@@ -8,9 +8,11 @@ function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)
 %   Parameters:
 %       --imgfile (str):
 %           Path to data in either a single multi volume file or a conc file.
+
 %       --datafile (str):
 %           Path to a tab, space or comma delimited text file with a header line
 %           and one column per variable.
+
 %       --target (str, default 'r'):
 %           A string specifying the results to compute separated by comma
 %           or space:

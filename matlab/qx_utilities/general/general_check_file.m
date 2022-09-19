@@ -7,8 +7,10 @@ function [ok] = general_check_file(filename, description, v, prepend)
 %   Parameters:
 %       --filename (str):
 %           The path to the file to check for.
+%
 %       --description (str, default 'a file'):
 %           The description for a file.
+%
 %       --v (str, default 'errorstop'):
 %           What should be reported:
 %

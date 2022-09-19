@@ -7,6 +7,7 @@ function [ts] = simulate_trim_pad(ts, l)
 %   Parameters:
 %       --ts (timeseries):
 %           Timeseries (timepoints x voxels).
+%
 %       --l (int):
 %           Desired length.
 %

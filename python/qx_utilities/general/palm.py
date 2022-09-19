@@ -84,7 +84,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
 
                 image='rs_connectivity.dtseries.nii|task_activation.dtseries.nii'
 
-        --design (str, default 'name꞉palm|d꞉d|t꞉t|f꞉f|eb꞉eb'):
+        --design (str, default 'name:palm|d:d|t:t|f:f|eb:eb'):
             The design name and the specific tails (if the defaults are not
             used) are specified by a design string. Design string is a pipe
             separated list of key:value pairs that specify the following (with
@@ -129,7 +129,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
 
             The colon symbols used above to denote::
 
-                default 'name꞉palm|d꞉d|t꞉t|f꞉f|eb꞉eb'
+                default 'name:palm|d:d|t:t|f:f|eb:eb'
 
             are of the Unicode *modifier colon* variety (U+A789) and are
             not equivalent to the *usual colon* (U+003A) that should be used
@@ -137,7 +137,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
             colons will result in an error - use normal colons with the command
             instead.
 
-        --palm_args (str, default 'n꞉100|zstat'):
+        --palm_args (str, default 'n:100|zstat'):
             Additional arguments to palm can be specified using the arguments
             string. The arguments string is a pipe separated list of arguments
             and optional values. The format of the string is::
@@ -184,7 +184,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
 
             The colon symbols used above to denote::
 
-                default 'n꞉100|zstat'
+                default 'n:100|zstat'
 
             are of the Unicode *modifier colon* variety (U+A789) and are
             not equivalent to the *usual colon* (U+003A) that should be used
@@ -192,7 +192,6 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
             colons will result in an error - use normal colons with the command
             instead.
 
-    Specific parameters:
         --T2DHEC (str, default '2:1:26'):
             Sets H, E and C parameters for 2D part of analysis.
 
@@ -217,21 +216,26 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
         --surface (str, default 'no'):
             Should the command only analyze left and right surfaces from
             dtseries or dscalar files.
+
         --mask (str, default None):
             Path to the mask file that will be used instead of the
             default mask files.
+
         --root (str, default detailed below):
             Optional root name for the result images, design name is
             used if the optional parameter is not specified.
+
         --parelements (int | str, default 'all'):
             Number of elements to run in parallel for grayordinate
             decomposition. If specified as None or 'all', all available elements
             (3 max for left surface, right surface and volume files) will be
             used. One element per CPU core is processed at a time.
+
         --overwrite (str, default 'no'):
             Whether to remove preexisting image files, if they exists,
             the command will exit with a warning if there are
             preexisting files and overwrite is set to 'no' (the default).
+
         --cleanup (str, default 'yes'):
             Should the command clean all the temporary generated files
             or not before the command exits.
@@ -948,7 +952,9 @@ def join_maps(images=None, output=None, names=None, originals=None):
 
 #
 def fNuissance(n):
-    '''Support function for create_ws_palm_design function.'''
+    """
+    Support function for create_ws_palm_design function.
+    """
     ndummy = n - 1
     block  = []
     for e in range(n):
@@ -970,9 +976,11 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     Parameters:
         --factors (str):
             A comma separated list of number of factor levels.
+
         --nsubjects (int):
             Number of subjects.
-        --root (str, default 'wspalm')
+
+        --root (str, default 'wspalm'):
             Root name for the created files.
 
     Notes:

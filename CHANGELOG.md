@@ -6,6 +6,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.11
+
+* Fixed setting of the default training files in ICAFix.
+* Added the ability to set custom templates in HCP PreFreeSurfer.
+* Improved stability of qunex_container.
+* Fixed a bug in BOLD run_qc when overwrite option was used.
+
+## 0.94.10
+
+* Removed some warnings from the MATLAB code.
+
 ## 0.94.9
 
 * Updated the version of HCP Pipelines.

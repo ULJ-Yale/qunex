@@ -8,10 +8,13 @@ function [] = general_image_overlap(af, bf, tf, v)
 %   Parameters:
 %       --af (nimage | str):
 %           Either a nimage object or the path to the first image file.
+%
 %       --bf (nimage | str):
 %           Either a nimage object or the path to the second image file.
+%
 %       --tf (str):
 %           The path to the file to save the overlap to.
+%
 %       --v (int, default 3):
 %           Which slice to show (1, 2 or 3).
 %

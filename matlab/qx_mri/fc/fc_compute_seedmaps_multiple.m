@@ -8,13 +8,16 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %       --flist (str):
 %           A .list file of session information, or a well strucutured
 %           string (see general_read_file_list).
-%       --roinfo (str)
+%
+%       --roinfo (str):
 %           An ROI file.
-%       --inmask (matrix | string, default []):
+%
+%       --inmask (matrix | string, default ''):
 %           Either an array mask defining which frames to use (1) and which
 %           not (0) or an event string specifying the events and frames to
 %           extract.
-%       --options (str, default []):
+%
+%       --options (str, default ''):
 %           A string defining which session files to save:
 %
 %           - r   - save map of correlations
@@ -25,8 +28,10 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %
 %       --targetf (str, default '.'):
 %           The folder to save images in.
+%
 %       --method (str, default 'mean'):
 %           Method for extracting timeseries - 'mean' or 'pca'.
+%
 %       --ignore (str, default 'no'):
 %           Do we omit frames to be ignored:
 %

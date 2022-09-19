@@ -87,20 +87,26 @@ It operates on a local server or cluster or within the XNAT Docker engine.
 Parameters:
     --turnkeytype (str, default 'xnat'):
         Specify type turnkey run. Options are: 'local' or 'xnat'.
+
     --path (str, default '/output/xnatprojectid'):
         Path where study folder is located. If empty default is for XNAT run.
+
     --sessions (str):
         Sessions to run locally on the file system if not an XNAT run.
+
     --sessionids (str):
         Comma separated list of session IDs to select for a run via gMRI engine
         from the batch file.
+
     --turnkeysteps (str):
         Specify specific turnkey steps you wish to run:
         Supported: TODO
+
     --turnkeycleanstep (str):
         Specify specific turnkey steps you wish to clean up intermediate files
         for.
         Supported: TODO
+
     --paramfile (str):
         File with pre-configured header specifying processing parameters.
 
@@ -130,7 +136,6 @@ Parameters:
           file. This file should be created and uploaded manually as the
           project-level resource on XNAT.
 
-Specific parameters:
     --acceptancetest (str, default 'no'):
         Specify if you wish to run a final acceptance test after each unit of
         processing.
@@ -140,30 +145,40 @@ Specific parameters:
 
         If --acceptancetest='<turnkey_step>', then acceptance test will be run
         but step won't be executed.
+
     --xnathost (str):
         Specify the XNAT site hostname URL to push data to.
+
     --xnatprojectid (str):
         Specify the XNAT site project id. This is the Project ID in XNAT and not
         the Project Title.
+
     --xnatuser (str):
         Specify XNAT username.
+
     --xnatpass (str):
         Specify XNAT password.
+
     --xnatsubjectid (str):
         ID for subject across the entire XNAT database.
         Required or --xnatsubjectlabel needs to be set.
+
     --xnatsubjectlabel (str):
         Label for subject within a project for the XNAT database.
         Required or --xnatsubjectid needs to be set.
+
     --xnataccsessionid (str):
         ID for subject-specific session within the XNAT project.
         Derived from XNAT but can be set manually.
+
     --xnatsessionlabel (str):
         Label for session within XNAT project.
         Note: may be general across multiple subjects (e.g. rest). Required.
+
     --xnatstudyinputpath (str, default 'input/RESOURCES/qunex_study'):
         The path to the previously generated session data as mounted for the
         container.
+
     --dataformat (str, default 'DICOM'):
         Specify the format in which the data is. Acceptable values are:
 
@@ -184,6 +199,7 @@ Specific parameters:
         Note that the filename to be used has to be provided in the
         session_hcp.txt file or the standard naming will be used. If not
         provided the default 'standard' will be used.
+
     --bidsformat (str, default 'no'):
         Note: this parameter is deprecated and is kept for backward
         compatibility.
@@ -208,33 +224,44 @@ Specific parameters:
         <projectname>/info/bids/<bidsname>. If bidsname is not provided, it
         will be deduced from the name of the folder in which the BIDS database
         is stored or from the zip package name.
+
     --rawdatainput (str, default ''):
         If --turnkeytype is not XNAT then specify location of raw data on the
         file system for a session. Default is '' for the XNAT type run as host
         is used to pull data.
+
     --workingdir (str, default '/output'):
         Specify where the study folder is to be created or resides.
+
     --projectname (str):
         Specify name of the project on local file system if XNAT is not
         specified.
+
     --overwritestep (str, default 'no'):
         Specify 'yes' or 'no' for delete of prior workflow step.
+
     --overwritesession (str, default 'no'):
         Specify 'yes' or 'no' for delete of prior session run.
+
     --overwriteproject (str, default 'no'):
         Specify 'yes' or 'no' for delete of entire project prior to run.
+
     --overwriteprojectxnat (str, default 'no'):
         Specify 'yes' or 'no' for delete of entire XNAT project folder prior to
         run.
+
     --cleanupsession (str, default 'no'):
         Specify 'yes' or 'no' for cleanup of session folder after steps are
         done.
+
     --cleanupproject (str, default 'no'):
         Specify 'yes' or 'no' for cleanup of entire project after steps are
         done.
+
     --cleanupoldfiles (str, default 'no'):
         Specify <yes> or <no> for cleanup of files that are older than start of
         run (XNAT run only).
+
     --bolds (str, default 'all'):
         For commands that work with BOLD images this flag specifies which
         specific BOLD images to process. The list of BOLDS has to be specified
@@ -253,6 +280,7 @@ Specific parameters:
         parameter is ommitted the '_bolds' specification in the batch.txt file
         never takes effect, because the default value 'all' will take
         precedence.
+
     --customqc (str, default 'no'):
         Either 'yes' or 'no'. If set to 'yes' then the script ooks into:
         ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes.
@@ -263,24 +291,26 @@ Specific parameters:
         See /opt/qunex/qx_library/data/scenes/qc/ for example templates.
 
         The qc path has to contain relevant files for the provided scene.
+
     --qcplotimages (str):
         Absolute path to images for general_plot_bold_timeseries. See
         'qunex general_plot_bold_timeseries' for help.
 
         Only set if general_plot_bold_timeseries is requested then this is a
         required setting.
-    --qcplotmasks (str)
+
+    --qcplotmasks (str):
         Absolute path to one or multiple masks to use for extracting BOLD data.
         See 'qunex general_plot_bold_timeseries' for help.
 
         Only set if general_plot_bold_timeseries is requested then this is a
         required setting.
-    --qcplotelements (str, default TODO):
+
+    --qcplotelements (str):
         Plot element specifications for general_plot_bold_timeseries. See
         'qunex general_plot_bold_timeseries' for help.
 
-        Only set if general_plot_bold_timeseries is requested. If not set then
-        the default is: TODO
+        Only set if general_plot_bold_timeseries is requested.
 
 Notes:
     List of Turnkey Steps:

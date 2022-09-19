@@ -7,6 +7,7 @@ function  [] = general_check_glm(sfolder, tfolder)
 %   Parameters:
 %       --sfolder (str, default '.'):
 %           A path to the folder that has the GLM files.
+%
 %       --tfolder (str, default '.'):
 %           A path to the folder where to save avi movie files.
 %

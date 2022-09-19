@@ -50,14 +50,14 @@ logname = ""
 #                                                       SUPPORT FUNCTIONS
 
 def writelog(item):
-    '''
+    """
     ``writelog(item)``
 
     Splits the passed item into two parts and appends the first to the
     global log list, and the second to the global stati list. It also
     prints the contents to the file specified in the global logname
     variable.
-    '''
+    """
     global logname
     global log
     global stati
@@ -70,15 +70,15 @@ def writelog(item):
 
 
 def procResponse(r):
-    '''
+    """
     ``procResponse(r)``
 
     It processes the response returned from the utilities functions
     called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple. If the 
+    no status tupple is present, it adds an "Unknown" tupple. If the
     third element is missing, it assumes it ran ok and sets it to
     0.
-    '''
+    """
 
     if type(r) is tuple:
         if len(r) == 2:
@@ -95,13 +95,13 @@ def procResponse(r):
 
 
 def torf(s):
-    '''
+    """
     ``torf(s)``
 
     First checks if string is "None", 'none', or "NONE" and returns
     None, then Checks if s is any of the possible true strings: "True", "true",
     or "TRUE" and retuns a boolean result of the check.
-    '''
+    """
     if s in ['None', 'none', 'NONE']:
         return None
     else:
@@ -109,11 +109,11 @@ def torf(s):
 
 
 def flag(f):
-    '''
+    """
     ``flag(f)``
 
     Converts a flag (f) passed as a string to a boolean.
-    '''
+    """
 
     if type(f) == bool:
         return f
@@ -124,12 +124,12 @@ def flag(f):
 
 
 def isNone(s):
-    '''
+    """
     ``isNone(s)``
 
     Check if the string is "" and returns None, otherwise
     returns the passed string.
-    '''
+    """
 
     if s in ['']:
         return None
@@ -138,12 +138,12 @@ def isNone(s):
 
 
 def updateOptions(session, options):
-    '''
+    """
     ``updateOptions(session, options)``
 
-    Returns an updated copy of options dictionary where all keys from 
+    Returns an updated copy of options dictionary where all keys from
     sessions that started with an underscore '_' are mapped into options.
-    '''
+    """
     soptions = dict(options)
     for key, value in session.items():
         if key.startswith('_'):
@@ -317,7 +317,15 @@ arglist = [
     ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution (in mm) of the structural images templates to use in the prefs step."],
     ['hcp_sephaseneg',         '',                                         str,    "spin echo field map volume with a negative phase encoding direction: (AP, PA, LR, RL) ['']."],
     ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) ['']."],
-    ['hcp_bold_smoothFWHM',    '2',                                         int,   "The size of the smoothing kernel (in mm)."],
+    ['hcp_bold_smoothFWHM',    '2',                                        int,    "The size of the smoothing kernel (in mm)."],
+    ['hcp_prefs_t1template', '',                                           isNone, "Path to the T1 template to be used by PreFreeSurfer."],
+    ['hcp_prefs_t1templatebrain', '',                                      isNone, "Path to the T1 brain template to be used by PreFreeSurfer."],
+    ['hcp_prefs_t1template2mm', '',                                        isNone, "Path to the T1 2mm template to be used by PreFreeSurfer."],
+    ['hcp_prefs_t2template', '',                                           isNone, "Path to the T2 template to be used by PreFreeSurfer."],
+    ['hcp_prefs_t2templatebrain', '',                                      isNone, "Path to the T2 brain template to be used by PreFreeSurfer."],
+    ['hcp_prefs_t2template2mm', '',                                        isNone, "Path to the T2 2mm template to be used by PreFreeSurfer."],
+    ['hcp_prefs_templatemask', '',                                         isNone, "Path to the template mask."],
+    ['hcp_prefs_template2mmmask', '',                                      isNone, "Path to the 2mm template mask."],
 
     ['# --- hcp_freesurfer options'],
     ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
@@ -382,7 +390,7 @@ arglist = [
     ['hcp_icafix_deleteintermediates', 'FALSE',                            torf,   "If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]."],
 
     ['# --- hcp_icafix options'],
-    ['hcp_icafix_traindata',   '',                                         str,    "Which file to use for training data. [] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix."],
+    ['hcp_icafix_traindata',   '',                                         isNone, "Which file to use for training data. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix."],
     ['hcp_icafix_threshold',   '10',                                       int,    "ICAFix threshold that controls the sensitivity/specificity tradeoff."],
     ['hcp_icafix_postfix',     'TRUE',                                     torf,   "Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully."],
 

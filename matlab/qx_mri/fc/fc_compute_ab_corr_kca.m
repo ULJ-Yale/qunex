@@ -9,16 +9,22 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %       --flist (str):
 %           A file list with information on sessions bold runs and segmentation
 %           files, or a well strucutured string (see general_read_file_list).
+%
 %       --smask (str):
 %           Path to .names file for source mask definition.
+%
 %       --tmask (str):
 %           Path to .names file for target mask roi definition.
+%
 %       --nc (cell array):
 %           List of the number(s) of clusters to compute k-means on.
+%
 %       --mask (int | logical | vector, default 0):
 %           Either number of frames to omit or a mask of frames to use.
+%
 %       --root (str, default 'flist'):
 %           The root of the filename where results are to be saved.
+%
 %       --options (str, default 'g'):
 %           A string with:
 %
@@ -27,8 +33,10 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %
 %       --dmeasure (str, default 'correlation'):
 %           Distance measure to used.
+%
 %       --nrep (int, defaut 10):
 %           Number of replications to run.
+%
 %       --verbose (str, default 'none'):
 %           How to report the progress: 'full', 'script' or 'none'.
 %

@@ -401,9 +401,9 @@ def getTRTE(info):
     return float(TR), float(TE)
 
 
-def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, parelements=1, debug=False):
+def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, parelements=1, debug=False):
     """
-    ``dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [parelements=1]``
+    ``dicom2nii [folder=.] [clean=no] [unzip=ask] [gzip=folder] [verbose=True] [parelements=1]``
 
     Converts MR images from DICOM to NIfTI format.
 
@@ -411,19 +411,24 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
         --folder (str, default '.'):
             The base session folder with the dicom subfolder that holds session
             numbered folders with dicom files.
-        --clean (str, default 'ask'):
+
+        --clean (str, default 'no'):
             Whether to remove preexisting NIfTI files ('yes'), leave them and
-            abort ('no') or ask interactively ('ask').
-        --unzip (str, default 'ask'):
-            If the dicom files are gziped whether to unzip them  ('yes'), leave
-            them be and abort ('no') or ask interactively ('ask').
-        --gzip (str, default 'ask'):
+            abort ('no').
+
+        --unzip (str, default 'yes'):
+            If the dicom files are gziped whether to unzip them ('yes'), leave
+            them be and abort ('no').
+
+        --gzip (str, default 'folder'):
             Whether to gzip individual DICOM files after they were processed
             ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
             ('folder'), or leave them ungzipped ('no'). Valid options are
-            'folder', 'file', 'no', 'ask'.
+            'folder', 'file', 'no'.
+
         --verbose (bool, default True):
              Whether to be report on the progress (True) or not (False).
+
         --parelements (int | str, default 1):
               How many parallel processes to run dcm2nii conversion with. The
               number is 1 by default, if specified as 'all', all available
@@ -501,15 +506,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
         Before running, the command check for presence of existing NIfTI
         files. The behavior when finding them is defined by clean parameter.
-        If set to 'ask', it will interactively ask what to do. If set to
-        'yes' it will remove any existing files and proceed. If set to 'no'
-        it will leave them and abort.
+        If set to 'yes' it will remove any existing files and proceed. If set to
+        'no' it will leave them and abort.
 
         Before running, the command also checks whether DICOM files might be
         gzipped. If that is the case, the response depends on the setting of
         the unzip parameter. If set to 'yes' it will automatically gunzip
         them and continue. If set to 'no', it will leave them be and abort.
-        If set to 'ask', it will interactively ask what to do.
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying
@@ -542,7 +545,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
                 --folder=. \\
                 --clean=yes \\
                 --unzip=yes \\
-                --gzip=yes \\
+                --gzip=folder \\
                 --parelements=3
 
         Multiple sessions example::
@@ -579,11 +582,6 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
 
     prior = glob.glob(os.path.join(imgf, "*.nii.gz")) + glob.glob(os.path.join(dmcf, "*", "*.nii.gz"))
     if len(prior) > 0:
-        if clean == 'ask':
-            print("\nWARNING: The following files already exist:")
-            for p in prior:
-                print(p)
-            clean = input("\nDo you want to delete the existing NIfTI files? [no] > ")
         if clean == "yes":
             print("\nDeleting files:")
             for p in prior:
@@ -597,9 +595,6 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     zipped_file = glob.glob(os.path.join(dmcf, "*", "*.dcm.gz"))
     zipped_folder = glob.glob(os.path.join(dmcf, "*.tar.gz"))
     if len(zipped_file) > 0 or len(zipped_folder) > 0:
-        if unzip == 'ask':
-            print("\nWARNING: DICOM files have been compressed using gzip.")
-            unzip = input("\nDo you want to unzip the existing files? [no] > ")
         if unzip == "yes":
             if verbose:
                 print("\nUnzipping files (this might take a while)")
@@ -857,12 +852,6 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
     stxt.close()
 
     # gzip files
-
-    if gzip == 'ask':
-        print("\nTo save space and file count, original DICOM files can be compressed and archived")
-        while gzip not in ['folder', 'file', 'no']:
-            gzip = input("\nDo you want to gzip DICOM files? [folder/file/no] > ")
-            gzip = gzip.strip()
     if gzip == 'file' or gzip == 'folder':
         if verbose:
             print("\nCompressing dicom with option {}:".format(gzip))
@@ -894,9 +883,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, pa
                 raise ge.CommandError("dicom2nii",  "Unable to archive one or more acquisitions")
 
 
-def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', add_image_type=0, add_json_info=""):
+def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', add_image_type=0, add_json_info=""):
     """
-    ``dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [add_image_type=0] [add_json_info=""]``
+    ``dicom2niix [folder=.] [clean=no] [unzip=yes] [gzip=folder] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [add_image_type=0] [add_json_info=""]``
 
     Converts MR images from DICOM and PAR/REC files to NIfTI format.
 
@@ -904,26 +893,33 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         --folder (str, default '.'):
             The base session folder with the dicom subfolder that holds session
             numbered folders with dicom files.
-        --clean (str, default 'ask'):
+
+        --clean (str, default 'no'):
             Whether to remove preexisting NIfTI files ('yes'), leave them and
-            abort ('no') or ask interactively ('ask').
-        --unzip (str, default 'ask'):
+            abort ('no').
+
+        --unzip (str, default 'yes'):
             If the dicom files are gziped whether to unzip them ('yes'), leave
-            them be and abort ('no') or ask interactively ('ask').
-        --gzip (str, default 'ask'):
+            them be and abort ('no').
+
+        --gzip (str, default 'folder'):
             Whether to gzip individual DICOM files after they were processed
             ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
             ('folder'), or leave them ungzipped ('no'). Valid options are
-            'folder', 'file', 'no', 'ask'.
+            'folder', 'file', 'no'.
+
         --sessionid (str, default extracted from dicom files):
             The id code to use for this session. If not provided, the session id
             is extracted from dicom files.
+
         --verbose (bool, default True):
             Whether to be report on the progress (True) or not (False).
+
         --parelements (int | str, default 1):
             How many parallel processes to run dcm2nii conversion with. The
             number is one by defaults, if specified as 'all', all available
             resources are utilized.
+
         --tool (str, default 'auto'):
             What tool to use for the conversion. It can be one of:
 
@@ -936,6 +932,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             Adds image type information to the sequence name (Siemens scanners).
             The value should specify how many of image type labels from the end
             of the image type list to add.
+
         --add_json_info (str, default ''):
             What sequence information to extract from JSON sidecar files and add
             to session.txt file. Specify a comma separated list of fields or
@@ -1038,16 +1035,14 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
         Before running, the command check for presence of existing NIfTI
         files. The behavior when finding them is defined by clean
-        parameter. If set to 'ask', it will ask interactively, what to do.
-        If set to 'yes' it will remove any existing files and proceede. If
-        set to 'no' it will leave them and abort.
+        parameter. If set to 'yes' it will remove any existing files and
+        proceede. If set to 'no' it will leave them and abort.
 
         Before running, the command also checks whether DICOM or .REC files
         might be gzipped. If that is the case, the response depends on the
         setting of the unzip parameter. If set to 'yes' it will
         automatically gunzip them and continue. If set to 'no', it will
-        leave them be and abort. If set to 'ask', it will ask
-        interactively, what to do.
+        leave them be and abort.
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying
@@ -1138,11 +1133,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             prior += glob.glob(os.path.join(tfolder, ext))
 
     if len(prior) > 0:
-        if clean == 'ask':
-            print("\nWARNING: The following files already exist:")
-            for p in prior:
-                print(p)
-            clean = input("Do you want to delete the existing NIfTI files? [no] > ")
         if clean == "yes":
             print("\nDeleting preexisting files:")
             for p in prior:
@@ -1157,9 +1147,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     zipped_file = glob.glob(os.path.join(dmcf, "*", "*.dcm.gz"))
     zipped_folder = glob.glob(os.path.join(dmcf, "*.tar.gz"))
     if len(zipped_file) > 0 or len(zipped_folder) > 0:
-        if unzip == 'ask':
-            print("\nWARNING: DICOM files have been compressed using gzip.")
-            unzip = input("\nDo you want to unzip the existing files? [no] > ")
         if unzip == "yes":
             if verbose:
                 print("\nUnzipping files (this might take a while)")
@@ -1478,12 +1465,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     stxt.close()
 
     # gzip files
-
-    if gzip == 'ask':
-        print("\nTo save space and file count, original DICOM files can be compressed and archived")
-        while gzip not in ['folder', 'file', 'no']:
-            gzip = input("\nDo you want to gzip DICOM files? [folder/file/no] > ")
-            gzip = gzip.strip()
     if gzip == 'file' or gzip == 'folder':
         if verbose:
             print("\nCompressing dicom with option {}:".format(gzip))
@@ -1522,7 +1503,7 @@ def _zip_dicom(gzip, dicom_folder):
     This function archives the dicom acquisition folder a single tar.gz file 
     when gzip=folder. A hidden temporary tar.gz file will be created and will
     be renamed after the dicom acquisition folder is completely archived. If
-    gzip=yes is set, gzip will compress individual files in the dicom 
+    gzip=file is set, gzip will compress individual files in the dicom 
     acquisition folder.
 
     This function can be called through ProcessPoolExecutor.
@@ -1755,15 +1736,18 @@ def sort_dicom(folder=".", **kwargs):
 
     Sorts DICOM files.
 
-    Paramters:
+    Parameters:
         --folder (str, default '.'):
             The base session folder that contains the inbox subfolder with the
             unsorted DICOM files.
+
         --copy (str, default 'move'):
             Should we 'copy' or 'move'.
+
         --outdir (str, default detailed below):
             Optional directory where the sorted files are to be saved. Defaults
             to `folder` parameter if not set.
+
         --files (str, default detailed below):
             List of files to sort. Defaults to files in `folder`.
 
@@ -2053,9 +2037,9 @@ def split_dicom(folder=None):
     return
 
 
-def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='folder', verbose='yes', overwrite='no'):
+def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="any", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='folder', verbose='yes', overwrite='no'):
     """
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
 
     Automatically processes packets with individual sessions's DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -2065,6 +2049,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             The base study sessions folder (e.g. WM44/sessions) where the inbox
             and individual session folders are. If not specified, the current
             working folder will be taken as the location of the sessionsfolder.
+
         --sessions (str, default ''):
             A comma delimited string that lists the sessions to process. If
             master inbox folder is used, the parameter is optional and it can
@@ -2073,6 +2058,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             sessions list will be processed. If `masterinbox` is set to none,
             the list specifies the session folders to process, and it can
             include glob patterns.
+
         --masterinbox (str, default <sessionsfolder>/inbox/MR):
             The master inbox folder with packages to process. By default
             masterinbox is in sessions folder: <sessionsfolder>/inbox/MR. If
@@ -2080,21 +2066,22 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             set to "none", the data is assumed to already exist in the
             individual sessions' inbox folder:
             <studyfolder>/<sessionsfolder>/<session id>/inbox.
-        --check (str, default 'yes'):
+
+        --check (str, default 'any'):
             The type of check to perform when packages or session folders are
             identified. The possible values are:
 
-            - 'yes' ... ask for interactive confirmation to proceed
             - 'no'  ... report and continue w/o additional checks
-            - 'any' ... continue if any packages are ready to process report error
-              otherwise.
+            - 'any' ... continue if any packages are ready to process report error otherwise.
 
         --pattern (str, default '(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)'):
             The regex pattern to use to find the packages and to extract the
             session id.
+
         --nameformat (str, default '(?P<subject_id>.*)'):
             The regex pattern to use to extract subject id and (optionally) the
             session name from the session or packet name.
+
         --tool (str, default 'auto'):
             What tool to use for the conversion. It can be one of:
 
@@ -2107,6 +2094,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             The number of parallel processes to use when running converting
             DICOM images to NIfTI files. If specified as 'all', all avaliable
             resources will be utilized.
+
         --logfile (str, default ''):
             A string specifying the location of the log file and the columns in
             which packetname, subject id and session name information are
@@ -2115,6 +2103,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             pattern>|subjectid:<the column with subjectid
             information>[|sessionid:<the column with sesion id
             information>]"``.
+
         --archive (str, default 'move'):
             What to do with a processed package. Options are:
 
@@ -2127,25 +2116,31 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
             In case of processing data from a sessions folder, the
             `archive` parameter is only valid for compressed
             packages.
+
         --add_image_type (int, default 0):
             Adds image type information to the sequence name (Siemens scanners).
             The value should specify how many of image type labels from the end
             of the image type list to add.
+
         --add_json_info (str, default ''):
             What sequence information to extract from JSON sidecar files and add
             to session.txt file. Specify a comma separated list of fields or
             'all'. See list in session.txt file description below.
+
         --unzip (str, default 'yes'):
             Whether to unzip individual DICOM files that are gzipped. Valid
-            options are 'yes', 'no', and 'ask'.
+            options are 'yes', 'no'.
+
         --gzip (str, default 'folder'):
             Whether to gzip individual DICOM files after they were processed
             ('file'), gzip a DICOM sequence or acquisition as an tar.gz archive
             ('folder'), or leave them ungzipped ('no'). Valid options are
-            'folder', 'file', 'no', 'ask'.
+            'folder', 'file', 'no'.
+
         --verbose (str, default 'yes'):
             Whether to provide detailed report also of packets that could not be
             identified and/or are not matched with log file.
+
         --overwrite (str, default 'no'):
             Whether to remove existing data in the dicom and nii folders.
 
@@ -2232,11 +2227,9 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
 
                 The command then lists all the sessions to process along with
                 the extracted subject ids and session names. If the check
-                parameter is set to 'yes', the command will ask whether to
-                process the listed packets, if it is set to 'no', it will just
-                start processing them, if it is set to `any`, it will start
-                processing them but return an explicit error if no packets are
-                found.
+                parameter is set to 'no', it will start processing them, if it
+                is set to `any`, it will start processing them but return an
+                explicit error if no packets are found.
 
                 For each packet found, the command will generate a new session
                 folder. The name of the folder will take the form
@@ -2677,13 +2670,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
     if overwrite:
         nToProcess += len(packets['exist'])
 
-    if nToProcess:
-        if check.lower() == 'yes':
-            s = input("\n===> Should I proceeed with processing the listed packages [y/n]: ")
-            if s != "y":
-                print("---> Aborting operation!\n")
-                return
-    else:        
+    if not nToProcess:   
         if check.lower() == 'any':
             if masterinbox:
                 raise ge.CommandFailed("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
@@ -2694,7 +2681,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="ye
                 raise ge.CommandNull("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
             else:
                 raise ge.CommandNull("import_dicom", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder))) 
-                
+
 
     # ---- Ok, now loop through the packets
 

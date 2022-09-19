@@ -14,21 +14,23 @@ function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbo
 %           - roi:<path to the individual's brain segmentation file>
 %           - file:<path to a bold file - one bold file per line>.
 %
-%       --target (str, default []):
+%       --target (str, default ''):
 %           Path to the folder to save results into. By default this location is
 %           set to where bold image is. If 'none' is used, the results are not
 %           saved in an external file.
-%       --store (str, default []):
+%
+%       --store (str, default ''):
 %           Specifies how to store the data:
 %
 %           - 'same': in the same file,
 %           - '<ext>': new file with extension,
 %           - '': no img file.
 %
-%       --scrub (str, default []):
+%       --scrub (str, default ''):
 %           Specifies whether and how to compute scrubbing
 %           information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme'.
-%        --verbose (bool, default false):
+%
+%       --verbose (bool, default false):
 %           Whether to report on progress or not.
 %
 %   Notes:

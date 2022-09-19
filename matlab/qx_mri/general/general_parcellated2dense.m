@@ -7,11 +7,14 @@ function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues
 %   Parameters:
 %       --inimg (str):
 %           A path to the image to expand.
+%
 %       --outimg (str, default inimg):
 %           An optional path where the expanded image is to be saved. If not
 %           provided, the specified inimg path is used.
+%
 %       --verbose (bool, default false):
 %           Should it report the details.
+%
 %       --missingvalues (str, default '0'):
 %           What value should be used in case of missing values (numeric or NaN)
 %           provided as a string.

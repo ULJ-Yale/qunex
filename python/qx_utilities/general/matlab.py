@@ -80,7 +80,9 @@ functionList = sorted(functions.keys())
 #
 
 def help(command):
-    '''Prints help for the command using Matlab.'''
+    """
+    Prints help for the command using Matlab.
+    """
 
     print("\nDisplaying help for Matlab function %s\n--------------------------------------------------------------------------------\n" % (command))
     com = '%s "help %s; exit"' % (mcommand, command)

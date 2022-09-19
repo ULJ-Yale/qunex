@@ -109,10 +109,13 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     Parameters:
         --concfile (str):
             The conc file to use as reference.
+
         --fidlroot (str):
             The root to use to find fidl files.
+
         --outfolder (str, default '.'):
             The folder in which to save the results.
+
         --fidlname (str, default ''):
             Optional fidl name.
 
@@ -209,11 +212,14 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
     Parameters:
         --concfolder (str):
             The folder with conc files.
+
         --fidlfolder (str, default detailed below):
             The folder with fidl files, defaults to concfolder if not provided.
+
         --outfolder (str, default detailed below):
             The folder in which the joint files should be saved, defaults
             to fidlfolder if not provided.
+
         --fidlname (str, default ''):
             Folder with fidl files.
 
@@ -262,8 +268,10 @@ def split_fidl(concfile, fidlfile, outfolder=None):
     Parameters:
         --concfile (str):
             The path to the conc file.
+
         --fidlfile (str):
             The path to the fidl file.
+
         --outfolder (str, default '.'):
             The path to the folder to put split fidls in.
 
@@ -335,11 +343,14 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
         --fidlfile (str, default detailed below):
             The path to the fidl file to plot. By default all the fidl files in
             the folder if none specified.
+
         --fidlfolder (str, default '.'):
             The folder from which to plot the fidl files.
+
         --plotfile (str, optional):
             The name of the file to save the plot to. Only makes sense if
             fidlfile is specified.
+
         --allcodes (bool, default False):
             Whether to plot line for all fidl codes even if no event has a
             particular code.

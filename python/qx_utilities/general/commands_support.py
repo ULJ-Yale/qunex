@@ -253,8 +253,11 @@ deprecated_values = {
         'standard': 'automated'
     },
     'hcp_folderstructure': {'initial': 'hcpya'},
-    'gzip': {'yes': 'file'}
+    'gzip': {'yes': 'folder', 'ask': 'folder'},
+    'clean': {'ask': 'no'},
+    'unzip': {'ask': 'yes'}
 }
+
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 
 # they were not specified and therefore have value None, and in those cases use values from
@@ -290,12 +293,12 @@ towarn_parameters = {
 #
 
 def check_deprecated_parameters(options, command):
-    '''
+    """
     ``check_deprecated_parameters(options, command)``
-    
+
     Checks for deprecated parameters, remaps deprecated ones
     and notifies the user.
-    '''
+    """
 
     remapped   = []
     deprecated = []
@@ -404,12 +407,12 @@ def check_deprecated_parameters(options, command):
 #
 
 def impute_parameters(options, command):
-    '''
+    """
     ``impute_parameters(options, command)``
-    
-    Checks if specific parameters are not specified and assigns them the value
-    of another relevant parameter.
-    '''
+
+    Checks if parameters are not specified and assigns them the value of another
+    relevant parameter.
+    """
 
     for target_option, source_option in to_impute:
         if options[target_option] is None:

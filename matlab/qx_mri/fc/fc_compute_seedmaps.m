@@ -17,7 +17,8 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %           A path to the names file specifying group based seeds. Additionally,
 %           separated by a pipe '|' symbol, a path to an image file holding
 %           subject/session specific ROI definition.
-%       --frames (matrix | int | str, default []):
+%
+%       --frames (matrix | int | str, default ''):
 %           The definition of which frames to extract, specifically:
 %
 %           - a numeric array mask defining which frames to use (1) and
@@ -61,6 +62,7 @@ function [fcmaps] = fc_compute_seedmaps(bolds, roiinfo, frames, targetf, options
 %
 %       --targetf (str, '.'):
 %           The folder to save images in.
+%
 %       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|subjectname=|verbose=false|debug=false'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::

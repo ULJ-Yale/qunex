@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-'''
+"""
 ``bruker.py``
 
 This file holds code for converting and onboarding bruker data into QuNex. It
@@ -22,7 +22,7 @@ from the command line using `qunex` command. Help is available through:
 
 There are additional support functions that are not to be used
 directly.
-'''
+"""
 
 '''
 Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
@@ -40,7 +40,7 @@ import general.exceptions as ge
 
 
 def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='move', parelements=1):
-    '''
+    """
     ``bruker_to_dicom [... processing options]``
 
     Converts bruker data into the dicom format which can be then imported into
@@ -51,8 +51,10 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
         --sessionsfolder (str, default '.'):
             The sessions folder where all the sessions are to be mapped to. It
             should be a folder within the <study folder>.
+
         --inbox (str, default '<sessionsfolder>/inbox/bruker'):
             The location of the folder with bruker datasets.
+
         --sessions (str, default ''):
             An optional parameter that specifies a comma or pipe separated list
             of sessions from the inbox folder to be processed. Regular
@@ -61,22 +63,27 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
             Note: the session will match if the string is found within the
             folder name. So 'S01' with match any folder that contains the string
             'S01'!
+
         --archive (str, default 'move'):
             What to do with bruker data once it is converted. Options are:
-                - move (move the package to the study's archive folder)
-                - copy (copy the package to the study's archive folder)
-                - leave (keep the package where it was)
-                - delete (delete the package)
+
+            - move (move the package to the study's archive folder)
+            - copy (copy the package to the study's archive folder)
+            - leave (keep the package where it was)
+            - delete (delete the package).
+
         --parelements (int, default 1):
-            How many parallel processes to run the conversion  with.
+            How many parallel processes to run the conversion with.
 
-     Examples:
-        qunex bruker_to_dicom \\
-        --sessionsfolder='/data/mice_study/sessions' \\
-        --sourcefolder='/data/raw/bruker' \\
-        --sessions='S01,S02'
+    Examples:
+        ::
 
-    '''
+            qunex bruker_to_dicom \\
+                --sessionsfolder='/data/mice_study/sessions' \\
+                --sourcefolder='/data/raw/bruker' \\
+                --sessions='S01,S02'
+
+    """
 
     print('Running bruker_to_dicom')
     print('=======================')

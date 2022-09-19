@@ -7,6 +7,7 @@ function [filename] = general_filename_join(elements, delim)
 %   Parameters:
 %       --elements (cell array):
 %           Cell array of file name elements.
+%
 %       --delim (str, default '_'):
 %           Delimiter to use for concatenation.
 %

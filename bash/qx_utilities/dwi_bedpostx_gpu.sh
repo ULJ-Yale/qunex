@@ -62,18 +62,25 @@ be in the following folder::
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --fibers (str, default '3'):
         Number of fibres per voxel.
+
     --weight (str, default '1'):
         ARD weight, more weight means less secondary fibres per voxel.
+
     --burnin (str, default '1000'):
         burnin period.
+
     --jumps (str, default '1250'):
         Number of jumps.
+
     --sample (str, default '25'):
         sample every.
+
     --model (str, default '2'):
         Deconvolution model:
 
@@ -84,15 +91,19 @@ Parameters:
     --rician (str, default 'yes'):
         Replace the default Gaussian noise assumption with rician noise
         ('yes'/'no').
+
     --gradnonlin (str, default detailed below):
         Consider gradient nonlinearities ('yes'/'no'). By default set
         automatically. Set to 'yes' if the file grad_dev.nii.gz is present, set
         to 'no' if it is not.
+
     --diffdatasuffix (str):
         Name of the DWI image; e.g. if the data is called
         <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
+
     --overwrite (str, default 'no'):
         Delete prior run for a given session.
+
     --scheduler (str):
         A string for the cluster scheduler (LSF, PBS or SLURM) followed by
         relevant options, e.g. for SLURM the string would look like this:

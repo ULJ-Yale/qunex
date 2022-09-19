@@ -400,8 +400,10 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
             The base folder to search for DICOM files. The command will try to
             locate all valid DICOM files within the specified folder and its
             subfolders.
+
         --targetfile (str, default 'dicom_fields.csv'):
-            The name (and path) of the file to store the information in. 
+            The name (and path) of the file to store the information in.
+
         --limit (int, default 20):
             The maximum number of example values to provide for each of the
             DICOM fields.
@@ -421,19 +423,19 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     Examples:
         ::
 
-        qunex get_dicom_fields
+            qunex get_dicom_fields
 
         ::
 
-        qunex get_dicom_fields \
-             --folder=/data/studies/WM/sessions/inbox/MR
+            qunex get_dicom_fields \\
+                --folder=/data/studies/WM/sessions/inbox/MR
 
         ::
 
-        qunex get_dicom_fields \
-             --folder=/data/studies/WM/sessions/inbox/MR/original \
-             --targetfile=/data/studies/WM/sessions/specs/dicom_fields.csv \
-             --limit=10
+            qunex get_dicom_fields \\
+                 --folder=/data/studies/WM/sessions/inbox/MR/original \\
+                 --targetfile=/data/studies/WM/sessions/specs/dicom_fields.csv \\
+                 --limit=10
     """
 
     if not os.path.exists(folder):
@@ -477,19 +479,24 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
             The base folder to search for DICOM files. The command will try to
             locate all valid DICOM files within the specified folder and its
             subfolders.
+
         --paramfile (str, default 'deidparam.txt'):
             The path to the parameter file that specifies what actions to
             perform on the dicom fields.
+
         --archivefile (str, default 'archive.csv'):
             The path to the file in which values to be archived are to be stored.
+
         --outputfolder (str):
             The optional path to the folder to which the modified dicom files
             are to be saved. If not specified, the dicom files are changed in
             place (overwritten).
+
         --extension (str):
             An optional extension to be added to each modified dicom file name.
             The extension can be applied only when files are copied to the
             outputfolder.
+
         --replacementdate (str):
             The date to replace all instances of StudyDate in the file. Looks at
             all DICOM fields with string values, and replaces the substring
@@ -553,24 +560,24 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
             sure that no such information is present in your dicom files.
 
     Examples:
-    ::
+        ::
 
-        qunex change_dicom_files \
-            --folder=. 
+            qunex change_dicom_files \\
+                --folder=.
 
-    ::
+        ::
 
-        qunex change_dicom_files \
-            --folder=/data/studies/WM/sessions/inbox/MR \
-            --paramfile=/data/studies/WM/sessions/specs/deid.txt
-    
-    ::
+            qunex change_dicom_files \\
+                --folder=/data/studies/WM/sessions/inbox/MR \\
+                --paramfile=/data/studies/WM/sessions/specs/deid.txt
 
-        qunex change_dicom_files \
-             --folder=/data/studies/WM/sessions/inbox/MR/original \
-             --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \
-             --outputfolder=/data/studies/WM/sessions/MR/deid \
-             --extension="v1"
+        ::
+
+            qunex change_dicom_files \\
+                --folder=/data/studies/WM/sessions/inbox/MR/original \\
+                --paramfile=/data/studies/WM/sessions/specs/deidv1.txt \\
+                --outputfolder=/data/studies/WM/sessions/MR/deid \\
+                --extension="v1"
     """
 
     if extension:

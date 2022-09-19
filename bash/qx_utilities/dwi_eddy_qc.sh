@@ -27,40 +27,52 @@ The function assumes that eddy outputs are saved in the following folder::
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --session (str):
         Session ID to run EDDY QC on.
-    --eddybase (str) :
+
+    --eddybase (str):
         This is the basename specified when running EDDY (e.g.
         eddy_unwarped_images)
+
     --eddyidx (str):
         EDDY index file.
+
     --eddyparams (str):
         EDDY parameters file.
+
     --mask (str):
         Binary mask file (most qc measures will be averaged across voxels
         labeled in the mask).
+
     --bvalsfile (str):
         bvals input file.
+
     --report (str, default 'individual'):
         If you want to generate a group report ('individual' or 'group').
+
     --overwrite (str):
         Delete prior run for a given session.
+
     --eddypath (str, default '<study_folder>/<session>/hcp/<session>/Diffusion/eddy/'):
         Specify the relative path of the eddy folder you want to use for inputs.
+
     --bvecsfile (str):
         If specified, the tool will create a bvals_no_outliers.txt and a
         bvecs_no_outliers.txt file that contain the bvals and bvecs of the
         non-outlier volumes, based on the MSR estimates,
 
-Special parameters:
     --list (str):
         Text file containing a list of qc.json files obtained from SQUAD. If
         --report='group', then this argument needs to be specified.
+
     --groupvar (str):
         Text file containing extra grouping variable. Extra optional input if
         --report='group'.
+
     --outputdir (str, default '<eddyBase>.qc'):
           Output directory. Extra optional input if --report='group'.
+
     --update (str):
         Applies only if --report='group' - set to <true> to update existing
         single session qc reports.

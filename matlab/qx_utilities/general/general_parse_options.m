@@ -8,9 +8,11 @@ function [options] = general_parse_options(options, s, default)
 %       --options (struct):
 %           A starting structure to work with - everything will be added to 
 %           it / changed in it.
+%
 %       --s (str):
 %           A 'key:value|key:value' string that defines what values to be 
 %           injected into the structure.
+%
 %       --default (str, default ''):
 %           An optional 'key:value|key:value' string with the default
 %           values to be used.

@@ -28,10 +28,13 @@ It produces the following outputs:
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
+
     --sessions (str):
         Comma separated list of sessions to run.
+
     --matrixversion (str):
         Matrix solution version to run parcellation on; e.g. 1 or 3.
+
     --seedfile (str):
         Specify the absolute path of the seed file you want to use as a seed for
         dconn reduction (e.g.
@@ -39,10 +42,13 @@ Parameters:
         Note: If you specify --seedfile='gbc' then the function computes an
         average across all streamlines from every greyordinate to all other
         greyordinates.
+
     --outname (str):
         Specify the suffix output name of the dscalar file.
+
     --overwrite (str):
         Delete prior run for a given session ('yes' / 'no').
+
     --waytotal (str, default 'none'):
         Use the waytotal normalized version of the DWI dense connectome.
         Default:

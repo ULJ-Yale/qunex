@@ -7,8 +7,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %   Parameters:
 %       --sessionf (str):
 %           A path to the sessions's folder with images and data.
+%
 %       --bolds (vector):
 %           A vector of bold runs in the order of the conc file.
+%
 %       --doIt (str, default 's,h,r,c,l'):
 %           Which steps to perform and in what order:
 %
@@ -36,8 +38,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %
 %       --TR (float, default 2.5):
 %           TR of the data, in seconds.
-%       --omit (int, default []):
+%
+%       --omit (int, default ''):
 %           The number of frames to omit at the start of each bold.
+%
 %       --rgss (str, default 'm,V,WM,WB,1d'):
 %           A comma separated string specifying what to regress in the
 %           regression step:
@@ -54,18 +58,24 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %           - 't'     ... task
 %           - 'e'     ... events.
 %
-%       --task (matrix, default []):
+%       --task (matrix, default ''):
 %           A matrix of custom regressors to be entered in GLM.
+%
 %       --efile (str, default ''):
 %           An event (fidl) file to be used for removing task structure.
+%
 %       --eventstring (str, default ''):
 %           A string specifying the events to regress and the regressors to use.
+%
 %       --variant (str, default ''):
 %           A string to be prepended to files.
+%
 %       --overwrite (bool, default false):
 %           Whether old files should be overwritten.
+%
 %       --tail (str, default '.nii.gz'):
 %           What file extension to expect and use for images.
+%
 %       --scrub (str, default Existing scrubbing data):
 %           The description of how to compute scrubbing - a string in
 %           `'param:value|param:value'` format.
@@ -102,6 +112,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %           running the command. Copying the above line containing modifier
 %           colons will result in an error - use normal colons with the command
 %           instead.
+%
 %       --options (str, default ''):
 %           Additional options that can be set using the 'key=value|key=value'
 %           string:
@@ -325,7 +336,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               For volume formats the images will be smoothed using the
 %               img_smooth_3d nimage method. For cifti format the smooting will
 %               be done by calling the relevant wb_command command. The
-%               smoothing specific parameters can be set in the options string:
+%               smoothing parameters can be set in the options string:
 %
 %               - voxel_smooth
 %                   Gaussian smoothing FWHM in voxels. Defaults to 2.

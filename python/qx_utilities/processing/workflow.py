@@ -159,33 +159,44 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions' information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
-            How many elements (e.g bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
+
         --overwrite (str, 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
             copy over. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to copy all.
+
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
+
         --nifti_tail (str, default detailed below):
             The tail of NIfTI volume images to use. Default to the value of
             qx_nifti_tail.
+
         --bold_variant (str, default ''):
             Optional variant of bold preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows. Empty if not used.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs once
             jobs are completed.
@@ -215,7 +226,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     Examples:
         ::
 
-            qunex create_bold_brain_masks
+            qunex create_bold_brain_masks \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
@@ -484,32 +495,43 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
-        --parelements (int, default 1)
-            How many elements (e.g bolds) to run in parallel.
-        --overwrite (str, default 'no')
+
+        --parelements (int, default 1):
+            How many elements (e.g. bolds) to run in parallel.
+
+        --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
             copy over. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to copy all.
+
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
+
         --nifti_tail (str, default ''):
             The tail of NIfTI volume images to use.
+
         --bold_variant (str, default ''):
             Optional variant of bold preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows. Empty if not used.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
@@ -523,25 +545,30 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
             - '<path>'  (for an arbitrary directory).
 
-    Specific parameters:
         --mov_radius (int, default 50):
             Estimated head radius (in mm) for computing frame displacement
             statistics.
+
         --mov_fd (float, default 0.5):
             Frame displacement threshold (in mm) to use for identifying bad
             frames.
+
         --mov_dvars (float, default 3.0):
             The (mean normalized) dvars threshold to use for identifying bad
             frames.
+
         --mov_dvarsme (float, default 1.5):
             The (median normalized) dvarsm threshold to use for identifying bad
             frames.
+
         --mov_after (int, default 0):
             How many frames after each frame identified as bad to also exclude
             from further processing and analysis.
+
         --mov_before (int, default 0):
             How many frames before each frame identified as bad to also exclude
             from further processing and analysis.
+
         --mov_bad (str, default 'udvarsme'):
             Which criteria to use for identification of bad frames (mov, dvars,
             dvarsme, idvars, uvars, idvarsme, udvarsme). See movement scrubbing
@@ -803,32 +830,42 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     create per session plots and fidl snippets and group reports.
 
     Parameters:
-        --batchfile (str, default '')
+        --batchfile (str, default ''):
             The batch.txt file with all the session information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
             copy over. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to copy all.
+
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
+
         --nifti_tail (str, default ''):
             The tail of NIfTI volume images to use.
+
         --bold_variant (str, default ''):
             Optional variant of bold preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows. Empty if not used.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed. When a comma or pipe ('|') separated list
@@ -842,25 +879,30 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     ... for `<hcp_folder>/logs/comlogs`
             - '<path>'  ... for an arbitrary directory.
 
-    Specific parameters:
         --mov_radius (int, default 50):
             Estimated head radius (in mm) for computing frame displacement
             statistics.
+
         --mov_fd (float, default 0.5):
             Frame displacement threshold (in mm) to use for identifying bad
             frames.
+
         --mov_dvars (float, default 3.0):
             The (mean normalized) dvars threshold to use for identifying bad
             frames.
+
         --mov_dvarsme (float, default 1.5):
             The (median normalized) dvarsm threshold to use for identifying bad
             frames.
+
         --mov_after (int, default 0):
             How many frames after each frame identified as bad to also exclude
             from further processing and analysis.
+
         --mov_before (int, default 0):
             How many frames before each frame identified as bad to also exclude
             from further processing and analysis.
+
         --mov_bad (str, default 'udvarsme'):
             Which criteria to use for identification of bad frames (mov, dvars,
             dvarsme, idvars, uvars, idvarsme, udvarsme). See movement scrubbing
@@ -880,23 +922,30 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
             For more detailed description please see wiki entry on Movement
             scrubbing.
+
         --TR (float, default 2.5):
             TR of the BOLD files.
+
         --mov_pref (str, default ''):
             The prefix to be used for the figure plot files.
+
         --mov_plot (str, default 'mov_report'):
             The base name of the plot files. If set to empty no plots are
             generated.
+
         --mov_mreport (str, default 'movement_report.txt'):
             The name of the group movement report file. If set to an empty
             string, no file is generated.
+
         --mov_sreport (str, default 'movement_scrubbing_report.txt'):
             The name of the group scrubbing report file. If set to an empty
             string, no file is generated.
+
         --mov_preport (str, default 'movement_report_post.txt'):
             The name of group report file with stats computed with frames
             identified as bad exluded from analysis. If set to an empty
             string, no file is generated.
+
         --mov_post (str, default 'udvarsme'):
             The criterium for identification of bad frames that is used when
             generating a post scrubbing statistics group report:
@@ -1207,35 +1256,47 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
+
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
+
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
-            How many elements (e.g bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
+
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
             copy over. It can be a single type (e.g. 'task'), a pipe separated
             list (e.g. 'WM|Control|rest') or 'all' to copy all.
+
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
+
         --nifti_tail (str, default ''):
             The tail of NIfTI volume images to use.
+
         --bold_variant (str, default ''):
             Optional variant of bold preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows. Empty if not used.
+
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
         --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed.
+
             When a comma or pipe ('|') separated list is given,
             the log will be created at the first provided location
             and then linked or copied to other locations.
@@ -1246,21 +1307,23 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
             - '<path>'  (for an arbitrary directory).
 
-    Specific parameters:
         --wbmask (str, default ''):
             A path to an optional file that specifies which regions are to be
             excluded from the whole-brain mask. It can be used in the case of
             ROI analyses for which one does not want to include the ROI specific
             signals in the global signal regression.
+
         --nroi (str, default ''):
             The path to additional nuisance regressors file. It can be either a
             binary mask or a '.names' file that specifies the ROI to be used.
             Based on other options, the ROI can be further masked by session
             specific files or not masked at all (see Use section below).
+
         --sessionroi (str, default ''):
             A string specifying which session specific mask to use for further
             masking the additional roi. The two options are 'wb' or 'aseg' for
             whole brain mask or FreeSurfer aseg+aparc mask, respectively.
+
         --shrinknsroi (str, default 'true'):
             A string specifying whether to shrink ('true') the whole
             brain and white matter masks or not ('false').
@@ -1272,7 +1335,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
               A text file that lists for each volume frame the information
               on mean intensity across the ventricle, white matter and whole
               brain voxels, and any additional nuisance ROI specified using
-              specific parameters. The file is stored in
+              parameters. The file is stored in the
               `images<img_suffix>/functional<bold_variant>/movement` folder.
 
         --`bold[N]<nifti_tail>_nuisance.png`
@@ -1303,9 +1366,9 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         parts of the brain that are not ventricles or white matter, which results
         in whole brain to mostly overlap with gray matter.
 
-        Using specific parameters listed below, it is also possible to specify
-        additional ROIs for which nuisance signal is to be extracted and/or ROI that
-        are to be excluded from the whole brain mask.
+        Using parameters listed below, it is also possible to specify additional
+        ROIs for which nuisance signal is to be extracted and/or ROI that are to
+        be excluded from the whole brain mask.
 
         To exclude specific ROI from the whole brain mask, use the '--wbmask'
         option. This should be a path to a file that specifies, which ROI are to
@@ -1512,26 +1575,34 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     Prepares BOLD files for further functional connectivity analysis.
 
     Parameters:
-        --batchfile (str , default ''):
+        --batchfile (str, default ''):
             The batch.txt file with all the session information.
-        --sessionsfolder (str , default '.'):
+
+        --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
             supposed to go.
-        --parsessions (int , default 1):
+
+        --parsessions (str, default 1):
             How many sessions to run in parallel.
+
         --parelements (int, default 1):
-            How many elements (e.g bolds) to run in parallel.
-        --overwrite (str , default 'no'):
+            How many elements (e.g. bolds) to run in parallel.
+
+        --overwrite (str, default 'no'):
             Whether to overwrite existing data ('yes') or not ('no').
-        --boldname (str , default 'bold'):
+
+        --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
-        --image_target (str , default 'nifti'):
+
+        --image_target (str, default 'nifti'):
             The target format to work with, one of '4dfp', 'nifti', 'dtseries'
             or 'ptseries'.
-        --logfolder (str , default ''):
+
+        --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-        --log (str , default 'study'):
+
+        --log (str, default 'study'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed. When a comma or pipe ('|') separated list
             is given, the log will be created at the first provided location
@@ -1544,25 +1615,31 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
 
-    Specific parameters:
         --bolds  (str, default 'all'):
             A pipe ('|') separated list of conc names to process.
+
         --event_file  (str, default ''):
             A pipe ('|') separated list of fidl names to use, that
             matches the conc list.
-        --bold_actions  (str , default 's,h,r,c,l'):
+
+        --bold_actions  (str, default 's,h,r,c,l'):
             A string specifying which actions, and in what sequence
             to perform.
-        --nifti_tail (str , default ''):
+
+        --nifti_tail (str, default ''):
             The tail of NIfTI volume images to use.
-        --cifti_tail (str , default ''):
+
+        --cifti_tail (str, default ''):
             The tail of CIFTI images to use.
-        --bold_prefix (str , default ''):
+
+        --bold_prefix (str, default ''):
             An optional prefix to place in front of processing name extensions
             in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
-        --bold_variant (str , default detailed below):
+
+        --bold_variant (str, default detailed below):
             Optional variant of HCP BOLD preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows. Empty if not used.
@@ -1728,7 +1805,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 For volume formats the images will be smoothed using the
                 img_smooth_3d nimage method. For cifti format the smooting will
                 be done by calling the relevant wb_command command. The
-                smoothing specific parameters are:
+                smoothing parameters are:
 
                 --voxel_smooth (int, default 2):
                     Gaussian smoothing FWHM in voxels.
@@ -1795,7 +1872,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             Temporal filtering is accomplished using img_filter nimage method.
             The code is adopted from the FSL C++ code enabling appropriate
             handling of bad frames (as described above - see SCRUBBING). The
-            specific parameters are:
+            parameters are:
 
             --hipass_filter (float, default 0.008):
                 The frequency for high-pass filtering in Hz.
@@ -1821,7 +1898,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             from BOLD files, removing unwanted potential sources of correlation
             for further functional connectivity analyses, and (2) to get task
             beta estimates for further activation analyses. The following
-            specific parameters are used in this step:
+            parameters are used in this step:
 
             --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
                 A comma separated list of regressors to include in GLM.
@@ -2200,24 +2277,31 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     done. Use and parameter description will be intertwined.
 
     Parameters:
-        --batchfile (str , default ''):
+        --batchfile (str, default ''):
             The batch.txt file with all the session information.
-        --sessionsfolder (str , default '.'):
+
+        --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging  data is
             supposed to go.
-        --parsessions (int , default 1):
+
+        --parsessions (str, default 1):
             How many sessions to run in parallel.
-        --overwrite (str , default 'no'):
+
+        --overwrite (str, default 'no'):
             Whether to overwrite existing data ('yes') or not ('no').
-        --boldname (str , default 'bold'):
+
+        --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
-        --image_target (str , default 'nifti'):
+
+        --image_target (str, default 'nifti'):
             The target format to work with, one of '4dfp', 'nifti', 'dtseries'
             or 'ptseries'.
-        --logfolder (str , default ''):
+
+        --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-        --log (str , default 'study'):
+
+        --log (str, default 'study'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
             once jobs are completed. When a comma or pipe ('|') separated list
             is given, the log will be created at the first provided location
@@ -2230,25 +2314,31 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
 
-    Specific parameters:
-        --bolds  (str, default 'all'):
+        --bolds (str, default 'all'):
             A pipe ('|') separated list of conc names to process.
-        --event_file  (str, default ''):
+
+        --event_file (str, default ''):
             A pipe ('|') separated list of fidl names to use, that
             matches the conc list.
-        --bold_actions  (str , default 's,h,r,c,l'):
+
+        --bold_actions (str, default 's,h,r,c,l'):
             A string specifying which actions, and in what sequence
             to perform.
-        --nifti_tail (str , default ''):
+
+        --nifti_tail (str, default ''):
             The tail of NIfTI volume images to use.
-        --cifti_tail (str , default ''):
+
+        --cifti_tail (str, default ''):
             The tail of CIFTI images to use.
-        --bold_prefix (str , default ''):
+
+        --bold_prefix (str, default ''):
             An optional prefix to place in front of processing name extensions
             in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
-        --bold_variant (str , default detailed below):
+
+        --bold_variant (str, default detailed below):
             Optional variant of HCP BOLD preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
+
         --img_suffix (str, default ''):
             Specifies a suffix for 'images' folder to enable support for
             multiple parallel workflows. Empty if not used.
@@ -2283,7 +2373,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
         present in the relevant individual session's folders, they are searched
         for in the `<sessionsfolder>/inbox/events` and
         `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_"
-        in the ∗.fidl and ∗.conc file name is not optional but required.
+        in the \*.fidl and \*.conc file name is not optional but required.
 
         The actions that can be performed are denoted by a single letter, and
         they will be executed in the sequence listed:
@@ -2427,7 +2517,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 For volume formats the images will be smoothed using the
                 img_smooth_3d nimage method. For cifti format the smooting will
                 be done by calling the relevant wb_command command. The
-                smoothing specific parameters are:
+                smoothing parameters are:
 
                 --voxel_smooth (int, default 2):
                     Gaussian smoothing FWHM in voxels.
@@ -2494,7 +2584,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             Temporal filtering is accomplished using img_filter nimage method.
             The code is adopted from the FSL C++ code enabling appropriate
             handling of bad frames (as described above - see SCRUBBING). The
-            specific parameters are:
+            parameters are:
 
             --hipass_filter (float, default 0.008):
                 The frequency for high-pass filtering in Hz.
@@ -2520,7 +2610,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             from BOLD files, removing unwanted potential sources of correlation
             for further functional connectivity analyses, and (2) to get task
             beta estimates for further activation analyses. The following
-            specific parameters are used in this step:
+            parameters are used in this step:
 
             --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
                 A comma separated list of regressors to include in GLM.

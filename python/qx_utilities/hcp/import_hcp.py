@@ -39,9 +39,9 @@ PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL',
 
 
 def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
-    '''
+    """
     Identifies and returns the intended location of the file based on its name.
-    '''
+    """
 
     try:
         if sessionsfolder[-1] == '/':
@@ -125,6 +125,7 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
         --sessionsfolder (str, default '.'):
             The sessions folder where all the sessions are to be mapped to. It
             should be a folder within the <study folder>.
+
         --inbox (str, default <sessionsfolder>/inbox/HCPLS):
             The location of the HCPLS dataset. It can be any of the following:
             the HCPLS dataset top folder, a folder that contains the HCPLS
@@ -134,6 +135,7 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
             can specify "<path>/<hcpfs_file>.zip" or "<path>" to a folder that
             contains multiple packages. The default location where the command
             will look for a HCPLS dataset is "<sessionsfolder>/inbox/HCPLS".
+
         --sessions (str, default detailed below):
             An optional parameter that specifies a comma or pipe separated list
             of sessions from the inbox folder to be processed. Regular
@@ -145,6 +147,7 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
             the session will match if the string is found within the package
             name or the session id. So 'HCPA' with match any zip file that
             contains string 'HCPA' or any session id that contains 'HCPA'!
+
         --action (str, default 'link'):
             How to map the files to QuNex structure.
             The following actions are supported:
@@ -179,10 +182,12 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
             Please note that there can be an interaction with the `action`
             parameter. If files are moved during action, they will be missing
             if `archive` is set to 'move' or 'copy'.
+
         --hcplsname (str, default detailed below):
             The optional name of the HCPLS dataset. If not provided it will be
             set to the name of the inbox folder or the name of the compressed
             package.
+
         --nameformat (str, default '(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'):
             An optional parameter that contains a regular expression pattern
             with named fields used to extract the subject and session
@@ -515,8 +520,8 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
 
 def processHCPLS(sessionfolder, filesort):
-    '''
-    '''
+    """
+    """
 
     if not os.path.exists(sessionfolder):
         raise ge.CommandFailed("processHCPLS", "No hcpls folder present!", "There is no hcpls data in session folder %s" % (sessionfolder), "Please import HCPLS data first!")
