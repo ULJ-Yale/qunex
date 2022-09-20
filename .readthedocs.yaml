@@ -12,10 +12,9 @@ build:
     python: "3.8"
   jobs:
     post_checkout:
-      - rm -rf qx_library # cannot clone into existing folder
-      # TODO: replace "<replace_with_actual_token>" with the actual repo token
-      # TODO: remove "-b develop" option to use master branch
-      - git clone -b develop https://token:<replace_with_actual_token>@gitlab.qunex.yale.edu/qunex/library.git qx_library
+      - rm -rf qx_library # otherwise cannot clone into existing folder
+      # remove "-b develop" option to use master branch of qunex/library repository
+      - git clone -b develop https://token:glpat-W4j8WPCLEfK5d2oMQh9j@gitlab.qunex.yale.edu/qunex/library.git qx_library
     pre_build:
       - qx_library/etc/docs/_extras/bash/pre_build.sh
 
