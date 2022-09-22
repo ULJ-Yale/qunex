@@ -840,7 +840,6 @@ dwi_bedpostx_gpu() {
     --rician='${Rician}' \
     --gradnonlin='${Gradnonlin}' \
     --overwrite='${Overwrite}' \
-    --diffdatasuffix='${diffdatasuffix}' \
     --species='${Species}'"
     # -- QuNex bash execute function
     bash_call_execute
