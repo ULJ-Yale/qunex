@@ -201,6 +201,21 @@ Parameters:
 
     --omitdefaults (str, default 'no'):
         Either 'yes' or 'no'. If set to 'yes' then the script omits defaults.
+    
+    --sourcefile (str, default 'session_hcp.txt'):
+            The name of the source session.txt file.
+
+    --hcp_filename (str):
+        Specify how files and folders should be named using HCP processing:
+
+        - 'automated'   ... files should be named using QuNex automated naming
+          (e.g. BOLD_1_PA)
+        - 'userdefined' ... files should be named using user defined names (e.g.
+          rfMRI_REST1_AP)
+
+        Note that the filename to be used has to be provided in the
+        session_hcp.txt file or the standard naming will be used. If not
+        provided the default 'automated' will be used.
 
 Output files:
     With the exception of rawNII, the function generates 3 types of outputs, which
@@ -416,6 +431,8 @@ unset HCPSuffix # --hcp_suffix
 unset GeneralSceneDataFile # --datafile
 unset GeneralSceneDataPath # --datapath
 unset SessionBatchFile # --sessionsbatchfile
+unset sourcefile # --sourcefile
+unset hcp_filename # -- hcp_filename
 
 runcmd=""
 
@@ -485,6 +502,10 @@ SessionBatchFile=`opts_GetOpt "--batchfile" $@`
 if [ -z "${SessionBatchFile}" ]; then
     SessionBatchFile=`opts_GetOpt "--sessionsbatchfile" $@`
 fi
+
+# -- Get source file and hcp_filename
+sourcefile=`get_parameters "--sourcefile" $@`
+hcp_filename=`get_parameters "--hcp_filename" $@`
 
 # -- Check general required parameters
 if [ -z ${CASES} ]; then
@@ -1260,33 +1281,13 @@ main() {
     get_options "$@"
     for CASE in ${CASES}; do
         # -- Set basics
-
-        # -- Set session_hcp.txt file 
-        if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
-            SessAcqInfoFile="session_hcp.txt"
-        else
-            # -- Set subject_hcp.txt file if session_hcp.txt is missing for backwards compatibility
-           if [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
-               SessAcqInfoFile="subject_hcp.txt"
-           fi
-        fi
-
-        # - If BOLDS parameter is empty then use session acquisition file
-        if [ "$Modality" = "BOLD" ]; then
-            if [ -z "$BOLDS" ]; then 
-                echo ""
-                echo "Note: BOLD input list not specified. Relying ${SessAcqInfoFile} individual information files."
-                BOLDS="${SessAcqInfoFile}"
-                echo ""
-            fi
-        fi
-
         CASEName="${CASE}${HCPSuffix}"
         HCPFolder="${SessionsFolder}/${CASE}/hcp/${CASEName}"
         if [ ! -z "$HCPSuffix" ]; then 
            geho " ===> HCP suffix specified ${HCPSuffix}"; echo ""
            geho "      Setting hcp folder to: ${SessionsFolder}/${CASE}/hcp/${CASEName}"; echo ""
-        fi 
+        fi
+
         # -- Check if raw NIFTI QC is requested and run it first
         if [ "$Modality" == "rawNII" ] ; then 
             unset CompletionCheck
@@ -1300,6 +1301,42 @@ main() {
                 mv ${SessionsFolder}/${CASE}/nii/slicesdir/* ${OutPath}/${CASE}
             fi
         else
+            # -- Set SessAcqInfoFile/source file
+            if [ ! ${sourcefile} == "" ]; then
+                echo ""
+                echo "---> Using a custom sourcefile ${sourcefile}.";
+                echo ""
+                SessAcqInfoFile=${sourcefile}
+            else
+                if [ -f ${SessionsFolder}/${CASE}/session_hcp.txt ]; then
+                    SessAcqInfoFile="session_hcp.txt"
+                elif [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
+                    SessAcqInfoFile="subject_hcp.txt"
+                fi
+            fi
+           
+            # -- Check if ${SessAcqInfoFile} is present:
+            echo ""
+            echo "---> Using ${SessAcqInfoFile} individual information files. Verifying that ${SessAcqInfoFile} exists.";
+            echo ""
+            if [[ -f "${SessionsFolder}/${CASE}/${SessAcqInfoFile}" ]]; then
+                echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} found. Proceeding ..."
+            else
+                reho "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your data and inputs."
+                echo ""
+                exit 1
+            fi
+
+            # - If BOLDS parameter is empty then use session acquisition file
+            if [ "$Modality" = "BOLD" ]; then
+                if [ -z "$BOLDS" ]; then 
+                    echo ""
+                    echo "Note: BOLD input list not specified. Relying ${SessAcqInfoFile} individual information files."
+                    BOLDS="${SessAcqInfoFile}"
+                    echo ""
+                fi
+            fi
+
             # -- Proceed with other QC steps
             TemplateSceneFile="template_${modality_lower}_qc.wb.scene"
             WorkingSceneFile="${CASEName}.${Modality}.QC.wb.scene"
@@ -1315,20 +1352,7 @@ main() {
                 geho " ===> Custom scenes requested from ${scenetemplatefolder}"; echo ""
                 geho "      ${CustomTemplateSceneFiles}"; echo ""
             fi
-            
-            # -- Check if ${SessAcqInfoFile} is present:
-            if [[ -n ${SessAcqInfoFile} ]] && [[ ${BOLDS} == "${SessAcqInfoFile}" ]]; then
-                echo ""
-                echo "---> Using ${SessAcqInfoFile} individual information files. Verifying that ${SessAcqInfoFile} exists."; echo ""
-                if [[ -f "${SessionsFolder}/${CASE}/${SessAcqInfoFile}" ]]; then
-                    echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} found. Proceeding..."
-                else
-                    reho "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your inputs."
-                    echo ""
-                    exit 1
-                fi
-            fi
-                
+
             # -- Check of overwrite flag was set
             if [ ${Overwrite} == "yes" ]; then
                 echo ""
@@ -1403,7 +1427,6 @@ main() {
             
             # -- Check if modality is BOLD
             if [ "$Modality" == "BOLD" ] ; then
-                
                 # ----------------------------------------------------------------------
                 # --       Block of code to set BOLD numbers correctly
                 # ----------------------------------------------------------------------
@@ -1414,9 +1437,12 @@ main() {
                     geho "  --> For ${CASE} searching for BOLD tags in batch file ${SessionBatchFile} ... "; echo ""
                     unset BOLDS BOLDLIST
                     if [[ -f ${SessionBatchFile} ]]; then
+                        if [ "${hcp_filename}" == "userdefined" ]; then
+                            output="name"
+                        fi
                         # For debugging
-                        # echo "   gmri batch_tag2namekey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-                        BOLDS=`gmri batch_tag2namekey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" prefix="" | grep "BOLDS:" | sed 's/BOLDS://g'`
+                        echo "   gmri batch_tag2namekey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" prefix="" output="${output}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+                        BOLDS=`gmri batch_tag2namekey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" prefix="" output="${output}" | grep "BOLDS:" | sed 's/BOLDS://g'`
                         BOLDLIST="${BOLDS}"
                     else
                         reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
