@@ -224,7 +224,7 @@ deprecated_parameters = {
     'sfilter':                 'filter',
     'hcp_fs_existing_subject': 'hcp_fs_existing_session',
     'subjectsfolder':          'sessionsfolder',
-    'subjid':                  {
+    'subjid':                   {
                                         'sessionid': ['dicom2niix', 'batch_tag2namekey'],
                                         'sessionids': 'export_hcp',
                                         'default': 'sessionid'

@@ -6811,9 +6811,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo["id"])
             run = False
 
-        # get library path
-        asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
-
         # lookup gdcoeffs file
         gdcfile, r, run = check_gdc_coeff_file(options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run)
         if gdcfile == "NONE":
@@ -6865,13 +6862,31 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
         # AP and PA fieldmaps for use in distortion correction
         # asl_se_info is populated through the PCASLhr tag
+        fmap_ap_file = None
+        fmap_pa_file = None
         if len(asl_se_info) > 0:
             for se in asl_se_info:
                 if "phenc" in se:
-                    if se["phenc"] in ["AP", "SE-FM-AP"] and "filename" in se:
-                        fmap_ap_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + se["filename"] + ".nii.gz")
+                    if se["phenc"] in ["AP", "SE-FM-AP"]:
+                        if "filename" in se:
+                            fmap_ap_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + se["filename"] + ".nii.gz")
+                        else:
+                            fmap_ap_file = glob.glob(os.path.join(hcp["ASL_source"], "*SpinEchoFieldMap_AP*.nii.gz"))
+                            if len(fmap_ap_file) == 0:
+                                r += "\n---> ERROR: SE AP file not found in [%s]" % hcp["ASL_source"]
+                                run = False
+                            else:
+                                fmap_ap_file = fmap_ap_file[0]
                     elif se["phenc"] in ["PA", "SE-FM-PA"]:
-                        fmap_pa_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + se["filename"] + ".nii.gz")
+                        if "filename" in se:
+                            fmap_pa_file = os.path.join(hcp["ASL_source"], sinfo["id"] + "_" + se["filename"] + ".nii.gz")
+                        else:
+                            fmap_pa_file = glob.glob(os.path.join(sefolder, "*SpinEchoFieldMap_PA*.nii.gz"))
+                            if len(fmap_pa_file) == 0:
+                                r += "\n---> ERROR: SE PA file not found in [%s]" % hcp["ASL_source"]
+                                run = False
+                            else:
+                                fmap_pa_file = fmap_pa_file[0]
 
         # else we need to get the files from se
         elif "se" in asl_info:
@@ -6890,12 +6905,16 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # check
-        if not os.path.exists(fmap_ap_file):
-            r += "\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file
+        if not fmap_ap_file or not fmap_pa_file:
+            r += "\n---> ERROR: one or more fieldmaps not found, check your input data"
             run = False
-        if not os.path.exists(fmap_ap_file):
-            r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
-            run = False
+        else:
+            if not os.path.exists(fmap_ap_file):
+                r += "\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file
+                run = False
+            if not os.path.exists(fmap_ap_file):
+                r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
+                run = False
 
         # wmparc
         wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
@@ -6908,6 +6927,21 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         if not os.path.exists(ribbon_file):
             r += "\n---> ERROR: ribbon.nii.gz from FreeSurfer not found [%s]" % ribbon_file
             run = False
+
+        # get library path
+        asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
+
+        # set mtname
+        if options["hcp_asl_mtname"] is None:
+            mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
+
+        # set territories atlas
+        if options["hcp_asl_territories_atlas"] is None:
+            territories_atlas = os.path.join(asl_library, "vascular_territories_eroded5_atlas.nii.gz")
+
+        # set territories labels
+        if options["hcp_asl_territories_labels"] is None:
+            territories_labels = os.path.join(asl_library, "vascular_territories_atlas.txt")
 
         # build the command
         if run:
@@ -6922,6 +6956,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --fmap_pa="%(fmap_pa)s" \
                 --wmparc="%(wmparc)s" \
                 --ribbon="%(ribbon)s" \
+                --mtname="%(mtname)s" \
+                --territories_atlas="%(territories_atlas)s" \
+                --territories_labels="%(territories_labels)s" \
                 --verbose' % {
                     "script"                : "hcp_asl",
                     "studydir"              : sinfo['hcp'],
@@ -6933,18 +6970,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     "fmap_ap"               : fmap_ap_file,
                     "fmap_pa"               : fmap_pa_file,
                     "wmparc"                : wmparc_file,
-                    "ribbon"                : ribbon_file}
+                    "ribbon"                : ribbon_file,
+                    "mtname"                : mtname,
+                    "territories_atlas"     : territories_atlas,
+                    "territories_labels"    : territories_labels
+                    }
 
             # -- Optional parameters
-            if options["hcp_asl_mtname"] is not None:
-                comm += "                --mtname=" + options["hcp_asl_mtname"]
-
-            if options["hcp_asl_territories_atlas"] is not None:
-                comm += "                --territories_atlas=" + options["hcp_asl_territories_atlas"]
-
-            if options["hcp_asl_territories_labels"] is not None:
-                comm += "                --territories_labels=" + options["hcp_asl_territories_labels"]
-
             if options["hcp_asl_use_t1"]:
                 comm += "                --use_t1"
 

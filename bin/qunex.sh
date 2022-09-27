@@ -145,9 +145,9 @@ qunex_failed() {
     reho ''
 }
  
-qunex_passed() {
+qunex_done() {
     geho ''
-    geho 'QuNex PASSED!'
+    geho 'QuNex DONE!'
     geho ''
 }
 
@@ -320,7 +320,7 @@ bash_call_execute() {
         # -- Run the commands locally
         if [[ ${Cluster} == 1 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_passed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
             geho "--------------------------------------------------------------"
@@ -840,7 +840,6 @@ dwi_bedpostx_gpu() {
     --rician='${Rician}' \
     --gradnonlin='${Gradnonlin}' \
     --overwrite='${Overwrite}' \
-    --diffdatasuffix='${diffdatasuffix}' \
     --species='${Species}'"
     # -- QuNex bash execute function
     bash_call_execute
@@ -973,7 +972,9 @@ run_qc() {
     --boldfcpath='${BOLDfcPath}' \
     --suffix='${Suffix}' \
     --hcp_suffix='${HCPSuffix}' \
-    --batchfile='${BATCH_FILE}' "
+    --batchfile='${BATCH_FILE}' \
+    --sourcefile='${sourcefile}' \
+    --hcp_filename='${hcp_filename}'"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1685,6 +1686,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ICAFIXFunction=`get_parameters "${setflag}icafixfunction" $@`
     HPFilter=`get_parameters "${setflag}hpfilter" $@`
     MovCorr=`get_parameters "${setflag}movcorr" $@`
+    sourcefile=`get_parameters "${setflag}sourcefile" $@`
+    hcp_filename=`get_parameters "${setflag}hcp_filename" $@`
 
     # -- Code block for BOLDs
     BOLDS=`get_parameters "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
@@ -2057,6 +2060,10 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     if [ "$Modality" = "general" ]; then
         echo "  Data input path: ${GeneralSceneDataPath}"
         echo "  Data input: ${GeneralSceneDataFile}"
+    fi
+
+    if [ -n ${sourcefile} ]; then
+        echo "  Source file: ${sourcefile}"
     fi
 
     echo ""

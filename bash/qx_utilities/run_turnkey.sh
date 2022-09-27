@@ -194,11 +194,10 @@ Parameters:
           (e.g. BOLD_1_PA)
         - 'userdefined' ... files should be named using user defined names (e.g.
           rfMRI_REST1_AP)
-        - 'standard'    ... default
 
         Note that the filename to be used has to be provided in the
         session_hcp.txt file or the standard naming will be used. If not
-        provided the default 'standard' will be used.
+        provided the default 'automated' will be used.
 
     --bidsformat (str, default 'no'):
         Note: this parameter is deprecated and is kept for backward
