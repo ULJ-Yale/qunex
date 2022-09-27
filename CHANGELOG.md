@@ -6,11 +6,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.13
+
+* hcp_asl now properly reads SE pairs. 
+
 ## 0.94.12
 
 * run_qc will now work if you changed the name of session_hcp.txt during the file preparation.
 * Fixed permission for compiled FSL CUDA binaries.
-* HCP_ASL default parameters are now setup more robustly.
+* hcp_asl default parameters are now setup more robustly.
 
 ## 0.94.11
 

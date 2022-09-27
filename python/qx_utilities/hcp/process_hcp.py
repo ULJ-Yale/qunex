@@ -125,7 +125,6 @@ def getHCPPaths(sinfo, options):
     d['hcp_nonlin']         = os.path.join(hcpbase, 'MNINonLinear')
     d['T1w_source']         = os.path.join(d['source'], 'T1w')
     d['DWI_source']         = os.path.join(d['source'], 'Diffusion')
-    d['mbPCASLhr_source']   = os.path.join(d['source'], 'mbPCASLhr')
     d['ASL_source']         = os.path.join(d['source'], 'ASL')
 
     d['T1w_folder']         = os.path.join(hcpbase, 'T1w')
@@ -6835,10 +6834,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         asl_se_info = []
         for (k, v) in sinfo.items():
             if k.isdigit():
-                if v["name"] in ["ASL", "mbPCASLhr"]:
-                    asl_info = v
-                elif v["name"] in ["PCASLhr"]:
+                if v["name"] in ["PCASLhr"] or "SpinEchoFieldMap" in v["task"]:
                     asl_se_info.append(v)
+                elif v["name"] in ["ASL", "mbPCASLhr"]:
+                    asl_info = v
 
         # ASL file
         if len(asl_info) == 0:
