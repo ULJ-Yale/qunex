@@ -6811,9 +6811,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo["id"])
             run = False
 
-        # get library path
-        asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
-
         # lookup gdcoeffs file
         gdcfile, r, run = check_gdc_coeff_file(options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run)
         if gdcfile == "NONE":
@@ -6931,6 +6928,21 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: ribbon.nii.gz from FreeSurfer not found [%s]" % ribbon_file
             run = False
 
+        # get library path
+        asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
+
+        # set mtname
+        if options["hcp_asl_mtname"] is None:
+            mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
+
+        # set territories atlas
+        if options["hcp_asl_territories_atlas"] is None:
+            territories_atlas = os.path.join(asl_library, "vascular_territories_eroded5_atlas.nii.gz")
+
+        # set territories labels
+        if options["hcp_asl_territories_labels"] is None:
+            territories_labels = os.path.join(asl_library, "vascular_territories_atlas.txt")
+
         # build the command
         if run:
             comm = '%(script)s \
@@ -6944,6 +6956,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --fmap_pa="%(fmap_pa)s" \
                 --wmparc="%(wmparc)s" \
                 --ribbon="%(ribbon)s" \
+                --mtname="%(mtname)s" \
+                --territories_atlas="%(territories_atlas)s" \
+                --territories_labels="%(territories_labels)s" \
                 --verbose' % {
                     "script"                : "hcp_asl",
                     "studydir"              : sinfo['hcp'],
@@ -6955,18 +6970,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     "fmap_ap"               : fmap_ap_file,
                     "fmap_pa"               : fmap_pa_file,
                     "wmparc"                : wmparc_file,
-                    "ribbon"                : ribbon_file}
+                    "ribbon"                : ribbon_file,
+                    "mtname"                : mtname,
+                    "territories_atlas"     : territories_atlas,
+                    "territories_labels"    : territories_labels
+                    }
 
             # -- Optional parameters
-            if options["hcp_asl_mtname"] is not None:
-                comm += "                --mtname=" + options["hcp_asl_mtname"]
-
-            if options["hcp_asl_territories_atlas"] is not None:
-                comm += "                --territories_atlas=" + options["hcp_asl_territories_atlas"]
-
-            if options["hcp_asl_territories_labels"] is not None:
-                comm += "                --territories_labels=" + options["hcp_asl_territories_labels"]
-
             if options["hcp_asl_use_t1"]:
                 comm += "                --use_t1"
 
