@@ -63,6 +63,13 @@ else
   mkdir "$ROIsFolder"/temp
 fi
 
+# If needed generate a ${DiffusionResolution} structural space for resampling the diffusion data into
+# Needed for legacy support, HCP already does this in T1w folder
+if [ ! -f "$T1wFolder"/"$T1wImage"_"$DiffusionResolution" ]; then
+  ${FSLDIR}/bin/flirt -interp spline -in "$T1wFolder"/"$T1wImage" -ref "$T1wFolder"/"$T1wImage" -applyisoxfm ${DiffusionResolution} -out "$T1wFolder"/"$T1wImage"_${DiffusionResolution}
+  ${FSLDIR}/bin/applywarp --rel --interp=spline -i "$T1wFolder"/"$T1wImage" -r "$T1wFolder"/"$T1wImage"_${DiffusionResolution} -o "$T1wFolder"/"$T1wImage"_${DiffusionResolution}
+fi
+
 #Inputs: wmparc at DiffusionResolution
 #Inputs: Ribbon Volume at DiffusionResolution
 
