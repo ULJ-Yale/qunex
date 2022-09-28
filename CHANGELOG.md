@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.14
+
+* dwi_pre_tractography now works when continuing from dwi_legacy_gpu.
+
 ## 0.94.13
 
 * hcp_asl now properly reads SE pairs. 
