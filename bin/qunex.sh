@@ -380,7 +380,6 @@ dwi_legacy_gpu() {
     QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy_gpu.sh \
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
-    --scanner=${Scanner} \
     --usefieldmap=${UseFieldmap} \
     --pedir=${PEdir} \
     --echospacing=${EchoSpacing} \
@@ -1602,7 +1601,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     PEdir=`get_parameters "${setflag}PEdir" $@`
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
-    Scanner=`get_parameters "${setflag}scanner" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
     diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
 
@@ -2254,7 +2252,6 @@ fi
 if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$Scanner" ]; then reho "ERROR: Scanner manufacturer missing"; exit 1; fi
     if [ -z "$UseFieldmap" ]; then reho "ERROR: UseFieldmap yes/no specification missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
@@ -2280,7 +2277,6 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
-    echo "   Scanner: ${Scanner}"
     echo "   Using FieldMap: ${UseFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
     echo "   Phase Encoding Direction: ${PEdir}"
