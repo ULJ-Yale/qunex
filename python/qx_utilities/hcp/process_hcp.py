@@ -502,6 +502,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             the used 2mm template mask is HCP's
             MNI152_T1_2mm_brain_mask_dil.nii.gz.
 
+        --hcp_prefs_fnirtconfig (str, default ""):
+            Path to the used FNIRT config. Set to the HCP's T1_2_MNI152_2mm.cnf
+            by default.
+
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence information
             to use in preprocessing of specific image modalities.
@@ -860,6 +864,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             template2mmmask = options['hcp_prefs_template2mmmask']
 
+        # hcp_prefs_fnirtconfig
+        if options['hcp_prefs_fnirtconfig'] is None:
+            fnirtconfig = os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf')
+        else:
+            fnirtconfig = options['hcp_prefs_fnirtconfig']
+
         # --- Set up the command
         comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh') + " "
 
@@ -876,7 +886,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     ('templatemask', templatemask),
                     ('template2mmmask', template2mmmask),
                     ('brainsize', options['hcp_brainsize']),
-                    ('fnirtconfig', os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf')),
+                    ('fnirtconfig', fnirtconfig),
                     ('fmapmag', fmmag),
                     ('fmapphase',fmphase),
                     ('fmapgeneralelectric', fmge),

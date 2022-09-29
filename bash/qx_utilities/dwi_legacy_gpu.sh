@@ -44,9 +44,6 @@ Parameters:
     --sessions (str):
         Comma separated list of sessions to run.
 
-    --scanner (str):
-        Name of scanner manufacturer ('siemens' or 'ge' supported).
-
     --echospacing (str):
         EPI Echo Spacing for data [in msec]; e.g. 0.69
 
@@ -131,7 +128,6 @@ Examples:
             --unwarpdir='x-' \\
             --diffdatasuffix='DWI_dir91_LR' \\
             --usefieldmap='yes' \\
-            --scanner='siemens' \\
             --overwrite='yes'
 
     Example with flagged parameters for submission to the scheduler using
@@ -148,7 +144,6 @@ Examples:
             --unwarpdir='x-' \\
             --diffdatasuffix='DWI_dir91_LR' \\
             --usefieldmap='yes' \\
-            --scanner='siemens' \\
             --overwrite='yes' \\
             --bash="module load CUDA/9.1.85" \\
             --scheduler='<name_of_scheduler_and_options>'
@@ -167,7 +162,6 @@ Examples:
             --pedir='1' \\
             --echospacing='0.69' \\
             --unwarpdir='x-' \\
-            --scanner='ge' \\
             --overwrite='yes'
 
 EOF
@@ -208,7 +202,6 @@ get_options() {
     unset unwarpdir
     unset diffdatasuffix
     unset overwrite
-    unset scanner
     unset usefieldmap
     runcmd=""
     # -- parse arguments
@@ -259,10 +252,6 @@ get_options() {
                 overwrite=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-             --scanner=*)
-                scanner=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;    
             --usefieldmap=*)
                 usefieldmap=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -280,10 +269,6 @@ get_options() {
     fi
     if [ -z ${session} ]; then
         echo "ERROR: <session-id> not specified"
-        exit 1
-    fi
-    if [ -z ${scanner} ]; then
-        echo "Note: <scanner> specification not set"
         exit 1
     fi
     if [ -z ${pedir} ]; then
@@ -318,7 +303,6 @@ get_options() {
     echo "-- ${script_name}: Specified Command-Line Options - Start --"
     echo "   Sessionsfolder: ${sessionsfolder}"
     echo "   Session: ${session}"
-    echo "   Scanner: ${scanner}"
     if [ ${usefieldmap} == "yes" ]; then
         echo "   Using fieldmap: ${usefieldmap}"
         echo "   PEdir: ${pedir}"
