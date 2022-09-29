@@ -326,6 +326,7 @@ arglist = [
     ['hcp_prefs_t2template2mm', '',                                        isNone, "Path to the T2 2mm template to be used by PreFreeSurfer."],
     ['hcp_prefs_templatemask', '',                                         isNone, "Path to the template mask."],
     ['hcp_prefs_template2mmmask', '',                                      isNone, "Path to the 2mm template mask."],
+    ['hcp_prefs_fnirtconfig', '',                                          isNone, "Path to the FNIRT config."],
 
     ['# --- hcp_freesurfer options'],
     ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],

@@ -10,6 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * dwi_pre_tractography now works when continuing from dwi_legacy_gpu.
 * Removed the scanner parameter from dwi_legacy_gpu as it was redundant.
+* HCP PreFreeSurfer's fnirtconfig can be now customized through the hcp_prefs_fnirtconfig parameter.
+
 ## 0.94.13
 
 * hcp_asl now properly reads SE pairs. 
