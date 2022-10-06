@@ -28,7 +28,17 @@ import general.exceptions as ge
 import os.path
 import general.core as gc
 
-def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", hcp_folderstructure="hcpls", hcp_suffix=""):
+# ---- some definitions
+unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
+PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
+PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL', 'LR': 'i-', 'i-': 'LR'}
+SEDirMap  = {'AP': 'y', 'PA': 'y', 'LR': 'x', 'RL': 'x'}
+
+def checkInlineParameterUse(modality, parameter, options):
+    return any([e in options['use_sequence_info'] for e in ['all', parameter, '%s:all' % (modality), '%s:%s' % (modality, parameter)]])
+
+
+def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", hcp_folderstructure="hcpls", hcp_suffix="", use_sequence_info="all"):
     """
     ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""]``
 
@@ -74,6 +84,28 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             Optional suffix to append to session id when creating session folder
             within the hcp folder. The final path to HCP session is then:
             `<targetfolder>/<session id><hcp_suffix>`.
+
+        --use_sequence_info (str, default 'all'):
+            A pipe, comma or space separated list of inline sequence information
+            to use in preprocessing of specific image modalities.
+
+            Example specifications:
+
+            - `all`: use all present inline information for all
+              modalities,
+            - 'DwellTime': use DwellTime information for all modalities,
+            - `T1w:all`: use all present inline information for T1w
+              modality,
+            - `SE:EchoSpacing`: use EchoSpacing information for
+              Spin-Echo fieldmap images.
+            - `none`: do not use inline information.
+
+            Modalities: T1w, T2w, SE, BOLD, dMRi Inline information: TR,
+            PEDirection, EchoSpacing, DwellTime, ReadoutDirection.
+
+            If information is not specified it will not be used. More general
+            specification (e.g. `all`) implies all more specific cases (e.g.
+            `T1w:all`).
 
     Notes:
         The command maps images from the sessions's nii folder into a folder
@@ -206,7 +238,8 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
     inf   = gc.read_session_data(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
-
+    options = {'use_sequence_info': gc.pcslist(use_sequence_info)}
+    
     # backwards compatibility (session used to be id)
 
     if 'id' in inf:
@@ -277,6 +310,18 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             orient = "_" + v['o']
         elif 'phenc' in v:
             orient = "_" + v['phenc']
+#        elif 'PEDirection' in v:
+#            orient = "_" + PEDirMap[v['PEDirection']]
+        elif 'PEDirection' in v and any([
+            "boldref" in v['name'] and checkInlineParameterUse('BOLD', 'PEDirection', options),
+            "bold"    in v['name'] and checkInlineParameterUse('BOLD', 'PEDirection', options), 
+            v['name'] in ["mbPCASLhr", "PCASLhr", "ASL"] and checkInlineParameterUse('ASL', 'PEDirection', options),
+            ]):
+                if v['PEDirection'] in PEDirMap:
+                    orient = "_" + PEDirMap[v['PEDirection']]
+                else:
+                    print("  ... unknown PEDirection %s for %s %s [not using, please check]" % (v['PEDirection'], v['ima'], v['name']))
+                    orient = ""
         else:
             orient = ""
         if v['name'] == 'T1w':
