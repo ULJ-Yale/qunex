@@ -1658,8 +1658,8 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
-        --hcp_long_fs_template (str, default 'base'):
-            Name of the base template.
+        --hcp_long_fs_template_id (str, default 'base'):
+            ID of the base template.
 
         --hcp_long_fs_extra_reconall_base (str, default ''):
             A string with extra parameters to pass to Longitudinal FreeSurfer
@@ -1683,7 +1683,7 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             qunex hcp_longitudibnal_freesurfer \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
-                --hcp_long_fs_template="<template_name>"
+                --hcp_long_fs_template_id="<template_id>"
     """
 
     r = "\n------------------------------------------------------------"
@@ -1779,12 +1779,12 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
 
     # sort out the folder structure
     sessionsfolder = options['sessionsfolder']
-    subject_dir = os.path.join(sessionsfolder, subject_id)
-    if not os.path.exists(subject_dir):
-        os.makedirs(subject_dir)
+    study_folder = os.path.join(sessionsfolder, subject_id)
+    if not os.path.exists(study_folder):
+        os.makedirs(study_folder)
 
-    template = options["hcp_long_fs_template"]
-    long_dir = os.path.join(subject_dir, f"{subject_id}.long.{template}")
+    templateid = options["hcp_long_fs_template_id"]
+    long_dir = os.path.join(study_folder, f"{subject_id}.long.{templateid}")
     # exit if overwrite is not set, else create folders
     if not overwrite and os.path.exists(long_dir):
         r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
@@ -1804,22 +1804,22 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
             r += f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!"
             run = False
 
-        target_dir = os.path.join(subject_dir, session)
+        target_dir = os.path.join(study_folder, session)
         gc.linkOrCopy(source_dir, target_dir, symlink=True)
         i += 1
 
     # build the command
     if run:
         comm = '%(script)s \
-            --subject-dir="%(subjectdir)s" \
+            --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
             --sessions="%(sessions)s" \
-            --template="%(template)s"' % {
+            --template-id="%(templateid)s"' % {
                 "script"        : os.path.join(hcp_dir, "FreeSurfer", "LongitudinalFreeSurferPipeline.sh"),
-                "subjectdir"    : subject_dir,
+                "studyfolder"   : study_folder,
                 "subject"       : subject_id,
                 "sessions"      : '@'.join(sessions_list),
-                "template"      : template}
+                "templateid"    : templateid}
 
         # -- Optional parameters
         if options["hcp_long_fs_extra_reconall_base"] is not None:
@@ -1839,10 +1839,10 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
 
         # -- Test file
         last_session = sessions_list[-1]
-        tfile = os.path.join(subject_dir,
-                             f"{subject_id}.long.{template}",
+        tfile = os.path.join(study_folder,
+                             f"{subject_id}.long.{templateid}",
                              "T1w",
-                             f"{last_session}.long.{template}",
+                             f"{last_session}.long.{templateid}",
                              "mri",
                              "T1.mgz")
 
