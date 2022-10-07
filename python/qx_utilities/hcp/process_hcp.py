@@ -2046,6 +2046,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             With the information present above, the file "/data/gc/Prisma.conf"
             would be used.
 
+        Apptainer (Singularity) and GPU support:
+            If nogpu is not provided, this command will facilitate GPUs to speed
+            up processing. Since the command uses CUDA binaries, an NVIDIA GPU
+            is required. To give access to CUDA drivers to the system inside the
+            Apptainer (Singularity) container, you need to use the --nv flag
+            of the qunex_container script.
+
         Use:
             Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion
             weighted images (DWI). Specifically, after b0 intensity
