@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.94.XY
+
+* Parameter `pedir` is now named consistently across the whole suite.
+* Fixed a bug where `_AP/PA` tags in `setup_hcp` were sometimes missing.
+
 ## 0.94.14
 
 * dwi_pre_tractography now works when continuing from dwi_legacy_gpu.
