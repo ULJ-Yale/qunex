@@ -381,7 +381,7 @@ dwi_legacy_gpu() {
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
     --usefieldmap=${UseFieldmap} \
-    --pedir=${PEdir} \
+    --pedir=${pedir} \
     --echospacing=${EchoSpacing} \
     --te=${te} \
     --unwarpdir=${UnwarpDir} \
@@ -1598,7 +1598,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
-    PEdir=`get_parameters "${setflag}PEdir" $@`
+    pedir=`get_parameters "${setflag}pedir" $@`
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
@@ -2279,7 +2279,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Using FieldMap: ${UseFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
-    echo "   Phase Encoding Direction: ${PEdir}"
+    echo "   Phase Encoding Direction: ${pedir}"
     echo "   TE value for Fieldmap: ${TE}"
     echo "   EPI Unwarp Direction: ${UnwarpDir}"
     echo "   Diffusion Data Suffix Name: ${diffdatasuffix}"

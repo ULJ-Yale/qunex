@@ -2112,8 +2112,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # --- using a legacy parameter?
-        if 'hcp_dwi_PEdir' in options:
-            r += "\n---> WARNING: you are still providing the hcp_dwi_PEdir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it."
+        if 'hcp_dwi_pedir' in options:
+            r += "\n---> WARNING: you are still providing the hcp_dwi_pedir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it."
             r += "\n---> hcp_dwi_phasepos is currently set to %s." % options['hcp_dwi_phasepos']
 
         # --- set up data
@@ -2221,7 +2221,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
-                --PEdir=%(pe_dir)s \
+                --pedir=%(pe_dir)s \
                 --posData="%(pos_data)s" \
                 --negData="%(neg_data)s" \
                 --echospacing="%(echospacing)s" \
