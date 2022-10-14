@@ -539,11 +539,13 @@ def main(args=None):
                     so your local environment setup will not be propagated into
                     the container. If you want to disable this functionality use
                     this flag. The flag is not set by default.
-    --nv            Required when using CUDA (GPU) inside Apptainer. If
+    --nv            Required when using CUDA inside Apptainer (Singularity). If
                     provided then apptainer exec --nv option will be used.
-    --script        If a script is to be run against the Apptainer container
-                    rather than a single command, the path to the script to be
-                    run is specified here. ['']
+    --cuda_path     Required when using Apptainer (Singularity) and a CUDA
+                    version that is not the QuNex default.
+    --script        If a script is to be run against the Apptainer (Singularity)
+                    container rather than a single command, the path to the
+                    script to be run is specified here. ['']
     --envars        If environment variables other than the default set by the
                     container are to be used, they can be specified in a pipe
                     separated string formatted as:
@@ -703,6 +705,7 @@ def main(args=None):
     bind                = None
     nocleanenv          = None
     nv                  = None
+    cudapath            = None
     script              = None
     parjobs             = None
     parsessions         = 1
