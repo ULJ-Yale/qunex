@@ -462,9 +462,6 @@ def main(args=None):
                     k, v = args[n].split("=", 1)
                     k = k.strip('-')
                     opts[k] = v
-                elif comm in gcom.commands:
-                    k = gcom.commands[comm]['args'][n - 1]
-                    opts[k] = args[n]
                 else:
                     k = args[n].strip('-')
                     opts[k] = True

@@ -24,7 +24,7 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'sort_dicom'            : {'com': dicom.sort_dicom,               'args': ('folder', 'out_dir', 'files', 'copy')},
             'dicom2nii'             : {'com': dicom.dicom2nii,                'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'parelements', 'debug')},
             'dicom2niix'            : {'com': dicom.dicom2niix,               'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'parelements', 'debug', 'tool', 'add_image_type', 'add_json_info')},
-            'import_dicom'          : {'com': dicom.import_dicom,             'args': ('sessionsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'add_image_type', 'add_json_info', 'unzip', 'gzip', 'verbose', 'overwrite')},
+            'import_dicom'          : {'com': dicom.import_dicom,             'args': ('sessionsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'add_image_type', 'add_json_info', 'unzip', 'gzip', 'verbose', 'overwrite', 'test')},
             'get_dicom_info'        : {'com': dicom.get_dicom_info,           'args': ('dicomfile', 'scanner')},
             'import_bids'           : {'com': bids.import_bids,               'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
             'map_bids2nii'          : {'com': bids.map_bids2nii,              'args': ('sourcefolder', 'overwrite', 'fileinfo')},
