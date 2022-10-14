@@ -705,7 +705,7 @@ def main(args=None):
     bind                = None
     nocleanenv          = None
     nv                  = None
-    cudapath            = None
+    cuda_path           = None
     script              = None
     parjobs             = None
     parsessions         = 1
@@ -744,6 +744,8 @@ def main(args=None):
             nocleanenv = True
         elif arg == "--nv":
             nv = True
+        elif "cuda_path=" in arg:
+            k, cuda_path = arg.split("=", 1)
         elif "script=" in arg:
             k, script = arg.split("=", 1)
         elif "parjobs=" in arg:
@@ -849,6 +851,10 @@ def main(args=None):
 
     homedir = os.path.expanduser("~")
     dockeropt += " -v %s:%s" % (homedir, homedir)
+
+    # bind cuda path if provided
+    if cuda_path:
+        dockeropt += f" -v {cuda_path}:/usr/local/cuda/"
 
     # if sessions is a batch file set as batchfile
     old_sessions_naming = False
@@ -1077,6 +1083,13 @@ def main(args=None):
                 # bind
                 if bind:
                     container_command += "-B %s " % bind
+
+                # bind cuda path if provided
+                if cuda_path:
+                    if not bind:
+                        container_command += f"-B {cuda_path}:/usr/local/cuda/ "
+                    else:
+                        container_command += f",{cuda_path}:/usr/local/cuda/ "
 
                 container_command +=  "%s bash %s" % (conimage, script_path)
             else:
