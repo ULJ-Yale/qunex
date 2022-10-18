@@ -1499,7 +1499,7 @@ main() {
                             TemplateSceneFile="template_pscalar_${modality_lower}_qc.wb.scene"
                         fi
                         if [[ ${BOLDfc} == "pconn" ]]; then
-                            TemplateSceneFile="template_pconn.${modality_lower}_qc.wb.scene"
+                            TemplateSceneFile="template_pconn_${modality_lower}_qc.wb.scene"
                         fi
                         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                         WorkingSceneFile="${CASEName}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
