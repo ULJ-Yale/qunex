@@ -8,9 +8,9 @@
         "tag":   ["label", "acq", "ce", "rec", "mod", "echo", "run"],
     },
     "func": {
-        "label": ["bold", "sbref"],
+        "label": ["sbref", "bold"],
         "info":  ["task", "acq", "rec", "run", "echo", "ses"],
-        "sort":  ["rec", "echo", "acq", "run", "task"],
+        "sort":  ["rec", "echo", "acq", "label", "run", "task"],
         "tag":   ["label", "task", "acq", "echo", "rec", "run"]
     },
     "dwi": {
