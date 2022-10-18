@@ -518,7 +518,7 @@ arglist = [
     ['flirt_ref',                  '',       isNone, "Path to the template file. If not provided QuNex will use EPI_template.nii.gz from its library."],
 
     ['# --- hcp_longitudinal_freesurfer options'],
-    ['hcp_long_fs_template', 'base',                                        str,     "Name of the base template."],
+    ['hcp_long_fs_template_id', 'base',                                     str,     "Name of the base template."],
     ['hcp_long_fs_extra_reconall_base',  '',                                isNone,  "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all base template creation. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
     ['hcp_long_fs_extra_reconall',  '',                                     isNone,  "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all processing. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
 ]

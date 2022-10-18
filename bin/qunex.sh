@@ -381,7 +381,7 @@ dwi_legacy_gpu() {
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
     --usefieldmap=${UseFieldmap} \
-    --pedir=${PEdir} \
+    --pedir=${pedir} \
     --echospacing=${EchoSpacing} \
     --te=${te} \
     --unwarpdir=${UnwarpDir} \
@@ -955,7 +955,6 @@ run_qc() {
     --omitdefaults=${OmitDefaults} \
     --dwipath='${DWIPath}' \
     --dwidata='${DWIData}' \
-    --dwilegacy='${DWILegacy}' \
     --dtifitqc='${DtiFitQC}' \
     --bedpostxqc='${BedpostXQC}' \
     --eddyqcstats='${EddyQCStats}' \
@@ -1598,7 +1597,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
-    PEdir=`get_parameters "${setflag}PEdir" $@`
+    pedir=`get_parameters "${setflag}pedir" $@`
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
@@ -1678,7 +1677,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     DtiFitQC=`get_parameters "${setflag}dtifitqc" $@`
     BedpostXQC=`get_parameters "${setflag}bedpostxqc" $@`
     EddyQCStats=`get_parameters "${setflag}eddyqcstats" $@`
-    DWILegacy=`get_parameters "${setflag}dwilegacy" $@`
     GeneralSceneDataFile=`get_parameters "${setflag}datafile" $@`
     GeneralSceneDataPath=`get_parameters "${setflag}datapath" $@`
     ICAFIXFunction=`get_parameters "${setflag}icafixfunction" $@`
@@ -1963,7 +1961,6 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     if [ "$Modality" = "DWI" ]; then
         if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
         if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; fi
-        if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${scenetemplatefolder}"; fi
         if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; fi
         if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
         if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi
@@ -2033,7 +2030,6 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     if [ "   $Modality" = "DWI" ]; then
         echo "   DWI input path: ${DWIPath}"
         echo "   DWI input name: ${DWIData}"
-        echo "   DWI legacy processing: ${DWILegacy}"
         echo "   DWI dtifit QC requested: ${DtiFitQC}"
         echo "   DWI bedpostX QC requested: ${BedpostXQC}"
         echo "   DWI EDDY QC Stats requested: ${EddyQCStats}"
@@ -2279,7 +2275,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Using FieldMap: ${UseFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
-    echo "   Phase Encoding Direction: ${PEdir}"
+    echo "   Phase Encoding Direction: ${pedir}"
     echo "   TE value for Fieldmap: ${TE}"
     echo "   EPI Unwarp Direction: ${UnwarpDir}"
     echo "   Diffusion Data Suffix Name: ${diffdatasuffix}"

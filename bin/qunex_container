@@ -539,11 +539,13 @@ def main(args=None):
                     so your local environment setup will not be propagated into
                     the container. If you want to disable this functionality use
                     this flag. The flag is not set by default.
-    --nv            Required when using CUDA (GPU) inside Apptainer. If
+    --nv            Required when using CUDA inside Apptainer (Singularity). If
                     provided then apptainer exec --nv option will be used.
-    --script        If a script is to be run against the Apptainer container
-                    rather than a single command, the path to the script to be
-                    run is specified here. ['']
+    --cuda_path     Required when using Apptainer (Singularity) and a CUDA
+                    version that is not the QuNex default.
+    --script        If a script is to be run against the Apptainer (Singularity)
+                    container rather than a single command, the path to the
+                    script to be run is specified here. ['']
     --envars        If environment variables other than the default set by the
                     container are to be used, they can be specified in a pipe
                     separated string formatted as:
@@ -703,6 +705,7 @@ def main(args=None):
     bind                = None
     nocleanenv          = None
     nv                  = None
+    cuda_path           = None
     script              = None
     parjobs             = None
     parsessions         = 1
@@ -741,6 +744,8 @@ def main(args=None):
             nocleanenv = True
         elif arg == "--nv":
             nv = True
+        elif "cuda_path=" in arg:
+            k, cuda_path = arg.split("=", 1)
         elif "script=" in arg:
             k, script = arg.split("=", 1)
         elif "parjobs=" in arg:
@@ -846,6 +851,10 @@ def main(args=None):
 
     homedir = os.path.expanduser("~")
     dockeropt += " -v %s:%s" % (homedir, homedir)
+
+    # bind cuda path if provided
+    if cuda_path:
+        dockeropt += f" -v {cuda_path}:/usr/local/cuda/"
 
     # if sessions is a batch file set as batchfile
     old_sessions_naming = False
@@ -1074,6 +1083,13 @@ def main(args=None):
                 # bind
                 if bind:
                     container_command += "-B %s " % bind
+
+                # bind cuda path if provided
+                if cuda_path:
+                    if not bind:
+                        container_command += f"-B {cuda_path}:/usr/local/cuda/ "
+                    else:
+                        container_command += f",{cuda_path}:/usr/local/cuda/ "
 
                 container_command +=  "%s bash %s" % (conimage, script_path)
             else:

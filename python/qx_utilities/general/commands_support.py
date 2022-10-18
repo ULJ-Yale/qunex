@@ -62,7 +62,6 @@ deprecated_commands = {
                         "dwi_dtifit": ["DWIFSLdtifit", "FSLDTtifit", "dwi_fsl_dtifit"],
                         "run_qc_dwi_dtifit": ["runQC_DWIFSLdtifit", "run_qc_dwi_fsl_dtifit"],
                         "dwi_legacy_gpu": ["dwi_legacy", "hcpdLegacy", "DWILegacy"],
-                        "run_qc_dwi_legacy": ["runQC_DWILegacy"],
                         "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
                         "dwi_probtrackx_dense_gpu": ["DWIprobtrackxDenseGPU", "ProbtrackxGPUDense"],
                         "dwi_seed_tractography_dense": ["DWIseedTractographyDense", "DWISeedTractography"],
@@ -237,7 +236,8 @@ deprecated_parameters = {
     'hcp_biascorrect_t1w': None,
     'hcp_Pipeline': 'hcp_pipeline',
     'args': 'palm_args',
-    'TR': 'tr'
+    'TR': 'tr',
+    'PEdir': 'pedir'
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

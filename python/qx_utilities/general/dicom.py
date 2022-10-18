@@ -2037,7 +2037,7 @@ def split_dicom(folder=None):
     return
 
 
-def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="any", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='folder', verbose='yes', overwrite='no'):
+def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="any", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='folder', verbose='yes', overwrite='no', test=False):
     """
     ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
 
@@ -2440,7 +2440,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     print("Running import_dicom\n====================")
 
     # check settings
-
     if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
         raise ge.CommandError('import_dicom', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
@@ -2479,7 +2478,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
         sessions = re.split(', *', sessions)
 
     # ---- check acquisition log if present:
-
     sessionsInfo = None
 
     if logfile is not None and logfile != "":
@@ -2516,14 +2514,11 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                     pass
 
     # ---- set up lists
-
     packets = {'ok': [], 'nolog': [], 'bad': [], 'exist': [], 'skip': [], 'invalid': []}
     emptysession = {'subjectid': None, 'sessionname': None, 'sessionid': None, 'packetname': None}
 
     # ---- get list of files / folders in masterinbox
-
     if masterinbox:
-
         reportSet = [('ok', '---> Found the following packets to process:'),
                      ('nolog', "---> These packets do not match with the log and they won't be processed"),
                      ('bad', "---> For these packets a packet name could not be identified and they won't be processed:"),
@@ -2590,11 +2585,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                 else:
                     packets['bad'].append(file, dict(emptysession))
 
-
     # ---- get list of session folders to process
-
     else:
-
         if not sessions:
             raise ge.CommandFailed("import_dicom", "Input data not specified", "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
 
@@ -2640,13 +2632,10 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
             packets['ok'].append((sfolder, session))
 
-
-
     # ---> Report
-
     for tag, message in reportSet:
         if packets[tag]:
-            print("\n", message)
+            print(f"\n{message}")
             for file, session in packets[tag]:
                 if session['sessionname']:
                     print("     subject: %s, session: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(file)))
@@ -2670,7 +2659,11 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     if overwrite:
         nToProcess += len(packets['exist'])
 
-    if not nToProcess:   
+    # just testing
+    if nToProcess and test:
+        print("\n---> To process them, remove the --test option!")
+        sys.exit(0)
+    elif not nToProcess:
         if check.lower() == 'any':
             if masterinbox:
                 raise ge.CommandFailed("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
@@ -2682,9 +2675,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             else:
                 raise ge.CommandNull("import_dicom", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder))) 
 
-
     # ---- Ok, now loop through the packets
-
     afolder = os.path.join(sessionsfolder, "archive", "MR")
     if not os.path.exists(afolder):
         os.makedirs(afolder)
@@ -2693,7 +2684,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     report = {'failed': [], 'ok': []}
 
     # ---> clean existing data if needed
-
     if overwrite:
         if packets['exist']:
             print("---> Cleaning exisiting data in folders:")

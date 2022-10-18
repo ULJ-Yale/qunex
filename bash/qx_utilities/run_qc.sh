@@ -133,10 +133,6 @@ Parameters:
         Specify if EDDY QC stats should be linked into QC folder and motion
         report generated (e.g. 'yes' or 'no').
 
-    --dwilegacy (str):
-        Specify if DWI data was processed via legacy pipelines (e.g. 'yes' or
-        'no').
-
     --boldprefix (str):
         Specify the prefix file name for BOLD dtseries data (may differ across
         studies depending on processing; e.g. 'BOLD' or 'TASK' or 'REST').
@@ -304,7 +300,6 @@ Examples:
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='DWI' \\
             --outpath='<path_for_output_file>' \\
-            --dwilegacy='yes' \\
             --dwidata='<file_name_for_dwi_data>' \\
             --dwipath='<path_for_dwi_data>' \\
             --overwrite='yes'
@@ -411,7 +406,6 @@ unset DWIData  # --dwidata
 unset DtiFitQC # --dtifitqc
 unset BedpostXQC # --bedpostxqc
 unset EddyQCStats # --eddyqcstats
-unset DWILegacy # --dwilegacy
 unset BOLDS # --bolddata
 unset BOLDRUNS # --bolddata
 unset BOLDDATA # --bolddata
@@ -468,7 +462,6 @@ DWIData=`opts_GetOpt "--dwidata" $@`
 DtiFitQC=`opts_GetOpt "--dtifitqc" $@`
 BedpostXQC=`opts_GetOpt "--bedpostxqc" $@`
 EddyQCStats=`opts_GetOpt "--eddyqcstats" $@`
-DWILegacy=`opts_GetOpt "--dwilegacy" $@`
 # -- Parse BOLD arguments
 BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
 if [ -z "${BOLDS}" ]; then
@@ -614,7 +607,6 @@ fi
 if [ "$Modality" = "DWI" ]; then
     if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; echo ""; fi
     if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; echo ""; fi
-    if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${scenetemplatefolder}"; echo ""; fi
     if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; echo ""; fi
     if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; echo ""; fi
     if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; echo ""; fi
@@ -701,7 +693,6 @@ echo "  Zip Scene File: ${SceneZip}"
 if [ "$Modality" = "DWI" ]; then
     echo "  DWI input path: ${DWIPath}"
     echo "  DWI input name: ${DWIData}"
-    echo "  DWI legacy processing: ${DWILegacy}"
     echo "  DWI dtifit QC requested: ${DtiFitQC}"
     echo "  DWI bedpostX QC requested: ${BedpostXQC}"
     echo "  DWI EDDY QC Stats requested: ${EddyQCStats}"
@@ -1794,14 +1785,9 @@ main() {
                     # -- Perform checks if modality is DWI
                     if [ "$Modality" == "DWI" ]; then
                         unset "$DWIName" >/dev/null 2>&1
-                        # -- Check if legacy setting is YES
-                        if [ "$DWILegacy" == "yes" ]; then
-                            DWIName="${CASEName}_${DWIData}"
-                            NoDiffBrainMask=`ls ${HCPFolder}/T1w/${DWIPath}/*T1w_brain_mask_downsampled2diff*` &> /dev/null
-                        else
-                            DWIName="${DWIData}"
-                            NoDiffBrainMask="${HCPFolder}/T1w/${DWIPath}/nodif_brain_mask.nii.gz"
-                        fi
+                        DWIName="${DWIData}"
+                        NoDiffBrainMask="${HCPFolder}/T1w/${DWIPath}/nodif_brain_mask.nii.gz"
+
                         # -- Check if Preprocessed DWI files are present
                         if [ ! -f ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz ]; then
                             echo ""

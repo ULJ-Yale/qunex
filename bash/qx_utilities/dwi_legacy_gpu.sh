@@ -81,6 +81,14 @@ Output files:
         $difffolder/reg
         $t1wdifffolder
 
+Notes:
+    Apptainer (Singularity) and GPU support:
+        If nogpu is not provided, this command will facilitate GPUs to speed
+        up processing. Since the command uses CUDA binaries, an NVIDIA GPU
+        is required. To give access to CUDA drivers to the system inside the
+        Apptainer (Singularity) container, you need to use the --nv flag
+        of the qunex_container script.
+
 Examples:
     Examples using Siemens FieldMap (needs GPU-enabled node).
 
