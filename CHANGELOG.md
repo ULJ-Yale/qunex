@@ -6,10 +6,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.94.XY
+## 0.95.0
 
 * Parameter `pedir` is now named consistently across the whole suite.
 * Fixed a bug where `_AP/PA` tags in `setup_hcp` were sometimes missing.
+* You can now check which data will be imported with `import_dicom` by using the `--test` flag.
+* `qunex_container` now has the `cuda_path` parameter for binding external cuda libraries.
+* Fixed  sorting of imported data in `import_bids`.
+* Updated HCP Pipelines to the latest version.
 
 ## 0.94.14
 
