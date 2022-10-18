@@ -184,7 +184,7 @@ bash_call_execute() {
             if [[ ! -d ${WORKDIR} ]]; then
                 mkdir -p ${WORKDIR} &> /dev/null
             fi
-            gmri create_study ${StudyFolder}
+            gmri create_study --studyfolder=${StudyFolder}
         fi
     fi
 
@@ -207,7 +207,7 @@ bash_call_execute() {
         mageho "WARNING: QuNex study folder specification .qunexstudy in ${StudyFolder} not found."
         mageho "         Check that ${StudyFolder} is a valid QuNex folder."
         mageho "         Consider re-generating QuNex hierarchy..."; echo ""
-        # gmri create_study ${StudyFolder}
+        # gmri create_study --studyfolder=${StudyFolder}
     fi
 
     # -- Added checks for study folder generation

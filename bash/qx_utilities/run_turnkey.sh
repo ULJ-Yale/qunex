@@ -1604,7 +1604,7 @@ fi
         if [ ! -d ${StudyFolder} ]; then
             mageho " --> Note: ${StudyFolder} not found. Regenerating now..."
             echo ""
-            ${QuNexCommand} create_study "${StudyFolder}"
+            ${QuNexCommand} create_study --studyfolder="${StudyFolder}"
             mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
         else
             geho " -- Study folder ${StudyFolder} already exists!"
@@ -1614,14 +1614,14 @@ fi
                     rm -rf ${StudyFolder}/ &> /dev/null
                     mageho " --> Note: ${StudyFolder} removed. Regenerating now..."
                     echo ""
-                    ${QuNexCommand} create_study "${StudyFolder}"
+                    ${QuNexCommand} create_study --studyfolder="${StudyFolder}"
                     mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
                 fi
             fi
         fi
         if [ ! -f ${StudyFolder}/.qunexstudy ]; then
             mageho " --> Note: ${StudyFolder}/.qunexstudy file not found. Not a proper QuNex file hierarchy. Regenerating now."; echo "";
-            ${QuNexCommand} create_study "${StudyFolder}"
+            ${QuNexCommand} create_study --studyfolder="${StudyFolder}"
         fi
 
         mkdir -p ${QuNexWorkDir} &> /dev/null
@@ -1640,15 +1640,15 @@ fi
         fi
         if [ ! -d ${StudyFolder} ]; then
             mageho " --> Note: ${StudyFolder} not found. Regenerating now."; echo "";
-            ${QuNexCommand} create_study "${StudyFolder}"
+            ${QuNexCommand} create_study --studyfolder="${StudyFolder}"
         fi
         if [ ! -f ${StudyFolder}/.qunexstudy ]; then
             mageho " --> Note: ${StudyFolder} qunexstudy file not found. Not a proper QuNex file hierarchy. Regenerating now."; echo "";
-            ${QuNexCommand} create_study "${StudyFolder}"
+            ${QuNexCommand} create_study --studyfolder="${StudyFolder}"
         fi
         if [ ! -d ${SessionsFolder} ]; then
             mageho " --> Note: ${SessionsFolder} folder not found. Not a proper QuNex file hierarchy. Regenerating now."; echo "";
-            ${QuNexCommand} create_study "${StudyFolder}"
+            ${QuNexCommand} create_study --studyfolder="${StudyFolder}"
         fi
         if [ ! -d ${QuNexWorkDir} ]; then
             mageho " --> Note: ${QuNexWorkDir} not found. Creating one now."; echo ""
