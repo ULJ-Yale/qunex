@@ -184,7 +184,7 @@ bash_call_execute() {
             if [[ ! -d ${WORKDIR} ]]; then
                 mkdir -p ${WORKDIR} &> /dev/null
             fi
-            gmri create_study ${StudyFolder}
+            gmri create_study --studyfolder=${StudyFolder}
         fi
     fi
 
