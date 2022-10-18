@@ -429,7 +429,7 @@ else
 	# -- Check if individual run was selected
 	if [ ${Report} == "individual" ]; then
 		geho "Computing individual QC run on ${EddyQCIn} "
-		EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -idx ${EddyQCIn}/${EddyIdx} -par ${EddyQCIn}/${EddyParams} -m ${EddyQCIn}/${Mask} -b ${EddyQCIn}/${BvalsFile} -g ${EddyQCIn}/${BvecsFile} -o ${EddyQCOut}"
+		EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -idx ${EddyIdx} -par ${EddyParams} -m ${Mask} -b ${BvalsFile} -g ${BvecsFile} -o ${EddyQCOut}"
 		echo ""
 		echo $EddyCommand
 		echo ""
