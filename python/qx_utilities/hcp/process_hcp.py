@@ -5601,6 +5601,9 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             Whether to automatically run HCP DeDriftAndResample if HCP MSMAll
             finishes successfully.
 
+        --hcp_msmall_myelin_target (str):
+            Alternate myelin map target.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -5852,6 +5855,10 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 'inregname'           : options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
+        # -- Optional parameters
+        if options['hcp_msmall_myelin_target'] is not None:
+            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
+
         # -- Report command
         if boldsok:
             r += "\n\n------------------------------------------------------------\n"
@@ -6016,6 +6023,10 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 'lowresmesh'          : options['hcp_lowresmesh'],
                 'inregname'           : options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
+
+        # -- Optional parameters
+        if options['hcp_msmall_myelin_target'] is not None:
+            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
 
         # -- Report command
         if boldok:
