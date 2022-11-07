@@ -867,11 +867,7 @@ def processBIDS(bfolder):
 
     # --> sort within modalities
 
-    for session in bidsData:
-        for modality in bids['modalities']:
-            if modality in bidsData[session]:
-                for key in bids[modality]['sort']:
-                    bidsData[session][modality].sort(key=lambda x: x[key] or "")
+    _sort_bids_images(bidsData, bids)
 
     # --> prepare and sort images
 
@@ -889,7 +885,25 @@ def processBIDS(bfolder):
 
     return bidsData
         
+def _sort_bids_images(bidsData, bids):
+    """
+    Sort bids images as defined in the bids template
 
+    Labels are sorted in the order they appear in the template instead of alphabetical order.
+    """
+    for session in bidsData:
+        for modality in bids['modalities']:
+            if modality in bidsData[session]:
+                for key in bids[modality]['sort']:
+                    def label_order(lst, val):
+                        if val is None:
+                            return -1
+                        else:
+                            return lst.index(val)
+                    if key == "label": 
+                        bidsData[session][modality].sort(key=lambda x: label_order(bids[modality]['label'], x[key]))
+                    else:
+                        bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
 def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     """
