@@ -884,7 +884,20 @@ def processBIDS(bfolder):
                         bidsData[session]['images']['info'][element['filename']] = element
 
     return bidsData
-        
+
+def _label_order(label_list, value):
+    """
+    Returns the index of `value` in the `label_list`
+
+    If value is `None`, the function will return -1.
+    Caller should guarantee that if value is not `None`
+    it exists in the label_list.
+    """
+    if value is None:
+        return -1
+    else:
+        return label_list.index(value)
+
 def _sort_bids_images(bidsData, bids):
     """
     Sort bids images as defined in the bids template
@@ -895,13 +908,8 @@ def _sort_bids_images(bidsData, bids):
         for modality in bids['modalities']:
             if modality in bidsData[session]:
                 for key in bids[modality]['sort']:
-                    def label_order(lst, val):
-                        if val is None:
-                            return -1
-                        else:
-                            return lst.index(val)
                     if key == "label": 
-                        bidsData[session][modality].sort(key=lambda x: label_order(bids[modality]['label'], x[key]))
+                        bidsData[session][modality].sort(key=lambda x: _label_order(bids[modality]['label'], x[key]))
                     else:
                         bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
