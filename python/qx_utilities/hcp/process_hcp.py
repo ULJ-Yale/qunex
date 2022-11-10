@@ -2260,7 +2260,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if options['hcp_dwi_topupconfig'] != '':
+            if options['hcp_dwi_topupconfig'] is not None:
                 comm += "                --topup-config-file=" + options['hcp_dwi_topupconfig']
 
             if options['hcp_dwi_even_slices']:
@@ -2459,16 +2459,16 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             LR/RL : `'LR=x|RL=-x|x'` or separately for PA/AP :
             `'PA=y|AP=y-|y-'`.
 
-        --hcp_bold_res (int, default 2):
+        --hcp_bold_res (str, default '2'):
             Target image resolution. 2mm recommended.
 
         --hcp_bold_gdcoeffs (str, default 'NONE'):
             Gradient distortion correction coefficients or NONE.
 
         --hcp_bold_topupconfig (str, default detailed below):
-            A full path to the topup configuration file to use. Set to
-            '' if the default is to be used or of TOPUP distortion
-            correction is not used.
+            A full path to the topup configuration file to use. Do not set if
+            the default is to be used or if TOPUP distortion correction is not
+            used.
 
         --hcp_bold_doslicetime (str, default 'FALSE'):
             Whether to do slice timing correction 'TRUE' or 'FALSE'.
@@ -2756,7 +2756,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         sepairs[bold] = {'spinPos': spinPos, 'spinNeg': spinNeg}
 
             # --> check for topupconfig
-
             if options['hcp_bold_topupconfig']:
                 topupconfig = options['hcp_bold_topupconfig']
                 if not os.path.exists(options['hcp_bold_topupconfig']):
@@ -2768,6 +2767,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r += "\n     ... TOPUP configuration file present"
                 else:
                     r += "\n     ... TOPUP configuration file present"
+            else:
+                topupconfig = ""
 
         # --- Process unwarp direction
 
@@ -3428,7 +3429,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             The number of vertices to be used in the low-resolution grayordinate
             mesh (in thousands).
 
-        --hcp_bold_res (int, default 2):
+        --hcp_bold_res (str, default '2'):
             The resolution of the BOLD volume data in mm.
 
         --hcp_grayordinatesres (int, default 2):
@@ -5601,6 +5602,9 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             Whether to automatically run HCP DeDriftAndResample if HCP MSMAll
             finishes successfully.
 
+        --hcp_msmall_myelin_target (str):
+            Alternate myelin map target.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -5852,6 +5856,10 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 'inregname'           : options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
 
+        # -- Optional parameters
+        if options['hcp_msmall_myelin_target'] is not None:
+            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
+
         # -- Report command
         if boldsok:
             r += "\n\n------------------------------------------------------------\n"
@@ -6016,6 +6024,10 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 'lowresmesh'          : options['hcp_lowresmesh'],
                 'inregname'           : options['hcp_regname'],
                 'matlabrunmode'       : matlabrunmode}
+
+        # -- Optional parameters
+        if options['hcp_msmall_myelin_target'] is not None:
+            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
 
         # -- Report command
         if boldok:
@@ -7112,7 +7124,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         --hcp_outgroupname (str, default ''):
             Name to use for the group output folder.
 
-        --hcp_bold_res (int, default 2):
+        --hcp_bold_res (str, default '2'):
             Resolution of data.
 
         --hcp_tica_timepoints (str, default ''):

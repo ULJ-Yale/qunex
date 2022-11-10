@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.95.2
+
+* Fixed a path in pconn template `run_qc` BOLD.
+* Added a new parameter to MSMAll (`hcp_msmall_myelin_target`).
+
 ## 0.95.1
 
 * Fixed a bug with positional parameters in gmri.
