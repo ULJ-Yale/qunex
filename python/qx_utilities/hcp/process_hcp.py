@@ -2459,7 +2459,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             LR/RL : `'LR=x|RL=-x|x'` or separately for PA/AP :
             `'PA=y|AP=y-|y-'`.
 
-        --hcp_bold_res (int, default 2):
+        --hcp_bold_res (str, default '2'):
             Target image resolution. 2mm recommended.
 
         --hcp_bold_gdcoeffs (str, default 'NONE'):
@@ -3428,7 +3428,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             The number of vertices to be used in the low-resolution grayordinate
             mesh (in thousands).
 
-        --hcp_bold_res (int, default 2):
+        --hcp_bold_res (str, default '2'):
             The resolution of the BOLD volume data in mm.
 
         --hcp_grayordinatesres (int, default 2):
@@ -7123,7 +7123,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         --hcp_outgroupname (str, default ''):
             Name to use for the group output folder.
 
-        --hcp_bold_res (int, default 2):
+        --hcp_bold_res (str, default '2'):
             Resolution of data.
 
         --hcp_tica_timepoints (str, default ''):
