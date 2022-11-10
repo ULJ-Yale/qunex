@@ -2260,7 +2260,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_cudaversion'] is not None:
                 comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
 
-            if options['hcp_dwi_topupconfig'] != '':
+            if options['hcp_dwi_topupconfig'] is not None:
                 comm += "                --topup-config-file=" + options['hcp_dwi_topupconfig']
 
             if options['hcp_dwi_even_slices']:
@@ -2466,9 +2466,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Gradient distortion correction coefficients or NONE.
 
         --hcp_bold_topupconfig (str, default detailed below):
-            A full path to the topup configuration file to use. Set to
-            '' if the default is to be used or of TOPUP distortion
-            correction is not used.
+            A full path to the topup configuration file to use. Do not set if
+            the default is to be used or if TOPUP distortion correction is not
+            used.
 
         --hcp_bold_doslicetime (str, default 'FALSE'):
             Whether to do slice timing correction 'TRUE' or 'FALSE'.
@@ -2756,7 +2756,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         sepairs[bold] = {'spinPos': spinPos, 'spinNeg': spinNeg}
 
             # --> check for topupconfig
-
             if options['hcp_bold_topupconfig']:
                 topupconfig = options['hcp_bold_topupconfig']
                 if not os.path.exists(options['hcp_bold_topupconfig']):
@@ -2768,6 +2767,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r += "\n     ... TOPUP configuration file present"
                 else:
                     r += "\n     ... TOPUP configuration file present"
+            else:
+                topupconfig = ""
 
         # --- Process unwarp direction
 
