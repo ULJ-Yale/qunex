@@ -745,11 +745,11 @@ for b = 1:nbolds
     file(b).tscrub      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.bold_tail variant '.scrub']);
     file(b).bstats      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.bstats']);
     file(b).nuisance    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname bnum options.ref_bold_tail '.nuisance']);
-    file(b).fidlfile    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' efile]);
+    % file(b).fidlfile    = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' efile]);
     file(b).bmask       = strcat(sessionf, ['/images' options.img_suffix '/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum options.ref_bold_tail '_frame1_brain_mask' tail]);
 
-    file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc'  eroot]);                % using conc instead of options.concname
-    file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);       % missing options.concname  before eroot
+    % file(b).croot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc'  eroot]);                % using conc instead of options.concname
+    % file(b).cfroot      = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);       % missing options.concname  before eroot
 
     file(b).Xroot       = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X' eroot]);            % not using options.concname
 
@@ -758,7 +758,10 @@ for b = 1:nbolds
 
 end
 
-
+file_fidl   = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/events/' efile]);
+file_croot  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/'       options.boldname options.bold_tail '_conc'  eroot]);                % using conc instead of options.concname
+file_cfroot = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);       % missing options.concname  before eroot
+file_sconc  = [file_cfroot variant '.conc'];
 % ======================================================
 %                       ----> are we doing coefficients?
 
@@ -776,25 +779,32 @@ allframes = 0;
 frames    = zeros(1, nbolds);
 
 for b = 1:nbolds
-
+    
     %   ----> read data
 
     if doscrubbing
         [nuisance(b).scrub  nuisance(b).scrub_hdr]  = general_read_table(file(b).oscrub);
     end
 
-    [nuisance(b).mov    nuisance(b).mov_hdr]    = general_read_table(file(b).movdata);
+    if ismember('m', rgss)
+        [nuisance(b).mov    nuisance(b).mov_hdr]    = general_read_table(file(b).movdata);
 
-    nuisance(b).nframes = size(nuisance(b).mov,1);
-    frames(b) = nuisance(b).nframes;
-    allframes = allframes + nuisance(b).nframes;
+        nuisance(b).nframes = size(nuisance(b).mov,1);
+        frames(b) = nuisance(b).nframes;
+        allframes = allframes + nuisance(b).nframes;
+    
 
-    %   ----> exclude extra data from mov
+        %   ----> exclude extra data from mov
 
-    me = {'frame', 'scale'};
-    nuisance(b).mov     = nuisance(b).mov(:,~ismember(nuisance(b).mov_hdr, me));
-    nuisance(b).mov_hdr = nuisance(b).mov_hdr(~ismember(nuisance(b).mov_hdr, me));
-    nuisance(b).nmov    = size(nuisance(b).mov,2);
+        me = {'frame', 'scale'};
+        nuisance(b).mov     = nuisance(b).mov(:,~ismember(nuisance(b).mov_hdr, me));
+        nuisance(b).mov_hdr = nuisance(b).mov_hdr(~ismember(nuisance(b).mov_hdr, me));
+        nuisance(b).nmov    = size(nuisance(b).mov,2);
+    else
+        nframes = general_get_image_length([file(b).froot tail]);
+        frames(b) = nframes;
+        nuisance(b).nframes = nframes;
+    end
 
     %   ----> do scrubbing anew if needed!
 
@@ -853,7 +863,7 @@ end
 if strfind(doIt, 'r')
 
     if ~isempty(eventstring)
-        rmodel = general_create_task_regressors(file(1).fidlfile, frames, eventstring);
+        rmodel = general_create_task_regressors(file_fidl, frames, eventstring);
         runs   = rmodel.run;
     else
         rmodel.fidl.fidl   = 'None';
@@ -928,11 +938,12 @@ if overwrite
             if isempty(ext)
                 ext = variant;
             end
+            
             ext   = [ext exts{c}];
             for b = 1:nbolds
-                file(b).tfile = [file(b).froot ext tail];
-                file(b).tconc = [file(b).cfroot ext '.conc'];
+                file(b).tfile = [file(b).froot ext tail];                
             end
+            file_tconc = [file_cfroot ext '.conc'];
     
             if exist(file(b).tfile, 'file')
                 if first
@@ -943,13 +954,13 @@ if overwrite
                 delete(file(b).tfile);
             end
 
-            if exist(file(b).tconc, 'file')
+            if exist(file_tconc, 'file')
                 if first
                     fprintf('\n---> removing old files:');
                     first = false;
                 end
-                fprintf('\n     ... %s', file(b).tconc);
-                delete(file(b).tconc);
+                fprintf('\n     ... %s', file_tconc);
+                delete(file_tconc);
             end
         end
     end
@@ -983,9 +994,9 @@ for current = char(doIt)
     end
     ext   = [ext exts{c}];
     for b = 1:nbolds
-        file(b).tfile = [file(b).froot ext tail];
-        file(b).tconc = [file(b).cfroot ext '.conc'];
+        file(b).tfile = [file(b).froot ext tail];        
     end
+    file_tconc = [file_cfroot ext '.conc'];
 
 
     % --- print info
@@ -1096,9 +1107,9 @@ for current = char(doIt)
     if current == 'r'
 
         for b = 1:nbolds
-            file(b).tfile = [file(b).froot ext tail];
-            file(b).tconc = [file(b).cfroot ext '.conc'];
+            file(b).tfile = [file(b).froot ext tail];            
         end
+        file_tconc = [file_cfroot ext '.conc'];
 
         if exist(file(b).tfile, 'file') && ~overwrite
             fprintf('... already completed!');
@@ -1108,7 +1119,7 @@ for current = char(doIt)
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
             fprintf('\n---> running GLM ');
-            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel);
+            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
             fprintf('... done!');
 
             if strcmp(options.glm_residuals, 'save')
@@ -1124,7 +1135,7 @@ for current = char(doIt)
             end
 
             if docoeff
-                cname = [file(b).croot ext '_Bcoeff' tail];
+                cname = [file_croot ext '_Bcoeff' tail];
                 fprintf('\n---> saving %s ', cname);
                 coeff.img_saveimage(cname);
                 fprintf('... done!');
@@ -1134,13 +1145,14 @@ for current = char(doIt)
     end
 
     if saveconc
-        if exist(file(b).tconc, 'file') && ~overwrite
-            fprintf('\n---> conc file already saved! [%s]', file(b).tconc);
+        if exist(file_tconc, 'file') && ~overwrite
+            fprintf('\n---> conc file already saved! [%s]', file_tconc);
         else
             fprintf('\n---> saving conc file ');
-            nimage.img_save_concfile(file(b).tconc, {file.tfile});
+            nimage.img_save_concfile(file_tconc, {file.tfile});
             fprintf('... done!');
         end
+        file_sconc = file_tconc;
     end
 
 end
@@ -1160,7 +1172,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot, rmodel)
+function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot, rmodel, file_sconc)
 
     % ---> basic settings
 
@@ -1591,13 +1603,12 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     xeffects = sprintf(strjoin(effects, '\t'));
     xeffect  = sprintf('%d\t', effect);
     xeindex  = sprintf('%d\t', eindex);
-    xuse     = sprintf('%d\t', mask);
+    xuse     = sprintf('%d\t', nmask);
 
     % generate header
     version = general_get_qunex_version();
     header = sprintf('# Generated by QuNex %s on %s\n#', version, datestr(now, 'YYYY-mm-dd_HH.MM.SS'));
-
-    pre      = sprintf('%s# fidl: %s\n# model: %s\n# bolds: %d\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# use: %s\n# event: %s\n# frame: %s', header, rmodel.fidl.fidl, rmodel.description, nbolds, xeffects, xeffect, xeindex, rmodel.ignore, xuse, xevents, xframes(1:end-1));
+    pre      = sprintf('%s# fidl: %s\n# model: %s\n# bolds: %d\n# source: %s\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# use: %s\n# event: %s\n# frame: %s', header, rmodel.fidl.fidl, rmodel.description, nbolds, file_sconc, xeffects, xeffect, xeindex, rmodel.ignore, xuse, xevents, xframes(1:end-1));
     xtable   = general_write_table(xfile, [X(nmask==1, :) zeros(sum(nmask==1), 2)], hdr, 'sd|mean|min|max', [], [], pre);
 
     if ismember(options.glm_matrix, {'image', 'both'})
