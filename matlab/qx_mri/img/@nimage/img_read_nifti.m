@@ -279,6 +279,9 @@ if mi > 0
                 img.glm.eindex  = sscanf(img.glm.eindex, '%d')';
                 img.glm.frame   = sscanf(img.glm.frame, '%d')';
                 img.glm.bolds   = sscanf(img.glm.bolds, '%d')';
+                if isfield(img.glm, 'use')
+                    img.glm.use     = sscanf(img.glm.use, '%d')';
+                end
                 img.glm.A       = mdata;
                 img.glm.hdr     = mhdr;
                 [img.glm.Nrow, img.glm.Mcol] = size(mdata);
@@ -286,7 +289,7 @@ if mi > 0
                 ltest = [img.frames img.glm.Mcol length(img.glm.effect) length(img.glm.eindex) length(img.glm.event) length(img.glm.hdr)];
 
                 if sum(abs(diff(ltest)))
-                    error('\nERROR: Corrupt GLM file! Number of frames (%d), matrix columns (%d), effects (%d), effect indeces (%d), events (%d), and header items (%d) does not match!\n', ltest);
+                    error('\nERROR: Corrupt GLM file! Number of frames (%d), matrix columns (%d), effects (%d), effect indeces (%d), events (%d), \nand header items (%d) does not match!\n', img.frames, img.glm.Mcol, length(img.glm.effect), length(img.glm.event), length(img.glm.hdr));
                 end
 
                 % --- copy out grand mean and sd images
