@@ -2444,7 +2444,6 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
             return "Could not open %s for reading!" % (file)
 
         for line in f:
-            line = line.decode('utf-8')
             if ':' in line:
                 line = [e.strip() for e in line.split(':')]
                 if line[0].isnumeric():
