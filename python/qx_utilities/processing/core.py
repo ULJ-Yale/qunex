@@ -558,7 +558,7 @@ def getSessionFolders(sinfo, options):
                     os.makedirs(fpath)
                 except:
                     print("ERROR: Could not create folder %s! Please check paths and permissions!" % (fpath))
-                    raise
+                    # raise
 
     return d
 
