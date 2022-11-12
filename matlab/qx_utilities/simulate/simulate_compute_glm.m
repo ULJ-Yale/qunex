@@ -1,29 +1,28 @@
 function [B, res rvar, Xdof] = simulate_compute_glm(y, X)
 
-%``function [B, res rvar, Xdof] = simulate_compute_glm(y, X)``
-%	
-%   Funtion for task structure removal.
+%``simulate_compute_glm(y, X)``
+%   
+%   Function for task structure removal.
 %
-%   INPUTS
-%	======
+%   Parameters:
+%       --y (timeseries):
+%           Timeseries (timepoints x voxels).
 %
-%   --ts 	timeseries (timepoints x voxels)
-%   --X		regressor
+%       --X (matrix):
+%           Regressor.
 %
-%   OUTPUTS
-%	=======
+%   Returns:
+%       B
+%           Beta coefficients.
 %
-%   B
-%		beta coefficients
+%       res
+%           Residual data.
 %
-%   res
-%		residual data
+%       rvar
+%           Residual variance.
 %
-%   rvar
-%		residual variance
-%
-%   Xdof
-%		model degrees of freedom
+%       Xdof
+%           Model degrees of freedom.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -58,6 +57,3 @@ if nargout > 1
         rvar = sum(res.^2,2)/Xdof;
     end
 end
-
-    
-

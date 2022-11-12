@@ -1,14 +1,15 @@
-function [] = general_print_struct(info, ftitle);
+function [] = general_print_struct(info, ftitle)
 
-%``function [] = general_print_struct(info, ftitle)``
+%``general_print_struct(info, ftitle)``
 %
 %   Function for printing the content of a struct field
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --info (struct):
+%           A structure to print.
 %
-%   --info      a structure to print
-%   --ftitle    a title to print above the report
+%       --ftitle (str, default ''):
+%           A title to print above the report.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

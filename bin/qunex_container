@@ -183,7 +183,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         comname   = scheduler_params.pop('comname', "")
         jobnum    = scheduler_params.pop('jobnum', "")
     except:
-        raise CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
+        raise CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", scheduler_params)
 
     # --- compile command to pass
     if command is None:
@@ -239,101 +239,69 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         outputs['stdout'] = outputs['both']
 
     # --- build scheduler commands
-    sCommand = ""
+    s_command = ""
 
     if scheduler_name == "PBS":
         for k, v in scheduler_params.items():
-            if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
-                sCommand += "#PBS -l %s=%s\n" % (k, v)
+            if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue', 'select'):
+                s_command += "#PBS -l %s=%s\n" % (k, v)
             elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e', 'l'):
-                sCommand += "#PBS -%s %s\n" % (k, v)
+                s_command += "#PBS -%s %s\n" % (k, v)
             elif k == 'depend':
-                sCommand += "#PBS -W depend=%s\n" % (v)
+                s_command += "#PBS -W depend=%s\n" % (v)
             elif k == 'umask':
-                sCommand += "#PBS -W umask=%s\n" % (v)
+                s_command += "#PBS -W umask=%s\n" % (v)
             elif k == 'N' and jobname == 'schedule':
                 jobname = v
             elif k == 'nodes':
-                sCommand += "#PBS -l nodes=%s\n" % v
-
-        # set default nodes
-        if ("nodes" not in scheduler_params.keys()):
-            sCommand += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
+                s_command += "#PBS -l nodes=%s\n" % v
 
         # job name
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
         if (jobnum != ""):
             jobname = "%s(%s)" % (jobname, jobnum)
-        sCommand += "#PBS -N %s\n" % jobname
+        s_command += "#PBS -N %s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sCommand += "#PBS -o %s\n" % (outputs['stdout'])
+            s_command += "#PBS -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
-            sCommand += "#PBS -e %s\n" % (outputs['stderr'])
+            s_command += "#PBS -e %s\n" % (outputs['stderr'])
         if outputs['both']:
-            sCommand += "#PBS -j oe\n"
+            s_command += "#PBS -j oe\n"
         com = 'qsub'
 
-    elif scheduler_name == "LSF":
-        sCommand += "#BSUB -o %s-%s_#%s_%%J\n" % (jobname, comname, jobnum)
-        for k, v in [('queue', '#BSUB -q %s\n'), ('mem', "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n"), ('walltime', '#BSUB -W %s\n'), ('cores', '#BSUB -n %s\n')]:
-            if k in scheduler_params:
-                sCommand += v % (scheduler_params[k])
-        for k, v in scheduler_params.items():
-            if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
-                sCommand += "#BSUB -%s %s\n" % (k, v)
-            elif k == 'jobName' and jobname == 'schedule':
-                jobname = v
-
-        # set default cores
-        if ("cores" not in scheduler_params.keys()):
-            sCommand += "#BSUB -n %s\n" % (parsessions * parelements)
-
-        # jobname
-        if (comname != ""):
-            jobname = "%s-%s" % (jobname, comname)
-        sCommand += "#BSUB -P %s\n" % jobname
-        if (jobnum != ""):
-            jobname = "%s(%s)" % (jobname, jobnum)
-        sCommand += "#BSUB -J %s\n" % jobname
-
-        if outputs['stdout'] is not None:
-            sCommand += "#BSUB -o %s\n" % (outputs['stdout'])
-        if outputs['stderr'] is not None:
-            sCommand += "#BSUB -e %s\n" % (outputs['stderr'])
-        com = 'bsub'
-
     elif scheduler_name == "SLURM":
-        sCommand += "#!/bin/sh\n"
+        s_command += "#!/bin/sh\n"
         for key, value in scheduler_params.items():
             if key in ('J', 'job-name') and jobname == 'schedule':
                 jobname = v
             elif value == "QX_FLAG":
-                sCommand += "#SBATCH --%s\n" % (key.replace('--', ''))
+                s_command += "#SBATCH --%s\n" % (key.replace('--', ''))
+
             else:
-                sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+                s_command += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
         # set default cpus-per-task
         if ("cpus-per-task" not in scheduler_params.keys() and "c" not in scheduler_params.keys()):
-            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
+            s_command += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
 
         # jobname
         if (comname != ""):
             jobname = "%s-%s" % (jobname, comname)
         if (jobnum != ""):
             jobname = "%s(%s)" % (jobname, jobnum)
-        sCommand += "#SBATCH --job-name=%s\n" % jobname
+        s_command += "#SBATCH --job-name=%s\n" % jobname
 
         if outputs['stdout'] is not None:
-            sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
+            s_command += "#SBATCH -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
-            sCommand += "#SBATCH -e %s\n" % (outputs['stderr'])
+            s_command += "#SBATCH -e %s\n" % (outputs['stderr'])
         com = 'sbatch'
 
     # --- run the scheduler
     print("\nSubmitting:\n------------------------------")
-    print(sCommand)
+    print(s_command)
     print(command + "\n")
 
     if outputs['return'] is None:
@@ -350,7 +318,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         sout = subprocess.PIPE
 
     run = subprocess.Popen(com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True)
-    run.stdin.write((sCommand + command).encode('utf-8'))
+    run.stdin.write((s_command + command).encode('utf-8'))
     run.stdin.close()
 
     # ---- returning results
@@ -362,14 +330,15 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         return result
 
 
-def getSessionIDsFromBatchFile(filename):
+def get_sessionids_from_batch(filename, batchfilter=None):
     '''
-    getSessionIDsFromBatchFile(filename)
+    get_sessionids_from_batch(filename, batchfilter=None)
 
     An internal function for reading batch.txt files. It reads the file and
     returns a list of sessions with the information on images and the additional
     parameters specified in the header.
 
+    It returns only the sessions that match the provided filter.
     '''
 
     if not os.path.exists(filename):
@@ -386,26 +355,89 @@ def getSessionIDsFromBatchFile(filename):
 
     sessionids = []
 
+    # build the filter dictionary
+    filters_dict = {}
+
+    # did we provide a filter
+    if batchfilter is not None:
+        # split filter items
+        filters = batchfilter.split('|')
+
+        # iterate through them and store them
+        for f in filters:
+            f_split = f.split(':')
+            filters_dict[f_split[0]] = f_split[1]
+
     for sub in s:
         sub = sub.split('\n')
         sub = [e.strip() for e in sub]
         sub = [e.split("#")[0].strip() for e in sub]
         sub = [e for e in sub if len(e) > 0]
 
+        # variable for storing the session id
+        session = ""
         for line in sub:
             line = [e.strip() for e in line.split(":")]
 
-            # id line
-            if len(line) == 2 and line[0] == "id":
-                sessionids.append(line[1])
-                break
+            # filter 
+            if len(line) == 2:
+                # is it the id/session line
+                if line[0] == "id" or line[0] == "session":
+                    session = line[1]
+
+                    # should I filter
+                    if filters_dict and line[0] in filters_dict:
+                        active_filter = filters_dict[line[0]].split(',')
+                        if line[1] in active_filter or re.match(filters_dict[line[0]], line[1]):
+                            sessionids.append(session)
+                            break
+                    else:
+                        sessionids.append(session)
+                        break
 
     return sessionids
 
 
-def getSessionIDsFromList(filename):
+def get_sessionids(batchfile, sessions, batchfilter=None):
     '''
-    getSessionIDsFromList(filename)
+    get_sessionids(batchfile, sessions, batchfilter=None)
+
+    An internal function for getting a list of session ids.
+
+    The batchfile parameter points to the location of the batch file.
+
+    The batchfilter parameters is used for selecting a subset of sessions
+    from the batch file.
+
+    Sessions can be:
+    - a comma, space or pipe separated list of session id codes,
+    - a path to a *.list file (identified by .list extension).
+    '''
+
+    sessionids = None
+
+    # session have a higher priority
+    if sessions is not None:
+        if re.match(".*\.list$", sessions):
+            if os.path.isfile(sessions):
+                sessionids = get_sessionids_from_list(sessions)
+            else:
+                raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
+        else:
+            sessionids = [e.strip() for e in re.split(' +|,|\|', sessions.replace(" ", ""))]
+    # batchfile
+    elif batchfile is not None:
+        if os.path.isfile(batchfile):
+            sessionids = get_sessionids_from_batch(batchfile, batchfilter)
+        else:
+            raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
+
+    return sessionids
+
+
+def get_sessionids_from_list(filename):
+    '''
+    get_sessionids_from_list(filename)
 
     An internal function for reading list files. It reads the file and
     returns a list of session ids.
@@ -427,37 +459,6 @@ def getSessionIDsFromList(filename):
 
             if len(line) == 2 and line[0] == "subject id":
                 sessionids.append(line[1])
-
-    return sessionids
-
-
-def getSessionIDs(listString, sessionsfolder=None):
-    '''
-    getSessionIDs(listString)
-
-    An internal function for getting a list of subject ids.
-
-    The provided listString can be:
-
-    - a comma, space or pipe separated list of subject id codes,
-    - a path to a batch file (identified by .txt extension),
-    - a path to a *.list file (identified by .list extension).
-
-    '''
-
-    listString = listString.strip().replace(" ", "")
-
-    if re.match(".*\.list$", listString):
-        sessionids = getSessionIDsFromList(listString)
-
-    elif os.path.isfile(listString):
-        sessionids = getSessionIDsFromBatchFile(listString)
-
-    elif re.match(".*\.txt$", listString) or '/' in listString:
-        raise ValueError("ERROR: The specified file is not found! [%s]!" % listString)
-
-    else:
-        sessionids = [e.strip() for e in re.split(' +|,|\|', listString)]
 
     return sessionids
 
@@ -498,11 +499,11 @@ def get_batchlogs_folder(sessionsfolder):
 def main(args=None):
     """
     qunex_container is a self-standing command that can run QuNex commands 
-    against a Singularity or a Docker QuNex container. To run an QuNex command 
+    against an Apptainer or a Docker QuNex container. To run an QuNex command 
     against a container the basic call is::
 
         qunex_container <qunex command> [parameters] \
-        --container="<a path to the Singularity image or a Docker container name>" [additional options]
+        --container="<a path to the Apptainer image or a Docker container name>" [additional options]
     
     `qunex command` is any command supported by QuNex. `parameters` are any
     parameters that should be passed to the qunex command. This part is the same
@@ -519,7 +520,7 @@ def main(args=None):
     INPUTS
     ======
 
-    --container     specifies either the path to the Singularity container image 
+    --container     specifies either the path to the Apptainer container image 
                     or the full specification of the Docker container to be used
                     (e.g. qunex/qunex_suite:0_45_07). This parameter can be 
                     omitted if the value is specified in the `QUNEXCONIMAGE` 
@@ -531,18 +532,20 @@ def main(args=None):
                     QuNex container before executing the desired QuNex command.
                     Use a semicolon separated list to chain multiple commands. 
                     ['']
-    --bind          Used for binding external folder for execution via a 
-                    singularity container, this is analog to the singularity's 
+    --bind          Used for binding external folder for execution via an 
+                    Apptainer container, this is analog to the Apptainer's 
                     -B flag. ['']
-    --nocleanenv    By default QuNex will use the --cleanevn flag of Singularity
+    --nocleanenv    By default QuNex will use the --cleanevn flag of Apptainer
                     so your local environment setup will not be propagated into
                     the container. If you want to disable this functionality use
                     this flag. The flag is not set by default.
-    --nv            Required when using CUDA (GPU) inside singularity. If
-                    provided then singularity exec --nv option will be used.
-    --script        If a script is to be run against the Singularity container
-                    rather than a single command, the path to the script to be
-                    run is specified here. ['']
+    --nv            Required when using CUDA inside Apptainer (Singularity). If
+                    provided then apptainer exec --nv option will be used.
+    --cuda_path     Required when using Apptainer (Singularity) and a CUDA
+                    version that is not the QuNex default.
+    --script        If a script is to be run against the Apptainer (Singularity)
+                    container rather than a single command, the path to the
+                    script to be run is specified here. ['']
     --envars        If environment variables other than the default set by the
                     container are to be used, they can be specified in a pipe
                     separated string formatted as:
@@ -562,7 +565,6 @@ def main(args=None):
                     mode and mount a specific folder use::
 
                         "-d -v /host/directory:/container/directory"
-
     --scheduler     A string that specifies the details to use to submit the 
                     container job to a scheduling system. 
     --output        A string specifying where to redirect the standard output 
@@ -591,11 +593,11 @@ def main(args=None):
     home folder will be mounted as `/root` in the container, which is the home
     folder within the container.
 
-    If a script parameter is specified, in case of a Singularity container, the 
+    If a script parameter is specified, in case of an Apptainer container, the 
     script will be executed using the `bash <script>` command. In case of a 
     Docker container, the content of the script will be appended to the 
     temporary script generated by the `qunex_container`. Do note that in the 
-    case of the Singularity container the script can reference paths on the 
+    case of the Apptainer container the script can reference paths on the 
     host computer, whereas in the case of the Docker container, the script
     has to reference the paths and mounts as they are visible within the
     Docker container. 
@@ -625,8 +627,8 @@ def main(args=None):
     ------------------------------------
     
     If the parameters provided include --parjobs, --parsessions, --scheduler
-    and --sessions, then qunex_container will spread the execution of the
-    command by scheduling multiple jobs to run on separate nodes. Specifically,
+    and --sessions or --batchfile, then qunex_container will spread the execution
+    of the command by scheduling multiple jobs to run on separate nodes. Specifically,
     if --parjobs is not provided then QuNex will schedule a job for each of the
     sessions. If --parjobs is provided then QuNex will schedule at most the
     requested amount of jobs, inside each job QuNex will run at most
@@ -634,16 +636,6 @@ def main(args=None):
     is set to 3 and parsessions is set to 4, QuNex will schedule 3 jobs. The first
     job will run 4 sessions in parallel and the other 2 jobs will run 3 sessions
     in parallel.
-
-
-    Passing --sessions parameter values cleanly
-    -------------------------------------------
-
-    In the case that --sessions parameter needs to be passed to a command, but
-    not used to split up processing into multiple container calls (e.g. in 
-    import_dicom or import_bids commands), specify the sessions to pass to the
-    call using the --csessions parameter. The value of that parameter will be
-    passed on as --sessions parameter to the command.
 
 
     Redirecting output
@@ -675,7 +667,7 @@ def main(args=None):
     scheduler specific options within settings string. It is best to provide 
     full absolute paths to the desired log.
 
-    
+
     EXAMPLE USE
     ===========
 
@@ -683,9 +675,9 @@ def main(args=None):
 
         qunex_container hcp_freesurfer \\
         --sessionsfolder=/data/study/sessions \\
-        --sessions=/data/study/processing/batch.txt \\
+        --batchfile=/data/study/processing/batch.txt \\
         --parsessions=4 \\
-        --container=/singularity/qunex_suite-0_38_10.simg \\
+        --container=/apptainer/qunex_suite-0_38_10.sif \\
         --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=pi_anticevic"
 
     """
@@ -697,6 +689,13 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
+    # deprecation warnings, TODO remove in 1.0.0
+    for arg in args:
+        if "sessionids=" in arg:
+            print("WARNING: The sessionids parameter will be deprecated, use the sessions parameter to select sessions.")
+        if "sessions=" in arg and ".txt" in arg:
+            print("WARNING: It seems like you are using the sessions parameters to pass the location of the batch file to QuNex. This functionality will be deprecated, use the batchfile parameter for specifying the location of the batchfile.")
+
     env_status          = False
     scheduler           = None
     conimage            = None
@@ -706,18 +705,21 @@ def main(args=None):
     bind                = None
     nocleanenv          = None
     nv                  = None
+    cuda_path           = None
     script              = None
     parjobs             = None
     parsessions         = 1
     parelements         = 1
+    batchfile           = None
+    batchfilter         = None
     sessions            = None
     sessionsfolder      = None
     sessionids          = None
     envars              = None
     dockeropt           = None
     output              = None
-    csessions           = None
     parinfo             = None
+    overwrite           = None
 
     for arg in args:
         if "env_status" in arg or "envstatus" in arg:
@@ -742,6 +744,8 @@ def main(args=None):
             nocleanenv = True
         elif arg == "--nv":
             nv = True
+        elif "cuda_path=" in arg:
+            k, cuda_path = arg.split("=", 1)
         elif "script=" in arg:
             k, script = arg.split("=", 1)
         elif "parjobs=" in arg:
@@ -760,11 +764,15 @@ def main(args=None):
             command += '%s="%s" ' % (k, sessionsfolder)
         elif "sessions=" in arg:
             k, sessions = arg.split("=", 1)
-        elif "csessions=" in arg:
-            k, csessions = arg.split("=", 1)
-            command += '--sessions="%s" ' % (csessions)
+        elif "batchfile=" in arg:
+            k, batchfile = arg.split("=", 1)
+        elif "filter=" in arg:
+            k, batchfilter = arg.split("=", 1)
         elif "sessionids=" in arg:
             k, sessionids = arg.split("=", 1)
+        elif "overwrite=" in arg:
+            k, overwrite = arg.split("=", 1)
+            command += '%s ' % (arg)
         elif "=" in arg:
             k, v = arg.split('=', 1)
             command += '%s="%s" ' % (k, v)
@@ -772,6 +780,27 @@ def main(args=None):
             parinfo = True
         else:
             command += '%s ' % (arg)
+
+    # workaround for commands that are not supported
+    commands_blacklist = [
+        'create_batch',
+        'create_list',
+        'create_conc',
+        'gather_behavior',
+        'pull_sequence_names',
+        'create_stats_report',
+        'fc_compute_roifc',
+        'fc_compute_gbc',
+        'fc_compute_seedmaps',
+        'fc_extract_roi_timeseries',
+        'general_extract_roi_values',
+        'general_extract_roi_glm_values'
+    ]
+    qx_command = command.split(' ')[0]
+    # ban parallel execution of these commands
+    if overwrite == "yes" and parsessions > 1 and qx_command in commands_blacklist:
+        print("ERROR: Parallel execution of this command is not supported when overwrite is set to yes!")
+        exit(1)
 
     # batchlogs folder
     batchlogsfolder = None
@@ -782,16 +811,16 @@ def main(args=None):
         if "QUNEXCONIMAGE" in os.environ:
             conimage = os.environ['QUNEXCONIMAGE']
         else:
-            print("ERROR: No Singularity image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
+            print("ERROR: No Apptainer image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
             exit(1)
 
-    # docker or Singularity
-    singularity = conimage.endswith(".simg") or conimage.endswith(".sif")
+    # Docker or Apptainer
+    apptainer = conimage.endswith(".simg") or conimage.endswith(".sif")
 
     # just report env status and quit
     if env_status:
-        # singularity
-        if singularity:
+        # apptainer
+        if apptainer:
             env_command = "singularity exec %s bash /opt/qunex/env/qunex_container_env_status.sh" % conimage
 
         # docker
@@ -801,10 +830,6 @@ def main(args=None):
         # run
         subprocess.Popen(env_command, shell=True)
         exit(0)
-
-    if csessions is not None and sessions is not None:
-        print("ERROR: Please specify either sessions or csessions, but not both!")
-        exit(1)
 
     if command.startswith('?scheduler'):
         print(schedule.__doc__)
@@ -827,29 +852,35 @@ def main(args=None):
     homedir = os.path.expanduser("~")
     dockeropt += " -v %s:%s" % (homedir, homedir)
 
+    # bind cuda path if provided
+    if cuda_path:
+        dockeropt += f" -v {cuda_path}:/usr/local/cuda/"
+
+    # if sessions is a batch file set as batchfile
+    old_sessions_naming = False
+    if sessions is not None and ".txt" in sessions:
+        if batchfile is not None:
+            print("ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!")
+            exit(1)
+        else:
+            batchfile = sessions
+            sessions = sessionids
+            sessionids = None
+            old_sessions_naming = True
+    elif sessions is not None and sessionids is not None:
+            print("WARNING: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!")
+
     # number of sessions
     n_sessions = None
 
-    # get sessionsids init
-    getsessionids = None
-
-    # split sessions via sessionids or split existing sessionids
-    if sessions is not None:
-        if sessionids is None:
-            getsessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
-        else:
-            temp_sessionids = getSessionIDs(sessions, sessionsfolder=sessionsfolder)
-            sessionidsSplit = re.split(' +|,|\|', sessionids)
-            getsessionids = [e for e in temp_sessionids if e in sessionidsSplit]
-
-        n_sessions = len(getsessionids)
-
-    # array for storing session ids
-    sessionids_array = []
+    # get sessionsids
+    g_sessionids = get_sessionids(batchfile, sessions, batchfilter)
+    if g_sessionids:
+        n_sessions = len(g_sessionids)
 
     # do not run in parallel multi_session/longitudinal commands
     multi_session_command = False
-    multi_commands = ["longitudinal_freesurfer", "longitudinalFS", "hcp_temporal_ica", "hcp_make_average_dataset"]
+    multi_commands = ["hcp_longitudinal_freesurfer", "hcp_temporal_ica", "hcp_make_average_dataset"]
     if any(c in command for c in multi_commands):
         multi_session_command = True
 
@@ -896,15 +927,31 @@ def main(args=None):
         if slurm_array:
             parjobs = 1
 
-    # if scheduler is not None or we have a multi_session_command then setup parallelism
-    if scheduler is not None and sessions is not None and not multi_session_command:
+            # only allow HCP MPP commands with job array
+            array_commands = [
+                'hcp_pre_freesurfer',
+                'hcp_freesurfer',
+                'hcp_post_freesurfer',
+                'hcp_fmri_volume',
+                'hcp_fmri_surface'
+            ]
+            if qx_command not in array_commands:
+                print("ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines!")
+                print("         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.")
+                exit(1)
+
+    # array for storing session ids
+    sessionids_array = []
+
+    # if scheduler is not None and we do not have a multi_session_command then setup parallelism
+    if scheduler is not None and (sessions is not None or batchfile is not None) and not multi_session_command:
         # if parjobs is None each session is its own job
         if parjobs is None:
             parjobs = 0
 
             # split to chunks
             for i in range(0, n_sessions, parsessions):
-                sessionids_array.append(','.join(getsessionids[i:i + parsessions]))
+                sessionids_array.append(','.join(g_sessionids[i:i + parsessions]))
 
             # calculate the number of parallel jobs
             parjobs = len(sessionids_array)
@@ -922,7 +969,7 @@ def main(args=None):
             sessionids_arrays = [[] for _ in range(parjobs)]
 
             # divide sessions among jobs
-            for idx, sessionid in enumerate(getsessionids):
+            for idx, sessionid in enumerate(g_sessionids):
                 job_id = idx % parjobs
                 sessionids_arrays[job_id].append(sessionid)
             
@@ -934,17 +981,15 @@ def main(args=None):
         parjobs = 1
 
         # add session ids
-        if getsessionids is not None:
-            sessionids_array.append(",".join(getsessionids))
+        if g_sessionids is not None:
+            sessionids_array.append(",".join(g_sessionids))
 
     # print out details
-    if n_sessions is not None:
-        print("\n--> QuNex will run the command over %s sessions. It will utilize:\n" % n_sessions)
-    else:
-        print("\n--> QuNex will utilize:\n")
-    print("    Scheduled jobs: %s " % parjobs)
+    if scheduler:
+        print("    Qunex will schedule %s jobs" % parjobs)
 
     if n_sessions is not None:
+        print("\n--> QuNex will run the command over %s sessions. It will utilize:\n" % n_sessions)
         print("    Maximum sessions run in parallel for a job: %s." % parsessions)
         print("    Maximum elements run in parallel for a session: %s." % parelements)
         print("    Up to %s processes will be utilized for a job.\n" % (parelements * parsessions))
@@ -955,100 +1000,105 @@ def main(args=None):
             for i in range(0, parjobs):
                 print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
 
-    # schedule
+    # execute
     if parinfo is None:
         for i in range(0, parjobs):
-            scheduleCommand = command
+            qx_command = command
 
-            # add sessionids to command?
-            if i < len(sessionids_array):
-                # if sessions is a batch file
-                if os.path.isfile(sessions):
-                    scheduleCommand += '--sessions="%s" ' % (sessions)
-                    scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
+            # add batchfile to command?
+            if batchfile is not None:
+                if not old_sessions_naming:
+                    qx_command += '--batchfile="%s" ' % (batchfile)
                 else:
-                    scheduleCommand += '--sessions="%s" ' % (sessionids_array[i])
+                    qx_command += '--sessions="%s" ' % (batchfile)
 
-                    if (sessionids is not None):
-                        scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
-
-            elif sessions is not None:
-                scheduleCommand += '--sessions="%s" ' % (sessions)
-
-                if (sessionids is not None):
-                    scheduleCommand += '--sessionids="%s" ' % (sessionids_array[i])
+            # add sessions to command?
+            if i < len(sessionids_array):
+                if not old_sessions_naming:
+                    qx_command += '--sessions="%s" ' % (sessionids_array[i])
+                else:
+                    qx_command += '--sessionids="%s" ' % (sessionids_array[i])
 
             # setup script
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             # prepare the schedule file
             if batchlogsfolder is not None:
-                scriptPath = os.path.join(batchlogsfolder, f'qunex_container_command_{timestamp}.scheduler')
+                script_path = os.path.join(batchlogsfolder, f'qunex_container_command_{timestamp}.sh')
             else:
-                scriptPath = os.path.join(homedir, f'qunex_container_command_{timestamp}.scheduler')
+                script_path = os.path.join(homedir, f'qunex_container_command_{timestamp}.sh')
 
-            f = open(scriptPath, "w")
+            f = open(script_path, "w")
 
             for k, v in envars:
                 print("export con_%s=\"%s\"" % (k, v), file=f)
+
             print("source /opt/qunex/env/qunex_environment.sh", file=f)
 
             if bash_post:
                 print(bash_post, file=f)
 
             if script:
-                if singularity:
+                if apptainer:
                     print("bash " + script, file=f)
                 else:
                     with open(script, 'r') as sfile:
                         for line in sfile:
                             print(line, file=f)
-            elif 'runTurnkey' in scheduleCommand:
-                scheduleCommand = scheduleCommand.replace('runTurnkey', '')
-                print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + scheduleCommand, file=f)
-                
+            elif 'runTurnkey' in qx_command:
+                qx_command = qx_command.replace('runTurnkey', '')
+                print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command, file=f)
+            elif 'run_turnkey' in qx_command:
+                qx_command = qx_command.replace('run_turnkey', '')
+                print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command, file=f)
             else:
-                print("bash /opt/qunex/bin/qunex.sh " + scheduleCommand, file=f)
+                print("bash /opt/qunex/bin/qunex.sh " + qx_command, file=f)
 
-            containerCommand = ""
-            if bash_pre:
-                containerCommand += bash_pre + ";"
-            
             f.close()
-            
-            if singularity:
-                f.close()
 
-                containerCommand += "singularity exec "
+            # setup the container command
+            container_command = ""
+            if bash_pre:
+                container_command += bash_pre + ";"
+
+            if apptainer:
+                container_command += "singularity exec "
 
                 # no clean env
                 if nocleanenv is None:
-                    containerCommand += "--cleanenv "
+                    container_command += "--cleanenv "
                     if slurm_array:
                         # the params we need are SLURM_ARRAY_TASK_ID and SLURM_ARRAY_TASK_MAX
                         # we do not need SLURM_JOB_ID, SLURM_ARRAY_JOB_ID, SLURM_ARRAY_TASK_COUNT, SLURM_ARRAY_TASK_MAX for now
                         slurm_array_params = ['SLURM_ARRAY_TASK_ID', 'SLURM_ARRAY_TASK_MAX']
-                        # pass variables into the Singularity container
-                        containerCommand += '--env '
-                        containerCommand += ','.join(['%s=${%s}' % (p, p) for p in slurm_array_params])
+                        # pass variables into the Apptainer container
+                        container_command += '--env '
+                        container_command += ','.join(['%s=${%s}' % (p, p) for p in slurm_array_params])
                         # replace trailing comma with space
-                        containerCommand += ' '
+                        container_command += ' '
 
                 # nv
                 if nv:
-                    containerCommand += " --nv "
+                    container_command += " --nv "
 
                 # bind
                 if bind:
-                    containerCommand += "-B %s " % bind
+                    container_command += "-B %s " % bind
 
-                containerCommand +=  "%s bash %s" % (conimage, scriptPath)
+                # bind cuda path if provided
+                if cuda_path:
+                    if not bind:
+                        container_command += f"-B {cuda_path}:/usr/local/cuda/ "
+                    else:
+                        container_command += f",{cuda_path}:/usr/local/cuda/ "
+
+                container_command +=  "%s bash %s" % (conimage, script_path)
             else:
-                containerCommand = "docker run %s %s bash %s/%s" % (dockeropt, conimage, homedir, scriptName)
+                container_command = "docker run %s %s bash %s" % (dockeropt, conimage, script_path)
 
             if scheduler:
-                schedule(command=containerCommand, scheduler_name=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
+                schedule(command=container_command, scheduler_name=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
             else:
-                subprocess.Popen(containerCommand, shell=True)
+                subprocess.Popen(container_command, shell=True)
 
 if __name__ == "__main__":
     main()

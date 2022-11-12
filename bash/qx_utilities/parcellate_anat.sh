@@ -11,57 +11,79 @@
 # ------------------------------------------------------------------------------
 
 usage() {
- echo ""
- echo "This function implements parcellation on the dense cortical thickness OR myelin "
- echo "files using a whole-brain parcellation (e.g. Glasser parcellation with "
- echo "subcortical labels included)."
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo " --sessionsfolder     Path to study data folder"
- echo " --session            Comma separated list of sessions to run"
- echo " --inputdatatype      Specify the type of dense data for the input file (e.g. "
- echo "                      MyelinMap_BC or corrThickness)"
- echo " --parcellationfile   Specify the absolute path of the *.dlabel file you want "
- echo "                      to use for parcellation"
- echo " --outname            Specify the suffix output name of the pconn file"
- echo " --overwrite          Delete prior run for a given session (yes / no)"
- echo " --extractdata        Specify if you want to save out the matrix as a CSV file"
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "Run directly via::"
- echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_anat.sh \ "
- echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- reho "NOTE: --scheduler is not available via direct script call."
- echo ""
- echo "Run via::"
- echo ""
- echo " qunex parcellate_anat \ "
- echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- geho "NOTE: scheduler is available via qunex call:"
- echo ""
- echo "  --scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                    followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""                   
- echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo " qunex parcellate_anat --sessionsfolder='<folder_with_sessions>' \ "
- echo " --session='<case_id>' \ "
- echo " --inputdatatype='MyelinMap_BC' \ "
- echo " --parcellationfile='<dlabel_file_for_parcellation>' \ "
- echo " --overwrite='no' \ "
- echo " --extractdata='yes' \ "
- echo " --outname='<name_of_output_pconn_file>' "
- echo ""
- exit 0
+    cat << EOF
+``parcellate_anat``
+
+This function implements parcellation on the dense cortical thickness OR myelin
+files using a whole-brain parcellation (e.g. Glasser parcellation with
+subcortical labels included).
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study data folder.
+
+    --session (str):
+        Comma separated list of sessions to run.
+
+    --inputdatatype (str):
+        Specify the type of dense data for the input file (e.g. MyelinMap_BC or
+        corrThickness).
+
+    --parcellationfile (str):
+        Specify the absolute path of the ∗.dlabel file you want to use for
+        parcellation.
+
+    --outname (str):
+        Specify the suffix output name of the pconn file.
+
+    --overwrite (str):
+        Delete prior run for a given session ('yes' / 'no').
+
+    --extractdata (flag):
+        Specify if you want to save out the matrix as a CSV file.
+
+Examples:
+    Run directly via::
+
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/parcellate_anat.sh \\
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via::
+
+        qunex parcellate_anat \\
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
+
+    NOTE: scheduler is available via qunex call:
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    ::
+
+        qunex parcellate_anat \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --session='<case_id>' \\
+            --inputdatatype='MyelinMap_BC' \\
+            --parcellationfile='<dlabel_file_for_parcellation>' \\
+            --overwrite='no' \\
+            --extractdata='yes' \\
+            --outname='<name_of_output_pconn_file>'
+
+EOF
+exit 0
 }
 
 

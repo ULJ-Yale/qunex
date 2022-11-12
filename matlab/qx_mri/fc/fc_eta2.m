@@ -1,6 +1,6 @@
 function [eta] = fc_eta2(a, b)
 
-%``function [eta] = fc_eta2(a, b)``
+%``fc_eta2(a, b)``
 %
 %   Computes Eta2 coefficients.
 %

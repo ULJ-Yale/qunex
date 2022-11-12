@@ -1,28 +1,35 @@
 function [cors, sim] = simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)
 
-%``function [cors, runs] = simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)``
-%	
-%   Function that generates multi normal timeseries with specified correlations.
+%``simulate_run_simulation_ec(r, models, timepoints, nruns, k, md)``
+%    
+%   Function that generates multi normal timeseries with specified
+%   correlations.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --r (matrix):
+%           List of correlations, one for each model.
 %
-%   --r             list of correlations, one for each model
-%   --models        array of structures specifying data models to generate
-%   --timepoints    what timepoints to extract for correlation analyses
-%   --nruns         how many simulations to run [100]
-%   --k             division coefficient for corr timeseries [6]
-%   --md            maximal allowed difference between desired and actual 
-%                   correlation [0.01]
+%       --models (cell array):
+%           Array of structures specifying data models to generate.
 %
-%   OUTPUTS
-%   =======
+%       --timepoints (vector):
+%           What timepoints to extract for correlation analyses.
 %
-%   cors
-%       matrix with actual and estimated correlations for each model
+%       --nruns (int, default 100):
+%           How many simulations to run.
 %
-%   sim  
-%       array with actual simulation data
+%       --k (int, default 6):
+%           Division coefficient for corr timeseries.
+%
+%       --md (float, default 0.01):
+%           Maximal allowed difference between desired and actual 
+%           correlation.
+%
+%   Returns:
+%       cors
+%           Matrix with actual and estimated correlations for each model.
+%       sim
+%           Array with actual simulation data.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -144,9 +151,4 @@ for s = 1:nruns
         end
     end
 end
-
-            
-    
-    
-    
     

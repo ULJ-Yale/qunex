@@ -1,25 +1,25 @@
 function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)
 
-%``function [ts] = general_create_assumed_response(TR, frames, delay, elength, hrf_type)``
+%``general_create_assumed_response(TR, frames, delay, elength, hrf_type)``
 %
 %   Returns timecourse of an assumed response to an event.
 %
 %   INPUTS
-%	======
+%    ======
 %
-%   --TR		 TR of the bold run
-%   --frames	 number of frames over which to create response
-%   --delay		 delay in s from the TR boundary
-%   --elength	 duration of event in seconds
-%   --hrf_type	 the type of assumed response to use
+%   --TR         TR of the bold run
+%   --frames     number of frames over which to create response
+%   --delay         delay in s from the TR boundary
+%   --elength     duration of event in seconds
+%   --hrf_type     the type of assumed response to use
 %
-%       		 - 'boynton'
-%       		 - 'SPM'
-%       		 - 'gamma'
-%       		 - 'empirical' (not yet implemented)
+%                - 'boynton'
+%                - 'SPM'
+%                - 'gamma'
+%                - 'empirical' (not yet implemented)
 %
 %   OUTPUTS
-%	=======
+%    =======
 %
 %   - ts       - a timeseries of the task regressor
 %

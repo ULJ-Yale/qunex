@@ -156,69 +156,83 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
 
     Extracts the brain and creates a brain mask for each BOLD image.
 
-    INPUTS
-    ======
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions' information.
 
-    The relevant processing parameters are:
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
 
-    --sessions          The batch.txt file with all the sessions information.
-                        [batch.txt]
-    --sessionsfolder    The path to the study/sessions folder, where the
-                        imaging  data is supposed to go. [.]
-    --parsessions       How many sessions to run in parallel. [1]
-    --parelements       How many elements (e.g bolds) to run in
-                        parallel. [1]
-    --overwrite         Whether to overwrite existing data (yes) or not (no).
-                        [no]
-    --bolds             Which bold images (as they are specified in the
-                        batch.txt file) to copy over. It can be a single
-                        type (e.g. 'task'), a pipe separated list (e.g.
-                        'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname          The default name of the bold files in the images
-                        folder. [bold]
-    --nifti_tail        The tail of NIfTI volume images to use. []
-    --bold_variant      Optional variant of bold preprocessing. If
-                        specified, the BOLD images in
-                        `images/functional<bold_variant>` will be
-                        processed. []
-    --img_suffix        Specifies a suffix for 'images' folder to enable
-                        support for multiple parallel workflows. Empty
-                        if not used. []
-    --logfolder         The path to the folder where runlogs and comlogs
-                        are to be stored, if other than default. []
-    --log               Whether to keep ('keep') or remove ('remove') the
-                        temporary logs once jobs are completed. ['keep']
-                        When a comma or pipe ('|') separated list is given,
-                        the log will be created at the first provided location
-                        and then linked or copied to other locations.
-                        The valid locations are:
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
 
-                         - 'study'   (for the default:
-                           `<study>/processing/logs/comlogs` location)
-                         - 'session' (for `<sessionid>/logs/comlogs`)
-                         - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-                         - '<path>'  (for an arbitrary directory)
+        --parelements (int, default 1):
+            How many elements (e.g. bolds) to run in parallel.
 
-    The parameters can be specified in command call or session.txt file.
+        --overwrite (str, 'no'):
+            Whether to overwrite existing data (yes) or not (no).
 
-    USE
-    ===
+        --bolds (str, default 'rest'):
+            Which bold images (as they are specified in the batch.txt file) to
+            copy over. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to copy all.
 
-    create_bold_brain_masks takes the first image of each bold file, and runs FSL
-    bet to extract the brain and create a brain mask. The resulting files are
-    saved into images/segmentation/boldmasks in the source image format:
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
 
-    - bold[N]<nifti_tail>_frame1.*
-    - bold[N]<nifti_tail>_frame1_brain.*
-    - bold[N]<nifti_tail>_frame1_brain_mask.*
+        --nifti_tail (str, default detailed below):
+            The tail of NIfTI volume images to use. Default to the value of
+            qx_nifti_tail.
 
-    EXAMPLE USE
-    ===========
+        --bold_variant (str, default ''):
+            Optional variant of bold preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
 
-    ::
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
 
-        qunex create_bold_brain_masks sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-              overwrite=no nifti_tail=_hp2000_clean bolds=all parelements=8
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs once
+            jobs are completed.
+            When a comma or pipe ('|') separated list is given, the log will be
+            created at the first provided location and then linked or copied to
+            other locations.
+            The valid locations are:
+
+            - 'study'   (for the default:
+              `<study>/processing/logs/comlogs` location)
+            - 'session' (for `<sessionid>/logs/comlogs`)
+            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+            - '<path>'  (for an arbitrary directory).
+
+    Notes:
+        The parameters can be specified in command call or session.txt file.
+
+        create_bold_brain_masks takes the first image of each bold file, and
+        runs FSL bet to extract the brain and create a brain mask. The resulting
+        files are saved into images/segmentation/boldmasks in the source image
+        format:
+
+        - bold[N]<nifti_tail>_frame1.*
+        - bold[N]<nifti_tail>_frame1_brain.*
+        - bold[N]<nifti_tail>_frame1_brain_mask.*
+
+    Examples:
+        ::
+
+            qunex create_bold_brain_masks \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --nifti_tail=_hp2000_clean \\
+                --bolds=all \\
+                --parelements=8
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -478,173 +492,204 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
 
     Processes specified BOLD files and saves images/function/movement files.
 
-    INPUTS
-    ======
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
 
-    General parameters
-    ------------------
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
 
-    When running the command, the following *general* processing parameters are
-    taken into account:
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
 
-    --sessions             The batch.txt file with all the session information.
-                           [batch.txt]
-    --sessionsfolder       The path to the study/sessions folder, where the
-                           imaging  data is supposed to go. [.]
-    --parsessions          How many sessions to run in parallel. [1]
-    --parelements          How many elements (e.g bolds) to run in
-                           parralel. [1]
-    --overwrite            Whether to overwrite existing data (yes) or not (no).
-                           [no]
-    --bolds                Which bold images (as they are specified in the
-                           batch.txt file) to copy over. It can be a single
-                           type (e.g. 'task'), a pipe separated list (e.g.
-                           'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname             The default name of the bold files in the images
-                           folder. [bold]
-    --nifti_tail           The tail of NIfTI volume images to use. []
-    --bold_variant         Optional variant of bold preprocessing. If
-                           specified, the BOLD images in
-                           `images/functional<bold_variant>` will be
-                           processed. []
-    --img_suffix           Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty
-                           if not used. []
-    --logfolder            The path to the folder where runlogs and comlogs
-                           are to be stored, if other than default []
-    --log                  Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given,
-                           the log will be created at the first provided location
-                           and then linked or copied to other locations.
-                           The valid locations are:
+        --parelements (int, default 1):
+            How many elements (e.g. bolds) to run in parallel.
 
-                           - 'study'   (for the default:
-                             `<study>/processing/logs/comlogs` location)
-                           - 'session' (for `<sessionid>/logs/comlogs`)
-                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-                           - '<path>'  (for an arbitrary directory)
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
 
-    Specific parameters
-    -------------------
+        --bolds (str, default 'rest'):
+            Which bold images (as they are specified in the batch.txt file) to
+            copy over. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to copy all.
 
-    In addition the following *specific* parameters define the actual results:
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
 
-    --mov_radius      Estimated head radius (in mm) for computing frame
-                      displacement statistics. [50]
-    --mov_fd          Frame displacement threshold (in mm) to use for
-                      identifying bad frames. [0.5]
-    --mov_dvars       The (mean normalized) dvars threshold to use for
-                      identifying bad frames. [3.0]
-    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
-                      identifying bad frames. [1.5]
-    --mov_after       How many frames after each frame identified as bad
-                      to also exclude from further processing and analysis. [0]
-    --mov_before      How many frames before each frame identified as bad
-                      to also exclude from further processing and analysis. [0]
-    --mov_bad         Which criteria to use for identification of bad frames
-                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further
-                      information. [udvarsme]
+        --nifti_tail (str, default ''):
+            The tail of NIfTI volume images to use.
 
-    Criteria for identification of bad frames can be one out of:
+        --bold_variant (str, default ''):
+            Optional variant of bold preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
 
-    --mov           Frame displacement threshold (fdt) is exceeded.
-    --dvars         Image intensity normalized root mean squared error (RMSE)
-                    threshold (dvarsmt) is exceeded.
-    --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
-    --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
-    --uvars         Either fdt or dvarsmt are exceeded (u for union).
-    --idvarsme      Both fdt and dvarsmet are exceeded.
-    --udvarsme      Either fdt or udvarsmet are exceeded.
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
 
-    For more detailed description please see wiki entry on Movement scrubbing.
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
 
-    The listed parameters can be specified in command call or session.txt file.
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed.
+            When a comma or pipe ('|') separated list is given, the log will be
+            created at the first provided location and then linked or copied to
+            other locations. The valid locations are:
 
-    USE
-    ===
+            - 'study'   (for the default: `<study>/processing/logs/comlogs`
+              location)
+            - 'session' (for `<sessionid>/logs/comlogs`)
+            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+            - '<path>'  (for an arbitrary directory).
 
-    compute_bold_stats processes each of the specified BOLD files and saves three
-    files in the images/functional/movement folder:
+        --mov_radius (int, default 50):
+            Estimated head radius (in mm) for computing frame displacement
+            statistics.
 
-    bold[N].bstats
-    --------------
+        --mov_fd (float, default 0.5):
+            Frame displacement threshold (in mm) to use for identifying bad
+            frames.
 
-    bold[N]<nifti_tail>.bstats includes for each frame of the BOLD image the
-    following computed statistics:
+        --mov_dvars (float, default 3.0):
+            The (mean normalized) dvars threshold to use for identifying bad
+            frames.
 
-    --n           Number of brain voxels.
-    --m           Mean signal intensity across all brain voxels.
-    --var         Signal variance across all brain voxels.
-    --sd          Signal standard variation across all brain voxels.
-    --dvars       RMDS measure of signal intensity difference between this and
-                  the preceeding frame.
-    --dvarsm      Mean normalized dvars measure.
-    --dvarsme     Median normalized dvarsm measure.
-    --fd          Frame displacement.
+        --mov_dvarsme (float, default 1.5):
+            The (median normalized) dvarsm threshold to use for identifying bad
+            frames.
 
-    There are three additional lines at the end of the file listing maximum,
-    mean and standar deviation of values across all timepoints / volumes.
+        --mov_after (int, default 0):
+            How many frames after each frame identified as bad to also exclude
+            from further processing and analysis.
 
-    bold[N].scrub
-    -------------
+        --mov_before (int, default 0):
+            How many frames before each frame identified as bad to also exclude
+            from further processing and analysis.
 
-    bold[N]<nifti_tail>.scrub includes for each frame the information on
-    whether the frame should be excluded (1) or not (0) based on the following
-    criteria (note below the relevant settings that specify thresholds etc.):
+        --mov_bad (str, default 'udvarsme'):
+            Which criteria to use for identification of bad frames (mov, dvars,
+            dvarsme, idvars, uvars, idvarsme, udvarsme). See movement scrubbing
+            documentation for further information.
+            Criteria for identification of bad frames can be one out of:
 
-    --mov          Is frame displacement higher from the specified threshold?
-    --dvars        Is mean normalized dvars (dvarsm) higher than the specified
-                   threshold?
-    --dvarsme      Is the median normalized dvarsm higher than the specified
-                   threshold?
-    --idvars       Are both frame displacement as well as dvarsm measures above
-                   threshold (intersection of fd and dvarsm).
-    --idvarsme     Are both frame displacement as well as dvarsme measures above
-                   threshold (intersection of fd and dvarsme).
-    --udvars       Are either frame displacement or dvarsm measures above
-                   threshold (union of fs and dvarsm).
-    --udvarsme     Are either frame displacement or dvarsme measures above
-                   threshold (union of fs and dvarsme).
+            - 'mov'      ... Frame displacement threshold (fdt) is exceeded.
+            - 'dvars'    ... Image intensity normalized root mean squared error
+              (RMSE) threshold (dvarsmt) is exceeded.
+            - 'dvarsme'  ... Median normalised RMSE (dvarsmet) threshold is
+              exceeded.
+            - 'idvars'   ... Both fdt and dvarsmt are exceeded (i for
+              intersection).
+            - 'uvars'    ... Either fdt or dvarsmt are exceeded (u for union).
+            - 'idvarsme' ... Both fdt and dvarsmet are exceeded.
+            - 'udvarsme' ... Either fdt or udvarsmet are exceeded.
 
-    The last column of the file is a 'use' column, which specifies, based on the
-    criteria provided, whether the frame should be used in further preprocessing
-    and analysis or not.
+            For more detailed description please see wiki entry on Movement
+            scrubbing.
 
-    There is an additional #sum line at the end of the file, listing how many
-    frames are marked as bad using each criteria.
+    Notes:
+        The parameters listed in `Other parameters` can be specified in command
+        call or session.txt file.
 
-    bold[N].use
-    -----------
+        The compute_bold_stats function processes each of the specified BOLD
+        files and saves three files in the images/functional/movement folder:
 
-    bold[N]<nifti_tail>.use file lists for each frame of the relevant BOLD
-    image, whether it is to be used (1) or not (0).
+        bold[N].bstats:
+            bold[N]<nifti_tail>.bstats includes for each frame of the BOLD image
+            the following computed statistics:
 
-    NOTES AND DEPENDENCIES
-    ======================
+            - n
+                Number of brain voxels.
+            - m
+                Mean signal intensity across all brain voxels.
+            - var
+                Signal variance across all brain voxels.
+            - sd
+                Signal standard variation across all brain voxels.
+            - dvars
+                RMDS measure of signal intensity difference between this and the
+                preceeding frame.
+            - dvarsm
+                Mean normalized dvars measure.
+            - dvarsme
+                Median normalized dvarsm measure.
+            - fd
+                Frame displacement.
 
-    When 'cifti' is the specified image target, the related nifti volume files
-    will be processed as only they provide all the information for computing
-    the relevant parameters
+            There are three additional lines at the end of the file listing
+            maximum, mean and standard deviation of values across all timepoints
+            / volumes.
 
-    The command runs the general_compute_bold_stats.m Matlab function for computation
-    of parameters. It also expects that both bold images and the related
-    movement correction parameter files are present in the expected locations.
+        bold[N].scrub:
+            bold[N]<nifti_tail>.scrub includes for each frame the information on
+            whether the frame should be excluded (1) or not (0) based on the
+            following criteria (note below the relevant settings that specify
+            thresholds etc.):
 
-    EXAMPLE USE
-    ===========
+            - mov
+                Is frame displacement higher from the specified threshold?
+            - dvars
+                Is mean normalized dvars (dvarsm) higher than the specified
+                threshold?
+            - dvarsme
+                Is the median normalized dvarsm higher than the specified
+                threshold?
+            - idvars
+                Are both frame displacement as well as dvarsm measures above
+                threshold (intersection of fd and dvarsm).
+            - idvarsme
+                Are both frame displacement as well as dvarsme measures above
+                threshold (intersection of fd and dvarsme).
+            - udvars
+                Are either frame displacement or dvarsm measures above threshold
+                (union of fs and dvarsm).
+            - udvarsme
+                Are either frame displacement or dvarsme measures above
+                threshold (union of fs and dvarsme).
 
-    Using the defaults::
+            The last column of the file is a 'use' column, which specifies,
+            based on the criteria provided, whether the frame should be used in
+            further preprocessing and analysis or not.
 
-        qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-             overwrite=no bolds=all
+            There is an additional #sum line at the end of the file, listing how
+            many frames are marked as bad using each criteria.
 
-    Specifying additional parameters for identification of bad frames::
+        bold[N].use:
+            bold[N]<nifti_tail>.use file lists for each frame of the relevant
+            BOLD image, whether it is to be used (1) or not (0).
 
-        qunex compute_bold_stats sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-             overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
-             mov_before=1 mov_after= 2
+        When 'cifti' is the specified image target, the related nifti volume
+        files will be processed as only they provide all the information for
+        computing the relevant parameters.
+
+        Dependencies:
+            The command runs the general_compute_bold_stats.m Matlab function
+            for computation of parameters. It also expects that both bold images
+            and the related movement correction parameter files are present in
+            the expected locations.
+
+    Examples:
+        Using the defaults::
+
+            qunex compute_bold_stats \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all
+
+        Specifying additional parameters for identification of bad frames::
+
+            qunex compute_bold_stats \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --mov_fd=0.9 \\
+                --mov_dvarsme=1.6 \\
+                --mov_before=1 \\
+                --mov_after=2
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -784,195 +829,246 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     Processes movement correction parameters and computed BOLD statistics to
     create per session plots and fidl snippets and group reports.
 
-    INPUTS
-    ======
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
 
-    General parameters
-    ------------------
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
 
-    When running the command, the following *general* processing parameters are
-    taken into account:
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
 
-    --sessions             The batch.txt file with all the session information.
-                           [batch.txt]
-    --sessionsfolder       The path to the study/sessions folder, where the
-                           imaging  data is supposed to go. [.]
-    --parsessions          How many sessions to run in parallel. [1]
-    --overwrite            Whether to overwrite existing data (yes) or not (no).
-                           [no]
-    --bolds                Which bold images (as they are specified in the
-                           batch.txt file) to copy over. It can be a single
-                           type (e.g. 'task'), a pipe separated list (e.g.
-                           'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname             The default name of the bold files in the images
-                           folder. [bold]
-    --nifti_tail           The tail of NIfTI volume images to use. []
-    --bold_variant         Optional variant of bold preprocessing. If
-                           specified, the BOLD images in
-                           `images/functional<bold_variant>` will be
-                           processed. []
-    --img_suffix           Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty
-                           if not used. []
-    --logfolder        ... The path to the folder where runlogs and comlogs
-                           are to be stored, if other than default []
-    --log                  Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given,
-                           the log will be created at the first provided location
-                           and then linked or copied to other locations.
-                           The valid locations are:
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
 
-                           - 'study'   (for the default:
-                             `<study>/processing/logs/comlogs` location)
-                           - 'session' (for `<sessionid>/logs/comlogs`)
-                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-                           - '<path>'  (for an arbitrary directory)
+        --bolds (str, default 'rest'):
+            Which bold images (as they are specified in the batch.txt file) to
+            copy over. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to copy all.
 
-    Specific parameters
-    -------------------
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
 
-    In addition the following *specific* parameters define the actual results:
+        --nifti_tail (str, default ''):
+            The tail of NIfTI volume images to use.
 
-    Scrubbing specific options:
+        --bold_variant (str, default ''):
+            Optional variant of bold preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
 
-    --mov_radius      Estimated head radius (in mm) for computing frame
-                      displacement statistics. [50]
-    --mov_fd          Frame displacement threshold (in mm) to use for
-                      identifying bad frames. [0.5]
-    --mov_dvars       The (mean normalized) dvars threshold to use for
-                      identifying bad frames. [3.0]
-    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
-                      identifying bad frames. [1.5]
-    --mov_after       How many frames after each frame identified as bad
-                      to also exclude from further processing and analysis. [0]
-    --mov_before      How many frames before each frame identified as bad
-                      to also exclude from further processing and analysis. [0]
-    --mov_bad         Which criteria to use for identification of bad frames
-                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further
-                      information. [udvarsme]
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
 
-    Criteria for identification of bad frames can be one out of:
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
 
-    --mov           Frame displacement threshold (fdt) is exceeded.
-    --dvars         Image intensity normalized root mean squared error (RMSE)
-                    threshold (dvarsmt) is exceeded.
-    --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
-    --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
-    --uvars         Either fdt or dvarsmt are exceeded (u for union).
-    --idvarsme      Both fdt and dvarsmet are exceeded.
-    --udvarsme      Either fdt or udvarsmet are exceeded.
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed. When a comma or pipe ('|') separated list
+            is given, the log will be created at the first provided location and
+            then linked or copied to other locations.
+            The valid locations are:
 
-    For more detailed description please see wiki entry on Movement scrubbing.
+            - 'study'   ... for the default: `<study>/processing/logs/comlogs`
+              location
+            - 'session' ... for `<sessionid>/logs/comlogs`
+            - 'hcp'     ... for `<hcp_folder>/logs/comlogs`
+            - '<path>'  ... for an arbitrary directory.
 
-    Reporting specific options:
+        --mov_radius (int, default 50):
+            Estimated head radius (in mm) for computing frame displacement
+            statistics.
 
-    --TR              TR of the BOLD files [2.5].
-    --mov_pref        The prefix to be used for the figure plot files [].
-    --mov_plot        The base name of the plot files. If set to empty no plots
-                      are generated [mov_report].
-    --mov_mreport     The name of the group movement report file. If set to
-                      an empty string, no file is generated
-                      [movement_report.txt].
-    --mov_sreport     The name of the group scrubbing report file. If set to
-                      an empty string, no file is generated
-                      [movement_scrubbing_report.txt].
-    --mov_preport     The name of group report file with stats computed with
-                      frames identified as bad exluded from analysis. If set
-                      to an empty string, no file is generated
-                      [movement_report_post.txt].
-    --mov_post        The criterium for identification of bad frames that is
-                      used when generating a post scrubbing statistics
-                      group report (fd/dvars/dvars/dvarsme/idvars/idvarsme/
-                      udvars/udvarsme/none) [udvarsme].
-    --mov_fidl        Whether to create fidl file snippets with listed bad
-                      frames, and what criterium to use for the definition of
-                      bad frames (fd/dvars/dvars/dvarsme/idvars/idvarsme/udvars/
-                      udvarsme). Set to none to not generate them [udvarsme].
-    --mov_pdf         The name of the folder in sessions/QC/movement in which to
-                      copy the individuals' movement plots [movement_plots].
+        --mov_fd (float, default 0.5):
+            Frame displacement threshold (in mm) to use for identifying bad
+            frames.
 
-    USE
-    ===
+        --mov_dvars (float, default 3.0):
+            The (mean normalized) dvars threshold to use for identifying bad
+            frames.
 
-    create_stats_report processes movement correction parameters and computed
-    BOLD statistics to create per session plots and fidl snippets and group
-    reports.
+        --mov_dvarsme (float, default 1.5):
+            The (median normalized) dvarsm threshold to use for identifying bad
+            frames.
 
-    For each session it saves into images/functional/movement:
+        --mov_after (int, default 0):
+            How many frames after each frame identified as bad to also exclude
+            from further processing and analysis.
 
-    --`bold<nifti_tail>_<mov_plot>_cor.pdf`
-            A plot of movement correction parameters for each of the BOLD files.
-    --`bold<nifti_tail>_<mov_plot>_dvars.pdf`
-            A plot of frame displacement and dvarsm statistics with frames that
-            are identified as bad marked in blue.
-    --`bold<nifti_tail>_<mov_plot>_dvarsme.pdf`
-            A plot of frame displacement and dvarsme statistics with frames that
-            are identified as bad marked in blue.
-    --`bold[N]<nifti_tail>_scrub.fidl`
-            A fidl filesnippet that lists, which frames are to be excluded from
-            the analysis.
+        --mov_before (int, default 0):
+            How many frames before each frame identified as bad to also exclude
+            from further processing and analysis.
 
-    For the group level it creates three report files that are stored in the
-    <sessionsfolder>/QC/movement folder. These files are:
+        --mov_bad (str, default 'udvarsme'):
+            Which criteria to use for identification of bad frames (mov, dvars,
+            dvarsme, idvars, uvars, idvarsme, udvarsme). See movement scrubbing
+            documentation for further information.
+            Criteria for identification of bad frames can be one out of:
 
-    - ``<mov_mreport>`` (bold<nifti_tail>_movement_report.txt by default)
-      This file lists for each session and bold file mean, sd, range, max, min,
-      median, and squared mean divided by max statistics for each of the 6
-      movement correction parameters. It also prints mean, median, maximum, and
-      standard deviation of frame displacement statistics. The purpose of this
-      file is to enable easy session and group level analysis of movement in
-      the scanner.
+            - 'mov'      ... Frame displacement threshold (fdt) is exceeded.
+            - 'dvars'    ... Image intensity normalized root mean squared error
+              (RMSE) threshold (dvarsmt) is exceeded.
+            - 'dvarsme'  ... Median normalised RMSE (dvarsmet) threshold is
+              exceeded.
+            - 'idvars'   ... Both fdt and dvarsmt are exceeded (i for
+              intersection).
+            - 'uvars'    ... Either fdt or dvarsmt are exceeded (u for union).
+            - 'idvarsme' ... Both fdt and dvarsmet are exceeded.
+            - 'udvarsme' ... Either fdt or udvarsmet are exceeded.
 
-    - ``<mov_preport>`` (bold<nifti_tail>_movement_report_post.txt by default)
-      This file has the same structure and information as the above, whith
-      frames marked as bad excluded from the statistics computation. This
-      enables session and group level assessment of the effects of scrubbing.
+            For more detailed description please see wiki entry on Movement
+            scrubbing.
 
-    - ``<mov_sreport>`` (bold<nifti_tail>_movement_scrubbing_report.txt by default)
-      This file lists for each BOLD of each session the number and the
-      percentage of frames that would be marked as bad and excluded from the
-      analyses when a specific exclusion criteria would be used. Again, the
-      file supports session and group level analysis of movement scrubbing.
+        --TR (float, default 2.5):
+            TR of the BOLD files.
 
-    NOTES AND DEPENDENCIES
-    ======================
+        --mov_pref (str, default ''):
+            The prefix to be used for the figure plot files.
 
-    The command runs the bold_stats.R R script that computes the statistics
-    and plots the data. The function requires that movement correction
-    parameters files and bold statistics data files (results of the
-    compute_bold_stats command) are present in the expected locations.
+        --mov_plot (str, default 'mov_report'):
+            The base name of the plot files. If set to empty no plots are
+            generated.
 
-    Session statistics are appended to the group level report files as they
-    are being computed. To avoid messy group level files, it is recommended
-    to run the command with parsessions set to 1 (example 1), to enforce sequential
-    processing and adding of information to group level statistics files.
-    Another option is to run the processing in two steps. The first step with
-    multiple parsessions to speed up generation of session level maps (example 2),
-    and then the second step with a single core, omitting the slow generation
-    of session specific plots.
+        --mov_mreport (str, default 'movement_report.txt'):
+            The name of the group movement report file. If set to an empty
+            string, no file is generated.
 
-    EXAMPLE USE
-    ===========
+        --mov_sreport (str, default 'movement_scrubbing_report.txt'):
+            The name of the group scrubbing report file. If set to an empty
+            string, no file is generated.
 
-    ::
+        --mov_preport (str, default 'movement_report_post.txt'):
+            The name of group report file with stats computed with frames
+            identified as bad exluded from analysis. If set to an empty
+            string, no file is generated.
 
-        qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
-              --sessionsfolder=sessions --overwrite=no --bolds=all \\
-              --parsessions=1
+        --mov_post (str, default 'udvarsme'):
+            The criterium for identification of bad frames that is used when
+            generating a post scrubbing statistics group report:
 
-    ::
+            - 'fd'
+            - 'dvars'
+            - 'dvars'
+            - 'dvarsme'
+            - 'idvars'
+            - 'idvarsme'
+            - 'udvars'
+            - 'udvarsme' ... default
+            - 'none'.
 
-        qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
-              --sessionsfolder=sessions --overwrite=no --bolds=all
-              --parsessions=10
+        --mov_fidl (str, default 'udvarsme'):
+            Whether to create fidl file snippets with listed bad frames, and
+            what criterium to use for the definition of bad frames:
 
-    ::
+            - 'fd'
+            - 'dvars'
+            - 'dvars'
+            - 'dvarsme'
+            - 'idvars'
+            - 'idvarsme'
+            - 'udvars'
+            - 'udvarsme' ... default
+            - 'none'     ... Set to 'none' to not generate them.
 
-        qunex create_stats_report --sessions=fcMRI/sessions_hcp.txt \\
-              --sessionsfolder=sessions --overwrite=no --bolds=all
-              --nifti_tail=_hp2000_clean --parsessions=1 --mov_plot=""
+        --mov_pdf (str, default 'movement_plots'):
+            The name of the folder in sessions/QC/movement in which to copy
+            the individuals' movement plots.
+
+    Notes:
+        Use:
+            create_stats_report processes movement correction parameters and
+            computed BOLD statistics to create per session plots and fidl
+            snippets and group reports.
+
+            For each session it saves into images/functional/movement:
+
+            --`bold<nifti_tail>_<mov_plot>_cor.pdf`
+                A plot of movement correction parameters for each of the BOLD
+                files.
+            --`bold<nifti_tail>_<mov_plot>_dvars.pdf`
+                A plot of frame displacement and dvarsm statistics with frames
+                that are identified as bad marked in blue.
+            --`bold<nifti_tail>_<mov_plot>_dvarsme.pdf`
+                A plot of frame displacement and dvarsme statistics with frames
+                that are identified as bad marked in blue.
+            --`bold[N]<nifti_tail>_scrub.fidl`
+                A fidl filesnippet that lists, which frames are to be excluded
+                from the analysis.
+
+            For the group level it creates three report files that are stored in
+            the <sessionsfolder>/QC/movement folder. These files are:
+
+            - ``<mov_mreport>`` (bold<nifti_tail>_movement_report.txt by default)
+                This file lists for each session and bold file mean, sd, range,
+                max, min, median, and squared mean divided by max statistics for
+                each of the 6 movement correction parameters. It also prints
+                mean, median, maximum, and standard deviation of frame
+                displacement statistics. The purpose of this file is to enable
+                easy session and group level analysis of movement in the scanner.
+
+            - ``<mov_preport>`` (bold<nifti_tail>_movement_report_post.txt by default)
+                This file has the same structure and information as the above,
+                with frames marked as bad excluded from the statistics
+                computation. This enables session and group level assessment of
+                the effects of scrubbing.
+
+            - ``<mov_sreport>`` (bold<nifti_tail>_movement_scrubbing_report.txt by default)
+                This file lists for each BOLD of each session the number and the
+                percentage of frames that would be marked as bad and excluded
+                from the analyses when a specific exclusion criteria would be
+                used. Again, the file supports session and group level analysis
+                of movement scrubbing.
+
+            Extra notes and dependencies:
+                The command runs the bold_stats.R R script that computes the
+                statistics and plots the data. The function requires that
+                movement correction parameters files and bold statistics data
+                files (results of the compute_bold_stats command) are present in
+                the expected locations.
+
+                Session statistics are appended to the group level report files
+                as they are being computed. To avoid messy group level files, it
+                is recommended to run the command with parsessions set to 1
+                (example 1), to enforce sequential processing and adding of
+                information to group level statistics files. Another option is
+                to run the processing in two steps. The first step with multiple
+                parsessions to speed up generation of session level maps
+                (example 2), and then the second step with a single core,
+                omitting the slow generation of session specific plots.
+
+    Examples:
+        ::
+
+            qunex create_stats_report \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --parsessions=1
+
+        ::
+
+            qunex create_stats_report \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --parsessions=10
+
+        ::
+
+            qunex create_stats_report \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --nifti_tail=_hp2000_clean \\
+                --parsessions=1 \\
+                --mov_plot=""
     """
 
     preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0, 'boldskipped': 0}
@@ -1157,164 +1253,168 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
 
     Extracts nuisance signal from volume BOLD files.
 
-    INPUTS
-    ======
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
 
-    General parameters
-    ------------------
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
 
-    When running the command, the following *general* processing parameters are
-    taken into account:
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
 
-    --sessions             The batch.txt file with all the session information.
-                           [batch.txt]
-    --sessionsfolder       The path to the study/sessions folder, where the
-                           imaging  data is supposed to go. [.]
-    --parsessions          How many sessions to run in parallel. [1]
-    --parelements          How many elements (e.g bolds) to run in
-                           parallel. [1]
-    --overwrite            Whether to overwrite existing data (yes) or not (no).
-                           [no]
-    --bolds                Which bold images (as they are specified in the
-                           batch.txt file) to copy over. It can be a single
-                           type (e.g. 'task'), a pipe separated list (e.g.
-                           'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname             The default name of the bold files in the images
-                           folder. [bold]
-    --nifti_tail           The tail of NIfTI volume images to use. []
-    --bold_variant         Optional variant of bold preprocessing. If
-                           specified, the BOLD images in
-                           `images/functional<bold_variant>` will be
-                           processed. []
-    --img_suffix           Specifies a suffix for 'images' folder to enable
-                           support for multiple parallel workflows. Empty
-                           if not used. []
-    --logfolder            The path to the folder where runlogs and comlogs
-                           are to be stored, if other than default. []
-    --log                  Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep'].
-                           When a comma or pipe ('|') separated list is given,
-                           the log will be created at the first provided location
-                           and then linked or copied to other locations.
-                           The valid locations are:
+        --parelements (int, default 1):
+            How many elements (e.g. bolds) to run in parallel.
 
-                           - 'study' (for the default:
-                             `<study>/processing/logs/comlogs` location)
-                           - 'session' (for `<sessionid>/logs/comlogs`)
-                           - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-                           - '<path>'  (for an arbitrary directory)
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
 
-    Specific parameters
-    -------------------
+        --bolds (str, default 'rest'):
+            Which bold images (as they are specified in the batch.txt file) to
+            copy over. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to copy all.
 
-    In addition the following *specific* parameters are used:
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
 
-    --wbmask           A path to an optional file that specifies which regions
-                       are to be excluded from the whole-brain mask. It can be
-                       used in the case of ROI analyses for which one does not
-                       want to include the ROI specific signals in the global
-                       signal regression.
-    --nroi             The path to additional nuisance regressors file. It can
-                       be either a binary mask or a '.names' file that specifies
-                       the ROI to be used. Based on other options, the ROI can
-                       be further masked by session specific files or not masked
-                       at all (see USE above).
-    --sessionroi       A string specifying which session specific mask to use
-                       for further masking the additional roi. The two options
-                       are 'wb' or 'aseg' for whole brain mask or FreeSurfer
-                       aseg+aparc mask, respectively.
-    --shrinknsroi      A string specifying whether to shrink ('true' or 'yes')
-                       the whole brain and white matter masks or not.
+        --nifti_tail (str, default ''):
+            The tail of NIfTI volume images to use.
 
-    OUTPUTS
-    =======
+        --bold_variant (str, default ''):
+            Optional variant of bold preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
 
-    The command generates the following files:
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
 
-    --`bold[N]<nifti_tail>.nuisance`
-      A text file that lists for each volume frame the information on mean
-      intensity across the ventricle, white matter and whole brain voxels, and
-      any additional nuisance ROI specified using specific parameters.
-      The file is stored in
-      `images<img_suffix>/functional<bold_variant>/movement` folder.
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
 
-    --`bold[N]<nifti_tail>_nuisance.png`
-      A PNG image of axial slices of the first BOLD frame over which the
-      identified nuisance regions are overlayed. Ventricles in green, white
-      matter in red and the rest of the brain in blue. The ventricle and
-      white matter regions are defined based on FreeSurfer segmentation. Each
-      region is "trimmed" before use, so that there is at least one voxel
-      buffer between each nuisance region mask. The image is stored in
-      `images<img_suffix>/ROI/nuisance<bold_variant>`.
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed.
 
-    --`bold[N]<nifti_tail>_nuisance.<image format>`
-      An image file of the relevant image format that holds the same information
-      as the above PNG. It is a file of five volumes, the first volume holds
-      the first BOLD frame, the second the whole brain mask, the third the
-      ventricles mask and the fourth the white matter mask. The fifth volume
-      stores all three masks coded as 1 (whole brain), 2 (ventricles), or 3
-      (white matter). The image is stored in
-      `images<img_suffix>/ROI/nuisance<bold_variant>` folder.
+            When a comma or pipe ('|') separated list is given,
+            the log will be created at the first provided location
+            and then linked or copied to other locations.
+            The valid locations are:
 
-    USE
-    ===
+            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
+            - 'session' (for `<sessionid>/logs/comlogs`)
+            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
+            - '<path>'  (for an arbitrary directory).
 
-    extract_nuisance_signal is used to extract nuisance signal from volume BOLD
-    files to be used in the latter steps of preprocessing, specifically for
-    regression of nuisance signals. By default it extract nuisance signals from
-    ventricles, white matter and whole brain. Whole brain is defined as those
-    parts of the brain that are not ventricles or white matter, which results
-    in whole brain to mostly overlap with gray matter.
+        --wbmask (str, default ''):
+            A path to an optional file that specifies which regions are to be
+            excluded from the whole-brain mask. It can be used in the case of
+            ROI analyses for which one does not want to include the ROI specific
+            signals in the global signal regression.
 
-    Using specific parameters listed below, it is also possible to specify
-    additional ROIs for which nuisance signal is to be extracted and/or ROI that
-    are to be excluded from the whole brain mask.
+        --nroi (str, default ''):
+            The path to additional nuisance regressors file. It can be either a
+            binary mask or a '.names' file that specifies the ROI to be used.
+            Based on other options, the ROI can be further masked by session
+            specific files or not masked at all (see Use section below).
 
-    To exclude specific ROI from the whole brain mask, use the '--wbmask'
-    option. This should be a path to a file that specifies, which ROI are to
-    be excluded from the whole-brain mask. The reason for exclusion might be
-    when one does not want the signals from specific ROI to be inlcuded in
-    the global signal regression, thereby resolving some of the issues taken as
-    arguments agains using global signal regression. The file can be either
-    a binary mask, or a '.names' file. In the latter case, it is possible to
-    additional mask the ROI to be excluded based on session specific
-    aseg+aparc image (see description of .names file format).
+        --sessionroi (str, default ''):
+            A string specifying which session specific mask to use for further
+            masking the additional roi. The two options are 'wb' or 'aseg' for
+            whole brain mask or FreeSurfer aseg+aparc mask, respectively.
 
-    Another option is to include additional independent nuisance regions that
-    might or might not overlap with the exisiting masks. Two parameters are used
-    to specify this. The first is the '--nroi' parameter. This, again, is a path
-    to either a binary image or a '.names' file. In the latter case, it is again
-    possible to mask the additional ROI either by the binary whole brain mask or
-    the individuals aseg+aparc file. To achieve this, set the additional
-    '--sessionroi' parameter to 'wb' or 'aseg', respectively. If some additional
-    ROI are to be excluded, even though they fall outside of the brain, then
-    these are to be listed as comma separated list of ROI names (that match the
-    ROI names in the .names file), separated from the path by a pipe ('|')
-    symbol. For instance if one also would like to include eyes and scull as
-    two additional nuiscance regions, one has to create a volume mask + a
-    .names file pair, and pass it as the '--nroi' parameter, e.g.::
+        --shrinknsroi (str, default 'true'):
+            A string specifying whether to shrink ('true') the whole
+            brain and white matter masks or not ('false').
 
-        --nroi="<path to ROI>/nroi.names|eyes,scull"
+    Output files:
+        The command generates the following files:
 
-    NOTES AND DEPENDENCIES
-    ======================
+        --`bold[N]<nifti_tail>.nuisance`
+              A text file that lists for each volume frame the information
+              on mean intensity across the ventricle, white matter and whole
+              brain voxels, and any additional nuisance ROI specified using
+              parameters. The file is stored in the
+              `images<img_suffix>/functional<bold_variant>/movement` folder.
 
-    When 'cifti' is the specified image target, the related nifti volume files
-    will be processed as only they provide all the information for computing
-    the relevant parameters
+        --`bold[N]<nifti_tail>_nuisance.png`
+            A PNG image of axial slices of the first BOLD frame over which
+            the identified nuisance regions are overlayed. Ventricles in
+            green, white matter in red and the rest of the brain in blue.
+            The ventricle and white matter regions are defined based on
+            FreeSurfer segmentation. Each region is "trimmed" before use, so
+            that there is at least one voxel buffer between each nuisance
+            region mask. The image is stored in
+            images<img_suffix>/ROI/nuisance<bold_variant>`.
 
-    The command runs the general_extract_nuisance.m Matlab function for actual
-    nuisance signal extraction. It expects that bold images, whole brain masks,
-    and aseg+aparc imags to be present in the expected locations.
+        --`bold[N]<nifti_tail>_nuisance.<image format>`
+            An image file of the relevant image format that holds the same
+            information as the above PNG. It is a file of five volumes, the
+            first volume holds the first BOLD frame, the second the whole
+            brain mask, the third the ventricles mask and the fourth the
+            white matter mask. The fifth volume stores all three masks coded
+            as 1 (whole brain), 2 (ventricles), or 3 (white matter). The
+            image is stored in `images<img_suffix>/ROI/nuisance<bold_variant>`
+            folder.
 
+    Notes:
+        extract_nuisance_signal is used to extract nuisance signal from volume BOLD
+        files to be used in the latter steps of preprocessing, specifically for
+        regression of nuisance signals. By default it extract nuisance signals from
+        ventricles, white matter and whole brain. Whole brain is defined as those
+        parts of the brain that are not ventricles or white matter, which results
+        in whole brain to mostly overlap with gray matter.
 
-    EXAMPLE USE
-    ===========
+        Using parameters listed below, it is also possible to specify additional
+        ROIs for which nuisance signal is to be extracted and/or ROI that are to
+        be excluded from the whole brain mask.
 
-    ::
+        To exclude specific ROI from the whole brain mask, use the '--wbmask'
+        option. This should be a path to a file that specifies, which ROI are to
+        be excluded from the whole-brain mask. The reason for exclusion might be
+        when one does not want the signals from specific ROI to be inlcuded in
+        the global signal regression, thereby resolving some of the issues taken as
+        arguments agains using global signal regression. The file can be either
+        a binary mask, or a '.names' file. In the latter case, it is possible to
+        additional mask the ROI to be excluded based on session specific
+        aseg+aparc image (see description of .names file format).
 
-        qunex extract_nuisance_signal sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-             overwrite=no bolds=all parsessions=10
+        Another option is to include additional independent nuisance regions that
+        might or might not overlap with the exisiting masks. Two parameters are used
+        to specify this. The first is the '--nroi' parameter. This, again, is a path
+        to either a binary image or a '.names' file. In the latter case, it is again
+        possible to mask the additional ROI either by the binary whole brain mask or
+        the individuals aseg+aparc file. To achieve this, set the additional
+        '--sessionroi' parameter to 'wb' or 'aseg', respectively. If some additional
+        ROI are to be excluded, even though they fall outside of the brain, then
+        these are to be listed as comma separated list of ROI names (that match the
+        ROI names in the .names file), separated from the path by a pipe ('|')
+        symbol. For instance if one also would like to include eyes and scull as
+        two additional nuiscance regions, one has to create a volume mask + a
+        .names file pair, and pass it as the '--nroi' parameter, e.g.::
+
+            --nroi="<path to ROI>/nroi.names|eyes,scull"
+
+        Extra notes and dependencies:
+            When 'cifti' is the specified image target, the related nifti volume
+            files will be processed as only they provide all the information for
+            computing the relevant parameters
+
+            The command runs the general_extract_nuisance.m Matlab function for
+            actual nuisance signal extraction. It expects that bold images,
+            whole brain masks, and aseg+aparc imags to be present in the
+            expected locations.
+
+    Examples:
+        ::
+
+            qunex extract_nuisance_signal \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --bolds=all \\
+                --parsessions=10
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1474,446 +1574,503 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
 
     Prepares BOLD files for further functional connectivity analysis.
 
-    INPUTS
-    ======
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
 
-    Basics specify which files are to be processed
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging  data is
+            supposed to go.
 
-    General parameters
-    ------------------
+        --parsessions (str, default 1):
+            How many sessions to run in parallel.
 
-    The function takes the usual general processing parameters:
+        --parelements (int, default 1):
+            How many elements (e.g. bolds) to run in parallel.
 
-    --sessions            The batch.txt file with all the session information
-                          [batch.txt].
-    --sessionsfolder      The path to the study/sessions folder, where the
-                          imaging  data is supposed to go [.].
-    --parsessions         How many sessions to run in parallel [1].
-    --parelements         How many elements (e.g bolds) to run in
-                          parallel [1].
-    --overwrite           Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --boldname            The default name of the bold files in the images
-                          folder [bold].
-    --image_target        The target format to work with, one of 4dfp, nifti,
-                          dtseries or ptseries [nifti].
-    --logfolder           The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log                 Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep'].
-                          When a comma or pipe ('|') separated list is given,
-                          the log will be created at the first provided location
-                          and then linked or copied to other locations.
-                          The valid locations are:
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data ('yes') or not ('no').
 
-                          - 'study'   (for the default:
-                            `<study>/processing/logs/comlogs` location)
-                          - 'session' (for `<sessionid>/logs/comlogs`)
-                          - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-                          - '<path>'  (for an arbitrary directory)
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
 
-    Specific parameters
-    -------------------
+        --image_target (str, default 'nifti'):
+            The target format to work with, one of '4dfp', 'nifti', 'dtseries'
+            or 'ptseries'.
 
-    There are a number of basic specific parameters for this command that are
-    relevant for all or most of the actions:
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
 
-    --bolds             A pipe ('|') separated list of bold files to process.
-    --event_file        The name of the fidl file to be used with each bold.
-    --bold_actions      A string specifying which actions, and in what sequence
-                        to perform [s,h,r,c,l]
-    --image_target      The target format to work with, one of 4dfp, nifti,
-                        dtseries or ptseries [nifti].
-    --nifti_tail        The tail of NIfTI volume images to use. []
-    --cifti_tail        The tail of CIFTI images to use. []
-    --bold_prefix       An optional prefix to place in front of processing
-                        name extensions in the resulting files, e.g.
-                        bold3<bold_prefix>_s_hpss.nii.gz [].
-    --bold_variant      Optional variant of HCP BOLD preprocessing. If
-                        specified, the BOLD images in
-                        `images/functional<bold_variant>` will be
-                        processed [].
-    --img_suffix        Specifies a suffix for 'images' folder to enable
-                        support for multiple parallel workflows. Empty
-                        if not used [].
+        --log (str, default 'study'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed. When a comma or pipe ('|') separated list
+            is given, the log will be created at the first provided location
+            and then linked or copied to other locations. The valid locations
+            are:
 
-    List of bold files specify, which types of bold files are to be processed,
-    as they are specified in the batch.txt file. An example of a list of
-    bolds in batch.txt would be::
+            - 'study'   (for the default:
+              ``<study>/processing/logs/comlogs`` location)
+            - 'session' (for ``<sessionid>/logs/comlogs``)
+            - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
+            - <path>  (for an arbitrary directory).
 
-        07: bold1:blink       :BOLD blink 3mm 48 2.5s
-        08: bold2:flanker     :BOLD flanker 3mm 48 2.5s
-        09: bold3:EC          :BOLD EC 3mm 48 2.5s
-        10: bold4:mirror      :BOLD mirror 3mm 48 2.5s
-        11: bold5:rest        :RSBOLD 3mm 48 2.5s
+        --bolds  (str, default 'all'):
+            A pipe ('|') separated list of conc names to process.
 
-    With --bolds set to "blink|EC|rest", bold1, 3, and 5 would be
-    processed. If it were set to "all", all would be processed. As each bold
-    gets processed independently and only one fidl file can be specified, you
-    are advised to use preprocess_conc when regressing task structure, and only
-    use preprocess_bold for resting state data. If you would still use like to
-    regress out events specified in a fidl file. They would neet to be named as
-    [<session id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
-    cifti files, image_target is composed of <cifti_tail>_cifti. If the files
-    are not present in the relevant individual sessions's folders, they are
-    searched for in the <sessionsfolder>/inbox/events folder. In that case the
-    "<session id>_" is not optional but required.
+        --event_file  (str, default ''):
+            A pipe ('|') separated list of fidl names to use, that
+            matches the conc list.
 
-    The actions that can be performed are denoted by a single letter, and they
-    will be executed in the sequence listed:
+        --bold_actions  (str, default 's,h,r,c,l'):
+            A string specifying which actions, and in what sequence
+            to perform.
 
-    --m     Motion scrubbing.
-    --s     Spatial smoothing.
-    --h     High-pass filtering.
-    --r     Regression (nuisance and/or task) with an optional number 0, 1, or 2
+        --nifti_tail (str, default ''):
+            The tail of NIfTI volume images to use.
+
+        --cifti_tail (str, default ''):
+            The tail of CIFTI images to use.
+
+        --bold_prefix (str, default ''):
+            An optional prefix to place in front of processing name extensions
+            in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
+
+        --bold_variant (str, default detailed below):
+            Optional variant of HCP BOLD preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
+
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
+
+    Notes:
+        List of bold files specify, which types of bold files are to be
+        processed, as they are specified in the batch.txt file. An example of a
+        list of bolds in batch.txt would be::
+
+            07: bold1:blink       :BOLD blink 3mm 48 2.5s
+            08: bold2:flanker     :BOLD flanker 3mm 48 2.5s
+            09: bold3:EC          :BOLD EC 3mm 48 2.5s
+            10: bold4:mirror      :BOLD mirror 3mm 48 2.5s
+            11: bold5:rest        :RSBOLD 3mm 48 2.5s
+
+        With --bolds set to "blink|EC|rest", bold1, 3, and 5 would be processed.
+        If it were set to "all", all would be processed. As each bold gets
+        processed independently and only one fidl file can be specified, you
+        are advised to use preprocess_conc when regressing task structure, and
+        only use preprocess_bold for resting state data. If you would still use
+        like to regress out events specified in a fidl file. They would neet to
+        be named as [<session id>_]<boldname>_<image_target>_<fidl name>.fidl.
+        In the case of cifti files, image_target is composed of
+        <cifti_tail>_cifti. If the files are not present in the relevant
+        individual sessions's folders, they are searched for in the
+        <sessionsfolder>/inbox/events folder. In that case the "<session id>_"
+        is not optional but required.
+
+        The actions that can be performed are denoted by a single letter, and
+        they will be executed in the sequence listed:
+
+        --m
+            Motion scrubbing.
+        --s
+            Spatial smoothing.
+        --h
+            High-pass filtering.
+        --r
+            Regression (nuisance and/or task) with an optional number 0, 1, or 2
             specifying the type of regression to use (see REGRESSION below).
-    --c     Saving of resulting beta coefficients (always to follow 'r').
-    --l     Low-pass filtering.
+        --c
+            Saving of resulting beta coefficients (always to follow 'r').
+        --l
+            Low-pass filtering.
 
-    So the default 's,h,r,c,l' --bold_actions parameter would lead to the files
-    first being smoothed, then high-pass filtered. Next a regression step
-    would follow in which nuisance signal and/or task related signal would
-    be estimated and regressed out, then the related beta estimates would
-    be saved. Lastly the BOLDs would be also low-pass filtered.
+        So the default 's,h,r,c,l' --bold_actions parameter would lead to the
+        files first being smoothed, then high-pass filtered. Next a regression
+        step would follow in which nuisance signal and/or task related signal
+        would be estimated and regressed out, then the related beta estimates
+        would be saved. Lastly the BOLDs would be also low-pass filtered.
 
-    USE
-    ===
+        Use:
+            preprocess_bold is a complex command initially used to prepare BOLD
+            files for further functional connectivity analysis. The function
+            enables the following actions:
 
-    preprocess_bold is a complex command initially used to prepare BOLD files
-    for further functional connectivity analysis. The function enables the
-    following actions:
+            - spatial smoothing (3D or 2D for cifti files)
+            - temporal filtering (high-pass, low-pass)
+            - removal of nuisance signal and task structure
 
-    - spatial smoothing (3D or 2D for cifti files)
-    - temporal filtering (high-pass, low-pass)
-    - removal of nuisance signal and task structure
+            The function makes use of a number of files and accepts a long list
+            of arguments that make it very powerful and flexible but also
+            require care in its use. What follows is a detailed documentation
+            of its actions and parameters organized by actions in the order
+            they would be most commonly done. Use and parameter description
+            will be intertwined.
 
-    The function makes use of a number of files and accepts a long list of
-    arguments that make it very powerful and flexible but also require care in
-    its use. What follows is a detailed documentation of its actions and
-    parameters organized by actions in the order they would be most commonly
-    done. Use and parameter description will be intertwined.
+        Scrubbing:
+            The command either makes use of scrubbing information or performs
+            scrubbing comuputation on its own (when 'm' is part of the
+            command). In the latter case, all the scrubbing parameters need to
+            be specified:
 
-    SCRUBBING
-    =========
+            --mov_radius (int, default 50):
+                Estimated head radius (in mm) for computing frame displacement
+                statistics.
+            --mov_fd (float, default 0.5):
+                Frame displacement threshold (in mm) to use for identifying bad
+                frames.
+            --mov_dvars (float, default 3.0):
+                The (mean normalized) dvars threshold to use for identifying bad
+                frames.
+            --mov_dvarsme (float, default 1.5):
+                The (median normalized) dvarsm threshold to use for identifying
+                bad frames.
+            --mov_after (int, default 0):
+                How many frames after each frame identified as bad to also
+                exclude from further processing and analysis.
+            --mov_before (int, default 0):
+                How many frames before each frame identified as bad to also
+                exclude from further processing and analysis.
+            --mov_bad (str, default 'udvarsme'):
+                Which criteria to use for identification of bad frames.
 
-    The command either makes use of scrubbing information or performs scrubbing
-    comuputation on its own (when 'm' is part of the command). In the latter
-    case, all the scrubbing parameters need to be specified:
+            Criteria for identification of bad frames can be one out of:
 
-    --mov_radius      Estimated head radius (in mm) for computing frame
-                      displacement statistics [50].
-    --mov_fd          Frame displacement threshold (in mm) to use for
-                      identifying bad frames [0.5]
-    --mov_dvars       The (mean normalized) dvars threshold to use for
-                      identifying bad frames [3.0].
-    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
-                      identifying bad frames [1.5].
-    --mov_after       How many frames after each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_before      How many frames before each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_bad         Which criteria to use for identification of bad frames
-                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
-                      See movement scrubbing documentation for further
-                      information [udvarsme].
-
-    Criteria for identification of bad frames can be one out of:
-
-    --mov       Frame displacement threshold (fdt) is exceeded.
-    --dvars     Image intensity normalized root mean squared error (RMSE)
+            --mov
+                Frame displacement threshold (fdt) is exceeded.
+            --dvars
+                Image intensity normalized root mean squared error (RMSE)
                 threshold (dvarsmt) is exceeded.
-    --dvarsme   Median normalised RMSE (dvarsmet) threshold is exceeded.
-    --idvars    Both fdt and dvarsmt are exceeded (i for intersection).
-    --uvars     Either fdt or dvarsmt are exceeded (u for union).
-    --idvarsme  Both fdt and dvarsmet are exceeded.
-    --udvarsme  Either fdt or udvarsmet are exceeded.
+            --dvarsme
+                Median normalised RMSE (dvarsmet) threshold is exceeded.
+            --idvars
+                Both fdt and dvarsmt are exceeded (i for intersection).
+            --uvars
+                Either fdt or dvarsmt are exceeded (u for union).
+            --idvarsme
+                Both fdt and dvarsmet are exceeded.
+            --udvarsme
+                Either fdt or udvarsmet are exceeded.
 
-    For more detailed description please see wiki entry on Movement scrubbing.
+            For more detailed description please see wiki entry on Movement
+            scrubbing.
 
-    In any case, if scrubbing was done beforehand or as a part of this command,
-    one has to specify, how the scrubbing information is used:
+            In any case, if scrubbing was done beforehand or as a part of this
+            command, one has to specify, how the scrubbing information is used:
 
-    --pignore  String describing how to deal with bad frames.
+            --pignore
+                String describing how to deal with bad frames.
 
-    The string has the following format::
+            The string has the following format::
 
-        'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
+                'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
 
-    Filtering options are:
+            Filtering options are:
 
-    --keep       Keep all the bad frames unchanged.
-    --linear     Replace bad frames with linear interpolated values based on
-                 neighboring good frames.
-    --spline     Replace bad frames with spline interpolated values based on
-                 neighboring good frames.
+            --keep
+                Keep all the bad frames unchanged.
+            --linear
+                Replace bad frames with linear interpolated values based on
+                neighboring good frames.
+            --spline
+                Replace bad frames with spline interpolated values based on
+                neighboring good frames.
 
-    To prevent artifacts present in bad frames to be temporarily spread, use
-    either 'linear' or 'spline' options.
+            To prevent artifacts present in bad frames to be temporarily spread,
+            use either 'linear' or 'spline' options.
 
-    Regression options are:
+            Regression options are:
 
-    --keep       Keep the bad frames and use them in the regression.
-    --ignore     Exclude bad frames from regression.
-    --mark       Exclude bad frames from regression and mark the bad frames
-                 as NaN.
-    --linear     Replace bad frames with linear interpolated values based on
-                 neighboring good frames.
-    --spline     Replace bad frames with spline interpolated values based on
-                 neighboring good frames.
+            --keep
+                Keep the bad frames and use them in the regression.
+            --ignore
+                Exclude bad frames from regression.
+            --mark
+                Exclude bad frames from regression and mark the bad frames as
+                NaN.
+            --linear
+                Replace bad frames with linear interpolated values based on
+                neighboring good frames.
+            --spline
+                Replace bad frames with spline interpolated values based on
+                neighboring good frames.
 
-    Please note that when the bad frames are not kept, the original values will
-    be retained in the residual signal. In this case they have to be excluded
-    or ignored also in all following analyses, otherwise they can be a
-    significant source of artifacts.
+            Please note that when the bad frames are not kept, the original
+            values will be retained in the residual signal. In this case they
+            have to be excluded or ignored also in all following analyses,
+            otherwise they can be a significant source of artifacts.
 
-    SPATIAL SMOOTHING
-    =================
+        Spatial smoothing:
+            Volume smoothing:
+                For volume formats the images will be smoothed using the
+                img_smooth_3d nimage method. For cifti format the smooting will
+                be done by calling the relevant wb_command command. The
+                smoothing parameters are:
 
-    Volume smoothing
-    ----------------
+                --voxel_smooth (int, default 2):
+                    Gaussian smoothing FWHM in voxels.
+                --smooth_mask (str, default false):
+                    Whether to smooth only within a mask, and what mask to use
+                    (nonzero|brainsignal|brainmask|<filename>|false).
+                --dilate_mask (str, default false):
+                    Whether to dilate the image after masked smoothing and what
+                    mask to use
+                    (nonzero|brainsignal|brainmask|same|<filename>|false).
 
-    For volume formats the images will be smoothed using the img_smooth_3d
-    nimage method. For cifti format the smoothing will be done by calling the
-    relevant wb_command command. The smoothing specific parameters are:
+                If a smoothing mask is set, only the signal within the specified
+                mask will be used in the smoothing. If a dilation mask is set,
+                after smoothing within a mask, the resulting signal will be
+                constrained / dilated to the specified dilation mask.
 
-    --voxel_smooth      Gaussian smoothing FWHM in voxels. [2]
-    --smooth_mask       Whether to smooth only within a mask, and what mask to
-                        use (nonzero/brainsignal/brainmask/<filename>). [false]
-    --dilate_mask       Whether to dilate the image after masked smoothing and
-                        what mask to use (nonzero/brainsignal/brainmask/
-                        same/<filename>). [false]
+                For both parameters the possible options are:
 
-    If a smoothing mask is set, only the signal within the specified mask will
-    be used in the smoothing. If a dilation mask is set, after smoothing within
-    a mask, the resulting signal will be constrained / dilated to the specified
-    dilation mask.
+                --nonzero
+                    Mask will consist of all the nonzero voxels of the first
+                    BOLD frame.
+                --brainsignal
+                    Mask will consist of all the voxels that are of value 300 or
+                    higher in the first BOLD frame (this gave a good coarse
+                    brain mask for images intensity normalized to mode 1000 in
+                    the NIL preprocessing stream).
+                --brainmask
+                    Mask will be the actual bet extracted brain mask based on
+                    the first BOLD frame (generated using in the
+                    creatBOLDBrainMasks command).
+                --filename
+                    All the non-zero voxels in a specified volume file will be
+                    used as a mask.
+                --false
+                    No mask will be used.
+                --same
+                    Only for dilate_mask, the mask used will be the same as
+                    smoothing mask.
 
-    For both parameters the possible options are:
+            Cifti smoothing:
+                For cifti format images, smoothing will be run using wb_command.
+                The following parameters can be set:
 
-    --nonzero          Mask will consist of all the nonzero voxels of the first
-                       BOLD frame.
-    --brainsignal      Mask will consist of all the voxels that are of value
-                       300 or higher in the first BOLD frame (this gave a good
-                       coarse brain mask for images intensity normalized to
-                       mode 1000 in the NIL preprocessing stream).
-    --brainmask        Mask will be the actual bet extracted brain mask based
-                       on the first BOLD frame (generated using in the
-                       creatBOLDBrainMasks command).
-    --filename         All the non-zero voxels in a specified volume file will
-                       be used as a mask.
-    --false            No mask will be used.
-    --same             Only for dilate_mask, the mask used will be the same as
-                       smoothing mask.
+                --surface_smooth (float, default 6.0):
+                    FWHM for Gaussian surface smoothing in mm.
+                --volume_smooth (float, default 6.0):
+                    FWHM for Gaussian volume smoothing in mm.
+                --omp_threads (int, default 0):
+                    Number of cores to be used by wb_command. 0 for no change of
+                    system settings.
+                --framework_path (str, default ''):
+                    The path to framework libraries on the Mac system. No need
+                    to use it currently if installed correctly.
+                --wb_command_path (str, default ''):
+                    The path to the wb_command executive. No need to use it
+                    currently if installed correctly.
 
-    Cifti smoothing
-    ---------------
-
-    For cifti format images, smoothing will be run using wb_command. The
-    following parameters can be set:
-
-    --surface_smooth      FWHM for Gaussian surface smoothing in mm [6.0].
-    --volume_smooth       FWHM for Gaussian volume smoothing in mm [6.0].
-    --omp_threads         Number of cores to be used by wb_command. 0 for no
-                          change of system settings [0].
-    --framework_path      The path to framework libraries on the Mac system.
-                          No need to use it currently if installed correctly.
-    --wb_command_path     The path to the wb_command executive. No need to
-                          use it currently if installed correctly.
-
-    Results
-    -------
-
-    The resulting smoothed files are saved with '_s' added to the BOLD root
-    filename.
+                Results:
+                    The resulting smoothed files are saved with '_s' added to
+                    the BOLD root filename.
 
 
-    TEMPORAL FILTERING
-    ==================
+        Temporal filtering:
+            Temporal filtering is accomplished using img_filter nimage method.
+            The code is adopted from the FSL C++ code enabling appropriate
+            handling of bad frames (as described above - see SCRUBBING). The
+            parameters are:
 
-    Temporal filtering is accomplished using img_filter nimage method. The
-    code is adopted from the FSL C++ code enabling appropriate handling of
-    bad frames (as described above - see SCRUBBING). The specific parameters
-    are:
+            --hipass_filter (float, default 0.008):
+                The frequency for high-pass filtering in Hz.
+            --lopass_filter (float, default 0.09):
+                The frequency for low-pass filtering in Hz.
 
-    --hipass_filter      The frequency for high-pass filtering in Hz [0.008].
-    --lopass_filter      The frequency for low-pass filtering in Hz [0.09].
+            Please note that the values finally passed to img_filter method are
+            the respective sigma values computed from the specified frequencies
+            and TR.
 
-    Please note that the values finally passed to img_filter method are the
-    respective sigma values computed from the specified frequencies and TR.
+            Results:
+                The resulting filtered files are saved with '_hpss' or '_bpss'
+                added to the BOLD root filename for high-pass and low-pass
+                filtering, respectively.
 
-    Results
-    -------
+        Regression:
+            Regression is a complex step in which GLM is used to estimate the
+            beta weights for the specified nuisance regressors and events. The
+            resulting beta weights are then stored in a GLM file (a regular
+            file with additional information on the design used) and residuals
+            are stored in a separate file. This step can therefore be used for
+            two purposes: (1) to remove nuisance signal and event structure
+            from BOLD files, removing unwanted potential sources of correlation
+            for further functional connectivity analyses, and (2) to get task
+            beta estimates for further activation analyses. The following
+            parameters are used in this step:
 
-    The resulting filtered files are saved with '_hpss' or '_bpss' added to the
-    BOLD root filename for high-pass and low-pass filtering, respectively.
+            --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
+                A comma separated list of regressors to include in GLM.
+                Possible values are:
 
-    REGRESSION
-    ==========
+                - 'm'     ... motion parameters
+                - 'm1d'   ... first derivative of motion parameters
+                - 'mSq'   ... squared motion parameters
+                - 'm1dSq' ... squared first derivative of motion parameters
+                - 'V'     ... ventricles signal
+                - 'WM'    ... white matter signal
+                - 'WB'    ... whole brain signal
+                - '1d'    ... first derivative of above nuisance signals
+                - 'e'     ... events listed in the provided fidl files (see
+                  above), modeled as specified in the event_string parameter.
 
-    Regression is a complex step in which GLM is used to estimate the beta
-    weights for the specified nuisance regressors and events. The resulting
-    beta weights are then stored in a GLM file (a regular file with additional
-    information on the design used) and residuals are stored in a separate file.
-    This step can therefore be used for two purposes: (1) to remove nuisance
-    signal and event structure from BOLD files, removing unwanted potential
-    sources of correlation for further functional connectivity analyses, and
-    (2) to get task beta estimates for further activation analyses. The
-    following specific parameters are used in this step:
+            --event_string (str, default ''):
+                A string describing, how to model the events listed in the
+                provided fidl files.
+            --glm_matrix (str, default 'none'):
+                Whether to save the GLM matrix as a text file ('text'), a png
+                image file ('image'), both ('both') or not ('none').
+            --glm_residuals (str, default 'save'):
+                Whether to save the residuals after GLM regression ('save') or
+                not ('none').
+            --glm_name (str, default ''):
+                An additional name to add to the residuals and GLM files to
+                distinguish between different possible models used.
 
-    --bold_nuisance      A comma separated list of regressors to include in GLM.
-                         Possible values are: [m,m1d,mSq,m1dSq,V,WM,WB,1d]
+            GLM modeling:
+                There are two important variables that affect the exact GLM
+                model used to estimate nuisance and task beta coefficients and
+                regress them from the signal. The first is the optional number
+                following the 'r' command in the --bold_actions parameter.
+                There are three options:
 
-                         - m     ... motion parameters
-                         - m1d   ... first derivative of movement regressors
-                         - mSq   ... squared motion parameters
-                         - m1dSq ... squared motion first derivatives
-                         - V     ... ventricles signal
-                         - WM    ... white matter signal
-                         - WB    ... whole brain signal
-                         - n1d   ... first derivative for nuisance signal
-                                     regressors
-                         - 1d    ... first derivatives of above nuisance signals
-                                     and movement
-                         - e     ... events listed in the provided fidl files
-                                     (see above), modeled as specified in the
-                                     event_string parameter.
-                         - t     ... task
+                - '0' ... Estimate nuisance regressors for each bold file
+                  separately, however, model events across all bold files (the
+                  default if no number is) specified.
+                - '1' ... Estimate both nuisance regressors and task regressors
+                  for each bold run separately.
+                - '2' ... Estimate both nuisance regressors as well as task
+                  regressors across all bold runs.
 
-    --event_string       A string describing, how to model the events listed in
-                         the provided fidl files. []
-    --glm_matrix         Whether to save the GLM matrix as a text file ('text'),
-                         a png image file ('image'), both ('both') or not
-                         ('none'). [none]
-    --glm_residuals      Whether to save the residuals after GLM regression
-                         ('save') or not ('none'). [save]
-    --glm_name           An additional name to add to the residuals and GLM
-                         files to distinguish between different possible models
-                         used.
+                The second key variable is the event string provided by the
+                --event_string parameter. The event string is a pipe ('|')
+                separated list of regressor specifications. The possibilities
+                are discussed below:
 
-    GLM modeling
-    ------------
+                Unassumed Modeling:
+                    ::
 
-    The exact GLM model used to estimate nuisance and task beta coefficients
-    and regress them from the signal is defined by the event string provided
-    by the --event_string parameter. The event string is a pipe ('|') separated
-    list of regressor specifications. The possibilities are:
+                        <fidl code>:<length in frames>
 
-    Unassumed Modeling
-    ~~~~~~~~~~~~~~~~~~
-    ::
+                    Where <fidl code> is the code for the event used in the fidl
+                    file, and <length in frames> specifies, for how many frames
+                    of the bold run (since the onset of the event) the event
+                    should be modeled.
 
-        <fidl code>:<length in frames>
+                Assumed Modeling:
+                    ::
 
-    Where <fidl code> is the code for the event used in the fidl file, and
-    <length in frames> specifies, for how many frames of the bold run (since
-    the onset of the event) the event should be modeled.
+                        <fidl code>:<hrf>[-run|-uni][:<length>]
 
-    Assumed Modeling
-    ~~~~~~~~~~~~~~~~
-    ::
+                    Where <fidl code> is the same as above, <hrf> is the type of
+                    the hemodynamic response function to use, '-run' and '-uni'
+                    specify how the regressor should be normalized, and
+                    <length> is an optional parameter, with its value dependent
+                    on the model used. The allowed <hrf> are:
 
-        <fidl code>:<hrf>[-run|-uni][:<length>]
+                    - 'boynton' ... uses the Boynton HRF
+                    - 'SPM'     ... uses the SPM double gaussian HRF
+                    - 'u'       ... unassumed (see above)
+                    - 'block'   ... block response.
 
-    Where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
-    response function to use, '-run' and '-uni' specify how the regressor should
-    be normalized, and <length> is an optional parameter, with its
-    value dependent on the model used. The allowed <hrf> are:
+                    For the first two, the <length> parameter is optional and
+                    would override the event duration information provided in
+                    the fidl file. For 'u' the length is the same as in
+                    previous section: the number of frames to model. For
+                    'block' length should be two numbers separated by a colon
+                    (e.g. 2:9) that specify the start and end offset (from the
+                    event onset) to model as a block.
 
-    - boynton (uses the Boynton HRF)
-    - SPM     (uses the SPM double gaussian HRF)
-    - u       (unassumed (see above))
-    - block   (block response)
+                    Assumed HRF regressors normalization:
+                        hrf_types `boynton` and `SPM` can be marked with an
+                        additional flag denoting how to normalize the
+                        regressor.
 
-    For the first two, the <length> parameter is optional and would override the
-    event duration information provided in the fidl file. For 'u' the length is
-    the same as in previous section: the number of frames to model. For 'block'
-    length should be two numbers separated by a colon (e.g. 2:9) that specify
-    the start and end offset (from the event onset) to model as a block.
+                        In case of `<hrf function>-uni`, e.g. 'boynton-uni' or
+                        'SPM-uni', the HRF function will be normalized to have
+                        the area under the curve equal to 1. This ensures
+                        uniform and universal, scaling of the resulting
+                        regressor across all event lengths. In addition, the
+                        scaling is not impacted by weights (e.g. behavioral
+                        coregressors), which in turn ensures that the weights
+                        are not scaled.
 
-    Assumed HRF regressors normalization
-    hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
-    how to normalize the regressor. 
-    
-    In case of `<hrf function>-uni`, e.g. 
-    'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
-    the area under the curve equal to 1. This ensures uniform and universal, 
-    scaling of the resulting regressor across all event lengths. In addition,
-    the scaling is not impacted by weights (e.g. behavioral coregressors), which
-    in turn ensures that the weights are not scaled.
- 
-    In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
-    resulting regressor is normalized to amplitude of 1 within each bold run 
-    separately. This can result in different scaling of regressors with different 
-    durations, and of the same regressor across different runs. Scaling in this 
-    case is performed after the signal is weighted, so in effect the scaling of 
-    weights (e.g. behavioral regressors), can differ across bold runs.
- 
-    The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
-    be assumed. The default has changed from '-run', which results in different 
-    assumed HRF regressor scaling and resulting GLM beta estimates as of QuNex 
-    version 0.93.4.
+                        In case of `<hrf function>-run`, e.g. `boynton-run` or
+                        `SPM-run`, the resulting regressor is normalized to
+                        amplitude of 1 within each bold run separately. This
+                        can result in different scaling of regressors with
+                        different durations, and of the same regressor across
+                        different runs. Scaling in this case is performed after
+                        the signal is weighted, so in effect the scaling of
+                        weights (e.g. behavioral regressors), can differ across
+                        bold runs.
 
-    Naming And Behavioral Regressors
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        The flag can be abbreviated to '-r' and '-u'. If not
+                        specified, '-run' will be assumed (the default might
+                        change).
 
-    Each of the above (unassumed and assumed modeling specification) can be
-    followed by a ">" (greater-than character), which signifies additional
-    information in the form::
+                Naming And Behavioral Regressors:
+                    Each of the above (unassumed and assumed modeling
+                    specification) can be followed by a ">" (greater-than
+                    character), which signifies additional information in the
+                    form::
 
-        <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
+                        <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
 
-    --name                  The name of the resulting regressor.
-    --column                The number of the additional behavioral regressors
-                            column in the fidl file (1-based) to use as a weight
-                            for the regressors.
-    --normalization_span    Whether to normalize the behavioral weight within
-                            a specific event type ('within') or across all
-                            events ('across'). [within]
-    --normalization_method  The method to use for normalization. Options are:
+                    --name
+                        The name of the resulting regressor.
+                    --column
+                        The number of the additional behavioral regressors
+                        column in the fidl file (1-based) to use as a weight
+                        for the regressors.
+                    --normalization_span
+                        Whether to normalize the behavioral weight within a
+                        specific event type ('within') or across all events
+                        ('across'). [within]
+                    --normalization_method
+                        The method to use for normalization. Options are:
 
-                            - z    (compute Z-score)
-                            - 01   (normalize to fixed range 0 to 1)
-                            - -11  (normalize to fixed range -1 to 1)
-                            - none (use weights as provided in fidl file)
+                        - 'z'    (compute Z-score)
+                        - '01'   (normalize to fixed range 0 to 1)
+                        - '-11'  (normalize to fixed range -1 to 1)
+                        - 'none' (use weights as provided in fidl file)
 
-    Example string::
+                    Example string::
 
-        'block:boynton|target:9|target:9>target_rt:1:within:z'
+                        'block:boynton|target:9|target:9>target_rt:1:within:z'
 
-    This would result in three sets of task regressors: one assumed task
-    regressor for the sustained activity across the block, one unassumed
-    task regressor set spanning 9 frames that would model the presentation of
-    the target, and one behaviorally weighted unassumed regressor that would
-    for each frame estimate the variability in response as explained by the
-    reaction time to the target.
+                    This would result in three sets of task regressors: one
+                    assumed task regressor for the sustained activity across
+                    the block, one unassumed task regressor set spanning 9
+                    frames that would model the presentation of the target, and
+                    one behaviorally weighted unassumed regressor that would
+                    for each frame estimate the variability in response as
+                    explained by the reaction time to the target.
 
-    Results
-    -------
+            Results:
+                This step results in the following files (if requested):
 
-    This step results in the following files (if requested):
+                - residual image (``<root>_res-<regressors>.<ext>``)
+                - GLM coefficient image (``<root>_res-<regressors>_coeff.<ext>``)
 
-    - residual image (``<root>_res-<regressors>.<ext>``)
-    - GLM coefficient image (``<root>_res-<regressors>_coeff.<ext>``)
+                If you want more specific GLM results and information, please use
+                preprocess_conc command.
 
-    If you want more specific GLM results and information, please use
-    preprocess_conc command.
+    Examples:
+        ::
 
-    EXAMPLE USE
-    ===========
-
-    ::
-
-        qunex preprocess_bold
-             sessions=fcMRI/sessions_hcp.txt \\
-             sessionsfolder=sessions \\
-             overwrite=no \\
-             parsessions=10 \\
-             bolds=rest \\
-             bold_actions="s,h,r,c,l" \\
-             bold_nuisance="m,V,WM,WB,1d" \\
-             mov_bad=udvarsme \\
-             pignore="hipass=linear|regress=ignore|lopass=linear" \\
-             nprocess=0
+            qunex preprocess_bold \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --bolds=rest \\
+                --bold_actions="s,h,r,c,l" \\
+                --bold_nuisance="m,V,WM,WB,1d" \\
+                --mov_bad=udvarsme \\
+                --pignore="hipass=linear|regress=ignore|lopass=linear" \\
+                --nprocess=0
     """
 
     pc.doOptionsCheck(options, sinfo, 'preprocess_bold')
@@ -2102,20 +2259,16 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     Performs spatial smoothing, temporal filtering, removal of nuisance signals
     and complex modeling of events.
 
-    USE
-    ===
-
-    preprocess_conc is a complex general purpose command implementing
-    spatial and temporal filtering, and multiple regression (GLM) to
-    enable both preprocessing and denoising of BOLD files for further
-    analysis, as well as complex activation modeling that creates
-    GLM files for second-level analyses. The function enables the
-    following actions:
+    preprocess_conc is a complex general purpose command implementing spatial
+    and temporal filtering, and multiple regression (GLM) to enable both
+    preprocessing and denoising of BOLD files for further analysis, as well as
+    complex activation modeling that creates GLM files for second-level
+    analyses. The function enables the following actions:
 
     - spatial smoothing (3D or 2D for cifti files)
     - temporal filtering (high-pass, low-pass)
     - removal of nuisance signal
-    - complex modeling of events
+    - complex modeling of events.
 
     The function makes use of a number of files and accepts a long list of
     arguments that make it very powerful and flexible but also require care in
@@ -2123,450 +2276,528 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     parameters organized by actions in the order they would be most commonly
     done. Use and parameter description will be intertwined.
 
-    INPUTS
-    ======
-
-    General parameters
-    ------------------
-
-    The function takes the usual general processing parameters:
-
-    --sessions            The batch.txt file with all the session information
-                          [batch.txt].
-    --sessionsfolder      The path to the study/sessions folder, where the
-                          imaging  data is supposed to go [.].
-    --parsessions         How many sessions to run in parallel [1].
-    --overwrite           Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --boldname            The default name of the bold files in the images
-                          folder [bold].
-    --image_target        The target format to work with, one of 4dfp, nifti,
-                          dtseries or ptseries [nifti].
-    --logfolder           The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log                 Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep'].
-                          When a comma or pipe ('|') separated list is given,
-                          the log will be created at the first provided location
-                          and then linked or copied to other locations.
-                          The valid locations are:
-
-                          - 'study'   (for the default:
-                            `<study>/processing/logs/comlogs` location)
-                          - 'session' (for `<sessionid>/logs/comlogs`)
-                          - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-                          - '<path>'  (for an arbitrary directory)
-
-    Specific parameters
-    -------------------
-
-    There are a number of basic specific parameters for this command that are
-    relevant for all or most of the actions:
-
-    --bolds             A pipe ('|') separated list of conc names to process.
-    --event_file        A pipe ('|') separated list of fidl names to use, that
-                        matches the conc list.
-    --bold_actions      A string specifying which actions, and in what sequence
-                        to perform [s,h,r,c,l]
-    --image_target      The target format to work with, one of 4dfp, nifti,
-                        dtseries or ptseries [nifti].
-    --nifti_tail        The tail of NIfTI volume images to use. []
-    --cifti_tail        The tail of CIFTI images to use. []
-    --bold_prefix       An optional prefix to place in front of processing
-                        name extensions in the resulting files, e.g.
-                        bold3<bold_prefix>_s_hpss.nii.gz [].
-    --bold_variant      Optional variant of HCP BOLD preprocessing. If
-                        specified, the BOLD images in
-                        `images/functional<bold_variant>` will be
-                        processed [].
-    --img_suffix        Specifies a suffix for 'images' folder to enable
-                        support for multiple parallel workflows. Empty
-                        if not used [].
-
-    The --bolds and --event_file parameters provide names based on which the
-    the appropriate .conc and .fidl files are searched for. Both are first
-    searched for in `images<img_suffix>/functional<bold_variant>/concs` and
-    images<img_suffix>/functional<bold_variant>/events folders respectively.
-    There they would be named as
-    `[<session id>_]<boldname>_<image_target>_<conc name>.conc` and
-    `[<session id>_]<boldname>_<image_target>_<fidl name>.fidl`. If the files
-    are not present in the relevant individual session's folders, they are
-    searched for in the `<sessionsfolder>/inbox/events` and
-    `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_"
-    in the *.fidl and *.conc file name is not optional but required.
-
-    The actions that can be performed are denoted by a single letter, and they
-    will be executed in the sequence listed:
-
-    --m     Motion scrubbing.
-    --s     Spatial smoothing.
-    --h     High-pass filtering.
-    --r     Regression (nuisance and/or task) with an optional number 0, 1, or 2
-            specifying the type of regression to use (see REGRESSION below).
-    --c     Saving of resulting beta coefficients (always to follow 'r').
-    --l     Low-pass filtering.
-
-    So the default 's,h,r,c,l' --bold_actions parameter would lead to the files
-    first being smoothed, then high-pass filtered. Next a regression step
-    would follow in which nuisance signal and/or task related signal would
-    be estimated and regressed out, then the related beta estimates would
-    be saved. Lastly the BOLDs would be also low-pass filtered.
-
-    **Relative vs. absolute use of conc files.**
-
-    If `conc_use` is set to relative (the default), then the only information
-    taken from the conc files will be the bold numbers. The actual location of
-    the bold files will be constructed from the information on the location of
-    the session's sesion folder present in the batch file, and the
-    `bold_variant` setting, whereas the specific bold file name and file
-    format (e.g. .nii.gz vs. .dtseries.nii) to use will depend on `boldname`,
-    `image_target`, `nifti_tail` and `cifti_tail` settings. This allows for
-    flexible use of conc files. That is, the same conc files can be used for
-    NIfTI and CIFTI versions of bold files, across bold variants, and even when
-    the actual study location changes, e.g. when moving the study from one
-    server, volume or folder to another. In most cases this use will be prefered.
-
-    If the information in the conc file is to be used literally, e.g. in
-    cases when you want to work with a specific preprocessed version of the
-    BOLD files, then `conc_use` should be set to `absolute`. In this case
-    both the specific location as well as the specific filename specified in
-    the conc file will be used exactly as specified. In this case, do check
-    and make sure that the information in the conc file is valid and it matches
-    with `boldname` and `image_target` parameters, and that the `nifti_tail`
-    is specified correctly, as it will be used to obtain bold statistics and
-    nuisance information!
-
-
-    SCRUBBING
-    =========
-
-    The command either makes use of scrubbing information or performs scrubbing
-    comuputation on its own (when 'm' is part of the command). In the latter
-    case, all the scrubbing parameters need to be specified:
-
-    --mov_radius      Estimated head radius (in mm) for computing frame
-                      displacement statistics [50].
-    --mov_fd          Frame displacement threshold (in mm) to use for
-                      identifying bad frames [0.5]
-    --mov_dvars       The (mean normalized) dvars threshold to use for
-                      identifying bad frames [3.0].
-    --mov_dvarsme     The (median normalized) dvarsm threshold to use for
-                      identifying bad frames [1.5].
-    --mov_after       How many frames after each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_before      How many frames before each frame identified as bad
-                      to also exclude from further processing and analysis [0].
-    --mov_bad         Which criteria to use for identification of bad frames
-                      [udvarsme].
-
-    Criteria for identification of bad frames can be one out of:
-
-    --mov           Frame displacement threshold (fdt) is exceeded.
-    --dvars         Image intensity normalized root mean squared error (RMSE)
-                    threshold (dvarsmt) is exceeded.
-    --dvarsme       Median normalised RMSE (dvarsmet) threshold is exceeded.
-    --idvars        Both fdt and dvarsmt are exceeded (i for intersection).
-    --uvars         Either fdt or dvarsmt are exceeded (u for union).
-    --idvarsme      Both fdt and dvarsmet are exceeded.
-    --udvarsme      Either fdt or udvarsmet are exceeded.
-
-    For more detailed description please see wiki entry on Movement scrubbing.
-
-    In any case, if scrubbing was done beforehand or as a part of this command,
-    one has to specify, how the scrubbing information is used:
-
-    --pignore       String describing how to deal with bad frames.
-
-    The string has the following format::
-
-        'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
-
-    Filtering options are:
-
-    --keep       Keep all the bad frames unchanged.
-    --linear     Replace bad frames with linear interpolated values based on
-                 neighboring good frames.
-    --spline     Replace bad frames with spline interpolated values based on
-                 neighboring good frames.
-
-    To prevent artifacts present in bad frames to be temporarily spread, use
-    either 'linear' or 'spline' options.
-
-    Regression options are:
-
-    --keep       Keep the bad frames and use them in the regression.
-    --ignore     Exclude bad frames from regression.
-    --mark       Exclude bad frames from regression and mark the bad frames
-                 as NaN.
-    --linear     Replace bad frames with linear interpolated values based on
-                 neighboring good frames.
-    --spline     Replace bad frames with spline interpolated values based on
-                 neighboring good frames.
-
-    Please note that when the bad frames are not kept, the original values will
-    be retained in the residual signal. In this case they have to be excluded
-    or ignored also in all following analyses, otherwise they can be a
-    significant source of artifacts.
-
-    SPATIAL SMOOTHING
-    =================
-
-    Volume smoothing
-    ----------------
-
-    For volume formats the images will be smoothed using the img_smooth_3d
-    nimage method. For cifti format the smooting will be done by calling the
-    relevant wb_command command. The smoothing specific parameters are:
-
-    --voxel_smooth      Gaussian smoothing FWHM in voxels [2]
-    --smooth_mask       Whether to smooth only within a mask, and what mask to
-                        use (nonzero/brainsignal/brainmask/<filename>)[false].
-    --dilate_mask       Whether to dilate the image after masked smoothing and
-                        what mask to use (nonzero/brainsignal/brainmask/
-                        same/<filename>)[false].
-
-    If a smoothing mask is set, only the signal within the specified mask will
-    be used in the smoothing. If a dilation mask is set, after smoothing within
-    a mask, the resulting signal will be constrained / dilated to the specified
-    dilation mask.
-
-    For both parameters the possible options are:
-
-    --nonzero          Mask will consist of all the nonzero voxels of the first
-                       BOLD frame.
-    --brainsignal      Mask will consist of all the voxels that are of value
-                       300 or higher in the first BOLD frame (this gave a good
-                       coarse brain mask for images intensity normalized to
-                       mode 1000 in the NIL preprocessing stream).
-    --brainmask        Mask will be the actual bet extracted brain mask based
-                       on the first BOLD frame (generated using in the
-                       creatBOLDBrainMasks command).
-    --filename         All the non-zero voxels in a specified volume file will
-                       be used as a mask.
-    --false            No mask will be used.
-    --same             Only for dilate_mask, the mask used will be the same as
-                       smoothing mask.
-
-    Cifti smoothing
-    ---------------
-
-    For cifti format images, smoothing will be run using wb_command. The
-    following parameters can be set:
-
-    --surface_smooth      FWHM for Gaussian surface smoothing in mm [6.0].
-    --volume_smooth       FWHM for Gaussian volume smoothing in mm [6.0].
-    --omp_threads         Number of cores to be used by wb_command. 0 for no
-                          change of system settings [0].
-    --framework_path      The path to framework libraries on the Mac system.
-                          No need to use it currently if installed correctly.
-    --wb_command_path     The path to the wb_command executive. No need to
-                          use it currently if installed correctly.
-
-    Results
-    -------
-
-    The resulting smoothed files are saved with '_s' added to the BOLD root
-    filename.
-
-
-    TEMPORAL FILTERING
-    ==================
-
-    Temporal filtering is accomplished using img_filter nimage method. The
-    code is adopted from the FSL C++ code enabling appropriate handling of
-    bad frames (as described above - see SCRUBBING). The specific parameters
-    are:
-
-    --hipass_filter      The frequency for high-pass filtering in Hz [0.008].
-    --lopass_filter      The frequency for low-pass filtering in Hz [0.09].
-
-    Please note that the values finaly passed to img_filter method are the
-    respective sigma values computed from the specified frequencies and TR.
-
-    Results
-    -------
-
-    The resulting filtered files are saved with '_hpss' or '_bpss' added to the
-    BOLD root filename for high-pass and low-pass filtering, respectively.
-
-    REGRESSION
-    ==========
-
-    Regression is a complex step in which GLM is used to estimate the beta
-    weights for the specified nuisance regressors and events. The resulting
-    beta weights are then stored in a GLM file (a regular file with additional
-    information on the design used) and residuals are stored in a separate file.
-    This step can therefore be used for two purposes: (1) to remove nuisance
-    signal and event structure from BOLD files, removing unwanted potential
-    sources of correlation for further functional connectivity analyses, and
-    (2) to get task beta estimates for further activation analyses. The
-    following specific parameters are used in this step:
-
-    --bold_nuisance      A comma separated list of regressors to include in GLM.
-                         Possible values are: [m,m1d,mSq,m1dSq,V,WM,WB,1d]
-
-                         - m     (motion parameters)
-                         - m1d   (first derivative of motion parameters)
-                         - mSq   (squared motion parameters)
-                         - m1dSq (squared first derivative of motion parameters)
-                         - V     (ventricles signal)
-                         - WM    (white matter signal)
-                         - WB    (whole brain signal)
-                         - 1d    (first derivative of above nuisance signals)
-                         - e     (events listed in the provided fidl files (see
-                           above), modeled as specified in the event_string
-                           parameter.)
-
-    --event_string       A string describing, how to model the events listed in
-                         the provided fidl files. []
-    --glm_matrix         Whether to save the GLM matrix as a text file ('text'),
-                         a png image file ('image'), both ('both') or not
-                         ('none'). [none]
-    --glm_residuals      Whether to save the residuals after GLM regression
-                         ('save') or not ('none'). [save]
-    --glm_name           An additional name to add to the residuals and GLM
-                         files to distinguish between different possible models
-                         used.
-
-    GLM modeling
-    ------------
-
-    There are two important variables that affect the exact GLM model used to
-    estimate nuisance and task beta coefficients and regress them from the
-    signal. The first is the optional number following the 'r' command in the
-    --bold_actions parameter. There are three options:
-
-    - 0 - Estimate nuisance regressors for each bold file separately, however,
-      model events across all bold files (the default if no number is)
-      specified.
-    - 1 - Estimate both nuisance regressors and task regressors for each bold
-      run separately.
-    - 2 - Estimate both nuisance regressors as well as task regressors across
-      all bold runs.
-
-    The second key variable is the event string provided by the --event_string
-    parameter. The event string is a pipe ('|') separated list of regressor
-    specifications. The possibilities are:
-
-    Unassumed Modeling
-    ~~~~~~~~~~~~~~~~~~
-    ::
-
-        <fidl code>:<length in frames>
-
-    Where <fidl code> is the code for the event used in the fidl file, and
-    <length in frames> specifies, for how many frames of the bold run (since
-    the onset of the event) the event should be modeled.
-
-    Assumed Modeling
-    ~~~~~~~~~~~~~~~~
-    ::
-
-        <fidl code>:<hrf>[-run|-uni][:<length>]
-
-    Where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
-    response function to use, '-run' and '-uni' specify how the regressor should
-    be normalized, and <length> is an optional parameter, with its
-    value dependent on the model used. The allowed <hrf> are:
-
-    - boynton (uses the Boynton HRF)
-    - SPM     (uses the SPM double gaussian HRF)
-    - u       (unassumed (see above))
-    - block   (block response)
-
-    For the first two, the <length> parameter is optional and would override the
-    event duration information provided in the fidl file. For 'u' the length is
-    the same as in previous section: the number of frames to model. For 'block'
-    length should be two numbers separated by a colon (e.g. 2:9) that specify
-    the start and end offset (from the event onset) to model as a block.
-
-    Assumed HRF regressors normalization
-    hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
-    how to normalize the regressor. 
-    
-    In case of `<hrf function>-uni`, e.g. 
-    'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
-    the area under the curve equal to 1. This ensures uniform and universal, 
-    scaling of the resulting regressor across all event lengths. In addition,
-    the scaling is not impacted by weights (e.g. behavioral coregressors), which
-    in turn ensures that the weights are not scaled.
- 
-    In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
-    resulting regressor is normalized to amplitude of 1 within each bold run 
-    separately. This can result in different scaling of regressors with different 
-    durations, and of the same regressor across different runs. Scaling in this 
-    case is performed after the signal is weighted, so in effect the scaling of 
-    weights (e.g. behavioral regressors), can differ across bold runs.
- 
-    The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
-    be assumed. The default has changed from '-run', which results in different 
-    assumed HRF regressor scaling and resulting GLM beta estimates as of QuNex 
-    version 0.93.4.
-
-    Naming And Behavioral Regressors
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Each of the above (unassumed and assumed modeling specification) can be
-    followed by a ">" (greater-than character), which signifies additional
-    information in the form::
-
-        <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
-
-    --name                  The name of the resulting regressor.
-    --column                The number of the additional behavioral regressors
-                            column in the fidl file (1-based) to use as a weight
-                            for the regressors.
-    --normalization_span    Whether to normalize the behavioral weight within
-                            a specific event type ('within') or across all
-                            events ('across'). [within]
-    --normalization_method  The method to use for normalization. Options are:
-
-                            - z    (compute Z-score)
-                            - 01   (normalize to fixed range 0 to 1)
-                            - -11  (normalize to fixed range -1 to 1)
-                            - none (use weights as provided in fidl file)
-
-    Example string::
-
-        'block:boynton|target:9|target:9>target_rt:1:within:z'
-
-    This would result in three sets of task regressors: one assumed task
-    regressor for the sustained activity across the block, one unassumed
-    task regressor set spanning 9 frames that would model the presentation of
-    the target, and one behaviorally weighted unassumed regressor that would
-    for each frame estimate the variability in response as explained by the
-    reaction time to the target.
-
-    Results
-    -------
-
-    This step results in the following files (if requested):
-
-    - residual image (``<root>_res-<regressors><glm name>.<ext>``)
-    - GLM image (``<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>``)
-    - text GLM regressor matrix (``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt``)
-    - image of a regressor matrix (``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png``)
-
-    EXAMPLE USE
-    ===========
-
-    Activation analysis::
-
-        qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-             overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-M1 \\
-             bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
-             event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
-             glm_matrix=both glm_residuals=none nprocess=0 \\
-             pignore="hipass=keep|regress=keep|lopass=keep"
-
-    Functional connectivity preprocessing::
-
-        qunex preprocess_conc sessions=fcMRI/sessions_hcp.txt sessionsfolder=sessions \\
-             overwrite=no parsessions=10 bolds=SRT event_file=SRT glm_name=-FC \\
-             bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
-             event_string="block:boynton|target:9" \\
-             glm_matrix=none glm_residuals=save nprocess=0 \\
-             pignore="hipass=linear|regress=ignore|lopass=linear"
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging  data is
+            supposed to go.
+
+        --parsessions (str, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data ('yes') or not ('no').
+
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
+
+        --image_target (str, default 'nifti'):
+            The target format to work with, one of '4dfp', 'nifti', 'dtseries'
+            or 'ptseries'.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --log (str, default 'study'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed. When a comma or pipe ('|') separated list
+            is given, the log will be created at the first provided location
+            and then linked or copied to other locations. The valid locations
+            are:
+
+            - 'study'   (for the default:
+              ``<study>/processing/logs/comlogs`` location)
+            - 'session' (for ``<sessionid>/logs/comlogs``)
+            - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
+            - <path>  (for an arbitrary directory).
+
+        --bolds (str, default 'all'):
+            A pipe ('|') separated list of conc names to process.
+
+        --event_file (str, default ''):
+            A pipe ('|') separated list of fidl names to use, that
+            matches the conc list.
+
+        --bold_actions (str, default 's,h,r,c,l'):
+            A string specifying which actions, and in what sequence
+            to perform.
+
+        --nifti_tail (str, default ''):
+            The tail of NIfTI volume images to use.
+
+        --cifti_tail (str, default ''):
+            The tail of CIFTI images to use.
+
+        --bold_prefix (str, default ''):
+            An optional prefix to place in front of processing name extensions
+            in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
+
+        --bold_variant (str, default detailed below):
+            Optional variant of HCP BOLD preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
+
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
+
+    Output files:
+        This step results in the following files (if requested):
+
+        - residual image::
+
+            <root>_res-<regressors><glm name>.<ext>
+
+        - GLM image::
+
+            <bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>
+
+        - text GLM regressor matrix::
+
+            glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt
+
+        - image of a regressor matrix::
+
+            ``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png``
+
+    Notes:
+        The --bolds and --event_file parameters provide names based on which the
+        the appropriate .conc and .fidl files are searched for. Both are first
+        searched for in `images<img_suffix>/functional<bold_variant>/concs` and
+        images<img_suffix>/functional<bold_variant>/events folders
+        respectively. There they would be named as `[<session
+        id>_]<boldname>_<image_target>_<conc name>.conc` and `[<session
+        id>_]<boldname>_<image_target>_<fidl name>.fidl`. If the files are not
+        present in the relevant individual session's folders, they are searched
+        for in the `<sessionsfolder>/inbox/events` and
+        `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_"
+        in the \*.fidl and \*.conc file name is not optional but required.
+
+        The actions that can be performed are denoted by a single letter, and
+        they will be executed in the sequence listed:
+
+        --m     Motion scrubbing.
+        --s     Spatial smoothing.
+        --h     High-pass filtering.
+        --r     Regression (nuisance and/or task) with an optional number 0, 1,
+                or 2 specifying the type of regression to use (see REGRESSION
+                below).
+        --c     Saving of resulting beta coefficients (always to follow 'r').
+        --l     Low-pass filtering.
+
+        So the default 's,h,r,c,l' --bold_actions parameter would lead to the
+        files first being smoothed, then high-pass filtered. Next a regression
+        step would follow in which nuisance signal and/or task related signal
+        would be estimated and regressed out, then the related beta estimates
+        would be saved. Lastly the BOLDs would be also low-pass filtered.
+
+        Relative vs. absolute use of conc files:
+            If `conc_use` is set to relative (the default), then the only
+            information taken from the conc files will be the bold numbers. The
+            actual location of the bold files will be constructed from the
+            information on the location of the session's sesion folder present
+            in the batch file, and the `bold_variant` setting, whereas the
+            specific bold file name and file format (e.g. .nii.gz vs.
+            .dtseries.nii) to use will depend on `boldname`, `image_target`,
+            `nifti_tail` and `cifti_tail` settings. This allows for flexible
+            use of conc files. That is, the same conc files can be used for
+            NIfTI and CIFTI versions of bold files, across bold variants, and
+            even when the actual study location changes, e.g. when moving the
+            study from one server, volume or folder to another. In most cases
+            this use will be prefered.
+
+            If the information in the conc file is to be used literally, e.g. in
+            cases when you want to work with a specific preprocessed version of
+            the BOLD files, then `conc_use` should be set to `absolute`. In
+            this case both the specific location as well as the specific
+            filename specified in the conc file will be used exactly as
+            specified. In this case, do check and make sure that the
+            information in the conc file is valid and it matches with
+            `boldname` and `image_target` parameters, and that the `nifti_tail`
+            is specified correctly, as it will be used to obtain bold
+            statistics and nuisance information!
+
+        Scrubbing:
+            The command either makes use of scrubbing information or performs
+            scrubbing comuputation on its own (when 'm' is part of the
+            command). In the latter case, all the scrubbing parameters need to
+            be specified:
+
+            --mov_radius (int, default 50):
+                Estimated head radius (in mm) for computing frame displacement
+                statistics.
+            --mov_fd (float, default 0.5):
+                Frame displacement threshold (in mm) to use for identifying bad
+                frames.
+            --mov_dvars (float, default 3.0):
+                The (mean normalized) dvars threshold to use for identifying bad
+                frames.
+            --mov_dvarsme (float, default 1.5):
+                The (median normalized) dvarsm threshold to use for identifying
+                bad frames.
+            --mov_after (int, default 0):
+                How many frames after each frame identified as bad to also
+                exclude from further processing and analysis.
+            --mov_before (int, default 0):
+                How many frames before each frame identified as bad to also
+                exclude from further processing and analysis.
+            --mov_bad (str, default 'udvarsme'):
+                Which criteria to use for identification of bad frames.
+
+            Criteria for identification of bad frames can be one out of:
+
+            --mov
+                Frame displacement threshold (fdt) is exceeded.
+            --dvars
+                Image intensity normalized root mean squared error (RMSE)
+                threshold (dvarsmt) is exceeded.
+            --dvarsme
+                Median normalised RMSE (dvarsmet) threshold is exceeded.
+            --idvars
+                Both fdt and dvarsmt are exceeded (i for intersection).
+            --uvars
+                Either fdt or dvarsmt are exceeded (u for union).
+            --idvarsme
+                Both fdt and dvarsmet are exceeded.
+            --udvarsme
+                Either fdt or udvarsmet are exceeded.
+
+            For more detailed description please see wiki entry on Movement
+            scrubbing.
+
+            In any case, if scrubbing was done beforehand or as a part of this
+            command, one has to specify, how the scrubbing information is used:
+
+            --pignore
+                String describing how to deal with bad frames.
+
+            The string has the following format::
+
+                'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
+
+            Filtering options are:
+
+            --keep
+                Keep all the bad frames unchanged.
+            --linear
+                Replace bad frames with linear interpolated values based on
+                neighboring good frames.
+            --spline
+                Replace bad frames with spline interpolated values based on
+                neighboring good frames.
+
+            To prevent artifacts present in bad frames to be temporarily spread,
+            use either 'linear' or 'spline' options.
+
+            Regression options are:
+
+            --keep
+                Keep the bad frames and use them in the regression.
+            --ignore
+                Exclude bad frames from regression.
+            --mark
+                Exclude bad frames from regression and mark the bad frames as
+                NaN.
+            --linear
+                Replace bad frames with linear interpolated values based on
+                neighboring good frames.
+            --spline
+                Replace bad frames with spline interpolated values based on
+                neighboring good frames.
+
+            Please note that when the bad frames are not kept, the original
+            values will be retained in the residual signal. In this case they
+            have to be excluded or ignored also in all following analyses,
+            otherwise they can be a significant source of artifacts.
+
+        Spatial smoothing:
+            Volume smoothing:
+                For volume formats the images will be smoothed using the
+                img_smooth_3d nimage method. For cifti format the smooting will
+                be done by calling the relevant wb_command command. The
+                smoothing parameters are:
+
+                --voxel_smooth (int, default 2):
+                    Gaussian smoothing FWHM in voxels.
+                --smooth_mask (str, default false):
+                    Whether to smooth only within a mask, and what mask to use
+                    (nonzero|brainsignal|brainmask|<filename>|false).
+                --dilate_mask (str, default false):
+                    Whether to dilate the image after masked smoothing and what
+                    mask to use
+                    (nonzero|brainsignal|brainmask|same|<filename>|false).
+
+                If a smoothing mask is set, only the signal within the specified
+                mask will be used in the smoothing. If a dilation mask is set,
+                after smoothing within a mask, the resulting signal will be
+                constrained / dilated to the specified dilation mask.
+
+                For both parameters the possible options are:
+
+                --nonzero
+                    Mask will consist of all the nonzero voxels of the first
+                    BOLD frame.
+                --brainsignal
+                    Mask will consist of all the voxels that are of value 300 or
+                    higher in the first BOLD frame (this gave a good coarse
+                    brain mask for images intensity normalized to mode 1000 in
+                    the NIL preprocessing stream).
+                --brainmask
+                    Mask will be the actual bet extracted brain mask based on
+                    the first BOLD frame (generated using in the
+                    creatBOLDBrainMasks command).
+                --filename
+                    All the non-zero voxels in a specified volume file will be
+                    used as a mask.
+                --false
+                    No mask will be used.
+                --same
+                    Only for dilate_mask, the mask used will be the same as
+                    smoothing mask.
+
+            Cifti smoothing:
+                For cifti format images, smoothing will be run using wb_command.
+                The following parameters can be set:
+
+                --surface_smooth (float, default 6.0):
+                    FWHM for Gaussian surface smoothing in mm.
+                --volume_smooth (float, default 6.0):
+                    FWHM for Gaussian volume smoothing in mm.
+                --omp_threads (int, default 0):
+                    Number of cores to be used by wb_command. 0 for no change of
+                    system settings.
+                --framework_path (str, default ''):
+                    The path to framework libraries on the Mac system. No need
+                    to use it currently if installed correctly.
+                --wb_command_path (str, default ''):
+                    The path to the wb_command executive. No need to use it
+                    currently if installed correctly.
+
+                Results:
+                    The resulting smoothed files are saved with '_s' added to
+                    the BOLD root filename.
+
+
+        Temporal filtering:
+            Temporal filtering is accomplished using img_filter nimage method.
+            The code is adopted from the FSL C++ code enabling appropriate
+            handling of bad frames (as described above - see SCRUBBING). The
+            parameters are:
+
+            --hipass_filter (float, default 0.008):
+                The frequency for high-pass filtering in Hz.
+            --lopass_filter (float, default 0.09):
+                The frequency for low-pass filtering in Hz.
+
+            Please note that the values finally passed to img_filter method are
+            the respective sigma values computed from the specified frequencies
+            and TR.
+
+            Results:
+                The resulting filtered files are saved with '_hpss' or '_bpss'
+                added to the BOLD root filename for high-pass and low-pass
+                filtering, respectively.
+
+        Regression:
+            Regression is a complex step in which GLM is used to estimate the
+            beta weights for the specified nuisance regressors and events. The
+            resulting beta weights are then stored in a GLM file (a regular
+            file with additional information on the design used) and residuals
+            are stored in a separate file. This step can therefore be used for
+            two purposes: (1) to remove nuisance signal and event structure
+            from BOLD files, removing unwanted potential sources of correlation
+            for further functional connectivity analyses, and (2) to get task
+            beta estimates for further activation analyses. The following
+            parameters are used in this step:
+
+            --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
+                A comma separated list of regressors to include in GLM.
+                Possible values are:
+
+                - 'm'     ... motion parameters
+                - 'm1d'   ... first derivative of motion parameters
+                - 'mSq'   ... squared motion parameters
+                - 'm1dSq' ... squared first derivative of motion parameters
+                - 'V'     ... ventricles signal
+                - 'WM'    ... white matter signal
+                - 'WB'    ... whole brain signal
+                - '1d'    ... first derivative of above nuisance signals
+                - 'e'     ... events listed in the provided fidl files (see
+                  above), modeled as specified in the event_string parameter.
+
+            --event_string (str, default ''):
+                A string describing, how to model the events listed in the
+                provided fidl files.
+            --glm_matrix (str, default 'none'):
+                Whether to save the GLM matrix as a text file ('text'), a png
+                image file ('image'), both ('both') or not ('none').
+            --glm_residuals (str, default 'save'):
+                Whether to save the residuals after GLM regression ('save') or
+                not ('none').
+            --glm_name (str, default ''):
+                An additional name to add to the residuals and GLM files to
+                distinguish between different possible models used.
+
+            GLM modeling:
+                There are two important variables that affect the exact GLM
+                model used to estimate nuisance and task beta coefficients and
+                regress them from the signal. The first is the optional number
+                following the 'r' command in the --bold_actions parameter.
+                There are three options:
+
+                - '0' ... Estimate nuisance regressors for each bold file
+                  separately, however, model events across all bold files (the
+                  default if no number is) specified.
+                - '1' ... Estimate both nuisance regressors and task regressors
+                  for each bold run separately.
+                - '2' ... Estimate both nuisance regressors as well as task
+                  regressors across all bold runs.
+
+                The second key variable is the event string provided by the
+                --event_string parameter. The event string is a pipe ('|')
+                separated list of regressor specifications. The possibilities
+                are discussed below:
+
+                Unassumed Modeling:
+                    ::
+
+                        <fidl code>:<length in frames>
+
+                    Where <fidl code> is the code for the event used in the fidl
+                    file, and <length in frames> specifies, for how many frames
+                    of the bold run (since the onset of the event) the event
+                    should be modeled.
+
+                Assumed Modeling:
+                    ::
+
+                        <fidl code>:<hrf>[-run|-uni][:<length>]
+
+                    Where <fidl code> is the same as above, <hrf> is the type of
+                    the hemodynamic response function to use, '-run' and '-uni'
+                    specify how the regressor should be normalized, and
+                    <length> is an optional parameter, with its value dependent
+                    on the model used. The allowed <hrf> are:
+
+                    - 'boynton' ... uses the Boynton HRF
+                    - 'SPM'     ... uses the SPM double gaussian HRF
+                    - 'u'       ... unassumed (see above)
+                    - 'block'   ... block response.
+
+                    For the first two, the <length> parameter is optional and
+                    would override the event duration information provided in
+                    the fidl file. For 'u' the length is the same as in
+                    previous section: the number of frames to model. For
+                    'block' length should be two numbers separated by a colon
+                    (e.g. 2:9) that specify the start and end offset (from the
+                    event onset) to model as a block.
+
+                    Assumed HRF regressors normalization:
+                        hrf_types `boynton` and `SPM` can be marked with an
+                        additional flag denoting how to normalize the
+                        regressor.
+
+                        In case of `<hrf function>-uni`, e.g. 'boynton-uni' or
+                        'SPM-uni', the HRF function will be normalized to have
+                        the area under the curve equal to 1. This ensures
+                        uniform and universal, scaling of the resulting
+                        regressor across all event lengths. In addition, the
+                        scaling is not impacted by weights (e.g. behavioral
+                        coregressors), which in turn ensures that the weights
+                        are not scaled.
+
+                        In case of `<hrf function>-run`, e.g. `boynton-run` or
+                        `SPM-run`, the resulting regressor is normalized to
+                        amplitude of 1 within each bold run separately. This
+                        can result in different scaling of regressors with
+                        different durations, and of the same regressor across
+                        different runs. Scaling in this case is performed after
+                        the signal is weighted, so in effect the scaling of
+                        weights (e.g. behavioral regressors), can differ across
+                        bold runs.
+
+                        The flag can be abbreviated to '-r' and '-u'. If not
+                        specified, '-run' will be assumed (the default might
+                        change).
+
+                Naming And Behavioral Regressors:
+                    Each of the above (unassumed and assumed modeling
+                    specification) can be followed by a ">" (greater-than
+                    character), which signifies additional information in the
+                    form::
+
+                        <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
+
+                    --name
+                        The name of the resulting regressor.
+                    --column
+                        The number of the additional behavioral regressors
+                        column in the fidl file (1-based) to use as a weight
+                        for the regressors.
+                    --normalization_span
+                        Whether to normalize the behavioral weight within a
+                        specific event type ('within') or across all events
+                        ('across'). [within]
+                    --normalization_method
+                        The method to use for normalization. Options are:
+
+                        - 'z'    (compute Z-score)
+                        - '01'   (normalize to fixed range 0 to 1)
+                        - '-11'  (normalize to fixed range -1 to 1)
+                        - 'none' (use weights as provided in fidl file)
+
+                    Example string::
+
+                        'block:boynton|target:9|target:9>target_rt:1:within:z'
+
+                    This would result in three sets of task regressors: one
+                    assumed task regressor for the sustained activity across
+                    the block, one unassumed task regressor set spanning 9
+                    frames that would model the presentation of the target, and
+                    one behaviorally weighted unassumed regressor that would
+                    for each frame estimate the variability in response as
+                    explained by the reaction time to the target.
+
+    Examples:
+        Activation analysis::
+
+            qunex preprocess_conc \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --bolds=SRT \\
+                --event_file=SRT \\
+                --glm_name=-M1 \\
+                --bold_actions="s,r,c" \\
+                --bold_nuisance=e \\
+                --mov_bad=none \\
+                --event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
+                --glm_matrix=both \\
+                --glm_residuals=none \\
+                --nprocess=0 \\
+                --pignore="hipass=keep|regress=keep|lopass=keep"
+
+        Functional connectivity preprocessing::
+
+            qunex preprocess_conc \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --parsessions=10 \\
+                --bolds=SRT \\
+                --event_file=SRT \\
+                --glm_name=-FC \\
+                --bold_actions="s,h,r,c,l" \\
+                --bold_nuisance="m,V,WM,WB,1d,e" \\
+                --mov_bad=udvarsme \\
+                --event_string="block:boynton|target:9" \\
+                --glm_matrix=none \\
+                --glm_residuals=save \\
+                --nprocess=0 \\
+                --pignore="hipass=linear|regress=ignore|lopass=linear"
     """
 
     pc.doOptionsCheck(options, sinfo, 'preprocess_conc')

@@ -1,6 +1,6 @@
 {
     "files": {
-        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap", "mbPCASLhr"],
+        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap", "mbPCASLhr", "ASL"],
         "T1w": {
             "info":  [],
         },
@@ -27,8 +27,8 @@
         }
     },
     "folders": {
-        "order": {"T1w": 1, "T2w": 2, "rfMRI": 3, "tfMRI": 4, "Diffusion": 5, "mbPCASLhr": 6},
-        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "Diffusion", "mbPCASLhr"],
+        "order": {"T1w": 1, "T2w": 2, "rfMRI": 3, "tfMRI": 4, "Diffusion": 5, "mbPCASLhr": 6, "ASL": 7},
+        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "Diffusion", "mbPCASLhr", "ASL"],
         "T1w": {
             "info":  [],
             "check": [  
@@ -112,5 +112,13 @@
                         ["mbPCASLhr"]
                       ]
         },
-    }    
+        "ASL": {
+            "info":  [],
+            "check": [  
+                        ["SpinEchoFieldMap", "AP"],
+                        ["SpinEchoFieldMap", "PA"],
+                        ["ASL"]
+                      ]
+        },
+    }
 }

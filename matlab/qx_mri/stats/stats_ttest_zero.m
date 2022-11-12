@@ -1,23 +1,27 @@
 function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 
-%``function [] = stats_ttest_zero(dfile, output, exclude, verbose)``
+%``stats_ttest_zero(dfile, output, exclude, verbose)``
 %
-%   INPUTS
-%   ======
+%   Computes t-test against zero and saves specified results.
 %
-%	Computes t-test against zero and saves specified results.
+%   Parameters:
+%       --dfile (str):
+%           The data file to work on - either a single image or a conc file.
 %
-%	--dfile     the data file to work on - either a single image or a conc file
-%   --output    the type of results to save ['metpz']
+%       --output (str, default 'metpz'):
+%           The type of results to save:
 %
-%               - m ... mean value for each voxel
-%               - e ... standard error for each voxel
-%               - t ... t-value for each voxel
-%               - p ... p-value for each voxel
-%               - z ... Z-score for each voxel
+%           - 'm' ... mean value for each voxel
+%           - 'e' ... standard error for each voxel
+%           - 't' ... t-value for each voxel
+%           - 'p' ... p-value for each voxel
+%           - 'z' ... Z-score for each voxel.
 %
-%   --exclude   values to be excluded from computation []
-%   --verbose   should report each step [false]
+%       --exclude (int, default ''):
+%           Values to be excluded from computation.
+%
+%       --verbose (bool, default false):
+%           Whether to report each step.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -48,7 +52,7 @@ root = strrep(root, '.gz', '');
 root = strrep(root, '.conc', '');
 
 % ======================================================
-% 	----> read file
+%     ----> read file
 
 if verbose, fprintf('--------------------------\nComputing t-test against zero\n ... reading data (%s) ', dfile), end
 img = nimage(dfile);
@@ -60,7 +64,7 @@ end
 
 
 % ======================================================
-% 	----> compute t-test
+%     ----> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
 [p Z M SE t] = img.img_ttest_zero(verbose);
@@ -68,7 +72,7 @@ if verbose, fprintf(' --- \n'), end
 
 
 % ======================================================
-% 	----> save results
+%     ----> save results
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)

@@ -7,77 +7,96 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 usage() {
- echo ""
- echo "This function implements reduction on the DWI dense connectomes using a given "
- echo "'seed' structure (e.g. thalamus)."
- echo ""
- echo "It explicitly assumes the the Human Connectome Project folder structure for "
- echo "preprocessing. Dense Connectome DWI data needs to be in the following folder::"
- echo ""
- echo " <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/"
- echo ""
- echo "It produces the following outputs::"
- echo ""
- echo "- Dense connectivity seed tractography file:"
- echo "  <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>.dconn.nii"
- echo "- Dense scalar seed tractography file:"
- echo "  <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>_Avg.dscalar.nii"
- echo ""
- echo "INPUTS"
- echo "======"
- echo ""
- echo "--sessionsfolder    Path to study folder that contains sessions"
- echo "--sessions          Comma separated list of sessions to run"
- echo "--matrixversion     Matrix solution verion to run parcellation on; e.g. 1 or 3"
- echo "--seedfile          Specify the absolute path of the seed file you want to use "
- echo "                    as a seed for dconn reduction "
- echo "                    (e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz)"
- echo ""
- echo "                    Note: If you specify --seedfile='gbc' then the function "
- echo "                    computes an average across all streamlines from every "
- echo "                    greyordinate to all other greyordinates."
- echo "--outname           Specify the suffix output name of the dscalar file"
- echo "--overwrite         Delete prior run for a given session (yes / no)"
- echo "--waytotal          Use the waytotal normalized version of the DWI dense "
- echo "                    connectome. Default: [none]"
- echo ""
- echo "                    - none     ... without waytotal normalization" 
- echo "                    - standard ... standard waytotal normalized"
- echo "                    - log      ... log-transformed waytotal normalized"
- echo ""
- echo "EXAMPLE USE"
- echo "==========="
- echo ""
- echo "Run directly via::"
- echo ""
- echo " ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh \ "
- echo " --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
- echo ""
- reho "NOTE: --scheduler is not available via direct script call."
- echo ""
- echo "Run via:: "
- echo ""
- echo "  qunex dwi_seed_tractography_dense --<parameter1> --<parameter2> ... --<parameterN> "
- echo ""
- geho "NOTE: scheduler is available via qunex call."
- echo ""
- echo "--scheduler       A string for the cluster scheduler (e.g. LSF, PBS or SLURM) "
- echo "                  followed by relevant options"
- echo ""
- echo "For SLURM scheduler the string would look like this via the qunex call:: "
- echo ""                   
- echo "  --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
- echo ""
- echo "::"
- echo ""
- echo " qunex dwi_seed_tractography_dense --sessionsfolder='<folder_with_sessions>' \ "
- echo " --session='<case_id>' \ "
- echo " --matrixversion='3' \ "
- echo " --seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
- echo " --overwrite='no' \ "
- echo " --outname='THALAMUS'"
- echo ""
- exit 0
+    cat << EOF
+``dwi_seed_tractography_dense``
+
+This function implements reduction on the DWI dense connectomes using a given
+'seed' structure (e.g. thalamus).
+
+It explicitly assumes the the Human Connectome Project folder structure for
+preprocessing. Dense Connectome DWI data needs to be in the following folder::
+
+    <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/
+
+It produces the following outputs:
+
+- Dense connectivity seed tractography file:
+  ``<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>.dconn.nii``
+- Dense scalar seed tractography file:
+  ``<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>_Avg.dscalar.nii``
+
+Parameters:
+    --sessionsfolder (str):
+        Path to study folder that contains sessions.
+
+    --sessions (str):
+        Comma separated list of sessions to run.
+
+    --matrixversion (str):
+        Matrix solution version to run parcellation on; e.g. 1 or 3.
+
+    --seedfile (str):
+        Specify the absolute path of the seed file you want to use as a seed for
+        dconn reduction (e.g.
+        <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz).
+        Note: If you specify --seedfile='gbc' then the function computes an
+        average across all streamlines from every greyordinate to all other
+        greyordinates.
+
+    --outname (str):
+        Specify the suffix output name of the dscalar file.
+
+    --overwrite (str):
+        Delete prior run for a given session ('yes' / 'no').
+
+    --waytotal (str, default 'none'):
+        Use the waytotal normalized version of the DWI dense connectome.
+        Default:
+
+        - 'none'     ... without waytotal normalization
+        - 'standard' ... standard waytotal normalized
+        - 'log'      ... log-transformed waytotal normalized.
+
+Examples:
+    Run directly via::
+
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_seed_tractography_dense.sh \\
+            --<parameter1> \\
+            --<parameter2> \\
+            --<parameter3> ... \\
+            --<parameterN>
+
+    NOTE: --scheduler is not available via direct script call.
+
+    Run via::
+
+        qunex dwi_seed_tractography_dense \\
+            --<parameter1> \\
+            --<parameter2> ... \\
+            --<parameterN>
+
+    NOTE: scheduler is available via qunex call.
+
+    --scheduler
+        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        relevant options.
+
+    For SLURM scheduler the string would look like this via the qunex call::
+
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+
+    ::
+
+        qunex dwi_seed_tractography_dense \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --session='<case_id>' \\
+            --matrixversion='3' \\
+            --seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \\
+            --overwrite='no' \\
+            --outname='THALAMUS'
+
+EOF
+exit 0
 }
 
 # ------------------------------------------------------------------------------

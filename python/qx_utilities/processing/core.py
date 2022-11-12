@@ -195,6 +195,31 @@ def useOrSkipBOLD(sinfo, options, r=""):
 
     return bolds, bskip, len(bskip), r
 
+def _filter_bolds(bolds, bolds_filter):
+    """
+    An internal function for filtering a list of bolds.
+
+    A list of bolds is filter according to the filter parameter.
+    """
+
+    # prepare filter
+    filters = [e.strip() for e in re.split(" +|\||, *", bolds_filter)]
+
+    # used bolds storage
+    used_bolds = []
+
+    for b in bolds:
+        # extract bold info
+        _, _, _, boldinfo = b
+
+        # check filters
+        for f in filters:
+            if f == boldinfo['ima'] or f == boldinfo['name'] or f == boldinfo['task']:
+                used_bolds.append(b)
+                break
+
+    return used_bolds
+
 
 def doOptionsCheck(options, sinfo, command):
 
@@ -483,9 +508,11 @@ def getSessionFolders(sinfo, options):
     """
     d = {}
 
-    #!# Add a check and thow an error if options['image_source'] is hcp but d['hcp'] is not set
-
     if options['image_source'] == 'hcp':
+        if "hcp" not in sinfo or not os.path.exists(sinfo['hcp']):
+            print("ERROR: HCP path does not exists, check your parameters and the batch file!")
+            raise
+
         d['s_source'] = sinfo['hcp']
     else:
         d['s_source'] = sinfo['data']
@@ -537,9 +564,9 @@ def getSessionFolders(sinfo, options):
 
 
 def missingReport(missing, message, prefix):
-    '''
+    """
     Takes a list of missing files and prepares a list report.
-    '''
+    """
 
     r = message + "\n"
     for file in missing:
@@ -921,10 +948,10 @@ def checkForFiles(r, checkfiles, ok, bad, all=False, status=True):
 
 
 def action(action, run):
-    '''
+    """
     action(action, run)
     A function that prepends "test" to action name if run is set to "test".
-    '''
+    """
     if run == "test":
         if action.istitle():
             return "Test " + action.lower()

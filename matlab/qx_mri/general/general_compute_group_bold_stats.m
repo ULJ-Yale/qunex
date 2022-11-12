@@ -1,78 +1,90 @@
 function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)
 
-%``function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)``
+%``general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)``
 %
 %   A command for extraction of image statistics over the whole group.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           Path to a sessions list file.
 %
-%   --flist     A sessions list file.
-%   --tfile     The file root to save the results to [''].
-%   --stats     A cell array or a comma separated string specifying, which 
-%               statistics to compute.
-%   --inmask    A mask of frames to exclude or an event string specifying which 
-%               frames to use.
-%   --ignore    Do we omit frames to be ignored (no)
+%       --tfile (str, default ''):
+%           The file root to save the results to.
 %
-%               'no'
-%                   do not ignore any additional frames
-%               'fidl'
-%                   ignore frames as marked in .fidl file
-%               '<col>'
-%                   the column in *_scrub.txt file that matches bold file to be 
-%                   used for ignore mask
+%       --stats (str, default 'sd'):
+%           A cell array or a comma separated string specifying, which
+%           statistics to compute.
 %
-%   USE
-%   ===
+%       --inmask (int, default 5):
+%           A mask of frames to exclude or an event string specifying which
+%           frames to use.
 %
-%   The function computes for each session the specified image statistics across
-%   the BOLD image, using the nimage img_stats method. Results are saved for
-%   each computed statistics in a separate file with one volume for each session
-%   with order of volumes matching the order in which the sessions are listed in
-%   the flist file. The root of the files in which the results are saved is
-%   specified in tfile. If not specified (i.e. left empty) the root will be the
-%   root of the flist.
+%       --ignore (str, default 'no'):
+%           Do we omit frames to be ignored:
 %
-%   The function is flexible in specifying what frames to use and/or exclude.
-%   inmask parameter can specify either a mask of frames to exclude for each
-%   session, or it can specify an eventstring to be used with a per-session
-%   fidl file. If an eventstring is specifed, then the list file (flist) needs
-%   to also list a fidl file for each session. The eventstring will then be
-%   used to create a regressor matrix using general_create_task_regressors function,
-%   and each frame for which there is a non-zero value in any of the regressor
-%   columns will be included in the computation of statistics. As an example,
-%   if the statistics are to be computed across the 3rd and 4th frames of each
-%   'neutral' and 'negative' events specified in the fidl file, then the
-%   eventstring would be::
+%           'no'
+%               do not ignore any additional frames
+%           'fidl'
+%               ignore frames as marked in .fidl file
+%           '<col>'
+%               the column in ∗_scrub.txt file that matches bold file to be
+%               used for ignore mask.
 %
-%       'negative:block:3:4|neutral:block:3:4'
+%   Notes:
+%       The function computes for each session the specified image statistics
+%       across the BOLD image, using the nimage img_stats method. Results are
+%       saved for each computed statistics in a separate file with one volume
+%       for each session with order of volumes matching the order in which the
+%       sessions are listed in the flist file. The root of the files in which
+%       the results are saved is specified in tfile. If not specified (i.e. left
+%       empty) the root will be the root of the flist.
 %
-%   Additionally, the ignore parameter specifies which frames to exclude based
-%   on image scrubbing information. If the information is to be taken out of a
-%   .scrub file then the name of the relevant column needs to be specified in
-%   the ignore parameter. If the ignore parameter is set to 'fidl' then the
-%   ignore frames in the fidl file will be used.
+%       The function is flexible in specifying what frames to use and/or
+%       exclude. The inmask parameter can specify either a mask of frames to
+%       exclude for each session, or it can specify an eventstring to be used
+%       with a per-session fidl file. If an eventstring is specifed, then the
+%       list file (flist) needs to also list a fidl file for each session. The
+%       eventstring will then be used to create a regressor matrix using
+%       general_create_task_regressors function, and each frame for which there
+%       is a non-zero value in any of the regressor columns will be included in
+%       the computation of statistics. As an example, if the statistics are to
+%       be computed across the 3rd and 4th frames of each 'neutral' and
+%       'negative' events specified in the fidl file, then the eventstring would
+%       be::
 %
-%   EXAMPLE USE
-%   ===========
+%           'negative:block:3:4|neutral:block:3:4'
 %
-%   To compute mean and standard variation and exclude the first 5 frames and
-%   the frames marked bad using udvarsme criterion, use::
+%       Additionally, the ignore parameter specifies which frames to exclude
+%       based on image scrubbing information. If the information is to be taken
+%       out of a .scrub file then the name of the relevant column needs to be
+%       specified in the ignore parameter. If the ignore parameter is set to
+%       'fidl' then the ignore frames in the fidl file will be used.
 %
-%       general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', 5, 'udvarsme');
+%   Examples:
+%       To compute mean and standard variation and exclude the first 5 frames
+%       and the frames marked bad using udvarsme criterion, use::
 %
-%   To compute the mean and standard variation for all negative trials (frames
-%   3 & 4), and use ignore information in fidl file, use::
+%           qunex general_compute_group_bold_stats \
+%               --flist='scz-wm.list' \
+%               --tfile='[]' \
+%               --stats='m, sd' \
+%               --inmask=5 \
+%               --ignore='udvarsme'
 %
-%       general_compute_group_bold_stats('scz-wm.list', [], 'm, sd', ...
-%       'negative:block:3:4', 'fidl');
+%       To compute the mean and standard variation for all negative trials
+%       (frames 3 & 4), and use ignore information in fidl file, use::
 %
-%   SEE ALSO
-%   ========
+%           qunex general_compute_group_bold_stats \
+%               --flist='scz-wm.list' \
+%               --tfile='[]' \
+%               --stats='m, sd' \
+%               --inmask='negative:block:3:4' \
+%               --ignore='fidl'
 %
-%   nimage.img_stats
-%   general_create_task_regressors
+%   See Also:
+%       nimage.img_stats
+%
+%       general_create_task_regressors
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

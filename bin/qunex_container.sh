@@ -19,7 +19,7 @@
 # 
 # ## Prerequisite Installed Software
 #
-# * QuNex Suite Docker or Singularity Container
+# * QuNex Suite Docker or Apptainer Container
 #
 # ## Prerequisite Environment Variables
 #
@@ -33,16 +33,16 @@
 usage() {
  echo ""
  echo "This function implements the initialization of the QuNex container execution for "
- echo "Docker or Singularity."
+ echo "Docker or Apptainer."
  echo ""
  echo "INPUTS"
  echo "======"
  echo ""
- echo "--container   Specifies either the path to the Singularity container image or"
+ echo "--container   Specifies either the path to the Apptainer container image or"
  echo "              the full specification of the Docker container to be used (e.g. "
  echo "              qunex/qunex_suite:0_45_07). This parameter can be omitted if the "
  echo "              value is specified in the `QUNEXCONIMAGE` environmental variable. "
- echo "--script      If a script is to be run agains the Singularity container rather "
+ echo "--script      If a script is to be run agains the Apptainer container rather "
  echo "              than a single command, the path to the script to be run is "
  echo "              specified here. [''] "
  echo "--string      String to execute the QuNex call."
@@ -132,16 +132,16 @@ if [[ -z ${InputFolder} ]]; then reho "  --> Error: QuNex Input folder input is 
 if [[ -z ${OutputFolder} ]]; then reho "  --> Error: QuNex Output folder input is missing."; exit 1; echo ''; fi
 
 if [[ `echo ${ConImage} | grep '.simg' ` ]] || [[ `echo ${ConImage} | grep '.sif' ` ]]; then 
-    Singularity="yes"
+    Apptainer="yes"
 else
     Docker="yes"
 fi
 
-# -- Execute Singularity container
+# -- Execute Apptainer container
 #
 #   -- Not yet finished -> needs to differentiate between script and call
 
-#if [[ ${Singularity} == 'yes' ]] ; then 
+#if [[ ${Apptainer} == 'yes' ]] ; then 
 #   echo ""
 #   echo " -- Executing container image ${QUNEXCONIMAGEPath}"
 #   echo ""

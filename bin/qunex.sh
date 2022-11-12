@@ -17,7 +17,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-qunex_commands="show_version environment dwi_legacy dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # ------------------------------------------------------------------------------
 # -- Setup color outputs
@@ -77,15 +77,16 @@ show_splash() {
     geho "OS: $OSInfo $OperatingSystem"
     geho "------------------------------------------------------------------------"
     geho ""
-    geho "        ██████\                  ║      ██\   ██\                       "
-    geho "       ██  __██\                 ║      ███\  ██ |                      "
-    geho "       ██ /  ██ |██\   ██\       ║      ████\ ██ | ██████\ ██\   ██\    "
-    geho "       ██ |  ██ |██ |  ██ |      ║      ██ ██\██ |██  __██\\\\\██\ ██  |"
-    geho "       ██ |  ██ |██ |  ██ |      ║      ██ \████ |████████ |\████  /    "
-    geho "       ██ ██\██ |██ |  ██ |      ║      ██ |\███ |██   ____|██  ██\     "
-    geho "       \██████ / \██████  |      ║      ██ | \██ |\███████\██  /\██\    "
-    geho "        \___███\  \______/       ║      \__|  \__| \_______\__/  \__|   "
-    geho "            \___|                ║                                      "
+    geho "                ____            _   _   _               "
+    geho "               / __ \\          | | | \\ | |              "
+    geho "              | |  | |  _   _  | | |  \\| |   ___  __  __"
+    geho "              | |  | | | | | | | | | .   |  / _ \\ \\ \\/ /"
+    geho "              | |__| | | |_| | | | | |\\  | |  __/  >  < "
+    geho "               \\___\\_\\  \\____| | | |_| \\_|  \\___| /_/\\_\\"
+    geho "                               |_|                      "
+    geho ""
+    geho "                              $QuNexVer"
+    geho ""
     geho ""
     geho "                       DEVELOPED & MAINTAINED BY:"
     geho ""
@@ -140,23 +141,13 @@ EOF
 
 qunex_failed() {
     reho ''
-    reho ' ▄▄▄▄▄▄▄         ||  ▄▄   ▄▄                                                 '
-    reho ' ▓▓    ▓         ||  ▓▓▓▄ ▓▓                ▓▓▓▓▓ ▄▓▓▓▓  ▓ ▄▓    ▄▓▓▓ ▓▓▓▄   '
-    reho ' ▓▓  ▓ ▓  ▓   ▓  ||  ▓▓ ▐▓▓▓ ▄▄▄▄ ▀▓▓ ▓▓▀   ▓▓    ▓  ▓▓ ▓▓ ▓▓   ▄▓▓▄  ▓  ▓▓  '
-    reho ' ▓▓▄▄▓▄▓  ▓▓  ▓  ||  ▓▓   ▓▓ ▓▄▄▓    ▓▄     ▓▓▀▀  ▓▓▓▓▓ ▓▌ ▓▓   ▀▓▓   ▓  ▓▓  '
-    reho '     ▓▄▄  ▓▓▄▄▓  ||  ▓▓    ▓ ▓▄▄  ▄▓▓ ▓▓▄   ▓     ▓▀ ▓  ▓  ▓▓▓▀▀ ▓▓▓▓ ▓▓▓▀   ' 
-    reho '                 ||                                                          '
+    reho 'QuNex FAILED!'
     reho ''
 }
  
-qunex_passed() {
+qunex_done() {
     geho ''
-    geho '    ______         ║   _   _               ____                        _  '
-    geho '   / ___  \_   _   ║  | \ | | _____  __   |  _ \ __ _ ___ ___  ___  __| | '
-    geho '  | |   | | | | |  ║  |  \| |/ _ \ \/ /   | |_) / _` / __/ __|/ _ \/ _` | '
-    geho '  | |_/\| | |_| |  ║  | |\  |  __/>  <    |  __| (_| \__ \__ |  __| (_| | '
-    geho '   \__\ \ /\__,_|  ║  |_| \_|\___/_/\_\   |_|   \__,_|___|___/\___|\__,_| '
-    geho '       \_\         ║                                                      '
+    geho 'QuNex DONE!'
     geho ''
 }
 
@@ -193,7 +184,7 @@ bash_call_execute() {
             if [[ ! -d ${WORKDIR} ]]; then
                 mkdir -p ${WORKDIR} &> /dev/null
             fi
-            gmri create_study ${StudyFolder}
+            gmri create_study --studyfolder=${StudyFolder}
         fi
     fi
 
@@ -216,7 +207,7 @@ bash_call_execute() {
         mageho "WARNING: QuNex study folder specification .qunexstudy in ${StudyFolder} not found."
         mageho "         Check that ${StudyFolder} is a valid QuNex folder."
         mageho "         Consider re-generating QuNex hierarchy..."; echo ""
-        # gmri create_study ${StudyFolder}
+        # gmri create_study --studyfolder=${StudyFolder}
     fi
 
     # -- Added checks for study folder generation
@@ -329,7 +320,7 @@ bash_call_execute() {
         # -- Run the commands locally
         if [[ ${Cluster} == 1 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_passed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
             geho "--------------------------------------------------------------"
@@ -381,29 +372,28 @@ show_usage_run_turnkey() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- dwi_legacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+# -- dwi_legacy_gpu - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-dwi_legacy() {
+dwi_legacy_gpu() {
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy_gpu.sh \
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
-    --scanner=${Scanner} \
     --usefieldmap=${UseFieldmap} \
-    --PEdir=${PEdir} \
+    --pedir=${pedir} \
     --echospacing=${EchoSpacing} \
-    --TE=${TE} \
+    --te=${te} \
     --unwarpdir=${UnwarpDir} \
-    --diffdatasuffix=${DiffDataSuffix} \
+    --diffdatasuffix=${diffdatasuffix} \
     --overwrite=${Overwrite}"
     # -- QuNex bash execute function
     bash_call_execute
 }
 
-show_usage_dwi_legacy() {
+show_usage_dwi_legacy_gpu() {
     echo ""; echo "qunex ${usage_input}"
-    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy.sh
+    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_legacy_gpu.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -664,10 +654,7 @@ extract_roi() {
     # -- Parse general parameters
     ROIFileSessionSpecific="$ROIFileSessionSpecific"
     SingleInputFile="$SingleInputFile"
-    if [[ -z ${SingleInputFile} ]]; then
-        OutPath="${SessionsFolder}/${CASE}/${OutPath}"
-    else
-        OutPath="${OutPath}"
+    if [[ -n ${SingleInputFile} ]]; then
         InputFile="${SingleInputFile}"
     fi
     if [[ ${ROIFileSessionSpecific} == "no" ]]; then
@@ -677,15 +664,16 @@ extract_roi() {
     fi
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh \
-    --roifile='${ROIInputFile}' \
+    --roifile='${ROIFile}' \
     --inputfile='${InputFile}' \
-    --outdir='${OutPath}' \
+    --outpath='${OutPath}' \
     --outname='${OutName}'"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
 
-show_usage_roi_extract() {
+show_usage_extract_roi() {
     echo ""
     echo "qunex ${usage_input}"
     ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh
@@ -814,7 +802,7 @@ dwi_dtifit() {
     # gradnonlin
     if [[ -n ${gradnonlin} ]]; then
         optional_parameters="${optional_parameters} \
-        --gradnonlin='${gradnonlin}''
+        --gradnonlin='${gradnonlin}'
         "
     fi
 
@@ -905,14 +893,14 @@ dwi_pre_tractography() {
     # -- Parse general parameters
     RunFolder="${SessionsFolder}/${CASE}/hcp/"
     # -- Specify command variable
-    QuNexCallToRun="${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh ${RunFolder} ${CASE} 0"
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh ${RunFolder} ${CASE} 0"
     # -- QuNex bash execute function
     bash_call_execute
 }
 
 show_usage_dwi_pre_tractography() {
     echo ""; echo "qunex ${usage_input}"
-    ${HCPPIPEDIR_dMRITractFull}/pre_tractography/pre_tractography.sh
+    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -967,7 +955,6 @@ run_qc() {
     --omitdefaults=${OmitDefaults} \
     --dwipath='${DWIPath}' \
     --dwidata='${DWIData}' \
-    --dwilegacy='${DWILegacy}' \
     --dtifitqc='${DtiFitQC}' \
     --bedpostxqc='${BedpostXQC}' \
     --eddyqcstats='${EddyQCStats}' \
@@ -983,7 +970,9 @@ run_qc() {
     --boldfcpath='${BOLDfcPath}' \
     --suffix='${Suffix}' \
     --hcp_suffix='${HCPSuffix}' \
-    --batchfile='${BATCH_FILE}' "
+    --batchfile='${BATCH_FILE}' \
+    --sourcefile='${sourcefile}' \
+    --hcp_filename='${hcp_filename}'"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1441,7 +1430,13 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_STUDY_INPUT_PATH=`get_parameters "${setflag}xnatstudyinputpath" $@`
 
     # -- General sessions and sessionids flags
-    CASES=`get_parameters "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+    SESSIONS=`get_parameters "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+    if [[ -z ${CASES} ]]; then
+        if [[ ! -z ${SESSIONS} ]]; then
+            CASES="$SESSIONS"
+            SESSIONS="$SESSIONS"
+        fi
+    fi
 
     # list of input cases; removing comma or pipes
     SESSIONIDS=`get_parameters "${setflag}sessionids" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
@@ -1566,7 +1561,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ROIFile=`get_parameters "${setflag}roifile" $@`
     ROIFileSessionSpecific=`get_parameters "${setflag}sessionroifile" $@`
 
-    # -- Input flags for  compute_bold_fc
+    # -- Input flags for compute_bold_fc
     InputFiles=`get_parameters "${setflag}inputfiles" $@`
     OutPathFC=`get_parameters "${setflag}targetf" $@`
     Calculation=`get_parameters "${setflag}calculation" $@`
@@ -1600,14 +1595,41 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WeightsFile=`get_parameters "${setflag}weightsfile" $@`
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
 
-    # -- Input flags for dwi_legacy
+    # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
-    PEdir=`get_parameters "${setflag}PEdir" $@`
-    TE=`get_parameters "${setflag}TE" $@`
+    pedir=`get_parameters "${setflag}pedir" $@`
+    te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
-    DiffDataSuffix=`get_parameters "${setflag}diffdatasuffix" $@`
-    Scanner=`get_parameters "${setflag}scanner" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
+    diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
+
+    # -- Input flags for dwi_bedpostx_gpu
+    Fibers=`get_parameters "${setflag}fibers" $@`
+    Weight=`get_parameters "${setflag}weight" $@`
+    Burnin=`get_parameters "${setflag}burnin" $@`
+    Jumps=`get_parameters "${setflag}jumps" $@`
+    Sample=`get_parameters "${setflag}sample" $@`
+    Model=`get_parameters "${setflag}model" $@`
+    Rician=`get_parameters "${setflag}rician" $@`
+    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
+
+    # -- Input flags for dwi_dtifit
+    bvecs=`get_parameters "${setflag}bvecs" $@`
+    bvals=`get_parameters "${setflag}bvals" $@`
+    cni=`get_parameters "${setflag}cni" $@`
+    sse=`get_flags "${setflag}sse" $@`
+    wls=`get_flags "${setflag}wls" $@`
+    kurt=`get_flags "${setflag}kurt" $@`
+    kurtdir=`get_flags "${setflag}kurtdir" $@`
+    littlebit=`get_flags "${setflag}littlebit" $@`
+    save_tensor=`get_flags "${setflag}save_tensor" $@`
+    zmin=`get_parameters "${setflag}zmin" $@`
+    zmax=`get_parameters "${setflag}zmax" $@`
+    ymin=`get_parameters "${setflag}ymin" $@`
+    ymax=`get_parameters "${setflag}ymax" $@`
+    xmin=`get_parameters "${setflag}xmin" $@`
+    xmax=`get_parameters "${setflag}xmax" $@`
+    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
 
     # -- Input flags for dwi_parcellate
     MatrixVersion=`get_parameters "${setflag}matrixversion" $@`
@@ -1632,34 +1654,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     OutputDir=`get_parameters "${setflag}outputdir" $@`
     Update=`get_parameters "${setflag}update" $@`
 
-    # -- Input flags for dwi_dtifit
-    bvecs=`get_parameters "${setflag}bvecs" $@`
-    bvals=`get_parameters "${setflag}bvals" $@`
-    cni=`get_parameters "${setflag}cni" $@`
-    sse=`get_flags "${setflag}sse" $@`
-    wls=`get_flags "${setflag}wls" $@`
-    kurt=`get_flags "${setflag}kurt" $@`
-    kurtdir=`get_flags "${setflag}kurtdir" $@`
-    littlebit=`get_flags "${setflag}littlebit" $@`
-    save_tensor=`get_flags "${setflag}save_tensor" $@`
-    zmin=`get_parameters "${setflag}zmin" $@`
-    zmax=`get_parameters "${setflag}zmax" $@`
-    ymin=`get_parameters "${setflag}ymin" $@`
-    ymax=`get_parameters "${setflag}ymax" $@`
-    xmin=`get_parameters "${setflag}xmin" $@`
-    xmax=`get_parameters "${setflag}xmax" $@`
-    gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
-
-    # -- Input flags for dwi_bedpostx_gpu
-    Fibers=`get_parameters "${setflag}fibers" $@`
-    Weight=`get_parameters "${setflag}weight" $@`
-    Burnin=`get_parameters "${setflag}burnin" $@`
-    Jumps=`get_parameters "${setflag}jumps" $@`
-    Sample=`get_parameters "${setflag}sample" $@`
-    Model=`get_parameters "${setflag}model" $@`
-    Rician=`get_parameters "${setflag}rician" $@`
-    Gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
-
     # -- Input flags for dwi_probtrackx_dense_gpu
     MatrixOne=`get_parameters "${setflag}omatrix1" $@`
     MatrixThree=`get_parameters "${setflag}omatrix3" $@`
@@ -1683,12 +1677,13 @@ if [[ ${setflag} =~ .*-.* ]]; then
     DtiFitQC=`get_parameters "${setflag}dtifitqc" $@`
     BedpostXQC=`get_parameters "${setflag}bedpostxqc" $@`
     EddyQCStats=`get_parameters "${setflag}eddyqcstats" $@`
-    DWILegacy=`get_parameters "${setflag}dwilegacy" $@`
     GeneralSceneDataFile=`get_parameters "${setflag}datafile" $@`
     GeneralSceneDataPath=`get_parameters "${setflag}datapath" $@`
     ICAFIXFunction=`get_parameters "${setflag}icafixfunction" $@`
     HPFilter=`get_parameters "${setflag}hpfilter" $@`
     MovCorr=`get_parameters "${setflag}movcorr" $@`
+    sourcefile=`get_parameters "${setflag}sourcefile" $@`
+    hcp_filename=`get_parameters "${setflag}hcp_filename" $@`
 
     # -- Code block for BOLDs
     BOLDS=`get_parameters "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
@@ -1723,6 +1718,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo "Using $BATCH_FILE for input."
         echo ""
         CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        if [[ -z $CASES ]]; then
+            CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        fi
     fi
 
     # -- Get species flag for NHP pipelines
@@ -1963,7 +1961,6 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     if [ "$Modality" = "DWI" ]; then
         if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
         if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; fi
-        if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${scenetemplatefolder}"; fi
         if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; fi
         if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
         if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi
@@ -2033,7 +2030,6 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     if [ "   $Modality" = "DWI" ]; then
         echo "   DWI input path: ${DWIPath}"
         echo "   DWI input name: ${DWIData}"
-        echo "   DWI legacy processing: ${DWILegacy}"
         echo "   DWI dtifit QC requested: ${DtiFitQC}"
         echo "   DWI bedpostX QC requested: ${BedpostXQC}"
         echo "   DWI EDDY QC Stats requested: ${EddyQCStats}"
@@ -2058,6 +2054,10 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     if [ "$Modality" = "general" ]; then
         echo "  Data input path: ${GeneralSceneDataPath}"
         echo "  Data input: ${GeneralSceneDataFile}"
+    fi
+
+    if [ -n ${sourcefile} ]; then
+        echo "  Source file: ${sourcefile}"
     fi
 
     echo ""
@@ -2242,21 +2242,20 @@ if [ "$CommandToRun" == "dwi_bedpostx_gpu" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- dwi_legacy
+# -- dwi_legacy_gpu
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "dwi_legacy" ]; then
+if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$Scanner" ]; then reho "ERROR: Scanner manufacturer missing"; exit 1; fi
     if [ -z "$UseFieldmap" ]; then reho "ERROR: UseFieldmap yes/no specification missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then reho "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "ERROR: List of sessions missing"; exit 1; fi
-    if [ -z "$DiffDataSuffix" ]; then reho "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
+    if [ -z "$diffdatasuffix" ]; then reho "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
 
     if [ ${UseFieldmap} == "yes" ]; then
-        if [ -z "$TE" ]; then reho "ERROR: TE value for Fieldmap missing"; exit 1; fi
+        if [ -z "$te" ]; then reho "ERROR: TE (--te) value for Fieldmap missing"; exit 1; fi
     elif [ ${UseFieldmap} == "no" ]; then
         echo "NOTE: Processing without FieldMap (TE option not needed)"
     fi
@@ -2274,13 +2273,12 @@ if [ "$CommandToRun" == "dwi_legacy" ]; then
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
-    echo "   Scanner: ${Scanner}"
     echo "   Using FieldMap: ${UseFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
-    echo "   Phase Encoding Direction: ${PEdir}"
+    echo "   Phase Encoding Direction: ${pedir}"
     echo "   TE value for Fieldmap: ${TE}"
     echo "   EPI Unwarp Direction: ${UnwarpDir}"
-    echo "   Diffusion Data Suffix Name: ${DiffDataSuffix}"
+    echo "   Diffusion Data Suffix Name: ${diffdatasuffix}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
 

@@ -1,65 +1,79 @@
-function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose);
+function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)
 
-%``function [] = general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)`
+%``general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)``
 %
-%	Extracts per ROI estimates of specified effects from a volume or cifti GLM
+%   Extracts per ROI estimates of specified effects from a volume or cifti GLM
 %   files as specified in the file list.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           Path to the list file or a well structured string of files or
+%           sessions to process.
 %
-%   --flist       List of sessions and files to process.
-%   --roif        path to a .names ROI file descriptor or a comma separated list 
-%                 of parcels to be extracted, specified as 
-%                 'parcels:<parcel1>,<parcel2>'. 'parcels:all' will export data
-%                 for all parcels. Note that in this case the list of parcels 
-%                 will be based on glm file from the first session in the list.
-%   --outf        Name of the output file. If left empty the it is set to list 
-%                 root with '.tsv' extension. []
-%   --effects     List of effects of interest. If none specified, all but trend 
-%                 and baseline are exported. []
-%   --frames      List of frames to extract from all effects. All if empty or 
-%                 not specified. []
-%   --values 	  In what form to extract the estimates. Possibilities are raw 
-%                 beta values ('raw') or percent signal change ('psc') values. 
-%                 ['raw']
-%   --tformat     A comma separated string specifying in what format the data is 
-%                 to be extracted. It can be a combination of:
+%       --roif (str):
+%           Path to a .names ROI file descriptor or a comma separated list of
+%           parcels to be extracted, specified as 'parcels:<parcel1>,<parcel2>'.
+%           'parcels:all' will export data for all parcels. Note that in this
+%           case the list of parcels will be based on glm file from the first
+%           session in the list.
 %
-%                 - 'mat'  ... a matlab file,
-%                 - 'wide' ... wide format txt file with one line per session
-%                   and each ROI and estimate in a separate column,
-%                 - 'long' ... long format txt file with one line per estimate
-%                   extracted with columns describing the session, ROI, effect 
-%                   and frame that it belongs to. The minimum, maximum, median, 
-%                   standard deviation, and standard error of the values within 
-%                   the ROI are reported, as well as the number of effective 
-%                   voxels within the ROI.
+%       --outf (str, default ''):
+%           Name of the output file. If left empty the it is set to list root
+%           with '.tsv' extension.
 %
-%	--verbose		Whether to report on progress or not. [not]
+%       --effects (str, default ''):
+%           A cell array or a comma separated list of effects of interest. If
+%           none specified, all but trend and baseline are exported.
 %
-%   OUTPUT
-%   ======
+%       --frames (int, default ''):
+%           List of frames to extract from all effects. All if empty or not
+%           specified.
 %
-%   The results are saved in the specified file but also returned in a
-%   datastructure.
+%       --values (str, default 'raw'):
+%           In what form to extract the estimates. Possibilities are raw beta
+%           values ('raw') or percent signal change ('psc') values.
 %
-%   USE
-%   ===
+%       --tformat (str, default 'wide,long,mat'):
+%           A comma separated string specifying in what format the data is to be
+%           extracted. It can be a combination of:
 %
-%   The function is used to extract per ROI estimates of the effects of interest
-%   for each of the ROI and sessions to enable second level analysis and
-%   visualization of the data. In the background the function first extracts the
-%   relevant volumes using the img_extract_glm_estimates. It then defines the ROI
-%   and uses img_extract_roi_stats method to get per ROI statistics.
+%           - 'mat'  ... a matlab file,
+%           - 'wide' ... wide format txt file with one line per session
+%             and each ROI and estimate in a separate column,
+%           - 'long' ... long format txt file with one line per estimate
+%             extracted with columns describing the session, ROI, effect
+%             and frame that it belongs to. The minimum, maximum, median,
+%             standard deviation, and standard error of the values within
+%             the ROI are reported, as well as the number of effective
+%             voxels within the ROI.
 %
-%   EXAMPLE USE
-%   ===========
+%       --verbose (bool, default false):
+%           Whether to report on progress or not.
 %
-%   ::
+%   Returns:
+%       data
+%           The results are returned in a datastructure but also saved in the
+%           specified file.
 %
-%       general_extract_roi_glm_values('wm-glm.list', 'CCN.names', [], 'encoding, ...
-%       delay', [], 'psc', 'long');
+%   Notes:
+%       The function is used to extract per ROI estimates of the effects of
+%       interest for each of the ROI and sessions to enable second level
+%       analysis and visualization of the data. In the background the function
+%       first extracts the relevant volumes using the img_extract_glm_estimates.
+%       It then defines the ROI and uses img_extract_roi_stats method to get per
+%       ROI statistics.
+%
+%   Examples:
+%       ::
+%
+%           qunex general_extract_roi_glm_values \
+%               --flist='wm-glm.list' \
+%               --roif='CCN.names' \
+%               --outf='' \
+%               --effects='encoding, delay' \
+%               --frames='' \
+%               --values='psc' \
+%               --tformat='long'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

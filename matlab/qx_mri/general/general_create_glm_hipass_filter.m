@@ -5,16 +5,16 @@ function F = general_create_glm_hipass_filter(nframes,levels)
 %   Creates a high-pass filtering matrix by creating a pair of regressors with
 %   0.25 phase difference for 1:levels number of full cycles over nframes.
 %
-%	INPUTS
-%	======
+%    INPUTS
+%    ======
 %
-%	--nframes
-%	--levels
+%    --nframes
+%    --levels
 %
-%	OUTPUT
-%	======
+%    OUTPUT
+%    ======
 %
-%	F
+%    F
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

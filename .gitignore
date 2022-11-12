@@ -60,8 +60,9 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
-docs/_build/
+# Sphinx documentation build time files
+/python/**/bash.py
+/python/**/r.py
 
 # PyBuilder
 target/
@@ -88,6 +89,12 @@ venv/
 # Rope project settings
 .ropeproject
 
+# PyCharm project settings
+.idea
+
+# Visual Studio Code project settings
+.vscode
+
 # VIM swap files
 *.swp
 
@@ -102,6 +109,3 @@ settings.json
 
 # DS* files
 .DS*
-
-# .vscode
-.vscode

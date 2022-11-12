@@ -1,20 +1,22 @@
-function [m] = simulate_voronoi_map(w,h,p)
+function [m] = simulate_voronoi_map(w, h, p)
 
-%``function [m] = simulate_voronoi_map(w,h,p)``
+%``simulate_voronoi_map(w, h, p)``
 %   
 %   Function for creating w by h Voronoi bitmap with points p.
 %
-%	INPUTS
-%	======
+%   Parameters:
+%       --w (int):
+%           Width.
 %
-%	--w
-%	--h
-%	--p
+%       --h (int):
+%           Height.
 %
-%	OUTPUT
-%	======
+%       --p (int):
+%           Points.
 %
-%	m
+%   Returns:
+%       m
+%           Voronoi bitmap.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

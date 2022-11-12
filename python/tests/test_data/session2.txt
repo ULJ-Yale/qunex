@@ -1,0 +1,57 @@
+session: HCPA001
+subject: HCPA001
+dicom: /data/sessions/HCPA001/dicom
+raw_data: /data/sessions/HCPA001/nii
+data: /data/sessions/HCPA001/4dfp
+hcp: /data/sessions/HCPA001/hcp
+
+11  : Localizer [1/3] i00001    
+12  : Localizer [2/3] i00002    
+13  : Localizer [3/3] i00003    
+21  : AAHScout                  
+31  : AAHScout_MPR_sag [1/4] i00001 
+32  : AAHScout_MPR_sag [2/4] i00002 
+33  : AAHScout_MPR_sag [3/4] i00003 
+34  : AAHScout_MPR_sag [4/4] i00004 
+41  : AAHScout_MPR_cor [1/3] i00001 
+42  : AAHScout_MPR_cor [2/3] i00002 
+43  : AAHScout_MPR_cor [3/3] i00003 
+51  : AAHScout_MPR_tra [1/3] i00001 
+52  : AAHScout_MPR_tra [2/3] i00002 
+53  : AAHScout_MPR_tra [3/3] i00003 
+61  : Localizer_aligned [1/3] i00001 
+62  : Localizer_aligned [2/3] i00008 
+63  : Localizer_aligned [3/3] i00009 
+71  : SpinEchoFieldMap_AP       
+81  : SpinEchoFieldMap_PA       
+91  : rfMRI_REST_AP_SBRef       
+101 : rfMRI_REST_AP             
+121 : rfMRI_REST_PA_SBRef       
+131 : rfMRI_REST_PA             
+151 : T1w_setter                
+171 : T1w_MPR_vNav_4e [1/4] e1  
+172 : T1w_MPR_vNav_4e [2/4] e2  
+173 : T1w_MPR_vNav_4e [3/4] e3  
+174 : T1w_MPR_vNav_4e [4/4] e4  
+181 : T1w_MPR_vNav_4e [1/4] e1  
+182 : T1w_MPR_vNav_4e [2/4] e2  
+183 : T1w_MPR_vNav_4e [3/4] e3  
+184 : T1w_MPR_vNav_4e [4/4] e4  
+191 : T1w_MPR_vNav_4e RMS       
+201 : T1w_MPR_vNav_4e RMS       
+211 : T2w_setter                
+231 : T2w_SPC_vNav              
+241 : T2w_SPC_vNav              
+251 : TSE_HiResHp               
+261 : TSE_HiResHp               
+271 : SpinEchoFieldMap_AP       
+281 : SpinEchoFieldMap_PA       
+291 : dMRI_dir98_AP_SBRef       
+301 : dMRI_dir98_AP             
+321 : dMRI_dir98_PA_SBRef       
+331 : dMRI_dir98_PA             
+351 : dMRI_dir99_AP_SBRef       
+361 : dMRI_dir99_AP             
+381 : dMRI_dir99_PA_SBRef       
+391 : dMRI_dir99_PA
+401 : asl_3d_tra_iso_3.0_highres

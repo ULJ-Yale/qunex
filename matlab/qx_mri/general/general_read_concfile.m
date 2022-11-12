@@ -1,19 +1,19 @@
 function [files] = general_read_concfile(file)
 
-%``function [files] = general_read_concfile(file)``
+%``general_read_concfile(file)``
 %
-%	Reads a conc file and returns a list of files.
+%    Reads a conc file and returns a list of files.
 %
-%	INPUT
-%	=====
+%    INPUT
+%    =====
 %
-%	--file 	a conc file
+%    --file     a conc file
 %
-%	OUTPUT
-%	======
+%    OUTPUT
+%    ======
 %
-%	files
-%		list of paths
+%    files
+%        list of paths
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -26,16 +26,16 @@ if fin == -1
 end
 s = fgetl(fin);
 
-files 	= {};
+files     = {};
 c = 1;
 while feof(fin) == 0
-	s = fgetl(fin);
-	if findstr(s, 'file:')
-		[f] = strread(s, '%s');
-		f = strrep(f{1}, 'file:', '');
-		files{c} = f;
-		c = c + 1;
-	end
+    s = fgetl(fin);
+    if findstr(s, 'file:')
+        [f] = strread(s, '%s');
+        f = strrep(f{1}, 'file:', '');
+        files{c} = f;
+        c = c + 1;
+    end
 end
 
 fclose(fin);

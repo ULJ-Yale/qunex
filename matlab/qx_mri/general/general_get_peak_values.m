@@ -1,6 +1,6 @@
 function [] = general_get_peak_values(peak_report, fin, fout)
 
-%``function [] = general_get_peak_values(peak_report, img)``
+%``general_get_peak_values(peak_report, img)``
 %
 %   Returns a file (fout) with values from the input image (fin) at
 %   specified coma-separated grayordinates or a modified peak report file

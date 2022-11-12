@@ -1,50 +1,59 @@
 function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)
 
-%``function [s] = general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``
+%``general_write_table(filename, data, hdr, extra, sform, sep, pre, post)``
 %
 %   A general function for writing data tables.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --filename (str):
+%           The path to the file.
 %
-%   --filename  The path to the file ['']
-%   --data      The data matrix to be saved.
-%   --hdr       Optional header (cell array of strings or a list of columns) [].
-%   --extra     Optional summary rows to be added at the end (e.g. 
-%               'mean|sd|min|max|%|sum') [].
-%   --sform     Format string for the header, first data column, rest of the 
-%               data columns and extra row names ['%s|%d|%.5f|%s'].
-%   --sep       Separator (default '\t').
-%   --pre       Optional text to prepend before the header.
-%   --post      Optional text to append at the end of the file.
+%       --data (DataMatrix):
+%           The data matrix to be saved.
 %
-%   OUTPUT
-%   ======
+%       --hdr (cell/str, default {}):
+%           Optional header (cell array of strings or a list of columns).
 %
-%   s
-%       a formated text string
+%       --extra (str, default ''):
+%           Optional summary rows to be added at the end (e.g. 
+%           'mean|sd|min|max|%|sum').
 %
-%   USE
-%   ===
+%       --sform (str, default '%s|%d|%.5g|%s'):
+%           Format string for the header, first data column, rest of the 
+%           data columns and extra row names.
 %
-%   The function is used to save the data to a text file (if a path / filename
-%   is provided) and/or generate a formulated string. The data should be a
-%   matrix of values, the header either a cell array of strings or a comma,
-%   semicolon, space or pipe separated string. If '#" commented summary rows
-%   should be added at the end of the file, the specific summaries should be
-%   specified in the extra parameter as a pipe separated list.
+%       --sep (str, default '⧵t'):
+%           Separator.
 %
-%   To specify how values are to be formated, an optional sform string can be
-%   provided. How the data is separated is specified in the sep parameter.
-%   Optional strings to be prepended or appended to the file can be specified as
-%   the pre and post parameters.
+%       --pre (str, default ''):
+%           Optional text to prepend before the header.
 %
-%   EXAMPLE USE
-%   ===========
+%       --post (str, default ''):
+%           Optional text to append at the end of the file.
 %
-%   ::
+%   Returns:
+%       s
+%           A formated text string.
 %
-%       general_write_table('mov.dat', movdata, 'frame,X,Y,Z', 'mean,sd,min,max');
+%   Notes:
+%       The function is used to save the data to a text file (if a path /
+%       filename is provided) and/or generate a formulated string. The data
+%       should be a matrix of values, the header either a cell array of
+%       strings or a comma, semicolon, space or pipe separated string. If
+%       '#" commented summary rows should be added at the end of the file,
+%       the specific summaries should be specified in the extra parameter
+%       as a pipe separated list.
+%
+%       To specify how values are to be formated, an optional sform string
+%       can be provided. How the data is separated is specified in the sep
+%       parameter. Optional strings to be prepended or appended to the file
+%       can be specified as the pre and post parameters.
+%
+%   Example:
+%       ::
+%
+%           general_write_table('mov.dat', movdata, 'frame,X,Y,Z', ...
+%           'mean,sd,min,max');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

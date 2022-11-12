@@ -1,41 +1,47 @@
-function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose);
+function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)
 
-%``function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
+%``general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
 %
-%	Extracts desired statistics from provided files for each ROI.
+%   Extracts desired statistics from provided files for each ROI.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --roif (str):
+%           ROI file, either a names file or a mask file.
 %
-%   --roif      ROI file, either a names file or a mask file.
-%   --mfs       Comma separated list of files to extract values from.
-%	--sefs      Optional list of comma separate files that hold SE for value 
-%               files.
-%   --vnames    Optional comma separated list of value names to use for each of 
-%               the files.
-%   --output    Comma separated list of files to save to. if a file contains 
-%               word long, it will save the data in a long format. By default it 
-%               saves the data in a wide format
+%       --mfs (str):
+%           Comma separated list of files to extract values from.
 %
-%   --stats     A comma separated list of the statistics to save:
+%       --sefs (str, default ''):
+%           Optional list of comma separate files that hold SE for value files.
 %
-%               - rsize   ... size of ROI in voxels
-%               - rmean   ... location of the geometric mean of the ROI
-%               - rpeak   ... location of the peak value of the ROI
-%               - rmin    ... location of the minimum value in the ROI
-%               - rmax    ... location of the maxumal value in the ROI
-%               - mean    ... mean of values across ROI
-%               - median  ... median value across ROI
-%               - min     ... minimum value across ROI
-%               - max     ... mamimum value across ROI
-%               - peak    ... peak value in the ROI (largest absolute value)
+%       --vnames (str, default ''):
+%           Optional comma separated list of value names to use for each of the
+%           files.
 %
-%	--verbose   To report on progress or not. [false]
+%       --output (str, default ''):
+%           Comma separated list of files to save to. If a file contains the
+%           word long, it will save the data in a long format. By default it
+%           saves the data in a wide format.
 %
-%   OUTPUT
-%   ======
-%   
-%   report
+%       --stats (str, default 'rsize, rmean, mean'):
+%           A comma separated list of the statistics to save:
+%
+%           - 'rsize'   ... size of ROI in voxels
+%           - 'rmean'   ... location of the geometric mean of the ROI
+%           - 'rpeak'   ... location of the peak value of the ROI
+%           - 'rmin'    ... location of the minimum value in the ROI
+%           - 'rmax'    ... location of the maxumal value in the ROI
+%           - 'mean'    ... mean of values across ROI
+%           - 'median'  ... median value across ROI
+%           - 'min'     ... minimum value across ROI
+%           - 'max'     ... mamimum value across ROI
+%           - 'peak'    ... peak value in the ROI (largest absolute value).
+%
+%       --verbose (bool, default false):
+%           To report on progress or not.
+%
+%   Returns:
+%       report
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

@@ -1,63 +1,74 @@
 function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)
 
-%``function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)`
+%``fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)``
 %
-%	Computes the correlation of each source mask voxel with each target mask 
+%   Computes the correlation of each source mask voxel with each target mask
 %   voxel.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --flist (str):
+%           File list with information on sessions bold runs and
+%           segmentation files, or a well strucutured string (see
+%           general_read_file_list).
 %
-%   --flist      File list with information on sessions bold runs and 
-%                segmentation files, or a well strucutured string (see 
-%                general_read_file_list).
-%   --smask      .names file for source mask definition.
-%   --tmask      .names file for target mask roi definition.
-%   --mask       Either number of frames to omit or a mask of frames to use [0].
-%   --root       The root of the filename where results are to be saved [''].
-%   --options    A string specifying what correlations to save ['g']:
+%       --smask (str):
+%           Path to .names file for source mask definition.
 %
-%                - 'g' - compute mean correlation across sessions (only makes
-%                  sense with the same sROI for each session)
-%                - 'i' - save individual sessions' results
+%       --tmask (str):
+%           Path to .names file for target mask roi definition.
 %
-%   --verbose    Whether to report the progress full, script, none. ['none']
+%       --mask (int | logical | vector, default ''):
+%           Either number of frames to omit or a mask of frames to use.
 %
-%	RESULTS
-%   =======
+%       --root (str, default ''):
+%           The root of the filename where results are to be saved.
 %
-%	The resulting files are:
+%       --options (str, default 'g'):
+%           A string specifying what correlations to save:
 %
-%   - group:
+%           - 'g'
+%               compute mean correlation across sessions (only makes
+%               sense with the same sROI for each session)
 %
-%       <root>_group_ABCor_Fz
+%           - 'i'
+%               save individual sessions' results.
+%
+%       --verbose (str, default 'none'):
+%           How to report the progress: 'full', 'script' or 'none'.
+%
+%   Output files:
+%       If group correlations are selected, the resulting files are:
+%
+%       - <root>_group_ABCor_Fz
 %           Mean Fisher Z value across participants.
 %
-%       <root>_group_ABCor_r
+%       - <root>_group_ABCor_r
 %           Mean Pearson r (converted from Fz) value across participants.
 %
-%   - individual:
+%       If individual correlations are selected, the resulting files are:
 %
-%       <root>_<session id>_ABCor
+%       - <root>_<session id>_ABCor
 %           Pearson r correlations for the individual.
 %
-%   If root is not specified, it is taken to be the root of the flist.
+%       If root is not specified, it is taken to be the root of the flist.
 %
-%   USE
-%   ===
+%   Notes:
+%       Use the function to compute individual and/or group correlations of each
+%       smask voxel with each tmask voxel. tmask voxels are spread across the
+%       volume and smask voxels are spread across the volumes. For more details
+%       see `img_compute_ab_correlation` - nimage method.
 %
-%   Use the function to compute individual and/or group correlations of each
-%   smask voxel with each tmask voxel. tmask voxels are spread across the volume
-%   and smask voxels are spread across the volumes. For more details see
-%   `img_compute_ab_correlation` - nimage method.
+%   Examples:
+%       ::
 %
-%   EXAMPLE USE
-%   ===========
-%
-%   ::
-%
-%       fc_compute_ab_corr('scz.list', 'PFC.names', 'ACC.names', 5, ...
-%                          'SCZ_PFC-ACC', 'g', 'full');
+%           qunex fc_compute_ab_corr \
+%               --flist='scz.list' \
+%               --smask='PFC.names' \
+%               --tmask='ACC.names' \
+%               --mask=5 \
+%               --root='SCZ_PFC-ACC' \
+%               --options='g' \
+%               --verbose='full'
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -147,8 +158,8 @@ for s = 1:nsessions
 
     %   --- reading in image files
     if script, tic, end
-	if script, fprintf('\n------\nProcessing %s', session(s).id), end
-	if script, fprintf('\n... reading file(s) '), end
+    if script, fprintf('\n------\nProcessing %s', session(s).id), end
+    if script, fprintf('\n... reading file(s) '), end
 
     % --- check if we need to load the session region file
 
@@ -159,25 +170,25 @@ for s = 1:nsessions
     end
 
     if tROIload
-	    tROI = nimage.img_read_roi(tmask, roif);
+        tROI = nimage.img_read_roi(tmask, roif);
     end
     if sROIload
-	    sROI = nimage.img_read_roi(smask, roif);
+        sROI = nimage.img_read_roi(smask, roif);
     end
 
     % --- load bold data
 
-	nfiles = length(session(s).files);
+    nfiles = length(session(s).files);
 
-	img = nimage(session(s).files{1});
-	if mask, img = img.sliceframes(mask); end
-	if script, fprintf('1'), end
-	if nfiles > 1
-    	for n = 2:nfiles
-    	    new = nimage(session(s).files{n});
-    	    if mask, new = new.sliceframes(mask); end
-    	    img = [img new];
-    	    if script, fprintf(', %d', n), end
+    img = nimage(session(s).files{1});
+    if mask, img = img.sliceframes(mask); end
+    if script, fprintf('1'), end
+    if nfiles > 1
+        for n = 2:nfiles
+            new = nimage(session(s).files{n});
+            if mask, new = new.sliceframes(mask); end
+            img = [img new];
+            if script, fprintf(', %d', n), end
         end
     end
     if script, fprintf('\n'), end

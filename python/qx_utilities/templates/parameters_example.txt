@@ -51,7 +51,7 @@
 #
 # # ---- Basic settings
 # 
-# _sessions                  The file with sessions information. [batch.txt]
+# _batchfile                 The file with sessions information. [batch.txt]
 # _sessionsfolder            The path to study sessions folder. []
 # _logfolder                 The path to log folder. []
 # _logtag                    An optional additional tag to add to the log file after the command name. []
@@ -63,7 +63,6 @@
 # _printoptions              Whether to print options. [False]
 # _filter                    Filtering information. []
 # _script                    The script to be executed. [None]
-# _sessionids                List of | separated session ids for which to run the command. []
 # 
 # # ---- Preprocessing options
 # 

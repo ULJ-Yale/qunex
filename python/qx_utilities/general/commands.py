@@ -12,7 +12,7 @@ Definition of commands used in gmri along with their parameters.
 """
 
 # qx_utilities imports
-from general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities, meltmovfidl, commands_support
+from general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities, meltmovfidl, commands_support, bruker
 
 # pipeline imports
 from hcp import import_hcp, setup_hcp, export_hcp
@@ -24,7 +24,7 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'sort_dicom'            : {'com': dicom.sort_dicom,               'args': ('folder', 'out_dir', 'files', 'copy')},
             'dicom2nii'             : {'com': dicom.dicom2nii,                'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'parelements', 'debug')},
             'dicom2niix'            : {'com': dicom.dicom2niix,               'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'parelements', 'debug', 'tool', 'add_image_type', 'add_json_info')},
-            'import_dicom'          : {'com': dicom.import_dicom,             'args': ('sessionsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'add_image_type', 'add_json_info', 'unzip', 'gzip', 'verbose', 'overwrite')},
+            'import_dicom'          : {'com': dicom.import_dicom,             'args': ('sessionsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'add_image_type', 'add_json_info', 'unzip', 'gzip', 'verbose', 'overwrite', 'test')},
             'get_dicom_info'        : {'com': dicom.get_dicom_info,           'args': ('dicomfile', 'scanner')},
             'import_bids'           : {'com': bids.import_bids,               'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
             'map_bids2nii'          : {'com': bids.map_bids2nii,              'args': ('sourcefolder', 'overwrite', 'fileinfo')},
@@ -37,7 +37,7 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'reslice'               : {'com': nifti.reslice,                  'args': ('inf', 'slices', 'outf')},
             'slice_image'           : {'com': img.slice_image,                'args': ('sourcefile', 'targetfile', 'frames')},
             'nifti24dfp'            : {'com': nifti.nifti24dfp,               'args': ('inf', 'outf')},
-            'setup_hcp'             : {'com': setup_hcp.setup_hcp,            'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'hcp_filename', 'hcp_folderstructure', 'hcp_suffix')},
+            'setup_hcp'             : {'com': setup_hcp.setup_hcp,            'args': ('sourcefolder', 'targetfolder', 'sourcefile', 'check', 'existing', 'hcp_filename', 'hcp_folderstructure', 'hcp_suffix', 'use_sequence_info')},
             'create_session_info'   : {'com': utilities.create_session_info,  'args': ('sessions', 'pipelines', 'sessionsfolder', 'sourcefile', 'targetfile', 'mapping', 'filter', 'overwrite')},
             'printniftihdr'         : {'com': img.printniftihdr,              'args': ('filename', )},
             'modniftihdr'           : {'com': qximg.modniftihdr,              'args': ('filename', 's')},
@@ -66,6 +66,7 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'get_dicom_fields'      : {'com': dicomdeid.get_dicom_fields,     'args': ('folder', 'targetfile', 'limit')},
             'change_dicom_files'    : {'com': dicomdeid.change_dicom_files,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')},
             'run_list'              : {'com': utilities.run_list,             'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')},
-            'import_nhp'            : {'com': import_nhp.import_nhp,          'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'nameformat')},
+            'import_nhp'            : {'com': import_nhp.import_nhp,          'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive')},
+            'bruker_to_dicom'       : {'com': bruker.bruker_to_dicom,         'args': ('sessionsfolder', 'inbox', 'sessions', 'archive', 'parelements')},
             'get_sessions_for_slurm_array' : {'com': utilities.get_sessions_for_slurm_array, 'args': ('sessions', 'sessionids')}
 }

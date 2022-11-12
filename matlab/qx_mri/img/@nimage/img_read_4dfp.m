@@ -1,6 +1,6 @@
 function [img] = img_read_4dfp(img, file, dtype, frames, verbose)
 
-%``function [img] = img_read_4dfp(img, file, dtype, frames, verbose)``
+%``img_read_4dfp(img, file, dtype, frames, verbose)``
 %
 %   Reads in a 4dfp image into an image object
 %
@@ -26,9 +26,9 @@ function [img] = img_read_4dfp(img, file, dtype, frames, verbose)
 if nargin < 5
     verbose = false;
     if nargin < 4
-    	frames = [];
-    	if nargin < 3
-    	    dtype = 'single';
+        frames = [];
+        if nargin < 3
+            dtype = 'single';
         end
     end
 end
@@ -36,7 +36,7 @@ end
 file = strtrim(file);
 if FileType(file)
 
-	img = nimage(file);
+    img = nimage(file);
 
 else
     root = strrep(file, '.img', '');
@@ -64,16 +64,16 @@ else
         mformat = 'l';
     end
 
-	[fim message] = fopen([root '.4dfp.img'], 'r', mformat);
-	if fim == -1
+    [fim message] = fopen([root '.4dfp.img'], 'r', mformat);
+    if fim == -1
         error('\n\nERROR: Could not open %s for reading. Please check your paths!\n\nMatlab message: %s', file, message);
     end
     if isempty(frames)
-	    img.data = fread(fim, ['float32=>' dtype]);
-	else
-	    img.data = fread(fim, img.voxels*frames, ['float32=>' dtype]);
+        img.data = fread(fim, ['float32=>' dtype]);
+    else
+        img.data = fread(fim, img.voxels*frames, ['float32=>' dtype]);
     end
-	fclose(fim);
+    fclose(fim);
 
     img.frames    = length(img.data)/sum(img.voxels);
     img.runframes = img.frames;
@@ -164,10 +164,10 @@ function [x, y, z] = ifh2af(dim, mmppix, center)
 function [ftype] = FileType(filename)
 
 if strcmp(filename(length(filename)-4:end), '.conc')
-	ftype = 1;
+    ftype = 1;
 elseif strcmp(filename(length(filename)-3:end), '.img')
-	ftype = 0;
+    ftype = 0;
 else
-	error('\n%s is neither a conc nor an image file! Aborting', filename);
+    error('\n%s is neither a conc nor an image file! Aborting', filename);
 end
 

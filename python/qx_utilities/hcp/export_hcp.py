@@ -45,11 +45,12 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
                       folder will be taken as the location of the
                       sessionsfolder. [.]
     
-    --sessions        Either a string with pipe `|` or comma separated list of 
-                      sessions (sessions ids) to be mapped (use of grep patterns
-                      is possible), e.g. "AP128,OP139,ER*". When mapping out of 
-                      QuNex it is best (or even required) to provide a path to 
-                      a batch.txt file with information on the sessions. [*]
+    --batchfile       A path to a batch.txt file.
+
+    --sessions        Either a string with pipe `|` or comma separatedlist of
+                      sessions (sessions ids) to be processed (use of grep
+                      patterns is possible), e.g. `"OP128,OP139,ER*"` or `*list`
+                      file with a list of session ids.
 
     --filter          And optional parameter used in combination with a 
                       batch.txt file used to filter sessions to include in the 
@@ -61,12 +62,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
                       batch.txt file referenced in the `sessions` parameter. 
                       Only the sessions for which all the specified keys match
                       the specified values will be mapped. []
-    
-    --sessionids      An optional parameter explicitly specifying, which of the 
-                      sessions identified by the `sessions` parameter are to be 
-                      mapped. If not specified, all sessions will be mapped. 
-                      []
- 
+
     --mapaction       How to map the data. ['link'] The following actions are 
                       supported:
 
@@ -143,7 +139,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     
         qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
-            --sessions=/data/studies/myStudy/processing/batch.txt \\
+            --batchfile=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
             --mapexclude=unprocessed \\
             --mapaction=link \\
@@ -162,7 +158,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
 
         qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
-            --sessions=/data/studies/myStudy/processing/batch.txt \\
+            --batchfile=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
             --filter="group:controls|institution:Yale" \\
             --mapaction="copy" \\
@@ -178,7 +174,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
 
         qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
-            --sessions=/data/studies/myStudy/processing/batch.txt \\
+            --batchfile=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
             --sessionids="AP*,HQ*" \\
             --mapaction="move" \\
@@ -193,7 +189,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
 
         qunex export_hcp \\
             --sessionsfolder=/data/studies/myStudy/sessions \\
-            --sessions=/data/studies/myStudy/processing/batch.txt \\
+            --batchfile=/data/studies/myStudy/processing/batch.txt \\
             --mapto=/data/outbox/hcp_formatted/myStudy \\
             --mapaction="link" \\
             --mapexclude="unprocessed,MotionMatrices,MotionCorrection" \\
@@ -214,7 +210,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     sessionsfolder, mapto, mapexclude = gu.exportPrep("export_hcp", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
-    sessions, _ = gc.getSessionList(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
+    sessions, _ = gc.get_sessions_list(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
     if not sessions:
         raise ge.CommandFailed("export_hcp", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 

@@ -1,6 +1,6 @@
 function [] = general_get_roi_parcels(fin, fout, atlas)
 
-%``function [] = general_get_roi_parcels(fin, fout, atlas)``
+%``general_get_roi_parcels(fin, fout, atlas)``
 %
 %   Returns a report showing the composition of regions of interest (ROI)
 %   in the input image (fin) across CIFTI-2 volume structures and/or the

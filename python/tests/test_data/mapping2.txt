@@ -1,0 +1,16 @@
+#  HCP mapping file
+#  ----------------
+
+191                         => T1w
+231                         => T2w
+SpinEchoFieldMap_AP         => SE-FM-AP
+SpinEchoFieldMap_PA         => SE-FM-PA
+rfMRI_REST_AP_SBRef         => boldref:rest:phenc(AP)
+rfMRI_REST_AP               => bold:rest:phenc(AP)
+rfMRI_REST_PA_SBRef         => boldref:rest:phenc(PA)
+rfMRI_REST_PA               => bold:rest:phenc(PA)
+dMRI_dir98_AP               => DWI:dir98_AP
+dMRI_dir98_PA               => DWI:dir98_PA
+dMRI_dir99_AP               => DWI:dir99_AP
+dMRI_dir99_PA               => DWI:dir99_PA
+asl_3d_tra_iso_3.0_highres  => ASL

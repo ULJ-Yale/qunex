@@ -1,21 +1,20 @@
 function [s] = strjoin(list, delim)
 
-%``function [s] = strjoin(list, delim)``
+%``strjoin(list, delim)``
 %
 %   Joins array of string cells into a single string using the provided
 %   delimiter.
 %
-%   INPUTS
-%	======
+%   Parameters:
+%       --list (cell):
+%           A cell array of strings to be joined.
 %
-%   --list  	a cell array of strings to be joined
-%   --delim 	delimiter between strings
+%       --delim (str, default ' '):
+%           Delimiter between strings.
 %
-%   OUTPUT
-%	======
-%
-%   s
-%		joined string
+%   Returns:
+%       s
+%           Joined string.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

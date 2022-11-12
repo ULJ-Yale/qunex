@@ -1,36 +1,36 @@
 function [ok] = general_check_folder(filename, description, create, v)
 
-%``function [ok] = general_check_folder(filename, description, create, v)``
+%``general_check_folder(filename, description, create, v)``
 %
 %   Checks for existence of a folder, prints notices and creates folder if
 %   specified.
 %
-%  	INPUTS
-%	======
-%   --filename    	The path to the folder to check for.
-%   --description 	The description for the folder ['a folder'].
-%	--create      	Whether to create a folder if it does not exist [true].
-%   --v           	Whether to notify of results [true].
+%   Parameters:
+%       --filename (str):
+%           The path to the folder to check for.
 %
-%	OUTPUT
-%   ======
+%       --description (str, default 'a folder'):
+%           The description for the folder.
 %
-%	ok
-%		Whether the folder was found (true or false)
+%       --create (bool, default true):
+%           Whether to create a folder if it does not exist.
 %
-%   USE
-%	===
+%       --v (bool, default true):
+%           Whether to notify of results.
 %
-%   Use to check for presence of a folder and to (optionally) create one if it
-%	does not yet exist.
+%   Return:
+%       ok
+%           Whether the folder was found (true or false).
 %
-%   EXAMPLE USE
-%	===========
+%   Notes:
+%       Use this function to check for presence of a folder and to
+%       (optionally) create one if it does not yet exist.
 %
-%   ::
+%   Examples:
+%       ::
 %
-%   	general_check_folder('images/functional/movement', 'movement folder', ...
-%		true, true);
+%           general_check_folder('images/functional/movement',
+%           'movement folder', true, true);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -43,7 +43,7 @@ if nargin < 2, description = 'a folder'; end
 
 
 if ~exist(filename, 'file')
-	pause(5);
+    pause(5);
 end
 
 if exist(filename, 'file')
@@ -59,7 +59,7 @@ else
 		end
 		ok = true;
 	else
-		if v & (~create)
+		if v
 			fprintf('... could not find %s (%s), please check your paths!\n', description, filename);
 		end
 		ok = false;

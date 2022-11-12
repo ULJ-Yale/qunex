@@ -1,29 +1,24 @@
 function [elements] = general_filename_split(filename, delim)
 
-%``function [elements] = general_filename_split(filename, delim)``
+%``general_filename_split(filename, delim)``
 %
 %   Splits the filename into elements separated by delim.
 %
-%   INPUTS
-%	======
-%   
-%	--filename  	The filename to be split.
-%   --delim     	The delimiter to be used.
+%   Parameters:
+%       --filename (str):
+%           The filename to be split.
 %
-%   OUTPUT
-%	======
-%   
-%	elements
-%		Cell array of file elements excluding extension.
+%       --delim (str, default '_'):
+%           The delimiter to be used.
 %
-%   EXAMPLE
-%	=======
+%   Returns:
+%       elements
+%           Cell array of file elements excluding extension.
 %
-%	::
+%   Example:
+%       Example below will result in `elements = {'bold3', 's', 'hpss'}`::
 %
-%   	elements = general_filename_split('bold3_s_hpss.nii.gz');
-%
-%   will result in `elements = {'bold3', 's', 'hpss'}`.
+%           elements = general_filename_split('bold3_s_hpss.nii.gz');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -37,8 +32,8 @@ if nargin < 2, delim = '_'; end
 items = sum(ismember(t, delim));
 
 for n = 1:items
-	[elements{n}, r] = strtok(t, delim);
-	t = r(2:end);
+    [elements{n}, r] = strtok(t, delim);
+    t = r(2:end);
 end
 elements{items+1} = t;
 

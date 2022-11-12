@@ -8,13 +8,13 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 %   INPUTS
 %   ======
 %
-%	--obj         current image
+%    --obj         current image
 %   --roi         roi image file
 %   --rcodes      roi values to use [all but 0]
 %   --method      method name [mean]
 %
 %                 - 'mean'      ... average value of the ROI
-%	              - 'median'    ... median value across the ROI
+%                 - 'median'    ... median value across the ROI
 %	              - 'max'       ... median value across the ROI
 %	              - 'min'       ... median value across the ROI
 %                 - 'pca'       ... first eigenvariate of the ROI

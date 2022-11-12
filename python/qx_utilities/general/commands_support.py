@@ -61,8 +61,7 @@ deprecated_commands = {
                         "dwi_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU", "dwi_fsl_bedpostx_gpu"],
                         "dwi_dtifit": ["DWIFSLdtifit", "FSLDTtifit", "dwi_fsl_dtifit"],
                         "run_qc_dwi_dtifit": ["runQC_DWIFSLdtifit", "run_qc_dwi_fsl_dtifit"],
-                        "dwi_legacy": ["hcpdLegacy", "DWILegacy"],
-                        "run_qc_dwi_legacy": ["runQC_DWILegacy"],
+                        "dwi_legacy_gpu": ["dwi_legacy", "hcpdLegacy", "DWILegacy"],
                         "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
                         "dwi_probtrackx_dense_gpu": ["DWIprobtrackxDenseGPU", "ProbtrackxGPUDense"],
                         "dwi_seed_tractography_dense": ["DWIseedTractographyDense", "DWISeedTractography"],
@@ -153,7 +152,6 @@ deprecated_commands = {
                         "hcp_dtifit": ["hcp_DTIFit"],
                         "hcp_bedpostx": ["hcp_Bedpostx"],
                         "run_shell_script": ["runShellScript"],
-                        "longitudinal_freesurfer": ["longitudinalFS"],
                         "create_bold_list": ["createBoldList"],
                         "create_conc_list": ["createConcList"],
                         "map_raw_data": ["mapRawData"],
@@ -225,7 +223,7 @@ deprecated_parameters = {
     'sfilter':                 'filter',
     'hcp_fs_existing_subject': 'hcp_fs_existing_session',
     'subjectsfolder':          'sessionsfolder',
-    'subjid':                  {
+    'subjid':                   {
                                         'sessionid': ['dicom2niix', 'batch_tag2namekey'],
                                         'sessionids': 'export_hcp',
                                         'default': 'sessionid'
@@ -237,7 +235,9 @@ deprecated_parameters = {
     'hcp_bold_sequencetype': None,
     'hcp_biascorrect_t1w': None,
     'hcp_Pipeline': 'hcp_pipeline',
-    'args': 'palm_args'
+    'args': 'palm_args',
+    'TR': 'tr',
+    'PEdir': 'pedir'
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
@@ -253,8 +253,11 @@ deprecated_values = {
         'standard': 'automated'
     },
     'hcp_folderstructure': {'initial': 'hcpya'},
-    'gzip': {'yes': 'file'}
+    'gzip': {'yes': 'folder', 'ask': 'folder'},
+    'clean': {'ask': 'no'},
+    'unzip': {'ask': 'yes'}
 }
+
 
 # The "to_impute" list specifies, which (target) options have to be checked whether 
 # they were not specified and therefore have value None, and in those cases use values from
@@ -290,12 +293,12 @@ towarn_parameters = {
 #
 
 def check_deprecated_parameters(options, command):
-    '''
+    """
     ``check_deprecated_parameters(options, command)``
-    
+
     Checks for deprecated parameters, remaps deprecated ones
     and notifies the user.
-    '''
+    """
 
     remapped   = []
     deprecated = []
@@ -328,6 +331,34 @@ def check_deprecated_parameters(options, command):
                 deprecated.append(k)
         else:
             new_options[k] = v
+
+    # custom remapping for sessions, sessionids and batchfile
+    sessions = None
+    if "sessions" in new_options:
+        sessions =  new_options["sessions"]
+        if ".txt" in sessions:
+            print("WARNING: passing the batchfile through the sessions parameter will be deprecated, please use the batchfile parameter!")
+    # if sessionids was used
+    if "sessionids" in new_options:
+        print("WARNING: the sessionids parameter will be deprecated, please use the sessions parameter!")
+    if "batchfile" in new_options:
+        # if sessions and batchfile both provide a file
+        if sessions is not None and ".txt" in sessions:
+            print("ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!")
+            exit(1)
+        elif sessions is not None:
+            # did we provide a list of sessions in sessionsids as well
+            if "sessionids" in new_options:
+                print("ERROR: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!")
+                exit(1)
+            # remap so session are sessionids and batchfile is sessions
+            else:
+                new_options["sessionids"] = new_options["sessions"]
+                new_options["sessions"] = new_options["batchfile"]
+                del new_options["batchfile"]
+        else:
+            new_options["sessions"] = new_options["batchfile"]
+            del new_options["batchfile"]
 
     if remapped:
         print("\nWARNING: Use of parameters with changed name(s)!")
@@ -376,12 +407,12 @@ def check_deprecated_parameters(options, command):
 #
 
 def impute_parameters(options, command):
-    '''
+    """
     ``impute_parameters(options, command)``
-    
-    Checks if specific parameters are not specified and assigns them the value
-    of another relevant parameter.
-    '''
+
+    Checks if parameters are not specified and assigns them the value of another
+    relevant parameter.
+    """
 
     for target_option, source_option in to_impute:
         if options[target_option] is None:
@@ -395,7 +426,7 @@ def impute_parameters(options, command):
 #                                                               EXTRA PARAMETERS
 #
 
-extra_parameters = ['sessions', 'filter', 'sessionid', 'sessionids', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']
+extra_parameters = ['batchfile', 'sessions', 'sessionids', 'filter', 'sessionid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']
 
 
 # ==============================================================================

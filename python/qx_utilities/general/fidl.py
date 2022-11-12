@@ -101,24 +101,30 @@ def readConc(concf, TR):
 
 def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     """
-    ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]``
+    ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [outfolder=<output_folder>] [fidlname=<optional fidl name>]``
 
     Combines all the fidl files matching root based on the information in conc
     file.
 
-    INPUTS
-    ======
+    Parameters:
+        --concfile (str):
+            The conc file to use as reference.
 
-    --concfile   The conc file to use as reference.
-    --fidlroot   The root to use to find fidl files.
-    --outfolder  The folder in which to save the results.
-    
-    EXAMPLE USE
-    ===========
-    
-    ::
+        --fidlroot (str):
+            The root to use to find fidl files.
 
-        qunex join_fidl concfile=OP33-WM.conc fidlroot=OP33-WM
+        --outfolder (str, default '.'):
+            The folder in which to save the results.
+
+        --fidlname (str, default ''):
+            Optional fidl name.
+
+    Examples:
+        ::
+
+            qunex join_fidl \\
+                --concfile=OP33-WM.conc \\
+                --fidlroot=OP33-WM
     """
 
     # ---> find all fidl files, sort them, read them, get TR info
@@ -198,26 +204,31 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
 def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     """
-    ``join_fidl_folder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]``
+    ``join_fidl_folder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder_in_which_to_save_joint_files>] [fidlname=<folder_with_fidl_files>]``
 
     Uses join_fidl to join all the fidl files that match the name of each conc
     file in the concfolder.
 
-    INPUTS
-    ======
+    Parameters:
+        --concfolder (str):
+            The folder with conc files.
 
-    --concfolder  The folder with conc files.
-    --fidlfolder  The folder with fidl files - defaults to concfolder if not
-                  provided.
-    --outfolder   The folder in which the joint files should be saved, defaults
-                  to fidlfolder if not provided.
+        --fidlfolder (str, default detailed below):
+            The folder with fidl files, defaults to concfolder if not provided.
 
-    EXAMPLE USE
-    ===========
+        --outfolder (str, default detailed below):
+            The folder in which the joint files should be saved, defaults
+            to fidlfolder if not provided.
 
-    ::
+        --fidlname (str, default ''):
+            Folder with fidl files.
 
-        qunex join_fidl_folder concfolder=concs fidlfolder=fidls
+    Examples:
+        ::
+
+            qunex join_fidl_folder \\
+                --concfolder=concs \\
+                --fidlfolder=fidls
     """
 
     if fidlfolder is None:
@@ -254,19 +265,23 @@ def split_fidl(concfile, fidlfile, outfolder=None):
     Splits a multi-bold fidl file into run specific bold files based on the
     sequence of bold files in conc file and their lengths.
     
-    INPUTS
-    ======
+    Parameters:
+        --concfile (str):
+            The path to the conc file.
 
-    --concfile   The path to the conc file.
-    --fidlfile   The path to the fidl file.
-    --outfolder  The path to the folder to put split fidls in.
+        --fidlfile (str):
+            The path to the fidl file.
 
-    EXAMPLE USE
-    ===========
+        --outfolder (str, default '.'):
+            The path to the folder to put split fidls in.
 
-    ::
+    Examples:
+        ::
 
-        qunex split_fidl concfile=OP333_WM.conc fidlfile=OP333_WM.fidl outfolder=/data/mystudy/analysis/splitfidls
+            qunex split_fidl \\
+                --concfile=OP333_WM.conc \\
+                --fidlfile=OP333_WM.fidl \\
+                --outfolder=/data/mystudy/analysis/splitfidls
     """
 
     # ---> read the fidl and conc info
@@ -320,28 +335,31 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
 def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     """
-    ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false] [verbose=true]``
+    ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]``
 
     Prints figures showing fidl events and their duration.
     
-    INPUTS
-    ======
+    Parameters:
+        --fidlfile (str, default detailed below):
+            The path to the fidl file to plot. By default all the fidl files in
+            the folder if none specified.
 
-    --fidlfile    The path to the fidl file to plot. All the fidl files in the
-                  folder if none specified.
-    --fidlfolder  The folder from which to plot the fidl files.
-    --plotfile    The name of the file to save the plot to. Only makes sense if
-                  fidlfile is specified.
-    --allcodes    Whether to plot line for all fidl codes even if no event has a
-                  particular code.
-    --verbose     Whether to report progress
+        --fidlfolder (str, default '.'):
+            The folder from which to plot the fidl files.
 
-    EXAMPLE USE
-    ===========
-    
-    ::
+        --plotfile (str, optional):
+            The name of the file to save the plot to. Only makes sense if
+            fidlfile is specified.
 
-        qunex check_fidl fidlfolder=jfidls
+        --allcodes (bool, default False):
+            Whether to plot line for all fidl codes even if no event has a
+            particular code.
+
+    Examples:
+        ::
+
+            qunex check_fidl \\
+                --fidlfolder=jfidls
     """
 
     if fidlfile:

@@ -153,7 +153,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "                   FSLDIR : $FSLDIR";               if [[ -z $FSLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLDIR"; fi
     echo "               FSLCONFDIR : $FSLCONFDIR";           if [[ -z $FSLCONFDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLCONFDIR"; fi
     echo "                FSLGPUDIR : $FSLGPUDIR";            if [[ -z $FSLGPUDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUDIR"; fi
-    echo "            FSLGPUScripts : $FSLGPUScripts";         if [[ -z $FSLGPUScripts ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUScripts"; fi
+    echo "           FSL_GPU_SCRIPTS : $FSL_GPU_SCRIPTS";         if [[ -z $FSL_GPU_SCRIPTS ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_GPU_SCRIPTS"; fi
     echo "             FSLGPUBinary : $FSLGPUBinary";         if [[ -z $FSLGPUBinary ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUBinary"; fi
     echo "               FSL_FIXDIR : $FSL_FIXDIR";           if [[ -z $FSL_FIXDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_FIXDIR"; fi
     # echo "            POSTFIXICADIR : $POSTFIXICADIR";        if [[ -z $POSTFIXICADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport POSTFIXICADIR"; fi
@@ -195,7 +195,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "        HCPPIPEDIR_Global : $HCPPIPEDIR_Global";        if [[ -z $HCPPIPEDIR_Global ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_Global"; fi
     echo " HCPPIPEDIR_tfMRIAnalysis : $HCPPIPEDIR_tfMRIAnalysis"; if [[ -z $HCPPIPEDIR_tfMRIAnalysis ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_tfMRIAnalysis"; fi
     echo "                MSMBINDIR : $MSMBINDIR";                if [[ -z $MSMBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport MSMBINDIR"; fi
-    echo "  HCPPIPEDIR_dMRITractFull : $HCPPIPEDIR_dMRITractFull";  if [[ -z $HCPPIPEDIR_dMRITractFull ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRITractFull"; fi
+    echo " HCPPIPEDIR_dMRITractFull : $HCPPIPEDIR_dMRITractFull";  if [[ -z $HCPPIPEDIR_dMRITractFull ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRITractFull"; fi
     echo "    HCPPIPEDIR_dMRILegacy : $HCPPIPEDIR_dMRILegacy";    if [[ -z $HCPPIPEDIR_dMRILegacy ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRILegacy"; fi
     echo "            AutoPtxFolder : $AutoPtxFolder";            if [[ -z $AutoPtxFolder ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport AutoPtxFolder"; fi
     echo "              EDDYCUDADIR : $EDDYCUDADIR";              if [[ -z $EDDYCUDADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport EDDYCUDADIR"; fi
@@ -210,13 +210,9 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     unset BinaryError
 
     ## -- Check for HCPpipedir
-    if [[ -e $HCPPIPEDIR/global/scripts/versioning/base.txt ]]; then
+    if [[ -e $HCPPIPEDIR/show_version ]]; then
         # add specific TAG and commit hash
-        echo "    HCPpipelines TAG : $(cat $HCPPIPEDIR/global/scripts/versioning/base.txt)"
-        echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
-    elif [[ -e $HCPPIPEDIR/version.txt ]]; then
-        # add specific TAG and commit hash
-        echo "    HCPpipelines TAG : $(cat $HCPPIPEDIR/version.txt)"
+        echo "    HCPpipelines TAG : `$HCPPIPEDIR/show_version --short`"
         echo " HCPpipelines commit : $(git --git-dir ${HCPPIPEDIR}/.git log -1 --pretty=format:"%H")"
     else
         BinaryError="yes"; BinaryErrorReport="HCPPipelines"
@@ -269,13 +265,13 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     ## -- Check for ANTs (only very few ANTs commands support --version flag)
     echo "        ANTs Binary  : $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion')"
     if [[ -z $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion') ]]; then 
-        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
+        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport ants"
         reho "        ANTs Version : Binary not found!"
         if [[ -L "$ANTSDIR"  && ! -e "$ANTSDIR" ]]; then
             reho "                     : $ANTSDIR is a link to a nonexisiting folder!"
         fi
     else
-        echo "        ANTs Version : $(antsJointFusion --version)"
+        echo "        ANTs Version : $(antsJointFusion --version | head -1)"
     fi
     echo ""
 

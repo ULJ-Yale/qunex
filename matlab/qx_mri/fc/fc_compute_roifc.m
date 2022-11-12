@@ -1,253 +1,288 @@
 function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 
-%function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
+%``fc_compute_roifc(bolds, roiinfo, frames, targetf, options)``
 %
-%   Computes ROI functional connectivity matrices for individual subject / session.
+%   Computes ROI functional connectivity matrices for individual
+%   subject / session.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --bolds (str):
+%           A string with a pipe separated list of paths to .conc or bold files.
+%           The first element has to be the name of the file or group to be used
+%           when saving the data.
+%           E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'.
 %
-%   --bolds     A string with a pipe separated list of paths to .conc or bold 
-%               files. The first element has to be the name of the file or group  
-%               to be used when saving the data. 
-%               E.g.: 'rest|<path to rest file 1>|<path to rest file 2>'
-%   --roiinfo   A path to the names file specifying group based ROI. Additionaly, 
-%               separated by a pipe '|' symbol, a path to an image file holding 
-%               subject/session specific ROI definition.
-%   --frames    The definition of which frames to extract, specifically:
+%       --roiinfo (str):
+%           A path to the names file specifying group based ROI. Additionaly,
+%           separated by a pipe '|' symbol, a path to an image file holding
+%           subject/session specific ROI definition.
 %
-%               -  a numeric array mask defining which frames to use (1) and 
-%                  which not (0), or 
-%               -  a single number, specifying the number of frames to skip at 
-%                  the start of each bold, or
-%               -  a string describing which events to extract timeseries for, 
-%                  and the frame offset from the start and end of the event in 
-%                  format::
-% 
-%                      '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>'
+%       --frames (cell array | int | str, default ''):
+%           The definition of which frames to extract, specifically
 %
-%                  where:
+%           - a numeric array mask defining which frames to use (1) and
+%             which not (0), or
 %
-%                  fidlfile        
-%                      is a path to the fidle file that defines the events    
-%                  extraction name 
-%                      is the name for the specific extraction definition    
-%                  event list      
-%                      is a comma separated list of events for which data is to 
-%                      be extracted    
-%                  extraction start
-%                      is a frame number relative to event start or end when the 
-%                      extraction should start    
-%                  extraction end  
-%                      is a frame number relative to event start or end when the
-%                      extraction should start the extraction start and end 
-%                      should be given as '<s|e><frame number>'. E.g.:
+%           - a single number, specifying the number of frames to skip at
+%             the start of each bold, or
 %
-%                      - s0  ... the frame of the event onset 
-%                      - s2  ... the second frame from the event onset 
-%                      - e1  ... the first frame from the event end 
-%                      - e0  ... the last frame of the event 
-%                      - e-2 ... the two frames before the event end
-%                      
-%                  Example::
+%           - a string describing which events to extract timeseries for,
+%             and the frame offset from the start and end of the event in
+%             format::
 %
-%                      '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%               '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>'
 %
-%   --targetf   The folder to save images in ['.'].
-%   --options   A string specifying additional analysis options formated as pipe 
-%               separated pairs of colon separated key, value pairs: 
+%           where:
+%
+%           - fidlfile
+%               is a path to the fidle file that defines the events
+%           - extraction name
+%               is the name for the specific extraction definition
+%           - event list
+%               is a comma separated list of events for which data is to
+%               be extracted
+%           - extraction start
+%               is a frame number relative to event start or end when the
+%               extraction should start
+%           - extraction end
+%               is a frame number relative to event start or end when the
+%               extraction should start the extraction start and end
+%               should be given as '<s|e><frame number>'. E.g.:
+%
+%               - 's0'  ... the frame of the event onset
+%               - 's2'  ... the second frame from the event onset
+%               - 'e1'  ... the first frame from the event end
+%               - 'e0'  ... the last frame of the event
+%               - 'e-2' ... the two frames before the event end.
+%
+%           Example::
+%
+%               '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%
+%       --targetf (str, default '.'):
+%           The folder to save images in.
+%
+%       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname=|addidtofile=false|subjectid='):
+%           A string specifying additional analysis options formated as pipe
+%           separated pairs of colon separated key, value pairs::
+%
 %               "<key>:<value>|<key>:<value>".
 %
-%               It takes the following keys and values:
+%           It takes the following keys and values:
 %
-%               roimethod 
-%                   what method to use to compute ROI signal: 
+%           - roimethod
+%               What method to use to compute ROI signal:
 %
-%                   mean
-%                       mean value across the ROI
-%	                median
-%                       median value across the ROI
-%	                max
-%                       maximum value across the ROI
-%	                min
-%                       mimimum value across the ROI
-%                   pca
-%                       first eigenvariate of the ROI
+%               - mean
+%                   compute mean values across the ROI
+%               - median
+%                   compute median value across the ROI
+%	            - max
+%                   compute maximum value across the ROI
+%	            - min
+%                   compute mimimum value across the ROI
+%               - pca
+%                   compute first eigenvariate of the ROI.
 %
-%                   ['mean']
+%               Defaults to 'mean'.
 %
-%               eventdata
-%                   what data to use from each event:
+%           - eventdata
+%               What data to use from each event:
 %
-%                   all    
-%                       use all identified frames of all events
-%                   mean   
-%                       use the mean across frames of each identified event
-%                   min    
-%                       use the minimum value across frames of each identified 
-%                       event
-%                   max    
-%                       use the maximum value across frames of each identified 
-%                       event
-%                   median 
-%                       use the median value across frames of each identified 
-%                       event
+%               - all
+%                   use all identified frames of all events
+%               - mean
+%                   use the mean across frames of each identified event
+%               - min
+%                   use the minimum value across frames of each identified
+%                   event
+%               - max
+%                   use the maximum value across frames of each identified
+%                   event
+%               - median
+%                   use the median value across frames of each identified
+%                   event.
 %                   
-%                   ['all']
+%               Defaults to 'all'.
 %
-%               ignore
-%                   a comma separated list of information to identify frames to 
-%                   ignore, options are:
+%           - ignore
+%               A comma separated list of information to identify frames to
+%               ignore, options are:
 %
-%                   use      
-%                       ignore frames as marked in the use field of the bold file
-%                   fidl     
-%                       ignore frames as marked in .fidl file (only available 
-%                       with event extraction)
-%                   <column> 
-%                       the column name in *_scrub.txt file that matches bold file 
-%                       to be used for ignore mask
+%               - use
+%                   ignore frames as marked in the use field of the bold file
+%               - fidl
+%                   ignore frames as marked in .fidl file (only available
+%                   with event extraction)
+%               - <column>
+%                   the column name in ∗_scrub.txt file that matches bold file
+%                   to be used for ignore mask.
 %
-%                   ['use,fidl']
+%               Defaults to 'use,fidl'.
 %
-%               badevents
-%                   what to do with events that have frames marked as bad, options 
-%                   are:
+%           - badevents
+%               What to do with events that have frames marked as bad, options
+%               are:
 %
-%                   use      
-%                       use any frames that are not marked as bad
-%                   <number> 
-%                       use the frames that are not marked as bad if at least 
-%                       <number> ok frames exist
-%                   ignore   
-%                       if any frame is marked as bad, ignore the full event
+%               - use
+%                   use any frames that are not marked as bad
+%               - <number>
+%                   use the frames that are not marked as bad if at least
+%                   <number> ok frames exist
+%               - ignore
+%                   if any frame is marked as bad, ignore the full event.
 %
-%                   ['use']
+%               Defaults to 'use'.
 %
-%               fcmeasure
-%                   which functional connectivity measure to compute, the options 
-%                   are:
+%           - fcmeasure
+%               Which functional connectivity measure to compute, the options
+%               are:
 %
-%                   - r    ... pearson's r value
-%                   - cv   ... covariance estimate
+%               - r
+%                   Pearson's r value
+%               - cv
+%                   covariance estimate.
 %
-%                   ['r']
+%               Defaults to 'r'.
 %
-%               saveind
-%                   a comma separted list of formats to use to save the data ['']
+%           - saveind
+%               A comma separted list of formats to use to save the data:
 %
-%                   long
-%                       save the resulting data in a long format .tsv file
-%                   wide-single
-%                       save the resulting data in a single wide format .tsv file
-%                   wide-separate
-%                       save the resulting data in a wide format .tsv file, one
-%                       file per each measure of interest
-%                   mat
-%                       save the resulting data in a matlab .mat file
-%                                 
-%               fcname
-%                   an optional name describing the functional connectivity 
-%                   computed to add to the output files, if empty, it won't be 
-%                   used ['']
+%               - long
+%                   save the resulting data in a long format .tsv file
+%               - wide-single
+%                   save the resulting data in a single wide format .tsv file
+%               - wide-separate
+%                   save the resulting data in a wide format .tsv file, one
+%                   file per each measure of interest
+%               - mat
+%                   save the resulting data in a matlab .mat file.
+%               - none
+%                   don't save the results in a file, same as ''.
 %
-%               subjectid
-%                   an optional subject/session id to report in the results, 
-%                   if empty, it won't be used ['']
+%               Defaults to 'none'.
 %
-%               addidtofile
-%                   whether to add subjectid to the filename if a subject id, 
-%                   is provided ['false']
+%           - fcname
+%               An optional name describing the functional connectivity
+%               computed to add to the output files, if empty, it won't be
+%               used. Defaults to ''.
 %
-%               verbose
-%                   Whether to be verbose 'true' or not 'false', when running the 
-%                   analysis ['false']
+%           - subjectid
+%               An optional subject/session id to report in the results, 
+%               if empty, it won't be used. Defaults to ''.
 %
-%   RESULTS
-%   =======
+%           -addidtofile
+%               Whether to add subjectid to the filename if a subject id, 
+%               is provided. Defaults to 'false'.
 %
-%   The function returns a structure array with the following fields for each specified
-%   data extraction:
+%           - verbose
+%               Whether to be verbose when running the analysis:
 %
-%   fcmat
-%       title 
-%           the title of the extraction as specifed in the frames string, empty 
-%           if extraction was specified using a numeric value 
-%       roi   
-%           a cell array with the names of the ROI used in the order of columns 
-%           and rows in the functional connectivity matrix
-%       N     
-%           number of frames over which the matrix was computed
-%       r     
-%           correlation matrix between all ROI for that subject/session
-%       fz    
-%           Fisher z transformed correlation matrix between all ROI for that 
-%           subject/session
-%       z     
-%           z-scores for the correlations
-%       p     
-%           p-values for the correlations
-%       cv    
-%           covariance matrix between all ROI for that subject/session
+%               - true
+%               - false.
 %
-%   Please note, that `cv` will only be present if it was specified as the fcmeasure.
-%   `r`, `fz`, `z`, `p` will only be present if `r` was specified as the fcmeasure.
+%               Defaults to 'false'.
 %
-%   Based on saveind option specification a file may be saved with the functional 
-%   connectivity
-%   data saved in a matlab.mat file and/or in a text long format::
+%           - debug
+%               Whether to print debug when running the analysis:
 %
-%       <targetf>/<name>[_<fcname>][_<subjectname>]_<cor|cov>[_<long|[_<r|Fz|cv>]wide>].<tsv|mat>
+%               - true
+%               - false.
 %
-%   `<name>` is the provided name of the bold(s).
-%   `<fcname>` is the provided name of the functional connectivity computed,
-%   if it was specified.
-%   `<subjectname>` is the provided name of the subject, if it was specified.
-%   `long` and `wide` will be added for long and wide tsv files, respectively.
-%   `r`, `Fz`, `cv` will be added when wide data is saved in separate wide 
-%   format files.
+%               Defauts to 'false'.
 %
-%   The text file will have the following columns (depending on the fcmethod):
+%   Returns:
+%       fcmat
+%           - title
+%               The title of the extraction as specifed in the frames string,
+%               empty if extraction was specified using a numeric value.
+%           - roi
+%               A cell array with the names of the ROI used in the order of
+%               columns and rows in the functional connectivity matrix.
+%           - N
+%               Number of frames over which the matrix was computed.
+%           - r
+%               Correlation matrix between all ROI for that subject/session.
+%           - fz
+%               Fisher z transformed correlation matrix between all ROI for that
+%               subject/session.
+%           - z
+%               z-scores for the correlations.
+%           - p
+%               p-values for the correlations.
+%           - cv
+%               Covariance matrix between all ROI for that subject/session.
+%
+%   Notes:
+%       Please note, that `cv` will only be present if it was specified as the
+%       cmeasure. `r`, `fz`, `z`, `p` will only be present if `r` was specified
+%       as the fcmeasure.
+%
+%       Based on saveind option specification a file may be saved with the
+%       functional connectivity data saved in a matlab.mat file and/or in a text
+%       long format::
+%
+%           <targetf>/<name>[_<fcname>][_<subjectid>]_<cor|cov>[_<long|[_<r|Fz|cv>]wide>].<tsv|mat>
+%
+%       - `<name>` is the provided name of the bold(s)
+%       - `<fcname>` is the provided name of the functional connectivity computed,
+%         if it was specified
+%       - `<subjectid>` is the provided name of the subject, if it was
+%         specified.
+%
+%       `long` and `wide` will be added for long and wide tsv files, respectively.
+%       `r`, `Fz`, `cv` will be added when wide data is saved in separate wide 
+%       format files.
+%
+%       The text file will have the following columns (depending on the
+%       fcmethod):
+%
+%       long format
+%       - name
+%       - title
+%       - subject
+%       - roi1
+%       - roi2
+%       - cv
+%       - r
+%       - Fz
+%       - Z
+%       - p
 %   
-%   long format         wide format
-%   - name              - name
-%   - title             - title
-%   - subject           - subject
-%   - roi1              - measure
-%   - roi2              - [<roi1_code>]_<roi1_name>-[<roi_code>2]_<roi3_name>
-%   - cv
-%   - r
-%   - Fz
-%   - Z
-%   - p
+%       wide format
+%       - name
+%       - title
+%       - subject
+%       - measure
+%       - [<roi1_code>]_<roi1_name>-[<roi_code>2]_<roi3_name>
+%
+%       Note:
+%       In wide format only cv, r, and Fz data will be saved. 
+%
+%       Use:
+%           The function computes functional connectivity matrices for the
+%           specified ROI. If an event string is provided, it has to start with
+%           a path to the .fidl file to be used to extract the events, following
+%           by a pipe separated list of event extraction definitions::
+%
+%               <title>:<eventlist>:<frame offset1>:<frame offset2>
+%
+%           multiple extractions can be specified by separating them using the
+%           pipe '|' separator. Specifically, for each extraction, all the
+%           events listed in a comma-separated eventlist will be considered
+%           (e.g. 'congruent,incongruent'). For each event all the frames
+%           starting from the specified beginning and ending offset will be
+%           extracted. If options eventdata is specified as 'all', all the
+%           specified frames will be concatenated in a single timeseries,
+%           otherwise, each event will be summarised by a single frame in a
+%           newly generated events series image.
 %   
-%   Note:
-%   In wide format only cv, r, and Fz data will be saved. 
+%           From the resulting timeseries, ROI series will be extracted for each
+%           specified ROI as specified by the roimethod option. A functional
+%           connectivity matrix between ROI will be computed.
 %
-%   USE
-%   ===
-% 
-%   The function computes functional connectivity matrices for the specified ROI. 
-%   If an event string is provided, it has to start with a path to the .fidl file 
-%   to be used to extract the events, following by a pipe separated list of event 
-%   extraction definitions:
-%
-%   <title>:<eventlist>:<frame offset1>:<frame offset2>
-%
-%   multiple extractions can be specified by separating them using the pipe '|' 
-%   separator. Specifically, for each extraction, all the events listed in a
-%   comma-separated eventlist will be considered (e.g. 'congruent,incongruent'). 
-%   For each event all the frames starting from the specified beginning and ending
-%   offset will be extracted. If options eventdata is specified as 'all', all the
-%   specified frames will be concatenated in a single timeseries, otherwise, each
-%   event will be summarised by a single frame in a newly generated events series 
-%   image.
-%   
-%   From the resulting timeseries, ROI series will be extracted for each specified 
-%   ROI as specified by the roimethod option. A functional connectivity matrix 
-%   between ROI will be computed.
-%
-%   The results will be returned in a fcmat structure and, if so specified, saved.
+%           The results will be returned in a fcmat structure and, if so
+%           specified, saved.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
