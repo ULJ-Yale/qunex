@@ -226,6 +226,9 @@ for s = 1:nsessions
         raw = [];
     end
 
+    % -- temporary hack
+    raw.use = ones(size(raw.use));
+
     % -- run requested computation
     if verbose && detailed; fprintf('       - computing predictions and/or residuals\n'); end
     if ismember({'residual'}, options.save)
