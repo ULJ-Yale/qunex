@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.95.3
+
+* Fixed a bug with setting the default value of `hcp_bold_topupconfig`.
+
 ## 0.95.2
 
 * Fixed a path in pconn template `run_qc` BOLD.
