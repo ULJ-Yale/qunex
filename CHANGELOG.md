@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## 0.95.3
 
 * Fixed a bug with setting the default value of `hcp_bold_topupconfig`.
+* Added support for `hcp_icafix_fallbackthreshold` in `hcp_icafix`.
 
 ## 0.95.2
 

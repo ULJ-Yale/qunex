@@ -3980,6 +3980,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             non-filtered timeseries files that are prerequisites to FIX
             cleaning.
 
+        --hcp_icafix_fallbackthreshold (int, default 0):
+            If greater than zero, reruns icadim on any run with a VN mean more
+            than this amount greater than the minimum VN mean.
+
         --hcp_icafix_postfix (str, default 'TRUE'):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
             successfully.
@@ -4340,7 +4344,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 "%(domot)s" \
                 "%(trainingdata)s" \
                 %(fixthreshold)d \
-                "%(deleteintermediates)s"' % {
+                "%(deleteintermediates)s" \
+                %(fallbackthreshold)d' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
                 'bandpass'              : int(bandpass),
@@ -4348,7 +4353,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 'domot'                 : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if options['hcp_icafix_traindata'] is None else options['hcp_icafix_traindata'],
                 'fixthreshold'          : options['hcp_icafix_threshold'],
-                'deleteintermediates'   : options['hcp_icafix_deleteintermediates']}
+                'deleteintermediates'   : options['hcp_icafix_deleteintermediates'],
+                'fallbackthreshold'     : options['hcp_icafix_fallbackthreshold']}
 
         # -- Report command
         if groupok:
