@@ -2651,13 +2651,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         # btargets = options['bolds'].split("|")
 
         # --- run checks
-
         if 'hcp' not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # -> Pre FS results
-
         if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
             r += "\n---> PreFS results present."
         else:
@@ -2683,11 +2681,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> lookup gdcoeffs file if needed
-
         gdcfile, r, run = check_gdc_coeff_file(options['hcp_bold_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
         # -> default parameter values
-
         spinP       = 0
         spinN       = 0
         spinNeg     = ""  # AP or LR
@@ -2701,7 +2697,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         fmge        = "NONE"
 
         # -> Check for SE images
-
         sepresent = []
         sepairs = {}
         sesettings = False
@@ -2709,9 +2704,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         if options['hcp_bold_dcmethod'].lower() == 'topup':
 
             # -- spin echo settings
-
             sesettings = True
-            for p in ['hcp_bold_sephaseneg', 'hcp_bold_sephasepos', 'hcp_bold_unwarpdir', 'hcp_bold_topupconfig']:
+            for p in ['hcp_bold_sephaseneg', 'hcp_bold_sephasepos', 'hcp_bold_unwarpdir']:
                 if not options[p]:
                     r += '\n---> ERROR: TOPUP requested but %s parameter is not set! Please review parameter file!' % (p)
                     boldok = False
@@ -2756,7 +2750,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         sepairs[bold] = {'spinPos': spinPos, 'spinNeg': spinNeg}
 
             # --> check for topupconfig
-            if options['hcp_bold_topupconfig']:
+            if options['hcp_bold_topupconfig'] and options['hcp_bold_topupconfig'] != "":
                 topupconfig = options['hcp_bold_topupconfig']
                 if not os.path.exists(options['hcp_bold_topupconfig']):
                     topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_bold_topupconfig'])
@@ -2771,7 +2765,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 topupconfig = ""
 
         # --- Process unwarp direction
-
         if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
             unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
             unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
@@ -2780,7 +2773,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             unwarpdirs = {'default': ""}
 
         # --- Get sorted bold numbers
-
         bolds, bskip, report['boldskipped'], r = pc.useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
             if options['hcp_filename'] == 'userdefined':
@@ -2789,7 +2781,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Preprocess
-
         boldsData = []
 
         if bolds:
@@ -2810,7 +2801,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             boldok = True
 
             # ===> Check for and prepare distortion correction parameters
-
             echospacing = ""
             unwarpdir = ""
 
@@ -2852,7 +2842,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 r += "\n     ... unwarp direction: %s" % (unwarpdir)
 
                 # -- set echospacing
-
                 if 'EchoSpacing' in boldinfo and checkInlineParameterUse('BOLD', 'EchoSpacing', options):
                     echospacing = boldinfo['EchoSpacing']
                     r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)
@@ -2865,7 +2854,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = False
 
             # --- check for spin-echo-fieldmap image
-
             if options['hcp_bold_dcmethod'].lower() == 'topup' and sesettings:
 
                 if not sepresent:
@@ -2899,13 +2887,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     r += "\n         -> SE Negative image : %s" % (os.path.basename(spinNeg))
 
                 # -- are we using a new SE image?
-
                 if spinN != spinP:
                     spinP = spinN
                     futureref = "NONE"
 
             # --- check for Siemens double TE-fieldmap image
-
             elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
@@ -2925,7 +2911,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 fmge = None
 
             # --- check for GE fieldmap image
-
             elif options['hcp_bold_dcmethod'].lower() in ['generalelectricfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
@@ -2937,7 +2922,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 fmge = hcp['fieldmap'][int(fmnum)]['GE']
 
             # --- check for Philips double TE-fieldmap image
-
             elif options['hcp_bold_dcmethod'].lower() in ['philipsfieldmap']:
                 fmnum = boldinfo.get('fm', None)
                 fieldok = True
@@ -2957,7 +2941,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 fmge = None
 
             # --- NO DC used
-
             elif options['hcp_bold_dcmethod'].lower() == 'none':
                 r += '\n     ... No distortion correction used '
                 if options['hcp_processing_mode'] == 'HCPStyleData':
@@ -2965,7 +2948,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     run = False
 
             # --- ERROR
-
             else:
                 r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_dcmethod'])
                 boldok = False
@@ -2977,7 +2959,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             #
 
             # --- check for bold image
-
             if 'filename' in boldinfo and options['hcp_filename'] == 'userdefined':
                 boldroot = boldinfo['filename']
             else:
@@ -3008,14 +2989,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 r += '\n     ... using the HCPpipelines default BOLD mask'
 
             # --- set movement reference image
-
             fmriref = futureref
             if options['hcp_bold_movref'] == 'first':
                 if futureref == "NONE":
                     futureref = boldtarget
 
             # --- are we using previous reference
-
             if fmriref != "NONE":
                 r += '\n     ... using %s as movement correction reference' % (fmriref)
                 refimg = 'NONE'
@@ -4001,6 +3980,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             non-filtered timeseries files that are prerequisites to FIX
             cleaning.
 
+        --hcp_icafix_fallbackthreshold (int, default 0):
+            If greater than zero, reruns icadim on any run with a VN mean more
+            than this amount greater than the minimum VN mean.
+
         --hcp_icafix_postfix (str, default 'TRUE'):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
             successfully.
@@ -4361,7 +4344,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 "%(domot)s" \
                 "%(trainingdata)s" \
                 %(fixthreshold)d \
-                "%(deleteintermediates)s"' % {
+                "%(deleteintermediates)s" \
+                %(fallbackthreshold)d' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
                 'bandpass'              : int(bandpass),
@@ -4369,7 +4353,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 'domot'                 : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if options['hcp_icafix_traindata'] is None else options['hcp_icafix_traindata'],
                 'fixthreshold'          : options['hcp_icafix_threshold'],
-                'deleteintermediates'   : options['hcp_icafix_deleteintermediates']}
+                'deleteintermediates'   : options['hcp_icafix_deleteintermediates'],
+                'fallbackthreshold'     : options['hcp_icafix_fallbackthreshold']}
 
         # -- Report command
         if groupok:
