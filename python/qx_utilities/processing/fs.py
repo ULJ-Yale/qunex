@@ -57,6 +57,8 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
             copy = False
 
         if overwrite or copy:
+            if f['t1_source'] is None:
+                raise NoSourceFolder("ERROR: Data source folder is not set. Please check your paths!")
             r += '\n... copying %s' % (f['t1_source'])
             if options['image_target'] == '4dfp':
                 if gi.getImgFormat(f['t1_source']) == '.4dfp.img':
@@ -158,9 +160,10 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
         if os.path.exists(p):
             return p
         else:
-            tp = os.path.join(d['s_source'], p)
-            if os.path.exists(tp):
-                return tp
+            if d['s_source'] is not None:
+                tp = os.path.join(d['s_source'], p)
+                if os.path.exists(tp):
+                    return tp
             elif "path_freesurfer" in options:
                 tf = options['path_freesurfer'].replace("[sid]", sid)
                 tp = os.path.join(tf, p)

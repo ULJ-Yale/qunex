@@ -75,6 +75,8 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
 
     try:
         if overwrite or copy:
+            if f['t1_source'] is None:
+                raise pc.NoSourceFolder("ERROR: Data source folder is not set. Please check your paths!")
             r += '\n... copying %s' % (f['t1_source'])
             if options['image_target'] == '4dfp':
                 if gi.getImgFormat(f['t1_source']) == '.4dfp.img':

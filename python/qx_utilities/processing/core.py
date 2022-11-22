@@ -522,9 +522,7 @@ def getSessionFolders(sinfo, options):
     """
     getSessionFolders - documentation not yet available.
     """
-    d = {}
-
-    d['s_source'] = None
+    d = {'s_source': None}
 
     if options['image_source'] == 'hcp':
         if "hcp" in sinfo:
