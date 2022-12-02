@@ -446,18 +446,7 @@ for n = 1:nsets
         rs = ts.img_extract_roi(roiinfo, [], options.roimethod); 
     end
 
-    if strcmp(options.fcmeasure, 'cv')
-        fc = rs';
-        fc = bsxfun(@minus, fc, mean(fc)) ./ sqrt(ts.voxels-1);
-        fc = fc' * fc;
-    else
-        if strcmp(options.fcmeasure, 'rho')
-            [~, rs] = sort(rs, 2, 'ascend');
-        end
-        fc = zscore(rs', 0, 1);
-        fc = fc ./ sqrt(ts.frames -1);
-        fc = fc' * fc;
-    end
+    fc = fc_compute(rs, [], options.fcmeasure, false);
     
     if verbose; fprintf(' ... computed fc matrix'); end
 
