@@ -146,6 +146,8 @@ function [fcset] = fc_compute_roifc_group(flist, roiinfo, frames, targetf, optio
 %
 %               - r
 %                   Pearson's r value
+%               - rho
+%                   Spearman's rho value
 %               - cv
 %                   covariance estimate.
 %
@@ -331,7 +333,7 @@ if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'min', 'max'})
     error('ERROR: Invalid roi extraction method: %s', options.roimethod);
 end
 
-if ~ismember(options.fcmeasure, {'r', 'cv'})
+if ~ismember(options.fcmeasure, {'r', 'cv', 'rho'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
 end
 
@@ -511,8 +513,8 @@ else
     fcname = '';
 end
 
-ftail = {'cor', 'cov'};
-ftail = ftail{ismember({'r', 'cv'}, options.fcmeasure)};
+ftail = {'cor', 'cov', 'rho'};
+ftail = ftail{ismember({'r', 'cv', 'rho'}, options.fcmeasure)};
 
 basefilename = fullfile(targetf, sprintf('%s_%s%s', lname, fcname, ftail));
 

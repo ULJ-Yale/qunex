@@ -140,6 +140,8 @@ function [fcmat] = fc_compute_roifc(bolds, roiinfo, frames, targetf, options)
 %
 %               - r
 %                   Pearson's r value
+%               - rho
+%                   Spearman's rho value
 %               - cv
 %                   covariance estimate.
 %
@@ -325,7 +327,7 @@ if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'min', 'max'})
     error('ERROR: Invalid roi extraction method: %s', options.roimethod);
 end
 
-if ~ismember(options.fcmeasure, {'r', 'cv'})
+if ~ismember(options.fcmeasure, {'r', 'cv', 'rho'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
 end
 
@@ -449,6 +451,9 @@ for n = 1:nsets
         fc = bsxfun(@minus, fc, mean(fc)) ./ sqrt(ts.voxels-1);
         fc = fc' * fc;
     else
+        if strcmp(options.fcmeasure, 'rho')
+            [~, rs] = sort(rs, 2, 'ascend');
+        end
         fc = zscore(rs', 0, 1);
         fc = fc ./ sqrt(ts.frames -1);
         fc = fc' * fc;
@@ -502,8 +507,8 @@ else
     subjectname = '';
 end
 
-ftail = {'cor', 'cov'};
-ftail = ftail{ismember({'r', 'cv'}, options.fcmeasure)};
+ftail = {'cor', 'cov', 'rho'};
+ftail = ftail{ismember({'r', 'cv', 'rho'}, options.fcmeasure)};
 
 basefilename = fullfile(targetf, sprintf('%s_%s%s%s', name, fcname, subjectname, ftail));
 
