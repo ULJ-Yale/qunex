@@ -80,9 +80,6 @@ if nargout == 2
     if isempty(raw)
         error('ERROR: Residuals were requested but no bold data was provided!'); 
     end
-    % if sum(raw.use) ~= size(glm.glm.A, 1)
-    %     error('ERROR: Regressor matrix and number of timepoints in BOLD do not match!'); 
-    % end
     if size(raw.data, 1) ~= size(glm.data, 1)
         error('ERROR: Beta maps and raw data do not match in voxel/grayordinate size!'); 
     end
