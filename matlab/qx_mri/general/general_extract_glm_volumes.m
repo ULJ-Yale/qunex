@@ -210,7 +210,8 @@ if ismember(saveoption, {'by_effect', 'by_session'})
     out = glm.zeroframes(pt);
     out.data = data;
     out = setMeta(out, session, effect, frame, event, verbose);
-    if nargin > 0
+    if nargout > 0
+        out.list.meta    = 'list';
         out.list.session = session;
         out.list.effect  = effect;
         out.list.frame   = frame;
