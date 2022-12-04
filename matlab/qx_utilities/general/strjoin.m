@@ -23,10 +23,14 @@ function [s] = strjoin(list, delim)
 
 if nargin < 2 || isempty(delim), delim = ' '; end
 
-s = list{1};
-slength = length(list);
-if slength > 1
-    for n = 2:slength
-        s = [s delim list{n}];
+if isempty(list)
+    s = '';
+else
+    s = list{1};
+    slength = length(list);
+    if slength > 1
+        for n = 2:slength
+            s = [s delim list{n}];
+        end
     end
 end
