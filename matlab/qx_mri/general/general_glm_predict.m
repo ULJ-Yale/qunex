@@ -137,7 +137,7 @@ detailed = strcmp(options.verboselevel, 'high');
 if verbose; fprintf('\nRunning prediction for effects %s on list %s.\n', strjoin(effects, ', '), flist); end
 
 if verbose && detailed
-    general_print_struct(options, 'Options used');
+    general_print_struct(options, 'general_glm_predict options used');
 end
 
 options.save = strtrim(regexp(options.save, ',', 'split'));

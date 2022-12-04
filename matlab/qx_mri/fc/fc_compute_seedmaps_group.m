@@ -293,7 +293,7 @@ if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be spe
 default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|saveindname=no|itargetf=sfolder|verbose=false';
 options = general_parse_options([], options, default);
 
-general_print_struct(options, 'Options used');
+general_print_struct(options, 'fc_compute_seedmaps_group options used');
 
 if ~ismember(options.fcmeasure, {'r', 'cv'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);

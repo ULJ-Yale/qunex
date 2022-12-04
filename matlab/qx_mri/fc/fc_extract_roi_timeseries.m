@@ -1,7 +1,3 @@
-% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
-%
-% SPDX-License-Identifier: GPL-3.0-or-later
-
 function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, options)
 
 %function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, options)
@@ -262,6 +258,10 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %   The results will be returned in a tsmat structure and, if so specified, saved.
 %
 
+% SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+%
+% SPDX-License-Identifier: GPL-3.0-or-later
+
 if nargin < 5 || isempty(options), options = '';  end
 if nargin < 4 || isempty(targetf), targetf = '.'; end
 if nargin < 3 frames  = []; end
@@ -277,7 +277,7 @@ detailed    = strcmp(options.verboselevel, 'high');
 addidtofile = strcmp(options.addidtofile, 'true');
 
 if verbose && detailed
-    general_print_struct(options, 'Options used');
+    general_print_struct(options, 'fc_extract_roi_timeseries options used');
 end
 
 if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})

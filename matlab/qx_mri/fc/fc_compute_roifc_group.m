@@ -323,7 +323,7 @@ if nargin < 2 error('ERROR: At least file list and ROI information have to be sp
 default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=|fcname=|saveind=|itargetf=gfolder|verbose=false';
 options = general_parse_options([], options, default);
 
-general_print_struct(options, 'Options used');
+general_print_struct(options, 'fc_compute_roifc_group options used');
 
 if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
     error('ERROR: Invalid eventdata option: %s', options.eventdata);

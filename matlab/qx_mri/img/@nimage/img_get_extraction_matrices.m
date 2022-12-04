@@ -72,7 +72,7 @@ verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
 
 if printdebug
-    general_print_struct(options, 'Options used');
+    general_print_struct(options, 'img_get_extraction_matrices options used');
 end
 
 % ---> creating use mask

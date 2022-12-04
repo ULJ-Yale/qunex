@@ -259,7 +259,7 @@ verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
 
 if printdebug
-    general_print_struct(options, 'Options used');
+    general_print_struct(options, 'fc_compute_gbc options used');
 end
 
 if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
