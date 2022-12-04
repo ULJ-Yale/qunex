@@ -95,6 +95,8 @@ prepend   = '       ... ';
 
 for s = files(:)'
     s = strtrim(s{1});
+    % -- replace 'subject id' with 'session id'
+    s = strrep(s, 'subject id:', 'session id:');
     if length(s) > 0 && s(1) == '#'
         continue
     end
