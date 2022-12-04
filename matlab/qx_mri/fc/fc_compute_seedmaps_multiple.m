@@ -107,6 +107,12 @@ if isa(inmask, 'char')
     end
 end
 
+if cv 
+    fcmeasure = 'cv';
+else
+    fcmeasure = 'r';
+end
+
 % ----- Check if the files are there!
 
 go = true;
@@ -222,13 +228,12 @@ for n = 1:nsub
 
     fprintf('\n     ... computing seed maps ');
 
-    if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
-        [pr, p] = y.img_compute_correlations(ts', false, cv);
-        if strfind(options, 'z')
-            z = p.img_p2z(pr);
-        end
+    if ~isempty(strfind(options, 'p'))
+        [pr, z, p] = y.img_compute_correlations(ts', fcmeasure, false, false);
+    elseif ~isempty(strfind(options, 'z'))
+        [pr, z] = y.img_compute_correlations(ts', fcmeasure, false, false);
     else
-        pr = y.img_compute_correlations(ts', false, cv);
+        pr = y.img_compute_correlations(ts', fcmeasure, false, false);
     end
 
     fprintf(' ... done!');

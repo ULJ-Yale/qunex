@@ -372,7 +372,7 @@ for n = 1:nsets
     % --> generate seedmaps
 
     rs = ts.img_extract_roi(roi, [], options.roimethod);
-    fc = ts.img_compute_correlations(rs', [], strcmp(options.fcmeasure, 'cv'));
+    fc = ts.img_compute_correlations(rs', options.fcmeasure, false);
 
     if verbose; fprintf(' ... computed seedmap'); end
 

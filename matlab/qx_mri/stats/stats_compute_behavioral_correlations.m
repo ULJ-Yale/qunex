@@ -59,7 +59,7 @@ img = nimage(imgfile);
 % ------------------------> Correlations
 
 if strfind(target, 'r')
-    [r, Z] = img.img_compute_correlations(bdata.data, true);
+    [r, Z] = img.img_compute_correlations(bdata.data, 'r', false, true);
     
     for n = 1:length(bdata.colheaders)
         r.img_saveimageframe(n, [r.rootfilename '-' bdata.colheaders{n} '_r']);
