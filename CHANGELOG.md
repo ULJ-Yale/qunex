@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.95.4
+
+* Added the ability to generate predicted timeseries and residual timeseries for arbitrary set of regressors used in the GLM analyses.
+
 ## 0.95.3
 
 * Fixed a bug with setting the default value of `hcp_bold_topupconfig`.
