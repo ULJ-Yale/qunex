@@ -197,6 +197,8 @@ minarea = mindim(2);
 maxsize = maxdim(1);
 maxarea = maxdim(2);
 
+default_options = 'frames:1|boundary:|limitvol:0';
+
 % --- Script verbosity
 report = false;
 verbose_pass = false;
@@ -225,21 +227,14 @@ else
 end
 
 % --- parse options argument
-options_parsed = general_parse_options([],options);
-if ~isfield(options_parsed,'frames')
-    options_parsed.frames = 1;
-    if img.frames > 1
-        warning(['img_find_peaks(): image contains multiple frames and ',...
-            'options->frames was not specified. As a result, only the ',...
-            'first frame will be processed.']);
-    end
+options_parsed = general_parse_options([], options, default_options);
+
+if img.frames > 1 && options_parsed.frames == 1 
+    warning(['img_find_peaks(): image contains multiple frames however ',...
+        'options->frames is set to 1. As a result, only the ',...
+        'first frame will be processed.']);
 end
-if ~isfield(options_parsed,'boundary')
-    options_parsed.boundary = '';
-end
-if ~isfield(options_parsed,'limitvol')
-    options_parsed.limitvol = '';
-end
+
 frames = options_parsed.frames;
 if strcmp(frames,'all')
     frames = 1:1:img.frames;

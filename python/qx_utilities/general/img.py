@@ -483,7 +483,7 @@ class niftihdr:
         t = s.read(sc)                                                # char      - unused
 
         self.dim_info,       = struct.unpack(e + "c", s.read(sc))      # char      - MRI slice ordering ---- information not available in IFH
-        self.dim_info        = self.dim_info.decode("utf-8")
+        self.dim_info        = self.dim_info.decode("utf-8", errors="ignore")
         self.ndimensions,    = struct.unpack(e + "h", s.read(sh))      # short     - number of dimensions used
         self.sizex,          = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension x
         self.sizey,          = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension y
