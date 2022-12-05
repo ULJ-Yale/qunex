@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -413,11 +413,8 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         if [[ -z $(which python 2>&1 | grep -v 'no python') ]]; then
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport python"
         reho "     python : Binary not found!"
-        if [[ -L "$RDIR"  && ! -e "$RDIR" ]]; then
-            reho "                     : $RDIR is a link to a nonexisiting folder!"
-        fi
     else
-        echo "      python Version : $(python --version | head -1)"
+        echo "     python Version : $(python --version | head -1)"
     fi
     echo ""
         

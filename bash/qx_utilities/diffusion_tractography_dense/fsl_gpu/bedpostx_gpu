@@ -72,7 +72,7 @@ Usage() {
 
 monitor(){
     cat <<EOM > ${bedpostxdir}/monitor
-#!/bin/sh
+#!/bin/bash
 nparts=0
 if [ $njobs -eq 1 ]; then
 #1 part (GPU) and several subparts
