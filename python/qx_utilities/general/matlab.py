@@ -59,7 +59,7 @@ functions = {
     'fc_extract_roi_timeseries_group': [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_roifc':                [('bolds', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_roifc_group':          [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_seedmaps':             [('bolds', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_compute_seedmaps':             [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_seedmaps_group':       [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_seedmaps_multiple':    [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'numeric'), ('options', 'string'), ('targetf', 'string'), ('method', 'string'), ('ignore', 'string'), ('cv', 'string')],
     'fc_extract_roi_timeseries_masked':   [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('targetf', 'string'), ('options', 'string'), ('method', 'string'), ('ignore', 'string'), ('rcodes', 'string'), ('mcodes', 'string'), ('bmask', 'string')],
@@ -75,6 +75,8 @@ functions = {
 }
 
 functionList = sorted(functions.keys())
+
+
 
 
 # ==============================================================================

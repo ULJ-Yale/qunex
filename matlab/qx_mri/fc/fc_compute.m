@@ -89,7 +89,7 @@ end
 
 % --- do we need to return Fz?
 
-if nargin > 1
+if nargout > 1
     fzmat = fc_fisher(fcmat);
 end
 

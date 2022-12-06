@@ -437,7 +437,7 @@ options = general_parse_options([], options, default);
 verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
 
-gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug)
+gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 fcmeasure = options.fcmeasure;
 
 if printdebug
@@ -577,16 +577,18 @@ for s = 1:nsub
 
     % ---> setting up frames parameter
 
-    if isa(frames, 'char')
-        if isfield(session(s), 'fidl')
-            go = go & general_check_file(session(s).fidl, [session(s).id ' fidl file'], 'error');
-            sframes = [session(s).fidl '|' frames];
-        else
-            go = false;
-            fprintf(' ... ERROR: %s missing fidl file specification!\n', session(s).id);
+    if isempty(frames)
+        frames = 0;
+    elseif isa(frames, 'char')
+        frames = str2num(frames);        
+        if isempty(frames) 
+            if isfield(session(s), 'fidl')
+                go = go & general_check_file(session(s).fidl, [session(s).id ' fidl file'], 'error');
+            else
+                go = false;
+                fprintf(' ... ERROR: %s missing fidl file specification!\n', session(s).id);
+            end
         end
-    else
-        sframes = frames;
     end
 
     if ~go, continue; end
