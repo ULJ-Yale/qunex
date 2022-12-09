@@ -237,7 +237,7 @@ get_options() {
     if [ -z "$burnin" ]; then geho "Note: The burnin parameter is not set, using default [1000]"; burnin=1000; fi
     if [ -z "$jumps" ]; then geho "Note: The jumps parameter is not set, using default [1250]"; jumps=1250; fi
     if [ -z "$sample" ]; then geho "Note: The sample parameter is not set, using default [25]"; sample=25; fi
-    if [ -z "$model" ]; then geho "Note: The model parameter is not set, using default [2]"; model=2; fi
+    if [ -z "$model" ]; then geho "Note: The model parameter is not set, using default [2]"; model=3; fi
     if [ -z "$rician" ]; then geho "Note: The rician parameter is not set, using default [yes]"; rician="yes"; fi
 
     # -- Set StudyFolder
