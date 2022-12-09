@@ -1,4 +1,4 @@
-function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)
+function [out] = general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)
 
 %``general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
 %
@@ -38,6 +38,10 @@ function [] = general_extract_glm_volumes(flist, outf, effects, frames, saveopti
 %           Only saved if an option is provided and the input is ptseries. Valid
 %           options are 'long' to save the data in long format or empty to skip
 %           saving data in a text file.
+%
+%   Outputs:
+%       --out (nimage)
+%           A nimage object with the extracted glm volumes.
 %
 %   Notes:
 %       The function is used to extract GLM estimates for the effects of
@@ -209,47 +213,57 @@ end
 % --- save
 
 if ismember(saveoption, {'by_effect', 'by_session'})
-    if verbose, fprintf('\n---> saving data in a single file, sorted %s', reportmsg); end
-
     out = glm.zeroframes(pt);
     out.data = data;
     out = setMeta(out, session, effect, frame, event, verbose);
-    out.img_saveimage(outf);
-    if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
-        if verbose, fprintf('\n---> saving data in a text file, sorted %s', reportmsg); end
-        tout = fopen([outf '_long.txt'], 'w');
-        fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
-        [nroi, ndata] = size(out.data);
-        for roi_index = 1:nroi
-            for data_index = 1:ndata
-                fprintf(tout, '\n%s\t%d\t%s\t%s\t%d\t%f', session{data_index}, roi_index, parcelnames{roi_index}, effect{data_index}, frame(data_index), out.data(roi_index, data_index));
+    if nargout > 0
+        out.list.meta    = 'list';
+        out.list.session = session;
+        out.list.effect  = effect;
+        out.list.frame   = frame;
+        out.list.event   = event;
+    end
+    if ~strcmp(outf, 'none')
+        if verbose, fprintf('\n---> saving data in a single file, sorted %s', reportmsg); end
+        out.img_saveimage(outf);
+        if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+            if verbose, fprintf('\n---> saving data in a text file, sorted %s', reportmsg); end
+            tout = fopen([outf '_long.txt'], 'w');
+            fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
+            [nroi, ndata] = size(out.data);
+            for roi_index = 1:nroi
+                for data_index = 1:ndata
+                    fprintf(tout, '\n%s\t%d\t%s\t%s\t%d\t%f', session{data_index}, roi_index, parcelnames{roi_index}, effect{data_index}, frame(data_index), out.data(roi_index, data_index));
+                end
             end
+            fclose(tout);
         end
-        fclose(tout);
     end
 else
-    if verbose, fprintf('\n---> saving data in separate files for each effect'); end
     for e = effects(:)'
         if verbose, fprintf('\n     ... %s', e{1}); end
         mask = ismember(effect, e);
         out = glm.zeroframes(sum(mask));
         out.data = data(:, mask);
         out = setMeta(out, session(mask), effect(mask), frame(mask), event(mask), verbose);
-        out.img_saveimage([outf '_' e{1}]);
-        if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
-            if verbose, fprintf('\n---> saving data in separate text files for each effect'); end
-            tout = fopen([outf '_' e{1} '_long.txt'], 'w');
-            fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
-            [nroi, ndata] = size(out.data);
-            t_session = session(mask);
-            t_effect  = effect(mask);
-            t_frame   = frame(mask);
-            for roi_index = 1:nroi
-                for data_index = 1:ndata
-                    fprintf(tout, '\n%s\t%d\t%s\t%s\t%d\t%f', t_session{data_index}, roi_index, parcelnames{roi_index}, t_effect{data_index}, t_frame(data_index), out.data(roi_index, data_index));
+        if ~strcmp(outf, 'none')
+            if verbose, fprintf('\n---> saving data in separate files for each effect'); end
+            out.img_saveimage([outf '_' e{1}]);
+            if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+                if verbose, fprintf('\n---> saving data in separate text files for each effect'); end
+                tout = fopen([outf '_' e{1} '_long.txt'], 'w');
+                fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
+                [nroi, ndata] = size(out.data);
+                t_session = session(mask);
+                t_effect  = effect(mask);
+                t_frame   = frame(mask);
+                for roi_index = 1:nroi
+                    for data_index = 1:ndata
+                        fprintf(tout, '\n%s\t%d\t%s\t%s\t%d\t%f', t_session{data_index}, roi_index, parcelnames{roi_index}, t_effect{data_index}, t_frame(data_index), out.data(roi_index, data_index));
+                    end
                 end
+                fclose(tout);
             end
-            fclose(tout);
         end
     end
 end

@@ -254,20 +254,16 @@ if nargin < 4 || isempty(maxs),       maxs      = inf  ;                    end
 if nargin < 3 || isempty(mins),       mins      = 0    ;                    end
 if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 
+default_options = 'frames:1|boundary:|parcels:|limitvol:0';
+
 % --- increment verbose for compatibility with the img_find_peaks method
 verbose = verbose + 1;
 
-frames = [];
-parcels = [];
-if ~isempty(options)
-    opt = general_parse_options([],options);
-    if isfield(opt,'frames')
-        frames = opt.frames;
-    end
-    if isfield(opt,'parcels')
-        parcels = opt.parcels;
-    end
-end
+options = general_parse_options([], options, default_options);
+frames = options.frames;
+parcels = options.parcels;
+
+general_print_struct(options, 'Options used');
    
 if ~isempty(presmooth)
     presmooth = general_parse_options([],presmooth);
@@ -279,6 +275,8 @@ if ~isempty(presmooth)
     if ~isfield(presmooth,'hcpatlas'),   presmooth.hcpatlas =[];     end
     if ~isfield(presmooth,'timeSeries'), presmooth.timeSeries =[];   end
     if ~isfield(presmooth,'frames'),     presmooth.frames = frames;  end
+
+    general_print_struct(presmooth, 'Presmoothing settings');
     if verbose >= 2, fprintf('\n---> Presmoothing image'); end
     img = img.img_smooth(presmooth.fwhm, verbose, presmooth.ftype,...
         presmooth.ksize, projection, presmooth.mask, presmooth.wb_path,...
