@@ -62,7 +62,7 @@ end
 
 if verbose, fprintf('\n\nStarting processing of %s...\n\n---> Reading in the file', flist); end
 
-[session nsessions nallfiles] = general_read_file_list(flist, verbose);
+[session nsessions nallfiles] = general_read_file_list(flist, 'all', [], verbose);
 
 rois = ismember('roi', fields(session));
 

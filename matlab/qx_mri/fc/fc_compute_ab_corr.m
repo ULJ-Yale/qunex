@@ -116,7 +116,7 @@ if script, fprintf('\n\nStarting ...'), end
 
 if script, fprintf('\n ... listing files to process'), end
 
-[session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose);
+[session, nsessions, nfiles, listname] = general_read_file_list(flist, 'all', [], verbose);
 
 if isempty(root)
     root = listname;

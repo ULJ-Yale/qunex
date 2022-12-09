@@ -198,7 +198,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, verbose);
+[session, nsub, nfiles, listname] = general_read_file_list(flist, 'all', [], verbose);
 
 fprintf(' ... done.');
 

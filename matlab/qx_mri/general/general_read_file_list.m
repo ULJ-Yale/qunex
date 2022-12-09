@@ -1,6 +1,6 @@
-function [session, nsessions, nfiles, listname, missing] = general_read_file_list(flist, verbose, check)
+function [session, nsessions, nfiles, listname, missing] = general_read_file_list(flist, sessions, check, verbose)
 
-%``general_read_file_list(flist, verbose, check)``
+%``general_read_file_list(flist, sessions, check, verbose)``
 %
 %   Reads a list of files and returns a structure with file information.
 %
@@ -33,9 +33,10 @@ function [session, nsessions, nfiles, listname, missing] = general_read_file_lis
 %   missing
 %       structure with information on missing data, with fields:
 %       
-%       - fields    ... a list of missing fields
-%       - sessions  ... a vector specifying whether a session has any missing
-%                       data
+%       - fields     ... a list of missing fields
+%       - sessions   ... a vector specifying whether a session has any missing
+%                        data
+%       - sessionids ... a list of missing session ids
 %
 %   USE
 %   ===
@@ -53,18 +54,26 @@ function [session, nsessions, nfiles, listname, missing] = general_read_file_lis
 %
 %   ::
 %
-%       [sessions, nsessions] = general_read_file_list('scz.list', true);
+%       [sessions, nsessions] = general_read_file_list('scz.list', 'all', [], true);
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 3, check = []; end
-if nargin < 2 || isempty(verbose), verbose = false; end
+if nargin < 4 || isempty(verbose),   verbose = false; end
+if nargin < 3,                         check = []; end
+if nargin < 2 || isempty(sessions), sessions = 'all'; end
+if nargin < 1 || isempty(flist)
+    error('general_read_file_list: flist parameter missing!');
+end
 
 if ~isempty(check)
     check = strtrim(regexp(check, ',', 'split'));
+end
+
+if ~isempty(sessions)
+    sessions = strtrim(regexp(sessions, ',', 'split'));
 end
 
 if verbose, fprintf('\n ... reading file list: '); end
@@ -80,6 +89,7 @@ if length(flist) >= 9 && strcmp(flist(1:9), 'listname:')
     listname = listname{2};
     files = files(2:end);
 else
+    general_check_file(flist, 'list file', 'errorstop', '');
     [lpath, listname, lext] = fileparts(flist);
     files = {};
     infile = fopen(flist);
@@ -119,7 +129,6 @@ for s = files(:)'
         [t, s] = strtok(s, ':');
         if general_check_file(strtrim(s(2:end)), 'image file', report, prepend)
             nf = nf + 1;
-            nfiles = nfiles + 1;
             session(nsessions).files{nf} = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'conc:'))
@@ -146,12 +155,29 @@ for s = files(:)'
 end
 
 if nsessions == 0
-    fprintf('\n\nERROR: No session id information present in file list: %s! Please check file format!\n\n', flist);
+    fprintf('\n\nERROR: No session id information present in list file: %s! Please check file format!\n\n', flist);
     error('ERROR: Could not read the provided filelist.');
 end
 
-missing.fields = {};
-missing.sessions = zeros(1, nsessions);
+% -- prepare missing data information
+missing.sessionids = {};
+
+% -- filter sessions
+sessionids = {session.id};
+if ~ismember('all', sessions)
+    session = session(ismember(sessionids, sessions));
+    nsessions = length(session);
+    missing.sessionids = setdiff(sessions, sessionids);
+end
+
+if nsessions == 0
+    fprintf('\n\nWARNING: None of the requested sessionids were present in list file: %s! Please check your list file!\n\n', flist);
+end
+
+% -- check data
+missing.fields     = {};
+missing.sessions   = zeros(1, nsessions);
+
 if ~isempty(check)    
     for s = 1:nsessions
         for c = check
@@ -168,6 +194,10 @@ if ~isempty(check)
             end
         end
     end
+end
+
+if nargout > 2
+    nfiles = length([session.files]);
 end
 
 if verbose, fprintf(' done.\n'); end

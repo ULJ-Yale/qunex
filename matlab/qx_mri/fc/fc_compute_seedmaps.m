@@ -88,6 +88,12 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %           It takes the following keys and values:
 %
+%           - sessions
+%               Which sessions to include in the analysis. The sessions should
+%               be provided as a comma or space separated list. If all sessions
+%               are to be processed this can be designated by 'all'. Defaults
+%               to 'all'.
+%
 %           - roimethod
 %               What method to use to compute ROI signal:
 %
@@ -431,7 +437,7 @@ if nargin < 3 frames  = []; end
 if nargin < 2 error('ERROR: At least list information and ROI .names file have to be specified!'); end
 
 % ----- parse options
-default = 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|saveindname=no|itargetf=sfolder|verbose=false|debug=false';
+default = 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|saveindname=no|itargetf=sfolder|verbose=false|debug=false';
 options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
@@ -527,7 +533,7 @@ end
 
 fprintf(' ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, options.verbose);
+[session, nsub, nfiles, listname] = general_read_file_list(flist, options.sessions, [], options.verbose);
 
 lname = strrep(listname, '.list', '');
 lname = strrep(lname, '.conc', '');

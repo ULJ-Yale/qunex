@@ -176,7 +176,7 @@ end
 
 if verbose && detailed; fprintf('-> reading file list\n'); end
 
-[sessions, nsessions, nfiles, listname, missing] = general_read_file_list(flist, verbose, check);
+[sessions, nsessions, nfiles, listname, missing] = general_read_file_list(flist, 'all', check, verbose);
 
 if sum(missing.sessions)
     fprintf('WARNING: Sessions with missing fields in file list will not be processed.\n');

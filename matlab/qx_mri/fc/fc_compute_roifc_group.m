@@ -374,7 +374,7 @@ fprintf('\n\nStarting ...\n');
 
 fprintf(' ... listing files to process');
 
-[subject, nsub, nfiles, listname] = general_read_file_list(flist, verbose);
+[subject, nsub, nfiles, listname] = general_read_file_list(flist, 'all', [], verbose);
 
 lname = strrep(listname, '.list', '');
 lname = strrep(lname, '.conc', '');

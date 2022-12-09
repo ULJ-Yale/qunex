@@ -337,7 +337,7 @@ if (startsWith(strtrim(flist), 'listname')) || (endsWith(strtrim(flist), '.list'
 
     if verbose && detailed; fprintf(' ... listing files to process'); end
 
-    [subject, nsub, nfiles, listname] = general_read_file_list(flist, verbose);
+    [subject, nsub, nfiles, listname] = general_read_file_list(flist, 'all', [], verbose);
 
     lname = strrep(listname, '.list', '');
     lname = strrep(lname, '.conc', '');
