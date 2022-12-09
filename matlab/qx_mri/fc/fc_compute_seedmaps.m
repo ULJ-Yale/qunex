@@ -164,37 +164,32 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %           - savegroup
 %               A comma separated list of files to save, options are:
 %
-%               - groupr
-%                   mean group Pearson correlation coefficients (converted from
-%                   Fz)
-%               - groupfz
+%               - mean_r
+%                   mean group correlation coefficients or covariances
+%               - mean_fz
 %                   mean group Fisher Z values
-%               - groupz
+%               - group_z
 %                   Z converted p values testing difference from 0
-%               - groupp
+%               - group_p
 %                   p values testing difference from 0
-%               - allfz
-%                   Fz values from all the sessions
-%               - groupcv
-%                   mean group covariance
-%               - allcv
-%                   covvariance values from all the participants
+%               - all_r
+%                   correlation coefficients or covariances for all the sessions
+%               - all_fz
+%                   Fz values for all the sessions
 %               - all
 %                   save all the relevant group level results
 %               - none
 %                   do not save any group level results.
 %
-%               Defaults to 'all'.
+%               Defaults to 'all'. Any invalid options will be ignored without
+%               a warning.
 %
 %           - saveind
 %               A comma separted list of individual session / subject files
 %               to save:
 %
 %               - r
-%                   save Pearson correlation coefficients (r only) separately
-%                   for each roi
-%               - rho
-%                   save Pearson correlation coefficients (rho only) separately
+%                   save correlation coefficients or covariance separately 
 %                   for each roi
 %               - fz
 %                   save Fisher Z values (r or rho) separately for each roi
@@ -202,15 +197,10 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %                   save Z statistic (r only) separately for each roi
 %               - p
 %                   save p value (r only) separately for each roi
-%               - cv
-%                   save covariances (cv only) separately for each roi
-%               - allbyroi
+%               - all_by_roi
 %                   save all relevant values by roi
 %               - jr
-%                   save Pearson correlation coefficients (r only) in a single
-%                   file for all roi
-%               - jrho
-%                   save Spearman correlation coefficients (rho only) in a single
+%                   save correlation coefficients or covariances in a single
 %                   file for all roi
 %               - jfz
 %                   save Fisher Z values (r or rho) in a single file for all roi
@@ -218,9 +208,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %                   save Z statistic (r only) in a single file for all roi
 %               - jp
 %                   save p value (r only) in a single file for all roi
-%               - jcv
-%                   save covariances (cv only) in a single file for all roi
-%               - alljoint
+%               - all_joint
 %                   save all relevant values in a joint file
 %               - none
 %                   do not save any individual level results
@@ -292,29 +280,27 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %   Output files:
 %       Based on savegroup specification it saves the following group files:
 %
-%       `<targetf>/<listname>[_<title>]_<roi>_group_r`
-%           Mean group Pearson's correlations (converted from Fz).
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_mean_<fcmeasure>`
+%           Mean group requested correlation coefficient or covariance.
 %
-%       `<targetf>/<listname>[_<title>]_<roi>_group_rho`
-%           Mean group Spearman's correlations (converted from Fz).
-%
-%       `<targetf>/<listname>[_<title>]_<roi>_group_<fcmeasure>_Fz`
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_mean_<fcmeasure>_Fz`
 %           Mean group Fisher Z values.
 %
-%       `<targetf>/<listname>[_<title>]_<roi>_group_<fcmeasure>_Z`
-%           Z converted p values testing difference from 0.
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_group_<fcmeasure>_p`
+%           Group p values testing difference from 0.
 %
-%       `<targetf>/<listname>[_<title>]_<roi>_all_<fcmeasure>_Fz`
-%           Fisher Z values for all participants.
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_group_<fcmeasure>_Z`
+%           Group Z converted p values testing difference from 0.
 %
-%       `<targetf>/<listname>[_<title>]_<roi>_group_cv`
-%           Mean group covariance.
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_all_<fcmeasure>`
+%           Correlation coefficients or covariance for all sessions.
 %
-%       `<targetf>/<listname>[_<title>]_<roi>_all_cv`
-%           Covariances for all participants.
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_all_<fcmeasure>_Fz`
+%           Fisher Z values for all sessions.
 %
 %       Definitions:
 %
+%       - `<targetf>' is the group target folder.
 %       - `<roi>` is the name of the ROI for which the seed map was computed
 %         for.
 %       - `<listname>` is the listname name of the flist.
@@ -323,11 +309,8 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %       Based on saveind option specification the following files may be saved:
 %
-%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_r`
-%           Pearson correlations
-%
-%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_rho`
-%           Pearson correlations
+%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_<fcmeasure>`
+%           Correlation coefficients or covariances
 %
 %       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_<fcmeasure>_Fz`
 %           Fisher Z values
@@ -337,9 +320,6 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_<fcmeasure>_p`
 %           p values testing difference from 0
-%
-%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_cv`
-%           covariance.
 %
 %       Definitions:
 %
@@ -494,11 +474,9 @@ end
 
 if ismember({'all'}, options.savegroup)
     if strcmp(options.fcmeasure, 'cv')
-        options.savegroup = {'groupz', 'groupp', 'groupcv', 'allcv'};
-    elseif strcmp(options.fcmeasure, 'r')
-        options.savegroup = {'groupz', 'groupp', 'groupr', 'groupfz', 'allfz'};
-    elseif strcmp(options.fcmeasure, 'rho')
-        options.savegroup = {'grouprho', 'groupfz', 'allfz'};
+        options.savegroup = {'group_z', 'group_p', 'mean_r', 'all_r'};
+    elseif ismember(options.fcmeasure, {'r', 'rho'})
+        options.savegroup = {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'};
     end    
 end
 
@@ -506,13 +484,13 @@ end
 
 options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 
-if ismember({'allbyroi'}, options.saveind)    
-    options.saveind = options.saveind(~ismember(options.saveind, {'allbyroi', 'r', 'fz', 'z', 'p', 'rho', 'cv'}));
-    options.saveind = [options.saveind, 'r', 'fz', 'z', 'p', 'rho', 'cv'];
+if ismember({'all_by_roi'}, options.saveind)    
+    options.saveind = options.saveind(~ismember(options.saveind, {'all_by_roi', 'r', 'fz', 'z', 'p'}));
+    options.saveind = [options.saveind, 'r', 'fz', 'z', 'p'];
 end
-if ismember({'alljoint'}, options.saveind)
-    options.saveind = options.saveind(~ismember(options.saveind, {'alljoint', 'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv'}));
-    options.saveind = [options.saveind, 'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv'];
+if ismember({'all_joint'}, options.saveind)
+    options.saveind = options.saveind(~ismember(options.saveind, {'all_joint', 'jr', 'jfz', 'jz', 'jp'}));
+    options.saveind = [options.saveind, 'jr', 'jfz', 'jz', 'jp'];
 end
 if ismember({'none'}, options.saveind)
     options.saveind = [];
@@ -522,9 +500,9 @@ if length(options.saveind)
     if strcmp(options.fcmeasure, 'r')
         options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p', 'jr', 'jfz', 'jz', 'jp'});
     elseif strcmp(options.fcmeasure, 'rho')
-        options.saveind = intersect(options.saveind, {'rho', 'fz', 'jrho', 'jfz'});
+        options.saveind = intersect(options.saveind, {'r', 'fz', 'jr', 'jfz'});
     else
-        options.saveind = intersect(options.saveind, {'cv', 'jcv'});
+        options.saveind = intersect(options.saveind, {'r', 'jr'});
     end
 end
 
@@ -547,6 +525,7 @@ fprintf(' ... done.\n');
 
 first_subject = true;
 oksub         = zeros(1, length(session));
+embed_data    = nargout > 0 || ~isempty(options.savegroup);
 
 for s = 1:nsub
 
@@ -656,7 +635,7 @@ for s = 1:nsub
 
         % ------> Embedd results (if group data is requested)
         
-        if nargout > 0 || (~isempty(options.savegroup) && ~strcmp(options.savegroup, 'none'))
+        if embed_data
             if first_subject
                 fcmaps(n).title    = exsets(n).title;
                 fcmaps(n).roi      = roi.roi.roinames;
@@ -741,27 +720,23 @@ for s = 1:nsub
                             case 'r'
                                 t = fc.sliceframes([1:nroi] == r);                                              
                                 t.filetype = tfiletype;
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_r']));
+                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
+                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
                             case 'fz'
                                 t = fz.sliceframes([1:nroi] == r);
                                 t.filetype = tfiletype;
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_Fz']));
+                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
+                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
                             case 'z'
                                 t = Z.sliceframes([1:nroi] == r);
                                 t.filetype = tfiletype;
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_Z']));
+                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
+                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
                             case 'p'
                                 t = p.sliceframes([1:nroi] == r);
                                 t.filetype = tfiletype;
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_p']));
-                            case 'rho'
-                                t = fc.sliceframes([1:nroi] == r);                                              
-                                t.filetype = tfiletype;
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_rho']));
-                            case 'cv'
-                                t = fc.sliceframes([1:nroi] == r);                                              
-                                t.filetype = tfiletype;
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_cv']));
+                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
+                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
                         end
                     end
                 end
@@ -783,27 +758,23 @@ for s = 1:nsub
                         case 'jr'
                             t = fc;  
                             t.filetype = tfiletype;
-                            t.img_saveimage(fullfile(stargetf, [basefilename '_r']));
+                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
+                            t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
                         case 'jfz'
                             t = fz;
                             t.filetype = tfiletype;
+                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
                         case 'jz'
                             t = Z;
                             t.filetype = tfiletype;
+                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
                         case 'jp'
                             t = p;
                             t.filetype = tfiletype;
+                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
-                        case 'jrho'
-                            t = fc;
-                            t.filetype = tfiletype;
-                            t.img_saveimage(fullfile(stargetf, [basefilename '_rho']));
-                        case 'jcv'
-                            t = fc;
-                            t.filetype = tfiletype;
-                            t.img_saveimage(fullfile(stargetf, [basefilename '_cv']));
                     end
                 end
             end
@@ -813,17 +784,108 @@ for s = 1:nsub
     first_subject = false;
 end
 
-if verbose; fprintf('\n\nCompleted\n'); end
+% -- save group data
 
-% TESTING
-% flist = '/Volumes/tigr/MBLab/fMRI/Tests/fc_group/flanker_test.list';
-% roiinfo = '/Volumes/tigr/MBLab/fMRI/NEco/analysis/flanker/2017-03/ROI/flanker_apriori_v2.names';
-% targetf = '/Volumes/tigr/MBLab/fMRI/Tests/fc_group/results';
-%
-% fc_compute_seedmaps(flist, roiinfo, frames, targetf, options)
-% 
-% RS-like:
-% frames = 0;
-% options = 'ignore:use|fcmeasure:cv|savegroup:none|saveind:alljoint|saveindname:yes|itargetf:sfolder|verbose:true|debug:true';
-% fc_compute_seedmaps(flist, roiinfo, frames, targetf, options)
-% 
+if ~isempty(options.savegroup)
+    if options.verbose; fprintf('Saving group data ... \n'); end
+
+    for sid = 1:nsub
+        extra(sid).key = ['session ' int2str(sid)];
+        extra(sid).value = session(sid).id;
+    end
+
+    for setid = 1:nsets
+        if options.verbose; fprintf(' -> %s\n', fcmaps(setid).title); end
+        if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
+
+        for roiid = 1:nroi
+            roiname = fcmaps(setid).roi{roiid};
+        
+            if options.verbose; fprintf('    ... for region %s', roiname); end
+            
+            % -- prepare group fc maps for the ROI
+            fc = fcmaps(setid).fc(1).(fcmeasure).zeroframes(nsub);
+            for sid = 1:nsub
+                fc.data(:, sid) = fcmaps(setid).fc(sid).(fcmeasure).data(:, roiid);
+            end
+
+            % -- compute Fisher-z values
+            if any(ismember(options.savegroup, {'mean_fz', 'group_p', 'group_z', 'mean_r', 'all_fz'}))
+                fz = fc;
+                fz.data = fc_fisher(fz.data);
+            end
+
+            % -- compute p-values
+            if any(ismember(options.savegroup, {'group_p', 'group_z'}))
+                if ismember(fcmeasure, {'cv'})
+                    [p Z M] = fc.img_ttest_zero();
+                elseif ismember(fcmeasure, {'r', 'rho'})
+                    [p Z MFz] = fz.img_ttest_zero();
+                    M = MFz.img_FisherInv();
+                end
+            end
+
+            % -- compute mean
+            if any(ismember(options.savegroup, {'mean_r'})) && isempty(M)
+                M = fc.zeroframes(1);
+                if ismember(fcmeasure, {'cv'})
+                    M.data = mean(fc.data, 2);
+                elseif ismember(fcmeasure, {'r', 'rho'})
+                    MFz = fc.zeroframes(1);
+                    MFz.data = mean(fz.data, 2);
+                    M = MFz.img_FisherInv();
+                end
+            end
+
+            % --- save requested data
+            if verbose; fprintf(' ... saving ...'); end
+            basefilename = sprintf('seedmap_%s%s_%s', lname, settitle, roiname);
+
+            % -- save group mean results
+            if any(ismember(options.savegroup, {'mean_r'}))
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_mean_' fcmeasure])]); end
+                M.img_saveimage(fullfile(targetf, [basefilename '_mean_' fcmeasure]), extra);
+                if verbose && ~printdebug; fprintf([' ' fcmeasure]); end
+            end
+
+            % -- save group mean fz results
+            if any(ismember(options.savegroup, {'mean_fz'}))
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_mean_' fcmeasure '_Fz'])]); end
+                MFz.img_saveimage(fullfile(targetf, [basefilename '_mean_' fcmeasure '_Fz']), extra);
+                if verbose && ~printdebug; fprintf(' fz'); end
+            end
+
+            % -- save all results
+            if any(ismember(options.savegroup, {'all_r'}))
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_' fcmeasure])]); end
+                fc.img_saveimage(fullfile(targetf, [basefilename '_all_' fcmeasure]), extra);
+                if verbose && ~printdebug; fprintf(' all_r'); end
+            end
+
+            % -- save all fz results
+            if any(ismember(options.savegroup, {'all_fz'}))
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_' fcmeasure '_Fz'])]); end
+                fz.img_saveimage(fullfile(targetf, [basefilename '_all_' fcmeasure '_Fz']), extra);
+                if verbose && ~printdebug; fprintf(' all_fz'); end
+            end
+            
+            % -- save group p results
+            if any(ismember(options.savegroup, {'group_p'}))
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_' fcmeasure '_p'])]); end
+                p.img_saveimage(fullfile(targetf, [basefilename '_group_' fcmeasure '_p']), extra);
+                if verbose && ~printdebug; fprintf(' p'); end
+            end
+
+            % -- save group Z results
+            if any(ismember(options.savegroup, {'group_z'}))
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_' fcmeasure '_Z'])]); end
+                Z.img_saveimage(fullfile(targetf, [basefilename '_group_' fcmeasure '_Z']), extra);
+                if verbose && ~printdebug; fprintf(' Z'); end
+            end
+
+            if verbose; fprintf(' ... done.\n'); end
+        end
+    end
+end            
+
+if verbose; fprintf('\n\nCompleted\n'); end
