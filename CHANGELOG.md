@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.96.1
+
+* Default value for the model parameter of `dwi_bepostx_gpu` is is reversed to 2, which is the correct FSL default.
+
 ## 0.96.0
 
 * Added the ability to generate predicted timeseries and residual timeseries for arbitrary set of regressors used in the GLM analyses.
