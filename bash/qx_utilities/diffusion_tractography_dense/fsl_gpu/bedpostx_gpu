@@ -174,7 +174,7 @@ fudge=1
 burnin=1000
 njumps=1250
 sampleevery=25
-model=3
+model=2
 gflag=0
 other=""
 
