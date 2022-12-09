@@ -524,18 +524,10 @@ def getSessionFolders(sinfo, options):
     """
     d = {'s_source': None}
 
-    if options['image_source'] == 'hcp':
-        if "hcp" in sinfo:
-            if os.path.exists(sinfo['hcp']):
-                d['s_source'] = sinfo['hcp']
-            else:
-                raise NoSourceFolder("ERROR: Source folder does not exist or is not reachable [%s]" % (sinfo['hcp']))
-
-    elif "data" in sinfo:
-        if os.path.exists(sinfo['data']):
-            d['s_source'] = sinfo['data']
-        else:
-            raise NoSourceFolder("ERROR: Source folder does not exist or is not reachable [%s]" % (sinfo['data']))
+    if options['image_source'] == 'hcp' and 'hcp' in sinfo:
+        d['s_source'] = sinfo['hcp']
+    elif 'data' in sinfo:
+        d['s_source'] = sinfo['data']
 
     if "hcp" in sinfo:
         d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
