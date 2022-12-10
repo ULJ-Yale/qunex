@@ -28,7 +28,7 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %           target folder for all processed data or the location of session
 %           functional images folder.
 %
-%       --options (str, 'default predicted_tail=|residual_tail=|save=|ignore=use,fidl|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high'):
+%       --options (str, 'default predicted_tail=|residual_tail=|sessions=all|save=|ignore=use,fidl|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::
 %
@@ -47,6 +47,12 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %               '_res-<effects abbreviation> tail will be added to each of the
 %               source BOLD files. <effects abbreviation> will be the first
 %               letters of all the predicted regressors. ['']
+%
+%           sessions
+%               Which sessions to include in the analysis. The sessions should
+%               be provided as a comma or space separated list. If all sessions
+%               are to be processed this can be designated by 'all'. Defaults
+%               to 'all'.
 %
 %           save
 %               A comma separated string, listing the files to save ['']:
@@ -127,7 +133,7 @@ extensions = {'.nii.gz', '.dtseries.nii', '.ptseries.nii'};
 
 % ----- parse options
 
-default = 'predicted_tail=|residual_tail=|save=|ignore=use,fidl|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high';
+default = 'predicted_tail=|residual_tail=|sessions=all|save=|ignore=use,fidl|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high';
 options = general_parse_options([], options, default);
 
 effects  = strtrim(regexp(effects, ',', 'split'));
@@ -176,7 +182,7 @@ end
 
 if verbose && detailed; fprintf('-> reading file list\n'); end
 
-[sessions, nsessions, nfiles, listname, missing] = general_read_file_list(flist, 'all', check, verbose);
+[sessions, nsessions, nfiles, listname, missing] = general_read_file_list(flist, options.sessions, check, verbose);
 
 if sum(missing.sessions)
     fprintf('WARNING: Sessions with missing fields in file list will not be processed.\n');
