@@ -846,18 +846,3 @@ function [] = save_wide(fcmat, fcmeasure, lname, basefilename, separate, verbose
     end
     
     if verbose; fprintf(' ... done\n'); end        
-
-
-% % TESTING
-% cd /Volumes/tigr/MBLab/fMRI/develop_fc 
-% flist = '/Volumes/tigr/MBLab/fMRI/develop_fc/analysis/lists/rest.list';
-% roiinfo = '/Volumes/tigr/MBLab/fMRI/develop_fc/analysis/ROI/flanker.names';
-% targetf = '/Volumes/tigr/MBLab/fMRI/develop_fc/analysis/roifc';
-% 
-% % fc_compute_roifc(flist, roiinfo, frames, targetf, options)
-% % 
-% % RS-like:
-% frames = 0;
-% options = 'ignore:use|fcmeasure:r|savegroup:mat,all_long,all_wide_single,all_wide_separate|saveind:long,wide_single,wide_separate,mat|savesessionid:yes|itargetf:gfolder|verbose:true|debug:true';
-% options = 'ignore:use|fcmeasure:cv|savegroup:all_long|saveind:long|savesessionid:true|itargetf:sfolder|verbose:true|debug:true';
-% fc_compute_roifc(flist, roiinfo, frames, targetf, options)
