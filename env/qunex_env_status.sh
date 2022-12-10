@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -153,7 +153,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "                   FSLDIR : $FSLDIR";               if [[ -z $FSLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLDIR"; fi
     echo "               FSLCONFDIR : $FSLCONFDIR";           if [[ -z $FSLCONFDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLCONFDIR"; fi
     echo "                FSLGPUDIR : $FSLGPUDIR";            if [[ -z $FSLGPUDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUDIR"; fi
-    echo "           FSL_GPU_SCRIPTS : $FSL_GPU_SCRIPTS";         if [[ -z $FSL_GPU_SCRIPTS ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_GPU_SCRIPTS"; fi
+    echo "          FSL_GPU_SCRIPTS : $FSL_GPU_SCRIPTS";      if [[ -z $FSL_GPU_SCRIPTS ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_GPU_SCRIPTS"; fi
     echo "             FSLGPUBinary : $FSLGPUBinary";         if [[ -z $FSLGPUBinary ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUBinary"; fi
     echo "               FSL_FIXDIR : $FSL_FIXDIR";           if [[ -z $FSL_FIXDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_FIXDIR"; fi
     # echo "            POSTFIXICADIR : $POSTFIXICADIR";        if [[ -z $POSTFIXICADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport POSTFIXICADIR"; fi
@@ -393,7 +393,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     ## -- Check for R packages that are required
     unset RPackageTest RPackage
     RPackages="ggplot2"   # <-- Add R packages here
-    echo "           R required packages : ${RPackages}"
+    echo " R required packages : ${RPackages}"
     for RPackage in ${RPackages}; do
         RPackageTest=`R --slave -e "tpkg <- '$RPackage'; if (is.element(tpkg, installed.packages()[,1])) {packageVersion(tpkg)} else {print('package not installed')}" | sed 's/\[1\]//g'`
         if [[ `echo ${RPackageTest} | grep 'not installed'` ]]; then 
@@ -402,6 +402,16 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
                 echo "           R Package : ${RPackage} ${RPackageTest}"
         fi
     done
+    echo ""
+
+    ## -- Check for python
+    echo "      python binary  : $(which python 2>&1 | grep -v 'no python')"
+        if [[ -z $(which python 2>&1 | grep -v 'no python') ]]; then
+        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport python"
+        reho "     python : Binary not found!"
+    else
+        echo "     python Version : $(python --version | head -1)"
+    fi
     echo ""
         
     ## -- Check for PALM

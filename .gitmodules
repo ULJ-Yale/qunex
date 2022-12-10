@@ -2,6 +2,3 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-[submodule "library"]
-	path = qx_library
-	url = ../library

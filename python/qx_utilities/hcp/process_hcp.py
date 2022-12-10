@@ -2804,44 +2804,50 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             echospacing = ""
             unwarpdir = ""
 
-            if options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']:
+            dcset = options['hcp_bold_dcmethod'].lower() in ['topup', 'fieldmap', 'siemensfieldmap', 'philipsfieldmap', 'generalelectricfieldmap']
 
-                # --- set unwarpdir
+            # --- set unwarpdir and orient
 
-                if "o" in boldinfo:
-                    orient    = "_" + boldinfo['o']
+            if "o" in boldinfo:
+                orient = "_" + boldinfo['o']
+                if dcset:
                     unwarpdir = unwarpdirs.get(boldinfo['o'])
                     if unwarpdir is None:
                         r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['o'])
                         boldok = False
-                elif 'phenc' in boldinfo:
-                    orient    = "_" + boldinfo['phenc']
+            elif 'phenc' in boldinfo:
+                orient = "_" + boldinfo['phenc']
+                if dcset:
                     unwarpdir = unwarpdirs.get(boldinfo['phenc'])
                     if unwarpdir is None:
                         r += '\n     ... ERROR: No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['phenc'])
                         boldok = False
-                elif 'PEDirection' in boldinfo and checkInlineParameterUse('BOLD', 'PEDirection', options):
-                    if boldinfo['PEDirection'] in PEDirMap:
-                        orient    = "_" + PEDirMap[boldinfo['PEDirection']]
+            elif 'PEDirection' in boldinfo and checkInlineParameterUse('BOLD', 'PEDirection', options):
+                if boldinfo['PEDirection'] in PEDirMap:
+                    orient = "_" + PEDirMap[boldinfo['PEDirection']]
+                    if dcset:
                         unwarpdir = boldinfo['PEDirection']
-                    else:
-                        r += '\n     ... ERROR: Invalid PEDirection specified [%s]! Please check sequence specific PEDirection value!' % (boldinfo['PEDirection'])
-                        boldok = False
                 else:
-                    orient = ""
+                    r += '\n     ... ERROR: Invalid PEDirection specified [%s]! Please check sequence specific PEDirection value!' % (boldinfo['PEDirection'])
+                    boldok = False
+            else:
+                orient = ""
+                if dcset:
                     unwarpdir = unwarpdirs.get('default')
                     if unwarpdir is None:
                         r += '\n     ... ERROR: No default unwarpdir is set! Please check hcp_bold_unwarpdir parameter!'
                         boldok = False
 
-                if orient:
-                    r += "\n     ... phase encoding direction: %s" % (orient[1:])
-                else:
-                    r += "\n     ... phase encoding direction not specified"
+            if orient:
+                r += "\n     ... phase encoding direction: %s" % (orient[1:])
+            else:
+                r += "\n     ... phase encoding direction not specified"
 
+            if dcset:
                 r += "\n     ... unwarp direction: %s" % (unwarpdir)
 
-                # -- set echospacing
+            # -- set echospacing
+            if dcset:                
                 if 'EchoSpacing' in boldinfo and checkInlineParameterUse('BOLD', 'EchoSpacing', options):
                     echospacing = boldinfo['EchoSpacing']
                     r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)
@@ -3980,6 +3986,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             non-filtered timeseries files that are prerequisites to FIX
             cleaning.
 
+        --hcp_icafix_fallbackthreshold (int, default 0):
+            If greater than zero, reruns icadim on any run with a VN mean more
+            than this amount greater than the minimum VN mean.
+
         --hcp_icafix_postfix (str, default 'TRUE'):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
             successfully.
@@ -4340,7 +4350,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 "%(domot)s" \
                 "%(trainingdata)s" \
                 %(fixthreshold)d \
-                "%(deleteintermediates)s"' % {
+                "%(deleteintermediates)s" \
+                %(fallbackthreshold)d' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
                 'bandpass'              : int(bandpass),
@@ -4348,7 +4359,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 'domot'                 : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if options['hcp_icafix_traindata'] is None else options['hcp_icafix_traindata'],
                 'fixthreshold'          : options['hcp_icafix_threshold'],
-                'deleteintermediates'   : options['hcp_icafix_deleteintermediates']}
+                'deleteintermediates'   : options['hcp_icafix_deleteintermediates'],
+                'fallbackthreshold'     : options['hcp_icafix_fallbackthreshold']}
 
         # -- Report command
         if groupok:

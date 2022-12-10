@@ -28,7 +28,7 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %           target folder for all processed data or the location of session
 %           functional images folder.
 %
-%       --options (str, 'default predicted_tail=|residual_tail=|sessions=all|save=|ignore=use,fidl|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high'):
+%       --options (str, 'default predicted_tail=|residual_tail=|sessions=all|save=|ignores>predict:mark,regress:mark|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::
 %
@@ -61,18 +61,27 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %                   save predicted bold timeseries
 %               residual
 %                   save residual bold timeseries
+%           
+%           ignores
+%               How to deal with frames that were marked as bad and ignored when
+%               GLM solution was completed. The information should be specified
+%               separately for predicting timecourse and regressing signal:
 %
-%           ignore
-%               A comma separated list of information to identify frames to
-%               ignore, options are ['use,fidl']:
+%               'ignores>predict:[mark/linear/spline],regress:[keep/mark/linear/spline]'
+%               
+%               The options have the following meaning:
+%       
+%               keep
+%                   keep the value in the original BOLD (only applicable to 
+%                   regressed signal)
+%               mark
+%                   mark the bad frames by setting the value to "NaN" 
+%               linear
+%                   interpolate values for bad frames using linear interpolation
+%               spline
+%                   interpolate values for bad frames using spline interpolation
 %
-%               use
-%                   ignore frames as marked in the use field of the bold file
-%               fidl
-%                   ignore frames as marked in .fidl file
-%               <column>
-%                   the column name in ∗_scrub.txt file that matches bold file
-%                   to be used for ignore mask
+%               The default is 'ignores>predict:mark,regress:mark'
 %
 %           indtargetf
 %               In case of group level extraction, where to save the individual
@@ -83,11 +92,18 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %               sfolder
 %                   in the individual session folder
 %
+%           img_suffix
+%               An optional string that specifies the tail to be added to
+%               the session 'image' subfolder if one is used. The target
+%               location will then be:
+%               <targetf>/<subjectid>/images<img_suffix>/functional<bold_variant>
+%               ['']
+%               
 %           bold_variant
 %               An optional string that specifies the tail be added to the
 %               session specific 'functional' subfolder if one is used. The
 %               target location will then be:
-%               <targetf>/<subjectid>/images/functional<bold_variant>
+%               <targetf>/<subjectid>/images<img_suffix>/functional<bold_variant>
 %               ['']
 %
 %           addidtofile
@@ -133,7 +149,7 @@ extensions = {'.nii.gz', '.dtseries.nii', '.ptseries.nii'};
 
 % ----- parse options
 
-default = 'predicted_tail=|residual_tail=|sessions=all|save=|ignore=use,fidl|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high';
+default = 'predicted_tail=|residual_tail=|sessions=all|save=|ignores>predict:mark,regress:mark|indtargetf=sfolder|img_suffix=|bold_variant=|addidtofile=false|verbose=true|verboselevel=high';
 options = general_parse_options([], options, default);
 
 effects  = strtrim(regexp(effects, ',', 'split'));
@@ -153,8 +169,6 @@ end
 
 if verbose && detailed; fprintf('\n\nStarting ...\n-> checking parameters\n'); end
 
-options.ignore = strtrim(regexp(options.ignore, ',', 'split'));
-
 if ~ismember({options.indtargetf}, {'gfolder', 'sfolder'})
     error('ERROR: No valid indtargetf specified [%s]. It has to be either gfolder or sfolder!', options.indtargetf);
 end
@@ -166,19 +180,16 @@ else
 end
 
 if isempty(options.predicted_tail)
-    options.predicted_tail = sprintf('_pred-', get_firsts(effects));
+    options.predicted_tail = sprintf('_pred-%s', get_firsts(effects));
 end
 
 if isempty(options.residual_tail)
-    options.residual_tail = sprintf('_res-', get_firsts(effects));
+    options.residual_tail = sprintf('_res-%s', get_firsts(effects));
 end
 
 % ------ Check file list
 
 check = 'glm';
-if ismember({'fidl'}, options.ignore)
-    check = [check ',fidl'];
-end
 
 if verbose && detailed; fprintf('-> reading file list\n'); end
 
@@ -200,8 +211,8 @@ for s = 1:nsessions
 
     % -- root path to save results
     if strcmp(options.indtargetf, 'sfolder')
-        targetpath = sprintf('%s/%s/images/functional%s/', targetf, sessions(s).id, options.bold_variant);
-        targetconcpath = sprintf('%s/%s/images/functional%s/concs/', targetf, sessions(s).id, options.bold_variant);
+        targetpath = sprintf('%s/%s/images%s/functional%s/', targetf, sessions(s).id, options.img_suffix, options.bold_variant);
+        targetconcpath = sprintf('%s/%s/images%s/functional%s/concs/', targetf, sessions(s).id, options.img_suffix, options.bold_variant);
         if addidtofile
             targetpath = sprintf('%s%s-', targetpath, sessions(s).id);
             targetconcpath = sprintf('%s%s-', targetconcpath, sessions(s).id);
@@ -238,9 +249,9 @@ for s = 1:nsessions
     % -- run requested computation
     if verbose && detailed; fprintf('       - computing predictions and/or residuals\n'); end
     if ismember({'residual'}, options.save)
-        [predicted, residual] = img_glm_predict(glm, effects, raw);
+        [predicted, residual] = img_glm_predict(glm, effects, raw, options);
     else
-        [predicted] = img_glm_predict(glm, effects, raw);
+        [predicted] = img_glm_predict(glm, effects, raw, options);
     end
 
     % -- save residuals
@@ -252,10 +263,12 @@ for s = 1:nsessions
             [fp, fn, fe] = fileparts(residual(n).rootfilename);
             savefilename = [targetpath fn fe options.residual_tail extension];
             savefiles{end+1} = savefilename;
+            if verbose && detailed; fprintf('         -> %s\n', savefilename); end
             residual(n).img_saveimage(savefilename);
         end
         if raw.rootconcname;
             [fp, fn, fe] = fileparts(raw.rootconcname);
+            if verbose && detailed; fprintf('         -> %s\n', [targetconcpath fn fe options.residual_tail '.conc']); end
             nimage.img_save_concfile([targetconcpath fn fe options.residual_tail '.conc'], savefiles);
         end
     end
@@ -263,22 +276,25 @@ for s = 1:nsessions
     % -- save predicted
     if ismember({'predicted'}, options.save)
         if verbose && detailed; fprintf('       - saving predictions\n'); end
-        if raw
+        if ~isempty(raw)
             savefiles = {};
             predicted = predicted.splitruns();
             for n = 1:length(predicted)
                 [fp, fn, fe] = fileparts(predicted(n).rootfilename);
                 savefilename = [targetpath fn fe options.predicted_tail extension];
                 savefiles{end+1} = savefilename;
+                if verbose && detailed; fprintf('         -> %s\n', savefilename); end
                 predicted(n).img_saveimage(savefilename);
             end
             if raw.rootconcname;
                 [fp, fn, fe] = fileparts(raw.rootconcname);
+                if verbose && detailed; fprintf('         -> %s\n', [targetconcpath fn fe options.predicted_tail '.conc']); end
                 nimage.img_save_concfile([targetconcpath fn fe options.predicted_tail '.conc'], savefiles);
             end
         else
             [fp, fn, fe] = fileparts(glm.rootfilename);
             savefilename = [targetpath fn fe options.predicted_tail];
+            if verbose && detailed; fprintf('         -> %s\n', savefilename); end
             predicted.img_saveimage(savefilename);
         end
     end
@@ -304,7 +320,7 @@ if verbose; fprintf('-> finished\n'); end
 function [firsts] = get_firsts(effects)
     firsts = '';
     for e = effects
-        firsts = [firsts e{1}(1)]
+        firsts = [firsts e{1}(1)];
     end
 
 

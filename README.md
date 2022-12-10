@@ -24,12 +24,12 @@ The QuNex code is co-developed and co-maintained by the:
 
 ## Version
 
-* QuNex: 0.95.3
-* qx_library: 0.90.14
+* QuNex: 0.96.1
+* qx_library: 0.90.15
 
 ## References
 
-Ji, J.L., Demšar, J., Fonteneau, C., Warrington, S., Tamayo, Z., Sotiropoulos, S., Murray, J.D., Anticevic, A., Repovs, G. QuNex: Quantitative Neuroimaging Environment & ToolboX (In prep).
+Jie Lisa Ji, Jure Demšar, Clara Fonteneau, Zailyn Tamayo, Lining Pan, Aleksij Kraljič, Andraž Matkovič, Nina Purg, Markus Helmer, Shaun Warrington, Anderson Winkler, Valerio Zerbi, Timothy S. Coalson, Matthew F. Glasser, Michael P. Harms, Stamatios N. Sotiropoulos, John D. Murray, Alan Anticevic, Grega Repovš; QuNex – An Integrative Platform for Reproducible Neuroimaging Analytics; bioRxiv 2022.06.03.494750; doi: https://doi.org/10.1101/2022.06.03.494750
 
 ## GPL licenses
 
