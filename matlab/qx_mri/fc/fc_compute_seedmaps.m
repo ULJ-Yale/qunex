@@ -2,7 +2,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 
 %``fc_compute_seedmaps(flist, roiinfo, frames, targetf, options)``
 %
-%   Computes seed based functional connectivity maps for group and/or an 
+%   Computes seed based functional connectivity maps for group and/or 
 %   individual subjects / sessions.
 %
 %   Parameters:
@@ -41,17 +41,11 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %           - a string describing which events to extract timeseries for,
 %             and the frame offset from the start and end of the event in
 %             format::
-% 
-%             individual session
-%                 '<fidlfile>|<extraction name>:<event list>:<extraction start>:<extraction end>'
 %
-%             group data
 %                 '<extraction name>:<event list>:<extraction start>:<extraction end>'
 %
 %           where:
 %
-%           - fidlfile
-%               is a path to the fidle file that defines the events
 %           - extraction name
 %               is the name for the specific extraction definition
 %           - event list
@@ -73,14 +67,12 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %           Example::
 %
-%               '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%               'encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
 %
 %       --targetf (str, '.'):
-%           The folder to save images in. In case of group data it should point 
-%           to the location to store qroup level data. In case of individual 
-%           extraction, the location of session functional images folder.
+%           The group level folder to save images in. 
 %
-%       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|subjectname=|verbose=false|debug=false'):
+%       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|savesessionid=false|verbose=false|debug=false'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::
 %
@@ -98,8 +90,15 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               What method to use to compute ROI signal:
 %
 %               - mean
+%                   compute mean values across the ROI
 %               - median
-%               - pca.
+%                   compute median value across the ROI
+%	            - max
+%                   compute maximum value across the ROI
+%	            - min
+%                   compute mimimum value across the ROI
+%               - pca
+%                   compute first eigenvariate of the ROI.
 %
 %               Defaults to 'mean'.
 %
@@ -216,13 +215,13 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               Default is 'none'. Any invalid options will be ignored without
 %               a warning.
 %
-%           - saveindname
-%               whether to add the name of the session or subject to the
+%           - savesessionid
+%               whether to add the id of the session or subject to the
 %               individual output file when saving to the individual session
 %               images/functional folder:
 %
-%               - yes
-%               - no.
+%               - true
+%               - false.
 %
 %               Defaults to 'no'.
 %
@@ -309,16 +308,16 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %       Based on saveind option specification the following files may be saved:
 %
-%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_<fcmeasure>`
+%       - `<targetf>/seedmap[_<sessionid>]_<listname>[_<title>]_<roi>_<fcmeasure>`
 %           Correlation coefficients or covariances
 %
-%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_<fcmeasure>_Fz`
+%       - `<targetf>/seedmap[_<sessionid>]_<listname>[_<title>]_<roi>_<fcmeasure>_Fz`
 %           Fisher Z values
 %
-%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_<fcmeasure>_Z`
+%       - `<targetf>/seedmap[_<sessionid>]_<listname>[_<title>]_<roi>_<fcmeasure>_Z`
 %           Z converted p values testing difference from 0
 %
-%       - `<targetf>/seedmap[_<subjectname>]_<listname>[_<title>]_<roi>_<fcmeasure>_p`
+%       - `<targetf>/seedmap[_<sessionid>]_<listname>[_<title>]_<roi>_<fcmeasure>_p`
 %           p values testing difference from 0
 %
 %       Definitions:
@@ -326,8 +325,8 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %       - `<targetf>' is either the group target folder or the individual
 %         image folder.
 %       - `<listname>` is the provided name of the bold(s).
-%       - `<subjectname>` is the provided name of the subject, if it was
-%         specified.
+%       - `<sessionid>` is the id of the session/subject, if it was requested
+%         or if files are saved to the group folder.
 %       - `<title>` is the title of the extraction event(s), if event string
 %         was specified.
 %       - `<roi>` is the name of the ROI for which the seed map was computed
@@ -417,7 +416,7 @@ if nargin < 3 frames  = []; end
 if nargin < 2 error('ERROR: At least list information and ROI .names file have to be specified!'); end
 
 % ----- parse options
-default = 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|saveindname=no|itargetf=sfolder|verbose=false|debug=false';
+default = 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|savesessionid=false|itargetf=sfolder|verbose=false|debug=false';
 options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
@@ -446,7 +445,7 @@ end
 
 go = true;
 
-if options.verbose; fprintf('\n\nChecking ...\n'); end
+if verbose; fprintf('\n\nChecking ...\n'); end
 
 % - check for presence of listfile unless the list is provided as a string
 if ~startsWith(flist, 'listname:')    
@@ -511,7 +510,7 @@ end
 
 fprintf(' ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, options.sessions, [], options.verbose);
+[session, nsub, nfiles, listname] = general_read_file_list(flist, options.sessions, [], verbose);
 
 lname = strrep(listname, '.list', '');
 lname = strrep(lname, '.conc', '');
@@ -531,7 +530,7 @@ for s = 1:nsub
 
     go = true;
 
-    if options.verbose; fprintf('\n---------------------------------\nProcessing session %s', session(s).id); end
+    if verbose; fprintf('\n---------------------------------\nProcessing session %s', session(s).id); end
 
     % ---> check roi files
 
@@ -657,7 +656,7 @@ for s = 1:nsub
 
         % set subjectname
 
-        if strcmp(options.saveindname, 'yes') || strcmp(options.itargetf, 'gfolder')
+        if strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder')
             subjectname = [subjectid, '_'];
         else
             subjectname = '';
@@ -787,7 +786,7 @@ end
 % -- save group data
 
 if ~isempty(options.savegroup)
-    if options.verbose; fprintf('Saving group data ... \n'); end
+    if verbose; fprintf('Saving group data ... \n'); end
 
     for sid = 1:nsub
         extra(sid).key = ['session ' int2str(sid)];
@@ -795,13 +794,13 @@ if ~isempty(options.savegroup)
     end
 
     for setid = 1:nsets
-        if options.verbose; fprintf(' -> %s\n', fcmaps(setid).title); end
+        if verbose; fprintf(' -> %s\n', fcmaps(setid).title); end
         if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
 
         for roiid = 1:nroi
             roiname = fcmaps(setid).roi{roiid};
         
-            if options.verbose; fprintf('    ... for region %s', roiname); end
+            if verbose; fprintf('    ... for region %s', roiname); end
             
             % -- prepare group fc maps for the ROI
             fc = fcmaps(setid).fc(1).(fcmeasure).zeroframes(nsub);
