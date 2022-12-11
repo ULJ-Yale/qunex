@@ -2220,7 +2220,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
-                --pedir=%(pe_dir)s \
+                --PEdir=%(pe_dir)s \
                 --posData="%(pos_data)s" \
                 --negData="%(neg_data)s" \
                 --echospacing="%(echospacing)s" \
