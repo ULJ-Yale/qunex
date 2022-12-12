@@ -2124,7 +2124,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             pe_dir = 2
         elif options['hcp_dwi_phasepos'] == 'AP':
             direction = {
-                'pos': 'AP',pe_dir
+                'pos': 'AP',
                 'neg': 'PA'
             }
             pe_dir = 2
