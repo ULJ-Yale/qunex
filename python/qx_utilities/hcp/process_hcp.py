@@ -2472,6 +2472,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_doslicetime (str, default 'FALSE'):
             Whether to do slice timing correction 'TRUE' or 'FALSE'.
 
+        --hcp_bold_slicetimingfile (str, default 'FALSE'):
+            Whether to use custom slice timing file 'TRUE' or 'FALSE'.
+
         --hcp_bold_slicetimerparams (str, default ''):
             A comma or pipe separated string of parameters for FSL slicetimer.
 
@@ -3006,6 +3009,15 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 if options['hcp_processing_mode'] == 'HCPStyleData' and options['hcp_bold_refreg'] == 'nonlinear':
                     r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, a nonlinear registration to an external BOLD was specified!\n            Consider using LegacyStyleData processing mode."
                     run = False
+            
+            # --- Check for slice timing file
+
+            # --- check for ref image
+            if options["hcp_bold_doslicetime"] and options["hcp_bold_slicetimingfile"]:
+                stfile = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s_slicetimer.txt" % (sinfo['id'], boldroot))
+                r, boldok = pc.checkForFile2(r, stfile, '\n     ... slice timing file present', '\n     ... ERROR: slice timing file missing!', status=boldok)
+            else:
+                stfile = None
 
             # store required data
             b = {'boldsource':   boldsource,
@@ -3015,6 +3027,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                  'boldok':       boldok,
                  'boldimg':      boldimg,
                  'refimg':       refimg,
+                 'stfile':       stfile,
                  'gdcfile':      gdcfile,
                  'unwarpdir':    unwarpdir,
                  'echospacing':  echospacing,
@@ -3153,6 +3166,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     boldok      = b['boldok']
     boldimg     = b['boldimg']
     refimg      = b['refimg']
+    stfile      = b['stfile']
     unwarpdir   = b['unwarpdir']
     echospacing = b['echospacing']
     spinNeg     = b['spinNeg']
@@ -3173,7 +3187,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         slicetimerparams = ""
 
-        if options['hcp_bold_doslicetime'].lower() == 'true':
+        if options['hcp_bold_doslicetime']:
+            doslicetime = 'TRUE'
 
             slicetimerparams = re.split(' +|,|\|', options['hcp_bold_slicetimerparams'])
 
@@ -3182,10 +3197,12 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 stappendItems.append('--down')
             if options['hcp_bold_stcorrint'] == 'odd':
                 stappendItems.append('--odd')
+            if options['hcp_bold_slicetimingfile']:
+                stappendItems.append(f'--tcustom={stfile}')
 
             for stappend in stappendItems:
                 if stappend not in slicetimerparams:
-                    slicetimerparams.append(stappend)
+                    slicetimerparams.append(stappend)            
 
             slicetimerparams = [e for e in slicetimerparams if e]
             slicetimerparams = "@".join(slicetimerparams)
@@ -3224,7 +3241,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     ("mctype",              options['hcp_bold_movreg'].upper()),
                     ("preregistertool",     options['hcp_bold_preregistertool']),
                     ("processing-mode",     options['hcp_processing_mode']),
-                    ("doslicetime",         options['hcp_bold_doslicetime'].upper()),
+                    ("doslicetime",         doslicetime),
                     ("slicetimerparams",    slicetimerparams),
                     ("fmriref",             fmrirefparam),
                     ("fmrirefreg",          options['hcp_bold_refreg']),
