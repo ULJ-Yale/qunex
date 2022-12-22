@@ -3997,7 +3997,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.
 
-        --hcp_icafix_deleteintermediates (bool, default False):
+        --hcp_icafix_deleteintermediates (str, default 'FALSE'):
             If True, deletes both the concatenated high-pass filtered and
             non-filtered timeseries files that are prerequisites to FIX
             cleaning.

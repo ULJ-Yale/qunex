@@ -389,7 +389,7 @@ arglist = [
     ['hcp_icafix_highpass',    '',                                         isNone, "Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix."],
     ['hcp_matlab_mode',        'compiled',                                 str, "Specifies the Matlab version, can be interpreted, compiled or octave."],
     ['hcp_icafix_domotionreg', '',                                         isNone, "Whether to regress motion parameters as part of the cleaning. The default value for single-run HCP ICAFix is [TRUE], while the default for multi-run HCP ICAFix is [FALSE]."],
-    ['hcp_icafix_deleteintermediates', 'FALSE',                            torf,   "If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]."],
+    ['hcp_icafix_deleteintermediates', 'FALSE',                            str,   "If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]."],
     ['hcp_icafix_fallbackthreshold', '0',                                  int,   "If greater than zero, reruns icadim on any run with a VN mean more than this amount greater than the minimum VN mean [0]."],
 
     ['# --- hcp_icafix options'],
