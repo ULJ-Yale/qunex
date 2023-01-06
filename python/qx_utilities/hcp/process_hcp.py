@@ -4360,23 +4360,29 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         bandpass = 0 if options['hcp_icafix_highpass'] is None else options['hcp_icafix_highpass']
 
         comm = '%(script)s \
-                "%(inputfile)s" \
-                %(bandpass)d \
-                "%(concatfilename)s" \
-                "%(domot)s" \
-                "%(trainingdata)s" \
-                %(fixthreshold)d \
-                "%(deleteintermediates)s" \
-                %(fallbackthreshold)d' % {
+                --fmri-names="%(fmrinames)s" \
+                --high-pass=%(bandpass)d \
+                --concat-fmri-name="%(concatfilename)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
-                'inputfile'             : boldimgs,
+                'fmrinames'             : boldimgs,
                 'bandpass'              : int(bandpass),
-                'concatfilename'        : concatfilename,
-                'domot'                 : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if options['hcp_icafix_traindata'] is None else options['hcp_icafix_traindata'],
-                'fixthreshold'          : options['hcp_icafix_threshold'],
-                'deleteintermediates'   : options['hcp_icafix_deleteintermediates'],
-                'fallbackthreshold'     : options['hcp_icafix_fallbackthreshold']}
+                'concatfilename'        : concatfilename}
+
+        # optional parameters
+        if options['hcp_icafix_domotionreg'] is not None:
+            comm += '             --motion-regression="%s"' % options['hcp_icafix_domotionreg']
+
+        if options['hcp_icafix_traindata'] is not None:
+            comm += '             --training-file="%s"' % options['hcp_icafix_traindata']
+
+        if options['hcp_icafix_threshold'] is not None:
+            comm += '             --fix-threshold="%s"' % options['hcp_icafix_threshold']
+
+        if options['hcp_icafix_deleteintermediates'] is not None:
+            comm += '             --delete-intermediates="%s"' % options['hcp_icafix_deleteintermediates']
+
+        if options['hcp_icafix_fallbackthreshold'] is not None:
+            comm += '             --fallback-threshold="%s"' % options['hcp_icafix_fallbackthreshold']
 
         # -- Report command
         if groupok:
