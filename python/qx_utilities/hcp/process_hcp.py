@@ -2153,11 +2153,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # get dwi files
             dwi_data = dict()
-            for ddir, dext in direction.items():
-                dwi_files = glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
-
-                # sort by temporal order as specified in batch
-                for dwi in sorted(dwis):
+            # sort by temporal order as specified in batch
+            for dwi in sorted(dwis):
+                for ddir, dext in direction.items():
+                    dwi_files = glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
                     for dwi_file in dwi_files:
                         if dwis[dwi] in dwi_file:
                             dwi_dict = {
