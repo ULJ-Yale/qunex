@@ -12,7 +12,7 @@ Definition of commands used in gmri along with their parameters.
 """
 
 # qx_utilities imports
-from general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities, meltmovfidl, commands_support, bruker
+from general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, palm, scheduler, utilities, meltmovfidl, commands_support, bruker, extensions
 
 # pipeline imports
 from hcp import import_hcp, setup_hcp, export_hcp
@@ -71,3 +71,7 @@ commands = {'list_dicom'            : {'com': dicom.list_dicom,               'a
             'bruker_to_dicom'       : {'com': bruker.bruker_to_dicom,         'args': ('sessionsfolder', 'inbox', 'sessions', 'archive', 'parelements')},
             'get_sessions_for_slurm_array' : {'com': utilities.get_sessions_for_slurm_array, 'args': ('sessions', 'sessionids')}
 }
+
+# -- update commands list with information from extensions
+commands.update(extensions.compile_dict('commands')) 
+commands.update(extensions.commands)

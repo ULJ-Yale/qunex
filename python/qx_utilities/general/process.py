@@ -29,6 +29,7 @@ import general.core as gc
 import general.exceptions as ge
 import general.commands_support as gcs
 from processing import fs, fsl, simple, workflow
+from general import extensions
 
 # pipelines imports
 from hcp import process_hcp
@@ -527,6 +528,9 @@ arglist = [
     ['hcp_long_fs_extra_reconall',  '',                                     isNone,  "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all processing. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
 ]
 
+# Add arguments used in extensions
+arglist += extensions.compile_list('arglist')
+arglist += extensions.arglist
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -551,6 +555,8 @@ flaglist = [
     ['fix_aggressive_cleanup',      'fix_aggressive_cleanup',       False,  "Provide this to enable agressive cleanup."],
 ]
 
+# Add flags used in extensions
+flaglist += extensions.compile_list('flaglist')
 
 #   ------------------------------------------------------------------ OPTIONS
 #   The options dictionary
@@ -638,6 +644,16 @@ salist = [
     ['lsi',     'list_session_info',          simple.list_session_info,                       "List session info"]
 ]
 
+# Add command lists used in extensions
+calist += extensions.compile_list('calist')
+lalist += extensions.compile_list('lalist')
+malist += extensions.compile_list('malist')
+salist += extensions.compile_list('salist')
+
+calist += extensions.calist
+lalist += extensions.lalist
+malist += extensions.malist
+salist += extensions.salist
 
 #   -------------------------------------------------------- COMMAND DICTIONARY
 #   Code that transcribes the comand specifications into a dictionary for
