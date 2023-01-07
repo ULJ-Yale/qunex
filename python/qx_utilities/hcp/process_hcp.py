@@ -4006,6 +4006,11 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             If greater than zero, reruns icadim on any run with a VN mean more
             than this amount greater than the minimum VN mean.
 
+        --hcp_config (str, default ''):
+            Path to the HCP config file where additional parameters can be
+            specified. For hcp_icafix, these parametersa are: volwisharts,
+            ciftiwisharts and icadimmode.
+
         --hcp_icafix_postfix (str, default 'TRUE'):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
             successfully.
@@ -4383,6 +4388,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if options['hcp_icafix_fallbackthreshold'] is not None:
             comm += '             --fallback-threshold="%s"' % options['hcp_icafix_fallbackthreshold']
+
+        if options['hcp_config'] is not None:
+            comm += '             --config="%s"' % options['hcp_config']
 
         # -- Report command
         if groupok:

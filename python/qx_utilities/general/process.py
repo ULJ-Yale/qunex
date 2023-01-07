@@ -300,6 +300,7 @@ arglist = [
     ['hcp_cifti_tail',         '_Atlas',                                   str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
     ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' folder. '' by default."],
     ['hcp_nifti_tail',         '',                                         str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
+    ['hcp_config',           '',                                           isNone, "Path to the HCP config file where additional parameters can be specified."],
 
     ['# --- hcp_pre_freesurfer options'],
     ['hcp_brainsize',          '150',                                      int,    "Human brain size in mm."],
