@@ -352,14 +352,9 @@ if [ "$USEOCTAVE" == "TRUE" ]; then
          if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
     fi
 else
-    # if [[ ${MatlabTest} == "fail" ]]; then
-    #     reho " ===> ERROR: Cannot setup Matlab because module test failed."
-    # else
-         
-         cyaneho " ---> Setting up Matlab "; echo ""
-         QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
-         if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-m"; fi
-    # fi
+    cyaneho " ---> Setting up Matlab "; echo ""
+    QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
+    if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-m"; fi
 fi
 # -- Use the following command to run .m code in Matlab
 export QUNEXMCOMMAND
@@ -384,17 +379,8 @@ PATH=$TOOLS/olib:$PATH
 PATH=$TOOLS/bin:$TOOLS/lib/bin:$TOOLS/lib/lib/:$PATH
 PATH=$QUNEXPATH/bin:$PATH
 PATH=$QUNEXPATH/lib:$PATH
-PATH=/usr/local/bin:$PATH
+PATH=$PATH:/usr/local/bin
 PATH=$PATH:/bin
-#PATH=$QUNEXPATH/qx_library/bin:$PATH
-#PATH=$QUNEXPATH/bash/qx_utilities:$PATH
-#PATH=$QUNEXPATH/matlab/qx_utilities:$PATH
-#PATH=$PYLIBDIR/gradunwarp:$PATH
-#PATH=$PYLIBDIR/gradunwarp/core:$PATH
-#PATH=$PYLIBDIR/xmlutils.py:$PATH
-#PATH=$PYLIBDIR:$PATH
-#PATH=$PYLIBDIR/bin:$PATH
-#PATH=$TOOLS/MeshNet:$PATH
 export PATH
 
 # -- add qx python to PYTHONPATH
