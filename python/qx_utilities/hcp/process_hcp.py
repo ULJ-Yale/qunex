@@ -3183,7 +3183,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     try:
 
         # --- process additional parameters
-
+        doslicetime = 'FALSE'
         slicetimerparams = ""
 
         if options['hcp_bold_doslicetime']:
