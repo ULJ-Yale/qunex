@@ -718,6 +718,3 @@ MATLABPATH=$QUNEXPATH/matlab/qx_mri/img:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mri/stats:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_utilities/general:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mice:$MATLABPATH
-
-# -- Reactivate conda environment
-source activate $QUNEXENV 2> /dev/null
