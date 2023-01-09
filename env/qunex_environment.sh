@@ -280,15 +280,6 @@ if [[ -z ${ASLDIR} ]]; then ASLDIR="${HCPPIPEDIR}/hcp-asl"; export ASLDIR; fi
 # -- The line below points to the environment expectation if using the 'dev' extended version of HCP Pipelines directly from QuNex repo
 #if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/qunex/hcp"; export HCPPIPEDIR; fi
 
-# -- conda management
-CONDABIN=${CONDADIR}/bin
-PATH=${CONDABIN}:${PATH}
-export CONDABIN PATH
-source deactivate 2> /dev/null
-
-# Activate conda environment
-source activate $QUNEXENV 2> /dev/null
-
 # ------------------------------------------------------------------------------
 # -- License and version disclaimer
 # ------------------------------------------------------------------------------
@@ -704,3 +695,15 @@ MATLABPATH=$QUNEXPATH/matlab/qx_mri/img:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mri/stats:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_utilities/general:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mice:$MATLABPATH
+
+# -- conda management
+# deactivate current
+source deactivate 2> /dev/null
+
+# set paths
+CONDABIN=${CONDADIR}/bin
+PATH=${CONDABIN}:${PATH}
+export CONDABIN PATH
+
+# activate qunex
+source activate $QUNEXENV 2> /dev/null
