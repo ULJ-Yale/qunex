@@ -634,12 +634,19 @@ if [ "$Modality" = "BOLD" ]; then
             reho "---> ERROR: Flag --boldfcinput is missing. Check your inputs and re-run."; echo ""; exit 1
         fi
     fi
+
     if [[ ! -z ${SessionBatchFile} ]]; then
         if [[ ! -f ${SessionBatchFile} ]]; then
             reho "---> ERROR: Requested BOLD modality with a batch file. Batch file not found."
             exit 1
         else
             BOLDSBATCH="${BOLDS}"
+        fi
+    else
+        # if BOLDS is all we need a batch file
+        if [[ ${BOLDS} == "all" ]]; then
+            reho "---> ERROR: When running QC over all BOLDS you need to specify a batch file!"
+            exit 1
         fi
     fi
 fi

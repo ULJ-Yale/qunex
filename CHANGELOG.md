@@ -6,6 +6,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.97.0
+
+* Improved the documentation at several locations.
+* Added the ability to create slice timing files when preparing data for HCP pipelines using the setup_hcp command.
+* Upgraded FSL to 6.0.6.1.
+* Optimization of parameter parsing for hcp_icafix.
+
+## 0.96.2
+
+* Fixed a bug where the phase enconding direction was not set correctly in `hcp_diffusion`.
+
 ## 0.96.1
 
 * Default value for the model parameter of `dwi_bepostx_gpu` is is reversed to 2, which is the correct FSL default.

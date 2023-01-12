@@ -66,7 +66,6 @@ from functools import partial
 
 # ---- some definitions
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
-PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
 PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL', 'LR': 'i-', 'i-': 'LR'}
 SEDirMap  = {'AP': 'y', 'PA': 'y', 'LR': 'x', 'RL': 'x'}
 
@@ -2154,11 +2153,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # get dwi files
             dwi_data = dict()
-            for ddir, dext in direction.items():
-                dwi_files = glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
-
-                # sort by temporal order as specified in batch
-                for dwi in sorted(dwis):
+            # sort by temporal order as specified in batch
+            for dwi in sorted(dwis):
+                for ddir, dext in direction.items():
+                    dwi_files = glob.glob(os.path.join(hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
                     for dwi_file in dwi_files:
                         if dwis[dwi] in dwi_file:
                             dwi_dict = {
@@ -2221,7 +2219,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             comm = '%(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
-                --pedir=%(pe_dir)s \
+                --PEdir=%(pe_dir)s \
                 --posData="%(pos_data)s" \
                 --negData="%(neg_data)s" \
                 --echospacing="%(echospacing)s" \
@@ -2472,6 +2470,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_bold_doslicetime (str, default 'FALSE'):
             Whether to do slice timing correction 'TRUE' or 'FALSE'.
+
+        --hcp_bold_slicetimingfile (str, default 'FALSE'):
+            Whether to use custom slice timing file 'TRUE' or 'FALSE'.
 
         --hcp_bold_slicetimerparams (str, default ''):
             A comma or pipe separated string of parameters for FSL slicetimer.
@@ -3007,6 +3008,15 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 if options['hcp_processing_mode'] == 'HCPStyleData' and options['hcp_bold_refreg'] == 'nonlinear':
                     r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, a nonlinear registration to an external BOLD was specified!\n            Consider using LegacyStyleData processing mode."
                     run = False
+            
+            # --- Check for slice timing file
+
+            # --- check for ref image
+            if options["hcp_bold_doslicetime"] and options["hcp_bold_slicetimingfile"]:
+                stfile = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s_slicetimer.txt" % (sinfo['id'], boldroot))
+                r, boldok = pc.checkForFile2(r, stfile, '\n     ... slice timing file present', '\n     ... ERROR: slice timing file missing!', status=boldok)
+            else:
+                stfile = None
 
             # store required data
             b = {'boldsource':   boldsource,
@@ -3016,6 +3026,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                  'boldok':       boldok,
                  'boldimg':      boldimg,
                  'refimg':       refimg,
+                 'stfile':       stfile,
                  'gdcfile':      gdcfile,
                  'unwarpdir':    unwarpdir,
                  'echospacing':  echospacing,
@@ -3154,6 +3165,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     boldok      = b['boldok']
     boldimg     = b['boldimg']
     refimg      = b['refimg']
+    stfile      = b['stfile']
     unwarpdir   = b['unwarpdir']
     echospacing = b['echospacing']
     spinNeg     = b['spinNeg']
@@ -3171,10 +3183,11 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     try:
 
         # --- process additional parameters
-
+        doslicetime = 'FALSE'
         slicetimerparams = ""
 
-        if options['hcp_bold_doslicetime'].lower() == 'true':
+        if options['hcp_bold_doslicetime']:
+            doslicetime = 'TRUE'
 
             slicetimerparams = re.split(' +|,|\|', options['hcp_bold_slicetimerparams'])
 
@@ -3183,10 +3196,12 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 stappendItems.append('--down')
             if options['hcp_bold_stcorrint'] == 'odd':
                 stappendItems.append('--odd')
+            if options['hcp_bold_slicetimingfile']:
+                stappendItems.append(f'--tcustom={stfile}')
 
             for stappend in stappendItems:
                 if stappend not in slicetimerparams:
-                    slicetimerparams.append(stappend)
+                    slicetimerparams.append(stappend)            
 
             slicetimerparams = [e for e in slicetimerparams if e]
             slicetimerparams = "@".join(slicetimerparams)
@@ -3225,7 +3240,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     ("mctype",              options['hcp_bold_movreg'].upper()),
                     ("preregistertool",     options['hcp_bold_preregistertool']),
                     ("processing-mode",     options['hcp_processing_mode']),
-                    ("doslicetime",         options['hcp_bold_doslicetime'].upper()),
+                    ("doslicetime",         doslicetime),
                     ("slicetimerparams",    slicetimerparams),
                     ("fmriref",             fmrirefparam),
                     ("fmrirefreg",          options['hcp_bold_refreg']),
@@ -3981,7 +3996,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.
 
-        --hcp_icafix_deleteintermediates (bool, default False):
+        --hcp_icafix_deleteintermediates (str, default 'FALSE'):
             If True, deletes both the concatenated high-pass filtered and
             non-filtered timeseries files that are prerequisites to FIX
             cleaning.
@@ -3989,6 +4004,11 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_fallbackthreshold (int, default 0):
             If greater than zero, reruns icadim on any run with a VN mean more
             than this amount greater than the minimum VN mean.
+
+        --hcp_config (str, default ''):
+            Path to the HCP config file where additional parameters can be
+            specified. For hcp_icafix, these parametersa are: volwisharts,
+            ciftiwisharts and icadimmode.
 
         --hcp_icafix_postfix (str, default 'TRUE'):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
@@ -4344,23 +4364,32 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         bandpass = 0 if options['hcp_icafix_highpass'] is None else options['hcp_icafix_highpass']
 
         comm = '%(script)s \
-                "%(inputfile)s" \
-                %(bandpass)d \
-                "%(concatfilename)s" \
-                "%(domot)s" \
-                "%(trainingdata)s" \
-                %(fixthreshold)d \
-                "%(deleteintermediates)s" \
-                %(fallbackthreshold)d' % {
+                --fmri-names="%(fmrinames)s" \
+                --high-pass=%(bandpass)d \
+                --concat-fmri-name="%(concatfilename)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
-                'inputfile'             : boldimgs,
+                'fmrinames'             : boldimgs,
                 'bandpass'              : int(bandpass),
-                'concatfilename'        : concatfilename,
-                'domot'                 : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'trainingdata'          : "HCP_Style_Single_Multirun_Dedrift.RData" if options['hcp_icafix_traindata'] is None else options['hcp_icafix_traindata'],
-                'fixthreshold'          : options['hcp_icafix_threshold'],
-                'deleteintermediates'   : options['hcp_icafix_deleteintermediates'],
-                'fallbackthreshold'     : options['hcp_icafix_fallbackthreshold']}
+                'concatfilename'        : concatfilename}
+
+        # optional parameters
+        if options['hcp_icafix_domotionreg'] is not None:
+            comm += '             --motion-regression="%s"' % options['hcp_icafix_domotionreg']
+
+        if options['hcp_icafix_traindata'] is not None:
+            comm += '             --training-file="%s"' % options['hcp_icafix_traindata']
+
+        if options['hcp_icafix_threshold'] is not None:
+            comm += '             --fix-threshold="%s"' % options['hcp_icafix_threshold']
+
+        if options['hcp_icafix_deleteintermediates'] is not None:
+            comm += '             --delete-intermediates="%s"' % options['hcp_icafix_deleteintermediates']
+
+        if options['hcp_icafix_fallbackthreshold'] is not None:
+            comm += '             --fallback-threshold="%s"' % options['hcp_icafix_fallbackthreshold']
+
+        if options['hcp_config'] is not None:
+            comm += '             --config="%s"' % options['hcp_config']
 
         # -- Report command
         if groupok:

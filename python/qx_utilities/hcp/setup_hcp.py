@@ -27,10 +27,10 @@ import collections
 import general.exceptions as ge
 import os.path
 import general.core as gc
+import json
 
 # ---- some definitions
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
-PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
 PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL', 'LR': 'i-', 'i-': 'LR'}
 SEDirMap  = {'AP': 'y', 'PA': 'y', 'LR': 'x', 'RL': 'x'}
 
@@ -38,9 +38,9 @@ def checkInlineParameterUse(modality, parameter, options):
     return any([e in options['use_sequence_info'] for e in ['all', parameter, '%s:all' % (modality), '%s:%s' % (modality, parameter)]])
 
 
-def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", hcp_folderstructure="hcpls", hcp_suffix="", use_sequence_info="all"):
+def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", hcp_folderstructure="hcpls", hcp_suffix="", use_sequence_info="all", slice_timing_info="no"):
     """
-    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""]``
+    ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""] [use_sequence_info=all] [slice_timing_info=no]``
 
     The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP minimal
@@ -106,6 +106,10 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             If information is not specified it will not be used. More general
             specification (e.g. `all`) implies all more specific cases (e.g.
             `T1w:all`).
+
+        --slice_timing_info (str, default 'no')
+            Whether to prepare ('yes') a file for each bold image with the 
+            slice timing information for fsl slicetimer or not ('no').
 
     Notes:
         The command maps images from the sessions's nii folder into a folder
@@ -239,6 +243,8 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     inf   = gc.read_session_data(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf  = inf.get('raw_data', None)
     options = {'use_sequence_info': gc.pcslist(use_sequence_info)}
+
+    slice_timing_info = any([slice_timing_info.upper() == e for e in ["YES", "TRUE"]])
     
     # backwards compatibility (session used to be id)
 
@@ -305,6 +311,8 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     mapped = False
 
     for k in i:
+        boldfile = False
+
         v = inf[k]
         if 'o' in v:
             orient = "_" + v['o']
@@ -407,6 +415,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             bolds[boldn]["ref"] = sfile
 
         elif "bold" in v['name']:
+            boldfile = True
             boldn = v['name'][4:]
             sfile = k + ".nii.gz"
             if filename and 'filename' in v:
@@ -414,7 +423,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                 tfold = v['filename'] + fctail
             else:
                 tfile = sid + "_BOLD_" + boldn + orient + ".nii.gz"
-                tfold = "BOLD_" + boldn + orient + fctail
+                tfold = "BOLD_" + boldn + orient + fctail                
             bolds[boldn]["bold"] = sfile
 
         elif v['name'] == "SE-FM-AP":
@@ -531,9 +540,16 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                 sfile_json = sfile.split('.')[0] + '.json'
                 tfile_json = tfile.split('.')[0] + '.json'
                 json_path = os.path.join(rawf, sfile_json)
+                
                 # link or copy if it exists
                 if os.path.exists(json_path):
                     gc.linkOrCopy(json_path, os.path.join(basef, tfold, tfile_json))
+
+                    # prepare slice timing file if requested
+                    if slice_timing_info and boldfile:
+                        stfile_path = os.path.join(basef, tfold, tfile.split('.')[0] + '_slicetimer.txt')
+                        prepare_slice_timing(json_path, stfile_path)
+
             else:
                 print("  ... %s already exists" % (tfile))
     
@@ -541,3 +557,50 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
         raise ge.CommandFailed("setup_hcp", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")
 
     return
+
+
+def prepare_slice_timing(jsonfile, slicetimingfile):
+    """
+    ``prepare_slice_timing jsonfile=<path to json file> slicetimingfile=<path to slice timing file>``
+
+    The command reads the JSON sidecart file for slice timing information and 
+    prepares a slice timing txt file compatible with fsl slicetimer.
+
+    Parameters:
+        --json (str):
+            A path to the JSON file that contains the slice timing information.
+        --slicetimingfile (str):
+            A path to the slice timing file to be created.
+
+    Notes:
+        The function computes for each slice, what fraction of the TR the
+        slice needs to be moved forward (positive fraction) or backwards in
+        time (negative fraction) so that all the slices are aligned to the
+        middle of the TR.
+    """
+
+    if not os.path.exists(jsonfile):
+        raise ge.CommandFailed("prepare_slice_timing", "JSON sidecard files does not exist", "Slice timing file could not be created as the %s file does not exist!" % (json), "Please check your data!")
+
+    with open(jsonfile, "r") as f:
+        data = json.load(f)
+    
+    if "SliceTiming" not in data:
+        print(f"WARNING: JSON file does not contain slice timing information no slice timing file was generated. [{jsonfile}]")
+        return
+    
+    if "SliceEncodingDirection" in data and data["SliceEncodingDirection"][0] == '-':
+        data["SliceTiming"].reverse()
+    
+    if "RepetitionTime" not in data:
+        print(f"WARNING: JSON file does not contain repetition time information no slice timing file was generated. [{jsonfile}]")
+        return
+
+    try:
+        with open(slicetimingfile, "w") as f:            
+            for slice_time in data["SliceTiming"]:
+                print(f"{-1 * slice_time / data['RepetitionTime'] + 0.5}", file=f)
+            print("  ... prepared slice timing file [%s]" % (os.path.basename(slicetimingfile)))
+    except:
+        print(f"WARNING: Could not write to slice timing file [{slicetimingfile}]. Please check your data and setting")
+        return

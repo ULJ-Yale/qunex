@@ -29,6 +29,7 @@ import general.core as gc
 import general.exceptions as ge
 import general.commands_support as gcs
 from processing import fs, fsl, simple, workflow
+from general import extensions
 
 # pipelines imports
 from hcp import process_hcp
@@ -300,6 +301,7 @@ arglist = [
     ['hcp_cifti_tail',         '_Atlas',                                   str,    "The tail of the cifti file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
     ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' folder. '' by default."],
     ['hcp_nifti_tail',         '',                                         str,    "The tail of the nifti (volume) file used when mapping data from the HCP MNINonLinear/Results folder and processing."],
+    ['hcp_config',           '',                                           isNone, "Path to the HCP config file where additional parameters can be specified."],
 
     ['# --- hcp_pre_freesurfer options'],
     ['hcp_brainsize',          '150',                                      int,    "Human brain size in mm."],
@@ -353,7 +355,8 @@ arglist = [
     ['hcp_bold_echodiff',      'NONE',                                     str,    "Delta TE in ms for BOLD fieldmap images or NONE if not used."],
     ['hcp_bold_unwarpdir',     'y',                                        str,    "The direction of unwarping, can be specified separately for LR/RL: e.g. 'LR=x|RL=-x|x' or similarly for AP/PA."],
     ['hcp_bold_gdcoeffs',      'NONE',                                     str,    "Gradient distortion correction coefficients or NONE."],
-    ['hcp_bold_doslicetime',   '',                                         str,    "Whether to do slice timing correction TRUE or FALSE (default)."],
+    ['hcp_bold_doslicetime',   '',                                         torf,   "Whether to do slice timing correction TRUE or FALSE (default)."],
+    ['hcp_bold_slicetimingfile','FALSE',                                   torf,   "Whether a slice timing file is prepared and shuld be used ('TRUE') or not ('FALSE')."],
     ['hcp_bold_slicetimerparams' ,'',                                      str,    "A comma or pipe separated string of parameters for FSL slicetimer."],
     ['hcp_bold_movreg',        'MCFLIRT',                                  str,    "Whether to use FLIRT or MCFLIRT for motion correction."],
     ['hcp_bold_movref',        'independent',                              str,    "What reference to use for movement correction (independent, first)."],
@@ -388,12 +391,12 @@ arglist = [
     ['hcp_icafix_highpass',    '',                                         isNone, "Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix."],
     ['hcp_matlab_mode',        'compiled',                                 str, "Specifies the Matlab version, can be interpreted, compiled or octave."],
     ['hcp_icafix_domotionreg', '',                                         isNone, "Whether to regress motion parameters as part of the cleaning. The default value for single-run HCP ICAFix is [TRUE], while the default for multi-run HCP ICAFix is [FALSE]."],
-    ['hcp_icafix_deleteintermediates', 'FALSE',                            torf,   "If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]."],
-    ['hcp_icafix_fallbackthreshold', '0',                                  int,   "If greater than zero, reruns icadim on any run with a VN mean more than this amount greater than the minimum VN mean [0]."],
+    ['hcp_icafix_deleteintermediates', '',                                 isNone, "If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]."],
+    ['hcp_icafix_fallbackthreshold', '',                                   isNone, "If greater than zero, reruns icadim on any run with a VN mean more than this amount greater than the minimum VN mean [0]."],
 
     ['# --- hcp_icafix options'],
     ['hcp_icafix_traindata',   '',                                         isNone, "Which file to use for training data. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix."],
-    ['hcp_icafix_threshold',   '10',                                       int,    "ICAFix threshold that controls the sensitivity/specificity tradeoff."],
+    ['hcp_icafix_threshold',   '',                                         isNone, "ICAFix threshold that controls the sensitivity/specificity tradeoff."],
     ['hcp_icafix_postfix',     'TRUE',                                     torf,   "Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully."],
 
     ['# --- hcp_post_fix options'],
@@ -525,6 +528,9 @@ arglist = [
     ['hcp_long_fs_extra_reconall',  '',                                     isNone,  "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all processing. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
 ]
 
+# Add arguments used in extensions
+arglist += extensions.compile_list('arglist')
+arglist += extensions.arglist
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -549,6 +555,8 @@ flaglist = [
     ['fix_aggressive_cleanup',      'fix_aggressive_cleanup',       False,  "Provide this to enable agressive cleanup."],
 ]
 
+# Add flags used in extensions
+flaglist += extensions.compile_list('flaglist')
 
 #   ------------------------------------------------------------------ OPTIONS
 #   The options dictionary
@@ -636,6 +644,16 @@ salist = [
     ['lsi',     'list_session_info',          simple.list_session_info,                       "List session info"]
 ]
 
+# Add command lists used in extensions
+calist += extensions.compile_list('calist')
+lalist += extensions.compile_list('lalist')
+malist += extensions.compile_list('malist')
+salist += extensions.compile_list('salist')
+
+calist += extensions.calist
+lalist += extensions.lalist
+malist += extensions.malist
+salist += extensions.salist
 
 #   -------------------------------------------------------- COMMAND DICTIONARY
 #   Code that transcribes the comand specifications into a dictionary for

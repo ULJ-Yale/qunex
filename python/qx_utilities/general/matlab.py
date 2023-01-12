@@ -21,6 +21,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import subprocess
+from general import extensions
 
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -73,6 +74,9 @@ functions = {
     'stats_ttest_independent':         [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('vartype', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
     'stats_ttest_zero':                [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
 }
+
+# -- update functions with information from extensions
+functions.update(extensions.compile_dict('functions')) 
 
 functionList = sorted(functions.keys())
 
