@@ -64,7 +64,7 @@ if ~isempty(B)
     end
 end
 
-if ~ismember(measure, {'cv', 'rho', 'r'})
+if ~ismember(measure, {'cv', 'rho', 'r', 'cc', 'icv'})
     error('ERROR: Invalid functional connectivity measure specified [%s]!', measure); 
 end
 
@@ -87,8 +87,44 @@ if ismember(measure, {'cv', 'rho', 'r'})
     end
 end
 
-% --- do we need to return Fz?
+if ismember(measure, {'icv'})
+    if isempty(B)
+        cov = A * A';
+        invcov = pinv(cov);
+        fcmat = zeros(size(invcov));
+        for i = 1:size(invcov,1)
+            for j = 1:size(invcov,2)
+                fcmat(i,j) = - invcov(i, j) / sqrt(invcov(i,i) * invcov(j, j));
+            end
+        end
+    else
+        error('ERROR: Inverse covariance can not be computed!'); 
+    end
+end
 
+if ismember(measure, {'cc'})
+    if isempty(B)
+        fcmat = zeros(size(A,1), size(A,1));
+        for i = 1:size(A,1)
+            for j = i:size(A,1)
+                [c,~] = xcorr(A(i,:),A(j,:));
+                fcmat(i,j) = max(c);
+                fcmat(j,i) = fcmat(i,j);
+            end
+        end
+    else
+        fcmat = zeros(size(A,1), size(B,1));
+        for i = 1:size(A,1)
+            for j = 1:size(B,1)
+                [c,~] = xcorr(A(i,:),B(j,:));
+                fcmat(i,j) = max(c);
+            end
+        end
+    end
+end
+
+% --- do we need to return Fz?
+fprintf('size(fcmat) is %s\n', mat2str(size(fcmat)));
 if nargout > 1
     fzmat = fc_fisher(fcmat);
 end

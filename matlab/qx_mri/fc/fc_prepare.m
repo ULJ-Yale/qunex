@@ -67,19 +67,19 @@ end
 
 % -- demean
 
-if ismember(measure, {'cv', 'rho', 'r'})
+if ismember(measure, {'cv', 'rho', 'r', 'cc', 'icv'})
     mat = bsxfun(@minus, mat, mean(mat));
 end
 
 % -- standardize
 
-if ismember(measure, {'rho', 'r'})
+if ismember(measure, {'rho', 'r', 'cc'})
     mat = bsxfun(@rdivide, mat, std(mat));
 end
 
 % -- divide by length
 
-if ismember(measure, {'rho', 'r'})
+if ismember(measure, {'rho', 'r', 'cv', 'cc'})
     mat = mat ./ sqrt(N-1);
 end
 
