@@ -208,7 +208,7 @@ arglist = [
     ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
     ['fast',               '-t 1 -n 3 --nopve',                           str,    "options to be passed to FAST in brain segmentation"],
     ['betboldmask',        '-R -m',                                       str,    "options to be passed to BET when creating bold brain masks"],
-    ['TR',                 '2.5',                                         float,  "TR of the bold data"],
+    ['tr',                 '2.5',                                         float,  "TR of the bold data"],
     ['omit',               '5',                                           int,    "how many frames to omit at the start of each bold run"],
     ['bold_actions',       'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
     ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
@@ -756,14 +756,6 @@ def run(command, args):
         else:
             options[k] = v
 
-    # recode
-    for line in arglist:
-        if len(line) == 4:
-            try:
-                options[line[0]] = line[2](options[line[0]])
-            except:
-                raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
-
     # take care of variable expansion
     for key in options:
         if type(options[key]) is str:
@@ -789,6 +781,15 @@ def run(command, args):
 
     # impute unspecified parameters
     options = gcs.impute_parameters(options, command)
+
+    # recode as last step before options are used
+    for line in arglist:
+        if len(line) == 4:
+            try:
+                options[line[0]] = line[2](options[line[0]])
+            except:
+                raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
+
 
     # --------------------------------------------------------------------------
     #                                                       start writing runlog
