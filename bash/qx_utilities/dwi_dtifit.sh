@@ -92,7 +92,7 @@ Parameters:
         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
         relevant options; e.g. for SLURM the string would look like this::
 
-            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>, cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
 Examples:
     Run directly via::
@@ -120,7 +120,7 @@ Examples:
 
     For SLURM scheduler the string would look like this via the qunex call::
 
-     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
     ::
 

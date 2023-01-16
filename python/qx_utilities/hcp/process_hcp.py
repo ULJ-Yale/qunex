@@ -2083,7 +2083,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="yes" \\
                 --bash="module load CUDA/9.1.85" \\
-                --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gres=gpu:1"
+                --scheduler="SLURM,time=24:00:00,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gpus=1"
 
         Run without a scheduler and without GPU support::
 
@@ -6840,7 +6840,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_asl_cores="8" \\
-                --scheduler="SLURM,time=24:00:00,ntasks=1,cpus-per-task=8,mem-per-cpu=16000"
+                --scheduler="SLURM,time=24:00:00,mem-per-cpu=16000"
     """
 
     r = "\n------------------------------------------------------------"

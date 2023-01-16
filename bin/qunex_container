@@ -619,8 +619,8 @@ def main(args=None):
 
     Example settings strings::
 
-        "SLURM,jobname=hcp_freesurfer,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
-        "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=pi_anticevic"
+        "SLURM,jobname=hcp_freesurfer,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
+        "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=week"
 
 
     Scheduling multiple jobs in parallel
@@ -678,7 +678,7 @@ def main(args=None):
         --batchfile=/data/study/processing/batch.txt \\
         --parsessions=4 \\
         --container=/apptainer/qunex_suite-0_38_10.sif \\
-        --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=pi_anticevic"
+        --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=week"
 
     """
 

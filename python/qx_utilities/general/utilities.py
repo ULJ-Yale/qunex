@@ -1586,7 +1586,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
             
             parsessions : 6
             sessions    : /data/testStudy/processing/batch_baseline.txt
-            scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,ntasks=6,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+            scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=day"
 
             command: preprocess_bold
                 bold_actions     : shrc
@@ -1621,7 +1621,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
           --runlists="doHCP" \\
           --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
           --sperlist=4 \\
-          --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+          --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=week"
 
     ::
 
@@ -1630,7 +1630,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
           --runlists="prepareFCPreprocessing" \\
           --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
           --sperlist=4 \\
-          --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+          --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=day"
 
     ::
 

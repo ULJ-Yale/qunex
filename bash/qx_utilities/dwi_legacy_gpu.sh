@@ -117,7 +117,7 @@ Examples:
 
     For SLURM scheduler the string would look like this via the qunex call::
 
-         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
     NOTE: CUDA libraries need to be loaded for this command to work, to do this
     you usually need to execute module load CUDA/9.1.85. When scheduling add the
