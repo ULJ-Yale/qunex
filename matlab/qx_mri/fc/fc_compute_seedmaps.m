@@ -437,7 +437,7 @@ if ~ismember(options.roimethod, {'mean', 'pca', 'median'})
     error('ERROR: Invalid roi extraction method: %s', options.roimethod);
 end
 
-if ~ismember(options.fcmeasure, {'r', 'cv', 'rho'})
+if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
 end
 
@@ -628,6 +628,8 @@ for s = 1:nsub
         % --> generate seedmaps
 
         rs = ts.img_extract_roi(roi, [], options.roimethod);
+        %fprintf('\n size(rs) is %s\n', mat2str(size(rs)));
+        %fprintf('\n size(ts) is %s\n', mat2str(size(ts.data)));
         fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'));
 
         if verbose; fprintf(' ... computed seedmap'); end
