@@ -72,7 +72,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %       --targetf (str, default '.'):
 %           The group level folder to save results in. 
 %
-%       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|verbose=false|debug=false|fcname=|savesessionid=false|subjectid='):
+%       --options (str, default 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|savesessionid=false|fcname=|verbose=false|debug=false'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::
 %

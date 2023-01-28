@@ -72,7 +72,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %       --targetf (str, '.'):
 %           The group level folder to save images in. 
 %
-%       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|savesessionid=false|verbose=false|debug=false'):
+%       --options (str, default 'roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|savesessionid=false|itargetf=gfolder|verbose=false|debug=false'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::
 %
@@ -223,7 +223,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               - true
 %               - false.
 %
-%               Defaults to 'no'.
+%               Defaults to 'false'.
 %
 %           - itargetf
 %               Where to save the individual data:

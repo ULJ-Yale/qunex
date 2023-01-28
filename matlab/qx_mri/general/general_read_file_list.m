@@ -200,6 +200,4 @@ if nargout > 2
     nfiles = length([session.files]);
 end
 
-if verbose, fprintf(' done.\n'); end
-
-
+if verbose, fprintf('\n ... done'); end
