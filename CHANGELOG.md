@@ -10,8 +10,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * Improved the documentation at several locations.
 * Added the ability to create slice timing files when preparing data for HCP pipelines using the setup_hcp command.
-* Upgraded FSL to 6.0.6.1.
+* Upgraded FSL to 6.0.6.2.
 * Optimization of parameter parsing for hcp_icafix.
+* Fixed the use of TR parameter in some cases.
+* Consistent scheduler parameter specification in documentation.
 
 ## 0.96.2
 

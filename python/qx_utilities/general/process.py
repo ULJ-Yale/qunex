@@ -188,7 +188,7 @@ def updateOptions(session, options):
 
 arglist = [
     ['# ---- Basic settings'],
-    ['batchfile',           '',                                           str,   "The file with sessions information."],
+    ['batchfile',          '',                                           str,   "The file with sessions information."],
     ['sessions',           '',                                            str,    "A list of sessions to process."],
     ['sessionsfolder',     '',                                            os.path.abspath, 'The path to study sessions folder.'],
     ['logfolder',          '',                                            isNone, 'The path to log folder.'],
@@ -761,6 +761,17 @@ def run(command, args):
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
+    # impute unspecified parameters
+    options = gcs.impute_parameters(options, command)
+
+    # recode as last step before options are used
+    for line in arglist:
+        if len(line) == 4:
+            try:
+                options[line[0]] = line[2](options[line[0]])
+            except:
+                raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
+
     # set key parameters
     overwrite    = options['overwrite']
     parsessions  = options['parsessions']
@@ -778,18 +789,6 @@ def run(command, args):
     options['comlogs']    = comlogfolder
     options['logfolder']  = logfolder
     options['specfolder'] = specfolder
-
-    # impute unspecified parameters
-    options = gcs.impute_parameters(options, command)
-
-    # recode as last step before options are used
-    for line in arglist:
-        if len(line) == 4:
-            try:
-                options[line[0]] = line[2](options[line[0]])
-            except:
-                raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
-
 
     # --------------------------------------------------------------------------
     #                                                       start writing runlog
@@ -826,7 +825,7 @@ def run(command, args):
         exit()
 
     elif options['run'] == 'run':
-        sout += "\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n" % (options['sessions'], parsessions)
+        sout += f"\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n" % (options['sessions'], parsessions)
 
     else:
         sout += "\nRunning test on %s ...\n" % (options['sessions'])
