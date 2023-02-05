@@ -761,9 +761,6 @@ def run(command, args):
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
-    # impute unspecified parameters
-    options = gcs.impute_parameters(options, command)
-
     # recode as last step before options are used
     for line in arglist:
         if len(line) == 4:
@@ -771,6 +768,9 @@ def run(command, args):
                 options[line[0]] = line[2](options[line[0]])
             except:
                 raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
+
+    # impute unspecified parameters
+    options = gcs.impute_parameters(options, command)
 
     # set key parameters
     overwrite    = options['overwrite']

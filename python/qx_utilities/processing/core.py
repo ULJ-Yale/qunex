@@ -394,8 +394,6 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     ext = getExtension(options['image_target'])
 
-    # print("root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext)
-
     rgss = options['bold_nuisance']
     rgss = rgss.translate(str.maketrans('','',' ,;|'))
 
@@ -412,18 +410,12 @@ def getBOLDFileNames(sinfo, boldname, options):
             # print("Searching in the atlas folder ...")
             f['bold_source']        = getExactFile(os.path.join(d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
 
-    # --- alternative check for 4dfp preprocessing
-
-    
-
     # --- bold masks
-
     f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1' + '.nii.gz')
     f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain' + '.nii.gz')
     f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_mask' + '.nii.gz')
 
     # --- bold masks internals
-
     f['bold1_nifti']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_flip.4dfp.nii.gz')
     f['bold1_brain_nifti']      = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp.nii.gz')
     f['bold1_brain_mask_nifti'] = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp_mask.nii.gz')
@@ -431,7 +423,6 @@ def getBOLDFileNames(sinfo, boldname, options):
     f['bold_n_png']             = os.path.join(d['s_nuisance'], options['boldname'] + boldnumber + options['nifti_tail'] + '_nuisance.png')
 
     # --- movement files
-
     movname = boldname.replace(options['boldname'], 'mov')
 
     if d['s_source'] is None:
@@ -446,7 +437,6 @@ def getBOLDFileNames(sinfo, boldname, options):
     f['bold_mov']              = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + '_mov.dat')
 
     # --- event files
-
     if 'e' in options['bold_nuisance']:
         if d['s_source'] is None:
             f['bold_event_o'] = None
@@ -456,7 +446,6 @@ def getBOLDFileNames(sinfo, boldname, options):
         f['bold_event']         = os.path.join(d['s_bold_events'], options['boldname'] + boldnumber + options['event_file'])
 
     # --- bold preprocessed files
-
     f['bold']                   = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + ext)
     f['bold_final']             = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + options['bold_prefix'] + ext)
     f['bold_stats']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.bstats')
