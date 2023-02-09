@@ -159,7 +159,17 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               - rho
 %                   Spearman's rho value
 %               - cv
-%                   covariance estimate.
+%                   covariance estimate
+%               - cc
+%                   cross correlation
+%               - icv
+%                   inverse covariance
+%               - coh
+%                   coherence
+%               - mi
+%                   mutual information
+%               - mar
+%                   multivariate autoregressive model (coefficients)
 %
 %               Defaults to 'r'.
 %
@@ -412,6 +422,10 @@ addidtofile = strcmp(options.savesessionid, 'true') || strcmp(options.itargetf, 
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 fcmeasure   = options.fcmeasure;
 
+if ~general_check_fcargs(options)
+    error('ERROR: Invalid arguments for the fc measure: %s: ', fcmeasure);
+end
+
 if options.fcname, fcname = [options.fcname, '_']; else fcname = ''; end
 
 if printdebug
@@ -426,7 +440,7 @@ if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'min', 'max'})
     error('ERROR: Invalid roi extraction method: %s', options.roimethod);
 end
 
-if ~ismember(options.fcmeasure, {'r', 'cv', 'rho'})
+if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc', 'icv', 'mi', 'mar', 'coh'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
 end
 
@@ -623,7 +637,7 @@ for s = 1:nsub
             rs = ts.img_extract_roi(roiinfo, [], options.roimethod); 
         end
     
-        fc = fc_compute(rs, [], fcmeasure, false);
+        fc = fc_compute(rs, [], fcmeasure, false, options);
         
         if verbose; fprintf(' ... computed fc matrix'); end
     

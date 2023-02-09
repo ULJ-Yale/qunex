@@ -21,6 +21,8 @@ function [mat] = fc_prepare(mat, measure)
 %               Spearman's rho value
 %           - cv
 %               covariance estimate.
+%           - cc
+%               cross correlation
 %
 %           Defaults to 'r'.
 %
@@ -67,7 +69,7 @@ end
 
 % -- demean
 
-if ismember(measure, {'cv', 'rho', 'r', 'cc', 'icv'})
+if ismember(measure, {'cv', 'rho', 'r', 'cc'})
     mat = bsxfun(@minus, mat, mean(mat));
 end
 

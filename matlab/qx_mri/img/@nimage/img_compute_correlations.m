@@ -1,4 +1,4 @@
-function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, fcmeasure, optimized, verbose)
+function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, fcmeasure, optimized, verbose, options)
 
 %``img_compute_correlations(obj, bdata, fcmeasure, verbose)``
 %
@@ -55,6 +55,7 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
+if nargin < 6 || isempty(options),   options = struct([]); end
 if nargin < 5 || isempty(verbose),   verbose   = false; end
 if nargin < 4 || isempty(optimized), optimized = false; end
 if nargin < 3 || isempty(fcmeasure), fcmeasure = false; end
@@ -75,7 +76,7 @@ if verbose, fprintf('\n\nComputing %d correlations [%s] on %s data.', ncorrelati
 % ---- compute correlations
 
 correlations = obj.zeroframes(ncorrelations);
-correlations.data = fc_compute(obj.data, bdata', fcmeasure, optimized);
+correlations.data = fc_compute(obj.data, bdata', fcmeasure, optimized, options);
 
 % ---- compute Z-scores if requested
 

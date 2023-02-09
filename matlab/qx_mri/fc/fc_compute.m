@@ -1,4 +1,4 @@
-function [fcmat, fzmat] = fc_compute(A, B, measure, optimized)
+function [fcmat, fzmat] = fc_compute(A, B, measure, optimized, options)
 
 %``fc_compute(A, B, measure, optimized)``
 %
@@ -24,13 +24,27 @@ function [fcmat, fzmat] = fc_compute(A, B, measure, optimized)
 %           - rho
 %               Spearman's rho value
 %           - cv
-%               covariance estimate.
+%               covariance estimate
+%           - cc
+%               cross correlation
+%           - icv
+%               inverse covariance
+%           - coh
+%               coherence
+%           - mi
+%               mutual information
+%           - mar
+%               multivariate autoregressive model (coefficients)
 %
 %           Defaults to 'r'.
 %
 %       --optimized (boolean):
 %           Whether the data have been optimized for computing the requested
 %           measure. Defaults to false.
+%
+%       --options (structure)
+%           .fcargs (structure) Defines arguments for a given fc measure.
+%               
 %
 %   Returns:
 %       --fcmat (numeric matrix)
@@ -50,21 +64,25 @@ function [fcmat, fzmat] = fc_compute(A, B, measure, optimized)
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
-    
-if nargin < 4 || isempty(optimized), optimized = false;  end
-if nargin < 3 || isempty(measure),   measure   = 'r';  end
-if nargin < 2,                       B         = [];  end
-if nargin < 1 error('ERROR: A matrix with data needs to be provided!'); end
+
+if nargin < 5 || isempty(options) || sum(strcmp(fieldnames(options), 'fcargs')) == 0
+    fcargs = struct([]); 
+else
+    fcargs = options.fcargs;
+end
+if nargin < 4 || isempty(optimized), optimized = false;   end
+if nargin < 3 || isempty(measure),   measure   = 'r';     end
+if nargin < 2,                       B         = [];      end
+if nargin < 1, error('ERROR: A matrix with data needs to be provided!'); end
 
 % --- check data and parameters
-
 if ~isempty(B)
     if size(A, 2) ~= size(B, 2)
         error('ERROR: The lengths of matrix A (%d) and matrix B (%d) do not match! Check your data!', size(A, 2), size(B, 2)); 
     end
 end
 
-if ~ismember(measure, {'cv', 'rho', 'r', 'cc', 'icv'})
+if ~ismember(measure, {'cv', 'rho', 'r', 'cc', 'icv', 'coh', 'mi', 'mar'})
     error('ERROR: Invalid functional connectivity measure specified [%s]!', measure); 
 end
 
@@ -89,42 +107,33 @@ end
 
 if ismember(measure, {'icv'})
     if isempty(B)
-        cov = A * A';
-        invcov = pinv(cov);
-        fcmat = zeros(size(invcov));
-        for i = 1:size(invcov,1)
-            for j = 1:size(invcov,2)
-                fcmat(i,j) = - invcov(i, j) / sqrt(invcov(i,i) * invcov(j, j));
-            end
-        end
+        fcmat = fc_icv(A', fcargs);
     else
         error('ERROR: Inverse covariance can not be computed!'); 
     end
 end
 
-if ismember(measure, {'cc'})
+if ismember(measure, {'mar'})
     if isempty(B)
-        fcmat = zeros(size(A,1), size(A,1));
-        for i = 1:size(A,1)
-            for j = i:size(A,1)
-                [c,~] = xcorr(A(i,:),A(j,:));
-                fcmat(i,j) = max(c);
-                fcmat(j,i) = fcmat(i,j);
-            end
-        end
+        fcmat = fc_mar(A, 1);
     else
-        fcmat = zeros(size(A,1), size(B,1));
-        for i = 1:size(A,1)
-            for j = 1:size(B,1)
-                [c,~] = xcorr(A(i,:),B(j,:));
-                fcmat(i,j) = max(c);
-            end
-        end
+        error('ERROR: Inverse covariance can not be computed!'); 
     end
 end
 
+if ismember(measure, {'mi'})
+    fcmat = fc_mi(A, B, fcargs);
+end
+
+if ismember(measure, {'coh'})
+    fcmat = fc_coh(A, B);
+end
+
+if ismember(measure, {'cc'})
+    fcmat = fc_cc(A, B);
+end
+
 % --- do we need to return Fz?
-fprintf('size(fcmat) is %s\n', mat2str(size(fcmat)));
 if nargout > 1
     fzmat = fc_fisher(fcmat);
 end

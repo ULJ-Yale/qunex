@@ -269,7 +269,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               A structure array with data per subject/session. With the 
 %               following fields:
 %
-%               - r/cv/rho
+%               - r/cv/rho/coh/mi/cc
 %                   The functional connectivity map, with one seed-map per frame.
 %               - fz
 %                   The functional connectivity map converted to Fisher z-values.
@@ -425,6 +425,10 @@ printdebug = strcmp(options.debug, 'true');
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 fcmeasure = options.fcmeasure;
 
+if ~general_check_fcargs(options)
+    error('ERROR: Invalid arguments for the fc measure: %s: ', fcmeasure);
+end
+
 if printdebug
     general_print_struct(options, 'fc_compute_seedmaps options used');
 end
@@ -437,7 +441,7 @@ if ~ismember(options.roimethod, {'mean', 'pca', 'median'})
     error('ERROR: Invalid roi extraction method: %s', options.roimethod);
 end
 
-if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc'})
+if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc', 'coh', 'mi'})
     error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
 end
 
@@ -628,9 +632,7 @@ for s = 1:nsub
         % --> generate seedmaps
 
         rs = ts.img_extract_roi(roi, [], options.roimethod);
-        %fprintf('\n size(rs) is %s\n', mat2str(size(rs)));
-        %fprintf('\n size(ts) is %s\n', mat2str(size(ts.data)));
-        fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'));
+        fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'), options);
 
         if verbose; fprintf(' ... computed seedmap'); end
 
