@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Optimization of parameter parsing for hcp_icafix.
 * Fixed the use of TR parameter in some cases.
 * Consistent scheduler parameter specification in documentation.
+* import_hcp can now import DWI beyond dir98 and dir99.
 
 ## 0.96.2
 
