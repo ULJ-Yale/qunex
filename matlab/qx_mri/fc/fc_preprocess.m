@@ -1,6 +1,6 @@
-function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
+function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
-%``fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)``
+%``fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, eventstring, variant, overwrite, tail, scrub, ignores, options)``
 %
 %   A command for running single BOLD file based functional connectivity 
 %   preprocessing.
@@ -48,7 +48,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %       --efile (str, default ''):
 %           An event (fidl) file to be used for removing task structure.
 %
-%       --TR (float, default 2.5):
+%       --tr (float, default 2.5):
 %           TR of the data, in seconds.
 %
 %       --eventstring (str, default ''):
@@ -575,7 +575,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, TR, e
 %               --omit=4 \
 %               --doIt='s,h,r' \
 %               --rgss='m,V,WM,WB,1d' \
-%               --TR=2.5 \
+%               --tr=2.5 \
 %               --overwrite=true \
 %               --scrub='udvarsme' \
 %               --ignores='hipass:linear|regress=ignore|lopass=linear'
@@ -592,7 +592,7 @@ if nargin < 12, tail = '.nii.gz';   end
 if nargin < 11, overwrite = false;  end
 if nargin < 10, variant = '';       end
 if nargin < 9,  eventstring = '';   end
-if nargin < 8 || isempty(TR), TR = 2.5;                     end
+if nargin < 8 || isempty(tr), tr = 2.5;                     end
 if nargin < 7,  efile = '';                                 end
 if nargin < 6,  task = [];                                  end
 if nargin < 5 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
@@ -610,7 +610,7 @@ fprintf('\n           doIt: %s', doIt);
 fprintf('\n           rgss: %s', rgss);
 fprintf('\n           task: [%s]', num2str(size(task)));
 fprintf('\n          efile: %s', efile);
-fprintf('\n             TR: %.2f', TR);
+fprintf('\n             tr: %.2f', tr);
 fprintf('\n   eventrstring: %s', eventstring);
 fprintf('\n        variant: %s', variant);
 fprintf('\n      overwrite: %s', num2str(overwrite));
@@ -885,11 +885,11 @@ for current = char(doIt)
                 end
             case 'h'
                 img = readIfEmpty(img, sfile, omit);
-                hpsigma = ((1/TR)/options.hipass_filter)/2;
+                hpsigma = ((1/tr)/options.hipass_filter)/2;
                 img = img.img_filter(hpsigma, 0, omit, true, ignore.hipass);
             case 'l'
                 img = readIfEmpty(img, sfile, omit);
-                lpsigma = ((1/TR)/options.lopass_filter)/2;
+                lpsigma = ((1/tr)/options.lopass_filter)/2;
                 img = img.img_filter(0, lpsigma, omit, true, ignore.lopass);
             case 'r'
                 img = readIfEmpty(img, sfile, omit);
@@ -910,13 +910,13 @@ for current = char(doIt)
 
     switch current
         case 'h'
-            hpsigma = ((1/TR)/options.hipass_filter)/2;
+            hpsigma = ((1/tr)/options.hipass_filter)/2;
             tnimg = tmpimg(nuisance.signal', nuisance.use);
             tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
             nuisance.signal = tnimg.data';
 
         case 'l'
-            lpsigma = ((1/TR)/options.lopass_filter)/2;
+            lpsigma = ((1/tr)/options.lopass_filter)/2;
             tnimg = tmpimg([nuisance.signal nuisance.task nuisance.events nuisance.mov]', nuisance.use);
             tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
             nuisance.signal = tnimg.data(1:nuisance.nsignal,:)';

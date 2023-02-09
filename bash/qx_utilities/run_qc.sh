@@ -253,7 +253,7 @@ Examples:
 
     For SLURM scheduler the string would look like this via the qunex call::
 
-        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
     raw NII QC::
 
@@ -634,12 +634,19 @@ if [ "$Modality" = "BOLD" ]; then
             reho "---> ERROR: Flag --boldfcinput is missing. Check your inputs and re-run."; echo ""; exit 1
         fi
     fi
+
     if [[ ! -z ${SessionBatchFile} ]]; then
         if [[ ! -f ${SessionBatchFile} ]]; then
             reho "---> ERROR: Requested BOLD modality with a batch file. Batch file not found."
             exit 1
         else
             BOLDSBATCH="${BOLDS}"
+        fi
+    else
+        # if BOLDS is all we need a batch file
+        if [[ ${BOLDS} == "all" ]]; then
+            reho "---> ERROR: When running QC over all BOLDS you need to specify a batch file!"
+            exit 1
         fi
     fi
 fi

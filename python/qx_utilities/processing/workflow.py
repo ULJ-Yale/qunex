@@ -925,7 +925,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             For more detailed description please see wiki entry on Movement
             scrubbing.
 
-        --TR (float, default 2.5):
+        --tr (float, default 2.5):
             TR of the BOLD files.
 
         --mov_pref (str, default ''):
@@ -1183,7 +1183,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             options['mov_dvarsme'],     # threshold to use for computing dvarsme rejections [1.5]
             options['mov_fd'],          # threshold to use for computing frame-to-frame movement rejections [0.5]
             options['mov_radius'],      # radius (in mm) from center of head to cortex to estimate rotation size [50]
-            float(options['TR']),       # TR to be used when generating .fidl files [2.5]
+            options['tr'],              # TR to be used when generating .fidl files [2.5]
             options['mov_fidl'],        # whether to output and what to base fild on (fd, dvars, dvarsme, u/ume - union, i/ime - intersection, none) [none]
             options['mov_post'],        # whether to create report of scrubbing effect and what to base it on (fd, dvars, dvarsme, u/ume - union, i/ime - intersection, none) [none]
             plot,                       # root name of the plot file, none to omit plotting [mov_report]
@@ -2219,7 +2219,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             options['bold_nuisance'],           # --- what to regress (m, m1d, mSq, m1dSq, V, WM, WB, d, t, e, 1d)
             '[]',                               # --- matrix of task regressors
             options['event_file'],              # --- fidl file to be used
-            float(options['TR']),               # --- TR of the data
+            options['tr'],                      # --- TR of the data
             options['event_string'],            # --- event string specifying what and how of the task to regress
             options['bold_prefix'],             # --- prefix to the bold files
             boldow,                             # --- whether to overwrite the existing files
@@ -2988,7 +2988,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     d['s_base'],                        # --- session folder
                     " ".join(bolds),                    # --- vector of bold runs in the order of the conc file
                     options['bold_actions'],            # --- which steps to perform in what order (s, h, r0/r1/r2, c, p, l)
-                    options['TR'],                      # --- TR
+                    options['tr'],                      # --- TR
                     options['omit'],                    # --- the number of frames to omit at the start of each run
                     options['bold_nuisance'],           # --- nuisance regressors (m, v, wm, wb, d, t, e)
                     tfidl,                              # --- event file to be used for task regression (w/o .fidl)

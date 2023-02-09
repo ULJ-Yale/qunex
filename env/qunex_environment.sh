@@ -119,7 +119,7 @@ fi
 #  Environment clear and check functions
 # ------------------------------------------------------------------------------
 
-ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR ANTSDIR PYLIBDIR FSLDIR FSLGPUDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder FSL_GPU_SCRIPTS FSLGPUBinary EDDYCUDADIR USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT'
+ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXEXTENSIONS QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLGPUDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder FSL_GPU_SCRIPTS FSLGPUBinary EDDYCUDADIR USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT'
 export ENVVARIABLES
 
 # -- Check if inside the container and reset the environment on first setup
@@ -280,15 +280,6 @@ if [[ -z ${ASLDIR} ]]; then ASLDIR="${HCPPIPEDIR}/hcp-asl"; export ASLDIR; fi
 # -- The line below points to the environment expectation if using the 'dev' extended version of HCP Pipelines directly from QuNex repo
 #if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/qunex/hcp"; export HCPPIPEDIR; fi
 
-# -- conda management
-CONDABIN=${CONDADIR}/bin
-PATH=${CONDABIN}:${PATH}
-export CONDABIN PATH
-source deactivate 2> /dev/null
-
-# Activate conda environment
-source activate $QUNEXENV 2> /dev/null
-
 # ------------------------------------------------------------------------------
 # -- License and version disclaimer
 # ------------------------------------------------------------------------------
@@ -352,14 +343,9 @@ if [ "$USEOCTAVE" == "TRUE" ]; then
          if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
     fi
 else
-    # if [[ ${MatlabTest} == "fail" ]]; then
-    #     reho " ===> ERROR: Cannot setup Matlab because module test failed."
-    # else
-         
-         cyaneho " ---> Setting up Matlab "; echo ""
-         QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
-         if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-m"; fi
-    # fi
+    cyaneho " ---> Setting up Matlab "; echo ""
+    QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
+    if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-m"; fi
 fi
 # -- Use the following command to run .m code in Matlab
 export QUNEXMCOMMAND
@@ -384,17 +370,8 @@ PATH=$TOOLS/olib:$PATH
 PATH=$TOOLS/bin:$TOOLS/lib/bin:$TOOLS/lib/lib/:$PATH
 PATH=$QUNEXPATH/bin:$PATH
 PATH=$QUNEXPATH/lib:$PATH
-PATH=/usr/local/bin:$PATH
+PATH=$PATH:/usr/local/bin
 PATH=$PATH:/bin
-#PATH=$QUNEXPATH/qx_library/bin:$PATH
-#PATH=$QUNEXPATH/bash/qx_utilities:$PATH
-#PATH=$QUNEXPATH/matlab/qx_utilities:$PATH
-#PATH=$PYLIBDIR/gradunwarp:$PATH
-#PATH=$PYLIBDIR/gradunwarp/core:$PATH
-#PATH=$PYLIBDIR/xmlutils.py:$PATH
-#PATH=$PYLIBDIR:$PATH
-#PATH=$PYLIBDIR/bin:$PATH
-#PATH=$TOOLS/MeshNet:$PATH
 export PATH
 
 # -- add qx python to PYTHONPATH
@@ -536,6 +513,92 @@ alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envcle
 alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
 alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
 
+
+# ------------------------------------------------------------------------------
+# -- QuNex Extensions processing
+# ------------------------------------------------------------------------------
+
+extensions_notice_printed=FALSE
+QUNEXEXTENSIONS=""
+QXEXTENSIONSPY=""
+
+# -- loop through plugin folders
+
+for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNEXEXTENSIONSFOLDERS
+do
+    # -- identify extensions and loop through them
+    for extension in `ls -d $extensions_folder/qx_* 2> /dev/null`
+    do  
+        # -- Notify processing
+        if [ $extensions_notice_printed == 'FALSE' ]
+        then
+            geho "QuNex extensions identified"
+            extensions_notice_printed=TRUE
+        fi
+        
+        # -- Process plugin
+
+        extension_name=`basename $extension`
+        echo "--> Registering extension $extension_name"
+
+        QUNEXEXTENSIONS="$QUNEXEXTENSIONS:$extensions_folder/$extension_name"
+
+        # -- Register paths
+
+        extension_root=`echo $extension_name | tr -d "_" | tr '[:lower:]' '[:upper:]'`
+        echo "    ... setting ${extension_root}PATH to '$extensions_folder/$extension_name'"
+        export ${extension_root}PATH="$extensions_folder/$extension_name"
+
+        if [ -e "$extensions_folder/$extension_name/lib" ]
+        then
+            echo "    ... setting ${extension_root}LIB to '$extensions_folder/$extension_name/lib'"
+            export ${extension_root}LIB="$extensions_folder/$extension_name/lib"
+        fi
+        
+        # -- Add bin folder to PATH
+
+        if [ -e "$extensions_folder/$extension_name/bin" ]
+        then
+            echo "    ... setting ${extension_root}BIN to '$extensions_folder/$extension_name/bin'"
+            export ${extension_root}BIN="$extensions_folder/$extension_name/bin"
+            PATH="$extensions_folder/$extension_name/bin":$PATH
+            echo "    ... added $extensions_folder/$extension_name/bin to PATH"
+        fi
+
+        # -- Add python folder to QXEXTENSIONSPY
+
+        if [ -e "$extensions_folder/$extension_name/python/qx_modules" ]
+        then
+            QXEXTENSIONSPY="$extensions_folder/$extension_name/python":$QXEXTENSIONSPY
+            echo "    ... added $extensions_folder/$extension_name/python to QXEXTENSIONSPY"
+        fi
+
+        # -- Add matlab folder and content to MATLABPATH
+
+        if [ -e "$extensions_folder/$extension_name/matlab" ]
+        then
+            MATLABPATH="$extensions_folder/$extension_name/matlab":$MATLABPATH
+            echo "    ... added $extensions_folder/$extension_name/matlab to MATLABPATH"
+
+            # -- Add subfolders if listed
+            if [ -f "$extensions_folder/$extension_name/matlab/matlabpaths" ]
+            then
+                for matlab_folder in `cat $extensions_folder/$extension_name/matlab/matlabpaths`
+                do
+                    if [ -e "$extensions_folder/$extension_name/matlab/$matlab_folder" ]
+                    then
+                        MATLABPATH="$extensions_folder/$extension_name/matlab/$matlab_folder":$MATLABPATH
+                        echo "    ... added $extensions_folder/$extension_name/matlab/$matlab_folder to MATLABPATH"
+                    fi
+                done
+            fi
+        fi
+        echo ""
+    done
+done
+
+export PATH MATLABPATH QUNEXEXTENSIONS QXEXTENSIONSPY
+
 # ------------------------------------------------------------------------------
 # -- Setup HCP Pipeline paths
 # ------------------------------------------------------------------------------
@@ -632,3 +695,15 @@ MATLABPATH=$QUNEXPATH/matlab/qx_mri/img:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mri/stats:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_utilities/general:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mice:$MATLABPATH
+
+# -- conda management
+# deactivate current
+source deactivate 2> /dev/null
+
+# set paths
+CONDABIN=${CONDADIR}/bin
+PATH=${CONDABIN}:${PATH}
+export CONDABIN PATH
+
+# activate qunex
+source activate $QUNEXENV 2> /dev/null

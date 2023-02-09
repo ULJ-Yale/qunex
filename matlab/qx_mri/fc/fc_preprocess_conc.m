@@ -1,6 +1,6 @@
-function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
+function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
-%``fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
+%``fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
 %
 %   A command for fcMRI preprocessing and GLM analysis a set of BOLD files.
 %
@@ -36,7 +36,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %           - m
 %               motion scrubbing.
 %
-%       --TR (float, default 2.5):
+%       --tr (float, default 2.5):
 %           TR of the data, in seconds.
 %
 %       --omit (int, default ''):
@@ -611,7 +611,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               --sessionf='sessions/OP234' \
 %               --bolds='[1 2 4 5]' \
 %               --doIt='s,r,c' \
-%               --TR=2.5 \
+%               --tr=2.5 \
 %               --omit=0 \
 %               --rgss='e' \
 %               --task='' \
@@ -630,7 +630,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               --sessionf='sessions/OP234' \
 %               --bolds='[1 2 4 5]' \
 %               --doIt='s,h,r' \
-%               --TR=2.5 \
+%               --tr=2.5 \
 %               --omit=0 \
 %               --rgss='m,V,WM,WB,1d,e' \
 %               --task='' \
@@ -659,14 +659,14 @@ if nargin < 8,  efile = '';                                 end
 if nargin < 7,  task = [];                                  end
 if nargin < 6 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 5 || isempty(omit), omit = [];                  end
-if nargin < 4 || isempty(TR), TR = 2.5;                     end
+if nargin < 4 || isempty(tr), tr = 2.5;                     end
 
 fprintf('\nRunning preproces conc script v0.9.16 [%s]\n-------------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
 fprintf('\n       sessionf: %s', sessionf);
 fprintf('\n          bolds: [%s]', num2str(bolds));
 fprintf('\n           doIt: %s', doIt);
-fprintf('\n             TR: %.2f', TR);
+fprintf('\n             tr: %.2f', tr);
 fprintf('\n           omit: %s', num2str(omit));
 fprintf('\n           rgss: %s', rgss);
 fprintf('\n           task: [%s]', num2str(size(task)));
@@ -1074,12 +1074,12 @@ for current = char(doIt)
                         end
                     case 'h'
                         tmpi = readIfEmpty(img(b), file(b).sfile, omit);
-                        hpsigma = ((1/TR)/options.hipass_filter)/2;
+                        hpsigma = ((1/tr)/options.hipass_filter)/2;
                         tmpi = tmpi.img_filter(hpsigma, 0, omit, true, ignore.hipass);
                         img(b) = tmpi;
                     case 'l'
                         tmpi = readIfEmpty(tmpi, file(b).sfile, omit);
-                        lpsigma = ((1/TR)/options.lopass_filter)/2;
+                        lpsigma = ((1/tr)/options.lopass_filter)/2;
                         tmpi = tmpi.img_filter(0, lpsigma, omit, true, ignore.lopass);
                         img(b) = tmpi;
                 end
@@ -1095,13 +1095,13 @@ for current = char(doIt)
             if dor
                 switch current
                     case 'h'
-                        hpsigma = ((1/TR)/options.hipass_filter)/2;
+                        hpsigma = ((1/tr)/options.hipass_filter)/2;
                         tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
                         tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
                         nuisance(b).signal = tnimg.data';
 
                     case 'l'
-                        lpsigma = ((1/TR)/options.lopass_filter)/2;
+                        lpsigma = ((1/tr)/options.lopass_filter)/2;
                         tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
                         tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
                         nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';

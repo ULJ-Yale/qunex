@@ -104,18 +104,17 @@ Parameters:
         A string for the cluster scheduler (LSF, PBS or SLURM) followed by
         relevant options, e.g. for SLURM the string would look like this:
         --scheduler='SLURM,jobname=<name_of_job>,
-        time=<job_duration>,ntasks=<numer_of_tasks>,
+        time=<job_duration>,
         cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,
         partition=<queue_to_send_job_to>'
         Note: You need to specify a GPU-enabled queue or partition.
 
 Notes:
     Apptainer (Singularity) and GPU support:
-        If nogpu is not provided, this command will facilitate GPUs to speed
-        up processing. Since the command uses CUDA binaries, an NVIDIA GPU
-        is required. To give access to CUDA drivers to the system inside the
-        Apptainer (Singularity) container, you need to use the --nv flag
-        of the qunex_container script.
+        This command will facilitate GPUs to speed up processing. Since the
+        command uses CUDA binaries, an NVIDIA GPU is required. To give access to
+        CUDA drivers to the system inside the Apptainer (Singularity) container,
+        you need to use the --nv flag of the qunex_container script.
 
 Examples:
     Run directly via::
@@ -142,7 +141,7 @@ Examples:
 
     For SLURM scheduler the string would look like this via the qunex call::
 
-        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>, ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
     ::
 

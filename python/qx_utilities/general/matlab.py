@@ -21,6 +21,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import subprocess
+from general import extensions
 
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -63,14 +64,17 @@ functions = {
     'fc_extract_roi_timeseries_masked':   [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('targetf', 'string'), ('options', 'string'), ('method', 'string'), ('ignore', 'string'), ('rcodes', 'string'), ('mcodes', 'string'), ('bmask', 'string')],
     'fc_extract_trial_timeseries_masked': [('flist', 'string'), ('roif', 'string'), ('targetf', 'string'), ('tevents', 'string'), ('frames', 'numeric'), ('scrubvar', 'string')],
     'fc_segment_mri':                  [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('verbose', 'string')],
-    'fc_preprocess':                   [('sessionf', 'string'), ('bold', 'numeric'), ('omit', 'numeric'), ('do', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('TR', 'numeric'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string')],
-    'fc_preprocess_conc':              [('sessionf', 'string'), ('bolds', 'numeric'), ('do', 'string'), ('TR', 'numeric'), ('omit', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string'), ('done', 'string')],
+    'fc_preprocess':                   [('sessionf', 'string'), ('bold', 'numeric'), ('omit', 'numeric'), ('do', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('tr', 'numeric'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string')],
+    'fc_preprocess_conc':              [('sessionf', 'string'), ('bolds', 'numeric'), ('do', 'string'), ('tr', 'numeric'), ('omit', 'string'), ('rgss', 'string'), ('task', 'string'), ('efile', 'string'), ('eventstring', 'string'), ('variant', 'string'), ('overwrite', 'string'), ('tail', 'string'), ('scrub', 'string'), ('ignores', 'string'), ('options', 'string'), ('done', 'string')],
     'stats_compute_behavioral_correlations': [('imgfile', 'string'), ('datafile', 'string'), ('target', 'string')],
     'stats_p2z':                       [('img', 'string'), ('out', 'string'), ('tail', 'string')],
     'stats_ttest_dependent':           [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
     'stats_ttest_independent':         [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('vartype', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
     'stats_ttest_zero':                [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
 }
+
+# -- update functions with information from extensions
+functions.update(extensions.compile_dict('functions')) 
 
 functionList = sorted(functions.keys())
 

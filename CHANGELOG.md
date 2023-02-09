@@ -6,6 +6,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.97.0
+
+* Improved the documentation at several locations.
+* Added the ability to create slice timing files when preparing data for HCP pipelines using the setup_hcp command.
+* Upgraded FSL to 6.0.6.2.
+* Optimization of parameter parsing for hcp_icafix.
+* Fixed the use of TR parameter in some cases.
+* Consistent scheduler parameter specification in documentation.
+* import_hcp can now import DWI beyond dir98 and dir99.
+
 ## 0.96.2
 
 * Fixed a bug where the phase enconding direction was not set correctly in `hcp_diffusion`.

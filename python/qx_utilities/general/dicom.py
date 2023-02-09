@@ -2662,7 +2662,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     # just testing
     if nToProcess and test:
         print("\n---> To process them, remove the --test option!")
-        sys.exit(0)
+        return
     elif not nToProcess:
         if check.lower() == 'any':
             if masterinbox:
