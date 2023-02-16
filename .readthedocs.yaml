@@ -21,6 +21,7 @@ build:
 # Sphinx build configuration
 sphinx:
    configuration: qx_library/etc/docs/conf.py
+   fail_on_warning: true
 
 # The Python PyPi requirements required to build your docs
 python:

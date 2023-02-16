@@ -420,8 +420,8 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             session folder and add to batch file.
 
         --targetfile (str, default <study>/processing/batch.txt):
-            The path to the batch file to be generated. By default, it is created
-            as <study>/processing/batch.txt.
+            The path to the batch file to be generated. By default, it is
+            created as <study>/processing/batch.txt.
 
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
@@ -485,12 +485,195 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         - multiband data template
             ``qunex/python/qx_utilities/templates/batch_multiband_parameters.txt``
 
+        The command also prepends the specific batch header parameters, if they
+        are saved in a specified parameters file (the default location of the
+        batch header files is ``sessions/specs/``). By default the code looks
+        for a header file ``sessions/specs/batch_parameters.txt``. If
+        ``batch_parameters.txt`` does not exist, it will be created
+        automatically, placing all the possible parameters into the header,
+        their default values and explanations to allow easy editing. The command
+        also supports appending new sessions to an existing batch file. The
+        final batch file with the appended session information is saved in
+        ``<path_to_study_folder>/processing/<name_of_batch_file>.txt``
+
+        Details on specification of batch file processing parameters:
+            The following section details how QuNex handles parameter
+            specification and how to set them up in the batch file.
+
+            Both HCP Pipelines as well as additional functional processing of
+            images make use of a number of parameters. For a full and current
+            list of parameters, run ``qunex -o``. These parameters can be
+            specified at multiple levels.
+
+            In order of priority, from lower to highest, they can be specified:
+
+            -  in the header section of the study batch file
+            -  in the runlist file
+            -  as a command line parameter
+            -  in the session section of the study batch file
+            -  in the image specification of the session section of the study
+               batch file
+
+            Header section of the study batch file:
+                To run most of the processing steps, a batch file needs to be
+                provided (see `batch file specification
+                <../../wiki/Overview/file_batch_txt.html>`__). Batch file consists of a
+                header section and a list of imaging sessions. The header
+                section provides the possibility to specify the default
+                parameter values that are to be used throughout the study.
+                Specifically, the parameters are provided as ``_<parameter
+                name>: <parameter value>`` pairs. An example might be:
+
+                ::
+
+                   --hcp_brainsize          : 150
+                   --hcp_t1samplespacing    : 0.0000021000
+                   --hcp_t2samplespacing    : 0.0000021000
+                   --hcp_unwarpdir          : z
+
+                If these parameters are not specified anywhere else, the above
+                values will be used.
+
+            runlist file:
+                When ``run_list`` utility is used, parameters can be specified
+                at the global run list level, at a specific list level, and at
+                an individual command level. The parameters specified will then
+                be passed to the command as command line parameters. For
+                details on the ``run_list`` command itself and how to specify
+                parameters at different levels within the runlist.txt file,
+                please see `Running a list of QuNex commands
+                <../../wiki/UsageDocs/RunningListsOfCommands.html>`__. These
+                parameters will take priority over the parameters specified in
+                the header section of the study batch file.
+
+            Command line parameters:
+                Parameters can be specified when running the command on the
+                command line. Any parameter specified on the command line takes
+                precedence over the parameters specified in the header section
+                of the study batch file.
+
+            Batch file individual session section:
+                The second part of the study batch file consists of information
+                for each individual session. Within the individual session
+                sections the parameters can be specified in the ``_<parameter
+                name>: <parameter value>`` format. Any parameter value
+                specified in such a way will override the parameter values
+                specified either in the header section of the study batch file
+                or as command line parameters.
+
+            Batch file image details section:
+                Each image can have a number of parameters associated with it.
+                They are listed as ``<key>(<value>)`` pairs separated by colons
+                in the relevant sequence line. The keys currently in use are:
+
+                - ``phenc`` – Phase Encoding direction (used for BOLD, SE and
+                  DWI images, overriding the ``hcp_bold_unwarpdir``,
+                  ``hcp_seunwarpdir`` and ``hcp_dwi_PEdir`` parameters,
+                  respectively)
+                - ``UnwarpDir`` – Unwarp direction (used for T1w and T2w
+                  images, overriding the ``hcp_unwarpdir`` parameter)
+                - ``EchoSpacing`` - Echo Spacing (used for BOLD, SE, and DWI
+                  images, overriding the ``hcp_bold_echospacing``,
+                  ``hcp_dwelltime``, and ``hcp_dwi_dwelltime`` parameters,
+                  respectively; note that the value has to be provided in ms
+                  for DWI images and in seconds for BOLD and Spin-Echo images)
+                - ``DwellTime`` – Dwell Time in seconds, overriding
+                  ``hcp_t1samplespacing`` and ``hcp_t2samplespacing`` parameters
+                - ``se`` - the spin echo pair to use for distortion correction
+                  (integer)
+                - ``filename`` – the exact (unique) name of the image file
+
+                This information is extracted from JSON sidecar files by default
+                when onboarding HCPLS datasets (if the information exists),
+                when onboarding DICOM datasets, this information is extracted
+                from JSON sidecar files only if explicitly requested. See
+                `import_dicom --addJSONInfo <import_dicom.html>`__
+                optional parameter for details.
+
+            Batch file example:
+                An example of batch.txt individual session section.
+
+                ::
+
+                   ---
+                   session: OP386_baseline
+                   subject: OP386
+                   dicom: /data/my_study/sessions/OP386_baseline/dicom
+                   raw_data: /data/my_study/sessions/OP386_baseline/nii
+                   hpc: /data/my_study/sessions/OP386_baseline/hpc
+
+                   age: 21
+                   handedness: right
+                   gender: male
+                   group: control
+
+                   institution: MR Imaging Center New Amsterdam
+                   device: Siemens|Prisma_fit|123456
+
+                   --hcp_brain_size: 150
+                   --hcp_fs_no_conf2hires: TRUE
+
+                   01: Survey
+                   02: T1w:             T1w 0.7mm N2 : se(1): DwellTime(0.0000459): UnwarpDir(z)
+                   03: T2w:             T2w 0.7mm N2 : se(1): DwellTime(0.0000066): UnwarpDir(z)
+                   04: Survey
+                   05: SE-FM-AP:        C-BOLD 3mm 48 2.5s FS-P   : se(1): phenc(AP): EchoSpacing(0.0006146)
+                   06: SE-FM-PA:        C-BOLD 3mm 48 2.5s FS-A   : se(1): phenc(PA): EchoSpacing(0.0006146)
+                   07: bold1:rest:      BOLD 3mm 48 2.5s          : se(1): phenc(PA): EchoSpacing(0.0006029): filename(rest_PA)
+                   08: bold2:task:      BOLD 3mm 48 2.5s          : se(1): phenc(PA): EchoSpacing(0.0006029): filename(task1_PA)
+                   09: bold2:task:      BOLD 3mm 48 2.5s          : se(1): phenc(PA): EchoSpacing(0.0006029): filename(task2_PA)
+
+                In the above example, ``_hcp_brain_size: 150`` and
+                ``_hcp_fs_no_conf2hires: TRUE`` are specified for session
+                ``OP386_baseline`` specifically. The specified values would
+                take precedence over any other value specified either in the
+                header section of the batch.txt file or the command line.
+
+                Additionally, the sequence specific
+
+                - ``DwellTime`` specifications would take precedence over
+                  ``hcp_t1samplespacing`` and ``hcp_t2samplespacing`` provided
+                  in batch.txt file or command call.
+                - ``EchoSpacing`` specifications would take precedence over
+                  ``hcp_seechospacing`` for the SE image pair provided in
+                  batch.txt file or command call.
+                - ``UnwarpDir`` specification would take precedence over
+                  ``hcp_unwarpdir`` provided in batch.txt file or command call.
+                - ``filename`` specification would define how to name the image
+                  files during HCP processing if ``hcp_filename`` was set to
+                  ``userdefined``.
+
     Examples:
+        This section shows a couple of examples for compiling a group batch
+        file and adding session-specific information.
+
         ::
 
             qunex create_batch \\
                 --sourcefiles="session.txt" \\
                 --targetfile="fcMRI/sessions_fcMRI.txt"
+
+        The following examples prepares a batch file using defaults::
+
+            qunex create_batch
+
+        Prepare a batch file specifying details::
+
+            qunex create_batch \\
+                --sessionsfolder="<path_to_study_folder>/sessions/<session_id>" \\
+                --sourcefiles="session_hcp.txt" \\
+                --targetfile="<path_to_study_folder>/processing/batch_hcp.txt" \\
+                --paramfile="<path_to_parameter_file>" \\
+                --overwrite="yes"
+
+        Append to an existing batch file using a glob pattern::
+
+            qunex create_batch \\
+                --sessionsfolder="<path_to_study_folder/sessions/<session_id>" \\
+                --sourcefiles="session_hcp.txt" \\
+                --targetfile="<path_to_study_folder>/processing/batch_hcp.txt" \\
+                --sessions="AP*|OP*" \\
+                --overwrite="append"
     """
 
     print("Running create_batch\n====================")

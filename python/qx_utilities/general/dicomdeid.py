@@ -389,6 +389,7 @@ def write_field_dict(output_file, limit):
             if (len(row[2]) <  128):
                 writer.writerow(row)
 
+
 def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     """
     ``get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]``
@@ -462,6 +463,7 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
+
 def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
     """
     ``change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``
@@ -511,7 +513,9 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
             can be used. The operations to be performed are specifed one dicom
             field per line in the format:
 
-            <dicom field>  > <action>[:<parameter>], <action>[:<parameter>]
+            ::
+
+                <dicom field>  > <action>[:<parameter>], <action>[:<parameter>]
 
             Dicom field is the hexdecimal code of the field, which can be found
             in the first column of the readDICOMfields output csv. The list of
