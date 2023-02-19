@@ -2494,7 +2494,7 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
         if check.lower() == 'yes':
             raise ge.CommandFailed("gather_behavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
         elif check.lower() == 'warn':
-            raise ge.CommandNull("gather_behavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+            raise ge.CommandNull("gather_behavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")
 
     if not processReport['ok']:
         raise ge.CommandNull("gather_behavior", "No files processed", "No valid data was found!")                
@@ -2960,7 +2960,21 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
             Note, that the old sequence names are preserved.
 
     Examples:
-        ::
+        Specify the session folder for a given study to automatically loop over the entire folder::
+
+            qunex create_session_info \\
+                --sessions="*" \\
+                --sessionsfolder=<study_folder>/sessions
+
+        Define source and target session parameter files and mapping file. In this example the --sourcefile flag points to the original session information file, --targetfile points to the session information file to generate, and --mapping points to a generic mapping file::
+
+            qunex create_session_info \\
+                --sessionsfolder=/<study_folder>/sessions \\
+                --sourcefile=<original_session_information_file> \\
+                --targetfile=<hcp_session_information_file> \\
+                --mapping=<generic_mapping_file>
+
+        Two additional examples::
 
             qunex create_session_info \\
                 --sessions="OP*|AP*" \\
@@ -2973,6 +2987,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
                 --sessions="processing/batch_new.txt" \\
                 --sessionsfolder=session \\
                 --mapping=session/hcp_mapping.txt
+
     """
 
     print("Running create_session_info\n===================")

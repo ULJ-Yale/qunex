@@ -90,6 +90,29 @@ Output files:
     - group_qc.pdf ... single session QC report
     - group_qc.db  ... database
 
+Notes:
+    -  Input: requires hcp_diffusion runs (eddy outputs here:
+       ``<study_folder>/<session>/hcp/<session>/T1w/Diffusion/eddy``) and
+       hcp_pre_freesurfer-hcp_post_freesurfer to have run successfully
+    -  Output for individual run:
+       ``/<study>/sessions/<session>/hcp/<session>/T1w/Diffusion/eddy/eddy_unwarped_images.qc``
+
+       -  qc.pdf: single session QC report
+       -  qc.json: single session QC and data info
+       -  vols_no_outliers.txt: text file that contains the list of the
+          non-outlier volumes (based on eddy residuals)
+
+    -  Output for group run:
+       ``/<study>/sessions/<session>/hcp/<session>/T1w/Diffusion/eddy/eddy_unwarped_images.qc``
+
+       -  group_qc.pdf: single session QC report
+       -  group_qc.db: database
+
+    -  Log Location: logs are created in
+       ``/<study>/sessions/<session>/hcp/<session>/T1w/Diffusion/eddy/log_eddyqc``
+
+       -  Run progress and error information will be logged in this folder
+
 Examples:
     ::
 
@@ -104,6 +127,38 @@ Examples:
             --eddyparams='<eddy_param_file>' \\
             --bvecsfile='<bvecs_file>' \\
             --overwrite='yes'
+
+    Individual run example (this command runs QC on dMRI eddy outputs)::
+
+        qunex dwi_eddy_qc \\
+            --path='<path_to_study_folder_with_session_directories>' \\
+            --session='<session_id>' \\
+            --eddybase='<eddy_base_name>' \\
+            --report='individual' \\
+            --bvalsfile='<bvals_file>' \\
+            --mask='<mask_file>' \\
+            --eddyidx='<eddy_index_file>' \\
+            --eddyparams='<eddy_param_file>' \\
+            --bvecsfile='<bvecs_file>' \\
+            --overwrite='yes' \\
+            --scheduler='<name_of_scheduler_and_options>'
+
+    Group run example (this command runs QC on dMRI eddy outputs)::
+
+        qunex dwi_eddy_qc \\
+            --path='<path_to_study_folder_with_session_directories>' \
+            --session='<session_id>' \
+            --list=<group_list_input> \
+            --eddybase='<eddy_base_name>' \
+            --report='individual'
+            --bvalsfile='<bvals_file>' \
+            --mask='<mask_file>' \
+            --eddyidx='<eddy_index_file>' \
+            --eddyparams='<eddy_param_file>' \
+            --bvecsfile='<bvecs_file>' \
+            --overwrite='yes' \
+            --scheduler='<name_of_scheduler_and_options>'
+
 
 EOF
 exit 0
