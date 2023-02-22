@@ -194,7 +194,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             contains multiple packages. The default location where the command
             will look for a BIDS dataset is.
 
-        --sessions (str, default ):
+        --sessions (str, optional):
             An optional parameter that specifies a comma or pipe separated list
             of sessions from the inbox folder to be processed. Glob patterns
             can be used. If provided, only packets or folders within the inbox
@@ -322,14 +322,14 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             previously flattened.
 
             Behavioral data:
-                In this step the subject specific and behavioral data that
-                is present in `<bids_study>/participants.tsv` and
-                `phenotype/*.tsv` files, will be parsed and split so that
-                data belonging to a specific participant will be mapped to
-                that participant's sessions 'behavior' folder (e.g. `<QuNex
-                study folder>/sessions/s14_01/behavior/masq01.tsv`). In
-                this way the session folder contains all the behavioral
-                data relevant for that participant.
+                Upon import of the BIDS dataset, the behavioral and participant
+                specific data present in the `<bids_study>/participants.tsv`
+                and `<bids_study>/phenotype/*.tsv` files, is parsed and split
+                so that data belonging to a specific participant is mapped to
+                that participant's sessions `behavior` folder (e.g. `<QuNex
+                study folder>/sessions/s14_01/behavior/masq01.tsv`). In this
+                way the session folder contains all the behavioral data
+                relevant for that participant.
 
         Step 2 - Mapping image files to QuNex Suite `nii` folder:
             For each session separately, images from the `bids` folder are
@@ -347,6 +347,57 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             Please see `map_bids2nii` inline documentation!
 
     Examples:
+        ::
+
+            qunex import_bids \\
+                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --inbox="<absolute path to folder with bids dataset>" \\
+                --archive=move \\
+                --overwrite=yes
+
+        The above command would map the entire BIDS dataset located at the
+        specified location into the relevant sessions' folders—creating them
+        when needed—, organize the MR image files in the sessions' `nii` folder
+        and prepare `session.txt` file for further processing. Any preexisting
+        data for the sessions present in the BIDS dataset would be removed and
+        replaced. By default, the BIDS files would be hard-linked to the new
+        location.
+
+        ::
+
+            qunex import_bids \\
+                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --inbox="<absolute path to folder with bids dataset>" \\
+                --action='copy' \\
+                --archive='leave' \\
+                --overwrite=no
+
+        The above command would map the entire BIDS dataset located at the
+        specified location into the relevant sessions' folders—creating them
+        when needed—, organize the MR image files in the sessions' `nii` folder
+        and prepare `session.txt` file for further processing. If for any of
+        the sessions bids mapped data already exist, that session will be
+        skipped when processing. The files would be mapped to their
+        destinations by creating a copy rather than hard-linking them.
+
+        ::
+
+            qunex import_bids \\
+                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --inbox="<absolute path to folder with bids dataset>" \\
+                --action='copy' \\
+                --archive='leave' \\
+                --overwrite=no \\
+                --fileinfo=full
+
+
+        In the example above, by specifying the `--fileinfo` parameter as "full"
+        the whole file name (with the exception of the participant id, the
+        session name and the extension) will be printed for each image file in
+        the `session.txt` file. Use this parameter if file names are not
+        matching the BIDS standard completely and hold important information
+        for later correct file handling.
+
         ::
 
             qunex import_bids \\
