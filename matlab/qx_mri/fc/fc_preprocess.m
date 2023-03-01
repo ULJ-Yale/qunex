@@ -642,6 +642,8 @@ if length(ignores)>=2
     end
 end
 
+doscrubbing = ~any(ismember({ignore.hipass, ignore.regress, ignore.lopass}, {'keep'}));
+
 rgsse = strrep(strrep(strrep(strrep(rgss, ',', ''), ' ', ''), ';', ''), '|', '');
 rgss  = regexp(rgss, ',|;| |\|', 'split');
 
@@ -687,22 +689,27 @@ end
 
 %   ----> read data
 
-if ismember('m', rgss)
+if doscrubbing
+    [nuisance.scrub  nuisance.scrub_hdr]  = general_read_table(file.oscrub);
+end
+
+if ismember('m', rgss) || ~isempty(strfind(doIt, 'm'))
     [nuisance.fstats nuisance.fstats_hdr] = general_read_table(file.bstats);
     [nuisance.scrub  nuisance.scrub_hdr]  = general_read_table(file.oscrub);
     [nuisance.mov    nuisance.mov_hdr]    = general_read_table(file.movdata);
     nuisance.nframes = size(nuisance.mov,1);
+
+    %   ----> exclude extra data from mov
+    me               = {'frame', 'scale'};
+    nuisance.mov     = nuisance.mov(:,~ismember(nuisance.mov_hdr, me));
+    nuisance.mov_hdr = nuisance.mov_hdr(~ismember(nuisance.mov_hdr, me));
+    nuisance.nmov    = size(nuisance.mov,2);
 else
     nframes = general_get_image_length([froot tail]);
     nuisance.nframes = nframes;
+    nuisance.mov     = zeros(nframes, 6);
+    nuisance.nmov    = size(nuisance.mov,2);
 end
-
-%   ----> exclude extra data from mov
-
-me               = {'frame', 'scale'};
-nuisance.mov     = nuisance.mov(:,~ismember(nuisance.mov_hdr, me));
-nuisance.mov_hdr = nuisance.mov_hdr(~ismember(nuisance.mov_hdr, me));
-nuisance.nmov    = size(nuisance.mov,2);
 
 %   ----> do scrubbing anew if needed!
 
@@ -731,7 +738,11 @@ end
 
 %  ----> what are the frames to be used
 
-nuisance.use = nuisance.scrub(:,ismember(nuisance.scrub_hdr, {'use'}))';
+if doscrubbing
+    nuisance.use = nuisance.scrub(:,ismember(nuisance.scrub_hdr, {'use'}))';
+else
+    nuisance.use = ones(1, nuisance.nframes);
+end
 
 %   ----> lets setup nuisances!
 
