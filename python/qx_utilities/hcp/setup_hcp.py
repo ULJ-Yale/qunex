@@ -214,7 +214,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             default). Optional `filter` and `sessionids` parameters can be used
             to filter sessions or limit them to just specified id codes. (for
             more information see online documentation). `sourcefolder` will be
-            filled in automatically as each sessions's folder. Commands will
+            filled in automatically as each session's folder. Commands will
             run in parallel, where the degree of parallelism is determined by
             `parsessions` (1 by default).
 
@@ -230,12 +230,24 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             logs should be stored. Otherwise the processor will make best
             guess, where the logs should go.
 
+            Do note that as this command only performs file mapping and no
+            image or file processing, the best performance might be achieved by
+            running on a single node and a single core.
+
     Examples:
-        ::
+        Simple example::
 
             qunex setup_hcp \\
                 --sourcefolder=OP316 \\
                 --sourcefile=session.txt
+
+        Prepare a single or several sessions in a study (here ``--sourcefiles``
+        points to the hcp mapping session information file)::
+
+            qunex setup_hcp \\
+                --sourcefolder=/<study_folder>/sessions \\
+                --sourcefiles=<hcp_session_information_file> \\
+                --overwrite=yes
     """
 
     print("Running setup_hcp\n================")

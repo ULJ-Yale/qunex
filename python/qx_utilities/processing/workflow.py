@@ -1304,7 +1304,8 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             and then linked or copied to other locations.
             The valid locations are:
 
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
+            - 'study' (for the default: `<study>/processing/logs/comlogs`
+              location)
             - 'session' (for `<sessionid>/logs/comlogs`)
             - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
             - '<path>'  (for an arbitrary directory).
@@ -1333,14 +1334,14 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     Output files:
         The command generates the following files:
 
-        --`bold[N]<nifti_tail>.nuisance`
+        - `bold[N]<nifti_tail>.nuisance`
               A text file that lists for each volume frame the information
               on mean intensity across the ventricle, white matter and whole
               brain voxels, and any additional nuisance ROI specified using
               parameters. The file is stored in the
               `images<img_suffix>/functional<bold_variant>/movement` folder.
 
-        --`bold[N]<nifti_tail>_nuisance.png`
+        - `bold[N]<nifti_tail>_nuisance.png`
             A PNG image of axial slices of the first BOLD frame over which
             the identified nuisance regions are overlayed. Ventricles in
             green, white matter in red and the rest of the brain in blue.
@@ -1350,7 +1351,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             region mask. The image is stored in
             images<img_suffix>/ROI/nuisance<bold_variant>`.
 
-        --`bold[N]<nifti_tail>_nuisance.<image format>`
+        - `bold[N]<nifti_tail>_nuisance.<image format>`
             An image file of the relevant image format that holds the same
             information as the above PNG. It is a file of five volumes, the
             first volume holds the first BOLD frame, the second the whole
@@ -1361,39 +1362,41 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             folder.
 
     Notes:
-        extract_nuisance_signal is used to extract nuisance signal from volume BOLD
-        files to be used in the latter steps of preprocessing, specifically for
-        regression of nuisance signals. By default it extract nuisance signals from
-        ventricles, white matter and whole brain. Whole brain is defined as those
-        parts of the brain that are not ventricles or white matter, which results
-        in whole brain to mostly overlap with gray matter.
+        extract_nuisance_signal is used to extract nuisance signal from volume
+        BOLD files to be used in the latter steps of preprocessing,
+        specifically for regression of nuisance signals. By default, it
+        extracts nuisance signals from ventricles, white matter and whole
+        brain. Whole brain is defined as those parts of the brain that are not
+        ventricles or white matter, which results in whole brain to mostly
+        overlap with gray matter.
 
-        Using parameters listed below, it is also possible to specify additional
-        ROIs for which nuisance signal is to be extracted and/or ROI that are to
-        be excluded from the whole brain mask.
+        Using parameters listed below, it is also possible to specify
+        additional ROIs for which nuisance signal is to be extracted and/or ROI
+        that are to be excluded from the whole brain mask.
 
         To exclude specific ROI from the whole brain mask, use the '--wbmask'
-        option. This should be a path to a file that specifies, which ROI are to
-        be excluded from the whole-brain mask. The reason for exclusion might be
-        when one does not want the signals from specific ROI to be inlcuded in
-        the global signal regression, thereby resolving some of the issues taken as
-        arguments agains using global signal regression. The file can be either
-        a binary mask, or a '.names' file. In the latter case, it is possible to
-        additional mask the ROI to be excluded based on session specific
-        aseg+aparc image (see description of .names file format).
+        option. This should be a path to a file that specifies, which ROI are
+        to be excluded from the whole-brain mask. The reason for exclusion
+        might be when one does not want the signals from specific ROI to be
+        included in the global signal regression, thereby resolving some issues
+        taken as arguments against using global signal regression. The file can
+        be either a binary mask, or a '.names' file. In the latter case, it is
+        possible to additional mask the ROI to be excluded based on session
+        specific aseg+aparc image (see description of .names file format).
 
-        Another option is to include additional independent nuisance regions that
-        might or might not overlap with the exisiting masks. Two parameters are used
-        to specify this. The first is the '--nroi' parameter. This, again, is a path
-        to either a binary image or a '.names' file. In the latter case, it is again
-        possible to mask the additional ROI either by the binary whole brain mask or
-        the individuals aseg+aparc file. To achieve this, set the additional
-        '--sessionroi' parameter to 'wb' or 'aseg', respectively. If some additional
-        ROI are to be excluded, even though they fall outside of the brain, then
-        these are to be listed as comma separated list of ROI names (that match the
-        ROI names in the .names file), separated from the path by a pipe ('|')
-        symbol. For instance if one also would like to include eyes and scull as
-        two additional nuiscance regions, one has to create a volume mask + a
+        Another option is to include additional independent nuisance regions
+        that might or might not overlap with the existing masks. Two parameters
+        are used to specify this. The first is the '--nroi' parameter. This,
+        again, is a path to either a binary image or a '.names' file. In the
+        latter case, it is again possible to mask the additional ROI either by
+        the binary whole brain mask or the individuals aseg+aparc file. To
+        achieve this, set the additional '--sessionroi' parameter to 'wb' or
+        'aseg', respectively. If some additional ROI are to be excluded, even
+        though they fall outside the brain, then these are to be listed as
+        comma separated list of ROI names (that match the ROI names in the
+        .names file), separated from the path by a pipe ('|') symbol. For
+        instance if one also would like to include eyes and scull as two
+        additional nuiscance regions, one has to create a volume mask + a
         .names file pair, and pass it as the '--nroi' parameter, e.g.::
 
             --nroi="<path to ROI>/nroi.names|eyes,scull"
@@ -1617,16 +1620,15 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
 
-        --bolds  (str, default 'all'):
+        --bolds (str, default 'all'):
             A pipe ('|') separated list of conc names to process.
 
-        --event_file  (str, default ''):
-            A pipe ('|') separated list of fidl names to use, that
-            matches the conc list.
+        --event_file (str, default ''):
+            A pipe ('|') separated list of fidl names to use, that matches the
+            conc list.
 
-        --bold_actions  (str, default 's,h,r,c,l'):
-            A string specifying which actions, and in what sequence
-            to perform.
+        --bold_actions (str, default 's,h,r,c,l'):
+            A string specifying which actions, and in what sequence to perform.
 
         --nifti_tail (str, default ''):
             The tail of NIfTI volume images to use.
