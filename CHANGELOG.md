@@ -6,6 +6,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.97.1
+
+* In `fc_preprocess`, when motion was not included as a regressor, `.mov` files were not read, but the data was still referenced later in the code. This interaction is now resolved.
+* Fixed a bug where `fc_process` could sometime create an invalid GLM table.
+* Fixed a bug where FSL's `imrm` did not remove some images which caused `hcp_diffusion` to crash.
+
 ## 0.97.0
 
 * Improved the documentation at several locations.
