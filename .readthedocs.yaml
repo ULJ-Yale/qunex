@@ -12,15 +12,16 @@ build:
     python: "3.8"
   jobs:
     post_checkout:
-      - rm -rf qx_library # otherwise cannot clone into existing folder
+      - rm -rf qx_library
       # remove "-b develop" option to use master branch of qunex/library repository
-      - git clone -b develop https://token:glpat-W4j8WPCLEfK5d2oMQh9j@gitlab.qunex.yale.edu/qunex/library.git qx_library
+      - git clone -b develop --depth=1 https://token:glpat-W4j8WPCLEfK5d2oMQh9j@gitlab.qunex.yale.edu/qunex/library.git qx_library
     pre_build:
       - qx_library/etc/docs/_extras/bash/pre_build.sh
 
 # Sphinx build configuration
 sphinx:
    configuration: qx_library/etc/docs/conf.py
+   fail_on_warning: true
 
 # The Python PyPi requirements required to build your docs
 python:

@@ -815,6 +815,8 @@ for b = 1:nbolds
         nframes = general_get_image_length([file(b).froot tail]);
         frames(b) = nframes;
         nuisance(b).nframes = nframes;
+        nuisance(b).mov     = zeros(nframes, 6);
+        nuisance(b).nmov    = size(nuisance(b).mov,2);
     end
 
     %   ----> do scrubbing anew if needed!

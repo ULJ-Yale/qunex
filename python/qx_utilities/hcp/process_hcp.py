@@ -1145,7 +1145,36 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         if no T2w image is present.
 
     Examples:
-        ::
+        Example run from the base study folder with test flag::
+
+            qunex hcp_freesurfer \\
+                --batchfile="processing/batch.txt" \\
+                --sessionsfolder="sessions" \\
+                --parsessions="10" \\
+                --overwrite="no" \\
+                --test
+
+        Example run with absolute paths with scheduler and no T2w image is available::
+
+            qunex hcp_freesurfer \\
+                --batchfile="<path_to_study_folder>/processing/batch.hcp.txt" \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --parsessions="4" \\
+                --hcp_t2="NONE" \\
+                --overwrite="yes" \\
+                --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
+
+        Run from the study folder with FreeSurfer specific details and scheduler::
+
+            qunex hcp_freesurfer \\
+                --batchfile="processing/batch.txt" \\
+                --sessionsfolder="sessions" \\
+                --parsessions="10" \\
+                --overwrite="no" \\
+                --hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
+                --scheduler="SLURM,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=week"
+
+        Additional examples::
 
             qunex hcp_freesurfer \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
@@ -1487,7 +1516,26 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         present.
 
     Examples:
-        ::
+        Example run from the base study folder with test flag::
+
+            qunex hcp_post_freesurfer \\
+                --batchfile="processing/batch.txt" \\
+                --sessionsfolder="sessions" \\
+                --parsessions="10" \\
+                --overwrite="no" \\
+                --test
+
+        Example run with absolute paths with scheduler::
+
+            qunex hcp_post_freesurfer \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --parsessions="4" \\
+                --hcp_t2="NONE" \\
+                --overwrite="yes" \\
+                --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
+
+        Additional examples::
 
             qunex hcp_post_freesurfer \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
@@ -1678,8 +1726,21 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
         The results of this step will be present in the
         <study_folder>/<sessions_folder>/<subject_id>.
 
+    Notes:
+        hcp_longitudinal_freesurfer parameter mapping:
+
+        =================================== ===========================
+        QuNex parameter                     HCPpipelines parameter
+        =================================== ===========================
+        ``hcp_long_fs_template``            ``template``
+        ``hcp_long_fs_extra_reconall_base`` ``extra-reconall-arg-base``
+        ``hcp_long_fs_extra_reconall``      ``extra-reconall-arg-long``
+        =================================== ===========================
+
     Examples:
-            qunex hcp_longitudibnal_freesurfer \\
+        ::
+
+            qunex hcp_longitudinal_freesurfer \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_long_fs_template_id="<template_id>"
@@ -2052,6 +2113,29 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Apptainer (Singularity) container, you need to use the --nv flag
             of the qunex_container script.
 
+        Mapping of QuNex parameters onto HCP Pipelines parameters:
+            Below is a detailed specification about how QuNex parameters are
+            mapped onto the HCP Pipelines parameters.
+
+            ======================== ======================================
+            QuNex parameter          HCPpipelines parameter
+            ======================== ======================================
+            ``hcp_dwi_phasepos``     ``posData``, ``negData`` and ``PEdir``
+            ``hcp_dwi_echospacing``  ``echospacing``
+            ``hcp_dwi_gdcoeffs``     ``gdcoeffs``
+            ``hcp_dwi_dof``          ``dof``
+            ``hcp_dwi_b0maxbval``    ``b0maxbval``
+            ``hcp_dwi_combinedata``  ``combinedataflag``
+            ``hcp_printcom``         ``printcom``
+            ``hcp_dwi_extraeddyarg`` ``extra-eddy-arg``
+            ``hcp_dwi_name``         ``dwiname``
+            ``hcp_dwi_selectbestb0`` ``select-best-b0``
+            ``hcp_dwi_cudaversion``  ``cuda-version``
+            ``hcp_dwi_nogpu``        ``no-gpu``
+            ``hcp_dwi_topupconfig``  ``topup-config-file``
+            ``hcp_dwi_even_slices``  ``ensure-even-slices``
+            ======================== ======================================
+
         Use:
             Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion
             weighted images (DWI). Specifically, after b0 intensity
@@ -2321,7 +2405,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_volume [... processing options]``
 
-    Runs the fMRI Volume step of HCP Pipeline.
+    Runs the fMRI Volume step of HCP Pipeline. It preprocesses BOLD images and
+    linearly and nonlinearly registers them to the MNI atlas. It makes use of
+    the PreFS and FS steps of the pipeline. It enables the use of a number of
+    parameters to customize the specific preprocessing steps.
 
     Warning:
         The code expects the first two HCP preprocessing steps
@@ -2606,15 +2693,160 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             With the information present above, the file
             `/data/gc/Prisma.conf` would be used.
 
-        Use:
-            Runs the fMRI Volume step of HCP Pipeline. It preprocesses BOLD
-            images and linearly and nonlinearly registers them to the MNI
-            atlas. It makes use of the PreFS and FS steps of the pipeline. It
-            enables the use of a number of parameters to customize the specific
-            preprocessing steps.
+        Slice timing correction:
+            Slice timing correction is performed using FSL slicetimer. For the
+            correction to be done correctly, the data needs to be carefully
+            inspected and the ``hcp_bold_slicetimerparams`` parameter has to be
+            prepared with the valid information. For complex slice timing
+            acquisition (e.g., multiband acquisition) it is best to prepare a
+            slice timing file. The slice timing file has to be saved in the
+            same folder as the respective BOLD file. It has to be named the
+            same as the BOLD file with ``_slicetimer.txt`` tail and extension.
+            The slice timing file can be prepared automatically using the
+            ```setup_hcp`` <../../api/gmri/setup_hcp.rst>`__ command, if JSON
+            sidecar files for BOLD images exist and have the correct slice
+            timing information. Alternatively ``prepare_slice_timing`` command
+            can be used. See the respective inline help for more information.
+
+        Movement and spin-echo references:
+            Whereas most of the options should be clear, the ones specifying
+            movement and spin-echo reference present the most significant
+            change from the original way fMRIVolume is run and should be
+            explained more in detail. Originally, each fMRI image is processed
+            independently and registered to the individual’s T1w image. Whereas
+            this works well for high-resolution multiband fMRI images, in our
+            experience the results are not optimal for legacy (non-multiband)
+            fMRI images of lower resolution. Due to slight changes in the
+            optimal registration to T1w image, fMRI images would not be
+            optimally spatially aligned to one another, which would lead to
+            increased within-subject noise across fMRI images. Using the
+            ``hcp_bold_movref`` parameter it is possible to instead align the
+            first fMRI image to the T1w image and then align all the following
+            fMRI images to the first fMRI rather than registering each of them
+            separately and independently to T1w image.
+
+            The original registration procedure (the steps in brackets are
+            based on previously completed steps):
+
+            ::
+
+               bold1 -> T1w [-> MNI atlas]
+               bold2 -> T1w [-> MNI atlas]
+               bold3 -> T1w [-> MNI atlas]
+
+            can be changed to:
+
+            ::
+
+               bold1 -> T1w [-> MNI atlas]
+               bold2 -> bold1 [-> T1w -> MNI atlas]
+               bold3 -> bold1 [-> T1w -> MNI atlas]
+
+            To use the original procedure and align each BOLD independently to
+            T1w image, the ``hcp_bold_movref`` parameter has to be set to
+            ``independent``. To use the modified procedure set the parameter to
+            ``first``. To remove additional mismatches that can arise due to
+            changes in distortion because of larger head movements between
+            acquisition of individual BOLD images, linear registration of
+            references between BOLD images can be enhanced with additional
+            nonlinear registration. To make use of the latter, set the
+            ``hcp_bold_refreg`` parameter to ``nonlinear`` instead of
+            ``linear``. Note that using the non-linear registration is not
+            compliant with the ``HCPStyleData`` processing mode.
+
+            The additional advantage of registration to the first BOLD image is
+            reduction in processing as the previously computed distortion
+            correction can be re-used. This can lead to noticeable reduction in
+            processing time.
+
+            When recording is interrupted for any reason (e.g. subject had to go
+            to a toilet, or the recording was completed in two sessions), a
+            novel spin-echo image might be acquired to account for movement and
+            allow better registration with BOLD images. In such a case, if
+            ``hcp_bold_seimg`` parameter is set to ``independent``, the
+            modified HCP pipeline will use for each BOLD image the last
+            spin-echo recorded before the BOLD image in question. In this case,
+            if BOLD registration target is set to the first BOLD image (using
+            ``hcp_bold_movref``), the BOLD image registration target will be
+            also changed to the fist BOLD image after the new spin-echo pair.
+            Specifically with ``independent`` ``hcp_bold_seimg`` an example
+            sequence might be::
+
+               se-pair1
+               bold1 -> se-pair1 -> T1w [-> MNI atlas]
+               bold2 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               bold3 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               se-pair2
+               bold4 -> se-pair2 -> T1w [-> MNI atlas]
+               bold5 -> bold4 [se-pair2 -> T1w -> MNI atlas]
+               bold6 -> bold4 [se-pair2 -> T1w -> MNI atlas]
+
+            If the ``hcp_bold_seimg`` parameter is set to ``first``, only the
+            first spin-echo pair of images will be considered and all others
+            will be ignored. The above sequence would then be changed to::
+
+               se-pair1
+               bold1 -> se-pair1 -> T1w [-> MNI atlas]
+               bold2 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               bold3 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               se-pair2
+               bold4 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               bold5 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               bold6 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+
+            In the rare cases, where a spin-echo pair of images would be
+            recorded after the first BOLD image, the first spin-echo image
+            found after the BOLD image would be used for distortion correction.
+            An example of such a situation might be the following sequence::
+
+               bold1 -> se-pair1 -> T1w [-> MNI atlas]
+               bold2 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               bold3 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               se-pair1
+               bold4 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               bold5 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+               bold6 -> bold1 [se-pair1 -> T1w -> MNI atlas]
+
+            In our testing, using the following combination of settings resulted
+            in smallest differences between registered BOLD legacy
+            (non-multiband) images::
+
+               # batch.txt settings
+               --hcp_bold_movreg    : MCFLIRT
+               --hcp_bold_movref    : first
+               --hcp_bold_seimg     : first
+               --hcp_bold_refreg    : nonlinear
+               --hcp_bold_mask      : T1_DILATED2x_fMRI_FOV
+
+            Do note that the best performing settings are study dependent and need
+            to be evaluated on a study by study basis.
 
     Examples:
-        ::
+        Example run from the base study folder with test flag::
+        
+            qunex hcp_fmri_volume  \\
+                --batchfile="processing/batch.txt"  \\
+                --sessionsfolder="sessions"  \\
+                --parsessions="10"  \\
+                --parelements="4"  \\
+                --overwrite="no"  \\
+                --test
+        
+        Run using absolute paths with additional options and scheduler::
+            
+            qunex hcp_fmri_volume  \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" 
+                --sessionsfolder="<path_to_study_folder>/sessions"  \\
+                --parsessions="4"  \\
+                --parelements="2"  \\
+                --hcp_bold_doslicetime="TRUE"  \\
+                --hcp_bold_movereg="MCFLIRT"  \\
+                --hcp_bold_moveref="first"  \\
+                --hcp_bold_mask="T1_DILATED2x_fMRI_FOV"  \\
+                --overwrite="yes"  \\
+                --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
+        
+        Additional examples::
 
             qunex hcp_fmri_volume \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
@@ -3461,7 +3693,30 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         grayordinate representation and generates .dtseries.nii files.
 
     Examples:
-        ::
+        Example run from the base study folder with ``--test`` flag. Here
+        ``--parsessions`` specifies how many sessions to run concurrently and
+        ``--parelements`` specifies how many elements (e.g. bold images) to
+        process concurrently::
+        
+            qunex hcp_fmri_surface  \\
+                --batchfile="processing/batch.txt"  \\
+                --sessionsfolder="sessions"  \\
+                --parsessions="10"  \\
+                --parelements="4"  \\
+                --overwrite="no"  \\
+                --test
+
+        Run using absolute paths with scheduler::
+            
+            qunex hcp_fmri_surface  \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"  \\
+                --sessionsfolder="<path_to_study_folder>/sessions"  \\
+                --parsessions="4"  \\
+                --parelements="4"  \\
+                --overwrite="yes"  \\
+                --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1300,partition=day"
+
+        Extra example::
 
             qunex hcp_fmri_surface \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
@@ -5663,6 +5918,43 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         MSMAll registration to the same full set of fMRI scans that were
         cleaned using hcp_icafix.
 
+        Mapping of QuNex parameters onto HCP Pipelines parameters:
+            Below is a detailed specification about how QuNex parameters are
+            mapped the HCP Pipelines parameters.
+
+            +-----------------------------+----------------------------------------+
+            | QuNex parameter             | HCPpipelines parameter                 |
+            +=============================+========================================+
+            | ``hcp_icafix_bolds``        | ``fix-names`` (for single-run ICAFix), |
+            |                             | ``multirun-fix-names`` and             |
+            |                             | ``multirun-fix-concat-names`` (for     |
+            |                             | multi-run ICAFix)                      |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_msmall_bolds``        | ``fmri-names-list`` (for single-run    |
+            |                             | ICAFix), OR                            |
+            |                             | ``multirun-fix-names-to-use`` (for     |
+            |                             | multi-run ICAFix)                      |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_msmall_outfmriname``  | ``output-fmri-name``                   |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_icafix_highpass``     | ``high-pass``                          |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_msmall_templates``    | ``msm-all-templates``                  |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_msmall_outregname``   | ``output-registration-name``           |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_hiresmesh``           | ``high-res-mesh``                      |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_lowresmesh``          | ``low-res-mesh``                       |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_regname``             | ``input-registration-name``            |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_matlab_mode``         | ``matlab-run-mode``                    |
+            +-----------------------------+----------------------------------------+
+            | ``hcp_msmall_procstring``   | ``fmri-proc-string``                   |
+            +-----------------------------+----------------------------------------+
+
+
     Examples:
         HCP MSMAll after application of single-run ICAFix::
 
@@ -6218,7 +6510,61 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
 
     Output files:
         The results of this step will be populated in the MNINonLinear
-        folder inside the same sessions's root hcp folder.
+        folder inside the same session's root hcp folder.
+
+    Notes:
+        Mapping of QuNex parameters onto HCP Pipelines parameters:
+            Below is a detailed specification about how QuNex parameters are
+            mapped onto the HCP Pipelines parameters.
+
+            +------------------------------+---------------------------------------+
+            | QuNex parameter              | HCPpipelines parameter                |
+            +==============================+=======================================+
+            | ``hcp_icafix_bolds``         | ``fix-names`` (for single-run         |
+            |                              | ICAFix), OR ``multirun-fix-names``    |
+            |                              | and ``multirun-fix-concat-names``     |
+            |                              | (for multi-run ICAFix)                |
+            +------------------------------+---------------------------------------+
+            | ``                           | ``concat-reg-name``                   |
+            | hcp_resample_concatregname`` |                                       |
+            +------------------------------+---------------------------------------+
+            | ``hcp_resample_regname``     | ``registration-name``                 |
+            +------------------------------+---------------------------------------+
+            | ``hcp_icafix_highpass``      | ``high-pass``                         |
+            +------------------------------+---------------------------------------+
+            | ``hcp_hiresmesh``            | ``high-res-mesh``                     |
+            +------------------------------+---------------------------------------+
+            | ``hcp_lowresmeshes``         | ``low-res-meshes``                    |
+            +------------------------------+---------------------------------------+
+            | ``hcp_resample_reg_files``   | ``dedrift-reg-files``                 |
+            +------------------------------+---------------------------------------+
+            | ``hcp_resample_maps``        | ``maps``                              |
+            +------------------------------+---------------------------------------+
+            | ``hcp_resample_myelinmaps``  | ``myelin-maps``                       |
+            +------------------------------+---------------------------------------+
+            | ``hcp_bold_smoothFWHM``      | ``smoothing-fwhm``                    |
+            +------------------------------+---------------------------------------+
+            | ``hcp_matlab_mode``          | ``matlab-run-mode``                   |
+            +------------------------------+---------------------------------------+
+            | ``hcp_icafix_domotionreg``   | ``motion-regression``                 |
+            +------------------------------+---------------------------------------+
+            | `                            | ``dont-fix-names``                    |
+            | `hcp_resample_dontfixnames`` |                                       |
+            +------------------------------+---------------------------------------+
+            | `                            | ``myelin-target-file``                |
+            | `hcp_resample_myelintarget`` |                                       |
+            +------------------------------+---------------------------------------+
+            | ``hcp_resample_inregname``   | ``input-reg-name``                    |
+            +------------------------------+---------------------------------------+
+            | `                            | ``multirun-fix-extract-names`` and    |
+            | `hcp_resample_extractnames`` | ``multirun-fix-extract-concat-names`` |
+            +------------------------------+---------------------------------------+
+            | ``hcp_res                    | ``                                    |
+            | ample_extractextraregnames`` | multirun-fix-extract-extra-regnames`` |
+            +------------------------------+---------------------------------------+
+            | ``                           | ``multirun-fix-extract-volume``       |
+            | hcp_resample_extractvolume`` |                                       |
+            +------------------------------+---------------------------------------+
 
     Examples:
         HCP DeDriftAndResample after application of single-run ICAFix::
@@ -6827,6 +7173,24 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             With the information present above, the file
             `/data/gc/Prisma.conf` would be used.
 
+        Mapping of QuNex parameters onto HCP ASL pipeline parameters:
+            Below is a detailed specification about how QuNex parameters are
+            mapped onto the HCP ASL parameters.
+
+            ============================== ======================
+            QuNex parameter                HCP ASL parameter
+            ============================== ======================
+            ``hcp_gdcoeffs``               ``grads``
+            ``hcp_asl_mtname``             ``mtname``
+            ``hcp_asl_territories_atlas``  ``territories_atlas``
+            ``hcp_asl_territories_labels`` ``territories_labels``
+            ``hcp_asl_use_t1``             ``use_t1``
+            ``hcp_asl_nobandingcorr``      ``nobandingcorr``
+            ``hcp_asl_interpolation``      ``interpolation``
+            ``hcp_asl_cores``              ``cores``
+            ============================== ======================
+
+
     Examples:
         Example run::
 
@@ -7254,6 +7618,135 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         the same sessions's root hcp folder. If ran on multiple sessions
         then a group folder is created inside the QuNex's session folder.
 
+    Notes:
+        the HCP Temporal ICA Pipeline needs to be executed in two steps, the
+        first step runs the following steps:
+
+        -  ``MIGP``,
+        -  ``GroupSICA``,
+        -  ``indProjSICA``,
+        -  ``ConcatGroupSICA``,
+        -  ``ComputeGroupTICA``,
+        -  ``indProjTICA``,
+        -  ``ComputeTICAFeatures``.
+
+        Since automatic classification is not yet supported. Users need to
+        classify the components manually and then rerun temporal ICA from
+        CleanData step onwards. This is the reason that the
+        ``hcp_tica_stop_after_step`` is by default set to
+        ``ComputeTICAFeatures``. After the manual classification both
+        ``hcp_tica_starting_step`` and ``hcp_tica_stop_after_step`` need to be
+        set to ``CleanData``.
+
+        In practice this means that after the HCP Temporal ICA Pipeline
+        requirements have been satisified (you need to run the HCP Minimnal
+        Preprocessing Pipeline,
+        ```hcp_icafix`` <../../api/gmri/hcp_icafix.rst>`__,
+        ```hcp_msmall`` <../../api/gmri/hcp_msmall.rst>`__ and
+        ```hcp_make_average_dataset`` <../../api/gmri/hcp_make_average_dataset.rst>`__)
+        you can run the first processing part, for example:
+
+        .. code:: bash
+
+           qunex hcp_temporal_ica \\
+               --sessionsfolder="<path_to_study_folder>/sessions" \\
+               --batchfile="<path_to_study_folder>/processing/batch.txt" \\
+               --hcp_tica_bolds="fMRI_CONCAT_ALL" \\
+               --hcp_tica_outfmriname="fMRI_CONCAT_ALL" \\
+               --hcp_tica_mrfix_concat_name="fMRI_CONCAT_ALL" \\
+               --hcp_tica_surfregname="MSMAll" \\
+               --hcp_icafix_highpass="0" \\
+               --hcp_outgroupname="hcp_group" \\
+               --hcp_tica_timepoints=<read from post_fix logs> \\
+               --hcp_tica_num_wishart="6" \\
+               --hcp_parallel_limit="4"
+
+        The ``hcp_tica_timepoints`` parameter value can be found inside the
+        ``hcp post_fix`` logs under the label ``NumTimePoints``. If your study
+        has many sessions you also need to set the ``hcp_parallel_limit`` to
+        prevent too many sessions from processing and parallel. If you do not
+        limit this, your system will most likely run out of memory. Once this
+        part is done (note that this can take a couple of days with larger
+        studies), the command will store the components in
+        ``<sessionfolderpath>/hcp_group/hcp_group/MNINonLinear/Results/fMRI_CONCAT_ALL/tICA_d<N>``
+        where ``<N>`` denotes the number of temporal ICA components. To inspect
+        the components you can create a ``wb_command`` scene file:
+
+        .. code:: bash
+
+           GroupAverageName='hcp_group'
+           tICADim=<N>
+           TemplateFolder="/gpfs/gibbs/pi/n3/software/HCP/HCPpipelines/global/templates/tICA"
+           ResultsFolder="<path_to_study_folder>/sessions/hcp_group/hcp_group/MNINonLinear/Results/fMRI_CONCAT_ALL/tICA_d<N>"
+           TemplateComponentScene="${TemplateFolder}/tICA.scene"
+           ResultComponentSceneFile="${ResultsFolder}/tICA_hcp_group.scene"
+           ResultComponentSceneFileFinal="${ResultsFolder}/tICA_hcp_group_final.scene"
+           cp ${TemplateComponentScene} ${ResultComponentSceneFile}
+           cat "${TemplateComponentScene}" | sed s/ExampleGroupAverageName/${GroupAverageName}/g | sed s/ExampleDim/${tICADim}/g >| "${ResultComponentSceneFile}"
+
+        Your scene file called tICA_hcp_group.scene will be created in
+        ``<path_to_study_folder>/sessions/hcp_group/hcp_group/MNINonLinear/Results/fMRI_CONCAT_ALL/tICA_d<N>``.
+        You can then zip the scene file in order to download it and explore it
+        with Workbench on your computer:
+
+        .. code:: bash
+
+           cd ${ResultsFolder}
+           wb_command -zip-scene-file \\
+               tICA_hcp_group.scene \\
+               tICA_hcp_group_sulc_fMRI_CONCAT_ALL \\
+               -skip-missing \\
+               tICA_hcp_group_sulc_fMRI_CONCAT_ALL.zip
+
+        MATLAB large variable error:
+            If receiving an error in MATBAL saying that a variable was not saved
+            because it is larger than 2GB, you need to set the default saving format
+            in MATLAB, to do this run MATLAB and execute:
+
+            .. code:: matlab
+
+               s = settings();
+               s.matlab.general.matfile.SaveFormat.PersonalValue = 'v7.3';
+
+        Mapping of QuNex parameters onto HCP temporal ICA parameters:
+            Below is a detailed specification about how QuNex parameters are
+            mapped onto the HCP temporal ICA parameters.
+
+            ===================================== ===============================
+            QuNex parameter                       HCP temporal ICA parameter
+            ===================================== ===============================
+            ``hcp_tica_bolds``                    ``fmri-names``
+            ``hcp_tica_outfmriname``              ``output-fmri-name``
+            ``hcp_tica_surfregname``              ``surf-reg-name``
+            ``hcp_tica_procstring``               ``proc-string``
+            ``hcp_outgroupname``                  ``out-group-name``
+            ``hcp_bold_res``                      ``fmri-resolution``
+            ``hcp_tica_timepoints``               ``subject-expected-timepoints``
+            ``hcp_tica_num_wishart``              ``num-wishart``
+            ``hcp_lowresmesh``                    ``low-res``
+            ``hcp_tica_mrfix_concat_name``        ``mrfix-concat-name``
+            ``hcp_tica_icamode``                  ``ica-mode``
+            ``hcp_tica_precomputed_clean_folder`` ``precomputed-clean-folder``
+            ``hcp_tica_precomputed_fmri_name``    ``precomputed-clean-fmri-name``
+            ``hcp_tica_precomputed_group_name``   ``precomputed-group-name``
+            ``hcp_tica_extra_output_suffix``      ``extra-output-suffix``
+            ``hcp_tica_pca_out_dim``              ``pca-out-dim``
+            ``hcp_tica_pca_internal_dim``         ``pca-internal-dim``
+            ``hcp_tica_migp_resume``              ``migp-resume``
+            ``hcp_tica_sicadim_iters``            ``sicadim-iters``
+            ``hcp_tica_sicadim_override``         ``sicadim-override``
+            ``hcp_low_sica_dims``                 ``low-sica-dims``
+            ``hcp_tica_reclean_mode``             ``reclean-mode``
+            ``hcp_tica_starting_step``            ``starting-step``
+            ``hcp_tica_stop_after_step``          ``stop-after-step``
+            ``hcp_tica_remove_manual_components`` ``manual-components-to-remove``
+            ``hcp_tica_fix_legacy_bias``          ``fix-legacy-bias``
+            ``hcp_parallel_limit``                ``parallel-limit``
+            ``hcp_tica_config_out``               ``config-out``
+            ``hcp_matlab_mode``                   ``matlab-run-mode``
+            ===================================== ===============================
+
+
     Examples:
         Example run::
 
@@ -7652,8 +8145,26 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         A group folder with outputs is created inside the QuNex's session
         folder.
 
+    Notes:
+        Mapping of QuNex parameters onto HCP ASL pipeline parameters:
+            Below is a detailed specification about how QuNex parameters are
+            mapped onto the HCP ASL parameters.
+
+            ============================== ======================
+            QuNex parameter                HCP ASL parameter
+            ============================== ======================
+            ``hcp_gdcoeffs``               ``grads``
+            ``hcp_asl_mtname``             ``mtname``
+            ``hcp_asl_territories_atlas``  ``territories_atlas``
+            ``hcp_asl_territories_labels`` ``territories_labels``
+            ``hcp_asl_use_t1``             ``use_t1``
+            ``hcp_asl_nobandingcorr``      ``nobandingcorr``
+            ``hcp_asl_interpolation``      ``interpolation``
+            ``hcp_asl_cores``              ``cores``
+            ============================== ======================
+
     Examples:
-        Example run::
+        A run with the default set of parameters::
 
             qunex hcp_make_average_dataset \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
@@ -8139,7 +8650,28 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 └-> images/functional/movement/[boldname][N]_mov.dat
 
     Examples:
-        ::
+
+        Example run from the base study folder with test flag::
+
+            qunex map_hcp_data \\
+                --batchfile="processing/batch.txt" \\
+                --sessionsfolder="sessions" \\
+                --parsessions="10" \\
+                --hcp_cifti_tail="_Atlas" \\
+                --overwrite="no" \\
+                --test
+
+        Run using absolute paths with scheduler::
+
+            qunex map_hcp_data \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --parsessions="4" \\
+                --hcp_cifti_tail="_Atlas" \\
+                --overwrite="yes" \\
+                --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
+
+        Additional example::
 
             qunex map_hcp_data \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
@@ -8376,7 +8908,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
     Parameters:
         --batchfile (str, default ''):
-            The batch.txt file with all the sessions information.
+            The batch.txt file with all the session's information.
 
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder, where the imaging data is
@@ -8442,7 +8974,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             Smoothing FWHM that matches what was used in the fMRISurface
             pipeline.
 
-        --hcp_bold_final_smoothFWHM
+        --hcp_bold_final_smoothFWHM (int, default 2):
             Value (in mm FWHM) of total desired smoothing, reached by
             calculating the additional smoothing required and applying that
             additional amount to data previously smoothed in fMRISurface.
@@ -8469,7 +9001,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         --hcp_regname (str, default 'MSMSulc'):
             Name of surface registration technique.
 
-        --hcp_grayordinatesres (int, default 2)
+        --hcp_grayordinatesres (int, default 2):
             Value (in mm) that matches value in 'Atlas_ROIs' filename.
 
         --hcp_lowresmesh (int, default 32):
@@ -8495,6 +9027,32 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     Output files:
         The results of this step will be populated in the MNINonLinear
         folder inside the same sessions's root hcp folder.
+
+    Notes:
+        Mapping of QuNex parameters onto HCP Pipelines parameters:
+            Below is a detailed specification about how QuNex parameters are
+            mapped the HCP Pipelines parameters.
+
+            ============================== ======================
+            QuNex parameter                HCPpipelines parameter
+            ============================== ======================
+            ``hcp_task_lvl1task``          ``lvl1tasks``
+            ``hcp_task_lvl1fsfs``          ``lvl1fsfs``
+            ``hcp_task_lvl2task``          ``lvl2task``
+            ``hcp_task_lvl2fsf``           ``lvl2fsf``
+            ``hcp_task_confound``          ``confound``
+            ``hcp_bold_smoothFWHM``        ``origsmoothingFWHM``
+            ``hcp_bold_final_smoothFWHM``  ``finalsmoothingFWHM``
+            ``hcp_task_highpass``          ``highpassfilter``
+            ``hcp_task_lowpass``           ``lowpassfilter``
+            ``hcp_task_procstring``        ``procstring``
+            ``hcp_regname``                ``regname``
+            ``hcp_grayordinatesres``       ``grayordinatesres``
+            ``hcp_lowresmesh``             ``lowresmesh``
+            ``hcp_task_vba``               ``vba``
+            ``hcp_task_parcellation``      ``parcellation``
+            ``hcp_task_parcellation_file`` ``parcellationfile``
+            ============================== ======================
 
     Examples:
         First level HCP TaskfMRIanalysis::
