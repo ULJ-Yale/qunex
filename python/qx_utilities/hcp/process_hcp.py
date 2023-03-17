@@ -2344,7 +2344,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_nogpu']:
                 comm += "                --no-gpu"
             else:
-                comm += "                --cuda-version=10.2
+                comm += "                --cuda-version=10.2"
 
             # -- Report command
             if run:
