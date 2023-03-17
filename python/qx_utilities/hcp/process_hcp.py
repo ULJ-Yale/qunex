@@ -1931,7 +1931,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_diffusion [... processing options]``
 
-    Runs the Diffusion step of HCP Pipeline.
+    Runs the Diffusion step of HCP Pipeline. This command uses GPUs by default
+    so CUDA Libraries are required for this to work. Use the nogpu flag to run
+    without a GPU if needed, note that this results in much slower processing
+    speed.
 
     Warning:
         The code expects the first HCP preprocessing step (hcp_pre_freesurfer)
@@ -2059,12 +2062,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         --hcp_dwi_name (str, default 'Diffusion'):
             Name to give DWI output directories.
 
-        --hcp_dwi_cudaversion (str, default ''):
-            If using the GPU-enabled version of eddy, then this option
-            can be used to specify which eddy_cuda binary version to
-            use. If X.Y is specified, then FSLDIR/bin/eddy_cudaX.Y will
-            be used. Note that CUDA 9.1 is installed in the container.
-
         --hcp_dwi_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of eddy. The
             flag is not set by default.
@@ -2130,7 +2127,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             ``hcp_dwi_extraeddyarg`` ``extra-eddy-arg``
             ``hcp_dwi_name``         ``dwiname``
             ``hcp_dwi_selectbestb0`` ``select-best-b0``
-            ``hcp_dwi_cudaversion``  ``cuda-version``
             ``hcp_dwi_nogpu``        ``no-gpu``
             ``hcp_dwi_topupconfig``  ``topup-config-file``
             ``hcp_dwi_even_slices``  ``ensure-even-slices``
@@ -2166,7 +2162,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="yes" \\
-                --bash="module load CUDA/9.1.85" \\
+                --bash="module load CUDA/11.3.1" \\
                 --scheduler="SLURM,time=24:00:00,cpus-per-task=1,mem-per-cpu=16000,partition=GPU,gpus=1"
 
         Run without a scheduler and without GPU support::
@@ -2339,9 +2335,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options['hcp_dwi_selectbestb0']:
                 comm += "                --select-best-b0"
 
-            if options['hcp_dwi_cudaversion'] is not None:
-                comm += "                --cuda-version=" + options['hcp_dwi_cudaversion']
-
             if options['hcp_dwi_topupconfig'] is not None:
                 comm += "                --topup-config-file=" + options['hcp_dwi_topupconfig']
 
@@ -2350,6 +2343,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             if options['hcp_dwi_nogpu']:
                 comm += "                --no-gpu"
+            else:
+                comm += "                --cuda-version=10.2
 
             # -- Report command
             if run:

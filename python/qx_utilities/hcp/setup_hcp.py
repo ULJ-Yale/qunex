@@ -47,6 +47,16 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     preprocessing workflow.
 
     Parameters:
+        --sessionsfolder (str, default '.'):
+            The sessions folder where all the sessions are to be mapped to. It
+            should be a folder within the <study folder>.
+
+        --sessions (str, default ''):
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Regular
+            expression patterns can be used. If provided, only sessions from the
+            list of sessions will be processed.
+
         --sourcefolder (str, default '.'):
             The base session folder that contains the nifti images and
             session.txt file.
@@ -235,19 +245,23 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             running on a single node and a single core.
 
     Examples:
-        Simple example::
+        Simple example for preparing a single session::
 
             qunex setup_hcp \\
-                --sourcefolder=OP316 \\
-                --sourcefile=session.txt
+                --sourcefolder="/<study_folder>/sessions/<session_id>"
 
-        Prepare a single or several sessions in a study (here ``--sourcefiles``
-        points to the hcp mapping session information file)::
+        An example for preparing multiple sessions for HCP processing
+        simultaneously::
 
             qunex setup_hcp \\
-                --sourcefolder=/<study_folder>/sessions \\
-                --sourcefiles=<hcp_session_information_file> \\
-                --overwrite=yes
+                --sessionsfolder=/<study_folder>/sessions \\
+                --sessions="<session_id_1>,<session_id_2>"
+
+        To run setup_hcp for all sessions in the batch file use::
+
+            qunex setup_hcp \\
+                --sessionsfolder="/<study_folder>/sessions" \\
+                --batchfile="/<study_folder>/processing/batch.txt"
     """
 
     print("Running setup_hcp\n================")
