@@ -120,10 +120,10 @@ Examples:
          --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
     NOTE: CUDA libraries need to be loaded for this command to work, to do this
-    you usually need to execute module load CUDA/9.1.85. When scheduling add the
-    bash parameter to the command call, e.g.:
+    you usually need to load the appropriate module on HPC systems. When
+    scheduling for example, add the bash parameter to the command call, e.g.:
 
-    ``--bash="module load CUDA/9.1.85"``
+    ``--bash="module load CUDA/11.3.1"``
 
     ::
 
@@ -153,7 +153,7 @@ Examples:
             --diffdatasuffix='DWI_dir91_LR' \\
             --usefieldmap='yes' \\
             --overwrite='yes' \\
-            --bash="module load CUDA/9.1.85" \\
+            --bash="module load CUDA//11.3.1" \\
             --scheduler='<name_of_scheduler_and_options>'
 
     Example with flagged parameters for submission to the scheduler using GE data
