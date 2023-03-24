@@ -6969,7 +6969,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 'smoothingfwhm'       : options['hcp_bold_smoothFWHM'],
                 'highpass'            : int(highpass),
                 'matlabrunmode'       : matlabrunmode,
-                'motionregression'    : "FALSE" if options['hcp_icafix_domotionreg'] is not None else options['hcp_icafix_domotionreg'],
+                'motionregression'    : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
                 'myelintargetfile'    : options['hcp_resample_myelintarget'],
                 'inputregname'        : options['hcp_resample_inregname'],
                 'msmalltemplates'     : msmall_templates}
