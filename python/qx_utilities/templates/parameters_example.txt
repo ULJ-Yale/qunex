@@ -273,3 +273,4 @@
 # _hcp_resample_extractnames         List of bolds and concat names provided in the same format as the hcp_icafix_bolds parameter. Defines which bolds to extract. Exists to enable extraction of a subset of the runs in a multi-run HCP ICAFix group into a new concatenated series
 # _hcp_resample_extractextraregnames Extract multi-run HCP ICAFix runs for additional surface registrations, often MSMSulc
 # _hcp_resample_extractvolume        Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work [FALSE]
+# _hcp_resample_msmall_templates     Path to directory containing MSM All template files.

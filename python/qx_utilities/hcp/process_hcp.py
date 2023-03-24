@@ -6503,6 +6503,23 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_inregname (str, default 'NONE'):
             A string to enable multiple fMRI resolutions (e.g._1.6mm).
 
+        --hcp_resample_extractnames (str, default 'NONE'):
+            List of bolds and concat names provided in the same format as the
+            hcp_icafix_bolds parameter. Defines which bolds to extract. Exists
+            to enable extraction of a subset of the runs in a multi-run HCP
+            ICAFix group into a new concatenated series.
+
+        --hcp_resample_extractextraregnames (str, default 'NONE'):
+            Extract multi-run HCP ICAFix runs for additional surface
+            registrations, often MSMSulc
+
+        --hcp_resample_extractvolume (str, default 'NONE'):
+            Whether to also extract the specified multi-run HCP ICAFix from the
+            volume data, requires hcp_resample_extractnames to work.
+
+        --hcp_resample_msmall_templates (str, default 'NONE'):
+            Path to directory containing MSM All template files.
+
     Output files:
         The results of this step will be populated in the MNINonLinear
         folder inside the same session's root hcp folder.
