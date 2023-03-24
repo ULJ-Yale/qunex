@@ -6543,22 +6543,26 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             +------------------------------+---------------------------------------+
             | ``hcp_icafix_domotionreg``   | ``motion-regression``                 |
             +------------------------------+---------------------------------------+
-            | `                            | ``dont-fix-names``                    |
-            | `hcp_resample_dontfixnames`` |                                       |
+            | ``                           | ``dont-fix-names``                    |
+            | hcp_resample_dontfixnames``  |                                       |
             +------------------------------+---------------------------------------+
-            | `                            | ``myelin-target-file``                |
-            | `hcp_resample_myelintarget`` |                                       |
+            | ``                           | ``myelin-target-file``                |
+            | hcp_resample_myelintarget``  |                                       |
             +------------------------------+---------------------------------------+
             | ``hcp_resample_inregname``   | ``input-reg-name``                    |
             +------------------------------+---------------------------------------+
-            | `                            | ``multirun-fix-extract-names`` and    |
-            | `hcp_resample_extractnames`` | ``multirun-fix-extract-concat-names`` |
+            | ``                           | ``multirun-fix-extract-names`` and    |
+            | hcp_resample_extractnames``  | ``multirun-fix-extract-concat-names`` |
             +------------------------------+---------------------------------------+
             | ``hcp_res                    | ``                                    |
             | ample_extractextraregnames`` | multirun-fix-extract-extra-regnames`` |
             +------------------------------+---------------------------------------+
             | ``                           | ``multirun-fix-extract-volume``       |
             | hcp_resample_extractvolume`` |                                       |
+            +------------------------------+---------------------------------------+
+            | ``                           |                                       |
+            | hcp_resample_msmall_templates| ``msm-all-templates``                 |
+            | ``                           |                                       |
             +------------------------------+---------------------------------------+
 
     Examples:
@@ -6906,6 +6910,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         if options['hcp_resample_regname'] is not None:
             regname = options['hcp_resample_regname']
 
+        # msm-all-templates
+        msmall_templates = hcp['hcp_base'] + "/global/templates/MSMAll"
+        if options['hcp_resample_msmall_templates'] is not None:
+            msmall_templates = options['hcp_resample_msmall_templates']
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
@@ -6925,7 +6934,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
             --myelin-target-file="%(myelintargetfile)s" \
-            --input-reg-name="%(inputregname)s"' % {
+            --input-reg-name="%(inputregname)s" \
+            --msm-all-templates="%(msmalltemplates)s"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
@@ -6944,7 +6954,8 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "FALSE" if options['hcp_icafix_domotionreg'] is not None else options['hcp_icafix_domotionreg'],
                 'myelintargetfile'    : options['hcp_resample_myelintarget'],
-                'inputregname'        : options['hcp_resample_inregname']}
+                'inputregname'        : options['hcp_resample_inregname'],
+                'msmalltemplates'     : msmall_templates}
 
         # -- Additional parameters
         # -- hcp_resample_extractnames
