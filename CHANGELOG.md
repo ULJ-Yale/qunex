@@ -6,6 +6,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.97.3
+
+* Fixed the parametrization of `hcp_icafix` and `hcp_msmall` to reflect the latest changes in HCP Pipelines.
+
+## 0.97.2
+
+* Fixed the default CUDA version for `hcp_diffusion`, required by the latest FSL version.
+
 ## 0.97.1
 
 * In `fc_preprocess`, when motion was not included as a regressor, `.mov` files were not read, but the data was still referenced later in the code. This interaction is now resolved.

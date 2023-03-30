@@ -4482,6 +4482,16 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         # bandpass value
         bandpass = 2000 if options['hcp_icafix_highpass'] is None else int(options['hcp_icafix_highpass'])
 
+        # delete intermediates
+        icafix_threshold = 10
+        if options['hcp_icafix_threshold'] is not None:
+            icafix_threshold = options['hcp_icafix_threshold']
+
+        # delete intermediates
+        delete_intermediates = "FALSE"
+        if options['hcp_icafix_deleteintermediates'] is not None:
+            delete_intermediates = options['hcp_icafix_deleteintermediates']
+
         comm = '%(script)s \
                 "%(inputfile)s" \
                 %(bandpass)d \
@@ -4494,8 +4504,8 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 'bandpass'              : bandpass,
                 'domot'                 : "TRUE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : f"HCP_hp{bandpass}.RData" if options['hcp_icafix_traindata'] is None else options['hcp_icafix_traindata'],
-                'fixthreshold'          : options['hcp_icafix_threshold'],
-                'deleteintermediates'   : options['hcp_icafix_deleteintermediates']}
+                'fixthreshold'          : icafix_threshold,
+                'deleteintermediates'   : delete_intermediates}
 
         # -- Report command
         if boldok:
@@ -6503,6 +6513,23 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_inregname (str, default 'NONE'):
             A string to enable multiple fMRI resolutions (e.g._1.6mm).
 
+        --hcp_resample_extractnames (str, default 'NONE'):
+            List of bolds and concat names provided in the same format as the
+            hcp_icafix_bolds parameter. Defines which bolds to extract. Exists
+            to enable extraction of a subset of the runs in a multi-run HCP
+            ICAFix group into a new concatenated series.
+
+        --hcp_resample_extractextraregnames (str, default 'NONE'):
+            Extract multi-run HCP ICAFix runs for additional surface
+            registrations, often MSMSulc
+
+        --hcp_resample_extractvolume (str, default 'NONE'):
+            Whether to also extract the specified multi-run HCP ICAFix from the
+            volume data, requires hcp_resample_extractnames to work.
+
+        --hcp_resample_msmall_templates (str, default 'NONE'):
+            Path to directory containing MSM All template files.
+
     Output files:
         The results of this step will be populated in the MNINonLinear
         folder inside the same session's root hcp folder.
@@ -6543,22 +6570,26 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             +------------------------------+---------------------------------------+
             | ``hcp_icafix_domotionreg``   | ``motion-regression``                 |
             +------------------------------+---------------------------------------+
-            | `                            | ``dont-fix-names``                    |
-            | `hcp_resample_dontfixnames`` |                                       |
+            | ``                           | ``dont-fix-names``                    |
+            | hcp_resample_dontfixnames``  |                                       |
             +------------------------------+---------------------------------------+
-            | `                            | ``myelin-target-file``                |
-            | `hcp_resample_myelintarget`` |                                       |
+            | ``                           | ``myelin-target-file``                |
+            | hcp_resample_myelintarget``  |                                       |
             +------------------------------+---------------------------------------+
             | ``hcp_resample_inregname``   | ``input-reg-name``                    |
             +------------------------------+---------------------------------------+
-            | `                            | ``multirun-fix-extract-names`` and    |
-            | `hcp_resample_extractnames`` | ``multirun-fix-extract-concat-names`` |
+            | ``                           | ``multirun-fix-extract-names`` and    |
+            | hcp_resample_extractnames``  | ``multirun-fix-extract-concat-names`` |
             +------------------------------+---------------------------------------+
             | ``hcp_res                    | ``                                    |
             | ample_extractextraregnames`` | multirun-fix-extract-extra-regnames`` |
             +------------------------------+---------------------------------------+
             | ``                           | ``multirun-fix-extract-volume``       |
             | hcp_resample_extractvolume`` |                                       |
+            +------------------------------+---------------------------------------+
+            | ``                           |                                       |
+            | hcp_resample_msmall_templates| ``msm-all-templates``                 |
+            | ``                           |                                       |
             +------------------------------+---------------------------------------+
 
     Examples:
@@ -6659,11 +6690,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-        # regname
-        regname = "%s_2_d40_WRN" % options['hcp_msmall_outregname']
-        if options['hcp_resample_regname'] is not None:
-            regname = options['hcp_resample_regname']
-
         # get group data
         bolds = group["bolds"]
 
@@ -6706,6 +6732,21 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             # add latest image
             boldtargets = boldtargets + boldtarget
 
+        # regname
+        regname = "%s_2_d40_WRN" % options['hcp_msmall_outregname']
+        if options['hcp_resample_regname'] is not None:
+            regname = options['hcp_resample_regname']
+
+        # dedrift reg files
+        regfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
+        if options['hcp_resample_reg_files'] is not None:
+            regfiles = options['hcp_resample_reg_files'].replace(",", "@")
+
+        # msm-all-templates
+        msmall_templates = hcp['hcp_base'] + "/global/templates/MSMAll"
+        if options['hcp_resample_msmall_templates'] is not None:
+            msmall_templates = options['hcp_resample_msmall_templates']
+
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -6717,49 +6758,48 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
             boldsok = False
 
-        # dedrift reg files
-        regfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
-        if options['hcp_resample_reg_files'] is not None:
-            regfiles = options['hcp_resample_reg_files'].replace(",", "@")
-
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
+            --fix-names="%(fixnames)s" \
             --high-res-mesh="%(highresmesh)s" \
             --low-res-meshes="%(lowresmeshes)s" \
             --registration-name="%(regname)s" \
-            --dedrift-reg-files="%(regfiles)s" \
-            --concat-reg-name="%(concatregname)s" \
             --maps="%(maps)s" \
-            --myelin-maps="%(myelinmaps)s" \
-            --multirun-fix-names="NONE" \
-            --multirun-fix-concat-names="NONE" \
-            --fix-names="%(fixnames)s" \
-            --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
-            --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
-            --myelin-target-file="%(myelintargetfile)s" \
-            --input-reg-name="%(inputregname)s"' % {
+            --msm-all-templates="%(msmalltemplates)s" \
+            --dedrift-reg-files="%(regfiles)s" \
+            --concat-reg-name="%(concatregname)s" \
+            --myelin-maps="%(myelinmaps)s" \
+            --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
+                'fixnames'            : boldtargets,
                 'highresmesh'         : options['hcp_highresmesh'],
                 'lowresmeshes'        : options['hcp_lowresmeshes'].replace(",", "@"),
                 'regname'             : regname,
-                'regfiles'            : regfiles,
-                'concatregname'       : options['hcp_resample_concatregname'],
                 'maps'                : options['hcp_resample_maps'].replace(",", "@"),
-                'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
-                'fixnames'            : boldtargets,
-                'dontfixnames'        : options['hcp_resample_dontfixnames'].replace(",", "@"),
                 'smoothingfwhm'       : options['hcp_bold_smoothFWHM'],
                 'highpass'            : int(highpass),
-                'matlabrunmode'       : matlabrunmode,
                 'motionregression'    : "TRUE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'myelintargetfile'    : options['hcp_resample_myelintarget'],
-                'inputregname'        : options['hcp_resample_inregname']}
+                'msmalltemplates'     : msmall_templates,
+                'regfiles'            : regfiles,
+                'concatregname'       : options['hcp_resample_concatregname'],
+                'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
+                'matlabrunmode'       : matlabrunmode}
+
+        # optional parameters
+        if options["hcp_resample_dontfixnames"] is not None:
+            comm += "                --dont-fix-names=" + options["hcp_resample_dontfixnames"].replace(",", "@")
+
+        if options["hcp_resample_myelintarget"] is not None:
+            comm += "                --myelin-target-file=" + options["hcp_resample_myelintarget"]
+
+        if options["hcp_resample_inregname"] is not None:
+            comm += "                --input-reg-name=" + options["hcp_resample_inregname"]
 
         # -- Report command
         if boldsok:
@@ -6885,6 +6925,21 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             grouptargets = grouptargets + groupname
             boldtargets = boldtargets + groupbolds
 
+        # regname
+        regname = "%s_2_d40_WRN" % options['hcp_msmall_outregname']
+        if options['hcp_resample_regname'] is not None:
+            regname = options['hcp_resample_regname']
+
+        # dedrift reg files
+        regfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
+        if options['hcp_resample_reg_files'] is not None:
+            regfiles = options['hcp_resample_reg_files'].replace(",", "@")
+
+        # msm-all-templates
+        msmall_templates = hcp['hcp_base'] + "/global/templates/MSMAll"
+        if options['hcp_resample_msmall_templates'] is not None:
+            msmall_templates = options['hcp_resample_msmall_templates']
+
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -6896,57 +6951,51 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
             runok = False
 
-        # dedrift reg files
-        regfiles = hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii" + "@" + hcp['hcp_base'] + "/global/templates/MSMAll/DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii"
-        if options['hcp_resample_reg_files'] is not None:
-            regfiles = options['hcp_resample_reg_files'].replace(",", "@")
-
-        # regname
-        regname = "%s_2_d40_WRN" % options['hcp_msmall_outregname']
-        if options['hcp_resample_regname'] is not None:
-            regname = options['hcp_resample_regname']
-
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
+            --multirun-fix-names="%(mrfixnames)s" \
+            --multirun-fix-concat-names="%(mrfixconcatnames)s" \
             --high-res-mesh="%(highresmesh)s" \
             --low-res-meshes="%(lowresmeshes)s" \
             --registration-name="%(regname)s" \
-            --dedrift-reg-files="%(regfiles)s" \
-            --concat-reg-name="%(concatregname)s" \
             --maps="%(maps)s" \
-            --myelin-maps="%(myelinmaps)s" \
-            --multirun-fix-names="%(mrfixnames)s" \
-            --multirun-fix-concat-names="%(mrfixconcatnames)s" \
-            --fix-names="NONE" \
-            --dont-fix-names="%(dontfixnames)s" \
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
-            --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
-            --myelin-target-file="%(myelintargetfile)s" \
-            --input-reg-name="%(inputregname)s"' % {
+            --msm-all-templates="%(msmalltemplates)s" \
+            --dedrift-reg-files="%(regfiles)s" \
+            --concat-reg-name="%(concatregname)s" \
+            --myelin-maps="%(myelinmaps)s" \
+            --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
+                'mrfixnames'          : boldtargets,
+                'mrfixconcatnames'    : grouptargets,
                 'highresmesh'         : options['hcp_hiresmesh'],
                 'lowresmeshes'        : options['hcp_lowresmeshes'].replace(",", "@"),
                 'regname'             : regname,
-                'regfiles'            : regfiles,
-                'concatregname'       : options['hcp_resample_concatregname'],
                 'maps'                : options['hcp_resample_maps'].replace(",", "@"),
-                'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
-                'mrfixnames'          : boldtargets,
-                'mrfixconcatnames'    : grouptargets,
-                'dontfixnames'        : options['hcp_resample_dontfixnames'].replace(",", "@"),
                 'smoothingfwhm'       : options['hcp_bold_smoothFWHM'],
                 'highpass'            : int(highpass),
-                'matlabrunmode'       : matlabrunmode,
-                'motionregression'    : "FALSE" if options['hcp_icafix_domotionreg'] is not None else options['hcp_icafix_domotionreg'],
-                'myelintargetfile'    : options['hcp_resample_myelintarget'],
-                'inputregname'        : options['hcp_resample_inregname']}
+                'motionregression'    : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
+                'msmalltemplates'     : msmall_templates,
+                'regfiles'            : regfiles,
+                'concatregname'       : options['hcp_resample_concatregname'],
+                'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
+                'matlabrunmode'       : matlabrunmode}
 
-        # -- Additional parameters
+        # optional parameters
+        if options["hcp_resample_dontfixnames"] is not None:
+            comm += "                --dont-fix-names=" + options["hcp_resample_dontfixnames"].replace(",", "@")
+
+        if options["hcp_resample_myelintarget"] is not None:
+            comm += "                --myelin-target-file=" + options["hcp_resample_myelintarget"]
+
+        if options["hcp_resample_inregname"] is not None:
+            comm += "                --input-reg-name=" + options["hcp_resample_inregname"]
+
         # -- hcp_resample_extractnames
         if options['hcp_resample_extractnames'] is not None:
             # variables for storing
