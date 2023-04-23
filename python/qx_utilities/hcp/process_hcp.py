@@ -5605,6 +5605,9 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options['run'] == "run":
+                    if os.path.exists(tfile):
+                        os.remove(tfile)
+                        
                     r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
