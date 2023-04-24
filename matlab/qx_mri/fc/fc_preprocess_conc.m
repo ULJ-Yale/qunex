@@ -118,9 +118,9 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           string:
 %
 %           - boldname        : ['bold']
-%           - surface_smooth  : [6]
-%           - volume_smooth   : [6]
-%           - voxel_smooth    : [2]
+%           - surface_smooth  : [2]
+%           - volume_smooth   : [2]
+%           - voxel_smooth    : [1]
 %           - lopass_filter   : [0.08]
 %           - hipass_filter   : [0.009]
 %           - framework_path  : ['']
@@ -339,7 +339,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %               smoothing parameters can be set in the options string:
 %
 %               - voxel_smooth
-%                   Gaussian smoothing FWHM in voxels. Defaults to 2.
+%                   Gaussian smoothing FWHM in voxels. Defaults to 1.
 %
 %               - smooth_mask
 %                   Whether to smooth only within a mask, and what mask to use
@@ -389,10 +389,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %               The following parameters can be set in the options parameter:
 %
 %               - surface_smooth
-%                   FWHM for gaussian surface smooting in mm. Defaults to 6.0.
+%                   FWHM for gaussian surface smooting in mm. Defaults to 2.0.
 %
 %               - volume_smooth
-%                   FWHM for gaussian volume smooting in mm. Defaults to 6.0.
+%                   FWHM for gaussian volume smooting in mm. Defaults to 2.0.
 %
 %               - omp_threads
 %                   Number of cores to be used by wb_command. 0 for no change of
@@ -681,7 +681,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=2|volume_smooth=2|voxel_smooth=1|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'Options used');

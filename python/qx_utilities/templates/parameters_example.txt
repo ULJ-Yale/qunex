@@ -122,9 +122,9 @@
 # 
 # # ---- CIFTI related options
 # 
-# _surface_smooth            Sigma for cifti surface smoothing [6.0]
-# _volume_smooth             Sigma for cifti volume smoothing [6.0]
-# _voxel_smooth              Extent of volume smoothing in voxels [2]
+# _surface_smooth            Sigma for cifti surface smoothing [2.0]
+# _volume_smooth             Sigma for cifti volume smoothing [2.0]
+# _voxel_smooth              Extent of volume smoothing in voxels [1]
 # _smooth_mask               Whether to use masked smoothing and what mask to use [false]
 # _dilate_mask               Whether to use dilation after smoothing and what mask to use [false]
 # _hipass_filter             Highpass filter to use [0.008]

@@ -262,9 +262,9 @@ arglist = [
     ['mov_pref',            "",                                            str,    "the prefix for the movement report files"],
 
     ['# ---- CIFTI related options'],
-    ['surface_smooth',      '6.0',                                         float,  "sigma for cifti surface smoothing"],
-    ['volume_smooth',       '6.0',                                         float,  "sigma for cifti volume smoothing"],
-    ['voxel_smooth',        '2',                                           float,  "extent of volume smoothing in voxels"],
+    ['surface_smooth',      '2.0',                                         float,  "sigma for cifti surface smoothing"],
+    ['volume_smooth',       '2.0',                                         float,  "sigma for cifti volume smoothing"],
+    ['voxel_smooth',        '1',                                           float,  "extent of volume smoothing in voxels"],
     ['smooth_mask',         'false',                                       str,    "whether to use masked smoothing and what mask to use"],
     ['dilate_mask',         'false',                                       str,    "whether to use dilation after smoothing and what mask to use"],
     ['hipass_filter',       '0.008',                                       float,  "highpass filter to use"],

@@ -1811,7 +1811,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 be done by calling the relevant wb_command command. The
                 smoothing parameters are:
 
-                --voxel_smooth (int, default 2):
+                --voxel_smooth (int, default 1):
                     Gaussian smoothing FWHM in voxels.
                 --smooth_mask (str, default false):
                     Whether to smooth only within a mask, and what mask to use
@@ -1853,9 +1853,9 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 For cifti format images, smoothing will be run using wb_command.
                 The following parameters can be set:
 
-                --surface_smooth (float, default 6.0):
+                --surface_smooth (float, default 2.0):
                     FWHM for Gaussian surface smoothing in mm.
-                --volume_smooth (float, default 6.0):
+                --volume_smooth (float, default 2.0):
                     FWHM for Gaussian volume smoothing in mm.
                 --omp_threads (int, default 0):
                     Number of cores to be used by wb_command. 0 for no change of
@@ -2523,7 +2523,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 be done by calling the relevant wb_command command. The
                 smoothing parameters are:
 
-                --voxel_smooth (int, default 2):
+                --voxel_smooth (int, default 1):
                     Gaussian smoothing FWHM in voxels.
                 --smooth_mask (str, default false):
                     Whether to smooth only within a mask, and what mask to use
@@ -2565,9 +2565,9 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 For cifti format images, smoothing will be run using wb_command.
                 The following parameters can be set:
 
-                --surface_smooth (float, default 6.0):
+                --surface_smooth (float, default 2.0):
                     FWHM for Gaussian surface smoothing in mm.
-                --volume_smooth (float, default 6.0):
+                --volume_smooth (float, default 2.0):
                     FWHM for Gaussian volume smoothing in mm.
                 --omp_threads (int, default 0):
                     Number of cores to be used by wb_command. 0 for no change of
