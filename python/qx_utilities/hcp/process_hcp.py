@@ -2574,9 +2574,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             What tool to use to preregister BOLDs before FSL BBR is 'run',
             'epi_reg' (default) or 'flirt'.
 
-        --hcp_bold_movreg (str, default 'FLIRT'):
-            Whether to use 'FLIRT' (default and best for multiband images) or
-            'MCFLIRT' for motion correction.
+        --hcp_bold_movreg (str, default 'MCFLIRT'):
+            Whether to use 'FLIRT' (usually for multiband images) or 'MCFLIRT'
+            (default) for motion correction.
 
         --hcp_bold_movref (str, default 'independent'):
             What reference to use for movement correction ('independent',
