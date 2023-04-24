@@ -5442,7 +5442,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
             # -- Run
             if run and boldok:
                 if options['run'] == "run":
-                    r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                    r, _, _, failed = pc.runExternalForFile(tfile, comm, 'Running single-run HCP ReApplyFix', overwrite=True, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(printbold)
@@ -5605,7 +5605,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options['run'] == "run":
-                    r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running multi-run HCP ReApplyFix', overwrite=True, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
 
                     if failed:
                         report['failed'].append(groupname)
@@ -5695,10 +5695,7 @@ def executeHCPHandReclassification(sinfo, options, hcp, run, singleFix, boldtarg
         # -- Run
         if run and boldok:
             if options['run'] == "run":
-                if os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP HandReclassification', thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(tfile, comm, 'Running HCP HandReclassification', overwrite=True, thread=sinfo['id'], remove=options['log'] == 'remove', task="hcp_HandReclassification", logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)
