@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 #   Automated probabilistic tractography plugin for FSL; visualisation script.
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -65,7 +65,7 @@ setIntentCode() {
 # the individual luts for each tract, combined with the intentcode in the nifti
 # header allow each tract to be displayed in FSLView with some spatial smoothing
 cd $dest
-echo "#!/bin/bash" > $command
+echo "#!/bin/bash -eu" > $command
 chmod +x $command
 Lut_list="Cool Cool Blue-Lightblue Blue-Lightblue Green Green Green Green Copper Copper Yellow Yellow Pink Pink Red Red Blue Copper Copper Blue-Lightblue Blue-Lightblue Red Red Red Red Red Red Red Red Blue-Lightblue Blue-Lightblue Hot Hot"
 arr=($Lut_list)

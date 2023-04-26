@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
