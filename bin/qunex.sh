@@ -689,121 +689,87 @@ dwi_dtifit() {
 
     # mask
     if [[ -n ${mask} ]]; then
-        optional_parameters=" \
-        --mask='${mask}'
-        "
+        optional_parameters="    --mask='${mask}'"
     fi
 
     # bvecs
     if [[ -n ${bvecs} ]]; then
-        optional_parameters="${optional_parameters} \
-        --bvecs='${bvecs}'
-        "
+        optional_parameters="${optional_parameters}    --bvecs='${bvecs}'"
     fi
 
     # bvals
     if [[ -n ${bvals} ]]; then
-        optional_parameters="${optional_parameters} \
-        --bvals='${bvals}'
-        "
+        optional_parameters="${optional_parameters}     --bvals='${bvals}'"
     fi
 
     # cni
     if [[ -n ${cni} ]]; then
-        optional_parameters="${optional_parameters} \
-        --cni='${cni}'
-        "
+        optional_parameters="${optional_parameters}    --cni='${cni}'"
     fi
 
     # sse
     if [[ -n ${sse} ]]; then
-        optional_parameters="${optional_parameters} \
-        --sse
-        "
+        optional_parameters="${optional_parameters}    --sse"
     fi
 
     # wls
     if [[ -n ${wls} ]]; then
-        optional_parameters="${optional_parameters} \
-        --wls
-        "
+        optional_parameters="${optional_parameters}    --wls"
     fi
 
     # kurt
     if [[ -n ${kurt} ]]; then
-        optional_parameters="${optional_parameters} \
-        --kurt
-        "
+        optional_parameters="${optional_parameters}    --kurt"
     fi
 
     # kurtdir
     if [[ -n ${kurtdir} ]]; then
-        optional_parameters="${optional_parameters} \
-        --kurtdir
-        "
+        optional_parameters="${optional_parameters}    --kurtdir"
     fi
 
     # littlebit
     if [[ -n ${littlebit} ]]; then
-        optional_parameters="${optional_parameters} \
-        --littlebit
-        "
+        optional_parameters="${optional_parameters}    --littlebit"
     fi
 
     # save_tensor
     if [[ -n ${save_tensor} ]]; then
-        optional_parameters="${optional_parameters} \
-        --save_tensor
-        "
+        optional_parameters="${optional_parameters}    --save_tensor"
     fi
 
     # zmin
     if [[ -n ${zmin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --zmin='${zmin}'
-        "
+        optional_parameters="${optional_parameters}    --zmin='${zmin}'"
     fi
 
     # zmax
     if [[ -n ${zmax} ]]; then
-        optional_parameters="${optional_parameters} \
-        --zmax='${zmax}'
-        "
+        optional_parameters="${optional_parameters}    --zmax='${zmax}'"
     fi
 
     # ymin
     if [[ -n ${ymin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --ymin='${ymin}'
-        "
+        optional_parameters="${optional_parameters}    --ymin='${ymin}'"
     fi
 
     # ymax
     if [[ -n ${ymax} ]]; then
-        optional_parameters="${optional_parameters} \
-        --ymax='${ymax}'
-        "
+        optional_parameters="${optional_parameters}    --ymax='${ymax}'"
     fi
 
     # xmin
     if [[ -n ${xmin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --xmin='${xmin}'
-        "
+        optional_parameters="${optional_parameters}    --xmin='${xmin}'"
     fi
 
     # xmax
     if [[ -n ${xmax} ]]; then
-        optional_parameters="${optional_parameters} \
-        --xmax='${xmax}'
-        "
+        optional_parameters="${optional_parameters}    --xmax='${xmax}'"
     fi
 
     # gradnonlin
     if [[ -n ${gradnonlin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --gradnonlin='${gradnonlin}'
-        "
+        optional_parameters="${optional_parameters}    --gradnonlin='${gradnonlin}'"
     fi
 
     # -- Specify command variable
@@ -812,6 +778,7 @@ dwi_dtifit() {
     --session='${CASE}' \
     --overwrite='${Overwrite}' \
     --species='${Species}' ${optional_parameters}"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
