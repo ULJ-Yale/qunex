@@ -1871,7 +1871,7 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
     # build the command
     if run:
         comm = '%(script)s \
-            --study-folder="%(studyfolder)s" \
+            --path="%(studyfolder)s" \
             --subject="%(subject)s" \
             --sessions="%(sessions)s" \
             --template-id="%(templateid)s"' % {
