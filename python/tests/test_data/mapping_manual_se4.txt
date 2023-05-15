@@ -1,0 +1,21 @@
+#  HCP mapping file
+#  ----------------
+
+1  => T1w      
+3  => T2w      
+5  => SE-FM-AP 
+6  => SE-FM-PA 
+7  => SE-FM-AP 
+8  => SE-FM-PA 
+9  => SE-FM-AP 
+10 => SE-FM-PA 
+11 => boldref:task1 : phenc(AP)
+12 => bold:task1    : phenc(AP)
+13 => boldref:task2 : phenc(AP)
+14 => bold:task2    : phenc(AP)
+15 => boldref:task3 : phenc(AP)
+16 => bold:task3    : phenc(AP)
+17 => boldref:rest  : phenc(AP)
+18 => bold:rest     : phenc(AP)
+19 => DWI:dirxx_AP  
+20 => DWI:dirxx_AP  

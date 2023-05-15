@@ -368,6 +368,10 @@ def _parse_image_line_tags(tokens, line_type):
     for token in token_iter:
         # TODO: python 3.8 https://docs.python.org/3/whatsnew/3.8.html#assignment-expressions
         # assignment expressions will make the code much more readable and less error prone
+        
+        if token == "":
+            continue
+
         se_match = RE_TAG_SE.match(token)
         if se_match:
             img_info["se"] = int(se_match.group(1))

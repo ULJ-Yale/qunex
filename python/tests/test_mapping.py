@@ -6,7 +6,8 @@ from general.parser import (
     _parse_session_file_lines,
 )
 from general.utilities import _reserved_bold_numbers, _process_pipeline_hcp_mapping, _serialize_session
-
+from general.exceptions import CommandError
+import pytest
 
 def _run_mapping_test(sf, mf):
     """Helper function performs mapping based on session and mapping file name
@@ -135,3 +136,37 @@ def test_mapping_bold_num():
     expected = _load_expected_mapping("session_boldnum3_hcp.txt")
     print("\n".join(lines))
     assert result == expected
+
+def test_mapping_manual_se_fm():
+    """Honor manually assigned spin-echo and field-map numbers
+
+    When se/fm is defined in the session / mapping file, the mapping should respect the tag
+    when assigning bold number
+    """
+    _, lines = _run_mapping_test("session_manual1.txt", "mapping_manual_se1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_manual1_hcp1.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+    _, lines = _run_mapping_test("session_manual1.txt", "mapping_manual_se2.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_manual1_hcp2.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+    with pytest.raises(CommandError) as exc_info:
+        _run_mapping_test("session_manual1.txt", "mapping_manual_se3_err.txt")
+    print(exc_info.value.args)
+    
+    # se defined in session file, so we will not run auto assign for other spin-echo images.
+    _, lines = _run_mapping_test("session_manual2.txt", "mapping_manual_se4.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_manual2_hcp4.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+    # This mapping file expects se images to be auto-assigned and uses them.
+    with pytest.raises(CommandError) as exc_info:
+        _run_mapping_test("session_manual2.txt", "mapping_manual_se1.txt")
+    print(exc_info.value.args)

@@ -1,0 +1,26 @@
+session: 123_1
+subject: 123
+bids: /data/123_1/bids
+raw_data: /data/123_1/nii
+hcp: /data/123_1/hcp
+
+1: T1w ce-corrected
+2: T1w ce-uncorrected
+3: T2w ce-corrected
+4: FLAIR
+5: epi dir-AP acq-dwi
+6: epi dir-PA acq-dwi
+7: epi dir-AP acq-func
+8: epi dir-PA acq-func
+9: epi dir-AP acq-task
+10: epi dir-PA acq-task
+11: sbref task1
+12: bold task1
+13: sbref task2
+14: bold task2
+15: sbref task3
+16: bold task3
+17: sbref rest
+18: bold rest
+19: dwi
+20: dwi
