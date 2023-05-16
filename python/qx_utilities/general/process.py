@@ -345,6 +345,7 @@ arglist = [
     ['# --- hcp_post_freesurfer options'],
     ['hcp_mcsigma',            '',                                         str,    "Correction sigma used for metric smooting (sqrt(200): 14.14213562373095048801) ['']."],
     ['hcp_inflatescale',       '1',                                        str,    "Inflate extra scale parameter [1]."],
+    ['hcp_fs_ind_mean',        'YES',                                      str,    "Whether to use the mean of the subject's myelin map as reference [YES]."],
 
     ['# --- hcp_fmri_volume options'],
     ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE, LEGACY or SEBASED (for TOPUP DC only). HCP Pipelines only!"],
