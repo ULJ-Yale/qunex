@@ -2868,27 +2868,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ============================= =======================
             QuNex parameter               HCPpipelines parameter
             ============================= =======================
-            ``hcp_bold_res``              ``fmrires``
-            ``hcp_bold_biascorrection``   ``biascorrection``
-            ``hcp_bold_echodiff``         ``echodiff``
-            ``hcp_gdcoeffs``              ``gdcoeffs``
-            ``hcp_bold_dcmethod``         ``dcmethod``
-            ``hcp_bold_echospacing``      ``echospacing``
-            ``hcp_bold_unwarpdir``        ``unwarpdir``
-            ``hcp_bold_topupconfig``      ``topupconfig``
-            ``hcp_bold_dof``              ``dof``
-            ``hcp_printcom``              ``printcom``
-            ``hcp_bold_usejacobian``      ``usejacobian``
-            ``hcp_bold_movreg``           ``mctype``
-            ``hcp_bold_preregistertool``  ``preregistertool``
-            ``hcp_processing_mode``       ``processing-mode``
-            ``hcp_bold_doslicetime``      ``slicetimerparams`
-            ``hcp_bold_slicetimerparams`` ``slicetimerparams``
-            ``hcp_bold_slicetimingfile``  ``slicetimerparams``
-            ``hcp_bold_stcorrdir``        ``slicetimerparams``
-            ``hcp_bold_stcorrint``        ``slicetimerparams``
-            ``hcp_bold_refreg``           ``fmrirefreg``
-            ``hcp_bold_mask``             ``fmrimask``
+
             ============================= =======================
 
     Examples:
