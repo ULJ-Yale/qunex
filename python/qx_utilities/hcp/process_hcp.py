@@ -2755,7 +2755,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             movement and spin-echo reference present the most significant
             change from the original way fMRIVolume is run and should be
             explained more in detail. Originally, each fMRI image is processed
-            independently and registered to the individual’s T1w image. Whereas
+            independently and registered to the individual's T1w image. Whereas
             this works well for high-resolution multiband fMRI images, in our
             experience the results are not optimal for legacy (non-multiband)
             fMRI images of lower resolution. Due to slight changes in the
@@ -2862,6 +2862,34 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             Do note that the best performing settings are study dependent and need
             to be evaluated on a study by study basis.
+
+        hcp_fmri_volume parameter mapping:
+
+            ============================= =======================
+            QuNex parameter               HCPpipelines parameter
+            ============================= =======================
+            ``hcp_bold_res``              ``fmrires``
+            ``hcp_bold_biascorrection``   ``biascorrection``
+            ``hcp_bold_echodiff``         ``echodiff``
+            ``hcp_gdcoeffs``              ``gdcoeffs``
+            ``hcp_bold_dcmethod``         ``dcmethod``
+            ``hcp_bold_echospacing``      ``echospacing``
+            ``hcp_bold_unwarpdir``        ``unwarpdir``
+            ``hcp_bold_topupconfig``      ``topupconfig``
+            ``hcp_bold_dof``              ``dof``
+            ``hcp_printcom``              ``printcom``
+            ``hcp_bold_usejacobian``      ``usejacobian``
+            ``hcp_bold_movreg``           ``mctype``
+            ``hcp_bold_preregistertool``  ``preregistertool``
+            ``hcp_processing_mode``       ``processing-mode``
+            ``hcp_bold_doslicetime``      ``slicetimerparams`
+            ``hcp_bold_slicetimerparams`` ``slicetimerparams``
+            ``hcp_bold_slicetimingfile``  ``slicetimerparams``
+            ``hcp_bold_stcorrdir``        ``slicetimerparams``
+            ``hcp_bold_stcorrint``        ``slicetimerparams``
+            ``hcp_bold_refreg``           ``fmrirefreg``
+            ``hcp_bold_mask``             ``fmrimask``
+            ============================= =======================
 
     Examples:
         Example run from the base study folder with test flag::
