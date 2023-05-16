@@ -2289,10 +2289,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
             echospacing = dwiinfo['EchoSpacing']
-            r += "\n---> Using image specific EchoSpacing: %s ms" % (echospacing)
+            r += "\n---> Using image specific EchoSpacing: %s" % (echospacing)
         else:
             echospacing = options['hcp_dwi_echospacing']
-            r += "\n---> Using study general EchoSpacing: %s ms" % (echospacing)
+            r += "\n---> Using study general EchoSpacing: %s" % (echospacing)
+
+        # -- check echospacing
+        if float(echospacing) < 0.5 and float(echospacing) > 1:
+            r += f"\nWARNING: the value of echospacing [{echospacing}] is not within the expected range!"
 
         # --- build the command
         if run:
