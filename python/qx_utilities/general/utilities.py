@@ -3132,9 +3132,18 @@ def _process_pipeline_hcp_mapping(src_session, mapping_rules):
     # assign numbers for bold and boldref images 
     _assign_bold_number(tgt_session, reserved_bold_numbers)
 
+    # find user defined se/fm in session or mapping file
+    user_defined_field_map_fm = _find_user_defined_field_maps(tgt_session, "fm")
+    user_defined_field_map_se = _find_user_defined_field_maps(tgt_session, "se")
+    
+    # skip this step when there are user defined entries.
     # execute FSM to identify proper se/fm pairs
-    field_map_fm = _find_field_maps(tgt_session, "fm")
-    field_map_se = _find_field_maps(tgt_session, "se")
+    if len(user_defined_field_map_fm) > 0 or len(user_defined_field_map_se) > 0:
+        field_map_fm = user_defined_field_map_fm
+        field_map_se = user_defined_field_map_se
+    else:
+        field_map_fm = _find_field_maps(tgt_session, "fm")
+        field_map_se = _find_field_maps(tgt_session, "se")
 
     # assign se/fm number only proper SE/FM pairs will be assigned with proper
     # HCP image type tag
@@ -3202,6 +3211,10 @@ def _apply_image_rule(img_info, rule):
         "applied_rule": rule,
         "additional_tags": [img_info["series_description"]] + img_info["additional_tags"] + rule["additional_tags"]
     }
+    if "se" in img_info:
+        new_img_info["se"] = img_info["se"]
+    if "fm" in img_info:
+        new_img_info["fm"] = img_info["fm"]
     for i in pass_through_tags:
         if i in img_info and i in rule:
             raise ge.SpecFileSyntaxError(
@@ -3310,12 +3323,47 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
             image["hcp_image_type"] = (
                 hcp_image_type[0], bold_num, hcp_image_type[2])
 
+def _find_user_defined_field_maps(tgt_session, field_map_type):
+    """
+    Find user-defined spin-echo / field map numbers. 
+
+    User could define se/fm in mapping or session file. Here we only record
+    se/fm numbers defined on actual field map images. The output of this function
+    is used to decide whether we will run the auto-assign FSM. 
+
+    TODO: currently this function does not check the number for images associated
+    with each se/fm number.
+    """
+
+    user_defined = {}
+
+    for img_num, img_info in tgt_session["images"].items():
+        rule = img_info["applied_rule"]
+        hcp_image_type = rule.get("hcp_image_type")
+
+        fm_num = img_info.get(field_map_type, rule.get(field_map_type))
+
+        if fm_num is None or hcp_image_type is None:
+            continue
+        
+        if (field_map_type == "fm" and hcp_image_type[0] in ("FM", "FM-GE")) \
+            or (field_map_type == "se" and hcp_image_type[0] == "SE-FM"):
+            
+            fm_images = user_defined.get(fm_num, list())
+            fm_images.append(img_num)
+
+            user_defined[fm_num] = fm_images
+
+    return user_defined
 
 def _find_field_maps(tgt_session, field_map_type):
     """Using a finite state machine to identify field map pairs
 
     The FSM iterates over the list of images in reverse order, to preferentially
     identify the second and third image as a pair in this case AP (PA AP).
+
+    Returns: A dictionary where the key is the field map number and the value is a tuple
+             containing the image number of one or two images. 
     """
     IDLE_STATE = 0
     LOOKING_FOR_PAIR_STATE = 1
@@ -3403,8 +3451,10 @@ def _find_field_maps(tgt_session, field_map_type):
                 pending_image = None
                 looking_for_dir = None
 
-    found_fm.reverse()
-    return found_fm
+    res = {}
+    for idx, fm in enumerate(reversed(found_fm)):
+        res[idx + 1] = fm
+    return res
 
 
 def _assign_field_maps(tgt_session, field_maps, field_map_type):
@@ -3420,11 +3470,11 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
     images = tgt_session["images"]
     image_numbers = list(sorted(images.keys()))
     fm_range = []  # starting index for each fm pair
+    fm_number = []
 
     img_idx = 0
-    for fm_idx, fm in enumerate(field_maps):
-        fm_hint = fm_idx + 1
-        # assign fm
+    # we iterate over field maps in the same order as they appear based on the first image
+    for fm_hint, fm in sorted(field_maps.items(), key=lambda kv: min(kv[1])):
         for fm_img_num in fm:
             image = images[fm_img_num]
             rule = image["applied_rule"]
@@ -3437,13 +3487,14 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
             img_idx += 1
 
         fm_range.append(img_idx)
+        fm_number.append(fm_hint)
 
     fm_range.append(len(image_numbers))
     # everything before the first field map will be assigned with the first fm
     fm_range[0] = 0
 
     for fm_idx, (st, ed) in enumerate(zip(fm_range[:-1], fm_range[1:])):
-        fm_hint = fm_idx + 1
+        fm_hint = fm_number[fm_idx]
         for i in range(st, ed):
             image = images[image_numbers[i]]
             rule = image["applied_rule"]
@@ -3451,6 +3502,11 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
 
             if hcp_image_type is None:
                 continue
+            elif image.get(field_map_type) is not None or rule.get(field_map_type) is not None:
+                user_defined_sefm = image.get(field_map_type, rule.get(field_map_type))
+                if user_defined_sefm not in fm_number:
+                    raise ge.CommandError("create_session_info", f"User specified spin-echo or field map number {field_map_type}({user_defined_sefm}) does not exist")
+                image[field_map_type] = user_defined_sefm
             elif hcp_image_type[0] in ["T1w", "T2w", "DWI", "ASL", "bold", "boldref"]:
                 image[field_map_type] = fm_hint
 
