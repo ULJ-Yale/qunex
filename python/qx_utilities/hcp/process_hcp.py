@@ -82,11 +82,8 @@ def getHCPPaths(sinfo, options):
 
     # ---- HCP Pipeline folders
 
-    # default
-    if options['hcp_pipeline'] is None:
-        options['hcp_pipeline'] = os.environ['HCPPIPEDIR']
-    else:
-        os.environ['HCPPIPEDIR'] = options['hcp_pipeline']
+    # set location of HCP Pipelines
+    options['hcp_pipeline'] = os.environ['HCPPIPEDIR']
 
     base                    = options['hcp_pipeline']
 

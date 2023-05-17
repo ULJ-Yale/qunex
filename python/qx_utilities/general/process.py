@@ -285,7 +285,6 @@ arglist = [
     ['hcp_folderstructure',    'hcpls',                                    str,    "If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically, the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study is used. Specifically, the source files are all stored within their individual subfolders located in the joint 'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder. ['hcpls']"],
     ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder."],
     ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE."],
-    ['hcp_pipeline',           '',                                         isNone, "Path to the HCP pipeline base folder."],
     ['hcp_suffix',             '',                                         str,    "session id suffix if running HCP preprocessing variants."],
     ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE."],
     ['hcp_printcom',           '',                                         str,    "Print command for the HCP scripts: set to echo to have commands printed and not executed.."],
