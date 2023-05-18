@@ -1684,9 +1684,6 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         --r
             Regression (nuisance and/or task) with an optional number 0, 1, or 2
             specifying the type of regression to use (see REGRESSION below).
-        --c
-            Saving of resulting beta coefficients (always to follow 'r').
-            [deprecated -> see glm_results]
         --l
             Low-pass filtering.
 
@@ -1925,9 +1922,6 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             --glm_matrix (str, default 'none'):
                 Whether to save the GLM matrix as a text file ('text'), a png
                 image file ('image'), both ('both') or not ('none').
-            --glm_residuals (str, default 'save'):
-                Whether to save the residuals after GLM regression ('save') or
-                not ('none'). [deprecated -> see glm_results]
             --glm_results (str, default 'c,r')
                 A string  which of the GLM analysis results are saved.
                 Possible values are:
@@ -1940,7 +1934,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                   coefficients.
                 --'r''  ... Saving of resulting residuals of the GLM.
                 --'all' ... Saving all of the results above.
-                
+
             --glm_name (str, default ''):
                 An additional name to add to the residuals and GLM files to
                 distinguish between different possible models used.
