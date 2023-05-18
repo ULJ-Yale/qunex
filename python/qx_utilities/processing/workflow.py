@@ -1914,7 +1914,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 - 'WB'    ... whole brain signal
                 - '1d'    ... first derivative of above nuisance signals
                 - 'e'     ... events listed in the provided fidl files (see
-                  above), modeled as specified in the event_string parameter.
+                   above), modeled as specified in the event_string parameter.
 
             --event_string (str, default ''):
                 A string describing, how to model the events listed in the
@@ -1938,64 +1938,6 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             --glm_name (str, default ''):
                 An additional name to add to the residuals and GLM files to
                 distinguish between different possible models used.
-
-        GLM modeling:
-            There are two important variables that affect the exact GLM
-            model used to estimate nuisance and task beta coefficients and
-            regress them from the signal. The first is the optional number
-            following the 'r' command in the --bold_actions parameter.
-            There are three options:
-
-            - '0' ... Estimate nuisance regressors for each bold file
-                separately, however, model events across all bold files (the
-                default if no number is) specified.
-            - '1' ... Estimate both nuisance regressors and task regressors
-                for each bold run separately.
-            - '2' ... Estimate both nuisance regressors as well as task
-                regressors across all bold runs.
-
-            The second key variable is the event string provided by the
-            event_string parameter. The event string is a pipe ('|')
-            separated list of regressor specifications. The possibilities
-            are discussed below:
-
-        Naming And Behavioral Regressors:
-            Each of the above (unassumed and assumed modeling
-            specification) can be followed by a ">" (greater-than
-            character), which signifies additional information in the
-            form::
-
-                <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
-
-            --name
-                The name of the resulting regressor.
-            --column
-                The number of the additional behavioral regressors
-                column in the fidl file (1-based) to use as a weight
-                for the regressors.
-            --normalization_span
-                Whether to normalize the behavioral weight within a
-                specific event type ('within') or across all events
-                ('across'). [within]
-            --normalization_method
-                The method to use for normalization. Options are:
-
-                - 'z'    (compute Z-score)
-                - '01'   (normalize to fixed range 0 to 1)
-                - '-11'  (normalize to fixed range -1 to 1)
-                - 'none' (use weights as provided in fidl file)
-
-                Example string::
-
-                    'block:boynton|target:9|target:9>target_rt:1:within:z'
-
-                This would result in three sets of task regressors: one
-                assumed task regressor for the sustained activity across
-                the block, one unassumed task regressor set spanning 9
-                frames that would model the presentation of the target, and
-                one behaviorally weighted unassumed regressor that would
-                for each frame estimate the variability in response as
-                explained by the reaction time to the target.
 
         Results:
             This step results in the following files (if requested):
