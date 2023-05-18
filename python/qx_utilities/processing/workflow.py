@@ -1959,63 +1959,67 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             separated list of regressor specifications. The possibilities
             are discussed below:
 
-        Unassumed Modeling:
-            <fidl code>:<length in frames>
+            Unassumed Modeling:
+                ::
 
-            Where <fidl code> is the code for the event used in the fidl
-            file, and <length in frames> specifies, for how many frames
-            of the bold run (since the onset of the event) the event
-            should be modeled.
+                    <fidl code>:<length in frames>
 
-        Assumed Modeling:
-            <fidl code>:<hrf>[-run|-uni][:<length>]
+                Where <fidl code> is the code for the event used in the fidl
+                file, and <length in frames> specifies, for how many frames
+                of the bold run (since the onset of the event) the event
+                should be modeled.
 
-            Where <fidl code> is the same as above, <hrf> is the type of
-            the hemodynamic response function to use, '-run' and '-uni'
-            specify how the regressor should be normalized, and
-            <length> is an optional parameter, with its value dependent
-            on the model used. The allowed <hrf> are:
+            Assumed Modeling:
+                ::
 
-            - 'boynton' ... uses the Boynton HRF
-            - 'SPM'     ... uses the SPM double gaussian HRF
-            - 'u'       ... unassumed (see above)
-            - 'block'   ... block response.
+                    <fidl code>:<hrf>[-run|-uni][:<length>]
 
-            For the first two, the <length> parameter is optional and
-            would override the event duration information provided in
-            the fidl file. For 'u' the length is the same as in
-            previous section: the number of frames to model. For
-            'block' length should be two numbers separated by a colon
-            (e.g. 2:9) that specify the start and end offset (from the
-            event onset) to model as a block.
+                Where <fidl code> is the same as above, <hrf> is the type of
+                the hemodynamic response function to use, '-run' and '-uni'
+                specify how the regressor should be normalized, and
+                <length> is an optional parameter, with its value dependent
+                on the model used. The allowed <hrf> are:
 
-            Assumed HRF regressors normalization:
-                hrf_types `boynton` and `SPM` can be marked with an
-                additional flag denoting how to normalize the
-                regressor.
+                - 'boynton' ... uses the Boynton HRF
+                - 'SPM'     ... uses the SPM double gaussian HRF
+                - 'u'       ... unassumed (see above)
+                - 'block'   ... block response.
 
-                In case of `<hrf function>-uni`, e.g. 'boynton-uni' or
-                'SPM-uni', the HRF function will be normalized to have
-                the area under the curve equal to 1. This ensures
-                uniform and universal, scaling of the resulting
-                regressor across all event lengths. In addition, the
-                scaling is not impacted by weights (e.g. behavioral
-                coregressors), which in turn ensures that the weights
-                are not scaled.
+                For the first two, the <length> parameter is optional and
+                would override the event duration information provided in
+                the fidl file. For 'u' the length is the same as in
+                previous section: the number of frames to model. For
+                'block' length should be two numbers separated by a colon
+                (e.g. 2:9) that specify the start and end offset (from the
+                event onset) to model as a block.
 
-                In case of `<hrf function>-run`, e.g. `boynton-run` or
-                `SPM-run`, the resulting regressor is normalized to
-                amplitude of 1 within each bold run separately. This
-                can result in different scaling of regressors with
-                different durations, and of the same regressor across
-                different runs. Scaling in this case is performed after
-                the signal is weighted, so in effect the scaling of
-                weights (e.g. behavioral regressors), can differ across
-                bold runs.
+                Assumed HRF regressors normalization:
+                    hrf_types `boynton` and `SPM` can be marked with an
+                    additional flag denoting how to normalize the
+                    regressor.
 
-                The flag can be abbreviated to '-r' and '-u'. If not
-                specified, '-run' will be assumed (the default might
-                change).
+                    In case of `<hrf function>-uni`, e.g. 'boynton-uni' or
+                    'SPM-uni', the HRF function will be normalized to have
+                    the area under the curve equal to 1. This ensures
+                    uniform and universal, scaling of the resulting
+                    regressor across all event lengths. In addition, the
+                    scaling is not impacted by weights (e.g. behavioral
+                    coregressors), which in turn ensures that the weights
+                    are not scaled.
+
+                    In case of `<hrf function>-run`, e.g. `boynton-run` or
+                    `SPM-run`, the resulting regressor is normalized to
+                    amplitude of 1 within each bold run separately. This
+                    can result in different scaling of regressors with
+                    different durations, and of the same regressor across
+                    different runs. Scaling in this case is performed after
+                    the signal is weighted, so in effect the scaling of
+                    weights (e.g. behavioral regressors), can differ across
+                    bold runs.
+
+                    The flag can be abbreviated to '-r' and '-u'. If not
+                    specified, '-run' will be assumed (the default might
+                    change).
 
         Naming And Behavioral Regressors:
             Each of the above (unassumed and assumed modeling
@@ -2391,8 +2395,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
         --r     Regression (nuisance and/or task) with an optional number 0, 1,
                 or 2 specifying the type of regression to use (see REGRESSION
                 below).
-        --c     Saving of resulting beta coefficients (always to follow 'r').
-                [deprecated -> see glm_results]
         --l     Low-pass filtering.
 
         So the default 's,h,r,c,l' --bold_actions parameter would lead to the
@@ -2641,9 +2643,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             --glm_matrix (str, default 'none'):
                 Whether to save the GLM matrix as a text file ('text'), a png
                 image file ('image'), both ('both') or not ('none').
-            --glm_residuals (str, default 'save'):
-                Whether to save the residuals after GLM regression ('save') or
-                not ('none'). [deprecated -> see glm_results]
             --glm_results (str, default 'c,r')
                 A string  which of the GLM analysis results are saved.
                 Possible values are:
