@@ -1,4 +1,4 @@
-function [B, res, rvar, Xdof] = img_glm_fit(obj, X)
+function [B, res, rvar, Xdof, B_se, B_z, B_pval] = img_glm_fit(obj, X)
 
 %``img_glm_fit(obj, X)``.
 %
@@ -8,19 +8,25 @@ function [B, res, rvar, Xdof] = img_glm_fit(obj, X)
 %    ======
 %
 %    --obj   nimage image object
-%   --X     predictor matrix (frames x predictors)
+%    --X     predictor matrix (frames x predictors)
 %
 %   OUTPUTS
 %    =======
 %
 %   B
 %        beta weights image
+%   res
+%        residual image
 %   rvar
 %        variance of the residual
 %   Xdof
 %        model degrees of freedom
-%   res
-%        residual image
+%   B_se
+%        standard error of beta weights
+%   B_z
+%        z scores of beta weights
+%   B_pval
+%        P-values of beta weights
 %
 %   USE
 %    ===
@@ -66,20 +72,62 @@ good(find(~good & mean(X)==1,1)) = true;
 
 % ---- compute GLM
 
+% ---- image of beta coefficients
 B = obj.zeroframes(size(X,2));
 B.data = reshape(B.data,B.frames,B.voxels);
+
+% --- extract data from the input image
 obj.data = obj.image2D';
+y = obj.data;
 X = X(:,good);
-B.data(good,:) = ((X'*X)\X')*obj.data; % was (INV(X'*X)*X')*obj.data;
+
+% ---- estimate beta coefficients
+beta = ((X'*X)\X')*y; % was (INV(X'*X)*X')*y;
+
+% ---- embed beta weights to output
+B.data(good,:) = beta;
 
 if nargout > 1
-    res  = obj;
-    res.data = (obj.data - X*B.data(good,:))';
+    % ---- compute the residuals
+    res = obj;
+    residuals = (y - X*beta);
+    res.data = residuals';
 
     if nargout > 2
+        % ---- compute the degrees of freedom
         Xdof = size(X,1) - size(X,2);
+
+        % ---- compute the mean squared error (MSE)
+        MSE = sum(residuals.^2,1) / Xdof;
         rvar = obj.zeroframes(1);
-        rvar.data = sum(res.data.^2,2)/Xdof;
+        rvar.data = MSE';
+        
+        if nargout > 4
+            B_se = obj.zeroframes(size(X,2));
+            B_se.data = reshape(B_se.data,B_se.frames,B_se.voxels);
+
+            B_z = obj.zeroframes(size(X,2));
+            B_z.data = reshape(B_z.data,B_z.frames,B_z.voxels);
+
+            B_pval = obj.zeroframes(size(X,2));
+            B_pval.data = reshape(B_pval.data,B_pval.frames,B_pval.voxels);
+
+            % ---- compute the standard error of beta estimates
+            var_beta = diag(inv(X'*X));
+            SE_beta = sqrt(MSE' * var_beta')';
+
+            % ---- compute the z-scores and p-values for beta estimates
+            z_beta = beta  .* (1./SE_beta);
+            p_beta = 2 .* (1 - normcdf(abs(z_beta)));
+
+            % ---- embed data to output images
+            B_se.data(good,:) = SE_beta;
+            B_se.data = B_se.data';
+            B_z.data(good,:) = z_beta;
+            B_z.data = B_z.data';
+            B_pval.data(good,:) = p_beta;
+            B_pval.data = B_pval.data';
+        end
     end
 end
 

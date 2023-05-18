@@ -817,9 +817,9 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         raise ge.CommandFailed("create_batch", "Not all sessions specified added to the batch file!", "%s was missing for %d session(s)!" % (sfile, missing), "Please check your data!")
 
 
-def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
+def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
     """
-    ``create_list [sessionsfolder="."] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
+    ``create_list [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Creates a .list formatted file that can be used as input to a number of
     processing and analysis functions. The function is fairly flexible, its
@@ -1228,9 +1228,9 @@ def create_list(sessionsfolder=".", sessions=None, filter=None, listfile=None, b
     lfile.close()
 
 
-def create_conc(sessionsfolder=".", sessions=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
+def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
     """
-    ``create_conc [sessionsfolder="."] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
+    ``create_conc [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Creates a set of .conc formated files that can be used as input
     to a number of processing and analysis functions. The function is fairly
