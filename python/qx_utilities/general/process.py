@@ -241,6 +241,7 @@ arglist = [
     ['# ---- GLM related options'],
     ['glm_matrix',          'none',                                        str,    "Whether to save GLM regressor matrix in text (text), image (image) or both (both) formats, or not (none)."],
     ['glm_residuals',       'save',                                        str,    "Whether to save GLM residuals (save) or not (none)."],
+    ['glm_results',        'c,r',                                          str,    "Which results of GLM to save. A comma or space separted string, specifying 'c' (beta coefficients), 'z' (coefficient z-scores), 'p', (coefficient p-values), 'se' (coefficiente standard errors), 'r' (residuals), 'all' (all listed)."],
     ['glm_name',            '',                                            str,    "Additional name to the residuals and coefficient file to distinguish between different posible models."],
 
     ['# ---- Movement thresholding and report options'],
