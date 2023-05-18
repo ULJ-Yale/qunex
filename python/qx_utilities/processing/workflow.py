@@ -1901,43 +1901,126 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             beta estimates for further activation analyses. The following
             parameters are used in this step:
 
-            --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
-                A comma separated list of regressors to include in GLM.
-                Possible values are:
 
-                - 'm'     ... motion parameters
-                - 'm1d'   ... first derivative of motion parameters
-                - 'mSq'   ... squared motion parameters
-                - 'm1dSq' ... squared first derivative of motion parameters
-                - 'V'     ... ventricles signal
-                - 'WM'    ... white matter signal
-                - 'WB'    ... whole brain signal
-                - '1d'    ... first derivative of above nuisance signals
-                - 'e'     ... events listed in the provided fidl files (see
-                   above), modeled as specified in the event_string parameter.
+        GLM modeling:
+            There are two important variables that affect the exact GLM
+            model used to estimate nuisance and task beta coefficients and
+            regress them from the signal. The first is the optional number
+            following the 'r' command in the --bold_actions parameter.
+            There are three options:
 
-            --event_string (str, default ''):
-                A string describing, how to model the events listed in the
-                provided fidl files.
-            --glm_matrix (str, default 'none'):
-                Whether to save the GLM matrix as a text file ('text'), a png
-                image file ('image'), both ('both') or not ('none').
-            --glm_results (str, default 'c,r')
-                A string  which of the GLM analysis results are saved.
-                Possible values are:
+            - '0' ... Estimate nuisance regressors for each bold file
+                separately, however, model events across all bold files (the
+                default if no number is) specified.
+            - '1' ... Estimate both nuisance regressors and task regressors
+                for each bold run separately.
+            - '2' ... Estimate both nuisance regressors as well as task
+                regressors across all bold runs.
 
-                - 'c'   ... Saving of resulting beta coefficients.
-                - 'z'   ... Saving of resulting z-scores of beta coefficients.
-                - 'p'   ... Saving of resulting session-level p-values of beta 
-                   coefficients.
-                - 'se'  ... Saving of resulting standard errors of beta
-                   coefficients.
-                - 'r'   ... Saving of resulting residuals of the GLM.
-                - 'all' ... Saving all of the results above.
+            The second key variable is the event string provided by the
+            event_string parameter. The event string is a pipe ('|')
+            separated list of regressor specifications. The possibilities
+            are discussed below:
 
-            --glm_name (str, default ''):
-                An additional name to add to the residuals and GLM files to
-                distinguish between different possible models used.
+            Unassumed Modeling:
+                ::
+
+                    <fidl code>:<length in frames>
+
+                Where <fidl code> is the code for the event used in the fidl
+                file, and <length in frames> specifies, for how many frames
+                of the bold run (since the onset of the event) the event
+                should be modeled.
+
+            Assumed Modeling:
+                ::
+
+                    <fidl code>:<hrf>[-run|-uni][:<length>]
+
+                Where <fidl code> is the same as above, <hrf> is the type of
+                the hemodynamic response function to use, '-run' and '-uni'
+                specify how the regressor should be normalized, and
+                <length> is an optional parameter, with its value dependent
+                on the model used. The allowed <hrf> are:
+
+                - 'boynton' ... uses the Boynton HRF
+                - 'SPM'     ... uses the SPM double gaussian HRF
+                - 'u'       ... unassumed (see above)
+                - 'block'   ... block response.
+
+                For the first two, the <length> parameter is optional and
+                would override the event duration information provided in
+                the fidl file. For 'u' the length is the same as in
+                previous section: the number of frames to model. For
+                'block' length should be two numbers separated by a colon
+                (e.g. 2:9) that specify the start and end offset (from the
+                event onset) to model as a block.
+
+                Assumed HRF regressors normalization:
+                    hrf_types `boynton` and `SPM` can be marked with an
+                    additional flag denoting how to normalize the
+                    regressor.
+
+                    In case of `<hrf function>-uni`, e.g. 'boynton-uni' or
+                    'SPM-uni', the HRF function will be normalized to have
+                    the area under the curve equal to 1. This ensures
+                    uniform and universal, scaling of the resulting
+                    regressor across all event lengths. In addition, the
+                    scaling is not impacted by weights (e.g. behavioral
+                    coregressors), which in turn ensures that the weights
+                    are not scaled.
+
+                    In case of `<hrf function>-run`, e.g. `boynton-run` or
+                    `SPM-run`, the resulting regressor is normalized to
+                    amplitude of 1 within each bold run separately. This
+                    can result in different scaling of regressors with
+                    different durations, and of the same regressor across
+                    different runs. Scaling in this case is performed after
+                    the signal is weighted, so in effect the scaling of
+                    weights (e.g. behavioral regressors), can differ across
+                    bold runs.
+
+                    The flag can be abbreviated to '-r' and '-u'. If not
+                    specified, '-run' will be assumed (the default might
+                    change).
+
+        Naming And Behavioral Regressors:
+            Each of the above (unassumed and assumed modeling
+            specification) can be followed by a ">" (greater-than
+            character), which signifies additional information in the
+            form::
+
+                <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
+
+            --name
+                The name of the resulting regressor.
+            --column
+                The number of the additional behavioral regressors
+                column in the fidl file (1-based) to use as a weight
+                for the regressors.
+            --normalization_span
+                Whether to normalize the behavioral weight within a
+                specific event type ('within') or across all events
+                ('across'). [within]
+            --normalization_method
+                The method to use for normalization. Options are:
+
+                - 'z'    (compute Z-score)
+                - '01'   (normalize to fixed range 0 to 1)
+                - '-11'  (normalize to fixed range -1 to 1)
+                - 'none' (use weights as provided in fidl file)
+
+                Example string::
+
+                    'block:boynton|target:9|target:9>target_rt:1:within:z'
+
+                This would result in three sets of task regressors: one
+                assumed task regressor for the sustained activity across
+                the block, one unassumed task regressor set spanning 9
+                frames that would model the presentation of the target, and
+                one behaviorally weighted unassumed regressor that would
+                for each frame estimate the variability in response as
+                explained by the reaction time to the target.
 
         Results:
             This step results in the following files (if requested):
