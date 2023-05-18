@@ -1926,14 +1926,14 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 A string  which of the GLM analysis results are saved.
                 Possible values are:
 
-                --'c'   ... Saving of resulting beta coefficients.
-                --'z'   ... Saving of resulting z-scores of beta coefficients.
-                --'p'   ... Saving of resulting session-level p-values of beta 
-                  coefficients.
-                --'se'  ... Saving of resulting standard errors of beta
-                  coefficients.
-                --'r'   ... Saving of resulting residuals of the GLM.
-                --'all' ... Saving all of the results above.
+                - 'c'   ... Saving of resulting beta coefficients.
+                - 'z'   ... Saving of resulting z-scores of beta coefficients.
+                - 'p'   ... Saving of resulting session-level p-values of beta 
+                   coefficients.
+                - 'se'  ... Saving of resulting standard errors of beta
+                   coefficients.
+                - 'r'   ... Saving of resulting residuals of the GLM.
+                - 'all' ... Saving all of the results above.
 
             --glm_name (str, default ''):
                 An additional name to add to the residuals and GLM files to
