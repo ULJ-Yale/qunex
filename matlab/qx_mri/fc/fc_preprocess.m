@@ -21,7 +21,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 %           - s - spatial smoothing
 %           - h - highpass temporal filter
 %           - r - regression of nuisance signal
-%           - c - save coefficients in _coeff file
+%           - c - save coefficients in _coeff file [deprecated -> see glm_results options]
 %           - l - lowpass temporal filtering
 %           - m - motion scrubbing.
 %
@@ -126,7 +126,8 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 %               - bold_variant    :
 %               - img_suffix      :
 %               - glm_matrix      : none  ('none' / 'text' / 'image' / 'both')
-%               - glm_residuals   : save
+%               - glm_residuals   : save   [deprectated -> see glm_results]
+%               - glm_results     : 'c,r' ('c', 'z', 'p', 'se', 'r', 'all')
 %               - glm_name        :
 %
 %   Notes:
@@ -620,8 +621,7 @@ fprintf('\n        ignores: %s', ignores);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-
-default = 'boldname=bold|surface_smooth=2|volume_smooth=2|voxel_smooth=1|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'Options used');
@@ -675,14 +675,49 @@ file.rsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/h
 
 
 % ======================================================
-%   ----> are we doing coefficients?
-
-docoeff = false;
+%   ----> are we doing coefficients? [deprecated -> see glm_results options]
+do_coeff = false;
 if strfind(doIt, 'c')
-    docoeff = true;
+    do_coeff = true;
     doIt = strrep(doIt, 'c', '');
 end
 
+% ======================================================
+%   ----> are we doing coefficient statistics?
+
+if strfind(options.glm_results, 'c')
+    do_coeff = true;
+end
+
+do_zscores = false;
+if strfind(options.glm_results, 'z')
+    do_zscores = true;
+end
+
+do_pvals = false;
+if strfind(options.glm_results, 'p')
+    do_pvals = true;
+end
+
+do_stderrors = false;
+if strfind(options.glm_results, 'se')
+    do_stderrors = true;
+end
+
+do_residuals = false;
+do_residuals_glm_results = ~isempty(strfind(options.glm_results, 'r'));
+do_residuals_deprecated = strcmpi(options.glm_residuals,'save');
+if do_residuals_glm_results || do_residuals_deprecated
+    do_residuals = true;
+end
+
+if strfind(options.glm_results, 'all')
+    do_coeff = true;
+    do_zscores = true;
+    do_pvals = true;
+    do_stderrors = true;
+    do_residuals = true;
+end
 
 % ======================================================
 %   ----> deal with nuisance and scrubbing
@@ -904,14 +939,31 @@ for current = char(doIt)
                 img = img.img_filter(0, lpsigma, omit, true, ignore.lopass);
             case 'r'
                 img = readIfEmpty(img, sfile, omit);
-                [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore.regress, options, [file.Xroot ext], rmodel, sfile);
-                if docoeff
-                    coeff.img_saveimage([froot ext '_coeff' tail]);
+                if ~(do_zscores || do_pvals || do_stderrors)
+                	[img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore.regress, options, [file.Xroot ext], rmodel, sfile);
+                	if do_coeff
+                    	coeff.img_saveimage([froot ext '_coeff' tail]);
+                	end
+                else
+                	[img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ignore.regress, options, [file.Xroot ext], rmodel, sfile);
+                	if do_coeff
+                    	coeff.img_saveimage([froot ext '_coeff' tail]);
+                	end
+                    if do_stderrors
+                        coeffstats.B_se.img_saveimage([froot ext '_coeff_stderrors' tail]);
+                    end
+                    if do_zscores
+                	    coeffstats.B_z.img_saveimage([froot ext '_coeff_zscores' tail]);
+                    end
+                    if do_pvals
+                        coeffstats.B_pval.img_saveimage([froot ext '_coeff_pvals' tail]);
+                    end
                 end
         end
 
-        if ~img.empty
+        if ~img.empty && do_residuals
             img.img_saveimage(tfile);
+            tfile
             fprintf(' ... saved!');
         end
     end
@@ -950,7 +1002,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, options, Xroot, rmodel, sfile)
+function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ignore, options, Xroot, rmodel, sfile)
 
 
     img.data = img.image2D;
@@ -1136,7 +1188,15 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, option
 
     Y = img.sliceframes(mask);
 
-    [coeff res] = Y.img_glm_fit(X);
+    if nargout > 2
+    	[coeff, res, rvar, ~, B_se, B_z, B_pval] = Y.img_glm_fit(X);
+        coeffstats.B_se = B_se;
+        coeffstats.B_z = B_z;
+        coeffstats.B_pval = B_pval;
+        coeffstats.res = res;
+    else
+    	[coeff res] = Y.img_glm_fit(X);
+    end
     img.data(:,mask) = res.image2D;
     coeff = [coeff Y.img_stats({'m', 'sd'})];
 

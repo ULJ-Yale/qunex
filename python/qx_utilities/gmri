@@ -320,13 +320,11 @@ def runCommand(command, args):
             elif command == "create_study":
                 folders['logfolder'] = "./processing/logs"
 
-            # if case is provided
             sufix = ""
-            if "sessions" in args:
-                sufix = "_" + args["sessions"]
+            if "sessionids" in args:
+              sufix = "_" + args["sessionids"]
 
             logfile = os.path.join(folders['logfolder'], 'comlogs', "%s%s.log" % (command, sufix))
-
             # run without log for exceptions
             # remove logs for exceptions
             if command in gcs.logskip_commands:
