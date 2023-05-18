@@ -1579,6 +1579,75 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
 
     Prepares BOLD files for further functional connectivity analysis.
 
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging  data is
+            supposed to go.
+
+        --parsessions (str, default 1):
+            How many sessions to run in parallel.
+
+        --parelements (int, default 1):
+            How many elements (e.g. bolds) to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data ('yes') or not ('no').
+
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
+
+        --image_target (str, default 'nifti'):
+            The target format to work with, one of '4dfp', 'nifti', 'dtseries'
+            or 'ptseries'.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --log (str, default 'study'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed. When a comma or pipe ('|') separated list
+            is given, the log will be created at the first provided location
+            and then linked or copied to other locations. The valid locations
+            are:
+
+            - 'study'   (for the default:
+              ``<study>/processing/logs/comlogs`` location)
+            - 'session' (for ``<sessionid>/logs/comlogs``)
+            - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
+            - <path>  (for an arbitrary directory).
+
+        --bolds (str, default 'all'):
+            A pipe ('|') separated list of conc names to process.
+
+        --event_file (str, default ''):
+            A pipe ('|') separated list of fidl names to use, that matches the
+            conc list.
+
+        --bold_actions (str, default 's,h,r,c,l'):
+            A string specifying which actions, and in what sequence to perform.
+
+        --nifti_tail (str, default ''):
+            The tail of NIfTI volume images to use.
+
+        --cifti_tail (str, default ''):
+            The tail of CIFTI images to use.
+
+        --bold_prefix (str, default ''):
+            An optional prefix to place in front of processing name extensions
+            in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
+
+        --bold_variant (str, default detailed below):
+            Optional variant of HCP BOLD preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
+
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
+
     Notes:
         List of bold files specify, which types of bold files are to be
         processed, as they are specified in the batch.txt file. An example of a
@@ -1870,149 +1939,6 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 An additional name to add to the residuals and GLM files to
                 distinguish between different possible models used.
 
-        GLM modeling:
-            There are two important variables that affect the exact GLM
-            model used to estimate nuisance and task beta coefficients and
-            regress them from the signal. The first is the optional number
-            following the 'r' command in the --bold_actions parameter.
-            There are three options:
-
-            - '0' ... Estimate nuisance regressors for each bold file
-                separately, however, model events across all bold files (the
-                default if no number is) specified.
-            - '1' ... Estimate both nuisance regressors and task regressors
-                for each bold run separately.
-            - '2' ... Estimate both nuisance regressors as well as task
-                regressors across all bold runs.
-
-            The second key variable is the event string provided by the
-            event_string parameter. The event string is a pipe ('|')
-            separated list of regressor specifications. The possibilities
-            are discussed below:
-
-            Unassumed Modeling:
-                ::
-
-                    <fidl code>:<length in frames>
-
-                Where <fidl code> is the code for the event used in the fidl
-                file, and <length in frames> specifies, for how many frames
-                of the bold run (since the onset of the event) the event
-                should be modeled.
-
-            Assumed Modeling:
-                ::
-
-                    <fidl code>:<hrf>[-run|-uni][:<length>]
-
-                Where <fidl code> is the same as above, <hrf> is the type of
-                the hemodynamic response function to use, '-run' and '-uni'
-                specify how the regressor should be normalized, and
-                <length> is an optional parameter, with its value dependent
-                on the model used. The allowed <hrf> are:
-
-                - 'boynton' ... uses the Boynton HRF
-                - 'SPM'     ... uses the SPM double gaussian HRF
-                - 'u'       ... unassumed (see above)
-                - 'block'   ... block response.
-
-                For the first two, the <length> parameter is optional and
-                would override the event duration information provided in
-                the fidl file. For 'u' the length is the same as in
-                previous section: the number of frames to model. For
-                'block' length should be two numbers separated by a colon
-                (e.g. 2:9) that specify the start and end offset (from the
-                event onset) to model as a block.
-
-                Assumed HRF regressors normalization:
-                    hrf_types `boynton` and `SPM` can be marked with an
-                    additional flag denoting how to normalize the
-                    regressor.
-
-                    In case of `<hrf function>-uni`, e.g. 'boynton-uni' or
-                    'SPM-uni', the HRF function will be normalized to have
-                    the area under the curve equal to 1. This ensures
-                    uniform and universal, scaling of the resulting
-                    regressor across all event lengths. In addition, the
-                    scaling is not impacted by weights (e.g. behavioral
-                    coregressors), which in turn ensures that the weights
-                    are not scaled.
-
-                    In case of `<hrf function>-run`, e.g. `boynton-run` or
-                    `SPM-run`, the resulting regressor is normalized to
-                    amplitude of 1 within each bold run separately. This
-                    can result in different scaling of regressors with
-                    different durations, and of the same regressor across
-                    different runs. Scaling in this case is performed after
-                    the signal is weighted, so in effect the scaling of
-                    weights (e.g. behavioral regressors), can differ across
-                    bold runs.
-
-                    The flag can be abbreviated to '-r' and '-u'. If not
-                    specified, '-run' will be assumed (the default might
-                    change).
-
-        Naming And Behavioral Regressors:
-            Each of the above (unassumed and assumed modeling
-            specification) can be followed by a ">" (greater-than
-            character), which signifies additional information in the
-            form::
-
-                <name>[:<column>[:<normalization_span>[:<normalization_method>]]]
-
-            --name
-                The name of the resulting regressor.
-            --column
-                The number of the additional behavioral regressors
-                column in the fidl file (1-based) to use as a weight
-                for the regressors.
-            --normalization_span
-                Whether to normalize the behavioral weight within a
-                specific event type ('within') or across all events
-                ('across'). [within]
-            --normalization_method
-                The method to use for normalization. Options are:
-
-                - 'z'    (compute Z-score)
-                - '01'   (normalize to fixed range 0 to 1)
-                - '-11'  (normalize to fixed range -1 to 1)
-                - 'none' (use weights as provided in fidl file)
-
-                Example string::
-
-                    'block:boynton|target:9|target:9>target_rt:1:within:z'
-
-                This would result in three sets of task regressors: one
-                assumed task regressor for the sustained activity across
-                the block, one unassumed task regressor set spanning 9
-                frames that would model the presentation of the target, and
-                one behaviorally weighted unassumed regressor that would
-                for each frame estimate the variability in response as
-                explained by the reaction time to the target.
-
-        Results:
-            This step results in the following files (if requested):
-
-            - residual image (``<root>_res-<regressors>.<ext>``)
-            - GLM coefficient image (``<root>_res-<regressors>_coeff.<ext>``)
-
-            If you want more specific GLM results and information, please use
-            preprocess_conc command.
-
-    Examples:
-        ::
-
-            qunex preprocess_bold \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --parsessions=10 \\
-                --bolds=rest \\
-                --bold_actions="s,h,r,c,l" \\
-                --bold_nuisance="m,V,WM,WB,1d" \\
-                --mov_bad=udvarsme \\
-                --pignore="hipass=linear|regress=ignore|lopass=linear" \\
-                --nprocess=0
     """
 
     pc.doOptionsCheck(options, sinfo, 'preprocess_bold')
