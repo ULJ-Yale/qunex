@@ -1955,7 +1955,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 regressors across all bold runs.
 
             The second key variable is the event string provided by the
-            --event_string parameter. The event string is a pipe ('|')
+            event_string parameter. The event string is a pipe ('|')
             separated list of regressor specifications. The possibilities
             are discussed below:
 
