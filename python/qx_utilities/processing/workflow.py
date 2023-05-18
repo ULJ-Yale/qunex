@@ -1960,9 +1960,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             are discussed below:
 
         Unassumed Modeling:
-            ::
-
-                <fidl code>:<length in frames>
+            <fidl code>:<length in frames>
 
             Where <fidl code> is the code for the event used in the fidl
             file, and <length in frames> specifies, for how many frames
@@ -1970,9 +1968,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             should be modeled.
 
         Assumed Modeling:
-            ::
-
-                <fidl code>:<hrf>[-run|-uni][:<length>]
+            <fidl code>:<hrf>[-run|-uni][:<length>]
 
             Where <fidl code> is the same as above, <hrf> is the type of
             the hemodynamic response function to use, '-run' and '-uni'
