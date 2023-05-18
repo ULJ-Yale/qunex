@@ -1932,7 +1932,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                   coefficients.
                 --'se'  ... Saving of resulting standard errors of beta
                   coefficients.
-                --'r''  ... Saving of resulting residuals of the GLM.
+                --'r'   ... Saving of resulting residuals of the GLM.
                 --'all' ... Saving all of the results above.
 
             --glm_name (str, default ''):
@@ -2658,7 +2658,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                   coefficients.
                 --'se'  ... Saving of resulting standard errors of beta
                   coefficients.
-                --'r''  ... Saving of resulting residuals of the GLM.
+                --'r'   ... Saving of resulting residuals of the GLM.
                 --'all' ... Saving all of the results above.
 
             --glm_name (str, default ''):
