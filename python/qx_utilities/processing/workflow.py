@@ -1687,7 +1687,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         --l
             Low-pass filtering.
 
-        So the default 's,h,r,c,l' --bold_actions parameter would lead to the
+        So the default 's,h,r,c,l' bold_actions parameter would lead to the
         files first being smoothed, then high-pass filtered. Next a regression
         step would follow in which nuisance signal and/or task related signal
         would be estimated and regressed out, then the related beta estimates
@@ -1901,6 +1901,43 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             beta estimates for further activation analyses. The following
             parameters are used in this step:
 
+            --bold_nuisance (str, default 'm,m1d,mSq,m1dSq,V,WM,WB,1d'):
+                A comma separated list of regressors to include in GLM.
+                Possible values are:
+
+                - 'm'     ... motion parameters
+                - 'm1d'   ... first derivative of motion parameters
+                - 'mSq'   ... squared motion parameters
+                - 'm1dSq' ... squared first derivative of motion parameters
+                - 'V'     ... ventricles signal
+                - 'WM'    ... white matter signal
+                - 'WB'    ... whole brain signal
+                - '1d'    ... first derivative of above nuisance signals
+                - 'e'     ... events listed in the provided fidl files (see
+                   above), modeled as specified in the event_string parameter.
+
+            --event_string (str, default ''):
+                A string describing, how to model the events listed in the
+                provided fidl files.
+            --glm_matrix (str, default 'none'):
+                Whether to save the GLM matrix as a text file ('text'), a png
+                image file ('image'), both ('both') or not ('none').
+            --glm_results (str, default 'c,r')
+                A string  which of the GLM analysis results are saved.
+                Possible values are:
+
+                - 'c'   ... Saving of resulting beta coefficients.
+                - 'z'   ... Saving of resulting z-scores of beta coefficients.
+                - 'p'   ... Saving of resulting session-level p-values of beta 
+                   coefficients.
+                - 'se'  ... Saving of resulting standard errors of beta
+                   coefficients.
+                - 'r'   ... Saving of resulting residuals of the GLM.
+                - 'all' ... Saving all of the results above.
+
+            --glm_name (str, default ''):
+                An additional name to add to the residuals and GLM files to
+                distinguish between different possible models used.
 
         GLM modeling:
             There are two important variables that affect the exact GLM
