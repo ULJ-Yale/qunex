@@ -1672,8 +1672,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         <sessionsfolder>/inbox/events folder. In that case the "<session id>_"
         is not optional but required.
 
-        The actions that can be performed are denoted by a single letter, and
-        they will be executed in the sequence listed:
+        The --bold_actions parameter specifies the actions, denoted by a single 
+        letter, that will be executed in the sequence listed:
 
         --m
             Motion scrubbing.
@@ -1686,6 +1686,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             specifying the type of regression to use (see REGRESSION below).
         --c
             Saving of resulting beta coefficients (always to follow 'r').
+            [deprecated -> see glm_results]
         --l
             Low-pass filtering.
 
@@ -1927,7 +1928,20 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 image file ('image'), both ('both') or not ('none').
             --glm_residuals (str, default 'save'):
                 Whether to save the residuals after GLM regression ('save') or
-                not ('none').
+                not ('none'). [deprecated -> see glm_results]
+            --glm_results (str, default 'c,r')
+                A string  which of the GLM analysis results are saved.
+                Possible values are:
+
+                --'c'   ... Saving of resulting beta coefficients.
+                --'z'   ... Saving of resulting z-scores of beta coefficients.
+                --'p'   ... Saving of resulting session-level p-values of beta 
+                  coefficients.
+                --'se'  ... Saving of resulting standard errors of beta
+                  coefficients.
+                --'r''  ... Saving of resulting residuals of the GLM.
+                --'all' ... Saving all of the results above.
+                
             --glm_name (str, default ''):
                 An additional name to add to the residuals and GLM files to
                 distinguish between different possible models used.
@@ -2211,13 +2225,13 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldow = 'false'
 
         scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
+        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_results=%(glm_results)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
         mcomm = 'fc_preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
             d['s_base'],                        # --- sessions folder
             boldnum,                            # --- number of bold file to process
             options['omit'],                    # --- number of frames to skip at the start of each run
-            options['bold_actions'],            # --- which steps to perform (s, h, r, c, p, p)
+            options['bold_actions'],            # --- which steps to perform (s, h, r, c, p, p, z)
             options['bold_nuisance'],           # --- what to regress (m, m1d, mSq, m1dSq, V, WM, WB, d, t, e, 1d)
             '[]',                               # --- matrix of task regressors
             options['event_file'],              # --- fidl file to be used
@@ -2379,8 +2393,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
         `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_"
         in the \*.fidl and \*.conc file name is not optional but required.
 
-        The actions that can be performed are denoted by a single letter, and
-        they will be executed in the sequence listed:
+        The --bold_actions parameter specifies the actions, denoted by a single 
+        letter, that will be executed in the sequence listed:
 
         --m     Motion scrubbing.
         --s     Spatial smoothing.
@@ -2389,6 +2403,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 or 2 specifying the type of regression to use (see REGRESSION
                 below).
         --c     Saving of resulting beta coefficients (always to follow 'r').
+                [deprecated -> see glm_results]
         --l     Low-pass filtering.
 
         So the default 's,h,r,c,l' --bold_actions parameter would lead to the
@@ -2639,7 +2654,20 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 image file ('image'), both ('both') or not ('none').
             --glm_residuals (str, default 'save'):
                 Whether to save the residuals after GLM regression ('save') or
-                not ('none').
+                not ('none'). [deprecated -> see glm_results]
+            --glm_results (str, default 'c,r')
+                A string  which of the GLM analysis results are saved.
+                Possible values are:
+
+                --'c'   ... Saving of resulting beta coefficients.
+                --'z'   ... Saving of resulting z-scores of beta coefficients.
+                --'p'   ... Saving of resulting session-level p-values of beta 
+                  coefficients.
+                --'se'  ... Saving of resulting standard errors of beta
+                  coefficients.
+                --'r''  ... Saving of resulting residuals of the GLM.
+                --'all' ... Saving all of the results above.
+
             --glm_name (str, default ''):
                 An additional name to add to the residuals and GLM files to
                 distinguish between different possible models used.
@@ -2984,7 +3012,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
+                opts  = "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_results=%(glm_results)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s" % (options)
 
                 mcomm = 'fc_preprocess_conc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- session folder
