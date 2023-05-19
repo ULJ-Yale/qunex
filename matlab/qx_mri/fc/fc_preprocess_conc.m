@@ -28,7 +28,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %               - 2 ... joint nuisance, joint task regressors across all runs
 %
 %           - c
-%               save coefficients in _Bcoeff file
+%               save coefficients in _Bcoeff file [deprecated -> see glm_results options]
 %           - p
 %               save png image files of nusance ROI mask
 %           - l
@@ -118,9 +118,9 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           string:
 %
 %           - boldname        : ['bold']
-%           - surface_smooth  : [6]
-%           - volume_smooth   : [6]
-%           - voxel_smooth    : [2]
+%           - surface_smooth  : [2]
+%           - volume_smooth   : [2]
+%           - voxel_smooth    : [1]
 %           - lopass_filter   : [0.08]
 %           - hipass_filter   : [0.009]
 %           - framework_path  : ['']
@@ -129,7 +129,8 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           - smooth_mask     : ['false']
 %           - dilate_mask     : ['false']
 %           - glm_matrix      : ['none']  ('none' / 'text' / 'image' / 'both')
-%           - glm_residuals   : ['save']
+%           - glm_residuals   : save   [deprectated -> see glm_results]
+%           - glm_results     : 'c,r' ('c', 'z', 'p', 'se', 'r', 'all')
 %           - glm_name        : ['']
 %           - bold_tail       : ['']
 %           - bold_variant    : ['']
@@ -339,7 +340,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %               smoothing parameters can be set in the options string:
 %
 %               - voxel_smooth
-%                   Gaussian smoothing FWHM in voxels. Defaults to 2.
+%                   Gaussian smoothing FWHM in voxels. Defaults to 1.
 %
 %               - smooth_mask
 %                   Whether to smooth only within a mask, and what mask to use
@@ -389,10 +390,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %               The following parameters can be set in the options parameter:
 %
 %               - surface_smooth
-%                   FWHM for gaussian surface smooting in mm. Defaults to 6.0.
+%                   FWHM for gaussian surface smooting in mm. Defaults to 2.0.
 %
 %               - volume_smooth
-%                   FWHM for gaussian volume smooting in mm. Defaults to 6.0.
+%                   FWHM for gaussian volume smooting in mm. Defaults to 2.0.
 %
 %               - omp_threads
 %                   Number of cores to be used by wb_command. 0 for no change of
@@ -681,7 +682,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'Options used');
@@ -774,14 +775,48 @@ file_croot  = strcat(sessionf, ['/images' options.img_suffix '/functional' optio
 file_cfroot = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);       % missing options.concname  before eroot
 file_sconc  = [file_cfroot variant '.conc'];
 % ======================================================
-%                       ----> are we doing coefficients?
+%   ----> are we doing coefficients? [deprecated -> see glm_results options]
 
-docoeff = false;
+do_coeff = false;
 if strfind(doIt, 'c')
-    docoeff = true;
+    do_coeff = true;
     doIt = strrep(doIt, 'c', '');
 end
 
+% ======================================================
+%   ----> are we doing coefficient statistics?
+
+if strfind(options.glm_results, 'c')
+    do_coeff = true;
+end
+
+do_zscores = false;
+if strfind(options.glm_results, 'z')
+    do_zscores = true;
+end
+
+do_pvals = false;
+if strfind(options.glm_results, 'p')
+    do_pvals = true;
+end
+
+do_stderrors = false;
+if strfind(options.glm_results, 'se')
+    do_stderrors = true;
+end
+
+do_residuals = false;
+if strfind(options.glm_results, 'r')
+    do_residuals = true;
+end
+
+if strfind(options.glm_results, 'all')
+    do_coeff = true;
+    do_zscores = true;
+    do_pvals = true;
+    do_stderrors = true;
+    do_residuals = true;
+end
 
 % ======================================================
 %                  ---> deal with nuisance and scrubbing
@@ -1132,10 +1167,36 @@ for current = char(doIt)
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
             fprintf('\n---> running GLM ');
-            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            if ~(do_zscores || do_pvals || do_stderrors)
+            	[img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            	if do_coeff
+                	cname = [file_croot ext '_Bcoeff' tail];
+	                fprintf('\n---> saving %s ', cname);
+	                coeff.img_saveimage(cname);
+	                fprintf('... done!');
+            	end
+            else
+            	[img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            	cname = [file_croot ext '_Bcoeff' tail];
+                fprintf('\n---> saving %s ', cname);
+                if do_coeff
+                    coeff.img_saveimage([file_croot ext '_Bcoeff' tail]);
+                end
+                if do_stderrors
+                    coeffstats.B_se.img_saveimage([file_croot ext '_Bcoeff_stderrors' tail]);
+                end
+                if do_zscores
+                    coeffstats.B_z.img_saveimage([file_croot ext '_Bcoeff_zscores' tail]);
+                end
+                if do_pvals
+                    coeffstats.B_pval.img_saveimage([file_croot ext '_Bcoeff_pvals' tail]);
+                end
+
+                fprintf('... done!');
+            end
             fprintf('... done!');
 
-            if strcmp(options.glm_residuals, 'save')
+            if strcmp(options.glm_residuals, 'save') || do_residuals
                 for b = 1:nbolds
                     fprintf('\n---> saving %s ', file(b).tfile);
                     img(b).img_saveimage(file(b).tfile);
@@ -1145,13 +1206,6 @@ for current = char(doIt)
             else
                 fprintf('\n---> not saving residuals (glm_residuals set to %s)', options.glm_residuals);
                 saveconc = false;
-            end
-
-            if docoeff
-                cname = [file_croot ext '_Bcoeff' tail];
-                fprintf('\n---> saving %s ', cname);
-                coeff.img_saveimage(cname);
-                fprintf('... done!');
             end
         end
         dor = false;
@@ -1185,7 +1239,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot, rmodel, file_sconc)
+function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot, rmodel, file_sconc)
 
     % ---> basic settings
 
@@ -1642,7 +1696,16 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     % fprintf('\n -> mask %d', sum(nmask==1));
     % fprintf(xevents);
     X = X(nmask==1, :);
-    [coeff res] = Y.img_glm_fit(X);
+
+    if nargout > 2
+    	[coeff, res, rvar, ~, B_se, B_z, B_pval] = Y.img_glm_fit(X);
+        coeffstats.B_se = B_se;
+        coeffstats.B_z = B_z;
+        coeffstats.B_pval = B_pval;
+        coeffstats.res = res;
+    else
+    	[coeff res] = Y.img_glm_fit(X);
+    end
     coeff = [coeff Y.img_stats({'m', 'sd'})];
 
     %   ----> put data back into images

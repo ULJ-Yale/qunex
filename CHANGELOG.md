@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.0
+
+* TODO
+
 ## 0.97.3
 
 * Fixed the parametrization of `hcp_icafix` and `hcp_msmall` to reflect the latest changes in HCP Pipelines.

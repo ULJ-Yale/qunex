@@ -10,10 +10,6 @@
 # ==     NOTE: ADJUST SETTINGS AS NEEDED FOR YOUR STUDY BEFORE USE!       ==
 # ==========================================================================
 
-# -------------------------> General HCP settings
-
-_hcp_pipeline           : ${HCPPIPEDIR}
-
 # ---> PreFreeSurfer
  
 _hcp_suffix             :
