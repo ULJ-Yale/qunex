@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -72,7 +72,7 @@ Usage() {
 
 monitor(){
     cat <<EOM > ${bedpostxdir}/monitor
-#!/bin/bash
+#!/bin/bash -eu
 nparts=0
 if [ $njobs -eq 1 ]; then
 #1 part (GPU) and several subparts

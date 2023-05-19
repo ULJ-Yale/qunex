@@ -288,6 +288,22 @@ def runCommand(command, args):
     else:
         parsessions = int(eargs.get('parsessions', '1'))
 
+        # if we have sessions and sessionids filter and remove one
+        if 'sessions' in args and 'sessionids' in args:
+            args_filter = None
+            if 'filter' in args:
+                args_filter = args['filter']
+
+            sessions_dict, _ = gc.get_sessions_list(args['sessions'], filter=args_filter, sessionids=args['sessionids'], verbose=False)
+
+            sessions_list = []
+            for session in sessions_dict:
+                sessions_list.append(session['session'])
+
+            args['sessions'] = ','.join(sessions_list)
+
+            del args['sessionids']
+
         # -- are we using a scheduler
         if 'scheduler' in eargs:
             gs.runThroughScheduler(command, sessions=sessions, args=args, parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
@@ -304,13 +320,11 @@ def runCommand(command, args):
             elif command == "create_study":
                 folders['logfolder'] = "./processing/logs"
 
-            # if case is provided
             sufix = ""
-            if "sessions" in args:
-                sufix = "_" + args["sessions"]
+            if "sessionids" in args:
+              sufix = "_" + args["sessionids"]
 
             logfile = os.path.join(folders['logfolder'], 'comlogs', "%s%s.log" % (command, sufix))
-
             # run without log for exceptions
             # remove logs for exceptions
             if command in gcs.logskip_commands:
