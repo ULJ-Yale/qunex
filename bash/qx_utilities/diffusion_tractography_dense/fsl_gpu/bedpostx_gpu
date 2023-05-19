@@ -34,13 +34,6 @@
 #
 #~ND~END~
 
-## -- if BedpostXGPUDir is not set then set it automatically
-if [[ -z ${BedpostXGPUBin} ]]; then
-    bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_${DEFAULT_CUDA_VERSION}/bedpostx_gpu
-else
-    bindir=${BedpostXGPUBin}/bedpostx_gpu
-fi
-
 Usage() {
     echo ""
     echo "This is a simplified version of the bedpostX gpu call to run interactively."

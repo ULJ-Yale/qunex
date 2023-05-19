@@ -34,8 +34,6 @@ Warning:
       stripping].
     - If PreFreeSurfer component of the HCP Pipelines was NOT run the
       function will start from raw T1w data [Results may be less optimal]. -
-      If you are this function interactively you need to be on a GPU-enabled
-      node or send it to a GPU-enabled queue.
 
 Parameters:
     --sessionsfolder (str, default '.'):
@@ -45,7 +43,7 @@ Parameters:
         Comma separated list of sessions to run.
 
     --echospacing (str):
-        EPI Echo Spacing for data [in msec]; e.g. 0.69
+        EPI Echo Spacing for data [in msec]; e.g. 0.69.
 
     --pedir (int):
         Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior.
@@ -69,6 +67,9 @@ Parameters:
         This is the echo time difference of the fieldmap sequence - find this
         out form the operator - defaults are *usually* 2.46ms on SIEMENS.
 
+    --nogpu (flag, default 'no'):
+        If set, this command will be processed useing a CPU instead of a GPU.
+
 Output files:
     - difffolder=${sessionsfolder}/${session}/hcp/${session}/Diffusion
     - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
@@ -90,35 +91,6 @@ Notes:
         of the qunex_container script.
 
 Examples:
-    Examples using Siemens FieldMap (needs GPU-enabled node).
-
-    Run directly via::
-
-        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/DWIPreprocPipelineLegacy.sh \\
-            --<parameter1> \\
-            --<parameter2> \\
-            --<parameter3> ... \\
-            --<parameterN>
-
-    NOTE: --scheduler is not available via direct script call.
-
-    Run via::
-
-        qunex dwi_legacy_gpu \\
-            --<parameter1> \\
-            --<parameter2> ... \\
-            --<parameterN>
-
-    NOTE: scheduler is available via qunex call.
-
-    --scheduler
-        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
-        relevant options.
-
-    For SLURM scheduler the string would look like this via the qunex call::
-
-         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
-
     NOTE: CUDA libraries need to be loaded for this command to work, to do this
     you usually need to load the appropriate module on HPC systems. When
     scheduling for example, add the bash parameter to the command call, e.g.:
@@ -156,8 +128,7 @@ Examples:
             --bash="module load CUDA//11.3.1" \\
             --scheduler='<name_of_scheduler_and_options>'
 
-    Example with flagged parameters for submission to the scheduler using GE data
-    without FieldMap (needs GPU-enabled queue):
+    Example with disabled GPU processing:
 
     ::
 
@@ -165,12 +136,12 @@ Examples:
             --sessionsfolder='<folder_with_sessions>' \\
             --sessions='<comma_separarated_list_of_cases>' \\
             --diffdatasuffix='DWI_dir91_LR' \\
-            --scheduler='<name_of_scheduler_and_options>' \\
             --usefieldmap='no' \\
             --pedir='1' \\
             --echospacing='0.69' \\
             --unwarpdir='x-' \\
-            --overwrite='yes'
+            --overwrite='yes' \\
+            --nogpu='yes'
 
 EOF
 exit 0
@@ -211,6 +182,7 @@ get_options() {
     unset diffdatasuffix
     unset overwrite
     unset usefieldmap
+    unset nogpu
     runcmd=""
     # -- parse arguments
     local index=0
@@ -263,7 +235,11 @@ get_options() {
             --usefieldmap=*)
                 usefieldmap=${argument/*=/""}
                 index=$(( index + 1 ))
-                ;;        
+                ;;
+            --nogpu=*)
+                nogpu=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
             *)
                 echo "ERROR: Unrecognized Option: ${argument}"
                 exit 1
@@ -322,6 +298,7 @@ get_options() {
     fi
     echo "   Diffusion data sufix: ${diffdatasuffix}"
     echo "   Overwrite: ${overwrite}"
+    echo "   No GPU: ${nogpu}"
     echo "-- ${script_name}: Specified Command-Line Options - End --"
     echo ""
     geho "------------------------- Start of work --------------------------------"
@@ -546,23 +523,29 @@ main() {
     fi
 
     ############################################
-    # STEP 3 - Run eddy_cuda
+    # STEP 3 - Run eddy
     ############################################    
 
     # -- Performs eddy call with --fwhm=10,0,0,0,0  --ff=10 -- this performs an initial FWHM smoothing for the first step of registration, then re-run with 4 more iterations without smoothing; the --ff flag adds a fat factor for angular smoothing. 
     # -- For best possible results you want opposing diff directions but in practice we distribute directions on the sphere. Instead we look at 'cones'. This does not smooth the data but rather the predictions to allow best possible estimation via EDDY.
-    geho "--- Running eddy_cuda..."    
+    geho "--- Running eddy..."    
     echo ""
-    eddy_cuda=${FSLGPUDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
-    geho "Using the following eddy_cuda binary: ${eddy_cuda}"
+
+    if [[ ${nogpu} == "yes" ]]; then
+        eddy_bin=${FSLBINDIR}/eddy_cpu
+    else
+        eddy_bin=${FSLBINDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
+    fi
+
+    geho "Using the following eddy binary: ${eddy_bin}"
     echo ""
 
     # -- Eddy call with cuda with extra QC options
     echo "Running command:"
     echo ""
-    geho "${eddy_cuda} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v"
+    geho "${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v"
     echo ""
-    ${eddy_cuda} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
+    ${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
 
     ############################################
     # STEP 4 - Run epi_reg w/fieldmap correction

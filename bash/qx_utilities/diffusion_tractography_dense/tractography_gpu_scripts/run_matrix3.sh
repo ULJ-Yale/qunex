@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -73,6 +73,9 @@ if [ "$store_streamlines_length" == "yes" ]; then
 else
     store_streamlines_length_flag=""
 fi
+
+# -- nogpu
+nogpu=$6
 
 # Out name
 OutFileName="Conn3.dconn.nii"
@@ -166,12 +169,19 @@ rm -f $ResultsFolder/commands_Mat3.sh &> /dev/null
 rm -rf $ResultsFolder/Mat3_logs
 mkdir -p $ResultsFolder/Mat3_logs
 out=" --dir=$ResultsFolder"
-echo $bindir/probtrackx2_gpu $generic_options $o $out  >> $ResultsFolder/commands_Mat3.sh
+
+if [[ ${nogpu} == "yes" ]]; then
+    probtrack_bin=${FSLBINDIR}/probtrackx2
+else
+    probtrack_bin=${FSLBINDIR}/probtrackx2_gpu${DEFAULT_CUDA_VERSION}
+fi
+
+echo $probtrack_bin $generic_options $o $out  >> $ResultsFolder/commands_Mat3.sh
 chmod 770 $ResultsFolder/commands_Mat3.sh
 
 # -- Do Tractography (N100: ~5h, 50GB RAM)
 echo ""
-echo "-- Queueing Probtrackx" 
+echo "-- Queueing Probtrackx"
 echo ""
 
 # -- Execute commands_Mat3 file

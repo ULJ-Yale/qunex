@@ -152,9 +152,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "                 CONDADIR : $CONDADIR";             if [[ -z $CONDADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport CONDADIR"; fi
     echo "                   FSLDIR : $FSLDIR";               if [[ -z $FSLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLDIR"; fi
     echo "               FSLCONFDIR : $FSLCONFDIR";           if [[ -z $FSLCONFDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLCONFDIR"; fi
-    echo "                FSLGPUDIR : $FSLGPUDIR";            if [[ -z $FSLGPUDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUDIR"; fi
-    echo "          FSL_GPU_SCRIPTS : $FSL_GPU_SCRIPTS";      if [[ -z $FSL_GPU_SCRIPTS ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_GPU_SCRIPTS"; fi
-    echo "             FSLGPUBinary : $FSLGPUBinary";         if [[ -z $FSLGPUBinary ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUBinary"; fi
+    echo "                FSLBINDIR : $FSLBINDIR";            if [[ -z $FSLBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLBINDIR"; fi
     echo "               FSL_FIXDIR : $FSL_FIXDIR";           if [[ -z $FSL_FIXDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_FIXDIR"; fi
     # echo "            POSTFIXICADIR : $POSTFIXICADIR";        if [[ -z $POSTFIXICADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport POSTFIXICADIR"; fi
     echo "          FREESURFER_HOME : $FREESURFER_HOME";      if [[ -z $FREESURFER_HOME ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FREESURFER_HOME"; fi
@@ -198,7 +196,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo " HCPPIPEDIR_dMRITractFull : $HCPPIPEDIR_dMRITractFull";  if [[ -z $HCPPIPEDIR_dMRITractFull ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRITractFull"; fi
     echo "    HCPPIPEDIR_dMRILegacy : $HCPPIPEDIR_dMRILegacy";    if [[ -z $HCPPIPEDIR_dMRILegacy ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRILegacy"; fi
     echo "            AutoPtxFolder : $AutoPtxFolder";            if [[ -z $AutoPtxFolder ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport AutoPtxFolder"; fi
-    echo "              EDDYCUDADIR : $EDDYCUDADIR";              if [[ -z $EDDYCUDADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport EDDYCUDADIR"; fi
+    echo "                 EDDYCUDA : $EDDYCUDA";                 if [[ -z $EDDYCUDA ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport EDDYCUDA"; fi
     echo "                   ASLDIR : $ASLDIR";                   if [[ -z $ASLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport ASLDIR"; fi
     echo ""
     echo ""
