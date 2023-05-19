@@ -3238,9 +3238,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 if not pc.is_number(options['hcp_bold_echospacing']):
                     fieldok = False
                     r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (options['hcp_bold_echospacing'])
-                if not pc.is_number(options['hcp_bold_echodiff']):
-                    fieldok = False
-                    r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (options['hcp_bold_echodiff'])
                 boldok = boldok and fieldok
                 fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
                 fmphase = hcp['fieldmap'][int(fmnum)]['phase']

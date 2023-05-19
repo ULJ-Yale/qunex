@@ -1579,75 +1579,6 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
 
     Prepares BOLD files for further functional connectivity analysis.
 
-    Parameters:
-        --batchfile (str, default ''):
-            The batch.txt file with all the session information.
-
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging  data is
-            supposed to go.
-
-        --parsessions (str, default 1):
-            How many sessions to run in parallel.
-
-        --parelements (int, default 1):
-            How many elements (e.g. bolds) to run in parallel.
-
-        --overwrite (str, default 'no'):
-            Whether to overwrite existing data ('yes') or not ('no').
-
-        --boldname (str, default 'bold'):
-            The default name of the bold files in the images folder.
-
-        --image_target (str, default 'nifti'):
-            The target format to work with, one of '4dfp', 'nifti', 'dtseries'
-            or 'ptseries'.
-
-        --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
-            if other than default.
-
-        --log (str, default 'study'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed. When a comma or pipe ('|') separated list
-            is given, the log will be created at the first provided location
-            and then linked or copied to other locations. The valid locations
-            are:
-
-            - 'study'   (for the default:
-              ``<study>/processing/logs/comlogs`` location)
-            - 'session' (for ``<sessionid>/logs/comlogs``)
-            - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
-            - <path>  (for an arbitrary directory).
-
-        --bolds (str, default 'all'):
-            A pipe ('|') separated list of conc names to process.
-
-        --event_file (str, default ''):
-            A pipe ('|') separated list of fidl names to use, that matches the
-            conc list.
-
-        --bold_actions (str, default 's,h,r,c,l'):
-            A string specifying which actions, and in what sequence to perform.
-
-        --nifti_tail (str, default ''):
-            The tail of NIfTI volume images to use.
-
-        --cifti_tail (str, default ''):
-            The tail of CIFTI images to use.
-
-        --bold_prefix (str, default ''):
-            An optional prefix to place in front of processing name extensions
-            in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
-
-        --bold_variant (str, default detailed below):
-            Optional variant of HCP BOLD preprocessing. If specified, the BOLD
-            images in `images/functional<bold_variant>` will be processed.
-
-        --img_suffix (str, default ''):
-            Specifies a suffix for 'images' folder to enable support for
-            multiple parallel workflows. Empty if not used.
-
     Notes:
         List of bold files specify, which types of bold files are to be
         processed, as they are specified in the batch.txt file. An example of a
@@ -1914,7 +1845,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 - 'WB'    ... whole brain signal
                 - '1d'    ... first derivative of above nuisance signals
                 - 'e'     ... events listed in the provided fidl files (see
-                   above), modeled as specified in the event_string parameter.
+                              above), modeled as specified in the event_string
+                              parameter.
 
             --event_string (str, default ''):
                 A string describing, how to model the events listed in the
@@ -2635,7 +2567,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 - 'WB'    ... whole brain signal
                 - '1d'    ... first derivative of above nuisance signals
                 - 'e'     ... events listed in the provided fidl files (see
-                  above), modeled as specified in the event_string parameter.
+                              above), modeled as specified in the event_string
+                              parameter.
 
             --event_string (str, default ''):
                 A string describing, how to model the events listed in the
