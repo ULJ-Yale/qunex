@@ -119,7 +119,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.94.5
 
-* Missing `EDDYCUDADIR` was reported erroneously inside the container.
+* Missing `EDDYCUDA` was reported erroneously inside the container.
 * `qunex_container` with PBS now supports the `select` flag.
 * Fixed a backwards compatibility and a stability issue with `qunex_continer`.
 * Update FSL verision in the container.

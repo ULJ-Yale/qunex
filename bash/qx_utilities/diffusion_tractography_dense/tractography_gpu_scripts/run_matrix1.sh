@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -34,15 +34,6 @@
 #
 #~ND~END~
 
-# -- Check which CUDA version is being run and set where GPU probtrackx binary is # bindir=$FSLDIR/bin
-
-## -- if ProbtrackXGPUBin is not set then set it automatically
-if [[ -z ${ProbtrackXGPUBin} ]]; then
-	bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_${DEFAULT_CUDA_VERSION}
-else
-	bindir=${ProbtrackXGPUBin}
-fi
-
 # -- Define paths
 scriptsdir=$HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts
 TemplateFolder=$QUNEXLIBRARYETC/diffusion_tractography_dense/templates
@@ -75,6 +66,9 @@ if [ "$store_streamlines_length" == "yes" ]; then
 else
     store_streamlines_length_flag=""
 fi
+
+# -- nogpu
+nogpu=$6
 
 # Out name
 OutFileName="Conn1.dconn.nii"
@@ -167,12 +161,19 @@ rm -f $ResultsFolder/commands_Mat1.sh &> /dev/null
 rm -rf $ResultsFolder/Mat1_logs
 mkdir -p $ResultsFolder/Mat1_logs
 out=" --dir=$ResultsFolder"
-echo $bindir/probtrackx2_gpu $generic_options $o $out  >> $ResultsFolder/commands_Mat1.sh
+
+if [[ ${nogpu} == "yes" ]]; then
+    probtrack_bin=${FSLBINDIR}/probtrackx2
+else
+    probtrack_bin=${FSLBINDIR}/probtrackx2_gpu${DEFAULT_CUDA_VERSION}
+fi
+
+echo $probtrack_bin $generic_options $o $out  >> $ResultsFolder/commands_Mat1.sh
 chmod 770 $ResultsFolder/commands_Mat1.sh
 
 # -- Do Tractography (N100: ~5h, 50GB RAM)
 echo ""
-echo "-- Queueing Probtrackx" 
+echo "-- Queueing Probtrackx"
 echo ""
 
 # -- Execute commands_Mat1 file
