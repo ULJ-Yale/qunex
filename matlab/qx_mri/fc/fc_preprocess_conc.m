@@ -891,16 +891,12 @@ for b = 1:nbolds
 
     %   ----> lets setup nuisances!
 
-    if strfind(doIt, 'r') && any(~ismember(rgss, {'1d', 'e', 't', 'm'}));
+    if ~isempty(strfind(doIt, 'r')) && any(~ismember(rgss, {'1d', 'e', 't', 'm'}));
 
         % ---> signal nuisance
 
         [nuisance(b).signal nuisance(b).signal_hdr] = general_read_table(file(b).nuisance);
         nuisance(b).nsignal = size(nuisance(b).signal,2);
-    else
-        nuisance(b).signal = [];
-        nuisance(b).signal_hdr = {};
-        nuisance(b).nsignal = 0;
     end
 
 end
@@ -958,6 +954,7 @@ if strfind(doIt, 'r')
     if strfind(doIt, 'r1'), rtype = 1; end
     if strfind(doIt, 'r2'), rtype = 2; end
 end
+
 
 
 
@@ -1023,7 +1020,7 @@ for b = 1:nbolds
     img(b) = nimage();
 end
 
-dor      = true;
+dor = ~isempty(strfind(doIt, 'r'));
 fprintf('--> starting the loop\n')
 
 for current = char(doIt)
@@ -1110,15 +1107,15 @@ for current = char(doIt)
 
                         end
                     case 'h'
-                        tmpi = readIfEmpty(img(b), file(b).sfile, omit);
+                        tmpi    = readIfEmpty(img(b), file(b).sfile, omit);
                         hpsigma = ((1/tr)/options.hipass_filter)/2;
-                        tmpi = tmpi.img_filter(hpsigma, 0, omit, true, ignore.hipass);
-                        img(b) = tmpi;
+                        tmpi    = tmpi.img_filter(hpsigma, 0, omit, true, ignore.hipass);
+                        img(b)  = tmpi;
                     case 'l'
-                        tmpi = readIfEmpty(tmpi, file(b).sfile, omit);
+                        tmpi    = readIfEmpty(img(b), file(b).sfile, omit);
                         lpsigma = ((1/tr)/options.lopass_filter)/2;
-                        tmpi = tmpi.img_filter(0, lpsigma, omit, true, ignore.lopass);
-                        img(b) = tmpi;
+                        tmpi    = tmpi.img_filter(0, lpsigma, omit, true, ignore.lopass);
+                        img(b)  = tmpi;
                 end
 
                 if ~img(b).empty
