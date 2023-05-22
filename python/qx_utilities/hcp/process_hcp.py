@@ -7090,6 +7090,10 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
+        --hcp_tica_studyfolder (str, default ''):
+            Overwrite the automatic QuNex's setup of the study folder, mainly
+            useful for REUSE mode and advanced users.
+
         --hcp_tica_bolds (str, default ''):
             A comma separated list of fmri run names. Set to all session BOLDs
             by default.
@@ -7247,24 +7251,34 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     report = "Error"
 
     try:
-        doHCPOptionsCheck(options, "hcp_temporal_ica")
-
-        # subject_list
-        subject_list = ""
-
-        # check sessions
-        for session in sessions:
-            hcp = getHCPPaths(session, options)
-
-            if "hcp" not in session:
-                r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (session["id"])
-                run = False
+        # if sessions is not a batch file skip batch file validity checks
+        if ("sessions" in options and os.path.exists(options["sessions"])) or ("batchfile" in options and os.path.exists(options["batchfile"])):
+            doHCPOptionsCheck(options, "hcp_temporal_ica")
 
             # subject_list
-            if subject_list == "":
-                subject_list = session['id'] + options["hcp_suffix"]
-            else:
-                subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
+            subject_list = ""
+
+            # check sessions
+            for session in sessions:
+                if "hcp" not in session:
+                    r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (session["id"])
+                    run = False
+
+                # subject_list
+                if subject_list == "":
+                    subject_list = session['id'] + options["hcp_suffix"]
+                else:
+                    subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
+        else:
+            # subject_list
+            subject_list = ""
+
+            for session in sessions:
+                # subject_list
+                if subject_list == "":
+                    subject_list = session['id'] + options["hcp_suffix"]
+                else:
+                    subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
 
         # use first session as the main one
         sinfo = sessions[0]
@@ -7340,38 +7354,41 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         else:
             num_wishart = options["hcp_tica_num_wishart"]
 
-        # study_dir prep
-        study_dir = ""
-
-        # single session
-        if len(sessions) == 1:
-            # get session info
-            study_dir = sessions[0]["hcp"]
-
-        # multi session
+        # if using a manual study_dir bypass all validity checks and preparation
+        if options["hcp_tica_studyfolder"]:
+            study_dir = options["hcp_tica_studyfolder"]
         else:
-            # set study dir
-            study_dir = os.path.join(options["sessionsfolder"], outgroupname)
+            study_dir = ""
 
-            # create folder
-            if not os.path.exists(study_dir):
-                os.makedirs(study_dir)
+            # single session
+            if len(sessions) == 1:
+                # get session info
+                study_dir = sessions[0]["hcp"]
 
-            # link sessions
-            for session in sessions:
-                # prepare folders
-                session_name = session["id"] + options["hcp_suffix"]
-                source_dir = os.path.join(session["hcp"], session_name)
-                target_dir = os.path.join(study_dir, session_name)
+            # multi session
+            else:
+                # set study dir
+                study_dir = os.path.join(options["sessionsfolder"], outgroupname)
 
-                # link
-                gc.linkOrCopy(source_dir, target_dir, symlink=True)
+                # create folder
+                if not os.path.exists(study_dir):
+                    os.makedirs(study_dir)
 
-            # check for make average dataset outputs
-            mad_file = os.path.join(study_dir, outgroupname, "MNINonLinear", "fsaverage_LR32k", outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii")
-            if not os.path.exists(mad_file):
-                r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
-                run = False
+                # link sessions
+                for session in sessions:
+                    # prepare folders
+                    session_name = session["id"] + options["hcp_suffix"]
+                    source_dir = os.path.join(session["hcp"], session_name)
+                    target_dir = os.path.join(study_dir, session_name)
+
+                    # link
+                    gc.linkOrCopy(source_dir, target_dir, symlink=True)
+
+                # check for make average dataset outputs
+                mad_file = os.path.join(study_dir, outgroupname, "MNINonLinear", "fsaverage_LR32k", outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii")
+                if not os.path.exists(mad_file):
+                    r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
+                    run = False
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
@@ -7406,7 +7423,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 --low-res="%(low_res)s" \
                 --matlab-run-mode="%(matlabrunmode)s" \
                 --stop-after-step="%(stopafterstep)s"' % {
-                    "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
+                    "script"            : os.path.join(os.environ['HCPPIPEDIR'], "tICA", "tICAPipeline.sh"),
                     "study_dir"         : study_dir,
                     "subject_list"      : subject_list,
                     "fmri_names"        : fmri_names,
