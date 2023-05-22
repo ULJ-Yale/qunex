@@ -708,4 +708,4 @@ export CONDABIN PATH
 source activate $QUNEXENV 2> /dev/null
 
 # set prompt
-PS1="($(basename $CONDA_PREFIX)) \[\e[0;36m\][kanga \W]\$\[\e[0m\] "
+PS1="($(basename $CONDA_PREFIX)) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "
