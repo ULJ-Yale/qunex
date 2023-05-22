@@ -56,6 +56,9 @@ mask     = var(data(:, use==1), 1, 2) > 0;
 data     = data(mask, :);
 nvox     = size(data, 1);
 
+if nvox == 0
+    return
+end
 
 %------- Interpolate?
 if verbose, fprintf('\n===> Temporal filtering (15/10/22)'); end

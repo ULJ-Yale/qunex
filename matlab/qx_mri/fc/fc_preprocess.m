@@ -665,7 +665,7 @@ file.bmask     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/b
 
 eroot          = strrep(efile, '.fidl', '');
 if eroot
-    eroot = ['_' eroot];
+    eroot      = ['_' eroot];
 end
 file.nuisance  = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.ref_bold_tail '.nuisance']);
 file.Xroot     = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/glm/' options.boldname int2str(bold) options.bold_tail '_GLM-X' eroot]);
@@ -739,7 +739,7 @@ if ismember('m', rgss) || ~isempty(strfind(doIt, 'm'))
     nuisance.mov     = nuisance.mov(:,~ismember(nuisance.mov_hdr, me));
     nuisance.mov_hdr = nuisance.mov_hdr(~ismember(nuisance.mov_hdr, me));
     nuisance.nmov    = size(nuisance.mov,2);
-else
+else        
     nframes = general_get_image_length([froot tail]);
     nuisance.nframes = nframes;
     nuisance.mov     = zeros(nframes, 6);
@@ -816,7 +816,6 @@ if strfind(doIt, 'r')
         nuisance.eventframes = [];
     end
     nuisance.nevents = size(nuisance.events,2);
-
 end
 
 
@@ -859,7 +858,7 @@ end
 
 ext  = '';
 img = nimage();
-
+dor = ~isempty(strfind(doIt, 'r'));
 
 for current = char(doIt)
 
@@ -959,6 +958,7 @@ for current = char(doIt)
                         coeffstats.B_pval.img_saveimage([froot ext '_coeff_pvals' tail]);
                     end
                 end
+                dor = false;
         end
 
         if ~img.empty && do_residuals
@@ -970,24 +970,24 @@ for current = char(doIt)
 
 
     % --- filter nuisance if needed
+    if dor
+        switch current
+            case 'h'
+                hpsigma = ((1/tr)/options.hipass_filter)/2;
+                tnimg = tmpimg(nuisance.signal', nuisance.use);     
+                tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
+                nuisance.signal = tnimg.data';
 
-    switch current
-        case 'h'
-            hpsigma = ((1/tr)/options.hipass_filter)/2;
-            tnimg = tmpimg(nuisance.signal', nuisance.use);
-            tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
-            nuisance.signal = tnimg.data';
-
-        case 'l'
-            lpsigma = ((1/tr)/options.lopass_filter)/2;
-            tnimg = tmpimg([nuisance.signal nuisance.task nuisance.events nuisance.mov]', nuisance.use);
-            tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
-            nuisance.signal = tnimg.data(1:nuisance.nsignal,:)';
-            nuisance.task   = tnimg.data((nuisance.nsignal+1):(nuisance.nsignal+nuisance.ntask),:)';
-            nuisance.events = tnimg.data((nuisance.nsignal+nuisance.ntask+1):(nuisance.nsignal+nuisance.ntask+nuisance.nevents),:)';
-            nuisance.mov    = tnimg.data(end-nuisance.nmov:end,:)';
+            case 'l'
+                lpsigma = ((1/tr)/options.lopass_filter)/2;
+                tnimg = tmpimg([nuisance.signal nuisance.task nuisance.events nuisance.mov]', nuisance.use);
+                tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
+                nuisance.signal = tnimg.data(1:nuisance.nsignal,:)';
+                nuisance.task   = tnimg.data((nuisance.nsignal+1):(nuisance.nsignal+nuisance.ntask),:)';
+                nuisance.events = tnimg.data((nuisance.nsignal+nuisance.ntask+1):(nuisance.nsignal+nuisance.ntask+nuisance.nevents),:)';
+                nuisance.mov    = tnimg.data(end-nuisance.nmov:end,:)';
+        end
     end
-
 end
 
 fprintf('\n==> preproces BOLD finished successfully\n');
