@@ -34,6 +34,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Consistent scheduler parameter specification in documentation.
 * import_hcp can now import DWI beyond dir98 and dir99.
 
+## 0.96.3
+
+* Fixed a bug where `hcp_reapply_fix` did not properly overwrite previous results.
+
 ## 0.96.2
 
 * Fixed a bug where the phase enconding direction was not set correctly in `hcp_diffusion`.
@@ -81,7 +85,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.94.13
 
-* hcp_asl now properly reads SE pairs. 
+* hcp_asl now properly reads SE pairs.
 
 ## 0.94.12
 
@@ -148,7 +152,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Fixed a bug in `extract_roi` that caused the command to crash in some cases.
 * Improved and optimised the mapping file logic.
 * Logic for filtering sessions is now consistent across the whole suite.
-* Added mice preprocessing pipelines. 
+* Added mice preprocessing pipelines.
 
 ## 0.93.8
 
@@ -242,7 +246,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.91.6 (2021-06-08)
 
-*  Optimized `dwi_probtrackx_dense_gpu` so it is now more robust and zips additional files at the end.
+* Optimized `dwi_probtrackx_dense_gpu` so it is now more robust and zips additional files at the end.
 * Squashed some minor bugs that arose when transitioning from Python 2 to 3.
 * Fixed a bug when echospacing was not printed correctly in batch files.
 
