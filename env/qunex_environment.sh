@@ -706,3 +706,6 @@ export CONDABIN PATH
 
 # activate qunex
 source activate $QUNEXENV 2> /dev/null
+
+# set prompt
+PS1="($(basename $CONDA_PREFIX)) \[\e[0;36m\][kanga \W]\$\[\e[0m\] "
