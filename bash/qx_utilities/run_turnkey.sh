@@ -2514,7 +2514,7 @@ fi
 
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
-           reho " ===> ERROR: ComLog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance test!"
+           reho " ===> ERROR: comlog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance test!"
         fi
         if [ ! -z "${CheckComLog}" ]; then
            geho " ===> run_turnkey acceptance testing found comlog file for ${TURNKEY_STEP} step:"
@@ -3021,7 +3021,7 @@ else
         turnkey_${TURNKEY_STEP}
 
         # -- Generate single session log folders
-        if [ ${TURNKEY_STEP} == "create_study" ]; then
+        if [[ ${TURNKEY_STEP} == "create_study" ]] || [[ ${TURNKEY_STEP} == "create_batch" ]] || [[ ${TURNKEY_STEP} == "create_session_info" ]] || [[ ${TURNKEY_STEP} == "import_dicom" ]]; then
             CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
         else
             CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}*${CASE}*log 2> /dev/null | head -n 1`
@@ -3067,7 +3067,7 @@ else
             geho " ===> run_turnkey acceptance testing ${TURNKEY_STEP} logs for completion."; echo ""
             if [ -z "${CheckComLog}" ]; then
                TURNKEY_STEP_ERRORS="yes"
-               reho " ===> ERROR: ComLog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance testing."
+               reho " ===> ERROR: comlog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance testing."
             fi
             if [ ! -z "${CheckComLog}" ]; then
                geho " ===> run_turnkey acceptance testing found comlog file for ${TURNKEY_STEP} step:"
