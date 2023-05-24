@@ -8038,6 +8038,11 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
                     run = False
 
+                # create folder if it does not exist
+                out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
+                if not os.path.exists(out_dir):
+                    os.makedirs(out_dir)
+
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -8048,11 +8053,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         else:
             r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
             run = False
-
-        # create folder if it does not exist
-        out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
 
         # build the command
         if run:
