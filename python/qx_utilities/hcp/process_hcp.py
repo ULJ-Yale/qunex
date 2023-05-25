@@ -6406,7 +6406,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
 
         if options['hcp_msmall_myelin_target'] is None:
             myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
-        else
+        else:
             myelintarget = options['hcp_msmall_myelin_target']
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
