@@ -414,7 +414,7 @@ arglist = [
     ['hcp_msmall_outregname',  'MSMAll_InitialReg',                        str,    "Output registration name."],
     ['hcp_msmall_procstring',  '',                                         isNone, "Identification for FIX cleaned dtseries to use."],
     ['hcp_msmall_resample',    'TRUE',                                     torf,   "Whether to automatically run HCP DeDriftAndResample if HCP MSMAll finishes successfully."],
-    ['hcp_msmall_myelin_target',  '',                                      isNone,    "Alternate myelin map target."],
+    ['hcp_msmall_myelin_target',  '',                                      isNone,    "Myelin map target, will use Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii by default."],
 
     ['# --- hcp_dedrift_and_resample options'],
     ['hcp_resample_concatregname', 'MSMAll',                               str,    "Output name of the dedrifted registration."],

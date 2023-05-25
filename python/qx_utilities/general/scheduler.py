@@ -327,7 +327,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         com = 'qsub'
 
     elif scheduler == "SLURM":
-        sCommand += "#!/bin/bash -eu\n"
+        sCommand += "#!/bin/bash\n"
         for key, value in setDict.items():
             if key in ('J', 'job-name') and jobname == 'qx_schedule':
                 jobname = v

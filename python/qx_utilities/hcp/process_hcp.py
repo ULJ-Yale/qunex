@@ -6008,8 +6008,10 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             Whether to automatically run HCP DeDriftAndResample if HCP MSMAll
             finishes successfully.
 
-        --hcp_msmall_myelin_target (str):
-            Alternate myelin map target.
+        --hcp_msmall_myelin_target (str, default 'Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii'):
+            Myelin map target, will use
+            Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii
+            by default.
 
     Output files:
         The results of this step will be generated and populated in the
@@ -6237,6 +6239,11 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         else:
           msmalltemplates = options['hcp_msmall_templates']
 
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else
+            myelintarget = options['hcp_msmall_myelin_target']
+
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -6263,6 +6270,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -6276,11 +6284,8 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 'highresmesh'         : options['hcp_hiresmesh'],
                 'lowresmesh'          : options['hcp_lowresmesh'],
                 'inregname'           : options['hcp_regname'],
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
-
-        # -- Optional parameters
-        if options['hcp_msmall_myelin_target'] is not None:
-            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
 
         # -- Report command
         if boldsok:
@@ -6399,6 +6404,11 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         else:
           msmalltemplates = options['hcp_msmall_templates']
 
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else
+            myelintarget = options['hcp_msmall_myelin_target']
+
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -6430,6 +6440,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -6445,11 +6456,8 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 'highresmesh'         : options['hcp_hiresmesh'],
                 'lowresmesh'          : options['hcp_lowresmesh'],
                 'inregname'           : options['hcp_regname'],
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
-
-        # -- Optional parameters
-        if options['hcp_msmall_myelin_target'] is not None:
-            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
 
         # -- Report command
         if boldok:
