@@ -6235,9 +6235,9 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 msmallBolds = msmallBolds + boldtarget
 
         if options['hcp_msmall_templates'] is None:
-          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+            msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
         else:
-          msmalltemplates = options['hcp_msmall_templates']
+            msmalltemplates = options['hcp_msmall_templates']
 
         if options['hcp_msmall_myelin_target'] is None:
             myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
@@ -6400,9 +6400,9 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             r, boldok = pc.checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
 
         if options['hcp_msmall_templates'] is None:
-          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+            msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
         else:
-          msmalltemplates = options['hcp_msmall_templates']
+            msmalltemplates = options['hcp_msmall_templates']
 
         if options['hcp_msmall_myelin_target'] is None:
             myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
@@ -6619,10 +6619,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             reapplied to them. Only applicable if single-run ICAFix was used.
             Generally not recommended.
 
-        --hcp_resample_myelintarget (str, default 'NONE'):
-            A myelin target file is required to run this pipeline when using a
-            different mesh resolution than the original MSMAll registration.
-
         --hcp_resample_inregname (str, default 'NONE'):
             A string to enable multiple fMRI resolutions (e.g._1.6mm).
 
@@ -6643,6 +6639,14 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_extractvolume (str, default 'NONE'):
             Whether to also extract the specified multi-run HCP ICAFix from the
             volume data, requires hcp_resample_extractnames to work.
+
+        --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):
+            Path to directory containing MSMAll template files.
+
+        --hcp_msmall_myelin_target (str, default 'Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii'):
+            Myelin map target, will use
+            Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii
+            by default.
 
     Output files:
         The results of this step will be populated in the MNINonLinear
@@ -6669,8 +6673,8 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             ``hcp_bold_smoothFWHM``               ``smoothing-fwhm``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
             ``hcp_icafix_domotionreg``            ``motion-regression``
+            ``hcp_msmall_myelin_target``           ``myelin-target-file``
             ``hcp_resample_dontfixnames``         ``dont-fix-names``
-            ``hcp_resample_myelintarget``         ``myelin-target-file``
             ``hcp_resample_inregname``            ``input-reg-name``
             ``hcp_resample_extractnames``         ``multirun-fix-extract-names``
             ``hcp_resample_extractnames``         ``multirun-fix-extract-concat-names``
@@ -6829,6 +6833,16 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
         if options['hcp_resample_reg_files'] is not None:
             regfiles = options['hcp_resample_reg_files'].replace(",", "@")
 
+        if options['hcp_msmall_templates'] is None:
+            msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+        else:
+            msmalltemplates = options['hcp_msmall_templates']
+
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else:
+            myelintarget = options['hcp_msmall_myelin_target']
+
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -6854,6 +6868,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             --dedrift-reg-files="%(regfiles)s" \
             --concat-reg-name="%(concatregname)s" \
             --myelin-maps="%(myelinmaps)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -6869,6 +6884,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 'regfiles'            : regfiles,
                 'concatregname'       : options['hcp_resample_concatregname'],
                 'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
 
         # optional parameters
@@ -7018,6 +7034,16 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         if options['hcp_resample_reg_files'] is not None:
             regfiles = options['hcp_resample_reg_files'].replace(",", "@")
 
+        if options['hcp_msmall_templates'] is None:
+          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+        else:
+          msmalltemplates = options['hcp_msmall_templates']
+
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else:
+            myelintarget = options['hcp_msmall_myelin_target']
+
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -7044,6 +7070,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             --dedrift-reg-files="%(regfiles)s" \
             --concat-reg-name="%(concatregname)s" \
             --myelin-maps="%(myelinmaps)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -7060,6 +7087,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 'regfiles'            : regfiles,
                 'concatregname'       : options['hcp_resample_concatregname'],
                 'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
 
         # optional parameters
