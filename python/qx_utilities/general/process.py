@@ -423,7 +423,6 @@ arglist = [
     ['hcp_resample_maps',      'sulc,curvature,corrThickness,thickness',   str,    "Comma separated paths to maps that will have the MSMAll registration applied that are not myelin maps."],
     ['hcp_resample_myelinmaps', 'MyelinMap,SmoothedMyelinMap',             str,    "Comma separated paths to myelin maps."],
     ['hcp_resample_dontfixnames', '',                                      isNone, "A list of comma separated bolds that will not have HCP ICAFix reapplied to them. Only applicable if single-run ICAFix was used. Generally not recommended."],
-    ['hcp_resample_myelintarget', '',                                      isNone, "A myelin target file is required to run this pipeline when using a different mesh resolution than the original MSMAll registration."],
     ['hcp_resample_inregname', '',                                         isNone, "A string to enable multiple fMRI resolutions (e.g._1.6mm)."],
     ['hcp_resample_use_ind_mean', '',                                      isNone, "Whether to use the mean of the individual myelin map as the group reference map's mean."],
     ['hcp_resample_extractnames', '',                                      isNone, "List of bolds and concat names provided in the same format as the hcp_icafix_bolds parameter. Defines which bolds to extract. Exists to enable extraction of a subset of the runs in a multi-run HCP ICAFix group into a new concatenated series."],
