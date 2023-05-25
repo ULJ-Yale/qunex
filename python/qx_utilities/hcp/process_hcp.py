@@ -7743,6 +7743,12 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             with similar settings, or for reusing these results for future
             cleaning. Not set by default.
 
+        --hcp_tica_average_dataset (str, default ''):
+            Location of the average dataset, the output from
+            hcp_make_average_dataset command. Set this if using the average set
+            from another study, this is usually used in combination with
+            REUSE_TICA mode.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'.
@@ -8050,6 +8056,16 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
                 if not os.path.exists(out_dir):
                     os.makedirs(out_dir)
+
+        # if hcp_tica_average_dataset is provided copy or link it into the outgroupname
+        if options["hcp_tica_average_dataset"] is not None:
+            mad_dir = os.path.join(study_dir, outgroupname)
+
+            # REUSE_TICA case
+            if options["hcp_tica_precomputed_clean_folder"] is not None:
+                mad_dir = options["hcp_tica_precomputed_clean_folder"]
+
+            gc.linkOrCopy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
