@@ -425,10 +425,10 @@ arglist = [
     ['hcp_resample_dontfixnames', '',                                      isNone, "A list of comma separated bolds that will not have HCP ICAFix reapplied to them. Only applicable if single-run ICAFix was used. Generally not recommended."],
     ['hcp_resample_myelintarget', '',                                      isNone, "A myelin target file is required to run this pipeline when using a different mesh resolution than the original MSMAll registration."],
     ['hcp_resample_inregname', '',                                         isNone, "A string to enable multiple fMRI resolutions (e.g._1.6mm)."],
+    ['hcp_resample_use_ind_mean', '',                                      isNone, "Whether to use the mean of the individual myelin map as the group reference map's mean."],
     ['hcp_resample_extractnames', '',                                      isNone, "List of bolds and concat names provided in the same format as the hcp_icafix_bolds parameter. Defines which bolds to extract. Exists to enable extraction of a subset of the runs in a multi-run HCP ICAFix group into a new concatenated series."],
     ['hcp_resample_extractextraregnames', '',                              isNone, "Extract multi-run HCP ICAFix runs for additional surface registrations, often MSMSulc."],
     ['hcp_resample_extractvolume', '',                                     isNone, "Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work."],
-    ['hcp_resample_msmall_templates', '',                                  isNone, "Path to directory containing MSM All template files."],
 
     ['# --- hcp_task_fmri_analysis options'],
     ['hcp_task_lvl1tasks', '',                                             isNone, "Comma separated list of task fMRI scan names."],

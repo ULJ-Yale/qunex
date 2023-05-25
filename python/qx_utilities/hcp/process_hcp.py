@@ -6626,6 +6626,10 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_inregname (str, default 'NONE'):
             A string to enable multiple fMRI resolutions (e.g._1.6mm).
 
+        --hcp_resample_use_ind_mean (str, default 'YES'):
+            Whether to use the mean of the individual myelin map as the group
+            reference map's mean.
+
         --hcp_resample_extractnames (str, default 'NONE'):
             List of bolds and concat names provided in the same format as the
             hcp_icafix_bolds parameter. Defines which bolds to extract. Exists
@@ -6639,9 +6643,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_extractvolume (str, default 'NONE'):
             Whether to also extract the specified multi-run HCP ICAFix from the
             volume data, requires hcp_resample_extractnames to work.
-
-        --hcp_resample_msmall_templates (str, default 'NONE'):
-            Path to directory containing MSM All template files.
 
     Output files:
         The results of this step will be populated in the MNINonLinear
@@ -6675,7 +6676,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             ``hcp_resample_extractnames``         ``multirun-fix-extract-concat-names``
             ``hcp_resample_extractextraregnames`` ``multirun-fix-extract-extra-regnames``
             ``hcp_resample_extractvolume``        ``multirun-fix-extract-volume``
-            ``hcp_resample_msmall_templates``     ``msm-all-templates``
+            ``hcp_resample_use_ind_mean``         ``use-ind-mean``
             ===================================== =======================================
 
     Examples:
@@ -6828,11 +6829,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
         if options['hcp_resample_reg_files'] is not None:
             regfiles = options['hcp_resample_reg_files'].replace(",", "@")
 
-        # msm-all-templates
-        msmall_templates = hcp['hcp_base'] + "/global/templates/MSMAll"
-        if options['hcp_resample_msmall_templates'] is not None:
-            msmall_templates = options['hcp_resample_msmall_templates']
-
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -6855,7 +6851,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
             --motion-regression="%(motionregression)s" \
-            --msm-all-templates="%(msmalltemplates)s" \
             --dedrift-reg-files="%(regfiles)s" \
             --concat-reg-name="%(concatregname)s" \
             --myelin-maps="%(myelinmaps)s" \
@@ -6871,7 +6866,6 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 'smoothingfwhm'       : options['hcp_bold_smoothFWHM'],
                 'highpass'            : int(highpass),
                 'motionregression'    : "TRUE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'msmalltemplates'     : msmall_templates,
                 'regfiles'            : regfiles,
                 'concatregname'       : options['hcp_resample_concatregname'],
                 'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
@@ -6886,6 +6880,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + options["hcp_resample_inregname"]
+
+        if options["hcp_resample_use_ind_mean"] is not None:
+            comm += "                --use-ind-mean=" + options["hcp_resample_use_ind_mean"]
 
         # -- Report command
         if boldsok:
@@ -7021,11 +7018,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         if options['hcp_resample_reg_files'] is not None:
             regfiles = options['hcp_resample_reg_files'].replace(",", "@")
 
-        # msm-all-templates
-        msmall_templates = hcp['hcp_base'] + "/global/templates/MSMAll"
-        if options['hcp_resample_msmall_templates'] is not None:
-            msmall_templates = options['hcp_resample_msmall_templates']
-
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
             matlabrunmode = 0
@@ -7049,7 +7041,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
             --motion-regression="%(motionregression)s" \
-            --msm-all-templates="%(msmalltemplates)s" \
             --dedrift-reg-files="%(regfiles)s" \
             --concat-reg-name="%(concatregname)s" \
             --myelin-maps="%(myelinmaps)s" \
@@ -7066,7 +7057,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 'smoothingfwhm'       : options['hcp_bold_smoothFWHM'],
                 'highpass'            : int(highpass),
                 'motionregression'    : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'msmalltemplates'     : msmall_templates,
                 'regfiles'            : regfiles,
                 'concatregname'       : options['hcp_resample_concatregname'],
                 'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
@@ -7081,6 +7071,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + options["hcp_resample_inregname"]
+
+        if options["hcp_resample_use_ind_mean"] is not None:
+            comm += "                --use-ind-mean=" + options["hcp_resample_use_ind_mean"]
 
         # -- hcp_resample_extractnames
         if options['hcp_resample_extractnames'] is not None:
