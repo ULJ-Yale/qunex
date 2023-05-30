@@ -34,4 +34,5 @@ python:
 
 # Token has permission to access both qunex and library
 submodules:
+  include: all
   recursive: true
