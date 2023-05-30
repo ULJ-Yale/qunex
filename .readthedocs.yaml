@@ -2,6 +2,15 @@
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
+# Environment variables:
+# 
+# GITLAB_QUNEX_TOKEN: A project access token with `read_repository` api scope for qunex and qunex.wiki
+# GITLAB_QX_LIBRARY_TOKEN: Use a project access token with `read_repository` api scope for qunex/library
+# QUNEXMCOMMAND: ?
+#
+# Note: GitLab tokens can only have a maximum lifetime of 365 days. 
+
+
 # Required
 version: 2
 
@@ -14,7 +23,7 @@ build:
     post_checkout:
       - rm -rf qx_library
       # remove "-b develop" option to use master branch of qunex/library repository
-      - git clone -b develop --depth=1 https://token:glpat-W4j8WPCLEfK5d2oMQh9j@gitlab.qunex.yale.edu/qunex/library.git qx_library
+      - git clone -b develop --depth=1 https://token:${GITLAB_QX_LIBRARY_TOKEN}@gitlab.qunex.yale.edu/qunex/library.git qx_library
     pre_build:
       - qx_library/etc/docs/_extras/bash/pre_build.sh
 
