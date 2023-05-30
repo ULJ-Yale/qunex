@@ -4,8 +4,7 @@
 
 # Environment variables:
 # 
-# GITLAB_QUNEX_TOKEN: A project access token with `read_repository` api scope for qunex and qunex.wiki
-# GITLAB_QX_LIBRARY_TOKEN: Use a project access token with `read_repository` api scope for qunex/library
+# GITLAB_QUNEX_TOKEN: A group access token with `read_repository` git clone permission for qunex, qunex.wiki, and library
 # QUNEXMCOMMAND: ?
 #
 # Note: GitLab tokens can only have a maximum lifetime of 365 days. 
@@ -20,10 +19,6 @@ build:
   tools:
     python: "3.8"
   jobs:
-    post_checkout:
-      - rm -rf qx_library
-      # remove "-b develop" option to use master branch of qunex/library repository
-      - git clone -b develop --depth=1 https://token:${GITLAB_QX_LIBRARY_TOKEN}@gitlab.qunex.yale.edu/qunex/library.git qx_library
     pre_build:
       - qx_library/etc/docs/_extras/bash/pre_build.sh
 
@@ -37,6 +32,6 @@ python:
    install:
    - requirements: qx_library/etc/docs/_extras/requirements.txt
 
-# Exclude submodules to suppress Read the Docs invalid submodule token error
+# Token has permission to access both qunex and library
 submodules:
-  exclude: all
+  recursive: true
