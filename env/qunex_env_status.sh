@@ -165,9 +165,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "               DICMNIIDIR : $DICMNIIDIR";           if [[ -z $DICMNIIDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport DICMNIIDIR"; fi
     if [ "$USEOCTAVE" == "TRUE" ]; then
     echo "                OCTAVEDIR : $OCTAVEDIR";            if [[ -z $OCTAVEDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport OCTAVEDIR"; fi
-    echo "             OCTAVEPKGDIR : $OCTAVEPKGDIR";         if [[ -z $OCTAVEPKGDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport OCTAVEPKGDIR"; fi
-    echo "             OCTAVEBINDIR : $OCTAVEBINDIR";         if [[ -z $OCTAVEBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport OCTAVEBINDIR"; fi
-    else
     echo "                MATLABDIR : $MATLABDIR";            if [[ -z $MATLABDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport MATLABDIR"; fi
     echo "             MATLABBINDIR : $MATLABBINDIR";         if [[ -z $MATLABBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport MATLABBINDIR"; fi
     fi
@@ -261,15 +258,15 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo ""
 
     ## -- Check for ANTs (only very few ANTs commands support --version flag)
-    echo "        ANTs Binary  : $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion')"
-    if [[ -z $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion') ]]; then 
+    echo "        ANTs Binary  : $(which antsRegistration 2>&1 | grep -v 'no antsRegistration')"
+    if [[ -z $(which antsRegistration 2>&1 | grep -v 'no antsRegistration') ]]; then 
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport ants"
         reho "        ANTs Version : Binary not found!"
         if [[ -L "$ANTSDIR"  && ! -e "$ANTSDIR" ]]; then
             reho "                     : $ANTSDIR is a link to a nonexisiting folder!"
         fi
     else
-        echo "        ANTs Version : $(antsJointFusion --version | head -1)"
+        echo "        ANTs Version : $(antsRegistration --version | head -1)"
     fi
     echo ""
 
@@ -354,9 +351,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         if [[ -z $(which octave 2>&1 | grep -v 'no octave') ]]; then 
             BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport octave"
             reho "      Octave Version : Binary not found!"
-            if [[ -L "$OCTAVEBINDIR"  && ! -e "$OCTAVEBINDIR" ]]; then
-                reho "                     : $OCTAVEBINDIR is a link to a nonexisiting folder!"
-            fi
         else
             echo "      Octave Version : $(octave -q --eval "v=version;fprintf('%s', v);")"
         fi
