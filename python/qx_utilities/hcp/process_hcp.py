@@ -7855,9 +7855,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
            cd ${ResultsFolder}
            wb_command -zip-scene-file \\
                tICA_hcp_group.scene \\
-               tICA_hcp_group_sulc_fMRI_CONCAT_ALL \\
+               tICA_hcp_group_fMRI_CONCAT_ALL \\
                -skip-missing \\
-               tICA_hcp_group_sulc_fMRI_CONCAT_ALL.zip
+               tICA_hcp_group_fMRI_CONCAT_ALL.zip
 
         MATLAB large variable error:
             If receiving an error in MATBAL saying that a variable was not saved
