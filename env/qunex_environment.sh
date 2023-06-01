@@ -330,9 +330,7 @@ if [ "$USEOCTAVE" == "TRUE" ]; then
         reho " ===> ERROR: Cannot setup Octave because module test failed."
     else
          ln -s `which octave` ${OCTAVEDIR}/octave > /dev/null 2>&1
-         export OCTAVEPKGDIR
          export OCTAVEDIR
-         export OCTAVEBINDIR
          cyaneho " ---> Setting up Octave "; echo ""
          QUNEXMCOMMAND='octave -q --no-init-file --eval'
          if [ ! -e ~/.octaverc ]; then
@@ -439,7 +437,7 @@ PATH=${ANTSDIR}:${PATH}
 export ANTSDIR PATH
 
 # -- dcm2niix path
-DCMNIIBINDIR=${DCMNIIDIR}/build/bin
+DCMNIIBINDIR=${DCMNIIDIR}/bin
 PATH=${DCMNIIDIR}:${DCMNIIBINDIR}:${PATH}
 export DCMNIIDIR PATH
 
