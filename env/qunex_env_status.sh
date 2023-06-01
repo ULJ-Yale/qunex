@@ -358,7 +358,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
                 reho "                     : $OCTAVEBINDIR is a link to a nonexisiting folder!"
             fi
         else
-            echo "      Octave Version : $(octave -q --eval "v=version;fprintf('%s', v);")"
+            echo "      Octave Version : $(octave -q --eval "warning('off','all');v=version;fprintf('%s', v);")"
         fi
     else
         echo "      Matlab Binary  : $(which matlab 2>&1 | grep -v 'no matlab')"
@@ -386,20 +386,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     else
         echo "           R Version : $(R --version | head -1)"
     fi
-    echo ""
-    
-    ## -- Check for R packages that are required
-    unset RPackageTest RPackage
-    RPackages="ggplot2"   # <-- Add R packages here
-    echo " R required packages : ${RPackages}"
-    for RPackage in ${RPackages}; do
-        RPackageTest=`R --slave -e "tpkg <- '$RPackage'; if (is.element(tpkg, installed.packages()[,1])) {packageVersion(tpkg)} else {print('package not installed')}" | sed 's/\[1\]//g'`
-        if [[ `echo ${RPackageTest} | grep 'not installed'` ]]; then 
-                reho "  R Package : ${RPackage} not installed!"
-        else
-                echo "           R Package : ${RPackage} ${RPackageTest}"
-        fi
-    done
     echo ""
 
     ## -- Check for python
