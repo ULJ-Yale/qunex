@@ -1256,7 +1256,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # --- set target file
-        tfile = os.path.join(hcp['FS_folder'], 'label', 'BA_exvivo.thresh.ctab'
+        tfile = os.path.join(hcp['FS_folder'], 'label', 'BA_exvivo.thresh.ctab')
 
         # --> Building the command string
 
