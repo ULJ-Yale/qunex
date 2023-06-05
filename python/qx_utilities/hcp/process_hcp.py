@@ -1255,8 +1255,64 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode."
             run = False
 
+        # -> check version of FS against previous version of FS
+
+        # ------------------------------------------------------------------
+        # - Alan added integrated code for FreeSurfer 6.0 completion check
+        # -----------------------------------------------------------------
+
+        freesurferhome = options['hcp_freesurfer_home']
+
+        # - Set FREESURFER_HOME based on --hcp_freesurfer_home flag to ensure backward compatibility
+        if freesurferhome:
+            sys.path.append(freesurferhome)
+            os.environ['FREESURFER_HOME'] = str(freesurferhome)
+            r +=  "\n---> FREESURFER_HOME set to: " + str(freesurferhome)
+            versionfile = os.path.join(os.environ['FREESURFER_HOME'], 'build-stamp.txt')
+        else:
+            fshome = os.environ["FREESURFER_HOME"]
+            r += "\n---> FREESURFER_HOME set to: " + str(fshome)
+            versionfile = os.path.join(os.environ['FREESURFER_HOME'], 'build-stamp.txt')
+
+        fsbuildstamp = open(versionfile).read()
+
+        for fstest, fsversion in [('stable-pub-v6.0.0', '6.0'), ('stable-pub-v5.3.0-HCP', '5.3-HCP'), ('unknown', 'unknown')]:
+            if fstest in fsbuildstamp:
+                break
+
+        # - Check if recon-all.log exists to set the FS version
+        reconallfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'scripts', 'recon-all.log')
+
+        if os.path.exists(reconallfile):
+            r +=  "\n---> Existing FreeSurfer recon-all.log was found!"
+
+            reconallfiletxt = open(reconallfile).read()
+            for fstest, efsversion in [('stable-pub-v6.0.0', '6.0'), ('stable-pub-v5.3.0-HCP', '5.3-HCP'), ('unknown', 'unknown')]:
+                if fstest in reconallfiletxt:
+                    break
+
+            if overwrite and options['run'] == "run" and not options['hcp_fs_existing_session']:
+                r += "\n     ... removing previous files"
+            else:
+                if fsversion == efsversion:
+                    r += "\n     ... current FREESURFER_HOME settings match previous version of recon-all.log [%s]." % (fsversion)
+                    r += "\n         Proceeding ..."
+                else:
+                    r += "\n     ... ERROR: current FREESURFER_HOME settings [%s] do not match previous version of recon-all.log [%s]!" % (fsversion, efsversion)
+                    r += "\n         Please check your FS version or set overwrite to yes"
+                    run = False
+
         # --- set target file
-        tfile = os.path.join(hcp['FS_folder'], 'label', 'BA_exvivo.thresh.ctab')
+
+        # --- Deprecated versions of tfile variable based on prior FS runs ---------------------------------------------
+        # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')
+        # tfile = os.path.join(hcp['T1w_folder'], '_FS.done')
+        # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
+        # --------------------------------------------------------------------------------------------------------------
+
+        tfiles = {'6.0':     os.path.join(hcp['FS_folder'], 'label', 'BA_exvivo.thresh.ctab'),
+                  '5.3-HCP': os.path.join(hcp['FS_folder'], 'label', 'rh.entorhinal_exvivo.label')}
+        tfile = tfiles[fsversion]
 
         # --> Building the command string
 
