@@ -32,10 +32,6 @@ _hcp_seechospacing      : NONE
 _hcp_seunwarpdir        : NONE
 _hcp_biascorrect_t1w    : YES
 
-# ---> FreeSurfer
-
-_hcp_freesurfer_home    : ${FREESURFER_HOME}
-
 # ---> Post FreeSurfer
 
 _hcp_regname            : MSMSulc

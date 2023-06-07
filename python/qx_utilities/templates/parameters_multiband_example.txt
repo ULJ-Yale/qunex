@@ -26,9 +26,6 @@ _hcp_sephaseneg         : AP
 _hcp_sephasepos         : PA
 _hcp_seechospacing      : 0.000580008723331
 _hcp_seunwarpdir        : y
- 
-# --->  FS
-_hcp_freesurfer_home    : ${FREESURFER_HOME}
 
 # ---> PostFreeSurfer
 
