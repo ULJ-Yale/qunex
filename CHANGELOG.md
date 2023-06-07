@@ -8,8 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.98.0
 
-* Optimized the whole DWI pipelines, all commands now support newer GPUs and `nogpu` processing for systems without an NVIDIA graphics card.
-* Updated the OS, packages and tools in the container and optimized the container.
+* Optimized DWI pipelines, all commands now support newer GPUs and `nogpu` processing for systems without an NVIDIA graphics card.
 * Added the fucionality to GLM modelling that allows to generate the output image with standard errors of each coefficient along with GLM beta coefficients.
 * Optimized Philips and GE scanner support in `hcp_pre_freesurfer`.
 * All HCP Pipelines parameters are now accessible to QuNex, added documentation for all of them and made the documentation consistent across commands.
@@ -18,7 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Added the ability to assign manual spin echo and fieldmap numbers to images in mapping files.
 * QuNex will now print a warning if `hcp_diffusion` echo spacing parameter has a value that is larger or smaller than expected.
 * Fixed a bug where some commands did not work properly if both `batchfile` and `sessions` parameters are used.
-* All `dwi_dtifit` are now properly acknowledged.
+* All `dwi_dtifit` parameters are now properly acknowledged.
 * `create_list` and `create_conc` now use the same log folder structure as other commands.
 * Fixed a bug in `hcp_reapply_fix` where the `overwrite` parameter was not acknowledged.
 * Improved several command examples in documentation.
