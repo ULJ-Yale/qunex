@@ -6008,8 +6008,10 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             Whether to automatically run HCP DeDriftAndResample if HCP MSMAll
             finishes successfully.
 
-        --hcp_msmall_myelin_target (str):
-            Alternate myelin map target.
+        --hcp_msmall_myelin_target (str, default 'Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii'):
+            Myelin map target, will use
+            Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii
+            by default.
 
     Output files:
         The results of this step will be generated and populated in the
@@ -6233,9 +6235,14 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 msmallBolds = msmallBolds + boldtarget
 
         if options['hcp_msmall_templates'] is None:
-          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+            msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
         else:
-          msmalltemplates = options['hcp_msmall_templates']
+            msmalltemplates = options['hcp_msmall_templates']
+
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else:
+            myelintarget = options['hcp_msmall_myelin_target']
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
@@ -6263,6 +6270,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -6276,11 +6284,8 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 'highresmesh'         : options['hcp_hiresmesh'],
                 'lowresmesh'          : options['hcp_lowresmesh'],
                 'inregname'           : options['hcp_regname'],
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
-
-        # -- Optional parameters
-        if options['hcp_msmall_myelin_target'] is not None:
-            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
 
         # -- Report command
         if boldsok:
@@ -6395,9 +6400,14 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             r, boldok = pc.checkForFile2(r, groupimg, '\n     ... ICA %s present' % groupname, '\n     ... ERROR: ICA [%s] missing!' % groupimg, status=boldok)
 
         if options['hcp_msmall_templates'] is None:
-          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+            msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
         else:
-          msmalltemplates = options['hcp_msmall_templates']
+            msmalltemplates = options['hcp_msmall_templates']
+
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else:
+            myelintarget = options['hcp_msmall_myelin_target']
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
@@ -6430,6 +6440,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             --high-res-mesh="%(highresmesh)s" \
             --low-res-mesh="%(lowresmesh)s" \
             --input-registration-name="%(inregname)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'MSMAll', 'MSMAllPipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -6445,11 +6456,8 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 'highresmesh'         : options['hcp_hiresmesh'],
                 'lowresmesh'          : options['hcp_lowresmesh'],
                 'inregname'           : options['hcp_regname'],
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
-
-        # -- Optional parameters
-        if options['hcp_msmall_myelin_target'] is not None:
-            comm += '             --myelin-target-file="%s"' % options['hcp_msmall_myelin_target']
 
         # -- Report command
         if boldok:
@@ -6611,12 +6619,12 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             reapplied to them. Only applicable if single-run ICAFix was used.
             Generally not recommended.
 
-        --hcp_resample_myelintarget (str, default 'NONE'):
-            A myelin target file is required to run this pipeline when using a
-            different mesh resolution than the original MSMAll registration.
-
         --hcp_resample_inregname (str, default 'NONE'):
             A string to enable multiple fMRI resolutions (e.g._1.6mm).
+
+        --hcp_resample_use_ind_mean (str, default 'YES'):
+            Whether to use the mean of the individual myelin map as the group
+            reference map's mean.
 
         --hcp_resample_extractnames (str, default 'NONE'):
             List of bolds and concat names provided in the same format as the
@@ -6632,8 +6640,13 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             Whether to also extract the specified multi-run HCP ICAFix from the
             volume data, requires hcp_resample_extractnames to work.
 
-        --hcp_resample_msmall_templates (str, default 'NONE'):
-            Path to directory containing MSM All template files.
+        --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):
+            Path to directory containing MSMAll template files.
+
+        --hcp_msmall_myelin_target (str, default 'Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii'):
+            Myelin map target, will use
+            Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii
+            by default.
 
     Output files:
         The results of this step will be populated in the MNINonLinear
@@ -6660,14 +6673,14 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             ``hcp_bold_smoothFWHM``               ``smoothing-fwhm``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
             ``hcp_icafix_domotionreg``            ``motion-regression``
+            ``hcp_msmall_myelin_target``           ``myelin-target-file``
             ``hcp_resample_dontfixnames``         ``dont-fix-names``
-            ``hcp_resample_myelintarget``         ``myelin-target-file``
             ``hcp_resample_inregname``            ``input-reg-name``
             ``hcp_resample_extractnames``         ``multirun-fix-extract-names``
             ``hcp_resample_extractnames``         ``multirun-fix-extract-concat-names``
             ``hcp_resample_extractextraregnames`` ``multirun-fix-extract-extra-regnames``
             ``hcp_resample_extractvolume``        ``multirun-fix-extract-volume``
-            ``hcp_resample_msmall_templates``     ``msm-all-templates``
+            ``hcp_resample_use_ind_mean``         ``use-ind-mean``
             ===================================== =======================================
 
     Examples:
@@ -6820,10 +6833,15 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
         if options['hcp_resample_reg_files'] is not None:
             regfiles = options['hcp_resample_reg_files'].replace(",", "@")
 
-        # msm-all-templates
-        msmall_templates = hcp['hcp_base'] + "/global/templates/MSMAll"
-        if options['hcp_resample_msmall_templates'] is not None:
-            msmall_templates = options['hcp_resample_msmall_templates']
+        if options['hcp_msmall_templates'] is None:
+            msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+        else:
+            msmalltemplates = options['hcp_msmall_templates']
+
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else:
+            myelintarget = options['hcp_msmall_myelin_target']
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
@@ -6847,10 +6865,10 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
             --motion-regression="%(motionregression)s" \
-            --msm-all-templates="%(msmalltemplates)s" \
             --dedrift-reg-files="%(regfiles)s" \
             --concat-reg-name="%(concatregname)s" \
             --myelin-maps="%(myelinmaps)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -6863,10 +6881,10 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 'smoothingfwhm'       : options['hcp_bold_smoothFWHM'],
                 'highpass'            : int(highpass),
                 'motionregression'    : "TRUE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'msmalltemplates'     : msmall_templates,
                 'regfiles'            : regfiles,
                 'concatregname'       : options['hcp_resample_concatregname'],
                 'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
 
         # optional parameters
@@ -6878,6 +6896,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + options["hcp_resample_inregname"]
+
+        if options["hcp_resample_use_ind_mean"] is not None:
+            comm += "                --use-ind-mean=" + options["hcp_resample_use_ind_mean"]
 
         # -- Report command
         if boldsok:
@@ -7013,10 +7034,15 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         if options['hcp_resample_reg_files'] is not None:
             regfiles = options['hcp_resample_reg_files'].replace(",", "@")
 
-        # msm-all-templates
-        msmall_templates = hcp['hcp_base'] + "/global/templates/MSMAll"
-        if options['hcp_resample_msmall_templates'] is not None:
-            msmall_templates = options['hcp_resample_msmall_templates']
+        if options['hcp_msmall_templates'] is None:
+          msmalltemplates = os.path.join(hcp['hcp_base'], 'global', 'templates', 'MSMAll')
+        else:
+          msmalltemplates = options['hcp_msmall_templates']
+
+        if options['hcp_msmall_myelin_target'] is None:
+            myelintarget = os.path.join(msmalltemplates, "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii")
+        else:
+            myelintarget = options['hcp_msmall_myelin_target']
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
@@ -7041,10 +7067,10 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             --smoothing-fwhm="%(smoothingfwhm)s" \
             --high-pass="%(highpass)d" \
             --motion-regression="%(motionregression)s" \
-            --msm-all-templates="%(msmalltemplates)s" \
             --dedrift-reg-files="%(regfiles)s" \
             --concat-reg-name="%(concatregname)s" \
             --myelin-maps="%(myelinmaps)s" \
+            --myelin-target-file="%(myelintarget)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
                 'script'              : os.path.join(hcp['hcp_base'], 'DeDriftAndResample', 'DeDriftAndResamplePipeline.sh'),
                 'path'                : sinfo['hcp'],
@@ -7058,10 +7084,10 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 'smoothingfwhm'       : options['hcp_bold_smoothFWHM'],
                 'highpass'            : int(highpass),
                 'motionregression'    : "FALSE" if options['hcp_icafix_domotionreg'] is None else options['hcp_icafix_domotionreg'],
-                'msmalltemplates'     : msmall_templates,
                 'regfiles'            : regfiles,
                 'concatregname'       : options['hcp_resample_concatregname'],
                 'myelinmaps'          : options['hcp_resample_myelinmaps'].replace(",", "@"),
+                'myelintarget'        : myelintarget,
                 'matlabrunmode'       : matlabrunmode}
 
         # optional parameters
@@ -7073,6 +7099,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + options["hcp_resample_inregname"]
+
+        if options["hcp_resample_use_ind_mean"] is not None:
+            comm += "                --use-ind-mean=" + options["hcp_resample_use_ind_mean"]
 
         # -- hcp_resample_extractnames
         if options['hcp_resample_extractnames'] is not None:
@@ -7609,6 +7638,10 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             - 'hcp' (for `<hcp_folder>/logs/comlogs`)
             - '<path>' (for an arbitrary directory).
 
+        --hcp_tica_studyfolder (str, default ''):
+            Overwrite the automatic QuNex's setup of the study folder, mainly
+            useful for REUSE mode and advanced users.
+
         --hcp_tica_bolds (str, default ''):
             A comma separated list of fmri run names. Set to all session BOLDs
             by default.
@@ -7731,6 +7764,12 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             with similar settings, or for reusing these results for future
             cleaning. Not set by default.
 
+        --hcp_tica_average_dataset (str, default ''):
+            Location of the average dataset, the output from
+            hcp_make_average_dataset command. Set this if using the average set
+            from another study, this is usually used in combination with
+            REUSE_TICA mode.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'.
@@ -7816,9 +7855,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
            cd ${ResultsFolder}
            wb_command -zip-scene-file \\
                tICA_hcp_group.scene \\
-               tICA_hcp_group_sulc_fMRI_CONCAT_ALL \\
+               tICA_hcp_group_fMRI_CONCAT_ALL \\
                -skip-missing \\
-               tICA_hcp_group_sulc_fMRI_CONCAT_ALL.zip
+               tICA_hcp_group_fMRI_CONCAT_ALL.zip
 
         MATLAB large variable error:
             If receiving an error in MATBAL saying that a variable was not saved
@@ -7895,24 +7934,34 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     report = "Error"
 
     try:
-        doHCPOptionsCheck(options, "hcp_temporal_ica")
-
-        # subject_list
-        subject_list = ""
-
-        # check sessions
-        for session in sessions:
-            hcp = getHCPPaths(session, options)
-
-            if "hcp" not in session:
-                r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (session["id"])
-                run = False
+        # if sessions is not a batch file skip batch file validity checks
+        if ("sessions" in options and os.path.exists(options["sessions"])) or ("batchfile" in options and os.path.exists(options["batchfile"])):
+            doHCPOptionsCheck(options, "hcp_temporal_ica")
 
             # subject_list
-            if subject_list == "":
-                subject_list = session['id'] + options["hcp_suffix"]
-            else:
-                subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
+            subject_list = ""
+
+            # check sessions
+            for session in sessions:
+                if "hcp" not in session:
+                    r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (session["id"])
+                    run = False
+
+                # subject_list
+                if subject_list == "":
+                    subject_list = session['id'] + options["hcp_suffix"]
+                else:
+                    subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
+        else:
+            # subject_list
+            subject_list = ""
+
+            for session in sessions:
+                # subject_list
+                if subject_list == "":
+                    subject_list = session['id'] + options["hcp_suffix"]
+                else:
+                    subject_list = subject_list + "@" + session['id'] + options["hcp_suffix"]
 
         # use first session as the main one
         sinfo = sessions[0]
@@ -7988,38 +8037,56 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         else:
             num_wishart = options["hcp_tica_num_wishart"]
 
-        # study_dir prep
-        study_dir = ""
-
-        # single session
-        if len(sessions) == 1:
-            # get session info
-            study_dir = sessions[0]["hcp"]
-
-        # multi session
+        # if using a manual study_dir bypass all validity checks and preparation
+        if options["hcp_tica_studyfolder"]:
+            study_dir = options["hcp_tica_studyfolder"]
         else:
-            # set study dir
-            study_dir = os.path.join(options["sessionsfolder"], outgroupname)
+            study_dir = ""
 
-            # create folder
-            if not os.path.exists(study_dir):
-                os.makedirs(study_dir)
+            # single session
+            if len(sessions) == 1:
+                # get session info
+                study_dir = sessions[0]["hcp"]
 
-            # link sessions
-            for session in sessions:
-                # prepare folders
-                session_name = session["id"] + options["hcp_suffix"]
-                source_dir = os.path.join(session["hcp"], session_name)
-                target_dir = os.path.join(study_dir, session_name)
+            # multi session
+            else:
+                # set study dir
+                study_dir = os.path.join(options["sessionsfolder"], outgroupname)
 
-                # link
-                gc.linkOrCopy(source_dir, target_dir, symlink=True)
+                # create folder
+                if not os.path.exists(study_dir):
+                    os.makedirs(study_dir)
 
-            # check for make average dataset outputs
-            mad_file = os.path.join(study_dir, outgroupname, "MNINonLinear", "fsaverage_LR32k", outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii")
-            if not os.path.exists(mad_file):
-                r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
-                run = False
+                # link sessions
+                for session in sessions:
+                    # prepare folders
+                    session_name = session["id"] + options["hcp_suffix"]
+                    source_dir = os.path.join(session["hcp"], session_name)
+                    target_dir = os.path.join(study_dir, session_name)
+
+                    # link
+                    gc.linkOrCopy(source_dir, target_dir, symlink=True)
+
+                # check for make average dataset outputs
+                mad_file = os.path.join(study_dir, outgroupname, "MNINonLinear", "fsaverage_LR32k", outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii")
+                if not os.path.exists(mad_file):
+                    r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
+                    run = False
+
+                # create folder if it does not exist
+                out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
+                if not os.path.exists(out_dir):
+                    os.makedirs(out_dir)
+
+        # if hcp_tica_average_dataset is provided copy or link it into the outgroupname
+        if options["hcp_tica_average_dataset"] is not None:
+            mad_dir = os.path.join(study_dir, outgroupname)
+
+            # REUSE_TICA case
+            if options["hcp_tica_precomputed_clean_folder"] is not None:
+                mad_dir = options["hcp_tica_precomputed_clean_folder"]
+
+            gc.linkOrCopy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options['hcp_matlab_mode'] == "compiled":
@@ -8031,11 +8098,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         else:
             r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
             run = False
-
-        # create folder if it does not exist
-        out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
 
         # build the command
         if run:
@@ -8054,7 +8116,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 --low-res="%(low_res)s" \
                 --matlab-run-mode="%(matlabrunmode)s" \
                 --stop-after-step="%(stopafterstep)s"' % {
-                    "script"            : os.path.join(hcp["hcp_base"], "tICA", "tICAPipeline.sh"),
+                    "script"            : os.path.join(os.environ['HCPPIPEDIR'], "tICA", "tICAPipeline.sh"),
                     "study_dir"         : study_dir,
                     "subject_list"      : subject_list,
                     "fmri_names"        : fmri_names,

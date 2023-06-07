@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -116,7 +116,6 @@ configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 StudyFolder=$1
 Session=$2
 MSMflag=$3
-LogFile=$4
 
 WholeBrainTrajectoryLabels=${configdir}/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
 LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt 
@@ -167,7 +166,7 @@ if [[ -s "${ResultsFolder}/pial.R.asc" ]]; then
     exit 0
 else
     echo ""
-    reho "ERROR: dwi_probtracx_dense_gpu run did not complete successfully"
+    reho "ERROR: dwi_pre_tractography run did not complete successfully"
     echo ""
     exit 1
 fi

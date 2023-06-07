@@ -2,6 +2,14 @@
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
+# Environment variables:
+# 
+# GITLAB_QUNEX_TOKEN: A group access token with `read_repository` git clone permission for qunex, qunex.wiki, and library
+# QUNEXMCOMMAND: ?
+#
+# Note: GitLab tokens can only have a maximum lifetime of 365 days. 
+
+
 # Required
 version: 2
 
@@ -11,10 +19,6 @@ build:
   tools:
     python: "3.8"
   jobs:
-    post_checkout:
-      - rm -rf qx_library
-      # remove "-b develop" option to use master branch of qunex/library repository
-      - git clone -b develop --depth=1 https://token:glpat-W4j8WPCLEfK5d2oMQh9j@gitlab.qunex.yale.edu/qunex/library.git qx_library
     pre_build:
       - qx_library/etc/docs/_extras/bash/pre_build.sh
 
@@ -28,6 +32,7 @@ python:
    install:
    - requirements: qx_library/etc/docs/_extras/requirements.txt
 
-# Exclude submodules to suppress Read the Docs invalid submodule token error
+# Token has permission to access both qunex and library
 submodules:
-  exclude: all
+  include: all
+  recursive: true

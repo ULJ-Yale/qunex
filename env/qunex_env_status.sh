@@ -152,9 +152,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "                 CONDADIR : $CONDADIR";             if [[ -z $CONDADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport CONDADIR"; fi
     echo "                   FSLDIR : $FSLDIR";               if [[ -z $FSLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLDIR"; fi
     echo "               FSLCONFDIR : $FSLCONFDIR";           if [[ -z $FSLCONFDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLCONFDIR"; fi
-    echo "                FSLGPUDIR : $FSLGPUDIR";            if [[ -z $FSLGPUDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUDIR"; fi
-    echo "          FSL_GPU_SCRIPTS : $FSL_GPU_SCRIPTS";      if [[ -z $FSL_GPU_SCRIPTS ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_GPU_SCRIPTS"; fi
-    echo "             FSLGPUBinary : $FSLGPUBinary";         if [[ -z $FSLGPUBinary ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLGPUBinary"; fi
+    echo "                FSLBINDIR : $FSLBINDIR";            if [[ -z $FSLBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLBINDIR"; fi
     echo "               FSL_FIXDIR : $FSL_FIXDIR";           if [[ -z $FSL_FIXDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_FIXDIR"; fi
     # echo "            POSTFIXICADIR : $POSTFIXICADIR";        if [[ -z $POSTFIXICADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport POSTFIXICADIR"; fi
     echo "          FREESURFER_HOME : $FREESURFER_HOME";      if [[ -z $FREESURFER_HOME ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FREESURFER_HOME"; fi
@@ -167,9 +165,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "               DICMNIIDIR : $DICMNIIDIR";           if [[ -z $DICMNIIDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport DICMNIIDIR"; fi
     if [ "$USEOCTAVE" == "TRUE" ]; then
     echo "                OCTAVEDIR : $OCTAVEDIR";            if [[ -z $OCTAVEDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport OCTAVEDIR"; fi
-    echo "             OCTAVEPKGDIR : $OCTAVEPKGDIR";         if [[ -z $OCTAVEPKGDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport OCTAVEPKGDIR"; fi
-    echo "             OCTAVEBINDIR : $OCTAVEBINDIR";         if [[ -z $OCTAVEBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport OCTAVEBINDIR"; fi
-    else
     echo "                MATLABDIR : $MATLABDIR";            if [[ -z $MATLABDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport MATLABDIR"; fi
     echo "             MATLABBINDIR : $MATLABBINDIR";         if [[ -z $MATLABBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport MATLABBINDIR"; fi
     fi
@@ -198,7 +193,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo " HCPPIPEDIR_dMRITractFull : $HCPPIPEDIR_dMRITractFull";  if [[ -z $HCPPIPEDIR_dMRITractFull ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRITractFull"; fi
     echo "    HCPPIPEDIR_dMRILegacy : $HCPPIPEDIR_dMRILegacy";    if [[ -z $HCPPIPEDIR_dMRILegacy ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRILegacy"; fi
     echo "            AutoPtxFolder : $AutoPtxFolder";            if [[ -z $AutoPtxFolder ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport AutoPtxFolder"; fi
-    echo "              EDDYCUDADIR : $EDDYCUDADIR";              if [[ -z $EDDYCUDADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport EDDYCUDADIR"; fi
+    echo "                 EDDYCUDA : $EDDYCUDA";                 if [[ -z $EDDYCUDA ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport EDDYCUDA"; fi
     echo "                   ASLDIR : $ASLDIR";                   if [[ -z $ASLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport ASLDIR"; fi
     echo ""
     echo ""
@@ -263,15 +258,15 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo ""
 
     ## -- Check for ANTs (only very few ANTs commands support --version flag)
-    echo "        ANTs Binary  : $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion')"
-    if [[ -z $(which antsJointFusion 2>&1 | grep -v 'no antsJointFusion') ]]; then 
+    echo "        ANTs Binary  : $(which antsRegistration 2>&1 | grep -v 'no antsRegistration')"
+    if [[ -z $(which antsRegistration 2>&1 | grep -v 'no antsRegistration') ]]; then 
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport ants"
         reho "        ANTs Version : Binary not found!"
         if [[ -L "$ANTSDIR"  && ! -e "$ANTSDIR" ]]; then
             reho "                     : $ANTSDIR is a link to a nonexisiting folder!"
         fi
     else
-        echo "        ANTs Version : $(antsJointFusion --version | head -1)"
+        echo "        ANTs Version : $(antsRegistration --version | head -1)"
     fi
     echo ""
 
@@ -356,11 +351,8 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         if [[ -z $(which octave 2>&1 | grep -v 'no octave') ]]; then 
             BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport octave"
             reho "      Octave Version : Binary not found!"
-            if [[ -L "$OCTAVEBINDIR"  && ! -e "$OCTAVEBINDIR" ]]; then
-                reho "                     : $OCTAVEBINDIR is a link to a nonexisiting folder!"
-            fi
         else
-            echo "      Octave Version : $(octave -q --eval "v=version;fprintf('%s', v);")"
+            echo "      Octave Version : $(octave -q --eval "warning('off','all');v=version;fprintf('%s', v);")"
         fi
     else
         echo "      Matlab Binary  : $(which matlab 2>&1 | grep -v 'no matlab')"
@@ -388,20 +380,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     else
         echo "           R Version : $(R --version | head -1)"
     fi
-    echo ""
-    
-    ## -- Check for R packages that are required
-    unset RPackageTest RPackage
-    RPackages="ggplot2"   # <-- Add R packages here
-    echo " R required packages : ${RPackages}"
-    for RPackage in ${RPackages}; do
-        RPackageTest=`R --slave -e "tpkg <- '$RPackage'; if (is.element(tpkg, installed.packages()[,1])) {packageVersion(tpkg)} else {print('package not installed')}" | sed 's/\[1\]//g'`
-        if [[ `echo ${RPackageTest} | grep 'not installed'` ]]; then 
-                reho "  R Package : ${RPackage} not installed!"
-        else
-                echo "           R Package : ${RPackage} ${RPackageTest}"
-        fi
-    done
     echo ""
 
     ## -- Check for python

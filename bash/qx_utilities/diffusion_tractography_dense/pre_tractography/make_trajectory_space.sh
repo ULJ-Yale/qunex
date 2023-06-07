@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -31,7 +31,7 @@ LeftCerebralTrajectoryLabels=`getopt1 "--leftcerebrallabels" $@`
 RightCerebralTrajectoryLabels=`getopt1 "--rightcerebrallabels" $@`
 FreeSurferLabels=`getopt1 "--freesurferlabels" $@`
 
-Caret7_Command="$HCPWBDIR/bin_rh_linux64/wb_command"
+Caret7_Command="wb_command"
 
 #NamingConventions
 T1wFolder="T1w"

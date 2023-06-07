@@ -28,8 +28,6 @@ usage() {
 
 This function runs the probtrackxgpu dense whole-brain connectome generation by
 calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh.
-Note that this function needs to send work to a GPU-enabled queue or you need
-to run it locally from a GPU-equiped machine.
 
 Warning:
 
@@ -124,9 +122,6 @@ Notes:
             $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix1.sh
             $HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts/run_matrix3.sh
 
-        Both functions are cluster-aware and send the jobs to the GPU-enabled
-        queue. They do not work interactively.
-
     Note on waytotal normalization and log transformation of streamline counts:
         waytotal normalization is computed automatically as part of the run
         prior to any inter-session or group comparisons to account for
@@ -157,32 +152,8 @@ Notes:
         of the qunex_container script.
 
 Examples:
-    Run directly via::
 
-        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \\
-            --<parameter1>  \\
-            --<parameter2>  \\
-            --<parameter3>  \\
-            ...  --<parameterN>
-
-    NOTE: --scheduler is not available via direct script call.
-
-    Run via::
-
-        qunex dwi_probtrackx_dense_gpu \\
-            --<parameter1> \\
-            --<parameter2> ... \\
-            --<parameterN>
-
-    NOTE: scheduler is available via qunex call.
-
-    --scheduler
-        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
-        relevant options.
-
-    For SLURM scheduler the string would look like this via the qunex call::
-
-        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+    Example with a scheduler and GPU processing:
 
     ::
 
@@ -193,6 +164,19 @@ Examples:
             --omatrix1='yes' \\
             --nsamplesmatrix1='10000' \\
             --overwrite='no'
+
+    Example without GPU processing:
+
+    ::
+
+        qunex dwi_probtrackx_dense_gpu \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --scheduler='<name_of_scheduler_and_options>' \\
+            --omatrix1='yes' \\
+            --nsamplesmatrix1='10000' \\
+            --overwrite='no' \\
+            --nogpu='yes'
 
 EOF
     exit 0
@@ -237,6 +221,7 @@ get_options() {
     unset minimumfilesize
     unset distance_correction
     unset store_streamlines_length
+    unset nogpu
 
     # -- Parse arguments
     SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
@@ -249,6 +234,7 @@ get_options() {
     NSamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
     distance_correction=`opts_GetOpt "--distancecorrection" $@`
     store_streamlines_length=`opts_GetOpt "--storestreamlineslength" $@`
+    nogpu=`opts_GetOpt "--nogpu" $@`
 
     if [[ -z ${SessionsFolder} ]]; then
         reho "ERROR: <sessionsfolder> not specified"
@@ -315,6 +301,7 @@ get_options() {
     echo "   Distance correction: ${distance_correction}"
     echo "   Store streamlines length: ${store_streamlines_length}"
     echo "   Overwrite prior run: ${Overwrite}"
+    echo "   No GPU: ${nogpu}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
     geho "------------------------- Start of work --------------------------------"
@@ -383,7 +370,7 @@ main() {
             echo ""
 
             # -- Command to run
-            DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${NSamples} ${distance_correction} ${store_streamlines_length}"
+            DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${NSamples} ${distance_correction} ${store_streamlines_length} ${nogpu}"
 
             # -- Echo the command
             echo "Running the following probtrackX GPU command: "

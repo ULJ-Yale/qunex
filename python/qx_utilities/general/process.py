@@ -414,7 +414,7 @@ arglist = [
     ['hcp_msmall_outregname',  'MSMAll_InitialReg',                        str,    "Output registration name."],
     ['hcp_msmall_procstring',  '',                                         isNone, "Identification for FIX cleaned dtseries to use."],
     ['hcp_msmall_resample',    'TRUE',                                     torf,   "Whether to automatically run HCP DeDriftAndResample if HCP MSMAll finishes successfully."],
-    ['hcp_msmall_myelin_target',  '',                                      isNone,    "Alternate myelin map target."],
+    ['hcp_msmall_myelin_target',  '',                                      isNone,    "Myelin map target, will use Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii by default."],
 
     ['# --- hcp_dedrift_and_resample options'],
     ['hcp_resample_concatregname', 'MSMAll',                               str,    "Output name of the dedrifted registration."],
@@ -423,12 +423,11 @@ arglist = [
     ['hcp_resample_maps',      'sulc,curvature,corrThickness,thickness',   str,    "Comma separated paths to maps that will have the MSMAll registration applied that are not myelin maps."],
     ['hcp_resample_myelinmaps', 'MyelinMap,SmoothedMyelinMap',             str,    "Comma separated paths to myelin maps."],
     ['hcp_resample_dontfixnames', '',                                      isNone, "A list of comma separated bolds that will not have HCP ICAFix reapplied to them. Only applicable if single-run ICAFix was used. Generally not recommended."],
-    ['hcp_resample_myelintarget', '',                                      isNone, "A myelin target file is required to run this pipeline when using a different mesh resolution than the original MSMAll registration."],
     ['hcp_resample_inregname', '',                                         isNone, "A string to enable multiple fMRI resolutions (e.g._1.6mm)."],
+    ['hcp_resample_use_ind_mean', '',                                      isNone, "Whether to use the mean of the individual myelin map as the group reference map's mean."],
     ['hcp_resample_extractnames', '',                                      isNone, "List of bolds and concat names provided in the same format as the hcp_icafix_bolds parameter. Defines which bolds to extract. Exists to enable extraction of a subset of the runs in a multi-run HCP ICAFix group into a new concatenated series."],
     ['hcp_resample_extractextraregnames', '',                              isNone, "Extract multi-run HCP ICAFix runs for additional surface registrations, often MSMSulc."],
     ['hcp_resample_extractvolume', '',                                     isNone, "Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work."],
-    ['hcp_resample_msmall_templates', '',                                  isNone, "Path to directory containing MSM All template files."],
 
     ['# --- hcp_task_fmri_analysis options'],
     ['hcp_task_lvl1tasks', '',                                             isNone, "Comma separated list of task fMRI scan names."],
@@ -455,6 +454,7 @@ arglist = [
     ['hcp_asl_nobandingcorr', None,                                        flag,   "If this option is provided, MT and ST banding corrections won’t be applied."],
 
     ['# --- hcp_temporal_ica options'],
+    ['hcp_tica_studyfolder', '',                                           isNone,  "Overwrite the automatic QuNex's setup of the study folder, mainly useful for REUSE mode and advanced users."],
     ['hcp_tica_bolds', '',                                                 isNone,  "A comma separated list of fmri run names. Set to all session BOLDs by default."],
     ['hcp_tica_outfmriname',  'rfMRI_REST',                                str,     "Name to use for tICA pipeline outputs."],
     ['hcp_tica_surfregname', '',                                           isNone,  "The registration string corresponding to the input files."],
@@ -480,6 +480,7 @@ arglist = [
     ['hcp_tica_remove_manual_components', '',                              isNone,  "Text file containing the component numbers to be removed by cleanup, separated by spaces, requires either --hcp_tica_icamode=REUSE_TICA or --hcp_tica_starting_step=CleanData."],
     ['hcp_tica_fix_legacy_bias', '',                                       isNone,  "Whether the input data used the legacy bias correction, YES or NO."],
     ['hcp_parallel_limit', '',                                             isNone,  "How many subjects to do in parallel (local, not cluster-distributed) during individual projection."],
+    ['hcp_tica_average_dataset', '',                                       isNone,  "Location of the average dataset, the output from hcp_make_average_dataset command. Set this if using the average set from another study, this is usually used in combination with REUSE_TICA mode."],
     ['hcp_tica_config_out', None,                                          flag,    "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
 
     ['# --- hcp_make_average_dataset options'],

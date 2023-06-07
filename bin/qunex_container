@@ -272,7 +272,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         com = 'qsub'
 
     elif scheduler_name == "SLURM":
-        s_command += "#!/bin/bash -eu\n"
+        s_command += "#!/bin/bash\n"
         for key, value in scheduler_params.items():
             if key in ('J', 'job-name') and jobname == 'schedule':
                 jobname = v

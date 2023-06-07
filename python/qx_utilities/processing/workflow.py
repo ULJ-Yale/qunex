@@ -1845,7 +1845,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 - 'WB'    ... whole brain signal
                 - '1d'    ... first derivative of above nuisance signals
                 - 'e'     ... events listed in the provided fidl files (see
-                   above), modeled as specified in the event_string parameter.
+                              above), modeled as specified in the event_string
+                              parameter.
 
             --event_string (str, default ''):
                 A string describing, how to model the events listed in the
@@ -1860,9 +1861,9 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 - 'c'   ... Saving of resulting beta coefficients.
                 - 'z'   ... Saving of resulting z-scores of beta coefficients.
                 - 'p'   ... Saving of resulting session-level p-values of beta 
-                   coefficients.
+                            coefficients.
                 - 'se'  ... Saving of resulting standard errors of beta
-                   coefficients.
+                            coefficients.
                 - 'r'   ... Saving of resulting residuals of the GLM.
                 - 'all' ... Saving all of the results above.
 
@@ -2566,7 +2567,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 - 'WB'    ... whole brain signal
                 - '1d'    ... first derivative of above nuisance signals
                 - 'e'     ... events listed in the provided fidl files (see
-                  above), modeled as specified in the event_string parameter.
+                              above), modeled as specified in the event_string
+                              parameter.
 
             --event_string (str, default ''):
                 A string describing, how to model the events listed in the
@@ -2578,14 +2580,14 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 A string  which of the GLM analysis results are saved.
                 Possible values are:
 
-                --'c'   ... Saving of resulting beta coefficients.
-                --'z'   ... Saving of resulting z-scores of beta coefficients.
-                --'p'   ... Saving of resulting session-level p-values of beta 
-                  coefficients.
-                --'se'  ... Saving of resulting standard errors of beta
-                  coefficients.
-                --'r'   ... Saving of resulting residuals of the GLM.
-                --'all' ... Saving all of the results above.
+                - 'c'   ... Saving of resulting beta coefficients.
+                - 'z'   ... Saving of resulting z-scores of beta coefficients.
+                - 'p'   ... Saving of resulting session-level p-values of beta 
+                            coefficients.
+                - 'se'  ... Saving of resulting standard errors of beta
+                            coefficients.
+                - 'r'   ... Saving of resulting residuals of the GLM.
+                - 'all' ... Saving all of the results above.
 
             --glm_name (str, default ''):
                 An additional name to add to the residuals and GLM files to

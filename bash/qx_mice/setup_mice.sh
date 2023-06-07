@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash
 
 # SPDX-FileCopyrightText: 2022 QuNex development team <https://qunex.yale.edu/>
 #

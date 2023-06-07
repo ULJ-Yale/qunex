@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash
 #
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
@@ -34,13 +34,6 @@
 #
 #~ND~END~
 
-## -- if BedpostXGPUDir is not set then set it automatically
-if [[ -z ${BedpostXGPUBin} ]]; then
-    bindir=${FSLGPUBinary}/bedpostx_gpu_cuda_${DEFAULT_CUDA_VERSION}/bedpostx_gpu
-else
-    bindir=${BedpostXGPUBin}/bedpostx_gpu
-fi
-
 Usage() {
     echo ""
     echo "This is a simplified version of the bedpostX gpu call to run interactively."
@@ -72,7 +65,7 @@ Usage() {
 
 monitor(){
     cat <<EOM > ${bedpostxdir}/monitor
-#!/bin/bash -eu
+#!/bin/bash
 nparts=0
 if [ $njobs -eq 1 ]; then
 #1 part (GPU) and several subparts
