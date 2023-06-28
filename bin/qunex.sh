@@ -774,6 +774,11 @@ dwi_dtifit() {
         optional_parameters="${optional_parameters}    --gradnonlin='${gradnonlin}'"
     fi
 
+    # diffdata
+    if [[ -n ${diffdata} ]]; then
+        optional_parameters="${optional_parameters}    --diffdata='${diffdata}'"
+    fi
+
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \
     --sessionsfolder='${SessionsFolder}' \
@@ -1607,6 +1612,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ymax=`get_parameters "${setflag}ymax" $@`
     xmin=`get_parameters "${setflag}xmin" $@`
     xmax=`get_parameters "${setflag}xmax" $@`
+    diffdata=`get_parameters "${setflag}diffdata" $@`
     gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
 
     # -- Input flags for dwi_parcellate

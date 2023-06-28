@@ -18,7 +18,8 @@ This function runs the FSL dtifit processing locally or via a scheduler.
 It explicitly assumes the Human Connectome Project folder structure for
 preprocessing and completed diffusion processing.
 
-The DWI data is expected to be in the following folder::
+The DWI data is expected to be in the following folder, to use different data,
+you can use the diffdata parameter::
 
     <study_folder>/<session>/hcp/<session>/T1w/Diffusion
 
@@ -44,6 +45,9 @@ Parameters:
 
     --bvals (str, default 'T1w/Diffusion/bvals'):
         b values file.
+
+    --diffdata (str, default '/T1w/Diffusion/data.nii.gz'):
+        Diffusion data file.
 
     --cni (str):
         Input confound regressors [not set by default].
@@ -196,6 +200,7 @@ get_options() {
     mask=`opts_getopt "--mask" $@`
     bvecs=`opts_getopt "--bvecs" $@`
     bvals=`opts_getopt "--bvals" $@`
+    diffdata=`opts_getopt "--diffdata" $@`
     cni=`opts_getopt "--cni" $@`
     sse=`get_flags "--sse" $@`
     wls=`get_flags "--wls" $@`
@@ -240,7 +245,11 @@ get_options() {
     else
         diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
     fi
-    in_file="data"
+    in_file="${diffusion_folder}/data"
+    if [[ -n ${diffdata} ]]; then
+        in_file=${diffdata}
+    fi
+
     out_file=${diffusion_folder}/dti_FA.nii.gz
 
     # mask
@@ -262,6 +271,11 @@ get_options() {
         echo "   bvals: ${bvals}"
     else
         bvals=${diffusion_folder}/bvals
+    fi
+
+    # diffdata
+    if [[ -n ${diffdata} ]]; then
+        echo "   diffdata: ${diffdata}"
     fi
 
     # Optional parameters
@@ -370,7 +384,7 @@ main() {
     minimumfilesize=100000
     if [ "$overwrite" == "yes" ]; then
         echo ""
-        reho "Removing existing dtifit run for $session..."x
+        reho "Removing existing dtifit run for $session..."
         echo ""
         rm -rf ${out_file} > /dev/null 2>&1
     fi
@@ -408,8 +422,8 @@ main() {
     # -- Command to run
     echo "Running command:"
     echo ""
-    geho "dtifit --data=${diffusion_folder}/${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}"
-    dtifit --data=${diffusion_folder}/${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}
+    geho "dtifit --data=${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}"
+    dtifit --data=${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}
 
     # -- Perform completion checks
     reho "--- Checking outputs..."
