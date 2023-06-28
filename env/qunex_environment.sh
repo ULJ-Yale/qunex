@@ -376,13 +376,13 @@ export PYTHONPATH=$QUNEXPATH/python
 
 # -- FSL bin dir
 FSLBINDIR=${FSLDIR}/bin
-PATH=${FSLBINDIR}:${PATH}
+PATH=${PATH}:${FSLBINDIR}
 export FSLBINDIR PATH
 MATLABPATH=$FSLBINDIR:$MATLABPATH
 export MATLABPATH
 
 # -- FreeSurfer path
-unset FSL_DIR
+unset FSL_DIR FSL_BIN
 FREESURFER_HOME=${FREESURFERDIR}
 PATH=${FREESURFER_HOME}:${PATH}
 export FREESURFER_HOME PATH
@@ -392,7 +392,6 @@ export FREESURFER_HOME PATH
 # -- Note: Always run after FreeSurfer for correct environment specification
 #          because SetUpFreeSurfer.sh can mis-specify the $FSLDIR path
 
-PATH=${FSLDIR}/bin:${PATH}
 source ${FSLDIR}/etc/fslconf/fsl.sh > /dev/null 2>&1
 export FSLDIR PATH
 MATLABPATH=$FSLDIR:$MATLABPATH
