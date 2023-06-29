@@ -1581,6 +1581,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     pedir=`get_parameters "${setflag}pedir" $@`
+    if [[ -z ${pedir} ]]; then
+        pedir=`get_parameters "${setflag}PEdir" $@`
+    fi
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`

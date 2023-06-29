@@ -58,7 +58,9 @@ Parameters:
 
     --diffdatasuffix (str):
         Name of the DWI image; e.g. if the data is called
-        <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR.
+        <session>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR. If you
+        provide multiple suffixes, QuNex will merge the images along with their
+        bvals and bvecs and run processing on the merged image.
 
     --overwrite (str):
         Delete prior run for a given session ('yes' | 'no').
@@ -320,7 +322,6 @@ main() {
     pedir="$pedir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
     te="$te" #delta te in ms for field map or "NONE" if not used
     unwarpdir="$unwarpdir" # direction along which to unwarp
-    diffdata="$session"_"$diffdatasuffix" # Diffusion data suffix name - e.g. if the data is called <sessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
     dwelltime="$echospacing" #same variable as echospacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
     dwelltimesec=`echo "scale=6; $dwelltime/1000" | bc` # set the dwell time to seconds
 
@@ -338,7 +339,87 @@ main() {
     echo "T1w diffusion folder: $t1wdifffolder"
     echo ""
 
-    # -- Delete any existing output sub-directories        
+    # -- Prepare diff data
+    # if there is a commma in the diffdata suffix we have multiple images and we need to merge
+    if [[ $diffdatasuffix == *,* ]]; then
+
+        # remove previous
+        if [[ "$overwrite" == "no" ]]; then
+            if [[ -f "${difffolder}/${session}_merged.nii.gz" ]]; then
+                echo "ERROR: merged DWI data already exists and overwrite is not set to yes"
+                exit 1
+            elif [[ -f "${difffolder}/${session}_merged.bval" ]]; then
+                echo "ERROR: merged DWI data already exists and overwrite is not set to yes"
+                exit 1
+            elif [[ -f "${difffolder}/${session}_merged.bvec" ]]; then
+                echo "ERROR: merged DWI data already exists and overwrite is not set to yes"
+                exit 1
+            fi
+        else
+            rm "${difffolder}/${session}_merged.nii.gz"  > /dev/null 2>&1
+            rm "${difffolder}/${session}_merged.bval"  > /dev/null 2>&1
+            rm "${difffolder}/${session}_merged.bvec"  > /dev/null 2>&1
+        fi
+
+        # storage
+        difffiles=""
+        bvals=""
+        bvecs=""
+
+        # merge data
+        IFS=","
+        for image in $diffdatasuffix; do
+            difffiles="${difffiles} ${difffolder}/${session}_${image}.nii.gz"
+        done
+        eval "fslmerge -t ${difffolder}/${session}_merged.nii.gz ${difffiles}"
+
+        # bvals
+        for ((i=1; ; i++))
+        do
+            merged_row_bval=""
+
+            for image in $diffdatasuffix; do
+                row_bval=$(awk "NR==$i" "${difffolder}/${session}_${image}.bval")
+                merged_row_bval+="$row_bval "
+            done
+
+            # Trim leading/trailing whitespaces
+            merged_row_bval=$(echo "$merged_row_bval" | awk '{$1=$1};1')
+
+            # Print or store the merged row
+            echo "$merged_row_bval" >> ${difffolder}/${session}_merged.bval
+
+            # Exit the loop if any file reaches end-of-file
+            [ -z "$row_bval" ] && break
+        done
+
+        # bvecs
+        for ((i=1; ; i++))
+        do
+            merged_row_bvec=""
+
+            for image in $diffdatasuffix; do
+                row_bvec=$(awk "NR==$i" "${difffolder}/${session}_${image}.bvec")
+                merged_row_bvec+="$row_bvec "
+            done
+
+            # Trim leading/trailing whitespaces
+            merged_row_bvec=$(echo "$merged_row_bvec" | awk '{$1=$1};1')
+
+            # Print or store the merged row
+            echo "$merged_row_bvec" >> ${difffolder}/${session}_merged.bvec
+
+            # Exit the loop if any file reaches end-of-file
+            [ -z "$row_bvec" ] && break
+        done
+
+        # set the suffix
+        diffdatasuffix="merged"
+    fi
+
+    diffdata="$session"_"$diffdatasuffix" # Diffusion data suffix name - e.g. if the data is called <sessionID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+
+    # -- Delete any existing output sub-directories
     if [ "$overwrite" == "yes" ]; then
         reho "--- Deleting prior runs for $diffdata ..."
         echo ""
