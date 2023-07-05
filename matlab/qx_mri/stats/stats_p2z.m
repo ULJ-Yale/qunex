@@ -44,10 +44,23 @@ if ~isobject(img)
     img = nimage(img);
 end
 
+
+% ======================================================
+%     ----> change p values to not trigger inf
+
+img.data(abs(img.data) < 0.0000001) = sign(img.data(abs(img.data) < 0.0000001)) .* 0.0000001;
+
+
 % ======================================================
 %     ----> convert
 
-img.data = norminv((1-(img.data/2)), 0, 1);
+if strcmp(tail, 'two')
+    img.data = norminv((1-(img.data/2)), 0, 1);    
+else
+    img.data = norminv((1-img.data), 0, 1);
+end
+
+
 
 % ======================================================
 %     ----> save results
