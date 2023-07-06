@@ -2010,8 +2010,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 --bold_actions="s,h,r,c,l" \\
                 --bold_nuisance="m,V,WM,WB,1d" \\
                 --mov_bad=udvarsme \\
-                --pignore="hipass=linear|regress=ignore|lopass=linear" \\
-                --nprocess=0
+                --pignore="hipass=linear|regress=ignore|lopass=linear"
     """
 
     pc.doOptionsCheck(options, sinfo, 'preprocess_bold')
@@ -2724,7 +2723,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 --event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
                 --glm_matrix=both \\
                 --glm_residuals=none \\
-                --nprocess=0 \\
                 --pignore="hipass=keep|regress=keep|lopass=keep"
 
         Functional connectivity preprocessing::
@@ -2743,7 +2741,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 --event_string="block:boynton|target:9" \\
                 --glm_matrix=none \\
                 --glm_residuals=save \\
-                --nprocess=0 \\
                 --pignore="hipass=linear|regress=ignore|lopass=linear"
     """
 
