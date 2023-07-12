@@ -436,7 +436,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
     # if remove option is set do nothinng
     remove = options['log'] == 'remove'
-    if not remove:
+    if not remove and endlogs:
         for el in endlogs:
             if os.path.exists(el):
                 # did the command error out?
@@ -1617,6 +1617,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             specifying the type of regression to use (see REGRESSION below).
         --l
             Low-pass filtering.
+        --c
+            Save beta coefficients as well.
 
         So the default 's,h,r,c,l' bold_actions parameter would lead to the
         files first being smoothed, then high-pass filtered. Next a regression
@@ -1844,9 +1846,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 - 'WM'    ... white matter signal
                 - 'WB'    ... whole brain signal
                 - '1d'    ... first derivative of above nuisance signals
-                - 'e'     ... events listed in the provided fidl files (see
-                              above), modeled as specified in the event_string
-                              parameter.
+                - 'e'     ... events listed in the provided fidl files.
 
             --event_string (str, default ''):
                 A string describing, how to model the events listed in the
@@ -1860,10 +1860,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
 
                 - 'c'   ... Saving of resulting beta coefficients.
                 - 'z'   ... Saving of resulting z-scores of beta coefficients.
-                - 'p'   ... Saving of resulting session-level p-values of beta 
-                            coefficients.
-                - 'se'  ... Saving of resulting standard errors of beta
-                            coefficients.
+                - 'p'   ... Saving of session-level coefficient p-values.
+                - 'se'  ... Saving of standard errors of beta coefficients.
                 - 'r'   ... Saving of resulting residuals of the GLM.
                 - 'all' ... Saving all of the results above.
 
@@ -2012,8 +2010,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 --bold_actions="s,h,r,c,l" \\
                 --bold_nuisance="m,V,WM,WB,1d" \\
                 --mov_bad=udvarsme \\
-                --pignore="hipass=linear|regress=ignore|lopass=linear" \\
-                --nprocess=0
+                --pignore="hipass=linear|regress=ignore|lopass=linear"
     """
 
     pc.doOptionsCheck(options, sinfo, 'preprocess_bold')
@@ -2566,9 +2563,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 - 'WM'    ... white matter signal
                 - 'WB'    ... whole brain signal
                 - '1d'    ... first derivative of above nuisance signals
-                - 'e'     ... events listed in the provided fidl files (see
-                              above), modeled as specified in the event_string
-                              parameter.
+                - 'e'     ... events listed in the provided fidl files.
 
             --event_string (str, default ''):
                 A string describing, how to model the events listed in the
@@ -2582,10 +2577,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
                 - 'c'   ... Saving of resulting beta coefficients.
                 - 'z'   ... Saving of resulting z-scores of beta coefficients.
-                - 'p'   ... Saving of resulting session-level p-values of beta 
-                            coefficients.
-                - 'se'  ... Saving of resulting standard errors of beta
-                            coefficients.
+                - 'p'   ... Saving of session-level coefficient p-values.
+                - 'se'  ... Saving of standard errors of beta coefficients.
                 - 'r'   ... Saving of resulting residuals of the GLM.
                 - 'all' ... Saving all of the results above.
 
@@ -2730,7 +2723,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 --event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
                 --glm_matrix=both \\
                 --glm_residuals=none \\
-                --nprocess=0 \\
                 --pignore="hipass=keep|regress=keep|lopass=keep"
 
         Functional connectivity preprocessing::
@@ -2749,7 +2741,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 --event_string="block:boynton|target:9" \\
                 --glm_matrix=none \\
                 --glm_residuals=save \\
-                --nprocess=0 \\
                 --pignore="hipass=linear|regress=ignore|lopass=linear"
     """
 

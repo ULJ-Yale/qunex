@@ -774,6 +774,11 @@ dwi_dtifit() {
         optional_parameters="${optional_parameters}    --gradnonlin='${gradnonlin}'"
     fi
 
+    # diffdata
+    if [[ -n ${diffdata} ]]; then
+        optional_parameters="${optional_parameters}    --diffdata='${diffdata}'"
+    fi
+
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \
     --sessionsfolder='${SessionsFolder}' \
@@ -1576,6 +1581,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     pedir=`get_parameters "${setflag}pedir" $@`
+    if [[ -z ${pedir} ]]; then
+        pedir=`get_parameters "${setflag}PEdir" $@`
+    fi
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
@@ -1607,6 +1615,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ymax=`get_parameters "${setflag}ymax" $@`
     xmin=`get_parameters "${setflag}xmin" $@`
     xmax=`get_parameters "${setflag}xmax" $@`
+    diffdata=`get_parameters "${setflag}diffdata" $@`
     gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
 
     # -- Input flags for dwi_parcellate

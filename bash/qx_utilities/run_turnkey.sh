@@ -553,6 +553,9 @@ SESSIONIDS=`opts_GetOpt "--sessionids" "$@"`
 if [ -z "$SESSIONIDS" ]; then
     SESSIONIDS=`opts_GetOpt "--sessionid" "$@"`
 fi
+if [ -z "$SESSIONIDS" ]; then
+    SESSIONIDS=${CASE}
+fi
 
 OVERWRITE_SESSION=`opts_GetOpt "--overwritesession" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
@@ -566,7 +569,7 @@ BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--paramfile" $@`
 
 # BACKWARDS COMPATIBILITY
 if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; then
-    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile $@`
+    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 fi
 
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`

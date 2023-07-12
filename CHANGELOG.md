@@ -6,6 +6,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.1
+
+* Added statistics package back to Octave in the container, required for `preprocess_bold` and `preprocess_conc`.
+* You can now merge of multiple DWI images before running `dwi_legacy_gpu`.
+* You can now run manual bash scripts through `qunex_container`.
+* You can change the data that gets used for `dwi_dtifit` (previously you could change only bvals and bvecs).
+
 ## 0.98.0
 
 * Optimized DWI pipelines, all commands now support newer GPUs and `nogpu` processing for systems without an NVIDIA graphics card.
