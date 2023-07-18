@@ -21,6 +21,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import subprocess
+from general import extensions
 
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -55,12 +56,9 @@ functions = {
     'fc_compute_ab_corr_kca':          [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('nc', 'numeric'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('dmeasure', 'string'), ('nrep', 'numeric'), ('verbose', 'bool')],
     'fc_compute_gbc3':                 [('flist', 'string'), ('command', 'string'), ('mask', 'numeric'), ('verbose', 'bool'), ('target', 'string'), ('targetf', 'string'), ('rsmooth', 'numeric'), ('rdilate', 'numeric'), ('ignore', 'string'), ('time', 'string'), ('cv', 'string'), ('vstep', 'numeric')],
     'fc_compute_gbcd':                 [('flist', 'string'), ('command', 'string'), ('roi', 'string'), ('rcodes', 'numeric'), ('nbands', 'numeric'), ('mask', 'numeric'), ('verbose', 'bool'), ('target', 'string'), ('targetf', 'string'), ('rsmooth', 'numeric'), ('rdilate', 'numeric'), ('ignore', 'string'), ('time', 'string'), ('method', 'string'), ('weights', 'string'), ('criterium', 'string')],
-    'fc_extract_roi_timeseries':       [('bolds', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_extract_roi_timeseries_group': [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_roifc':                [('bolds', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_roifc_group':          [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_seedmaps':             [('bolds', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_seedmaps_group':       [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_extract_roi_timeseries':       [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_compute_roifc':                [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_compute_seedmaps':             [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_seedmaps_multiple':    [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'numeric'), ('options', 'string'), ('targetf', 'string'), ('method', 'string'), ('ignore', 'string'), ('cv', 'string')],
     'fc_extract_roi_timeseries_masked':   [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('targetf', 'string'), ('options', 'string'), ('method', 'string'), ('ignore', 'string'), ('rcodes', 'string'), ('mcodes', 'string'), ('bmask', 'string')],
     'fc_extract_trial_timeseries_masked': [('flist', 'string'), ('roif', 'string'), ('targetf', 'string'), ('tevents', 'string'), ('frames', 'numeric'), ('scrubvar', 'string')],
@@ -74,7 +72,12 @@ functions = {
     'stats_ttest_zero':                [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
 }
 
+# -- update functions with information from extensions
+functions.update(extensions.compile_dict('functions')) 
+
 functionList = sorted(functions.keys())
+
+
 
 
 # ==============================================================================

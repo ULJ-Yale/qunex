@@ -157,7 +157,7 @@ def readPARInfo(filename):
                 info[k] = v
 
     info['sessionid']          = info.get('Patient name', info['sessionid'])
-    info['seriesNumber']       = int(info.get('Acquisition nr', 0) * 100 + int(info.get('Reconstruction nr', 0)))
+    info['seriesNumber']       = int(info.get('Acquisition nr', 0)) * 100 + int(info.get('Reconstruction nr', 0))
     info['seriesDescription']  = info.get('Protocol name', info['seriesDescription']).replace("WIP ", "")
     info['TR']                 = float(info.get('Repetition time [msec]', info['TR']))
     info['TR']                 = float(info.get('Repetition time [ms]', info['TR']))
@@ -2662,7 +2662,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     # just testing
     if nToProcess and test:
         print("\n---> To process them, remove the --test option!")
-        sys.exit(0)
+        return
     elif not nToProcess:
         if check.lower() == 'any':
             if masterinbox:

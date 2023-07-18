@@ -42,7 +42,7 @@ end
 
 if verbose, fprintf('\n\nStarting ...'); end
 
-[session nsessions nallfiles] = general_read_file_list(flist, verbose);
+[session nsessions nallfiles] = general_read_file_list(flist, 'all', [], verbose);
 
 snr = zeros(nallfiles,1);
 sd  = zeros(nallfiles,1);

@@ -270,7 +270,10 @@ def getFileNames(sinfo, options):
 
     f = {}
 
-    f['t1_source']          = getExactFile(os.path.join(d['s_source'], options['path_t1']))
+    if d['s_source'] is None:
+        f['t1_source'] = None
+    else:    
+        f['t1_source']          = getExactFile(os.path.join(d['s_source'], options['path_t1']))
 
     ext = getExtension(options['image_target'].replace('cifti', 'nifti'))
 
@@ -396,17 +399,22 @@ def getBOLDFileNames(sinfo, boldname, options):
     rgss = options['bold_nuisance']
     rgss = rgss.translate(str.maketrans('','',' ,;|'))
 
-    if 'path_' + boldname in options:
-        f['bold_source']        = getExactFile(os.path.join(d['s_source'], options['path_' + boldname]))
+    if d['s_source'] is None:
+        f['bold_source'] = None
     else:
-        btarget                 = options['path_bold'].replace('[N]', boldnumber)
-        f['bold_source']        = getExactFile(os.path.join(d['s_source'], btarget))
+        if 'path_' + boldname in options:
+            f['bold_source']        = getExactFile(os.path.join(d['s_source'], options['path_' + boldname]))
+        else:
+            btarget                 = options['path_bold'].replace('[N]', boldnumber)
+            f['bold_source']        = getExactFile(os.path.join(d['s_source'], btarget))
+
+        if f['bold_source'] == '' and options['image_target'] == '4dfp':
+            # print("Searching in the atlas folder ...")
+            f['bold_source']        = getExactFile(os.path.join(d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
 
     # --- alternative check for 4dfp preprocessing
 
-    if f['bold_source'] == '' and options['image_target'] == '4dfp':
-        # print("Searching in the atlas folder ...")
-        f['bold_source']        = getExactFile(os.path.join(d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
+    
 
     # --- bold masks
 
@@ -425,18 +433,25 @@ def getBOLDFileNames(sinfo, boldname, options):
     # --- movement files
 
     movname = boldname.replace(options['boldname'], 'mov')
-    if 'path_' + movname in options:
-        f['bold_mov_o']        = getExactFile(os.path.join(d['s_source'], options['path_' + movname]))
+
+    if d['s_source'] is None:
+        f['bold_mov_o'] = None
     else:
-        mtarget                = options['path_mov'].replace('[N]', boldnumber)
-        f['bold_mov_o']        = getExactFile(os.path.join(d['s_source'], mtarget))
+        if 'path_' + movname in options:
+            f['bold_mov_o']        = getExactFile(os.path.join(d['s_source'], options['path_' + movname]))
+        else:
+            mtarget                = options['path_mov'].replace('[N]', boldnumber)
+            f['bold_mov_o']        = getExactFile(os.path.join(d['s_source'], mtarget))
 
     f['bold_mov']              = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + '_mov.dat')
 
     # --- event files
 
     if 'e' in options['bold_nuisance']:
-        f['bold_event_o']       = os.path.join(d['s_source'], options['boldname'] + boldnumber + options['event_file'])
+        if d['s_source'] is None:
+            f['bold_event_o'] = None
+        else:
+            f['bold_event_o']       = os.path.join(d['s_source'], options['boldname'] + boldnumber + options['event_file'])
         f['bold_event_a']       = os.path.join(options['sessionsfolder'], 'inbox', sinfo['id'] + "_" + options['boldname'] + boldnumber + options['event_file'])
         f['bold_event']         = os.path.join(d['s_bold_events'], options['boldname'] + boldnumber + options['event_file'])
 
@@ -491,13 +506,14 @@ def findFile(sinfo, options, fname):
         if os.path.exists(tfile):
             return tfile
 
-    tfile = os.path.join(d['s_source'], fname)
-    if os.path.exists(tfile):
-        return tfile
+    if d['s_source'] is not None:
+        tfile = os.path.join(d['s_source'], fname)
+        if os.path.exists(tfile):
+            return tfile
 
-    tfile = os.path.join(d['s_source'], "%s_%s" % (sinfo['id'], fname))
-    if os.path.exists(tfile):
-        return tfile
+        tfile = os.path.join(d['s_source'], "%s_%s" % (sinfo['id'], fname))
+        if os.path.exists(tfile):
+            return tfile
 
     return False
 
@@ -506,15 +522,11 @@ def getSessionFolders(sinfo, options):
     """
     getSessionFolders - documentation not yet available.
     """
-    d = {}
+    d = {'s_source': None}
 
-    if options['image_source'] == 'hcp':
-        if "hcp" not in sinfo or not os.path.exists(sinfo['hcp']):
-            print("ERROR: HCP path does not exists, check your parameters and the batch file!")
-            raise
-
+    if options['image_source'] == 'hcp' and 'hcp' in sinfo:
         d['s_source'] = sinfo['hcp']
-    else:
+    elif 'data' in sinfo:
         d['s_source'] = sinfo['data']
 
     if "hcp" in sinfo:
@@ -539,17 +551,16 @@ def getSessionFolders(sinfo, options):
     d['s_fs_orig']          = os.path.join(d['s_fs'], 'mri/orig')
     d['s_fs_surf']          = os.path.join(d['s_fs'], 'surf')
     d['inbox']              = os.path.join(options['sessionsfolder'], 'inbox')
-
     d['qc']                 = os.path.join(options['sessionsfolder'], 'QC')
     d['qc_mov']             = os.path.join(d['qc'], 'movement' + options['img_suffix'] + options['bold_variant'])
 
-    if not os.path.exists(d['s_source']) and options['source_folder']:
-        print("WARNING: Source folder not found, waiting 15s to give it a chance to come online!")
-        time.sleep(15)
-        if not os.path.exists(d['s_source']):
-            print("WARNING: Source folder still not found, if data has not been copied over the processing will fail!")
-            # errormessage = "\n... ERROR: Source folder does not exist or is not reachable [%s]" % (d['s_source'])
-            # raise NoSourceFolder(errormessage)
+    # if not os.path.exists(d['s_source']) and options['source_folder']:
+    #     print("WARNING: Source folder not found, waiting 15s to give it a chance to come online!")
+    #     time.sleep(15)
+    #     if not os.path.exists(d['s_source']):
+    #         print("WARNING: Source folder still not found, if data has not been copied over the processing will fail!")
+    #         # errormessage = "\n... ERROR: Source folder does not exist or is not reachable [%s]" % (d['s_source'])
+    #         # raise NoSourceFolder(errormessage)
 
     for (key, fpath) in d.items():
         if key != 's_source':
@@ -558,7 +569,7 @@ def getSessionFolders(sinfo, options):
                     os.makedirs(fpath)
                 except:
                     print("ERROR: Could not create folder %s! Please check paths and permissions!" % (fpath))
-                    raise
+                    # raise
 
     return d
 

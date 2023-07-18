@@ -1,5 +1,4 @@
 function [img] = stats_p2z(img, out, tail)
-
 %``stats_p2z(img, out, tail)``
 %
 %   Converts p to Z values considering one or two tails.
@@ -46,7 +45,7 @@ end
 
 
 % ======================================================
-%     ----> change p values to not trigger inf
+%     ----> adjust small p values to not trigger inf
 
 img.data(abs(img.data) < 0.0000001) = sign(img.data(abs(img.data) < 0.0000001)) .* 0.0000001;
 

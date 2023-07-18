@@ -6,6 +6,33 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.97.0
+
+* Improved the documentation at several locations.
+* Added the ability to create slice timing files when preparing data for HCP pipelines using the setup_hcp command.
+* Upgraded FSL to 6.0.6.1.
+* Optimization of parameter parsing for hcp_icafix.
+
+## 0.96.2
+
+* Fixed a bug where the phase enconding direction was not set correctly in `hcp_diffusion`.
+
+## 0.96.1
+
+* Default value for the model parameter of `dwi_bepostx_gpu` is is reversed to 2, which is the correct FSL default.
+
+## 0.96.0
+
+* Added the ability to generate predicted timeseries and residual timeseries for arbitrary set of regressors used in the GLM analyses.
+* Updated HCP Pipelines to v4.7.0.
+* Default value for the model parameter of `dwi_bepostx_gpu` is now 3. This is also the FSL's default and by far the most commonly used value in practice.
+* Fixed a bug where some analysis commands that do not need hcp data would not work if hcp folder is not present.
+
+## 0.95.3
+
+* Fixed a bug with setting the default value of `hcp_bold_topupconfig`.
+* Added support for `hcp_icafix_fallbackthreshold` in `hcp_icafix`.
+
 ## 0.95.2
 
 * Fixed a path in pconn template `run_qc` BOLD.

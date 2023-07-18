@@ -693,7 +693,7 @@ RunParcellations=`opts_GetOpt "--runparcellations" $@`
 #
 # -- dwi_legacy input flags
 EchoSpacing=`opts_GetOpt "--echospacing" $@`
-PEdir=`opts_GetOpt "--pedir" $@`
+pedir=`opts_GetOpt "--pedir" $@`
 TE=`opts_GetOpt "--TE" $@`
 UnwarpDir=`opts_GetOpt "--unwarpdir" $@`
 DiffDataSuffix=`opts_GetOpt "--diffdatasuffix" $@`
@@ -2315,7 +2315,7 @@ fi
     # -- Diffusion Legacy (after hcp_pre_freesurfer)
     turnkey_dwi_legacy_gpu() {
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ HCP Pipelines: dwi_legacy_gpu"; echo ""
-        ${QuNexCommand} dwi_legacy_gpu --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --pedir="{pedir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
+        ${QuNexCommand} dwi_legacy_gpu --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --pedir="${pedir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
     }
     # -- run_qc_dwi
     turnkey_run_qc_dwi() {
