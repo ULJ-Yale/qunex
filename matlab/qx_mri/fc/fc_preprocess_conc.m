@@ -125,7 +125,6 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           - hipass_filter   : [0.009]
 %           - framework_path  : ['']
 %           - wb_command_path : ['']
-%           - omp_threads     : [0]
 %           - smooth_mask     : ['false']
 %           - dilate_mask     : ['false']
 %           - glm_matrix      : ['none']  ('none' / 'text' / 'image' / 'both')
@@ -394,10 +393,6 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %
 %               - volume_smooth
 %                   FWHM for gaussian volume smooting in mm. Defaults to 2.0.
-%
-%               - omp_threads
-%                   Number of cores to be used by wb_command. 0 for no change of
-%                   system settings. Defaults to 0.
 %
 %               - framework_path
 %                   The path to framework libraries on the Mac system. No need
@@ -682,7 +677,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'Options used');
@@ -1807,9 +1802,6 @@ function [] = wbSmooth(sfile, tfile, file, options)
             fprintf('\n     ... setting PATH to %s', options.wb_command_path);
             setenv('PATH', [options.wb_command_path ':' s]);
         end
-    end
-    if options.omp_threads > 0
-        setenv('OMP_NUM_THREADS', num2str(options.omp_threads));
     end
 
     fprintf('\n     ... smoothing');
