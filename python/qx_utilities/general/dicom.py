@@ -314,6 +314,18 @@ def readDICOMInfo(filename):
 
     info['fileid'], _ = os.path.splitext(os.path.basename(filename))
 
+    # --> institution name
+    if [0x0008, 0x0080] in d:
+        info['institution'] = d[0x0008, 0x0080].value
+    
+    # --> manufacturer and model
+    MR = []
+    for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
+        if e in d:
+            MR.append(str(d[e].value))
+    if MR:
+        info['device'] = '|'.join(MR)
+
     return info
 
 
@@ -607,6 +619,11 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
     r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
     stxt = open(os.path.join(folder, "session.txt"), 'w')
 
+    # --- Print header
+    
+    gc.print_qunex_header(file=r)
+    gc.print_qunex_header(file=stxt)
+
     # get a list of folders
 
     folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
@@ -638,6 +655,7 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             first = False
             time = getDicomTime(d)
             print("Report for %s scanned on %s\n" % (getID(d), time), file=r)
+
             if verbose:
                 print("\n\nProcessing images from %s scanned on %s\n" % (getID(d), time))
 
@@ -650,6 +668,20 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
             print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
             print("", file=stxt)
+            
+            # --> institution name
+            if [0x0008, 0x0080] in d:
+                print(f"Scanned at: {d[0x0008, 0x0080].value}", file=r)
+                print(f"institution: {d[0x0008, 0x0080].value}", file=stxt)
+
+            # --> manufacturer and model
+            MR = []
+            for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
+                if e in d:
+                    print(f"{e}: {d[e].value}", file=r)
+                    MR.append(d[e].value)
+            if MR:
+                print(f"device: {'|'.join(MR)}", file=stxt)
 
         try:
             seriesDescription = d.SeriesDescription
@@ -1159,6 +1191,11 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
     r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
     stxt = open(os.path.join(folder, "session.txt"), 'w')
 
+    # --- Print header
+    
+    gc.print_qunex_header(file=r)
+    gc.print_qunex_header(file=stxt)
+
     # get a list of folders
 
     folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
@@ -1244,6 +1281,19 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
             print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
             print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
             print("", file=stxt)
+
+            if "institution" in info:
+                print(f"Scanned at: {info['institution']}", file=r)
+                print(f"institution: {info['institution']}", file=stxt)
+            
+            if "device" in info:
+                print(f"MR device: {info['device']}", file=r)
+                print(f"device: {info['device']}", file=stxt)
+            
+            if "institution" in info or "device" in info:
+                print("", file=r)
+                print("", file=stxt)
+
 
         # recenter, dofz2zf, fz, reorder = False, False, "", False
         # try:
@@ -1332,12 +1382,12 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
 
         nimg = len(imgs)
         if nimg == 0:
-            print(" WARNING: no NIfTI file created!")
+            print(" WARNING: no NIfTI file created!", file=r)
             if verbose:
                 print(" WARNING: no NIfTI file created!")
             continue
         elif nimg > 9:
-            print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
+            print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!", file=r)
             if verbose:
                 print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
             continue
@@ -2842,7 +2892,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                                         if tfile.split('.')[-1] == ext:
                                             tfile = tfile[:-3] + ext.upper()
                                 else:
-                                    tfile = str(fnum)
+                                    tfile = str(fnum) + ".dcm"
                                 
                                 with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
                                     if igz.match(sf.filename):
@@ -2879,7 +2929,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                                         if tfile.split('.')[-1] == ext:
                                             tfile = tfile[:-3] + ext.upper()
                                 else:
-                                    tfile = str(fnum)
+                                    tfile = str(fnum) + ".dcm"
                                 
                                 with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
                                     if igz.match(tarinfo.name):
