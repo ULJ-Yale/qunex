@@ -1817,7 +1817,7 @@ fi
                     if [[ "$CheckCASECount" -gt "1" ]]; then
                         reho " ===> ERROR: More than one zip file found for ${CASE}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                         echo ""
-                        return 1
+                        FILECHECK="fail"
                     fi
                     CASEinbox=`basename ${SessionsFolder}/${CASE}/inbox/${CASE}*`
                     CASEext="${CASEinbox#*.}"
