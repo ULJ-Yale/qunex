@@ -3109,8 +3109,8 @@ else
         geho "---> Cleaning up DICOMs from build directory to save space:"
         if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
-            geho "     - removing dicom folder"
-            rm -rf ${QuNexWorkDir}/dicom &> /dev/null
+            geho "     - removing dicom files"
+            rm ${QuNexWorkDir}/dicom/*.gz &> /dev/null
             echo ""
         fi
         geho "     - removing stray xml catalog files"
