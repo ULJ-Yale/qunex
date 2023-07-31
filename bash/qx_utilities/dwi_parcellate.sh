@@ -352,14 +352,14 @@ if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
 else
     reho "--- Parcellation data not found."
     echo ""
-    echo "--- Computing parcellation by COLUMN on $DWIInput..."
+    echo "--- Computing parcellation by ROW on $DWIInput..."
     echo ""
-    # -- First parcellate by COLUMN and save a *pdconn file
-    wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePDconn"
-    echo "--- Computing parcellation by ROW on ${DWIOutput}/${DWIOutFilePDconn} ..."
+    # -- First parcellate by ROW and save a *pdconn file
+    wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePDconn"
+    echo "--- Computing parcellation by COLUMN on ${DWIOutput}/${DWIOutFilePDconn} ..."
     echo ""
-    # -- Next parcellate by ROW and save final *pconn file
-    wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePconn"
+    # -- Next parcellate by COLUMN and save final *pconn file
+    wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePconn"
 fi
 
 # -- Perform completion checks
