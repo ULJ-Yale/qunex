@@ -1799,7 +1799,7 @@ def sort_dicom(folder=".", **kwargs):
             to `folder` parameter if not set.
 
         --files (str, default detailed below):
-            List of files to sort. Defaults to files in `folder`.
+            Comma separated list of files to sort. Defaults to files in `folder`.
 
     Notes:
         The command looks for the inbox subfolder in the specified session
@@ -1880,6 +1880,8 @@ def sort_dicom(folder=".", **kwargs):
         #     print("---> Processing %d files from %s" % (len(files), inbox))
         # else:
         #     raise ge.CommandFailed("sort_dicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
+    else:
+        files_iter = [e.strip() for e in files.split(",")] 
 
     info = None
 
