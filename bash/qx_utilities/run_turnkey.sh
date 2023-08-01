@@ -3110,7 +3110,11 @@ else
         if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
             geho "     - removing dicom files"
-            rm ${QuNexWorkDir}/dicom/*.gz &> /dev/null
+            # Temp storage for kept files
+            mkdir ${QuNexWorkDir}/dicomtmp
+            mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
+            rm  -rf ${QuNexWorkDir}/dicom &> /dev/null
+            mv ${QuNexWorkDir}/dicomtmp ${QuNexWorkDir}/dicom
             echo ""
         fi
         geho "     - removing stray xml catalog files"
