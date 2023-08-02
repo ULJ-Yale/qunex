@@ -963,17 +963,6 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolde
     SessionsFolderName="subjects"
 fi
 
-if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]]; then
-    SessionsFolder="${STUDY_PATH}/sessions"
-    SessionsFolderName="sessions"
-fi
-if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}" ]]; then
-    SessionsFolder="${STUDY_PATH}/sessions"
-    SessionsFolderName="sessions"
-fi
-
-
-
 # -- Check TURNKEY_STEPS
 if [[ -z ${TURNKEY_STEPS} ]] && [ ! -z "${QuNexTurnkeyWorkflow##*${AcceptanceTest}*}" ]; then
     echo ""
