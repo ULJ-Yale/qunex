@@ -28,6 +28,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 # import dicom
 import os
+import io
 import os.path
 import sys
 import re
@@ -2565,6 +2566,103 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             deleted after the successful processing.
     """
 
+    isgz = re.compile(r'(^.*)\.gz$')
+    iszip = re.compile(r'(^.*)\.zip$')
+    istar = re.compile(r'(^.*)(\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$)')
+
+    def _process_file(fobj, fname, fnum, dnum, target):
+
+        if not isinstance(fobj, io.IOBase):
+            if os.path.isfile(fobj):
+                fobj = open(fobj, 'rb')
+            else:
+                return (fnum, dnum)
+
+        if isgz.match(fname):
+            fobj = gz.GzipFile(fileobj=fobj)
+            fname = isgz.match(fname).group(1)
+        elif istar.match(fname):
+            return _extract_tar(fobj, fname, fnum, dnum, target)
+        elif iszip.match(fname):
+            return _extract_zip(fobj, fname, fnum, dnum, target)
+
+        if fnum % 1000 == 0:
+            dnum += 1
+            if not os.path.exists(os.path.join(target, str(dnum))):
+                os.makedirs(os.path.join(target, str(dnum)))
+        fnum += 1
+
+        tfile = f"{dnum}-{os.path.basename(fname)}"
+
+        # --- check if par/rec/log
+        if tfile.split('.')[-1].lower() in ['par', 'rec', 'log']:
+            for ext in ['rec', 'par']:
+                if tfile.split('.')[-1] == ext:
+                    tfile = tfile[:-3] + ext.upper()
+
+        with open(os.path.join(target, str(dnum), tfile), 'wb') as fout:
+            shutil.copyfileobj(fobj, fout)
+
+        fobj.close()
+        return (fnum, dnum)
+
+    def _extract_zip(packet, packetname, fnum=0, dnum=0, target=None):
+
+        # -- open packet
+        try:
+            z = zipfile.ZipFile(packet, 'r')
+        except:
+            e = sys.exc_info()[0]
+            raise ge.CommandFailed("import_dicom", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
+        
+        # -- get list of files in packet
+        file_list = z.infolist()
+
+        # -- process list
+        for source_file in file_list:
+            if source_file.file_size > 0:
+                print("...  extracting:", source_file.filename, source_file.file_size)
+                fnum, dnum = _process_file(z.open(source_file), source_file.filename, fnum, dnum, target)
+        
+        # -- close and return with latest numbers
+
+        print("     -> done!")
+        z.close()
+        return (fnum, dnum)
+    
+    def _extract_tar(packet, packetname, fnum=0, dnum=0, target=None):
+        
+        # -- open packet
+        try:
+            if isinstance(packet, io.IOBase):
+                tar = tarfile.open(fileobj=packet, mode='r')
+            else:
+                tar = tarfile.open(packet, 'r')
+        except:
+            e = sys.exc_info()[0]            
+            raise ge.CommandFailed("import_dicom", "Tar file could not be processed", "Opening tar [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
+
+        # -- process files
+        for tarinfo in tar:
+            if tarinfo.isfile():
+                print("...  extracting:", tarinfo.name, tarinfo.size)
+                fnum, dnum = _process_file(tar.extractfile(tarinfo), tarinfo.name, fnum, dnum, target)
+        
+        # -- close and return with latest numbers
+
+        print("     -> done!")
+        tar.close()
+        return (fnum, dnum)
+
+    def _process_folder(folder, fnum=0, dnum=0, target=None):
+        # -- get list of files
+        files_iter = glob.iglob(os.path.join(folder, "**", "*"), recursive=True)
+        for source_file in files_iter:
+            fnum, dnum = _process_file(source_file, os.path.basename(source_file), fnum, dnum, target)
+
+        return (fnum, dnum)
+
+
     print("Running import_dicom\n====================")
 
     # check settings
@@ -2591,8 +2689,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
     if nameformat is None:
         nameformat = r"(?P<subject_id>.*)"
-
-    igz = re.compile(r'^.*\.gz$')
     
     try:
         if add_image_type == None or add_image_type == '':
@@ -2654,6 +2750,12 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                      ('exist', "---> The session and inbox folder for these packages already exist:"),
                      ('skip', "---> These packages do not match list of sessions and will be skipped:")]
 
+        if not os.path.exists(masterinbox):
+            raise ge.CommandFailed("import_dicom", "Master inbox does not exist", f"A folder {masterinbox} does not exist.", "Please check your path!")
+
+        if not os.path.isdir(masterinbox):
+            raise ge.CommandFailed("import_dicom", "Master inbox is not a folder", f"{masterinbox} is not a folder.", "Please check your path!")
+
         print("---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'" % (os.path.abspath(masterinbox), pattern, nameformat))
 
         files = glob.glob(os.path.join(masterinbox, '*'))
@@ -2666,8 +2768,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
         except:
             raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
 
-        for file in files:
-            m = getop.search(os.path.basename(file))
+        for afile in files:
+            m = getop.search(os.path.basename(afile))
             if m:
                 if 'packet_name' in m.groupdict() and m.group('packet_name'):
                     pname = m.group('packet_name')
@@ -2678,7 +2780,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                         if pname in sessionsInfo:
                             session = dict(sessionsInfo[pname])
                         else:
-                            packets['nolog'].append((file, dict(session)))
+                            packets['nolog'].append((afile, dict(session)))
                             continue
                     else:
                         session = dict(emptysession)
@@ -2694,24 +2796,24 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                                 session.update({'subjectid': ms.group('subject_id'), 'sessionname': None, 'sessionid': ms.group('subject_id')})
 
                         else:
-                            packets['invalid'].append((file, session))
+                            packets['invalid'].append((afile, session))
                             continue
 
                     sfolder = os.path.join(sessionsfolder, session['sessionid'])
 
                     if sessions:
                         if not any([matchAll(e, session['sessionid']) for e in sessions]):
-                            packets['skip'].append((file, session))
+                            packets['skip'].append((afile, session))
                             continue
 
                     if os.path.exists(os.path.join(sfolder, 'inbox')):
-                        packets['exist'].append((file, session))
+                        packets['exist'].append((afile, session))
                         continue
 
-                    packets['ok'].append((file, session))
+                    packets['ok'].append((afile, session))
 
                 else:
-                    packets['bad'].append(file, dict(emptysession))
+                    packets['bad'].append(afile, dict(emptysession))
 
     # ---- get list of session folders to process
     else:
@@ -2764,17 +2866,17 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     for tag, message in reportSet:
         if packets[tag]:
             print(f"\n{message}")
-            for file, session in packets[tag]:
+            for afile, session in packets[tag]:
                 if session['sessionname']:
-                    print("     subject: %s, session: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(file)))
+                    print("     subject: %s, session: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['subjectid']:
-                    print("     subject: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionid'], session['packetname'], os.path.basename(file)))
+                    print("     subject: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['sessionid']:
-                    print("     %s <= %s <- %s" % (session['sessionid'], session['packetname'], os.path.basename(file)))
+                    print("     %s <= %s <- %s" % (session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['packetname']:
-                    print("     %s <= %s <- %s" % ("????", session['packetname'], os.path.basename(file)))
+                    print("     %s <= %s <- %s" % ("????", session['packetname'], os.path.basename(afile)))
                 else:
-                    print("     %s <= %s <- %s" % ("????", "????", os.path.basename(file)))
+                    print("     %s <= %s <- %s" % ("????", "????", os.path.basename(afile)))
 
             if tag == 'exist':
                 #if overwrite:
@@ -2815,7 +2917,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     if overwrite:
         if packets['exist']:
             print("---> Cleaning exisiting data in folders:")
-            for file, session in packets['exist']:
+            for afile, session in packets['exist']:
                 sfolder = os.path.join(sessionsfolder, session['sessionid'])
                 print("     ... %s" % (sfolder))
                 if masterinbox:
@@ -2834,7 +2936,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
     print("---> Starting to process %d packets ..." % (len(packets['ok'])))
 
-    for file, session in packets['ok']:
+    for afile, session in packets['ok']:
         note = []
         try:
 
@@ -2848,7 +2950,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
             if masterinbox and not os.path.exists(ifolder):
                 os.makedirs(ifolder)
-                files = [file]
+                files = [afile]
             else:
                 if 'archives' in session and session['archives']:
                     files = session['archives']
@@ -2860,96 +2962,25 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
             for p in files:
 
-            # --- unzip or copy the package
+                # --- unzip or copy the package
 
-                if p.endswith('zip'):
-
+                if iszip.match(p):
                     ptype = "zip"
+                    fnum, dnum = _extract_zip(p, os.path.basename(p), fnum, dnum, ifolder)
 
-                    print("...  unzipping %s" % (os.path.basename(p)))
-
-                    try:
-                        z = zipfile.ZipFile(p, 'r')
-                    except:
-                        e = sys.exc_info()[0]
-                        raise ge.CommandFailed("import_dicom", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (p, e), "Please check your data!")                
-
-                    ilist = z.infolist()
-                    for sf in ilist:
-                        if sf.file_size > 0:
-
-                            if fnum % 1000 == 0:
-                                dnum += 1
-                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
-                                    os.makedirs(os.path.join(ifolder, str(dnum)))
-                            fnum += 1
-
-                            print("...  extracting:", sf.filename, sf.file_size)
-                           
-                            with z.open(sf) as fobj:
-                                # --- do we have par / rec / log
-                                if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                                    tfile = os.path.basename(sf.filename)
-                                    for ext in ['rec', 'par']:
-                                        if tfile.split('.')[-1] == ext:
-                                            tfile = tfile[:-3] + ext.upper()
-                                else:
-                                    tfile = str(fnum) + ".dcm"
-                                
-                                with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
-                                    if igz.match(sf.filename):
-                                        with gz.GzipFile(fileobj=fobj) as gz_fobj:
-                                            shutil.copyfileobj(gz_fobj, fout)
-                                    else:
-                                        shutil.copyfileobj(fobj, fout)
-
-                    z.close()
-                    print("     -> done!")
-
-                elif re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p):
-
+                elif istar.match(p):
                     ptype = "tar"
-
-                    print("...  untarring %s" % (os.path.basename(p)))
-
-                    tar = tarfile.open(p, 'r')
-                    for tarinfo in tar:
-                        if tarinfo.isfile():
-                            if fnum % 1000 == 0:
-                                dnum += 1
-                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
-                                    os.makedirs(os.path.join(ifolder, str(dnum)))
-                            fnum += 1
-
-                            print("...  extracting:", tarinfo.name, tarinfo.size)
-
-                            with tar.extractfile(tarinfo) as fobj:
-                                # --- do we have par / rec / log
-                                if tarinfo.name.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                                    tfile = os.path.basename(tarinfo.name)
-                                    for ext in ['rec', 'par']:
-                                        if tfile.split('.')[-1] == ext:
-                                            tfile = tfile[:-3] + ext.upper()
-                                else:
-                                    tfile = str(fnum) + ".dcm"
-                                
-                                with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
-                                    if igz.match(tarinfo.name):
-                                        with gz.GzipFile(fileobj=fobj) as gz_fobj:
-                                            shutil.copyfileobj(gz_fobj, fout)
-                                    else:
-                                        shutil.copyfileobj(fobj, fout)
-
-                    tar.close()
-                    print("     -> done!")
+                    fnum, dnum = _extract_tar(p, os.path.basename(p), fnum, dnum, ifolder)
 
                 else:
                     ptype = "folder"
                     if masterinbox and ifolder != p:
-                        if os.path.exists(ifolder):
-                            shutil.rmtree(ifolder)
-                        print("...  copying %s dicom files" % (os.path.basename(p)))
-                        shutil.copytree(p, ifolder)
+                        fnum, dnum = _process_folder(p, fnum, dnum, ifolder)
+                        
+                        # if os.path.exists(ifolder):
+                        #     shutil.rmtree(ifolder)                    
+                        # print("...  copying %s dicom files" % (os.path.basename(p)))                        
+                        # shutil.copytree(p, ifolder)
 
             # ===> run sort dicom
 
@@ -3004,24 +3035,24 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                         else:
                             os.remove(p)
 
-            report['ok'].append((file, dict(session), note))
+            report['ok'].append((afile, dict(session), note))
 
         except ge.CommandFailed as e: 
-            report['failed'].append((file, dict(session), ["%s: %s" % (e.function, e.error)]))
+            report['failed'].append((afile, dict(session), ["%s: %s" % (e.function, e.error)]))
 
     print("\nFinal report\n============")
 
     if report["ok"]:
         print("\nSuccessfully processed:")
-        for file, session, notes in report["ok"]:
-            print("... %s [%s]" % (session['sessionid'], file))
+        for afile, session, notes in report["ok"]:
+            print("... %s [%s]" % (session['sessionid'], afile))
             for note in notes:
                 print("    %s" % (note))
 
     if report["failed"]:
         print("\nFailed to process:")
-        for file, session, notes in report["failed"]:
-            print("... %s [%s]" % (session['sessionid'], file))
+        for afile, session, notes in report["failed"]:
+            print("... %s [%s]" % (session['sessionid'], afile))
             for note in notes:
                 print("    %s" % (note))
         raise ge.CommandFailed("import_dicom", "Some packages failed to process", "Please check report!")
