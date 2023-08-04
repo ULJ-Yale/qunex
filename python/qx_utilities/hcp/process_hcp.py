@@ -8002,7 +8002,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --territories_atlas="%(territories_atlas)s" \
                 --territories_labels="%(territories_labels)s" \
                 --verbose' % {
-                "script": "hcp_asl",
+                "script": "process_hcp_asl",
                 "studydir": sinfo['hcp'],
                 "subid": sinfo['id'] + options['hcp_suffix'],
                 "grads": gdcfile,
