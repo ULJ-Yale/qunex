@@ -905,15 +905,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     fi
 
     # -- Define final variable set
-    if [[ ${DATAFormat} == "BIDS" ]]; then
-        # -- Setup CASE without the 'MR' prefix in the XNAT_SESSION_LABEL
-        #    Eventually deprecate once fixed in XNAT
-        CASE=`echo ${XNAT_SESSION_LABEL} | sed 's|_MR1$||' | sed 's|_MR|_|'`
-        mageho " --> Note: --dataformat='BIDS' "
-        reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant session variable for QuNex run: ${CASE}"
-        echo ""
-    else
-        CASE="${XNAT_SESSION_LABEL}"
+    CASE="${XNAT_SESSION_LABEL}"
     fi
 fi
 #
