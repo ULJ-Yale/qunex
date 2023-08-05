@@ -1506,6 +1506,12 @@ if [[ ${setflag} =~ .*-.* ]]; then
         LogSave="remove"
     fi
 
+    # omp threads
+    omp_threads=`get_parameters "${setflag}omp_threads" $@`
+    if [[ -n ${omp_threads} ]]; then
+        export OMP_NUM_THREADS=${omp_threads}
+    fi
+
     # -- If scheduler flag set then set RunMethod variable
     if [[ ! -z ${Scheduler} ]]; then
         RunMethod="2"
