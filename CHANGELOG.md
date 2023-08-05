@@ -6,6 +6,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.2
+
+* Updated `hcp_asl` to the latest version.
+* `hcp_diffusion` now prints an error if there are no pos/neg pairs insted of crashing.
+* Optimized speed of `dwi_parcellate`.
+* `create_batch` now replaces an existing session when using `append` mode.
+* Fixed an issue where QuNex was using some unavailable Octave functions in analysis commands.
+* `omp_threads` parameter is now used globally for setting parallelism for `wb_command`.
+
 ## 0.98.1
 
 * Added statistics package back to Octave in the container, required for `preprocess_bold` and `preprocess_conc`.
