@@ -3093,7 +3093,16 @@ else
             geho "     - removing dicom files"
             # Temp storage for kept files
             mkdir ${QuNexWorkDir}/dicomtmp
-            mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
+            #check for logs and move them
+            logCount=`${QuNexWorkDir}/dicom/*.log &>/dev/null | wc -l`
+            if [ $logCount != 0 ]; then
+                mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicomtmp
+            fi
+            #check for txt files and move them
+            logCount=`${QuNexWorkDir}/dicom/*.txt &>/dev/null | wc -l`
+            if [ $logCount != 0 ]; then
+                mv ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
+            fi
             rm  -rf ${QuNexWorkDir}/dicom &> /dev/null
             mv ${QuNexWorkDir}/dicomtmp ${QuNexWorkDir}/dicom
             echo ""
