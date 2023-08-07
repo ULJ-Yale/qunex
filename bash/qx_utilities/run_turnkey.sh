@@ -906,8 +906,8 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
 
     # -- Define final variable set
     CASE="${XNAT_SESSION_LABEL}"
-    
 fi
+
 #
 ################################################################################
 
