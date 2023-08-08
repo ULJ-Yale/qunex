@@ -28,6 +28,8 @@ if nargin < 3, datatype = []; end
 
 if verbose, fprintf('\n---> Saving image as %s', filename); end
 
+cifti_filetypes = {'dtseries', 'dscalar', 'dlabel', 'ptseries', 'pscalar', 'plabel', 'pconn', 'dconn'};
+
 % ---> embed extra data if available
 
 if ~ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'}) && img.frames > 2
@@ -40,9 +42,9 @@ end
 filename = strtrim(filename);
 % unpack and set up
 
-root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.dscalar|\.pconn', '');
+root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dconn|\.dtseries|\.dscalar|\.dlabel|\.dpconn|\.pconnseries|\.pconnscalar|\.pconn|\.ptseries|\.pscalar|\.pdconn|\.dfan|\.fiberTemp', '');
 
-ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar|\.dscalar)', 'tokens');
+ftype = regexp(filename, '(\.dconn|\.dtseries|\.dscalar|\.dlabel|\.dpconn|\.pconnseries|\.pconnscalar|\.pconn|\.ptseries|\.pscalar|\.pdconn|\.dfan|\.fiberTemp)', 'tokens');
 if length(ftype) > 0
     ftype = char(ftype{1});
     img.filetype = ftype;
@@ -80,29 +82,61 @@ switch img.imageformat
         if isempty(img.TR)
             img.TR = 1;
         end
-        cmeta = find([img.meta.code] == 32);
-        if img.voxels == 91282            
-            if strcmp(img.filetype, '.dtseries')
-                img.meta(cmeta) = dtseriesXML(img);
-            elseif strcmp(img.filetype, '.dscalar')
-                img.meta(cmeta) = dscalarXML(img);
+
+        % check filename
+        if any(ismember(cifti_filetypes, strsplit(filename, '.')))
+            img.filetype = ['.' cifti_filetypes{find(ismember(cifti_filetypes, strsplit(filename, '.')))}];
+        end
+            
+        % --- if series create series information
+        if contains(img.filetype, 'tseries') 
+            try series_unit = img.cifti.metadata.diminfo{2}.seriesUnit; catch series_unit = 'SECOND'; end
+            try series_start = img.cifti.metadata.diminfo{2}.seriesStart; catch series_start = 0; end
+            img.cifti.metadata.diminfo{2} = cifti_diminfo_make_series(img.frames, series_start, img.TR, series_unit);
+            
+        % --- if scalar or label create scalar information
+        elseif contains(img.filetype, 'scalar') || contains(img.filetype, 'label')
+            if length(img.cifti.maps) == img.frames
+                img.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(img.frames, img.cifti.maps);
             else
-                img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
-            end
-        else
-            if strcmp(img.filetype, '.ptseries')
-                img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
-            elseif strcmp(img.filetype, '.pscalar')
-                img.meta(cmeta) = string2meta(img.meta.data, 32);
+                map_names = {};
+                for imap = 1:img.frames
+                    map_names{imap} = sprintf('Map %d', imap);
+                end
+                img.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(img.frames, map_names);
+            end        
+        end
+
+        if contains(img.filetype, 'label') 
+            img.cifti.metadata.diminfo{2}.type = 'labels';
+            for imap = 1:img.frames
+                img.cifti.metadata.diminfo{2}.maps(imap).table = img.cifti.labels{imap};
             end
         end
-        if strcmp(img.filetype, '.pconn')
-            img.hdrnifti.dim(6:7) = img.dim;
-        else
-            img.hdrnifti.dim(6) = img.frames;
-            img.hdrnifti.dim(7) = img.voxels;
-        end
+
+        % --- get correct dimensions (not needed - set by cifi-matlab)
+        % if contains(img.filetype, 'conn')
+        %     img.hdrnifti.dim(6:7) = img.dim;
+        % else
+        %     img.hdrnifti.dim(6) = img.frames;
+        %     img.hdrnifti.dim(7) = img.voxels;
+        % end
+
+        tcifti = img.cifti.metadata;
+        tcifti.cdata = img.data;
         file = [root img.filetype '.nii'];
+        [metaxml, hdrnifti] = cifti_write_metadata(tcifti, file);
+
+        cmeta = length(img.meta) + 1;
+        if length(img.meta) > 0
+            cmeta = find([img.meta.code] == 32);
+        end
+        if cmeta > 1
+            img.meta(cmeta) = string2meta(metaxml, 32);
+        else
+            img.meta = string2meta(metaxml, 32);
+        end
+        % img.hdrnifti = hdrnifti; -> leave as is for the time (need to update rather than replace)
 
     otherwise
         fprintf('\nWARNING: Imageformat info not recognized [%s], using .nii.gz\n', img.imageformat);
@@ -349,31 +383,6 @@ function [s] = packHeader_nifti2(hdrnifti)
     s(526:540) = sw(hdrnifti.unused_str,     'uint8');
 
 
-
-
-
-function [meta] = framesHack(meta, oframes, nframes)
-
-    if oframes == nframes
-        return;
-    end
-
-    s = cast(meta.data', 'char');
-    olds = sprintf('SeriesPoints="%d"', oframes);
-    news = sprintf('SeriesPoints="%d"', nframes);
-    s = strrep(s, olds, news);
-    s = cast(s', 'uint8');
-
-    if length(olds) ~= length(news)
-        meta.size   = ceil((length(s)+8)/16)*16;
-        meta.data   = zeros(1, meta.size-8, 'uint8');
-        meta.data(1:length(s)) = s;
-    else
-        meta.data = s;
-    end
-
-
-
 function [meta] = dtseriesXML(img)
 
     mpath = fileparts(mfilename('fullpath'));
@@ -386,6 +395,7 @@ function [meta] = dtseriesXML(img)
     xml = strrep(xml,'{{TR}}', num2str(img.TR));
     xml = cast(xml', 'uint8');
     meta = string2meta(xml, 32);
+
 
 function [meta] = dscalarXML(img)
 
@@ -413,6 +423,7 @@ function [meta] = dscalarXML(img)
     end
     xml = strrep(xml, '{{NamedMaps}}', mapString);
     meta = string2meta(xml, 32);
+
 
 function [meta] = string2meta(string, code)
     string = cast(string(:), 'uint8');
