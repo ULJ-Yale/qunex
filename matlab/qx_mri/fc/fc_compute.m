@@ -1,6 +1,6 @@
-function [fcmat, fzmat] = fc_compute(A, B, measure, optimized, options)
+function [fcmat, fzmat] = fc_compute(A, B, measure, prepared, options)
 
-%``fc_compute(A, B, measure, optimized)``
+%``fc_compute(A, B, measure, prepared, options)``
 %
 %   Computes functional connectivity matrix
 %
@@ -38,9 +38,9 @@ function [fcmat, fzmat] = fc_compute(A, B, measure, optimized, options)
 %
 %           Defaults to 'r'.
 %
-%       --optimized (boolean):
-%           Whether the data have been optimized for computing the requested
-%           measure. Defaults to false.
+%       --prepared (boolean):
+%           Whether the data have been prepared (i.e. demeaned or standardized)
+%           for computing the requested measure. Defaults to false.
 %
 %       --options (structure)
 %           .fcargs (structure) Defines arguments for a given fc measure.
@@ -70,7 +70,8 @@ if nargin < 5 || isempty(options) || sum(strcmp(fieldnames(options), 'fcargs')) 
 else
     fcargs = options.fcargs;
 end
-if nargin < 4 || isempty(optimized), optimized = false;   end
+
+if nargin < 4 || isempty(prepared), prepared = false;   end
 if nargin < 3 || isempty(measure),   measure   = 'r';     end
 if nargin < 2,                       B         = [];      end
 if nargin < 1, error('ERROR: A matrix with data needs to be provided!'); end
@@ -88,7 +89,7 @@ end
 
 % --- prepare data if needed
 
-if ~optimized
+if ~prepared
     A = fc_prepare(A, measure);
     if ~isempty(B)
         B = fc_prepare(B, measure);
