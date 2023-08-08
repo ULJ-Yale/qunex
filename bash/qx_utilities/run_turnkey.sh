@@ -906,8 +906,8 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
 
     # -- Define final variable set
     CASE="${XNAT_SESSION_LABEL}"
-    
 fi
+
 #
 ################################################################################
 
@@ -953,6 +953,19 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolde
     echo ""
     SessionsFolder="${STUDY_PATH}/subjects"
     SessionsFolderName="subjects"
+fi
+
+if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+    if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]]; then
+        echo "SESSION RENAME CASE 1"
+        SessionsFolder="${STUDY_PATH}/sessions"
+        SessionsFolderName="sessions"
+    fi
+    if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}" ]]; then
+        echo "SESSION RENAME CASE 2"
+        SessionsFolder="${STUDY_PATH}/sessions"
+        SessionsFolderName="sessions"
+    fi
 fi
 
 # -- Check TURNKEY_STEPS
@@ -3093,7 +3106,16 @@ else
             geho "     - removing dicom files"
             # Temp storage for kept files
             mkdir ${QuNexWorkDir}/dicomtmp
-            mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
+            #check for logs and move them
+            logCount=`${QuNexWorkDir}/dicom/*.log &>/dev/null | wc -l`
+            if [ $logCount != 0 ]; then
+                mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicomtmp
+            fi
+            #check for txt files and move them
+            logCount=`${QuNexWorkDir}/dicom/*.txt &>/dev/null | wc -l`
+            if [ $logCount != 0 ]; then
+                mv ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
+            fi
             rm  -rf ${QuNexWorkDir}/dicom &> /dev/null
             mv ${QuNexWorkDir}/dicomtmp ${QuNexWorkDir}/dicom
             echo ""
