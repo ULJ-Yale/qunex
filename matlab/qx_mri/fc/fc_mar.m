@@ -3,13 +3,11 @@ function [A] = fc_mar(data, p)
 %``fc_mar(data, p)``
 %
 %   This function identifies an coefficients "A" of autoregressive (AR) model 
-%   from multivariate time series using the multivariate least square
-%   method
+%   from multivariate time series using the multivariate least square method.
 %
 %   Parameters:
 %       --data (numeric matrix): NxT (N=ROIs, T=number of timepoints)
-%       --p (integer): Order of the AR model to be identified. (Lags)
-%          
+%       --p (integer): Order of the AR model to be identified (lags)
 %
 %   Returns:
 %       A (numerical matrix): AR coefficients of size NxNp
