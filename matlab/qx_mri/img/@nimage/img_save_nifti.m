@@ -90,7 +90,11 @@ switch img.imageformat
                 img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
             end
         else
-            img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
+            if strcmp(img.filetype, '.ptseries')
+                img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
+            elseif strcmp(img.filetype, '.pscalar')
+                img.meta(cmeta) = string2meta(img.meta.data, 32);
+            end
         end
         if strcmp(img.filetype, '.pconn')
             img.hdrnifti.dim(6:7) = img.dim;
