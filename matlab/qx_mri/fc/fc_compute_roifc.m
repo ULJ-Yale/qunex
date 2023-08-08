@@ -173,6 +173,11 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %
 %               Defaults to 'r'.
 %
+%               Additional parameters for specific measures can be added, e.g.
+%               for inverse covariance shrinkage and standardize options can be
+%               set as follows 'fcmeasure=icv|shrinkage=LW|standardize=partialcorr'.
+%
+%
 %           - savegroup
 %               A comma separated list of formats to use to save the group 
 %               data:
@@ -300,8 +305,9 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %
 %   Notes:
 %       Please note, that only those results that are valid for the specific 
-%       fcmeasure. For example, `fz`, `p`, and `z` will not be reported for `cv`
-%       at the individual level, and `fz` won't be reported on the group level.
+%       fcmeasure are saved. For example, `fz`, `p`, and `z` will not be
+%       reported for `cv` at the individual level, and `fz` won't be reported
+%       on the group level.
 %
 %       Based on savegroup option specification a file may be saved with the
 %       functional connectivity data saved in a matlab.mat file and/or in a text
@@ -640,6 +646,7 @@ for s = 1:nsub
             rs = ts.img_extract_roi(roiinfo, [], options.roimethod); 
         end
     
+        options
         fc = fc_compute(rs, [], fcmeasure, false, options);
         
         if verbose; fprintf(' ... computed fc matrix'); end
