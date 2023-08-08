@@ -66,7 +66,7 @@ function [fcmat, fzmat] = fc_compute(A, B, measure, optimized, options)
 % SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 5 || isempty(options) || sum(strcmp(fieldnames(options), 'fcargs')) == 0
-    fcargs = struct([]); 
+    fcargs = general_parse_options([], options, '');
 else
     fcargs = options.fcargs;
 end
