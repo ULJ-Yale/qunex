@@ -206,9 +206,9 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %
 %               - long
 %                   save the resulting data in a long format .tsv file
-%               - wide-single
+%               - wide_single
 %                   save the resulting data in a single wide format .tsv file
-%               - wide-separate
+%               - wide_separate
 %                   save the resulting data in a wide format .tsv file, one
 %                   file per each measure of interest
 %               - mat
