@@ -237,17 +237,17 @@ end
 
 pt = 4;
 if length(img.meta) > 0
-    img.metadata = zeros(4 + sum([img.meta.size]), 1, 'uint8');
-    img.metadata(1:4) = sw([1 0 0 0], 'uint8');
+    metadata = zeros(4 + sum([img.meta.size]), 1, 'uint8');
+    metadata(1:4) = sw([1 0 0 0], 'uint8');
     for n = 1:length(img.meta)
         if verbose, fprintf('\n --> preparing meta %d [%d bytes]', img.meta(n).code, img.meta(n).size); end
-        img.metadata(pt+1:pt+4) = sw(img.meta(n).size, 'int32');
-        img.metadata(pt+5:pt+8) = sw(img.meta(n).code, 'int32');
-        img.metadata(pt+9:pt+img.meta(n).size) = img.meta(n).data;
+        metadata(pt+1:pt+4) = sw(img.meta(n).size, 'int32');
+        metadata(pt+5:pt+8) = sw(img.meta(n).code, 'int32');
+        metadata(pt+9:pt+img.meta(n).size) = img.meta(n).data;
         pt = pt + img.meta(n).size;
     end
 else
-    img.metadata = sw([0 0 0 0], 'uint8');
+    metadata = sw([0 0 0 0], 'uint8');
 end
 
 
@@ -268,7 +268,7 @@ end
 
 % ---> save it
 
-nimage.img_save_nifti_mx(file, fhdr, img.data, img.metadata, img.hdrnifti.swapped == 1, verbose);
+nimage.img_save_nifti_mx(file, fhdr, img.data, metadata, img.hdrnifti.swapped == 1, verbose);
 
 
 

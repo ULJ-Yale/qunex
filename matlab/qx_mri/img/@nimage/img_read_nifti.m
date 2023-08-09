@@ -218,8 +218,6 @@ end
 
 % ---- Map metadata
 
-img.metadata = fmeta;
-
 if img.hdrnifti.swap
     sw = @(x) swapbytes(x);
 else

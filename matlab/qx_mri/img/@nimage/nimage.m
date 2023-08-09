@@ -89,12 +89,8 @@ classdef nimage
 %       If the image is an ROI mask, a structure with the information about the ROI
 %   glm           
 %       If the image contains results of GLM, the structure with the GLM information
-%   xml           
-%       For CIFTI images, the content of the xml metadata
 %   meta          
 %       A structure that describes metadata
-%   metadata      
-%       uint8 encoded metadata
 %   list          
 %       S structure with list information
 %   tevents        
@@ -151,9 +147,7 @@ classdef nimage
         info            = [];
         roi             = [];
         glm;
-        xml             = [];
         meta            = [];
-        metadata        = [];
         list            = [];
         tevents         = [];
 

@@ -139,11 +139,6 @@ img.hdrnifti.glmin           = 0;
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = false;
 
-% --- add empty metadata info
-
-img.metadata = char(ones(1,4)*0);
-
-
 function [space] = guessSpace(dim)
     space = 4;
     if (length(dim) == 3)
