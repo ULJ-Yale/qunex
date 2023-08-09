@@ -1817,6 +1817,25 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             the respective sigma values computed from the specified frequencies
             and TR.
 
+            Filtering of nuisance signal, movement, task, and events
+            Besides data, nuisance signal, motion parameters, and event 
+            regressors can be filtered as well. What to filter beside data can
+            be specified by a comma separated list using the following 
+            parameters:
+            
+            --hipass_do (str, default 'nuisance')
+                What to high-pass filter besides data – options are: nuisance, 
+                movement, events, task. Default is 'nuisance'.
+ 
+            --lopass_do (str, default 'nuisance,movement,task,events')
+                What to lo-pass filter besides data – options are: nuisance, 
+                movement, events, task. Default is 'nuisance, movement, task, 
+                events'.
+            
+            Note that 'events' refers to regressors created based on events 
+            as specified in the fidl file, whereas 'task' refers to a task
+            matrix that is passed directy in the matlab function call.
+
             Results:
                 The resulting filtered files are saved with '_hpss' or '_bpss'
                 added to the BOLD root filename for high-pass and low-pass
@@ -2103,20 +2122,24 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
         status = True
 
         # --- movement
-        r, status = pc.checkForFile2(r, f['bold_mov'], '\n    ... movement data present', '\n    ... movement data missing [%s]' % (f['bold_mov']), status=status)
+        if 'r' in options['bold_actions'] and ('m' in options['bold_nuisance'] or 'm' in options['bold_actions']):
+            r, status = pc.checkForFile2(r, f['bold_mov'], '\n    ... movement data present', '\n    ... movement data missing [%s]' % (f['bold_mov']), status=status)
 
         # --- bold stats
-        r, status = pc.checkForFile2(r, f['bold_stats'], '\n    ... bold statistics data present', '\n    ... bold statistics data missing [%s]' % (f['bold_stats']), status=status)
+        if 'm' in options['bold_actions']:
+            r, status = pc.checkForFile2(r, f['bold_stats'], '\n    ... bold statistics data present', '\n    ... bold statistics data missing [%s]' % (f['bold_stats']), status=status)
 
         # --- bold scrub
-        r, status = pc.checkForFile2(r, f['bold_scrub'], '\n    ... bold scrubbing data present', '\n    ... bold scrubbing data missing [%s]' % (f['bold_scrub']), status=status)
+        if any([e in options['pignore'] for e in ['linear', 'spline', 'ignore']]):
+            r, status = pc.checkForFile2(r, f['bold_scrub'], '\n    ... bold scrubbing data present', '\n    ... bold scrubbing data missing [%s]' % (f['bold_scrub']), status=status)
 
         # --- check for files if doing regression
 
         if 'r' in options['bold_actions']:
 
             # --- nuisance data
-            r, status = pc.checkForFile2(r, f['bold_nuisance'], '\n    ... bold nuisance signal data present', '\n    ... bold nuisance signal data missing [%s]' % (f['bold_nuisance']), status=status)
+            if any([e in options['bold_nuisance'] for e in ['V', 'WM', 'WB']]):
+                r, status = pc.checkForFile2(r, f['bold_nuisance'], '\n    ... bold nuisance signal data present', '\n    ... bold nuisance signal data missing [%s]' % (f['bold_nuisance']), status=status)
 
             # --- event
             if 'e' in options['bold_nuisance']:
@@ -2533,6 +2556,25 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             Please note that the values finally passed to img_filter method are
             the respective sigma values computed from the specified frequencies
             and TR.
+
+            Filtering of nuisance signal, movement, task, and events
+            Besides data, nuisance signal, motion parameters, and event 
+            regressors can be filtered as well. What to filter beside data can
+            be specified by a comma separated list using the following 
+            parameters:
+            
+            --hipass_do (str, default 'nuisance')
+                What to high-pass filter besides data – options are: nuisance, 
+                movement, events, task. Default is 'nuisance'.
+ 
+            --lopass_do (str, default 'nuisance,movement,task,events')
+                What to lo-pass filter besides data – options are: nuisance, 
+                movement, events, task. Default is 'nuisance, movement, task, 
+                events'.
+            
+            Note that 'events' refers to regressors created based on events 
+            as specified in the fidl file, whereas 'task' refers to a task
+            matrix that is passed directy in the matlab function call.
 
             Results:
                 The resulting filtered files are saved with '_hpss' or '_bpss'

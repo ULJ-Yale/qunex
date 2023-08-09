@@ -441,9 +441,9 @@ def getBOLDFileNames(sinfo, boldname, options):
         if d['s_source'] is None:
             f['bold_event_o'] = None
         else:
-            f['bold_event_o']       = os.path.join(d['s_source'], options['boldname'] + boldnumber + options['event_file'])
-        f['bold_event_a']       = os.path.join(options['sessionsfolder'], 'inbox', sinfo['id'] + "_" + options['boldname'] + boldnumber + options['event_file'])
-        f['bold_event']         = os.path.join(d['s_bold_events'], options['boldname'] + boldnumber + options['event_file'])
+            f['bold_event_o']       = os.path.join(d['s_source'], options['boldname'] + boldnumber + options['event_file']) + ".fidl"
+        f['bold_event_a']       = os.path.join(options['sessionsfolder'], 'inbox', sinfo['id'] + "_" + options['boldname'] + boldnumber + options['event_file']) + ".fidl"
+        f['bold_event']         = os.path.join(d['s_bold_events'], options['boldname'] + boldnumber + options['event_file']) + ".fidl"
 
     # --- bold preprocessed files
     f['bold']                   = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + ext)
