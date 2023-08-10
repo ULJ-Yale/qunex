@@ -152,9 +152,7 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     opt.fwhm = fwhm;
     opt.framework_path = [];
     opt.wb_command_path = wb_path;
-    opt.omp_threads = [];
-    
-    
+
     projection = general_parse_options([],projection);
     % --- assign proper projection type format
     if isfield(projection,'cortex_left') && isfield(projection,'cortex_right')
@@ -229,10 +227,6 @@ if ~isempty(options.wb_command_path)
         fprintf('\n     ... setting PATH to %s', options.wb_command_path);
         setenv('PATH', [options.wb_command_path ':' s]);
     end
-end
-
-if options.omp_threads > 0
-    setenv('OMP_NUM_THREADS', num2str(options.omp_threads));
 end
 
 roi_smooth = '';

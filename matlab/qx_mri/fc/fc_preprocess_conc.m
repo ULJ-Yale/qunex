@@ -127,7 +127,6 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           - lopass_do       : ['nuisance, movement, events, task']
 %           - framework_path  : ['']
 %           - wb_command_path : ['']
-%           - omp_threads     : [0]
 %           - smooth_mask     : ['false']
 %           - dilate_mask     : ['false']
 %           - glm_matrix      : ['none']  ('none' / 'text' / 'image' / 'both')
@@ -396,10 +395,6 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %
 %               - volume_smooth
 %                   FWHM for gaussian volume smooting in mm. Defaults to 2.0.
-%
-%               - omp_threads
-%                   Number of cores to be used by wb_command. 0 for no change of
-%                   system settings. Defaults to 0.
 %
 %               - framework_path
 %                   The path to framework libraries on the Mac system. No need
@@ -1892,9 +1887,6 @@ function [] = wbSmooth(sfile, tfile, file, options)
             fprintf('\n     ... setting PATH to %s', options.wb_command_path);
             setenv('PATH', [options.wb_command_path ':' s]);
         end
-    end
-    if options.omp_threads > 0
-        setenv('OMP_NUM_THREADS', num2str(options.omp_threads));
     end
 
     fprintf('\n     ... smoothing');
