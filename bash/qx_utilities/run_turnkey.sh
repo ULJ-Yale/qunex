@@ -905,9 +905,17 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     fi
 
     # -- Define final variable set
-    CASE="${XNAT_SESSION_LABEL}"
+    if [[ ${DATAFormat} == "BIDS" ]]; then
+        # -- Setup CASE without the 'MR' prefix in the XNAT_SESSION_LABEL
+        #    Eventually deprecate once fixed in XNAT
+        CASE=`echo ${XNAT_SESSION_LABEL} | sed 's|_MR1$||' | sed 's|_MR|_|'`
+        mageho " --> Note: --dataformat='BIDS' "
+        reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant session variable for QuNex run: ${CASE}"
+        echo ""
+    else
+        CASE="${XNAT_SESSION_LABEL}"
+    fi
 fi
-
 #
 ################################################################################
 
@@ -955,18 +963,16 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolde
     SessionsFolderName="subjects"
 fi
 
-if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-    if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]]; then
-        echo "SESSION RENAME CASE 1"
-        SessionsFolder="${STUDY_PATH}/sessions"
-        SessionsFolderName="sessions"
-    fi
-    if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}" ]]; then
-        echo "SESSION RENAME CASE 2"
-        SessionsFolder="${STUDY_PATH}/sessions"
-        SessionsFolderName="sessions"
-    fi
+if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]]; then
+    SessionsFolder="${STUDY_PATH}/sessions"
+    SessionsFolderName="sessions"
 fi
+if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}" ]]; then
+    SessionsFolder="${STUDY_PATH}/sessions"
+    SessionsFolderName="sessions"
+fi
+
+
 
 # -- Check TURNKEY_STEPS
 if [[ -z ${TURNKEY_STEPS} ]] && [ ! -z "${QuNexTurnkeyWorkflow##*${AcceptanceTest}*}" ]; then
@@ -1811,7 +1817,7 @@ fi
                     if [[ "$CheckCASECount" -gt "1" ]]; then
                         reho " ===> ERROR: More than one zip file found for ${CASE}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                         echo ""
-                        FILECHECK="fail"
+                        return 1
                     fi
                     CASEinbox=`basename ${SessionsFolder}/${CASE}/inbox/${CASE}*`
                     CASEext="${CASEinbox#*.}"
@@ -3103,21 +3109,8 @@ else
         geho "---> Cleaning up DICOMs from build directory to save space:"
         if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
-            geho "     - removing dicom files"
-            # Temp storage for kept files
-            mkdir ${QuNexWorkDir}/dicomtmp
-            #check for logs and move them
-            logCount=`${QuNexWorkDir}/dicom/*.log &>/dev/null | wc -l`
-            if [ $logCount != 0 ]; then
-                mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicomtmp
-            fi
-            #check for txt files and move them
-            logCount=`${QuNexWorkDir}/dicom/*.txt &>/dev/null | wc -l`
-            if [ $logCount != 0 ]; then
-                mv ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
-            fi
-            rm  -rf ${QuNexWorkDir}/dicom &> /dev/null
-            mv ${QuNexWorkDir}/dicomtmp ${QuNexWorkDir}/dicom
+            geho "     - removing dicom folder"
+            rm -rf ${QuNexWorkDir}/dicom &> /dev/null
             echo ""
         fi
         geho "     - removing stray xml catalog files"
