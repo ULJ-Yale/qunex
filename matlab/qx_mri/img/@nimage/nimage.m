@@ -300,8 +300,13 @@ classdef nimage
                     obj.dim(1)  = size(varone,1);
                     obj.dim(2)  = size(varone,2);
                     obj.dim(3)  = size(varone,3);
-                    obj.voxels  = prod(obj.dim(1:3));
-                    obj.frames  = size(varone,4);
+                    if ndims(obj.data) >= 3
+                        obj.voxels  = prod(obj.dim(1:3));
+                        obj.frames  = size(varone,4);
+                    else
+                        obj.voxels = obj.dim(1);
+                        obj.frames = obj.dim(2);
+                    end
                     obj.empty   = false;
                     if (obj.dim(1) == 91 && obj.dim(2) == 109 && obj.dim(3) == 91)  % assuming it is a MNI Atlas NIfTI image
                         obj.imageformat='NIfTI';

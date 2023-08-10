@@ -121,8 +121,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           - surface_smooth  : [2]
 %           - volume_smooth   : [2]
 %           - voxel_smooth    : [1]
-%           - lopass_filter   : [0.08]
 %           - hipass_filter   : [0.009]
+%           - lopass_filter   : [0.08]
+%           - hipass_do       : ['nuisance']
+%           - lopass_do       : ['nuisance, movement, events, task']
 %           - framework_path  : ['']
 %           - wb_command_path : ['']
 %           - smooth_mask     : ['false']
@@ -422,6 +424,25 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           the respective sigma values computed from the specified frequencies
 %           and TR.
 %
+%           Filtering of nuisance signal, movement, task, and events
+%           Besides data, nuisance signal, motion parameters, and event 
+%           regressors can be filtered as well. What to filter beside data can
+%           be specified by a comma separated list using the following 
+%           parameters:
+%           
+%           - hipass_do
+%               What to high-pass filter besides data – options are: nuisance, 
+%               movement, events, task. Default is 'nuisance'.
+%
+%           - lopass_do
+%               What to lo-pass filter besides data – options are: nuisance, 
+%               movement, events, task. Default is 'nuisance, movement, task, 
+%               events'.
+%
+%           Note that 'events' refers to regressors created based on events 
+%           as specified in the fidl file, whereas 'task' refers to a task
+%           matrix that is passed directy in the matlab function call.
+%
 %           Results:
 %               The resulting filtered files are saved with '_hpss' or '_bpss'
 %               added to the BOLD root filename for high-pass and low-pass
@@ -677,7 +698,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'Options used');
@@ -686,6 +707,8 @@ TS = [];
 doIt = strrep(doIt, ',', '');
 doIt = strrep(doIt, ' ', '');
 
+options.hipass_do = strip(strsplit(options.hipass_do, ','));
+options.lopass_do = strip(strsplit(options.lopass_do, ','));
 
 % ======================================================
 %                          ----> prepare basic variables
@@ -886,12 +909,20 @@ for b = 1:nbolds
 
     %   ----> lets setup nuisances!
 
-    if ~isempty(strfind(doIt, 'r')) && any(~ismember(rgss, {'1d', 'e', 't', 'm'}));
-
-        % ---> signal nuisance
+    if strfind(doIt, 'r') && ~isempty(setdiff(rgss, {'1d', 'n1d', 'e', 't', 'm', 'm1d', 'mSq', 'm1dSq'}));
+        % ---> load nuisance signal  file
 
         [nuisance(b).signal nuisance(b).signal_hdr] = general_read_table(file(b).nuisance);
-        nuisance(b).nsignal = size(nuisance(b).signal,2);
+        nuisance(b).nsignal = size(nuisance(b).signal, 2);
+    else
+        % ---> prepare empty nuisance
+        nuisance(b).signal = [];
+        nuisance(b).signal_hdr = {};
+        nuisance(b).nsignal = 0;
+
+        if any(ismember({'1d', 'n1d'}, rgss))
+            % print a warning
+        end
     end
 
 end
@@ -920,6 +951,7 @@ if strfind(doIt, 'r')
 
         if isempty(task)
             nuisance(b).task  = [];
+            nuisance(b).ntask = 0;
         else
             nuisance(b).task  = task(bstart:bend, :);
             nuisance(b).ntask = size(task, 2);
@@ -1125,18 +1157,19 @@ for current = char(doIt)
                 switch current
                     case 'h'
                         hpsigma = ((1/tr)/options.hipass_filter)/2;
-                        tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
-                        tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
-                        nuisance(b).signal = tnimg.data';
+                        tnimg = prepare_nuisance(nuisance, b, options.hipass_do);
+                        if ~isempty(tnimg.data)
+                            tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
+                            nuisance = extract_nuisance(tnimg, nuisance, b, options.hipass_do);
+                        end
 
                     case 'l'
                         lpsigma = ((1/tr)/options.lopass_filter)/2;
-                        tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
-                        tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
-                        nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';
-                        nuisance(b).task   = tnimg.data((nuisance(b).nsignal+1):(nuisance(b).nsignal+nuisance(b).ntask),:)';
-                        nuisance(b).events = tnimg.data((nuisance(b).nsignal+nuisance(b).ntask+1):(nuisance(b).nsignal+nuisance(b).ntask+nuisance(b).nevents),:)';
-                        nuisance(b).mov    = tnimg.data(end-nuisance(b).nmov:end,:)';
+                        tnimg = prepare_nuisance(nuisance, b, options.lopass_do);
+                        if ~isempty(tnimg.data)
+                            tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
+                            nuisance = extract_nuisance(tnimg, nuisance, b, options.lopass_do);
+                        end
                 end
             end
         end
@@ -1729,19 +1762,71 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
 return
 
 
+% ======================================================
+%                   ----> prepare nuisance for filtering
+%
 
+function [img] = prepare_nuisance(nuisance, bold, dofilter)
+    data      = [];
+    filtering = {};
+
+    fprintf('\n     --> filtering also: ');
+    for f = dofilter 
+        switch f{1}
+            case 'nuisance'
+                filtering{end+1} = 'nuisance signal';
+                data = [data nuisance(bold).signal];
+            case 'movement'
+                filtering{end + 1} = 'movement data';
+                data = [data nuisance(bold).mov];
+            case 'task'
+                filtering{end+1} = 'task regressors';
+                data = [data nuisance(bold).task];
+            case 'events'
+                filtering{end+1} = 'event regressors';
+                data = [data nuisance(bold).events];
+        end
+    end
+    fprintf(strjoin(filtering, ', '));
+
+    img = nimage(data');
+    img.use = nuisance(bold).use;
 
 
 % ======================================================
-%                           ----> create temporary image
+%                 ----> extract nuisance after filtering
 %
 
-function [img] = tmpimg(data, use)
+function [nuisance] = extract_nuisance(img, nuisance, bold, dofilter)
+    estart = 0;
+    eend   = 0;
+    data   = img.data';
 
-    img = nimage();
-    img.data = data;
-    img.use  = use;
-    [img.voxels img.frames] = size(data);
+    % Note: The following code works even if the requested nuisance signal
+    %       is empty. In this case eend is not increased and when requesting
+    %       a slice with e.g., data(:,7:6) - eend is smaller than estart -
+    %       matlab returns an empty matrix. Octave the same.
+
+    for f = dofilter
+        switch f{1}
+            case 'nuisance'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).nsignal;
+                nuisance(bold).signal = data(:, estart:eend);
+            case 'movement'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).nmov;
+                nuisance(bold).mov = data(:, estart:eend);
+            case 'task'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).ntask;
+                nuisance(bold).task = data(:, estart:eend);
+            case 'events'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).nevents;
+                nuisance(bold).events = data(:, estart:eend);
+        end
+    end
 
 
 % ======================================================
