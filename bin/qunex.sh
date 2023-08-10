@@ -252,12 +252,6 @@ bash_call_execute() {
         mkdir ${RunChecksFolder} &> /dev/null
     fi
 
-    # -- Set and generate temp run_turnkey unit tests folder
-    ComRunFolder="${StudyFolder}/processing/scripts/run_turnkey"
-    if [[ ! -d ${ComRunFolder} ]]; then
-        mkdir ${ComRunFolder} &> /dev/null
-    fi
-
     # -- Specific call for python qx_utilities functions
     if [[ ${qxutil_command_to_run} ]]; then
         echo ""
@@ -283,7 +277,7 @@ bash_call_execute() {
         # --   Specification:  done_<command_name>[_B<N>]_<session code>_<date>_<hour>.<minute>.<microsecond>.log
         # --   Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
         ComlogTmp="${MasterComlogFolder}/tmp_${CommandToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
-        ComRun="${ComRunFolder}/Run_${CommandToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
+        ComRun="${MasterComlogFolder}/Run_${CommandToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
         ComlogDone="${MasterComlogFolder}/done_${CommandToRun}_${CASE}_${TimeStamp}.log"
         CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
         ComlogError="${MasterComlogFolder}/error_${CommandToRun}_${CASE}_${TimeStamp}.log"
@@ -326,7 +320,7 @@ bash_call_execute() {
         # -- Run the commands locally
         if [[ ${Cluster} == 1 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; rm -rf ${ComRunFolder}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
             geho "--------------------------------------------------------------"
@@ -342,7 +336,7 @@ bash_call_execute() {
         # -- Run the commands via scheduler
         if [[ ${Cluster} == 2 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; rm -rf ${ComRunFolder}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ===> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ===> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
             cd ${MasterRunLogFolder}
