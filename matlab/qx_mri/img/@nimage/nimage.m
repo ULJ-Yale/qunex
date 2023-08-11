@@ -331,14 +331,14 @@ classdef nimage
                         load('cifti_templates.mat');
                         switch dtype
                             case {'single', 'dtseries'}
-                                obj.filetype = '.dtseries';
+                                obj.filetype = 'dtseries';
                                 obj.hdrnifti.intent_code = 3002;
                                 obj.hdrnifti.intent_name = 'ConnDenseSeries ';
                                 obj.TR = 1;
                                 obj.cifti = cifti_templates.dtseries;
                                 obj.cifti.metadata.diminfo{2}.length = obj.frames;                                
                             case 'dscalar'
-                                obj.filetype = '.dscalar';
+                                obj.filetype = 'dscalar';
                                 obj.hdrnifti.intent_code = 3006;
                                 obj.hdrnifti.intent_name = 'ConnDenseScalar ';
                                 obj.cifti = cifti_templates.dscalar;

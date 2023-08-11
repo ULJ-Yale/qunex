@@ -93,19 +93,13 @@ if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 % --- file root
 
-root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.dscalar|\.pconn', '');
+fileinfo = general_check_image_file(filename);
 
-img.rootfilename = root;
-img.rootfilenames = {root};
-[p, n, e]        = fileparts(filename);
-img.filename     = [n e];
-img.filenames    = {img.filename};
-
-ftype = regexp(filename, '(\.dconn|\.dtseries|\.dscalar|\.dlabel|\.dpconn|\.pconnseries|\.pconnscalar|\.pconn|\.ptseries|\.pscalar|\.pdconn|\.dfan|\.fiberTemp)', 'tokens');
-if length(ftype) > 0
-    ftype = char(ftype{1});
-    img.filetype = ftype;
-end
+img.rootfilename  = fileinfo.rootname;
+img.rootfilenames = {fileinfo.rootname};
+img.filename      = fileinfo.basename;
+img.filenames     = {fileinfo.basename};
+img.filetype      = fileinfo.image_type;
 
 % --- format and size details
 
@@ -114,7 +108,6 @@ if img.hdrnifti.dim(1) > 4
 else
     img.imageformat = 'NIfTI';
 end
-
 
 if strcmp(img.imageformat, 'NIfTI')
     img.TR = [];
@@ -167,7 +160,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
         img.frames = 1;
     end
 
-    if strcmp(img.filetype, '.pconn')
+    if strcmp(img.filetype, 'pconn')
         if length(img.dim) > 1
             img.voxels  = img.dim(1) .* img.dim(2);
         else

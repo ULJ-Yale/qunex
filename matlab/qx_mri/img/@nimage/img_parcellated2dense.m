@@ -41,12 +41,12 @@ xml  = cast(img.meta(find([img.meta.code] == 32)).data, 'char')';
 
 % --> set up new image format
 
-if strcmp(img.filetype, '.ptseries')
-    if verbose fprintf('\n===> Expanding .ptseries to .dtseries'); end
-    img.filetype = '.dtseries';
-elseif strcmp(img.filetype, '.pscalar')
-    if verbose fprintf('\n===> Expanding .pscalar to .dscalar'); end
-    img.filetype = '.dscalar';
+if strcmp(img.filetype, 'ptseries')
+    if verbose fprintf('\n===> Expanding ptseries to dtseries'); end
+    img.filetype = 'dtseries';
+elseif strcmp(img.filetype, 'pscalar')
+    if verbose fprintf('\n===> Expanding pscalar to dscalar'); end
+    img.filetype = 'dscalar';
 else
     error('ERROR: The image provided to img_parcellated2dense is neither ptseries nor pscalar! Aborting');
 end

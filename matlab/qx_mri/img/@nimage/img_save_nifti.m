@@ -47,7 +47,7 @@ root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dconn|\.dtseries|\.dscalar|
 ftype = regexp(filename, '(\.dconn|\.dtseries|\.dscalar|\.dlabel|\.dpconn|\.pconnseries|\.pconnscalar|\.pconn|\.ptseries|\.pscalar|\.pdconn|\.dfan|\.fiberTemp)', 'tokens');
 if length(ftype) > 0
     ftype = char(ftype{1});
-    img.filetype = ftype;
+    img.filetype = ftype(2:end);
 end
 
 img = img.unmaskimg;
@@ -71,12 +71,12 @@ switch img.imageformat
         file = [root '.nii.gz'];
 
     case 'CIFTI-1'
-        if strcmp(img.filetype, '.pconn')
+        if strcmp(img.filetype, 'pconn')
             img.hdrnifti.dim(6:7) = img.dim;
         else
             img.hdrnifti.dim(7) = img.frames;
         end
-        file = [root img.filetype '.nii'];
+        file = [root '.' img.filetype '.nii'];
 
     case 'CIFTI-2'
         if isempty(img.TR)
@@ -85,7 +85,7 @@ switch img.imageformat
 
         % check filename
         if any(ismember(cifti_filetypes, strsplit(filename, '.')))
-            img.filetype = ['.' cifti_filetypes{find(ismember(cifti_filetypes, strsplit(filename, '.')))}];
+            img.filetype = cifti_filetypes{find(ismember(cifti_filetypes, strsplit(filename, '.')))};
         end
             
         % --- if series create series information
@@ -124,7 +124,7 @@ switch img.imageformat
 
         tcifti = img.cifti.metadata;
         tcifti.cdata = img.data;
-        file = [root img.filetype '.nii'];
+        file = [root '.' img.filetype '.nii'];
         [metaxml, hdrnifti] = cifti_write_metadata(tcifti, file);
 
         cmeta = length(img.meta) + 1;

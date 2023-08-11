@@ -206,7 +206,7 @@ end
 
 % --- will we use parcel names?
 
-if strcmp(glm.filetype, '.ptseries') & ~isempty(txtf)
+if strcmp(glm.filetype, 'ptseries') & ~isempty(txtf)
     parcelnames = getParcelNames(glm);
 end
 
@@ -226,7 +226,7 @@ if ismember(saveoption, {'by_effect', 'by_session'})
     if ~strcmp(outf, 'none')
         if verbose, fprintf('\n---> saving data in a single file, sorted %s', reportmsg); end
         out.img_saveimage(outf);
-        if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+        if strcmp(out.filetype, 'ptseries') & ~isempty(txtf)
             if verbose, fprintf('\n---> saving data in a text file, sorted %s', reportmsg); end
             tout = fopen([outf '_long.txt'], 'w');
             fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
@@ -249,7 +249,7 @@ else
         if ~strcmp(outf, 'none')
             if verbose, fprintf('\n---> saving data in separate files for each effect'); end
             out.img_saveimage([outf '_' e{1}]);
-            if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+            if strcmp(out.filetype, 'ptseries') & ~isempty(txtf)
                 if verbose, fprintf('\n---> saving data in separate text files for each effect'); end
                 tout = fopen([outf '_' e{1} '_long.txt'], 'w');
                 fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');

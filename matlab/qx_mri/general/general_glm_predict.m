@@ -138,7 +138,7 @@ if nargin < 1 || isempty(flist), error('ERROR: At least data and effects to pred
 
 % -- support variables
 
-filetypes = {'', '.dtseries', '.ptseries'};
+filetypes = {'', 'dtseries', 'ptseries'};
 extensions = {'.nii.gz', '.dtseries.nii', '.ptseries.nii'};
 
 % ----- parse options

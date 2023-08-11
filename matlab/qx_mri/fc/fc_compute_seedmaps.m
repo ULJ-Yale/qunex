@@ -428,8 +428,8 @@ if ~isempty(options.saveind)
 
     % set up filetype for single images
 
-    if strcmp(y.filetype, '.dtseries')
-        tfiletype = '.dscalar';
+    if strcmp(y.filetype, 'dtseries')
+        tfiletype = 'dscalar';
     else
         tfiletype = y.filetype;
     end
