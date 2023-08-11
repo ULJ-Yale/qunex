@@ -7758,6 +7758,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             If this option is provided, MT and ST banding corrections
             won’t be applied. The flag is not set by default.
 
+        --hcp_asl_stages (str)
+            A comma separated list of stages (zero-indexed) to run.
+            All prior stages are assumed to have run successfully.
+
     Output files:
         The results of this step will be present in the ASL folder in the
         sessions's root hcp folder.
@@ -7802,6 +7806,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             ``hcp_asl_nobandingcorr``      ``nobandingcorr``
             ``hcp_asl_interpolation``      ``interpolation``
             ``hcp_asl_cores``              ``cores``
+            ``hcp_asl_stages``             ``stages``
             ============================== ======================
 
 
@@ -8030,6 +8035,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_asl_cores"] is not None:
                 comm += "                --cores=" + options["hcp_asl_cores"]
+
+            if options["hcp_asl_stages"] is not None:
+                stages = options["hcp_asl_stages"].replace(",", " ")
+                comm += "                --stages=" + stages
 
             # -- Report command
             if run:
@@ -9457,7 +9466,8 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             logtags = options['logtag'] + \
                 "%s-flirt_%s" % (options['command_ran'], sinfo['id'])
 
-            _, endlog, _, failedcom = pc.runExternalForFile(f['fs_aparc_bold'], f"flirt -interp nearestneighbour -ref {os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')} -in {f['fs_aparc_t1']} -out {f['fs_aparc_bold']} -applyisoxfm {options['hcp_bold_res']}", ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite=overwrite, remove=options['log'] == 'remove', logfolder=options['comlogs'], logtags=logtags, shell=True)
+            _, endlog, _, failedcom = pc.runExternalForFile(f['fs_aparc_bold'], f"flirt -interp nearestneighbour -ref {os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')} -in {f['fs_aparc_t1']} -out {f['fs_aparc_bold']} -applyisoxfm {options['hcp_bold_res']}", ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (
+                os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite=overwrite, remove=options['log'] == 'remove', logfolder=options['comlogs'], logtags=logtags, shell=True)
             if failedcom:
                 report['lores aseg+aparc'] = 'failed'
                 failed += 1

@@ -274,10 +274,7 @@ if [[ -z ${USEOCTAVE} ]]; then USEOCTAVE="FALSE"; export USEOCTAVE; fi
 if [[ -z ${MSMBINDIR} ]]; then MSMBINDIR="$TOOLS/MSM_HOCR_v3"; export MSMBINDIR; fi
 if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/HCP/HCPpipelines"; export HCPPIPEDIR; fi
 if [[ -z ${MSMCONFIGDIR} ]]; then MSMCONFIGDIR=${HCPPIPEDIR}/MSMConfig; export MSMCONFIGDIR; fi
-if [[ -z ${ASLDIR} ]]; then ASLDIR="${HCPPIPEDIR}/hcp-asl"; export ASLDIR; fi
-
-# -- The line below points to the environment expectation if using the 'dev' extended version of HCP Pipelines directly from QuNex repo
-#if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/qunex/hcp"; export HCPPIPEDIR; fi
+if [[ -z ${ASLDIR} ]]; then ASLDIR="${TOOLS}/HCP/hcp-asl"; export ASLDIR; fi
 
 # ------------------------------------------------------------------------------
 # -- License and version disclaimer

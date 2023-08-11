@@ -6,6 +6,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.3
+
+* Fixed a bug that crashed `preprocess_conc` and `preprocess_bold` with some parameter configurations.
+* `import_dicom` is now capable of onboarding data folders that contain multiple compressed sessions or compressed files that contain multiple session within them.
+* `import_bids` now acknowledges data from supporting JSON files.
+* `map_hcp_data` now acknowledges the `hcp_bold_res` parameter.
+* Added meaningful error messages at several locations where QuNex previously just crashed with a very technical message.
+* Updated `hcp_asl` version and added version reporting to QX environment status.
+* Added support to the `hcp_asl` parameter `stages` through `hcp_asl_stages`.
+
 ## 0.98.2
 
 * Updated `hcp_asl` to the latest version.
