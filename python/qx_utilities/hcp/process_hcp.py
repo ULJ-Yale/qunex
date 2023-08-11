@@ -7758,6 +7758,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             If this option is provided, MT and ST banding corrections
             won’t be applied. The flag is not set by default.
 
+        --hcp_asl_stages (str)
+            A comma separated list of stages (zero-indexed) to run.
+            All prior stages are assumed to have run successfully.
+
     Output files:
         The results of this step will be present in the ASL folder in the
         sessions's root hcp folder.
@@ -8030,6 +8034,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_asl_cores"] is not None:
                 comm += "                --cores=" + options["hcp_asl_cores"]
+
+            if options["hcp_asl_stages"] is not None:
+                stages = options["hcp_asl_stages"].replace(",", " ")
+                comm += "                --stages=" + stages
 
             # -- Report command
             if run:
