@@ -127,6 +127,17 @@ switch img.imageformat
         file = [root '.' img.filetype '.nii'];
         [metaxml, hdrnifti] = cifti_write_metadata(tcifti, file);
 
+        % -> update hdrnifti
+        for fieldname = fieldnames(hdrnifti)'
+            img.hdrnifti.(fieldname{1}) = hdrnifti.(fieldname{1});
+        end
+
+        % -> for some reason intent returned is too short
+        img.hdrnifti.intent_name = [img.hdrnifti.intent_name '                 '];
+        img.hdrnifti.intent_name = img.hdrnifti.intent_name(1:16);
+
+        % -> add xml to metadata
+
         cmeta = length(img.meta) + 1;
         if length(img.meta) > 0
             cmeta = find([img.meta.code] == 32);
