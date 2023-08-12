@@ -171,6 +171,7 @@ classdef nimage
         [files boldn sfolder] = img_read_concfile(file)
         img   = img_read_concimage(file, dtype, frames, verbose)
         roi   = img_read_roi(roiinfo, roif2, checks)
+        roi   = img_prep_roi(roi, mask, options)
         img_save_concfile(file, files)
         img_save_nifti_mx(filename, hdr, data, meta, doswap, verbose)
         [hdr, data, meta, doswap] = img_read_nifti_mx(filename, verbose)
@@ -812,6 +813,38 @@ classdef nimage
         end
 
 
+        % =================================================
+        %                                      selectframes
+        %
+        %   method for selecting the indicated frames from image
+        
+        function obj = selectframes(obj, selectframes, options)
+            % selectframes(selectframes, options)
+            %
+            %   Select the indicated frames from image.
+            %   
+            %   Parameters:
+            %       -- selectframes (array of int): 
+            %           The indices of frames to select
+            %       -- options (str)
+            %           If set to 'perrun' the selection is done for each run
+            %           if the object is a concatenated image
+
+            if nargin < 3, options = []; end
+            if nargin < 2, frames  = []; end
+            
+            if length(obj.runframes) > 1 & strcmpi(options, 'perrun')
+                frames = [];
+                for n = 1:length(obj.runframes)
+                    frames = [frames 1:obj.runframes(n)];
+                end
+            else
+                frames = [1:obj.frames];
+            end
+
+            mask = ismember(frames, selectframes);
+            obj = obj.sliceframes(mask);
+        end
 
 
         % =================================================
