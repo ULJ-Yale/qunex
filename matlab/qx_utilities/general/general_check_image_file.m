@@ -29,11 +29,12 @@ if nargin < 1, filename = ''; end
 
 [filepath, name, ext] = fileparts(filename);
 
-file_info = struct('filename', filename, 'path', filepath, 'basename', [name ext], 'rootname', name, 'extension', ext, 'image_type', false, 'exists', isfile(filename));
+file_info = struct('filename', filename, 'path', filepath, 'basename', [name ext], 'rootname', name, 'extension', ext, 'is_image', false, 'image_type', '', 'exists', isfile(filename));
 
 image_type = regexp(filename, '(\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
 if ~isempty(image_type)
     image_type = image_type{1}{1};
+    file_info.is_image = true;
     file_info.extension = image_type;
     file_info.rootname = strrep(file_info.basename, image_type, '');
     if strcmp(image_type, '.nii') || strcmp(image_type, '.nii.gz')
