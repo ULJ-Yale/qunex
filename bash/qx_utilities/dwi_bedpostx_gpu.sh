@@ -50,8 +50,8 @@ usage() {
     cat << EOF
 ``dwi_bedpostx_gpu``
 
-This function runs the FSL bedpostx_gpu processing using a GPU-enabled
-node or via a GPU-enabled queue if using the scheduler option.
+This function runs the FSL bedpostx command, by default it will facilitate
+GPUs to speed the processing.
 
 It explicitly assumes the Human Connectome Project folder structure for
 preprocessing and completed diffusion processing. DWI data is expected to
@@ -101,47 +101,27 @@ Parameters:
         Delete prior run for a given session.
 
     --scheduler (str):
-        A string for the cluster scheduler (LSF, PBS or SLURM) followed by
+        A string for the cluster scheduler (PBS or SLURM) followed by
         relevant options, e.g. for SLURM the string would look like this:
         --scheduler='SLURM,jobname=<name_of_job>,
-        time=<job_duration>,ntasks=<numer_of_tasks>,
+        time=<job_duration>,
         cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,
         partition=<queue_to_send_job_to>'
-        Note: You need to specify a GPU-enabled queue or partition.
+
+    --nogpu (flag, default 'no'):
+        If set, this command will be processed useing a CPU instead of a GPU.
 
 Notes:
     Apptainer (Singularity) and GPU support:
-        This command will facilitate GPUs to speed up processing. Since the
-        command uses CUDA binaries, an NVIDIA GPU is required. To give access to
-        CUDA drivers to the system inside the Apptainer (Singularity) container,
-        you need to use the --nv flag of the qunex_container script.
+        If nogpu is not provided, this command will facilitate GPUs to speed
+        up processing. Since the command uses CUDA binaries, an NVIDIA GPU
+        is required. To give access to CUDA drivers to the system inside the
+        Apptainer (Singularity) container, you need to use the --nv flag
+        of the qunex_container script.
 
 Examples:
-    Run directly via::
 
-        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \\
-            --<parameter1> \\
-            --<parameter2> \\
-            --<parameter3> ... \\
-            --<parameterN>
-
-    NOTE: --scheduler is not available via direct script call.
-
-    Run via::
-
-        qunex dwi_bedpostx_gpu \\
-            --<parameter1> \\
-            --<parameter2> ... \\
-            --<parameterN>
-
-    NOTE: scheduler is available via qunex call.
-
-    --scheduler       A string for the cluster scheduler (LSF, PBS or SLURM)
-                      followed by relevant options
-
-    For SLURM scheduler the string would look like this via the qunex call::
-
-        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>, ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>, mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+    Example with a scheduler and GPU processing:
 
     ::
 
@@ -153,6 +133,19 @@ Examples:
             --model='3' \\
             --scheduler='<name_of_scheduler_and_options>' \\
             --overwrite='yes'
+
+    Example without GPU processing:
+
+    ::
+
+        qunex dwi_bedpostx_gpu \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --fibers='3' \\
+            --burnin='3000' \\
+            --model='3' \\
+            --overwrite='yes' \\
+            --nogpu='yes'
 
 EOF
  exit 0
@@ -225,6 +218,7 @@ get_options() {
     species=`opts_getopt "--species" $@`
     session=`opts_getopt "--session" $@`
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
+    nogpu=`opts_getopt "--nogpu" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then reho "Error: sessions folder"; exit 1; fi
@@ -257,6 +251,7 @@ get_options() {
     echo "     Model type: ${model}"
     echo "     Rician flag: ${rician}"
     echo "     Overwrite prior run: ${overwrite}"
+    echo "     No GPU: ${nogpu}"
 
     # Report species if not default
     if [[ -n ${species} ]]; then
@@ -339,10 +334,6 @@ main() {
     reho "--> Prior bedpostx run not found or incomplete for $session. Setting up new run..."
     fi
 
-    echo ""
-    geho "--> Generating log folder"
-    mkdir ${bedpostx_folder} > /dev/null 2>&1
-
     # -- Set rician flag
     if [ "$rician" == "no" ] || [ "$rician" == "NO" ]; then
         rician_flag=""
@@ -374,10 +365,17 @@ main() {
 
     # -- Report
     geho "--> Running FSL command:"
-    echo "    ${FSL_GPU_SCRIPTS}/bedpostx_gpu ${diffusion_folder}/. ${bedpostx_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}"
+
+    if [[ ${nogpu} == "yes" ]]; then
+        bedpostx_bin=${FSLBINDIR}/bedpostx
+    else
+        bedpostx_bin=${FSLBINDIR}/bedpostx_gpu
+    fi
+
+    echo "    ${bedpostx_bin} ${diffusion_folder} -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}"
 
     # -- Execute
-    ${FSL_GPU_SCRIPTS}/bedpostx_gpu ${diffusion_folder}/. ${bedpostx_folder}/. -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
+    ${bedpostx_bin} ${diffusion_folder} -n ${fibers} -w ${weight} -b ${burnin} -j ${jumps} -s ${sample} -model ${model}${gradnonlin_flag}${rician_flag}
 
     # -- Perform completion checks
     echo ""

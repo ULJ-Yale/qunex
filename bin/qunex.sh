@@ -386,7 +386,9 @@ dwi_legacy_gpu() {
     --te=${te} \
     --unwarpdir=${UnwarpDir} \
     --diffdatasuffix=${diffdatasuffix} \
-    --overwrite=${Overwrite}"
+    --overwrite=${Overwrite} \
+    --nogpu=${nogpu}"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -689,121 +691,92 @@ dwi_dtifit() {
 
     # mask
     if [[ -n ${mask} ]]; then
-        optional_parameters=" \
-        --mask='${mask}'
-        "
+        optional_parameters="    --mask='${mask}'"
     fi
 
     # bvecs
     if [[ -n ${bvecs} ]]; then
-        optional_parameters="${optional_parameters} \
-        --bvecs='${bvecs}'
-        "
+        optional_parameters="${optional_parameters}    --bvecs='${bvecs}'"
     fi
 
     # bvals
     if [[ -n ${bvals} ]]; then
-        optional_parameters="${optional_parameters} \
-        --bvals='${bvals}'
-        "
+        optional_parameters="${optional_parameters}     --bvals='${bvals}'"
     fi
 
     # cni
     if [[ -n ${cni} ]]; then
-        optional_parameters="${optional_parameters} \
-        --cni='${cni}'
-        "
+        optional_parameters="${optional_parameters}    --cni='${cni}'"
     fi
 
     # sse
     if [[ -n ${sse} ]]; then
-        optional_parameters="${optional_parameters} \
-        --sse
-        "
+        optional_parameters="${optional_parameters}    --sse"
     fi
 
     # wls
     if [[ -n ${wls} ]]; then
-        optional_parameters="${optional_parameters} \
-        --wls
-        "
+        optional_parameters="${optional_parameters}    --wls"
     fi
 
     # kurt
     if [[ -n ${kurt} ]]; then
-        optional_parameters="${optional_parameters} \
-        --kurt
-        "
+        optional_parameters="${optional_parameters}    --kurt"
     fi
 
     # kurtdir
     if [[ -n ${kurtdir} ]]; then
-        optional_parameters="${optional_parameters} \
-        --kurtdir
-        "
+        optional_parameters="${optional_parameters}    --kurtdir"
     fi
 
     # littlebit
     if [[ -n ${littlebit} ]]; then
-        optional_parameters="${optional_parameters} \
-        --littlebit
-        "
+        optional_parameters="${optional_parameters}    --littlebit"
     fi
 
     # save_tensor
     if [[ -n ${save_tensor} ]]; then
-        optional_parameters="${optional_parameters} \
-        --save_tensor
-        "
+        optional_parameters="${optional_parameters}    --save_tensor"
     fi
 
     # zmin
     if [[ -n ${zmin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --zmin='${zmin}'
-        "
+        optional_parameters="${optional_parameters}    --zmin='${zmin}'"
     fi
 
     # zmax
     if [[ -n ${zmax} ]]; then
-        optional_parameters="${optional_parameters} \
-        --zmax='${zmax}'
-        "
+        optional_parameters="${optional_parameters}    --zmax='${zmax}'"
     fi
 
     # ymin
     if [[ -n ${ymin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --ymin='${ymin}'
-        "
+        optional_parameters="${optional_parameters}    --ymin='${ymin}'"
     fi
 
     # ymax
     if [[ -n ${ymax} ]]; then
-        optional_parameters="${optional_parameters} \
-        --ymax='${ymax}'
-        "
+        optional_parameters="${optional_parameters}    --ymax='${ymax}'"
     fi
 
     # xmin
     if [[ -n ${xmin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --xmin='${xmin}'
-        "
+        optional_parameters="${optional_parameters}    --xmin='${xmin}'"
     fi
 
     # xmax
     if [[ -n ${xmax} ]]; then
-        optional_parameters="${optional_parameters} \
-        --xmax='${xmax}'
-        "
+        optional_parameters="${optional_parameters}    --xmax='${xmax}'"
     fi
 
     # gradnonlin
     if [[ -n ${gradnonlin} ]]; then
-        optional_parameters="${optional_parameters} \
-        --gradnonlin='${gradnonlin}'
-        "
+        optional_parameters="${optional_parameters}    --gradnonlin='${gradnonlin}'"
+    fi
+
+    # diffdata
+    if [[ -n ${diffdata} ]]; then
+        optional_parameters="${optional_parameters}    --diffdata='${diffdata}'"
     fi
 
     # -- Specify command variable
@@ -812,6 +785,7 @@ dwi_dtifit() {
     --session='${CASE}' \
     --overwrite='${Overwrite}' \
     --species='${Species}' ${optional_parameters}"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -839,7 +813,9 @@ dwi_bedpostx_gpu() {
     --rician='${Rician}' \
     --gradnonlin='${Gradnonlin}' \
     --overwrite='${Overwrite}' \
-    --species='${Species}'"
+    --species='${Species}' \
+    --nogpu='${nogpu}'"
+
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -919,7 +895,8 @@ dwi_probtrackx_dense_gpu() {
     --nsamplesmatrix3='${NsamplesMatrixThree}' \
     --distancecorrection='${distance_correction}' \
     --storestreamlineslength='${store_streamlines_length}' \
-    --overwrite='${Overwrite}' "
+    --overwrite='${Overwrite}' \
+    --nogpu='${nogpu}'"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -1529,6 +1506,12 @@ if [[ ${setflag} =~ .*-.* ]]; then
         LogSave="remove"
     fi
 
+    # omp threads
+    omp_threads=`get_parameters "${setflag}omp_threads" $@`
+    if [[ -n ${omp_threads} ]]; then
+        export OMP_NUM_THREADS=${omp_threads}
+    fi
+
     # -- If scheduler flag set then set RunMethod variable
     if [[ ! -z ${Scheduler} ]]; then
         RunMethod="2"
@@ -1595,9 +1578,18 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WeightsFile=`get_parameters "${setflag}weightsfile" $@`
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
 
+    # -- diffusion commands
+    nogpu=`get_parameters "${setflag}nogpu" $@`
+    if [[ -z ${nogpu} ]]; then
+        nogpu="no"
+    fi
+
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     pedir=`get_parameters "${setflag}pedir" $@`
+    if [[ -z ${pedir} ]]; then
+        pedir=`get_parameters "${setflag}PEdir" $@`
+    fi
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
@@ -1629,6 +1621,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ymax=`get_parameters "${setflag}ymax" $@`
     xmin=`get_parameters "${setflag}xmin" $@`
     xmax=`get_parameters "${setflag}xmax" $@`
+    diffdata=`get_parameters "${setflag}diffdata" $@`
     gradnonlin=`get_parameters "${setflag}gradnonlin" $@`
 
     # -- Input flags for dwi_parcellate
@@ -2280,6 +2273,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   EPI Unwarp Direction: ${UnwarpDir}"
     echo "   Diffusion Data Suffix Name: ${diffdatasuffix}"
     echo "   Overwrite prior run: ${Overwrite}"
+    echo "   No GPU: ${nogpu}"
     echo ""
 
     # -- Loop through all the cases
@@ -2792,6 +2786,7 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Distance correction: ${distance_correction}"
     echo "   Store streamlines length: ${store_streamlines_length}"
     echo "   Overwrite prior run: ${Overwrite}"
+    echo "   No GPU: ${nogpu}"
     echo ""
 
     # -- Execute

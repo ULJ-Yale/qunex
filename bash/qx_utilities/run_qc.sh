@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
@@ -222,10 +222,174 @@ Output files:
     - .zip file that contains all relevant files to download and re-generate the
       scene in Connectome Workbench.
 
-    Note: For BOLD data there is also an SNR txt output if specified.
+    .. note::
+       For BOLD data there is also an SNR txt output if specified.
 
-    Note: For raw NIFTI QC outputs are generated in:
-    <sessions_folder>/<case>/nii/slicesdir
+    .. note::
+       For raw NIFTI QC outputs are generated in:
+       <sessions_folder>/<case>/nii/slicesdir
+
+Notes:
+    Raw NIFTI visual QC:
+        -  Input: requires NIFTI images in ``<sessionsfolder>/<case>/nii`` after
+           either BIDS import of DICOM organization
+        -  Session-specific output: ``<sessionsfolder>/<case>/nii/slicesdir``
+        -  Uses FSL’s ``slicesdir`` script to generate PNGs and an HTML file in
+           the above directory.
+        -  This can be invoked via the ``qunex run_qc`` command.
+
+    T1w visual QC:
+        -  Input: requires T1w images and hcp_pre_freesurfer-hcp_post_freesurfer
+           to have run successfully
+        -  Session-specific output: ``/<study>/sessions/<session>/QC/T1w``
+
+           -  T1w.QC.png image files for each session will be located in this
+              folder
+           -  T1w.QC.wb.scene image files also produced and located in this
+              folder
+
+        -  Group outputs of all session files is specified via the optional
+           ``--outpath`` flag.
+        -  If ``--outpath`` is unspecified then files are saved to:
+           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
+        -  Log Location: logs are created in ``/<study>/sessions/QC/T1w/qclog``
+
+           -  There will be error logs in this folder if QC could not be run
+           -  Other errors can be found by looking at the QC images formed
+
+    T2w visual QC:
+        -  Input: requires T2w images and hcp_pre_freesurfer-hcp_post_freesurfer
+           to have run successfully
+        -  Session-specific output: ``/<study>/sessions/<session>/QC/T2w``
+
+           -  T2w.QC.png image files for each session
+           -  T2w.QC.wb.scene image files also produced
+
+        -  Group outputs of all session files is specified via the optional
+           ``--outpath`` flag.
+        -  If ``--outpath`` is unspecified then files are saved to:
+           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
+        -  Log Location: logs are created in ``/<study>/sessions/QC/T2w/qclog``
+
+           -  There will be error logs in this folder if QC could not be run
+           -  Other errors will need to be found by looking at the structural
+              images
+
+    Myelin map visual QC:
+        -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
+           have run successfully
+        -  Session-specific output: ``/<study>/sessions/<session>/QC/myelin``
+
+           -  This will produce a .myelin.QC.wb.png image and a
+              myelin.QC.wb.scene file for each session
+
+        -  Group outputs of all session files is specified via the optional
+           ``--outpath`` flag.
+        -  If ``--outpath`` is unspecified then files are saved to:
+           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
+        -  Log Location: logs are created in
+           ``/<study>/sessions/QC/myelin/qclog``
+
+           -  There will be error logs in this folder if QC could not be run
+           -  Other errors will need to be found by looking at the myelin images
+
+    BOLD visual QC:
+        -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
+           have run successfully
+        -  Session-specific output: ``/<study>/sessions/<session>/QC/BOLD``
+
+           -  A .GStimeseries.QC.wb.png image will be produced for each BOLD in
+              this folder
+           -  A .GSmap.QC.wb.png image will be produced for each BOLD in this
+              folder
+           -  A QC.wb.scene file will be produced for each BOLD run for each
+              session
+
+        -  Group outputs of all session files is specified via the optional
+           ``--outpath`` flag.
+        -  If ``--outpath`` is unspecified then files are saved to:
+           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
+        -  Log Location: logs are created in ``/<study>/sessions/QC/BOLD/qclog``
+
+           -  There will be error logs in this folder if QC could not be run
+           -  Other errors will need to be found by looking at the BOLD images
+
+        -  Note that IF no BOLD ``--bolddata`` is provided, then ``--batchfile``
+           must be provided so that the script will look for
+           ``session_<pipeline>.txt`` info file to determine which BOLDs to run.
+           If neither ``--bolddata`` nor ``--batchfile`` is specified, the
+           command will return an error.
+
+    BOLD temporal Signal-to-noise (SNR):
+        -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
+           have run successfully
+        -  Session-specific output: ``/<study>/sessions/<session>/QC/BOLD``
+
+           -  A ``<SNR>`` file will be produced for each BOLD in this folder
+
+        -  Group outputs of all session files is specified via the optional
+           ``--outpath`` flag.
+        -  If ``--outpath`` is unspecified then files are saved to:
+           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
+        -  Log Location: logs are created in ``/<study>/sessions/QC/BOLD/qclog``
+
+           -  There will be error logs in this folder if QC could not be run
+           -  Other errors will need to be found by looking at the BOLD images
+
+        -  Note that IF no BOLD ``--bolddata`` is provided in the flag the
+           script will look for ``session_<pipeline>.txt`` info file to
+           determine which BOLDs to run
+        -  Note that this SNR gets calculated automatically for every BOLD
+        -  If you wish to compute SNR only but omit visual QC then use this
+           flag:
+
+           -  ``--snronly="yes"``
+
+    BOLD FC QC for scalar and pconn data:
+        -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
+           have run successfully
+        -  Session-specific output: ``/<study>/sessions/<session>/QC/BOLD``
+
+           -  A \*.png image will be produced for each BOLD in this folder
+              either for pconn or dscalar
+
+        -  If ``--boldfcpath`` is unspecified then default is:
+           ``/<path_to_study_sessions_folder>/sessions/<session>/images/functional``
+        -  Log Location: logs are created in ``/<study>/sessions/QC/BOLD/qclog``
+
+           -  There will be error logs in this folder if QC could not be run
+           -  Other errors will need to be found by looking at the BOLD images
+
+        -  Note that IF no BOLD ``--bolddata`` is provided in the flag the
+           script will look for ``session_<pipeline>.txt`` info file to
+           determine which BOLDs to run
+
+    DWI visual and motion QC:
+        -  Input: requires hcp_diffusion runs and
+           hcp_pre_freesurfer-hcp_post_freesurfer to have run successfully
+        -  Session-specific output: ``/<study>/sessions/<session>/QC/DWI``
+
+           -  DWI.QC.png and DWI.QC.wb.scene files
+           -  DWI.bedpostx.QC.png and DWI.bedpostx.QC.wb.scene files
+
+        -  Group outputs of all session files is specified via the optional
+           ``--outpath`` flag.
+        -  If ``--outpath`` is unspecified then files are saved to:
+           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
+
+           -  DWI.dtifit.QC.png and DWI.dtifit.QC.wb.scene files
+
+        -  Log Location: logs are created in ``/<study>/sessions/QC/DWI/qclog``
+
+           -  There will be error logs in this folder if QC could not be run
+           -  Other errors will need to be found by looking at the myelin images
+
+    Running BOLD QC with tag selection:
+        run_qc allows for processing BOLD runs directly via numeric selection
+        (e.g. 1,2,3,4) or by using the ‘tag’ specification from the ‘batch’
+        file. In other words, BOLD runs 1,2 could be tagged as ‘blink’ in the
+        following example. This way, the user can filter and select which BOLDs
+        to QC flexibly.
 
 Examples:
     Run directly via::
@@ -253,9 +417,9 @@ Examples:
 
     For SLURM scheduler the string would look like this via the qunex call::
 
-        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
-    raw NII QC::
+    Raw NII QC::
 
         qunex run_qc \\
             --sessionsfolder='<path_to_study_sessions_folder>' \\
@@ -328,6 +492,19 @@ Examples:
             --boldsuffix='Atlas' \\
             --overwrite='yes'
 
+    BOLD temporal SNR::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions="<comma_separated_list_of_cases>" \\
+            --outpath='<path_for_output_file>' \\
+            --modality='BOLD' \\
+            --snronly="yes" \\
+            --bolddata='BOLD_#,BOLD_#' \\
+            --boldsuffix='Atlas' \\
+            --overwrite='no' \\
+            --scheduler='<settings for scheduler>'
+
     BOLD FC QC [pscalar or pconn]::
 
         qunex run_qc \\
@@ -339,6 +516,59 @@ Examples:
             --boldfcinput='<data_input_for_bold_fc>' \\
             --bolddata='1' \\
             --overwrite='yes'
+
+    DWI visual and motion QC::
+
+        qunex run_qc \\
+            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --sessions="<comma_separated_list_of_cases>" \\
+            --outpath='<path_for_output_file>' \\
+            --templatefolder='<path_for_the_template_folder>' \\
+            --modality='DWI' \\
+            --dwidata='data' \\
+            --dwipath='Diffusion' \\
+            --dtifitqc='yes' \\
+            --bedpostxqc='yes' \\
+            --eddyqcstats='yes' \\
+            --overwrite='no' \\
+            --scheduler='<settings for scheduler>'
+
+    
+    Running BOLD QC with tag selection:
+        run_qc call across several sessions using tag selection for all BOLDS::
+
+            qunex run_qc \\
+                --sessionsfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/sessions' \\
+                --batchfile='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/processing/batch.txt' \\
+                --sessions='OP268_07032014,OP269_07032014,OP270_07082014' \\
+                --modality='BOLD' \\
+                --bolddata="all" \\
+                --boldprefix="BOLD" \\
+                --boldsuffix="Atlas" \\
+                --overwrite='yes'
+
+        run_qc call across several sessions using tag selection for specific BOLDS tagged as 'blink'::
+
+            qunex run_qc --sessionsfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/sessions' \\
+                --batchfile='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/processing/batch.txt' \\
+                --sessions='OP270_07082014,OP269_07032014' \\
+                --modality='BOLD' \\
+                --bolddata="blink" \\
+                --boldprefix="BOLD" \\
+                --boldsuffix="Atlas" \\
+                --overwrite='yes'
+
+        run_qc call across several sessions using numeric selection for select BOLDS::
+
+            qunex run_qc \\
+                --sessionsfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/sessions' \\
+                --batchfile='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/processing/batch.txt' \\
+                --sessions='OP270_07082014,OP269_07032014' \\
+                --modality='BOLD' \\
+                --bolddata="1,6" \\
+                --boldprefix="BOLD" \\
+                --boldsuffix="Atlas" \\
+                --overwrite='yes'
 
 EOF
 exit 0

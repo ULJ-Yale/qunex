@@ -237,7 +237,6 @@ deprecated_parameters = {
     'hcp_bold_stcorrint':      'hcp_bold_slicetimerparams',
     'hcp_bold_sequencetype': None,
     'hcp_biascorrect_t1w': None,
-    'hcp_Pipeline': 'hcp_pipeline',
     'args': 'palm_args',
     'TR': 'tr',
     'PEdir': 'pedir'

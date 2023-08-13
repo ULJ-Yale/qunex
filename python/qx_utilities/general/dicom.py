@@ -28,6 +28,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 # import dicom
 import os
+import io
 import os.path
 import sys
 import re
@@ -313,6 +314,18 @@ def readDICOMInfo(filename):
     # --- fileid
 
     info['fileid'], _ = os.path.splitext(os.path.basename(filename))
+
+    # --> institution name
+    if [0x0008, 0x0080] in d:
+        info['institution'] = d[0x0008, 0x0080].value
+    
+    # --> manufacturer and model
+    MR = []
+    for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
+        if e in d:
+            MR.append(str(d[e].value))
+    if MR:
+        info['device'] = '|'.join(MR)
 
     return info
 
@@ -607,6 +620,11 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
     r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
     stxt = open(os.path.join(folder, "session.txt"), 'w')
 
+    # --- Print header
+    
+    gc.print_qunex_header(file=r)
+    gc.print_qunex_header(file=stxt)
+
     # get a list of folders
 
     folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
@@ -638,6 +656,7 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             first = False
             time = getDicomTime(d)
             print("Report for %s scanned on %s\n" % (getID(d), time), file=r)
+
             if verbose:
                 print("\n\nProcessing images from %s scanned on %s\n" % (getID(d), time))
 
@@ -650,6 +669,20 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
             print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
             print("", file=stxt)
+            
+            # --> institution name
+            if [0x0008, 0x0080] in d:
+                print(f"Scanned at: {d[0x0008, 0x0080].value}", file=r)
+                print(f"institution: {d[0x0008, 0x0080].value}", file=stxt)
+
+            # --> manufacturer and model
+            MR = []
+            for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
+                if e in d:
+                    print(f"{e}: {d[e].value}", file=r)
+                    MR.append(d[e].value)
+            if MR:
+                print(f"device: {'|'.join(MR)}", file=stxt)
 
         try:
             seriesDescription = d.SeriesDescription
@@ -1159,6 +1192,11 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
     r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
     stxt = open(os.path.join(folder, "session.txt"), 'w')
 
+    # --- Print header
+    
+    gc.print_qunex_header(file=r)
+    gc.print_qunex_header(file=stxt)
+
     # get a list of folders
 
     folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
@@ -1244,6 +1282,19 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
             print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
             print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
             print("", file=stxt)
+
+            if "institution" in info:
+                print(f"Scanned at: {info['institution']}", file=r)
+                print(f"institution: {info['institution']}", file=stxt)
+            
+            if "device" in info:
+                print(f"MR device: {info['device']}", file=r)
+                print(f"device: {info['device']}", file=stxt)
+            
+            if "institution" in info or "device" in info:
+                print("", file=r)
+                print("", file=stxt)
+
 
         # recenter, dofz2zf, fz, reorder = False, False, "", False
         # try:
@@ -1332,12 +1383,12 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
 
         nimg = len(imgs)
         if nimg == 0:
-            print(" WARNING: no NIfTI file created!")
+            print(" WARNING: no NIfTI file created!", file=r)
             if verbose:
                 print(" WARNING: no NIfTI file created!")
             continue
         elif nimg > 9:
-            print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
+            print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!", file=r)
             if verbose:
                 print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
             continue
@@ -1749,7 +1800,7 @@ def sort_dicom(folder=".", **kwargs):
             to `folder` parameter if not set.
 
         --files (str, default detailed below):
-            List of files to sort. Defaults to files in `folder`.
+            Comma separated list of files to sort. Defaults to files in `folder`.
 
     Notes:
         The command looks for the inbox subfolder in the specified session
@@ -1769,7 +1820,7 @@ def sort_dicom(folder=".", **kwargs):
             default). Optional `filter` and `sessionids` parameters can be used
             to filter sessions or limit them to just specified id codes. (for
             more information see online documentation). `sfolder` will be
-            filled in automatically as each sessions's folder. Commands will
+            filled in automatically as each session's folder. Commands will
             run in parallel by utilizing the specified number of parelements (1
             by default).
 
@@ -1781,8 +1832,8 @@ def sort_dicom(folder=".", **kwargs):
             `scheduler_environment`, `scheduler_workdir`, `scheduler_sleep`,
             and `nprocess` parameters can be set.
 
-            Set optional `logfolder` parameter to specify where the processing
-            logs should be stored. Otherwise the processor will make best
+            Set optional ``logfolder`` parameter to specify where the processing
+            logs should be stored. Otherwise, the processor will make best
             guess, where the logs should go.
 
     Examples:
@@ -1830,6 +1881,8 @@ def sort_dicom(folder=".", **kwargs):
         #     print("---> Processing %d files from %s" % (len(files), inbox))
         # else:
         #     raise ge.CommandFailed("sort_dicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
+    else:
+        files_iter = [e.strip() for e in files.split(",")] 
 
     info = None
 
@@ -1996,7 +2049,7 @@ def split_dicom(folder=None):
         presence of DICOM files. For each DICOM file it finds, it checks, what
         session id the file belongs to. In the specified folder it then creates
         a subfolder for each of the found sessions and moves all the DICOM
-        files in the right sessions's subfolder.
+        files in the right sessions' subfolder.
 
     Examples:
         ::
@@ -2041,7 +2094,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     """
     ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
 
-    Automatically processes packets with individual sessions's DICOM or PAR/REC
+    Automatically processes packets with individual sessions' DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
 
     Parameters:
@@ -2145,297 +2198,470 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             Whether to remove existing data in the dicom and nii folders.
 
     Notes:
-        Use:
-            The command is used to automatically process packets with individual
-            sessions's DICOM or PAR/REC files all the way to, and including,
-            generation of NIfTI files. Packet can be either a zip file, a tar
-            archive or a folder that contains DICOM or PAR/REC files.
+        The command is used to automatically process packets with individual
+        session's DICOM or PAR/REC files all the way to, and including,
+        generation of NIfTI files. Packet can be either a zip file, a tar
+        archive or a folder that contains DICOM or PAR/REC files.
 
-            The command can import packets either from a dedicated masterinbox
-            folder and create the necessary session folders within
-            `--sessionsfolder`, or it can process the data already present in
-            the session specific folders.
+        The command can import packets either from a dedicated masterinbox
+        folder and create the necessary session folders within
+        `--sessionsfolder`, or it can process the data already present in
+        the session specific folders.
 
-            The next sections will describe the two use cases in more detail.
+        The next sections will describe the two use cases in more detail.
 
-            Processing data from a dedicated masterinbox folder:
-                This is the default operation. In this case the `--masterinbox`
-                parameter has to provide a path to the folder with the incoming
-                packets (`<sessionsfolder>/inbox/MR` by default). The session
-                id is identified by the use of the `--pattern` parameter, and
-                optionally the `--logfile` parameter. The packages processed
-                can be optionally further filtered by the `--sessions`
-                parameter, so that only the packages that match both with the
-                `--pattern` and `--sessions` list are processed.
+        Processing data from a dedicated inbox folder:
+            This is the default operation. In this mode of operation:
 
-                The command first looks into the provided master inbox folder
-                (`--masterinbox`; by default `<sessionsfolder>/inbox/MR`) and
-                finds any packets that match the specified regex pattern
-                (`--pattern`). The `--pattern` has to be prepared so that it
-                returns a named group 'packet_name'.
-                The default pattern is::
+            - The candidate packages are identified by a `pattern` parameter,
+              which also specifies, how to extract a packet name.
+            - The packets found are optionally filtered using the `sessions`
+              parameter.
+            - Subject id and (optionally) session name are either extracted
+              from the packet name using the `nameformat` parameter or looked
+              up in a log file.
+            - A report of packets identified is generated.
+            - Session folders are created and packet data is moved or copied to
+              the session's `inbox` folder.
+            - Dicom data is sorted into folders holding information from a
+              single scan
+            - Images are converted to nifti format
+            - `session.txt` files are generated
+            - Original packets are archived as specified by the `archive`
+              parameter.
 
-                    "(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
+            In this mode of operation the `masterinbox` parameter passed to
+            `import_dicom` has to provide a path to the folder with the
+            incoming packets. The default location is
+            `<study>/<sessionsfolder>/inbox/MR`, which is used automatically if
+            `masterinbox` is not specified. Data from each session has to be
+            present in the `masterinbox` directory either as a separate folder
+            with the raw DICOM files or as a compressed package with that
+            session's data. `import_dicom` supports the following packages:
+            `.zip`, `.tar`, `.tar.gz`, `.tar.bz2`, `.tarz` and `.tar.bzip2`.
 
-                which will identify the initial part of the packet file- or
-                foldername, (w/o any extension that identifies a compressed
-                package) as the packet name.
-                Specifically::
+            The `pattern` parameter is used to specify, which files and/or
+            folders are to be identified as potential packets to be processed.
+            Specifically, the `pattern` parameter is a string that specifies a
+            `regular expression <http://www.rexegg.com/regex-quickstart.html>`_
+            against which the files and folders in the `masterinbox` are
+            matched. In addition, the regular expression has to return a named
+            group, 'packet_name' that is used in further processing.
 
-                    OP386
-                    OP386.zip
-                    OP386.tar.gz
+            The default `pattern` parameter is
+            `"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"`. This
+            pattern will identify the initial part of the packet file- or
+            foldername, (without any extension that identifies a compressed
+            package) as the packet name.
 
-                will all be identified as packet names 'OP386'.
+            Specifically:
 
-                Once all the packets have been found, if the `--sessions`
-                parameter is specified, only those packets for which the
-                identified packet name matches any of the sessions specified in
-                the `--sessions` parameter will be further processed. The
-                entries in the `--sessions` list can be regular expressions, in
-                which case all the packet names that match any of the
-                expressions will be processed.
+            - OP386
+            - OP386.zip
+            - OP386.tar.gz
 
-                Next, the extracted packet name will be processed to extract
-                subject id and (optionally) session name. The extraction is
-                specified by the `--nameformat` parameter. Specifically, the
-                parameter should be a regular expression that returns a named
-                group `subject_id` and (optionally) a named group
-                `session_name`. This information will be used to identify the
-                subject the data belongs to and (optionally) the specific
-                session within which the data were acquired. The default
-                expression is::
+            will all be identified as packet names 'OP386'.
 
-                    "(?P<subject_id>.*)"
+            Next the packet name has to be processed to identify the subject id
+            and (optionally) the session name. This can be done in one of two
+            ways. If the necessary information is present in the packet name
+            itself, it can be extracted as specified in by the `nameformat`
+            parameter. If not, it can be specified using a `logfile` parameter.
 
-                which will return the session id as the subject id, assuming
-                that only a single session was recorded. The following
-                pattern::
+            Extracting subject id from packet name:
+                To extract subject id from a packet name, the `nameformat`
+                parameter has to specify a `regular
+                expression <http://www.rexegg.com/regex-quickstart.html>`_ that
+                will extract the subject id and (optionally) the session name
+                from the packet name as named groups, `subject_id` and
+                `session_name`, respectively. The default `nameformat`
+                parameter is `"(?P<subject_id>.*)"`. It assumes that the packet
+                name is equal to the subject id and only a single session was
+                recorded. Here are a few additional examples of how subject id
+                and session names can be extracted using the `nameformat`
+                parameter:
 
-                    "(?P<subject_id>.*?)_(?P<session_name>.*)"
+                +-----------------------+--------------------------------------------------+------------+--------------+---------------+
+                | packet name           | `nameformat` parameter                           | subject id | session name | session id    |
+                +=======================+==================================================+============+==============+===============+
+                | AP346_MR_1            | `"(?P<subject_id>.*?)_(?P<session_name>.*)"`     | AP346      | MR_1         | AP346_MR_1    |
+                +-----------------------+--------------------------------------------------+------------+--------------+---------------+
+                | Siemens_Baseline-S002 | `".*?_(?P<session_name>.*?)-(?P<subject_id>.*)"` | S002       | Baseline     | S002_Baseline |
+                +-----------------------+--------------------------------------------------+------------+--------------+---------------+
+                | Yale-EQ469-Placebo    | `".*?-(?P<subject_id>.*?)-(?P<session_name>.*)"` | EQ469      | Placebo      | EQ469_Placebo |
+                +-----------------------+--------------------------------------------------+------------+--------------+---------------+
+                | Oxford.MR492.T3-Trio  | `".*?\.(?P<subject_id>.*?)\..*"`                 | MR492      | -            | MR492         |
+                +-----------------------+--------------------------------------------------+------------+--------------+---------------+
 
-                Would take the section of the string before the first underscore
-                as the subject id and the rest of the string as the session
-                name. I.e.::
 
-                    OP386_MR_1
+                Shown are the extracted packet name, the `nameformat` regular
+                expression, the resulting extracted subject id and session name
+                (when present), and the final generated session id.
 
-                would be parsed to::
+            Looking up subject id in a log file:
+                If subject id and (optionally) session name is not present or
+                cannot be robustly extracted from the package name, it is
+                possible to make use of a file that provides the mapping
+                between package names, subject ids and session names. A log
+                file has to be either a comma separated value (`.csv`) file or
+                a tab separated text file in which each row provides
+                information about a single scanning session. An example log
+                file (e.g. `scanning_sessions.csv`) can be::
 
-                    subject_id: OP386
-                    session_name: MR_1
+                    scanning code,subject,session,date of scan, ...
+                    AP1789,S001,baseline,2019-03-21, ...
+                    AP1790,S001,incentive,2019-03-21, ...
+                    WID1832,S002,baselime,2019-04-12, ...
+                    WID1913,S002,incentive,2019-04-12, ...
 
-                The command then lists all the sessions to process along with
-                the extracted subject ids and session names. If the check
-                parameter is set to 'no', it will start processing them, if it
-                is set to `any`, it will start processing them but return an
-                explicit error if no packets are found.
+                To use a log file, a `logfile` parameter has to be provided.
+                The content of the `logfile` has to be a string of the
+                following format::
 
-                For each packet found, the command will generate a new session
-                folder. The name of the folder will take the form
-                `<subject_id>_<session_name>`. If no session name is extracted
-                then the name of the folder will be simply `<subject_id>`.
+                    path:<path to the log file>|packet_name:<the column number with the packet name>|subject_id:<a column number with the subject id>|session_name:<a column number with the session name>
 
-                Alternatively, a path to a log file can be provided with the
-                information on which columns provide the following information:
+                In case of the above information, the `logfile` parameter would be::
 
-                - packet_name (the extracted name of the packet)
-                - subject_id (subject id of the packet)
-                - session_name (session id of the packet)
+                    --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3"
 
-                At least `packet_name` and `subject_id` have to be provided. If
-                `session_name` is omitted, the command assumes there is only
-                one session per subject.
+                And the resulting mapping would be:
 
-                The command will then copy, unzip or untar all the files in the
-                packet into an inbox folder created within the session folder.
-                Once all the files are extracted or copied, depending on the
-                archive parameter, the packet is then either moved or copied to
-                the `study/sessions/archive/MR` folder, left as is, or deleted.
-                If the archive folder does not yet exist, it is created.
+                +-------------+------------+--------------+----------------+
+                | packet name | subject id | session name | session id     |
+                +=============+============+==============+================+
+                | AP1789      | S001       | baseline     | S001_baseline  |
+                +-------------+------------+--------------+----------------+
+                | AP1790      | S001       | incentive    | S001_incentive |
+                +-------------+------------+--------------+----------------+
+                | WID1832     | S002       | baseline     | S002_baseline  |
+                +-------------+------------+--------------+----------------+
+                | WID1913     | S002       | incentive    | S002_incentive |
+                +-------------+------------+--------------+----------------+
 
-                If a session folder with an inbox folder already exists, if the
-                overwrite parameter is set to yes, it will delete the contents
-                of the dicom and nii folders and redo the import process. If
-                the overwrite parameter is set to no, then the packet will not
-                be processed so that existing data is not changed. In this case
-                either set the overwrite parameter to yes, or remove or rename
-                the exisiting folder(s) and rerun the command to process those
-                packet(s) as well.
+                Shown are the extracted packet name, the extracted subject id
+                and session name, and the final generated session id.
 
-            Processing data from a session folder:
-                If the `--masterinbox` parameter is set to "none", then the
-                command assumes that the incoming data has already been saved
-                to each session folder within the `--sessionsfolder`. In this
-                case, the command will look into all folders that match the
-                list provided in the `--sessions` parameter and process the
-                data in that folder. Each entry in the list can be a glob
-                pattern matching with multitiple session folders.
-
-                To correctly identify the subject id and session name,
-                `--nameformat` parameter will be used. Specifically, the
-                parameter should be a regular expression that returns a named
-                group `subject_id` and (optionally) a named group
-                `session_name`. This information will be used to identify the
-                subject the data belongs to and (optionally) the specific
-                session within which the data were acquired. The default
-                expression is::
-
-                    "(?P<subject_id>.*)"
-
-                which will return the session id as the subject id, assuming
-                that only a single session was recorded. The following
-                pattern::
-
-                    "(?P<subject_id>.*?)_(?P<session_name>.*)"
-
-                Would take the section of the string before the first underscore
-                as the subject id and the rest of the string as the session
-                name. I.e.::
-
-                    OP386_MR_1
-
-                would be parsed to::
-
-                    subject_id: OP386
-                    session_name: MR_1
-
-                The folders found are expected to have the data stored in the
-                inbox folder either as individual files or as a compressed
-                package. If the latter is the case, the files will be extracted
-                to the inbox folder. If any results—e.g. files in `dicom` or
-                `nii` folders—already exists, if the overwrite parameter is set
-                to no (the default) then the processing of the folder will be
-                skipped. If the overwrite parmeter is set to yes, the existing
-                data in dicom and nii folders will be removed and the
-                processing will be redone.
+                Do note that at least `packet_name` and `subject_id` have to be
+                provided in the `logfile` parameter and in the log file itself.
+                If `session_name` is not provided, it is assumed that only a
+                single session was recorded for each subject and session id
+                equals subject id.
 
             Further processing:
-                After the files have been copied or extracted to the inbox
-                folder, a `sort_dicom` command is run on that folder and all
-                the DICOM or PAR/REC files are sorted and moved to the dicom
-                folder. After that is done, a conversion command is run to
-                convert the DICOM images or PAR/REC files to the NIfTI format
-                and move them to the nii folder. The specific tool to do the
-                conversion can be specified explicitly using the `--tool`
-                parameter or left for the command to decide if set to 'auto' or
-                let to default. The DICOM or PAR/REC files are preserved and
-                gzipped to save space. To speed up the conversion, the
-                parelements parameter is passed to the `dicom2niix` command.
-                `session.txt` and `DICOM-Report.txt` files are created as well.
-                Please, check the help for `sort_dicom` and `dicom2niix`
-                commands for the specifics.
+                As can be seen from the examples, after the subject id and
+                (optionally) the session name are extracted, the session id is
+                generated using the formula `<subject_id>[_<session_name>]`,
+                where `_<session_name>` is appended only if extracted from
+                either the packet name or the log file. The generated session
+                id would then be used to name the sessions' folders in the
+                `/studies/myStudy/sessions`.
+
+                The progress of processing now depends on the `check` parameter.
+                If the `check` parameter is set to `any` it will proceed if any
+                packets to process were found, and it will report an error
+                otherwise. If `check` is set to `no`, no additional check will
+                be performed. If any packets were found to be processed, they
+                will be processed. If none were found, the command will exit
+                without reporting an error.
+
+                If packets were found to process and a go ahead was given,
+                import_dicom will then copy, unzip or untar all the files in
+                each packet into an inbox folder created within the session
+                folder. Once all the files are extracted or copied, depending
+                on the `archive` parameter, the packet is then either moved
+                ('move') or copied ('copy') to the
+                `<study>/sessions/archive/MR` folder, left as is ('leave'), or
+                deleted ('delete'). If the archive folder does not yet exist,
+                it is created. The default `archive` setting is 'move'.
+
+                If a session folder and an inbox folder within it already
+                exists, then the related packet will not be processed so that
+                the existing data is not changed. In this case the user has to
+                either remove or rename the existing folder(s) and rerun the
+                command to process those packet(s) as well.
+
+            Filtering sessions:
+                If not all packets in the `masterinbox` folder are to be
+                processed, it is possible to explicitly define which packets
+                can be processed by specifying the `sessions` parameter. The
+                parameter is a comma separated string of packet names that can
+                be processed. Each entry in the list can be a regular extension
+                pattern, in which case all the packet names that match any of
+                the patterns will be processed. Following the last example
+                above, specifying::
+
+                    --sessions=".*_baseline"
+
+                Would only process the baseline sessions and prepare data in
+                these session-specific folders:
+
+                - /studies/myStudy/sessions/S001_baseline
+                - /studies/myStudy/sessions/S002_baseline
+
+        Processing data from a session folder:
+            If the raw DICOM files or compressed packages with the raw DICOM
+            files are already present in the respective
+            `<study>/sessions/<session id>/inbox` folders, then the
+            `masterinbox` parameter has to be explicitly set to 'none', and the
+            session folders to be processed have to be listed in the `sessions`
+            parameter. In this case the `session` parameter is a comma
+            separated string, where each entry in the list can be a glob
+            pattern matching with multiple session folders.
+
+            Please note that the `sessions` parameter is only used to identify
+            possible folders. If a session folder is not present, even though
+            explicitly listed, `import_dicom` won't report an error.
+
+            In this mode of operation the session id is taken to be the folder
+            name. However, if subject id is not equal to the session id, the
+            `nameformat` parameter has to be specified to correctly extract the
+            subject id from the session name. Specifically, `nameformat`
+            parameter has to specify a `regular
+            expression <http://www.rexegg.com/regex-quickstart.html>`_ string
+            that returns a 'subject_id' named group. By default, the
+            `nameformat` parameter is `"(?P<subject_id>.*)"`, which identifies
+            the whole session name as the subject id. Here are a few examples
+            of how to change the `nameformat` parameter to extract the subject
+            id correctly:
+
+            +------------------+----------------------------+-------------+
+            | session id       | `nameformat` string        | subject id  |
+            +==================+============================+=============+
+            | P1102_000_01     | `"(?P<subject_id>.*?)_.*"` | P1102       |
+            +------------------+----------------------------+-------------+
+            | S5238_Placebo    | `"(?P<subject_id>.*?)_.*"` | S5238       |
+            +------------------+----------------------------+-------------+
+            | NDAR_INV2CTC8934 | `".*?_(?P<subject_id>.*)"` | INV2CTC8934 |
+            +------------------+----------------------------+-------------+
+
+            After the sessions are identified and subject id extracted,
+            depending on the `check` parameter, the user is prompted to confirm
+            processing (`check="yes"`), the processing continues, but an error
+            is reported if no sessions are identified (`check="any"`), or the
+            processing continues and no error is reported even if no sessions
+            to be processed are found (`check="no"`).
+
+            The folders found are expected to have the data stored in the inbox
+            folder either as individual raw DICOM files—that can be nested in
+            additional subfolders—or as a compressed package(s). If the latter
+            is the case, the files will be extracted to the inbox folder, and
+            the package(s) will submit to the setting in the `archive`
+            parameter.
+
+            If any results—e.g. files in `dicom` or `nii` folders—already
+            exists, the processing of the folder will be skipped.
+
+            For similar use cases refer to the Examples section.
+
+        Processing steps:
+            `import_dicom` will first extract and organize the data as described above. As a next step, it will call `sort_dicom` command to organize the raw DICOM files into separate folders for each images. Next it will call `dicom2niix` command that will convert the DICOM files to NIfTI format, store them in `nii` folder and create a `session.txt` file with details of the session.
 
     Examples:
-        First the examples for processing packages from `masterinbox` folder.
+        Data from a dedicated inbox folder:
+            First the examples for processing packages from `masterinbox` folder.
 
-        In the first example, we are assuming that the packages we want to
-        process are in the default folder
-        (`<path_to_studyfolder>/sessions/inbox/MR`), the file or folder names
-        contain only the packet names to be used, and the subject id is equal
-        to the packet name. All packets found are to be processed, after the
-        user gives a go-ahead to an interactive prompt:
+            In the first example, we are assuming that the packages we want to
+            process are in the default folder
+            (`<path_to_studyfolder>/sessions/inbox/MR`), the file or folder names
+            contain only the packet names to be used, and the subject id is equal
+            to the packet name. All packets found are to be processed, after the
+            user gives a go-ahead to an interactive prompt:
 
-        ::
+            ::
 
-            qunex import_dicom \\
-                --sessionsfolder="<path_to_studyfolder>/sessions"
+                qunex import_dicom \\
+                    --sessionsfolder="<path_to_studyfolder>/sessions"
 
-        If the processing should continue automatically if packages to process
-        were found, then the command should be:
+            If the processing should continue automatically if packages to process
+            were found, then the command should be:
 
-        ::
+            ::
 
-            qunex import_dicom \\
-                --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                --check="any"
+                qunex import_dicom \\
+                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                    --check="any"
 
-        If only package names starting with 'AP' or 'HQ' are to be processed
-        then the `sessions` parameter has to be added:
+            If only package names starting with 'AP' or 'HQ' are to be processed
+            then the `sessions` parameter has to be added:
 
-        ::
+            ::
 
-            qunex import_dicom \\
-                --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                --sessions="AP.*,HQ.*" \\
-                --check="any"
+                qunex import_dicom \\
+                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                    --sessions="AP.*,HQ.*" \\
+                    --check="any"
 
-        If the packages are named e.g. 'Yale-AP4983.zip' with the extension
-        optional, then to extract the packet name and map it directly to
-        subject id, the following `pattern` parameter needs to be added:
+            If the packages are named e.g. 'Yale-AP4983.zip' with the extension
+            optional, then to extract the packet name and map it directly to
+            subject id, the following `pattern` parameter needs to be added:
 
-        ::
+            ::
 
-            qunex import_dicom \\
-                --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
-                --sessions="AP.*,HQ.*" \\
-                --check="any"
+                qunex import_dicom \\
+                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --sessions="AP.*,HQ.*" \\
+                    --check="any"
 
-        If the session name can also be extracted and the files are in the
-        format e.g. 'Yale-AP4876_Baseline.zip', then a `nameformat` parameter
-        needs to be added:
+            If the session name can also be extracted and the files are in the
+            format e.g. 'Yale-AP4876_Baseline.zip', then a `nameformat` parameter
+            needs to be added:
 
-        ::
+            ::
 
-            qunex import_dicom \\
-                --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
-                --sessions="AP.*,HQ.*" \\
-                --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \\
-                --check="any"
+                qunex import_dicom \\
+                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --sessions="AP.*,HQ.*" \\
+                    --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \\
+                    --check="any"
 
-        In this case, 'AP4876_Baseline' will be first extracted as a packet name
-        and then parsed into 'AP4876' subject id and 'Baseline' session name.
+            In this case, 'AP4876_Baseline' will be first extracted as a packet name
+            and then parsed into 'AP4876' subject id and 'Baseline' session name.
 
-        If the files are named e.g. 'Yale-AP4983.zip' and a log file exists in
-        which the AP* or HQ* are mapped to a corresponding subject id and
-        session names, then the command is changed to:
+            If the files are named e.g. 'Yale-AP4983.zip' and a log file exists in
+            which the AP* or HQ* are mapped to a corresponding subject id and
+            session names, then the command is changed to:
 
-        ::
+            ::
 
-            qunex import_dicom \\
-                --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
-                --sessions="AP.*,HQ.*" \\
-                --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \\
-                --check="any"
+                qunex import_dicom \\
+                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --sessions="AP.*,HQ.*" \\
+                    --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \\
+                    --check="any"
 
-        For the examples of processing data already present in the individual
-        session id folder, let's assume that we have the following files
-        present, with no other files in the sessions folders::
+        Data already present:
+            For the examples of processing data already present in the individual
+            session id folder, let's assume that we have the following files
+            present, with no other files in the sessions folders:
 
-            /studies/myStudy/sessions/S001_baseline/inbox/AYXQ.tar.gz
+            - /studies/myStudy/sessions/S001_baseline/inbox/AYXQ.tar.gz
+            - /studies/myStudy/sessions/S001_incentive/inbox/TWGS.tar.gz
+            - /studies/myStudy/sessions/S002_baseline/inbox/OHTZ.zip
+            - /studies/myStudy/sessions/S002_incentive/inbox/QRTD.zip
 
-            /studies/myStudy/sessions/S001_incentive/inbox/TWGS.tar.gz
+            Then these are a set of possible commands:
 
-            /studies/myStudy/sessions/S002_baseline/inbox/OHTZ.zip
+            ::
 
-            /studies/myStudy/sessions/S002_incentive/inbox/QRTD.zip
+                qunex import_dicom \\
+                    --sessionsfolder="/studies/myStudy/sessions" \\
+                    --masterinbox="none" \\
+                    --sessions="S*"
 
-        Then these are a set of possible commands:
+            In the above case all the folders will be processed, the packages will
+            be extracted and (by default) moved to
+            `/studies/myStudy/sessions/archive/MR`::
 
-        ::
+                qunex import_dicom \\
+                    --sessionsfolder="/studies/myStudy/sessions" \\
+                    --masterinbox="none" \\
+                    --sessions="*baseline" \\
+                    --archive="delete"
 
-            qunex import_dicom \\
-                --sessionsfolder="/studies/myStudy/sessions" \\
-                --masterinbox="none" \\
-                --sessions="S*"
-
-        In the above case all the folders will be processed, the packages will
-        be extracted and (by default) moved to
-        `/studies/myStudy/sessions/archive/MR`::
-
-            qunex import_dicom \\
-                --sessionsfolder="/studies/myStudy/sessions" \\
-                --masterinbox="none" \\
-                --sessions="*baseline" \\
-                --archive="delete"
-
-        In the above case only the `S001_baseline` and `S002_baseline` sessions
-        will be processed and the respective compressed packages will be
-        deleted after the successful processing.
+            In the above case only the `S001_baseline` and `S002_baseline` sessions
+            will be processed and the respective compressed packages will be
+            deleted after the successful processing.
     """
+
+    isgz = re.compile(r'(^.*)\.gz$')
+    iszip = re.compile(r'(^.*)\.zip$')
+    istar = re.compile(r'(^.*)(\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$)')
+
+    def _process_file(fobj, fname, fnum, dnum, target):
+
+        if not isinstance(fobj, io.IOBase):
+            if os.path.isfile(fobj):
+                fobj = open(fobj, 'rb')
+            else:
+                return (fnum, dnum)
+
+        if isgz.match(fname):
+            fobj = gz.GzipFile(fileobj=fobj)
+            fname = isgz.match(fname).group(1)
+        elif istar.match(fname):
+            return _extract_tar(fobj, fname, fnum, dnum, target)
+        elif iszip.match(fname):
+            return _extract_zip(fobj, fname, fnum, dnum, target)
+
+        if fnum % 1000 == 0:
+            dnum += 1
+            if not os.path.exists(os.path.join(target, str(dnum))):
+                os.makedirs(os.path.join(target, str(dnum)))
+        fnum += 1
+
+        tfile = f"{dnum}-{os.path.basename(fname)}"
+
+        # --- check if par/rec/log
+        if tfile.split('.')[-1].lower() in ['par', 'rec', 'log']:
+            for ext in ['rec', 'par']:
+                if tfile.split('.')[-1] == ext:
+                    tfile = tfile[:-3] + ext.upper()
+
+        with open(os.path.join(target, str(dnum), tfile), 'wb') as fout:
+            shutil.copyfileobj(fobj, fout)
+
+        fobj.close()
+        return (fnum, dnum)
+
+    def _extract_zip(packet, packetname, fnum=0, dnum=0, target=None):
+
+        # -- open packet
+        try:
+            z = zipfile.ZipFile(packet, 'r')
+        except:
+            e = sys.exc_info()[0]
+            raise ge.CommandFailed("import_dicom", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
+        
+        # -- get list of files in packet
+        file_list = z.infolist()
+
+        # -- process list
+        for source_file in file_list:
+            if source_file.file_size > 0:
+                print("...  extracting:", source_file.filename, source_file.file_size)
+                fnum, dnum = _process_file(z.open(source_file), source_file.filename, fnum, dnum, target)
+        
+        # -- close and return with latest numbers
+
+        print("     -> done!")
+        z.close()
+        return (fnum, dnum)
+    
+    def _extract_tar(packet, packetname, fnum=0, dnum=0, target=None):
+        
+        # -- open packet
+        try:
+            if isinstance(packet, io.IOBase):
+                tar = tarfile.open(fileobj=packet, mode='r')
+            else:
+                tar = tarfile.open(packet, 'r')
+        except:
+            e = sys.exc_info()[0]            
+            raise ge.CommandFailed("import_dicom", "Tar file could not be processed", "Opening tar [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
+
+        # -- process files
+        for tarinfo in tar:
+            if tarinfo.isfile():
+                print("...  extracting:", tarinfo.name, tarinfo.size)
+                fnum, dnum = _process_file(tar.extractfile(tarinfo), tarinfo.name, fnum, dnum, target)
+        
+        # -- close and return with latest numbers
+
+        print("     -> done!")
+        tar.close()
+        return (fnum, dnum)
+
+    def _process_folder(folder, fnum=0, dnum=0, target=None):
+        # -- get list of files
+        files_iter = glob.iglob(os.path.join(folder, "**", "*"), recursive=True)
+        for source_file in files_iter:
+            fnum, dnum = _process_file(source_file, os.path.basename(source_file), fnum, dnum, target)
+
+        return (fnum, dnum)
+
 
     print("Running import_dicom\n====================")
 
@@ -2463,8 +2689,6 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
     if nameformat is None:
         nameformat = r"(?P<subject_id>.*)"
-
-    igz = re.compile(r'^.*\.gz$')
     
     try:
         if add_image_type == None or add_image_type == '':
@@ -2526,6 +2750,12 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                      ('exist', "---> The session and inbox folder for these packages already exist:"),
                      ('skip', "---> These packages do not match list of sessions and will be skipped:")]
 
+        if not os.path.exists(masterinbox):
+            raise ge.CommandFailed("import_dicom", "Master inbox does not exist", f"A folder {masterinbox} does not exist.", "Please check your path!")
+
+        if not os.path.isdir(masterinbox):
+            raise ge.CommandFailed("import_dicom", "Master inbox is not a folder", f"{masterinbox} is not a folder.", "Please check your path!")
+
         print("---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'" % (os.path.abspath(masterinbox), pattern, nameformat))
 
         files = glob.glob(os.path.join(masterinbox, '*'))
@@ -2538,8 +2768,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
         except:
             raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
 
-        for file in files:
-            m = getop.search(os.path.basename(file))
+        for afile in files:
+            m = getop.search(os.path.basename(afile))
             if m:
                 if 'packet_name' in m.groupdict() and m.group('packet_name'):
                     pname = m.group('packet_name')
@@ -2550,7 +2780,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                         if pname in sessionsInfo:
                             session = dict(sessionsInfo[pname])
                         else:
-                            packets['nolog'].append((file, dict(session)))
+                            packets['nolog'].append((afile, dict(session)))
                             continue
                     else:
                         session = dict(emptysession)
@@ -2566,24 +2796,24 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                                 session.update({'subjectid': ms.group('subject_id'), 'sessionname': None, 'sessionid': ms.group('subject_id')})
 
                         else:
-                            packets['invalid'].append((file, session))
+                            packets['invalid'].append((afile, session))
                             continue
 
                     sfolder = os.path.join(sessionsfolder, session['sessionid'])
 
                     if sessions:
                         if not any([matchAll(e, session['sessionid']) for e in sessions]):
-                            packets['skip'].append((file, session))
+                            packets['skip'].append((afile, session))
                             continue
 
                     if os.path.exists(os.path.join(sfolder, 'inbox')):
-                        packets['exist'].append((file, session))
+                        packets['exist'].append((afile, session))
                         continue
 
-                    packets['ok'].append((file, session))
+                    packets['ok'].append((afile, session))
 
                 else:
-                    packets['bad'].append(file, dict(emptysession))
+                    packets['bad'].append(afile, dict(emptysession))
 
     # ---- get list of session folders to process
     else:
@@ -2636,17 +2866,17 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     for tag, message in reportSet:
         if packets[tag]:
             print(f"\n{message}")
-            for file, session in packets[tag]:
+            for afile, session in packets[tag]:
                 if session['sessionname']:
-                    print("     subject: %s, session: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(file)))
+                    print("     subject: %s, session: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['subjectid']:
-                    print("     subject: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionid'], session['packetname'], os.path.basename(file)))
+                    print("     subject: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['sessionid']:
-                    print("     %s <= %s <- %s" % (session['sessionid'], session['packetname'], os.path.basename(file)))
+                    print("     %s <= %s <- %s" % (session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['packetname']:
-                    print("     %s <= %s <- %s" % ("????", session['packetname'], os.path.basename(file)))
+                    print("     %s <= %s <- %s" % ("????", session['packetname'], os.path.basename(afile)))
                 else:
-                    print("     %s <= %s <- %s" % ("????", "????", os.path.basename(file)))
+                    print("     %s <= %s <- %s" % ("????", "????", os.path.basename(afile)))
 
             if tag == 'exist':
                 #if overwrite:
@@ -2687,7 +2917,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     if overwrite:
         if packets['exist']:
             print("---> Cleaning exisiting data in folders:")
-            for file, session in packets['exist']:
+            for afile, session in packets['exist']:
                 sfolder = os.path.join(sessionsfolder, session['sessionid'])
                 print("     ... %s" % (sfolder))
                 if masterinbox:
@@ -2706,7 +2936,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
     print("---> Starting to process %d packets ..." % (len(packets['ok'])))
 
-    for file, session in packets['ok']:
+    for afile, session in packets['ok']:
         note = []
         try:
 
@@ -2720,7 +2950,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
             if masterinbox and not os.path.exists(ifolder):
                 os.makedirs(ifolder)
-                files = [file]
+                files = [afile]
             else:
                 if 'archives' in session and session['archives']:
                     files = session['archives']
@@ -2732,96 +2962,25 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
             for p in files:
 
-            # --- unzip or copy the package
+                # --- unzip or copy the package
 
-                if p.endswith('zip'):
-
+                if iszip.match(p):
                     ptype = "zip"
+                    fnum, dnum = _extract_zip(p, os.path.basename(p), fnum, dnum, ifolder)
 
-                    print("...  unzipping %s" % (os.path.basename(p)))
-
-                    try:
-                        z = zipfile.ZipFile(p, 'r')
-                    except:
-                        e = sys.exc_info()[0]
-                        raise ge.CommandFailed("import_dicom", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (p, e), "Please check your data!")                
-
-                    ilist = z.infolist()
-                    for sf in ilist:
-                        if sf.file_size > 0:
-
-                            if fnum % 1000 == 0:
-                                dnum += 1
-                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
-                                    os.makedirs(os.path.join(ifolder, str(dnum)))
-                            fnum += 1
-
-                            print("...  extracting:", sf.filename, sf.file_size)
-                           
-                            with z.open(sf) as fobj:
-                                # --- do we have par / rec / log
-                                if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                                    tfile = os.path.basename(sf.filename)
-                                    for ext in ['rec', 'par']:
-                                        if tfile.split('.')[-1] == ext:
-                                            tfile = tfile[:-3] + ext.upper()
-                                else:
-                                    tfile = str(fnum)
-                                
-                                with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
-                                    if igz.match(sf.filename):
-                                        with gz.GzipFile(fileobj=fobj) as gz_fobj:
-                                            shutil.copyfileobj(gz_fobj, fout)
-                                    else:
-                                        shutil.copyfileobj(fobj, fout)
-
-                    z.close()
-                    print("     -> done!")
-
-                elif re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p):
-
+                elif istar.match(p):
                     ptype = "tar"
-
-                    print("...  untarring %s" % (os.path.basename(p)))
-
-                    tar = tarfile.open(p, 'r')
-                    for tarinfo in tar:
-                        if tarinfo.isfile():
-                            if fnum % 1000 == 0:
-                                dnum += 1
-                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
-                                    os.makedirs(os.path.join(ifolder, str(dnum)))
-                            fnum += 1
-
-                            print("...  extracting:", tarinfo.name, tarinfo.size)
-
-                            with tar.extractfile(tarinfo) as fobj:
-                                # --- do we have par / rec / log
-                                if tarinfo.name.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                                    tfile = os.path.basename(tarinfo.name)
-                                    for ext in ['rec', 'par']:
-                                        if tfile.split('.')[-1] == ext:
-                                            tfile = tfile[:-3] + ext.upper()
-                                else:
-                                    tfile = str(fnum)
-                                
-                                with open(os.path.join(ifolder, str(dnum), tfile), 'wb') as fout:
-                                    if igz.match(tarinfo.name):
-                                        with gz.GzipFile(fileobj=fobj) as gz_fobj:
-                                            shutil.copyfileobj(gz_fobj, fout)
-                                    else:
-                                        shutil.copyfileobj(fobj, fout)
-
-                    tar.close()
-                    print("     -> done!")
+                    fnum, dnum = _extract_tar(p, os.path.basename(p), fnum, dnum, ifolder)
 
                 else:
                     ptype = "folder"
                     if masterinbox and ifolder != p:
-                        if os.path.exists(ifolder):
-                            shutil.rmtree(ifolder)
-                        print("...  copying %s dicom files" % (os.path.basename(p)))
-                        shutil.copytree(p, ifolder)
+                        fnum, dnum = _process_folder(p, fnum, dnum, ifolder)
+                        
+                        # if os.path.exists(ifolder):
+                        #     shutil.rmtree(ifolder)                    
+                        # print("...  copying %s dicom files" % (os.path.basename(p)))                        
+                        # shutil.copytree(p, ifolder)
 
             # ===> run sort dicom
 
@@ -2876,24 +3035,24 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                         else:
                             os.remove(p)
 
-            report['ok'].append((file, dict(session), note))
+            report['ok'].append((afile, dict(session), note))
 
         except ge.CommandFailed as e: 
-            report['failed'].append((file, dict(session), ["%s: %s" % (e.function, e.error)]))
+            report['failed'].append((afile, dict(session), ["%s: %s" % (e.function, e.error)]))
 
     print("\nFinal report\n============")
 
     if report["ok"]:
         print("\nSuccessfully processed:")
-        for file, session, notes in report["ok"]:
-            print("... %s [%s]" % (session['sessionid'], file))
+        for afile, session, notes in report["ok"]:
+            print("... %s [%s]" % (session['sessionid'], afile))
             for note in notes:
                 print("    %s" % (note))
 
     if report["failed"]:
         print("\nFailed to process:")
-        for file, session, notes in report["failed"]:
-            print("... %s [%s]" % (session['sessionid'], file))
+        for afile, session, notes in report["failed"]:
+            print("... %s [%s]" % (session['sessionid'], afile))
             for note in notes:
                 print("    %s" % (note))
         raise ge.CommandFailed("import_dicom", "Some packages failed to process", "Please check report!")

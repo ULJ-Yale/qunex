@@ -29,12 +29,22 @@ import tarfile
 import glob
 import gzip
 import ast
+import json
 
 import general.exceptions as ge
 import general.core as gc
 import general.filelock as fl
 
 from datetime import datetime
+
+unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
+PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL', 'LR': 'i-', 'i-': 'LR'}
+json_all = ['phenc', 'DwellTime', 'EchoSpacing', 'UnwarpDir']
+json_mapping = {
+    'phenc': ['PhaseEncodingDirection', lambda x : PEDirMap.get(x, 'NA')],
+    'UnwarpDir': ['PhaseEncodingDirection', lambda x: unwarp.get(x, 'NA')],
+    'EchoSpacing' : ['EffectiveEchoSpacing', lambda x: x]
+}
 
 def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
     """
@@ -173,9 +183,9 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
 
 
 
-def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
+def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None, sequenceinfo='all'):
     """
-    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]``
+    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short] [sequenceinfo='all']``
     
     Maps a BIDS dataset to the QuNex Suite file structure.
 
@@ -194,7 +204,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             contains multiple packages. The default location where the command
             will look for a BIDS dataset is.
 
-        --sessions (str, default ):
+        --sessions (str, optional):
             An optional parameter that specifies a comma or pipe separated list
             of sessions from the inbox folder to be processed. Glob patterns
             can be used. If provided, only packets or folders within the inbox
@@ -253,6 +263,18 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
               the identified BIDS tags
             - 'full' ... list the full file name excluding the
               participant id, session name and extension.
+
+        --sequenceinfo (str, default 'all'):
+            A comma or space separated string, listing which info present in 
+            `.json` sidecar files to include in the sequence information. 
+            Options are:
+
+            - phenc ... phase encoding direction
+            - DwellTime
+            - UnwarpDir ... unwarp direction
+            - EchoSpacing
+            - 'all' ... all of the above listed information, if present in 
+              the `.json` sidecar file.
 
     Output files:
         After running the `import_bids` command the BIDS dataset will be
@@ -322,14 +344,14 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             previously flattened.
 
             Behavioral data:
-                In this step the subject specific and behavioral data that
-                is present in `<bids_study>/participants.tsv` and
-                `phenotype/*.tsv` files, will be parsed and split so that
-                data belonging to a specific participant will be mapped to
-                that participant's sessions 'behavior' folder (e.g. `<QuNex
-                study folder>/sessions/s14_01/behavior/masq01.tsv`). In
-                this way the session folder contains all the behavioral
-                data relevant for that participant.
+                Upon import of the BIDS dataset, the behavioral and participant
+                specific data present in the `<bids_study>/participants.tsv`
+                and `<bids_study>/phenotype/*.tsv` files, is parsed and split
+                so that data belonging to a specific participant is mapped to
+                that participant's sessions `behavior` folder (e.g. `<QuNex
+                study folder>/sessions/s14_01/behavior/masq01.tsv`). In this
+                way the session folder contains all the behavioral data
+                relevant for that participant.
 
         Step 2 - Mapping image files to QuNex Suite `nii` folder:
             For each session separately, images from the `bids` folder are
@@ -347,6 +369,57 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             Please see `map_bids2nii` inline documentation!
 
     Examples:
+        ::
+
+            qunex import_bids \\
+                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --inbox="<absolute path to folder with bids dataset>" \\
+                --archive=move \\
+                --overwrite=yes
+
+        The above command would map the entire BIDS dataset located at the
+        specified location into the relevant sessions' folders—creating them
+        when needed—, organize the MR image files in the sessions' `nii` folder
+        and prepare `session.txt` file for further processing. Any preexisting
+        data for the sessions present in the BIDS dataset would be removed and
+        replaced. By default, the BIDS files would be hard-linked to the new
+        location.
+
+        ::
+
+            qunex import_bids \\
+                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --inbox="<absolute path to folder with bids dataset>" \\
+                --action='copy' \\
+                --archive='leave' \\
+                --overwrite=no
+
+        The above command would map the entire BIDS dataset located at the
+        specified location into the relevant sessions' folders—creating them
+        when needed—, organize the MR image files in the sessions' `nii` folder
+        and prepare `session.txt` file for further processing. If for any of
+        the sessions bids mapped data already exist, that session will be
+        skipped when processing. The files would be mapped to their
+        destinations by creating a copy rather than hard-linking them.
+
+        ::
+
+            qunex import_bids \\
+                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --inbox="<absolute path to folder with bids dataset>" \\
+                --action='copy' \\
+                --archive='leave' \\
+                --overwrite=no \\
+                --fileinfo=full
+
+
+        In the example above, by specifying the `--fileinfo` parameter as "full"
+        the whole file name (with the exception of the participant id, the
+        session name and the extension) will be printed for each image file in
+        the `session.txt` file. Use this parameter if file names are not
+        matching the BIDS standard completely and hold important information
+        for later correct file handling.
+
         ::
 
             qunex import_bids \\
@@ -845,6 +918,18 @@ def processBIDS(bfolder):
     
         if session not in bidsData:
             bidsData[session] = {}
+
+        # --> get and process .json file
+
+        sidecar, sideinfo = None, None
+        filename = os.path.basename(sfile)
+        filedir  = os.path.dirname(sfile)
+        fileroot = filename.split('.')[0]
+        for ext in ['.json', '.JSON']:
+            if os.path.exists(os.path.join(filedir, fileroot + ext)):
+                sidecar  = os.path.join(filedir, fileroot + ext)
+                with open(sidecar) as json_file:
+                    sideinfo = json.load(json_file)
     
         # --> get modality
     
@@ -857,13 +942,14 @@ def processBIDS(bfolder):
             info = dict(zip(bids[modality]['info'], [None for e in range(len(bids[modality]['info']))]))
             info.update(dict([(i, part.split('-')[1]) for part in parts for i in bids[modality]['info'] if '-' in part and i == part.split('-')[0]]))
             info['filepath'] = sfile
-            info['filename'] = os.path.basename(sfile)
-    
+            info['filename'] = filename
             info['label'] = ([None] + [part for part in parts if part in bids[modality]['label']])[-1]
+            info['json_file'] = sidecar
+            info['json_info'] = sideinfo
     
             bidsData[session][modality].append(info)
         else:
-            bidsData[session]['files'] = {'filepath': sfile, 'filename': os.path.basename(sfile)}
+            bidsData[session]['files'] = {'filepath': sfile, 'filename': filename, 'json_file': sidecar, 'json_info': sideinfo}
 
     # --> sort within modalities
 
@@ -873,15 +959,48 @@ def processBIDS(bfolder):
 
     for session in bidsData:
         bidsData[session]['images'] = {'list': [], 'info': {}}
+        imgn = 0
         for modality in ['anat', 'fmap', 'func', 'dwi', "asl"]:
             if modality in bidsData[session]:
                 for element in bidsData[session][modality]:
                     if '.nii' in element['filename']:
+                        imgn += 1
                         bidsData[session]['images']['list'].append(element['filename'])
                         element['tag'] = ' '.join(["%s-%s" % (e, element[e]) for e in bids[modality]['tag'] if element[e]])
                         element['tag'] = element['tag'].replace('label-', '')
                         element['tag'] = element['tag'].replace('task-', '')
+                        element['imgn'] = imgn
                         bidsData[session]['images']['info'][element['filename']] = element
+    
+    # --> process fieldmap matching
+    for session in bidsData:
+        for element in bidsData[session].get('fmap', []):
+            if '.nii' in element['filename']:
+
+                # --> is fieldmap a spin-echo type or a "regular" fieldmap?
+                if element['label'] == 'epi':
+                    fmtype = 'se'
+                else:
+                    fmtype = 'fm'
+
+                # --> is there a run information or is there just a single fieldmap
+                if element['run'] is None:
+                    fmindex = 1
+                else:
+                    fmindex = element['run']
+
+                tag = f"{fmtype}({fmindex})"
+                
+                # --> add a tag to the fieldmap image
+                bidsData[session]['images']['info'][element['filename']]['seq_info'] = bidsData[session]['images']['info'][element['filename']].get('seq_info', []) + [tag]
+                if 'json_info' in element and element['json_info'] and 'IntendedFor' in element['json_info']:
+                    if isinstance(element['json_info']['IntendedFor'], str):
+                        target_files = [element['json_info']['IntendedFor']]
+                    else:
+                        target_files = element['json_info']['IntendedFor']
+                    for target_file in target_files:
+                        target_file = os.path.basename(target_file)
+                        bidsData[session]['images']['info'][target_file]['seq_info'] = bidsData[session]['images']['info'][target_file].get('seq_info', []) + [tag] 
 
     return bidsData
 
@@ -913,9 +1032,9 @@ def _sort_bids_images(bidsData, bids):
                     else:
                         bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
-def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
+def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, sequenceinfo='all'):
     """
-    ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short']``
+    ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [sequenceinfo='all']``
 
     Maps data organized according to BIDS specification to `nii` folder 
     structure as expected by QuNex commands.
@@ -960,6 +1079,18 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
               identified BIDS tags
             - 'full' ... list the full file name excluding the
               participant id, session name and extension.
+
+        --sequenceinfo (str, default 'all'):
+            A comma or space separated string, listing which info present in 
+            `.json` sidecar files to include in the sequence information. 
+            Options are:
+
+            - phenc ... phase encoding direction
+            - DwellTime
+            - UnwarpDir ... unwarp direction
+            - EchoSpacing
+            - 'all' ... all of the above listed information, if present in 
+              the `.json` sidecar file.
 
     Output files:
         After running the mapped nifti files will be in the `nii` subfolder,
@@ -1066,7 +1197,6 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     if fileinfo not in ['short', 'full']:
         raise ge.CommandError("map_bids2nii", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
-
     sfolder = os.path.abspath(sourcefolder)
     bfolder = os.path.join(sfolder, 'bids')
     nfolder = os.path.join(sfolder, 'nii')
@@ -1074,6 +1204,11 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
     session = os.path.basename(sfolder)
     subject = session.split('_')[0]
     sessionid = (session.split('_') + [''])[1]
+
+    sequenceinfo = [e.strip() for e in sequenceinfo.replace(",", " ").split()]
+    sequenceinfo = [e for e in sequenceinfo if len(e) > 0]
+    if 'all' in sequenceinfo:
+        sequenceinfo = list(set(sequenceinfo + json_all))
 
     info = 'subject ' + subject
     if sessionid:
@@ -1129,20 +1264,45 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None):
 
     allOk = True
 
-    imgn = 0
     for image in bidsData['images']['list']:
-        imgn += 1
 
+        imgn = bidsData['images']['info'][image]['imgn']
         tfile = os.path.join(nfolder, "%d.nii.gz" % (imgn))
         
         status = gc.moveLinkOrCopy(bidsData['images']['info'][image]['filepath'], tfile, action='link')
+        if bidsData['images']['info'][image]['json_file']:
+            status = status & gc.moveLinkOrCopy(bidsData['images']['info'][image]['json_file'], os.path.join(nfolder, "%d.json" % (imgn)), action='link')
         if status:
             print("--> linked %d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename']))
+
+            # --> check if there is sequence info present
+            seq_info = ":".join(bidsData['images']['info'][image].get('seq_info', []))
+            if seq_info:
+                seq_info = ":" + seq_info
+
+            # --> check if there is json info present
+            json_info = []
+            json_data = bidsData['images']['info'][image].get('json_info', None)
+            if json_data and sequenceinfo:
+                for ji in sequenceinfo:
+                    if ji in json_mapping:
+                        if json_mapping[ji][0] in json_data:
+                            json_info.append(f"{ji}({json_mapping[ji][1](json_data[json_mapping[ji][0]])})")
+                    elif ji in json_data:
+                        json_info.append(f"{ji}({json_data[ji]})")
+            if json_info:
+                json_info = ":" + ":".join(json_info)
+            else:
+                json_info = ""
+
+            # --> compile file information
             if fileinfo == 'short':
-                print("%d: %s" % (imgn, bidsData['images']['info'][image]['tag']), file=sout)
+                file_info = bidsData['images']['info'][image]['tag']
             elif fileinfo == 'full':
-                fullinfo = bidsData['images']['info'][image]['filename'].replace('.nii.gz', '').replace('sub-%s_' % (subject), '').replace('ses-%s_' % (sessionid), '')
-                print("%d: %s" % (imgn, fullinfo), file=sout)
+                file_info = bidsData['images']['info'][image]['filename'].replace('.nii.gz', '').replace('sub-%s_' % (subject), '').replace('ses-%s_' % (sessionid), '')
+            
+            # --> print info to session.txt
+            print(f"{imgn}: {file_info} {seq_info} {json_info}", file=sout)
 
             print("%s => %s" % (bidsData['images']['info'][image]['filepath'], tfile), file=bout)
         else:

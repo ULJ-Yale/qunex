@@ -1,6 +1,6 @@
-function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
+function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
-%``fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
+%``fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
 %
 %   A command for fcMRI preprocessing and GLM analysis a set of BOLD files.
 %
@@ -28,7 +28,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               - 2 ... joint nuisance, joint task regressors across all runs
 %
 %           - c
-%               save coefficients in _Bcoeff file
+%               save coefficients in _Bcoeff file [deprecated -> see glm_results options]
 %           - p
 %               save png image files of nusance ROI mask
 %           - l
@@ -36,7 +36,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %           - m
 %               motion scrubbing.
 %
-%       --TR (float, default 2.5):
+%       --tr (float, default 2.5):
 %           TR of the data, in seconds.
 %
 %       --omit (int, default ''):
@@ -118,18 +118,20 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %           string:
 %
 %           - boldname        : ['bold']
-%           - surface_smooth  : [6]
-%           - volume_smooth   : [6]
-%           - voxel_smooth    : [2]
-%           - lopass_filter   : [0.08]
+%           - surface_smooth  : [2]
+%           - volume_smooth   : [2]
+%           - voxel_smooth    : [1]
 %           - hipass_filter   : [0.009]
+%           - lopass_filter   : [0.08]
+%           - hipass_do       : ['nuisance']
+%           - lopass_do       : ['nuisance, movement, events, task']
 %           - framework_path  : ['']
 %           - wb_command_path : ['']
-%           - omp_threads     : [0]
 %           - smooth_mask     : ['false']
 %           - dilate_mask     : ['false']
 %           - glm_matrix      : ['none']  ('none' / 'text' / 'image' / 'both')
-%           - glm_residuals   : ['save']
+%           - glm_residuals   : save   [deprectated -> see glm_results]
+%           - glm_results     : 'c,r' ('c', 'z', 'p', 'se', 'r', 'all')
 %           - glm_name        : ['']
 %           - bold_tail       : ['']
 %           - bold_variant    : ['']
@@ -339,7 +341,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               smoothing parameters can be set in the options string:
 %
 %               - voxel_smooth
-%                   Gaussian smoothing FWHM in voxels. Defaults to 2.
+%                   Gaussian smoothing FWHM in voxels. Defaults to 1.
 %
 %               - smooth_mask
 %                   Whether to smooth only within a mask, and what mask to use
@@ -389,14 +391,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               The following parameters can be set in the options parameter:
 %
 %               - surface_smooth
-%                   FWHM for gaussian surface smooting in mm. Defaults to 6.0.
+%                   FWHM for gaussian surface smooting in mm. Defaults to 2.0.
 %
 %               - volume_smooth
-%                   FWHM for gaussian volume smooting in mm. Defaults to 6.0.
-%
-%               - omp_threads
-%                   Number of cores to be used by wb_command. 0 for no change of
-%                   system settings. Defaults to 0.
+%                   FWHM for gaussian volume smooting in mm. Defaults to 2.0.
 %
 %               - framework_path
 %                   The path to framework libraries on the Mac system. No need
@@ -425,6 +423,25 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %           Please note that the values finaly passed to img_filter method are
 %           the respective sigma values computed from the specified frequencies
 %           and TR.
+%
+%           Filtering of nuisance signal, movement, task, and events
+%           Besides data, nuisance signal, motion parameters, and event 
+%           regressors can be filtered as well. What to filter beside data can
+%           be specified by a comma separated list using the following 
+%           parameters:
+%           
+%           - hipass_do
+%               What to high-pass filter besides data – options are: nuisance, 
+%               movement, events, task. Default is 'nuisance'.
+%
+%           - lopass_do
+%               What to lo-pass filter besides data – options are: nuisance, 
+%               movement, events, task. Default is 'nuisance, movement, task, 
+%               events'.
+%
+%           Note that 'events' refers to regressors created based on events 
+%           as specified in the fidl file, whereas 'task' refers to a task
+%           matrix that is passed directy in the matlab function call.
 %
 %           Results:
 %               The resulting filtered files are saved with '_hpss' or '_bpss'
@@ -611,7 +628,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               --sessionf='sessions/OP234' \
 %               --bolds='[1 2 4 5]' \
 %               --doIt='s,r,c' \
-%               --TR=2.5 \
+%               --tr=2.5 \
 %               --omit=0 \
 %               --rgss='e' \
 %               --task='' \
@@ -630,7 +647,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, TR, omit, rgss, task, ef
 %               --sessionf='sessions/OP234' \
 %               --bolds='[1 2 4 5]' \
 %               --doIt='s,h,r' \
-%               --TR=2.5 \
+%               --tr=2.5 \
 %               --omit=0 \
 %               --rgss='m,V,WM,WB,1d,e' \
 %               --task='' \
@@ -659,14 +676,14 @@ if nargin < 8,  efile = '';                                 end
 if nargin < 7,  task = [];                                  end
 if nargin < 6 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 5 || isempty(omit), omit = [];                  end
-if nargin < 4 || isempty(TR), TR = 2.5;                     end
+if nargin < 4 || isempty(tr), tr = 2.5;                     end
 
 fprintf('\nRunning preproces conc script v0.9.16 [%s]\n-------------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
 fprintf('\n       sessionf: %s', sessionf);
 fprintf('\n          bolds: [%s]', num2str(bolds));
 fprintf('\n           doIt: %s', doIt);
-fprintf('\n             TR: %.2f', TR);
+fprintf('\n             tr: %.2f', tr);
 fprintf('\n           omit: %s', num2str(omit));
 fprintf('\n           rgss: %s', rgss);
 fprintf('\n           task: [%s]', num2str(size(task)));
@@ -681,7 +698,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'fc_preprocess_conc options used');
@@ -690,6 +707,8 @@ TS = [];
 doIt = strrep(doIt, ',', '');
 doIt = strrep(doIt, ' ', '');
 
+options.hipass_do = strip(strsplit(options.hipass_do, ','));
+options.lopass_do = strip(strsplit(options.lopass_do, ','));
 
 % ======================================================
 %                          ----> prepare basic variables
@@ -774,14 +793,48 @@ file_croot  = strcat(sessionf, ['/images' options.img_suffix '/functional' optio
 file_cfroot = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat eroot]);       % missing options.concname  before eroot
 file_sconc  = [file_cfroot variant '.conc'];
 % ======================================================
-%                       ----> are we doing coefficients?
+%   ----> are we doing coefficients? [deprecated -> see glm_results options]
 
-docoeff = false;
+do_coeff = false;
 if strfind(doIt, 'c')
-    docoeff = true;
+    do_coeff = true;
     doIt = strrep(doIt, 'c', '');
 end
 
+% ======================================================
+%   ----> are we doing coefficient statistics?
+
+if strfind(options.glm_results, 'c')
+    do_coeff = true;
+end
+
+do_zscores = false;
+if strfind(options.glm_results, 'z')
+    do_zscores = true;
+end
+
+do_pvals = false;
+if strfind(options.glm_results, 'p')
+    do_pvals = true;
+end
+
+do_stderrors = false;
+if strfind(options.glm_results, 'se')
+    do_stderrors = true;
+end
+
+do_residuals = false;
+if strfind(options.glm_results, 'r')
+    do_residuals = true;
+end
+
+if strfind(options.glm_results, 'all')
+    do_coeff = true;
+    do_zscores = true;
+    do_pvals = true;
+    do_stderrors = true;
+    do_residuals = true;
+end
 
 % ======================================================
 %                  ---> deal with nuisance and scrubbing
@@ -815,6 +868,8 @@ for b = 1:nbolds
         nframes = general_get_image_length([file(b).froot tail]);
         frames(b) = nframes;
         nuisance(b).nframes = nframes;
+        nuisance(b).mov     = zeros(nframes, 6);
+        nuisance(b).nmov    = size(nuisance(b).mov,2);
     end
 
     %   ----> do scrubbing anew if needed!
@@ -854,16 +909,20 @@ for b = 1:nbolds
 
     %   ----> lets setup nuisances!
 
-    if strfind(doIt, 'r') && any(~ismember(rgss, {'1d', 'e', 't', 'm'}));
-
-        % ---> signal nuisance
+    if strfind(doIt, 'r') && ~isempty(setdiff(rgss, {'1d', 'n1d', 'e', 't', 'm', 'm1d', 'mSq', 'm1dSq'}));
+        % ---> load nuisance signal  file
 
         [nuisance(b).signal nuisance(b).signal_hdr] = general_read_table(file(b).nuisance);
-        nuisance(b).nsignal = size(nuisance(b).signal,2);
+        nuisance(b).nsignal = size(nuisance(b).signal, 2);
     else
+        % ---> prepare empty nuisance
         nuisance(b).signal = [];
         nuisance(b).signal_hdr = {};
         nuisance(b).nsignal = 0;
+
+        if any(ismember({'1d', 'n1d'}, rgss))
+            % print a warning
+        end
     end
 
 end
@@ -892,6 +951,7 @@ if strfind(doIt, 'r')
 
         if isempty(task)
             nuisance(b).task  = [];
+            nuisance(b).ntask = 0;
         else
             nuisance(b).task  = task(bstart:bend, :);
             nuisance(b).ntask = size(task, 2);
@@ -921,6 +981,7 @@ if strfind(doIt, 'r')
     if strfind(doIt, 'r1'), rtype = 1; end
     if strfind(doIt, 'r2'), rtype = 2; end
 end
+
 
 
 
@@ -986,7 +1047,7 @@ for b = 1:nbolds
     img(b) = nimage();
 end
 
-dor      = true;
+dor = ~isempty(strfind(doIt, 'r'));
 fprintf('--> starting the loop\n')
 
 for current = char(doIt)
@@ -1073,15 +1134,15 @@ for current = char(doIt)
 
                         end
                     case 'h'
-                        tmpi = readIfEmpty(img(b), file(b).sfile, omit);
-                        hpsigma = ((1/TR)/options.hipass_filter)/2;
-                        tmpi = tmpi.img_filter(hpsigma, 0, omit, true, ignore.hipass);
-                        img(b) = tmpi;
+                        tmpi    = readIfEmpty(img(b), file(b).sfile, omit);
+                        hpsigma = ((1/tr)/options.hipass_filter)/2;
+                        tmpi    = tmpi.img_filter(hpsigma, 0, omit, true, ignore.hipass);
+                        img(b)  = tmpi;
                     case 'l'
-                        tmpi = readIfEmpty(tmpi, file(b).sfile, omit);
-                        lpsigma = ((1/TR)/options.lopass_filter)/2;
-                        tmpi = tmpi.img_filter(0, lpsigma, omit, true, ignore.lopass);
-                        img(b) = tmpi;
+                        tmpi    = readIfEmpty(img(b), file(b).sfile, omit);
+                        lpsigma = ((1/tr)/options.lopass_filter)/2;
+                        tmpi    = tmpi.img_filter(0, lpsigma, omit, true, ignore.lopass);
+                        img(b)  = tmpi;
                 end
 
                 if ~img(b).empty
@@ -1095,19 +1156,20 @@ for current = char(doIt)
             if dor
                 switch current
                     case 'h'
-                        hpsigma = ((1/TR)/options.hipass_filter)/2;
-                        tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
-                        tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
-                        nuisance(b).signal = tnimg.data';
+                        hpsigma = ((1/tr)/options.hipass_filter)/2;
+                        tnimg = prepare_nuisance(nuisance, b, options.hipass_do);
+                        if ~isempty(tnimg.data)
+                            tnimg = tnimg.img_filter(hpsigma, 0, omit, false, ignore.hipass);
+                            nuisance = extract_nuisance(tnimg, nuisance, b, options.hipass_do);
+                        end
 
                     case 'l'
-                        lpsigma = ((1/TR)/options.lopass_filter)/2;
-                        tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
-                        tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
-                        nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';
-                        nuisance(b).task   = tnimg.data((nuisance(b).nsignal+1):(nuisance(b).nsignal+nuisance(b).ntask),:)';
-                        nuisance(b).events = tnimg.data((nuisance(b).nsignal+nuisance(b).ntask+1):(nuisance(b).nsignal+nuisance(b).ntask+nuisance(b).nevents),:)';
-                        nuisance(b).mov    = tnimg.data(end-nuisance(b).nmov:end,:)';
+                        lpsigma = ((1/tr)/options.lopass_filter)/2;
+                        tnimg = prepare_nuisance(nuisance, b, options.lopass_do);
+                        if ~isempty(tnimg.data)
+                            tnimg = tnimg.img_filter(0, lpsigma, omit, false, ignore.lopass);
+                            nuisance = extract_nuisance(tnimg, nuisance, b, options.lopass_do);
+                        end
                 end
             end
         end
@@ -1130,10 +1192,36 @@ for current = char(doIt)
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
             fprintf('\n---> running GLM ');
-            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            if ~(do_zscores || do_pvals || do_stderrors)
+            	[img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            	if do_coeff
+                	cname = [file_croot ext '_Bcoeff' tail];
+	                fprintf('\n---> saving %s ', cname);
+	                coeff.img_saveimage(cname);
+	                fprintf('... done!');
+            	end
+            else
+            	[img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            	cname = [file_croot ext '_Bcoeff' tail];
+                fprintf('\n---> saving %s ', cname);
+                if do_coeff
+                    coeff.img_saveimage([file_croot ext '_Bcoeff' tail]);
+                end
+                if do_stderrors
+                    coeffstats.B_se.img_saveimage([file_croot ext '_Bcoeff_stderrors' tail]);
+                end
+                if do_zscores
+                    coeffstats.B_z.img_saveimage([file_croot ext '_Bcoeff_zscores' tail]);
+                end
+                if do_pvals
+                    coeffstats.B_pval.img_saveimage([file_croot ext '_Bcoeff_pvals' tail]);
+                end
+
+                fprintf('... done!');
+            end
             fprintf('... done!');
 
-            if strcmp(options.glm_residuals, 'save')
+            if strcmp(options.glm_residuals, 'save') || do_residuals
                 for b = 1:nbolds
                     fprintf('\n---> saving %s ', file(b).tfile);
                     img(b).img_saveimage(file(b).tfile);
@@ -1143,13 +1231,6 @@ for current = char(doIt)
             else
                 fprintf('\n---> not saving residuals (glm_residuals set to %s)', options.glm_residuals);
                 saveconc = false;
-            end
-
-            if docoeff
-                cname = [file_croot ext '_Bcoeff' tail];
-                fprintf('\n---> saving %s ', cname);
-                coeff.img_saveimage(cname);
-                fprintf('... done!');
             end
         end
         dor = false;
@@ -1183,7 +1264,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot, rmodel, file_sconc)
+function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot, rmodel, file_sconc)
 
     % ---> basic settings
 
@@ -1640,7 +1721,16 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     % fprintf('\n -> mask %d', sum(nmask==1));
     % fprintf(xevents);
     X = X(nmask==1, :);
-    [coeff res] = Y.img_glm_fit(X);
+
+    if nargout > 2
+    	[coeff, res, rvar, ~, B_se, B_z, B_pval] = Y.img_glm_fit(X);
+        coeffstats.B_se = B_se;
+        coeffstats.B_z = B_z;
+        coeffstats.B_pval = B_pval;
+        coeffstats.res = res;
+    else
+    	[coeff res] = Y.img_glm_fit(X);
+    end
     coeff = [coeff Y.img_stats({'m', 'sd'})];
 
     %   ----> put data back into images
@@ -1672,19 +1762,71 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 return
 
 
+% ======================================================
+%                   ----> prepare nuisance for filtering
+%
 
+function [img] = prepare_nuisance(nuisance, bold, dofilter)
+    data      = [];
+    filtering = {};
+
+    fprintf('\n     --> filtering also: ');
+    for f = dofilter 
+        switch f{1}
+            case 'nuisance'
+                filtering{end+1} = 'nuisance signal';
+                data = [data nuisance(bold).signal];
+            case 'movement'
+                filtering{end + 1} = 'movement data';
+                data = [data nuisance(bold).mov];
+            case 'task'
+                filtering{end+1} = 'task regressors';
+                data = [data nuisance(bold).task];
+            case 'events'
+                filtering{end+1} = 'event regressors';
+                data = [data nuisance(bold).events];
+        end
+    end
+    fprintf(strjoin(filtering, ', '));
+
+    img = nimage(data');
+    img.use = nuisance(bold).use;
 
 
 % ======================================================
-%                           ----> create temporary image
+%                 ----> extract nuisance after filtering
 %
 
-function [img] = tmpimg(data, use)
+function [nuisance] = extract_nuisance(img, nuisance, bold, dofilter)
+    estart = 0;
+    eend   = 0;
+    data   = img.data';
 
-    img = nimage();
-    img.data = data;
-    img.use  = use;
-    [img.voxels img.frames] = size(data);
+    % Note: The following code works even if the requested nuisance signal
+    %       is empty. In this case eend is not increased and when requesting
+    %       a slice with e.g., data(:,7:6) - eend is smaller than estart -
+    %       matlab returns an empty matrix. Octave the same.
+
+    for f = dofilter
+        switch f{1}
+            case 'nuisance'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).nsignal;
+                nuisance(bold).signal = data(:, estart:eend);
+            case 'movement'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).nmov;
+                nuisance(bold).mov = data(:, estart:eend);
+            case 'task'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).ntask;
+                nuisance(bold).task = data(:, estart:eend);
+            case 'events'
+                estart = eend + 1;
+                eend = eend + nuisance(bold).nevents;
+                nuisance(bold).events = data(:, estart:eend);
+        end
+    end
 
 
 % ======================================================
@@ -1745,9 +1887,6 @@ function [] = wbSmooth(sfile, tfile, file, options)
             fprintf('\n     ... setting PATH to %s', options.wb_command_path);
             setenv('PATH', [options.wb_command_path ':' s]);
         end
-    end
-    if options.omp_threads > 0
-        setenv('OMP_NUM_THREADS', num2str(options.omp_threads));
     end
 
     fprintf('\n     ... smoothing');

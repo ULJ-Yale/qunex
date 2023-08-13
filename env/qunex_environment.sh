@@ -119,7 +119,7 @@ fi
 #  Environment clear and check functions
 # ------------------------------------------------------------------------------
 
-ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXEXTENSIONS QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLGPUDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder FSL_GPU_SCRIPTS FSLGPUBinary EDDYCUDADIR USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT'
+ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXEXTENSIONS QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLBINDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder EDDYCUDA USEOCTAVE QUNEXENV CONDADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT'
 export ENVVARIABLES
 
 # -- Check if inside the container and reset the environment on first setup
@@ -254,7 +254,7 @@ fi
 if [[ -z ${FSLDIR} ]]; then FSLDIR="${TOOLS}/fsl/fsl"; export FSLDIR; fi
 if [[ -z ${FSLCONFDIR} ]]; then FSLCONFDIR="${FSLDIR}/config"; export FSLCONFDIR; fi
 if [[ -z ${FSL_FIXDIR} ]]; then FSL_FIXDIR="${TOOLS}/fsl/fix"; fi
-if [[ -z ${FREESURFERDIR} ]]; then FREESURFERDIR="${TOOLS}/freesurfer/freesurfer-6.0"; export FREESURFERDIR; fi
+if [[ -z ${FREESURFERDIR} ]]; then FREESURFERDIR="${TOOLS}/freesurfer/freesurfer"; export FREESURFERDIR; fi
 if [[ -z ${FreeSurferSchedulerDIR} ]]; then FreeSurferSchedulerDIR="${TOOLS}/freesurfer/FreeSurferScheduler"; export FreeSurferSchedulerDIR; fi
 if [[ -z ${HCPWBDIR} ]]; then HCPWBDIR="${TOOLS}/workbench/workbench"; export HCPWBDIR; fi
 if [[ -z ${AFNIDIR} ]]; then AFNIDIR="${TOOLS}/AFNI/AFNI"; export AFNIDIR; fi
@@ -262,7 +262,6 @@ if [[ -z ${ANTSDIR} ]]; then ANTSDIR="${TOOLS}/ANTs/ANTs/bin"; export ANTSDIR; f
 if [[ -z ${DCMNIIDIR} ]]; then DCMNIIDIR="${TOOLS}/dcm2niix/dcm2niix"; export DCMNIIDIR; fi
 if [[ -z ${DICMNIIDIR} ]]; then DICMNIIDIR="${TOOLS}/dicm2nii/dicm2nii"; export DICMNIIDIR; fi
 if [[ -z ${OCTAVEDIR} ]]; then OCTAVEDIR="${TOOLS}/octave/octave"; export OCTAVEDIR; fi
-if [[ -z ${OCTAVEPKGDIR} ]]; then OCTAVEPKGDIR="${TOOLS}/octave/octavepkg"; export OCTAVEPKGDIR; fi
 if [[ -z ${PYLIBDIR} ]]; then PYLIBDIR="${TOOLS}/pylib"; export PYLIBDIR; fi
 if [[ -z ${FMRIPREPDIR} ]]; then FMRIPREPDIR="${TOOLS}/fmriprep/fmriprep"; export FMRIPREPDIR; fi
 if [[ -z ${MATLABDIR} ]]; then MATLABDIR="${TOOLS}/matlab"; export MATLABDIR; fi
@@ -275,10 +274,7 @@ if [[ -z ${USEOCTAVE} ]]; then USEOCTAVE="FALSE"; export USEOCTAVE; fi
 if [[ -z ${MSMBINDIR} ]]; then MSMBINDIR="$TOOLS/MSM_HOCR_v3"; export MSMBINDIR; fi
 if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/HCP/HCPpipelines"; export HCPPIPEDIR; fi
 if [[ -z ${MSMCONFIGDIR} ]]; then MSMCONFIGDIR=${HCPPIPEDIR}/MSMConfig; export MSMCONFIGDIR; fi
-if [[ -z ${ASLDIR} ]]; then ASLDIR="${HCPPIPEDIR}/hcp-asl"; export ASLDIR; fi
-
-# -- The line below points to the environment expectation if using the 'dev' extended version of HCP Pipelines directly from QuNex repo
-#if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/qunex/hcp"; export HCPPIPEDIR; fi
+if [[ -z ${ASLDIR} ]]; then ASLDIR="${TOOLS}/HCP/hcp-asl"; export ASLDIR; fi
 
 # ------------------------------------------------------------------------------
 # -- License and version disclaimer
@@ -331,9 +327,7 @@ if [ "$USEOCTAVE" == "TRUE" ]; then
         reho " ===> ERROR: Cannot setup Octave because module test failed."
     else
          ln -s `which octave` ${OCTAVEDIR}/octave > /dev/null 2>&1
-         export OCTAVEPKGDIR
          export OCTAVEDIR
-         export OCTAVEBINDIR
          cyaneho " ---> Setting up Octave "; echo ""
          QUNEXMCOMMAND='octave -q --no-init-file --eval'
          if [ ! -e ~/.octaverc ]; then
@@ -377,17 +371,19 @@ export PATH
 # -- add qx python to PYTHONPATH
 export PYTHONPATH=$QUNEXPATH/python
 
-# -- FSL probtrackx2_gpu command path
-FSLGPUDIR=${FSLDIR}/bin
-PATH=${FSLGPUDIR}:${PATH}
-export FSLGPUDIR PATH
-MATLABPATH=$FSLGPUDIR:$MATLABPATH
+# -- FSL bin dir
+FSLBINDIR=${FSLDIR}/bin
+PATH=${PATH}:${FSLBINDIR}
+export FSLBINDIR PATH
+MATLABPATH=$FSLBINDIR:$MATLABPATH
 export MATLABPATH
 
 # -- FreeSurfer path
-unset FSL_DIR
+unset FSL_DIR FSL_BIN
 FREESURFER_HOME=${FREESURFERDIR}
-PATH=${FREESURFER_HOME}:${PATH}
+FREESURFER_BIN=${FREESURFER_HOME}/bin
+FREESURFER_MNI=${FREESURFER_HOME}/mni/bin
+PATH=${FREESURFER_HOME}:${FREESURFER_BIN}:${FREESURFER_MNI}:${PATH}
 export FREESURFER_HOME PATH
 . ${FREESURFER_HOME}/SetUpFreeSurfer.sh > /dev/null 2>&1
 
@@ -395,7 +391,6 @@ export FREESURFER_HOME PATH
 # -- Note: Always run after FreeSurfer for correct environment specification
 #          because SetUpFreeSurfer.sh can mis-specify the $FSLDIR path
 
-PATH=${FSLDIR}/bin:${PATH}
 source ${FSLDIR}/etc/fslconf/fsl.sh > /dev/null 2>&1
 export FSLDIR PATH
 MATLABPATH=$FSLDIR:$MATLABPATH
@@ -440,7 +435,7 @@ PATH=${ANTSDIR}:${PATH}
 export ANTSDIR PATH
 
 # -- dcm2niix path
-DCMNIIBINDIR=${DCMNIIDIR}/build/bin
+DCMNIIBINDIR=${DCMNIIDIR}/bin
 PATH=${DCMNIIDIR}:${DCMNIIBINDIR}:${PATH}
 export DCMNIIDIR PATH
 
@@ -634,10 +629,8 @@ export HCPPIPEDIR_dMRITract=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tr
 export HCPPIPEDIR_dMRITractFull=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
 export HCPPIPEDIR_dMRILegacy=${TOOLS}/${QUNEXREPO}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
-export FSL_GPU_SCRIPTS=${HCPPIPEDIR_dMRITractFull}/fsl_gpu; PATH=${FSL_GPU_SCRIPTS}:${PATH}; export PATH
-export FSLGPUBinary=${QUNEXLIBRARYETC}/fsl_gpu_binaries; PATH=${FSLGPUBinary}:${PATH}; export PATH
-export DEFAULT_CUDA_VERSION="9.1";
-export EDDYCUDADIR=${FSLGPUDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
+export DEFAULT_CUDA_VERSION="10.2";
+export EDDYCUDA=${FSLBINDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
 
 # ------------------------------------------------------------------------------
 # -- Setup ICA FIX paths and variables
@@ -681,6 +674,7 @@ if [[ -e /opt/.container ]]; then
     # matlab runtime
     export MATLAB_COMPILER_RUNTIME=${MATLABDIR}/v93
     export FSL_FIX_MCRROOT=${MATLABDIR}
+    export FSL_FIX_MCR=${MATLAB_COMPILER_RUNTIME}
     export LD_LIBRARY_PATH=/opt/matlab/v93/runtime/glnxa64:/opt/matlab/v93/bin/glnxa64:/opt/matlab/v93/sys/os/glnxa64:${LD_LIBRARY_PATH}
 
     # add CUDA stuff to PATH and LD_LIBRARY_PATH
@@ -707,3 +701,6 @@ export CONDABIN PATH
 
 # activate qunex
 source activate $QUNEXENV 2> /dev/null
+
+# set prompt
+PS1="($(basename $CONDA_PREFIX)) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "

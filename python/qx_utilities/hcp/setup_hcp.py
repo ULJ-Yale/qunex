@@ -47,6 +47,16 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
     preprocessing workflow.
 
     Parameters:
+        --sessionsfolder (str, default '.'):
+            The sessions folder where all the sessions are to be mapped to. It
+            should be a folder within the <study folder>.
+
+        --sessions (str, default ''):
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Regular
+            expression patterns can be used. If provided, only sessions from the
+            list of sessions will be processed.
+
         --sourcefolder (str, default '.'):
             The base session folder that contains the nifti images and
             session.txt file.
@@ -214,7 +224,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             default). Optional `filter` and `sessionids` parameters can be used
             to filter sessions or limit them to just specified id codes. (for
             more information see online documentation). `sourcefolder` will be
-            filled in automatically as each sessions's folder. Commands will
+            filled in automatically as each session's folder. Commands will
             run in parallel, where the degree of parallelism is determined by
             `parsessions` (1 by default).
 
@@ -230,12 +240,28 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             logs should be stored. Otherwise the processor will make best
             guess, where the logs should go.
 
+            Do note that as this command only performs file mapping and no
+            image or file processing, the best performance might be achieved by
+            running on a single node and a single core.
+
     Examples:
-        ::
+        Simple example for preparing a single session::
 
             qunex setup_hcp \\
-                --sourcefolder=OP316 \\
-                --sourcefile=session.txt
+                --sourcefolder="/<study_folder>/sessions/<session_id>"
+
+        An example for preparing multiple sessions for HCP processing
+        simultaneously::
+
+            qunex setup_hcp \\
+                --sessionsfolder=/<study_folder>/sessions \\
+                --sessions="<session_id_1>,<session_id_2>"
+
+        To run setup_hcp for all sessions in the batch file use::
+
+            qunex setup_hcp \\
+                --sessionsfolder="/<study_folder>/sessions" \\
+                --batchfile="/<study_folder>/processing/batch.txt"
     """
 
     print("Running setup_hcp\n================")

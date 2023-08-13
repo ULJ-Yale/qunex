@@ -12,7 +12,6 @@
 
 # -------------------------> General HCP settings
 
-_hcp_pipeline           : ${HCPPIPEDIR}
 _hcp_processing_mode    : LegacyStyleData # For HCP compliant data set to ==> HCPStyleData
 
 # ---> Pre FreeSurfer
@@ -32,10 +31,6 @@ _hcp_sephasepos         : NONE
 _hcp_seechospacing      : NONE
 _hcp_seunwarpdir        : NONE
 _hcp_biascorrect_t1w    : YES
-
-# ---> FreeSurfer
-
-_hcp_freesurfer_home    : ${FREESURFER_HOME}
 
 # ---> Post FreeSurfer
 

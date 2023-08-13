@@ -1,0 +1,26 @@
+session: 123_1
+subject: 123
+bids: /data/123_1/bids
+raw_data: /data/123_1/nii
+hcp: /data/123_1/hcp
+hcpready: true
+1   :T1w             :T1w ce-corrected: se(1)
+2   :                :T1w ce-uncorrected
+3   :T2w             :T2w ce-corrected: se(1)
+4   :                :FLAIR
+5   :SE-FM-AP        :epi dir-AP acq-dwi: se(1)
+6   :SE-FM-PA        :epi dir-PA acq-dwi: se(1)
+7   :SE-FM-AP        :epi dir-AP acq-func: se(2)
+8   :SE-FM-PA        :epi dir-PA acq-func: se(2)
+9   :SE-FM-AP        :epi dir-AP acq-task: se(3)
+10  :SE-FM-PA        :epi dir-PA acq-task: se(3)
+11  :boldref1:task1  :sbref task1: se(3): phenc(AP)
+12  :bold1:task1     :bold task1: se(3): phenc(AP)
+13  :boldref2:task2  :sbref task2: se(3): phenc(AP)
+14  :bold2:task2     :bold task2: se(3): phenc(AP)
+15  :boldref3:task3  :sbref task3: se(3): phenc(AP)
+16  :bold3:task3     :bold task3: se(3): phenc(AP)
+17  :boldref4:rest   :sbref rest: se(2): phenc(AP)
+18  :bold4:rest      :bold rest: se(2): phenc(AP)
+19  :DWI:dirxx_AP    :dwi: se(1)
+20  :DWI:dirxx_AP    :dwi: se(1)

@@ -68,8 +68,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     Example settings strings::
 
-        "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
-        "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=anticevic"
+        "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
+        "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=week"
 
     Optional parameters
     -------------------
@@ -221,13 +221,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     ::
 
         qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
 
     ::
 
         qunex schedule command="bet {{in}} {{out}}" \\
                        replace="in:t1.nii.gz|out:brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
+                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week" \\
                        workdir="/studies/WM/sessions/AP23791/images/structural"
     """
 

@@ -29,7 +29,7 @@ Session=`getopt1 "--session" $@`                 # "$2" #SessionID
 LowResMesh=`getopt1 "--lowresmesh" $@`  # "$3" #DownSampled number of CIFTI vertices
 DiffusionResolution=`getopt1 "--diffresol" $@`   # "$4" #Diffusion Resolution in mm
 
-Caret7_Command="$WORKBENCHDIR/wb_command"
+Caret7_Command="wb_command"
 
 #NamingConventions and Paths
 trajectory="Whole_Brain_Trajectory"

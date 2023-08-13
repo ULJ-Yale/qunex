@@ -79,7 +79,7 @@ Parameters:
         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
         relevant options e.g. for SLURM the string would look like this::
 
-            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
 Examples:
     ::
@@ -116,7 +116,6 @@ configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 StudyFolder=$1
 Session=$2
 MSMflag=$3
-LogFile=$4
 
 WholeBrainTrajectoryLabels=${configdir}/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
 LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt 
@@ -167,7 +166,7 @@ if [[ -s "${ResultsFolder}/pial.R.asc" ]]; then
     exit 0
 else
     echo ""
-    reho "ERROR: dwi_probtracx_dense_gpu run did not complete successfully"
+    reho "ERROR: dwi_pre_tractography run did not complete successfully"
     echo ""
     exit 1
 fi

@@ -33,7 +33,7 @@ FreeSurferLabels=`getopt1 "--freesurferlabels" $@`
 LowResMesh=`getopt1 "--lowresmesh" $@`
 MSMflag=`getopt1 "--msmflag" $@`
 
-Caret7_Command="$HCPWBDIR/bin_rh_linux64/wb_command"
+Caret7_Command="wb_command"
 
 #NamingConventions
 MNIFolder="MNINonLinear"

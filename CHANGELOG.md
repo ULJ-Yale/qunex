@@ -6,12 +6,75 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.3
+
+* Fixed a bug that crashed `preprocess_conc` and `preprocess_bold` with some parameter configurations.
+* `import_dicom` is now capable of onboarding data folders that contain multiple compressed sessions or compressed files that contain multiple session within them.
+* `import_bids` now acknowledges data from supporting JSON files.
+* `map_hcp_data` now acknowledges the `hcp_bold_res` parameter.
+* Added meaningful error messages at several locations where QuNex previously just crashed with a very technical message.
+* Updated `hcp_asl` version and added version reporting to QX environment status.
+* Added support to the `hcp_asl` parameter `stages` through `hcp_asl_stages`.
+
+## 0.98.2
+
+* Updated `hcp_asl` to the latest version.
+* `hcp_diffusion` now prints an error if there are no pos/neg pairs insted of crashing.
+* Optimized speed of `dwi_parcellate`.
+* `create_batch` now replaces an existing session when using `append` mode.
+* Fixed an issue where QuNex was using some unavailable Octave functions in analysis commands.
+* `omp_threads` parameter is now used globally for setting parallelism for `wb_command`.
+
+## 0.98.1
+
+* Added statistics package back to Octave in the container, required for `preprocess_bold` and `preprocess_conc`.
+* You can now merge of multiple DWI images before running `dwi_legacy_gpu`.
+* You can now run manual bash scripts through `qunex_container`.
+* You can change the data that gets used for `dwi_dtifit` (previously you could change only bvals and bvecs).
+
+## 0.98.0
+
+* Optimized DWI pipelines, all commands now support newer GPUs and `nogpu` processing for systems without an NVIDIA graphics card.
+* Added the fucionality to GLM modelling that allows to generate the output image with standard errors of each coefficient along with GLM beta coefficients.
+* Optimized Philips and GE scanner support in `hcp_pre_freesurfer`.
+* All HCP Pipelines parameters are now accessible to QuNex, added documentation for all of them and made the documentation consistent across commands.
+* `fc_preprocess` and `fc_preprocess_conc` can now be executed without regression, only with filtering.
+* Location of HCP Pipelines is now always read from the system HCPPIPEDIR variable.
+* Added the ability to assign manual spin echo and fieldmap numbers to images in mapping files.
+* QuNex will now print a warning if `hcp_diffusion` echo spacing parameter has a value that is larger or smaller than expected.
+* Fixed a bug where some commands did not work properly if both `batchfile` and `sessions` parameters are used.
+* All `dwi_dtifit` parameters are now properly acknowledged.
+* `create_list` and `create_conc` now use the same log folder structure as other commands.
+* Fixed a bug in `hcp_reapply_fix` where the `overwrite` parameter was not acknowledged.
+* Improved several command examples in documentation.
+
+## 0.97.3
+
+* Fixed the parametrization of `hcp_icafix` and `hcp_msmall` to reflect the latest changes in HCP Pipelines.
+
+## 0.97.2
+
+* Fixed the default CUDA version for `hcp_diffusion`, required by the latest FSL version.
+
+## 0.97.1
+
+* In `fc_preprocess`, when motion was not included as a regressor, `.mov` files were not read, but the data was still referenced later in the code. This interaction is now resolved.
+* Fixed a bug where `fc_process` could sometime create an invalid GLM table.
+* Fixed a bug where FSL's `imrm` did not remove some images which caused `hcp_diffusion` to crash.
+
 ## 0.97.0
 
 * Improved the documentation at several locations.
 * Added the ability to create slice timing files when preparing data for HCP pipelines using the setup_hcp command.
-* Upgraded FSL to 6.0.6.1.
+* Upgraded FSL to 6.0.6.2.
 * Optimization of parameter parsing for hcp_icafix.
+* Fixed the use of TR parameter in some cases.
+* Consistent scheduler parameter specification in documentation.
+* import_hcp can now import DWI beyond dir98 and dir99.
+
+## 0.96.3
+
+* Fixed a bug where `hcp_reapply_fix` did not properly overwrite previous results.
 
 ## 0.96.2
 
@@ -60,7 +123,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.94.13
 
-* hcp_asl now properly reads SE pairs. 
+* hcp_asl now properly reads SE pairs.
 
 ## 0.94.12
 
@@ -98,7 +161,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.94.5
 
-* Missing `EDDYCUDADIR` was reported erroneously inside the container.
+* Missing `EDDYCUDA` was reported erroneously inside the container.
 * `qunex_container` with PBS now supports the `select` flag.
 * Fixed a backwards compatibility and a stability issue with `qunex_continer`.
 * Update FSL verision in the container.
@@ -127,7 +190,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Fixed a bug in `extract_roi` that caused the command to crash in some cases.
 * Improved and optimised the mapping file logic.
 * Logic for filtering sessions is now consistent across the whole suite.
-* Added mice preprocessing pipelines. 
+* Added mice preprocessing pipelines.
 
 ## 0.93.8
 
@@ -221,7 +284,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.91.6 (2021-06-08)
 
-*  Optimized `dwi_probtrackx_dense_gpu` so it is now more robust and zips additional files at the end.
+* Optimized `dwi_probtrackx_dense_gpu` so it is now more robust and zips additional files at the end.
 * Squashed some minor bugs that arose when transitioning from Python 2 to 3.
 * Fixed a bug when echospacing was not printed correctly in batch files.
 

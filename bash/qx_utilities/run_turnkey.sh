@@ -312,63 +312,70 @@ Parameters:
         Only set if general_plot_bold_timeseries is requested.
 
 Notes:
+    A complete list of commands that can be used with turnkey:
+
+    * create_study
+    * map_raw_data
+    * import_dicom
+    * run_qc_rawnii
+    * create_session_info
+    * setup_hcp
+    * create_batch
+    * export_hcp
+    * hcp_pre_freesurfer
+    * hcp_freesurfer
+    * hcp_post_freesurfer
+    * run_qc_t1w
+    * run_qc_t2w
+    * run_qc_myelin
+    * hcp_fmri_volume
+    * hcp_fmri_surface
+    * run_qc_bold
+    * hcp_diffusion
+    * run_qc_dwi
+    * dwi_legacy_gpu
+    * dwi_eddy_qc
+    * run_qc_dwi_eddy
+    * dwi_dtifit
+    * run_qc_dwi_dtifit
+    * dwi_bedpostx_gpu
+    * run_qc_dwi_process
+    * run_qc_dwi_bedpostx
+    * dwi_probtrackx_dense_gpu
+    * dwi_pre_tractography
+    * dwi_parcellate
+    * dwi_seed_tractography_dense
+    * run_qc_custom
+    * map_hcp_data
+    * create_bold_brain_masks
+    * compute_bold_stats
+    * create_stats_report
+    * extract_nuisance_signal
+    * preprocess_bold
+    * preprocess_conc
+    * general_plot_bold_timeseries
+    * parcellate_bold
+    * parcellate_bold
+    * compute_bold_fc_seed
+    * compute_bold_fc_gbc
+    * run_qc_bold_fc.
+
     List of Turnkey Steps:
         Most turnkey steps have exact matching qunex commands with several
         exceptions that fall into two categories:
 
-        * `map_raw_data`  step is only relevant to `run_turnkey`, which maps
+        * ``map_raw_data``  step is only relevant to `run_turnkey`, which maps
           files on a local filesystem or in XNAT to the study folder.
-        * `run_qc*` and `compute_bold_fc*`  are two groups of turnkey steps that
+        * ``run_qc*`` and `compute_bold_fc*`  are two groups of turnkey steps that
           have qunex commands as their prefixes. The suffixes of these commands
           are options of the corresponding qunex command.
 
-        A complete list of turnkey commands:
+    Tracking progress:
+        Progress can be tracked by keeping track of the standard out and by log files generated in:
 
-        * create_study
-        * map_raw_data
-        * import_dicom
-        * run_qc_rawnii
-        * create_session_info
-        * setup_hcp
-        * create_batch
-        * export_hcp
-        * hcp_pre_freesurfer
-        * hcp_freesurfer
-        * hcp_post_freesurfer
-        * run_qc_t1w
-        * run_qc_t2w
-        * run_qc_myelin
-        * hcp_fmri_volume
-        * hcp_fmri_surface
-        * run_qc_bold
-        * hcp_diffusion
-        * run_qc_dwi
-        * dwi_legacy_gpu
-        * dwi_eddy_qc
-        * run_qc_dwi_eddy
-        * dwi_dtifit
-        * run_qc_dwi_dtifit
-        * dwi_bedpostx_gpu
-        * run_qc_dwi_process
-        * run_qc_dwi_bedpostx
-        * dwi_probtrackx_dense_gpu
-        * dwi_pre_tractography
-        * dwi_parcellate
-        * dwi_seed_tractography_dense
-        * run_qc_custom
-        * map_hcp_data
-        * create_bold_brain_masks
-        * compute_bold_stats
-        * create_stats_report
-        * extract_nuisance_signal
-        * preprocess_bold
-        * preprocess_conc
-        * general_plot_bold_timeseries
-        * parcellate_bold
-        * parcellate_bold
-        * compute_bold_fc_seed
-        * compute_bold_fc_gbc
-        * run_qc_bold_fc.
+        ``${WORK_DIR}/${STUDY_NAME}/processing/logs/runlogs/``
+
+        ``${WORK_DIR}/${STUDY_NAME}/processing/logs/comlogs/``
 
 Examples:
     Run directly via::
@@ -392,7 +399,7 @@ Examples:
 
     For SLURM scheduler the string would look like this via the qunex call::
 
-        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<number_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
 
     ::
 
@@ -546,6 +553,9 @@ SESSIONIDS=`opts_GetOpt "--sessionids" "$@"`
 if [ -z "$SESSIONIDS" ]; then
     SESSIONIDS=`opts_GetOpt "--sessionid" "$@"`
 fi
+if [ -z "$SESSIONIDS" ]; then
+    SESSIONIDS=${CASE}
+fi
 
 OVERWRITE_SESSION=`opts_GetOpt "--overwritesession" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
@@ -559,7 +569,7 @@ BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--paramfile" $@`
 
 # BACKWARDS COMPATIBILITY
 if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; then
-    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile $@`
+    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 fi
 
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
@@ -2507,7 +2517,7 @@ fi
 
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
-           reho " ===> ERROR: ComLog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance test!"
+           reho " ===> ERROR: comlog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance test!"
         fi
         if [ ! -z "${CheckComLog}" ]; then
            geho " ===> run_turnkey acceptance testing found comlog file for ${TURNKEY_STEP} step:"
@@ -3014,7 +3024,7 @@ else
         turnkey_${TURNKEY_STEP}
 
         # -- Generate single session log folders
-        if [ ${TURNKEY_STEP} == "create_study" ]; then
+        if [[ ${TURNKEY_STEP} == "create_study" ]] || [[ ${TURNKEY_STEP} == "create_batch" ]] || [[ ${TURNKEY_STEP} == "create_session_info" ]] || [[ ${TURNKEY_STEP} == "import_dicom" ]]; then
             CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
         else
             CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}*${CASE}*log 2> /dev/null | head -n 1`
@@ -3060,7 +3070,7 @@ else
             geho " ===> run_turnkey acceptance testing ${TURNKEY_STEP} logs for completion."; echo ""
             if [ -z "${CheckComLog}" ]; then
                TURNKEY_STEP_ERRORS="yes"
-               reho " ===> ERROR: ComLog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance testing."
+               reho " ===> ERROR: comlog file for ${TURNKEY_STEP} step not found during run_turnkey acceptance testing."
             fi
             if [ ! -z "${CheckComLog}" ]; then
                geho " ===> run_turnkey acceptance testing found comlog file for ${TURNKEY_STEP} step:"
