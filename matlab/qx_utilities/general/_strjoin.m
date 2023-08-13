@@ -1,6 +1,6 @@
-function [s] = strjoin(list, delim)
+function [s] = _strjoin(list, delim)
 
-%``strjoin(list, delim)``
+%``_strjoin(list, delim)``
 %
 %   Joins array of string cells into a single string using the provided
 %   delimiter.

@@ -668,11 +668,11 @@ for s = 1:nsub
 
         % set up filetype for single images
 
-        if strcmp(y.filetype, '.dtseries')
-            tfiletype = '.dscalar';
-        else
-            tfiletype = y.filetype;
-        end
+    if strcmp(y.filetype, 'dtseries')
+        tfiletype = 'dscalar';
+    else
+        tfiletype = y.filetype;
+    end
 
         % --- loop through sets
 

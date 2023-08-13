@@ -137,10 +137,11 @@ rcodes.gray   = [rcodes.cgray rcodes.subc rcodes.cerc 702];
 
 %   ---- Go on ...
 
-if nargin < 2 || isempty(roi2),     roi2 = 'none';        end
-if nargin < 3 || isempty(check), check = 'warning'; end
-if ~any(strcmpi({'ignore','warning','error'},check))
-    error('\nERROR: Option [%s] for handleUI argument is invalid! Valid options are ''ignore'', ''warning'' and ''error''.\n',check);
+if nargin < 2 || isempty(roi2),     roi2 = 'none';    end
+if nargin < 3 || isempty(check),   check = 'warning'; end
+
+if ~any(strcmpi({'ignore','warning','error'}, check))
+    error('\nERROR: Option [%s] for check argument is invalid! Valid options are ''ignore'', ''warning'' and ''error''.\n', check);
 end
 
 % ----> Read the ROI info
@@ -238,9 +239,9 @@ if isa(roi1, 'nimage')
             if ~any(roi1.data == roicodes1{i}(j))
                 switch lower(check)
                     case 'warning'
-                        warning('\nimg_read_roi: Code [%d] does not exist in %s!\n',roicodes1{i}(j),roif1);
+                        warning('\nimg_read_roi: Code [%d] does not exist in %s!\n',roicodes1{i}(j), roif1);
                     case 'error'
-                        error('\nERROR: Code [%d] does not exist in %s!\n',roicodes1{i}(j),roif1);
+                        error('\nERROR: Code [%d] does not exist in %s!\n',roicodes1{i}(j), roif1);
                 end
             end
         end
@@ -253,9 +254,9 @@ if isa(roi2, 'nimage')
             if ~any(roi2.data == roicodes2{i}(j))
                 switch lower(check)
                     case 'warning'
-                        warning('\nimg_read_roi: Code [%d] does not exist in %s!\n',roicodes2{i}(j),roif2);
+                        warning('\nimg_read_roi: Code [%d] does not exist in %s!\n',roicodes2{i}(j), roif2);
                     case 'error'
-                        error('\nERROR: Code [%d] does not exist in %s!\n',roicodes2{i}(j),roif2);
+                        error('\nERROR: Code [%d] does not exist in %s!\n',roicodes2{i}(j), roif2);
                 end
             end
         end
@@ -288,7 +289,6 @@ if max(sum(img.data > 0, 2)) == 1
     img.frames = 1;
 end
 
-
 % ----> Encode metadata
 
 img.roi.roinames  = roinames;
@@ -301,17 +301,17 @@ img.roi.roifile2  = roif2;
 
 function [codes] = getCodes(s, rcodes)
 
-codes = [];
-s = strtrim(regexp(s, ',', 'split'));
-for n = 1:length(s)
-    if ~isempty(s{n})
-        if min(isstrprop(s{n}, 'digit'))
-            codes = [codes str2num(s{n})];
-        elseif isfield(rcodes, s{n})
-            codes = [codes rcodes.(s{n})];
-        else
-            fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
+    codes = [];
+    s = strtrim(regexp(s, ',', 'split'));
+    for n = 1:length(s)
+        if ~isempty(s{n})
+            if min(isstrprop(s{n}, 'digit'))
+                codes = [codes str2num(s{n})];
+            elseif isfield(rcodes, s{n})
+                codes = [codes rcodes.(s{n})];
+            else
+                fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
+            end
         end
     end
-end
 

@@ -62,19 +62,8 @@ if nargin < 1, error('ERROR: No ROI provided for value extraction!');          e
 % --------------------------------------------------------------
 %                                                       read roi
 
-if isempty(strfind(roif, '.names'))
-    roi    = nimage(roif);
-    roi.roi.roicodes = sort(unique(reshape(roi.data, [], 1)));
-    roi.roi.roicodes = roi.roi.roicodes(roi.roi.roicodes ~= 0);
-    roi.roi.roinames = {};
-    for r = 1:length(roi.roi.roicodes)
-        roi.roi.roinames = [roi.roi.roinames, ['ROI' num2str(roi.roi.roicodes(r))]];
-    end
-else
-    roi = nimage.img_read_roi(roif);
-end
+roi = nimage.img_read_roi(roif);
 roi.data = roi.image2D;
-
 
 % --------------------------------------------------------------
 %                                                   set up stats
@@ -147,7 +136,7 @@ for n = 1:nfiles
         sefs{n}  = strtrim(sefs{n});
         seimg(n) = nimage(sefs{n});
         seimg(n).data = seimg(n).image2D;
-        if vstatsn, sedata{n} = zeros([roi, frames(n), vstatsn]); end
+        if vstatsn, sedata{n} = zeros([nroi, frames(n), vstatsn]); end
         if frames(n) ~= seimg(n).frames
             error('\nERROR: Number of frames in %s does not match number of frames in %s!', sefs{n}, mfs{n});
         end
@@ -185,52 +174,52 @@ for roin = 1:nroi
 
                 tvdata = mimg(filen).data(rids, framen);
                 if ~isempty(sefs)
-                    tsedata = seimg(filen).data(rids,framen);
+                    tsedata = seimg(filen).data(rids, framen);
                 end
 
                 switch vstats{vstat}
 
                     case 'mean'
-                        vdata{filen}(roin,framen,vstat) = mean(tvdata);
+                        vdata{filen}(roin, framen, vstat) = mean(tvdata);
                         if ~isempty(sefs)
-                            sedata{filen}(roin,framen,vstat) = mean(tsedata);
+                            sedata{filen}(roin, framen, vstat) = mean(tsedata);
                         end
 
                     case 'median'
-                        vdata{filen}(roin,framen,vstat) = median(tvdata);
+                        vdata{filen}(roin, framen, vstat) = median(tvdata);
                         if ~isempty(sefs)
-                            sedata{filen}(roin,framen,vstat) = median(tsedata);
+                            sedata{filen}(roin, framen, vstat) = median(tsedata);
                         end
 
                     case 'min'
-                        vdata{filen}(roin,framen,vstat) = min(tvdata);
+                        vdata{filen}(roin, framen, vstat) = min(tvdata);
                         if ~isempty(sefs)
-                            sedata{filen}(roin,framen,vstat) = tsedata(find(tvdata==vdata{filen}(roin,framen,vstat), 'first'));
+                            sedata{filen}(roin, framen, vstat) = tsedata(find(tvdata==vdata{filen}(roin, framen, vstat), 'first'));
                         end
 
                     case 'max'
-                        vdata{filen}(roin,framen,vstat) = max(tvdata);
+                        vdata{filen}(roin, framen, vstat) = max(tvdata);
                         if ~isempty(sefs)
-                            sedata{filen}(roin,framen,vstat) = tsedata(find(tvdata==vdata{filen}(roin,framen,vstat), 'first'));
+                            sedata{filen}(roin, framen, vstat) = tsedata(find(tvdata==vdata{filen}(roin, framen, vstat), 'first'));
                         end
 
                     case 'peak'
                         tmin = min(tvdata);
                         tmax = max(tvdata);
                         if abs(tmax) > abs(tmin)
-                            vdata{filen}(roin,framen,vstat) = tmax;
+                            vdata{filen}(roin, framen, vstat) = tmax;
                         else
-                            vdata{filen}(roin,framen,vstat) = tmin;
+                            vdata{filen}(roin, framen, vstat) = tmin;
                         end
                         if ~isempty(sefs)
-                            sedata{filen}(roin,framen,vstat) = tsedata(find(tvdata==vdata{filen}(roin,framen,vstat), 'first'));
+                            sedata{filen}(roin, framen, vstat) = tsedata(find(tvdata==vdata{filen}(roin, framen, vstat), 'first'));
                         end
 
                     case 'rmin'
-                        vldata{filen}(roin,framen,vstat,:) = getXYZ(rids(find(tvdata==min(tvdata), 'first')), dim);
+                        vldata{filen}(roin, framen, vstat,:) = getXYZ(rids(find(tvdata==min(tvdata), 'first')), dim);
 
                     case 'rmax'
-                        vldata{filen}(roin,framen,vstat,:) = getXYZ(rids(find(tvdata==max(tvdata), 'first')), dim);
+                        vldata{filen}(roin, framen, vstat,:) = getXYZ(rids(find(tvdata==max(tvdata), 'first')), dim);
 
                     case 'rpeak'
                         tmin = min(tvdata);
@@ -240,7 +229,7 @@ for roin = 1:nroi
                         else
                             tpeak = tmin;
                         end
-                        vldata{filen}(roin,framen,vstat,:) = getXYZ(rids(find(tvdata==tpeak, 'first')), dim);
+                        vldata{filen}(roin, framen, vstat,:) = getXYZ(rids(find(tvdata==tpeak, 'first')), dim);
                 end
             end
         end

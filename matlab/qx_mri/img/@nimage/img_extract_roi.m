@@ -15,8 +15,8 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 %
 %                 - 'mean'      ... average value of the ROI
 %                 - 'median'    ... median value across the ROI
-%	              - 'max'       ... median value across the ROI
-%	              - 'min'       ... median value across the ROI
+%	              - 'max'       ... maximum value across the ROI
+%	              - 'min'       ... minimum value across the ROI
 %                 - 'pca'       ... first eigenvariate of the ROI
 %                 - 'threshold' ... average of all voxels above threshold
 %                 - 'maxn'      ... average of highest n voxels
