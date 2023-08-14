@@ -603,16 +603,7 @@ echo ""
                 fi
             
                 # -- Define final variable set
-                if [[ ${BIDSFormat} == "yes" ]]; then
-                    # -- Setup CASE without the 'MR' prefix in the XNAT_SESSION_LABEL
-                    #    Eventually deprecate once fixed in XNAT
-                    CASE="${XNAT_SESSION_LABEL_HOST}"
-                    CASE=`echo ${CASE} | sed 's|MR||g'`
-                    echo " -- Note: --bidsformat='yes' " 
-                    echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for QuNex run: ${CASE}"
-                    echo ""
-                else
-                    CASE="${XNAT_SUBJECT_LABEL}"
+                CASE="${XNAT_SUBJECT_LABEL}"
                 fi
             fi
         
