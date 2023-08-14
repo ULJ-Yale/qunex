@@ -14,7 +14,7 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %   Parameters:
 %       --flist (str):
 %           Either a .list file listing the subjects and their files to use, or
-%           a well strucutured file list string (see `general_read_file_list`).
+%           a well structured file list string (see `general_read_file_list`).
 %           The information should include at least `glm:` entries for each
 %           session, as well as raw bold or conc files if residuals are
 %           requested.
@@ -193,52 +193,52 @@ check = 'glm';
 
 if verbose && detailed; fprintf('-> reading file list\n'); end
 
-[sessions, nsessions, nfiles, listname, missing] = general_read_file_list(flist, options.sessions, check, verbose);
+list = general_read_file_list(flist, options.sessions, check, verbose);
 
-if sum(missing.sessions)
+if sum(list.missing.sessions)
     fprintf('WARNING: Sessions with missing fields in file list will not be processed.\n');
-    sessions = sessions(~missing.sessions);
-    nsessions = length(sessions);
+    list.session = list.session(~list.missing.sessions);
+    list.nsessions = length(list.session);
 end
 
 % ------ run prediction loop
 
 if verbose; fprintf('-> processing sessions\n'); end
 
-for s = 1:nsessions
+for s = 1:list.nsessions
     
-    if verbose; fprintf('   ... session id: %s\n', sessions(s).id); end
+    if verbose; fprintf('   ... session id: %s\n', list.session(s).id); end
 
     % -- root path to save results
     if strcmp(options.indtargetf, 'sfolder')
-        targetpath = sprintf('%s/%s/images%s/functional%s/', targetf, sessions(s).id, options.img_suffix, options.bold_variant);
-        targetconcpath = sprintf('%s/%s/images%s/functional%s/concs/', targetf, sessions(s).id, options.img_suffix, options.bold_variant);
+        targetpath = sprintf('%s/%s/images%s/functional%s/', targetf, list.session(s).id, options.img_suffix, options.bold_variant);
+        targetconcpath = sprintf('%s/%s/images%s/functional%s/concs/', targetf, list.session(s).id, options.img_suffix, options.bold_variant);
         if addidtofile
-            targetpath = sprintf('%s%s-', targetpath, sessions(s).id);
-            targetconcpath = sprintf('%s%s-', targetconcpath, sessions(s).id);
+            targetpath = sprintf('%s%s-', targetpath, list.session(s).id);
+            targetconcpath = sprintf('%s%s-', targetconcpath, list.session(s).id);
         end
     else
-        targetpath = sprintf('%s/%s-', targetf, sessions(s).id);
-        targetconcpath = sprintf('%s/%s-', targetf, sessions(s).id);
+        targetpath = sprintf('%s/%s-', targetf, list.session(s).id);
+        targetconcpath = sprintf('%s/%s-', targetf, list.session(s).id);
     end
 
     % -- process files
 
     if verbose && detailed; fprintf('       - reading glm\n'); end
 
-    glm = nimage(sessions(s).glm);
+    glm = nimage(list.session(s).glm);
 
     % -- id extension
 
     extension = extensions{find(ismember(filetypes, glm.filetype))};    
     
     % -- do we have raw files
-    if isfield(sessions(s), 'conc') && ~isempty(sessions(s).conc)
+    if isfield(list.session(s), 'conc') && ~isempty(list.session(s).conc)
         if verbose && detailed; fprintf('       - reading conc file\n'); end
-        raw = nimage(sessions(s).conc);
-    elseif isfield(sessions(s), 'files') && ~isempty(sessions(s).files)
+        raw = nimage(list.session(s).conc);
+    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files)
         if verbose && detailed; fprintf('       - reading raw files\n'); end
-        raw = nimage(strjoin(sessions(s).files, '|'));
+        raw = nimage(strjoin(list.session(s).files, '|'));
     else
         raw = [];
     end

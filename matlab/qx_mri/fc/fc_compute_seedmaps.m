@@ -514,9 +514,9 @@ end
 
 fprintf(' ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, options.sessions, [], verbose);
+list = general_read_file_list(flist, options.sessions, [], verbose);
 
-lname = strrep(listname, '.list', '');
+lname = strrep(list.listname, '.list', '');
 lname = strrep(lname, '.conc', '');
 lname = strrep(lname, '.4dfp', '');
 lname = strrep(lname, '.img', '');
@@ -527,33 +527,33 @@ fprintf(' ... done.\n');
 %                                                The main loop ... go through all the sessions
 
 first_subject = true;
-oksub         = zeros(1, length(session));
+oksub         = zeros(1, length(list.nsessions));
 embed_data    = nargout > 0 || ~isempty(options.savegroup);
 
-for s = 1:nsub
+for s = 1:list.nsessions
 
     go = true;
 
-    if verbose; fprintf('\n---------------------------------\nProcessing session %s', session(s).id); end
+    if verbose; fprintf('\n---------------------------------\nProcessing session %s', list.session(s).id); end
 
     % ---> check roi files
 
-    if isfield(session(s), 'roi')
-        go = go & general_check_file(session(s).roi, [session(s).id ' individual ROI file'], 'error');
-        sroifile = session(s).roi;
+    if isfield(list.session(s), 'roi')
+        go = go & general_check_file(list.session(s).roi, [list.session(s).id ' individual ROI file'], 'error');
+        sroifile = list.session(s).roi;
     else
         sroifile = [];
     end
 
     % ---> check bold files
 
-    if isfield(session(s), 'conc') && ~isempty(session(s).conc) 
-        go = go & general_check_file(session(s).conc, 'conc file', 'error');
-        bolds = general_read_concfile(session(s).conc);
-    elseif isfield(session(s), 'files') && ~isempty(session(s).files) 
-        bolds = session(s).files;
+    if isfield(list.session(s), 'conc') && ~isempty(list.session(s).conc)
+        go = go & general_check_file(list.session(s).conc, 'conc file', 'error');
+        bolds = general_read_concfile(list.session(s).conc);
+    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files) 
+        bolds = list.session(s).files;
     else
-        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', session(s).id);
+        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', list.session(s).id);
         go = false;
     end    
 
@@ -570,11 +570,11 @@ for s = 1:nsub
     elseif isa(frames, 'char')
         frames = str2num(frames);        
         if isempty(frames) 
-            if isfield(session(s), 'fidl')
-                go = go & general_check_file(session(s).fidl, [session(s).id ' fidl file'], 'error');
+            if isfield(list.session(s), 'fidl')
+                go = go & general_check_file(list.session(s).fidl, [list.session(s).id ' fidl file'], 'error');
             else
                 go = false;
-                fprintf(' ... ERROR: %s missing fidl file specification!\n', session(s).id);
+                fprintf(' ... ERROR: %s missing fidl file specification!\n', list.session(s).id);
             end
         end
     end
@@ -591,7 +591,7 @@ for s = 1:nsub
     else
         stargetf = targetf;
     end
-    subjectid = session(s).id;
+    subjectid = list.session(s).id;
 
     % ---> run individual session
 
@@ -792,9 +792,9 @@ end
 if ~isempty(options.savegroup)
     if verbose; fprintf('Saving group data ... \n'); end
 
-    for sid = 1:nsub
+    for sid = 1:list.nsessions
         extra(sid).key = ['session ' int2str(sid)];
-        extra(sid).value = session(sid).id;
+        extra(sid).value = list.session(sid).id;
     end
 
     for setid = 1:nsets
@@ -807,8 +807,8 @@ if ~isempty(options.savegroup)
             if verbose; fprintf('    ... for region %s', roiname); end
             
             % -- prepare group fc maps for the ROI
-            fc = fcmaps(setid).fc(1).(fcmeasure).zeroframes(nsub);
-            for sid = 1:nsub
+            fc = fcmaps(setid).fc(1).(fcmeasure).zeroframes(list.nsessions);
+            for sid = 1:list.nsessions
                 fc.data(:, sid) = fcmaps(setid).fc(sid).(fcmeasure).data(:, roiid);
             end
 

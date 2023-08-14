@@ -135,9 +135,9 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, 'all', []);
+list = general_read_file_list(flist, 'all', []);
 
-lname = strrep(listname, '.list', '');
+lname = strrep(list.listname, '.list', '');
 lname = strrep(lname, '.conc', '');
 lname = strrep(lname, '.4dfp', '');
 lname = strrep(lname, '.img', '');
@@ -149,16 +149,16 @@ fprintf(' ... done.');
 %                                                The main loop ... go through all the sessions
 
 
-for n = 1:nsub
+for n = 1:list.nsessions
 
-    fprintf('\n ... processing %s', session(n).id);
+    fprintf('\n ... processing %s', list.session(n).id);
 
     % ---> reading ROI file
 
     fprintf('\n     ... creating ROI mask');
 
-    if isfield(session(n), 'roi')
-        sroifile = session(n).roi;
+    if isfield(list.session(n), 'roi')
+        sroifile = list.session(n).roi;
     else
         sroifile = '';
     end
@@ -170,9 +170,9 @@ for n = 1:nsub
 
     fprintf('\n     ... reading image file(s)');
 
-    y = nimage(session(n).files{1});
-    for f = 2:length(session(n).files)
-        y = [y nimage(session(n).files{f})];
+    y = nimage(list.session(n).files{1});
+    for f = 2:length(list.session(n).files)
+        y = [y nimage(list.session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -181,9 +181,9 @@ for n = 1:nsub
 
     if eventbased
         mask = [];
-        if isfield(session(n), 'fidl')
-            if session(n).fidl
-                mask = general_create_task_regressors(session(n).fidl, y.runframes, inmask, fignore);
+        if isfield(list.session(n), 'fidl')
+            if list.session(n).fidl
+                mask = general_create_task_regressors(list.session(n).fidl, y.runframes, inmask, fignore);
                 mask = mask.run;
                 nmask = [];
                 for r = 1:length(mask)
@@ -247,9 +247,9 @@ for n = 1:nsub
 
         if n == 1
             if cv
-                group(r).cv = roi.zeroframes(nsub);
+                group(r).cv = roi.zeroframes(list.nsessions);
             else
-                group(r).Fz = roi.zeroframes(nsub);
+                group(r).Fz = roi.zeroframes(list.nsessions);
             end
             group(r).roi = roi.roi.roinames{r};
         end
@@ -265,19 +265,19 @@ for n = 1:nsub
         % ----> if needed, save individual images
 
         if ~isempty(strfind(options, 'cv')) && cv
-            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_cov']);   fprintf(' cov');
+            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_cov']); fprintf(' cov');
         end
         if ~isempty(strfind(options, 'r')) && ~cv
-            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_r']);   fprintf(' r');
+            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_r']); fprintf(' r');
         end
         if ~isempty(strfind(options, 'f')) && ~cv
-            group(r).Fz.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_Fz']);   fprintf(' Fz');
+            group(r).Fz.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_Fz']); fprintf(' Fz');
         end
         if ~isempty(strfind(options, 'p')) && ~cv
-            p.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_p']);   fprintf(' p');
+            p.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_p']); fprintf(' p');
         end
         if ~isempty(strfind(options, 'z')) && ~cv
-            z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' session(n).id '_Z']);   fprintf(' Z');
+            z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_Z']); fprintf(' Z');
         end
 
     end
@@ -291,9 +291,9 @@ fprintf('\n\n... computing group results');
 
 for r = 1:nroi
 
-    for s = 1:nsub
+    for s = 1:list.nsessions
         extra(s).key = ['session ' int2str(n)];
-        extra(s).value = session(n).id;
+        extra(s).value = list.session(n).id;
     end
 
     fprintf('\n    ... for region %s', group(r).roi);

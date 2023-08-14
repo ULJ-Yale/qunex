@@ -111,18 +111,16 @@ end
 % --------------------------------------------------------------
 %                                                  read filelist
 
-sessions = general_read_file_list(flist);
-nsub = length(sessions);
-
+list = general_read_file_list(flist);
 
 % --------------------------------------------------------------
 %                             check that glm entries are present
 
 if verbose, fprintf('\n---> checking file list'); end
 allok = true;
-for s = 1:nsub
-    if ~isfield(sessions(s), 'glm')
-        fprintf('\n     WARNING: Session id: %s has no glm file specified!', sessions(s).id);
+for s = 1:list.nsessions
+    if ~isfield(list.session(s), 'glm')
+        fprintf('\n     WARNING: Session id: %s has no glm file specified!', list.session(s).id);
         allok = false;
     end
 end
@@ -137,9 +135,9 @@ end
 
 if verbose, fprintf('\n---> checking file list'); end
 allok = true;
-for s = 1:nsub
-    if ~isfield(sessions(s), 'glm')
-        fprintf('\n     WARNING: Session id: %s has no glm file specified!', sessions(s).id);
+for s = 1:list.nsessions
+    if ~isfield(list.session(s), 'glm')
+        fprintf('\n     WARNING: Session id: %s has no glm file specified!', list.session(s).id);
         allok = false;
     end
 end
@@ -163,9 +161,9 @@ end
 
 % --- setup data holder
 
-if verbose, fprintf('\n---> processing session: %s', sessions(1).id); end
+if verbose, fprintf('\n---> processing session: %s', list.session(1).id); end
 
-glm = nimage(sessions(1).glm);
+glm = nimage(list.session(1).glm);
 sef = glm.glm.effects;
 glm = glm.img_extract_glm_estimates(effects, frames, values);
 effect = sef(glm.glm.effect);
@@ -173,26 +171,26 @@ frame  = glm.glm.frame;
 event  = glm.glm.event;
 
 [nvox nb]     = size(glm.image2D);
-data          = zeros(nvox, nb * (nsub + 5));
+data          = zeros(nvox, nb * (list.nsessions + 5));
 data(:, 1:nb) = glm.image2D;
-session       = repmat({sessions(1).id}, 1, nb);
+session       = repmat({list.session(1).id}, 1, nb);
 
 pt = nb;
 
-for s = 2:nsub
+for s = 2:list.nsessions
 
     % ---> read GLMs
 
-    if verbose, fprintf('\n---> processing session: %s', sessions(s).id); end
+    if verbose, fprintf('\n---> processing session: %s', list.session(s).id); end
 
-    glm = nimage(sessions(s).glm);
+    glm = nimage(list.session(s).glm);
     sef = glm.glm.effects;
     glm = glm.img_extract_glm_estimates(effects, frames, values);
     nb  = size(glm.image2D,2);
     effect  = [effect sef(glm.glm.effect)];
     frame   = [frame glm.glm.frame];
     event   = [event glm.glm.event];
-    session = [session repmat({sessions(s).id}, 1, nb)];
+    session = [session repmat({list.session(s).id}, 1, nb)];
 
     data(:, pt+1:pt+nb) = glm.image2D;
     pt = pt + nb;

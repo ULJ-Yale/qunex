@@ -504,9 +504,9 @@ end
 
 fprintf(' ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, options.sessions, [], verbose);
+list = general_read_file_list(flist, options.sessions, [], verbose);
 
-lname = strrep(listname, '.list', '');
+lname = strrep(list.listname, '.list', '');
 lname = strrep(lname, '.conc', '');
 lname = strrep(lname, '.4dfp', '');
 lname = strrep(lname, '.img', '');
@@ -518,33 +518,33 @@ fprintf(' ... done.\n');
 %                                                The main loop ... go through all the sessions
 
 first_subject = true;
-oksub         = zeros(1, length(session));
+oksub         = zeros(1, length(list.session));
 embed_data    = nargout > 0 || ~isempty(options.savegroup);
 
-for s = 1:nsub
+for s = 1:list.nsessions
 
     go = true;
 
-    if verbose; fprintf('\n---------------------------------\nProcessing session %s', session(s).id); end
+    if verbose; fprintf('\n---------------------------------\nProcessing session %s', list.session(s).id); end
     
     % ---> check roi files
 
-    if isfield(session(s), 'roi')
-        go = go & general_check_file(session(s).roi, [session(s).id ' individual ROI file'], 'error');
-        sroifile = session(s).roi;
+    if isfield(list.session(s), 'roi')
+        go = go & general_check_file(list.session(s).roi, [list.session(s).id ' individual ROI file'], 'error');
+        sroifile = list.session(s).roi;
     else
         sroifile = [];
     end
 
     % ---> check bold files
 
-    if isfield(session(s), 'conc') && ~isempty(session(s).conc) 
-        go = go & general_check_file(session(s).conc, 'conc file', 'error');
-        bolds = general_read_concfile(session(s).conc);
-    elseif isfield(session(s), 'files') && ~isempty(session(s).files) 
-        bolds = session(s).files;
+    if isfield(list.session(s), 'conc') && ~isempty(list.session(s).conc)
+        go = go & general_check_file(list.session(s).conc, 'conc file', 'error');
+        bolds = general_read_concfile(list.session(s).conc);
+    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files) 
+        bolds = list.session(s).files;
     else
-        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', session(s).id);
+        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', list.session(s).id);
         go = false;
     end    
 
@@ -561,11 +561,11 @@ for s = 1:nsub
     elseif isa(frames, 'char')
         frames = str2num(frames);        
         if isempty(frames) 
-            if isfield(session(s), 'fidl')
-                go = go & general_check_file(session(s).fidl, [session(s).id ' fidl file'], 'error');
+            if isfield(list.session(s), 'fidl')
+                go = go & general_check_file(list.session(s).fidl, [list.session(s).id ' fidl file'], 'error');
             else
                 go = false;
-                fprintf(' ... ERROR: %s missing fidl file specification!\n', session(s).id);
+                fprintf(' ... ERROR: %s missing fidl file specification!\n', list.session(s).id);
             end
         end
     end
@@ -582,7 +582,7 @@ for s = 1:nsub
     else
         stargetf = targetf;
     end
-    subjectid = session(s).id;
+    subjectid = list.session(s).id;
 
     % ---> reading image files
 
@@ -602,7 +602,7 @@ for s = 1:nsub
         roi.data = roi.image2D;    
     else
         if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
-            error('ERROR: The bold file lacks parcel specification! [%s]', session(s).id);
+            error('ERROR: The bold file lacks parcel specification! [%s]', list.session(s).id);
         end
         if length(parcels) == 1 && strcmp(parcels{1}, 'all')        
             parcels = y.cifti.parcels;
@@ -699,7 +699,7 @@ for s = 1:nsub
     % set subjectname
 
     if addidtofile
-        subjectname = [session(s).id, '_'];
+        subjectname = [list.session(s).id, '_'];
     else
         subjectname = '';
     end

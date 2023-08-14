@@ -287,9 +287,9 @@ fprintf('\n\nStarting ...\n');
 
 fprintf(' ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, 'all', [], options.verbose);
+list = general_read_file_list(flist, 'all', [], options.verbose);
 
-lname = strrep(listname, '.list', '');
+lname = strrep(list.listname, '.list', '');
 lname = strrep(lname, '.conc', '');
 lname = strrep(lname, '.4dfp', '');
 lname = strrep(lname, '.img', '');
@@ -301,50 +301,50 @@ fprintf(' ... done.\n');
 %                                                The main loop ... go through all the sessions
 
 first_subject = true;
-oksub         = zeros(1, length(session));
+oksub         = zeros(1, list.nsessions);
 
-for n = 1:nsub
+for n = 1:list.nsessions
 
     go = true;
 
-    if options.verbose; fprintf('\n---------------------------------\nProcessing session %s', session(n).id); end
+    if options.verbose; fprintf('\n---------------------------------\nProcessing session %s', list.session(n).id); end
 
     % ---> setting up roidef parameter
 
-    if isfield(session(n), 'roi')
-        go = go & general_check_file(session(n).roi, [session(n).id ' individual ROI file'], 'error');
-        roidef = [roiinfo '|' session(n).roi];
+    if isfield(list.session(n), 'roi')
+        go = go & general_check_file(list.session(n).roi, [list.session(n).id ' individual ROI file'], 'error');
+        roidef = [roiinfo '|' list.session(n).roi];
     else
         roidef = [roiinfo];
     end
 
     % ---> setting up bolds parameter
 
-    if isfield(session(n), 'conc') && ~isempty(session(n).conc) 
-        go = go & general_check_file(session(n).conc, 'conc file', 'error');
-        bolds = [lname '|' session(n).conc];
-        reference_file = general_read_concfile(session(n).conc);
+    if isfield(list.session(n), 'conc') && ~isempty(list.session(n).conc)
+        go = go & general_check_file(list.session(n).conc, 'conc file', 'error');
+        bolds = [lname '|' list.session(n).conc];
+        reference_file = general_read_concfile(list.session(n).conc);
         reference_file = reference_file{1};
-    elseif isfield(session(n), 'files') && ~isempty(session(n).files) 
-        for bold = session(n).files
+    elseif isfield(list.session(n), 'files') && ~isempty(list.session(n).files) 
+        for bold = list.session(n).files
             go = go & general_check_file(bold{1}, 'bold file', 'error');
         end
-        bolds = [lname '|' strjoin(session(n).files, '|')];
-        reference_file = session(n).files{1};
+        bolds = [lname '|' strjoin(list.session(n).files, '|')];
+        reference_file = list.session(n).files{1};
     else
-        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', session(n).id);
+        fprintf(' ... ERROR: %s missing bold or conc file specification!\n', list.session(n).id);
         go = false;
     end
 
     % ---> setting up frames parameter
 
     if isa(frames, 'char')
-        if isfield(session(n), 'fidl')
-            go = go & general_check_file(session(n).fidl, [session(n).id ' fidl file'], 'error');
-            sframes = [session(n).fidl '|' frames];
+        if isfield(list.session(n), 'fidl')
+            go = go & general_check_file(list.session(n).fidl, [list.session(n).id ' fidl file'], 'error');
+            sframes = [list.session(n).fidl '|' frames];
         else
             go = false;
-            fprintf(' ... ERROR: %s missing fidl file specification!\n', session(n).id);
+            fprintf(' ... ERROR: %s missing fidl file specification!\n', list.session(n).id);
         end
     else
         sframes = frames;
@@ -359,14 +359,14 @@ for n = 1:nsub
         options.subjectname = '';
     else
         stargetf = targetf;
-        options.subjectname = session(n).id;
+        options.subjectname = list.session(n).id;
     end
 
     % ---> run individual session
     try
         fcmaps = fc_compute_seedmaps(bolds, roidef, sframes, stargetf, options);
     catch ME
-        fprintf(' ... ERROR: Computation of seed maps for %s failed with error: %s\n', session(n).id, ME.message);
+        fprintf(' ... ERROR: Computation of seed maps for %s failed with error: %s\n', list.session(n).id, ME.message);
         continue
     end
 
@@ -392,7 +392,7 @@ for n = 1:nsub
             % -------> Create data files if it is the first run
 
             if first_subject
-                fcset(s).group(r).fc = fcmaps(s).fc.zeroframes(nsub);                
+                fcset(s).group(r).fc = fcmaps(s).fc.zeroframes(list.nsessions);                
                 fcset(s).group(r).roi = fcmaps(s).roi{r};                
             end
 
@@ -415,9 +415,9 @@ if options.verbose; fprintf('\n---------------------------------\nComputing grou
 
 oksub = oksub == 1;
 
-if sum(oksub) < nsub
-    session = session(oksub);
-    nsub = sum(oksub);
+if sum(oksub) < list.nsessions
+    list.session = list.session(oksub);
+    list.nsessions = sum(oksub);
 
     for s = 1:nset
         for r = 1:nroi
@@ -428,9 +428,9 @@ end
 
 % --- add extra info for files
 
-for s = 1:nsub
+for s = 1:list.nsessions
     extra(s).key = ['session ' int2str(s)];
-    extra(s).value = session(s).id;
+    extra(s).value = list.session(s).id;
 end
 
 % --- save loop
