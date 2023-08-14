@@ -957,12 +957,10 @@ fi
 
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]]; then
-        echo "SESSION RENAME CASE 1"
         SessionsFolder="${STUDY_PATH}/sessions"
         SessionsFolderName="sessions"
     fi
     if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}" ]]; then
-        echo "SESSION RENAME CASE 2"
         SessionsFolder="${STUDY_PATH}/sessions"
         SessionsFolderName="sessions"
     fi
