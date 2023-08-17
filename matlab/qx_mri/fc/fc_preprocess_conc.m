@@ -54,7 +54,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           - 'WM'    ... white matter
 %           - 'WB'    ... whole brains
 %           - 'n1d'   ... first derivative for nuisance signal regressors
-%           - '1d'    ... first derivative for movement and nuisance signal
+%           - '1d'    ... first derivative of specified regressors (movement or nuisance)
 %           - 't'     ... task
 %           - 'e'     ... events.
 %
@@ -490,8 +490,8 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %                       first derivative of requested above nuisance signals
 %                       (V, WM, WB)
 %                   - 1d
-%                       first derivative of both movement regressors and
-%                       specified nuisance signals (V, WM, WB)
+%                       first derivative of specified regressors, movement and
+%                       nuisance signals (V, WM, WB)
 %                   - e
 %                       events listed in the provided fidl files (see above),
 %                       modeled as specified in the event_string parameter.
@@ -855,7 +855,7 @@ for b = 1:nbolds
         [nuisance(b).scrub  nuisance(b).scrub_hdr]  = general_read_table(file(b).oscrub);
     end
 
-    if ismember('m', rgss)
+    if any(ismember(rgss, {'m', 'm1d', 'mSq', 'm1sSq'}))
         [nuisance(b).mov    nuisance(b).mov_hdr]    = general_read_table(file(b).movdata);
 
         nuisance(b).nframes = size(nuisance(b).mov,1);
@@ -869,12 +869,16 @@ for b = 1:nbolds
         nuisance(b).mov     = nuisance(b).mov(:,~ismember(nuisance(b).mov_hdr, me));
         nuisance(b).mov_hdr = nuisance(b).mov_hdr(~ismember(nuisance(b).mov_hdr, me));
         nuisance(b).nmov    = size(nuisance(b).mov,2);
+
+        mov_data_present = true;
     else
         nframes = general_get_image_length([file(b).froot tail]);
         frames(b) = nframes;
         nuisance(b).nframes = nframes;
         nuisance(b).mov     = zeros(nframes, 6);
         nuisance(b).nmov    = size(nuisance(b).mov,2);
+
+        mov_data_present = false;
     end
 
     %   ----> do scrubbing anew if needed!
@@ -919,15 +923,15 @@ for b = 1:nbolds
 
         [nuisance(b).signal nuisance(b).signal_hdr] = general_read_table(file(b).nuisance);
         nuisance(b).nsignal = size(nuisance(b).signal, 2);
+
+        regress_nuisance = true;
     else
         % ---> prepare empty nuisance
         nuisance(b).signal = [];
         nuisance(b).signal_hdr = {};
         nuisance(b).nsignal = 0;
 
-        if any(ismember({'1d', 'n1d'}, rgss))
-            % print a warning
-        end
+        regress_nuisance = false;
     end
 
 end
@@ -985,6 +989,39 @@ if strfind(doIt, 'r')
 
     if strfind(doIt, 'r1'), rtype = 1; end
     if strfind(doIt, 'r2'), rtype = 2; end
+
+	if ~regress_nuisance
+		if any(ismember(rgss, 'n1d'))
+		    fprintf('\nERROR: No nuisance regressors specified while requesting nuisance derivatives!');
+		    error('\nAborting processing!');
+		    idx = find(ismember(rgss, 'n1d'));
+		    rgss(idx) = [];
+		end
+	end
+
+	if any(ismember(rgss, '1d'))
+		if ~mov_data_present && ~regress_nuisance
+		    fprintf('\n---> WARNING: No movement or nuisance data available, skipping derivatives regression!');
+		    idx = find(ismember(rgss, '1d'));
+		    rgss(idx) = [];
+		elseif ~mov_data_present
+		    fprintf('\n---> WARNING: No movement data available, skipping movement derivatives regression!');
+		    idx = find(ismember(rgss, '1d'));
+		    if ~any(ismember(rgss, 'n1d'))
+		        rgss{idx} = 'n1d';
+		    else
+		        rgss(idx) = [];
+		    end
+		elseif ~regress_nuisance
+		    fprintf('\n---> WARNING: No nuisance data available, skipping nuisance derivatives regression!');
+		    idx = find(ismember(rgss, '1d'));
+		    if ~any(ismember(rgss, 'm1d'))
+		        rgss{idx} = 'm1d';
+		    else
+		        rgss(idx) = [];
+		    end
+		end
+	end
 end
 
 
