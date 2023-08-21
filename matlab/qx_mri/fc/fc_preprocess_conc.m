@@ -707,8 +707,8 @@ TS = [];
 doIt = strrep(doIt, ',', '');
 doIt = strrep(doIt, ' ', '');
 
-options.hipass_do = strip(strsplit(options.hipass_do, ','));
-options.lopass_do = strip(strsplit(options.lopass_do, ','));
+options.hipass_do = strtrim(strsplit(options.hipass_do, ','));
+options.lopass_do = strtrim(strsplit(options.lopass_do, ','));
 
 % ======================================================
 %                          ----> prepare basic variables
