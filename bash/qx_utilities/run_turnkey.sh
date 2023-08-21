@@ -3099,25 +3099,25 @@ else
 
     if [ ${TURNKEY_TYPE} == "xnat" ]; then
         geho "---> Cleaning up DICOMs from build directory to save space:"
-        if [[ ${DATAFormat} == "DICOM" ]]; then
-            echo ""
-            geho "     - removing dicom files"
-            # Temp storage for kept files
-            mkdir ${QuNexWorkDir}/dicomtmp
-            #check for logs and move them
-            logCount=`${QuNexWorkDir}/dicom/*.log &>/dev/null | wc -l`
-            if [ $logCount != 0 ]; then
-                mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicomtmp
-            fi
-            #check for txt files and move them
-            logCount=`${QuNexWorkDir}/dicom/*.txt &>/dev/null | wc -l`
-            if [ $logCount != 0 ]; then
-                mv ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
-            fi
-            rm  -rf ${QuNexWorkDir}/dicom &> /dev/null
-            mv ${QuNexWorkDir}/dicomtmp ${QuNexWorkDir}/dicom
-            echo ""
-        fi
+        # if [[ ${DATAFormat} == "DICOM" ]]; then
+        #     echo ""
+        #     geho "     - removing dicom files"
+        #     # Temp storage for kept files
+        #     mkdir ${QuNexWorkDir}/dicomtmp
+        #     #check for logs and move them
+        #     logCount=`${QuNexWorkDir}/dicom/*.log &>/dev/null | wc -l`
+        #     if [ $logCount != 0 ]; then
+        #         mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicomtmp
+        #     fi
+        #     #check for txt files and move them
+        #     logCount=`${QuNexWorkDir}/dicom/*.txt &>/dev/null | wc -l`
+        #     if [ $logCount != 0 ]; then
+        #         mv ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
+        #     fi
+        #     rm  -rf ${QuNexWorkDir}/dicom &> /dev/null
+        #     mv ${QuNexWorkDir}/dicomtmp ${QuNexWorkDir}/dicom
+        #     echo ""
+        # fi
         geho "     - removing stray xml catalog files"
         find ${StudyFolder} -name *catalog.xml -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
 
