@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.4
+
+* Fixed an incompatibility betweeb MATLAB and Octave.
+
 ## 0.98.3
 
 * Fixed a bug that crashed `preprocess_conc` and `preprocess_bold` with some parameter configurations.

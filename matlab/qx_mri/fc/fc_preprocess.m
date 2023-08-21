@@ -643,8 +643,8 @@ options = general_parse_options([], options, default);
 
 general_print_struct(options, 'Options used');
 
-options.hipass_do = strip(strsplit(options.hipass_do, ','));
-options.lopass_do = strip(strsplit(options.lopass_do, ','));
+options.hipass_do = strtrim(strsplit(options.hipass_do, ','));
+options.lopass_do = strtrim(strsplit(options.lopass_do, ','));
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
