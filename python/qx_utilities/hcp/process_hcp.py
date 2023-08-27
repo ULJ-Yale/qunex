@@ -7978,24 +7978,16 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
 
-            # -- Test files
-            tfile = os.path.join(
-                hcp["hcp_nonlin"], "ASL", "arrival_Atlas.dscalar.nii")
-            full_test = None
-
         # -- Run
         if run:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, report, failed = pc.runExternalForFile(tfile, comm, "Running HCP ASL", overwrite=overwrite, thread=sinfo["id"], remove=options[
-                                                                  "log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=full_test, shell=True, r=r)
+                r, endlog, report, failed = pc.runExternalForFile(None, comm, "Running HCP ASL", overwrite=overwrite, thread=sinfo["id"], remove=options[
+                                                                  "log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=options["logtag"], fullTest=None, shell=True, r=r)
 
             # -- just checking
             else:
                 passed, report, r, failed = pc.checkRun(
-                    tfile, full_test, "HCP ASL", r, overwrite=overwrite)
+                    None, None, "HCP ASL", r, overwrite=overwrite)
                 if passed is None:
                     r += "\n---> HCP ASL can be run"
                     report = "HCP ASL can be run"

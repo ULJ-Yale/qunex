@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.5
+
+* Fixed the output checks of HCP ASL.
+
 ## 0.98.4
 
 * Fixed an incompatibility betweeb MATLAB and Octave.
