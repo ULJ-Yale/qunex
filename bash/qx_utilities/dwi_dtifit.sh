@@ -248,35 +248,44 @@ get_options() {
     in_file="${diffusion_folder}/data"
     if [[ -n ${diffdata} ]]; then
         in_file=${diffdata}
+        if [[ ! -f ${in_file} ]]; then
+            in_file=${diffusion_folder}/${in_file}
+        fi
     fi
+    echo "   diffdata: ${in_file}"
 
     out_file=${diffusion_folder}/dti_FA.nii.gz
+    echo "   output: ${out_file}"
 
     # mask
     if [[ -n ${mask} ]]; then
-        echo "   mask: ${mask}"
+        if [[ ! -f ${mask} ]]; then
+            mask=${diffusion_folder}/${mask}
+        fi
     else
         mask=${diffusion_folder}/nodif_brain_mask
     fi
+    echo "   mask: ${mask}"
 
     # bvecs
     if [[ -n ${bvecs} ]]; then
-        echo "   bvecs: ${bvecs}"
+        if [[ ! -f ${bvecs} ]]; then
+            bvecs=${diffusion_folder}/${bvecs}
+        fi
     else
         bvecs=${diffusion_folder}/bvecs
     fi
+    echo "   bvecs: ${bvecs}"
 
     # bvals
     if [[ -n ${bvals} ]]; then
-        echo "   bvals: ${bvals}"
+        if [[ ! -f ${bvals} ]]; then
+            bvals=${diffusion_folder}/${bvals}
+        fi
     else
         bvals=${diffusion_folder}/bvals
     fi
-
-    # diffdata
-    if [[ -n ${diffdata} ]]; then
-        echo "   diffdata: ${diffdata}"
-    fi
+    echo "   bvals: ${bvals}"
 
     # Optional parameters
     optional_parameters=""
@@ -284,7 +293,7 @@ get_options() {
     # cni
     if [[ -n ${cni} ]]; then
         echo "   cni: ${cni}"
-        optional_parameters="${optional_parameters} --cni='${cni}'"
+        optional_parameters="${optional_parameters} --cni=${cni}"
     fi
 
     # sse
@@ -326,45 +335,47 @@ get_options() {
     # zmin
     if [[ -n ${zmin} ]]; then
         echo "   zmin: ${zmin}"
-        optional_parameters="${optional_parameters} --zmin='${zmin}'"
+        optional_parameters="${optional_parameters} --zmin=${zmin}"
     fi
 
     # zmax
     if [[ -n ${zmax} ]]; then
         echo "   zmax: ${zmax}"
-        optional_parameters="${optional_parameters} --zmax='${zmax}'"
+        optional_parameters="${optional_parameters} --zmax=${zmax}"
     fi
 
     # ymin
     if [[ -n ${ymin} ]]; then
         echo "   ymin: ${ymin}"
-        optional_parameters="${optional_parameters} --ymin='${ymin}'"
+        optional_parameters="${optional_parameters} --ymin=${ymin}"
     fi
 
     # ymax
     if [[ -n ${ymax} ]]; then
         echo "   ymax: ${ymax}"
-        optional_parameters="${optional_parameters} --ymax='${ymax}'"
+        optional_parameters="${optional_parameters} --ymax=${ymax}"
     fi
 
     # xmin
     if [[ -n ${xmin} ]]; then
         echo "   xmin: ${xmin}"
-        optional_parameters="${optional_parameters} --xmin='${xmin}'"
+        optional_parameters="${optional_parameters} --xmin=${xmin}"
     fi
 
     # xmax
     if [[ -n ${xmax} ]]; then
         echo "   xmax: ${xmax}"
-        optional_parameters="${optional_parameters} --xmax='${xmax}'"
+        optional_parameters="${optional_parameters} --xmax=${xmax}"
     fi
 
     # gradnonlin
     if [[ -n ${gradnonlin} ]]; then
+        if [[ ! -f ${gradnonlin} ]]; then
+            gradnonlin=${diffusion_folder}/${gradnonlin}
+        fi
         echo "   gradnonlin: ${gradnonlin}"
-        optional_parameters="${optional_parameters} --gradnonlin='${gradnonlin}'"
+        optional_parameters="${optional_parameters} --gradnonlin=${gradnonlin}"
     fi
-
 
     echo "-- ${script_name}: Specified Command-Line Options - End --"
     echo ""
