@@ -6,6 +6,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.98.6
+
+* Improved several aspects of `run_turnkey` when running on XNAT.
+* Fixed the use of `hcp_asl`_stages parameter and updated HCP ASL version.
+* Improved the robustness of `dwi_dtifit`.
+
 ## 0.98.5
 
 * Fixed the output checks of HCP ASL.
