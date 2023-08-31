@@ -7969,7 +7969,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_asl_stages"] is not None:
                 stages = options["hcp_asl_stages"].replace(",", " ")
-                comm += "                --stages=" + stages
+                comm += "                --stages " + stages
 
             # -- Report command
             if run:
