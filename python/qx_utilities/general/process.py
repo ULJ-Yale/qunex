@@ -563,6 +563,10 @@ arglist = [
         "If set will ensure the input images to FSL's topup and eddy have an even number of slices by removing one slice if necessary. This behaviour used to be the default, but is now optional, because discarding a slice is incompatible with using slice-to-volume correction in FSL's eddy."],
     ['hcp_dwi_topupconfig',   '',                                          isNone,
         "A full path to the topup configuration file to use. Set to '' if the default is to be used or of TOPUP distortion correction is not used."],
+    ['hcp_dwi_posdata',   '',                                              isNone,
+        "Overrides the automatic QuNex's setup for the posData HCP pipelines' parameter. Provide a comma separated list of images with pos data."],
+    ['hcp_dwi_negdata',   '',                                              isNone,
+        "Overrides the automatic QuNex's setup for the negData HCP pipelines' parameter. Provide a comma separated list of images with neg data."],
 
     ['# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options'],
     ['hcp_icafix_bolds',       '',                                         isNone,

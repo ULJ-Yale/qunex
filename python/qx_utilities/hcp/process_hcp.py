@@ -2172,6 +2172,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             with using slice-to-volume correction in FSL's eddy. The
             flag is not set by default.
 
+        --hcp_dwi_posdata (str, default ''):
+            Overrides the automatic QuNex's setup for the posData HCP pipelines'
+            parameter. Provide a comma separated list of images with pos data.
+
+        --hcp_dwi_negdata (str, default ''):
+            Overrides the automatic QuNex's setup for the negData HCP pipelines'
+            parameter. Provide a comma separated list of images with neg data.
+
     Output files:
         The results of this command will be present in the Diffusion folder
         in the sessions's root hcp folder.
@@ -2228,6 +2236,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             ``hcp_dwi_nogpu``        ``no-gpu``
             ``hcp_dwi_topupconfig``  ``topup-config-file``
             ``hcp_dwi_even_slices``  ``ensure-even-slices``
+            ``hcp_dwi_posdata``      ``posData``
+            ``hcp_dwi_negdata``      ``negData``
             ======================== ======================================
 
         Use:
@@ -2332,85 +2342,127 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if k.isdigit() and v['name'] == 'DWI':
                     dwis[int(k)] = v["task"]
 
-            # get dwi files
-            dwi_data = dict()
-            # sort by temporal order as specified in batch
-            for dwi in sorted(dwis):
-                for ddir, dext in direction.items():
-                    dwi_files = glob.glob(os.path.join(
-                        hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
-                    for dwi_file in dwi_files:
-                        if dwis[dwi] in dwi_file:
-                            dwi_dict = {
-                                'dir': ddir,
-                                'ext': dext,
-                                'file': dwi_file
-                            }
-                            dwi_data[dwis[dwi]] = dwi_dict
+            # QuNex's automatic posData and negData setup
+            if options['hcp_dwi_posdata'] is None and options['hcp_dwi_negdata'] is None:
+                # get dwi files
+                dwi_data = dict()
+                # sort by temporal order as specified in batch
+                for dwi in sorted(dwis):
+                    for ddir, dext in direction.items():
+                        dwi_files = glob.glob(os.path.join(
+                            hcp['DWI_source'], "*_%s.nii.gz" % (dext)))
 
-                            # add matching pair if it does not exist
-                            opposite_dir = 'pos'
-                            if ddir == 'pos':
-                                opposite_dir = 'neg'
-                            opposite_exp = direction[opposite_dir]
-
-                            dwi_matching = dwis[dwi].replace(
-                                dext, opposite_exp)
-
-                            if dwi_matching not in dwi_data:
+                        for dwi_file in dwi_files:
+                            if dwis[dwi] in dwi_file:
                                 dwi_dict = {
-                                    'dir': opposite_dir,
-                                    'ext': opposite_exp,
-                                    'file': 'EMPTY'
+                                    'dir': ddir,
+                                    'ext': dext,
+                                    'file': dwi_file
                                 }
-                                dwi_data[dwi_matching] = dwi_dict
+                                dwi_data[dwis[dwi]] = dwi_dict
 
-            # prepare pos and neg files
-            dwi_files = dict()
-            for _, dwi in dwi_data.items():
-                if dwi['dir'] in dwi_files:
-                    dwi_files[dwi['dir']] = dwi_files[dwi['dir']] + \
-                        "@" + dwi['file']
-                else:
-                    dwi_files[dwi['dir']] = dwi['file']
+                                # add matching pair if it does not exist
+                                opposite_dir = 'pos'
+                                if ddir == 'pos':
+                                    opposite_dir = 'neg'
+                                opposite_exp = direction[opposite_dir]
 
-            for ddir in ['pos', 'neg']:
-                # if one dir is missing
-                if ddir not in dwi_files:
-                    r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
-                    run = False
-                    break
+                                dwi_matching = dwis[dwi].replace(
+                                    dext, opposite_exp)
 
-                dfiles = dwi_files[ddir].split("@")
+                                if dwi_matching not in dwi_data:
+                                    dwi_dict = {
+                                        'dir': opposite_dir,
+                                        'ext': opposite_exp,
+                                        'file': 'EMPTY'
+                                    }
+                                    dwi_data[dwi_matching] = dwi_dict
 
-                if dfiles and dfiles != [''] and dfiles != 'EMPTY':
-                    r += "\n---> The following %s direction files were found:" % (
-                        ddir)
-                    for dfile in dfiles:
-                        r += "\n     %s" % (os.path.basename(dfile))
-                else:
-                    r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
-                    run = False
-                    break
+                # prepare pos and neg files
+                dwi_files = dict()
+                for _, dwi in dwi_data.items():
+                    if dwi['dir'] in dwi_files:
+                        dwi_files[dwi['dir']] = dwi_files[dwi['dir']] + \
+                            "@" + dwi['file']
+                    else:
+                        dwi_files[dwi['dir']] = dwi['file']
+
+                for ddir in ['pos', 'neg']:
+                    # if one dir is missing
+                    if ddir not in dwi_files:
+                        r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
+                        run = False
+                        break
+
+                    dfiles = dwi_files[ddir].split("@")
+
+                    if dfiles and dfiles != [''] and dfiles != 'EMPTY':
+                        r += "\n---> The following %s direction files were found:" % (
+                            ddir)
+                        for dfile in dfiles:
+                            r += "\n     %s" % (os.path.basename(dfile))
+                    else:
+                        r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
+                        run = False
+                        break
+
+                pos_data = dwi_files['pos']
+                neg_data = dwi_files['neg']
+            # if both are None something is wrong
+            elif (options['hcp_dwi_posdata'] is not None and options['hcp_dwi_negdata'] is None) or (options['hcp_dwi_posdata'] is None and options['hcp_dwi_negdata'] is not None):
+                r += "\n---> ERROR: When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters."
+                run = False
+            else:
+                # pos
+                pos_list = options['hcp_dwi_posdata'].split(',')
+                pos_paths = []
+                for image in pos_list:
+                    if image != 'EMPTY':
+                        pos_paths.append(hcp['DWI_source'] + '/' + image)
+                    else:
+                        pos_paths.append(image)
+                pos_data = '@'.join(pos_paths)
+                # neg
+                neg_list = options['hcp_dwi_negdata'].split(',')
+                neg_paths = []
+                for image in neg_list:
+                    if image != 'EMPTY':
+                        neg_paths.append(hcp['DWI_source'] + '/' + image)
+                    else:
+                        neg_paths.append(image)
+                neg_data = '@'.join(neg_paths)
 
         # --- lookup gdcoeffs file if needed
         gdcfile, r, run = check_gdc_coeff_file(
             options['hcp_dwi_gdcoeffs'], hcp=hcp, sinfo=sinfo, r=r, run=run)
 
-        # -- set echospacing
-        dwiinfo = [v for (k, v) in sinfo.items()
-                   if k.isdigit() and v['name'] == 'DWI'][0]
+        # -- check for DWI data
+        dwi_found = False
+        for (k, v) in sinfo.items():
+            if k.isdigit() and v['name'] == 'DWI':
+                dwi_found = True
 
-        if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
-            echospacing = dwiinfo['EchoSpacing']
-            r += "\n---> Using image specific EchoSpacing: %s" % (echospacing)
+        if not dwi_found:
+            r += "\n---> ERROR: No DWI files found in the batch file for one of the sessions!"
+            run = False
         else:
-            echospacing = options['hcp_dwi_echospacing']
-            r += "\n---> Using study general EchoSpacing: %s" % (echospacing)
+            # -- set echospacing
+            dwiinfo = [v for (k, v) in sinfo.items()
+                    if k.isdigit() and v['name'] == 'DWI'][0]
 
-        # -- check echospacing
-        if float(echospacing) < 0.5 and float(echospacing) > 1:
-            r += f"\nWARNING: the value of echospacing [{echospacing}] is not within the expected range!"
+            if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
+                echospacing = dwiinfo['EchoSpacing']
+                r += "\n---> Using image specific EchoSpacing: %s" % (echospacing)
+            else:
+                echospacing = options['hcp_dwi_echospacing']
+                r += "\n---> Using study general EchoSpacing: %s" % (echospacing)
+
+            # -- check echospacing
+            if not echospacing:
+                r += "\n---> ERROR: QuNex was unable to acquire echospacing from the data and the parameter is not set!"
+                run = False
+            elif float(echospacing) < 0.5 and float(echospacing) > 1:
+                r += f"\nWARNING: the value of echospacing [{echospacing}] is not within the expected range!"
 
         # --- build the command
         if run:
@@ -2427,8 +2479,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --combine-data-flag="%(combinedataflag)s" \
                 --printcom="%(printcom)s"' % {
                 'script': os.path.join(hcp['hcp_base'], 'DiffusionPreprocessing', 'DiffPreprocPipeline.sh'),
-                'pos_data': dwi_files['pos'],
-                'neg_data': dwi_files['neg'],
+                'pos_data': pos_data,
+                'neg_data': neg_data,
                 'path': sinfo['hcp'],
                 'subject': sinfo['id'] + options['hcp_suffix'],
                 'echospacing': echospacing,
