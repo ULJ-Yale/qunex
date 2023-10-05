@@ -1405,7 +1405,9 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] ; then
             --include='/${SessionsFolderName}/${CASE}/hcp/' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
-            --exclude='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*nii*' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*gii*' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms/***' \
@@ -1511,6 +1513,12 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] ; then
             --include='/${SessionsFolderName}/${CASE}/*.txt' \
             --include='/${SessionsFolderName}/${CASE}/images' \
             --include='/${SessionsFolderName}/${CASE}/images/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
             --include='/${SessionsFolderName}/specs' \
             --include='/${SessionsFolderName}/specs/***' \
             --include='/processing' \
