@@ -1516,6 +1516,9 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] ; then
             --include='/${SessionsFolderName}/${CASE}/hcp/' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/T1w_restore.nii.gz' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/***' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
             --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
