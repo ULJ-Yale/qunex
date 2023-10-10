@@ -812,41 +812,49 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap':
             fmnum = T1w.get('fm', None)
-            # include => if fmnum is None, same as for senum
 
-            for i, v in hcp['fieldmap'].items():
-                if os.path.exists(hcp['fieldmap'][i]['GE']):
-                    r += "\n---> Gradient Echo Field Map %d file present." % (
-                        i)
-                else:
-                    r += "\n---> ERROR: Could not find Gradient Echo Field Map %d file for session %s.\n            Expected location: %s" % (
-                        i, sinfo['id'], hcp['fmapge'])
-                    run = False
+            if fmnum is None:
+                r += "\n---> ERROR: No fieldmap number specified for the T1w image!"
+                run = False
+            else:
+                for i, v in hcp['fieldmap'].items():
+                    if os.path.exists(hcp['fieldmap'][i]['GE']):
+                        r += "\n---> Gradient Echo Field Map %d file present." % (
+                            i)
+                    else:
+                        r += "\n---> ERROR: Could not find Gradient Echo Field Map %d file for session %s.\n            Expected location: %s" % (
+                            i, sinfo['id'], hcp['fmapge'])
+                        run = False
 
-            fmmag = None
-            fmphase = None
-            fmge = hcp['fieldmap'][int(fmnum)]['GE']
+                fmmag = None
+                fmphase = None
+                fmge = hcp['fieldmap'][int(fmnum)]['GE']
 
         elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap', 'PhilipsFieldMap']:
             fmnum = T1w.get('fm', None)
 
-            for i, v in hcp['fieldmap'].items():
-                if os.path.exists(hcp['fieldmap'][i]['magnitude']):
-                    r += "\n---> Magnitude Field Map %d file present." % (i)
-                else:
-                    r += "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s" % (
-                        i, sinfo['id'], hcp['fmapmag'])
-                    run = False
-                if os.path.exists(hcp['fieldmap'][i]['phase']):
-                    r += "\n---> Phase Field Map %d file present." % (i)
-                else:
-                    r += "\n---> ERROR: Could not find Phase Field Map %d file for session %s.\n            Expected location: %s" % (
-                        i, sinfo['id'], hcp['fmapphase'])
-                    run = False
+            if fmnum is None:
+                r += "\n---> ERROR: No fieldmap number specified for the T1w image!"
+                run = False
+            else:
+                for i, v in hcp['fieldmap'].items():
+                    if os.path.exists(hcp['fieldmap'][i]['magnitude']):
+                        r += "\n---> Magnitude Field Map %d file present." % (
+                            i)
+                    else:
+                        r += "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s" % (
+                            i, sinfo['id'], hcp['fmapmag'])
+                        run = False
+                    if os.path.exists(hcp['fieldmap'][i]['phase']):
+                        r += "\n---> Phase Field Map %d file present." % (i)
+                    else:
+                        r += "\n---> ERROR: Could not find Phase Field Map %d file for session %s.\n            Expected location: %s" % (
+                            i, sinfo['id'], hcp['fmapphase'])
+                        run = False
 
-            fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
-            fmphase = hcp['fieldmap'][int(fmnum)]['phase']
-            fmge = None
+                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                fmge = None
 
         else:
             r += "\n---> WARNING: No distortion correction method specified."
@@ -3363,56 +3371,68 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- check for Siemens double TE-fieldmap image
             elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
                 fmnum = boldinfo.get('fm', None)
-                fieldok = True
-                for i, v in hcp['fieldmap'].items():
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (
-                        i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (
-                        i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp['fieldmap'].items():
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (
+                            i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (
+                            i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
+                        boldok = boldok and fieldok
+                    if not pc.is_number(options['hcp_bold_echospacing']):
+                        fieldok = False
+                        r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
+                            options['hcp_bold_echospacing'])
+                    if not pc.is_number(options['hcp_bold_echodiff']):
+                        fieldok = False
+                        r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (
+                            options['hcp_bold_echodiff'])
                     boldok = boldok and fieldok
-                if not pc.is_number(options['hcp_bold_echospacing']):
-                    fieldok = False
-                    r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
-                        options['hcp_bold_echospacing'])
-                if not pc.is_number(options['hcp_bold_echodiff']):
-                    fieldok = False
-                    r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (
-                        options['hcp_bold_echodiff'])
-                boldok = boldok and fieldok
-                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
-                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
-                fmge = None
+                    fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                    fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                    fmge = None
 
             # --- check for GE fieldmap image
             elif options['hcp_bold_dcmethod'].lower() in ['generalelectricfieldmap']:
                 fmnum = boldinfo.get('fm', None)
-                fieldok = True
-                for i, v in hcp['fieldmap'].items():
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (
-                        i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
-                    boldok = boldok and fieldok
-                fmmag = None
-                fmphase = None
-                fmge = hcp['fieldmap'][int(fmnum)]['GE']
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp['fieldmap'].items():
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (
+                            i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
+                        boldok = boldok and fieldok
+                    fmmag = None
+                    fmphase = None
+                    fmge = hcp['fieldmap'][int(fmnum)]['GE']
 
             # --- check for Philips double TE-fieldmap image
             elif options['hcp_bold_dcmethod'].lower() in ['philipsfieldmap']:
                 fmnum = boldinfo.get('fm', None)
-                fieldok = True
-                for i, v in hcp['fieldmap'].items():
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (
-                        i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (
-                        i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp['fieldmap'].items():
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (
+                            i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (
+                            i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
+                        boldok = boldok and fieldok
+                    if not pc.is_number(options['hcp_bold_echospacing']):
+                        fieldok = False
+                        r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
+                            options['hcp_bold_echospacing'])
                     boldok = boldok and fieldok
-                if not pc.is_number(options['hcp_bold_echospacing']):
-                    fieldok = False
-                    r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
-                        options['hcp_bold_echospacing'])
-                boldok = boldok and fieldok
-                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
-                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
-                fmge = None
+                    fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                    fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                    fmge = None
 
             # --- NO DC used
             elif options['hcp_bold_dcmethod'].lower() == 'none':
