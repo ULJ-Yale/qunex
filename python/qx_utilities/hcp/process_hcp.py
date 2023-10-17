@@ -2188,6 +2188,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Overrides the automatic QuNex's setup for the negData HCP pipelines'
             parameter. Provide a comma separated list of images with neg data.
 
+        --hcp_dwi_dummy_bval_bvec (flag, optional):
+            QuNex will create dummy bval and bvec files if they do not yet
+            exist. Mainly useful when using distortion maps as part of the
+            input data.
+
     Output files:
         The results of this command will be present in the Diffusion folder
         in the sessions's root hcp folder.
@@ -2396,12 +2401,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                         dwi_files[dwi['dir']] = dwi['file']
 
                 for ddir in ['pos', 'neg']:
-                    # if one dir is missing
-                    if ddir not in dwi_files:
-                        r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
-                        run = False
-                        break
-
                     dfiles = dwi_files[ddir].split("@")
 
                     if dfiles and dfiles != [''] and dfiles != 'EMPTY':
@@ -2414,8 +2413,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                         run = False
                         break
 
-                pos_data = dwi_files['pos']
-                neg_data = dwi_files['neg']
+                # if one dir is missing
+                if 'pos' not in dwi_files and 'neg' not in dwi_files:
+                    r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
+                    run = False
+                else:
+                    pos_data = dwi_files['pos']
+                    neg_data = dwi_files['neg']
+
             # if both are None something is wrong
             elif (options['hcp_dwi_posdata'] is not None and options['hcp_dwi_negdata'] is None) or (options['hcp_dwi_posdata'] is None and options['hcp_dwi_negdata'] is not None):
                 r += "\n---> ERROR: When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters."
@@ -2456,14 +2461,16 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         else:
             # -- set echospacing
             dwiinfo = [v for (k, v) in sinfo.items()
-                    if k.isdigit() and v['name'] == 'DWI'][0]
+                       if k.isdigit() and v['name'] == 'DWI'][0]
 
             if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
                 echospacing = dwiinfo['EchoSpacing']
-                r += "\n---> Using image specific EchoSpacing: %s" % (echospacing)
+                r += "\n---> Using image specific EchoSpacing: %s" % (
+                    echospacing)
             else:
                 echospacing = options['hcp_dwi_echospacing']
-                r += "\n---> Using study general EchoSpacing: %s" % (echospacing)
+                r += "\n---> Using study general EchoSpacing: %s" % (
+                    echospacing)
 
             # -- check echospacing
             if not echospacing:
@@ -2524,6 +2531,42 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 comm += "                --no-gpu"
             else:
                 comm += "                --cuda-version=10.2"
+
+            # create dummy bvals and bvecs if demanded
+            if options['hcp_dwi_dummy_bval_bvec']:
+                # iterate over pos_data
+                pos_array = pos_data.split('@')
+                for pos in pos_array:
+                    # bval
+                    bval = pos.replace('.nii.gz', '.bval')
+                    if not os.path.isfile(bval):
+                        r += f"\n---> Creating dummy bval file for [{pos}]."
+                        with open(bval, "w") as f:
+                            f.write("0\n")
+
+                    # bvec
+                    bvec = pos.replace('.nii.gz', '.bvec')
+                    if not os.path.isfile(bvec):
+                        r += f"\n---> Creating dummy bvec file for [{pos}]."
+                        with open(bvec, "w") as f:
+                            f.write("0\n0\n0\n")
+
+                # iterate over neg_data
+                neg_array = neg_data.split('@')
+                for neg in neg_array:
+                    # bval
+                    bval = neg.replace('.nii.gz', '.bval')
+                    if not os.path.isfile(bval):
+                        r += f"\n---> Creating dummy bval file for [{pos}]."
+                        with open(bval, "w") as f:
+                            f.write("0\n")
+
+                    # bvec
+                    bvec = neg.replace('.nii.gz', '.bvec')
+                    if not os.path.isfile(bvec):
+                        r += f"\n---> Creating dummy bvec file for [{pos}]."
+                        with open(bvec, "w") as f:
+                            f.write("0\n0\n0\n")
 
             # -- Report command
             if run:
