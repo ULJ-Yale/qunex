@@ -1946,8 +1946,12 @@ def run_recipe(recipe_file=None, recipe=None, logfolder=None, verbose="no", earg
     commands = recipe_dict["commands"]
 
     for com in commands:
-        command_name = list(com.keys())[0]
-        command_parameters = list(com.values())[0]
+        if isinstance(com, dict):
+            command_name = list(com.keys())[0]
+            command_parameters = list(com.values())[0]
+        else:
+            command_name = com
+            command_parameters = {}
 
         # override params with those from eargs (passed because of parallelization on a higher level)
         if eargs is not None:
