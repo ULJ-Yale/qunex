@@ -1621,7 +1621,7 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
                                ".conc files for some sessions were not generated", "Please check report for details!")
 
 
-def run_list(listfile=None, runlists=None, logfolder=None, xnat=None, verbose="no", eargs=None):
+def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=None):
     """
     ``run_list listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]``
 
@@ -1638,7 +1638,6 @@ def run_list(listfile=None, runlists=None, logfolder=None, xnat=None, verbose="n
     --runlists         A comma, space or pipe separated list of lists specified 
                        within runlist file to run.
     --logfolder        The folder within which to save the log.
-    --xnat             When set as "yes", runs additional scripts for XNAT support.
     --mapvalues        Names of values of custom variables that will be injected
                        into specifically marked fields in the runlist file.
     --verbose          Whether to record in a log a full verbose report of the 
@@ -2122,13 +2121,6 @@ def run_list(listfile=None, runlists=None, logfolder=None, xnat=None, verbose="n
                 for toIgnore in ignore:
                     if toIgnore in commandParameters:
                         del commandParameters[toIgnore]
-
-            # -- xnat build folder prep
-
-            if xnat == "yes":
-                xnatScript = os.path.join(os.environ['XNAT_SCRIPTS_FOLDER'], commandName + "_xnat.sh")
-                xnatProcess = subprocess.Popen(
-                xnatScript, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
 
             # -- setup command
 
