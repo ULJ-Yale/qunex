@@ -26,7 +26,7 @@ The commands are accessible from the terminal using gmri utility.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-# import dicom
+
 import os
 import io
 import os.path
@@ -42,52 +42,52 @@ import gzip as gz
 import csv
 import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
-
 import general.core as gc
 import general.img as gi
 import general.nifti as gn
 import general.qximg as qxi
 import general.exceptions as ge
-
 from datetime import datetime
+if "QUNEXMCOMMAND" not in os.environ:
+    mcommand = "matlab -nojvm -nodisplay -nosplash -r"
+else:
+    mcommand = os.environ['QUNEXMCOMMAND']
 
 try:
     import pydicom.filereader as dfr
 except:
     import dicom.filereader as dfr
 
+dcm_info_list = (('sessionid', str, "NA"), ('seriesNumber', int, 0), ('seriesDescription', str, "NA"), ('TR', float, 0.), ('TE', float, 0.), ('frames',
+                 int, 0), ('directions', int, 0), ('volumes', int, 0), ('slices', int, 0), ('datetime', str, ""), ('ImageType', str, ""), ('fileid', str, ""))
 
-if "QUNEXMCOMMAND" not in os.environ:
-    mcommand = "matlab -nojvm -nodisplay -nosplash -r"
-else:
-    mcommand = os.environ['QUNEXMCOMMAND']
-
-
-dcm_info_list = (('sessionid', str, "NA"), ('seriesNumber', int, 0), ('seriesDescription', str, "NA"), ('TR', float, 0.), ('TE', float, 0.), ('frames', int, 0), ('directions', int, 0), ('volumes', int, 0), ('slices', int, 0), ('datetime', str, ""), ('ImageType', str, ""), ('fileid', str, ""))
 
 class vdict(dict):
     """
     An extension of a dictionary class. Upon initialization it creates fields
     with the names and default values as specified in the __keys__, which 
     should be a list of key_name, key_func, and key_default triplets.
-    
+
     Upon initialization, keys with the provided names and defaults values are
     created. When calling `validate` method, any missing keys are generated 
     with the default values, and all the keys are transformed according to 
     the provided functions in the key_func.
     """
+
     def __init__(self, *args, **kw):
         self.__keys__ = kw.pop('__keys__', ())
-        super(vdict, self).__init__(*args, **kw)        
+        super(vdict, self).__init__(*args, **kw)
         self.validate()
+
     def validate(self):
         for key_name, key_func, key_default in self.__keys__:
             try:
                 self[key_name] = key_func(self.get(key_name, key_default))
             except ValueError as e:
-                e.args += (f"Validation of the dictionary failed! The value '{self[key_name]}' for {key_name} is invalid!")
+                e.args += (
+                    f"Validation of the dictionary failed! The value '{self[key_name]}' for {key_name} is invalid!")
                 raise
-                
+
 
 def cleanName(string):
     """
@@ -97,7 +97,6 @@ def cleanName(string):
     should not be in a file name.
     """
     return re.sub(r'[^A-Za-z0-9]', r'', string)
-
 
 
 def matchAll(pattern, string):
@@ -118,9 +117,9 @@ def matchAll(pattern, string):
 def readPARInfo(filename):
     """
     ``readPARInfo(filename)``
-    
+
     Reads `.PAR` files.
-    
+
     INPUT
     =====
 
@@ -157,19 +156,24 @@ def readPARInfo(filename):
                 k, v = [e.strip() for e in line.split(':  ')]
                 info[k] = v
 
-    info['sessionid']          = info.get('Patient name', info['sessionid'])
-    info['seriesNumber']       = int(info.get('Acquisition nr', 0)) * 100 + int(info.get('Reconstruction nr', 0))
-    info['seriesDescription']  = info.get('Protocol name', info['seriesDescription']).replace("WIP ", "")
-    info['TR']                 = float(info.get('Repetition time [msec]', info['TR']))
-    info['TR']                 = float(info.get('Repetition time [ms]', info['TR']))
-    info['TE']                 = 0.
-    info['frames']             = int(info.get('Max. number of dynamics', info['frames']))
-    info['directions']         = int(info.get('Max. number of gradient orients', 1)) - 1
-    info['volumes']            = max(info['frames'], info['directions'])
-    info['slices']             = int(info.get('Max. number of slices/locations', info['slices']))
-    info['datetime']           = info.get('Examination date/time', info['datetime'])
-    info['ImageType']          = [""]
-    info['fileid']             = os.path.basename(filename)[:-4].replace('.', '_').replace('-', '_')
+    info['sessionid'] = info.get('Patient name', info['sessionid'])
+    info['seriesNumber'] = int(
+        info.get('Acquisition nr', 0)) * 100 + int(info.get('Reconstruction nr', 0))
+    info['seriesDescription'] = info.get(
+        'Protocol name', info['seriesDescription']).replace("WIP ", "")
+    info['TR'] = float(info.get('Repetition time [msec]', info['TR']))
+    info['TR'] = float(info.get('Repetition time [ms]', info['TR']))
+    info['TE'] = 0.
+    info['frames'] = int(info.get('Max. number of dynamics', info['frames']))
+    info['directions'] = int(
+        info.get('Max. number of gradient orients', 1)) - 1
+    info['volumes'] = max(info['frames'], info['directions'])
+    info['slices'] = int(
+        info.get('Max. number of slices/locations', info['slices']))
+    info['datetime'] = info.get('Examination date/time', info['datetime'])
+    info['ImageType'] = [""]
+    info['fileid'] = os.path.basename(
+        filename)[:-4].replace('.', '_').replace('-', '_')
 
     info.validate()
 
@@ -213,7 +217,7 @@ def readDICOMInfo(filename):
 
     info = vdict(__keys__=dcm_info_list)
 
-    info['sessionid']  = getID(d)
+    info['sessionid'] = getID(d)
 
     # --- sessionid
 
@@ -269,8 +273,7 @@ def readDICOMInfo(filename):
     except:
         info['volumes'] = 0
 
-
-    info['frames']     = info['volumes']
+    info['frames'] = info['volumes']
     info['directions'] = info['volumes']
 
     # --- slices
@@ -286,10 +289,12 @@ def readDICOMInfo(filename):
     # --- datetime
 
     try:
-        info['datetime'] = datetime.strptime(str(int(float(d.StudyDate + d.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+        info['datetime'] = datetime.strptime(str(int(float(
+            d.StudyDate + d.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
     except:
         try:
-            info['datetime'] = datetime.strptime(str(int(float(d.StudyDate + d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            info['datetime'] = datetime.strptime(str(int(
+                float(d.StudyDate + d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
         except:
             info['datetime'] = ""
 
@@ -318,7 +323,7 @@ def readDICOMInfo(filename):
     # --> institution name
     if [0x0008, 0x0080] in d:
         info['institution'] = d[0x0008, 0x0080].value
-    
+
     # --> manufacturer and model
     MR = []
     for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
@@ -371,10 +376,12 @@ def readDICOMBase(filename):
 
 def getDicomTime(info):
     try:
-        time = datetime.strptime(str(int(float(info.StudyDate + info.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+        time = datetime.strptime(str(int(float(
+            info.StudyDate + info.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
     except:
         try:
-            time = datetime.strptime(str(int(float(info.StudyDate + info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            time = datetime.strptime(str(int(float(
+                info.StudyDate + info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
         except:
             time = ""
     return time
@@ -589,11 +596,13 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
     # check if dicom folder existis
 
     if not os.path.exists(dmcf):
-        raise ge.CommandFailed("dicom2nii", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sort_dicom command!")
+        raise ge.CommandFailed("dicom2nii", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (
+            dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sort_dicom command!")
 
     # check for existing .gz files
 
-    prior = glob.glob(os.path.join(imgf, "*.nii.gz")) + glob.glob(os.path.join(dmcf, "*", "*.nii.gz"))
+    prior = glob.glob(os.path.join(imgf, "*.nii.gz")) + \
+        glob.glob(os.path.join(dmcf, "*", "*.nii.gz"))
     if len(prior) > 0:
         if clean == "yes":
             print("\nDeleting files:")
@@ -601,7 +610,8 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
                 print("---> ", p)
                 os.remove(p)
         else:
-            raise ge.CommandFailed("dicom2nii", "Existing NIfTI files", "Please remove existing NIfTI files or run the command with 'clean' set to 'yes'.", "Aborting processing of DICOM files!")
+            raise ge.CommandFailed("dicom2nii", "Existing NIfTI files",
+                                   "Please remove existing NIfTI files or run the command with 'clean' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # gzipped files
 
@@ -613,21 +623,23 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
                 print("\nUnzipping files (this might take a while)")
             _unzip_dicom(dmcf, parelements)
         else:
-            raise ge.CommandFailed("dicom2nii", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
+            raise ge.CommandFailed("dicom2nii", "Gzipped DICOM files",
+                                   "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # --- open report files
 
-    r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
+    r = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
     stxt = open(os.path.join(folder, "session.txt"), 'w')
 
     # --- Print header
-    
+
     gc.print_qunex_header(file=r)
     gc.print_qunex_header(file=stxt)
 
     # get a list of folders
 
-    folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
+    folders = [e for e in os.listdir(
+        dmcf) if os.path.isdir(os.path.join(dmcf, e))]
     folders = [int(e) for e in folders if e.isdigit()]
     folders.sort()
     folders = [os.path.join(dmcf, str(e)) for e in folders]
@@ -636,10 +648,10 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
         os.makedirs(imgf)
 
     first = True
-    c     = 0
+    c = 0
     calls = []
-    logs  = []
-    reps  = []
+    logs = []
+    reps = []
     files = []
 
     for folder in folders:
@@ -647,8 +659,10 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
         d = readDICOMBase(glob.glob(os.path.join(folder, "*.dcm"))[-1])
 
         if d is None:
-            print("# WARNING: Could not read dicom file! Skipping folder %s" % (folder), file=r)
-            print("===> WARNING: Could not read dicom file! Skipping folder %s" % (folder))
+            print("# WARNING: Could not read dicom file! Skipping folder %s" %
+                  (folder), file=r)
+            print(
+                "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder))
             continue
 
         c += 1
@@ -658,18 +672,22 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             print("Report for %s scanned on %s\n" % (getID(d), time), file=r)
 
             if verbose:
-                print("\n\nProcessing images from %s scanned on %s\n" % (getID(d), time))
+                print("\n\nProcessing images from %s scanned on %s\n" %
+                      (getID(d), time))
 
             # --- setup session.txt file
 
             print("id:", getID(d), file=stxt)
             print("subject:", getID(d), file=stxt)
-            print("dicom:", os.path.abspath(os.path.join(base, 'dicom')), file=stxt)
-            print("raw_data:", os.path.abspath(os.path.join(base, 'nii')), file=stxt)
-            print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
+            print("dicom:", os.path.abspath(
+                os.path.join(base, 'dicom')), file=stxt)
+            print("raw_data:", os.path.abspath(
+                os.path.join(base, 'nii')), file=stxt)
+            print("data:", os.path.abspath(
+                os.path.join(base, '4dfp')), file=stxt)
             print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
             print("", file=stxt)
-            
+
             # --> institution name
             if [0x0008, 0x0080] in d:
                 print(f"Scanned at: {d[0x0008, 0x0080].value}", file=r)
@@ -693,10 +711,12 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
                 seriesDescription = "None"
 
         try:
-            time = datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+            time = datetime.strptime(
+                d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
         except:
             try:
-                time = datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+                time = datetime.strptime(
+                    d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
             except:
                 time = ""
 
@@ -729,19 +749,25 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
 
         try:
             nframes = d[0x2001, 0x1081].value
-            logs.append("%4d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
-            reps.append("---> %4d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
+            logs.append("%4d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (
+                niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
+            reps.append("---> %4d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (
+                niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
         except:
             nframes = 0
-            logs.append("%4d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
-            reps.append("---> %4d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
+            logs.append("%4d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (
+                niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
+            reps.append("---> %4d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (
+                niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
 
         if niinum > 0:
             print("%4d: %s" % (niinum, seriesDescription))
 
         niiid = str(niinum)
-        calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
-        files.append([niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices])
+        calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(
+            os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
+        files.append([niinum, folder, dofz2zf, recenter,
+                     fz, reorder, nframes, nslices])
 
     done = gc.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
@@ -756,16 +782,19 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
         tfname = False
         imgs = glob.glob(os.path.join(folder, "*.nii*"))
         if debug:
-            print("     --> found nifti files: %s" % ("\n                            ".join(imgs)))
+            print("     --> found nifti files: %s" %
+                  ("\n                            ".join(imgs)))
         for image in imgs:
             if not os.path.exists(image):
                 continue
             if debug:
-                print("     --> processing: %s [%s]" % (image, os.path.basename(image)))
+                print("     --> processing: %s [%s]" %
+                      (image, os.path.basename(image)))
             if image[-3:] == 'nii':
                 if debug:
                     print("     --> gzipping: %s" % (image))
-                subprocess.call("gzip " + image, shell=True, stdout=null, stderr=null)
+                subprocess.call("gzip " + image, shell=True,
+                                stdout=null, stderr=null)
                 image += '.gz'
             if os.path.basename(image)[0:2] == 'co':
                 # os.rename(image, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
@@ -779,9 +808,11 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
                     timg = qxi.qximg(image)
                     if recenter == 0.7:
-                        timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
+                        timg.hdrnifti.modifyHeader(
+                            "srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
                     elif recenter == 0.8:
-                        timg.hdrnifti.modifyHeader("srow_x:[0.8,0.0,0.0,-94.8];srow_y:[0.0,0.8,0.0,-128.0];srow_z:[0.0,0.0,0.8,-130];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-94.8;qoffset_y:-128.0;qoffset_z:-130.0")
+                        timg.hdrnifti.modifyHeader(
+                            "srow_x:[0.8,0.0,0.0,-94.8];srow_y:[0.0,0.8,0.0,-128.0];srow_z:[0.0,0.0,0.8,-130];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-94.8;qoffset_y:-128.0;qoffset_z:-130.0")
                     if debug:
                         print("         saving to: %s" % (tfname))
                     timg.saveimage(tfname)
@@ -791,7 +822,8 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
                 else:
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
                     if debug:
-                        print("         ... moving '%s' to '%s'" % (image, tfname))
+                        print("         ... moving '%s' to '%s'" %
+                              (image, tfname))
                     os.rename(image, tfname)
 
                 # -- remove original
@@ -816,8 +848,8 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             for dwiextra in ['.bval', '.bvec']:
                 dwisrc = image.replace('.nii.gz', dwiextra)
                 if os.path.exists(dwisrc):
-                    os.rename(dwisrc, os.path.join(imgf, "%02d%s" % (niinum, dwiextra)))
-
+                    os.rename(dwisrc, os.path.join(
+                        imgf, "%02d%s" % (niinum, dwiextra)))
 
         # --- check if resulting nifti is present
 
@@ -830,21 +862,20 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             print("", file=r)
             print("")
 
-
         # --- flip z and t dimension if needed
 
         if dofz2zf:
             gn.fz2zf(os.path.join(imgf, "%02d.nii.gz" % (niinum)))
-
 
         # --- reorder slices if needed
 
         if reorder:
             # nifti.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
             timgf = os.path.join(imgf, "%02d.nii.gz" % (niinum))
-            timg  = qxi.qximg(timgf)
+            timg = qxi.qximg(timgf)
             timg.data = timg.data[:, ::-1, ...]
-            timg.hdrnifti.modifyHeader("srow_x:[-3.4,0.0,0.0,-108.5];srow_y:[0.0,3.4,0.0,-102.0];srow_z:[0.0,0.0,5.0,-63.0];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:108.5;qoffset_y:-102.0;qoffset_z:-63.0")
+            timg.hdrnifti.modifyHeader(
+                "srow_x:[-3.4,0.0,0.0,-108.5];srow_y:[0.0,3.4,0.0,-102.0];srow_z:[0.0,0.0,5.0,-63.0];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:108.5;qoffset_y:-102.0;qoffset_z:-63.0")
             timg.saveimage(timgf)
 
         # --- check final geometry
@@ -853,30 +884,40 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             hdr = gi.niftihdr(tfname)
 
             if hdr.sizez > hdr.sizey:
-                print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames), file=r)
+                print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (
+                    hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames), file=r)
                 if verbose:
-                    print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames))
+                    print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (
+                        hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames))
 
             if nframes > 1:
                 if hdr.frames != nframes:
-                    print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes), file=r)
+                    print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (
+                        hdr.frames, nframes), file=r)
                     if verbose:
-                        print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes))
+                        print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (
+                            hdr.frames, nframes))
                     if nslices > 0:
                         gframes = int(hdr.sizez / nslices)
                         if gframes > 1:
-                            print("     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes), file=r)
+                            print("     WARNING: reslicing image to %d slices and %d good frames" % (
+                                nslices, gframes), file=r)
                             if verbose:
-                                print("     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes))
+                                print("     WARNING: reslicing image to %d slices and %d good frames" % (
+                                    nslices, gframes))
                             gn.reslice(tfname, nslices)
                         else:
-                            print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez), file=r)
+                            print("     WARNING: not enough slices (%d) to make a complete volume." % (
+                                hdr.sizez), file=r)
                             if verbose:
-                                print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez))
+                                print("     WARNING: not enough slices (%d) to make a complete volume." % (
+                                    hdr.sizez))
                     else:
-                        print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname), file=r)
+                        print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (
+                            tfname), file=r)
                         if verbose:
-                            print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname))
+                            print(
+                                "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname))
 
     if verbose:
         print("... done!")
@@ -888,7 +929,7 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
     if gzip == 'file' or gzip == 'folder':
         if verbose:
             print("\nCompressing dicom with option {}:".format(gzip))
-        
+
         with ProcessPoolExecutor(parelements) as executor:
             pending_futures = []
             for folder in folders:
@@ -899,21 +940,23 @@ def dicom2nii(folder='.', clean='no', unzip='yes', gzip='folder', verbose=True, 
             exceptions = []
             for future in as_completed(pending_futures):
                 if future.exception() is not None:
-                    # Unhandled 
+                    # Unhandled
                     e = future.exception()
                     print("Unhandled exception")
                     print(traceback.format_exc())
                     exceptions.append(e)
                     continue
                 r = future.result()
-                if r["status"] == "ok": 
+                if r["status"] == "ok":
                     print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("archive failed {}".format(r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(
+                        r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
-                raise ge.CommandError("dicom2nii",  "Unable to archive one or more acquisitions")
+                raise ge.CommandError(
+                    "dicom2nii",  "Unable to archive one or more acquisitions")
 
 
 def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=None, verbose=True, parelements=1, debug=False, tool='auto', add_image_type=0, add_json_info=""):
@@ -1138,7 +1181,8 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
         else:
             add_image_type = int(add_image_type)
     except:
-        raise ge.CommandError('dicom2niix', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
+        raise ge.CommandError('dicom2niix', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (
+            add_image_type), "Please check command instructions!")
     # parse parelements
     try:
         parelements = int(parelements)
@@ -1151,12 +1195,14 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
     # check tool setting
 
     if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
-        raise ge.CommandError('dicom2niix', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
+        raise ge.CommandError('dicom2niix', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (
+            tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
     # check if dicom folder existis
 
     if not os.path.exists(dmcf):
-        raise ge.CommandFailed("dicom2niix", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sort_dicom command!")
+        raise ge.CommandFailed("dicom2niix", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (
+            dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sort_dicom command!")
 
     # check for existing .gz files
 
@@ -1173,7 +1219,8 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
                 os.remove(p)
             print("")
         else:
-            raise ge.CommandFailed("dicom2niix", "Existing NIfTI files", "Please remove existing NIfTI files or run the command with 'clean' set to 'yes'.", "Aborting processing of DICOM files!")
+            raise ge.CommandFailed("dicom2niix", "Existing NIfTI files",
+                                   "Please remove existing NIfTI files or run the command with 'clean' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # gzipped files
 
@@ -1185,21 +1232,23 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
                 print("\nUnzipping files (this might take a while)")
             _unzip_dicom(dmcf, parelements)
         else:
-            raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
+            raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files",
+                                   "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # --- open report files
 
-    r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
+    r = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
     stxt = open(os.path.join(folder, "session.txt"), 'w')
 
     # --- Print header
-    
+
     gc.print_qunex_header(file=r)
     gc.print_qunex_header(file=stxt)
 
     # get a list of folders
 
-    folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
+    folders = [e for e in os.listdir(
+        dmcf) if os.path.isdir(os.path.join(dmcf, e))]
     folders = [int(e) for e in folders if e.isdigit()]
     folders.sort()
     folders = [os.path.join(dmcf, str(e)) for e in folders]
@@ -1209,10 +1258,10 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
 
     first = True
     setdi = True
-    c     = 0
+    c = 0
     calls = []
-    logs  = []
-    reps  = []
+    logs = []
+    reps = []
     files = []
 
     print("---> Analyzing data")
@@ -1224,14 +1273,15 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
             info = readPARInfo(par)
         else:
             try:
-                info = readDICOMInfo(glob.glob(os.path.join(folder, "*.dcm"))[-1])
+                info = readDICOMInfo(
+                    glob.glob(os.path.join(folder, "*.dcm"))[-1])
                 if info['volumes'] == 0:
                     da, db, ta, tb = 0, 0, 0, 0
                     try:
                         da = info['dicom'][0x0020, 0x0012].value
                     except:
-                        try: 
-                            db = info['dicom'][0x0020, 0x0013].value 
+                        try:
+                            db = info['dicom'][0x0020, 0x0013].value
                         except:
                             pass
                     if da > 0:
@@ -1241,14 +1291,17 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
 
                     if ta > 0:
                         for dfile in glob.glob(os.path.join(folder, "*.dcm")):
-                            tinfo = readDICOMInfo(dfile)                            
-                            info['volumes'] = max(tinfo['dicom'][ta, tb].value, info['volumes'])
+                            tinfo = readDICOMInfo(dfile)
+                            info['volumes'] = max(
+                                tinfo['dicom'][ta, tb].value, info['volumes'])
 
-                    info['frames']     = info['volumes']
+                    info['frames'] = info['volumes']
                     info['directions'] = info['volumes']
             except:
-                print("# WARNING: Could not read dicom file! Skipping folder %s" % (folder), file=r)
-                print("===> WARNING: Could not read dicom file! Skipping folder %s" % (folder))
+                print("# WARNING: Could not read dicom file! Skipping folder %s" % (
+                    folder), file=r)
+                print(
+                    "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder))
                 continue
 
         if add_image_type > 0:
@@ -1269,32 +1322,36 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
             else:
                 subjectid = sessionid
 
-            print("Report for %s (%s) scanned on %s\n" % (sessionid, info['sessionid'], info['datetime']), file=r)
+            print("Report for %s (%s) scanned on %s\n" %
+                  (sessionid, info['sessionid'], info['datetime']), file=r)
             if verbose:
-                print("\nProcessing images from %s (%s) scanned on %s" % (sessionid, info['sessionid'], info['datetime']))
+                print("\nProcessing images from %s (%s) scanned on %s" %
+                      (sessionid, info['sessionid'], info['datetime']))
 
             # --- setup session.txt file
 
             print("id:", sessionid, file=stxt)
             print("subject:", subjectid, file=stxt)
-            print("dicom:", os.path.abspath(os.path.join(base, 'dicom')), file=stxt)
-            print("raw_data:", os.path.abspath(os.path.join(base, 'nii')), file=stxt)
-            print("data:", os.path.abspath(os.path.join(base, '4dfp')), file=stxt)
+            print("dicom:", os.path.abspath(
+                os.path.join(base, 'dicom')), file=stxt)
+            print("raw_data:", os.path.abspath(
+                os.path.join(base, 'nii')), file=stxt)
+            print("data:", os.path.abspath(
+                os.path.join(base, '4dfp')), file=stxt)
             print("hcp:", os.path.abspath(os.path.join(base, 'hcp')), file=stxt)
             print("", file=stxt)
 
             if "institution" in info:
                 print(f"Scanned at: {info['institution']}", file=r)
                 print(f"institution: {info['institution']}", file=stxt)
-            
+
             if "device" in info:
                 print(f"MR device: {info['device']}", file=r)
                 print(f"device: {info['device']}", file=stxt)
-            
+
             if "institution" in info or "device" in info:
                 print("", file=r)
                 print("", file=stxt)
-
 
         # recenter, dofz2zf, fz, reorder = False, False, "", False
         # try:
@@ -1308,24 +1365,28 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
         #     pass
 
         if info['seriesNumber']:
-            niinum = info['seriesNumber'] * 10            
+            niinum = info['seriesNumber'] * 10
         else:
             niinum = c * 10
 
         info['niinum'] = niinum
 
-        logs.append("%(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s" % (info))
-        reps.append("---> %(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s" % (info))
+        logs.append(
+            "%(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s" % (info))
+        reps.append(
+            "---> %(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s" % (info))
 
         niiid = str(niinum)
 
         if tool == 'auto':
             if par:
                 utool = 'dicm2nii'
-                print('---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available. [%s: %s]' % (niiid, info['seriesDescription']))
+                print('---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available. [%s: %s]' % (
+                    niiid, info['seriesDescription']))
             else:
                 utool = 'dcm2niix'
-                print('---> Using dcm2niix for conversion to NIfTI. [%s: %s]' % (niiid, info['seriesDescription']))
+                print(
+                    '---> Using dcm2niix for conversion to NIfTI. [%s: %s]' % (niiid, info['seriesDescription']))
         else:
             utool = tool
 
@@ -1336,24 +1397,32 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
                     subprocess.call("matlab -nodisplay -r \"setpref('dicm2nii_gui_para', 'save_patientName', true); setpref('dicm2nii_gui_para', 'save_json', true); setpref('dicm2nii_gui_para', 'use_parfor', true); setpref('dicm2nii_gui_para', 'use_seriesUID', true); setpref('dicm2nii_gui_para', 'lefthand', true); setpref('dicm2nii_gui_para', 'scale_16bit', false); exit\" ", shell=True, stdout=null, stderr=null)
                     print('     done!')
                     setdi = False
-                calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, general_report_crash(ME); exit(1), end; exit" % (folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})
+                calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, general_report_crash(ME); exit(1), end; exit" % (
+                    folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})
             else:
-                print('---> Using dcm2niix for conversion as Matlab is not available! [%s: %s]' % (niiid, info['seriesDescription']))
+                print('---> Using dcm2niix for conversion as Matlab is not available! [%s: %s]' % (
+                    niiid, info['seriesDescription']))
                 if par:
-                    calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+                    calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y',
+                                 '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
                 else:
-                    calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', '-o', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+                    calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y',
+                                 '-o', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
 
         elif utool == 'dcm2nii':
             if par:
-                calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
+                calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder, par], 'sout': os.path.join(
+                    os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
             else:
-                calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
+                calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(
+                    os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
         else:
             if par:
-                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y',
+                             '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
             else:
-                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b',
+                             'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         files.append([niinum, folder, info])
 
     if not calls:
@@ -1362,7 +1431,8 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
         for cleanFile in [os.path.join(dmcf, "DICOM-Report.txt"), os.path.join(folder, "session.txt")]:
             if os.path.exists(cleanFile):
                 os.remove(cleanFile)
-        raise ge.CommandFailed("dicom2niix", "No source DICOM files", "No source DICOM files were found to process!", "Please check your data and paths!")
+        raise ge.CommandFailed("dicom2niix", "No source DICOM files",
+                               "No source DICOM files were found to process!", "Please check your data and paths!")
 
     gc.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
@@ -1390,7 +1460,8 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
         elif nimg > 9:
             print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!", file=r)
             if verbose:
-                print(" WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
+                print(
+                    " WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!")
             continue
         else:
             print("", file=r)
@@ -1399,17 +1470,20 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
             imgnum = 0
 
             if debug:
-                print("     --> found %s nifti file(s): %s" % (nimg, "\n                            ".join(imgs)))
+                print("     --> found %s nifti file(s): %s" %
+                      (nimg, "\n                            ".join(imgs)))
 
             for image in imgs:
                 if not os.path.exists(image):
-                    continue                
+                    continue
                 if debug:
-                    print("     --> processing: %s [%s]" % (image, os.path.basename(image)))
+                    print("     --> processing: %s [%s]" %
+                          (image, os.path.basename(image)))
                 if image.endswith(".nii"):
                     if debug:
                         print("     --> gzipping: %s" % (image))
-                    subprocess.call("gzip " + image, shell=True, stdout=null, stderr=null)
+                    subprocess.call("gzip " + image, shell=True,
+                                    stdout=null, stderr=null)
                     image += '.gz'
 
                 # --> compile the basename of the target file(s) for nii folder
@@ -1420,7 +1494,9 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
                 # --> extract any suffices to add to the session.txt
                 suffix = ""
                 if "_" in imgname:
-                    suffix = " " +"_".join(imgname.replace('.nii.gz','').replace(info['fileid'], '').split('_')[1:])
+                    suffix = " " + \
+                        "_".join(imgname.replace('.nii.gz', '').replace(
+                            info['fileid'], '').split('_')[1:])
 
                 # --> generate the actual target file path and move the image
                 tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
@@ -1432,14 +1508,15 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
                 for dwiextra in ['.bval', '.bvec']:
                     dwisrc = image.replace('.nii.gz', dwiextra)
                     if os.path.exists(dwisrc):
-                        os.rename(dwisrc, os.path.join(imgf, "%s%s" % (tbasename, dwiextra)))
+                        os.rename(dwisrc, os.path.join(
+                            imgf, "%s%s" % (tbasename, dwiextra)))
 
                 # --> initialize JSON information
-            
+
                 jsoninfo = ""
                 jinf = {}
 
-                # --> check for .json files and extract info if present                
+                # --> check for .json files and extract info if present
 
                 for jsonextra in ['.json', '.JSON']:
                     jsonsrc = image.replace('.gz', '')
@@ -1447,31 +1524,40 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
                     jsonsrc += jsonextra
 
                     if not os.path.exists(jsonsrc):
-                        jsonfiles = glob.glob(os.path.join(folder, "*" + jsonextra))
+                        jsonfiles = glob.glob(
+                            os.path.join(folder, "*" + jsonextra))
                         if len(jsonfiles) == 1:
                             jsonsrc = jsonfiles[0]
 
                     if os.path.exists(jsonsrc):
                         try:
-                            with open(jsonsrc, 'r') as f:                            
+                            with open(jsonsrc, 'r') as f:
                                 jinf = json.load(f)
-                            os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
+                            os.rename(jsonsrc, tfname.replace(
+                                '.nii.gz', '.json'))
                             jsonsrc = tfname.replace('.nii.gz', '.json')
 
                             if 'RepetitionTime' in jinf and ('TR' in add_json_info or 'all' in add_json_info):
-                                jsoninfo += ": TR(%s)" % (str(jinf['RepetitionTime']))
+                                jsoninfo += ": TR(%s)" % (
+                                    str(jinf['RepetitionTime']))
                             if 'PhaseEncodingDirection' in jinf and ('PEDirection' in add_json_info or 'all' in add_json_info):
-                                jsoninfo += ": PEDirection(%s)" % (jinf['PhaseEncodingDirection'].strip())    
+                                jsoninfo += ": PEDirection(%s)" % (
+                                    jinf['PhaseEncodingDirection'].strip())
                             if 'EffectiveEchoSpacing' in jinf and ('EchoSpacing' in add_json_info or 'all' in add_json_info):
-                                jsoninfo += ": EchoSpacing(%s)" % (str(jinf['EffectiveEchoSpacing']))
+                                jsoninfo += ": EchoSpacing(%s)" % (
+                                    str(jinf['EffectiveEchoSpacing']))
                             if 'DwellTime' in jinf and ('DwellTime' in add_json_info or 'all' in add_json_info):
-                                jsoninfo += ": DwellTime(%s)" % (str(jinf['DwellTime']))
+                                jsoninfo += ": DwellTime(%s)" % (
+                                    str(jinf['DwellTime']))
                             if 'ReadoutDirection' in jinf and ('ReadoutDirection' in add_json_info or 'all' in add_json_info):
-                                jsoninfo += ": ReadoutDirection(%s)" % (jinf['ReadoutDirection'].strip())
+                                jsoninfo += ": ReadoutDirection(%s)" % (
+                                    jinf['ReadoutDirection'].strip())
                         except:
-                            print("     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc), file=r)
+                            print("     WARNING: Could not parse the JSON file [%s]!" % (
+                                jsonsrc), file=r)
                             if verbose:
-                                print("     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc))
+                                print(
+                                    "     WARNING: Could not parse the JSON file [%s]!" % (jsonsrc))
 
                 # --> print the info to session.txt file
 
@@ -1479,38 +1565,49 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
                 if nimg > 1:
                     numinfo = " [%d/%d]" % (imgnum, nimg)
 
-                print("%-4s: %-25s %s" % (tbasename, info['seriesDescription'] + numinfo + suffix, jsoninfo), file=stxt)
+                print("%-4s: %-25s %s" % (tbasename,
+                      info['seriesDescription'] + numinfo + suffix, jsoninfo), file=stxt)
 
                 # --- check final geometry
 
                 if tfname:
                     hdr = gi.niftihdr(tfname)
 
-                    if hdr.sizez > hdr.sizey and hdr.sizex < 150 :
-                        print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames), file=r)
+                    if hdr.sizez > hdr.sizey and hdr.sizex < 150:
+                        print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (
+                            hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames), file=r)
                         if verbose:
-                            print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames))
+                            print("     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (
+                                hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames))
 
                     if info['volumes'] > 1:
                         if hdr.frames != info['volumes']:
-                            print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, info['volumes']), file=r)
+                            print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (
+                                hdr.frames, info['volumes']), file=r)
                             if verbose:
-                                print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, info['volumes']))
+                                print("     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (
+                                    hdr.frames, info['volumes']))
                             if info['slices'] > 0:
                                 gframes = int(hdr.sizez / info['slices'])
                                 if gframes > 1:
-                                    print("     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes), file=r)
+                                    print("     WARNING: reslicing image to %d slices and %d good frames" % (
+                                        info['slices'], gframes), file=r)
                                     if verbose:
-                                        print("     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes))
+                                        print("     WARNING: reslicing image to %d slices and %d good frames" % (
+                                            info['slices'], gframes))
                                     gn.reslice(tfname, info['slices'])
                                 else:
-                                    print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez), file=r)
+                                    print("     WARNING: not enough slices (%d) to make a complete volume." % (
+                                        hdr.sizez), file=r)
                                     if verbose:
-                                        print("     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez))
+                                        print("     WARNING: not enough slices (%d) to make a complete volume." % (
+                                            hdr.sizez))
                             else:
-                                print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname), file=r)
+                                print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (
+                                    tfname), file=r)
                                 if verbose:
-                                    print("     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname))
+                                    print(
+                                        "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname))
 
     r.close()
     stxt.close()
@@ -1519,7 +1616,7 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
     if gzip == 'file' or gzip == 'folder':
         if verbose:
             print("\nCompressing dicom with option {}:".format(gzip))
-        
+
         with ProcessPoolExecutor(parelements) as executor:
             pending_futures = []
             for folder in folders:
@@ -1530,21 +1627,23 @@ def dicom2niix(folder='.', clean='no', unzip='yes', gzip='folder', sessionid=Non
             exceptions = []
             for future in as_completed(pending_futures):
                 if future.exception() is not None:
-                    # Unhandled 
+                    # Unhandled
                     e = future.exception()
                     print("Unhandled exception")
                     print(traceback.format_exc())
                     exceptions.append(e)
                     continue
                 r = future.result()
-                if r["status"] == "ok": 
+                if r["status"] == "ok":
                     print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("archive failed {}".format(r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(
+                        r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
-                raise ge.CommandError("dicom2nii", "Unable to archive one or more acquisitions")
+                raise ge.CommandError(
+                    "dicom2nii", "Unable to archive one or more acquisitions")
 
 
 def _zip_dicom(gzip, dicom_folder):
@@ -1560,28 +1659,34 @@ def _zip_dicom(gzip, dicom_folder):
     This function can be called through ProcessPoolExecutor.
     """
     r = {"args": {"gzip": gzip, "dicom_folder": dicom_folder}}
-    try: 
+    try:
         if not os.path.exists(dicom_folder):
-            raise ge.CommandFailed('_zip_dicom', 'Unable to find acquisition folder %s' % (dicom_folder))
+            raise ge.CommandFailed(
+                '_zip_dicom', 'Unable to find acquisition folder %s' % (dicom_folder))
         if not os.path.isdir(dicom_folder):
-            raise ge.CommandFailed('_zip_dicom', '%s is not a folder' % (dicom_folder))
+            raise ge.CommandFailed(
+                '_zip_dicom', '%s is not a folder' % (dicom_folder))
 
         dicom_dir, dicom_num = os.path.split(dicom_folder)
         if gzip == 'folder':
 
-            dicom_folder_zip = os.path.join(dicom_dir, '{}.tar.gz'.format(dicom_num))
-            dicom_folder_zip_tmp = os.path.join(dicom_dir, '.{}.tar.gz'.format(dicom_num))
+            dicom_folder_zip = os.path.join(
+                dicom_dir, '{}.tar.gz'.format(dicom_num))
+            dicom_folder_zip_tmp = os.path.join(
+                dicom_dir, '.{}.tar.gz'.format(dicom_num))
 
             if os.path.exists(dicom_folder_zip):
                 os.remove(dicom_folder_zip)
             if os.path.exists(dicom_folder_zip_tmp):
                 os.remove(dicom_folder_zip_tmp)
 
-            p = subprocess.run(['tar', 'czf', dicom_folder_zip_tmp, os.path.basename(dicom_folder)], cwd=os.path.dirname(dicom_folder))
+            p = subprocess.run(['tar', 'czf', dicom_folder_zip_tmp, os.path.basename(
+                dicom_folder)], cwd=os.path.dirname(dicom_folder))
 
             if p.returncode != 0:
-                raise ge.CommandFailed("_zip_dicom", 'Unable to archive: tar exit code: %d' % (p.returncode) )
-            
+                raise ge.CommandFailed(
+                    "_zip_dicom", 'Unable to archive: tar exit code: %d' % (p.returncode))
+
             os.rename(dicom_folder_zip_tmp, dicom_folder_zip)
             shutil.rmtree(dicom_folder)
 
@@ -1589,14 +1694,15 @@ def _zip_dicom(gzip, dicom_folder):
             p = subprocess.run(['gzip', '-r', dicom_folder])
 
             if p.returncode != 0:
-                raise ge.CommandFailed("_zip_dicom", 'Unable to archive: gzip exit code: %d' % (p.returncode) )
-        r["status"] = "ok" 
+                raise ge.CommandFailed(
+                    "_zip_dicom", 'Unable to archive: gzip exit code: %d' % (p.returncode))
+        r["status"] = "ok"
     except Exception as e:
         r["status"] = "error"
         r["exception"] = e
         r["traceback"] = traceback.format_exc()
     return r
-        
+
 
 def _get_zip_file_content_iterator(packet_name):
     """
@@ -1616,7 +1722,8 @@ def _get_zip_file_content_iterator(packet_name):
                 fobj.close()
         except:
             e = sys.exc_info()[0]
-            raise ge.CommandFailed("_get_zip_file_content_iterator", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (packet_name, e), "Please check your data!")
+            raise ge.CommandFailed("_get_zip_file_content_iterator", "Zip file could not be processed",
+                                   "Opening zip [%s] returned an error [%s]!" % (packet_name, e), "Please check your data!")
         finally:
             if fobj is not None:
                 fobj.close()
@@ -1639,22 +1746,24 @@ def _get_zip_file_content_iterator(packet_name):
                 fobj.close()
             if tar is not None:
                 tar.close()
-    
+
     if not os.path.exists(packet_name):
-        raise ge.CommandFailed('_get_zip_file_content_iterator', "Packet does not exist {}".format(packet_name))
+        raise ge.CommandFailed('_get_zip_file_content_iterator',
+                               "Packet does not exist {}".format(packet_name))
 
     if packet_name.endswith('zip'):
         return zip_gen()
     elif re.search(r"\.tar$|\.tar\.gz$|\.tar\.bz2$|\.tarz$|\.tar\.bzip2$|\.tgz$", packet_name):
         return tar_gen()
     else:
-        raise ge.CommandFailed('_get_zip_file_content_iterator', "Unknown packet type")
+        raise ge.CommandFailed(
+            '_get_zip_file_content_iterator', "Unknown packet type")
 
 
 def _unzip_dicom_folder(dicom_packet, dicom_folder):
     """
     Extract archived dicom acquisition. 
-    
+
     The zip/tar dicom packet (dicom_packet) will be extracted into the dicom 
     acquisition folder (dicom_folder).If the input packet contains gzipped 
     dicom files, they will also be decompressed on-the-fly to minimize I/O 
@@ -1668,7 +1777,7 @@ def _unzip_dicom_folder(dicom_packet, dicom_folder):
     This function can be called through ProcessPoolExecutor.
     """
     r = {"args": {"dicom_packet": dicom_packet, "dicom_folder": dicom_folder}}
-    try: 
+    try:
         if not os.path.exists(dicom_folder):
             os.mkdir(dicom_folder)
 
@@ -1701,7 +1810,8 @@ def _unzip_dicom_file(dicom_folder):
     try:
         p = subprocess.run(["gunzip", "-r", dicom_folder])
         if p.returncode != 0:
-            raise ge.CommandError("_unzip_dicom_file", "Unable to unzip dicom files: gunzip exit code: %d" % p.returncode)
+            raise ge.CommandError(
+                "_unzip_dicom_file", "Unable to unzip dicom files: gunzip exit code: %d" % p.returncode)
         r["status"] = "ok"
     except Exception as e:
         r["status"] = "error"
@@ -1713,7 +1823,7 @@ def _unzip_dicom_file(dicom_folder):
 def _unzip_dicom(dicom_root_folder, parelements):
     """
     Find and unzip archived dicom folders and files. 
-    
+
     This function finds archived dicom folders created by previous import dicom
     runs 
     """
@@ -1722,34 +1832,39 @@ def _unzip_dicom(dicom_root_folder, parelements):
         for i in os.listdir(dicom_root_folder):
             fullpath = os.path.join(dicom_root_folder, i)
             if os.path.isfile(fullpath):
-                match_result = re.match(r"^(?P<dcm_name>\d+)(\.zip|\.tar|\.tar\.gz|\.tar\.bz2|\.tar\.xz|\.tarz|\.tar\.bzip2|\.tgz)$", i)
+                match_result = re.match(
+                    r"^(?P<dcm_name>\d+)(\.zip|\.tar|\.tar\.gz|\.tar\.bz2|\.tar\.xz|\.tarz|\.tar\.bzip2|\.tgz)$", i)
                 if match_result:
                     dcm_name = match_result.group("dcm_name")
                     print("submit unzip dicom folder: {}".format(dcm_name))
                     if not dcm_name.isdigit():
                         continue
-                    future = executor.submit(_unzip_dicom_folder, fullpath,  os.path.join(dicom_root_folder, dcm_name))
+                    future = executor.submit(
+                        _unzip_dicom_folder, fullpath,  os.path.join(dicom_root_folder, dcm_name))
                     pending_futures.append(future)
         exceptions = []
         for future in as_completed(pending_futures):
             if future.exception() is not None:
-                # Unhandled 
+                # Unhandled
                 e = future.exception()
                 print("Unhandled exception")
                 print(traceback.format_exc())
                 exceptions.append(e)
                 continue
             r = future.result()
-            if r["status"] == "ok": 
-                print("unzipped {} -> {}".format(r["args"]["dicom_packet"], r["args"]["dicom_folder"]))
+            if r["status"] == "ok":
+                print(
+                    "unzipped {} -> {}".format(r["args"]["dicom_packet"], r["args"]["dicom_folder"]))
             else:
-                print("unzip failed {} -> {}".format(r["args"]["dicom_packet"], r["args"]["dicom_folder"]))
+                print(
+                    "unzip failed {} -> {}".format(r["args"]["dicom_packet"], r["args"]["dicom_folder"]))
                 print(r["traceback"])
                 exceptions.append(r["exception"])
         # raise exception after the status of all child processes are collected
         if len(exceptions) > 0:
-            raise ge.CommandError("_unzip_dicom", "Unable to unzip one or more acquisition folders")
-        
+            raise ge.CommandError(
+                "_unzip_dicom", "Unable to unzip one or more acquisition folders")
+
         pending_futures.clear()
         for i in os.listdir(dicom_root_folder):
             fullpath = os.path.join(dicom_root_folder, i)
@@ -1762,23 +1877,25 @@ def _unzip_dicom(dicom_root_folder, parelements):
         exceptions.clear()
         for future in as_completed(pending_futures):
             if future.exception() is not None:
-                # Unhandled 
+                # Unhandled
                 e = future.exception()
                 print("Unhandled exception")
                 print(traceback.format_exc())
                 exceptions.append(e)
                 continue
             r = future.result()
-            if r["status"] == "ok": 
-                print("extract gzipped dicoms {}".format(r["args"]["dicom_folder"]))
+            if r["status"] == "ok":
+                print("extract gzipped dicoms {}".format(
+                    r["args"]["dicom_folder"]))
             else:
-                print("extract gzipped dicoms failed {}".format(r["args"]["dicom_folder"]))
+                print("extract gzipped dicoms failed {}".format(
+                    r["args"]["dicom_folder"]))
                 print(r["traceback"])
                 exceptions.append(r["exception"])
         # raise exception after the status of all child processes are collected
         if len(exceptions) > 0:
-            raise ge.CommandError("_unzip_dicom", "Unable to unzip one or more files")
-        
+            raise ge.CommandError(
+                "_unzip_dicom", "Unable to unzip one or more files")
 
 
 def sort_dicom(folder=".", **kwargs):
@@ -1862,7 +1979,7 @@ def sort_dicom(folder=".", **kwargs):
 
     # --- establish target folder
 
-    dcmf  = os.path.join(kwargs.get('out_dir', folder), 'dicom')
+    dcmf = os.path.join(kwargs.get('out_dir', folder), 'dicom')
 
     # --- get list of files
 
@@ -1870,7 +1987,8 @@ def sort_dicom(folder=".", **kwargs):
     if files is None:
         inbox = os.path.join(folder, 'inbox')
         if not os.path.exists(inbox):
-            raise ge.CommandFailed("sort_dicom", "Inbox folder not found", "Please check your paths! [%s]" % (os.path.abspath(inbox)), "Aborting")
+            raise ge.CommandFailed("sort_dicom", "Inbox folder not found", "Please check your paths! [%s]" % (
+                os.path.abspath(inbox)), "Aborting")
         files_iter = glob.iglob(os.path.join(inbox, "**", "*"), recursive=True)
 
         # if len(files):
@@ -1882,7 +2000,7 @@ def sort_dicom(folder=".", **kwargs):
         # else:
         #     raise ge.CommandFailed("sort_dicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
     else:
-        files_iter = [e.strip() for e in files.split(",")] 
+        files_iter = [e.strip() for e in files.split(",")]
 
     info = None
 
@@ -1913,17 +2031,18 @@ def sort_dicom(folder=".", **kwargs):
             continue
 
         elif ext.lower() == 'par':
-            info  = readPARInfo(dcm)
+            info = readPARInfo(dcm)
 
         else:
             try:
-                info = readDICOMInfo(dcm)                
+                info = readDICOMInfo(dcm)
             except:
                 continue
-        
+
         if show_session_info:
             if info and info['sessionid']:
-                print("---> Sorting dicoms for %s scanned on %s" % (info['sessionid'], info['datetime']))
+                print("---> Sorting dicoms for %s scanned on %s" %
+                      (info['sessionid'], info['datetime']))
                 show_session_info = False
 
         if info['seriesNumber'] is None:
@@ -1935,7 +2054,8 @@ def sort_dicom(folder=".", **kwargs):
 
         if not os.path.exists(sqfl):
             os.makedirs(sqfl)
-            print("---> Created subfolder for sequence %s %s - %s" % (info['sessionid'], sqid, info['seriesDescription']))
+            print("---> Created subfolder for sequence %s %s - %s" %
+                  (info['sessionid'], sqid, info['seriesDescription']))
 
         if ext.lower() == 'par':
             tgpar = os.path.join(sqfl, os.path.basename(dcm))
@@ -1968,13 +2088,15 @@ def sort_dicom(folder=".", **kwargs):
 
             # --- do the deed
 
-            tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (cleanName(info['sessionid']), sqid, sop, dext))
+            tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" %
+                               (cleanName(info['sessionid']), sqid, sop, dext))
             doFile(dcm, tgf)
-    
+
     print("---> Processed %d dicom files from %s" % (dcmn, inbox))
 
     print("---> Done")
-    return 
+    return
+
 
 def list_dicom(folder=None):
     """
@@ -2016,16 +2138,19 @@ def list_dicom(folder=None):
     files = [e for e in files if os.path.isfile(e)]
 
     if not files:
-        raise ge.CommandFailed("list_dicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
+        raise ge.CommandFailed("list_dicom", "No files found", "Please check the specified folder! [%s]" % (
+            os.path.abspath(folder)), "Aborting")
 
     for dcm in files:
         try:
-            d    = readDICOMBase(dcm)
+            d = readDICOMBase(dcm)
             time = getDicomTime(d)
             try:
-                print("---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.SeriesDescription, time))
+                print("---> %s - %-6s %6d - %-30s scanned on %s" %
+                      (dcm, getID(d), d.SeriesNumber, d.SeriesDescription, time))
             except:
-                print("---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.ProtocolName, time))
+                print("---> %s - %-6s %6d - %-30s scanned on %s" %
+                      (dcm, getID(d), d.SeriesNumber, d.ProtocolName, time))
         except:
             pass
 
@@ -2068,21 +2193,23 @@ def split_dicom(folder=None):
     files = [e for e in files if os.path.isfile(e)]
 
     if not files:
-        raise ge.CommandFailed("split_dicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
+        raise ge.CommandFailed("split_dicom", "No files found", "Please check the specified folder! [%s]" % (
+            os.path.abspath(folder)), "Aborting")
 
     sessions = []
 
     for dcm in files:
         try:
             # d    = dicom.read_file(dcm, stop_before_pixels=True)
-            d    = readDICOMBase(dcm)
+            d = readDICOMBase(dcm)
             time = getDicomTime(d)
-            sid  = getID(d)
+            sid = getID(d)
             if sid not in sessions:
                 sessions.append(sid)
                 os.makedirs(os.path.join(folder, sid))
                 print("===> creating subfolder for session %s" % (sid))
-            print("---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time))
+            print("---> %s - %-6s %6d - %-30s scanned on %s" %
+                  (dcm, sid, d.SeriesNumber, d.SeriesDescription, time))
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
         except:
             pass
@@ -2568,7 +2695,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
     isgz = re.compile(r'(^.*)\.gz$')
     iszip = re.compile(r'(^.*)\.zip$')
-    istar = re.compile(r'(^.*)(\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$)')
+    istar = re.compile(
+        r'(^.*)(\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$)')
 
     def _process_file(fobj, fname, fnum, dnum, target):
 
@@ -2613,25 +2741,28 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             z = zipfile.ZipFile(packet, 'r')
         except:
             e = sys.exc_info()[0]
-            raise ge.CommandFailed("import_dicom", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
-        
+            raise ge.CommandFailed("import_dicom", "Zip file could not be processed",
+                                   "Opening zip [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
+
         # -- get list of files in packet
         file_list = z.infolist()
 
         # -- process list
         for source_file in file_list:
             if source_file.file_size > 0:
-                print("...  extracting:", source_file.filename, source_file.file_size)
-                fnum, dnum = _process_file(z.open(source_file), source_file.filename, fnum, dnum, target)
-        
+                print("...  extracting:", source_file.filename,
+                      source_file.file_size)
+                fnum, dnum = _process_file(
+                    z.open(source_file), source_file.filename, fnum, dnum, target)
+
         # -- close and return with latest numbers
 
         print("     -> done!")
         z.close()
         return (fnum, dnum)
-    
+
     def _extract_tar(packet, packetname, fnum=0, dnum=0, target=None):
-        
+
         # -- open packet
         try:
             if isinstance(packet, io.IOBase):
@@ -2639,15 +2770,17 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             else:
                 tar = tarfile.open(packet, 'r')
         except:
-            e = sys.exc_info()[0]            
-            raise ge.CommandFailed("import_dicom", "Tar file could not be processed", "Opening tar [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
+            e = sys.exc_info()[0]
+            raise ge.CommandFailed("import_dicom", "Tar file could not be processed",
+                                   "Opening tar [%s] returned an error [%s]!" % (packetname, e), "Please check your data!")
 
         # -- process files
         for tarinfo in tar:
             if tarinfo.isfile():
                 print("...  extracting:", tarinfo.name, tarinfo.size)
-                fnum, dnum = _process_file(tar.extractfile(tarinfo), tarinfo.name, fnum, dnum, target)
-        
+                fnum, dnum = _process_file(tar.extractfile(
+                    tarinfo), tarinfo.name, fnum, dnum, target)
+
         # -- close and return with latest numbers
 
         print("     -> done!")
@@ -2656,18 +2789,20 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
     def _process_folder(folder, fnum=0, dnum=0, target=None):
         # -- get list of files
-        files_iter = glob.iglob(os.path.join(folder, "**", "*"), recursive=True)
+        files_iter = glob.iglob(os.path.join(
+            folder, "**", "*"), recursive=True)
         for source_file in files_iter:
-            fnum, dnum = _process_file(source_file, os.path.basename(source_file), fnum, dnum, target)
+            fnum, dnum = _process_file(
+                source_file, os.path.basename(source_file), fnum, dnum, target)
 
         return (fnum, dnum)
-
 
     print("Running import_dicom\n====================")
 
     # check settings
     if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
-        raise ge.CommandError('import_dicom', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
+        raise ge.CommandError('import_dicom', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (
+            tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
     verbose = verbose.lower() == 'yes'
 
@@ -2682,21 +2817,23 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     if masterinbox.lower() == 'none':
         masterinbox = None
         if sessions is None or sessions == "":
-            raise ge.CommandError('import_dicom', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
+            raise ge.CommandError('import_dicom', "Sessions parameter not specified",
+                                  "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
 
     if pattern is None:
         pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
 
     if nameformat is None:
         nameformat = r"(?P<subject_id>.*)"
-    
+
     try:
         if add_image_type == None or add_image_type == '':
             add_image_type = 0
         else:
             add_image_type = int(add_image_type)
     except:
-        raise ge.CommandError('import_dicom', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
+        raise ge.CommandError('import_dicom', "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (
+            add_image_type), "Please check command instructions!")
 
     if sessions:
         sessions = re.split(', *', sessions)
@@ -2705,21 +2842,25 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     sessionsInfo = None
 
     if logfile is not None and logfile != "":
-        log = dict([[f.strip() for f in e.split(':')] for e in logfile.split('|')])
+        log = dict([[f.strip() for f in e.split(':')]
+                   for e in logfile.split('|')])
 
         if not all([e in log for e in ['path', 'subject_id', 'packet_name']]):
-            raise ge.CommandFailed("import_dicom", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
+            raise ge.CommandFailed("import_dicom", "Missing information in logfile",
+                                   "Please provide all information in the logfile specification! [%s]" % (logfile))
 
         try:
             for key in [e for e in log.keys() if e in ['packet_name', 'subject_id', 'session_name']]:
                 log[key] = int(log[key]) - 1
         except:
-            raise ge.CommandFailed("import_dicom", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
+            raise ge.CommandFailed("import_dicom", "Invalid logfile specification",
+                                   "Please create a valid logfile specification! [%s]" % (logfile))
 
         sessionname = 'session_name' in log
 
         if not os.path.exists(log['path']):
-            raise ge.CommandFailed("import_dicom", "Logfile does not exist", "The specified logfile does not exist:", log['path'], "Please check your paths!")
+            raise ge.CommandFailed("import_dicom", "Logfile does not exist",
+                                   "The specified logfile does not exist:", log['path'], "Please check your paths!")
 
         print("---> Reading acquisition log [%s]." % (log['path']))
         sessionsInfo = {}
@@ -2731,15 +2872,19 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             for line in reader:
                 try:
                     if sessionname:
-                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subject_id']], 'sessionname': line[log['session_name']], 'sessionid': "%s_%s" % (line[log['subject_id']], line[log['session_name']]), 'packetname': line[log['packet_name']]}
+                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subject_id']], 'sessionname': line[log['session_name']], 'sessionid': "%s_%s" % (
+                            line[log['subject_id']], line[log['session_name']]), 'packetname': line[log['packet_name']]}
                     else:
-                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subject_id']], 'sessionname': None, 'sessionid': line[log['subject_id']], 'packetname': line[log['packet_name']]}
+                        sessionsInfo[line[log['packetname']]] = {
+                            'subjectid': line[log['subject_id']], 'sessionname': None, 'sessionid': line[log['subject_id']], 'packetname': line[log['packet_name']]}
                 except:
                     pass
 
     # ---- set up lists
-    packets = {'ok': [], 'nolog': [], 'bad': [], 'exist': [], 'skip': [], 'invalid': []}
-    emptysession = {'subjectid': None, 'sessionname': None, 'sessionid': None, 'packetname': None}
+    packets = {'ok': [], 'nolog': [], 'bad': [],
+               'exist': [], 'skip': [], 'invalid': []}
+    emptysession = {'subjectid': None, 'sessionname': None,
+                    'sessionid': None, 'packetname': None}
 
     # ---- get list of files / folders in masterinbox
     if masterinbox:
@@ -2751,22 +2896,27 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                      ('skip', "---> These packages do not match list of sessions and will be skipped:")]
 
         if not os.path.exists(masterinbox):
-            raise ge.CommandFailed("import_dicom", "Master inbox does not exist", f"A folder {masterinbox} does not exist.", "Please check your path!")
+            raise ge.CommandFailed("import_dicom", "Master inbox does not exist",
+                                   f"A folder {masterinbox} does not exist.", "Please check your path!")
 
         if not os.path.isdir(masterinbox):
-            raise ge.CommandFailed("import_dicom", "Master inbox is not a folder", f"{masterinbox} is not a folder.", "Please check your path!")
+            raise ge.CommandFailed("import_dicom", "Master inbox is not a folder",
+                                   f"{masterinbox} is not a folder.", "Please check your path!")
 
-        print("---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'" % (os.path.abspath(masterinbox), pattern, nameformat))
+        print("---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'" %
+              (os.path.abspath(masterinbox), pattern, nameformat))
 
         files = glob.glob(os.path.join(masterinbox, '*'))
         try:
             getop = re.compile(pattern)
         except:
-            raise ge.CommandFailed("import_dicom", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
+            raise ge.CommandFailed("import_dicom", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (
+                pattern), "Please check and correct it!")
         try:
             getid = re.compile(nameformat)
         except:
-            raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
+            raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (
+                nameformat), "Please check and correct it!")
 
         for afile in files:
             m = getop.search(os.path.basename(afile))
@@ -2775,8 +2925,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                     pname = m.group('packet_name')
                     session = dict(emptysession)
                     session['packetname'] = pname
-                    
-                    if sessionsInfo:                        
+
+                    if sessionsInfo:
                         if pname in sessionsInfo:
                             session = dict(sessionsInfo[pname])
                         else:
@@ -2791,15 +2941,18 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                         if ms and 'subject_id' in ms.groupdict() and ms.group('subject_id'):
                             sid = ms.group('subject_id')
                             if 'session_name' in ms.groupdict() and ms.group('session_name'):
-                                session.update({'subjectid': ms.group('subject_id'), 'sessionname': ms.group('session_name'), 'sessionid': "%s_%s" % (ms.group('subject_id'), ms.group('session_name'))})
+                                session.update({'subjectid': ms.group('subject_id'), 'sessionname': ms.group(
+                                    'session_name'), 'sessionid': "%s_%s" % (ms.group('subject_id'), ms.group('session_name'))})
                             else:
-                                session.update({'subjectid': ms.group('subject_id'), 'sessionname': None, 'sessionid': ms.group('subject_id')})
+                                session.update({'subjectid': ms.group(
+                                    'subject_id'), 'sessionname': None, 'sessionid': ms.group('subject_id')})
 
                         else:
                             packets['invalid'].append((afile, session))
                             continue
 
-                    sfolder = os.path.join(sessionsfolder, session['sessionid'])
+                    sfolder = os.path.join(
+                        sessionsfolder, session['sessionid'])
 
                     if sessions:
                         if not any([matchAll(e, session['sessionid']) for e in sessions]):
@@ -2818,13 +2971,15 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     # ---- get list of session folders to process
     else:
         if not sessions:
-            raise ge.CommandFailed("import_dicom", "Input data not specified", "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
+            raise ge.CommandFailed("import_dicom", "Input data not specified",
+                                   "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
 
         reportSet = [('ok', '---> Found the following folders to process:'),
                      ('invalid', "---> For these folders the folder name could not parsed and they won't be processed:"),
                      ('exist', "---> These folders have existing results:")]
 
-        print("---> Checking for folders to process in '%s'" % (os.path.abspath(sessionsfolder)))
+        print("---> Checking for folders to process in '%s'" %
+              (os.path.abspath(sessionsfolder)))
 
         getid = re.compile(nameformat)
 
@@ -2848,17 +3003,19 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             if ms and 'subject_id' in ms.groupdict() and ms.group('subject_id'):
                 sid = ms.group('subject_id')
                 if 'session_name' in ms.groupdict() and ms.group('session_name'):
-                    session.update({'subjectid': ms.group('subject_id'), 'sessionname': ms.group('session_name'), 'sessionid': pname})
+                    session.update({'subjectid': ms.group('subject_id'), 'sessionname': ms.group(
+                        'session_name'), 'sessionid': pname})
                 else:
-                    session.update({'subjectid': ms.group('subject_id'), 'sessionname': None, 'sessionid': pname})
+                    session.update({'subjectid': ms.group(
+                        'subject_id'), 'sessionname': None, 'sessionid': pname})
 
             else:
                 packets['invalid'].append((sfolder, session))
                 continue
 
             if glob.glob(os.path.join(sfolder, 'dicom')) or glob.glob(os.path.join(sfolder, 'nii')):
-                packets['exist'].append((sfolder, session)) 
-                continue                   
+                packets['exist'].append((sfolder, session))
+                continue
 
             packets['ok'].append((sfolder, session))
 
@@ -2868,22 +3025,28 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             print(f"\n{message}")
             for afile, session in packets[tag]:
                 if session['sessionname']:
-                    print("     subject: %s, session: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(afile)))
+                    print("     subject: %s, session: %s ... %s <= %s <- %s" %
+                          (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['subjectid']:
-                    print("     subject: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionid'], session['packetname'], os.path.basename(afile)))
+                    print("     subject: %s ... %s <= %s <- %s" %
+                          (session['subjectid'], session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['sessionid']:
-                    print("     %s <= %s <- %s" % (session['sessionid'], session['packetname'], os.path.basename(afile)))
+                    print("     %s <= %s <- %s" %
+                          (session['sessionid'], session['packetname'], os.path.basename(afile)))
                 elif session['packetname']:
-                    print("     %s <= %s <- %s" % ("????", session['packetname'], os.path.basename(afile)))
+                    print("     %s <= %s <- %s" %
+                          ("????", session['packetname'], os.path.basename(afile)))
                 else:
-                    print("     %s <= %s <- %s" % ("????", "????", os.path.basename(afile)))
+                    print("     %s <= %s <- %s" %
+                          ("????", "????", os.path.basename(afile)))
 
             if tag == 'exist':
-                #if overwrite:
+                # if overwrite:
                 #    print("     ... The folders will be cleaned and replaced with new data")
-                #else:
+                # else:
                 #    print("     ... To process them, remove or rename the exisiting subject folders or set `overwrite` to 'yes'")
-                print("     ... To process them, remove or rename the exisiting session folders")
+                print(
+                    "     ... To process them, remove or rename the exisiting session folders")
 
     nToProcess = len(packets['ok'])
     if overwrite:
@@ -2896,14 +3059,18 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
     elif not nToProcess:
         if check.lower() == 'any':
             if masterinbox:
-                raise ge.CommandFailed("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
+                raise ge.CommandFailed("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (
+                    os.path.abspath(masterinbox)), "Please check your data!")
             else:
-                raise ge.CommandFailed("import_dicom", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder)), "Please check your data!")                
+                raise ge.CommandFailed("import_dicom", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (
+                    os.path.abspath(sessionsfolder)), "Please check your data!")
         else:
             if masterinbox:
-                raise ge.CommandNull("import_dicom", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
+                raise ge.CommandNull("import_dicom", "No packets found to process",
+                                     "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
             else:
-                raise ge.CommandNull("import_dicom", "No sessions found to process", "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder))) 
+                raise ge.CommandNull("import_dicom", "No sessions found to process",
+                                     "No sessions were found to be processed in session folder [%s]!" % (os.path.abspath(sessionsfolder)))
 
     # ---- Ok, now loop through the packets
     afolder = os.path.join(sessionsfolder, "archive", "MR")
@@ -2929,7 +3096,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                 for rmfolder in [nfolder, dfolder]:
                     if os.path.exists(rmfolder):
                         shutil.rmtree(rmfolder)
-    
+
         packets['ok'] += packets['exist']
 
     # ---> process packets
@@ -2966,20 +3133,22 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
                 if iszip.match(p):
                     ptype = "zip"
-                    fnum, dnum = _extract_zip(p, os.path.basename(p), fnum, dnum, ifolder)
+                    fnum, dnum = _extract_zip(
+                        p, os.path.basename(p), fnum, dnum, ifolder)
 
                 elif istar.match(p):
                     ptype = "tar"
-                    fnum, dnum = _extract_tar(p, os.path.basename(p), fnum, dnum, ifolder)
+                    fnum, dnum = _extract_tar(
+                        p, os.path.basename(p), fnum, dnum, ifolder)
 
                 else:
                     ptype = "folder"
                     if masterinbox and ifolder != p:
                         fnum, dnum = _process_folder(p, fnum, dnum, ifolder)
-                        
+
                         # if os.path.exists(ifolder):
-                        #     shutil.rmtree(ifolder)                    
-                        # print("...  copying %s dicom files" % (os.path.basename(p)))                        
+                        #     shutil.rmtree(ifolder)
+                        # print("...  copying %s dicom files" % (os.path.basename(p)))
                         # shutil.copytree(p, ifolder)
 
             # ===> run sort dicom
@@ -2990,7 +3159,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             # ===> run dicom to nii
 
             print
-            dicom2niix(folder=sfolder, clean='no', unzip=unzip, gzip=gzip, sessionid=session['sessionid'], tool=tool, parelements=parelements, add_image_type=add_image_type, add_json_info=add_json_info, verbose=True)
+            dicom2niix(folder=sfolder, clean='no', unzip=unzip, gzip=gzip,
+                       sessionid=session['sessionid'], tool=tool, parelements=parelements, add_image_type=add_image_type, add_json_info=add_json_info, verbose=True)
 
             # ===> archive
 
@@ -3007,20 +3177,26 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                     # --- move package to archive
                     if archive == 'move':
                         if os.path.exists(archivetarget):
-                            print("...  WARNING: %s already exists in archive and it will not be moved!" % (os.path.basename(p)))
-                            note.append("WARNING: %s already exists in archive and it was not moved!" % (os.path.basename(p)))
+                            print("...  WARNING: %s already exists in archive and it will not be moved!" % (
+                                os.path.basename(p)))
+                            note.append("WARNING: %s already exists in archive and it was not moved!" % (
+                                os.path.basename(p)))
                         else:
-                            print("...  moving %s to archive" % (os.path.basename(p)))
+                            print("...  moving %s to archive" %
+                                  (os.path.basename(p)))
                             shutil.move(p, archivetarget)
                             print("     -> done!")
 
                     # --- copy package to archive
                     elif archive == 'copy':
                         if os.path.exists(archivetarget):
-                            print("...  WARNING: %s already exists in archive and it will not be copied!" % (os.path.basename(p)))
-                            note.append("WARNING: %s already exists in archive and it was not copied!" % (os.path.basename(p)))
+                            print("...  WARNING: %s already exists in archive and it will not be copied!" % (
+                                os.path.basename(p)))
+                            note.append("WARNING: %s already exists in archive and it was not copied!" % (
+                                os.path.basename(p)))
                         else:
-                            print("...  copying %s to archive" % (os.path.basename(p)))
+                            print("...  copying %s to archive" %
+                                  (os.path.basename(p)))
                             if ptype == 'folder':
                                 shutil.copytree(p, archivetarget)
                             else:
@@ -3029,7 +3205,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
                     # --- delete original package
                     elif archive == 'delete':
-                        print("...  deleting packet [%s]" % (os.path.basename(p)))
+                        print("...  deleting packet [%s]" % (
+                            os.path.basename(p)))
                         if ptype == 'folder':
                             shutil.rmtree(p)
                         else:
@@ -3037,8 +3214,9 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
             report['ok'].append((afile, dict(session), note))
 
-        except ge.CommandFailed as e: 
-            report['failed'].append((afile, dict(session), ["%s: %s" % (e.function, e.error)]))
+        except ge.CommandFailed as e:
+            report['failed'].append(
+                (afile, dict(session), ["%s: %s" % (e.function, e.error)]))
 
     print("\nFinal report\n============")
 
@@ -3055,7 +3233,8 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             print("... %s [%s]" % (session['sessionid'], afile))
             for note in notes:
                 print("    %s" % (note))
-        raise ge.CommandFailed("import_dicom", "Some packages failed to process", "Please check report!")
+        raise ge.CommandFailed(
+            "import_dicom", "Some packages failed to process", "Please check report!")
 
     return
 
@@ -3104,13 +3283,16 @@ def get_dicom_info(dicomfile=None, scanner='siemens'):
     """
 
     if dicomfile is None:
-        raise ge.CommandError("get_dicom_info", "No path to the dicom file was provided")
+        raise ge.CommandError(
+            "get_dicom_info", "No path to the dicom file was provided")
 
     if not os.path.exists(dicomfile):
-        raise ge.CommandFailed("get_dicom_info", "DICOM file does not exist", "Please check path! [%s]" % (dicomfile))
+        raise ge.CommandFailed(
+            "get_dicom_info", "DICOM file does not exist", "Please check path! [%s]" % (dicomfile))
 
     if scanner not in ['siemens', 'philips']:
-        raise ge.CommandError("get_dicom_info", "Scanner not supported", "The specified scanner is not yet supported! [%s]" % (scanner))
+        raise ge.CommandError("get_dicom_info", "Scanner not supported",
+                              "The specified scanner is not yet supported! [%s]" % (scanner))
 
     d = readDICOMBase(dicomfile)
     ok = True
@@ -3123,7 +3305,8 @@ def get_dicom_info(dicomfile=None, scanner='siemens'):
         print("            Institution: undefined")
 
     try:
-        print("                Scanner:", d[0x0008, 0x0070].value, d[0x0008, 0x1090].value)
+        print("                Scanner:",
+              d[0x0008, 0x0070].value, d[0x0008, 0x1090].value)
     except:
         print("                Scanner: undefined")
 
@@ -3186,7 +3369,8 @@ def get_dicom_info(dicomfile=None, scanner='siemens'):
 
     if scanner == 'philips':
         try:
-            print("        Repetition Time: %.2f" % (float(d[0x0018, 0x0080].value)))
+            print("        Repetition Time: %.2f" %
+                  (float(d[0x0018, 0x0080].value)))
         except:
             try:
                 print("        Repetition Time:", d[0x2005, 0x1030].value[0])
@@ -3241,27 +3425,30 @@ def get_dicom_info(dicomfile=None, scanner='siemens'):
             print("   Parallel Acquisition:", d[0x0018, 0x9077].value)
             if d[0x0018, 0x9077].value == 'YES':
                 try:
-                    print("%23s: in plane: %.2f out of plane %.2f" % (d[0x0018, 0x9078].value, d[0x0018, 0x9168].value, d[0x0018, 0x9155].value))
+                    print("%23s: in plane: %.2f out of plane %.2f" % (
+                        d[0x0018, 0x9078].value, d[0x0018, 0x9168].value, d[0x0018, 0x9155].value))
                 except:
                     print("                 Factor: undefined")
         except:
             print("   Parallel Acquisition: undefined")
 
         try:
-            print("                 Matrix: [%d, %d, %d]" % (d[0x0028, 0x0010].value, d[0x0028, 0x0011].value, d[0x2001, 0x1018].value))
+            print("                 Matrix: [%d, %d, %d]" % (
+                d[0x0028, 0x0010].value, d[0x0028, 0x0011].value, d[0x2001, 0x1018].value))
         except:
             print("                 Matrix: undefined")
 
         try:
-            print("          Field of View: [%d, %d, %d]" % (d[0x2005, 0x1074].value, d[0x2005, 0x1076].value, d[0x2005, 0x1075].value))
+            print("          Field of View: [%d, %d, %d]" % (
+                d[0x2005, 0x1074].value, d[0x2005, 0x1076].value, d[0x2005, 0x1075].value))
         except:
             print("          Field of View: undefined")
 
         try:
             if tesla == 3:
-                wfdiff    = 3.35
-                resfreq   = 42.576
-                dwelltime = 1 / ( tesla * wfdiff * resfreq / wfs * etl)
+                wfdiff = 3.35
+                resfreq = 42.576
+                dwelltime = 1 / (tesla * wfdiff * resfreq / wfs * etl)
                 print("   Parallel Acquisition: undefined")
                 print("    Estimated dwelltime: %.8f" % (dwelltime))
         except:

@@ -28,6 +28,7 @@ import subprocess
 from datetime import datetime
 import traceback
 import itertools
+import yaml
 import general.commands_support as gcs
 import general.process as gp
 import general.core as gc
@@ -522,7 +523,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             In order of priority, from lower to highest, they can be specified:
 
             -  in the header section of the study batch file
-            -  in the runlist file
+            -  in the recipe file
             -  as a command line parameter
             -  in the session section of the study batch file
             -  in the image specification of the session section of the study
@@ -548,13 +549,13 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 If these parameters are not specified anywhere else, the above
                 values will be used.
 
-            runlist file:
-                When ``run_list`` utility is used, parameters can be specified
+            recipe file:
+                When ``run_recipe`` utility is used, parameters can be specified
                 at the global run list level, at a specific list level, and at
                 an individual command level. The parameters specified will then
                 be passed to the command as command line parameters. For
-                details on the ``run_list`` command itself and how to specify
-                parameters at different levels within the runlist.txt file,
+                details on the ``run_recipe`` command itself and how to specify
+                parameters at different levels within the recipe.yaml file,
                 please see `Running a list of QuNex commands
                 <../../wiki/UsageDocs/RunningListsOfCommands.html>`__. These
                 parameters will take priority over the parameters specified in
@@ -1621,11 +1622,11 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
                                ".conc files for some sessions were not generated", "Please check report for details!")
 
 
-def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=None):
+def run_recipe(recipe_file=None, recipe=None, logfolder=None, verbose="no", eargs=None):
     """
-    ``run_list listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]``
+    ``run_recipe recipe_file=<path to recipe file> recipe=<nameof the recipe to run> [logfolder=None] [verbose=no] [<extra arguments>]``
 
-    Executes the commands defined in each list.
+    Executes the commands defined in each recipe.
 
     INPUTS
     ======
@@ -1633,100 +1634,81 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
     General parameters
     ------------------
 
-    --listfile         The runlist file containing runlists and their 
-                       parameters.
-    --runlists         A comma, space or pipe separated list of lists specified 
-                       within runlist file to run.
+    --recipe_file      The file containing recipes and their  parameters.
+    --recipe           Name of the recipe in the recipe_file to run.
     --logfolder        The folder within which to save the log.
     --mapvalues        Names of values of custom variables that will be injected
-                       into specifically marked fields in the runlist file.
+                       into specifically marked fields in the recipe file.
     --verbose          Whether to record in a log a full verbose report of the 
                        output of each command that was run ('yes') or only a
                        summary success report of each command ran. ['no']
 
-    Multiple run_list invocations
+    Multiple run_recipe invocations
     ----------------------------
 
     These parameters allow spreading processing of multiple sessions across 
-    multiple run_list invocations:
+    multiple run_recipe invocations:
 
     --batchfile             A path to a batch.txt file.
-    --sessions              Either a string with pipe `|` or comma separated 
-                            list of sessions (sessions ids) to be processed
-                            (use of grep patterns is possible), e.g. 
-                            `"OP128,OP139,ER*"` or `*list` file with a list
-                            of session ids.
-    --sessionids            An optional parameter explicitly specifying, which
-                            of the sessions from the list provided by the 
-                            `sessions` parameter are to be processed in this
-                            call. If not specified, all sessions will be 
-                            processed.
-    --sperlist              An optional parameter specifying, how many sessions
-                            to run per individual run_list invocation. If not 
+    --sessions              Either a string with comma separated list of
+                            sessions (sessions ids) to be processed (use of grep
+                            patterns is possible), e.g.  `"OP128,OP139,ER*"` or
+                            `*list` file with a list of session ids.
+    --sper_recipe           An optional parameter specifying, how many sessions
+                            to run per individual run_recipe invocation. If not 
                             specified, all sessions will be run through the 
-                            same run_list invocation. 
-    --runinpar              If multiple run_list invocations are to be run, how 
+                            same run_recipe invocation. 
+    --runinpar              If multiple run_recipe invocations are to be run, how 
                             many should be run in parallel. The default is 1.
     --scheduler             An optional scheduler settings description string. 
-                            If provided, each run_list invocation will be 
+                            If provided, each run_recipe invocation will be 
                             scheduled to run on a separate cluster node. For 
                             details about the settings string specification see 
                             the inline help for the `schedule` command.
 
     If these parameters are provided, the processing of the sessions will
-    be split so that `sperlist` sessions will be processed by each separate
-    run_list invocation. If `scheduler` is specified, each run_list invocation
-    will be scheduled as a separate job on a cluster. 
+    be split so that `sper_recipe` sessions will be processed by each separate
+    run_recipe invocation. If `scheduler` is specified, each run_recipe
+    invocation will be scheduled as a separate job on a cluster. 
 
-    When processing is spread across multiple run_list invocations, the 
-    `sperlist` parameter will be passed forward as `parsessions` parameter on
+    When processing is spread across multiple run_recipe invocations, the 
+    `sper_recipe` parameter will be passed forward as `parsessions` parameter on
     each separate invocation (see the next section). Similarly `sessionids` will
-    be passed on, adjusted for the sessions to be run with the specific run_list
-    invocation (see the next section).
+    be passed on, adjusted for the sessions to be run with the specific
+    run_recipe invocation (see the next section).
 
-    Please take note that if `run_list` command is ran using a scheduler, any
-    scheduler specification within the `listfile` will be ignored to avoid the
-    attempts to spawn new cluster jobs when `run_list` instance is already 
-    running on a cluster node.
+    Please take note that if `run_recipe` command is ran using a scheduler, any
+    scheduler specification within the `recipe_file` will be ignored to avoid
+    the  attempts to spawn new cluster jobs when `run_recipe` instance is
+    already running on a cluster node.
 
-    Importantly, if `scheduler` is specified in the `run_list` file, do bear 
-    in mind, that all the commands in the list will be scheduled at the same 
-    time, and not in a succession, as `run_list` can not track execution of jobs
-    on individual cluster nodes.
+    Importantly, if `scheduler` is specified in the `run_recipe` file, do bear 
+    in mind, that all the commands in the recipe will be scheduled at the same 
+    time, and not in a succession, as `run_recipe` can not track execution of
+    jobs on individual cluster nodes.
 
+    Additional parameters
+    ---------------------
 
-    Parameters to pass on or ignore
-    -------------------------------
-
-    Sometimes the parameters specified in the `listfile` need to be adjusted
-    in a run_list invocation. If the following parameters are listed, they will
-    take precedence over parameters specified within the `listfile`: 
+    Sometimes the parameters specified in the `run_recipe` need to be adjusted
+    in a run_recipe invocation. If the following parameters are listed, they will
+    take precedence over parameters specified within the `run_recipe`: 
 
     --parsessions    An optional parameter specifying how many sessions to run
                      in parallel. If parsessions parameter is already specified
-                     within the `listfile`, then the lower value will 
+                     within the `run_recipe`, then the lower value will 
                      take precedence.
     --parelements    An optional parameter specifying how many elements to run
                      in paralel within each of the jobs (e.g. how many bolds
                      when bold processing). If parelements is already specified
-                     within the `listfile`, then the lower value will
+                     within the `run_recipe`, then the lower value will
                      take precedence.
-    --sessionids     An optional parameter specifying which sessions are to be 
-                     processed within this run_list invocation. If `sessionids`
-                     is specified within the listfile, then the value passed to 
-                     run_list will take precedence.
-
-    Sometimes one would wish to ignore a parameter specified in a list when
-    running a list. The parameters to ignore can be specified using:
-
-    --ignore            An optional comma or pipe separated list of parameters
-                        to ignore when running any of the specified lists.
 
     USE
     ===
 
-    runlist takes a `runlist` file and a `runlists` list of lists and executes
-    the commands defined in each list. The runlist file contains commands that 
+    run_recipe takes a `recipe_file` and a `recipe` name and executes
+    the commands defined in the recipe. The `recipe_file` contains commands that 
     should be run and parameters that it should use.
 
     LOGS AND FAILURES
@@ -1736,232 +1718,133 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
     `<study>/processing/logs/runlogs` stamped with date and time that the 
     log was started. If a study folder is not yet created, please provide a 
     valid folder to save the logs to. If the log can not be created the 
-    `run_list` command will exit with a failure.
+    `run_recipe` command will exit with a failure.
 
-    `run_list` is checking for a successful completion of commands that it runs.
+    `run_recipe` is checking for a successful completion of commands that it runs.
     If any of the commands fail to complete successfully, the execution of the
     commands will stop and the failure will be reported both in stdout as well
     as the log.
 
     Individual commands that are run can generate their own logs, the presence
     and location of those logs depend on the specific command and settings 
-    specified in the runlist file.
+    specified in the recipe file.
 
-    RUNLIST FILE
-    ============
+    THE RECIPE FILE
+    ===============
 
-    At the top of the runlist file global settings are defined in the form
-    of `<parameter>: <value>` pairs. These are the settings that will be used as 
-    defaults throughout the list and individual commands defined in the rest of 
-    the runlist file.
+    Recipe files use YAML markup language. At the top of the recipe file is the
+    global_parameters section, where the global settings are defined in the form
+    of `<parameter>: <value>` pairs. These are the settings that will be used as
+    defaults throughout all recipes and individual commands defined in the rest
+    of the recipe file.
 
-    Each list starts with a line that consists of three dashes "---" only. The
-    next line should define the name of the list by specifying:
-    `list: <listname>`. The list name is the one referenced in the run_list 
-    command. After the definition of the list, the default parameters for the
-    list can be specified as a <parameter>:<value> pairs. These values will be 
-    taken as the default for the list. They have priority over the general 
-    runlist file definition in that values that are defined within a specific 
-    list will be used rather than values defined at the higher level. It is 
-    recommended for readibility purposes for the content of the list to be 
-    indented by four spaces.
+    Recpies are defined in the recipes portion of the file where each recipe is
+    defined by its unique name. Each recipe has two sections, the parameters and
+    the commands. The parameters section defines the parameters and the values
+    that are specific to that recipe. The commands section defines the commands
+    that are specific to that recipe along with command specific parameters. All
+    parameters are provided in the form of <parameter>:<value> pairs. Recipe
+    level parameters have a higher priority than global parameters, while
+    command level parameters have a higher priority than recipe level
+    parameters. Parameters provided through the command line interface call have
+    the highest priority, meaning that their valus will override any values in
+    recipe files.
 
-    Each list then consists of commands. Commands are defined by the:
-    `command: <command name>` lines. Each `command: <command name>` specifies
-    a command to be run, where <command name> is a valid qunex command. The 
-    command within a list will be executed in the order they are listed. 
-
-    Each command can then list additional parameters to be provided to the
-    command in the form of `<parameter>:<value>` pairs. The values provided
-    here will take priority over the values specified at the beginning of the
-    list as well as over the default values provided at the beginning of the
-    runlist file. For readibility purposes it is advised that the 
-    <parameter>:<value> pairs are further indented for additional four spaces.
-
-    If a specific parameter specified at a higher level is not to be used at
-    this level or below, it can be listed prefixed by a dash / minus sign.
-
-    Example runlist file
-    --------------------
+    Example recipe file
+    -------------------
 
     ::
 
-        # global settings
-        sessionsfolder : /data/testStudy/sessions
-        overwrite      : yes
-        sessions       : *_baseline
+        global_parameters:
+            sessionsfolder    : /data/qx_study/sessions
+            sessions          : OP101,OP102
+            overwrite         : "yes"
+            batchfile         : /data/qx_study/processing/batch.txt
 
+        recipes:
+            onboard_dicom:
+                commands:
+                    - create_study:
+                        studyfolder: /data/qx_study
+                    - import_dicom:
+                        masterinbox: /data/qx_data
+                        archive: leave
+                    - create_session_info:
+                        mapping: /data/qx_specs/hcp_mapping.txt
+                    - create_batch:
+                        targetfile: /data/qx_study/processing/batch.txt
+                        paramfile : /data/qx_specs/hcp_parameters.txt
+                    - setup_hcp
 
-        ---
-        list: dataImport
+            hcp_preprocess:
+                parsessions: 2
 
-            command: import_bids
-                inbox   : /data/datalake/EMBARC/inbox/BIDS
-                archive : leave
-
-        ---
-        list: prepareHCP
-
-            command: create_session_info
-
-            command: create_batch
-                tfile: /data/testStudy/processing/batch_baseline.txt
-
-            command: setup_hcp
-
-        ---
-        list: doHCP
-
-            sessions: /data/testStudy/processing/batch_baseline.txt
-            parsessions: 4
-
-            command: hcp_pre_freesurfer
-
-            command: hcp_freesurfer
-
-            command: hcp_post_freesurfer
-
-            command: hcp_fmri_volume
-                parsessions : 1
-                parelements : 4
-
-            command: hcp_fmri_surface
-                parsessions : 1
-                parelements : 4
-
-        ---
-        list: prepareFCPreprocessing
-            parsessions : 6
-            sessions    : /data/testStudy/processing/batch_baseline.txt
-            bolds       : all
-
-            command: map_hcp_data
-
-            command: create_bold_brain_masks
-
-            command: compute_bold_stats
-                log: remove
-
-            command : create_stats_report
-                parsessions: 1
-
-            command: extract_nuisance_signal
-
-        ---
-        list: runFCPreprocessing
-
-            parsessions : 6
-            sessions    : /data/testStudy/processing/batch_baseline.txt
-            scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=day"
-
-            command: preprocess_bold
-                bold_actions     : shrc
-                glm_residuals    : save
-                bold_nuisance    : m,V,WM,WB,1d
-                pignore          : hipass=linear|regress=spline|lopass=linear
-                overwrite        : yes
-                bolds            : rest
-                image_target     : cifti
-                hcp_cifti_tail   : _Atlas
-
-        ---
-        list: doPreFS
-            sessions    : {sessions_var}
-            parsessions : 4
-
-            command: hcp_pre_freesurfer
+                commands:
+                    - hcp_pre_freesurfer
+                    - hcp_freesurfer
+                    - hcp_post_freesurfer
+                    - hcp_fmri_volume
+                    - hcp_fmri_surface
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="dataImport,prepareHCP"
+        qunex run_recipe \\
+          --recipe_file="/data/settings/recipe.yaml" \\
+          --recipe="onboard_dicom"
 
     ::
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="doHCP" \\
+        qunex run_recipe \\
+          --recipe_file="/data/settings/recipe.yaml" \\
+          --recipe="hcp_preprocess" \\
           --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
-          --sperlist=4 \\
+          --sper_recipe=4 \\
           --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=week"
 
     ::
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="prepareFCPreprocessing" \\
-          --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
-          --sperlist=4 \\
-          --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=day"
-
-    ::
-
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="runFCPreprocessing" 
-
-    ::
-
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="doPreFS" \\
+        qunex run_recipe \\
+          --recipe_file="/data/settings/recipe.yaml" \\
+          --recipe="hcp_preprocess" \\
           --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt" 
 
-    The first call will execute all the commands in lists `dataImport` and 
-    `prepareHCP` locally.
+    The first call will execute all the commands in recipe `onboard_dicom`.
 
-    The second call will execute all the steps of the HCP preprocessing pipeline, 
-    in sequence. Execution will be spread across the nodes with each `run_list` 
-    instance processing four sessions at a time. Based on the settings in the 
-    `runlist.txt` file, the first three HCP steps will be executed with four
-    sessions running in parallel, whereas the last two fMRI steps the sessions 
-    will be executed serially with four BOLDS from each session being processed in
-    parallel. 
+    The second call will execute all the steps of the HCP preprocessing pipeline
+    via a scheduler. It will execute two sessions in parallel within the run.
+    in sequence.
 
-    The third call will again schedule multiple `run_list` invocations, each 
-    processing four sessions at a time (the lower number of `sperlist`
-    and `parsessions`). In this call, the initial steps will be performed
-    on all BOLD images.
-
-    The fourth call will start a single `run_list` instance locally, however,
-    this will submit both listed `preprocess_bold` commands as jobs to be run with
-    six sessions per node in parallel. These two commands will be run only on BOLD
-    images tagged as `rest`. 
-
-    The last, fifth call will execute hcp_pre_freesurfer, the value of the `sessions`
-    parameter here is set to a placeholder variable `sessions_var`, the value is 
-    then injected from the command call by using the `mapvalues` parameter.
-    Alternatively the value could be injected by setting the environmental variable
-    `$sessions_var`.
+    The last, thid call will execute hcp preprocessing, the value of the
+    `sessions` parameter here is set to a placeholder variable `sessions_var`,
+    the value is  then injected from the command call by using the `mapvalues`
+    parameter. Alternatively the value could be injected by setting the
+    environmental variable `$sessions_var`.
     """
 
-    verbose = verbose.lower() == 'yes'
+    verbose = verbose.lower() == "yes"
 
-    flags = ['test']
+    flags = ["test"]
 
-    if listfile is None:
-        raise ge.CommandError("run_list", "listfile not specified",
-                              "No runlist file specified", "Please provide path to the runlist file!")
+    if recipe_file is None:
+        raise ge.CommandError("run_recipe", "recipe_file not specified",
+                              "No recipe file specified", "Please provide path to the recipe file!")
 
-    if runlists is None:
-        raise ge.CommandError("run_list", "runlists not specified",
-                              "No runlists specified", "Please provide list of list names to run!")
+    if recipe is None:
+        raise ge.CommandError("run_recipe", "recipe not specified",
+                              "No recipe specified", "Please provide the recipe name!")
 
-    if not os.path.exists(listfile):
-        raise ge.CommandFailed("run_list", "runlist file does not exist",
-                               "Runlist file not found [%s]" % (listfile), "Please check your paths!")
+    if not os.path.exists(recipe_file):
+        raise ge.CommandFailed("run_recipe", "recipe file file does not exist",
+                               "Recipe file file not found [%s]" % (recipe_file), "Please check your paths!")
 
-    # -- parse runlist file
-    runList = {'parameters': {},
-               'lists': {}}
+    # parse the recipe file
+    parameters = {}
+    commands = []
 
-    parameters = runList['parameters']
-
-    # -- prepare mapvalues
+    # prepare mapvalues
     mapvalues = {}
     if "mapvalues" in eargs:
         tempmap = eargs["mapvalues"].split("|")
@@ -1973,213 +1856,190 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
         # remove
         del eargs["mapvalues"]
 
-    with open(listfile, 'r') as file:
-        for line in file:
-            try:
-                line = line.strip()
-                if line.startswith('#') or line.startswith('---') or line.strip() == "":
-                    continue
-                elif line.startswith('list'):
-                    listName = strip_quotes(line.split(':')[1].strip())
-                    runList['lists'][listName] = {'parameters': runList['parameters'].copy(
-                    ), 'commands': [], 'removed_parameters': []}
-                    parameters = runList['lists'][listName]['parameters']
-                    removedParameters = runList['lists'][listName]['removed_parameters']
-                elif line.startswith('command'):
-                    commandName = strip_quotes(line.split(':')[1].strip())
-                    parameters = runList['lists'][listName]['parameters'].copy(
-                    )
-                    removedParameters = list(
-                        runList['lists'][listName]['removed_parameters'])
-                    runList['lists'][listName]['commands'].append(
-                        {'name': commandName, 'parameters': parameters, 'removed_parameters': removedParameters})
-                elif ':' in line:
-                    parameter, value = [strip_quotes(
-                        e.strip()) for e in line.split(":", 1)]
-                    # is value something we should inject
-                    if "{" in value and "}" in value:
-                        value = value.strip("{").strip("}")
-                        # is value in global parameters or environment
-                        if value in mapvalues:
-                            value = mapvalues[value]
-                        elif value in os.environ:
-                            value = os.environ[value]
-                        else:
-                            raise ge.CommandFailed("run_list", "Cannot parse line", "Injection value [%s] in line [%s] not provided" % (
-                                value, line), "Please provide injection values as input parameters (--mapvalues) or as environmental variables!")
+    # open the recipe file
+    with open(recipe_file, "r", encoding="UTF-8") as file:
+        try:
+            recipe_data = yaml.load(file, Loader=yaml.FullLoader)
+        except Exception as e:
+            raise ge.CommandFailed(
+                "run_recipe", "Cannot parse the recipe file")
 
-                    # set
-                    parameters[parameter] = value
-                elif line.strip() in flags:
-                    parameters[line.strip()] = "flag"
-                elif line.strip().startswith('-'):
-                    keyToRemove = line.strip()[1:]
-                    if keyToRemove in parameters:
-                        # mark parameter as removed
-                        removedParameters.append(keyToRemove)
-                        del parameters[keyToRemove]
-                    # also remove arguments that come from eargs
-                    elif eargs is not None and keyToRemove in eargs:
-                        # mark parameter as removed
-                        removedParameters.append(keyToRemove)
+    # get the recipe
+    if "recipes" not in recipe_data:
+        raise ge.CommandFailed(
+            "run_recipe", "Recipes not found in the recipe file")
 
-            except:
-                raise ge.CommandFailed("run_list", "Cannot parse line", "Unable to parse line [%s]" % (
-                    line), "Please check the runlist file [%s]" % listfile)
+    recipes = recipe_data["recipes"]
 
-    # -- log location
+    if recipe not in recipes:
+        raise ge.CommandFailed(
+            "run_recipe", f"Recipe {recipe} not found in the recipe file")
+
+    recipe_dict = recipes[recipe]
+
+    # global parameters
+    if "global_parameters" in recipe_data:
+        for parameter, value in recipe_data["global_parameters"].items():
+            # overwrite value
+            if value in mapvalues:
+                value = mapvalues[value]
+            elif value in os.environ:
+                value = os.environ[value]
+
+            parameters[parameter] = value
+
+    # recipe parameters
+    if "parameters" in recipe_dict:
+        for parameter, value in recipe_dict["parameters"].items():
+            # overwrite value
+            if value in mapvalues:
+                value = mapvalues[value]
+            elif value in os.environ:
+                value = os.environ[value]
+
+            parameters[parameter] = value
+
+    # log location
     if logfolder is None:
         if "studyfolder" in parameters:
             logfolder = os.path.join(
                 parameters["studyfolder"], "processing", "logs")
         elif "sessionsfolder" in parameters:
             logfolder = gc.deduceFolders(
-                {'sessionsfolder': parameters["sessionsfolder"]})["logfolder"]
+                {"sessionsfolder": parameters["sessionsfolder"]})["logfolder"]
         else:
-            logfolder = gc.deduceFolders({'reference': listfile})["logfolder"]
-    runlogfolder = os.path.join(logfolder, 'runlogs')
+            logfolder = gc.deduceFolders(
+                {"reference": run_recipe})["logfolder"]
+    runlogfolder = os.path.join(logfolder, "runlogs")
 
     # create folder if it does not exist
     if not os.path.isdir(runlogfolder):
         os.makedirs(runlogfolder)
 
-    print("===> Saving the run_list runlog to: %s" % runlogfolder)
+    print(f"===> Saving the run_recipe runlog to: {runlogfolder}")
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = os.path.join(
-        runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
+        runlogfolder, f"Log-run_recipe-{logstamp}.log")
 
-    # -- are there parameters to ignore
-    if 'ignore' in eargs:
-        ignore = [e.strip() for e in re.split(
-            ' ?, ?| ?\| ?| +|', eargs['ignore'])]
-    else:
-        ignore = None
-
-    # -- run through lists
-    runLists = re.split(r'[,\|\s]', runlists)
-    summary = "\n----==== LISTS EXECUTION SUMMARY ====----"
+    # run
+    summary = "\n----==== RECIPE EXECUTION SUMMARY ====----"
 
     try:
         log = open(logname, "w", encoding="utf-8")
     except:
-        raise ge.CommandFailed("run_list", "Cannot open log", "Unable to open log [%s]" % (
-            logname), "Please check the paths!")
+        raise ge.CommandFailed("run_recipe", "Cannot open log",
+                               f"Unable to open log [{logname}]", "Please check the paths!")
 
-    print("\n\n============================== RUNLIST LOG ==============================\n", file=log)
-    print("===> Running commands from the following lists:", ", ".join(runLists))
-    print("===> Running commands from the following lists:",
-          ", ".join(runLists), "\n", file=log)
+    print("\n\n============================== RUN_RECIPE LOG ==============================\n", file=log)
 
-    for runListName in runLists:
-        if runListName not in runList['lists']:
-            raise ge.CommandFailed("run_list", "List not found", "List with name %s not found" % (
-                runListName), "Please check the runlist file [%s]" % listfile)
+    summary += f"\n\n===> recipe: {recipe}"
 
-        summary += "\n\n===> list: %s" % (runListName)
+    print(f"===> Running commands from recipe: {recipe}")
+    print(f"===> Running commands from recipe: {recipe}\n", file=log)
 
-        print("===> Running commands from list:", runListName)
-        print("\n----------==================== LIST ====================---------\n", file=log)
-        print("===> Running commands from list:", runListName, "\n", file=log)
+    # commands
+    if "commands" not in recipe_dict:
+        raise ge.CommandFailed(
+            "run_recipe", f"Recipe {recipe} missing commands specification")
 
-        commandsToRun = list(runList['lists'][runListName]['commands'])
+    commands = recipe_dict["commands"]
 
-        for runCommand in commandsToRun:
-            commandName = runCommand['name']
-            commandParameters = runCommand['parameters']
+    for com in commands:
+        if isinstance(com, dict):
+            command_name = list(com.keys())[0]
+            command_parameters = list(com.values())[0]
+        else:
+            command_name = com
+            command_parameters = {}
 
-            # -- override params with those from eargs (passed because of parallelization on a higher level)
-
-            if eargs is not None:
-                # do not add parameter if it is flagged as removed
-                removedParameters = runCommand['removed_parameters']
-                for k in eargs:
-                    if k not in removedParameters:
-                        if k in ['parsessions', 'parelements']:
-                            if k in commandParameters:
-                                commandParameters[k] = str(
-                                    min([int(e) for e in [eargs[k], commandParameters[k]]]))
-                        else:
-                            commandParameters[k] = eargs[k]
-
-            # -- remove parameters that are not allowed
-            import general.commands as gcom
-            if commandName in gcom.commands:
-                allowedParameters = list(
-                    gcom.commands.get(commandName)["args"])
-                if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
-                    allowedParameters += gcs.extra_parameters
-
-                newParameters = commandParameters.copy()
-                for param in commandParameters.keys():
-                    if param not in allowedParameters:
-                        del newParameters[param]
-                commandParameters = newParameters
-
-            # -- remove parameters set to ignore
-            if ignore:
-                for toIgnore in ignore:
-                    if toIgnore in commandParameters:
-                        del commandParameters[toIgnore]
-
-            # -- setup command
-
-            command = ["qunex"]
-            command.append(commandName)
-            commandr = "\n--------------------------------------------\n===> Running command:\n---> qunex " + commandName
-            for param, value in commandParameters.items():
-                if param in flags:
-                    command.append('--%s' % (param))
-                    commandr += " \\\n          --%s" % (param)
+        # override params with those from eargs (passed because of parallelization on a higher level)
+        if eargs is not None:
+            # do not add parameter if it is flagged as removed
+            for k in eargs:
+                if k in ["parsessions", "parelements"]:
+                    if k in command_parameters:
+                        command_parameters[k] = str(
+                            min([int(e) for e in [eargs[k], command_parameters[k]]]))
                 else:
-                    command.append('--%s=%s' % (param, value))
-                    commandr += ' \\\n          --%s="%s"' % (param, value)
+                    command_parameters[k] = eargs[k]
 
-            print(commandr)
-            print(commandr, file=log)
+        # append global and recipe parameters
+        for parameter, value in parameters.items():
+            if parameter not in command_parameters:
+                command_parameters[parameter] = value
 
-            # -- run command
-            process = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
+        # remove parameters that are not allowed
+        import general.commands as gcom
+        if command_name in gcom.commands:
+            allowed_parameters = list(
+                gcom.commands.get(command_name)["args"])
+            if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
+                allowed_parameters += gcs.extra_parameters
 
-            # Poll process for new output until finished
-            error = False
-            logging = verbose
+            new_parameters = command_parameters.copy()
+            for param in command_parameters.keys():
+                if param not in allowed_parameters:
+                    del new_parameters[param]
+            command_parameters = new_parameters
 
-            for line in iter(process.stdout.readline, b''):
-                line = line.decode("utf-8")
-                if "ERROR in completing" in line or "ERROR:" in line or "failed with error" in line:
-                    error = True
-                if "Final report" in line:
-                    if not verbose:
-                        print("", file=log)
-                    logging = True
-
-                # print
-                if logging:
-                    print(line, end=" ", file=log)
-                    log.flush()
-
-            if error:
-                summary += "\n---> command %-20s FAILED" % (commandName)
-                summary += "\n\n----------==== END SUMMARY ====----------"
-                print(summary, file=log)
-                print("\n---> Running lists not completed successfully: failed running command '%s' in list '%s'" %
-                      (commandName, runListName), file=log)
-                log.close()
-                raise ge.CommandFailed("runlist", "Runlist command failed", "Command '%s' inside list '%s' failed" % (
-                    commandName, runListName), "See error logs in the study folder for details")
+        # setup command
+        command = ["qunex"]
+        command.append(command_name)
+        commandr = "\n--------------------------------------------\n===> Running command:\n\n     qunex " + command_name
+        for param, value in command_parameters.items():
+            if param in flags:
+                command.append(f"--{param}")
+                commandr += f" \\\n          --{param}" % (param)
             else:
-                summary += "\n---> command %-20s OK" % (commandName)
-                print("===> Successful completion of runlist command %s" %
-                      (commandName))
+                command.append(f"--{param}={value}")
+                commandr += f" \\\n          --{param}='{value}'"
+
+        print(commandr)
+        print(commandr, file=log)
+
+        # run command
+        process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
+
+        # Poll process for new output until finished
+        error = False
+        logging = verbose
+
+        for line in iter(process.stdout.readline, b""):
+            line = line.decode("utf-8")
+            if "ERROR in completing" in line or "ERROR:" in line or "failed with error" in line:
+                error = True
+            if "Final report" in line:
+                if not verbose:
+                    print("", file=log)
+                logging = True
+
+            # print
+            if logging:
+                print(line, end=" ", file=log)
+                log.flush()
+
+        if error:
+            summary += f"\n ... command {command_name} FAILED"
+            summary += "\n\n----------==== END SUMMARY ====----------"
+            print(summary, file=log)
+            print(
+                f"\n---> run_recipe not completed successfully: failed running command {command_name}", file=log)
+            log.close()
+            raise ge.CommandFailed("run_recipe", "run_recipe command failed",
+                                   f"Command {command_name} inside recipe {recipe} failed", "See error logs in the study folder for details")
+        else:
+            summary += f"\n---> command {command_name} OK"
+            print(
+                f"===> Successful completion of the run_recipe command {command_name}\n")
+
     summary += "\n\n----------==== END SUMMARY ====----------"
 
     print(summary, file=log)
-    print("\n===> Successful completion of task: run_lists %s" %
-          (", ".join(runLists)), file=log)
+    print("\n===> Successful completion of task: run_recipe", file=log)
 
-    print("===> Successful completion of run_lists %s" % (", ".join(runLists)))
+    print("===> Successful completion of run_recipes")
     print(summary)
 
     log.close()
