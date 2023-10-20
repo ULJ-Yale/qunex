@@ -1622,7 +1622,7 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
                                ".conc files for some sessions were not generated", "Please check report for details!")
 
 
-def run_recipe(recipe_file=None, recipe=None, logfolder=None, verbose="no", eargs=None):
+def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose="no", eargs=None):
     """
     ``run_recipe recipe_file=<path to recipe file> recipe=<nameof the recipe to run> [logfolder=None] [verbose=no] [<extra arguments>]``
 
@@ -1636,6 +1636,7 @@ def run_recipe(recipe_file=None, recipe=None, logfolder=None, verbose="no", earg
 
     --recipe_file      The file containing recipes and their  parameters.
     --recipe           Name of the recipe in the recipe_file to run.
+    --xnat             When set as "yes", runs additional scripts for XNAT support.
     --logfolder        The folder within which to save the log.
     --mapvalues        Names of values of custom variables that will be injected
                        into specifically marked fields in the recipe file.
@@ -1982,6 +1983,12 @@ def run_recipe(recipe_file=None, recipe=None, logfolder=None, verbose="no", earg
                 if param not in allowed_parameters:
                     del new_parameters[param]
             command_parameters = new_parameters
+
+        # xnat build folder prep
+            if xnat == "yes":
+                xnatScript = os.path.join(os.environ['XNAT_SCRIPTS_FOLDER'], commandName + "_xnat.sh")
+                xnatProcess = subprocess.Popen(
+                xnatScript, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
 
         # setup command
         command = ["qunex"]
