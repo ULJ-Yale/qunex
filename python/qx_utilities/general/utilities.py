@@ -19,6 +19,7 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
+import chevron
 import errno
 import shutil
 import glob
@@ -1638,8 +1639,6 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
     --recipe           Name of the recipe in the recipe_file to run.
     --xnat             When set as "yes", runs additional scripts for XNAT support.
     --logfolder        The folder within which to save the log.
-    --mapvalues        Names of values of custom variables that will be injected
-                       into specifically marked fields in the recipe file.
     --verbose          Whether to record in a log a full verbose report of the 
                        output of each command that was run ('yes') or only a
                        summary success report of each command ran. ['no']
@@ -1787,6 +1786,13 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
                     - hcp_fmri_volume
                     - hcp_fmri_surface
 
+            hcp_denoise:
+                commands:
+                    - hcp_icafix:
+                        hcp_matlab_mode: "{{matlab_mode}}"
+                    - hcp_msmall
+                        hcp_matlab_mode: "{{$MATLAB_MODE}}"
+
     EXAMPLE USE
     ===========
 
@@ -1809,8 +1815,8 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
 
         qunex run_recipe \\
           --recipe_file="/data/settings/recipe.yaml" \\
-          --recipe="hcp_preprocess" \\
-          --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt" 
+          --recipe="hcp_denoise" \\
+          --matlab_mode="interpreted"
 
     The first call will execute all the commands in recipe `onboard_dicom`.
 
@@ -1818,11 +1824,13 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
     via a scheduler. It will execute two sessions in parallel within the run.
     in sequence.
 
-    The last, thid call will execute hcp preprocessing, the value of the
-    `sessions` parameter here is set to a placeholder variable `sessions_var`,
-    the value is  then injected from the command call by using the `mapvalues`
-    parameter. Alternatively the value could be injected by setting the
-    environmental variable `$sessions_var`.
+    The last, thid call will execute the hcp_denoise list where the 
+    hcp_matlab_mode parameter will be set to "interpreted" for the hcp_icafix
+    and it will be read from the system environment variable $MATLAB_MODE for
+    hcp_msmall. This is an example of how you can inject custom values into
+    specially marked slots (marked with "{{label}}") in the recipe file. Note
+    that the value of the parameter is provided in the form of a string, so it
+    needs to be encapsulated with double quotes.
     """
 
     verbose = verbose.lower() == "yes"
@@ -1844,18 +1852,6 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
     # parse the recipe file
     parameters = {}
     commands = []
-
-    # prepare mapvalues
-    mapvalues = {}
-    if "mapvalues" in eargs:
-        tempmap = eargs["mapvalues"].split("|")
-
-        for m in tempmap:
-            m = m.split(":")
-            mapvalues[m[0]] = m[1]
-
-        # remove
-        del eargs["mapvalues"]
 
     # open the recipe file
     with open(recipe_file, "r", encoding="UTF-8") as file:
@@ -1881,23 +1877,11 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
     # global parameters
     if "global_parameters" in recipe_data:
         for parameter, value in recipe_data["global_parameters"].items():
-            # overwrite value
-            if value in mapvalues:
-                value = mapvalues[value]
-            elif value in os.environ:
-                value = os.environ[value]
-
             parameters[parameter] = value
 
     # recipe parameters
     if "parameters" in recipe_dict:
         for parameter, value in recipe_dict["parameters"].items():
-            # overwrite value
-            if value in mapvalues:
-                value = mapvalues[value]
-            elif value in os.environ:
-                value = os.environ[value]
-
             parameters[parameter] = value
 
     # log location
@@ -1986,15 +1970,27 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
 
         # xnat build folder prep
             if xnat == "yes":
-                xnatScript = os.path.join(os.environ['XNAT_SCRIPTS_FOLDER'], commandName + "_xnat.sh")
+                xnatScript = os.path.join(
+                    os.environ['XNAT_SCRIPTS_FOLDER'], command_name + "_xnat.sh")
                 xnatProcess = subprocess.Popen(
-                xnatScript, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
+                    xnatScript, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
 
         # setup command
         command = ["qunex"]
         command.append(command_name)
         commandr = "\n--------------------------------------------\n===> Running command:\n\n     qunex " + command_name
         for param, value in command_parameters.items():
+            # inject mustache marked values
+            if len(value) > 0 and "{{" in value and "}}" in value:
+                label = value.strip("{{").strip("}}")
+                if label in eargs:
+                    value = eargs[label]
+                elif label[1:] in os.environ:
+                    value = os.environ[label[1:]]
+                else:
+                    raise ge.CommandFailed(
+                        "run_recipe", f"Cannot inject values marked with double curly braces in the recipe. Label not found in the parameters or in system environment variables.")
+
             if param in flags:
                 command.append(f"--{param}")
                 commandr += f" \\\n          --{param}" % (param)
