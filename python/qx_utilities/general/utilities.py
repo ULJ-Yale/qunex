@@ -1824,13 +1824,13 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
     via a scheduler. It will execute two sessions in parallel within the run.
     in sequence.
 
-    The last, thid call will execute the hcp_denoise list where the 
+    The last, third call will execute the hcp_denoise list where the 
     hcp_matlab_mode parameter will be set to "interpreted" for the hcp_icafix
     and it will be read from the system environment variable $MATLAB_MODE for
     hcp_msmall. This is an example of how you can inject custom values into
-    specially marked slots (marked with "{{label}}") in the recipe file. Note
-    that the value of the parameter is provided in the form of a string, so it
-    needs to be encapsulated with double quotes.
+    specially marked slots (marked with "{{<label>}}") in the recipe file. Note
+    that the labels need to be provided in the form of a string, so they need
+    to be encapsulated with double quotes.
     """
 
     verbose = verbose.lower() == "yes"
