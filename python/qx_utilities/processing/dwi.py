@@ -630,6 +630,13 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         # model
         if "noddi_model" not in options:
             options["noddi_model"] = "Watson"
+
+        # check validity
+        if options["noddi_model"] not in ["Watson", "Bingham"]:
+            r += f"\n---> ERROR: Invalid NODDI model [{options['noddi_model']}], needs to be Watson or Bingham."
+            report = (sinfo['id'], "Not ready for CUDIMOT NODDI", 1)
+            run = False
+
         cudimot_script = os.path.join(
             cudimot_dir, "bin", f"Pipeline_NODDI_{options['noddi_model']}.sh")
 
