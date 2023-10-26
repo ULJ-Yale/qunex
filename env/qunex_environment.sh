@@ -378,6 +378,9 @@ export FSLBINDIR PATH
 MATLABPATH=$FSLBINDIR:$MATLABPATH
 export MATLABPATH
 
+# -- FSL lib dir
+export LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH
+
 # -- FreeSurfer path
 unset FSL_DIR FSL_BIN
 FREESURFER_HOME=${FREESURFERDIR}
@@ -691,7 +694,7 @@ MATLABPATH=$QUNEXPATH/matlab/qx_utilities/general:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mice:$MATLABPATH
 
 # -- cudimot
-export CUDIMOT=$QUNEXLIBRARY/etc/cudimot
+export CUDIMOT=$QUNEXLIBRARY/etc/cudimot/cuda_${DEFAULT_CUDA_VERSION}
 
 # -- conda management
 # deactivate current
