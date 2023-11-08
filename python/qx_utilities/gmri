@@ -316,50 +316,29 @@ def runCommand(command, args):
         if sessions and 'sper_recipe' in eargs:
 
             if 'scheduler' in eargs:
-                # -- define number of sessions to run in each run_recipe
-                parsessions = int(eargs['sper_recipe'])
-                args['parsessions'] = eargs['sper_recipe']
-                if 'ignore' in args:
-                    args['ignore'] += 'scheduler'
-                else:
-                    args['ignore'] = 'scheduler'
-                del args['sper_recipe']
-
                 gs.runThroughScheduler(command, sessions=sessions, args=args,
                                        parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
             else:
                 # -- define number of sessions to run in each run_recipe
-                sper_recipe = args['sper_recipe']
-                del args['sper_recipe']
-
-                # -- define number of run_recipe to run in parallel
-                parsessions = eargs.get('runinpar', 1)
-                args['parsessions'] = parsessions
-                if 'runinpar' in args:
-                    del args['runinpar']
+                parsessions = args.get('parsessions', 1)
 
                 c = 0
                 while sessions:
                     c += 1
-                    largs = args.copy()
+                    recipe_args = args.copy()
 
                     # -- set up a list of sessions to run in each run_recipe
                     slist = [sessions.pop(0)['id']
-                             for e in range(sper_recipe) if sessions]
-                    largs['sessionids'] = "|".join(slist)
+                             for e in range(parsessions) if sessions]
+                    recipe_args['sessionids'] = ",".join(slist)
 
                     calls.append({'name': 'run_recipe_%d' % (
-                        c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
+                        c), 'function': gcom.commands[command]['com'], 'args': recipe_args, 'logfile': None})
 
         else:
             # -- if using a scheduler schedule the whole run_recipe commmand
             if 'scheduler' in eargs:
-                if 'ignore' in args:
-                    args['ignore'] += 'scheduler'
-                else:
-                    args['ignore'] = 'scheduler'
-
                 run_recipe_folder = folders['logfolder']
 
                 # create folder if it does not exist

@@ -1654,28 +1654,11 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
                             sessions (sessions ids) to be processed (use of grep
                             patterns is possible), e.g.  `"OP128,OP139,ER*"` or
                             `*list` file with a list of session ids.
-    --sper_recipe           An optional parameter specifying, how many sessions
-                            to run per individual run_recipe invocation. If not 
-                            specified, all sessions will be run through the 
-                            same run_recipe invocation. 
-    --runinpar              If multiple run_recipe invocations are to be run, how 
-                            many should be run in parallel. The default is 1.
     --scheduler             An optional scheduler settings description string. 
                             If provided, each run_recipe invocation will be 
                             scheduled to run on a separate cluster node. For 
                             details about the settings string specification see 
                             the inline help for the `schedule` command.
-
-    If these parameters are provided, the processing of the sessions will
-    be split so that `sper_recipe` sessions will be processed by each separate
-    run_recipe invocation. If `scheduler` is specified, each run_recipe
-    invocation will be scheduled as a separate job on a cluster. 
-
-    When processing is spread across multiple run_recipe invocations, the 
-    `sper_recipe` parameter will be passed forward as `parsessions` parameter on
-    each separate invocation (see the next section). Similarly `sessionids` will
-    be passed on, adjusted for the sessions to be run with the specific
-    run_recipe invocation (see the next section).
 
     Please take note that if `run_recipe` command is ran using a scheduler, any
     scheduler specification within the `recipe_file` will be ignored to avoid
