@@ -313,15 +313,14 @@ def runCommand(command, args):
 
     # -- run_recipe specifics
     if command == "run_recipe":
-        if sessions and 'sper_recipe' in eargs:
-
+        if sessions and 'parsessions' in args:
             if 'scheduler' in eargs:
                 gs.runThroughScheduler(command, sessions=sessions, args=args,
                                        parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
             else:
                 # -- define number of sessions to run in each run_recipe
-                parsessions = args.get('parsessions', 1)
+                parsessions = (int)(args.get('parsessions', 1))
 
                 c = 0
                 while sessions:
@@ -329,12 +328,32 @@ def runCommand(command, args):
                     recipe_args = args.copy()
 
                     # -- set up a list of sessions to run in each run_recipe
-                    slist = [sessions.pop(0)['id']
+                    slist = [sessions.pop(0)['session']
                              for e in range(parsessions) if sessions]
                     recipe_args['sessionids'] = ",".join(slist)
 
+                    # copy recipe args to eargs
+                    run_recipe_kwargs = ['recipe_file', 'recipe', 'steps', 'xnat', 'logfolder', 'verbose']
+                    recipe_eargs = {}
+                    to_delete = []
+                    for k, v in recipe_args.items():
+                        if k not in run_recipe_kwargs:
+                            recipe_eargs[k] = v
+                            to_delete.append(k)
+                    
+                    for arg in to_delete:
+                        del recipe_args[arg]
+
+                    recipe_args['eargs'] = recipe_eargs
+
+                    # disable within recipe parallelism
+                    recipe_eargs['parsessions'] = 1
+
                     calls.append({'name': 'run_recipe_%d' % (
                         c), 'function': gcom.commands[command]['com'], 'args': recipe_args, 'logfile': None})
+
+                # execute each run_recipe in parallel
+                parsessions = len(calls)
 
         else:
             # -- if using a scheduler schedule the whole run_recipe commmand
@@ -363,6 +382,7 @@ def runCommand(command, args):
                 bargs['eargs'] = eargs
                 gcom.commands[command]['com'](**bargs)
                 print("\n===> Successful completion of task")
+
 
     # -- all other commands
     else:

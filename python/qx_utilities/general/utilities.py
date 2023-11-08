@@ -1623,9 +1623,9 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
                                ".conc files for some sessions were not generated", "Please check report for details!")
 
 
-def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose="no", eargs=None):
+def run_recipe(recipe_file=None, recipe=None, steps=None, xnat=None, logfolder=None, verbose="no", eargs=None):
     """
-    ``run_recipe recipe_file=<path to recipe file> recipe=<nameof the recipe to run> [logfolder=None] [verbose=no] [<extra arguments>]``
+    ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [verbose=no] [<extra arguments>]``
 
     Executes the commands defined in each recipe.
 
@@ -1635,13 +1635,16 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
     General parameters
     ------------------
 
-    --recipe_file      The file containing recipes and their  parameters.
-    --recipe           Name of the recipe in the recipe_file to run.
-    --xnat             When set as "yes", runs additional scripts for XNAT support.
-    --logfolder        The folder within which to save the log.
-    --verbose          Whether to record in a log a full verbose report of the 
-                       output of each command that was run ('yes') or only a
-                       summary success report of each command ran. ['no']
+    --recipe_file   The file containing recipes and their  parameters.
+    --recipe        Name of the recipe in the recipe_file to run.
+    --steps         A comma separated list of steps (QuNex commands) to run.
+                    This is an alternative to specifying the recipe file and
+                    a recipe name.
+    --xnat          When set as "yes", runs additional scripts for XNAT support.
+    --logfolder     The folder within which to save the log.
+    --verbose       Whether to record in a log a full verbose report of the
+                    output of each command that was run ('yes') or only a
+                    summary success report of each command ran. ['no']
 
     Multiple run_recipe invocations
     ----------------------------
@@ -1662,7 +1665,7 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
 
     Please take note that if `run_recipe` command is ran using a scheduler, any
     scheduler specification within the `recipe_file` will be ignored to avoid
-    the  attempts to spawn new cluster jobs when `run_recipe` instance is
+    the attempts to spawn new cluster jobs when `run_recipe` instance is
     already running on a cluster node.
 
     Importantly, if `scheduler` is specified in the `run_recipe` file, do bear 
@@ -1692,7 +1695,8 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
 
     run_recipe takes a `recipe_file` and a `recipe` name and executes
     the commands defined in the recipe. The `recipe_file` contains commands that 
-    should be run and parameters that it should use.
+    should be run and parameters that it should use. Alternatively, you can
+    provide a comma separated list of commands with the `steps` parameter.
 
     LOGS AND FAILURES
     =================
@@ -1791,7 +1795,6 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
           --recipe_file="/data/settings/recipe.yaml" \\
           --recipe="hcp_preprocess" \\
           --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
-          --sper_recipe=4 \\
           --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=week"
 
     ::
@@ -1801,34 +1804,49 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
           --recipe="hcp_denoise" \\
           --matlab_mode="interpreted"
 
+    ::
+
+        qunex run_recipe \\
+          --sessionsfolder="/data/qx_study/sessions" \\
+          --batchfile="/data/qx_study/processing/batch.txt" \\
+          --steps="hcp_pre_freesurfer,hcp_freesurfer,hcp_post_freesurfer"
+
     The first call will execute all the commands in recipe `onboard_dicom`.
 
     The second call will execute all the steps of the HCP preprocessing pipeline
     via a scheduler. It will execute two sessions in parallel within the run.
     in sequence.
 
-    The last, third call will execute the hcp_denoise list where the 
+    The third call will execute the hcp_denoise list where the 
     hcp_matlab_mode parameter will be set to "interpreted" for the hcp_icafix
     and it will be read from the system environment variable $MATLAB_MODE for
     hcp_msmall. This is an example of how you can inject custom values into
     specially marked slots (marked with "{{<label>}}") in the recipe file. Note
     that the labels need to be provided in the form of a string, so they need
-    to be encapsulated with double quotes.
+    to be encapsulated with double quotes.  
+
+    The forth example shows how to use the steps parameter to run a set of
+    commands sequentially.
+
     """
 
     verbose = verbose.lower() == "yes"
 
     flags = ["test"]
 
-    if recipe_file is None:
-        raise ge.CommandError("run_recipe", "recipe_file not specified",
-                              "No recipe file specified", "Please provide path to the recipe file!")
+    if recipe_file is not None and steps is not None:
+        raise ge.CommandError("run_recipe", "both recipe_file and steps are specified",
+                              "BOth recipe file and steps specified", "Please set only one parameter!")
 
-    if recipe is None:
+    if recipe_file is None and steps is None:
+        raise ge.CommandError("run_recipe", "both recipe_file and steps are not specified",
+                              "No recipe file or steps specified", "Please provide path to the recipe file or a comma separated list of steps to run!")
+
+    if recipe_file is not None and recipe is None:
         raise ge.CommandError("run_recipe", "recipe not specified",
                               "No recipe specified", "Please provide the recipe name!")
 
-    if not os.path.exists(recipe_file):
+    if recipe_file is not None and not os.path.exists(recipe_file):
         raise ge.CommandFailed("run_recipe", "recipe file file does not exist",
                                "Recipe file file not found [%s]" % (recipe_file), "Please check your paths!")
 
@@ -1837,35 +1855,43 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
     commands = []
 
     # open the recipe file
-    with open(recipe_file, "r", encoding="UTF-8") as file:
-        try:
-            recipe_data = yaml.load(file, Loader=yaml.FullLoader)
-        except Exception as e:
+    if not steps:
+        with open(recipe_file, "r", encoding="UTF-8") as file:
+            try:
+                recipe_data = yaml.load(file, Loader=yaml.FullLoader)
+            except Exception as e:
+                raise ge.CommandFailed(
+                    "run_recipe", "Cannot parse the recipe file")
+
+        # get the recipe
+        if "recipes" not in recipe_data:
             raise ge.CommandFailed(
-                "run_recipe", "Cannot parse the recipe file")
+                "run_recipe", "Recipes not found in the recipe file")
 
-    # get the recipe
-    if "recipes" not in recipe_data:
-        raise ge.CommandFailed(
-            "run_recipe", "Recipes not found in the recipe file")
+        recipes = recipe_data["recipes"]
 
-    recipes = recipe_data["recipes"]
+        if recipe not in recipes:
+            raise ge.CommandFailed(
+                "run_recipe", f"Recipe {recipe} not found in the recipe file")
 
-    if recipe not in recipes:
-        raise ge.CommandFailed(
-            "run_recipe", f"Recipe {recipe} not found in the recipe file")
+        recipe_dict = recipes[recipe]
 
-    recipe_dict = recipes[recipe]
+        # global parameters
+        if "global_parameters" in recipe_data:
+            for parameter, value in recipe_data["global_parameters"].items():
+                parameters[parameter] = value
 
-    # global parameters
-    if "global_parameters" in recipe_data:
-        for parameter, value in recipe_data["global_parameters"].items():
-            parameters[parameter] = value
+        # recipe parameters
+        if "parameters" in recipe_dict:
+            for parameter, value in recipe_dict["parameters"].items():
+                parameters[parameter] = value
+    else:
+        # define recipe name
+        recipe = "steps parameter"
 
-    # recipe parameters
-    if "parameters" in recipe_dict:
-        for parameter, value in recipe_dict["parameters"].items():
-            parameters[parameter] = value
+        # create the commands dict
+        recipe_dict = {}
+        recipe_dict["commands"] = steps.split(",")
 
     # log location
     if logfolder is None:
@@ -1964,7 +1990,7 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
         commandr = "\n--------------------------------------------\n===> Running command:\n\n     qunex " + command_name
         for param, value in command_parameters.items():
             # inject mustache marked values
-            if len(value) > 0 and "{{" in value and "}}" in value:
+            if type(value) == str and len(value) > 0 and "{{" in value and "}}" in value:
                 label = value.strip("{{").strip("}}")
                 if label in eargs:
                     value = eargs[label]
@@ -1980,6 +2006,10 @@ def run_recipe(recipe_file=None, recipe=None, xnat=None, logfolder=None, verbose
             else:
                 command.append(f"--{param}={value}")
                 commandr += f" \\\n          --{param}='{value}'"
+
+        # warn if scheduler was used in the recipe file
+        if "scheduler" in command_parameters:
+            print(f"\nWARNING: the scheduler parameter defined in the recipe file will be ignored. Scheduling needs to be defined at the command call level.")
 
         print(commandr)
         print(commandr, file=log)
