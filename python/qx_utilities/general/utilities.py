@@ -1673,12 +1673,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, xnat=None, logfolder=N
     time, and not in a succession, as `run_recipe` can not track execution of
     jobs on individual cluster nodes.
 
-    Additional parameters
-    ---------------------
+    Parallel processing
+    -------------------
 
-    Sometimes the parameters specified in the `run_recipe` need to be adjusted
-    in a run_recipe invocation. If the following parameters are listed, they will
-    take precedence over parameters specified within the `run_recipe`: 
+    To setup run_recipe parallelism, you can use the traditional parsessions and
+    parelements parameters.
 
     --parsessions    An optional parameter specifying how many sessions to run
                      in parallel. If parsessions parameter is already specified
@@ -1689,6 +1688,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, xnat=None, logfolder=N
                      when bold processing). If parelements is already specified
                      within the `run_recipe`, then the lower value will
                      take precedence.
+
+    The parsessions parameter defines the number of sessions that will be ran in
+    parallel within a single run_recipe invocation. The default is 1, which
+    means that each session will be ran in parallel within a separate job. If
+    parsessions is set to the number of sessions, then all the sessions will
+    be executed in sequence within a single run_recipe invocation.
 
     USE
     ===
@@ -1898,19 +1903,22 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, xnat=None, logfolder=N
         if "studyfolder" in parameters:
             logfolder = os.path.join(
                 parameters["studyfolder"], "processing", "logs")
+        elif "studyfolder" in eargs:
+            logfolder = os.path.join(
+                eargs["studyfolder"], "processing", "logs")
         elif "sessionsfolder" in parameters:
             logfolder = gc.deduceFolders(
                 {"sessionsfolder": parameters["sessionsfolder"]})["logfolder"]
-        else:
+        elif "sessionsfolder" in eargs:
             logfolder = gc.deduceFolders(
-                {"reference": run_recipe})["logfolder"]
+                {"sessionsfolder": eargs["sessionsfolder"]})["logfolder"]
     runlogfolder = os.path.join(logfolder, "runlogs")
 
     # create folder if it does not exist
     if not os.path.isdir(runlogfolder):
         os.makedirs(runlogfolder)
 
-    print(f"===> Saving the run_recipe runlog to: {runlogfolder}")
+    print(f"\n===> Saving the run_recipe runlog to: {runlogfolder}")
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = os.path.join(

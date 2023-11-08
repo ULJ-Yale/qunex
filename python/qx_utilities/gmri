@@ -313,15 +313,15 @@ def runCommand(command, args):
 
     # -- run_recipe specifics
     if command == "run_recipe":
-        if sessions and 'parsessions' in args:
+        if sessions:
+            # -- default is a recipe for each session
+            parsessions = (int)(args.get('parsessions', 1))
+
             if 'scheduler' in eargs:
                 gs.runThroughScheduler(command, sessions=sessions, args=args,
                                        parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
             else:
-                # -- define number of sessions to run in each run_recipe
-                parsessions = (int)(args.get('parsessions', 1))
-
                 c = 0
                 while sessions:
                     c += 1
@@ -382,7 +382,6 @@ def runCommand(command, args):
                 bargs['eargs'] = eargs
                 gcom.commands[command]['com'](**bargs)
                 print("\n===> Successful completion of task")
-
 
     # -- all other commands
     else:
