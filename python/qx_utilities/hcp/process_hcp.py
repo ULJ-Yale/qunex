@@ -2401,6 +2401,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                         dwi_files[dwi['dir']] = dwi['file']
 
                 for ddir in ['pos', 'neg']:
+                    if ddir not in dwi_files:
+                        r += f"\n---> ERROR: No DWI files found, check the _hcp_dwi_phasepos and _hcp_dwi_phaseneg parameters."
+                        run = False
+                        break
+
                     dfiles = dwi_files[ddir].split("@")
 
                     if dfiles and dfiles != [''] and dfiles != 'EMPTY':
