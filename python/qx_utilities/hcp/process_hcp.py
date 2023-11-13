@@ -1414,7 +1414,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if os.path.lexists(hcp['FS_folder']):
                         r += "\n ---> removing preexisting FS folder [%s]" % (
                             hcp['FS_folder'])
-                        shutil.rmtree(hcp['FS_folder'])
+                        shutil.rmtree(hcp['FS_folder'], ignore_errors=True)
                     for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average', os.path.join('xfms', 'OrigT1w2T1w.nii.gz')]:
                         rmtarget = os.path.join(hcp['T1w_folder'], toremove)
                         try:
