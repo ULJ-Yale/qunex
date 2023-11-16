@@ -7378,9 +7378,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             comm += "                --dont-fix-names=" + \
                 options["hcp_resample_dontfixnames"].replace(",", "@")
 
-        if options["hcp_resample_myelintarget"] is not None:
+        if options["hcp_msmall_myelin_target"] is not None:
             comm += "                --myelin-target-file=" + \
-                options["hcp_resample_myelintarget"]
+                options["hcp_msmall_myelin_target"]
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + \
@@ -7600,9 +7600,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             comm += "                --dont-fix-names=" + \
                 options["hcp_resample_dontfixnames"].replace(",", "@")
 
-        if options["hcp_resample_myelintarget"] is not None:
+        if options["hcp_msmall_myelin_target"] is not None:
             comm += "                --myelin-target-file=" + \
-                options["hcp_resample_myelintarget"]
+                options["hcp_msmall_myelin_target"]
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + \
