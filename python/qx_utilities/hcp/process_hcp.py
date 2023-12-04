@@ -3752,23 +3752,25 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             slicetimerparams = re.split(
                 ' +|,|\|', options['hcp_bold_slicetimerparams'])
 
-            stappendItems = []
-            if options['hcp_bold_stcorrdir'] == 'down':
-                stappendItems.append('--down')
-            if options['hcp_bold_stcorrint'] == 'odd':
-                stappendItems.append('--odd')
-            if options['hcp_bold_slicetimingfile']:
-                stappendItems.append(f'--tcustom={stfile}')
-
-            for stappend in stappendItems:
-                if stappend not in slicetimerparams:
-                    slicetimerparams.append(stappend)
-
             slicetimerparams = [e for e in slicetimerparams if e]
+
+            if options['hcp_bold_stcorrdir'] != '' and options['hcp_bold_stcorrdir'] not in slicetimerparams:
+                slicetimerparams.append(options['hcp_bold_stcorrdir'])
+            if options['hcp_bold_stcorrint'] != '' and options['hcp_bold_stcorrint'] not in slicetimerparams:
+                slicetimerparams.append(options['hcp_bold_stcorrint'])
+            if options['hcp_bold_slicetimingfile']:
+                slicetimingfile = f'--tcustom={stfile}'
+                if slicetimingfile not in slicetimerparams:
+                    slicetimerparams.append(slicetimingfile)
+
+            # iterate over slicetimerparams
+            for i in range(len(slicetimerparams)):
+                if not slicetimerparams[i].startswith('--'):
+                    slicetimerparams[i] = f'--{slicetimerparams[i]}'
+
             slicetimerparams = "@".join(slicetimerparams)
 
         # --- Set up the command
-
         if fmriref == 'NONE':
             fmrirefparam = ""
         else:

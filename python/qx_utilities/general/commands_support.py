@@ -235,13 +235,11 @@ deprecated_parameters = {
                                 },
     'sbjroi':                  'sessionroi',
     'subjectf':                'sessionf',
-    'hcp_bold_stcorrdir':      'hcp_bold_slicetimerparams', 
-    'hcp_bold_stcorrint':      'hcp_bold_slicetimerparams',
-    'hcp_bold_sequencetype': None,
-    'hcp_biascorrect_t1w': None,
-    'args': 'palm_args',
-    'TR': 'tr',
-    'PEdir': 'pedir'
+    'hcp_bold_sequencetype':    None,
+    'hcp_biascorrect_t1w':      None,
+    'args':                     'palm_args',
+    'TR':                       'tr',
+    'PEdir':                    'pedir'
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
