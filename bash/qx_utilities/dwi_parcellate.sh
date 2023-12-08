@@ -161,6 +161,7 @@ unset WayTotal
 unset Lengths
 unset DWIOutFilePconn
 unset DWIOutFilePDconn
+unset DWIOutFileDPconn
 runcmd=""
 
 # -- Parse arguments
@@ -299,6 +300,7 @@ if [ "$Lengths" == "yes" ]; then
     echo "--- Using streamline length dconn file"; echo ""
     DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_lengths.dconn.nii.gz"
     DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pconn.nii"
+    DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.dpconn.nii"
     DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pdconn.nii"
     if [ ! "$WayTotal" == "none" ]; then
         echo "--- ignoring waytotal argument (should be set to none when parcellating the streamline lengths matrix)"; echo ""
@@ -310,18 +312,22 @@ else
         DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
         DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
         DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
+        DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_${OutName}.dpconn.nii"
+
     fi
     if [ "$WayTotal" == "standard" ]; then
         echo "--- Using waytotal normalized dconn file"; echo ""
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
         DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pconn.nii"
         DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pdconn.nii"
+        DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dpconn.nii"
     fi
     if [ "$WayTotal" == "log" ]; then
         echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
         DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pconn.nii"
         DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pdconn.nii"
+        DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dpconn.nii"
     fi
 
 fi
@@ -335,6 +341,7 @@ echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePc
 if [ "$Overwrite" == "yes" ]; then
     reho "--- Deleting prior runs for $DiffData..."
     echo ""
+    rm -f "$DWIOutput"/"$DWIOutFileDPconn" > /dev/null 2>&1
     rm -f "$DWIOutput"/"$DWIOutFilePDconn" > /dev/null 2>&1
     rm -f "$DWIOutput"/"$DWIOutFilePconn" > /dev/null 2>&1
 fi
@@ -354,12 +361,14 @@ else
     echo ""
     echo "--- Computing parcellation by ROW on $DWIInput..."
     echo ""
-    # -- First parcellate by ROW and save a *pdconn file
-    wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePDconn"
-    echo "--- Computing parcellation by COLUMN on ${DWIOutput}/${DWIOutFilePDconn} ..."
+    # -- First parcellate by ROW and save a *dpconn file
+    wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFileDPconn"
+    echo "--- Computing parcellation by COLUMN on ${DWIOutput}/${DWIOutFileDPconn} ..."
     echo ""
     # -- Next parcellate by COLUMN and save final *pconn file
-    wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePconn"
+    wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFileDPconn" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePconn"
+    wb_command -cifti-transpose "$DWIOutput"/"$DWIOutFileDPconn" "$DWIOutput"/"$DWIOutFilePDconn"
+	rm "$DWIOutput"/"$DWIOutFileDPconn"
 fi
 
 # -- Perform completion checks

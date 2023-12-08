@@ -28,7 +28,7 @@ commands = {'list_dicom': {'com': dicom.list_dicom,               'args': ('fold
             'get_dicom_info': {'com': dicom.get_dicom_info,           'args': ('dicomfile', 'scanner')},
             'import_bids': {'com': bids.import_bids,               'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')},
             'map_bids2nii': {'com': bids.map_bids2nii,              'args': ('sourcefolder', 'overwrite', 'fileinfo')},
-            'import_hcp': {'com': import_hcp.import_hcp,          'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort')},
+            'import_hcp': {'com': import_hcp.import_hcp,          'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort', 'processed_data')},
             'map_hcpls2nii': {'com': import_hcp.map_hcpls2nii,       'args': ('sourcefolder', 'overwrite', 'filesort')},
             'run_nil_folder': {'com': fourdfp.run_nil_folder,         'args': ('folder', 'pattern', 'overwite', 'sourcefile')},
             'run_nil': {'com': fourdfp.run_nil,                'args': ('folder', 'overwite', 'sourcefile')},

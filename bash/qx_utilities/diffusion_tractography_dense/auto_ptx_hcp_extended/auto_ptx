@@ -13,9 +13,6 @@ Usage() {
 
 [ "$3" = "" ] && Usage
 
-
-GPU_flag=1 #Set to 1 to run using GPUs
-
 StudyFolder=$1
 SessionId=$2
 BpxFolder=$3
@@ -57,16 +54,8 @@ while read line ; do
     hours=`echo $wallt | awk '{print $1}'`
     minutes=`echo $wallt | awk '{print $2}'`
     time=$(( 60 * hours + minutes ))
-    if [ $GPU_flag == "0" ]; then
-	jobid=`$FSLDIR/bin/fsl_sub -N "auto_ptx" -T $time -l $logDir $execPath/track_subject_struct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag`
-    else
-	echo "$execPath/track_subject_struct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag" >> ${OutDir}/commands.txt
-    fi	
+    echo "$execPath/track_subject_struct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag" >> ${OutDir}/commands.txt
 done < $structures
 
-if [ $GPU_flag == "1" ]; then
-    #qsub -l nodes=1:ppn=1:gpus=1:K20x,walltime=04:00:00,mem=8gb -N auto_ptx_gpu -e $logDir/GPUerrofile -o $logDir/GPUoutfile ${OutDir}/commands.txt
-    chmod +x ${OutDir}/commands.txt
-    bash ${OutDir}/commands.txt	
-fi
-
+chmod +x ${OutDir}/commands.txt
+bash ${OutDir}/commands.txt	

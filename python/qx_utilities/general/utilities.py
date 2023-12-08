@@ -722,7 +722,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         elif overwrite == 'append':
             print("WARNING: target file %s already exists!" %
                   (os.path.abspath(targetfile)))
-            print("         Appending to exisiting file.")
+            print("         Appending to an exisiting file.")
         elif overwrite == 'no':
             raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (
                 os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action")
@@ -763,7 +763,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 print(
                     "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!")
 
-            # open the files
+            # open the file
             jfile = open(targetfile, 'a')
 
         # --- check for param file

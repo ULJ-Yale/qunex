@@ -87,7 +87,7 @@ all_qunex_commands = [
      "Runs FSL GPU-enabled bedpostx.",                                                           "bash"),
     ("qx_utilities.bash.dwi_dtifit",
      "Runs FSL's dtifit tool (cluster usable).",                                                 "bash",),
-    ("qx_utilities.processing.fsl.dwi_f99",                         "Runs FSL F99 command.",
+    ("qx_utilities.processing.dwi.dwi_f99",                         "Runs FSL F99 command.",
      "python"),
     ("qx_utilities.bash.dwi_legacy_gpu",
      "Diffusion image processing for data with or without standard fieldmaps.",                  "bash"),
@@ -99,7 +99,9 @@ all_qunex_commands = [
      "Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.",                     "bash"),
     ("qx_utilities.bash.dwi_seed_tractography_dense",
      "Reduces dense tractography data using a seed structure.",                                  "bash"),
-    ("qx_utilities.processing.fsl.dwi_xtract",                      "Runs FSL XTRACT command.",
+    ("qx_utilities.processing.dwi.dwi_xtract",                      "Runs FSL XTRACT command.",
+     "python"),
+    ("qx_utilities.processing.dwi.dwi_noddi_gpu",                   "Runs CUDIMOT's NODDI microstructure modelling.",
      "python"),
     ("qx_utilities.processing.workflow.extract_nuisance_signal",
      "Extracts nuisance signal from BOLD images.",                                               "python"),
@@ -299,7 +301,7 @@ def runCommand(command, args):
     # -- process extra arguments
     sessions = None
     if 'sessions' in eargs:
-        if command != "run_recipe" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
+        if command != "run_list" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
             raise ge.CommandError("gmri", "Incompatible command",
                                   "Command %s can not be run on multiple sessions!" % (command))
         if folders['sessionsfolder'] is None:

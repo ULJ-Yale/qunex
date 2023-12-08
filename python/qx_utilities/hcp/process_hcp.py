@@ -812,41 +812,49 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap':
             fmnum = T1w.get('fm', None)
-            # include => if fmnum is None, same as for senum
 
-            for i, v in hcp['fieldmap'].items():
-                if os.path.exists(hcp['fieldmap'][i]['GE']):
-                    r += "\n---> Gradient Echo Field Map %d file present." % (
-                        i)
-                else:
-                    r += "\n---> ERROR: Could not find Gradient Echo Field Map %d file for session %s.\n            Expected location: %s" % (
-                        i, sinfo['id'], hcp['fmapge'])
-                    run = False
+            if fmnum is None:
+                r += "\n---> ERROR: No fieldmap number specified for the T1w image!"
+                run = False
+            else:
+                for i, v in hcp['fieldmap'].items():
+                    if os.path.exists(hcp['fieldmap'][i]['GE']):
+                        r += "\n---> Gradient Echo Field Map %d file present." % (
+                            i)
+                    else:
+                        r += "\n---> ERROR: Could not find Gradient Echo Field Map %d file for session %s.\n            Expected location: %s" % (
+                            i, sinfo['id'], hcp['fmapge'])
+                        run = False
 
-            fmmag = None
-            fmphase = None
-            fmge = hcp['fieldmap'][int(fmnum)]['GE']
+                fmmag = None
+                fmphase = None
+                fmge = hcp['fieldmap'][int(fmnum)]['GE']
 
         elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap', 'PhilipsFieldMap']:
             fmnum = T1w.get('fm', None)
 
-            for i, v in hcp['fieldmap'].items():
-                if os.path.exists(hcp['fieldmap'][i]['magnitude']):
-                    r += "\n---> Magnitude Field Map %d file present." % (i)
-                else:
-                    r += "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s" % (
-                        i, sinfo['id'], hcp['fmapmag'])
-                    run = False
-                if os.path.exists(hcp['fieldmap'][i]['phase']):
-                    r += "\n---> Phase Field Map %d file present." % (i)
-                else:
-                    r += "\n---> ERROR: Could not find Phase Field Map %d file for session %s.\n            Expected location: %s" % (
-                        i, sinfo['id'], hcp['fmapphase'])
-                    run = False
+            if fmnum is None:
+                r += "\n---> ERROR: No fieldmap number specified for the T1w image!"
+                run = False
+            else:
+                for i, v in hcp['fieldmap'].items():
+                    if os.path.exists(hcp['fieldmap'][i]['magnitude']):
+                        r += "\n---> Magnitude Field Map %d file present." % (
+                            i)
+                    else:
+                        r += "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s" % (
+                            i, sinfo['id'], hcp['fmapmag'])
+                        run = False
+                    if os.path.exists(hcp['fieldmap'][i]['phase']):
+                        r += "\n---> Phase Field Map %d file present." % (i)
+                    else:
+                        r += "\n---> ERROR: Could not find Phase Field Map %d file for session %s.\n            Expected location: %s" % (
+                            i, sinfo['id'], hcp['fmapphase'])
+                        run = False
 
-            fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
-            fmphase = hcp['fieldmap'][int(fmnum)]['phase']
-            fmge = None
+                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                fmge = None
 
         else:
             r += "\n---> WARNING: No distortion correction method specified."
@@ -1406,7 +1414,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if os.path.lexists(hcp['FS_folder']):
                         r += "\n ---> removing preexisting FS folder [%s]" % (
                             hcp['FS_folder'])
-                        shutil.rmtree(hcp['FS_folder'])
+                        shutil.rmtree(hcp['FS_folder'], ignore_errors=True)
                     for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average', os.path.join('xfms', 'OrigT1w2T1w.nii.gz')]:
                         rmtarget = os.path.join(hcp['T1w_folder'], toremove)
                         try:
@@ -2180,6 +2188,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Overrides the automatic QuNex's setup for the negData HCP pipelines'
             parameter. Provide a comma separated list of images with neg data.
 
+        --hcp_dwi_dummy_bval_bvec (flag, optional):
+            QuNex will create dummy bval and bvec files if they do not yet
+            exist. Mainly useful when using distortion maps as part of the
+            input data.
+
     Output files:
         The results of this command will be present in the Diffusion folder
         in the sessions's root hcp folder.
@@ -2388,9 +2401,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                         dwi_files[dwi['dir']] = dwi['file']
 
                 for ddir in ['pos', 'neg']:
-                    # if one dir is missing
                     if ddir not in dwi_files:
-                        r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
+                        r += f"\n---> ERROR: No DWI files found, check the _hcp_dwi_phasepos and _hcp_dwi_phaseneg parameters."
                         run = False
                         break
 
@@ -2406,8 +2418,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                         run = False
                         break
 
-                pos_data = dwi_files['pos']
-                neg_data = dwi_files['neg']
+                # if one dir is missing
+                if 'pos' not in dwi_files and 'neg' not in dwi_files:
+                    r += "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu." % ddir
+                    run = False
+                else:
+                    pos_data = dwi_files['pos']
+                    neg_data = dwi_files['neg']
+
             # if both are None something is wrong
             elif (options['hcp_dwi_posdata'] is not None and options['hcp_dwi_negdata'] is None) or (options['hcp_dwi_posdata'] is None and options['hcp_dwi_negdata'] is not None):
                 r += "\n---> ERROR: When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters."
@@ -2448,14 +2466,16 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         else:
             # -- set echospacing
             dwiinfo = [v for (k, v) in sinfo.items()
-                    if k.isdigit() and v['name'] == 'DWI'][0]
+                       if k.isdigit() and v['name'] == 'DWI'][0]
 
             if 'EchoSpacing' in dwiinfo and checkInlineParameterUse('dMRI', 'EchoSpacing', options):
                 echospacing = dwiinfo['EchoSpacing']
-                r += "\n---> Using image specific EchoSpacing: %s" % (echospacing)
+                r += "\n---> Using image specific EchoSpacing: %s" % (
+                    echospacing)
             else:
                 echospacing = options['hcp_dwi_echospacing']
-                r += "\n---> Using study general EchoSpacing: %s" % (echospacing)
+                r += "\n---> Using study general EchoSpacing: %s" % (
+                    echospacing)
 
             # -- check echospacing
             if not echospacing:
@@ -2516,6 +2536,42 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 comm += "                --no-gpu"
             else:
                 comm += "                --cuda-version=10.2"
+
+            # create dummy bvals and bvecs if demanded
+            if options['hcp_dwi_dummy_bval_bvec']:
+                # iterate over pos_data
+                pos_array = pos_data.split('@')
+                for pos in pos_array:
+                    # bval
+                    bval = pos.replace('.nii.gz', '.bval')
+                    if not os.path.isfile(bval):
+                        r += f"\n---> Creating dummy bval file for [{pos}]."
+                        with open(bval, "w") as f:
+                            f.write("0\n")
+
+                    # bvec
+                    bvec = pos.replace('.nii.gz', '.bvec')
+                    if not os.path.isfile(bvec):
+                        r += f"\n---> Creating dummy bvec file for [{pos}]."
+                        with open(bvec, "w") as f:
+                            f.write("0\n0\n0\n")
+
+                # iterate over neg_data
+                neg_array = neg_data.split('@')
+                for neg in neg_array:
+                    # bval
+                    bval = neg.replace('.nii.gz', '.bval')
+                    if not os.path.isfile(bval):
+                        r += f"\n---> Creating dummy bval file for [{pos}]."
+                        with open(bval, "w") as f:
+                            f.write("0\n")
+
+                    # bvec
+                    bvec = neg.replace('.nii.gz', '.bvec')
+                    if not os.path.isfile(bvec):
+                        r += f"\n---> Creating dummy bvec file for [{pos}]."
+                        with open(bvec, "w") as f:
+                            f.write("0\n0\n0\n")
 
             # -- Report command
             if run:
@@ -3363,56 +3419,68 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- check for Siemens double TE-fieldmap image
             elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
                 fmnum = boldinfo.get('fm', None)
-                fieldok = True
-                for i, v in hcp['fieldmap'].items():
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (
-                        i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (
-                        i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp['fieldmap'].items():
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Siemens fieldmap magnitude image %d present ' % (
+                            i), '\n     ... ERROR: Siemens fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Siemens fieldmap phase image %d present ' % (
+                            i), '\n     ... ERROR: Siemens fieldmap phase image %d missing!' % (i), status=fieldok)
+                        boldok = boldok and fieldok
+                    if not pc.is_number(options['hcp_bold_echospacing']):
+                        fieldok = False
+                        r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
+                            options['hcp_bold_echospacing'])
+                    if not pc.is_number(options['hcp_bold_echodiff']):
+                        fieldok = False
+                        r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (
+                            options['hcp_bold_echodiff'])
                     boldok = boldok and fieldok
-                if not pc.is_number(options['hcp_bold_echospacing']):
-                    fieldok = False
-                    r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
-                        options['hcp_bold_echospacing'])
-                if not pc.is_number(options['hcp_bold_echodiff']):
-                    fieldok = False
-                    r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (
-                        options['hcp_bold_echodiff'])
-                boldok = boldok and fieldok
-                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
-                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
-                fmge = None
+                    fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                    fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                    fmge = None
 
             # --- check for GE fieldmap image
             elif options['hcp_bold_dcmethod'].lower() in ['generalelectricfieldmap']:
                 fmnum = boldinfo.get('fm', None)
-                fieldok = True
-                for i, v in hcp['fieldmap'].items():
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (
-                        i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
-                    boldok = boldok and fieldok
-                fmmag = None
-                fmphase = None
-                fmge = hcp['fieldmap'][int(fmnum)]['GE']
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp['fieldmap'].items():
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['GE'], '\n     ... GeneralElectric fieldmap image %d present ' % (
+                            i), '\n     ... ERROR: GeneralElectric fieldmap image %d missing!' % (i), status=fieldok)
+                        boldok = boldok and fieldok
+                    fmmag = None
+                    fmphase = None
+                    fmge = hcp['fieldmap'][int(fmnum)]['GE']
 
             # --- check for Philips double TE-fieldmap image
             elif options['hcp_bold_dcmethod'].lower() in ['philipsfieldmap']:
                 fmnum = boldinfo.get('fm', None)
-                fieldok = True
-                for i, v in hcp['fieldmap'].items():
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (
-                        i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
-                    r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (
-                        i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp['fieldmap'].items():
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['magnitude'], '\n     ... Philips fieldmap magnitude image %d present ' % (
+                            i), '\n     ... ERROR: Philips fieldmap magnitude image %d missing!' % (i), status=fieldok)
+                        r, fieldok = pc.checkForFile2(r, hcp['fieldmap'][i]['phase'], '\n     ... Philips fieldmap phase image %d present ' % (
+                            i), '\n     ... ERROR: Philips fieldmap phase image %d missing!' % (i), status=fieldok)
+                        boldok = boldok and fieldok
+                    if not pc.is_number(options['hcp_bold_echospacing']):
+                        fieldok = False
+                        r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
+                            options['hcp_bold_echospacing'])
                     boldok = boldok and fieldok
-                if not pc.is_number(options['hcp_bold_echospacing']):
-                    fieldok = False
-                    r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (
-                        options['hcp_bold_echospacing'])
-                boldok = boldok and fieldok
-                fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
-                fmphase = hcp['fieldmap'][int(fmnum)]['phase']
-                fmge = None
+                    fmmag = hcp['fieldmap'][int(fmnum)]['magnitude']
+                    fmphase = hcp['fieldmap'][int(fmnum)]['phase']
+                    fmge = None
 
             # --- NO DC used
             elif options['hcp_bold_dcmethod'].lower() == 'none':
@@ -3684,23 +3752,25 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             slicetimerparams = re.split(
                 ' +|,|\|', options['hcp_bold_slicetimerparams'])
 
-            stappendItems = []
-            if options['hcp_bold_stcorrdir'] == 'down':
-                stappendItems.append('--down')
-            if options['hcp_bold_stcorrint'] == 'odd':
-                stappendItems.append('--odd')
-            if options['hcp_bold_slicetimingfile']:
-                stappendItems.append(f'--tcustom={stfile}')
-
-            for stappend in stappendItems:
-                if stappend not in slicetimerparams:
-                    slicetimerparams.append(stappend)
-
             slicetimerparams = [e for e in slicetimerparams if e]
+
+            if options['hcp_bold_stcorrdir'] != '' and options['hcp_bold_stcorrdir'] not in slicetimerparams:
+                slicetimerparams.append(options['hcp_bold_stcorrdir'])
+            if options['hcp_bold_stcorrint'] != '' and options['hcp_bold_stcorrint'] not in slicetimerparams:
+                slicetimerparams.append(options['hcp_bold_stcorrint'])
+            if options['hcp_bold_slicetimingfile']:
+                slicetimingfile = f'--tcustom={stfile}'
+                if slicetimingfile not in slicetimerparams:
+                    slicetimerparams.append(slicetimingfile)
+
+            # iterate over slicetimerparams
+            for i in range(len(slicetimerparams)):
+                if not slicetimerparams[i].startswith('--'):
+                    slicetimerparams[i] = f'--{slicetimerparams[i]}'
+
             slicetimerparams = "@".join(slicetimerparams)
 
         # --- Set up the command
-
         if fmriref == 'NONE':
             fmrirefparam = ""
         else:
@@ -7310,9 +7380,9 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             comm += "                --dont-fix-names=" + \
                 options["hcp_resample_dontfixnames"].replace(",", "@")
 
-        if options["hcp_resample_myelintarget"] is not None:
+        if options["hcp_msmall_myelin_target"] is not None:
             comm += "                --myelin-target-file=" + \
-                options["hcp_resample_myelintarget"]
+                options["hcp_msmall_myelin_target"]
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + \
@@ -7532,9 +7602,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             comm += "                --dont-fix-names=" + \
                 options["hcp_resample_dontfixnames"].replace(",", "@")
 
-        if options["hcp_resample_myelintarget"] is not None:
+        if options["hcp_msmall_myelin_target"] is not None:
             comm += "                --myelin-target-file=" + \
-                options["hcp_resample_myelintarget"]
+                options["hcp_msmall_myelin_target"]
 
         if options["hcp_resample_inregname"] is not None:
             comm += "                --input-reg-name=" + \

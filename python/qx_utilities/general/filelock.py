@@ -19,9 +19,17 @@ import time
 import atexit
 import random
 
-# create a lock file for a certain file
+# create a lock file for a file
 def lock(filename, delay=0.5, identifier="Python process"):
     lock_file = filename + ".lock"
+
+    # if the lock_file is older than 30 minutes, remove it
+    if os.path.isfile(lock_file):
+        if time.time() - os.stat(lock_file).st_mtime > 1800:
+            try:
+                os.remove(lock_file)
+            except:
+                pass
 
     # wait while file exists
     while True:
@@ -42,7 +50,7 @@ def lock(filename, delay=0.5, identifier="Python process"):
         time.sleep(delay + random.random() * delay)
 
 
-# remove a lock file for a certain file
+# remove a lock file for a file
 def unlock(filename):
     lock_file = filename + ".lock"
 

@@ -28,7 +28,7 @@ import general.scheduler as gs
 import general.core as gc
 import general.exceptions as ge
 import general.commands_support as gcs
-from processing import fs, fsl, simple, workflow
+from processing import fs, simple, workflow, dwi
 from general import extensions
 
 # pipelines imports
@@ -567,6 +567,8 @@ arglist = [
         "Overrides the automatic QuNex's setup for the posData HCP pipelines' parameter. Provide a comma separated list of images with pos data."],
     ['hcp_dwi_negdata',   '',                                              isNone,
         "Overrides the automatic QuNex's setup for the negData HCP pipelines' parameter. Provide a comma separated list of images with neg data."],
+    ['hcp_dwi_dummy_bval_bvec', None,                                      flag,
+        "QuNex will create dummy bval and bvec files if they do not yet exist. Mainly useful when using distortion maps as part of the input data."],
 
     ['# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options'],
     ['hcp_icafix_bolds',       '',                                         isNone,
@@ -954,10 +956,12 @@ calist = [
     ['rsc',     'run_shell_script',         simple.run_shell_script,
         "Runs the specified script."],
     [],
-    ['f99',     'dwi_f99',                  fsl.dwi_f99,
+    ['f99',     'dwi_f99',                  dwi.dwi_f99,
         "Run FSL F99 command."],
-    ['fslx',    'dwi_xtract',               fsl.dwi_xtract,
+    ['fslx',    'dwi_xtract',               dwi.dwi_xtract,
         "Run FSL XTRACT command."],
+    ['noddi',   'dwi_noddi_gpu',            dwi.dwi_noddi_gpu,
+        "Run CUDIMOT's NODDI microstructure modelling."],
     [],
     ['smice',   'setup_mice',               qx_mice.setup_mice.setup_mice,
         "Runs the command to prepare a QuNex study for mice preprocessing."],
