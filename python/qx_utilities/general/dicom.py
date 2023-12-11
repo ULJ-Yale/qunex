@@ -2219,7 +2219,7 @@ def split_dicom(folder=None):
 
 def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="any", pattern=None, nameformat=None, tool='auto', parelements=1, logfile=None, archive='move', add_image_type=0, add_json_info="", unzip='yes', gzip='folder', verbose='yes', overwrite='no', test=False):
     """
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|.tgz$|\\.tar\\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
 
     Automatically processes packets with individual sessions' DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -2254,7 +2254,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             - 'no'  ... report and continue w/o additional checks
             - 'any' ... continue if any packages are ready to process report error otherwise.
 
-        --pattern (str, default '(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)'):
+        --pattern (str, default '(?P<session_id>.*?)(?:\\.zip$|\\.tar$|\\.tgz$|\\.tar\\..*$|$)'):
             The regex pattern to use to find the packages and to extract the
             session id.
 
@@ -2376,7 +2376,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
             group, 'packet_name' that is used in further processing.
 
             The default `pattern` parameter is
-            `"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"`. This
+            `"(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|\\.tar\\..*$|$)"`. This
             pattern will identify the initial part of the packet file- or
             foldername, (without any extension that identifies a compressed
             package) as the packet name.
@@ -2417,7 +2417,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
                 | Yale-EQ469-Placebo    | `".*?-(?P<subject_id>.*?)-(?P<session_name>.*)"` | EQ469      | Placebo      | EQ469_Placebo |
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
-                | Oxford.MR492.T3-Trio  | `".*?\.(?P<subject_id>.*?)\..*"`                 | MR492      | -            | MR492         |
+                | Oxford.MR492.T3-Trio  | `".*?\\.(?P<subject_id>.*?)\\..*"`               | MR492      | -            | MR492         |
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
 
 
@@ -2626,7 +2626,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --check="any"
 
@@ -2638,7 +2638,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \\
                     --check="any"
@@ -2654,7 +2654,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \\
                     --check="any"
@@ -3171,7 +3171,7 @@ def import_dicom(sessionsfolder=None, sessions=None, masterinbox=None, check="an
                 print("".join(['=' for e in range(len(s))]))
 
             for p in files:
-                if masterinbox or re.search("\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p):
+                if masterinbox or re.search(r"\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p):
                     archivetarget = os.path.join(afolder, os.path.basename(p))
 
                     # --- move package to archive

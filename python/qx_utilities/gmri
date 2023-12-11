@@ -301,7 +301,7 @@ def runCommand(command, args):
     # -- process extra arguments
     sessions = None
     if 'sessions' in eargs:
-        if command != "run_list" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
+        if command != "run_recipe" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
             raise ge.CommandError("gmri", "Incompatible command",
                                   "Command %s can not be run on multiple sessions!" % (command))
         if folders['sessionsfolder'] is None:
@@ -335,14 +335,15 @@ def runCommand(command, args):
                     recipe_args['sessionids'] = ",".join(slist)
 
                     # copy recipe args to eargs
-                    run_recipe_kwargs = ['recipe_file', 'recipe', 'steps', 'xnat', 'logfolder', 'verbose']
+                    run_recipe_kwargs = [
+                        'recipe_file', 'recipe', 'steps', 'xnat', 'logfolder', 'verbose']
                     recipe_eargs = {}
                     to_delete = []
                     for k, v in recipe_args.items():
                         if k not in run_recipe_kwargs:
                             recipe_eargs[k] = v
                             to_delete.append(k)
-                    
+
                     for arg in to_delete:
                         del recipe_args[arg]
 
@@ -538,8 +539,8 @@ def print_help(com):
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
         os.system("qunex -splash")
-        for full_name, description, language in all_qunex_commands:
-            print(f'{full_name.split(".")[-1]:<39} {description}')
+        for full_name, description, _ in all_qunex_commands:
+            print(full_name.split(".")[-1] + " " + description)
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
