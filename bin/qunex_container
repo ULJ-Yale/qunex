@@ -17,7 +17,7 @@ from datetime import datetime
 
 class CommandError(Exception):
     """There was an error in calling the command."""
-    
+
     def __init__(self, function=None, error=None, *hints):
         if function is None:
             function = "unknown function"
@@ -26,9 +26,9 @@ class CommandError(Exception):
         msg = "Error '%s' occured in %s" % (error, function)
         super(CommandError, self).__init__(msg)
         self.function = function
-        self.error    = error
-        self.hints    = hints
-        self.report   = (error,) + hints
+        self.error = error
+        self.hints = hints
+        self.report = (error,) + hints
 
 
 class CommandFailed(Exception):
@@ -42,19 +42,32 @@ class CommandFailed(Exception):
         msg = "Error '%s' occured in %s" % (error, function)
         super(CommandFailed, self).__init__(msg)
         self.function = function
-        self.error    = error
-        self.hints    = hints
-        self.report   = (error,) + hints
+        self.error = error
+        self.hints = hints
+        self.report = (error,) + hints
 
 
-def schedule(command=None, script=None, scheduler_name=None, scheduler_params=None, replace=None, workdir=None, environment=None, output=None, parsessions=1, parelements=1, batchlogsfolder=None, slurm_array=False):
-    '''
-    qunex_command scheduler 
+def schedule(
+    command=None,
+    script=None,
+    scheduler_name=None,
+    scheduler_params=None,
+    replace=None,
+    workdir=None,
+    environment=None,
+    output=None,
+    parsessions=1,
+    parelements=1,
+    batchlogsfolder=None,
+    slurm_array=False,
+):
+    """
+    qunex_command scheduler
 
     USE
     ===
 
-    Schedules the provided command to be run by the specified scheduler (PBS, 
+    Schedules the provided command to be run by the specified scheduler (PBS,
     LSF, SLURM are currently supported).
 
     INPUTS
@@ -79,14 +92,14 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
     four different directives provided by "<key>:<value>" strings separated by
     pipe:
 
-    stdout 
-        specifies a path to a log file that should store standard output of the 
+    stdout
+        specifies a path to a log file that should store standard output of the
         submitted job
-    stderr 
-        specified a path to a log file that should store error output of the 
+    stderr
+        specified a path to a log file that should store error output of the
         submitted job
-    both   
-        specifies a path to a log file that should store joint standard and 
+    both
+        specifies a path to a log file that should store joint standard and
         error outputs of the submitted job
 
     Examples:
@@ -118,7 +131,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
         "#PBS -l <key>=<value>"
 
     Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using::
-    
+
         "#PBS -<key> <value>"
 
     Key: depend will be submitted using::
@@ -143,7 +156,7 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
     - walltime ... "#BSUB -W <walltime>"
     - cores    ... "#BSUB -n <cores>"
 
-    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo, 
+    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo,
     jobName will be submitted using::
 
         "#BSUB -<key> <value>"
@@ -165,40 +178,69 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
     - mail-user        ... Email address to send notifications to
     - mail-type        ... On what events to send emails
 
-    '''
+    """
 
     # --- check inputs
     if command is None and script is None:
-        raise CommandError("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
+        raise CommandError(
+            "schedule",
+            "Missing parameter",
+            "Either command or script need to be specified to run scheduler!",
+        )
 
     if command is not None and script is not None:
-        raise CommandError("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
+        raise CommandError(
+            "schedule",
+            "Parameter conflict",
+            "Only command or script need to be provided to run scheduler!",
+        )
 
     if scheduler_params is None:
-        raise CommandError("schedule", "Missing parameter", "Scheduler parameters need to be provided to run scheduler!")
+        raise CommandError(
+            "schedule",
+            "Missing parameter",
+            "Scheduler parameters need to be provided to run scheduler!",
+        )
 
     # --- parse settings
     try:
-        jobname   = scheduler_params.pop('jobname', "schedule")
-        comname   = scheduler_params.pop('comname', "")
-        jobnum    = scheduler_params.pop('jobnum', "")
+        jobname = scheduler_params.pop("jobname", "schedule")
+        comname = scheduler_params.pop("comname", "")
+        jobnum = scheduler_params.pop("jobnum", "")
     except:
-        raise CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", scheduler_params)
+        raise CommandError(
+            "schedule",
+            "Misspecified parameter",
+            "Could not parse the settings string:",
+            scheduler_params,
+        )
 
     # --- compile command to pass
     if command is None:
         if not os.path.exists(script):
-            raise CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
+            raise CommandFailed(
+                "schedule",
+                "File not found",
+                "The specified script does not exist! [%s]" % (script),
+            )
         command = open(script, "r")
 
     if workdir is not None:
         if not os.path.exists(workdir):
-            raise CommandFailed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
+            raise CommandFailed(
+                "schedule",
+                "Folder does not exist",
+                "The specified working directory does not exist! [%s]" % (workdir),
+            )
         command = "cd %s\n" % (workdir) + command
 
     if environment is not None:
         if not os.path.exists(environment):
-            raise CommandFailed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
+            raise CommandFailed(
+                "schedule",
+                "File not found",
+                "The specified environment script does not exist! [%s]" % (environment),
+            )
         command = open(environment, "r") + "\n" + command
 
     # --- do search replace
@@ -209,12 +251,18 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
             command.replace("{{%s}}" % (key), value)
 
     # --- parse output
-    outputs = {'stdout': None, 'stderr': None, 'both': None, 'return': None}
+    outputs = {"stdout": None, "stderr": None, "both": None, "return": None}
 
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
-            if not os.path.exists(os.path.dirname(v)) and k != 'return':
-                raise CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
+            if not os.path.exists(os.path.dirname(v)) and k != "return":
+                raise CommandFailed(
+                    "schedule",
+                    "Folder does not exist",
+                    "The specified folder for the '%s' log file does not exist! [%s]"
+                    % (k, os.path.dirname(v)),
+                    "Please check your paths!",
+                )
             outputs[k] = v
     else:
         # log name
@@ -227,111 +275,129 @@ def schedule(command=None, script=None, scheduler_name=None, scheduler_params=No
 
         # put in batchfolder
         if batchlogsfolder is not None:
-            outputs['stdout'] = batchlogsfolder + logname
-            outputs['stderr'] = batchlogsfolder + logname
+            outputs["stdout"] = batchlogsfolder + logname
+            outputs["stderr"] = batchlogsfolder + logname
         else:
             homedir = os.path.expanduser("~")
-            outputs['stdout'] = homedir + logname
-            outputs['stderr'] = homedir + logname
+            outputs["stdout"] = homedir + logname
+            outputs["stderr"] = homedir + logname
 
-    if outputs['both'] is not None:
-        outputs['stderr'] = outputs['both']
-        outputs['stdout'] = outputs['both']
+    if outputs["both"] is not None:
+        outputs["stderr"] = outputs["both"]
+        outputs["stdout"] = outputs["both"]
 
     # --- build scheduler commands
     s_command = ""
 
     if scheduler_name == "PBS":
         for k, v in scheduler_params.items():
-            if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue', 'select'):
+            if k in (
+                "mem",
+                "walltime",
+                "software",
+                "file",
+                "procs",
+                "pmem",
+                "feature",
+                "host",
+                "naccesspolicy",
+                "epilogue",
+                "prologue",
+                "select",
+            ):
                 s_command += "#PBS -l %s=%s\n" % (k, v)
-            elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e', 'l'):
+            elif k in ("j", "m", "o", "S", "a", "A", "M", "q", "t", "e", "l"):
                 s_command += "#PBS -%s %s\n" % (k, v)
-            elif k == 'depend':
+            elif k == "depend":
                 s_command += "#PBS -W depend=%s\n" % (v)
-            elif k == 'umask':
+            elif k == "umask":
                 s_command += "#PBS -W umask=%s\n" % (v)
-            elif k == 'N' and jobname == 'schedule':
+            elif k == "N" and jobname == "schedule":
                 jobname = v
-            elif k == 'nodes':
+            elif k == "nodes":
                 s_command += "#PBS -l nodes=%s\n" % v
 
         # job name
-        if (comname != ""):
+        if comname != "":
             jobname = "%s-%s" % (jobname, comname)
-        if (jobnum != ""):
+        if jobnum != "":
             jobname = "%s(%s)" % (jobname, jobnum)
         s_command += "#PBS -N %s\n" % jobname
 
-        if outputs['stdout'] is not None:
-            s_command += "#PBS -o %s\n" % (outputs['stdout'])
-        if outputs['stderr'] is not None:
-            s_command += "#PBS -e %s\n" % (outputs['stderr'])
-        if outputs['both']:
+        if outputs["stdout"] is not None:
+            s_command += "#PBS -o %s\n" % (outputs["stdout"])
+        if outputs["stderr"] is not None:
+            s_command += "#PBS -e %s\n" % (outputs["stderr"])
+        if outputs["both"]:
             s_command += "#PBS -j oe\n"
-        com = 'qsub'
+        com = "qsub"
 
     elif scheduler_name == "SLURM":
         s_command += "#!/bin/bash\n"
         for key, value in scheduler_params.items():
-            if key in ('J', 'job-name') and jobname == 'schedule':
+            if key in ("J", "job-name") and jobname == "schedule":
                 jobname = v
             elif value == "QX_FLAG":
-                s_command += "#SBATCH --%s\n" % (key.replace('--', ''))
+                s_command += "#SBATCH --%s\n" % (key.replace("--", ""))
 
             else:
-                s_command += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+                s_command += "#SBATCH --%s=%s\n" % (key.replace("--", ""), value)
 
         # set default cpus-per-task
-        if ("cpus-per-task" not in scheduler_params.keys() and "c" not in scheduler_params.keys()):
+        if (
+            "cpus-per-task" not in scheduler_params.keys()
+            and "c" not in scheduler_params.keys()
+        ):
             s_command += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
 
         # jobname
-        if (comname != ""):
+        if comname != "":
             jobname = "%s-%s" % (jobname, comname)
-        if (jobnum != ""):
+        if jobnum != "":
             jobname = "%s(%s)" % (jobname, jobnum)
         s_command += "#SBATCH --job-name=%s\n" % jobname
 
-        if outputs['stdout'] is not None:
-            s_command += "#SBATCH -o %s\n" % (outputs['stdout'])
-        if outputs['stderr'] is not None:
-            s_command += "#SBATCH -e %s\n" % (outputs['stderr'])
-        com = 'sbatch'
+        if outputs["stdout"] is not None:
+            s_command += "#SBATCH -o %s\n" % (outputs["stdout"])
+        if outputs["stderr"] is not None:
+            s_command += "#SBATCH -e %s\n" % (outputs["stderr"])
+        com = "sbatch"
 
     # --- run the scheduler
     print("\nSubmitting:\n------------------------------")
     print(s_command)
     print(command + "\n")
 
-    if outputs['return'] is None:
+    if outputs["return"] is None:
         serr = None
         sout = None
-    elif outputs['return'] == 'both':
+    elif outputs["return"] == "both":
         serr = subprocess.STDOUT
         sout = subprocess.PIPE
-    elif outputs['return'] == 'stderr':
+    elif outputs["return"] == "stderr":
         serr = subprocess.PIPE
         sout = None
-    elif outputs['return'] == 'stdout':
+    elif outputs["return"] == "stdout":
         serr = None
         sout = subprocess.PIPE
 
-    run = subprocess.Popen(com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True)
-    run.stdin.write((s_command + command).encode('utf-8'))
+    run = subprocess.Popen(
+        com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True
+    )
+    run.stdin.write((s_command + command).encode("utf-8"))
     run.stdin.close()
 
     # ---- returning results
-    if outputs['return'] in ['both', 'stdout']:
+    if outputs["return"] in ["both", "stdout"]:
         result = run.stdout.read()
         return result
-    elif outputs['return'] in ['stderr']:
+    elif outputs["return"] in ["stderr"]:
         result = run.stderr.read()
         return result
 
 
 def get_sessionids_from_batch(filename, batchfilter=None):
-    '''
+    """
     get_sessionids_from_batch(filename, batchfilter=None)
 
     An internal function for reading batch.txt files. It reads the file and
@@ -339,10 +405,13 @@ def get_sessionids_from_batch(filename, batchfilter=None):
     parameters specified in the header.
 
     It returns only the sessions that match the provided filter.
-    '''
+    """
 
     if not os.path.exists(filename):
-        print("\n\n=====================================================\nERROR: Batch file does not exist [%s]", file=filename)
+        print(
+            "\n\n=====================================================\nERROR: Batch file does not exist [%s]",
+            file=filename,
+        )
         raise ValueError("ERROR: Batch file not found: %s" % (filename))
 
     s = open(filename, "r").read()
@@ -361,15 +430,15 @@ def get_sessionids_from_batch(filename, batchfilter=None):
     # did we provide a filter
     if batchfilter is not None:
         # split filter items
-        filters = batchfilter.split('|')
+        filters = batchfilter.split("|")
 
         # iterate through them and store them
         for f in filters:
-            f_split = f.split(':')
+            f_split = f.split(":")
             filters_dict[f_split[0]] = f_split[1]
 
     for sub in s:
-        sub = sub.split('\n')
+        sub = sub.split("\n")
         sub = [e.strip() for e in sub]
         sub = [e.split("#")[0].strip() for e in sub]
         sub = [e for e in sub if len(e) > 0]
@@ -379,7 +448,7 @@ def get_sessionids_from_batch(filename, batchfilter=None):
         for line in sub:
             line = [e.strip() for e in line.split(":")]
 
-            # filter 
+            # filter
             if len(line) == 2:
                 # is it the id/session line
                 if line[0] == "id" or line[0] == "session":
@@ -387,8 +456,10 @@ def get_sessionids_from_batch(filename, batchfilter=None):
 
                     # should I filter
                     if filters_dict and line[0] in filters_dict:
-                        active_filter = filters_dict[line[0]].split(',')
-                        if line[1] in active_filter or re.match(filters_dict[line[0]], line[1]):
+                        active_filter = filters_dict[line[0]].split(",")
+                        if line[1] in active_filter or re.match(
+                            filters_dict[line[0]], line[1]
+                        ):
                             sessionids.append(session)
                             break
                     else:
@@ -399,7 +470,7 @@ def get_sessionids_from_batch(filename, batchfilter=None):
 
 
 def get_sessionids(batchfile, sessions, batchfilter=None):
-    '''
+    """
     get_sessionids(batchfile, sessions, batchfilter=None)
 
     An internal function for getting a list of session ids.
@@ -412,7 +483,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
     Sessions can be:
     - a comma, space or pipe separated list of session id codes,
     - a path to a *.list file (identified by .list extension).
-    '''
+    """
 
     sessionids = None
 
@@ -422,33 +493,42 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
             if os.path.isfile(sessions):
                 sessionids = get_sessionids_from_list(sessions)
             else:
-                raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
+                raise ValueError(
+                    "ERROR: The specified file is not found! [%s]!" % batchfile
+                )
         else:
-            sessionids = [e.strip() for e in re.split(' +|,|\|', sessions.replace(" ", ""))]
+            sessionids = [
+                e.strip() for e in re.split(" +|,|\|", sessions.replace(" ", ""))
+            ]
     # batchfile
     elif batchfile is not None:
         if os.path.isfile(batchfile):
             sessionids = get_sessionids_from_batch(batchfile, batchfilter)
         else:
-            raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
+            raise ValueError(
+                "ERROR: The specified file is not found! [%s]!" % batchfile
+            )
 
     return sessionids
 
 
 def get_sessionids_from_list(filename):
-    '''
+    """
     get_sessionids_from_list(filename)
 
     An internal function for reading list files. It reads the file and
     returns a list of session ids.
 
-    '''
+    """
 
     if not os.path.exists(filename):
-        print("\n\n=====================================================\nERROR: List file does not exist [%s]", file=filename)
+        print(
+            "\n\n=====================================================\nERROR: List file does not exist [%s]",
+            file=filename,
+        )
         raise ValueError("ERROR: List file not found: %s" % (filename))
 
-    sessionids  = []
+    sessionids = []
 
     with open(filename) as f:
         for line in f:
@@ -478,20 +558,20 @@ def get_batchlogs_folder(sessionsfolder):
     basefolder = None
 
     # try to find the root
-    while os.path.dirname(f) and os.path.dirname(f) != '/':
+    while os.path.dirname(f) and os.path.dirname(f) != "/":
         f = os.path.dirname(f)
-        if os.path.exists(os.path.join(f, '.qunexstudy')):
+        if os.path.exists(os.path.join(f, ".qunexstudy")):
             basefolder = f
             break
-        elif os.path.exists(os.path.join(f, '.mnapstudy')):
+        elif os.path.exists(os.path.join(f, ".mnapstudy")):
             basefolder = f
             break
-    
+
     # log folder
     batchlogsfolder = None
 
     if basefolder is not None:
-        batchlogsfolder = os.path.join(basefolder, 'processing', 'logs', 'batchlogs')
+        batchlogsfolder = os.path.join(basefolder, "processing", "logs", "batchlogs")
 
     return batchlogsfolder
 
@@ -692,34 +772,38 @@ def main(args=None):
     # deprecation warnings, TODO remove in 1.0.0
     for arg in args:
         if "sessionids=" in arg:
-            print("WARNING: The sessionids parameter will be deprecated, use the sessions parameter to select sessions.")
+            print(
+                "WARNING: The sessionids parameter will be deprecated, use the sessions parameter to select sessions."
+            )
         if "sessions=" in arg and ".txt" in arg:
-            print("WARNING: It seems like you are using the sessions parameters to pass the location of the batch file to QuNex. This functionality will be deprecated, use the batchfile parameter for specifying the location of the batchfile.")
+            print(
+                "WARNING: It seems like you are using the sessions parameters to pass the location of the batch file to QuNex. This functionality will be deprecated, use the batchfile parameter for specifying the location of the batchfile."
+            )
 
-    env_status          = False
-    scheduler           = None
-    conimage            = None
-    command             = ""
-    bash_pre            = None
-    bash_post           = None
-    bind                = None
-    nocleanenv          = None
-    nv                  = None
-    cuda_path           = None
-    script              = None
-    parjobs             = None
-    parsessions         = 1
-    parelements         = 1
-    batchfile           = None
-    batchfilter         = None
-    sessions            = None
-    sessionsfolder      = None
-    sessionids          = None
-    envars              = None
-    dockeropt           = None
-    output              = None
-    parinfo             = None
-    overwrite           = None
+    env_status = False
+    scheduler = None
+    conimage = None
+    command = ""
+    bash_pre = None
+    bash_post = None
+    bind = None
+    nocleanenv = None
+    nv = None
+    cuda_path = None
+    script = None
+    parjobs = None
+    parsessions = 1
+    parelements = 1
+    batchfile = None
+    batchfilter = None
+    sessions = None
+    sessionsfolder = None
+    sessionids = None
+    envars = None
+    dockeropt = None
+    output = None
+    parinfo = None
+    overwrite = None
 
     for arg in args:
         if "env_status" in arg or "envstatus" in arg:
@@ -772,34 +856,36 @@ def main(args=None):
             k, sessionids = arg.split("=", 1)
         elif "overwrite=" in arg:
             k, overwrite = arg.split("=", 1)
-            command += '%s ' % (arg)
+            command += "%s " % (arg)
         elif "=" in arg:
-            k, v = arg.split('=', 1)
+            k, v = arg.split("=", 1)
             command += '%s="%s" ' % (k, v)
         elif arg.replace("-", "") == "parinfo":
             parinfo = True
         else:
-            command += '%s ' % (arg)
+            command += "%s " % (arg)
 
     # workaround for commands that are not supported
     commands_blacklist = [
-        'create_batch',
-        'create_list',
-        'create_conc',
-        'gather_behavior',
-        'pull_sequence_names',
-        'create_stats_report',
-        'fc_compute_roifc',
-        'fc_compute_gbc',
-        'fc_compute_seedmaps',
-        'fc_extract_roi_timeseries',
-        'general_extract_roi_values',
-        'general_extract_roi_glm_values'
+        "create_batch",
+        "create_list",
+        "create_conc",
+        "gather_behavior",
+        "pull_sequence_names",
+        "create_stats_report",
+        "fc_compute_roifc",
+        "fc_compute_gbc",
+        "fc_compute_seedmaps",
+        "fc_extract_roi_timeseries",
+        "general_extract_roi_values",
+        "general_extract_roi_glm_values",
     ]
-    qx_command = command.split(' ')[0]
+    qx_command = command.split(" ")[0]
     # ban parallel execution of these commands
     if overwrite == "yes" and parsessions > 1 and qx_command in commands_blacklist:
-        print("ERROR: Parallel execution of this command is not supported when overwrite is set to yes!")
+        print(
+            "ERROR: Parallel execution of this command is not supported when overwrite is set to yes!"
+        )
         exit(1)
 
     # batchlogs folder
@@ -809,9 +895,11 @@ def main(args=None):
 
     if conimage is None:
         if "QUNEXCONIMAGE" in os.environ:
-            conimage = os.environ['QUNEXCONIMAGE']
+            conimage = os.environ["QUNEXCONIMAGE"]
         else:
-            print("ERROR: No Apptainer image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!")
+            print(
+                "ERROR: No Apptainer image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!"
+            )
             exit(1)
 
     # Docker or Apptainer
@@ -821,33 +909,39 @@ def main(args=None):
     if env_status:
         # apptainer
         if apptainer:
-            env_command = "singularity exec %s bash /opt/qunex/env/qunex_container_env_status.sh" % conimage
+            env_command = (
+                "singularity exec %s bash /opt/qunex/env/qunex_container_env_status.sh"
+                % conimage
+            )
 
         # docker
         else:
-            env_command = "docker run %s bash -c \"/opt/qunex/env/qunex_container_env_status.sh\"" % conimage
+            env_command = (
+                'docker run %s bash -c "/opt/qunex/env/qunex_container_env_status.sh"'
+                % conimage
+            )
 
         # run
         subprocess.Popen(env_command, shell=True)
         exit(0)
 
-    if command.startswith('?scheduler'):
+    if command.startswith("?scheduler"):
         print(schedule.__doc__)
         exit()
 
     # -- check for environment variables
     if envars:
-        envars = [e for e in envars.split('|')]
-        envars = [e.split('=>') for e in envars if '=>' in e]
+        envars = [e for e in envars.split("|")]
+        envars = [e.split("=>") for e in envars if "=>" in e]
     else:
         envars = []
 
     # -- check for docker options
     if dockeropt is None:
         if "QUNEXDOCKEROPT" in os.environ:
-            dockeropt = os.environ['QUNEXDOCKEROPT']
+            dockeropt = os.environ["QUNEXDOCKEROPT"]
         else:
-            dockeropt = "-v \"$(pwd)\":/data"
+            dockeropt = '-v "$(pwd)":/data'
 
     homedir = os.path.expanduser("~")
     dockeropt += " -v %s:%s" % (homedir, homedir)
@@ -860,7 +954,9 @@ def main(args=None):
     old_sessions_naming = False
     if sessions is not None and ".txt" in sessions:
         if batchfile is not None:
-            print("ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!")
+            print(
+                "ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!"
+            )
             exit(1)
         else:
             batchfile = sessions
@@ -868,7 +964,9 @@ def main(args=None):
             sessionids = None
             old_sessions_naming = True
     elif sessions is not None and sessionids is not None:
-            print("WARNING: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!")
+        print(
+            "WARNING: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!"
+        )
 
     # number of sessions
     n_sessions = None
@@ -880,7 +978,11 @@ def main(args=None):
 
     # do not run in parallel multi_session/longitudinal commands
     multi_session_command = False
-    multi_commands = ["hcp_longitudinal_freesurfer", "hcp_temporal_ica", "hcp_make_average_dataset"]
+    multi_commands = [
+        "hcp_longitudinal_freesurfer",
+        "hcp_temporal_ica",
+        "hcp_make_average_dataset",
+    ]
     if any(c in command for c in multi_commands):
         multi_session_command = True
 
@@ -893,8 +995,14 @@ def main(args=None):
         scheduler_name = scheduler_params_list.pop(0)
 
         # check scheduler
-        if scheduler_name not in ['PBS', 'LSF', 'SLURM']:
-            raise CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", scheduler_name)
+        if scheduler_name not in ["PBS", "LSF", "SLURM"]:
+            raise CommandError(
+                "schedule",
+                "Misspecified parameter",
+                "First value in the settings string has to specify one of PBS, LSF, SLURM!",
+                "The settings string submitted was:",
+                scheduler_name,
+            )
 
         # parse scheduler parameters
         scheduler_params = {}
@@ -906,7 +1014,7 @@ def main(args=None):
                 # SLURM job array?
                 if scheduler_name == "SLURM" and sSplit[0].strip() == "array":
                     slurm_array = True
-            
+
                 scheduler_params[sSplit[0].strip()] = sSplit[1].strip()
             # flags
             else:
@@ -929,29 +1037,38 @@ def main(args=None):
 
             # only allow HCP MPP commands with job array
             array_commands = [
-                'hcp_pre_freesurfer',
-                'hcp_freesurfer',
-                'hcp_post_freesurfer',
-                'hcp_fmri_volume',
-                'hcp_fmri_surface'
+                "hcp_pre_freesurfer",
+                "hcp_freesurfer",
+                "hcp_post_freesurfer",
+                "hcp_fmri_volume",
+                "hcp_fmri_surface",
+                "run_recipe",
             ]
             if qx_command not in array_commands:
-                print("ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines!")
-                print("         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.")
+                print(
+                    "ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines!"
+                )
+                print(
+                    "         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface."
+                )
                 exit(1)
 
     # array for storing session ids
     sessionids_array = []
 
     # if scheduler is not None and we do not have a multi_session_command then setup parallelism
-    if scheduler is not None and (sessions is not None or batchfile is not None) and not multi_session_command:
+    if (
+        scheduler is not None
+        and (sessions is not None or batchfile is not None)
+        and not multi_session_command
+    ):
         # if parjobs is None each session is its own job
         if parjobs is None:
             parjobs = 0
 
             # split to chunks
             for i in range(0, n_sessions, parsessions):
-                sessionids_array.append(','.join(g_sessionids[i:i + parsessions]))
+                sessionids_array.append(",".join(g_sessionids[i : i + parsessions]))
 
             # calculate the number of parallel jobs
             parjobs = len(sessionids_array)
@@ -972,7 +1089,7 @@ def main(args=None):
             for idx, sessionid in enumerate(g_sessionids):
                 job_id = idx % parjobs
                 sessionids_arrays[job_id].append(sessionid)
-            
+
             for s in sessionids_arrays:
                 sessionids_array.append(",".join(s))
 
@@ -989,16 +1106,24 @@ def main(args=None):
         print("    Qunex will schedule %s jobs" % parjobs)
 
     if n_sessions is not None:
-        print("\n--> QuNex will run the command over %s sessions. It will utilize:\n" % n_sessions)
+        print(
+            "\n--> QuNex will run the command over %s sessions. It will utilize:\n"
+            % n_sessions
+        )
         print("    Maximum sessions run in parallel for a job: %s." % parsessions)
         print("    Maximum elements run in parallel for a session: %s." % parelements)
-        print("    Up to %s processes will be utilized for a job.\n" % (parelements * parsessions))
+        print(
+            "    Up to %s processes will be utilized for a job.\n"
+            % (parelements * parsessions)
+        )
 
         if slurm_array:
             print("    Using SLURM job array over sessions: %s" % sessionids_array[0])
         else:
             for i in range(0, parjobs):
-                print("    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i]))
+                print(
+                    "    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i])
+                )
 
     # execute
     if parinfo is None:
@@ -1023,14 +1148,18 @@ def main(args=None):
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             # prepare the schedule file
             if batchlogsfolder is not None:
-                script_path = os.path.join(batchlogsfolder, f'qunex_container_command_{timestamp}.sh')
+                script_path = os.path.join(
+                    batchlogsfolder, f"qunex_container_command_{timestamp}.sh"
+                )
             else:
-                script_path = os.path.join(homedir, f'qunex_container_command_{timestamp}.sh')
+                script_path = os.path.join(
+                    homedir, f"qunex_container_command_{timestamp}.sh"
+                )
 
             f = open(script_path, "w")
 
             for k, v in envars:
-                print("export con_%s=\"%s\"" % (k, v), file=f)
+                print('export con_%s="%s"' % (k, v), file=f)
 
             print("source /opt/qunex/env/qunex_environment.sh", file=f)
 
@@ -1041,15 +1170,21 @@ def main(args=None):
                 if apptainer:
                     print("bash " + script, file=f)
                 else:
-                    with open(script, 'r') as sfile:
+                    with open(script, "r") as sfile:
                         for line in sfile:
                             print(line, file=f)
-            elif 'runTurnkey' in qx_command:
-                qx_command = qx_command.replace('runTurnkey', '')
-                print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command, file=f)
-            elif 'run_turnkey' in qx_command:
-                qx_command = qx_command.replace('run_turnkey', '')
-                print("bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command, file=f)
+            elif "runTurnkey" in qx_command:
+                qx_command = qx_command.replace("runTurnkey", "")
+                print(
+                    "bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command,
+                    file=f,
+                )
+            elif "run_turnkey" in qx_command:
+                qx_command = qx_command.replace("run_turnkey", "")
+                print(
+                    "bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command,
+                    file=f,
+                )
             else:
                 print("bash /opt/qunex/bin/qunex.sh " + qx_command, file=f)
 
@@ -1069,12 +1204,17 @@ def main(args=None):
                     if slurm_array:
                         # the params we need are SLURM_ARRAY_TASK_ID and SLURM_ARRAY_TASK_MAX
                         # we do not need SLURM_JOB_ID, SLURM_ARRAY_JOB_ID, SLURM_ARRAY_TASK_COUNT, SLURM_ARRAY_TASK_MAX for now
-                        slurm_array_params = ['SLURM_ARRAY_TASK_ID', 'SLURM_ARRAY_TASK_MAX']
+                        slurm_array_params = [
+                            "SLURM_ARRAY_TASK_ID",
+                            "SLURM_ARRAY_TASK_MAX",
+                        ]
                         # pass variables into the Apptainer container
-                        container_command += '--env '
-                        container_command += ','.join(['%s=${%s}' % (p, p) for p in slurm_array_params])
+                        container_command += "--env "
+                        container_command += ",".join(
+                            ["%s=${%s}" % (p, p) for p in slurm_array_params]
+                        )
                         # replace trailing comma with space
-                        container_command += ' '
+                        container_command += " "
 
                 # nv
                 if nv:
@@ -1091,14 +1231,28 @@ def main(args=None):
                     else:
                         container_command += f",{cuda_path}:/usr/local/cuda/ "
 
-                container_command +=  "%s bash %s" % (conimage, script_path)
+                container_command += "%s bash %s" % (conimage, script_path)
             else:
-                container_command = "docker run %s %s bash %s" % (dockeropt, conimage, script_path)
+                container_command = "docker run %s %s bash %s" % (
+                    dockeropt,
+                    conimage,
+                    script_path,
+                )
 
             if scheduler:
-                schedule(command=container_command, scheduler_name=scheduler_name, scheduler_params=scheduler_params.copy(), output=output, parsessions=parsessions, parelements=parelements, batchlogsfolder=batchlogsfolder, slurm_array=slurm_array)
+                schedule(
+                    command=container_command,
+                    scheduler_name=scheduler_name,
+                    scheduler_params=scheduler_params.copy(),
+                    output=output,
+                    parsessions=parsessions,
+                    parelements=parelements,
+                    batchlogsfolder=batchlogsfolder,
+                    slurm_array=slurm_array,
+                )
             else:
                 subprocess.Popen(container_command, shell=True)
+
 
 if __name__ == "__main__":
     main()
