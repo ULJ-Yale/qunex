@@ -748,6 +748,19 @@ arglist = [
     ['hcp_tica_config_out', None,                                          flag,
         "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning."],
 
+    ['# --- hcp_apply_auto_reclean options'],
+
+    ['hcp_autoreclean_timepoints', '',                                     isNone,
+        "Output spectra size for sICA individual projection, RunsXNumTimePoints, like '4800'."],
+    ['hcp_autoreclean_surfregname', '',                                    isNone,
+        "The registration string corresponding to the input files."],
+    ['hcp_autoreclean_model_folder', '',                                   isNone,
+        "The folder containing the model to use for cleaning."],
+    ['hcp_autoreclean_model_to_use', '',                                   isNone,
+        "The model to use for cleaning."],
+    ['hcp_autoreclean_vote_threshold', '',                                 isNone,
+        "The threshold for the vote."],
+
     ['# --- hcp_make_average_dataset options'],
     ['hcp_surface_atlas_dir',        '',
         isNone,  "Path to the location of the standard surfaces."],
@@ -948,6 +961,8 @@ calist = [
     [],
     ['hcpd',    'hcp_diffusion',            process_hcp.hcp_diffusion,
         "Run HCP DWI pipeline."],
+    ['hcpaar',   'hcp_apply_auto_reclean',  process_hcp.hcp_apply_auto_reclean,
+        "Run HCP ApplyAutoRecleanPipelines."],
     ['hpca',    'hcp_asl',                  process_hcp.hcp_asl,
         "Run HCP ASL pipeline."],
     # ['hcpdf',   'hcp_dtifit',                 process_hcp.hcp_dtifit,                         "Run FSL DTI fit."],
