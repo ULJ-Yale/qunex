@@ -103,6 +103,8 @@ all_qunex_commands = [
      "python"),
     ("qx_utilities.processing.dwi.dwi_noddi_gpu",                   "Runs CUDIMOT's NODDI microstructure modelling.",
      "python"),
+    ("qx_utilities.bash.dwi_eddy_qc",
+     "Runs DWI eddy QC.",                                                                        "bash"),
     ("qx_utilities.processing.workflow.extract_nuisance_signal",
      "Extracts nuisance signal from BOLD images.",                                               "python"),
     ("qx_utilities.bash.extract_roi",
