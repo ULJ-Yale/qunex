@@ -319,20 +319,28 @@ def runCommand(command, args):
             # -- default is a recipe for each session
             parsessions = (int)(args.get('parsessions', 1))
 
+            # all sessions
+            all_sessions = []
+            for session in sessions:
+                all_sessions.append(session['session'])
+
             if 'scheduler' in eargs:
                 gs.runThroughScheduler(command, sessions=sessions, args=args,
                                        parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
 
             else:
                 c = 0
-                while sessions:
+                while all_sessions:
                     c += 1
                     recipe_args = args.copy()
 
                     # -- set up a list of sessions to run in each run_recipe
-                    slist = [sessions.pop(0)['session']
-                             for e in range(parsessions) if sessions]
+                    slist = [all_sessions.pop(0) for e in range(parsessions) if all_sessions]
                     recipe_args['sessionids'] = ",".join(slist)
+
+                    # pass all sessions if in slurm array
+                    if 'SLURM_ARRAY_TASK_ID' in os.environ:
+                        recipe_args['sessionids'] = (",").join(all_sessions)
 
                     # copy recipe args to eargs
                     run_recipe_kwargs = [

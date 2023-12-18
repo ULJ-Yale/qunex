@@ -2254,6 +2254,7 @@ def run_recipe(
             "\n--------------------------------------------\n===> Running command:\n\n     qunex "
             + command_name
         )
+
         for param, value in command_parameters.items():
             # inject mustache marked values
             if (
@@ -2272,6 +2273,7 @@ def run_recipe(
                         "run_recipe",
                         f"Cannot inject values marked with double curly braces in the recipe. Label not found in the parameters or in system environment variables.",
                     )
+
 
             if param in flags:
                 command.append(f"--{param}")

@@ -346,11 +346,6 @@ def check_deprecated_parameters(options, command):
     sessions = None
     if "sessions" in new_options:
         sessions = new_options["sessions"]
-        if ".txt" in sessions:
-            print("WARNING: passing the batchfile through the sessions parameter will be deprecated, please use the batchfile parameter!")
-    # if sessionids was used
-    if "sessionids" in new_options:
-        print("WARNING: the sessionids parameter will be deprecated, please use the sessions parameter!")
     if "batchfile" in new_options:
         # if sessions and batchfile both provide a file
         if sessions is not None and ".txt" in sessions:
