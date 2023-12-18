@@ -448,7 +448,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
     qxfolders = gc.deduceFolders({'sessionsfolder': sessionsfolder})
 
     if inbox is None:
-        inbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')    
+        inbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')
     
     sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': [], 'bids': False}
     allOk        = True
@@ -457,22 +457,21 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
     inbox = os.path.abspath(inbox)
 
     # ---> Check for folders
-
-    BIDSInbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')
-    if not os.path.exists(BIDSInbox):
-        io = fl.makedirs(BIDSInbox)
+    bidsinbox = os.path.join(sessionsfolder, 'inbox', 'BIDS')
+    if not os.path.exists(bidsinbox):
+        io = fl.makedirs(bidsinbox)
         if not io:
             print("--> created inbox BIDS folder")
         elif io != 'File exists':
-            raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS inbox [%s]!" % (BIDSInbox), "Please check paths and permissions!")
+            raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS inbox [%s]!" % (bidsinbox), "Please check paths and permissions!")
 
-    BIDSArchive = os.path.join(sessionsfolder, 'archive', 'BIDS')
-    if not os.path.exists(BIDSArchive):
-        io = fl.makedirs(BIDSArchive)
+    bidsarchive = os.path.join(sessionsfolder, 'archive', 'BIDS')
+    if not os.path.exists(bidsarchive):
+        io = fl.makedirs(bidsarchive)
         if not io:
             print("--> created BIDS archive folder")
         elif io != 'File exists':
-            raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS archive [%s]!" % (BIDSArchive), "Please check paths and permissions!")
+            raise ge.CommandFailed("import_bids", "I/O error: %s" % (io), "Could not create BIDS archive [%s]!" % (bidsarchive), "Please check paths and permissions!")
 
     # --- load BIDS structure
     # template folder
@@ -487,7 +486,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
     bids = ast.literal_eval(content)
 
     # ---> identification of files
-
     print("--> identifying files in %s" % (inbox))
 
     sourceFiles = []
@@ -502,7 +500,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                 select = [e.strip().replace('sub-', '').replace('ses-', '').replace('/', '_') for e in re.split(' +|\| *|, *', sessions)]
 
         elif os.path.isdir(inbox):
-
             # -- figure out, where we are
             basename = os.path.basename(inbox)
             if 'sub-' in basename:
@@ -517,7 +514,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             print("--> Inbox type:", folderType)
 
             # -- process sessions
-
             globfor = {'subject': '*', 'session': '*', 'bids_study': 'sub-*', 'inbox': '*'}
 
             if sessions:
@@ -547,7 +543,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                 sessions = [globfor[folderType]]
 
             # --- check for metadata
-
             studyat = {'subject': -1, 'session': -2}
             metadata = ['dataset_description.json', 'README', 'CHANGES', 'participants.*']
             metadata += ["%s/*" % (e) for e in bids['optional']]
@@ -570,7 +565,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                             sourceFiles.append(os.path.join(path, file))
 
             # --- compile candidates
-
             candidates = []
             for e in sessions:
                 candidates += glob.glob(os.path.join(inbox, e) + "*")
@@ -589,33 +583,32 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
     if not sourceFiles:
         raise ge.CommandFailed("import_bids", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")        
 
-
     # ---> definition of paths
-
     if bidsname is None:
         if os.path.samefile(inbox, os.path.join(sessionsfolder, 'inbox', 'BIDS')):
             bidsname = ""
-            BIDSInfo = os.path.join(qxfolders['basefolder'], 'info', 'bids')
-        else:
-            if folderType == 'file':
-                bidsname = os.path.basename(inbox)
-                bidsname = re.sub('.zip$|.gz$|.tgz$', '', bidsname)
-                bidsname = re.sub('.tar$', '', bidsname)
-            elif folderType in ['inbox', 'bids_study']:
-                bidsname = os.path.basename(inbox)
-            elif folderType in ['subject', 'session']:
-                bidsname = inbox.split(os.path.sep)[studyat[folderType]-1]
-            BIDSInfo = os.path.join(qxfolders['basefolder'], 'info', 'bids', bidsname)
-    
+    else:
+        if folderType == 'file':
+            bidsname = os.path.basename(inbox)
+            bidsname = re.sub('.zip$|.gz$|.tgz$', '', bidsname)
+            bidsname = re.sub('.tar$', '', bidsname)
+        elif folderType in ['inbox', 'bids_study']:
+            bidsname = os.path.basename(inbox)
+        elif folderType in ['subject', 'session']:
+            bidsname = inbox.split(os.path.sep)[studyat[folderType]-1]
+
+    if not bidsname:
+        bidsinfo = os.path.join(qxfolders['basefolder'], 'info', 'bids')
+    else:
+        bidsinfo = os.path.join(qxfolders['basefolder'], 'info', 'bids', bidsname)
+
     print("==> Paths:")
-    print("    BIDSInfo    ->", BIDSInfo)
-    print("    BIDSInbox   ->", BIDSInbox)
-    print("    BIDSArchive ->", BIDSArchive)
+    print("    bidsinfo    ->", bidsinfo)
+    print("    bidsinbox   ->", bidsinbox)
+    print("    bidsarchive ->", bidsarchive)
 
     # ---> mapping data to sessions' folders
-
     print("--> mapping files to QuNex bids folders")
-    
     for file in sourceFiles:
         if file.endswith('.zip'):
             print("    --> processing zip package [%s]" % (file))
@@ -624,7 +617,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile, lock = mapToQUNEXBids(sf.filename, sessionsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
+                        tfile, lock = mapToQUNEXBids(sf.filename, sessionsfolder, bidsinfo, sessionsList, overwrite, "        ", select)
                         if tfile:
                             if lock:
                                 fl.lock(tfile)
@@ -652,7 +645,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile, lock = mapToQUNEXBids(member.name, sessionsfolder, BIDSInfo, sessionsList, overwrite, "        ", select)
+                        tfile, lock = mapToQUNEXBids(member.name, sessionsfolder, bidsinfo, sessionsList, overwrite, "        ", select)
                         if tfile:
                             if lock:
                                 fl.lock(tfile)
@@ -675,7 +668,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                 errors += "\n    .. Processing of package %s failed!" % (file)
 
         else:
-            tfile, lock = mapToQUNEXBids(file, sessionsfolder, BIDSInfo, sessionsList, overwrite, "    ")
+            tfile, lock = mapToQUNEXBids(file, sessionsfolder, bidsinfo, sessionsList, overwrite, "    ")
             if tfile:
                 if tfile.endswith('.nii'):
                     tfile += ".gz"
@@ -689,12 +682,10 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                     errors += msg
 
     # ---> close status file
-
     if sessionsList['bids'] == 'open':
-        fl.write_status(os.path.join(BIDSInfo, 'bids_info_status'), 'Processing done on %s.' % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")), 'a')
+        fl.write_status(os.path.join(bidsinfo, 'bids_info_status'), 'Processing done on %s.' % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")), 'a')
 
     # ---> archiving the dataset
-    
     if errors:
         print("   ==> The following errors were encountered when mapping the files:")
         print(errors)
@@ -702,7 +693,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
         archiveList = []
 
         # --> review what to archive
-
         # -> we're archiving a file
         if os.path.isfile(inbox):
             archiveList = [inbox]
@@ -711,8 +701,8 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
         # -> we're archiving fully processed inbox folder
         elif processAll:
 
-            # -> from BIDSInbox
-            if os.path.samefile(inbox, BIDSInbox):
+            # -> from bidsinbox
+            if os.path.samefile(inbox, bidsinbox):
                 archiveList = glob.glob(os.path.join(inbox, '*'))
 
             # -> from external inbox location
@@ -724,24 +714,23 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             archiveList = candidates
 
         # --> archive
-
         if archive in ['move', 'copy', 'delete']:
             print("--> Archiving: %sing items" % (archive.replace('y', 'yy')[:-1]))
 
         # -> prepare target folder
         if archive in ['move', 'copy']:
             if folderType == 'file':
-                archiveFolder = BIDSArchive
+                archiveFolder = bidsarchive
             elif folderType in ['inbox', 'bids_study']:
-                if os.path.samefile(inbox, BIDSInbox):
-                    archiveFolder = BIDSArchive
+                if os.path.samefile(inbox, bidsinbox):
+                    archiveFolder = bidsarchive
                 else:
-                    archiveFolder = os.path.join(BIDSArchive, os.path.basename(inbox))
+                    archiveFolder = os.path.join(bidsarchive, os.path.basename(inbox))
             else:
-                if os.path.samefile(inbox, BIDSInbox):
-                    archiveFolder = os.path.join(BIDSArchive, *inbox.split(os.path.sep)[studyat[folderType]:])
+                if os.path.samefile(inbox, bidsinbox):
+                    archiveFolder = os.path.join(bidsarchive, *inbox.split(os.path.sep)[studyat[folderType]:])
                 else:
-                    archiveFolder = os.path.join(BIDSArchive, *inbox.split(os.path.sep)[studyat[folderType]-1:])
+                    archiveFolder = os.path.join(bidsarchive, *inbox.split(os.path.sep)[studyat[folderType]-1:])
 
         # -> loop through items
         for archiveItem in archiveList:
@@ -756,7 +745,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                     print("    WARNING: Could not remove %s. Please check permissions!" % (archiveItem))
 
             # -> move or copy items
-           
             if archive in ['move', 'copy']:
                 targetItem = archiveItem.replace(inbox, '')
                 targetItem = re.sub(r'^%s+' % (os.path.sep), '', targetItem)
@@ -788,22 +776,18 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                 fl.unlock(archiveTarget)
 
     # ---> mapping data to QuNex nii and behavioral folder
-
     # -> check study level data
-
     if sessionsList['bids'] == 'locked':
-        BIDSInfoStatus = fl.wait_status(os.path.join(BIDSInfo, 'bids_info_status'), 'done')
+        BIDSInfoStatus = fl.wait_status(os.path.join(bidsinfo, 'bids_info_status'), 'done')
         if BIDSInfoStatus != "done":
             print("===> WARNING: Status of behavioral files is unknown! Please check the data!")
 
     # --> get a list of behavioral data:
-
     behavior = []
-    behavior += glob.glob(os.path.join(BIDSInfo, 'participants.tsv'))
-    behavior += glob.glob(os.path.join(BIDSInfo, 'phenotype/*.tsv'))
+    behavior += glob.glob(os.path.join(bidsinfo, 'participants.tsv'))
+    behavior += glob.glob(os.path.join(bidsinfo, 'phenotype/*.tsv'))
 
     # --> run the mapping
-
     report = []
     for execute in ['map', 'clean']:
         for session in sessionsList[execute]:
@@ -826,7 +810,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                     nmapping = False                    
 
                 # -- do behavioral mapping
-
                 try:
                     bmapping = mapBIDS2behavior(os.path.join(sessionsfolder, session), behavior, overwrite)
                 except ge.CommandFailed as e:
@@ -834,7 +817,6 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
                     bmapping = False                
 
                 # -- compile report
-
                 if nmapping:
                     minfo = info + " image mapping completed"
                 else:
