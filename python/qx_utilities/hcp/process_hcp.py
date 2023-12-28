@@ -10741,9 +10741,6 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             Output spectra size for sICA individual projection,
             RunsXNumTimePoints, like '4800'.
 
-        --hcp_autoreclean_surfregname (str, default ''):
-            The registration string corresponding to the input files.
-
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
 
@@ -10779,7 +10776,6 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_highpass``            ``bandpass``
             ``hcp_bold_res``                   ``fmri-resolution``
             ``hcp_autoreclean_timepoints``     ``subject-expected-timepoints``
-            ``hcp_autoreclean_surfregname``    ``surf-reg-name``
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_autoreclean_model_folder``   ``model-folder``
             ``hcp_autoreclean_model_to_use``   ``model-to-use``
@@ -10793,8 +10789,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             qunex hcp_apply_auto_reclean \\
                 --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
-                --hcp_autoreclean_timepoints="4800" \\
-                --hcp_autoreclean_surfregname="MSMAll"
+                --hcp_autoreclean_timepoints="4800"
 
         ::
 
@@ -10803,7 +10798,6 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
                 --hcp_autoreclean_timepoints="4800" \\
-                --hcp_autoreclean_surfregname="MSMAll" \\
                 --hcp_matlab_mode="interpreted"
     """
 
@@ -11051,14 +11045,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
         else:
             timepoints = options["hcp_autoreclean_timepoints"]
 
-        # hcp_autoreclean_surfregname
-        surfregname = ""
-        if options["hcp_autoreclean_surfregname"] is None:
-            r += "\n---> ERROR: hcp_autoreclean_surfregname is not provided!"
-            run = False
-        else:
-            surfregname = options["hcp_autoreclean_surfregname"]
-
         # matlab run mode
         matlabrunmode = int(os.environ["FSL_FIX_MATLAB_MODE"])
 
@@ -11066,13 +11052,11 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
-            --fmri-name="%(boldimgs)s" \
+            --fmri-names="%(boldimgs)s" \
             --fix-high-pass="%(highpass)d" \
             --fmri-resolution="%(fmri_resolution)s" \
             --subject-expected-timepoints="%(timepoints)s" \
-            --surf-reg-name="%(surf_reg_name)s" \
             --low-res="%(low_res)s" \
-            --python-singularity="NONE" \
             --matlab-run-mode="%(matlabrunmode)d"'
             % {
                 "script": os.path.join(
@@ -11084,7 +11068,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
                 "highpass": int(highpass),
                 "fmri_resolution": options["hcp_bold_res"],
                 "timepoints": timepoints,
-                "surf_reg_name": surfregname,
                 "low_res": options["hcp_lowresmesh"],
                 "matlabrunmode": matlabrunmode,
             }

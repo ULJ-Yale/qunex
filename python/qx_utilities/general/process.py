@@ -752,8 +752,6 @@ arglist = [
 
     ['hcp_autoreclean_timepoints', '',                                     isNone,
         "Output spectra size for sICA individual projection, RunsXNumTimePoints, like '4800'."],
-    ['hcp_autoreclean_surfregname', '',                                    isNone,
-        "The registration string corresponding to the input files."],
     ['hcp_autoreclean_model_folder', '',                                   isNone,
         "The folder containing the model to use for cleaning."],
     ['hcp_autoreclean_model_to_use', '',                                   isNone,
