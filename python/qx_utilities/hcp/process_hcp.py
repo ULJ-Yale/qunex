@@ -3133,7 +3133,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             the user prior to mapping (e.g. `rfMRI_REST1_AP`).
 
         --hcp_bold_biascorrection (str, default 'NONE'):
-            Whether to perform bias correction for BOLD images. NONE or Legacy.
+            Whether to perform bias correction for BOLD images. NONE, Legacy
+            or SEBASED. With SEBASED must also use hcp_bold_dcmethod.
 
         --hcp_bold_usejacobian (str, default 'FALSE'):
             Whether to apply the jacobian of the distortion correction to fMRI
