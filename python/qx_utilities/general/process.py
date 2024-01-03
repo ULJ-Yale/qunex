@@ -28,7 +28,7 @@ import general.scheduler as gs
 import general.core as gc
 import general.exceptions as ge
 import general.commands_support as gcs
-from processing import fs, simple, workflow, dwi
+from processing import fs, simple, workflow, dwi, fsl
 from general import extensions
 
 # pipelines imports
@@ -982,6 +982,9 @@ calist = [
         "Runs the QuNex mice preprocessing pipeline."],
     ['mmd',     'map_mice_data',            qx_mice.process_mice.map_mice_data,
         "Maps mice pipeline data to sessions' image folder."],
+    [],
+    ['fslf',     'fsl_feat',                fsl.fsl_feat,
+        "Run FSL feat command."],
 ]
 
 # longitudinal commands

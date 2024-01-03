@@ -28,14 +28,12 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-
-
-
 import os
 import shutil
 import traceback
 import processing.core as pc
 from datetime import datetime
+
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_f99 [... processing options]``

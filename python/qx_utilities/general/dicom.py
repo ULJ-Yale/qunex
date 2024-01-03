@@ -2623,7 +2623,7 @@ def import_dicom(
     overwrite="no",
     test=False,
 ):
-    """
+    r"""
     ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
 
     Automatically processes packets with individual sessions' DICOM or PAR/REC
@@ -3759,7 +3759,7 @@ def import_dicom(
 
             for p in files:
                 if masterinbox or re.search(
-                    "\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p
+                    r"\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p
                 ):
                     archivetarget = os.path.join(afolder, os.path.basename(p))
 
