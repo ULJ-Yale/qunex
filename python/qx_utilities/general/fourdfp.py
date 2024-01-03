@@ -211,7 +211,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
             with open(os.path.join(folder, 'dicom', 'DICOM-Report.txt')) as f:
                 for line in f:
                     if ("BOLD" in line and not "C-BOLD" in line) or ("bold" in line):
-                        m = re.search('TR +([0-9.]+),', line)
+                        m = re.search(r'TR +([0-9.]+),', line)
                         if m:
                             TR = m.group(1)
                             TR = float(TR) / 1000
