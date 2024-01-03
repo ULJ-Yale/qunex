@@ -497,7 +497,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
             sourceFiles = [inbox]
             folderType = 'file'
             if sessions:
-                select = [e.strip().replace('sub-', '').replace('ses-', '').replace('/', '_') for e in re.split(' +|\| *|, *', sessions)]
+                select = [e.strip().replace('sub-', '').replace('ses-', '').replace('/', '_') for e in re.split(r' +|\| *|, *', sessions)]
 
         elif os.path.isdir(inbox):
             # -- figure out, where we are
@@ -518,7 +518,7 @@ def import_bids(sessionsfolder=None, inbox=None, sessions=None, action='link', o
 
             if sessions:
                 processAll = False
-                sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
+                sessions = [e.strip() for e in re.split(r' +|\| *|, *', sessions)]
                 if folderType == 'bids_study':
                     nsessions = []
                     for session in sessions:

@@ -383,8 +383,8 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
     # --- setup and run
 
     toclean   = [];
-    cnum = re.compile('.*_c([0-9]+).gii')
-    mnum = re.compile('.*_m([0-9]+)_')
+    cnum = re.compile(r'.*_c([0-9]+).gii')
+    mnum = re.compile(r'.*_m([0-9]+)_')
 
 
     try:

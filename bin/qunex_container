@@ -418,13 +418,13 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
 
     # session have a higher priority
     if sessions is not None:
-        if re.match(".*\.list$", sessions):
+        if re.match(r".*\.list$", sessions):
             if os.path.isfile(sessions):
                 sessionids = get_sessionids_from_list(sessions)
             else:
                 raise ValueError("ERROR: The specified file is not found! [%s]!" % batchfile)
         else:
-            sessionids = [e.strip() for e in re.split(' +|,|\|', sessions.replace(" ", ""))]
+            sessionids = [e.strip() for e in re.split(r' +|,|\|', sessions.replace(" ", ""))]
     # batchfile
     elif batchfile is not None:
         if os.path.isfile(batchfile):

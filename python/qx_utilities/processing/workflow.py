@@ -59,7 +59,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     """
     get_bold_data - documentation not yet available.
     """
-    bsearch = re.compile('bold([0-9]+)')
+    bsearch = re.compile(r'bold([0-9]+)')
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))

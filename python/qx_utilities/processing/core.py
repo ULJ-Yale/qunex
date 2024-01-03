@@ -128,7 +128,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
     - the dictionary with all the info
     """
 
-    bsearch = re.compile('bold([0-9]+)')
+    bsearch = re.compile(r'bold([0-9]+)')
     btargets = [e.strip() for e in re.split(r" +|\||, *", options['bolds'])]
     bolds = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k)
              for (k, v) in sinfo.items() if k.isdigit() and bsearch.match(v['name'])]
@@ -414,7 +414,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     # if bold_tail is set, use that instead
     target_bold_tail = options.get('bold_tail', target_bold_tail)
 
-    boldnumber = re.search('\d+$', boldname).group()
+    boldnumber = re.search(r'\d+$', boldname).group()
 
     ext = getExtension(options['image_target'])
 
