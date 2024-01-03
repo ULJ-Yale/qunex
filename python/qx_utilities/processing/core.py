@@ -129,7 +129,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
     """
 
     bsearch = re.compile('bold([0-9]+)')
-    btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
+    btargets = [e.strip() for e in re.split(r" +|\||, *", options['bolds'])]
     bolds = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k)
              for (k, v) in sinfo.items() if k.isdigit() and bsearch.match(v['name'])]
     bskip = []
@@ -209,7 +209,7 @@ def _filter_bolds(bolds, bolds_filter):
     """
 
     # prepare filter
-    filters = [e.strip() for e in re.split(" +|\||, *", bolds_filter)]
+    filters = [e.strip() for e in re.split(r" +|\||, *", bolds_filter)]
 
     # used bolds storage
     used_bolds = []
@@ -230,7 +230,7 @@ def _filter_bolds(bolds, bolds_filter):
 def doOptionsCheck(options, sinfo, command):
 
     # logs
-    logs = [e.strip() for e in re.split(" +|\||, *", options['log'])]
+    logs = [e.strip() for e in re.split(r" +|\||, *", options['log'])]
     studyComlogs = options['comlogs']
     comlogs = []
 

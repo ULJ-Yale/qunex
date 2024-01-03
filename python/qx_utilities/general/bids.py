@@ -77,7 +77,7 @@ def mapToQUNEXBids(file, sessionsfolder, bidsfolder, sessionsList, overwrite, pr
 
     # -> extract file meta information
     bids_path = file.replace(sessionsfolder, "")
-    for part in re.split("_|/|\.", bids_path):
+    for part in re.split(r"_|/|\.", bids_path):
         if part.startswith('sub-'):
             subject = part.split('-')[1]            
         elif part.startswith('ses-'):
@@ -882,7 +882,7 @@ def processBIDS(bfolder):
     # -> map all the files
     
     for sfile in sourceFiles:
-        parts = re.split("_|/|\.", sfile)
+        parts = re.split(r"_|/|\.", sfile)
     
         # --> is it optional content
     

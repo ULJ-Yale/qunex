@@ -4362,7 +4362,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         if options["hcp_bold_doslicetime"]:
             doslicetime = "TRUE"
 
-            slicetimerparams = re.split(" +|,|\|", options["hcp_bold_slicetimerparams"])
+            slicetimerparams = re.split(r" +|,|\|", options["hcp_bold_slicetimerparams"])
 
             slicetimerparams = [e for e in slicetimerparams if e]
 

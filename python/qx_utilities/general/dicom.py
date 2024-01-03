@@ -3261,7 +3261,7 @@ def import_dicom(
         )
 
     if sessions:
-        sessions = re.split(", *", sessions)
+        sessions = re.split(r", *", sessions)
 
     # ---- check acquisition log if present:
     sessionsInfo = None
