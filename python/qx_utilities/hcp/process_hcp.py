@@ -382,7 +382,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
 
 
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
-    """
+    r"""
     ``hcp_pre_freesurfer [... processing options]``
 
     Runs the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
@@ -11017,8 +11017,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
                 if boldimgs != "":
                     boldimgs = boldimgs + "@"
 
-                # add latest image
-                boldimgs = boldimgs + boldimg
+                boldimgs = boldimgs + boldtarget
 
         # subject/session
         subject = sinfo["id"] + options["hcp_suffix"]
