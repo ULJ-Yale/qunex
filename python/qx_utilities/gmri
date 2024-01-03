@@ -199,6 +199,8 @@ all_qunex_commands = [
      "Runs HCP fMRI task analysis pipeline.",                                                    "python"),
     ("qx_utilities.hcp.process_hcp.hcp_temporal_ica",
      "Runs HCP temporal ICA pipeline.",                                                          "python"),
+    ("qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean",
+     "Runs HCP apply auto reclean pipeline.",                                                    "python"),
     ("qx_utilities.general.bids.import_bids",
      "Maps a BIDS dataset to the QuNex Suite file structure.",                                   "python"),
     ("qx_utilities.general.dicom.import_dicom",
