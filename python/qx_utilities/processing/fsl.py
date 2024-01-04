@@ -118,7 +118,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
                 feat_file = options["feat_file"]
 
         if feat_file is None and run:
-            r += f"\n---> ERROR: Could not find the feat file [{options["feat_file"]}]."
+            r += f"\n---> ERROR: Could not find the feat file [{options['feat_file']}]."
             report = (sinfo['id'], "Not ready for FSL feat", 1)
             run = False
 
