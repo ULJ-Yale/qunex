@@ -40,7 +40,7 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
     create_bold_list - documentation not yet available.
     """
     bfile = open(os.path.join(options['sessionsfolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
-    bsearch = re.compile('bold([0-9]+)')
+    bsearch = re.compile(r'bold([0-9]+)')
 
     for session in sinfo:
         bolds = []

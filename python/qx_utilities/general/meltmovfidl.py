@@ -54,7 +54,7 @@ def meltmovfidl(cfile, ifile, iffile, offile):
         # ---> add matching fidl ignore file
         
         ifidl = glob.glob(os.path.join(os.path.dirname(bold[0]), 'movement', "*"+ifile))
-        m = re.compile(".*b.*?%s[^0-9].*" % bold[1])
+        m = re.compile(r".*b.*?%s[^0-9].*" % bold[1])
         ifidl = [e for e in ifidl if m.match(os.path.basename(e))]
 
         if len(ifidl) != 1:

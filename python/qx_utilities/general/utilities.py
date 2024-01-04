@@ -720,7 +720,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         elif overwrite == 'append':
             print("WARNING: target file %s already exists!" %
                   (os.path.abspath(targetfile)))
-            print("         Appending to exisiting file.")
+            print("         Appending to an exisiting file.")
         elif overwrite == 'no':
             raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (
                 os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action")
@@ -761,7 +761,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 print(
                     "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!")
 
-            # open the files
+            # open the file
             jfile = open(targetfile, 'a')
 
         # --- check for param file
@@ -1173,11 +1173,11 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(' *, *| *\| *| +', bolds)]
+        bolds = [e.strip() for e in re.split(r' *, *| *\| *| +', bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
 
-    bsearch = re.compile('bold([0-9]+)')
+    bsearch = re.compile(r'bold([0-9]+)')
 
     images_folder = 'images' + img_suffix
     functional_folder = 'functional' + bold_variant
@@ -1514,14 +1514,14 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(' *, *| *\| *| +', bolds)]
+        bolds = [e.strip() for e in re.split(r' *, *| *\| *| +', bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
     else:
         raise ge.CommandError(
             "create_conc", "No bolds specified to be included in the conc files")
 
-    bsearch = re.compile('bold([0-9]+)')
+    bsearch = re.compile(r'bold([0-9]+)')
 
     images_folder = 'images' + img_suffix
     functional_folder = 'functional' + bold_variant
@@ -2052,7 +2052,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
     # -- are there parameters to ignore
     if 'ignore' in eargs:
         ignore = [e.strip() for e in re.split(
-            ' ?, ?| ?\| ?| +|', eargs['ignore'])]
+            r' ?, ?| ?\| ?| +|', eargs['ignore'])]
     else:
         ignore = None
 
@@ -2513,7 +2513,7 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r' *, *| *\| *| +', sourcefiles)]
 
     # --- check sessions
 
@@ -2842,7 +2842,7 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r' *, *| *\| *| +', sourcefiles)]
 
     # --- check sessions
 
@@ -2963,7 +2963,7 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
 
     # -- prepare exclusion
     if mapexclude:
-        patterns = [e.strip() for e in re.split(', *', mapexclude)]
+        patterns = [e.strip() for e in re.split(r', *', mapexclude)]
         mapexclude = []
         for e in patterns:
             try:

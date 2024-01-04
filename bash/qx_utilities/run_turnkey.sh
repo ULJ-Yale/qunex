@@ -1288,7 +1288,7 @@ bash ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus
 echo ""
 
 # ---- Map the data from input to output when in XNAT workflow
-if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
+if [[ ${TURNKEY_TYPE} == "xnat" ]] ; then
     # --- Specify what to map
     firstStep=`echo ${TURNKEY_STEPS} | awk '{print $1;}'`
     echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ Initial data re-map from XNAT with ${firstStep} as starting point ."; echo ""
@@ -1394,9 +1394,35 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        run_qc_t1w|run_qc_t2w|run_qc_myelin)
+        run_qc_t1w|run_qc_t2w|run_qc_myelin|run_qc_bold)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*gii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/ROIs/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Native/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
@@ -1487,6 +1513,15 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             --include='/${SessionsFolderName}/${CASE}/*.txt' \
             --include='/${SessionsFolderName}/${CASE}/images' \
             --include='/${SessionsFolderName}/${CASE}/images/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/T1w_restore.nii.gz' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
             --include='/${SessionsFolderName}/specs' \
             --include='/${SessionsFolderName}/specs/***' \
             --include='/processing' \

@@ -763,7 +763,15 @@ if [ ${RunType} == "individual" ]; then
             mkdir ${OutPath} > /dev/null 2>&1
             # -- Generate the temp list
             echo "session id:${INPUTCASE}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-            for InputFile in ${InputFiles}; do echo "file:${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+            for InputFile in ${InputFiles}; do 
+                full_input_path=${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}
+                # check if file exists
+                if [ ! -e "${full_input_path}" ]; then
+                    echo "ERROR: input file ${full_input_path} does not exist!"
+                    exit 1
+                fi
+                echo "file:${full_input_path}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list;
+            done
             FinalInput="${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
         fi
     done
@@ -783,7 +791,15 @@ if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
         InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
         # -- Generate the temp list
         echo "session id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
-        for InputFile in ${InputFiles}; do echo "file:${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+        for InputFile in ${InputFiles}; do
+            full_input_path=${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}
+            # check if file exists
+            if [ ! -e "${full_input_path}" ]; then
+                echo "ERROR: input file ${full_input_path} does not exist!"
+                exit 1
+            fi
+            echo "file:${full_input_path}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list;
+        done
         FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
     done
 fi

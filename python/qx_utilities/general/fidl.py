@@ -84,8 +84,8 @@ def readConc(concf, TR):
             print("===> ERROR: image does not exist! (%s)" % (boldfile))
             return []
 
-    # m = re.compile('_b.*?([0-9]+)')
-    m = re.compile(".*/.*?[bold]*?([0-9]+)(/|\.).*")
+    # m = re.compile(r'_b.*?([0-9]+)')
+    m = re.compile(r".*/.*?[bold]*?([0-9]+)(/|\.).*")
     bolds = []
     start = 0
     for boldfile in boldfiles:
