@@ -12,6 +12,7 @@ This file holds code for running FSL commands. It
 consists of functions:
 
 --fsl_feat      Runs FSL feat command.
+--fsl_melodic   Runs FSL melodic command.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -19,9 +20,7 @@ from the command line using `qunex` command. Help is available through:
 - ``qunex ?<command>`` for command specific help
 There are additional support functions that are not to be used
 directly.
-"""
 
-"""
 Copyright (c) Jure Demsar.
 All rights reserved.
 """
@@ -40,12 +39,6 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     FMRI data analysis.
 
     Parameters:
-        --feat_file (str, default ''):
-            Path to the feat file. If an absolute path is provided all sessions
-            will be processed using the same feat file. If a relative path
-            is provided, QuNex will look for the feat file inside each
-            session's folder.
-
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
@@ -63,18 +56,11 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ("keep") or remove ("remove") the temporary logs
-            once jobs are completed.
-            When a comma or pipe ("|") separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - "study" (for the default:
-              `<study>/processing/logs/comlogs` location)
-            - "session" (for `<sessionid>/logs/comlogs`)
-            - "hcp" (for `<hcp_folder>/logs/comlogs`)
-            - "<path>" (for an arbitrary directory).
+        --feat_file (str, default ''):
+            Path to the feat file. If an absolute path is provided all sessions
+            will be processed using the same feat file. If a relative path
+            is provided, QuNex will look for the feat file inside each
+            session's folder.
 
     Examples:
         ::
@@ -82,13 +68,13 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             qunex fsl_feat \\
                 --feat_file="feat.fsf" \\
                 --sessionsfolder="/data/qunex_study/sessions" \\
-                --sessions="OP207,OP208e" \\
+                --sessions="OP207,OP208" \\
                 --parsessions=2
 
             qunex fsl_feat \\
                 --feat_file="/data/qunex_study/info/feat.fsf" \\
                 --sessionsfolder="/data/qunex_study/sessions" \\
-                --sessions="OP207,OP208e" \\
+                --sessions="OP207,OP208" \\
                 --parsessions=2
     """
 
@@ -137,9 +123,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # set up the command
-        comm = "feat \
-                %(feat_file)s" % {
-            "feat_file": feat_file}
+        comm = "feat %(feat_file)s" % {"feat_file": feat_file}
 
         # report command
         r += "\n\n------------------------------------------------------------\n"
@@ -153,8 +137,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
 
                 # execute
-                r, _, _, failed = pc.runExternalForFile(None, comm, "Running FSL feat", overwrite=overwrite, thread=sinfo["id"], remove=options[
-                                                             "log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
+                r, _, _, failed = pc.runExternalForFile(None, comm, "Running FSL feat", overwrite=overwrite, thread=sinfo["id"], remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
                 if failed:
                     r += "\n---> FSL feat processing for session %s failed" % session
                     report = (sinfo['id'], "FSL feat failed", 1)
@@ -184,5 +167,192 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
         r += "\n --- Failed during processing of session %s with error:\n %s\n" % (
             session, traceback.format_exc())
         report = (sinfo['id'], "FSL feat failed", 1)
+
+    return (r, report)
+
+def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
+    """
+    ``fsl_melodic [... processing options]``
+
+    This command executes FSL's melodic command line tool for ICA decomposition.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --input_files (str, default ''):
+            A list of input files to run melodic on. These files can be
+            located in the session folder, QuNex will iterate over sessions and
+            use all of the listed files for all provided sessions. Can also be a
+            list of absolute paths without sessions. If multiple files are
+            provided, they should be separated by commas, e.g. "bold1,bold2".
+
+        --melodic_extra_args (str, default ''):
+            Additional arguments to pass to melodic. All arguments need to be
+            provided as a single literal string, e.g.
+            "--ICs=melodic_IC --mix=melodic_mix".
+
+    Examples:
+        ::
+
+            qunex fsl_melodic \\
+                --input_files="bold1,bold2" \\
+                --sessionsfolder="/data/qunex_study/sessions" \\
+                --sessions="OP207,OP208"
+
+            qunex fsl_melodic \\
+                --input_files="bold1,bold2" \\
+                --sessionsfolder="/data/qunex_study/sessions" \\
+                --sessions="OP207,OP208" \\
+                --melodic_extra_args="--ICs=melodic_IC --mix=melodic_mix"
+    """
+
+    # list of sessions
+    sessions_array = sessions.split(",")
+
+    r = "\n------------------------------------------------------------"
+    r += "\nMelodic: \n[started on %s]" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s FSL melodic ..." % (pc.action("Running", options["run"]))
+
+    # status variables
+    run = True
+
+    try:
+        # check base settings
+        pc.doOptionsCheck(options, sessions, "fsl_melodic")
+
+        # get input files
+        input_files = []
+        if "input_files" not in options or options["input_files"] is None:
+            r += f"\n---> ERROR: input_files not provided."
+            report = ("Study", "Not ready for FSL melodic", 1)
+            run = False
+
+        # input paths
+        input_paths = options["input_files"].split(",")
+
+        # sessions provided
+        if len(sessions_array) > 0:
+            r += "\n---> Multiple sessions provided. Will iterate over sessions."
+            for session in sessions_array:
+                r += f"\n---> Working on session {session}"
+                
+                for path in input_paths:
+                    r += f"\n    ... checking {path}"
+                    path_candidates = []
+                    # check for input file in images functional
+                    input_path = os.path.join(options["sessionsfolder"], session,
+                                            "images", "functional", path)
+                    path_candidates.append(input_path)
+
+                    # with .nii.gz
+                    input_path = os.path.join(options["sessionsfolder"], session,
+                                              "images", "functional", path + ".nii.gz")
+                    path_candidates.append(input_path)
+
+                    # as full relative path
+                    input_path = os.path.join(options["sessionsfolder"], session, path)
+                    path_candidates.append(input_path)
+
+                    # with .nii.gz
+                    input_path = os.path.join(options["sessionsfolder"], session, path + ".nii.gz")
+                    path_candidates.append(input_path)
+
+                    file_found = False
+                    for pathc in path_candidates:
+                        if os.path.exists(pathc):
+                            r += "\n        ... found at %s" % pathc
+                            input_files.append(pathc)
+                            file_found = True
+                            break
+
+                    if not file_found:
+                        r += f"\n        ... ERROR: Could not find {path} for session {session}."
+                        report = (session, "Not ready for FSL melodic", 1)
+                        run = False
+                        break
+
+        # no sessions provided, we use absolute paths
+        else:
+            r += "\n---> No sessions provided. Will use absolute paths."
+            for path in input_paths:
+                r += f"\n---> Working on path {path}"
+                if not os.path.exists(path):
+                    r += f"\n    ... ERROR: Could not find {path}."
+                    input_files.append(path)
+                    report = ("Study", "Not ready for FSL melodic", 1)
+                    run = False
+                    break
+
+        # set up the command
+        comm = "melodic -i %(input_files)s" % {"input_files": ",".join(input_files)}
+
+        # output
+        # set from melodic_extra_args
+        if options["melodic_extra_args"] is not None and ("-o " in options["melodic_extra_args"] or "--output " in options["melodic_extra_args"]):
+            r += "\n---> Output folder set through melodic_extra_args."
+        elif options["sessionsfolder"] is not None:
+            r += "\n---> Output folder set through sessionsfolder."
+            comm += f" -o {os.path.join(options["sessionsfolder"], "melodic")}"
+        else:
+            r += "\n---> ERROR: output (-o or --output) needs to be set through melodic_extra_args or by providing a sessionsfolder."
+            report = ("Study", "Not ready for FSL melodic", 1)
+            run = False
+
+        # extra args
+        if options["melodic_extra_args"] is not None:
+            comm += " " + options["melodic_extra_args"]
+
+        # report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running FSL melodic command via QuNex:\n\n"
+        r += comm.replace("                ", "")
+        r += "\n------------------------------------------------------------\n"
+
+        # run
+        if run:
+            # run
+            if options["run"] == "run":
+
+                # execute
+                r, _, _, failed = pc.runExternalForFile(None, comm, "Running FSL melodic", overwrite=overwrite, thread="Study", remove=options["log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
+                if failed:
+                    r += "\n---> FSL melodic processing failed"
+                    report = ("Study", "FSL melodic failed", 1)
+                else:
+                    r += "\n---> FSL melodic processing completed"
+                    report = ("Study", "FSL melodic completed", 0)
+
+            # just checking
+            else:
+                passed, _, r, failed = pc.checkRun(
+                    None, None, "FSL melodic " + sessions, r, overwrite=overwrite)
+
+                if passed is None:
+                    r += "\n---> FSL melodic can be run"
+                    report = ("Study", "FSL melodic ready", 0)
+                else:
+                    r += "\n---> FSL melodic processing for would be skipped"
+                    report = ("Study", "FSL melodic would be skipped", 1)
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = "\n\n\n --- Failed ith error:\n"
+        r += str(errormessage)
+        report = ("Study", "FSL melodic failed", 1)
+
+    except:
+        r += "\n --- Failed with error:\n %s\n" % (traceback.format_exc())
+        report = ("Study", "FSL melodic failed", 1)
 
     return (r, report)
