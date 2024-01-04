@@ -447,19 +447,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_processing_mode (str, default 'HCPStyleData'):
             Controls whether the HCP acquisition and processing guidelines
             should be treated as requirements ('HCPStyleData') or if additional
@@ -1340,18 +1327,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_processing_mode (str, default 'HCPStyleData'):
             Controls whether the HCP acquisition and processing guidelines
             should be treated as requirements ('HCPStyleData') or if additional
@@ -1767,20 +1742,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given,
-            the log will be created at the first provided
-            location and then linked or copied to other
-            locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_processing_mode (str, default 'HCPStyleData'):
             Controls whether the HCP acquisition and processing guidelines
             should be treated as requirements ('HCPStyleData') or if additional
@@ -2118,18 +2079,6 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_long_fs_template_id (str, default 'base'):
             ID of the base template.
 
@@ -2172,7 +2121,7 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
     """
 
     r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (
+    r += "\nSessions: %s \n[started on %s]" % (
         subjectids,
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     )
@@ -2438,19 +2387,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ("keep") or remove ("remove") the temporary logs
-            once jobs are completed.
-            When a comma or pipe ("|") separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations.
-            The valid locations are:
-
-            - "study" (for the default: "<study>/processing/logs/comlogs" location)
-            - "session" (for "<sessionid>/logs/comlogs")
-            - "hcp" (for "<hcp_folder>/logs/comlogs")
-            - "<path>" (for an arbitrary directory).
 
         --hcp_dwi_echospacing (str, default detailed below):
             Echo Spacing or Dwelltime of DWI images in msec. Default is
@@ -3092,20 +3028,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given,
-            the log will be created at the first provided
-            location and then linked or copied to other
-            locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
 
         --hcp_processing_mode (str, default 'HCPStyleData'):
             Controls whether the HCP acquisition and processing guidelines
@@ -4659,20 +4581,6 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given,
-            the log will be created at the first provided
-            location and then linked or copied to other
-            locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_folderstructure (str, default 'hcpls'):
             If set to 'hcpya' the folder structure used in the initial HCP Young
             Adults study is used. Specifically, the source files are stored in
@@ -5352,20 +5260,6 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-
-            When a comma or pipe ('|') separated list is given,
-            the log will be created at the first provided
-            location and then linked or copied to other
-            locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
 
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
@@ -6093,20 +5987,6 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given,
-            the log will be created at the first provided
-            location and then linked or copied to other
-            locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
             separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
@@ -6579,19 +6459,6 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
 
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. You can specify a comma
@@ -7472,18 +7339,6 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_icafix_bolds (str, default ''):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
@@ -8214,20 +8069,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given,
-            the log will be created at the first provided
-            location and then linked or copied to other
-            locations. The valid locations are:
-
-            - 'study' (for the default:
-              `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
 
         --hcp_icafix_bolds (str, default detailed below):
             List of bolds on which ICAFix was applied, with the same format as
@@ -9108,19 +8949,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_gdcoeffs (str, default ''):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see
@@ -9564,18 +9392,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
 
         --hcp_tica_studyfolder (str, default ''):
             Overwrite the automatic QuNex's setup of the study folder, mainly
@@ -10316,19 +10132,6 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --hcp_surface_atlas_dir (str, default '${HCPPIPEDIR}/global/templates/standard_mesh_atlases'):
             Path to the location of the standard surfaces.
 
@@ -10645,19 +10448,6 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
 
         --hcp_icafix_bolds (str, default ''):
             Specify a list of bolds for ICAFix. If a multi run ICAFix was ran
@@ -11865,18 +11655,6 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
 
         --hcp_task_lvl1tasks (str, default ''):
             List of task fMRI scan names, which are the prefixes of the time

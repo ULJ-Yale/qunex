@@ -199,20 +199,6 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs once
-            jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations.
-            The valid locations are:
-
-            - 'study'   (for the default:
-              `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-            - '<path>'  (for an arbitrary directory).
-
     Notes:
         The parameters can be specified in command call or session.txt file.
 
@@ -534,19 +520,6 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-            When a comma or pipe ('|') separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - 'study'   (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-            - '<path>'  (for an arbitrary directory).
-
         --mov_radius (int, default 50):
             Estimated head radius (in mm) for computing frame displacement
             statistics.
@@ -867,19 +840,6 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed. When a comma or pipe ('|') separated list
-            is given, the log will be created at the first provided location and
-            then linked or copied to other locations.
-            The valid locations are:
-
-            - 'study'   ... for the default: `<study>/processing/logs/comlogs`
-              location
-            - 'session' ... for `<sessionid>/logs/comlogs`
-            - 'hcp'     ... for `<hcp_folder>/logs/comlogs`
-            - '<path>'  ... for an arbitrary directory.
 
         --mov_radius (int, default 50):
             Estimated head radius (in mm) for computing frame displacement
@@ -1294,21 +1254,6 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed.
-
-            When a comma or pipe ('|') separated list is given,
-            the log will be created at the first provided location
-            and then linked or copied to other locations.
-            The valid locations are:
-
-            - 'study' (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp'     (for `<hcp_folder>/logs/comlogs`)
-            - '<path>'  (for an arbitrary directory).
 
         --wbmask (str, default ''):
             A path to an optional file that specifies which regions are to be

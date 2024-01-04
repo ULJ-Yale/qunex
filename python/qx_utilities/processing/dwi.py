@@ -28,14 +28,12 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-
-
-
 import os
 import shutil
 import traceback
 import processing.core as pc
 from datetime import datetime
+
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_f99 [... processing options]``
@@ -70,19 +68,6 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ("keep") or remove ("remove") the temporary logs
-            once jobs are completed.
-            When a comma or pipe ("|") separated list is given, the log will be
-            created at the first provided location and then linked or copied to
-            other locations. The valid locations are:
-
-            - "study" (for the default:
-              `<study>/processing/logs/comlogs` location)
-            - "session" (for `<sessionid>/logs/comlogs`)
-            - "hcp" (for `<hcp_folder>/logs/comlogs`)
-            - "<path>" (for an arbitrary directory).
 
     Output files:
         The results of this step will be present in the dMRI/NHP/F99reg
@@ -256,20 +241,6 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs
             are to be stored, if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ("keep") or remove ("remove") the
-            temporary logs once jobs are completed.
-            When a comma or pipe ("|") separated list is given,
-            the log will be created at the first provided
-            location and then linked or copied to other
-            locations. The valid locations are:
-
-            - "study" (for the default: `<study>/processing/logs/comlogs`
-              location)
-            - "session" (for `<sessionid>/logs/comlogs`)
-            - "hcp" (for `<hcp_folder>/logs/comlogs`)
-            - "<path>" (for an arbitrary directory).
 
         --species (str, default 'human'):
             Species: human or macaque.

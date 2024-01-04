@@ -73,18 +73,6 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed. When a comma or pipe ('|') separated list
-            is given, the log will be created at the first provided location and
-            then linked or copied to other locations. The valid locations are:
-
-            - 'study' (for the default:
-              `<study>/processing/logs/comlogs` location)
-            - 'session' (for `<sessionid>/logs/comlogs`)
-            - 'hcp' (for `<hcp_folder>/logs/comlogs`)
-            - '<path>' (for an arbitrary directory).
-
         --tr (float, default 2.5):
             TR of the bold data.
 
