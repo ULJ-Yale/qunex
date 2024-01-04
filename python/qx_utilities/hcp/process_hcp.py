@@ -382,7 +382,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
 
 
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
-    """
+    r"""
     ``hcp_pre_freesurfer [... processing options]``
 
     Runs the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
@@ -817,7 +817,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmphase = ""
         fmge = ""
 
-        if options["hcp_avgrdcmethod"].lower() == "topup":
+        if options["hcp_avgrdcmethod"] == "TOPUP":
             # -- spin echo settings
             sesettings = True
             for p in ["hcp_sephaseneg", "hcp_sephasepos", "hcp_seunwarpdir"]:
@@ -3133,7 +3133,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             the user prior to mapping (e.g. `rfMRI_REST1_AP`).
 
         --hcp_bold_biascorrection (str, default 'NONE'):
-            Whether to perform bias correction for BOLD images. NONE or Legacy.
+            Whether to perform bias correction for BOLD images. NONE, LEGACY
+            or SEBASED. With SEBASED must also use hcp_bold_dcmethod.
 
         --hcp_bold_usejacobian (str, default 'FALSE'):
             Whether to apply the jacobian of the distortion correction to fMRI
@@ -3631,7 +3632,25 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         sepairs = {}
         sesettings = False
 
-        if options["hcp_bold_dcmethod"].lower() == "topup":
+        # check parameters values
+        if options["hcp_bold_dcmethod"] not in [
+            "TOPUP",
+            "FIELDMAP",
+            "SiemensFieldmap",
+            "PhilipsFieldMap",
+            "GeneralElectricFieldMap",
+            "NONE",
+        ]:
+            r += "\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter!"
+            run = False
+
+        if options["hcp_bold_biascorrection"] not in ["LEGACY", "SEBASED", "NONE"]:
+            r += (
+                "\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter!"
+            )
+            run = False
+
+        if options["hcp_bold_dcmethod"] == "TOPUP":
             # -- spin echo settings
             sesettings = True
             for p in [
@@ -3739,12 +3758,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 topupconfig = ""
 
         # --- Process unwarp direction
-        if options["hcp_bold_dcmethod"].lower() in [
-            "topup",
-            "fieldmap",
-            "siemensfieldmap",
-            "philipsfieldmap",
-            "generalelectricfieldmap",
+        if options["hcp_bold_dcmethod"] in [
+            "TOPUP",
+            "FIELDMAP",
+            "SiemensFieldmap",
+            "PhilipsFieldMap",
+            "GeneralElectricFieldMap",
         ]:
             unwarpdirs = [
                 [f.strip() for f in e.strip().split("=")]
@@ -3794,16 +3813,15 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             echospacing = ""
             unwarpdir = ""
 
-            dcset = options["hcp_bold_dcmethod"].lower() in [
-                "topup",
-                "fieldmap",
-                "siemensfieldmap",
-                "philipsfieldmap",
-                "generalelectricfieldmap",
+            dcset = options["hcp_bold_dcmethod"] in [
+                "TOPUP",
+                "FIELDMAP",
+                "SiemensFieldmap",
+                "PhilipsFieldMap",
+                "GeneralElectricFieldMap",
             ]
 
             # --- set unwarpdir and orient
-
             if "o" in boldinfo:
                 orient = "_" + boldinfo["o"]
                 if dcset:
@@ -3873,7 +3891,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = False
 
             # --- check for spin-echo-fieldmap image
-            if options["hcp_bold_dcmethod"].lower() == "topup" and sesettings:
+            if options["hcp_bold_dcmethod"] == "TOPUP" and sesettings:
                 if not sepresent:
                     r += "\n     ... ERROR: No spin echo fieldmap set images present!"
                     boldok = False
@@ -3920,9 +3938,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     futureref = "NONE"
 
             # --- check for Siemens double TE-fieldmap image
-            elif options["hcp_bold_dcmethod"].lower() in [
-                "fieldmap",
-                "siemensfieldmap",
+            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
+                "hcp_bold_dcmethod"
+            ] in [
+                "FIELDMAP",
+                "SiemensFieldMap",
             ]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
@@ -3969,7 +3989,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmge = None
 
             # --- check for GE fieldmap image
-            elif options["hcp_bold_dcmethod"].lower() in ["generalelectricfieldmap"]:
+            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
+                "hcp_bold_dcmethod"
+            ] in ["GeneralElectricFieldMap"]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
                     r += (
@@ -3994,7 +4016,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmge = hcp["fieldmap"][int(fmnum)]["GE"]
 
             # --- check for Philips double TE-fieldmap image
-            elif options["hcp_bold_dcmethod"].lower() in ["philipsfieldmap"]:
+            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
+                "hcp_bold_dcmethod"
+            ] in ["PhilipsFieldMap"]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
                     r += (
@@ -4034,10 +4058,17 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmge = None
 
             # --- NO DC used
-            elif options["hcp_bold_dcmethod"].lower() == "none":
+            elif options["hcp_bold_dcmethod"] == "NONE":
                 r += "\n     ... No distortion correction used "
                 if options["hcp_processing_mode"] == "HCPStyleData":
                     r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no distortion correction method was specified!\n            Consider using LegacyStyleData processing mode."
+                    run = False
+
+            # --- SEBASED
+            elif options["hcp_bold_biascorrection"] == "SEBASED":
+                r += "\n     ... SEBASED bias correction used"
+                if options["hcp_bold_dcmethod"] != "TOPUP":
+                    r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP!"
                     run = False
 
             # --- ERROR
@@ -4362,7 +4393,9 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         if options["hcp_bold_doslicetime"]:
             doslicetime = "TRUE"
 
-            slicetimerparams = re.split(r" +|,|\|", options["hcp_bold_slicetimerparams"])
+            slicetimerparams = re.split(
+                r" +|,|\|", options["hcp_bold_slicetimerparams"]
+            )
 
             slicetimerparams = [e for e in slicetimerparams if e]
 
@@ -4561,20 +4594,12 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 else:
                     report["skipped"].append(printbold)
 
-        elif run:
-            report["not ready"].append(printbold)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images or data parameters missing, skipping this BOLD!"
-            else:
-                r += "\n---> ERROR: images or data parameters missing, this BOLD would be skipped!"
         else:
             report["not ready"].append(printbold)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this BOLD!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this BOLD would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
@@ -4985,7 +5010,6 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             fullTest = None
 
         # -- Run
-
         if run and boldok:
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
@@ -5026,20 +5050,12 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 else:
                     report["skipped"].append(printbold)
 
-        elif run:
-            report["not ready"].append(printbold)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this BOLD!"
-            else:
-                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report["not ready"].append(printbold)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this BOLD!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this BOLD would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold)
@@ -5809,20 +5825,12 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 else:
                     report["skipped"].append(printbold)
 
-        elif run:
-            report["not ready"].append(printbold)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this BOLD!"
-            else:
-                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report["not ready"].append(printbold)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this BOLD!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this BOLD would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bold %s\n" % (printbold)
@@ -6021,18 +6029,12 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 else:
                     report["skipped"].append(groupname)
 
-        elif run:
+        else:
             report["not ready"].append(groupname)
             if options["run"] == "run":
                 r += "\n---> ERROR: images missing, skipping this group!"
             else:
                 r += "\n---> ERROR: images missing, this group would be skipped!"
-        else:
-            report["not ready"].append(groupname)
-            if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this group!"
-            else:
-                r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
@@ -6515,20 +6517,12 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
                 else:
                     report["skipped"].append(printbold)
 
-        elif run:
-            report["not ready"].append(printbold)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this BOLD!"
-            else:
-                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report["not ready"].append(printbold)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this BOLD!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this BOLD would be skipped!"
 
         # log beautify
         r += "\n\n"
@@ -7012,21 +7006,14 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
                     else:
                         report["skipped"].append(printbold)
 
-            elif run:
-                report["not ready"].append(printbold)
-                if options["run"] == "run":
-                    r += "\n---> ERROR: images missing, skipping this BOLD!"
-                else:
-                    r += "\n---> ERROR: images missing, this BOLD would be skipped!"
             else:
                 report["not ready"].append(printbold)
                 if options["run"] == "run":
-                    r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                    r += "\n---> ERROR: something missing, skipping this BOLD!"
                 else:
-                    r += "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-
-            # log beautify
-            r += "\n\n"
+                    r += "\n---> ERROR: something missing, this BOLD would be skipped!"
+                # log beautify
+                r += "\n\n"
 
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
@@ -7238,21 +7225,14 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     else:
                         report["skipped"].append(groupname)
 
-            elif run:
-                report["not ready"].append(groupname)
-                if options["run"] == "run":
-                    r += "\n---> ERROR: images missing, skipping this group!"
-                else:
-                    r += "\n---> ERROR: images missing, this group would be skipped!"
             else:
                 report["not ready"].append(groupname)
                 if options["run"] == "run":
-                    r += "\n---> ERROR: No hcp info for session, skipping this group!"
+                    r += "\n---> ERROR: something missing, skipping this group!"
                 else:
-                    r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
-
-            # log beautify
-            r += "\n\n"
+                    r += "\n---> ERROR: something missing, this group would be skipped!"
+                # log beautify
+                r += "\n\n"
 
         else:
             r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
@@ -7392,20 +7372,12 @@ def executeHCPHandReclassification(
                 else:
                     report["skipped"].append(printbold)
 
-        elif run:
-            report["not ready"].append(printbold)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this BOLD!"
-            else:
-                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report["not ready"].append(printbold)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this BOLD!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this BOLD would be skipped!"
 
         # log beautify
         r += "\n"
@@ -7960,20 +7932,12 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 else:
                     report["skipped"].append(printbold)
 
-        elif run:
-            report["not ready"].append(printbold)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this BOLD!"
-            else:
-                r += "\n---> ERROR: images missing, this BOLD would be skipped!"
         else:
             report["not ready"].append(printbold)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this BOLD!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this BOLD would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of bolds %s\n" % (msmallBolds)
@@ -8192,20 +8156,12 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 else:
                     report["skipped"].append(groupname)
 
-        elif run:
-            report["not ready"].append(groupname)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this group!"
-            else:
-                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report["not ready"].append(groupname)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this group!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this group would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
@@ -8746,20 +8702,12 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 else:
                     report["skipped"].append(regname)
 
-        elif run:
-            report["not ready"].append(regname)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this group!"
-            else:
-                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report["not ready"].append(regname)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this group!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this group would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
@@ -9102,20 +9050,12 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 else:
                     report["skipped"].append(grouptargets)
 
-        elif run:
-            report["not ready"].append(grouptargets)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this group!"
-            else:
-                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report["not ready"].append(grouptargets)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this BOLD!"
+                r += "\n---> ERROR: something missing, skipping this group!"
             else:
-                r += (
-                    "\n---> ERROR: No hcp info for session, this BOLD would be skipped!"
-                )
+                r += "\n---> ERROR: something missing, this group would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
@@ -11017,8 +10957,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
                 if boldimgs != "":
                     boldimgs = boldimgs + "@"
 
-                # add latest image
-                boldimgs = boldimgs + boldimg
+                boldimgs = boldimgs + boldtarget
 
         # subject/session
         subject = sinfo["id"] + options["hcp_suffix"]
@@ -11125,18 +11064,12 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
                 else:
                     report["done"].append(groupname)
 
-        elif run:
-            report["not ready"].append(groupname)
-            if options["run"] == "run":
-                r += "\n---> ERROR: images missing, skipping this group!"
-            else:
-                r += "\n---> ERROR: images missing, this group would be skipped!"
         else:
             report["not ready"].append(groupname)
             if options["run"] == "run":
-                r += "\n---> ERROR: No hcp info for session, skipping this group!"
+                r += "\n---> ERROR: something missing, skipping this group!"
             else:
-                r += "\n---> ERROR: No hcp info for session, this group would be skipped!"
+                r += "\n---> ERROR: something missing, this group would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
