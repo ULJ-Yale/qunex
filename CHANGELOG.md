@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.99.1
+
+* Fixed a bug in completion check when importing BIDS data through `run_turnkey`.
+
 ## 0.99.0
 
 * `fc_compute_wrapper` now checks if input files exist.
