@@ -4396,13 +4396,14 @@ def xnat_load_checkpoint(file_path):
         summary += "\XNAT_DEFAULT_FILTERS set as 'no', skipping default filters..."
 
     elif use_filter.lower() == "yes":
-        print("XNAT_USE_FILTERS set as 'yes', filtering files now...")
+        print("XNAT_DEFAULT_FILTERS set as 'yes', filtering files now...")
         summary += "\XNAT_DEFAULT_FILTERS set as 'yes', filtering files now..."
 
         if (
             "create_session_info" in file_path
             or "setup_hcp_in" in file_path
             or "export_hcp" in file_path
+            or "run_qc_in" in file_path
         ):
             pass
         else:
@@ -4509,32 +4510,9 @@ def xnat_import_dicom(prep=True):
         cmd = ["rsync", "-avzh", inPath, outPath]
         summary += xnat_run_cmd(cmd)
 
-        summary += "\nGetting Parameter file from project..."
-
-        inPath = (
-            os.environ["XNAT_HOST"]
-            + "/data/projects/"
-            + os.environ["XNAT_PROJECT"]
-            + "/resources/QUNEX_PROC/files/"
-            + os.environ["BATCH_PARAMETERS_FILENAME"]
-        )
-        outPath = os.environ["INITIAL_PARAMETERS"]
-        cmd = [
-            "curl",
-            "-k",
-            "-u",
-            os.environ["XNAT_USER"] + ":" + os.environ["XNAT_PASS"],
-            "-X",
-            "GET",
-            inPath,
-            "-o",
-            outPath,
-        ]
-        summary += xnat_run_cmd(cmd)
-
     else:
         summary += "\n Removing dicoms..."
-        # dicoms currently all gz
+        # dicoms currently all gunzipped, update if that changes
         files = glob.glob(
             os.environ["SESSIONS_FOLDER"] + "/" + os.environ["LABEL"] + "/dicom/*.gz"
         )  #
@@ -4597,5 +4575,54 @@ def xnat_create_session_info(prep=True):
         summary += xnat_run_cmd(cmd)
 
     summary += "\n\n----==== XNAT CREATE_SESSION_INFO EXECUTION END ====----\n\n"
+    print(summary)
+    return summary
+
+def xnat_create_batch(prep=True):
+    """
+    xnat_create_batch
+
+    A helper function called by run_recipe to run create_batch on XNAT, in this case copying the batch parameters file
+
+    Parameters:
+        --prep (boolean):
+            Whether to run prep or cleanup related code. Default: True
+
+    Returns:
+        --summary (str):
+            stdout of the run bash commands plus other details to print to a log
+
+    Notes:
+        When run with prep=True, it copies over the mapping from the project level
+
+        When run with prep=False, does nothing
+    """
+    summary = "\n\n----==== XNAT CREATE_BATCH EXECUTION SUMMARY ====----\n\n"
+    summary += "\n Running with prep:" + str(prep)
+    if prep:
+        summary += "\nGetting Parameter file from project..."
+
+        inPath = (
+            os.environ["XNAT_HOST"]
+            + "/data/projects/"
+            + os.environ["XNAT_PROJECT"]
+            + "/resources/QUNEX_PROC/files/"
+            + os.environ["BATCH_PARAMETERS_FILENAME"]
+        )
+        outPath = os.environ["INITIAL_PARAMETERS"]
+        cmd = [
+            "curl",
+            "-k",
+            "-u",
+            os.environ["XNAT_USER"] + ":" + os.environ["XNAT_PASS"],
+            "-X",
+            "GET",
+            inPath,
+            "-o",
+            outPath,
+        ]
+        summary += xnat_run_cmd(cmd)
+
+    summary += "\n\n----==== XNAT CREATE_BATCH EXECUTION END ====----\n\n"
     print(summary)
     return summary
