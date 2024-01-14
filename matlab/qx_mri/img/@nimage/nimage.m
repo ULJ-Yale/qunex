@@ -188,6 +188,7 @@ classdef nimage
         output = img_get_xyz(obj, ijk)
         output = img_get_ijk(obj, xyz)
         output = img_create_roi_from_peaks(obj, peaksIn)
+        output = img_join_masks(obj, mask_a, mask_b, options);
     end
 
     methods
@@ -706,7 +707,6 @@ classdef nimage
                 obj.voxels = size(obj.data, 1);
             end
         end
-
 
         function obj = standardize(obj)
         %
