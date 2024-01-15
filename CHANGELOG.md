@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.99.2
+
+* Made HCP commands more robust to parameter types.
+
 ## 0.99.1
 
 * Fixed a bug in completion check when importing BIDS data through `run_turnkey`.
