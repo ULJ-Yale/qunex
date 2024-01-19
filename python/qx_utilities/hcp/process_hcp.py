@@ -10836,7 +10836,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
                 r, endlog, _, failed = pc.runExternalForFile(
                     None,
                     comm,
-                    "Running multi-run HCP ICAFix",
+                    "Running ApplyAutoRecleanPipeline",
                     overwrite=overwrite,
                     thread=sinfo["id"],
                     remove=options["log"] == "remove",
