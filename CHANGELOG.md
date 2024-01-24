@@ -6,6 +6,41 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.99.2
+
+* Made HCP commands more robust to parameter types.
+
+## 0.99.1
+
+* Fixed a bug in completion check when importing BIDS data through `run_turnkey`.
+
+## 0.99.0
+
+* `fc_compute_wrapper` now checks if input files exist.
+* Removed some race conditions in parallel runs.
+* Added better reporting in case FM numbers are missing in the batch file.
+* Allowed custom setup of POS/NEG pairs in `hcp_diffusion`.
+* Now you can onboard processed HCP data along with unprocessed.
+* QuNex DWI pipelines now supports microstrucutre modelling (NODDI).
+* Improved the file locking mechanism.
+* Fixed a bug with a non-existing parameter in DeDriftAndResample.
+* Added support for the HCP ApplyAutoReclean Pipeline (`hcp_apply_auto_reclean`).
+* Improved support for SEBASED `hcp_bold_biascorrection` in `hcp_fmri_volume`.
+
+## 0.98.6
+
+* Improved several aspects of `run_turnkey` when running on XNAT.
+* Fixed the use of `hcp_asl`_stages parameter and updated HCP ASL version.
+* Improved the robustness of `dwi_dtifit`.
+
+## 0.98.5
+
+* Fixed the output checks of HCP ASL.
+
+## 0.98.4
+
+* Fixed an incompatibility betweeb MATLAB and Octave.
+
 ## 0.98.3
 
 * Fixed a bug that crashed `preprocess_conc` and `preprocess_bold` with some parameter configurations.

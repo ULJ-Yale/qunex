@@ -905,17 +905,9 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     fi
 
     # -- Define final variable set
-    if [[ ${DATAFormat} == "BIDS" ]]; then
-        # -- Setup CASE without the 'MR' prefix in the XNAT_SESSION_LABEL
-        #    Eventually deprecate once fixed in XNAT
-        CASE=`echo ${XNAT_SESSION_LABEL} | sed 's|_MR1$||' | sed 's|_MR|_|'`
-        mageho " --> Note: --dataformat='BIDS' "
-        reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant session variable for QuNex run: ${CASE}"
-        echo ""
-    else
-        CASE="${XNAT_SESSION_LABEL}"
-    fi
+    CASE="${XNAT_SESSION_LABEL}"
 fi
+
 #
 ################################################################################
 
@@ -963,16 +955,16 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolde
     SessionsFolderName="subjects"
 fi
 
-if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]]; then
-    SessionsFolder="${STUDY_PATH}/sessions"
-    SessionsFolderName="sessions"
+if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+    if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]]; then
+        SessionsFolder="${STUDY_PATH}/sessions"
+        SessionsFolderName="sessions"
+    fi
+    if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}" ]]; then
+        SessionsFolder="${STUDY_PATH}/sessions"
+        SessionsFolderName="sessions"
+    fi
 fi
-if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}" ]]; then
-    SessionsFolder="${STUDY_PATH}/sessions"
-    SessionsFolderName="sessions"
-fi
-
-
 
 # -- Check TURNKEY_STEPS
 if [[ -z ${TURNKEY_STEPS} ]] && [ ! -z "${QuNexTurnkeyWorkflow##*${AcceptanceTest}*}" ]; then
@@ -1296,7 +1288,7 @@ bash ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus
 echo ""
 
 # ---- Map the data from input to output when in XNAT workflow
-if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
+if [[ ${TURNKEY_TYPE} == "xnat" ]] ; then
     # --- Specify what to map
     firstStep=`echo ${TURNKEY_STEPS} | awk '{print $1;}'`
     echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ Initial data re-map from XNAT with ${firstStep} as starting point ."; echo ""
@@ -1402,9 +1394,35 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        run_qc_t1w|run_qc_t2w|run_qc_myelin)
+        run_qc_t1w|run_qc_t2w|run_qc_myelin|run_qc_bold)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/${SessionsFolderName}' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
+            RsyncCommand="rsync -avzH \
+            --include='/${SessionsFolderName}' \
+            --include='/${SessionsFolderName}/specs' \
+            --include='/${SessionsFolderName}/specs/***' \
+            --include='/${SessionsFolderName}/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/*.txt' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*nii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*gii*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/xfms/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/ROIs/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Native/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T1w/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/T2w/***' \
+            --include='/processing' \
+            --include='/processing/*.txt' \
+            --include='/processing/scenes' \
+            --include='/processing/scenes/***' \
+            --exclude='*' \
+            ${XNAT_STUDY_INPUT_PATH}/ ${STUDY_PATH}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
@@ -1495,6 +1513,15 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_STEP} == "yes" ]] ; then
             --include='/${SessionsFolderName}/${CASE}/*.txt' \
             --include='/${SessionsFolderName}/${CASE}/images' \
             --include='/${SessionsFolderName}/${CASE}/images/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/T1w_restore.nii.gz' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/***' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/*Results*' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results' \
+            --include='/${SessionsFolderName}/${CASE}/hcp/${CASE}/MNINonLinear/Results/***' \
             --include='/${SessionsFolderName}/specs' \
             --include='/${SessionsFolderName}/specs/***' \
             --include='/processing' \
@@ -1817,7 +1844,7 @@ fi
                     if [[ "$CheckCASECount" -gt "1" ]]; then
                         reho " ===> ERROR: More than one zip file found for ${CASE}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                         echo ""
-                        return 1
+                        FILECHECK="fail"
                     fi
                     CASEinbox=`basename ${SessionsFolder}/${CASE}/inbox/${CASE}*`
                     CASEext="${CASEinbox#*.}"
@@ -1914,11 +1941,11 @@ fi
 
             # -- Run BIDS completion checks on mapped data
             if [ -f ${SessionsFolder}/${CASE}/bids/bids2nii.log ]; then
-                 FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
+                 FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep ".nii.gz" | wc -l 2> /dev/null`
             else
                  FILECHECK="fail"
             fi
-            FILEFOUND=`ls ${SessionsFolder}/${CASE}/nii/* | wc -l 2> /dev/null`
+            FILEFOUND=`ls ${SessionsFolder}/${CASE}/nii/*.nii.gz | wc -l 2> /dev/null`
             if [ -z ${FILEFOUND} ]; then
                 FILECHECK="fail"
             fi
@@ -3109,8 +3136,21 @@ else
         geho "---> Cleaning up DICOMs from build directory to save space:"
         if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
-            geho "     - removing dicom folder"
-            rm -rf ${QuNexWorkDir}/dicom &> /dev/null
+            geho "     - removing dicom files"
+            # Temp storage for kept files
+            mkdir ${QuNexWorkDir}/dicomtmp
+            #check for logs and move them
+            logCount=`ls ${QuNexWorkDir}/dicom/*.log | wc -l`
+            if [ $logCount != 0 ]; then
+                mv ${QuNexWorkDir}/dicom/*.log ${QuNexWorkDir}/dicomtmp
+            fi
+            #check for txt files and move them
+            logCount=`ls ${QuNexWorkDir}/dicom/*.txt | wc -l`
+            if [ $logCount != 0 ]; then
+                mv ${QuNexWorkDir}/dicom/*.txt ${QuNexWorkDir}/dicomtmp
+            fi
+            rm  -rf ${QuNexWorkDir}/dicom &> /dev/null
+            mv ${QuNexWorkDir}/dicomtmp ${QuNexWorkDir}/dicom
             echo ""
         fi
         geho "     - removing stray xml catalog files"

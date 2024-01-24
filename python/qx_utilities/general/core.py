@@ -82,8 +82,8 @@ def read_session_data(filename, verbose=False):
     s = s.split("\n---")
     s = [e for e in s if len(e) > 10]
 
-    nsearch = re.compile('(.*?)\((.*)\)')
-    csearch = re.compile('c([0-9]+)$')
+    nsearch = re.compile(r'(.*?)\((.*)\)')
+    csearch = re.compile(r'c([0-9]+)$')
 
     slist = []
     gpref = {}
@@ -270,17 +270,17 @@ def get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=N
 
     listString = listString.strip()
 
-    if re.match(".*\.list$", listString):
+    if re.match(r".*\.list$", listString):
         slist = read_list(listString, verbose=verbose)
 
     elif os.path.isfile(listString):
         slist, gpref = read_session_data(listString, verbose=verbose)
 
-    elif re.match(".*\.txt$", listString) or '/' in listString:
+    elif re.match(r".*\.txt$", listString) or '/' in listString:
         raise ValueError("ERROR: The specified session file is not found! [%s]!" % listString)
 
     else:
-        slist = [e.strip() for e in re.split(' +|,|\|', listString)]
+        slist = [e.strip() for e in re.split(r' +|,|\|', listString)]
 
         if sessionsfolder is None:
             slist = [{'id': e} for e in slist]
@@ -292,7 +292,7 @@ def get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=N
             slist = [{'id': os.path.basename(e)} for e in nlist]
 
     if sessionids is not None and sessionids.strip() != "":
-        sessionids = re.split(' +|,|\|', sessionids)
+        sessionids = re.split(r' +|,|\|', sessionids)
         filtered_slist = []
         for s in slist:
             if "id" in s and s["id"] in sessionids:
@@ -946,7 +946,7 @@ def pcslist(s):
     any whitespace caracters from start or end of each resulting substring, and
     retuns an array of substrings of length more than 0.
     """
-    s = re.split(' *, *| *\| *| +', s)
+    s = re.split(r' *, *| *\| *| +', s)
     s = [e.strip() for e in s]
     s = [e for e in s if len(e) > 0]
     return s

@@ -19,6 +19,9 @@ Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
+
+
+
 import os
 import os.path
 import shutil
@@ -27,15 +30,12 @@ import subprocess
 import glob
 import sys
 import traceback
-import time
+import multiprocessing
 from datetime import datetime
-
 import general.exceptions as ge
 import general.core as gc
 from general.img import *
 from general.meltmovfidl import *
-
-
 def is_number(s):
     try:
         float(s)
@@ -95,7 +95,8 @@ class NoSourceFolder(Exception):
 
 
 def getExtension(filetype):
-    extensions = {'4dfp': '.4dfp.img', 'nifti': '.nii.gz', 'cifti': '.dtseries.nii', 'dtseries': '.dtseries.nii', 'ptseries': '.ptseries.nii'}
+    extensions = {'4dfp': '.4dfp.img', 'nifti': '.nii.gz', 'cifti': '.dtseries.nii',
+                  'dtseries': '.dtseries.nii', 'ptseries': '.ptseries.nii'}
     return extensions[filetype]
 
 
@@ -127,11 +128,12 @@ def useOrSkipBOLD(sinfo, options, r=""):
     - the dictionary with all the info
     """
 
-    bsearch  = re.compile('bold([0-9]+)')
-    btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
-    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k) for (k, v) in sinfo.items() if k.isdigit() and bsearch.match(v['name'])]
-    bskip    = []
-    nbolds   = len(bolds)
+    bsearch = re.compile(r'bold([0-9]+)')
+    btargets = [e.strip() for e in re.split(r" +|\||, *", options['bolds'])]
+    bolds = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v, k)
+             for (k, v) in sinfo.items() if k.isdigit() and bsearch.match(v['name'])]
+    bskip = []
+    nbolds = len(bolds)
 
     if "all" not in btargets:
         keep = []
@@ -146,13 +148,16 @@ def useOrSkipBOLD(sinfo, options, r=""):
         keep += [n for n in range(nbolds) if bolds[n][2] in btargets]
 
         # check bold names if present
-        keep += [n for n in range(nbolds) if bolds[n][3].get('filename') in btargets]
+        keep += [n for n in range(nbolds) if bolds[n]
+                 [3].get('filename') in btargets]
 
         # check bold names if present
-        keep += [n for n in range(nbolds) if bolds[n][3].get('boldname') in btargets]
+        keep += [n for n in range(nbolds) if bolds[n]
+                 [3].get('boldname') in btargets]
 
         # check sequence names
-        keep += [n for n in range(nbolds) if bolds[n][3].get('ext') in btargets]
+        keep += [n for n in range(nbolds) if bolds[n]
+                 [3].get('ext') in btargets]
 
         # check sequence number
         keep += [n for n in range(nbolds) if bolds[n][4] in btargets]
@@ -195,6 +200,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
 
     return bolds, bskip, len(bskip), r
 
+
 def _filter_bolds(bolds, bolds_filter):
     """
     An internal function for filtering a list of bolds.
@@ -203,7 +209,7 @@ def _filter_bolds(bolds, bolds_filter):
     """
 
     # prepare filter
-    filters = [e.strip() for e in re.split(" +|\||, *", bolds_filter)]
+    filters = [e.strip() for e in re.split(r" +|\||, *", bolds_filter)]
 
     # used bolds storage
     used_bolds = []
@@ -224,7 +230,7 @@ def _filter_bolds(bolds, bolds_filter):
 def doOptionsCheck(options, sinfo, command):
 
     # logs
-    logs = [e.strip() for e in re.split(" +|\||, *", options['log'])]
+    logs = [e.strip() for e in re.split(r" +|\||, *", options['log'])]
     studyComlogs = options['comlogs']
     comlogs = []
 
@@ -232,10 +238,12 @@ def doOptionsCheck(options, sinfo, command):
         if log in ['keep', 'study']:
             comlogs.append(studyComlogs)
         elif log == 'session':
-            comlogs.append(os.path.join(options['sessionsfolder'], sinfo['id'], 'logs', 'comlogs'))
+            comlogs.append(os.path.join(
+                options['sessionsfolder'], sinfo['id'], 'logs', 'comlogs'))
         elif log == 'hcp':
             if 'hcp' in sinfo:
-                comlogs.append(os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'], 'logs', 'comlogs'))
+                comlogs.append(os.path.join(
+                    sinfo['hcp'], sinfo['id'] + options['hcp_suffix'], 'logs', 'comlogs'))
         else:
             comlogs.append(log)
 
@@ -262,9 +270,10 @@ def getFileNames(sinfo, options):
     d = getSessionFolders(sinfo, options)
 
     rgss = options['bold_nuisance']
-    rgss = rgss.translate(str.maketrans('','',' ,;|')) + options['glm_name']
+    rgss = rgss.translate(str.maketrans('', '', ' ,;|')) + options['glm_name']
 
-    concname = "_".join(e for e in [options['boldname'] + options.get('bold_tail', ''), options['image_target'].replace('cifti', 'dtseries'), options.get('concname', 'conc'), options.get('fidlname', '')] if e)
+    concname = "_".join(e for e in [options['boldname'] + options.get('bold_tail', ''), options['image_target'].replace(
+        'cifti', 'dtseries'), options.get('concname', 'conc'), options.get('fidlname', '')] if e)
 
     # --- structural images
 
@@ -272,27 +281,29 @@ def getFileNames(sinfo, options):
 
     if d['s_source'] is None:
         f['t1_source'] = None
-    else:    
-        f['t1_source']          = getExactFile(os.path.join(d['s_source'], options['path_t1']))
+    else:
+        f['t1_source'] = getExactFile(
+            os.path.join(d['s_source'], options['path_t1']))
 
     ext = getExtension(options['image_target'].replace('cifti', 'nifti'))
 
-    f['t1']                 = os.path.join(d['s_struc'], 'T1' + ext)
+    f['t1'] = os.path.join(d['s_struc'], 'T1' + ext)
 
-    f['t1_brain']           = os.path.join(d['s_struc'], 'T1_brain' + ext)
-    f['t1_seg']             = os.path.join(d['s_struc'], 'T1_seg' + ext)
-    f['bold_template']      = os.path.join(d['s_struc'], 'BOLD_template' + ext)
+    f['t1_brain'] = os.path.join(d['s_struc'], 'T1_brain' + ext)
+    f['t1_seg'] = os.path.join(d['s_struc'], 'T1_seg' + ext)
+    f['bold_template'] = os.path.join(d['s_struc'], 'BOLD_template' + ext)
 
-    f['fs_aseg_t1']         = os.path.join(d['s_fs_mri'], 'aseg_t1' + ext)
-    f['fs_aseg_bold']       = os.path.join(d['s_fs_mri'], 'aseg_bold' + ext)
+    f['fs_aseg_t1'] = os.path.join(d['s_fs_mri'], 'aseg_t1' + ext)
+    f['fs_aseg_bold'] = os.path.join(d['s_fs_mri'], 'aseg_bold' + ext)
 
-    f['fs_aparc_t1']        = os.path.join(d['s_fs_mri'], 'aparc+aseg_t1' + ext)
-    f['fs_aparc_bold']      = os.path.join(d['s_fs_mri'], 'aparc+aseg_bold' + ext)
+    f['fs_aparc_t1'] = os.path.join(d['s_fs_mri'], 'aparc+aseg_t1' + ext)
+    f['fs_aparc_bold'] = os.path.join(d['s_fs_mri'], 'aparc+aseg_bold' + ext)
 
-    f['fs_lhpial']          = os.path.join(d['s_fs_surf'], 'lh.pial')
+    f['fs_lhpial'] = os.path.join(d['s_fs_surf'], 'lh.pial')
 
-    f['conc']               = os.path.join(d['s_bold_concs'], concname + '.conc')
-    f['conc_final']         = os.path.join(d['s_bold_concs'], options['bold_prefix'] + concname + '.conc')
+    f['conc'] = os.path.join(d['s_bold_concs'], concname + '.conc')
+    f['conc_final'] = os.path.join(
+        d['s_bold_concs'], options['bold_prefix'] + concname + '.conc')
 
     for ch in options['bold_actions']:
         if ch == 's':
@@ -300,42 +311,51 @@ def getFileNames(sinfo, options):
         elif ch == 'h':
             f['conc_final'] = f['conc_final'].replace('.conc', '_hpss.conc')
         elif ch == 'r':
-            f['conc_final'] = f['conc_final'].replace('.conc', '_res-' + rgss + '.conc')
+            f['conc_final'] = f['conc_final'].replace(
+                '.conc', '_res-' + rgss + '.conc')
         elif ch == 'l':
             f['conc_final'] = f['conc_final'].replace('.conc', '_lpss.conc')
 
     # --- Freesurfer preprocessing "internals"
 
-    f['fs_morig_mgz']       = os.path.join(d['s_fs_orig'], '001.mgz')
-    f['fs_morig_nii']       = os.path.join(d['s_fs_orig'], '001.nii')
+    f['fs_morig_mgz'] = os.path.join(d['s_fs_orig'], '001.mgz')
+    f['fs_morig_nii'] = os.path.join(d['s_fs_orig'], '001.nii')
 
     # --- legacy paths and Freesurfer preprocessing "internals"
 
-    f['m111']               = os.path.join(d['s_struc'], 'mprage_111.4dfp.img')
-    f['m111_nifti']         = os.path.join(d['s_struc'], 'mprage_111_flip.4dfp.nii.gz')
-    f['m111_brain_nifti']   = os.path.join(d['s_struc'], 'mprage_111_brain_flip.4dfp.nii.gz')
-    f['m111_seg_nifti']     = os.path.join(d['s_struc'], 'mprage_111_brain_flip_seg.nii.gz')
-    f['m111_brain']         = os.path.join(d['s_struc'], 'mprage_111_brain.4dfp.img')
-    f['m111_seg']           = os.path.join(d['s_struc'], 'mprage_111_seg.4dfp.img')
+    f['m111'] = os.path.join(d['s_struc'], 'mprage_111.4dfp.img')
+    f['m111_nifti'] = os.path.join(d['s_struc'], 'mprage_111_flip.4dfp.nii.gz')
+    f['m111_brain_nifti'] = os.path.join(
+        d['s_struc'], 'mprage_111_brain_flip.4dfp.nii.gz')
+    f['m111_seg_nifti'] = os.path.join(
+        d['s_struc'], 'mprage_111_brain_flip_seg.nii.gz')
+    f['m111_brain'] = os.path.join(d['s_struc'], 'mprage_111_brain.4dfp.img')
+    f['m111_seg'] = os.path.join(d['s_struc'], 'mprage_111_seg.4dfp.img')
 
-    f['fs_aseg_mgz']        = os.path.join(d['s_fs_mri'], 'aseg.mgz')
-    f['fs_aseg_nii']        = os.path.join(d['s_fs_mri'], 'aseg.nii')
-    f['fs_aseg_analyze']    = os.path.join(d['s_fs_mri'], 'aseg.img')
-    f['fs_aseg_4dfp']       = os.path.join(d['s_fs_mri'], 'aseg.4dfp.img')
-    f['fs_aseg_111']        = os.path.join(d['s_fs_mri'], 'aseg_111.4dfp.img')
-    f['fs_aseg_333']        = os.path.join(d['s_fs_mri'], 'aseg_333.4dfp.img')
-    f['fs_aseg_111_nii']    = os.path.join(d['s_fs_mri'], 'aseg_111.nii.gz')
-    f['fs_aseg_333_nii']    = os.path.join(d['s_fs_mri'], 'aseg_333.nii.gz')
+    f['fs_aseg_mgz'] = os.path.join(d['s_fs_mri'], 'aseg.mgz')
+    f['fs_aseg_nii'] = os.path.join(d['s_fs_mri'], 'aseg.nii')
+    f['fs_aseg_analyze'] = os.path.join(d['s_fs_mri'], 'aseg.img')
+    f['fs_aseg_4dfp'] = os.path.join(d['s_fs_mri'], 'aseg.4dfp.img')
+    f['fs_aseg_111'] = os.path.join(d['s_fs_mri'], 'aseg_111.4dfp.img')
+    f['fs_aseg_333'] = os.path.join(d['s_fs_mri'], 'aseg_333.4dfp.img')
+    f['fs_aseg_111_nii'] = os.path.join(d['s_fs_mri'], 'aseg_111.nii.gz')
+    f['fs_aseg_333_nii'] = os.path.join(d['s_fs_mri'], 'aseg_333.nii.gz')
 
-    f['fs_aparc+aseg_mgz']        = os.path.join(d['s_fs_mri'], 'aparc+aseg.mgz')
-    f['fs_aparc+aseg_nii']        = os.path.join(d['s_fs_mri'], 'aparc+aseg.nii')
-    f['fs_aparc+aseg_3d_nii']     = os.path.join(d['s_fs_mri'], 'aparc+aseg_3d.nii')
-    f['fs_aparc+aseg_analyze']    = os.path.join(d['s_fs_mri'], 'aparc+aseg.img')
-    f['fs_aparc+aseg_4dfp']       = os.path.join(d['s_fs_mri'], 'aparc+aseg.4dfp.img')
-    f['fs_aparc+aseg_111']        = os.path.join(d['s_fs_mri'], 'aparc+aseg_111.4dfp.img')
-    f['fs_aparc+aseg_333']        = os.path.join(d['s_fs_mri'], 'aparc+aseg_333.4dfp.img')
-    f['fs_aparc+aseg_111_nii']    = os.path.join(d['s_fs_mri'], 'aparc+aseg_111.nii.gz')
-    f['fs_aparc+aseg_333_nii']    = os.path.join(d['s_fs_mri'], 'aparc+aseg_333.nii.gz')
+    f['fs_aparc+aseg_mgz'] = os.path.join(d['s_fs_mri'], 'aparc+aseg.mgz')
+    f['fs_aparc+aseg_nii'] = os.path.join(d['s_fs_mri'], 'aparc+aseg.nii')
+    f['fs_aparc+aseg_3d_nii'] = os.path.join(
+        d['s_fs_mri'], 'aparc+aseg_3d.nii')
+    f['fs_aparc+aseg_analyze'] = os.path.join(d['s_fs_mri'], 'aparc+aseg.img')
+    f['fs_aparc+aseg_4dfp'] = os.path.join(d['s_fs_mri'],
+                                           'aparc+aseg.4dfp.img')
+    f['fs_aparc+aseg_111'] = os.path.join(d['s_fs_mri'],
+                                          'aparc+aseg_111.4dfp.img')
+    f['fs_aparc+aseg_333'] = os.path.join(d['s_fs_mri'],
+                                          'aparc+aseg_333.4dfp.img')
+    f['fs_aparc+aseg_111_nii'] = os.path.join(
+        d['s_fs_mri'], 'aparc+aseg_111.nii.gz')
+    f['fs_aparc+aseg_333_nii'] = os.path.join(
+        d['s_fs_mri'], 'aparc+aseg_333.nii.gz')
 
     # --- convert legacy paths (create hard links)
 
@@ -354,22 +374,26 @@ def getFileNames(sinfo, options):
         if os.path.exists(f['fs_aseg_111']) and not os.path.exists(f['fs_aseg_t1']):
             gc.linkOrCopy(f['fs_aseg_111'], f['fs_aseg_t1'])
         if os.path.exists(f['fs_aseg_111'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aseg_t1'].replace('.img', '.ifh')):
-            gc.linkOrCopy(f['fs_aseg_111'].replace('.img', '.ifh'), f['fs_aseg_t1'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aseg_111'].replace('.img', '.ifh'),
+                          f['fs_aseg_t1'].replace('.img', '.ifh'))
 
         if os.path.exists(f['fs_aseg_333']) and not os.path.exists(f['fs_aseg_bold']):
             gc.linkOrCopy(f['fs_aseg_333'], f['fs_aseg_bold'])
         if os.path.exists(f['fs_aseg_333'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aseg_bold'].replace('.img', '.ifh')):
-            gc.linkOrCopy(f['fs_aseg_333'].replace('.img', '.ifh'), f['fs_aseg_bold'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aseg_333'].replace('.img', '.ifh'),
+                          f['fs_aseg_bold'].replace('.img', '.ifh'))
 
         if os.path.exists(f['fs_aparc+aseg_111']) and not os.path.exists(f['fs_aparc_t1']):
             gc.linkOrCopy(f['fs_aparc+aseg_111'], f['fs_aparc_t1'])
         if os.path.exists(f['fs_aparc+aseg_111'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aparc_t1'].replace('.img', '.ifh')):
-            gc.linkOrCopy(f['fs_aparc+aseg_111'].replace('.img', '.ifh'), f['fs_aparc_t1'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aparc+aseg_111'].replace('.img',
+                          '.ifh'), f['fs_aparc_t1'].replace('.img', '.ifh'))
 
         if os.path.exists(f['fs_aparc+aseg_333']) and not os.path.exists(f['fs_aparc_bold']):
             gc.linkOrCopy(f['fs_aparc+aseg_333'], f['fs_aparc_bold'])
         if os.path.exists(f['fs_aparc+aseg_333'].replace('.img', '.ifh')) and not os.path.exists(f['fs_aparc_bold'].replace('.img', '.ifh')):
-            gc.linkOrCopy(f['fs_aparc+aseg_333'].replace('.img', '.ifh'), f['fs_aparc_bold'].replace('.img', '.ifh'))
+            gc.linkOrCopy(f['fs_aparc+aseg_333'].replace('.img',
+                          '.ifh'), f['fs_aparc_bold'].replace('.img', '.ifh'))
 
     return f
 
@@ -390,37 +414,47 @@ def getBOLDFileNames(sinfo, boldname, options):
     # if bold_tail is set, use that instead
     target_bold_tail = options.get('bold_tail', target_bold_tail)
 
-    boldnumber = re.search('\d+$', boldname).group()
+    boldnumber = re.search(r'\d+$', boldname).group()
 
     ext = getExtension(options['image_target'])
 
     rgss = options['bold_nuisance']
-    rgss = rgss.translate(str.maketrans('','',' ,;|'))
+    rgss = rgss.translate(str.maketrans('', '', ' ,;|'))
 
     if d['s_source'] is None:
         f['bold_source'] = None
     else:
         if 'path_' + boldname in options:
-            f['bold_source']        = getExactFile(os.path.join(d['s_source'], options['path_' + boldname]))
+            f['bold_source'] = getExactFile(os.path.join(
+                d['s_source'], options['path_' + boldname]))
         else:
-            btarget                 = options['path_bold'].replace('[N]', boldnumber)
-            f['bold_source']        = getExactFile(os.path.join(d['s_source'], btarget))
+            btarget = options['path_bold'].replace('[N]', boldnumber)
+            f['bold_source'] = getExactFile(
+                os.path.join(d['s_source'], btarget))
 
         if f['bold_source'] == '' and options['image_target'] == '4dfp':
             # print("Searching in the atlas folder ...")
-            f['bold_source']        = getExactFile(os.path.join(d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
+            f['bold_source'] = getExactFile(os.path.join(
+                d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
 
     # --- bold masks
-    f['bold1']                  = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1' + '.nii.gz')
-    f['bold1_brain']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain' + '.nii.gz')
-    f['bold1_brain_mask']       = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_mask' + '.nii.gz')
+    f['bold1'] = os.path.join(d['s_boldmasks'], options['boldname'] +
+                              boldnumber + options['nifti_tail'] + '_frame1' + '.nii.gz')
+    f['bold1_brain'] = os.path.join(d['s_boldmasks'], options['boldname'] +
+                                    boldnumber + options['nifti_tail'] + '_frame1_brain' + '.nii.gz')
+    f['bold1_brain_mask'] = os.path.join(
+        d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_mask' + '.nii.gz')
 
     # --- bold masks internals
-    f['bold1_nifti']            = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_flip.4dfp.nii.gz')
-    f['bold1_brain_nifti']      = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp.nii.gz')
-    f['bold1_brain_mask_nifti'] = os.path.join(d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp_mask.nii.gz')
+    f['bold1_nifti'] = os.path.join(d['s_boldmasks'], options['boldname'] +
+                                    boldnumber + options['nifti_tail'] + '_frame1_flip.4dfp.nii.gz')
+    f['bold1_brain_nifti'] = os.path.join(
+        d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp.nii.gz')
+    f['bold1_brain_mask_nifti'] = os.path.join(
+        d['s_boldmasks'], options['boldname'] + boldnumber + options['nifti_tail'] + '_frame1_brain_flip.4dfp_mask.nii.gz')
 
-    f['bold_n_png']             = os.path.join(d['s_nuisance'], options['boldname'] + boldnumber + options['nifti_tail'] + '_nuisance.png')
+    f['bold_n_png'] = os.path.join(
+        d['s_nuisance'], options['boldname'] + boldnumber + options['nifti_tail'] + '_nuisance.png')
 
     # --- movement files
     movname = boldname.replace(options['boldname'], 'mov')
@@ -429,36 +463,53 @@ def getBOLDFileNames(sinfo, boldname, options):
         f['bold_mov_o'] = None
     else:
         if 'path_' + movname in options:
-            f['bold_mov_o']        = getExactFile(os.path.join(d['s_source'], options['path_' + movname]))
+            f['bold_mov_o'] = getExactFile(os.path.join(
+                d['s_source'], options['path_' + movname]))
         else:
-            mtarget                = options['path_mov'].replace('[N]', boldnumber)
-            f['bold_mov_o']        = getExactFile(os.path.join(d['s_source'], mtarget))
+            mtarget = options['path_mov'].replace('[N]', boldnumber)
+            f['bold_mov_o'] = getExactFile(
+                os.path.join(d['s_source'], mtarget))
 
-    f['bold_mov']              = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + '_mov.dat')
+    f['bold_mov'] = os.path.join(
+        d['s_bold_mov'], options['boldname'] + boldnumber + '_mov.dat')
 
     # --- event files
     if 'e' in options['bold_nuisance']:
         if d['s_source'] is None:
             f['bold_event_o'] = None
         else:
-            f['bold_event_o']       = os.path.join(d['s_source'], options['boldname'] + boldnumber + options['event_file']) + ".fidl"
-        f['bold_event_a']       = os.path.join(options['sessionsfolder'], 'inbox', sinfo['id'] + "_" + options['boldname'] + boldnumber + options['event_file']) + ".fidl"
-        f['bold_event']         = os.path.join(d['s_bold_events'], options['boldname'] + boldnumber + options['event_file']) + ".fidl"
+            f['bold_event_o'] = os.path.join(
+                d['s_source'], options['boldname'] + boldnumber + options['event_file']) + ".fidl"
+        f['bold_event_a'] = os.path.join(options['sessionsfolder'], 'inbox', sinfo['id'] +
+                                         "_" + options['boldname'] + boldnumber + options['event_file']) + ".fidl"
+        f['bold_event'] = os.path.join(
+            d['s_bold_events'], options['boldname'] + boldnumber + options['event_file']) + ".fidl"
 
     # --- bold preprocessed files
-    f['bold']                   = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + ext)
-    f['bold_final']             = os.path.join(d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + options['bold_prefix'] + ext)
-    f['bold_stats']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.bstats')
-    f['bold_nuisance']          = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.nuisance')
-    f['bold_scrub']             = os.path.join(d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.scrub')
+    f['bold'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + ext)
+    f['bold_final'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + target_bold_tail + options['bold_prefix'] + ext)
+    f['bold_stats'] = os.path.join(
+        d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.bstats')
+    f['bold_nuisance'] = os.path.join(
+        d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.nuisance')
+    f['bold_scrub'] = os.path.join(
+        d['s_bold_mov'], options['boldname'] + boldnumber + options['nifti_tail'] + '.scrub')
 
-    f['bold_vol']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['nifti_tail'] + '.nii.gz')
-    f['bold_dts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['cifti_tail'] + '.dtseries.nii')
-    f['bold_pts']               = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['cifti_tail'] + '.ptseries.nii')
+    f['bold_vol'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + options['nifti_tail'] + '.nii.gz')
+    f['bold_dts'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + options['cifti_tail'] + '.dtseries.nii')
+    f['bold_pts'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + options['cifti_tail'] + '.ptseries.nii')
 
-    f['bold_qx_vol']            = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['qx_nifti_tail'] + '.nii.gz')
-    f['bold_qx_dts']            = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['qx_cifti_tail'] + '.dtseries.nii')
-    f['bold_qx_pts']            = os.path.join(d['s_bold'], options['boldname'] + boldnumber + options['qx_cifti_tail'] + '.ptseries.nii')
+    f['bold_qx_vol'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + options['qx_nifti_tail'] + '.nii.gz')
+    f['bold_qx_dts'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + options['qx_cifti_tail'] + '.dtseries.nii')
+    f['bold_qx_pts'] = os.path.join(
+        d['s_bold'], options['boldname'] + boldnumber + options['qx_cifti_tail'] + '.ptseries.nii')
 
     for ch in options['bold_actions']:
         if ch == 's':
@@ -466,9 +517,10 @@ def getBOLDFileNames(sinfo, boldname, options):
         elif ch == 'h':
             f['bold_final'] = f['bold_final'].replace(ext, '_hpss' + ext)
         elif ch == 'c':
-            f['bold_coef']  = f['bold_final'].replace(ext, '_coeff' + ext)
+            f['bold_coef'] = f['bold_final'].replace(ext, '_coeff' + ext)
         elif ch == 'r':
-            f['bold_final'] = f['bold_final'].replace(ext, '_res-' + rgss + options['glm_name'] + ext)
+            f['bold_final'] = f['bold_final'].replace(
+                ext, '_res-' + rgss + options['glm_name'] + ext)
         elif ch == 'l':
             f['bold_final'] = f['bold_final'].replace(ext, '_lpss' + ext)
 
@@ -486,12 +538,14 @@ def findFile(sinfo, options, fname):
         return tfile
 
     if any([e in fname for e in ['conc', 'fidl']]):
-        tfile = os.path.join(d['inbox'], 'events', "%s_%s" % (sinfo['id'], fname))
+        tfile = os.path.join(d['inbox'], 'events', "%s_%s" %
+                             (sinfo['id'], fname))
         if os.path.exists(tfile):
             return tfile
 
     if any([e in fname for e in ['conc']]):
-        tfile = os.path.join(d['inbox'], 'concs', "%s_%s" % (sinfo['id'], fname))
+        tfile = os.path.join(d['inbox'], 'concs', "%s_%s" %
+                             (sinfo['id'], fname))
         if os.path.exists(tfile):
             return tfile
 
@@ -519,46 +573,48 @@ def getSessionFolders(sinfo, options):
         d['s_source'] = sinfo['data']
 
     if "hcp" in sinfo:
-        d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
+        d['hcp'] = os.path.join(
+            sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
 
-    d['s_base']             = os.path.join(options['sessionsfolder'], sinfo['id'])
-    d['s_images']           = os.path.join(d['s_base'], 'images' + options['img_suffix'])
-    d['s_struc']            = os.path.join(d['s_images'], 'structural')
-    d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
-    d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks' + options['bold_variant'])
-    d['s_bold']             = os.path.join(d['s_images'], 'functional' + options['bold_variant'])
-    d['s_bold_mov']         = os.path.join(d['s_bold'], 'movement')
-    d['s_bold_events']      = os.path.join(d['s_bold'], 'events')
-    d['s_bold_concs']       = os.path.join(d['s_bold'], 'concs')
-    d['s_bold_glm']         = os.path.join(d['s_bold'], 'glm')
-    d['s_roi']              = os.path.join(d['s_images'], 'ROI')
-    d['s_nuisance']         = os.path.join(d['s_roi'], 'nuisance' + options['bold_variant'])
-    d['s_fs']               = os.path.join(d['s_seg'], 'freesurfer')
-    d['s_hcp']              = os.path.join(d['s_seg'], 'hcp')
-    d['s_s32k']             = os.path.join(d['s_hcp'], 'fsaverage_LR32k')
-    d['s_fs_mri']           = os.path.join(d['s_fs'], 'mri')
-    d['s_fs_orig']          = os.path.join(d['s_fs'], 'mri/orig')
-    d['s_fs_surf']          = os.path.join(d['s_fs'], 'surf')
-    d['inbox']              = os.path.join(options['sessionsfolder'], 'inbox')
-    d['qc']                 = os.path.join(options['sessionsfolder'], 'QC')
-    d['qc_mov']             = os.path.join(d['qc'], 'movement' + options['img_suffix'] + options['bold_variant'])
+    d['s_base'] = os.path.join(options['sessionsfolder'], sinfo['id'])
+    d['s_images'] = os.path.join(d['s_base'], 'images' + options['img_suffix'])
+    d['s_struc'] = os.path.join(d['s_images'], 'structural')
+    d['s_seg'] = os.path.join(d['s_images'], 'segmentation')
+    d['s_boldmasks'] = os.path.join(
+        d['s_seg'], 'boldmasks' + options['bold_variant'])
+    d['s_bold'] = os.path.join(
+        d['s_images'], 'functional' + options['bold_variant'])
+    d['s_bold_mov'] = os.path.join(d['s_bold'], 'movement')
+    d['s_bold_events'] = os.path.join(d['s_bold'], 'events')
+    d['s_bold_concs'] = os.path.join(d['s_bold'], 'concs')
+    d['s_bold_glm'] = os.path.join(d['s_bold'], 'glm')
+    d['s_roi'] = os.path.join(d['s_images'], 'ROI')
+    d['s_nuisance'] = os.path.join(
+        d['s_roi'], 'nuisance' + options['bold_variant'])
+    d['s_fs'] = os.path.join(d['s_seg'], 'freesurfer')
+    d['s_hcp'] = os.path.join(d['s_seg'], 'hcp')
+    d['s_s32k'] = os.path.join(d['s_hcp'], 'fsaverage_LR32k')
+    d['s_fs_mri'] = os.path.join(d['s_fs'], 'mri')
+    d['s_fs_orig'] = os.path.join(d['s_fs'], 'mri/orig')
+    d['s_fs_surf'] = os.path.join(d['s_fs'], 'surf')
+    d['inbox'] = os.path.join(options['sessionsfolder'], 'inbox')
+    d['qc'] = os.path.join(options['sessionsfolder'], 'QC')
+    d['qc_mov'] = os.path.join(
+        d['qc'], 'movement' + options['img_suffix'] + options['bold_variant'])
 
-    # if not os.path.exists(d['s_source']) and options['source_folder']:
-    #     print("WARNING: Source folder not found, waiting 15s to give it a chance to come online!")
-    #     time.sleep(15)
-    #     if not os.path.exists(d['s_source']):
-    #         print("WARNING: Source folder still not found, if data has not been copied over the processing will fail!")
-    #         # errormessage = "\n... ERROR: Source folder does not exist or is not reachable [%s]" % (d['s_source'])
-    #         # raise NoSourceFolder(errormessage)
+    folder_creation_lock = multiprocessing.Lock()
 
     for (key, fpath) in d.items():
         if key != 's_source':
             if not os.path.exists(fpath):
                 try:
-                    os.makedirs(fpath)
+                    with folder_creation_lock:
+                        # Check again inside the lock to ensure no other process created the folder
+                        if not os.path.exists(fpath):
+                            os.makedirs(fpath)
                 except:
-                    print("ERROR: Could not create folder %s! Please check paths and permissions!" % (fpath))
-                    # raise
+                    print(
+                        f"ERROR: Could not create folder {fpath}! Please check paths and permissions!")
 
     return d
 
@@ -593,21 +649,25 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
 
     if fullTest and 'specfolder' in fullTest:
         if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
-            fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
+            fullTest['tfile'] = os.path.join(
+                fullTest['specfolder'], fullTest['tfile'])
 
     if tfile is not None and os.path.exists(tfile) and not overwrite:
         if verbose:
-            r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
+            r += "\n---> %s test file [%s] present" % (
+                command, os.path.basename(tfile))
         report = "%s finished" % (command)
         passed = 'done'
         failed = 0
 
         if fullTest:
             try:
-                filestatus, filespresent, filesmissing = gc.checkFiles(fullTest['tfolder'], fullTest['tfile'], fields=fullTest['fields'], report=logFile)
+                filestatus, filespresent, filesmissing = gc.checkFiles(
+                    fullTest['tfolder'], fullTest['tfile'], fields=fullTest['fields'], report=logFile)
                 if filesmissing:
                     if verbose:
-                        r += missingReport(filesmissing, "\n---> Full file check revealed that the following files were not created:", "            ")
+                        r += missingReport(
+                            filesmissing, "\n---> Full file check revealed that the following files were not created:", "            ")
                     report += ", full file check incomplete"
                     passed = 'incomplete'
                     failed = 1
@@ -633,7 +693,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         # check log contents for errors
         log = open(logFile, 'r')
         lines = log.readlines()
-        
+
         for line in lines:
             if "Error" in line or "ERROR" in line:
                 report = "%s not finished" % (command)
@@ -649,6 +709,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         failed = 1
 
     return passed, report, r, failed
+
 
 def closeLog(logfile, logname, logfolders, status, remove, r):
 
@@ -760,23 +821,24 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         if isinstance(logtags, basestring) or logtags is None:
             logtags = [logtags]
 
-        logname  = [task] + logtags + [thread, logstamp]
-        logname  = [e for e in logname if e]
-        logname  = "_".join(logname)
+        logname = [task] + logtags + [thread, logstamp]
+        logname = [e for e in logname if e]
+        logname = "_".join(logname)
 
         logfolders = []
-        if type(logfolder)in [list, set, tuple]:
+        if type(logfolder) in [list, set, tuple]:
             logfolders = list(logfolder)
-            logfolder  = logfolders.pop(0)
+            logfolder = logfolders.pop(0)
 
         if not os.path.exists(logfolder):
             try:
                 os.makedirs(logfolder)
             except:
-                r += "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
+                r += "\n\nERROR: Could not create folder for logfile [%s]!" % (
+                    logfolder)
                 raise ExternalFailed(r)
 
-        tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+        tmplogfile = os.path.join(logfolder, "tmp_%s.log" % (logname))
         # --- report
         print("You can follow command's progress in:")
         print(tmplogfile)
@@ -789,7 +851,8 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
             # --- open log file
             if not os.path.exists(tmplogfile):
-                r += "\n\nERROR: Could not create a temporary log file %s!" % (tmplogfile)
+                r += "\n\nERROR: Could not create a temporary log file %s!" % (
+                    tmplogfile)
                 raise ExternalFailed(r)
 
             # add command call to start of the log
@@ -804,18 +867,21 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         except:
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
             r += comm
-            endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
+            endlog, r = closeLog(
+                nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
-
 
         # --- check results
         if ret:
-            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (description, ret)
+            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (
+                description, ret)
             r += comm
-            endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
+            endlog, r = closeLog(
+                nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
-        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=tmplogfile, verbose=verbose)
+        status, report, r, failed = checkRun(
+            checkfile, fullTest=fullTest, command=task, r=r, logFile=tmplogfile, verbose=verbose)
 
         if status is None:
             r += "\n\nTry running the command directly for more detailed error information:\n"
@@ -827,19 +893,23 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
         else:
             if status and status == 'incomplete':
-                endlog, r = closeLog(nf, tmplogfile, logfolders, "incomplete", remove, r)
+                endlog, r = closeLog(
+                    nf, tmplogfile, logfolders, "incomplete", remove, r)
             else:
-                endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
+                endlog, r = closeLog(
+                    nf, tmplogfile, logfolders, "error", remove, r)
 
     else:
         if os.path.getsize(checkfile) < 100:
-            r, endlog, status, failed = runExternalForFile(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags, fullTest=fullTest, shell=shell, r=r)
+            r, endlog, status, failed = runExternalForFile(
+                checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags, fullTest=fullTest, shell=shell, r=r)
         else:
             status, _, _, failed = checkRun(checkfile, fullTest)
             if status in ['full', 'done']:
                 r += '\n%s --- already completed' % (description)
             else:
-                r += '\n%s --- already ran, incomplete file check' % (description)
+                r += '\n%s --- already ran, incomplete file check' % (
+                    description)
 
     if task:
         task += " "
@@ -865,17 +935,18 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
         logtags = [logtags]
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname  = [task] + logtags + [thread, logstamp]
-    logname  = [e for e in logname if e]
-    logname  = "_".join(logname)
+    logname = [task] + logtags + [thread, logstamp]
+    logname = [e for e in logname if e]
+    logname = "_".join(logname)
 
-    tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+    tmplogfile = os.path.join(logfolder, "tmp_%s.log" % (logname))
     donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
-    errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
-    endlog      = None
+    errlogfile = os.path.join(logfolder, "error_%s.log" % (logname))
+    endlog = None
 
     nf = open(tmplogfile, 'w')
-    print("\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description), file=nf)
+    print("\n#-------------------------------\n# Running: %s\n#-------------------------------" %
+          (description), file=nf)
 
     ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
     if ret:
@@ -895,7 +966,6 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
         r += ' --- done'
 
     return r, endlog
-
 
 
 def checkForFile(r, checkfile, message, status=True):

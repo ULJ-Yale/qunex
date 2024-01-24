@@ -720,7 +720,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         elif overwrite == 'append':
             print("WARNING: target file %s already exists!" %
                   (os.path.abspath(targetfile)))
-            print("         Appending to exisiting file.")
+            print("         Appending to an exisiting file.")
         elif overwrite == 'no':
             raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (
                 os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action")
@@ -761,7 +761,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 print(
                     "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!")
 
-            # open the files
+            # open the file
             jfile = open(targetfile, 'a')
 
         # --- check for param file
@@ -1173,11 +1173,11 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(' *, *| *\| *| +', bolds)]
+        bolds = [e.strip() for e in re.split(r' *, *| *\| *| +', bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
 
-    bsearch = re.compile('bold([0-9]+)')
+    bsearch = re.compile(r'bold([0-9]+)')
 
     images_folder = 'images' + img_suffix
     functional_folder = 'functional' + bold_variant
@@ -1514,14 +1514,14 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(' *, *| *\| *| +', bolds)]
+        bolds = [e.strip() for e in re.split(r' *, *| *\| *| +', bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
     else:
         raise ge.CommandError(
             "create_conc", "No bolds specified to be included in the conc files")
 
-    bsearch = re.compile('bold([0-9]+)')
+    bsearch = re.compile(r'bold([0-9]+)')
 
     images_folder = 'images' + img_suffix
     functional_folder = 'functional' + bold_variant
@@ -1955,23 +1955,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
         raise ge.CommandFailed("run_list", "runlist file does not exist",
                                "Runlist file not found [%s]" % (listfile), "Please check your paths!")
 
-    # prep log
-    if logfolder is None:
-        logfolder = gc.deduceFolders({'reference': listfile})["logfolder"]
-    runlogfolder = os.path.join(logfolder, 'runlogs')
-
-    # create folder if it does not exist
-    if not os.path.isdir(runlogfolder):
-        os.makedirs(runlogfolder)
-
-    print("===> Saving the run_list runlog to: %s" % runlogfolder)
-
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = os.path.join(
-        runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
-
     # -- parse runlist file
-
     runList = {'parameters': {},
                'lists': {}}
 
@@ -2043,21 +2027,41 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
                 raise ge.CommandFailed("run_list", "Cannot parse line", "Unable to parse line [%s]" % (
                     line), "Please check the runlist file [%s]" % listfile)
 
-    # -- are there parameters to ignore
+    # -- log location
+    if logfolder is None:
+        if "studyfolder" in parameters:
+            logfolder = os.path.join(
+                parameters["studyfolder"], "processing", "logs")
+        elif "sessionsfolder" in parameters:
+            logfolder = gc.deduceFolders(
+                {'sessionsfolder': parameters["sessionsfolder"]})["logfolder"]
+        else:
+            logfolder = gc.deduceFolders({'reference': listfile})["logfolder"]
+    runlogfolder = os.path.join(logfolder, 'runlogs')
 
+    # create folder if it does not exist
+    if not os.path.isdir(runlogfolder):
+        os.makedirs(runlogfolder)
+
+    print("===> Saving the run_list runlog to: %s" % runlogfolder)
+
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+    logname = os.path.join(
+        runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
+
+    # -- are there parameters to ignore
     if 'ignore' in eargs:
         ignore = [e.strip() for e in re.split(
-            ' ?, ?| ?\| ?| +|', eargs['ignore'])]
+            r' ?, ?| ?\| ?| +|', eargs['ignore'])]
     else:
         ignore = None
 
     # -- run through lists
-
-    runLists = re.split(' ?, ?| ?\| ?| +|', runlists)
+    runLists = re.split(r'[,\|\s]', runlists)
     summary = "\n----==== LISTS EXECUTION SUMMARY ====----"
 
     try:
-        log = open(logname, "w", buffering=0)
+        log = open(logname, "w", encoding="utf-8")
     except:
         raise ge.CommandFailed("run_list", "Cannot open log", "Unable to open log [%s]" % (
             logname), "Please check the paths!")
@@ -2099,18 +2103,20 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
                             commandParameters[k] = eargs[k]
 
             # -- remove parameters that are not allowed
-            import commands as gcom
+            import general.commands as gcom
             if commandName in gcom.commands:
                 allowedParameters = list(
                     gcom.commands.get(commandName)["args"])
                 if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
                     allowedParameters += gcs.extra_parameters
+
+                newParameters = commandParameters.copy()
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
-                        del commandParameters[param]
+                        del newParameters[param]
+                commandParameters = newParameters
 
             # -- remove parameters set to ignore
-
             if ignore:
                 for toIgnore in ignore:
                     if toIgnore in commandParameters:
@@ -2120,7 +2126,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
 
             command = ["qunex"]
             command.append(commandName)
-            commandr = "\n--------------------------------------------\n===> Running new command:\n---> qunex " + commandName
+            commandr = "\n--------------------------------------------\n===> Running command:\n---> qunex " + commandName
             for param, value in commandParameters.items():
                 if param in flags:
                     command.append('--%s' % (param))
@@ -2141,7 +2147,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
             logging = verbose
 
             for line in iter(process.stdout.readline, b''):
-                print(line, end=" ")
+                line = line.decode("utf-8")
                 if "ERROR in completing" in line or "ERROR:" in line or "failed with error" in line:
                     error = True
                 if "Final report" in line:
@@ -2162,7 +2168,7 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
                       (commandName, runListName), file=log)
                 log.close()
                 raise ge.CommandFailed("runlist", "Runlist command failed", "Command '%s' inside list '%s' failed" % (
-                    commandName, runListName), "See errors above for details")
+                    commandName, runListName), "See error logs in the study folder for details")
             else:
                 summary += "\n---> command %-20s OK" % (commandName)
                 print("===> Successful completion of runlist command %s" %
@@ -2507,7 +2513,7 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r' *, *| *\| *| +', sourcefiles)]
 
     # --- check sessions
 
@@ -2836,7 +2842,7 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r' *, *| *\| *| +', sourcefiles)]
 
     # --- check sessions
 
@@ -2957,7 +2963,7 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
 
     # -- prepare exclusion
     if mapexclude:
-        patterns = [e.strip() for e in re.split(', *', mapexclude)]
+        patterns = [e.strip() for e in re.split(r', *', mapexclude)]
         mapexclude = []
         for e in patterns:
             try:

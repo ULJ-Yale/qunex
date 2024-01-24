@@ -5,6 +5,4 @@
 [submodule "library"]
 	path = qx_library
 	url = ../library
-[submodule "qx_library"]
-	path = qx_library
-	url = https://gitlab.qunex.yale.edu/qunex/library.git
+	ignore = all
