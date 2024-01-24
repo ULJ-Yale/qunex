@@ -460,6 +460,10 @@ export MATLABBINDIR PATH
 PATH=${RDIR}:${PATH}
 export RDIR PATH
 
+# QX matlablib packages
+MATLABPATH=$TOOLS/matlablib/cifti-matlab.qx:$MATLABPATH
+export MATLABPATH
+
 # ------------------------------------------------------------------------------
 # -- Setup overall QuNex paths
 # ------------------------------------------------------------------------------
