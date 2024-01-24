@@ -93,9 +93,9 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %                   compute mean values across the ROI
 %               - median
 %                   compute median value across the ROI
-%	            - max
+%               - max
 %                   compute maximum value across the ROI
-%	            - min
+%               - min
 %                   compute mimimum value across the ROI
 %               - pca
 %                   compute first eigenvariate of the ROI.
