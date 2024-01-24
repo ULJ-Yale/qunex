@@ -1722,6 +1722,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
 
+    # -- Filter sessions with sessionids
+    if [[ ! -z ${SESSIONIDS} ]]; then
+        CASES=`echo "${CASES}" | grep -w "${SESSIONIDS}"`
+    fi
+
     # -- Get species flag for NHP pipelines
     Species=`get_parameters "${setflag}species" $@`
 fi
