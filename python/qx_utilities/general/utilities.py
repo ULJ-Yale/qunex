@@ -19,7 +19,6 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
-import chevron
 import errno
 import shutil
 import glob
