@@ -125,7 +125,7 @@ switch img.imageformat
         tcifti = img.cifti.metadata;
         tcifti.cdata = img.data;
         file = [root '.' img.filetype '.nii'];
-        [metaxml, hdrnifti] = cifti_write_metadata(tcifti, file);
+        [metaxml, hdrnifti] = cifti_encode_metadata(tcifti, file);
 
         % -> update hdrnifti
         for fieldname = fieldnames(hdrnifti)'
