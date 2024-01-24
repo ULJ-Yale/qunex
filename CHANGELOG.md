@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.100.0
+
+* New FC functionality (`fc_compute_roifc`, `fc_compute_seedmap`).
+
 ## 0.99.2
 
 * Made HCP commands more robust to parameter types.
