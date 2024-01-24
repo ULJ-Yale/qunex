@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.100.0
+## 0.99.3
 
 * New FC functionality (`fc_compute_roifc`, `fc_compute_seedmap`).
 
