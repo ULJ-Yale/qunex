@@ -663,7 +663,7 @@ for s = 1:list.nsessions
         fcmat(n).fc.(fcmeasure) = fc;
         fcmat(n).fc.N = ts.frames;
 
-        if ismember(fcmeasure, {'r', 'rho'})
+        if ismember(fcmeasure, {'r', 'rho', 'cc'})
             fcmat(n).fc.fz = fc_fisher(fc);
             fcmat(n).fc.z  = fcmat(n).fc.fz/(1/sqrt(fcmat(n).fc.N - 3));
             fcmat(n).fc.p  = (1 - normcdf(abs(fcmat(n).fc.z), 0, 1)) * 2 .* sign(fcmat(n).fc.fz);
@@ -678,7 +678,7 @@ for s = 1:list.nsessions
             fcmats(n).subjects(s) = {subjectid};
             fcmats(n).fc(s).(fcmeasure) = fc;
             fcmats(n).fc(s).N = ts.frames;
-            if ismember(fcmeasure, {'r', 'rho'})
+            if ismember(fcmeasure, {'r', 'rho', 'cc'})
                 fcmats(n).fc(s).fz = fcmat(n).fc.fz;
                 fcmats(n).fc(s).z  = fcmat(n).fc.z;
                 fcmats(n).fc(s).p  = fcmat(n).fc.p;
@@ -763,8 +763,8 @@ function [] = save_long(fcmat, fcmeasure, lname, basefilename, verbose, printdeb
 
     fout = fopen([basefilename '_long.tsv'], 'w');
 
-    if strcmp(fcmeasure, 'cv')
-        fprintf(fout, 'name\ttitle\tsubject\troi1_name\troi2_name\tcv\n');
+    if ismember(fcmeasure, {'cv', 'icv', 'mi', 'mar', 'coh'})
+        fprintf(fout, 'name\ttitle\tsubject\troi1_name\troi2_name\t%s\n', fcmeasure);
     else
         fprintf(fout, 'name\ttitle\tsubject\troi1_name\troi2_name\t%s\tFz\tZ\tp\n', fcmeasure);
     end
@@ -796,12 +796,12 @@ function [] = save_long(fcmat, fcmeasure, lname, basefilename, verbose, printdeb
         % --- write up
         
         for s = 1:length(fcmat(n).subjects)
-            if ismember(fcmeasure, {'cv'})
+            if ismember(fcmeasure, {'cv', 'icv', 'mi', 'mar', 'coh'})
                 fc = fcmat(n).fc(s).(fcmeasure)(idx);
                 for c = 1:nfc
                     fprintf(fout, '%s\t%s\t%s\t%s\t%s\t%.5f\n', lname, settitle, fcmat(n).subjects{s}, roi1name{c}, roi2name{c}, fc(c));
                 end
-            elseif ismember(fcmeasure, {'r', 'rho'})
+            elseif ismember(fcmeasure, {'r', 'rho', 'cc'})
                 fc = fcmat(n).fc(s).(fcmeasure)(idx);
                 fz = fcmat(n).fc(s).fz(idx);
                 z  = fcmat(n).fc(s).z(idx);
@@ -840,7 +840,7 @@ function [] = save_wide(fcmat, fcmeasure, lname, basefilename, separate, verbose
     printHeader(fout_fc, roi);
     toclose = [fout_fc];
 
-    if separate && ismember(fcmeasure, {'r', 'rho'}) 
+    if separate && ismember(fcmeasure, {'r', 'rho', 'cc'}) 
         if printdebug; fprintf([' ' basefilename '_Fz_wide.tsv']); end
         fout_Fz = fopen([basefilename '_Fz_wide.tsv'], 'w');
         printHeader(fout_Fz, roi);
@@ -856,7 +856,7 @@ function [] = save_wide(fcmat, fcmeasure, lname, basefilename, separate, verbose
                 fprintf(fout_fc,'\n%s\t%s\t%s\t%s\t%s\t%d', lname, settitle, fcmat(n).subjects{s}, fcmeasure, roi{r});
                 fprintf(fout_fc, '\t%.7f', fcmat(n).fc(s).(fcmeasure)(r, :));
             end
-            if ismember(fcmeasure, {'r', 'rho'})
+            if ismember(fcmeasure, {'r', 'rho', 'cc'})
                 for r = 1:nroi
                     fprintf(fout_Fz, '\n%s\t%s\t%s\t%s\t%s\t%d', lname, settitle, fcmat(n).subjects{s}, 'fz', roi{r});
                     fprintf(fout_Fz, '\t%.7f', fcmat(n).fc(s).fz(r, :));

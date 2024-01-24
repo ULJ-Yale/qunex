@@ -52,12 +52,14 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               is a comma separated list of events for which data is to
 %               be extracted
 %           - extraction start
-%               is a frame number relative to event start or end when the
-%               extraction should start
+%               is a frame number relative to event start or event end, that 
+%               specifies the frame at which the extraction should start
 %           - extraction end
-%               is a frame number relative to event start or end when the
-%               extraction should start the extraction start and end
-%               should be given as '<s|e><frame number>'. E.g.:
+%               is a frame number relative to event start or event end, that
+%               specifies the frame at which the extraction should end.
+%               
+%               the extraction start and end should be given as 
+%               '<s|e><frame number>'. E.g.:
 %
 %               - 's0'  ... the frame of the event onset
 %               - 's2'  ... the second frame from the event onset
@@ -67,7 +69,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %           Example::
 %
-%               'encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%               'encoding:e-color,e-shape:s2:s4|delay:d-color,d-shape:s2:e0'
 %
 %       --targetf (str, '.'):
 %           The group level folder to save images in. 
@@ -156,7 +158,13 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               - rho
 %                   Spearman's rho coefficient of correlation
 %               - cv
-%                   covariance estimate.               
+%                   covariance estimate 
+%               - cc
+%                  cross correlation
+%               - coh
+%                   coherence
+%               - mi
+%                   mutual information
 %
 %               Defaults to 'r'.
 %
@@ -476,9 +484,9 @@ if ismember({'none'}, options.savegroup)
 end
 
 if ismember({'all'}, options.savegroup)
-    if strcmp(options.fcmeasure, 'cv')
+    if ismember(options.fcmeasure, {'cv', 'mi', 'coh'}) 
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'all_r'};
-    elseif ismember(options.fcmeasure, {'r', 'rho'})
+    elseif ismember(options.fcmeasure, {'r', 'rho', 'cc'})
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'};
     end    
 end
@@ -502,7 +510,7 @@ end
 if length(options.saveind) 
     if strcmp(options.fcmeasure, 'r')
         options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p', 'jr', 'jfz', 'jz', 'jp'});
-    elseif strcmp(options.fcmeasure, 'rho')
+    elseif ismember(options.fcmeasure, {'rho', 'cc'}) 
         options.saveind = intersect(options.saveind, {'r', 'fz', 'jr', 'jfz'});
     else
         options.saveind = intersect(options.saveind, {'r', 'jr'});
@@ -706,7 +714,7 @@ for s = 1:list.nsessions
 
             % --- print for each ROI separately
         
-            if any(ismember(options.saveind, {'r', 'fz', 'z', 'p', 'rho', 'cv'}));
+            if any(ismember(options.saveind, {'r', 'fz', 'z', 'p', 'rho', 'cv', 'cc', 'coh', 'mi'}));
 
                 for r = 1:nroi
 
@@ -747,7 +755,7 @@ for s = 1:list.nsessions
 
             % --- print for all ROI jointly
 
-            if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv'}));
+            if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv', 'jcc', 'jmi', 'jcoh'}));
 
                 allroi = strjoin(roi.roi.roinames, '-');
                 basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, allroi);
@@ -820,9 +828,9 @@ if ~isempty(options.savegroup)
 
             % -- compute p-values
             if any(ismember(options.savegroup, {'group_p', 'group_z'}))
-                if ismember(fcmeasure, {'cv'})
+                if ismember(fcmeasure, {'cv', 'mi', 'coh'})
                     [p Z M] = fc.img_ttest_zero();
-                elseif ismember(fcmeasure, {'r', 'rho'})
+                elseif ismember(fcmeasure, {'r', 'rho', 'cc'})
                     [p Z MFz] = fz.img_ttest_zero();
                     M = MFz.img_FisherInv();
                 end
@@ -831,9 +839,9 @@ if ~isempty(options.savegroup)
             % -- compute mean
             if any(ismember(options.savegroup, {'mean_r'})) && isempty(M)
                 M = fc.zeroframes(1);
-                if ismember(fcmeasure, {'cv'})
+                if ismember(fcmeasure, {'cv', 'mi', 'coh'})
                     M.data = mean(fc.data, 2);
-                elseif ismember(fcmeasure, {'r', 'rho'})
+                elseif ismember(fcmeasure, {'r', 'rho', 'cc'})
                     MFz = fc.zeroframes(1);
                     MFz.data = mean(fz.data, 2);
                     M = MFz.img_FisherInv();
