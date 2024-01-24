@@ -88,7 +88,7 @@ def readConc(filename, boldname=None, check=False):
         if missing:
             raise ge.CommandFailed("readConc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
 
-    m = re.compile(".*?([0-9]+).*")
+    m = re.compile(r".*?([0-9]+).*")
 
     try:
         for boldfile in boldfiles:

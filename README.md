@@ -24,8 +24,8 @@ The QuNex code is co-developed and co-maintained by the:
 
 ## Version
 
-* QuNex: 0.99.0
-* qx_library: 0.90.16
+* QuNex: 0.100.0
+* qx_library: 0.90.17
 
 ## References
 

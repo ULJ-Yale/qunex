@@ -373,10 +373,11 @@ export PYTHONPATH=$QUNEXPATH/python
 
 # -- FSL bin dir
 FSLBINDIR=${FSLDIR}/bin
+FSLDIRMATLAB=${FSLDIR}/etc/matlab
 FSLLIBDIR=${FSLDIR}/lib
-PATH=${PATH}:${FSLBINDIR}:${FSLLIBDIR}
-export FSLBINDIR PATH
-MATLABPATH=$FSLBINDIR:$MATLABPATH
+PATH=${PATH}:${FSLBINDIR}:${FSLDIRMATLAB}:${FSLLIBDIR}
+export FSLBINDIR FSLDIRMATLAB PATH
+MATLABPATH=$FSLBINDIR:$FSLDIRMATLAB:$MATLABPATH
 export MATLABPATH
 
 # -- FreeSurfer path
@@ -458,6 +459,10 @@ export MATLABBINDIR PATH
 # -- R path
 PATH=${RDIR}:${PATH}
 export RDIR PATH
+
+# QX matlablib packages
+MATLABPATH=$TOOLS/matlablib/cifti-matlab.qx:$MATLABPATH
+export MATLABPATH
 
 # ------------------------------------------------------------------------------
 # -- Setup overall QuNex paths

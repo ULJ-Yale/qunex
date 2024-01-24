@@ -489,7 +489,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
 
     # session have a higher priority
     if sessions is not None:
-        if re.match(".*\.list$", sessions):
+        if re.match(r".*\.list$", sessions):
             if os.path.isfile(sessions):
                 sessionids = get_sessionids_from_list(sessions)
             else:
@@ -498,7 +498,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
                 )
         else:
             sessionids = [
-                e.strip() for e in re.split(" +|,|\|", sessions.replace(" ", ""))
+                e.strip() for e in re.split(r" +|,|\|", sessions.replace(" ", ""))
             ]
     # batchfile
     elif batchfile is not None:
@@ -982,6 +982,7 @@ def main(args=None):
         "hcp_longitudinal_freesurfer",
         "hcp_temporal_ica",
         "hcp_make_average_dataset",
+        "fsl_melodic",
     ]
     if any(c in command for c in multi_commands):
         multi_session_command = True
@@ -1173,18 +1174,6 @@ def main(args=None):
                     with open(script, "r") as sfile:
                         for line in sfile:
                             print(line, file=f)
-            elif "runTurnkey" in qx_command:
-                qx_command = qx_command.replace("runTurnkey", "")
-                print(
-                    "bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command,
-                    file=f,
-                )
-            elif "run_turnkey" in qx_command:
-                qx_command = qx_command.replace("run_turnkey", "")
-                print(
-                    "bash /opt/qunex/bash/qx_utilities/run_turnkey.sh" + qx_command,
-                    file=f,
-                )
             else:
                 print("bash /opt/qunex/bin/qunex.sh " + qx_command, file=f)
 

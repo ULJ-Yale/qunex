@@ -75,12 +75,6 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed. When a comma or pipe ('|') separated list
-            is given, the log will be created at the first provided location and
-            then linked or copied to other locations. The valid locations are:
-
         --bias_field_correction (str, default 'yes'):
             Whether to perform bias field correction, yes/no.
 
@@ -340,12 +334,6 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-        --log (str, default 'keep'):
-            Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed. When a comma or pipe ('|') separated list
-            is given, the log will be created at the first provided location and
-            then linked or copied to other locations. The valid locations are:
 
     Output files:
         The results of this step will be present in the functional folder

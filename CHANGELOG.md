@@ -6,9 +6,30 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.100.0
+
+* New FC functionality (`fc_compute_roifc`, `fc_compute_seedmap`).
+
+## 0.99.2
+
+* Made HCP commands more robust to parameter types.
+
+## 0.99.1
+
+* Fixed a bug in completion check when importing BIDS data through `run_turnkey`.
+
 ## 0.99.0
 
-* TODO
+* `fc_compute_wrapper` now checks if input files exist.
+* Removed some race conditions in parallel runs.
+* Added better reporting in case FM numbers are missing in the batch file.
+* Allowed custom setup of POS/NEG pairs in `hcp_diffusion`.
+* Now you can onboard processed HCP data along with unprocessed.
+* QuNex DWI pipelines now supports microstrucutre modelling (NODDI).
+* Improved the file locking mechanism.
+* Fixed a bug with a non-existing parameter in DeDriftAndResample.
+* Added support for the HCP ApplyAutoReclean Pipeline (`hcp_apply_auto_reclean`).
+* Improved support for SEBASED `hcp_bold_biascorrection` in `hcp_fmri_volume`.
 
 ## 0.98.6
 

@@ -1941,11 +1941,11 @@ fi
 
             # -- Run BIDS completion checks on mapped data
             if [ -f ${SessionsFolder}/${CASE}/bids/bids2nii.log ]; then
-                 FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
+                 FILESEXPECTED=`cat ${SessionsFolder}/${CASE}/bids/bids2nii.log | grep ".nii.gz" | wc -l 2> /dev/null`
             else
                  FILECHECK="fail"
             fi
-            FILEFOUND=`ls ${SessionsFolder}/${CASE}/nii/* | wc -l 2> /dev/null`
+            FILEFOUND=`ls ${SessionsFolder}/${CASE}/nii/*.nii.gz | wc -l 2> /dev/null`
             if [ -z ${FILEFOUND} ]; then
                 FILECHECK="fail"
             fi

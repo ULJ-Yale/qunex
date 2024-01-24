@@ -1284,11 +1284,11 @@ def create_list(
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(" *, *| *\| *| +", bolds)]
+        bolds = [e.strip() for e in re.split(r" *, *| *\| *| +", bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
 
-    bsearch = re.compile("bold([0-9]+)")
+    bsearch = re.compile(r"bold([0-9]+)")
 
     images_folder = "images" + img_suffix
     functional_folder = "functional" + bold_variant
@@ -1680,7 +1680,7 @@ def create_conc(
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(" *, *| *\| *| +", bolds)]
+        bolds = [e.strip() for e in re.split(r" *, *| *\| *| +", bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
     else:
@@ -1688,7 +1688,7 @@ def create_conc(
             "create_conc", "No bolds specified to be included in the conc files"
         )
 
-    bsearch = re.compile("bold([0-9]+)")
+    bsearch = re.compile(r"bold([0-9]+)")
 
     images_folder = "images" + img_suffix
     functional_folder = "functional" + bold_variant
@@ -2274,7 +2274,6 @@ def run_recipe(
                         f"Cannot inject values marked with double curly braces in the recipe. Label not found in the parameters or in system environment variables.",
                     )
 
-
             if param in flags:
                 command.append(f"--{param}")
                 commandr += f" \\\n          --{param}" % (param)
@@ -2747,7 +2746,7 @@ def gather_behavior(
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(" *, *| *\| *| +", sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r" *, *| *\| *| +", sourcefiles)]
 
     # --- check sessions
 
@@ -3132,7 +3131,7 @@ def pull_sequence_names(
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(" *, *| *\| *| +", sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r" *, *| *\| *| +", sourcefiles)]
 
     # --- check sessions
 
@@ -3297,7 +3296,7 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
 
     # -- prepare exclusion
     if mapexclude:
-        patterns = [e.strip() for e in re.split(", *", mapexclude)]
+        patterns = [e.strip() for e in re.split(r", *", mapexclude)]
         mapexclude = []
         for e in patterns:
             try:
@@ -4577,6 +4576,7 @@ def xnat_create_session_info(prep=True):
     summary += "\n\n----==== XNAT CREATE_SESSION_INFO EXECUTION END ====----\n\n"
     print(summary)
     return summary
+
 
 def xnat_create_batch(prep=True):
     """
