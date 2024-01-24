@@ -78,7 +78,7 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %                   QA_bold1_tsplot.pdf
 %
 %           fformat
-%               File format in which the plot is to be saved, pdf by default.
+%               File format in which the plot is to be saved, 'pdf' by default.
 %
 %           skip
 %               If no initial dummy scans were used during image acquisition,
