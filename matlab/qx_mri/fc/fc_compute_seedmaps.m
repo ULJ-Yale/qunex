@@ -484,9 +484,9 @@ if ismember({'none'}, options.savegroup)
 end
 
 if ismember({'all'}, options.savegroup)
-    if ismember(options.fcmeasure, {'cv', 'mi', 'coh'}) 
+    if ismember(options.fcmeasure, {'cv', 'mi', 'cc'})
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'all_r'};
-    elseif ismember(options.fcmeasure, {'r', 'rho', 'cc'})
+    elseif ismember(options.fcmeasure, {'r', 'rho', 'coh'})
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'};
     end    
 end
@@ -510,7 +510,7 @@ end
 if length(options.saveind) 
     if strcmp(options.fcmeasure, 'r')
         options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p', 'jr', 'jfz', 'jz', 'jp'});
-    elseif ismember(options.fcmeasure, {'rho', 'cc'}) 
+    elseif ismember(options.fcmeasure, {'rho', 'coh'}) 
         options.saveind = intersect(options.saveind, {'r', 'fz', 'jr', 'jfz'});
     else
         options.saveind = intersect(options.saveind, {'r', 'jr'});
@@ -828,9 +828,9 @@ if ~isempty(options.savegroup)
 
             % -- compute p-values
             if any(ismember(options.savegroup, {'group_p', 'group_z'}))
-                if ismember(fcmeasure, {'cv', 'mi', 'coh'})
+                if ismember(fcmeasure, {'cv', 'mi', 'cc'})
                     [p Z M] = fc.img_ttest_zero();
-                elseif ismember(fcmeasure, {'r', 'rho', 'cc'})
+                elseif ismember(fcmeasure, {'r', 'rho', 'coh'})
                     [p Z MFz] = fz.img_ttest_zero();
                     M = MFz.img_FisherInv();
                 end
@@ -839,9 +839,9 @@ if ~isempty(options.savegroup)
             % -- compute mean
             if any(ismember(options.savegroup, {'mean_r'})) && isempty(M)
                 M = fc.zeroframes(1);
-                if ismember(fcmeasure, {'cv', 'mi', 'coh'})
+                if ismember(fcmeasure, {'cv', 'mi', 'cc'})
                     M.data = mean(fc.data, 2);
-                elseif ismember(fcmeasure, {'r', 'rho', 'cc'})
+                elseif ismember(fcmeasure, {'r', 'rho', 'coh'})
                     MFz = fc.zeroframes(1);
                     MFz.data = mean(fz.data, 2);
                     M = MFz.img_FisherInv();
