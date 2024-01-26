@@ -10814,7 +10814,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
         if options["hcp_autoreclean_model_to_use"] is not None:
             comm += (
                 '             --model-to-use="%s"'
-                % options["hcp_autoreclean_model_to_use"]
+                % options["hcp_autoreclean_model_to_use"].replace(",", "@")
             )
 
         if options["hcp_autoreclean_vote_threshold"] is not None:
