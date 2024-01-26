@@ -557,7 +557,7 @@ arglist = [
         "hcp_regname",
         "MSMSulc",
         str,
-        "What registration is used FS or MSMSulc. FS if none is provided.",
+        "What registration is used FS or MSMSulc [MSMSulc].",
     ],
     [
         "hcp_fs_longitudinal",
