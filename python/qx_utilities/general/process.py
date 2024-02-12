@@ -1426,6 +1426,18 @@ arglist = [
         "Location of the average dataset, the output from hcp_make_average_dataset command. Set this if using the average set from another study, this is usually used in combination with REUSE_TICA mode.",
     ],
     [
+        "hcp_tica_extract_fmri_name_list",
+        "",
+        isNone,
+        "A comma separated list of list of fMRI run names to concatenate into the --hcp_tica_concat_fmri_out output after tICA cleanup.",
+    ],
+    [
+        "hcp_tica_concat_fmri_out",
+        "",
+        isNone,
+        "fMRI name for concatenated extracted runs, requires --hcp_tica_extract_fmri_name_list.",
+    ],
+    [
         "hcp_tica_config_out",
         None,
         flag,
