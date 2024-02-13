@@ -8462,7 +8462,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 "path": sinfo["hcp"],
                 "subject": sinfo["id"] + options["hcp_suffix"],
                 "fixnames": boldtargets,
-                "highresmesh": options["hcp_highresmesh"],
+                "highresmesh": options["hcp_hiresmesh"],
                 "lowresmeshes": options["hcp_lowresmeshes"].replace(",", "@"),
                 "regname": regname,
                 "maps": options["hcp_resample_maps"].replace(",", "@"),
