@@ -72,7 +72,7 @@ verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
 
 if printdebug
-    general_print_struct(options, 'Options used');
+    general_print_struct(options, 'img_get_extraction_matrices options used');
 end
 
 % ---> creating use mask
@@ -96,7 +96,6 @@ for ti = toignore
 end
 
 obj.use = useframes;
-
 
 % ----- prepare run info
 
@@ -130,9 +129,14 @@ if isnumeric(frames)
         exmat = ones(1, obj.frames);
     end
 
-    exsets.title = '';
+    % mask out frames to ignore
+    exmat(obj.use ~= 1) = 0;
+
+    exsets.title = 'timeseries';
     exsets.exdef = frames;
     exsets.exmat = exmat;
+    exsets.eind  = [1];
+    exsets.estat = sum(exmat,2);
     return
 end
 
@@ -181,6 +185,7 @@ end
 
 % ----- prepare extraction matrices
 
+c = 0;
 for n = 1:nexlists
 
     % --> extract the definition
@@ -191,8 +196,9 @@ for n = 1:nexlists
         continue
     end
     
-    exsets(n).exdef = exlist{n};
-    exsets(n).title = exdef{1};
+    c = c + 1;
+    exsets(c).exdef = exlist{n};
+    exsets(c).title = exdef{1};
 
     eventset = strtrim(regexp(exdef{2}, ',', 'split'));
     startref = exdef{3}(1);
@@ -276,7 +282,7 @@ for n = 1:nexlists
         okrows = sum(bsxfun(@and, exmat, ignore), 2) == 0;
     end
 
-    exsets(n).exmat = exmat(okrows, :);
-    exsets(n).eind  = eind(okrows);
-    exsets(n).estat = estat;
+    exsets(c).exmat = exmat(okrows, :);
+    exsets(c).eind  = eind(okrows);
+    exsets(c).estat = estat;
 end

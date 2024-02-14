@@ -108,8 +108,7 @@ end
 % --------------------------------------------------------------
 %                                                  read filelist
 
-sessions = general_read_file_list(flist);
-nsub = length(sessions);
+list = general_read_file_list(flist);
 
 % --------------------------------------------------------------
 %                                                       read roi
@@ -118,9 +117,9 @@ if isempty(parcels)
     roi = nimage.img_read_roi(roif);
     roi.data = roi.image2D;    
 elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
-    t = nimage(sessions(1).glm);
+    t = nimage(list.session(1).glm);
     if ~isfield(t.cifti, 'parcels') || isempty(t.cifti.parcels)
-        error('ERROR: The glm file lacks parcel specification! [%s]', sessions(1).glm);
+        error('ERROR: The glm file lacks parcel specification! [%s]', list.session(1).glm);
     end
     parcels = t.cifti.parcels;
     roi.roi.roinames = parcels;    
@@ -156,20 +155,20 @@ end
 % --------------------------------------------------------------
 %                                          loop through sessions
 
-for s = 1:nsub
+for s = 1:list.nsessions
 
     % ---> read GLM
 
-    if verbose, fprintf('\n---> processing session: %s', sessions(s).id); end
+    if verbose, fprintf('\n---> processing session: %s', list.session(s).id); end
 
     % glm = nimage(sessions(s).glm, [], [], verbose);
-    glm = nimage(sessions(s).glm);
+    glm = nimage(list.session(s).glm);
     glm = glm.img_extract_glm_estimates(effects, frames);
 
     % ---> update ROI
 
-    if isempty(parcels) && isfield(sessions(s), 'roi') && ~isempty(sessions(s).roi)
-        sroi = roi.img_mask_roi(sessions(s).roi);
+    if isempty(parcels) && isfield(list.session(s), 'roi') && ~isempty(list.session(s).roi)
+        sroi = roi.img_mask_roi(list.session(s).roi);
     else
         sroi = roi;
     end
@@ -182,7 +181,7 @@ for s = 1:nsub
         stats   = glm.img_extract_roi_stats(sroi);
     else
         if ~isfield(glm.cifti, 'parcels') || isempty(glm.cifti.parcels)
-            fprintf('WARNING: The glm file [%s] lacks parcel specification! Skipping session [%s]', sessions(s).glm, sessions(s).id);
+            fprintf('WARNING: The glm file [%s] lacks parcel specification! Skipping session [%s]', list.session(s).glm, list.session(s).id);
             continue
         end
 
@@ -200,7 +199,7 @@ for s = 1:nsub
                 stats(p).se      = zeros(1, glm.frames);  
             end          
         else
-            fprintf('WARNING: The glm file [%s] lacks some parcels (%s)! Skipping session [%s]', sessions(s).glm, strjoin(parcels(~ismember(parcels, glm.cifti.parcels)), ', '), sessions(s).id);
+            fprintf('WARNING: The glm file [%s] lacks some parcels (%s)! Skipping session [%s]', list.session(s).glm, strjoin(parcels(~ismember(parcels, glm.cifti.parcels)), ', '), list.session(s).id);
             continue
         end
     end
@@ -214,13 +213,13 @@ for s = 1:nsub
     if ltext
         for r = 1:nroi
             for f = 1:nframes
-                fprintf(ltext, '\n%s\t%s\t%d\t%s\t%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%d', sessions(s).id, stats(r).roiname, stats(r).roicode, glm.glm.effects{glm.glm.effect(f)}, glm.glm.frame(f), stats(r).min(f), stats(r).max(f), stats(r).mean(f), stats(r).median(f), stats(r).sd(f), stats(r).se(f), stats(r).N);
+                fprintf(ltext, '\n%s\t%s\t%d\t%s\t%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%d', list.session(s).id, stats(r).roiname, stats(r).roicode, glm.glm.effects{glm.glm.effect(f)}, glm.glm.frame(f), stats(r).min(f), stats(r).max(f), stats(r).mean(f), stats(r).median(f), stats(r).sd(f), stats(r).se(f), stats(r).N);
             end
         end
     end
     if wtext
         for f = 1:nframes
-            fprintf(wtext, '\n%s\t%s\t%s', sessions(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f));
+            fprintf(wtext, '\n%s\t%s\t%s', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f));
             for r = 1:nroi
                 fprintf(wtext, '\t%.3f', stats(r).mean(f));
             end

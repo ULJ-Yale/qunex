@@ -62,27 +62,27 @@ end
 
 if verbose, fprintf('\n\nStarting processing of %s...\n\n---> Reading in the file', flist); end
 
-[session nsessions nallfiles] = general_read_file_list(flist, verbose);
+list = general_read_file_list(flist, 'all', [], verbose);
 
-rois = ismember('roi', fields(session));
+rois = ismember('roi', fields(list.session));
 
-for s = 1:nsessions
+for s = 1:list.nsessions
 
-    if verbose, fprintf('\n\nProcessing session %s...', session(s).id); end
+    if verbose, fprintf('\n\nProcessing session %s...', list.session(s).id); end
     %   --- read in roi file
     mask = [];
     if rois
-        if ~isempty(session(s).roi)
-            if ~strfind(session(s).roi, 'none')
+        if ~isempty(list.session(s).roi)
+            if ~strfind(list.session(s).roi, 'none')
                 if verbose, fprintf('\n---> Reading mask'); end
-                mask = nimage(strfind(session(s).roi));
+                mask = nimage(strfind(list.session(s).roi));
             end
         end
     end
 
-    nfiles = length(session(s).files);
+    nfiles = length(list.session(s).files);
     for n = 1:nfiles
-        general_compute_bold_stats(session(s).files{n}, mask, target, store, scrub, verbose);
+        general_compute_bold_stats(list.session(s).files{n}, mask, target, store, scrub, verbose);
 
     end
 end

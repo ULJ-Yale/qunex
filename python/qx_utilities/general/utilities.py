@@ -19,7 +19,6 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
-import chevron
 import errno
 import shutil
 import glob
@@ -4392,11 +4391,11 @@ def xnat_load_checkpoint(file_path):
 
     if use_filter.lower() == "no":
         print("XNAT_DEFAULT_FILTERS set as 'no', skipping default filters...")
-        summary += "\XNAT_DEFAULT_FILTERS set as 'no', skipping default filters..."
+        summary += "\nXNAT_DEFAULT_FILTERS set as 'no', skipping default filters..."
 
     elif use_filter.lower() == "yes":
         print("XNAT_DEFAULT_FILTERS set as 'yes', filtering files now...")
-        summary += "\XNAT_DEFAULT_FILTERS set as 'yes', filtering files now..."
+        summary += "\nXNAT_DEFAULT_FILTERS set as 'yes', filtering files now..."
 
         if (
             "create_session_info" in file_path
@@ -4422,8 +4421,8 @@ def xnat_load_checkpoint(file_path):
     else:
         print("XNAT_DEFAULT_FILTERS value: '" + use_filter + "' unrecognized!")
         print("XNAT_DEFAULT_FILTERS must be one of: ['yes', 'no', '']")
-        summary += "\XNAT_DEFAULT_FILTERS value: '" + use_filter + "' unrecognized!"
-        summary += "\XNAT_DEFAULT_FILTERS must be one of: ['yes', 'no', '']"
+        summary += "\nXNAT_DEFAULT_FILTERS value: '" + use_filter + "' unrecognized!"
+        summary += "\nXNAT_DEFAULT_FILTERS must be one of: ['yes', 'no', '']"
 
         raise ge.CommandFailed(
             "run_recipe",

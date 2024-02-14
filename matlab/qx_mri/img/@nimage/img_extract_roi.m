@@ -14,7 +14,9 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 %   --method      method name [mean]
 %
 %                 - 'mean'      ... average value of the ROI
-%                  - 'median'    ... median value across the ROI
+%                 - 'median'    ... median value across the ROI
+%	              - 'max'       ... maximum value across the ROI
+%	              - 'min'       ... minimum value across the ROI
 %                 - 'pca'       ... first eigenvariate of the ROI
 %                 - 'threshold' ... average of all voxels above threshold
 %                 - 'maxn'      ... average of highest n voxels
@@ -45,7 +47,7 @@ method = lower(method);
 
 % ---- check method
 
-if ~ismember(method, {'mean', 'pca', 'threshold', 'maxn', 'weighted', 'median', 'all'})
+if ~ismember(method, {'mean', 'pca', 'max', 'min', 'threshold', 'maxn', 'weighted', 'median', 'all'})
     error('ERROR: Unrecognized method of computing ROI mean!')
 end
 
@@ -69,6 +71,27 @@ end
 if isa(roi, 'nimage')
     if obj.voxels ~= roi.voxels;
         error('ERROR: ROI image does not match target in dimensions!');
+    end
+elseif isa(roi, 'char') || isa(roi, 'string')
+    if startsWith(roi, 'parcels')
+        if ~isfield(obj.cifti, 'parcels') || isempty(obj.cifti.parcels)
+            error('ERROR: The file lacks parcel specification!');
+        end
+
+        parcels = strtrim(regexp(roi(9:end), ',', 'split'));
+        if length(parcels) == 1 && strcmp(parcels{1}, 'all')            
+            parcels = obj.cifti.parcels;
+        end
+        if isempty(rcodes)
+            rcodes = parcels;
+        else
+            rcodes = strtrim(regexp(rcodes, ',', 'split'));
+        end
+        [tf, rows] = ismember(rcodes, obj.cifti.parcels);
+        ts = obj.data(rows, :);
+        return
+    else
+        error('ERROR: Unknown ROI specification [%s]!', roi);
     end
 else
     roi = reshape(roi, [], 1);
@@ -131,6 +154,12 @@ for r = 1:nrois
 
         case 'median'
             ts(r, :) = median(tmp, 1);
+        
+        case 'max'
+            ts(r, :) = max(tmp, [], 1);
+
+        case 'min'
+            ts(r, :) = max(tmp, [], 1);
 
         case 'weighted'
             tmpw = weights(roi.img_roi_mask(rcodes(r)), :);

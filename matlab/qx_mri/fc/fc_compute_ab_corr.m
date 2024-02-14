@@ -1,8 +1,8 @@
-function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)
+function [] = fc_compute_ab_corr(flist, sroi, troi, frames, root, options, verbose)
 
-%``fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbose)``
+%``fc_compute_ab_corr(flist, sroi, troi, frames, root, options, verbose)``
 %
-%   Computes the correlation of each source mask voxel with each target mask
+%   Computes the correlation of each source ROI voxel with each target ROI
 %   voxel.
 %
 %   Parameters:
@@ -11,27 +11,36 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %           segmentation files, or a well strucutured string (see
 %           general_read_file_list).
 %
-%       --smask (str):
-%           Path to .names file for source mask definition.
+%       --sroi (str, nimage):
+%           Input to img_prep_roi roi parameter that defines the source ROI, 
+%           usually a path to .names file, but it can also be any other 
+%           path that results in an roi image, or an nimage object. See options
+%           parameter for behavior when there are multiple source ROI defined.
 %
-%       --tmask (str):
-%           Path to .names file for target mask roi definition.
+%       --troi (str):
+%           Input to img_prep_roi roi parameter that defines the target ROI,
+%           usually a path to .names file, but it can also be any other
+%           path that results in an roi image, or an nimage object. See options
+%           parameter for behavior when there are multiple target ROI defined.
 %
-%       --mask (int | logical | vector, default ''):
+%       --frames (int | logical | vector, default ''):
 %           Either number of frames to omit or a mask of frames to use.
 %
 %       --root (str, default ''):
 %           The root of the filename where results are to be saved.
 %
-%       --options (str, default 'g'):
-%           A string specifying what correlations to save:
+%       --options (str, default 'save:group|source_roi:1|target_roi:1'):
+%           A pipe separated '<key>:<value>|<key>:<value>' string
+%           specifying further options. The possible options are:
 %
-%           - 'g'
-%               compute mean correlation across sessions (only makes
-%               sense with the same sROI for each session)
-%
-%           - 'i'
-%               save individual sessions' results.
+%           - save : group ('group' | 'individual')
+%               Whether to compute mean correlation across sessions ('group')
+%               (only makes sense with the same sROI for each session), and/or
+%               save individual sessions' results ('individual')
+%           - source_roi : 1 (integer)
+%               In case of multiple ROI, which ones to use as source.
+%           - target_roi : 1 (integer)
+%               In case of multiple ROI, which ones to use as target.
 %
 %       --verbose (str, default 'none'):
 %           How to report the progress: 'full', 'script' or 'none'.
@@ -39,23 +48,23 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %   Output files:
 %       If group correlations are selected, the resulting files are:
 %
-%       - <root>_group_ABCor_Fz
+%       - <root>_group_ABCor_<source_roi>_<target_roi>_Fz
 %           Mean Fisher Z value across participants.
 %
-%       - <root>_group_ABCor_r
+%       - <root>_group_ABCor_<source_roi>_<target_roi>_r
 %           Mean Pearson r (converted from Fz) value across participants.
 %
 %       If individual correlations are selected, the resulting files are:
 %
-%       - <root>_<session id>_ABCor
+%       - <root>_<session id>_ABCor_<source_roi>_<target_roi>_r
 %           Pearson r correlations for the individual.
 %
 %       If root is not specified, it is taken to be the root of the flist.
 %
 %   Notes:
 %       Use the function to compute individual and/or group correlations of each
-%       smask voxel with each tmask voxel. tmask voxels are spread across the
-%       volume and smask voxels are spread across the volumes. For more details
+%       sroi voxel with each troi voxel. troi voxels are spread across the
+%       volume and sroi voxels are spread across the volumes. For more details
 %       see `img_compute_ab_correlation` - nimage method.
 %
 %   Examples:
@@ -63,9 +72,9 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 %
 %           qunex fc_compute_ab_corr \
 %               --flist='scz.list' \
-%               --smask='PFC.names' \
-%               --tmask='ACC.names' \
-%               --mask=5 \
+%               --sroi='PFC.names' \
+%               --troi='ACC.names' \
+%               --frames=5 \
 %               --root='SCZ_PFC-ACC' \
 %               --options='g' \
 %               --verbose='full'
@@ -78,7 +87,7 @@ function [] = fc_compute_ab_corr(flist, smask, tmask, mask, root, options, verbo
 if nargin < 7 || isempty(verbose), verbose = 'none'; end
 if nargin < 6 || isempty(options), options = 'g';    end
 if nargin < 5 root = []; end
-if nargin < 4 mask = []; end
+if nargin < 4 frames = []; end
 if nargin < 3 error('ERROR: At least file list, source and target masks must be specified to run fc_compute_ab_corr!'); end
 
 
@@ -116,10 +125,10 @@ if script, fprintf('\n\nStarting ...'), end
 
 if script, fprintf('\n ... listing files to process'), end
 
-[session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose);
+list = general_read_file_list(flist, 'all', [], verbose);
 
 if isempty(root)
-    root = listname;
+    root = list.listname;
 end
 
 if script, fprintf(' ... done.'), end
@@ -130,74 +139,74 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-sROI = nimage.img_read_roi(smask, session(1).roi);
-tROI = nimage.img_read_roi(tmask, session(1).roi);
+s_roi = nimage.img_prep_roi(sroi, list.session(1).roi);
+t_roi = nimage.img_prep_roi(troi, list.session(1).roi);
 
-if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
+if isempty([s_roi.roi(:).roicodes2])
     sROIload = false;
 else
     sROIload = true;
 end
 
-if length(tROI.roi.roicodes2) == 1 & length(tROI.roi.roicodes2{1}) == 0
+if isempty([t_roi.roi(:).roicodes2])
     tROIload = false;
 else
     tROIload = true;
 end
 
 if group
-    nframes = sum(sum(sROI.image2D > 0));
-    gres = sROI.zeroframes(nframes);
-    gcnt = sROI.zeroframes(1);
+    nframes = sum(sum(s_roi.image2D > 0));
+    gres = s_roi.zeroframes(nframes);
+    gcnt = s_roi.zeroframes(1);
     gcnt.data = gcnt.image2D;
 end
 
 %   --- Start the loop
 
-for s = 1:nsessions
+for s = 1:list.nsessions
 
     %   --- reading in image files
     if script, tic, end
-    if script, fprintf('\n------\nProcessing %s', session(s).id), end
+    if script, fprintf('\n------\nProcessing %s', list.session(s).id), end
     if script, fprintf('\n... reading file(s) '), end
 
     % --- check if we need to load the session region file
 
-    if ~strcmp(session(s).roi, 'none')
+    if ~strcmp(list.session(s).roi, 'none')
         if tROIload | sROIload
-            roif = nimage(session(s).roi);
+            roif = nimage(list.session(s).roi);
         end
     end
 
     if tROIload
-        tROI = nimage.img_read_roi(tmask, roif);
+        tROI = nimage.img_read_roi(troi, roif);
     end
     if sROIload
-        sROI = nimage.img_read_roi(smask, roif);
+        s_roi = nimage.img_read_roi(sroi, roif);
     end
 
     % --- load bold data
 
-    nfiles = length(session(s).files);
+    nfiles = length(list.session(s).files);
 
-    img = nimage(session(s).files{1});
-    if mask, img = img.sliceframes(mask); end
+    img = nimage(list.session(s).files{1});
+    if frames, img = img.sliceframes(frames); end
     if script, fprintf('1'), end
     if nfiles > 1
         for n = 2:nfiles
-            new = nimage(session(s).files{n});
-            if mask, new = new.sliceframes(mask); end
+            new = nimage(list.session(s).files{n});
+            if frames, new = new.sliceframes(frames); end
             img = [img new];
             if script, fprintf(', %d', n), end
         end
     end
     if script, fprintf('\n'), end
 
-    ABCor = img.img_compute_ab_correlation(sROI, tROI, method);
+    ABCor = img.img_compute_ab_correlation(s_roi, t_roi, method);
     ABCor = ABCor.unmaskimg;
 
     if indiv
-        ifile = [root '_' session(s).id '_ABCor'];
+        ifile = [root '_' list.session(s).id '_ABCor'];
         if script, fprintf('\n... saving %s\n', ifile); end
         ABCor.img_saveimage(ifile);
     end
@@ -206,7 +215,7 @@ for s = 1:nsessions
         if script, fprintf('\n... computing group results\n'); end
         gres.data = gres.data + fc_fisher(ABCor.data);
         if tROIload
-            gcnt.data = gcnt.data + tROI.image2D > 0;
+            gcnt.data = gcnt.data + t_roi.image2D > 0;
         end
     end
 
@@ -217,7 +226,7 @@ if group
     if script, fprintf('\n=======\nSaving group results'), end
 
     if ~tROIload
-        gcnt.data = (tROI.image2D > 0) .* nsessions;
+        gcnt.data = (t_roi.image2D > 0) .* list.nsessions;
     end
 
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);

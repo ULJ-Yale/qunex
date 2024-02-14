@@ -47,20 +47,21 @@ if ~exist(filename, 'file')
 end
 
 if exist(filename, 'file')
-    if v
-        fprintf('... found %s (%s)\n', description, filename);
-    end
-    ok = true;
-else
-    ok = false;
-    if create
-        mkdir(filename);
-        if v
-            fprintf('... could not find %s (%s) a new folder was created!\n', description, filename);
-        end
-    else
-        if v & (~create)
-            fprintf('... could not find %s (%s), please check your paths!\n', description, filename);
-        end
-    end
+	if v
+		fprintf('... found %s (%s)\n', description, filename);
+	end
+	ok = true;
+else	
+	if create
+		mkdir(filename);
+		if v
+			fprintf('... could not find %s (%s) a new folder was created!\n', description, filename);
+		end
+		ok = true;
+	else
+		if v
+			fprintf('... could not find %s (%s), please check your paths!\n', description, filename);
+		end
+		ok = false;
+	end
 end

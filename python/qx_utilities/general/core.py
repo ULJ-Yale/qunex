@@ -443,8 +443,11 @@ def runExternalParallel(calls, cores=None, prepend=""):
             cores=1, prepend=' ... ')
     """
 
-    if cores is None or cores in ["all", "All", "ALL"]:
-        cores = len(os.sched_getaffinity(0))
+    if cores is None or cores in ['all', 'All', 'ALL']:
+        try:
+            cores = len(os.sched_getaffinity(0))
+        except:
+            cores = multiprocessing.cpu_count()
     else:
         try:
             cores = int(cores)

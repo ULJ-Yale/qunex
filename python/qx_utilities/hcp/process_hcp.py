@@ -8462,7 +8462,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 "path": sinfo["hcp"],
                 "subject": sinfo["id"] + options["hcp_suffix"],
                 "fixnames": boldtargets,
-                "highresmesh": options["hcp_highresmesh"],
+                "highresmesh": options["hcp_hiresmesh"],
                 "lowresmeshes": options["hcp_lowresmeshes"].replace(",", "@"),
                 "regname": regname,
                 "maps": options["hcp_resample_maps"].replace(",", "@"),
@@ -9524,6 +9524,14 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             from another study, this is usually used in combination with
             REUSE_TICA mode.
 
+        --hcp_tica_extract_fmri_name_list (str, default ''):
+            A comma separated list of list of fMRI run names to concatenate into
+            the --hcp_tica_concat_fmri_out output after tICA cleanup.
+
+        --hcp_tica_concat_fmri_out (str, default ''):
+            fMRI name for concatenated extracted runs, requires
+            --hcp_tica_extract_fmri_name_list.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'.
@@ -10039,6 +10047,14 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             # hcp_tica_config_out
             if options["hcp_tica_config_out"]:
                 comm += "                    --config-out"
+
+            # hcp_tica_extract_fmri_name_list
+            if options["hcp_tica_extract_fmri_name_list"]:
+                comm += f'                    --extract-fmri-name-list="{options["hcp_tica_extract_fmri_name_list"].replace(",", "@")}"'
+
+            # hcp_tica_extract_fmri_name_list
+            if options["hcp_tica_concat_fmri_out"]:
+                comm += f'                    --concat-fmri-out="{options["hcp_tica_concat_fmri_out"]}"'
 
             # -- Report command
             if run:
@@ -10814,7 +10830,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
         if options["hcp_autoreclean_model_to_use"] is not None:
             comm += (
                 '             --model-to-use="%s"'
-                % options["hcp_autoreclean_model_to_use"]
+                % options["hcp_autoreclean_model_to_use"].replace(",", "@")
             )
 
         if options["hcp_autoreclean_vote_threshold"] is not None:
