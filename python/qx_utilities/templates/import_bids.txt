@@ -15,14 +15,14 @@
     },
     "dwi": {
         "label": ["dwi"],
-        "info":  ["acq", "run", "ses"],
-        "sort":  ["run", "acq"],
-        "tag":   ["label", "acq", "run"]
+        "info":  ["acq", "run", "ses", "dir"],
+        "sort":  ["run", "dir", "acq"],
+        "tag":   ["label", "dir", "acq", "run"]
     },
     "fmap": {
         "label": ["phasediff", "magnitude", "magnitude1", "magnitude2", "phase1", "phase2", "epi"],
         "info":  ["acq", "run", "ses", "dir"],
-        "sort":  ["run", "dir", "acq" ],
+        "sort":  ["run", "dir", "acq"],
         "tag":   ["label", "dir", "acq", "run"]
     },
     "asl": {
