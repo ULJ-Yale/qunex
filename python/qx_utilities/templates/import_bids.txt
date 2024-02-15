@@ -16,7 +16,7 @@
     "dwi": {
         "label": ["dwi"],
         "info":  ["acq", "run", "ses", "dir"],
-        "sort":  ["run", "dir", "acq"],
+        "sort":  ["dir", "run", "acq"],
         "tag":   ["label", "dir", "acq", "run"]
     },
     "fmap": {
