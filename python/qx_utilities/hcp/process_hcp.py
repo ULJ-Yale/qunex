@@ -9666,6 +9666,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_tica_fix_legacy_bias``          ``fix-legacy-bias``
             ``hcp_parallel_limit``                ``parallel-limit``
             ``hcp_tica_config_out``               ``config-out``
+            ``hcp_tica_extract_fmri_name_list``   ``extract-fmri-name-list``
+            ``hcp_tica_concat_fmri_out``          ``concat-fmri-out``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
             ===================================== ===============================
 
@@ -10052,7 +10054,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             if options["hcp_tica_extract_fmri_name_list"]:
                 comm += f'                    --extract-fmri-name-list="{options["hcp_tica_extract_fmri_name_list"].replace(",", "@")}"'
 
-            # hcp_tica_extract_fmri_name_list
+            # hcp_tica_concat_fmri_out
             if options["hcp_tica_concat_fmri_out"]:
                 comm += f'                    --concat-fmri-out="{options["hcp_tica_concat_fmri_out"]}"'
 
