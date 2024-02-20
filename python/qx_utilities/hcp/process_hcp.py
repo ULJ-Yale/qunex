@@ -9526,9 +9526,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
         --hcp_tica_extract_fmri_name_list (str, default ''):
             A comma separated list of list of fMRI run names to concatenate into
-            the --hcp_tica_concat_fmri_out output after tICA cleanup.
+            the --hcp_tica_extract_fmri_out output after tICA cleanup.
 
-        --hcp_tica_concat_fmri_out (str, default ''):
+        --hcp_tica_extract_fmri_out (str, default ''):
             fMRI name for concatenated extracted runs, requires
             --hcp_tica_extract_fmri_name_list.
 
@@ -9667,7 +9667,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_parallel_limit``                ``parallel-limit``
             ``hcp_tica_config_out``               ``config-out``
             ``hcp_tica_extract_fmri_name_list``   ``extract-fmri-name-list``
-            ``hcp_tica_concat_fmri_out``          ``concat-fmri-out``
+            ``hcp_tica_extract_fmri_out``         ``extract-fmri-out``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
             ===================================== ===============================
 
@@ -10054,9 +10054,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             if options["hcp_tica_extract_fmri_name_list"]:
                 comm += f'                    --extract-fmri-name-list="{options["hcp_tica_extract_fmri_name_list"].replace(",", "@")}"'
 
-            # hcp_tica_concat_fmri_out
-            if options["hcp_tica_concat_fmri_out"]:
-                comm += f'                    --concat-fmri-out="{options["hcp_tica_concat_fmri_out"]}"'
+            # hcp_tica_extract_fmri_out
+            if options["hcp_tica_extract_fmri_out"]:
+                comm += f'                    --extract-fmri-out="{options["hcp_tica_extract_fmri_out"]}"'
 
             # -- Report command
             if run:
