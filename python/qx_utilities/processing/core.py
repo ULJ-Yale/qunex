@@ -378,29 +378,29 @@ def getFileNames(sinfo, options):
         # ---> BET & FAST
 
         if os.path.exists(f["m111_brain"]) and not os.path.exists(f["t1_brain"]):
-            gc.linkOrCopy(f["m111_brain"], f["t1_brain"])
+            gc.link_or_copy(f["m111_brain"], f["t1_brain"])
 
         if os.path.exists(f["m111_seg"]) and not os.path.exists(f["t1_seg"]):
-            gc.linkOrCopy(f["m111_seg"], f["t1_seg"])
+            gc.link_or_copy(f["m111_seg"], f["t1_seg"])
 
         # ---> FreeSurfer
 
         if os.path.exists(f["fs_aseg_111"]) and not os.path.exists(f["fs_aseg_t1"]):
-            gc.linkOrCopy(f["fs_aseg_111"], f["fs_aseg_t1"])
+            gc.link_or_copy(f["fs_aseg_111"], f["fs_aseg_t1"])
         if os.path.exists(
             f["fs_aseg_111"].replace(".img", ".ifh")
         ) and not os.path.exists(f["fs_aseg_t1"].replace(".img", ".ifh")):
-            gc.linkOrCopy(
+            gc.link_or_copy(
                 f["fs_aseg_111"].replace(".img", ".ifh"),
                 f["fs_aseg_t1"].replace(".img", ".ifh"),
             )
 
         if os.path.exists(f["fs_aseg_333"]) and not os.path.exists(f["fs_aseg_bold"]):
-            gc.linkOrCopy(f["fs_aseg_333"], f["fs_aseg_bold"])
+            gc.link_or_copy(f["fs_aseg_333"], f["fs_aseg_bold"])
         if os.path.exists(
             f["fs_aseg_333"].replace(".img", ".ifh")
         ) and not os.path.exists(f["fs_aseg_bold"].replace(".img", ".ifh")):
-            gc.linkOrCopy(
+            gc.link_or_copy(
                 f["fs_aseg_333"].replace(".img", ".ifh"),
                 f["fs_aseg_bold"].replace(".img", ".ifh"),
             )
@@ -408,11 +408,11 @@ def getFileNames(sinfo, options):
         if os.path.exists(f["fs_aparc+aseg_111"]) and not os.path.exists(
             f["fs_aparc_t1"]
         ):
-            gc.linkOrCopy(f["fs_aparc+aseg_111"], f["fs_aparc_t1"])
+            gc.link_or_copy(f["fs_aparc+aseg_111"], f["fs_aparc_t1"])
         if os.path.exists(
             f["fs_aparc+aseg_111"].replace(".img", ".ifh")
         ) and not os.path.exists(f["fs_aparc_t1"].replace(".img", ".ifh")):
-            gc.linkOrCopy(
+            gc.link_or_copy(
                 f["fs_aparc+aseg_111"].replace(".img", ".ifh"),
                 f["fs_aparc_t1"].replace(".img", ".ifh"),
             )
@@ -420,11 +420,11 @@ def getFileNames(sinfo, options):
         if os.path.exists(f["fs_aparc+aseg_333"]) and not os.path.exists(
             f["fs_aparc_bold"]
         ):
-            gc.linkOrCopy(f["fs_aparc+aseg_333"], f["fs_aparc_bold"])
+            gc.link_or_copy(f["fs_aparc+aseg_333"], f["fs_aparc_bold"])
         if os.path.exists(
             f["fs_aparc+aseg_333"].replace(".img", ".ifh")
         ) and not os.path.exists(f["fs_aparc_bold"].replace(".img", ".ifh")):
-            gc.linkOrCopy(
+            gc.link_or_copy(
                 f["fs_aparc+aseg_333"].replace(".img", ".ifh"),
                 f["fs_aparc_bold"].replace(".img", ".ifh"),
             )
@@ -864,7 +864,7 @@ def closeLog(logfile, logname, logfolders, status, remove, r):
         if not os.path.exists(logfolder):
             os.makedirs(logfolder)
         try:
-            gc.linkOrCopy(tfile, nfile)
+            gc.link_or_copy(tfile, nfile)
             r += "\n---> logfile: %s" % (nfile)
         except:
             r += "\n---> WARNING: could not map logfile to: %s" % (nfile)

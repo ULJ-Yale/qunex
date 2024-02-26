@@ -2266,7 +2266,7 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
             run = False
 
         target_dir = os.path.join(study_folder, session)
-        gc.linkOrCopy(source_dir, target_dir, symlink=True)
+        gc.link_or_copy(source_dir, target_dir, symlink=True)
         i += 1
 
     # build the command
@@ -9848,7 +9848,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     target_dir = os.path.join(study_dir, session_name)
 
                     # link
-                    gc.linkOrCopy(source_dir, target_dir, symlink=True)
+                    gc.link_or_copy(source_dir, target_dir, symlink=True)
 
                 # check for make average dataset outputs
                 mad_file = os.path.join(
@@ -9875,7 +9875,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             if options["hcp_tica_precomputed_clean_folder"] is not None:
                 mad_dir = options["hcp_tica_precomputed_clean_folder"]
 
-            gc.linkOrCopy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
+            gc.link_or_copy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] == "compiled":
@@ -10294,7 +10294,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
                 target_dir = os.path.join(study_dir, session_name)
 
                 # link
-                gc.linkOrCopy(source_dir, target_dir, symlink=True)
+                gc.link_or_copy(source_dir, target_dir, symlink=True)
 
         # hcp_surface_atlas_dir
         surface_atlas = ""
@@ -11370,7 +11370,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         r += "\n ... T1 ready"
         report["T1"] = "present"
     else:
-        status, r = gc.linkOrCopy(
+        status, r = gc.link_or_copy(
             os.path.join(d["hcp"], "MNINonLinear", "T1w.nii.gz"),
             f["t1"],
             r,
@@ -11383,7 +11383,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         r += "\n ... highres aseg+aparc ready"
         report["hires aseg+aparc"] = "present"
     else:
-        status, r = gc.linkOrCopy(
+        status, r = gc.link_or_copy(
             os.path.join(d["hcp"], "MNINonLinear", "aparc+aseg.nii.gz"),
             f["fs_aparc_t1"],
             r,
@@ -11460,7 +11460,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     -> updated .spec file [%s]" % (sid)
                     ncp += 1
                     continue
-                if gc.linkOrCopy(sfile, tfile):
+                if gc.link_or_copy(sfile, tfile):
                     ncp += 1
                 else:
                     r += "\n     -> ERROR: could not map or copy %s" % (sfile)
@@ -11537,7 +11537,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... volume image ready"
                 else:
                     # r += "\n     ... linking volume image \n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + '.nii.gz'), f['bold'])
-                    status, r = gc.linkOrCopy(
+                    status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
                             hcp_bold_name + options["hcp_nifti_tail"] + ".nii.gz",
@@ -11553,7 +11553,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... grayordinate image ready"
                 else:
                     # r += "\n     ... linking cifti image\n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
-                    status, r = gc.linkOrCopy(
+                    status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
                             hcp_bold_name + options["hcp_cifti_tail"] + ".dtseries.nii",

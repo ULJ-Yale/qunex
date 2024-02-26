@@ -1124,11 +1124,11 @@ def pcslist(s):
     return s
 
 
-def linkOrCopy(
+def link_or_copy(
     source, target, r=None, status=None, name=None, prefix=None, symlink=False
 ):
     """
-    linkOrCopy - documentation not yet available.
+    link_or_copy - documentation not yet available.
     """
     if status is None:
         status = True

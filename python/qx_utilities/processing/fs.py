@@ -298,9 +298,9 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
 
         if options['image_target'] == 'nifti':
             if not os.path.exists(f['fs_aseg_t1']):
-                gc.linkOrCopy(f['fs_aseg_nii'], f['fs_aseg_t1'])
+                gc.link_or_copy(f['fs_aseg_nii'], f['fs_aseg_t1'])
             if not os.path.exists(f['fs_aparc_t1']):
-                gc.linkOrCopy(f['fs_aparc+aseg_nii'], f['fs_aparc_t1'])
+                gc.link_or_copy(f['fs_aparc+aseg_nii'], f['fs_aparc_t1'])
 
         # --- 4dfp path
 
@@ -418,7 +418,7 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
 
         if options['image_target'] == 'nifti':
             if not os.path.exists(f['fs_aseg_t1']):
-                gc.linkOrCopy(f['fs_aseg_nii'], f['fs_aseg_t1'])
+                gc.link_or_copy(f['fs_aseg_nii'], f['fs_aseg_t1'])
 
         # --- 4dfp path
 
