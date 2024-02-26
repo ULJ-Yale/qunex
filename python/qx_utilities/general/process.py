@@ -2017,18 +2017,18 @@ def run(command, args):
     # check if all sessions have subjects for longitudinal
     if command in lactions:
         subject_list = []
-        for session in sessions:
-            if "subject" not in session:
-                raise ge.CommandFailed(
-                    command,
-                    "Missing subject information",
-                    "%s batch file does not provide subject information for session id %s."
-                    % (options["subjects"], session["id"]),
-                    "Please check the batch file!",
-                    "Aborting processing!",
-                )
-            if session["subject"] not in subject_list:
-                subject_list.append(session["subject"])
+        if sessions is not None:
+            for session in sessions:
+                if "subject" not in session:
+                    raise ge.CommandFailed(
+                        command,
+                        "Missing subject information",
+                        f"No subject information provided for session id: {session['id']}.",
+                        "Please check the batch file!",
+                        "Aborting processing!",
+                    )
+                if session["subject"] not in subject_list:
+                    subject_list.append(session["subject"])
 
     # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, command)

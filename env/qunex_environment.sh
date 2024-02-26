@@ -538,14 +538,12 @@ do
         fi
         
         # -- Process plugin
-
         extension_name=`basename $extension`
         echo "--> Registering extension $extension_name"
 
         QUNEXEXTENSIONS="$QUNEXEXTENSIONS:$extensions_folder/$extension_name"
 
         # -- Register paths
-
         extension_root=`echo $extension_name | tr -d "_" | tr '[:lower:]' '[:upper:]'`
         echo "    ... setting ${extension_root}PATH to '$extensions_folder/$extension_name'"
         export ${extension_root}PATH="$extensions_folder/$extension_name"
@@ -557,7 +555,6 @@ do
         fi
         
         # -- Add bin folder to PATH
-
         if [ -e "$extensions_folder/$extension_name/bin" ]
         then
             echo "    ... setting ${extension_root}BIN to '$extensions_folder/$extension_name/bin'"
@@ -567,7 +564,6 @@ do
         fi
 
         # -- Add python folder to QXEXTENSIONSPY
-
         if [ -e "$extensions_folder/$extension_name/python/qx_modules" ]
         then
             QXEXTENSIONSPY="$extensions_folder/$extension_name/python":$QXEXTENSIONSPY
@@ -575,7 +571,6 @@ do
         fi
 
         # -- Add matlab folder and content to MATLABPATH
-
         if [ -e "$extensions_folder/$extension_name/matlab" ]
         then
             MATLABPATH="$extensions_folder/$extension_name/matlab":$MATLABPATH
