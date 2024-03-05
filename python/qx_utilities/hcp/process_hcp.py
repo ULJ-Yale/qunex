@@ -5315,6 +5315,13 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
             successfully.
 
+        --hcp_icafix_processingmode (str, default ''):
+            HCPStyleData (default) or LegacyStyleData, controls whether
+            --icadim-mode=fewtimepoints is allowed.
+
+        --hcp_icafix_fixonly (str, default 'FALSE'):
+            Whether to execute only the FIX step of the pipeline.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -5346,16 +5353,15 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ================================== =======================
             QuNex parameter                    HCPpipelines parameter
             ================================== =======================
-            ``hcp_icafix_highpass``            ``bandpass``
-            ``hcp_icafix_domotionreg``         ``domot``
-            ``hcp_icafix_traindata``           ``trainingdata``
-            ``hcp_icafix_threshold``           ``fix-threshold``
-            ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
+            ``hcp_icafix_highpass``            ``high-pass``
             ``hcp_icafix_domotionreg``         ``motion-regression``
             ``hcp_icafix_traindata``           ``training-file``
+            ``hcp_icafix_threshold``           ``fix-threshold``
+            ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
-            ``hcp_config``                     ``training-file``
-            ``hcp_icafix_traindata``           ``config``
+            ``hcp_config``                     ``config``
+            ``hcp_icafix_processingmode``      ``processing-mode``
+            ``hcp_icafix_fixonly``             ``fix-only``
             ``hcp_matlab_mode``                ``matlabrunmode``
             ================================== =======================
 
@@ -5856,6 +5862,12 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if options["hcp_config"] is not None:
             comm += '             --config="%s"' % options["hcp_config"]
+
+        if options["hcp_icafix_processingmode"] is not None:
+            comm += '             --processing-mode="%s"' % options["hcp_icafix_processingmode"]
+
+        if options["hcp_icafix_fixonly"] is not None:
+            comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
 
         # -- Report command
         if groupok:

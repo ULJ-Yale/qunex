@@ -263,7 +263,7 @@ bash_call_execute() {
         echo ""
         cyaneho "--- Full QuNex call for command: ${qxutil_command_to_run}"
         echo ""
-        cyaneho "gmri ${gmriinput}"
+        cyaneho "qunex ${gmriinput}"
         echo ""
         cyaneho "---------------------------------------------------------"
         echo ""

@@ -1048,6 +1048,18 @@ arglist = [
         torf,
         "Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully.",
     ],
+    [
+        "hcp_icafix_processingmode",
+        "",
+        isNone,
+        "HCPStyleData (default) or LegacyStyleData, controls whether --icadim-mode=fewtimepoints is allowed.",
+    ],
+    [
+        "hcp_icafix_fixonly",
+        "",
+        isNone,
+        "Whether to execute only the FIX step of the pipeline.",
+    ],
     ["# --- hcp_post_fix options"],
     [
         "hcp_postfix_dualscene",
@@ -2101,7 +2113,7 @@ def run(command, args):
     sout = gc.print_qunex_header()
     sout += "#\n"
     sout += "=================================================================\n"
-    sout += "gmri " + command + " \\\n"
+    sout += "qunex " + command + " \\\n"
 
     for k, v in args.items():
         sout += '  --%s="%s" \\\n' % (k, v)
