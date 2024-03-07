@@ -393,16 +393,6 @@ def check_deprecated_parameters(options, command):
             new_options["sessions"] = new_options["batchfile"]
             del new_options["batchfile"]
 
-    if remapped:
-        print("\nWARNING: Use of parameters with changed name(s)!")
-        print("         The following parameters have new names:")
-        for k in remapped:
-            print("         ... %s is now %s!" % (k, deprecated_parameters[k]))
-
-        print(
-            "         Please correct the listed parameter names in command line or batch file!"
-        )
-
     if deprecated:
         print("\nWARNING: Use of deprecated parameters!")
         print("         The following parameters are no longer used:")
