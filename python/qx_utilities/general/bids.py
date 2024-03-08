@@ -160,7 +160,7 @@ def mapToQUNEXBids(
                 sessionsList["bids"] = "open"
 
             # --> status exists
-            elif io == "File exists" and not overwrite == "yes":
+            elif io == "File exists" and not (overwrite == "yes" or overwrite == True):
                 print(prefix + "--> skipping processing of BIDS info folder")
                 sessionsList["skip"].append("bids")
                 sessionsList["bids"] = "locked"
@@ -178,7 +178,7 @@ def mapToQUNEXBids(
 
         # --> session folder exists
         elif os.path.exists(folder):
-            if overwrite == "yes":
+            if overwrite == "yes" or overwrite == True:
                 print(
                     prefix
                     + "--> bids for session %s already exists: cleaning session"
@@ -1511,7 +1511,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
     sout = gc.createSessionFile("map_bids2nii", sfolder, session, subject, overwrite)
 
     # --- open bids2nii log file
-    if overwrite == "yes":
+    if overwrite == "yes" or overwrite == True:
         mode = "w"
     else:
         mode = "a"

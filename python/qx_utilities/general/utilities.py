@@ -767,7 +767,7 @@ def create_batch(
         )
 
     if os.path.exists(targetfile):
-        if overwrite == "yes":
+        if overwrite == "yes" or overwrite == True:
             print(
                 "WARNING: target file %s already exists!"
                 % (os.path.abspath(targetfile))
@@ -805,7 +805,7 @@ def create_batch(
         # --- initalize slist
         slist = []
 
-        if overwrite == "yes":
+        if overwrite == "yes" or overwrite == True:
             print(
                 "---> Creating file %s [%s]"
                 % (os.path.basename(targetfile), targetfile)
@@ -833,7 +833,7 @@ def create_batch(
             jfile = open(targetfile, "a")
 
         # --- check for param file
-        if overwrite == "yes" or not preexist:
+        if overwrite == "yes" or overwrite == True or not preexist:
             if paramfile is None:
                 paramfile = os.path.join(sessionsfolder, "specs", "parameters.txt")
                 if not os.path.exists(paramfile):
@@ -860,6 +860,7 @@ def create_batch(
                 print(
                     "---> parameter files does not exist, skipping [%s]." % (paramfile)
                 )
+            jfile.write("\n")
 
         # -- get list of sessions folders
         missing = 0
@@ -1307,7 +1308,7 @@ def create_list(
         print(
             "WARNING: Target list file %s already exists!" % (os.path.abspath(listfile))
         )
-        if overwrite == "yes":
+        if overwrite == "yes" or overwrite == True:
             print("         Overwriting the exisiting file.")
         elif overwrite == "append":
             print("         Appending to the exisiting file.")
@@ -1436,7 +1437,7 @@ def create_list(
 
     # --- write to target file
 
-    if overwrite == "yes":
+    if overwrite == "yes" or overwrite == True:
         print("---> Creating file %s" % (os.path.basename(listfile)))
         lfile = open(listfile, "w")
         gc.print_qunex_header(file=lfile)
@@ -1786,7 +1787,7 @@ def create_conc(
                 "     WARNING: Conc file %s already exists!"
                 % (os.path.abspath(concfile))
             )
-            if overwrite == "yes":
+            if overwrite == "yes" or overwrite == True:
                 print("              Overwriting the exisiting file.")
             elif overwrite == "no":
                 print("              Skipping this conc file.")
@@ -1797,7 +1798,7 @@ def create_conc(
 
         # --- write to target file
 
-        if overwrite == "yes":
+        if overwrite == "yes" or overwrite == True:
             print(
                 "     ... creating %s with %d files"
                 % (os.path.basename(concfile), len(files))
