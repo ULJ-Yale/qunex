@@ -66,7 +66,7 @@ switch  img.hdrnifti.datatype
     case 4
         datatype = 'int16';
     case 8
-        datatype = 'int32'
+        datatype = 'int32';
     case 16
         datatype = 'single';
     case 64
@@ -79,8 +79,6 @@ switch  img.hdrnifti.datatype
         datatype = 'uint32';
     case 1024
         datatype = 'int64';
-    case 1280
-        datatype = 'uint64';
     case 1280
         datatype = 'uint64';
     otherwise

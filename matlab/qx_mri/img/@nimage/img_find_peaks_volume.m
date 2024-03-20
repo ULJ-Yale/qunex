@@ -116,7 +116,7 @@ elseif verbose == 2
 end
 
 % --- parse options argument
-options_parsed = general_parse_options([],options);
+options_parsed = general_parse_options([], options);
 if ~isfield(options_parsed,'frames')
     options_parsed.frames = 1;
 end
@@ -145,7 +145,7 @@ else
     for fr = frames
         if verbose, fprintf('\n---> performing ROI on frame %d', fr); end
         img_temp.data = img.data(:,fr);
-        [img_temp, p_temp] = img_temp.img_find_peaks_volume(minsize, maxsize, val, t, verbose_pass);
+        [img_temp, p_temp] = img_temp.img_find_peaks_volume(minsize, maxsize, val, t, options, verbose_pass);
         roi.data(:,fr)=img_temp.image2D();
         peak{fr} = p_temp;
     end
