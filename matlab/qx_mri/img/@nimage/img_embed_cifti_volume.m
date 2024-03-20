@@ -35,7 +35,7 @@ vol_img.data = vol_img.image2D;
 % remap the values from the NIfTI to CIFTI-2 nimage
 for i = 1:1:numel(img.cifti.shortnames)
     if strcmp(cifti.(lower(img.cifti.shortnames{i})).type, 'Volume')
-        img.data(img.cifti.start(i):img.cifti.end(i),:) = vol_img.data(components.indexMask == i,:);
+        img.data(img.cifti.start{i}:img.cifti.end{i},:) = vol_img.data(components.indexMask == i,:);
     end
 end
 

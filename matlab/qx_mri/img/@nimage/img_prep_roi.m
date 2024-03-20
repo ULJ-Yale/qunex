@@ -608,7 +608,48 @@ function [roi] = process_label(roi, options)
 %                                                                                process_parcel
 
 function [img] = process_parcel(roi, options)
-    error('\nERROR: processing parcel files not yet implemented!');
+
+    roi = roi.selectframes(1);
+    nparcels = length(roi.cifti.parcels);
+    roi.data = [1:nparcels]';
+
+    % TODO
+    % -> expand parcels to full cifti image
+    % -> get indices for each key in the full cifti image
+
+    error('ERROR: Processing parcel images is not yet implemented!');
+
+
+    img = nimage('dscalar:1');
+
+    for p = 1:length(roi.cifti.parcels)
+        
+        % --> set basic info
+        img.roi(p).roiname   = roi.cifti.metadata.diminfo{1}.parcels(p).name;
+        img.roi(p).roicode   = p;
+        img.roi(p).roicodes1 = {p};
+        img.roi(p).roicodes2 = {};
+        img.roi(p).map       = roi.rootfilename;
+        img.roi(p).indeces   = [];
+        img.roi(p).weights   = [];
+
+        nmodels = length(img.cifti.metadata.diminfo{1}.models);
+
+        % --> process surfs
+        for s = 1:length(roi.cifti.metadata.diminfo{1}.parcels(p).surfs)
+            sname    = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).struct;
+            sindeces = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).vertlist;
+            for tm = 1:nmodels
+                if strcmpi(sname, img.cifti.metadata.diminfo{1}.models{tm}.struct)
+                    img.roi(p).indeces = [img.roi(p).indeces sindeces + img.cifti.metadata.diminfo{1}.models{tm}.start];                    
+                end
+            end
+        end
+        % --> process vols
+
+        img.data(img.roi(p).indeces) = p;
+    end
+
 
 
 % --------------------------------------------------------------------------------------------

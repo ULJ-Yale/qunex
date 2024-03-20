@@ -31,7 +31,7 @@ function [mask] = img_roi_mask(img, roi)
 img.data = img.image2D;
 
 if nargin < 2 || isempty(roi)
-    mask = sum(img.data, 2) > 0
+    mask = sum(img.data, 2) > 0;
     return
 end
 
