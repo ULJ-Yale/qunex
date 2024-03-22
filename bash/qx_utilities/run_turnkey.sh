@@ -364,7 +364,7 @@ Notes:
         Most turnkey steps have exact matching qunex commands with several
         exceptions that fall into two categories:
 
-        * ``map_raw_data``  step is only relevant to `run_turnkey`, which maps
+        * ``map_raw_data`` step is only relevant to ``run_turnkey``, which maps
           files on a local filesystem or in XNAT to the study folder.
         * ``run_qc*`` and ``compute_bold_fc*`` are two groups of turnkey steps that
           have qunex commands as their prefixes. The suffixes of these commands

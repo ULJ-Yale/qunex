@@ -1146,12 +1146,10 @@ is_qunex_command() {
     for qunex_command in $qunex_commands; do
         if [[ $qunex_command == $1 ]]; then
             is_qunex_command=1
+            break
         fi
     done
-    if [[ $is_qunex_command == 1 ]]; then
-        show_usage_"$1"
-        exit 0
-    else
+    if [[ $is_qunex_command == 0 ]]; then
         echo ""
         reho "ERROR: $1 --> Requested command is not supported. Refer to general QuNex usage."
         echo ""
