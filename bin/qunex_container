@@ -1146,8 +1146,14 @@ def main(args=None):
             if i < len(sessionids_array):
                 if not old_sessions_naming:
                     qx_command += '--sessions="%s" ' % (sessionids_array[i])
+                    # run_turnkey requires both
+                    if "run_turnkey" in qx_command:
+                        qx_command += '--sessionids="%s" ' % (sessionids_array[i])
                 else:
                     qx_command += '--sessionids="%s" ' % (sessionids_array[i])
+                    # run_turnkey requires both
+                    if "run_turnkey" in qx_command:
+                        qx_command += '--sessions="%s" ' % (sessionids_array[i])
 
             # setup script
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -1231,7 +1237,6 @@ def main(args=None):
                     conimage,
                     script_path,
                 )
-
             if scheduler:
                 schedule(
                     command=container_command,
