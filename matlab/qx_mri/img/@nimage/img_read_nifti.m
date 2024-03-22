@@ -326,7 +326,7 @@ if mi > 0
 
             if strcmp(img.imageformat, 'CIFTI-2')
                 img.cifti.metadata = cifti_read_metadata(cast(img.meta(m).data, 'char')', img.hdrnifti, img.filename);
-
+                
                 % -- get parcel or structure info
                 if strcmp(img.cifti.metadata.diminfo{1}.type, 'parcels')
                     img.cifti.parcels = {img.cifti.metadata.diminfo{1}.parcels.name};
@@ -344,7 +344,7 @@ if mi > 0
                 if strcmp(img.cifti.metadata.diminfo{2}.type, 'scalars')
                     img.cifti.maps = {img.cifti.metadata.diminfo{2}.maps.name};
                 elseif strcmp(img.cifti.metadata.diminfo{2}.type, 'series')
-                    TR = img.cifti.metadata.diminfo{2}.seriesStep;
+                    img.TR = img.cifti.metadata.diminfo{2}.seriesStep;
                 elseif strcmp(img.cifti.metadata.diminfo{2}.type, 'labels')
                     img.cifti.maps = {img.cifti.metadata.diminfo{2}.maps.name};
                     for imap = 1:length(img.cifti.metadata.diminfo{2}.maps);
