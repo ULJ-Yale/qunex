@@ -677,7 +677,7 @@ def create_batch(
                    institution: MR Imaging Center New Amsterdam
                    device: Siemens|Prisma_fit|123456
 
-                   --hcp_brain_size: 150
+                   --hcp_brainsize: 150
                    --hcp_fs_no_conf2hires: TRUE
 
                    01: Survey
@@ -690,7 +690,7 @@ def create_batch(
                    08: bold2:task:      BOLD 3mm 48 2.5s          : se(1): phenc(PA): EchoSpacing(0.0006029): filename(task1_PA)
                    09: bold2:task:      BOLD 3mm 48 2.5s          : se(1): phenc(PA): EchoSpacing(0.0006029): filename(task2_PA)
 
-                In the above example, ``_hcp_brain_size: 150`` and
+                In the above example, ``_hcp_brainsize: 150`` and
                 ``_hcp_fs_no_conf2hires: TRUE`` are specified for session
                 ``OP386_baseline`` specifically. The specified values would
                 take precedence over any other value specified either in the
