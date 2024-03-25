@@ -2126,6 +2126,7 @@ def run_recipe(
                 "logfolder"
             ]
     runlogfolder = os.path.join(logfolder, "runlogs")
+    comlogfolder = os.path.join(logfolder, "comlogs")
 
     # create folder if it does not exist
     if not os.path.isdir(runlogfolder):
@@ -2191,173 +2192,231 @@ def run_recipe(
             command_name = com
             command_parameters = {}
 
-        # override params with those from eargs (passed because of parallelization on a higher level)
-        if eargs is not None:
-            # do not add parameter if it is flagged as removed
-            for k in eargs:
-                if k in ["parsessions", "parelements"]:
-                    if k in command_parameters:
-                        command_parameters[k] = str(
-                            min([int(e) for e in [eargs[k], command_parameters[k]]])
-                        )
-                else:
-                    command_parameters[k] = eargs[k]
-
-        # append global and recipe parameters
-        for parameter, value in parameters.items():
-            if parameter not in command_parameters:
-                command_parameters[parameter] = value
-
-        # remove parameters that are not allowed
-        import general.commands as gcom
-
-        if command_name in gcom.commands:
-            allowed_parameters = list(gcom.commands.get(command_name)["args"])
-            if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
-                allowed_parameters += gcs.extra_parameters
-
-            new_parameters = command_parameters.copy()
-            for param in command_parameters.keys():
-                if param not in allowed_parameters:
-                    del new_parameters[param]
-            command_parameters = new_parameters
-
-        # XNAT individual command prep, creates _in checkpoint
-        if os.environ.get("XNAT", "") == "yes":
-            print("Attemping XNAT specific setup...", file=log)
-            possibles = globals().copy()
-            possibles.update(locals())
-            # XNAT helper functions for individual commands must be in format xnat_ + command_name
-            xnat_command = possibles.get("xnat_" + command_name)
-            if not xnat_command:
-                print("\n------------------------", file=log)
-                print(
-                    "\nNo XNAT setup method detected for: "
-                    + command_name
-                    + ", continuing...",
-                    file=log,
+        # executing a custom script
+        if command_name == "script":
+            script_path = command_parameters
+            print(f"===> Running script: {script_path}")
+            print(f"===> Running script: {script_path}", file=log)
+            if not os.path.exists(script_path):
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script not found",
+                    f"Script not found [{script_path}]",
+                    "Please check the script path!",
                 )
-                print("\n------------------------", file=log)
+
+            # log
+            script_name = os.path.basename(script_path)
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+            log_path = os.path.join(
+                comlogfolder,
+                f"tmp_{script_name}_{command_name}_{timestamp}.log",
+            )
+
+            # prep command
+            command = ["bash", script_path]
+
+            # create comlogfolder folder if needed
+            if not os.path.isdir(comlogfolder):
+                print(f"    ... creating log folder [{comlogfolder}]")
+                print(f"    ... creating log folder [{comlogfolder}]", file=log)
+                os.makedirs(comlogfolder)
+
+            # run the command with subprocess Popen
+            with open(log_path, "w", encoding="UTF-8") as log_file:
+                process = subprocess.Popen(
+                    command, stdout=log_file, stderr=subprocess.STDOUT
+                )
+                process.communicate()
+
+            # Get the exit code
+            exit_code = process.returncode
+
+            if exit_code != 0:
+                error_log = log_path.replace("tmp_", "error_")
+                print(f"    ... failed [{script_path}], see [{error_log}]")
+                print(f"    ... failed [{script_path}], see [{error_log}]", file=log)
+                os.rename(log_path, error_log)
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script failed",
+                    f"Script failed [{script_path}]",
+                    "Please check the log for details!",
+                )
             else:
-                print(xnat_command(prep=True), file=log)
-            print("Making checkpoint IN...", file=log)
-            print("Making checkpoint IN...")
-            xnat_make_checkpoint(
-                command_name + "_in",
-                tag=os.environ.get("XNAT_CHECKPOINT_TAG", "timestamp"),
-            )
+                done_log = log_path.replace("tmp_", "done_")
+                print(f"    ... done [{script_path}], see [{done_log}]")
+                print(f"    ... done [{script_path}], see [{done_log}]", file=log)
+                os.rename(log_path, done_log)
 
-        # setup command
-        command = ["qunex"]
-        command.append(command_name)
-        commandr = (
-            "\n--------------------------------------------\n===> Running command:\n\n     qunex "
-            + command_name
-        )
-
-        for param, value in command_parameters.items():
-            # inject mustache marked values
-            if (
-                type(value) == str
-                and len(value) > 0
-                and "{{" in value
-                and "}}" in value
-            ):
-                label = value.strip("{{").strip("}}")
-                if label in eargs:
-                    value = eargs[label]
-                elif label[1:] in os.environ:
-                    value = os.environ[label[1:]]
-                else:
-                    raise ge.CommandFailed(
-                        "run_recipe",
-                        f"Cannot inject values marked with double curly braces in the recipe. Label not found in the parameters or in system environment variables.",
-                    )
-
-            if param in flags:
-                command.append(f"--{param}")
-                commandr += f" \\\n          --{param}" % (param)
-            else:
-                command.append(f"--{param}={value}")
-                commandr += f" \\\n          --{param}='{value}'"
-
-        # warn if scheduler was used in the recipe file
-        if "scheduler" in command_parameters:
-            print(
-                f"\nWARNING: the scheduler parameter defined in the recipe file will be ignored. Scheduling needs to be defined at the command call level."
-            )
-
-        print(commandr)
-        print(commandr, file=log)
-
-        # run command
-        process = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
-        )
-
-        # Poll process for new output until finished
-        error = False
-        logging = verbose
-
-        for line in iter(process.stdout.readline, b""):
-            line = line.decode("utf-8")
-            if (
-                "ERROR in completing" in line
-                or "ERROR:" in line
-                or "failed with error" in line
-            ):
-                error = True
-            if "Final report" in line:
-                if not verbose:
-                    print("", file=log)
-                logging = True
-
-            # print
-            if logging:
-                print(line, end=" ", file=log)
-                log.flush()
-
-        if error:
-            summary += f"\n ... command {command_name} FAILED"
-            summary += "\n\n----------==== END SUMMARY ====----------"
-            print(summary, file=log)
-            print(
-                f"\n---> run_recipe not completed successfully: failed running command {command_name}",
-                file=log,
-            )
-            log.close()
-            raise ge.CommandFailed(
-                "run_recipe",
-                "run_recipe command failed",
-                f"Command {command_name} inside recipe {recipe} failed",
-                "See error logs in the study folder for details",
-            )
         else:
-            summary += f"\n---> command {command_name} OK"
-            print(
-                f"===> Successful completion of the run_recipe command {command_name}\n"
+            # override params with those from eargs (passed because of parallelization on a higher level)
+            if eargs is not None:
+                # do not add parameter if it is flagged as removed
+                for k in eargs:
+                    if k in ["parsessions", "parelements"]:
+                        if k in command_parameters:
+                            command_parameters[k] = str(
+                                min([int(e) for e in [eargs[k], command_parameters[k]]])
+                            )
+                    else:
+                        command_parameters[k] = eargs[k]
+
+            # append global and recipe parameters
+            for parameter, value in parameters.items():
+                if parameter not in command_parameters:
+                    command_parameters[parameter] = value
+
+            # remove parameters that are not allowed
+            import general.commands as gcom
+
+            if command_name in gcom.commands:
+                allowed_parameters = list(gcom.commands.get(command_name)["args"])
+                if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
+                    allowed_parameters += gcs.extra_parameters
+
+                new_parameters = command_parameters.copy()
+                for param in command_parameters.keys():
+                    if param not in allowed_parameters:
+                        del new_parameters[param]
+                command_parameters = new_parameters
+
+            # XNAT individual command prep, creates _in checkpoint
+            if os.environ.get("XNAT", "") == "yes":
+                print("Attemping XNAT specific setup...", file=log)
+                possibles = globals().copy()
+                possibles.update(locals())
+                # XNAT helper functions for individual commands must be in format xnat_ + command_name
+                xnat_command = possibles.get("xnat_" + command_name)
+                if not xnat_command:
+                    print("\n------------------------", file=log)
+                    print(
+                        "\nNo XNAT setup method detected for: "
+                        + command_name
+                        + ", continuing...",
+                        file=log,
+                    )
+                    print("\n------------------------", file=log)
+                else:
+                    print(xnat_command(prep=True), file=log)
+                print("Making checkpoint IN...", file=log)
+                print("Making checkpoint IN...")
+                xnat_make_checkpoint(
+                    command_name + "_in",
+                    tag=os.environ.get("XNAT_CHECKPOINT_TAG", "timestamp"),
+                )
+
+            # setup command
+            command = ["qunex"]
+            command.append(command_name)
+            commandr = (
+                "\n--------------------------------------------\n===> Running command:\n\n     qunex "
+                + command_name
             )
 
-        # XNAT individual command cleanup, creates _out checkpoint
-        if os.environ.get("XNAT", "") == "yes":
-            print("Attempting Xnat specific cleanup...", file=log)
-            if not xnat_command:
-                print("\n------------------------")
+            for param, value in command_parameters.items():
+                # inject mustache marked values
+                if (
+                    type(value) == str
+                    and len(value) > 0
+                    and "{{" in value
+                    and "}}" in value
+                ):
+                    label = value.strip("{{").strip("}}")
+                    if label in eargs:
+                        value = eargs[label]
+                    elif label[1:] in os.environ:
+                        value = os.environ[label[1:]]
+                    else:
+                        raise ge.CommandFailed(
+                            "run_recipe",
+                            f"Cannot inject values marked with double curly braces in the recipe. Label not found in the parameters or in system environment variables.",
+                        )
+
+                if param in flags:
+                    command.append(f"--{param}")
+                    commandr += f" \\\n          --{param}" % (param)
+                else:
+                    command.append(f"--{param}={value}")
+                    commandr += f" \\\n          --{param}='{value}'"
+
+            # warn if scheduler was used in the recipe file
+            if "scheduler" in command_parameters:
                 print(
-                    "\nNo Xnat cleanup method detected for: "
-                    + command_name
-                    + ", continuing...",
+                    f"\nWARNING: the scheduler parameter defined in the recipe file will be ignored. Scheduling needs to be defined at the command call level."
+                )
+
+            print(commandr)
+            print(commandr, file=log)
+
+            # run command
+            process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
+            )
+
+            # Poll process for new output until finished
+            error = False
+            logging = verbose
+
+            for line in iter(process.stdout.readline, b""):
+                line = line.decode("utf-8")
+                if (
+                    "ERROR in completing" in line
+                    or "ERROR:" in line
+                    or "failed with error" in line
+                ):
+                    error = True
+                if "Final report" in line:
+                    if not verbose:
+                        print("", file=log)
+                    logging = True
+
+                # print
+                if logging:
+                    print(line, end=" ", file=log)
+                    log.flush()
+
+            if error:
+                summary += f"\n ... command {command_name} FAILED"
+                summary += "\n\n----------==== END SUMMARY ====----------"
+                print(summary, file=log)
+                print(
+                    f"\n---> run_recipe not completed successfully: failed running command {command_name}",
                     file=log,
                 )
-                print("\n------------------------")
+                log.close()
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "run_recipe command failed",
+                    f"Command {command_name} inside recipe {recipe} failed",
+                    "See error logs in the study folder for details",
+                )
             else:
-                print(xnat_command(prep=False), file=log)
-            print("Making checkpoint OUT...", file=log)
-            print("Making checkpoint OUT...")
-            xnat_make_checkpoint(
-                command_name + "_out",
-                tag=os.environ.get("XNAT_CHECKPOINT_TAG", "timestamp"),
-            )
+                summary += f"\n---> command {command_name} OK"
+                print(
+                    f"===> Successful completion of the run_recipe command {command_name}\n"
+                )
+
+            # XNAT individual command cleanup, creates _out checkpoint
+            if os.environ.get("XNAT", "") == "yes":
+                print("Attempting Xnat specific cleanup...", file=log)
+                if not xnat_command:
+                    print("\n------------------------")
+                    print(
+                        "\nNo Xnat cleanup method detected for: "
+                        + command_name
+                        + ", continuing...",
+                        file=log,
+                    )
+                    print("\n------------------------")
+                else:
+                    print(xnat_command(prep=False), file=log)
+                print("Making checkpoint OUT...", file=log)
+                print("Making checkpoint OUT...")
+                xnat_make_checkpoint(
+                    command_name + "_out",
+                    tag=os.environ.get("XNAT_CHECKPOINT_TAG", "timestamp"),
+                )
 
     summary += "\n\n----------==== END SUMMARY ====----------"
 

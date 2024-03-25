@@ -289,12 +289,21 @@ def get_sessions_list(
     elif os.path.isfile(listString):
         slist, gpref = read_session_data(listString, verbose=verbose)
 
-    elif re.match(r".*\.txt$", listString) or "/" in listString:
+    elif (
+        re.match(r".*\.txt$", listString) or "/" in listString
+    ) and sessionids is None:
         raise ValueError(
-            "ERROR: The specified session file is not found! [%s]!" % listString
+            f"ERROR: The specified session file is not found and sessionids are not provided! [{listString}]!"
         )
 
     else:
+        if (
+            re.match(r".*\.txt$", listString)
+            or "/" in listString
+            and sessionids is not None
+        ):
+            listString = sessionids
+
         slist = [e.strip() for e in re.split(r" +|,|\|", listString)]
 
         if sessionsfolder is None:
@@ -306,6 +315,7 @@ def get_sessions_list(
                 nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{"id": os.path.basename(e)} for e in nlist]
 
+    # filter with sessionids
     if sessionids is not None and sessionids.strip() != "":
         sessionids = re.split(r" +|,|\|", sessionids)
         filtered_slist = []
@@ -317,6 +327,7 @@ def get_sessions_list(
 
         slist = filtered_slist
 
+    # filter with filter
     if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(":")] for e in filter.split("|")]
@@ -443,7 +454,7 @@ def runExternalParallel(calls, cores=None, prepend=""):
             cores=1, prepend=' ... ')
     """
 
-    if cores is None or cores in ['all', 'All', 'ALL']:
+    if cores is None or cores in ["all", "All", "ALL"]:
         try:
             cores = len(os.sched_getaffinity(0))
         except:
