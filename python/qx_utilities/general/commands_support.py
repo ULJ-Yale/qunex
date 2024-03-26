@@ -435,7 +435,7 @@ def impute_parameters(options, command):
 #                                                               EXTRA PARAMETERS
 #
 
-extra_parameters = ['batchfile', 'sessions', 'sessionids', 'filter', 'sessionid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash']
+extra_parameters = ['batchfile', 'sessions', 'sessionids', 'filter', 'sessionid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash', 'existing_study']
 
 
 # ==============================================================================

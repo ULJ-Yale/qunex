@@ -81,6 +81,8 @@ all_qunex_commands = [
      "Create BOLD movement statistic reports and plots.",                                        "python"),
     ("qx_utilities.general.utilities.create_study",
      "Creates the base study folder structure.",                                                 "python"),
+    ("qx_utilities.general.utilities.copy_study",
+     "Copies an existing QuNex study into a new one.",                                           "python"),
     ("qx_utilities.general.palm.create_ws_palm_design",             "Prepares the design file.",
      "python"),
     ("qx_utilities.bash.dwi_bedpostx_gpu",

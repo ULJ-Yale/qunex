@@ -351,19 +351,19 @@ def create_study(studyfolder=None, folders=None):
             │   └── hcpls
             └── sessions
                 ├── inbox
-                │   ├── MR
-                │   ├── EEG
-                │   ├── BIDS
-                │   ├── HCPLS
-                │   ├── behavior
-                │   ├── concs
-                │   └── events
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   ├── behavior
+                │   ├── concs
+                │   └── events
                 ├── archive
-                │   ├── MR
-                │   ├── EEG
-                │   ├── BIDS
-                │   ├── HCPLS
-                │   └── behavior
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   └── behavior
                 ├── specs
                 └── QC
 
@@ -388,6 +388,144 @@ def create_study(studyfolder=None, folders=None):
 
     manage_study(studyfolder=studyfolder, action="create",
                  folders=folders, verbose=True)
+
+
+def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=None, filter=None):
+    """
+    ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [step=None] [sessions=None] [batchfile=None] [filter=None] ``
+
+    Copies an existing QuNex study onto a new location.
+
+    Parameters:
+        --studyfolder (str):
+            The path to the study folder to be generated.
+
+        --existing_study (str):
+            The path of an existing QuNex study that will be copied.
+
+        --step (str, default None):
+            The step which will be executed next, if provided only a subset of
+            data will be copied in some cases.
+
+        --sessions (str, default None):
+            If provided, only the specified sessions from the sessions folder
+            will be processed. They are to be specified as a comma separated
+            list.
+
+        --batchfile (str, default None):
+            If provided, only the sessions specified in the batch file will be
+            processed.
+
+        --filter (str, default None):
+            An optional parameter given as "key:value|key:value" string. Can be
+            used for filtering the session data within the provided batchfile.
+
+    Notes:
+        Can be used for backing up existing studies or when copying previous
+        study to continue with the processing or an analysis in a new study
+        folder. If sessions parameter is provided only a subset of sessions will
+        be copied over. If batchfile is provided, only the sessions specified
+        in the batch file will be copied. If filter is provided, it will be
+        applied to the provided batchfile before copying the study.
+
+    Examples:
+        ::
+
+            qunex copy_study \\
+                --studyfolder=/Volumes/data/studies/WM.v4 \\
+                --existing_study=/Volumes/data/studies/WM.v3
+    """
+
+    print("Running copy_study\n==================\n")
+
+    # check if mandatory parameters are provided
+    print()
+    print("===> Checking input parameters")
+    if studyfolder is None:
+        raise ge.CommandError("copy_study", "No studyfolder specified",
+                              "Please provide path for the new study folder using the studyfolder parameter!")
+    print(f" ... studyfolder: {studyfolder}")
+
+    if existing_study is None:
+        raise ge.CommandError("copy_study", "No existing_study specified",
+                              "Please provide path of an existing QuNex study by using the existing_study parameter!")
+    print(f" ... existing_study: {existing_study}")
+
+    # check if the source folder is a QuNex study
+    if not os.path.exists(os.path.join(existing_study, ".qunexstudy")):
+        raise ge.CommandError("copy_study", "Existing study is not a QuNex study",
+                              "The existing study folder does not contain a .qunexstudy file. Please provide a valid QuNex study folder.")
+
+    # if filter is provided, we need the batchfile as well
+    if filter is not None and batchfile is None:
+        raise ge.CommandError("copy_study", "Filter provided, but no batchfile specified",
+                              "Please provide the path to the batch file using the batchfile parameter.")
+
+    # other parameters
+    print(f" ... step: {step}")
+    print(f" ... sessions: {sessions}")
+    print(f" ... batchfile: {batchfile}")
+    print(f" ... filter: {filter}")
+
+    # create a new study at the specified location
+    create_study(studyfolder=studyfolder)
+
+    # copy analysis, processing, info folders as they are
+    print()
+    print("===> Copying top-level folders")
+    for folder in ["analysis", "processing", "info"]:
+        src = os.path.join(existing_study, folder)
+        dst = os.path.join(studyfolder, folder)
+        print(f" ... copying {src}")
+        shutil.copytree(src, dst, dirs_exist_ok=True)
+
+    # copy inbox, archive, specs and QC folders inside sessions
+    for folder in ["inbox", "archive", "specs", "QC"]:
+        src = os.path.join(existing_study, "sessions", folder)
+        dst = os.path.join(studyfolder, "sessions", folder)
+        print(f" ... copying {src}")
+        shutil.copytree(src, dst, dirs_exist_ok=True)
+
+    # get sessions
+    if batchfile is not None:
+        sessions, _ = gc.get_sessions_list(batchfile, filter=filter, sessionids=sessions)
+    elif sessions is not None:
+        sessions = sessions.split(",")
+
+    # copy sessions
+    print()
+    print("===> Copying sessions")
+    for session in sessions:
+        src = os.path.join(existing_study, "sessions", session)
+        dst = os.path.join(studyfolder, "sessions", session)
+        print(f" ... copying {session}")
+
+        # copy all files and folder from src to dst, with the exception of the hcp folder
+        for item in os.listdir(src):
+            if os.path.isfile(os.path.join(src, item)):
+                shutil.copy2(os.path.join(src, item), os.path.join(dst, item))
+            elif item != "hcp":
+                shutil.copytree(os.path.join(src, item), os.path.join(dst, item), dirs_exist_ok=True)
+
+        # only copy hcp folder if "hcp_" in steps but not if steps is hcp_pre_freesurfer
+        if step is None or ("hcp_" in step and step != "hcp_pre_freesurfer"):
+            src = os.path.join(existing_study, "sessions", session, "hcp")
+            dst = os.path.join(studyfolder, "sessions", session)
+            shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+
+    # fix paths in txt, conc and list files
+    print()
+    print("===> Fixing paths in relevant files")
+    for root, _, files in os.walk(studyfolder):
+        for file in files:
+            if file.endswith(".txt") or file.endswith(".conc") or file.endswith(".list"):
+                with open(os.path.join(root, file), "r") as f:
+                    lines = f.readlines()
+                with open(os.path.join(root, file), "w") as f:
+                    for line in lines:
+                        f.write(line.replace(existing_study, studyfolder))
+
+    # TODO remove unused sessions from batch files
 
 
 def check_study(startfolder=".", folders=None):
@@ -417,7 +555,6 @@ def check_study(startfolder=".", folders=None):
         manage_study(studyfolder=studyfolder, action="check", folders=folders)
 
     return studyfolder
-
 
 def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
     """
@@ -1606,7 +1743,7 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
         # --- write to target file
 
         if overwrite == 'yes':
-            print("     ... creating %s with %d files" %
+            print("  ... creating %s with %d files" %
                   (os.path.basename(concfile), len(files)))
             cfile = open(concfile, 'w')
 
@@ -2216,12 +2353,12 @@ def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number'
                         batch.txt file) to process. It can be a single
                         type (e.g. 'task'), a pipe separated list (e.g.
                         'WM|Control|rest') or 'all' to process all.
-    --output        ... Whether to output numbers ('number') or bold names 
+    --output     ... Whether to output numbers ('number') or bold names 
                         ('name'). In the latter case the name will be extracted
                         from the 'filename' specification, if provided in the 
                         batch file, or '<prefix>[N]' if 'filename' is not 
                         specified.
-    --prefix        ... The default prefix to use if a filename is not specified
+    --prefix     ... The default prefix to use if a filename is not specified
                         in the batch file.
     """
 
@@ -3202,7 +3339,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
 
             if os.path.exists(stfile) and overwrite != "yes":
                 print(
-                    "     ... Target file already exists, skipping! [%s]" % (stfile))
+                    "  ... Target file already exists, skipping! [%s]" % (stfile))
                 report['pre-existing target'].append(sfolder)
                 continue
 
@@ -3210,7 +3347,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
                 src_session = parser.read_generic_session_file(ssfile)
 
                 if "hcp" in src_session["pipeline_ready"]:
-                    print("     ... %s already pipeline ready" % (sourcefile))
+                    print("  ... %s already pipeline ready" % (sourcefile))
                     if sourcefile != targetfile:
                         shutil.copyfile(sourcefile, targetfile)
                     report['pre-processed source'].append(sfolder)
@@ -3220,7 +3357,7 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
 
                 output_lines = _serialize_session(tgt_session)
 
-                print("     ... writing %s" % (targetfile))
+                print("  ... writing %s" % (targetfile))
                 fout = open(stfile, 'w')
 
                 # qunex header
