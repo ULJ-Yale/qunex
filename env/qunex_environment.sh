@@ -523,8 +523,10 @@ extensions_notice_printed=FALSE
 QUNEXEXTENSIONS=""
 QXEXTENSIONSPY=""
 
-# -- loop through plugin folders
+# -- covert $QUNEXEXTENSIONSFOLDERS from colon separated to space
+QUNEXEXTENSIONSFOLDERS=`echo $QUNEXEXTENSIONSFOLDERS | tr ':' ' '`
 
+# -- loop through plugin folders
 for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNEXEXTENSIONSFOLDERS
 do
     # -- identify extensions and loop through them
