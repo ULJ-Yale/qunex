@@ -800,6 +800,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         tufolder = None
         fmmag = ""
         fmphase = ""
+        fmcombined = ""
 
         if options["hcp_avgrdcmethod"] == "TOPUP":
             # -- spin echo settings
