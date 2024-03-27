@@ -207,6 +207,7 @@ def getHCPPaths(sinfo, options):
         "FIELDMAP",
         "SiemensFieldMap",
         "PhilipsFieldMap",
+        "GEHealthCareFieldMap",
     ] or options["hcp_bold_dcmethod"] in ["SiemensFieldMap", "PhilipsFieldMap"]:
         fmapmag = glob.glob(
             os.path.join(
@@ -235,8 +236,8 @@ def getHCPPaths(sinfo, options):
                 if fmnum in d["fieldmap"]:
                     d["fieldmap"][fmnum].update({"phase": imagepath})
     elif (
-        options["hcp_avgrdcmethod"] == "GeneralElectricFieldMap"
-        or options["hcp_bold_dcmethod"] == "GeneralElectricFieldMap"
+        options["hcp_avgrdcmethod"] == "GEHealthCareLegacyFieldMap"
+        or options["hcp_bold_dcmethod"] == "GEHealthCareLegacyFieldMap"
     ):
         fmapge = glob.glob(
             os.path.join(
@@ -411,19 +412,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             SpinEchoFieldMap[N]\*/\*_<hcp_sephasepos>_\*
             SpinEchoFieldMap[N]\*/\*_<hcp_sephaseneg>_\*
 
-        **SiemensFieldMap**::
+        **SiemensFieldMap, GEHealthCareFieldMap or PhilipsFieldMap**::
 
             FieldMap/<session id>_FieldMap_Magnitude.nii.gz
             FieldMap/<session id>_FieldMap_Phase.nii.gz
 
-        **GeneralElectricFieldMap**::
+        **GEHealthCareLegacyFieldMap**::
 
             FieldMap/<session id>_FieldMap_GE.nii.gz
-
-        **PhilipsFieldMap**::
-
-            FieldMap/<session id>_FieldMap_Magnitude.nii.gz
-            FieldMap/<session id>_FieldMap_Phase.nii.gz
 
     Parameters:
         --batchfile (str, default ''):
@@ -504,8 +500,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
               readout correction)
             - 'SiemensFieldMap' (average any repeats and use Siemens field map
               for readout correction)
-            - 'GeneralElectricFieldMap' (average any repeats and use GE field
+            - 'GEHealthCareFieldMap' (average any repeats and use GE field
               map for readout correction)
+            - 'GEHealthCareLegacyFieldMap' (average any repeats and use GE field
+              map for readout correction, for legacy, combined GE field maps)
             - 'PhilipsFieldMap' (average any repeats and use Philips field map
               for readout correction)
             - 'TOPUP' (average any repeats and use spin echo field map for
@@ -802,7 +800,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         tufolder = None
         fmmag = ""
         fmphase = ""
-        fmge = ""
 
         if options["hcp_avgrdcmethod"] == "TOPUP":
             # -- spin echo settings
@@ -959,7 +956,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     run = False
                     raise
 
-        elif options["hcp_avgrdcmethod"] == "GeneralElectricFieldMap":
+        elif options["hcp_avgrdcmethod"] == "GEHealthCareLegacyFieldMap":
             fmnum = T1w.get("fm", None)
 
             if fmnum is None:
@@ -978,12 +975,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 fmmag = None
                 fmphase = None
-                fmge = hcp["fieldmap"][int(fmnum)]["GE"]
+                fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
 
         elif options["hcp_avgrdcmethod"] in [
             "FIELDMAP",
             "SiemensFieldMap",
             "PhilipsFieldMap",
+            "GEHealthCareFieldMap",
         ]:
             fmnum = T1w.get("fm", None)
 
@@ -1011,7 +1009,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                 fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                fmge = None
+                fmcombined = None
 
         else:
             r += "\n---> WARNING: No distortion correction method specified."
@@ -1167,7 +1165,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ("fnirtconfig", fnirtconfig),
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
-            ("fmapgeneralelectric", fmge),
+            ("fmapcombined", fmcombined),
             ("echodiff", options["hcp_echodiff"]),
             ("SEPhaseNeg", seneg),
             ("SEPhasePos", sepos),
@@ -3096,8 +3094,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_bold_dcmethod (str, default 'TOPUP'):
             BOLD image deformation correction that should be used: TOPUP,
-            FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap,
-            PhilipsFieldMap or NONE.
+            FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
+            GEHealthCareLegacyFieldMap, PhilipsFieldMap or NONE.
 
         --hcp_bold_echodiff (str, default 'NONE'):
             Delta TE for BOLD fieldmap images or NONE if not used.
@@ -3547,7 +3545,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         orient = ""
         fmmag = "NONE"
         fmphase = "NONE"
-        fmge = "NONE"
+        fmcombined = "NONE"
 
         # -> Check for SE images
         sepresent = []
@@ -3560,7 +3558,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "FIELDMAP",
             "SiemensFieldmap",
             "PhilipsFieldMap",
-            "GeneralElectricFieldMap",
+            "GEHealthCareFieldMap",
+            "GEHealthCareLegacyFieldMap"
             "NONE",
         ]:
             r += "\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter!"
@@ -3685,7 +3684,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "FIELDMAP",
             "SiemensFieldmap",
             "PhilipsFieldMap",
-            "GeneralElectricFieldMap",
+            "GEHealthCareFieldMap",
+            "GEHealthCareLegacyFieldMap",
         ]:
             unwarpdirs = [
                 [f.strip() for f in e.strip().split("=")]
@@ -3740,7 +3740,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "FIELDMAP",
                 "SiemensFieldmap",
                 "PhilipsFieldMap",
-                "GeneralElectricFieldMap",
+                "GEHealthCareFieldMap",
+                "GEHealthCareLegacyFieldMap",
             ]
 
             # --- set unwarpdir and orient
@@ -3908,12 +3909,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                    fmge = None
+                    fmcombined = None
 
-            # --- check for GE fieldmap image
+            # --- check for GE legacy fieldmap image
             elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
                 "hcp_bold_dcmethod"
-            ] in ["GeneralElectricFieldMap"]:
+            ] in ["GEHealthCareLegacyFieldMap"]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
                     r += (
@@ -3926,16 +3927,58 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["GE"],
-                            "\n     ... GeneralElectric fieldmap image %d present "
+                            "\n     ... GeneralElectric legacy fieldmap image %d present "
                             % (i),
-                            "\n     ... ERROR: GeneralElectric fieldmap image %d missing!"
+                            "\n     ... ERROR: GeneralElectric legacy fieldmap image %d missing!"
                             % (i),
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
                     fmmag = None
                     fmphase = None
-                    fmge = hcp["fieldmap"][int(fmnum)]["GE"]
+                    fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
+
+            # --- check for GE double TE-fieldmap image
+            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
+                "hcp_bold_dcmethod"
+            ] in ["GEHealthCareFieldMap"]:
+                fmnum = boldinfo.get("fm", None)
+                if fmnum is None:
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp["fieldmap"].items():
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["magnitude"],
+                            "\n     ... GE fieldmap magnitude image %d present "
+                            % (i),
+                            "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["phase"],
+                            "\n     ... GE fieldmap phase image %d present " % (i),
+                            "\n     ... ERROR: GE fieldmap phase image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        boldok = boldok and fieldok
+                    if not pc.is_number(options["hcp_bold_echospacing"]):
+                        fieldok = False
+                        r += (
+                            '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
+                            % (options["hcp_bold_echospacing"])
+                        )
+                    boldok = boldok and fieldok
+                    fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                    fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
+                    fmcombined = None
 
             # --- check for Philips double TE-fieldmap image
             elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
@@ -3977,7 +4020,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                    fmge = None
+                    fmcombined = None
 
             # --- NO DC used
             elif options["hcp_bold_dcmethod"] == "NONE":
@@ -4122,7 +4165,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "topupconfig": topupconfig,
                 "fmmag": fmmag,
                 "fmphase": fmphase,
-                "fmge": fmge,
+                "fmcombined": fmcombined,
                 "fmriref": fmriref,
             }
             boldsData.append(b)
@@ -4293,7 +4336,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     topupconfig = b["topupconfig"]
     fmmag = b["fmmag"]
     fmphase = b["fmphase"]
-    fmge = b["fmge"]
+    fmcombined = b["fmcombined"]
     fmriref = b["fmriref"]
 
     # prepare return variables
@@ -4369,7 +4412,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             ("SEPhasePos", spinPos),
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
-            ("fmapgeneralelectric", fmge),
+            ("fmapcombined", fmcombined),
             ("echospacing", echospacing),
             ("echodiff", options["hcp_bold_echodiff"]),
             ("unwarpdir", unwarpdir),
