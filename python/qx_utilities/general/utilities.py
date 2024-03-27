@@ -515,19 +515,20 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
 
     # copy analysis, processing, info folders as they are
     print()
-    print("===> Copying top-level folders")
+    print("Copying top-level folders")
     for folder in ["analysis", "processing", "info"]:
         src = os.path.join(existing_study, folder)
         dst = os.path.join(studyfolder, folder)
         print(f" ... copying {src}")
-        shutil.copytree(src, dst, dirs_exist_ok=True)
+        shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
 
     # copy inbox, archive, specs and QC folders inside sessions
-    for folder in ["inbox", "archive", "specs", "QC"]:
+    session_supplementary = ["inbox", "archive", "specs", "QC"]
+    for folder in session_supplementary:
         src = os.path.join(existing_study, "sessions", folder)
         dst = os.path.join(studyfolder, "sessions", folder)
         print(f" ... copying {src}")
-        shutil.copytree(src, dst, dirs_exist_ok=True)
+        shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
 
     # get sessions
     if batchfile is not None:
@@ -536,8 +537,13 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
         sessions = sessions.split(",")
 
     # copy sessions
+    if sessions is None:
+        sessions = os.listdir(os.path.join(existing_study, "sessions"))
+        # remove archive, inbox, QC, specs
+        sessions = [session for session in sessions if session not in session_supplementary]
+
     print()
-    print("===> Copying sessions")
+    print("Copying sessions")
     for session in sessions:
         src = os.path.join(existing_study, "sessions", session)
         dst = os.path.join(studyfolder, "sessions", session)
@@ -546,9 +552,10 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
         # copy all files and folder from src to dst, with the exception of the hcp folder
         for item in os.listdir(src):
             if os.path.isfile(os.path.join(src, item)):
+                os.makedirs(dst, exist_ok=True)
                 shutil.copy2(os.path.join(src, item), os.path.join(dst, item))
             elif item != "hcp":
-                shutil.copytree(os.path.join(src, item), os.path.join(dst, item), dirs_exist_ok=True)
+                shutil.copytree(os.path.join(src, item), os.path.join(dst, item), dirs_exist_ok=True, ignore_dangling_symlinks=True)
 
         # only copy hcp folder if "hcp_" in steps but not if steps is hcp_pre_freesurfer
         if step is None or ("hcp_" in step and step != "hcp_pre_freesurfer"):
@@ -558,7 +565,7 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
 
     # fix paths in txt, conc and list files
     print()
-    print("===> Fixing paths in relevant files")
+    print("Fixing paths in relevant files")
     for root, _, files in os.walk(studyfolder):
         for file in files:
             if file.endswith(".txt") or file.endswith(".conc") or file.endswith(".list"):
@@ -568,8 +575,43 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
                     for line in lines:
                         f.write(line.replace(existing_study, studyfolder))
 
-    # TODO remove unused sessions from batch files
+    # remove unused sessions from batch files
+    # assume batch files are .txt files in the processing subfolder
+    if sessions:
+        print()
+        print("Removing unused sessions from batch files in the processing subfolder")
+        processing_folder = os.path.join(studyfolder, "processing")
+        for item in os.listdir(processing_folder):
+            if item.endswith(".txt"):
+                batchfile = os.path.join(processing_folder, item)
+                print(f" ... processing {batchfile}")
+                filter_batch(batchfile, sessions)
 
+def filter_batch(batchfile, sessions=None):
+    """
+    A helper function that removes all unused sessions from a batch file.
+    """
+    batch_content = ""
+
+    with open(batchfile, "r") as f:
+        for line in f:
+            batch_content += line
+
+    # split on ---
+    batch_list = batch_content.split("\n---\n")
+
+    # new batch
+    new_batch = batch_list[0]
+
+    # iterate over other items
+    for item in batch_list[1:]:
+        for session in sessions:
+            if session in item:
+                new_batch += "\n---\n" + item
+
+    # write back
+    with open(batchfile, "w") as f:
+        f.write(new_batch)
 
 def check_study(startfolder=".", folders=None):
     """
