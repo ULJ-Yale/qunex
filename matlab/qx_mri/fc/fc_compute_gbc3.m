@@ -171,7 +171,7 @@ end
 
 fprintf('\n ... listing files to process');
 
-[session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose);
+list = general_read_file_list(flist, 'all', [], verbose);
 
 fprintf(' ... done.');
 
@@ -181,44 +181,44 @@ fprintf(' ... done.');
 
 %   --- Get variables ready first
 
-template  = nimage(session(1).files{1}, 'single', 1);
+template = nimage(list.session(1).files{1}, 'single', 1);
 nvoxels   = template.voxels;
 desc      = parseCommand(command);
 nvolumes  = length(desc);
 
 
-template = template.zeroframes(nsessions);
+template = template.zeroframes(list.nsessions);
 for n = 1:nvolumes
     gbc(n) = template;
 end
 clear('template');
 
-for s = 1:nsessions
+for s = 1:list.nsessions
 
     %   --- do we use a session specific mask
 
     usemask = false;
-    if isfield(session(s), 'roi') && (~isempty(session(s).roi))
+    if isfield(list.session(s), 'roi') && (~isempty(list.session(s).roi))
         usemask = true;
     end
 
     %   --- reading in image files
     tic;
-    fprintf('\n ... processing %s', session(s).id);
+    fprintf('\n ... processing %s', list.session(s).id);
     fprintf('\n     ... reading image file(s) ');
 
     y = [];
 
-    nfiles = length(session(s).files);
+    nfiles = length(list.session(s).files);
 
-    img = nimage(session(s).files{1});
+    img = nimage(list.session(s).files{1});
 
     if ~isempty(mask),   img = img.sliceframes(mask); end
     if ~isempty(ignore), img = scrub(img, ignore); end
 
     if nfiles > 1
         for n = 2:nfiles
-            new = nimage(session(s).files{n});
+            new = nimage(list.session(s).files{n});
             fprintf(', %d', n);
             if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = scrub(new, ignore); end
@@ -227,7 +227,7 @@ for s = 1:nsessions
     end
 
     if usemask
-        imask = nimage(session(s).roi);
+        imask = nimage(list.session(s).roi);
         imask = imask.ismember(target);
 
         if rsmooth
@@ -256,7 +256,7 @@ for s = 1:nsessions
 end
 
 for c = 1:nvolumes
-    fname = [listname '_gbc_' desc{c}];
+    fname = [list.listname '_gbc_' desc{c}];
     gbc(c).img_saveimage(fullfile(targetf, fname));
 end
 

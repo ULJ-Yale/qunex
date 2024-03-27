@@ -560,7 +560,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
                 # link the file
                 print(" ---> linking %s to %s" % (sfile, tfile))
-                gc.linkOrCopy(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
+                gc.link_or_copy(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
 
                 # check if json exists
                 sfile_json = sfile.split('.')[0] + '.json'
@@ -569,7 +569,7 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
                 
                 # link or copy if it exists
                 if os.path.exists(json_path):
-                    gc.linkOrCopy(json_path, os.path.join(basef, tfold, tfile_json))
+                    gc.link_or_copy(json_path, os.path.join(basef, tfold, tfile_json))
 
                     # prepare slice timing file if requested
                     if slice_timing_info and boldfile:

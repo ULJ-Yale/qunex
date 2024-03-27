@@ -26,7 +26,7 @@ The commands are accessible from the terminal using gmri utility.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-# import dicom
+
 import os
 import io
 import os.path
@@ -42,26 +42,29 @@ import gzip as gz
 import csv
 import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
-
 import general.core as gc
 import general.img as gi
 import general.nifti as gn
 import general.qximg as qxi
 import general.exceptions as ge
-
 from datetime import datetime
+if "QUNEXMCOMMAND" not in os.environ:
+    mcommand = "matlab -nojvm -nodisplay -nosplash -r"
+else:
+    mcommand = os.environ['QUNEXMCOMMAND']
 
 try:
     import pydicom.filereader as dfr
 except:
     import dicom.filereader as dfr
 
+dcm_info_list = (('sessionid', str, "NA"), ('seriesNumber', int, 0), ('seriesDescription', str, "NA"), ('TR', float, 0.), ('TE', float, 0.), ('frames',
+                 int, 0), ('directions', int, 0), ('volumes', int, 0), ('slices', int, 0), ('datetime', str, ""), ('ImageType', str, ""), ('fileid', str, ""))
 
 if "QUNEXMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
     mcommand = os.environ["QUNEXMCOMMAND"]
-
 
 dcm_info_list = (
     ("sessionid", str, "NA"),
@@ -113,7 +116,6 @@ def cleanName(string):
     should not be in a file name.
     """
     return re.sub(r"[^A-Za-z0-9]", r"", string)
-
 
 def matchAll(pattern, string):
     """
@@ -681,7 +683,8 @@ def dicom2nii(
 
     # get a list of folders
 
-    folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
+    folders = [e for e in os.listdir(
+        dmcf) if os.path.isdir(os.path.join(dmcf, e))]
     folders = [int(e) for e in folders if e.isdigit()]
     folders.sort()
     folders = [os.path.join(dmcf, str(e)) for e in folders]
@@ -757,9 +760,7 @@ def dicom2nii(
             time = datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
         except:
             try:
-                time = datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime(
-                    "%H:%M:%S"
-                )
+                time = datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
             except:
                 time = ""
 
@@ -924,7 +925,8 @@ def dicom2nii(
                 else:
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
                     if debug:
-                        print("         ... moving '%s' to '%s'" % (image, tfname))
+                        print("         ... moving '%s' to '%s'" %
+                              (image, tfname))
                     os.rename(image, tfname)
 
                 # -- remove original
@@ -1076,7 +1078,8 @@ def dicom2nii(
                 if r["status"] == "ok":
                     print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("archive failed {}".format(r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(
+                        r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
@@ -1408,7 +1411,8 @@ def dicom2niix(
 
     # get a list of folders
 
-    folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
+    folders = [e for e in os.listdir(
+        dmcf) if os.path.isdir(os.path.join(dmcf, e))]
     folders = [int(e) for e in folders if e.isdigit()]
     folders.sort()
     folders = [os.path.join(dmcf, str(e)) for e in folders]
@@ -1809,7 +1813,8 @@ def dicom2niix(
                     jsonsrc += jsonextra
 
                     if not os.path.exists(jsonsrc):
-                        jsonfiles = glob.glob(os.path.join(folder, "*" + jsonextra))
+                        jsonfiles = glob.glob(
+                            os.path.join(folder, "*" + jsonextra))
                         if len(jsonfiles) == 1:
                             jsonsrc = jsonfiles[0]
 
@@ -1969,7 +1974,8 @@ def dicom2niix(
                 if r["status"] == "ok":
                     print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("archive failed {}".format(r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(
+                        r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
@@ -2659,7 +2665,7 @@ def import_dicom(
             - 'no'  ... report and continue w/o additional checks
             - 'any' ... continue if any packages are ready to process report error otherwise.
 
-        --pattern (str, default '(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)'):
+        --pattern (str, default '(?P<session_id>.*?)(?:\\.zip$|\\.tar$|\\.tgz$|\\.tar\\..*$|$)'):
             The regex pattern to use to find the packages and to extract the
             session id.
 
@@ -2781,7 +2787,7 @@ def import_dicom(
             group, 'packet_name' that is used in further processing.
 
             The default `pattern` parameter is
-            `"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"`. This
+            `"(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|\\.tar\\..*$|$)"`. This
             pattern will identify the initial part of the packet file- or
             foldername, (without any extension that identifies a compressed
             package) as the packet name.
@@ -2822,7 +2828,7 @@ def import_dicom(
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
                 | Yale-EQ469-Placebo    | `".*?-(?P<subject_id>.*?)-(?P<session_name>.*)"` | EQ469      | Placebo      | EQ469_Placebo |
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
-                | Oxford.MR492.T3-Trio  | `".*?\.(?P<subject_id>.*?)\..*"`                 | MR492      | -            | MR492         |
+                | Oxford.MR492.T3-Trio  | `".*?\\.(?P<subject_id>.*?)\\..*"`               | MR492      | -            | MR492         |
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
 
 
@@ -3031,7 +3037,7 @@ def import_dicom(
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --check="any"
 
@@ -3043,7 +3049,7 @@ def import_dicom(
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \\
                     --check="any"
@@ -3059,7 +3065,7 @@ def import_dicom(
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \\
                     --check="any"
@@ -3201,7 +3207,8 @@ def import_dicom(
 
     def _process_folder(folder, fnum=0, dnum=0, target=None):
         # -- get list of files
-        files_iter = glob.iglob(os.path.join(folder, "**", "*"), recursive=True)
+        files_iter = glob.iglob(os.path.join(
+            folder, "**", "*"), recursive=True)
         for source_file in files_iter:
             fnum, dnum = _process_file(
                 source_file, os.path.basename(source_file), fnum, dnum, target
@@ -3775,7 +3782,8 @@ def import_dicom(
                                 % (os.path.basename(p))
                             )
                         else:
-                            print("...  moving %s to archive" % (os.path.basename(p)))
+                            print("...  moving %s to archive" %
+                                  (os.path.basename(p)))
                             shutil.move(p, archivetarget)
                             print("     -> done!")
 
@@ -3977,7 +3985,8 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
 
     if scanner == "philips":
         try:
-            print("        Repetition Time: %.2f" % (float(d[0x0018, 0x0080].value)))
+            print("        Repetition Time: %.2f" %
+                  (float(d[0x0018, 0x0080].value)))
         except:
             try:
                 print("        Repetition Time:", d[0x2005, 0x1030].value[0])

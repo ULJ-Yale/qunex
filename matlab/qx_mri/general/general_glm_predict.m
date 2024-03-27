@@ -14,7 +14,7 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %   Parameters:
 %       --flist (str):
 %           Either a .list file listing the subjects and their files to use, or
-%           a well strucutured file list string (see `general_read_file_list`).
+%           a well structured file list string (see `general_read_file_list`).
 %           The information should include at least `glm:` entries for each
 %           session, as well as raw bold or conc files if residuals are
 %           requested.
@@ -28,7 +28,7 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %           target folder for all processed data or the location of session
 %           functional images folder.
 %
-%       --options (str, 'default predicted_tail=|residual_tail=|save=|ignores>predict:mark,regress:mark|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high'):
+%       --options (str, 'default predicted_tail=|residual_tail=|sessions=all|save=|ignores>predict:mark,regress:mark|indtargetf=sfolder|bold_variant=|addidtofile=false|verbose=true|verboselevel=high'):
 %           A string specifying additional analysis options formated as pipe
 %           separated pairs of colon separated key, value pairs::
 %
@@ -47,6 +47,12 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %               '_res-<effects abbreviation> tail will be added to each of the
 %               source BOLD files. <effects abbreviation> will be the first
 %               letters of all the predicted regressors. ['']
+%
+%           sessions
+%               Which sessions to include in the analysis. The sessions should
+%               be provided as a comma or space separated list. If all sessions
+%               are to be processed this can be designated by 'all'. Defaults
+%               to 'all'.
 %
 %           save
 %               A comma separated string, listing the files to save ['']:
@@ -138,12 +144,12 @@ if nargin < 1 || isempty(flist), error('ERROR: At least data and effects to pred
 
 % -- support variables
 
-filetypes = {'', '.dtseries', '.ptseries'};
+filetypes = {'', 'dtseries', 'ptseries'};
 extensions = {'.nii.gz', '.dtseries.nii', '.ptseries.nii'};
 
 % ----- parse options
 
-default = 'predicted_tail=|residual_tail=|save=|ignores>predict:mark,regress:mark|indtargetf=sfolder|img_suffix=|bold_variant=|addidtofile=false|verbose=true|verboselevel=high';
+default = 'predicted_tail=|residual_tail=|sessions=all|save=|ignores>predict:mark,regress:mark|indtargetf=sfolder|img_suffix=|bold_variant=|addidtofile=false|verbose=true|verboselevel=high';
 options = general_parse_options([], options, default);
 
 effects  = strtrim(regexp(effects, ',', 'split'));
@@ -153,7 +159,7 @@ detailed = strcmp(options.verboselevel, 'high');
 if verbose; fprintf('\nRunning prediction for effects %s on list %s.\n', strjoin(effects, ', '), flist); end
 
 if verbose && detailed
-    general_print_struct(options, 'Options used');
+    general_print_struct(options, 'general_glm_predict options used');
 end
 
 options.save = strtrim(regexp(options.save, ',', 'split'));
@@ -187,55 +193,58 @@ check = 'glm';
 
 if verbose && detailed; fprintf('-> reading file list\n'); end
 
-[sessions, nsessions, nfiles, listname, missing] = general_read_file_list(flist, verbose, check);
+list = general_read_file_list(flist, options.sessions, check, verbose);
 
-if sum(missing.sessions)
+if sum(list.missing.sessions)
     fprintf('WARNING: Sessions with missing fields in file list will not be processed.\n');
-    sessions = sessions(~missing.sessions);
-    nsessions = length(sessions);
+    list.session = list.session(~list.missing.sessions);
+    list.nsessions = length(list.session);
 end
 
 % ------ run prediction loop
 
 if verbose; fprintf('-> processing sessions\n'); end
 
-for s = 1:nsessions
+for s = 1:list.nsessions
     
-    if verbose; fprintf('   ... session id: %s\n', sessions(s).id); end
+    if verbose; fprintf('   ... session id: %s\n', list.session(s).id); end
 
     % -- root path to save results
     if strcmp(options.indtargetf, 'sfolder')
-        targetpath = sprintf('%s/%s/images%s/functional%s/', targetf, sessions(s).id, options.img_suffix, options.bold_variant);
-        targetconcpath = sprintf('%s/%s/images%s/functional%s/concs/', targetf, sessions(s).id, options.img_suffix, options.bold_variant);
+        targetpath = sprintf('%s/%s/images%s/functional%s/', targetf, list.session(s).id, options.img_suffix, options.bold_variant);
+        targetconcpath = sprintf('%s/%s/images%s/functional%s/concs/', targetf, list.session(s).id, options.img_suffix, options.bold_variant);
         if addidtofile
-            targetpath = sprintf('%s%s-', targetpath, sessions(s).id);
-            targetconcpath = sprintf('%s%s-', targetconcpath, sessions(s).id);
+            targetpath = sprintf('%s%s-', targetpath, list.session(s).id);
+            targetconcpath = sprintf('%s%s-', targetconcpath, list.session(s).id);
         end
     else
-        targetpath = sprintf('%s/%s-', targetf, sessions(s).id);
-        targetconcpath = sprintf('%s/%s-', targetf, sessions(s).id);
+        targetpath = sprintf('%s/%s-', targetf, list.session(s).id);
+        targetconcpath = sprintf('%s/%s-', targetf, list.session(s).id);
     end
 
     % -- process files
 
     if verbose && detailed; fprintf('       - reading glm\n'); end
 
-    glm = nimage(sessions(s).glm);
+    glm = nimage(list.session(s).glm);
 
     % -- id extension
 
     extension = extensions{find(ismember(filetypes, glm.filetype))};    
     
     % -- do we have raw files
-    if isfield(sessions(s), 'conc') && ~isempty(sessions(s).conc)
+    if isfield(list.session(s), 'conc') && ~isempty(list.session(s).conc)
         if verbose && detailed; fprintf('       - reading conc file\n'); end
-        raw = nimage(sessions(s).conc);
-    elseif isfield(sessions(s), 'files') && ~isempty(sessions(s).files)
+        raw = nimage(list.session(s).conc);
+    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files)
         if verbose && detailed; fprintf('       - reading raw files\n'); end
-        raw = nimage(strjoin(sessions(s).files, '|'));
+        raw = nimage(strjoin(list.session(s).files, '|'));
     else
         raw = [];
     end
+
+    % -- temporary hack
+    raw.use = ones(size(raw.use));
 
     % -- run requested computation
     if verbose && detailed; fprintf('       - computing predictions and/or residuals\n'); end

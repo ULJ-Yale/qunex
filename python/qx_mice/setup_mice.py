@@ -224,7 +224,7 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
     else:
         # map
         r += f' ... mapping {source_bold} => {target_bold}.\n'
-        gc.linkOrCopy(source_bold, target_bold)
+        gc.link_or_copy(source_bold, target_bold)
 
         if boldok:
             # set up the command

@@ -413,7 +413,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(target_original) and not overwrite:
                         f'\n ... {bold_original} already exists and overwrite is set to no, skipping this file'
                     else:
-                        gc.linkOrCopy(source_original, target_original)
+                        gc.link_or_copy(source_original, target_original)
                     report['done'].append(bold_original)
                 else:
                     r += f'\n ... ERROR: {bold_original} does not exist, rerun the preprocess_mice step'
@@ -425,7 +425,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(target_epi) and not overwrite:
                         f'\n ... {bold_epi} already exists and overwrite is set to no, skipping this file'
                     else:
-                        gc.linkOrCopy(source_epi, target_epi)
+                        gc.link_or_copy(source_epi, target_epi)
                     report['done'].append(bold_epi)
                 else:
                     r += f'\n ... ERROR: {bold_epi} does not exist, rerun the preprocess_mice step'
@@ -437,7 +437,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(target_abi) and not overwrite:
                         f'\n ... {bold_abi} already exists and overwrite is set to no, skipping this file'
                     else:
-                        gc.linkOrCopy(source_abi, target_abi)
+                        gc.link_or_copy(source_abi, target_abi)
                     report['done'].append(bold_abi)
                 else:
                     r += f'\n ... ERROR: {bold_abi} does not exist, rerun the preprocess_mice step'

@@ -1,4 +1,4 @@
-function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
+function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium, return_img)
 
 %``function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)``
 %
@@ -14,7 +14,9 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 %   --method      method name [mean]
 %
 %                 - 'mean'      ... average value of the ROI
-%                  - 'median'    ... median value across the ROI
+%                 - 'median'    ... median value across the ROI
+%	              - 'max'       ... maximum value across the ROI
+%	              - 'min'       ... minimum value across the ROI
 %                 - 'pca'       ... first eigenvariate of the ROI
 %                 - 'threshold' ... average of all voxels above threshold
 %                 - 'maxn'      ... average of highest n voxels
@@ -23,34 +25,35 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 %
 %   --weights     image file with weights to use []
 %   --criterium   threshold or number of voxels to extract []
+%   --return_img  whether to return a parcellated nimage [false]
 %
 %   OUTPUT
 %   ======
 %
 %   ts
+%       a time series of the ROI data or a parcellated nimage
 %   
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 6; criterium = [];  end
-if nargin < 5; weights = [];    end
-if nargin < 4; method = [];     end
-if nargin < 3; rcodes = [];     end
+if nargin < 7; return_img = false; end
+if nargin < 6; criterium  = [];    end
+if nargin < 5; weights    = [];    end
+if nargin < 4; method     = [];    end
+if nargin < 3; rcodes     = [];    end
 
-if isempty (method) method = 'mean'; end
+if isempty (method), method = 'mean'; end
 
 method = lower(method);
 
 % ---- check method
-
-if ~ismember(method, {'mean', 'pca', 'threshold', 'maxn', 'weighted', 'median', 'all'})
+if ~ismember(method, {'mean', 'pca', 'max', 'min', 'threshold', 'maxn', 'weighted', 'median', 'all'})
     error('ERROR: Unrecognized method of computing ROI mean!')
 end
 
 % ---- check data dependencies
-
 if ismember(method, {'threshold', 'maxn', 'weighted'})
     if isempty(weights)
         error('ERROR: Weights image needed to extract ROI using %s method!', method);
@@ -65,10 +68,30 @@ end
 
 
 % ---- check ROI data
-
 if isa(roi, 'nimage')
     if obj.voxels ~= roi.voxels;
         error('ERROR: ROI image does not match target in dimensions!');
+    end
+elseif isa(roi, 'char') || isa(roi, 'string')
+    if startsWith(roi, 'parcels')
+        if ~isfield(obj.cifti, 'parcels') || isempty(obj.cifti.parcels)
+            error('ERROR: The file lacks parcel specification!');
+        end
+
+        parcels = strtrim(regexp(roi(9:end), ',', 'split'));
+        if length(parcels) == 1 && strcmp(parcels{1}, 'all')            
+            parcels = obj.cifti.parcels;
+        end
+        if isempty(rcodes)
+            rcodes = parcels;
+        else
+            rcodes = strtrim(regexp(rcodes, ',', 'split'));
+        end
+        [tf, rows] = ismember(rcodes, obj.cifti.parcels);
+        ts = obj.data(rows, :);
+        return
+    else
+        error('ERROR: Unknown ROI specification [%s]!', roi);
     end
 else
     roi = reshape(roi, [], 1);
@@ -88,7 +111,6 @@ if isempty (rcodes)
 end
 
 % ---- check weights data
-
 if ~isempty(weights)
     if isa(weights, 'nimage')
         if ~obj.issize(weights);
@@ -104,8 +126,6 @@ if ~isempty(weights)
 end
 
 % ---- start the loop
-
-
 nrois = length(rcodes);
 target = obj.image2D;
 
@@ -131,6 +151,12 @@ for r = 1:nrois
 
         case 'median'
             ts(r, :) = median(tmp, 1);
+        
+        case 'max'
+            ts(r, :) = max(tmp, [], 1);
+
+        case 'min'
+            ts(r, :) = max(tmp, [], 1);
 
         case 'weighted'
             tmpw = weights(roi.img_roi_mask(rcodes(r)), :);
@@ -160,3 +186,11 @@ for r = 1:nrois
     end
 end
 
+% ---- return nimage if requested
+if return_img
+    img = obj.img_create_parcellated_metadata(roi, rcodes);
+    img.data = ts;
+    ts = img;
+end
+    
+end

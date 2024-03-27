@@ -557,7 +557,7 @@ arglist = [
         "hcp_regname",
         "MSMSulc",
         str,
-        "What registration is used FS or MSMSulc. FS if none is provided.",
+        "What registration is used FS or MSMSulc [MSMSulc].",
     ],
     [
         "hcp_fs_longitudinal",
@@ -1048,6 +1048,18 @@ arglist = [
         torf,
         "Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully.",
     ],
+    [
+        "hcp_icafix_processingmode",
+        "",
+        isNone,
+        "HCPStyleData (default) or LegacyStyleData, controls whether --icadim-mode=fewtimepoints is allowed.",
+    ],
+    [
+        "hcp_icafix_fixonly",
+        "",
+        isNone,
+        "Whether to execute only the FIX step of the pipeline.",
+    ],
     ["# --- hcp_post_fix options"],
     [
         "hcp_postfix_dualscene",
@@ -1424,6 +1436,18 @@ arglist = [
         "",
         isNone,
         "Location of the average dataset, the output from hcp_make_average_dataset command. Set this if using the average set from another study, this is usually used in combination with REUSE_TICA mode.",
+    ],
+    [
+        "hcp_tica_extract_fmri_name_list",
+        "",
+        isNone,
+        "A comma separated list of list of fMRI run names to concatenate into the --hcp_tica_extract_fmri_out output after tICA cleanup.",
+    ],
+    [
+        "hcp_tica_extract_fmri_out",
+        "",
+        isNone,
+        "fMRI name for concatenated extracted runs, requires --hcp_tica_extract_fmri_name_list.",
     ],
     [
         "hcp_tica_config_out",
@@ -2005,18 +2029,18 @@ def run(command, args):
     # check if all sessions have subjects for longitudinal
     if command in lactions:
         subject_list = []
-        for session in sessions:
-            if "subject" not in session:
-                raise ge.CommandFailed(
-                    command,
-                    "Missing subject information",
-                    "%s batch file does not provide subject information for session id %s."
-                    % (options["subjects"], session["id"]),
-                    "Please check the batch file!",
-                    "Aborting processing!",
-                )
-            if session["subject"] not in subject_list:
-                subject_list.append(session["subject"])
+        if sessions is not None:
+            for session in sessions:
+                if "subject" not in session:
+                    raise ge.CommandFailed(
+                        command,
+                        "Missing subject information",
+                        f"No subject information provided for session id: {session['id']}.",
+                        "Please check the batch file!",
+                        "Aborting processing!",
+                    )
+                if session["subject"] not in subject_list:
+                    subject_list.append(session["subject"])
 
     # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, command)
@@ -2089,7 +2113,7 @@ def run(command, args):
     sout = gc.print_qunex_header()
     sout += "#\n"
     sout += "=================================================================\n"
-    sout += "gmri " + command + " \\\n"
+    sout += "qunex " + command + " \\\n"
 
     for k, v in args.items():
         sout += '  --%s="%s" \\\n' % (k, v)

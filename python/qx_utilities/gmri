@@ -20,7 +20,7 @@ from general import exceptions as ge
 from general import commands as gcom
 from general import commands_support as gcs
 
-help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
+help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 (qx_utilities) commands can be invoked via the "qunex <command>" call.
 
  General QuNex usage syntax
@@ -46,7 +46,7 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 ======================================
 
   qunex --a
-'''
+"""
 
 #
 # Took out these two commands until fully integrated to avoid documentation confusion w/ bash qx_utilities
@@ -259,8 +259,8 @@ all_qunex_commands = [
 def runCommand(command, args):
     folders = gc.deduceFolders(args)
 
-    if folders['basefolder']:
-        gu.check_study(folders['basefolder'])
+    if folders["basefolder"]:
+        gu.check_study(folders["basefolder"])
 
     # --- check if command is deprecated
     if command != "check_deprecated_commands":
@@ -276,14 +276,18 @@ def runCommand(command, args):
         gp.run(command, args)
         return
     elif command in gm.functions:
-        if 'scheduler' in args:
+        if "scheduler" in args:
             gs.runThroughScheduler(
-                command, sessions=None, args=args, logfolder=folders['logfolder'])
+                command, sessions=None, args=args, logfolder=folders["logfolder"]
+            )
         else:
             gm.run(command, args)
         return
     else:
-        print("ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command))
+        print(
+            "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands."
+            % (command)
+        )
         sys.exit(1)
 
     # --- process commands
@@ -291,193 +295,263 @@ def runCommand(command, args):
     bargs = {}
     eargs = {}
     for k, v in args.items():
-        if k in gcom.commands[command]['args']:
+        if k in gcom.commands[command]["args"]:
             bargs[k] = v
         else:
             eargs[k] = v
 
-    # -- check extra arguments, except for run_list
-    if eargs and command != "run_list":
+    # -- check extra arguments, except for run_recipe
+    if eargs and command != "run_recipe":
         bad = []
         for k, v in eargs.items():
             if k not in gcs.extra_parameters:
                 bad.append(k)
                 print(
-                    "ERROR: Extra argument %s is not valid! Please check your command!" % (k))
+                    "ERROR: Extra argument %s is not valid! Please check your command!"
+                    % (k)
+                )
         if bad:
             raise ge.CommandError(
-                "gmri", "Invalid arguments", "The extra argument(s) provided is/are not valid! [%s]" % (", ".join(bad)))
+                "gmri",
+                "Invalid arguments",
+                "The extra argument(s) provided is/are not valid! [%s]"
+                % (", ".join(bad)),
+            )
 
     # -- process extra arguments
     sessions = None
-    if 'sessions' in eargs:
-        if command != "run_list" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
-            raise ge.CommandError("gmri", "Incompatible command",
-                                  "Command %s can not be run on multiple sessions!" % (command))
-        if folders['sessionsfolder'] is None:
-            folders['sessionsfolder'] = "."
-        sessions, _ = gc.get_sessions_list(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get(
-            'sessionids'), sessionsfolder=folders['sessionsfolder'], verbose=False)
+    if "sessions" in eargs:
+        if command != "run_recipe" and not any(
+            [e in gcom.commands[command]["args"] for e in ["sourcefolder", "folder"]]
+        ):
+            raise ge.CommandError(
+                "gmri",
+                "Incompatible command",
+                "Command %s can not be run on multiple sessions!" % (command),
+            )
+        if folders["sessionsfolder"] is None:
+            folders["sessionsfolder"] = "."
 
-    logname = eargs.get('logname')
+        sessions_param = eargs["sessions"]
+        sessions, _ = gc.get_sessions_list(
+            sessions_param,
+            filter=eargs.get("filter"),
+            sessionids=eargs.get("sessionids"),
+            sessionsfolder=folders["sessionsfolder"],
+            verbose=False,
+        )
+
+    logname = eargs.get("logname")
 
     calls = []
 
-    # -- run_list specifics
-    if command == "run_list":
-        if sessions and 'sperlist' in eargs:
+    # -- run_recipe specifics
+    if command == "run_recipe":
+        if sessions:
+            # -- default is a recipe for each session
+            parsessions = (int)(args.get("parsessions", 1))
 
-            if 'scheduler' in eargs:
-                # -- define number of sessions to run in each run_list
-                parsessions = int(eargs['sperlist'])
-                args['parsessions'] = eargs['sperlist']
-                if 'ignore' in args:
-                    args['ignore'] += 'scheduler'
-                else:
-                    args['ignore'] = 'scheduler'
-                del args['sperlist']
+            # all sessions
+            all_sessions = []
+            for session in sessions:
+                all_sessions.append(session["session"])
 
-                gs.runThroughScheduler(command, sessions=sessions, args=args,
-                                       parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+            if "scheduler" in eargs:
+                gs.runThroughScheduler(
+                    command,
+                    sessions=sessions,
+                    args=args,
+                    parsessions=parsessions,
+                    logfolder=folders["logfolder"],
+                    logname=logname,
+                )
 
             else:
-                # -- define number of sessions to run in each run_list
-                sperlist = args['sperlist']
-                del args['sperlist']
-
-                # -- define number of run_list to run in parallel
-                parsessions = eargs.get('runinpar', 1)
-                args['parsessions'] = parsessions
-                if 'runinpar' in args:
-                    del args['runinpar']
-
                 c = 0
-                while sessions:
+                while all_sessions:
                     c += 1
-                    largs = args.copy()
+                    recipe_args = args.copy()
 
-                    # -- set up a list of sessions to run in each run_list
+                    # -- set up a list of sessions to run in each run_recipe
+                    slist = [
+                        all_sessions.pop(0) for e in range(parsessions) if all_sessions
+                    ]
+                    recipe_args["sessionids"] = ",".join(slist)
 
-                    slist = [sessions.pop(0)['id']
-                             for e in range(sperlist) if sessions]
-                    largs['sessionids'] = "|".join(slist)
+                    # pass all sessions if in slurm array
+                    if "SLURM_ARRAY_TASK_ID" in os.environ:
+                        recipe_args["sessionids"] = (",").join(all_sessions)
 
-                    calls.append({'name': 'run_list_%d' % (
-                        c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
+                    # copy recipe args to eargs
+                    run_recipe_kwargs = [
+                        "recipe_file",
+                        "recipe",
+                        "steps",
+                        "xnat",
+                        "logfolder",
+                        "verbose",
+                    ]
+                    recipe_eargs = {}
+                    to_delete = []
+                    for k, v in recipe_args.items():
+                        if k not in run_recipe_kwargs:
+                            recipe_eargs[k] = v
+                            to_delete.append(k)
+
+                    for arg in to_delete:
+                        del recipe_args[arg]
+
+                    recipe_args["eargs"] = recipe_eargs
+
+                    # disable within recipe parallelism
+                    recipe_eargs["parsessions"] = 1
+
+                    calls.append(
+                        {
+                            "name": "run_recipe_%d" % (c),
+                            "function": gcom.commands[command]["com"],
+                            "args": recipe_args,
+                            "logfile": None,
+                        }
+                    )
+
+                # execute each run_recipe in parallel
+                parsessions = len(calls)
 
         else:
-            # -- if using a scheduler schedule the whole run_list commmand
-            if 'scheduler' in eargs:
-                if 'ignore' in args:
-                    args['ignore'] += 'scheduler'
-                else:
-                    args['ignore'] = 'scheduler'
-
-                runListFolder = folders['logfolder']
+            # -- if using a scheduler schedule the whole run_recipe commmand
+            if "scheduler" in eargs:
+                run_recipe_folder = folders["logfolder"]
 
                 # create folder if it does not exist
-                if not os.path.isdir(runListFolder):
-                    os.makedirs(runListFolder)
+                if not os.path.isdir(run_recipe_folder):
+                    os.makedirs(run_recipe_folder)
 
-                runListFolder = os.path.join(runListFolder, "batchlogs")
+                run_recipe_folder = os.path.join(run_recipe_folder, "batchlogs")
 
                 # create folder if it does not exist
-                if not os.path.isdir(runListFolder):
-                    os.makedirs(runListFolder)
+                if not os.path.isdir(run_recipe_folder):
+                    os.makedirs(run_recipe_folder)
 
                 logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-                logname = os.path.join(
-                    runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
+                logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
+                    "run_recipe",
+                    logstamp,
+                )
 
                 gs.runThroughScheduler(
-                    command, args=args, logfolder=runListFolder, logname=logname)
+                    command, args=args, logfolder=run_recipe_folder, logname=logname
+                )
 
             else:
-                bargs['eargs'] = eargs
-                gcom.commands[command]['com'](**bargs)
+                bargs["eargs"] = eargs
+                gcom.commands[command]["com"](**bargs)
                 print("\n===> Successful completion of task")
 
     # -- all other commands
     else:
-        parsessions = int(eargs.get('parsessions', '1'))
+        parsessions = int(eargs.get("parsessions", "1"))
 
         # if we have sessions and sessionids filter and remove one
-        if 'sessions' in args and 'sessionids' in args:
+        if "sessions" in args and "sessionids" in args:
             args_filter = None
-            if 'filter' in args:
-                args_filter = args['filter']
+            if "filter" in args:
+                args_filter = args["filter"]
 
             sessions_dict, _ = gc.get_sessions_list(
-                args['sessions'], filter=args_filter, sessionids=args['sessionids'], verbose=False)
+                args["sessions"],
+                filter=args_filter,
+                sessionids=args["sessionids"],
+                verbose=False,
+            )
 
             sessions_list = []
             for session in sessions_dict:
-                sessions_list.append(session['session'])
+                if "id" in session:
+                    sessions_list.append(session["id"])
+                elif "session" in session:
+                    sessions_list.append(session["session"])
 
-            args['sessions'] = ','.join(sessions_list)
+            args["sessions"] = ",".join(sessions_list)
 
-            del args['sessionids']
+            del args["sessionids"]
 
         # -- are we using a scheduler
-        if 'scheduler' in eargs:
-            gs.runThroughScheduler(command, sessions=sessions, args=args,
-                                   parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+        if "scheduler" in eargs:
+            gs.runThroughScheduler(
+                command,
+                sessions=sessions,
+                args=args,
+                parsessions=parsessions,
+                logfolder=folders["logfolder"],
+                logname=logname,
+            )
 
         # -- a basic call
         elif sessions is None:
             # logfolder
-            if not folders['logfolder']:
-                folders['logfolder'] = "."
+            if not folders["logfolder"]:
+                folders["logfolder"] = "."
 
             # createstudy exception
             if command == "create_study" and "studyfolder" in args:
-                folders['logfolder'] = args["studyfolder"] + "/processing/logs"
+                folders["logfolder"] = args["studyfolder"] + "/processing/logs"
             elif command == "create_study":
-                folders['logfolder'] = "./processing/logs"
+                folders["logfolder"] = "./processing/logs"
 
             sufix = ""
             if "sessionids" in args:
                 sufix = "_" + args["sessionids"]
 
             logfile = os.path.join(
-                folders['logfolder'], 'comlogs', "%s%s.log" % (command, sufix))
+                folders["logfolder"], "comlogs", "%s%s.log" % (command, sufix)
+            )
             # run without log for exceptions
             # remove logs for exceptions
             if command in gcs.logskip_commands:
-                gcom.commands[command]['com'](**args)
+                gcom.commands[command]["com"](**args)
             # run with log
             else:
                 _, result, _, _ = gc.runWithLog(
-                    gcom.commands[command]['com'], args=args, logfile=logfile)
+                    gcom.commands[command]["com"], args=args, logfile=logfile
+                )
 
         # -- sessions loop
         else:
             for session in sessions:
                 targs = dict(bargs)
-                name = command + ": " + session['id']
-                sessionsfolder = os.path.join(
-                    folders['sessionsfolder'], session['id'])
-                if folders['logfolder']:
+                name = command + ": " + session["id"]
+                sessionsfolder = os.path.join(folders["sessionsfolder"], session["id"])
+                if folders["logfolder"]:
                     logfile = os.path.join(
-                        folders['logfolder'], 'comlogs', "%s_%s.log" % (command, session['id']))
-                for targ in ['sourcefolder', 'folder']:
-                    if targ in gcom.commands[command]['args']:
+                        folders["logfolder"],
+                        "comlogs",
+                        "%s_%s.log" % (command, session["id"]),
+                    )
+                for targ in ["sourcefolder", "folder"]:
+                    if targ in gcom.commands[command]["args"]:
                         targs[targ] = sessionsfolder
 
                 calls.append(
-                    {'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
+                    {
+                        "name": name,
+                        "function": gcom.commands[command]["com"],
+                        "args": targs,
+                        "logfile": logfile,
+                    }
+                )
 
     # -- Have we set up calls to run in parallel?
     if calls:
         callInfo = "Running %s" % (command)
-        callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
+        callInfo += "\n" + "".join(["=" for e in range(len(callInfo))])
         print(callInfo)
 
-        print("\n===> Running %s through %d sessions in parallel" %
-              (command, parsessions))
+        print(
+            "\n===> Running %s through %d sessions in parallel" % (command, parsessions)
+        )
 
-        results = gc.runInParallel(
-            calls, cores=parsessions, prepend="     ... ")
+        results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
         print("\n===> Final report for command", command)
@@ -486,7 +560,7 @@ def runCommand(command, args):
             if result:
                 ok = False
             else:
-                result = 'completed'
+                result = "completed"
             print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
         if ok:
             print("\n===> Successful completion of task")
@@ -494,7 +568,7 @@ def runCommand(command, args):
 
 def print_help(com):
     # --- print list of available commands, required for qunex.sh checks
-    if com == 'available':
+    if com == "available":
         available_commands = []
         # -> gmri commands
         for c, _ in gcom.commands.items():
@@ -550,12 +624,12 @@ def print_help(com):
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
         os.system("qunex -splash")
-        for full_name, description, language in all_qunex_commands:
-            print(f'{full_name.split(".")[-1]:<39} {description}')
+        for full_name, description, _ in all_qunex_commands:
+            print(full_name.split(".")[-1] + " " + description)
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
-        print("\nqunex", gcom.commands[com]['com'].__doc__.strip(), "\n")
+        print("\nqunex", gcom.commands[com]["com"].__doc__.strip(), "\n")
 
     # --- print help for processing actions
     elif com in gp.allactions:
@@ -567,7 +641,10 @@ def print_help(com):
 
     # --- print error
     else:
-        print("\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n" % com)
+        print(
+            "\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n"
+            % com
+        )
 
 
 def main(args=None):
@@ -581,25 +658,25 @@ def main(args=None):
         print(help)
         sys.exit(0)
 
-    comm = args[0].strip('-')
+    comm = args[0].strip("-")
     opts = dict()
 
     try:
         help_request = False
-        if comm in ['a', 'A', 'allcommands', 'available']:
+        if comm in ["a", "A", "allcommands", "available"]:
             help_request = True
         else:
             for n in range(1, len(args)):
                 # if --h, -h, --H or -H flag is provided user is looking for help
-                if args[n].strip('-') in ['h', 'H', 'help']:
+                if args[n].strip("-") in ["h", "H", "help"]:
                     help_request = True
                     break
                 elif "=" in args[n]:
                     k, v = args[n].split("=", 1)
-                    k = k.strip('-')
+                    k = k.strip("-")
                     opts[k] = v
                 else:
-                    k = args[n].strip('-')
+                    k = args[n].strip("-")
                     opts[k] = True
 
         # print help or run the command
@@ -609,7 +686,9 @@ def main(args=None):
                 print_help(comm)
             except:
                 print(
-                    "ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:]))
+                    "ERROR: '%s' is not a recognized command!\n-----------------------"
+                    % (comm[1:])
+                )
                 print(help)
                 raise
         else:
@@ -625,25 +704,43 @@ def main(args=None):
         sys.exit(1)
     except ge.CommandError as e:
         print(ge.reportCommandError(comm, e))
-        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (
-            " \\\n    ".join(oargs)))
-        print("\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm))
+        print(
+            "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
+            % (" \\\n    ".join(oargs))
+        )
+        print(
+            "\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm)
+        )
         sys.exit(1)
     except ValueError as e:
-        print("\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm))
+        print(
+            "\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!"
+            % (comm)
+        )
         print(e)
-        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (
-            " \\\n    ".join(oargs)))
+        print(
+            "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
+            % (" \\\n    ".join(oargs))
+        )
         raise
     except SystemExit as e:
         sys.exit(e)
     except:
-        print("\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm))
         print(
-            "       Please check documentation for the command (`qunex %s --h`)!" % (comm))
-        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (
-            " \\\n    ".join(oargs)))
-        print("\n--------------------------------------------------------------\nHere's the error as caught by python:\n")
+            "\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!"
+            % (comm)
+        )
+        print(
+            "       Please check documentation for the command (`qunex %s --h`)!"
+            % (comm)
+        )
+        print(
+            "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
+            % (" \\\n    ".join(oargs))
+        )
+        print(
+            "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
+        )
         raise
 
 

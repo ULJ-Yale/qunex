@@ -263,7 +263,7 @@ bash_call_execute() {
         echo ""
         cyaneho "--- Full QuNex call for command: ${qxutil_command_to_run}"
         echo ""
-        cyaneho "gmri ${gmriinput}"
+        cyaneho "qunex ${gmriinput}"
         echo ""
         cyaneho "---------------------------------------------------------"
         echo ""
@@ -965,9 +965,9 @@ show_usage_run_qc() {
     ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_qc.sh
 }
 
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
-# =-=-=-=-=-==-=-=-= Establish general QuNex functions and variables =-=-=-=-=-=-=-=-=-=-=
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-
+# =-=-=-=-=-==-=-=-= Establish general QuNex functions and variables =-=-=-=-=-=
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-
 
 # ------------------------------------------------------------------------------
 # -- Capture current working directory
@@ -1105,35 +1105,26 @@ if [[ $is_gmri_command == 1 ]]; then
     # -- If yes then set the gmri function variable
     qxutil_command_to_run="$1"
 
-    # -- Check for input is command name with no other arguments
-    if [[ "$qxutil_command_to_run" != *"-"* ]] && [[ -z ${2} ]]; then
-        usage_input="$qxutil_command_to_run"
-        # -- If no other input is provided print help
-        show_usage_qxutil
-        exit 0
-    # -- Otherwise pass the command with all inputs from the command line
-    else
-        # -- Handle input parameters
-        unset gmriinput
+    # -- Handle input parameters
+    unset gmriinput
 
-        for inputarg in "$@"; do
-            #  parameters
-            if [[ ${inputarg} =~ '=' ]]; then
-                if [[ $inputarg =~ "\"" ]]; then
-                    inputarg=${inputarg/=/=\'}\'
-                else
-                    inputarg=${inputarg/=/=\"}\"
-                fi
-            fi
-
-            # flags
-            if [[ -z $gmriinput ]]; then
-                gmriinput="${inputarg}"
+    for inputarg in "$@"; do
+        #  parameters
+        if [[ ${inputarg} =~ '=' ]]; then
+            if [[ $inputarg =~ "\"" ]]; then
+                inputarg=${inputarg/=/=\'}\'
             else
-                gmriinput="${gmriinput} ${inputarg}"
+                inputarg=${inputarg/=/=\"}\"
             fi
-        done
-    fi
+        fi
+
+        # flags
+        if [[ -z $gmriinput ]]; then
+            gmriinput="${inputarg}"
+        else
+            gmriinput="${gmriinput} ${inputarg}"
+        fi
+    done
 
     # execute
     bash_call_execute
@@ -1155,12 +1146,10 @@ is_qunex_command() {
     for qunex_command in $qunex_commands; do
         if [[ $qunex_command == $1 ]]; then
             is_qunex_command=1
+            break
         fi
     done
-    if [[ $is_qunex_command == 1 ]]; then
-        show_usage_"$1"
-        exit 0
-    else
+    if [[ $is_qunex_command == 0 ]]; then
         echo ""
         reho "ERROR: $1 --> Requested command is not supported. Refer to general QuNex usage."
         echo ""
@@ -1196,6 +1185,9 @@ for fn in "$@" ; do
         exit 0
     fi
 done
+
+# -- check if it is a valid qunex command
+is_qunex_command ${1}
 
 # ------------------------------------------------------------------------------
 # -- Check if running script interactively or using flag arguments
@@ -1318,10 +1310,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
                 SessionsFolderName="sessions"
                 SessionsFolder="${StudyFolder}/${SessionsFolderName}"
             fi
-            if [ -d ${SessionsFolder} ]; then
-                echo "    ---> Resetting to defaults: ${SessionsFolder}"
-                echo ""
-            else
+            if [ ! -d ${SessionsFolder} ]; then
                 echo ""
                 echo ""
                 reho "ERROR: Study folder or sessions folder is not defined or missing."
@@ -1720,6 +1709,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
         if [[ -z $CASES ]]; then
             CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
         fi
+    fi
+
+    # -- Filter sessions with sessionids
+    if [[ ! -z ${SESSIONIDS} ]]; then
+        CASES=`echo "${CASES}" | grep -w "${SESSIONIDS}"`
     fi
 
     # -- Get species flag for NHP pipelines

@@ -68,10 +68,13 @@ if strcmp(method, 'all')
     nframes = sum(exmat, 2);
     simg = obj.zeroframes(sum(nframes));
     simg.tevents = zeros(1, sum(nframes));
+    simg.tframes = zeros(1, sum(nframes));
     fend = 0;
-else
-    simg.tevents = eind(:)';
+    tframes = [1:obj.frames];
+else    
     simg = obj.zeroframes(nevents);
+    simg.tevents = eind(:)';
+    simg.tframes = sum(exmat, 2);
 end
 
 for n = 1:nevents
@@ -88,6 +91,7 @@ for n = 1:nevents
             fstart = fend + 1;
             fend = fend + nframes(n);
             simg.tevents(fstart:fend) = eind(n);
-            simg.data(:,fstart:fend) = obj.data(:,exmat(n,:));
+            simg.tframes(fstart:fend) = tframes(exmat(n,:));
+            simg.data(:,fstart:fend) = obj.data(:,exmat(n,:));            
     end
 end
