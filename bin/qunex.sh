@@ -274,7 +274,16 @@ bash_call_execute() {
         if [[ -z ${Modality} ]]; then
             logtag="${CommandToRun}_${CASE}_${TimeStamp}"
         else
-            logtag="${CommandToRun}_${CASE}_${Modality}_${TimeStamp}"
+            modality_lower=$(echo "${Modality}" | tr '[:upper:]' '[:lower:]')
+
+            # add bold number if only one BOLD in BOLDLIST
+            if [[ -n ${BOLDLIST} ]]; then
+                if [[ ! "${BOLDLIST}" =~ [,\ |] ]]; then
+                    modality_lower=${modality_lower}${BOLDLIST}
+                fi
+            fi
+
+            logtag="${CommandToRun}_${modality_lower}_${CASE}_${TimeStamp}"
         fi
 
         # runlog
