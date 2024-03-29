@@ -2334,6 +2334,22 @@ def run_recipe(
             logfolder = gc.deduceFolders({"sessionsfolder": eargs["sessionsfolder"]})[
                 "logfolder"
             ]
+
+    # mustache injections to logfolder?
+    if "{{" in logfolder and "}}" in logfolder:
+        labels = _find_enclosed_substrings(logfolder)
+        logfolder = logfolder.replace("{", "").replace("}", "")
+        for label in labels:
+            label = label.replace("{", "").replace("}", "")
+            os_label = label[1:]
+            if os_label in os.environ:
+                logfolder = logfolder.replace(label, os.environ[os_label])
+            else:
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
+                )
+
     runlogfolder = os.path.join(logfolder, "runlogs")
     comlogfolder = os.path.join(logfolder, "comlogs")
 
@@ -2364,7 +2380,7 @@ def run_recipe(
         file=log,
     )
 
-    summary += f"\n\n===> recipe: {recipe}"
+    summary += f"\n\nRecipe: {recipe}"
 
     print(f"===> Running commands from recipe: {recipe}")
     print(f"===> Running commands from recipe: {recipe}\n", file=log)
@@ -2606,7 +2622,7 @@ def run_recipe(
                     "See error logs in the study folder for details",
                 )
             else:
-                summary += f"\n---> command {command_name} OK"
+                summary += f"\n ... command {command_name} OK"
                 print(
                     f"===> Successful completion of the run_recipe command {command_name}\n"
                 )
@@ -2637,7 +2653,8 @@ def run_recipe(
     print(summary, file=log)
     print("\n===> Successful completion of task: run_recipe", file=log)
 
-    print("===> Successful completion of run_recipes")
+    print("\n------------------------")
+    print("===> Successful completion of run_recipe")
     print(summary)
 
     log.close()
