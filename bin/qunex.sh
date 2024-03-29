@@ -271,19 +271,23 @@ bash_call_execute() {
         eval "gmri ${gmriinput}"
     else
         # log tag
-        if [[ -z ${Modality} ]]; then
+        if [[ ${CommandToRun} != "run_qc" ]]; then
             logtag="${CommandToRun}_${CASE}_${TimeStamp}"
         else
-            modality_lower=$(echo "${Modality}" | tr '[:upper:]' '[:lower:]')
+            if [[ -z ${Modality} ]]; then
+                logtag="${CommandToRun}_${CASE}_${TimeStamp}"
+            else
+                modality_lower=$(echo "${Modality}" | tr '[:upper:]' '[:lower:]')
 
-            # add bold number if only one BOLD in BOLDLIST
-            if [[ -n ${BOLDLIST} ]]; then
-                if [[ ! "${BOLDLIST}" =~ [,\ |] ]]; then
-                    modality_lower=${modality_lower}${BOLDLIST}
+                # add bold number if only one BOLD in BOLDLIST
+                if [[ -n ${BOLDLIST} ]]; then
+                    if [[ ! "${BOLDLIST}" =~ [,\ |] ]]; then
+                        modality_lower=${modality_lower}_${BOLDLIST}
+                    fi
                 fi
-            fi
 
-            logtag="${CommandToRun}_${modality_lower}_${CASE}_${TimeStamp}"
+                logtag="${CommandToRun}_${modality_lower}_${CASE}_${TimeStamp}"
+            fi
         fi
 
         # runlog
