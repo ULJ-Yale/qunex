@@ -133,7 +133,10 @@ def getHCPPaths(sinfo, options):
         print(
             "ERROR: HCP path does not exists, check your parameters and the batch file!"
         )
-        raise
+        raise ge.CommandFailed(
+            options["command_ran"],
+            "No sufficient input data, perhaps you did not provide the batch file?",
+        )
 
     d["base"] = hcpbase
     if options["hcp_folderstructure"] == "hcpya":
@@ -3560,8 +3563,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "SiemensFieldmap",
             "PhilipsFieldMap",
             "GEHealthCareFieldMap",
-            "GEHealthCareLegacyFieldMap"
-            "NONE",
+            "GEHealthCareLegacyFieldMap" "NONE",
         ]:
             r += "\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter!"
             run = False
@@ -3955,8 +3957,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["magnitude"],
-                            "\n     ... GE fieldmap magnitude image %d present "
-                            % (i),
+                            "\n     ... GE fieldmap magnitude image %d present " % (i),
                             "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
                             % (i),
                             status=fieldok,
@@ -5687,12 +5688,16 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 "script": os.path.join(hcp["hcp_base"], "ICAFIX", "hcp_fix"),
                 "inputfile": inputfile,
                 "bandpass": bandpass,
-                "domot": "TRUE"
-                if options["hcp_icafix_domotionreg"] is None
-                else options["hcp_icafix_domotionreg"],
-                "trainingdata": f"HCP_hp{bandpass}.RData"
-                if options["hcp_icafix_traindata"] is None
-                else options["hcp_icafix_traindata"],
+                "domot": (
+                    "TRUE"
+                    if options["hcp_icafix_domotionreg"] is None
+                    else options["hcp_icafix_domotionreg"]
+                ),
+                "trainingdata": (
+                    f"HCP_hp{bandpass}.RData"
+                    if options["hcp_icafix_traindata"] is None
+                    else options["hcp_icafix_traindata"]
+                ),
                 "fixthreshold": icafix_threshold,
                 "deleteintermediates": delete_intermediates,
             }
@@ -5908,7 +5913,10 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             comm += '             --config="%s"' % options["hcp_config"]
 
         if options["hcp_icafix_processingmode"] is not None:
-            comm += '             --processing-mode="%s"' % options["hcp_icafix_processingmode"]
+            comm += (
+                '             --processing-mode="%s"'
+                % options["hcp_icafix_processingmode"]
+            )
 
         if options["hcp_icafix_fixonly"] is not None:
             comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
@@ -6859,9 +6867,11 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
                     "regname": options["hcp_icafix_regname"],
                     "lowresmesh": options["hcp_lowresmesh"],
                     "matlabrunmode": matlabrunmode,
-                    "motionregression": "TRUE"
-                    if options["hcp_icafix_domotionreg"] is None
-                    else options["hcp_icafix_domotionreg"],
+                    "motionregression": (
+                        "TRUE"
+                        if options["hcp_icafix_domotionreg"] is None
+                        else options["hcp_icafix_domotionreg"]
+                    ),
                     "deleteintermediates": options["hcp_icafix_deleteintermediates"],
                 }
             )
@@ -7078,9 +7088,11 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     "regname": options["hcp_icafix_regname"],
                     "lowresmesh": options["hcp_lowresmesh"],
                     "matlabrunmode": matlabrunmode,
-                    "motionregression": "FALSE"
-                    if options["hcp_icafix_domotionreg"] is None
-                    else options["hcp_icafix_domotionreg"],
+                    "motionregression": (
+                        "FALSE"
+                        if options["hcp_icafix_domotionreg"] is None
+                        else options["hcp_icafix_domotionreg"]
+                    ),
                     "deleteintermediates": options["hcp_icafix_deleteintermediates"],
                 }
             )
@@ -8524,9 +8536,11 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 "maps": options["hcp_resample_maps"].replace(",", "@"),
                 "smoothingfwhm": options["hcp_bold_smoothFWHM"],
                 "highpass": highpass,
-                "motionregression": "TRUE"
-                if options["hcp_icafix_domotionreg"] is None
-                else options["hcp_icafix_domotionreg"],
+                "motionregression": (
+                    "TRUE"
+                    if options["hcp_icafix_domotionreg"] is None
+                    else options["hcp_icafix_domotionreg"]
+                ),
                 "regfiles": regfiles,
                 "concatregname": options["hcp_resample_concatregname"],
                 "myelinmaps": options["hcp_resample_myelinmaps"].replace(",", "@"),
@@ -8797,9 +8811,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 "maps": options["hcp_resample_maps"].replace(",", "@"),
                 "smoothingfwhm": options["hcp_bold_smoothFWHM"],
                 "highpass": highpass,
-                "motionregression": "FALSE"
-                if options["hcp_icafix_domotionreg"] is None
-                else options["hcp_icafix_domotionreg"],
+                "motionregression": (
+                    "FALSE"
+                    if options["hcp_icafix_domotionreg"] is None
+                    else options["hcp_icafix_domotionreg"]
+                ),
                 "regfiles": regfiles,
                 "concatregname": options["hcp_resample_concatregname"],
                 "myelinmaps": options["hcp_resample_myelinmaps"].replace(",", "@"),
@@ -10886,10 +10902,9 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             )
 
         if options["hcp_autoreclean_model_to_use"] is not None:
-            comm += (
-                '             --model-to-use="%s"'
-                % options["hcp_autoreclean_model_to_use"].replace(",", "@")
-            )
+            comm += '             --model-to-use="%s"' % options[
+                "hcp_autoreclean_model_to_use"
+            ].replace(",", "@")
 
         if options["hcp_autoreclean_vote_threshold"] is not None:
             comm += (

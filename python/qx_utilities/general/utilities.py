@@ -433,7 +433,9 @@ def create_study(studyfolder=None, folders=None):
     )
 
 
-def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=None, filter=None):
+def copy_study(
+    studyfolder, existing_study, step=None, sessions=None, batchfile=None, filter=None
+):
     """
     ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [step=None] [sessions=None] [batchfile=None] [filter=None] ``
 
@@ -485,24 +487,36 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
     print()
     print("===> Checking input parameters")
     if studyfolder is None:
-        raise ge.CommandError("copy_study", "No studyfolder specified",
-                              "Please provide path for the new study folder using the studyfolder parameter!")
+        raise ge.CommandError(
+            "copy_study",
+            "No studyfolder specified",
+            "Please provide path for the new study folder using the studyfolder parameter!",
+        )
     print(f" ... studyfolder: {studyfolder}")
 
     if existing_study is None:
-        raise ge.CommandError("copy_study", "No existing_study specified",
-                              "Please provide path of an existing QuNex study by using the existing_study parameter!")
+        raise ge.CommandError(
+            "copy_study",
+            "No existing_study specified",
+            "Please provide path of an existing QuNex study by using the existing_study parameter!",
+        )
     print(f" ... existing_study: {existing_study}")
 
     # check if the source folder is a QuNex study
     if not os.path.exists(os.path.join(existing_study, ".qunexstudy")):
-        raise ge.CommandError("copy_study", "Existing study is not a QuNex study",
-                              "The existing study folder does not contain a .qunexstudy file. Please provide a valid QuNex study folder.")
+        raise ge.CommandError(
+            "copy_study",
+            "Existing study is not a QuNex study",
+            "The existing study folder does not contain a .qunexstudy file. Please provide a valid QuNex study folder.",
+        )
 
     # if filter is provided, we need the batchfile as well
     if filter is not None and batchfile is None:
-        raise ge.CommandError("copy_study", "Filter provided, but no batchfile specified",
-                              "Please provide the path to the batch file using the batchfile parameter.")
+        raise ge.CommandError(
+            "copy_study",
+            "Filter provided, but no batchfile specified",
+            "Please provide the path to the batch file using the batchfile parameter.",
+        )
 
     # other parameters
     print(f" ... step: {step}")
@@ -532,7 +546,9 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
 
     # get sessions
     if batchfile is not None:
-        sessions, _ = gc.get_sessions_list(batchfile, filter=filter, sessionids=sessions)
+        sessions, _ = gc.get_sessions_list(
+            batchfile, filter=filter, sessionids=sessions
+        )
     elif sessions is not None:
         sessions = sessions.split(",")
 
@@ -540,7 +556,9 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
     if sessions is None:
         sessions = os.listdir(os.path.join(existing_study, "sessions"))
         # remove archive, inbox, QC, specs
-        sessions = [session for session in sessions if session not in session_supplementary]
+        sessions = [
+            session for session in sessions if session not in session_supplementary
+        ]
 
     print()
     print("Copying sessions")
@@ -555,7 +573,12 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
                 os.makedirs(dst, exist_ok=True)
                 shutil.copy2(os.path.join(src, item), os.path.join(dst, item))
             elif item != "hcp":
-                shutil.copytree(os.path.join(src, item), os.path.join(dst, item), dirs_exist_ok=True, ignore_dangling_symlinks=True)
+                shutil.copytree(
+                    os.path.join(src, item),
+                    os.path.join(dst, item),
+                    dirs_exist_ok=True,
+                    ignore_dangling_symlinks=True,
+                )
 
         # only copy hcp folder if "hcp_" in steps but not if steps is hcp_pre_freesurfer
         if step is None or ("hcp_" in step and step != "hcp_pre_freesurfer"):
@@ -568,7 +591,11 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
     print("Fixing paths in relevant files")
     for root, _, files in os.walk(studyfolder):
         for file in files:
-            if file.endswith(".txt") or file.endswith(".conc") or file.endswith(".list"):
+            if (
+                file.endswith(".txt")
+                or file.endswith(".conc")
+                or file.endswith(".list")
+            ):
                 with open(os.path.join(root, file), "r") as f:
                     lines = f.readlines()
                 with open(os.path.join(root, file), "w") as f:
@@ -586,6 +613,7 @@ def copy_study(studyfolder, existing_study, step=None, sessions=None, batchfile=
                 batchfile = os.path.join(processing_folder, item)
                 print(f" ... processing {batchfile}")
                 filter_batch(batchfile, sessions)
+
 
 def filter_batch(batchfile, sessions=None):
     """
@@ -612,6 +640,7 @@ def filter_batch(batchfile, sessions=None):
     # write back
     with open(batchfile, "w") as f:
         f.write(new_batch)
+
 
 def check_study(startfolder=".", folders=None):
     """
@@ -643,7 +672,16 @@ def check_study(startfolder=".", folders=None):
 
     return studyfolder
 
-def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
+
+def create_batch(
+    sessionsfolder=".",
+    sourcefiles=None,
+    targetfile=None,
+    sessions=None,
+    filter=None,
+    overwrite="no",
+    paramfile=None,
+):
     """
     ``create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/parameters.txt]``
 
@@ -2493,16 +2531,21 @@ def run_recipe(
                     and "{{" in value
                     and "}}" in value
                 ):
-                    label = value.strip("{{").strip("}}")
-                    if label in eargs:
-                        value = eargs[label]
-                    elif label[1:] in os.environ:
-                        value = os.environ[label[1:]]
-                    else:
-                        raise ge.CommandFailed(
-                            "run_recipe",
-                            f"Cannot inject values marked with double curly braces in the recipe. Label not found in the parameters or in system environment variables.",
-                        )
+                    labels = _find_enclosed_substrings(value)
+                    value = value.replace("{", "").replace("}", "")
+
+                    for label in labels:
+                        label = label.replace("{", "").replace("}", "")
+                        os_label = label[1:]
+                        if label in eargs:
+                            value = value.replace(label, eargs[label])
+                        elif os_label in os.environ:
+                            value = value.replace(label, os.environ[os_label])
+                        else:
+                            raise ge.CommandFailed(
+                                "run_recipe",
+                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in the parameters or in system environment variables.",
+                            )
 
                 if param in flags:
                     command.append(f"--{param}")
@@ -2608,6 +2651,28 @@ def run_recipe(
 
     # copy logname to comlog
     shutil.copyfile(logname, comlog)
+
+
+def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter="}}"):
+    """
+    Find all substrings enclosed by start and end delimiters in a string.
+    """
+    substrings = []
+    start_index = 0
+
+    while True:
+        start_pos = input_string.find(start_delimiter, start_index)
+        if start_pos == -1:
+            break
+
+        end_pos = input_string.find(end_delimiter, start_pos + len(start_delimiter))
+        if end_pos == -1:
+            break
+
+        substrings.append(input_string[start_pos + len(start_delimiter) : end_pos])
+        start_index = end_pos + len(end_delimiter)
+
+    return substrings
 
 
 def strip_quotes(string):
@@ -3794,9 +3859,8 @@ def create_session_info(
             print(" ... Processing folder %s" % (sfolder))
 
             if os.path.exists(stfile) and overwrite != "yes":
-                print(
-                    "  ... Target file already exists, skipping! [%s]" % (stfile))
-                report['pre-existing target'].append(sfolder)
+                print("  ... Target file already exists, skipping! [%s]" % (stfile))
+                report["pre-existing target"].append(sfolder)
                 continue
 
             try:
@@ -3813,7 +3877,7 @@ def create_session_info(
                 output_lines = _serialize_session(tgt_session)
 
                 print(" ... writing %s" % (targetfile))
-                fout = open(stfile, 'w')
+                fout = open(stfile, "w")
 
                 # qunex header
                 gc.print_qunex_header(file=fout)
