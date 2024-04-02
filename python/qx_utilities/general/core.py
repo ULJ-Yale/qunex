@@ -201,8 +201,8 @@ def read_session_data(filename, verbose=False):
                             % (dic["id"], field, dic[field], os.path.basename(filename))
                         )
 
-        # done with parsing parameters
-        first = False
+            # done with parsing parameters
+            first = False
 
     except:
         print(
