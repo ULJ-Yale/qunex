@@ -246,17 +246,17 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo ""
 
     ## -- Check for AFNI
-    echo "        AFNI Binary  : $(which afni 2>&1 | grep -v 'no afni')"
-    if [[ -z $(which afni 2>&1 | grep -v 'no afni') ]]; then 
-        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
-        reho "        AFNI Version : Binary not found!"
-        if [[ -L "$AFNIDIR"  && ! -e "$AFNIDIR" ]]; then
-            reho "                     : $AFNIDIR is a link to a nonexisiting folder!"
-        fi
-    else
-        echo "        AFNI Version : $(afni --version)"
-    fi
-    echo ""
+    #echo "        AFNI Binary  : $(which afni 2>&1 | grep -v 'no afni')"
+    #if [[ -z $(which afni 2>&1 | grep -v 'no afni') ]]; then 
+    #    BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
+    #    reho "        AFNI Version : Binary not found!"
+    #    if [[ -L "$AFNIDIR"  && ! -e "$AFNIDIR" ]]; then
+    #        reho "                     : $AFNIDIR is a link to a nonexisiting folder!"
+    #    fi
+    #else
+    #    echo "        AFNI Version : $(afni --version)"
+    #fi
+    #echo ""
 
     ## -- Check for ANTs (only very few ANTs commands support --version flag)
     echo "        ANTs Binary  : $(which antsRegistration 2>&1 | grep -v 'no antsRegistration')"
