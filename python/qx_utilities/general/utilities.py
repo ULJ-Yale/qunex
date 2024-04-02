@@ -2342,7 +2342,7 @@ def run_recipe(
         for label in labels:
             label = label.replace("{", "").replace("}", "")
             os_label = label[1:]
-            if os_label in os.environ:
+            if label[0] == "$" and os_label in os.environ:
                 logfolder = logfolder.replace(label, os.environ[os_label])
             else:
                 raise ge.CommandFailed(
@@ -2555,7 +2555,7 @@ def run_recipe(
                         os_label = label[1:]
                         if label in eargs:
                             value = value.replace(label, eargs[label])
-                        elif os_label in os.environ:
+                        elif label[0] == "$" and os_label in os.environ:
                             value = value.replace(label, os.environ[os_label])
                         else:
                             raise ge.CommandFailed(
