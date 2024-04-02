@@ -121,7 +121,7 @@ function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, r
 %   it takes to compute GBC will be reported. This can inform setting of vstep.
 %   vstep defines how many voxels to compute the GBC for in a single step.
 %   Having too small vstep results in more steps, which reduces the inherent
-%   paralelization in computing correlations. Too large vstep can result in
+%   parallelization in computing correlations. Too large vstep can result in
 %   chunks that don't fit into memory, which requires use of memory paging and
 %   consequent longer execution times.
 %

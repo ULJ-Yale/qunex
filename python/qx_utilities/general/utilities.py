@@ -2087,14 +2087,10 @@ def run_recipe(
     parelements parameters.
 
     --parsessions    An optional parameter specifying how many sessions to run
-                     in parallel. If parsessions parameter is already specified
-                     within the `run_recipe`, then the lower value will 
-                     take precedence.
+                     in parallel.
     --parelements    An optional parameter specifying how many elements to run
-                     in paralel within each of the jobs (e.g. how many bolds
-                     when bold processing). If parelements is already specified
-                     within the `run_recipe`, then the lower value will
-                     take precedence.
+                     in parallel within each of the jobs (e.g. how many bolds
+                     when bold processing).
 
     The parsessions parameter defines the number of sessions that will be ran in
     parallel within a single run_recipe invocation. The default is 1, which
