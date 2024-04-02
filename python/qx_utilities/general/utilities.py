@@ -2043,7 +2043,7 @@ def run_recipe(
     General parameters
     ------------------
 
-    --recipe_file   The file containing recipes and their  parameters.
+    --recipe_file   path to a YAML file that contains recipe definitions.
     --recipe        Name of the recipe in the recipe_file to run.
     --steps         A comma separated list of steps (QuNex commands) to run.
                     This is an alternative to specifying the recipe file and
