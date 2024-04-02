@@ -323,19 +323,13 @@ geho ""
 # ------------------------------------------------------------------------------
 
 if [ "$USEOCTAVE" == "TRUE" ]; then
-    if [[ ${OctaveTest} == "fail" ]]; then 
-        reho " ===> ERROR: Cannot setup Octave because module test failed."
-    else
-         ln -s `which octave` ${OCTAVEDIR}/octave > /dev/null 2>&1
-         export OCTAVEDIR
-         cyaneho " ---> Setting up Octave "; echo ""
-         QUNEXMCOMMAND='octave -q --no-init-file --eval'
-         if [ ! -e ~/.octaverc ]; then
-             cp ${QUNEXPATH}/qx_library/etc/.octaverc ~/.octaverc
-         fi
-         export LD_LIBRARY_PATH=/usr/lib64/hdf5/:${LD_LIBRARY_PATH} > /dev/null 2>&1
-         if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
+    cyaneho " ---> Setting up Octave "; echo ""
+    QUNEXMCOMMAND='octave -q --eval'
+    if [ ! -e ~/.octaverc ]; then
+        cp ${QUNEXPATH}/qx_library/etc/.octaverc ~/.octaverc
     fi
+    export LD_LIBRARY_PATH=/usr/lib64/hdf5/:${LD_LIBRARY_PATH} > /dev/null 2>&1
+    if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
 else
     cyaneho " ---> Setting up Matlab "; echo ""
     QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
