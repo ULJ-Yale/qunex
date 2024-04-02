@@ -93,7 +93,7 @@ def read_session_data(filename, verbose=False):
     gpref = {}
 
     c = 0
-    # first "sessions" is the parameters block
+    # first "session" is the parameters block
     first = True
     try:
         for sub in s:
