@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.99.3
+
+* Fixed a bug in parameter parsing from batch files.
+
 ## 0.99.2
 
 * Made HCP commands more robust to parameter types.
