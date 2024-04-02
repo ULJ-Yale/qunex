@@ -93,6 +93,7 @@ def read_session_data(filename, verbose=False):
     gpref = {}
 
     c = 0
+    # first "sessions" is the parameters block
     first = True
     try:
         for sub in s:
@@ -199,6 +200,9 @@ def read_session_data(filename, verbose=False):
                             "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!"
                             % (dic["id"], field, dic[field], os.path.basename(filename))
                         )
+
+            # done with the parameters block
+            first = False
 
     except:
         print(
