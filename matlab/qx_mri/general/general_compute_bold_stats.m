@@ -145,6 +145,7 @@ end
 % --- compute stats
 
 if verbose, fprintf(' ... computing stats'); end
+bmask = nimage(bmask)
 stats = img.img_stats_time([], bmask);
 
 % --------------------------------------------------------------
