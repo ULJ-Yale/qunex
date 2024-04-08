@@ -4381,14 +4381,22 @@ def _serialize_session(tgt_session):
         raise ge.SpecFileSyntaxError(error="subject id cannot be empty")
     lines.append("subject: {}".format(tgt_session["subject"]))
 
+    lines.append("")
+
     for path_name, path in tgt_session["paths"].items():
         lines.append("{}: {}".format(path_name, path))
+
+    lines.append("")
 
     for tag_key, tag_value in tgt_session["custom_tags"].items():
         lines.append("{}: {}".format(tag_key, tag_value))
 
+    lines.append("")
+
     for pipeline in tgt_session["pipeline_ready"]:
         lines.append("{}ready: true".format(pipeline))
+
+    lines.append("")
 
     for img_num in sorted(tgt_session["images"].keys()):
         image = tgt_session["images"][img_num]
