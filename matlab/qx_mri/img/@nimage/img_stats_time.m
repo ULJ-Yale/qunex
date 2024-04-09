@@ -89,40 +89,40 @@ for d = doIt
 
     case 'm'
         if isempty(n), n = sum(~isnan(img.data), 1); end
-        if isempty(sm), sm = nansum(img.data, 1); end
+        if isempty(sm), sm = sum(img.data, 1, "omitnan"); end
         if isempty(m), m = sm./n; end
         out.mean = m;
         done{c} = char(d);
 
     case 'me'
-        out.median = nanmedian(img.data, 1);
+        out.median = median(img.data, 1, "omitnan");
         done{c} = char(d);
 
     case 'max'
-        out.max = nanmax(img.data, [], 1);
+        out.max = max(img.data, [], 1, "omitnan");
         done{c} = char(d);
 
     case 'min'
-        out.min = nanmin(img.data, [], 1);
+        out.min = min(img.data, [], 1, "omitnan");
         done{c} = char(d);
 
     case 'sum'
-        if isempty(sm), sm = nansum(img.data, 1); end
+        if isempty(sm), sm = sum(img.data, 1, "omitnan"); end
         out.sum = sm;
         done{c} = char(d);
 
     case 'sd'
-        if isempty(sd), sd = nanstd(img.data, 0, 1); end
+        if isempty(sd), sd = std(img.data, 0, 1, "omitnan"); end
         out.sd = sd;
         done{c} = char(d);
 
     case 'var'
-        if isempty(v), v = nanvar(img.data, 1, 1); end
+        if isempty(v), v = var(img.data, 1, 1, "omitnan"); end
         out.var = v;
         done{c} = char(d);
 
     case 'dvars'
-        if isempty(sm), sm = nansum(img.data, 1); end
+        if isempty(sm), sm = sum(img.data, 1, "omitnan"); end
         if isempty(n), n = sum(~isnan(img.data), 1); end
         if isempty(m), m = sm./n; end
         dv = diff(img.data, 1, 2);
@@ -133,5 +133,3 @@ for d = doIt
         done{c} = char(d);
     end
 end
-
-

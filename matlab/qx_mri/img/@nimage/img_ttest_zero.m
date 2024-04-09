@@ -58,7 +58,7 @@ else
     [h, p.data] = ttest(obj.data, 0, 'Alpha', 0.05, 'Tail', 'both', 'Dim', 2);
 end
 
-M.data = nanmean(obj.data, 2);
+M.data = mean(obj.data, 2, "omitnan");
 
 % ---- compute Z scores
 
