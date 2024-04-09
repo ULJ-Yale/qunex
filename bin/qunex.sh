@@ -97,8 +97,8 @@ show_splash() {
     geho "                      COPYRIGHT & LICENSE NOTICE:"
     geho ""
     geho "Use of this software is subject to the terms and conditions defined in"
-    geho "'LICENSES' which is a part of the QuNex Suite source code package:"
-    geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
+    geho "QuNex LICENSES which can be found in the LICENSES folder of the QuNex"
+    geho "repository or at https://qunex.yale.edu/qunex-registration"
     geho ""
 }
 
