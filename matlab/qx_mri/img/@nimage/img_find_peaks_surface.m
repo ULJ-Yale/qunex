@@ -171,7 +171,6 @@ fp_param.cifti = cifti;
 fp_param = determineSurfaceProjection(fp_param);
 
 % --- Create an empty matrix to store the data globally for each hemisphere
-% TODO: unhardcode the size of the following array of zeros
 roiDataRaw = zeros(32492,1);
 %fp_param.surfaceComponent = lower(img.cifti.shortnames{fp_param.cmp});
 roiDataRaw(fp_param.cifti.(fp_param.surfaceComponent).mask) = img.data(img.cifti.start{fp_param.cmp}:img.cifti.end{fp_param.cmp});

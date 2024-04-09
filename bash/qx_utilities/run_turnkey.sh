@@ -99,13 +99,11 @@ Parameters:
         from the batch file.
 
     --turnkeysteps (str):
-        Specify specific turnkey steps you wish to run:
-        Supported: TODO
+        Specify specific turnkey steps you wish to run.
 
     --turnkeycleanstep (str):
         Specify specific turnkey steps you wish to clean up intermediate files
         for.
-        Supported: TODO
 
     --paramfile (str):
         File with pre-configured header specifying processing parameters.

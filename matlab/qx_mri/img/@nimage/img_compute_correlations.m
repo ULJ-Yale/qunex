@@ -41,8 +41,6 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %   correlations between activation maps and behavioral variables across
 %   sessions.
 %
-%   TODO: adjust information for different fc measures
-%
 %   EXAMPLE USE
 %   ===========
 %

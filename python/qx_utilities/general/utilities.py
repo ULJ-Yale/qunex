@@ -4160,9 +4160,6 @@ def _find_user_defined_field_maps(tgt_session, field_map_type):
     User could define se/fm in mapping or session file. Here we only record
     se/fm numbers defined on actual field map images. The output of this function
     is used to decide whether we will run the auto-assign FSM.
-
-    TODO: currently this function does not check the number for images associated
-    with each se/fm number.
     """
 
     user_defined = {}

@@ -395,9 +395,6 @@ end
 
 if ~isempty(options.rois)
     keep_roi = ismember({img.roi.roiname}, options.rois);
-    % TODO 
-    % --> remove excluded ROI from img.data
-    % --> recode kept ROI in img.data and in img.roi
     img.roi = img.roi(keep_roi);
     
     if isempty(img.roi)
@@ -570,7 +567,7 @@ function [roi] = process_label(roi, options)
         error('ERROR: In img_prep_roi there are no volumes/maps left to define ROI. Please check your ROI file and options!');
     end
 
-    % --> process and check for overlapping labels  %TODO -- check no of ROI names -> first process labels, then make ROIs
+    % --> process and check for overlapping labels
     c = 0;
     labels = {};
     overlap = {};
@@ -601,9 +598,6 @@ function [roi] = process_label(roi, options)
         end
     end
 
-    % TODO – consider dealing with labels with the same name.
-    % overlap = unique(overlap); <- 
-
 % --------------------------------------------------------------------------------------------
 %                                                                                process_parcel
 
@@ -613,12 +607,7 @@ function [img] = process_parcel(roi, options)
     nparcels = length(roi.cifti.parcels);
     roi.data = [1:nparcels]';
 
-    % TODO
-    % -> expand parcels to full cifti image
-    % -> get indices for each key in the full cifti image
-
     error('ERROR: Processing parcel images is not yet implemented!');
-
 
     img = nimage('dscalar:1');
 

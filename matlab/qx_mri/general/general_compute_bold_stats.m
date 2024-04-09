@@ -145,8 +145,9 @@ end
 % --- compute stats
 
 if verbose, fprintf(' ... computing stats'); end
-bmask = nimage(bmask)
-stats = img.img_stats_time([], bmask);
+% TODO fix and enable masking
+%stats = img.img_stats_time([], bmask);
+stats = img.img_stats_time([]);
 
 % --------------------------------------------------------------
 %                                       save in an external file

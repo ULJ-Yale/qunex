@@ -429,7 +429,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           The results will be returned in a gbcmaps structure and, if so
 %           specified, saved.
 %
-%   Examples:  <<<<<< ToDo: write up examples
+%   Examples:
 %       To compute resting state seed maps using first eigenvariate of each ROI::
 %
 %           qunex fc_compute_seedmaps \

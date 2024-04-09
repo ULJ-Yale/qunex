@@ -167,11 +167,6 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                         f = pc.getFileNames(sinfo, options)
                         f.update(pc.getBOLDFileNames(sinfo, boldname, options))
                         d = pc.getSessionFolders(sinfo, options)
-                        # f_conc = os.path.join(d['s_bold_concs'], tconc+".conc")
-                        # f_fidl = os.path.join(d['s_bold_events'], tfidl+".fidl")
-
-                        # TODO copyBOLDData does not exist!?
-                        # r, status = copyBOLDData(sinfo, options, overwrite, thread, d, f, r)
 
                         if status:
                             r += "\n---> Data ready!"

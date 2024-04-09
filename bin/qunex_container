@@ -769,7 +769,7 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
-    # deprecation warnings, TODO remove in 1.0.0
+    # deprecation warnings
     for arg in args:
         if "sessionids=" in arg:
             print(
