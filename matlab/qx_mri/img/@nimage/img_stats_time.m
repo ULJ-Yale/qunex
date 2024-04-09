@@ -39,7 +39,7 @@ function [out, done] = img_stats_time(img, doIt, mask)
 % SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3, mask = []; end
-if nargin < 2, doIt = [];   end
+if nargin < 2, doIt = []; end
 
 if isempty(doIt)
     doIt = {'n', 'm', 'me', 'max', 'min', 'sum', 'sd', 'var', 'dvars'};
