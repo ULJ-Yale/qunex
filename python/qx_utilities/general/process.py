@@ -139,16 +139,16 @@ def isNone(s):
         return s
 
 
-def updateOptions(session, options):
+def update_options(session, options):
     """
-    ``updateOptions(session, options)``
+    ``update_options(session, options)``
 
     Returns an updated copy of options dictionary where all keys from
     sessions that started with an underscore '_' are mapped into options.
     """
     soptions = dict(options)
     for key, value in session.items():
-        if key.startswith("_"):
+        if key.startswith("_") or key.startswith("--"):
             soptions[key[1:]] = value
     return soptions
 
@@ -2176,7 +2176,7 @@ def run(command, args):
                             action = "testing"
                         else:
                             action = "processing"
-                        soptions = updateOptions(session, options)
+                        soptions = update_options(session, options)
                         consoleLog += "\nStarting %s of sessions %s at %s" % (
                             action,
                             session["id"],
@@ -2214,7 +2214,7 @@ def run(command, args):
                 # update options and prepare the all sessions string for labeling
                 sessionids = ""
                 for session in sessions:
-                    soptions = updateOptions(session, options)
+                    soptions = update_options(session, options)
 
                     if sessionids == "":
                         sessionids = session["id"]
@@ -2259,7 +2259,7 @@ def run(command, args):
 
                 # update options and prepare the all subjects string for labeling
                 for session in sessions:
-                    soptions = updateOptions(session, options)
+                    soptions = update_options(session, options)
 
                 subjectids = ",".join(subject_list)
 
@@ -2292,7 +2292,7 @@ def run(command, args):
             # simple processing commands
             elif command in sactions:
                 pending_actions = sactions[command]
-                soptions = updateOptions(session, options)
+                soptions = update_options(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 
@@ -2304,7 +2304,7 @@ def run(command, args):
                 pending_actions = pactions[command]
                 for session in sessions:
                     if len(session["id"]) > 1:
-                        soptions = updateOptions(session, options)
+                        soptions = update_options(session, options)
                         consoleLog += (
                             "\nAdding processing of session %s to the pool at %s"
                             % (
@@ -2335,7 +2335,7 @@ def run(command, args):
 
             elif command in sactions:
                 pending_actions = sactions[command]
-                soptions = updateOptions(session, options)
+                soptions = update_options(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 
