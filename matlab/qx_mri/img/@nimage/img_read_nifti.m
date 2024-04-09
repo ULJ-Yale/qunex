@@ -110,7 +110,9 @@ end
 if strcmp(img.imageformat, 'NIfTI')
     img.TR = [];
     img.frames = 1;
-    if img.hdrnifti.dim(1) == 4    % we probably have a BOLD (4D) file
+
+    % we probably have a BOLD (4D) file
+    if img.hdrnifti.dim(1) == 4
         if ~isempty(frames)
             img.hdrnifti.dim(5) = frames;
             img.frames = frames;
@@ -136,7 +138,8 @@ elseif strcmp(img.imageformat, 'CIFTI')
 
     img.TR     = [];
 
-    if img.hdrnifti.dim(1) == 6                             % we probably have 2d cifi file
+    % we probably have a 2d cifti file
+    if img.hdrnifti.dim(1) == 6
         cver = regexp(char(fmeta'), 'CIFTI Version="(.)"', 'tokens');
         if length(cver) == 0
             error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', img.filename);
