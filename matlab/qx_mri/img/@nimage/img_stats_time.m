@@ -89,7 +89,7 @@ for d = doIt
 
     case 'm'
         if isempty(n), n = sum(~isnan(img.data), 1); end
-        if isempty(sm), sm = sum(img.data, 1, "omitnan"); end
+        if isempty(sm), sm = nansum(img.data, 1); end
         if isempty(m), m = sm./n; end
         out.mean = m;
         done{c} = char(d);
@@ -99,15 +99,15 @@ for d = doIt
         done{c} = char(d);
 
     case 'max'
-        out.max = max(img.data, [], 1, "omitnan");
+        out.max = max(img.data, [], 1);
         done{c} = char(d);
 
     case 'min'
-        out.min = min(img.data, [], 1, "omitnan");
+        out.min = min(img.data, [], 1);
         done{c} = char(d);
 
     case 'sum'
-        if isempty(sm), sm = sum(img.data, 1, "omitnan"); end
+        if isempty(sm), sm = nansum(img.data, 1); end
         out.sum = sm;
         done{c} = char(d);
 
@@ -122,7 +122,7 @@ for d = doIt
         done{c} = char(d);
 
     case 'dvars'
-        if isempty(sm), sm = sum(img.data, 1, "omitnan"); end
+        if isempty(sm), sm = nansum(img.data, 1); end
         if isempty(n), n = sum(~isnan(img.data), 1); end
         if isempty(m), m = sm./n; end
         dv = diff(img.data, 1, 2);

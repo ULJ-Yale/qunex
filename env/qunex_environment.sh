@@ -323,6 +323,10 @@ geho ""
 # ------------------------------------------------------------------------------
 
 if [ "$USEOCTAVE" == "TRUE" ]; then
+    # Octave needs this for some reason
+    if [[ ! -e ~/.local/share ]]; then
+        mkdir -p ~/.local/share
+    fi
     cyaneho " ---> Setting up Octave "; echo ""
     QUNEXMCOMMAND='octave -q --eval'
     if [ ! -e ~/.octaverc ]; then

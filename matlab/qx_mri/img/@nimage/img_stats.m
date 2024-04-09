@@ -99,7 +99,7 @@ for d = doIt(:)'
         out.data(:,c) = n;
 
     case 'm'
-        if isempty(s), s = sum(img.data, 2, "omitnan"); end
+        if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
         out.data(:,c) = m;
@@ -108,13 +108,13 @@ for d = doIt(:)'
         out.data(:,c) = median(img.data, 2, "omitnan");
 
     case 'max'
-        out.data(:,c) = max(img.data, 2, "omitnan");
+        out.data(:,c) = max(img.data, 2);
 
     case 'min'
-        out.data(:,c) = min(img.data, 2, "omitnan");
+        out.data(:,c) = min(img.data, 2);
 
     case 'sum'
-        if isempty(s), s = sum(img.data, 2, "omitnan"); end
+        if isempty(s), s = nansum(img.data, 2); end
         out.data(:,c) = s;
 
     case 'sd'
@@ -126,7 +126,7 @@ for d = doIt(:)'
         out.data(:,c) = v;
 
     case 't'
-        if isempty(s), s = sum(img.data, 2, "omitnan"); end
+        if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
         if isempty(v), v = var(img.data, 1, 2, "omitnan"); end
@@ -134,7 +134,7 @@ for d = doIt(:)'
         out.data(:,c) = t;
 
     case 'tp'
-        if isempty(s), s = sum(img.data, 2, "omitnan"); end
+        if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
         if isempty(v), v = var(img.data, 1, 2, "omitnan"); end
@@ -143,7 +143,7 @@ for d = doIt(:)'
         out.data(:,c) = p;
 
     case 'tz'
-        if isempty(s), s = sum(img.data, 2, "omitnan"); end
+        if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
         if isempty(v), v = var(img.data, 1, 2, "omitnan"); end
@@ -158,7 +158,7 @@ for d = doIt(:)'
         out.data(:,c) = r;
 
     case 'nrmsd'
-        if isempty(s), s = sum(img.data, 2, "omitnan"); end
+        if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
         if isempty(r), r = sqrt(mean(diff(img.data, 1, 2) .^ 2, 2)); end

@@ -134,10 +134,10 @@ for d = doIt(:)'
         out.data(:,c) = dn;
 
     case 'dm'
-        if isempty(s1), s1 = sum(img1.data, 2, "omitnan"); end
+        if isempty(s1), s1 = nansum(img1.data, 2); end
         if isempty(n1), n1 = sum(~isnan(img1.data), 2); end
         if isempty(m1), m1 = s1./n1; end
-        if isempty(s2), s2 = sum(img2.data, 2, "omitnan"); end
+        if isempty(s2), s2 = nansum(img2.data, 2); end
         if isempty(n2), n2 = sum(~isnan(img2.data), 2); end
         if isempty(m2), m2 = s2./n2; end
         if isempty(dm), dm = m1-m2; end
@@ -147,14 +147,14 @@ for d = doIt(:)'
         out.data(:,c) = median(img1.data, 2, "omitnan") - median(img2.data, 2, "omitnan") ;
 
     case 'dmax'
-        out.data(:,c) = max(img1.data, 2, "omitnan") - max(img2.data, 2, "omitnan");
+        out.data(:,c) = max(img1.data, 2) - max(img2.data, 2);
 
     case 'dmin'
-        out.data(:,c) = min(img1.data, 2, "omitnan") - min(img2.data, 2, "omitnan");
+        out.data(:,c) = min(img1.data, 2) - min(img2.data, 2);
 
     case 'dsum'
-        if isempty(s1), s1 = sum(img1.data, 2, "omitnan"); end
-        if isempty(s2), s2 = sum(img2.data, 2, "omitnan"); end
+        if isempty(s1), s1 = nansum(img1.data, 2); end
+        if isempty(s2), s2 = nansum(img2.data, 2); end
         if isempty(ds), ds = s1-s2; end
         out.data(:,c) = ds;
 
@@ -171,10 +171,10 @@ for d = doIt(:)'
         out.data(:,c) = dvar;
 
     case 't2'
-        if isempty(s1), s1 = sum(img1.data, 2, "omitnan"); end
+        if isempty(s1), s1 = nansum(img1.data, 2); end
         if isempty(n1), n1 = sum(~isnan(img1.data), 2); end
         if isempty(m1), m1 = s1./n1; end
-        if isempty(s2), s2 = sum(img2.data, 2, "omitnan"); end
+        if isempty(s2), s2 = nansum(img2.data, 2); end
         if isempty(n2), n2 = sum(~isnan(img2.data), 2); end
         if isempty(m2), m2 = s2./n2; end
         if isempty(dm), dm = m1-m2; end
@@ -186,10 +186,10 @@ for d = doIt(:)'
         out.data(:,c) = t2;
 
     case 't2p'
-        if isempty(s1), s1 = sum(img1.data, 2, "omitnan"); end
+        if isempty(s1), s1 = nansum(img1.data, 2); end
         if isempty(n1), n1 = sum(~isnan(img1.data), 2); end
         if isempty(m1), m1 = s1./n1; end
-        if isempty(s2), s2 = sum(img2.data, 2, "omitnan"); end
+        if isempty(s2), s2 = nansum(img2.data, 2); end
         if isempty(n2), n2 = sum(~isnan(img2.data), 2); end
         if isempty(m2), m2 = s2./n2; end
         if isempty(dm), dm = m1-m2; end
@@ -202,10 +202,10 @@ for d = doIt(:)'
         out.data(:,c) = t2p;
 
     case 't2z'
-        if isempty(s1), s1 = sum(img1.data, 2, "omitnan"); end
+        if isempty(s1), s1 = nansum(img1.data, 2); end
         if isempty(n1), n1 = sum(~isnan(img1.data), 2); end
         if isempty(m1), m1 = s1./n1; end
-        if isempty(s2), s2 = sum(img2.data, 2, "omitnan"); end
+        if isempty(s2), s2 = nansum(img2.data, 2); end
         if isempty(n2), n2 = sum(~isnan(img2.data), 2); end
         if isempty(m2), m2 = s2./n2; end
         if isempty(dm), dm = m1-m2; end

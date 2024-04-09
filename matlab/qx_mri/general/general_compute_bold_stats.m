@@ -144,7 +144,7 @@ end
 
 % --- compute stats
 
-if verbose, fprintf(' ... computing stats'); end
+if verbose, fprintf('\n ... computing stats'); end
 % TODO fix and enable masking
 %stats = img.img_stats_time([], bmask);
 stats = img.img_stats_time([]);
