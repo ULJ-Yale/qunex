@@ -621,11 +621,10 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
 
     # print to log file
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = "%s_create_bold_brain_masks_%s_%s_%s_%s.log" % (
+    logname = "%s_create_bold_brain_masks_B%s_%s_%s.log" % (
         log_prefix,
-        sinfo["id"],
-        boldname,
         boldnum,
+        sinfo["id"],
         logstamp,
     )
 
