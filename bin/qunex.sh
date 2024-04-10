@@ -1037,8 +1037,6 @@ get_flags() {
 show_version() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo "Quantitative Neuroimaging Environment & Toolbox (QuNex) Suite Version: ${QuNexVer}"
-    echo ""
-    exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -1048,6 +1046,8 @@ show_version() {
 # -- Check if version was requested
 if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
     show_version
+    echo ""
+    exit 0
 fi
 
 # -- Check if splash was requested
@@ -1199,6 +1199,7 @@ for fn in "$@" ; do
         # -- Check if input part of function list
         is_qunex_command ${1}
         show_version
+        echo ""
         show_usage_"${1}"
         exit 0
     fi
