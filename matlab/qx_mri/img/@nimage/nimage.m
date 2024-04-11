@@ -649,14 +649,15 @@ classdef nimage
 
             % - extract mask from nimage object
             if isa(mask, 'nimage')
-                mask = mask.image2D;
+                mask.data = mask.image2D;
                 if prod(obj.dim) ~= prod(mask.dim)
                     error('ERROR: in img_mask, the mask image does not match the target image in size!');
                 end
                 if mask.frames > 1
-                    mask = mask(:, 1);
+                    mask = mask.selectframes(1);
                     warning('WARNING: in img_mask, the provided mask has more than one frame. Only the first frame will be used!');
                 end                
+                mask = mask.data;
             end
 
             if length(mask) > obj.voxels

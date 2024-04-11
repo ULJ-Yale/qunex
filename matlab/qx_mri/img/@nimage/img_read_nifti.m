@@ -39,6 +39,10 @@ end
 % --- read the file
 [fhdr fdata fmeta fswap] = nimage.img_read_nifti_mx(filename, verbose);
 
+% fmeta to str (remove starting chars before < as they are not UTF-8)
+idx = find(fmeta' == 60, 1);
+fmeta_str = char(fmeta'(idx:end));
+
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;
 
@@ -139,7 +143,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
 
     % we probably have a 2d cifti file
     if img.hdrnifti.dim(1) == 6
-        cver = regexp(char(fmeta'), 'CIFTI Version="(.)"', 'tokens');
+        cver = regexp(fmeta_str, 'CIFTI Version="(.)"', 'tokens');
         if length(cver) == 0
             error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', img.filename);
         end
@@ -328,7 +332,7 @@ if mi > 0
 
             if strcmp(img.imageformat, 'CIFTI-2')
                 img.cifti.metadata = cifti_read_metadata(cast(img.meta(m).data, 'char')', img.hdrnifti, img.filename);
-                
+
                 % -- get parcel or structure info
                 if strcmp(img.cifti.metadata.diminfo{1}.type, 'parcels')
                     img.cifti.parcels = {img.cifti.metadata.diminfo{1}.parcels.name};
