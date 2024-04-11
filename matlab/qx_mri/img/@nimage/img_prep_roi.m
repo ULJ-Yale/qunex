@@ -274,7 +274,7 @@ options = general_parse_options([], options, default);
 
 % ---> are there options in roi variable
 
-if ischar(roi) && contains(roi, '|')
+if ischar(roi) && strfind(roi, '|')
     [roi, noptions] = strtok(roi, '|');
     roi = strip(roi);
     noptions = noptions(2:end);

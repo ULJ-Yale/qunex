@@ -413,8 +413,7 @@ if nargin < 2 error('ERROR: At least file list and ROI .names file have to be sp
 %                                              parcel processing
 
 parcels = {};
-
-if startsWith(roiinfo, 'parcels:')
+if strncmp(roiinfo, 'parcels:', 8)
     parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
 end
 
@@ -481,7 +480,7 @@ go = true;
 if verbose; fprintf('\nChecking ...\n'); end
 
 % - check for presence of listfile unless the list is provided as a string
-if ~startsWith(flist, 'listname:')    
+if ~strncmp(flist, 'listname:', 9)
     go = go & general_check_file(flist, 'image file list', 'error');
 end
 

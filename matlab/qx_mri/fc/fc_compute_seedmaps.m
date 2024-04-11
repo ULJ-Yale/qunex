@@ -460,7 +460,7 @@ go = true;
 if verbose; fprintf('\n\nChecking ...\n'); end
 
 % - check for presence of listfile unless the list is provided as a string
-if ~startsWith(flist, 'listname:')    
+if ~strncmp(flist, 'listname:', 9)
     go = go & general_check_file(flist, 'image file list', 'error');
 end
 go = go & general_check_file(roiinfo, 'ROI definition file', 'error');

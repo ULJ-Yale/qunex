@@ -73,7 +73,7 @@ if isa(roi, 'nimage')
         error('ERROR: ROI image does not match target in dimensions!');
     end
 elseif isa(roi, 'char') || isa(roi, 'string')
-    if startsWith(roi, 'parcels')
+    if strncmp(roi, 'parcels:', 8)
         if ~isfield(obj.cifti, 'parcels') || isempty(obj.cifti.parcels)
             error('ERROR: The file lacks parcel specification!');
         end

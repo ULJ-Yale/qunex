@@ -37,7 +37,6 @@ if ~exist(filename)
 end
 
 % --- read the file
-
 [fhdr fdata fmeta fswap] = nimage.img_read_nifti_mx(filename, verbose);
 
 img.hdrnifti.swap    = false;

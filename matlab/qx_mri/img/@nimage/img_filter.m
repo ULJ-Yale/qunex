@@ -114,7 +114,7 @@ if hp_sigma
     first = true;
     c0 = zeros(nvox,1);
     for t = 1:len
-        if verbose, fprintf('\b\b\b\b\b%5d',t), end
+        if verbose && mod(t, 20) == 0, fprintf('%5d',t), end
 
         bot = max([t-hp_mask, 1]);
         top = min([t+hp_mask, len]);
@@ -162,10 +162,10 @@ if lp_sigma
     w = repmat(lp_exp, nvox,1);
     if verbose, fprintf('\n---> lopass frame      '), end
     for t = 1:len
-        if verbose, fprintf('\b\b\b\b\b%5d',t); end
+        if verbose && mod(t, 20) == 0, fprintf('%5d',t); end
         out(:,t) = sum(tmp(:,t:t+2*lp_mask).*w,2);
     end
-    if verbose, fprintf('\n'), end  %fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\n')
+    if verbose, fprintf('\n'), end
 else
     out = tmp;
 end
