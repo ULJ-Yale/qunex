@@ -109,3 +109,6 @@ settings.json
 
 # DS* files
 .DS*
+
+# mex
+*.mex
