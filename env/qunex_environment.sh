@@ -231,7 +231,7 @@ if [ -e ~/qunexinit.sh ]; then
 fi
 
 QUNEXPATH=${TOOLS}/${QUNEXREPO}
-QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+QuNexVer=`cat ${QUNEXPATH}/VERSION.md`
 export QUNEXPATH QUNEXREPO QuNexVer
 
 if [ -e ~/qunexinit.sh ]; then
@@ -280,7 +280,7 @@ if [[ -z ${ASLDIR} ]]; then ASLDIR="${TOOLS}/HCP/hcp-asl"; export ASLDIR; fi
 # -- License and version disclaimer
 # ------------------------------------------------------------------------------
 
-QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+QuNexVer=`cat ${QUNEXPATH}/VERSION.md`
 
 # ------------------------------------------------------------------------------
 # -- Setup server login messages
@@ -487,21 +487,52 @@ PATH=${NIUTemplateFolder}:${PATH}
 export NIUTemplateFolder PATH
 
 # -- useful aliases
-alias qunex_env_source='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
-alias qx_env_source='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
+alias qunex_env_source='source ${QUNEXPATH}/env/qunex_environment.sh'
+alias qx_env_source='source ${QUNEXPATH}/env/qunex_environment.sh'
 
-alias qunex_env_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
-alias qx_env_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
+alias qunex_env_help='bash ${QUNEXPATH}/env/qunex_environment.sh --help'
+alias qx_env_help='bash ${QUNEXPATH}/env/qunex_environment.sh --help'
 
-alias qunex_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qx_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
+alias qunex_env_status='source ${QUNEXPATH}/env/qunex_env_status.sh --envstatus'
+alias qx_env_status='source ${QUNEXPATH}/env/qunex_env_status.sh --envstatus'
 
 alias qunex_container_env_status=`qunex_container --env_status`
 
-alias qunex_env_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
-alias qx_env_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qunex_env_reset='source ${QUNEXPATH}/env/qunex_env_status.sh --envclear'
+alias qx_env_reset='source ${QUNEXPATH}/env/qunex_env_status.sh --envclear'
 
-alias qx_env_octave='export USEOCTAVE="TRUE"; source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
+# -- easy swapping between matlab and octave
+qx_env_matlab() {
+    # copy over precompiled matlab mex
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mex ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mexa64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mexmaci64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mex ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mexa64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mexmaci64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+
+    # source env
+    export USEOCTAVE="FALSE"
+    source ${QUNEXPATH}/env/qunex_environment.sh
+}
+
+qx_env_octave() {
+    # compile octave's mex
+    pushd ${QUNEXPATH}/matlab/qx_mri/img/@nimage > /dev/null
+    rm *.mex*
+    cp img_read_nifti_mx_octave.cpp img_read_nifti_mx.cpp
+    cp img_save_nifti_mx_octave.cpp img_save_nifti_mx.cpp
+    mkoctfile --mex -lz img_read_nifti_mx.cpp qx_nifti.c znzlib.c
+    mkoctfile --mex -lz img_save_nifti_mx.cpp qx_nifti.c znzlib.c
+    rm img_read_nifti_mx.cpp
+    rm img_save_nifti_mx.cpp
+
+    # source env
+    export USEOCTAVE="TRUE"
+    source ${QUNEXPATH}/env/qunex_environment.sh
+    popd > /dev/null
+}
+
 
 # ------------------------------------------------------------------------------
 # -- QuNex Extensions processing
@@ -616,9 +647,9 @@ export HCPPIPEDIR_tfMRI=${HCPPIPEDIR}/tfMRI/scripts; PATH=${HCPPIPEDIR_tfMRI}:${
 export HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts; PATH=${HCPPIPEDIR_dMRI}:${PATH}; export PATH
 export HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts; PATH=${HCPPIPEDIR_Global}:${PATH}; export PATH
 export HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts; PATH=${HCPPIPEDIR_tfMRIAnalysis}:${PATH}; export PATH
-export HCPPIPEDIR_dMRITract=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tractography/scripts; PATH=${HCPPIPEDIR_dMRITract}:${PATH}; export PATH
-export HCPPIPEDIR_dMRITractFull=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
-export HCPPIPEDIR_dMRILegacy=${TOOLS}/${QUNEXREPO}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
+export HCPPIPEDIR_dMRITract=${QUNEXPATH}/bash/qx_utilities/diffusion_tractography/scripts; PATH=${HCPPIPEDIR_dMRITract}:${PATH}; export PATH
+export HCPPIPEDIR_dMRITractFull=${QUNEXPATH}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
+export HCPPIPEDIR_dMRILegacy=${QUNEXPATH}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
 export DEFAULT_CUDA_VERSION="10.2";
 export EDDYCUDA=${FSLBINDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
