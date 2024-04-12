@@ -486,32 +486,22 @@ NIUTemplateFolder=$QUNEXPATH/python/qx_utilities/templates/
 PATH=${NIUTemplateFolder}:${PATH}
 export NIUTemplateFolder PATH
 
-# -- Define submodules, but omit hcpextendedpull to avoid conflicts
-alias qunex_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
-alias qx_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
-alias qunex_environment_set='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
-alias qx_environment_set='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
+# -- useful aliases
+alias qunex_env_source='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
+alias qx_env_source='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
 
-alias qunex_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
-alias qx_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
-alias qunex_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
-alias qx_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
+alias qunex_env_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
+alias qx_env_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
 
 alias qunex_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
 alias qx_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qunex_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qx_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qunex_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qx_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh'
 
 alias qunex_container_env_status=`qunex_container --env_status`
-alias qunex_container_envstatus=`qunex_container --env_status`
 
-alias qunex_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
-alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
-alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
-alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qunex_env_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qx_env_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
 
+alias qx_env_octave='export USEOCTAVE="TRUE"; source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
 
 # ------------------------------------------------------------------------------
 # -- QuNex Extensions processing
