@@ -1521,7 +1521,7 @@ main() {
             unset CompletionCheck
             pushd ${SessionsFolder}/${CASE}/nii/
             slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*
-            popd
+            popd > /dev/null
             if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
                 CompletionCheck="fail"
             else

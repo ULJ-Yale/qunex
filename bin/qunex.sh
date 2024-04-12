@@ -992,8 +992,8 @@ show_usage_run_qc() {
 # ------------------------------------------------------------------------------
 # -- Capture current working directory
 # ------------------------------------------------------------------------------
-dirs -c  &> /dev/null
-pushd `pwd` &> /dev/null
+dirs -c  > /dev/null
+pushd `pwd` > /dev/null
 
 # ------------------------------------------------------------------------------
 # -- Load relevant libraries for logging and parsing options
@@ -1828,7 +1828,7 @@ if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] 
 fi
 
 # -- return to stored folder
-popd &> /dev/null
+popd > /dev/null
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-= Execute specific commands =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

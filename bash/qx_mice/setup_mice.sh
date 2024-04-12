@@ -56,7 +56,7 @@ fi
 # -- prep
 # ------------------------------------------------------------------------------
 # go to work dir
-pushd ${work_dir}
+pushd ${work_dir} > /dev/null
 
 # create a copy, leave the original
 cp ${bold}.nii.gz ${bold}_SM.nii.gz
@@ -154,4 +154,4 @@ echo ""
 exit 0
 
 # back to starting dir
-popd
+popd > /dev/null

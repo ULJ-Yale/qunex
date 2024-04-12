@@ -1934,7 +1934,7 @@ fi
                 ${QuNexCommand} import_bids --sessionsfolder="${SessionsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             fi
 
-            #popd 2> /dev/null
+            #popd > /dev/null
             rm -rf ${SessionsFolder}/inbox/BIDS/${CASE}* &> /dev/null
 
             # -- Run BIDS completion checks on mapped data
@@ -2054,7 +2054,7 @@ fi
 
             fi
 
-            #popd 2> /dev/null
+            #popd > /dev/null
             rm -rf ${SessionsFolder}/inbox/HCPLS/${CASE}* &> /dev/null
 
             # -- Run HCPLS completion checks on mapped data
