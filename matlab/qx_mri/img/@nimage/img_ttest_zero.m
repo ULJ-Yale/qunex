@@ -43,7 +43,7 @@ end
 if verbose, fprintf('\nSetting up data'), end
 
 obj.data = obj.image2D;
-obj = obj.sliceframes(~isnan(nanmean(obj.data)));
+obj = obj.sliceframes(~isnan(mean(obj.data)));
 
 M = obj.zeroframes(1);
 p = obj.zeroframes(1);
