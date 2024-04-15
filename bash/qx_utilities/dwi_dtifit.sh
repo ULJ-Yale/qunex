@@ -27,7 +27,7 @@ Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
 
-    --session (str):
+    --sessions (str):
         The sessions to run.
 
     --overwrite (str):
