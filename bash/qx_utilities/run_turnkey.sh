@@ -616,7 +616,6 @@ for STEP in ${TURNKEY_STEPS}; do
     # is it deprecated or not?
     if [[ -n $NEW_STEP ]]; then
         NEW_STEP=${NEW_STEP}
-        mageho " --> Warning: run_turnkey step ${STEP} name is deprecated, renaming to ${NEW_STEP}."
     else
         NEW_STEP=${STEP}
     fi
@@ -2483,7 +2482,7 @@ fi
 
         geho " ===> run_turnkey acceptance testing ${TURNKEY_STEP} logs for completion."; echo ""
 
-        CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${FunctionName}_${CASE}*log 2> /dev/null | head -n 1`
 
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
