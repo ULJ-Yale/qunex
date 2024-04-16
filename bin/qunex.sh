@@ -813,7 +813,7 @@ dwi_dtifit() {
     --species='${Species}' ${optional_parameters}"
 
     # -- QuNex bash execute function
-    #bash_call_execute
+    bash_call_execute
 }
 
 show_usage_dwi_dtifit() {
