@@ -813,7 +813,7 @@ dwi_dtifit() {
     --species='${Species}' ${optional_parameters}"
 
     # -- QuNex bash execute function
-    bash_call_execute
+    #bash_call_execute
 }
 
 show_usage_dwi_dtifit() {
@@ -1420,6 +1420,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
     XNAT_PASSWORD=`get_parameters "${setflag}xnatpass" $@`
     XNAT_STUDY_INPUT_PATH=`get_parameters "${setflag}xnatstudyinputpath" $@`
 
+    # -- Get sessions from batchfile?
+    if [[ -n ${BATCH_FILE} ]]; then
+        CASES=${BATCH_FILE}
+    fi
+
     # -- General sessions and sessionids flags
     SESSIONS=`get_parameters "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
     if [[ -z ${CASES} ]]; then
@@ -1730,7 +1735,10 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
 
-    # -- Filter sessions with sessionids
+    # -- Filter sessions with sessions and sessionids
+    if [[ ! -z ${SESSIONS} ]]; then
+        CASES=`echo "${CASES}" | grep -w "${SESSIONS}"`
+    fi
     if [[ ! -z ${SESSIONIDS} ]]; then
         CASES=`echo "${CASES}" | grep -w "${SESSIONIDS}"`
     fi
