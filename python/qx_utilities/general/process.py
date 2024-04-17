@@ -102,12 +102,12 @@ def torf(s):
 
     First checks if string is "None", 'none', or "NONE" and returns
     None, then Checks if s is any of the possible true strings: "True", "true",
-    or "TRUE" and retuns a boolean result of the check.
+    or "TRUE" and returns a boolean result of the check.
     """
     if s in ["None", "none", "NONE"]:
         return None
     else:
-        return s in ["True", "true", "TRUE", "yes", "Yes", "YES"]
+        return s in ["True", "true", "TRUE", "yes", "Yes", "YES", True]
 
 
 def flag(f):
@@ -1646,6 +1646,12 @@ arglist += extensions.arglist
 flaglist = [
     ["test", "run", "test", "Run a test only."],
     [
+        "overwrite",
+        "overwrite",
+        True,
+        "Whether to overwrite existing results.",
+    ],
+    [
         "hcp_dwi_nogpu",
         "hcp_dwi_nogpu",
         True,
@@ -2040,7 +2046,6 @@ def run(command, args):
                 options[flist[k][0]] = v
             else:
                 options[flist[k][0]] = flist[k][1]
-
         else:
             options[k] = v
 
@@ -2164,7 +2169,6 @@ def run(command, args):
     if options["scheduler"] == "local":
         consoleLog = ""
 
-        print("---- Running local")
         c = 0
         if parsessions == 1 or options["run"] == "test":
             # processing commands

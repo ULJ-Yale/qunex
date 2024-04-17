@@ -1085,26 +1085,6 @@ geho " ........................ Running QuNex v${QuNexVer} .....................
 echo ""
 
 # ------------------------------------------------------------------------------
-# -- Map deprecated commands
-# ------------------------------------------------------------------------------
-
-# -- Use the check_deprecated_commands from niutilities to remap 
-if [[ $1 != --* ]]; then
-    # grep the command
-    deprecation=`gmri check_deprecated_commands --command="$1"`
-    # print and set new command if something was deprecated
-    if [[ -n $deprecation ]]; then
-        echo ""
-        echo $deprecation
-        command_name=`echo $deprecation | grep "is now known as" | sed 's/^.*is now known as //g'`
-        if [[ -n $command_name ]]; then
-            set -- ${command_name} "${@:2}"
-        fi
-    fi
-fi
-
-
-# ------------------------------------------------------------------------------
 # -- gmri outside local commands to bypass checking
 # ------------------------------------------------------------------------------
 
@@ -1152,6 +1132,24 @@ else
     unset qxutil_command_to_run
 fi
 
+# ------------------------------------------------------------------------------
+# -- Map deprecated commands
+# ------------------------------------------------------------------------------
+
+# -- Use the check_deprecated_commands from niutilities to remap 
+if [[ $1 != --* ]]; then
+    # grep the command
+    deprecation=`gmri check_deprecated_commands --command="$1"`
+    # print and set new command if something was deprecated
+    if [[ -n $deprecation ]]; then
+        echo ""
+        echo $deprecation
+        command_name=`echo $deprecation | grep "is now known as" | sed 's/^.*is now known as //g'`
+        if [[ -n $command_name ]]; then
+            set -- ${command_name} "${@:2}"
+        fi
+    fi
+fi
 
 # ------------------------------------------------------------------------------
 # -- Check if specific command help requested
