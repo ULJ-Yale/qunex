@@ -160,7 +160,7 @@ def mapToQUNEXBids(
                 sessionsList["bids"] = "open"
 
             # --> status exists
-            elif io == "File exists" and not (overwrite == "yes" or overwrite == True):
+            elif io == "File exists" and not (overwrite == "yes" or overwrite is True):
                 print(prefix + "--> skipping processing of BIDS info folder")
                 sessionsList["skip"].append("bids")
                 sessionsList["bids"] = "locked"
@@ -178,7 +178,7 @@ def mapToQUNEXBids(
 
         # --> session folder exists
         elif os.path.exists(folder):
-            if overwrite == "yes" or overwrite == True:
+            if overwrite == "yes" or overwrite is True:
                 print(
                     prefix
                     + "--> bids for session %s already exists: cleaning session"
@@ -1497,7 +1497,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
     if os.path.exists(nfolder):
         nfiles = len(glob.glob(os.path.join(nfolder, "*.nii*")))
         if nfiles > 0:
-            if overwrite == "no" or overwrite == False:
+            if overwrite == "no" or overwrite is False:
                 raise ge.CommandFailed(
                     "map_bids2nii",
                     "Existing files present!",
@@ -1515,7 +1515,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
     sout = gc.createSessionFile("map_bids2nii", sfolder, session, subject, overwrite)
 
     # --- open bids2nii log file
-    if overwrite == "yes" or overwrite == True:
+    if overwrite == "yes" or overwrite is True:
         mode = "w"
     else:
         mode = "a"

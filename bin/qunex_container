@@ -883,7 +883,7 @@ def main(args=None):
     qx_command = command.split(" ")[0]
     # ban parallel execution of these commands
     if (
-        (overwrite == "yes" or overwrite == True)
+        (overwrite == "yes" or overwrite is True)
         and parsessions > 1
         and qx_command in commands_blacklist
     ):

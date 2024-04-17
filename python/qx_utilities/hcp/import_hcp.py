@@ -98,7 +98,7 @@ def mapToQUNEXcpls(
     elif sessionid not in sessions["list"]:
         sessions["list"].append(sessionid)
         if os.path.exists(tfolder):
-            if overwrite == "yes" or overwrite == True:
+            if overwrite == "yes" or overwrite is True:
                 print(
                     prefix
                     + "--> hcpls for session %s already exists: cleaning session"
@@ -1153,7 +1153,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     if os.path.exists(nfolder):
         nfiles = len(glob.glob(os.path.join(nfolder, "*.nii*")))
         if nfiles > 0:
-            if overwrite == "no" or overwrite == False:
+            if overwrite == "no" or overwrite is False:
                 raise ge.CommandFailed(
                     "map_hcpls2nii",
                     "Existing files present!",
@@ -1173,7 +1173,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     # --- create session_hcp.txt file
     sfile = os.path.join(sfolder, "session_hcp.txt")
     if os.path.exists(sfile):
-        if overwrite == "yes" or overwrite == True:
+        if overwrite == "yes" or overwrite is True:
             os.remove(sfile)
             print("--> removed existing session_hcp.txt file")
         else:
@@ -1197,7 +1197,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
 
     # --- open hcpfs2nii log file
 
-    if overwrite == "yes" or overwrite == True:
+    if overwrite == "yes" or overwrite is True:
         mode = "w"
     else:
         mode = "a"

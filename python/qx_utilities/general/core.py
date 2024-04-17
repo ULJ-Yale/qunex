@@ -1313,7 +1313,7 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     # open fifle
     sfile = os.path.join(sfolder, "session.txt")
     if os.path.exists(sfile):
-        if overwrite == "yes" or overwrite == True:
+        if overwrite == "yes" or overwrite is True:
             os.remove(sfile)
             print(prefix + "--> removed existing session.txt file")
         else:

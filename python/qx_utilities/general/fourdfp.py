@@ -90,7 +90,7 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
         overwrite = False
     elif overwrite:
         pass
-    elif overwrite == "yes" or overwrite == True:
+    elif overwrite == "yes" or overwrite is True:
         overwrite = True
     else:
         overwrite = False
@@ -168,7 +168,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         overwrite = False
     elif overwrite:
         pass
-    elif overwrite == "yes" or overwrite == True:
+    elif overwrite == "yes" or overwrite is True:
         overwrite = True
     else:
         overwrite = False

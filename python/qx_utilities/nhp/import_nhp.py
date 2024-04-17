@@ -81,7 +81,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
 
     # overwrite?
     if os.path.exists(tfile):
-        if overwrite == "yes" or overwrite == True:
+        if overwrite == "yes" or overwrite is True:
             print(prefix + "--> file %s already exists: deleting ..." % (tfile))
             os.remove(tfile)
         else:
@@ -437,7 +437,7 @@ def import_nhp(
 
             # create session_nhp.txt
             if os.path.exists(sfile):
-                if overwrite == "yes" or overwrite == True:
+                if overwrite == "yes" or overwrite is True:
                     os.remove(sfile)
                     print("    --> removed existing session_nhp.txt file")
                 else:
