@@ -206,14 +206,6 @@ def import_nhp(
             "Please specify one of: leave, copy, link, move!",
         )
 
-    if overwrite not in ["yes", "no"]:
-        raise ge.CommandError(
-            "import_nhp",
-            "Invalid option for overwrite",
-            "%s is not a valid option for overwrite parameter!" % (overwrite),
-            "Please specify one of: yes, no!",
-        )
-
     if archive not in ["leave", "move", "copy", "delete"]:
         raise ge.CommandError(
             "import_nhp",
@@ -445,7 +437,7 @@ def import_nhp(
 
             # create session_nhp.txt
             if os.path.exists(sfile):
-                if overwrite == "yes":
+                if overwrite == "yes" or overwrite == True:
                     os.remove(sfile)
                     print("    --> removed existing session_nhp.txt file")
                 else:

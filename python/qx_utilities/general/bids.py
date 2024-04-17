@@ -496,6 +496,10 @@ def import_bids(
                 --bidsname=swga
     """
 
+    print("!!!!!!!!!!!!!!!")
+    print(overwrite)
+    exit(1)
+
     print("Running import_bids\n==================")
 
     if action not in ["link", "copy", "move"]:
@@ -1493,7 +1497,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
     if os.path.exists(nfolder):
         nfiles = len(glob.glob(os.path.join(nfolder, "*.nii*")))
         if nfiles > 0:
-            if overwrite == "no":
+            if overwrite == "no" or overwrite == False:
                 raise ge.CommandFailed(
                     "map_bids2nii",
                     "Existing files present!",

@@ -988,7 +988,7 @@ def create_batch(
                 % (os.path.abspath(targetfile))
             )
             print("         Appending to an exisiting file.")
-        elif overwrite == "no":
+        elif overwrite == "no" or overwrite == False:
             raise ge.CommandFailed(
                 "create_batch",
                 "Target file exists",
@@ -1521,7 +1521,7 @@ def create_list(
             print("         Overwriting the exisiting file.")
         elif overwrite == "append":
             print("         Appending to the exisiting file.")
-        elif overwrite == "no":
+        elif overwrite == "no" or overwrite == False:
             raise ge.CommandFailed(
                 "create_list",
                 "File exists",
@@ -1998,7 +1998,7 @@ def create_conc(
             )
             if overwrite == "yes" or overwrite == True:
                 print("              Overwriting the exisiting file.")
-            elif overwrite == "no":
+            elif overwrite == "no" or overwrite == False:
                 print("              Skipping this conc file.")
                 error = True
                 continue
