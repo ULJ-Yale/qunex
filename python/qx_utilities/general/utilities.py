@@ -2029,11 +2029,9 @@ def create_conc(
         )
 
 
-def run_recipe(
-    recipe_file=None, recipe=None, steps=None, logfolder=None, verbose="no", eargs=None
-):
+def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=None):
     """
-    ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [verbose=no] [<extra arguments>]``
+    ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [<extra arguments>]``
 
     Executes the commands defined in each recipe.
 
@@ -2049,9 +2047,6 @@ def run_recipe(
                     This is an alternative to specifying the recipe file and
                     a recipe name.
     --logfolder     The folder within which to save the log.
-    --verbose       Whether to record in a log a full verbose report of the
-                    output of each command that was run ('yes') or only a
-                    summary success report of each command ran. ['no']
 
     Multiple run_recipe invocations
     ----------------------------
@@ -2237,8 +2232,6 @@ def run_recipe(
     commands sequentially.
 
     """
-
-    verbose = verbose.lower() == "yes"
 
     flags = ["test"]
 
@@ -2582,23 +2575,25 @@ def run_recipe(
 
             # Poll process for new output until finished
             error = False
-            logging = verbose
+            logging = False
 
             for line in iter(process.stdout.readline, b""):
                 line = line.decode("utf-8")
+                print(line)
                 if (
                     "ERROR in completing" in line
                     or "ERROR:" in line
                     or "failed with error" in line
                 ):
+                    print("", file=log)
                     error = True
+
                 if "Final report" in line:
-                    if not verbose:
-                        print("", file=log)
+                    print("", file=log)
                     logging = True
 
                 # print
-                if logging:
+                if logging or error:
                     print(line, end=" ", file=log)
                     log.flush()
 
