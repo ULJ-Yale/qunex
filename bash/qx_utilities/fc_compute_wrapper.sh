@@ -126,7 +126,7 @@ Parameters:
     --method (str, default 'mean'):
         Method for extracting timeseries - 'mean' or 'pca'.
 
-    --options (str, default ''):
+    --options (str, default 'all'):
         A string defining which session files to save. Default assumes all:
 
         - 'r'  ... save map of correlations
