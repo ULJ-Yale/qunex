@@ -2408,9 +2408,23 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
         # executing a custom script
         if command_name == "script":
-            script_path = command_parameters
-            print(f"===> Running script: {script_path}")
-            print(f"===> Running script: {script_path}", file=log)
+            if "path" in command_parameters:
+                script_path = command_parameters["path"]
+                del command_parameters["path"]
+            else:
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script path not provided",
+                    f"Script path not provided [{command_parameters}]",
+                    "Please provide the path to the script!",
+                )
+            print(
+                f"\n--------------------------------------------\n===> Running script: {script_path}"
+            )
+            print(
+                f"\n--------------------------------------------\n===> Running script: {script_path}",
+                file=log,
+            )
             if not os.path.exists(script_path):
                 raise ge.CommandFailed(
                     "run_recipe",
@@ -2428,7 +2442,21 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             )
 
             # prep command
-            command = ["bash", script_path]
+            if script_path.endswith(".sh"):
+                command = ["bash", script_path]
+            elif script_path.endswith(".py"):
+                command = ["python", script_path]
+            else:
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script type not supported",
+                    f"Script type not supported [{script_path}]",
+                    "Please use .sh or .py scripts!",
+                )
+
+            # add parameters to the command
+            for param, value in command_parameters.items():
+                command.append(f"--{param}={value}")
 
             # create comlogfolder folder if needed
             if not os.path.isdir(comlogfolder):
@@ -2447,6 +2475,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             exit_code = process.returncode
 
             if exit_code != 0:
+                summary += f"\n - script {script_path} ... FAILED"
                 error_log = log_path.replace("tmp_", "error_")
                 print(f"    ... failed [{script_path}], see [{error_log}]")
                 print(f"    ... failed [{script_path}], see [{error_log}]", file=log)
@@ -2458,6 +2487,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     "Please check the log for details!",
                 )
             else:
+                summary += f"\n - script {script_path} ... OK"
                 done_log = log_path.replace("tmp_", "done_")
                 print(f"    ... done [{script_path}], see [{done_log}]")
                 print(f"    ... done [{script_path}], see [{done_log}]", file=log)
@@ -2598,7 +2628,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     log.flush()
 
             if error:
-                summary += f"\n ... command {command_name} FAILED"
+                summary += f"\n - command {command_name} ... FAILED"
                 summary += "\n\n----------==== END SUMMARY ====----------"
                 print(summary, file=log)
                 print(
@@ -2613,7 +2643,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     "See error logs in the study folder for details",
                 )
             else:
-                summary += f"\n ... command {command_name} OK"
+                summary += f"\n - command {command_name} ... OK"
                 print(
                     f"===> Successful completion of the run_recipe command {command_name}\n"
                 )
