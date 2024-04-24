@@ -1723,7 +1723,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
-        BATCH_FILE="$CASES"
         echo ""
         echo "Using $BATCH_FILE for input."
         echo ""
@@ -1731,14 +1730,30 @@ if [[ ${setflag} =~ .*-.* ]]; then
         if [[ -z $CASES ]]; then
             CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
         fi
+        # convert to space separated insted of new line
+        CASES=`echo $CASES | sed 's/\n/ /g'`
     fi
 
     # -- Filter sessions with sessions and sessionids
     if [[ ! -z ${SESSIONS} ]]; then
-        CASES=`echo "${CASES}" | grep -w "${SESSIONS}"`
+        # loop over cases if case is in sessions keep it
+        NEW_CASES=""
+        for CASE in ${CASES}; do
+            if [[ ${SESSIONS} =~ ${CASE} ]]; then
+                NEW_CASES="${NEW_CASES}${CASE} "
+            fi
+        done
+        CASES=$(echo "${NEW_CASES}" | xargs)
     fi
     if [[ ! -z ${SESSIONIDS} ]]; then
-        CASES=`echo "${CASES}" | grep -w "${SESSIONIDS}"`
+        # loop over cases if case is in sessionids keep it
+        NEW_CASES=""
+        for CASE in ${CASES}; do
+            if [[ ${SESSIONIDS} =~ ${CASE} ]]; then
+                NEW_CASES="${NEW_CASES} ${CASE}"
+            fi
+        done
+        CASES=$(echo "${NEW_CASES}" | xargs)
     fi
 
     # -- Get species flag for NHP pipelines
