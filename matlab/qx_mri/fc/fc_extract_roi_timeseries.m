@@ -326,13 +326,13 @@ if printdebug
     general_print_struct(options, 'fc_extract_roi_timeseries options used');
 end
 
-if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
-    error('ERROR: Invalid eventdata option: %s', options.eventdata);
-end
+if verbose; fprintf('\nChecking ...\n'); end
 
-if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'max', 'min'})
-    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
-end
+options.flist = flist;
+options.roiinfo = roiinfo;
+options.tfolder = tfolder;
+
+general_check_options(options, 'eventdata, roimethod, flist, roiinfo, tfolder', 'stop');
 
 
 % --- File saving related options
@@ -367,30 +367,6 @@ end
 sdiff = setdiff(options.saveind, {'mat', 'long', 'wide', ''});
 if ~isempty(sdiff)
     error('ERROR: Invalid individual save format specified: %s', strjoin(sdiff,","));
-end
-
-% ----- Check if the files are there!
-
-go = true;
-if verbose; fprintf('\nChecking ...\n'); end
-
-% - check for presence of listfile unless the list is provided as a string
-if ~startsWith(flist, 'listname:')    
-    go = go & general_check_file(flist, 'image file list', 'error');
-end
-
-% - check for presence of ROI specification file if we are not using parcells
-if isempty(parcels)
-    go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
-end
-
-% - check for presence of target folder no data needs to be saved there
-if ~isempty(options.savegroup) || (~isempty(options.saveind) && strcmp(options.itargetf, 'sfolder'))
-    general_check_folder(targetf, 'results folder');
-end
-
-if ~go
-    error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
 end
 
 %   ------------------------------------------------------------------------------------------

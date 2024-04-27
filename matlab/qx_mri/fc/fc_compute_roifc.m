@@ -428,27 +428,21 @@ addidtofile = strcmp(options.savesessionid, 'true') || strcmp(options.itargetf, 
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 fcmeasure   = options.fcmeasure;
 
-if ~general_check_fcargs(options)
-    error('ERROR: Invalid arguments for the fc measure: %s: ', fcmeasure);
-end
-
 if options.fcname, fcname = [options.fcname, '_']; else fcname = ''; end
 
 if printdebug
     general_print_struct(options, 'fc_compute_roifc_options used');
 end
 
-if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
-    error('ERROR: Invalid eventdata option: %s', options.eventdata);
-end
+% --> Check input
 
-if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'min', 'max'})
-    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
-end
+if verbose; fprintf('\nChecking ...\n'); end
 
-if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc', 'icv', 'mi', 'mar', 'coh'})
-    error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
-end
+options.flist = flist;
+options.roiinfo = roiinfo;
+options.targetf = targetf;
+
+general_check_options(options, 'fc, eventdata, roimethod, flist, roiinfo, tfolder', 'stop');
 
 % ----- What should be saved
 
@@ -473,31 +467,6 @@ sdiff = setdiff(options.savegroup, {'mat', 'all_long', 'all_wide_single', 'all_w
 if ~isempty(sdiff)
     error('ERROR: Invalid group save format specified: %s', strjoin(sdiff,","));
 end
-
-% ----- Check if the files are there!
-
-go = true;
-if verbose; fprintf('\nChecking ...\n'); end
-
-% - check for presence of listfile unless the list is provided as a string
-if ~startsWith(flist, 'listname:')    
-    go = go & general_check_file(flist, 'image file list', 'error');
-end
-
-% - check for presence of ROI specification file if we are not using parcells
-if isempty(parcels)
-    go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
-end
-
-% - check for presence of target folder no data needs to be saved there
-if ~isempty(options.savegroup) || (~isempty(options.saveind) && strcmp(options.itargetf, 'sfolder'))
-    general_check_folder(targetf, 'results folder');
-end
-
-if ~go
-    error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
-end
-
 
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
