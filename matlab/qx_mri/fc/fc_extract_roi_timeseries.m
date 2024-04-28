@@ -92,9 +92,9 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %                   compute mean values across the ROI
 %               - median
 %                   compute median value across the ROI
-%	            - max
+%               - max
 %                   compute maximum value across the ROI
-%	            - min
+%               - min
 %                   compute mimimum value across the ROI
 %               - pca
 %                   compute first eigenvariate of the ROI.
@@ -221,18 +221,18 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %
 %   Returns:
 %       tsmat
-%            A structure array with the following fields for each specified
-%           data extraction:        
+%           A structure array with the following fields for each specified
+%           data extraction:
 %
-%           title 
+%           - title
 %               the title of the extraction as specifed in the frames string, empty 
 %               if extraction was specified using a numeric value 
-%           roi   
+%           - roi
 %               a cell array with the names of the ROI used in the order they were
 %               used for timeseries extraction
-%           N     
-%               number of extracted frames 
-%           ts     
+%           - N
+%               number of extracted frames
+%           - ts
 %               the extracted timeseries matrix in the format ROI x timepoint
 %
 %   Output files:
@@ -307,8 +307,7 @@ if nargin < 2 error('ERROR: At least file list and ROI .names file have to be sp
 %                                              parcel processing
 
 parcels = {};
-
-if startsWith(roiinfo, 'parcels:')
+if strncmp(roiinfo, 'parcels:', 8)
     parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
 end
 

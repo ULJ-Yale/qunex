@@ -99,13 +99,11 @@ Parameters:
         from the batch file.
 
     --turnkeysteps (str):
-        Specify specific turnkey steps you wish to run:
-        Supported: TODO
+        Specify specific turnkey steps you wish to run.
 
     --turnkeycleanstep (str):
         Specify specific turnkey steps you wish to clean up intermediate files
         for.
-        Supported: TODO
 
     --paramfile (str):
         File with pre-configured header specifying processing parameters.
@@ -364,9 +362,9 @@ Notes:
         Most turnkey steps have exact matching qunex commands with several
         exceptions that fall into two categories:
 
-        * ``map_raw_data``  step is only relevant to `run_turnkey`, which maps
+        * ``map_raw_data`` step is only relevant to ``run_turnkey``, which maps
           files on a local filesystem or in XNAT to the study folder.
-        * ``run_qc*`` and `compute_bold_fc*`  are two groups of turnkey steps that
+        * ``run_qc*`` and ``compute_bold_fc*`` are two groups of turnkey steps that
           have qunex commands as their prefixes. The suffixes of these commands
           are options of the corresponding qunex command.
 
@@ -618,7 +616,6 @@ for STEP in ${TURNKEY_STEPS}; do
     # is it deprecated or not?
     if [[ -n $NEW_STEP ]]; then
         NEW_STEP=${NEW_STEP}
-        mageho " --> Warning: run_turnkey step ${STEP} name is deprecated, renaming to ${NEW_STEP}."
     else
         NEW_STEP=${STEP}
     fi
@@ -1936,7 +1933,7 @@ fi
                 ${QuNexCommand} import_bids --sessionsfolder="${SessionsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             fi
 
-            #popd 2> /dev/null
+            #popd > /dev/null
             rm -rf ${SessionsFolder}/inbox/BIDS/${CASE}* &> /dev/null
 
             # -- Run BIDS completion checks on mapped data
@@ -2056,7 +2053,7 @@ fi
 
             fi
 
-            #popd 2> /dev/null
+            #popd > /dev/null
             rm -rf ${SessionsFolder}/inbox/HCPLS/${CASE}* &> /dev/null
 
             # -- Run HCPLS completion checks on mapped data
@@ -2232,31 +2229,12 @@ fi
     }
 
     #
-    # --------------- Intial study and file organization end -------------------
-
-    # --> FINISH adding rawNII checks here and integrate w/ run_qc function
-    run_qc_finalize() {
-        runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-        # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`       # --> Commented for massively parallel processing
-        rename run_qc run_qc_${QCLogName} ${QuNexMasterLogFolder}/comlogs/${runQCComLog} 2> /dev/null
-        # rename run_qc run_qc_${QCLogName} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented out for massively parallel processing
-
-       # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
-       # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
-       # mkdir -p ${SessionsFolder}/${CASE}/QC/${Modality} 2> /dev/null # --> Commented out for logging consistency
-       # cp ${QuNexMasterLogFolder}/comlogs/${runQCComLog} ${SessionsFolder}/${CASE}/logs/comlog/ 2> /dev/null # --> Commented out for logging consistency
-       # cp ${QuNexMasterLogFolder}/comlogs/${runQCRunLog} ${SessionsFolder}/${CASE}/logs/comlog/ 2> /dev/null # --> Commented out for logging consistency
-       # cp ${SessionsFolder}/QC/${Modality}/*${CASE}*scene ${SessionsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null # --> Commented out logging for consistency
-       # cp ${SessionsFolder}/QC/${Modality}/*${CASE}*zip ${SessionsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null # --> Commented out for logging consistency
-    }
-
+    # ------------------------ run_qc_rawnii -----------------------------------
     # -- run_qc_rawnii (after organizing DICOM files)
     turnkey_run_qc_rawnii() {
         Modality="rawNII"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --modality="${Modality}"
-        QCLogName="rawnii"
-        run_qc_finalize
     }
 
     # --------------- HCP Processing and relevant QC start ---------------------
@@ -2292,24 +2270,18 @@ fi
         Modality="T1w"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="t1w"
-        run_qc_finalize
     }
     # -- run_qc_t2w (after hcp_post_freesurfer)
     turnkey_run_qc_t2w() {
         Modality="T2w"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="t2w"
-        run_qc_finalize
     }
     # -- run_qc_myelin (after hcp_post_freesurfer)
     turnkey_run_qc_myelin() {
         Modality="myelin"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc step for ${Modality} data."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="myelin"
-        run_qc_finalize
     }
     # -- fMRIVolume
     turnkey_hcp_fmri_volume() {
@@ -2338,10 +2310,6 @@ fi
         # -- Loop through BOLD runs
         for BOLDRUN in ${LBOLDRUNS}; do
             ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
-            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename run_qc run_qc_bold${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-            # rename run_qc run_qc_bold${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
     # -- Diffusion HCP (after hcp_pre_freesurfer)
@@ -2359,8 +2327,6 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc steps for ${Modality} HCP processing."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
-        QCLogName="dwi"
-        run_qc_finalize
     }
     # -- dwi_eddy_qc processing steps
     turnkey_dwi_eddy_qc() {
@@ -2388,8 +2354,6 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc steps for ${Modality} dwi_eddy_qc."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
-        QCLogName="dwi_eddy"
-        run_qc_finalize
     }
     #
     # --------------- HCP Processing and relevant QC end -----------------------
@@ -2416,16 +2380,12 @@ fi
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc steps for ${Modality} FSL's dtifit analyses."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
-        QCLogName="dwi_dtifit"
-        run_qc_finalize
     }
     # -- run_qc_dwi_bedpostx (after dwi_bedpostx_gpu)
     turnkey_run_qc_dwi_bedpostx() {
         Modality="DWI"
         echo ""; cyaneho " ===> RUNNING run_turnkey step ~~~ run_qc steps for ${Modality} FSL's BedpostX analyses."; echo ""
         ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${SessionsFolder}/QC/DWI" --modality="${Modality}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
-        QCLogName="dwi_bedpostx"
-        run_qc_finalize
     }
     # -- dwi_probtrackx_dense_gpu for DWI data (after dwi_bedpostx_gpu)
     turnkey_dwi_probtrackx_dense_gpu() {
@@ -2498,19 +2458,11 @@ fi
                 for BOLDRUN in ${LBOLDRUNS}; do
                     echo "----> Now working on BOLDRUN: ${BOLDRUN}"
                     ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
-                    runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-                    # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-                    rename run_qc run_qc_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-                    # rename run_qc run_qc_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
                 done
             elif [[ ${Modality} == "DWI" ]]; then
                 ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
-                QCLogName="qc_custom"
-                run_qc_finalize
             else
                 ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
-                QCLogName="qc_custom"
-                run_qc_finalize
             fi
         done
     }
@@ -2523,24 +2475,14 @@ fi
     # -- Specific checks for BOLD Fc functions
     BOLDfcLogCheck() {
         cd ${QuNexMasterLogFolder}/comlogs/
+
         ComLogName=`ls -t1 ./*${FunctionName}*${CASE}*log | head -1 | xargs -n 1 basename 2> /dev/null`
         if [ ! -z ${ComLogName} ]; then echo " ===> Comlog: $ComLogName"; echo ""; fi
         rename ${FunctionName} ${TURNKEY_STEP} ${QuNexMasterLogFolder}/comlogs/${ComLogName} 2> /dev/null
 
-        cd ${QuNexMasterLogFolder}/runlogs/
-        # RunLogName=`ls -t1 ./Log-${FunctionName}*log | head -1 | xargs -n 1 basename 2> /dev/null`  # --> Commented for massively parallel processing
-        # if [ ! -z ${ComLogName} ]; then echo " ===> RunLog: $RunLogName"; echo ""; fi               # --> Commented for massively parallel processing
-        # rename ${FunctionName} ${TURNKEY_STEP} ${QuNexMasterLogFolder}/runlogs/${RunLogName} 2> /dev/null         # --> Commented for massively parallel processing
-
         geho " ===> run_turnkey acceptance testing ${TURNKEY_STEP} logs for completion."; echo ""
 
-        CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
-
-        # CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`     # --> Commented for massively parallel processing
-        # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
-        # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
-        # cp ${CheckComLog} ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
-        # cp ${CheckRunLog} ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null                  # --> Commented for massively parallel processing
+        CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${FunctionName}_${CASE}*log 2> /dev/null | head -n 1`
 
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
@@ -2926,10 +2868,6 @@ fi
 
         for BOLDRUN in ${LBOLDRUNS}; do
             ${QuNexCommand} run_qc --sessionsfolder="${SessionsFolder}" --sessions="${CASE}" --outpath="${SessionsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
-            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_run_qc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-run_qc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename run_qc run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
-            # rename run_qc run_qc_bold_fc${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
 
@@ -3057,40 +2995,9 @@ else
             CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}*${CASE}*log 2> /dev/null | head -n 1`
         fi
 
-        # CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`      # ==> Commented to support massively parallel single study run
-        # mkdir -p ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
-        # mkdir -p ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null # --> Commented out for logging consistency
-        # cp ${CheckComLog} ${SessionsFolder}/${CASE}/logs/comlog 2> /dev/null # --> Commented out for logging consistency
-        # cp ${CheckRunLog} ${SessionsFolder}/${CASE}/logs/runlog 2> /dev/null    # --> Commented to support massively parallel single study run
-
-        # Modalities="T1w T2w myelin BOLD DWI" # --> Commented out for QC output consistency
-        # for Modality in ${Modalities}; do
-        #     mkdir -p ${SessionsFolder}/${CASE}/QC/${Modality} 2> /dev/null
-        # done
-    #
         # -- Specific sets of functions for logging
         BashBOLDFunctions="parcellate_bold compute_bold_fc_gbc compute_bold_fc_seed"
         NiUtilsFunctions="setup_hcp hcp_pre_freesurfer hcp_freesurfer hcp_post_freesurfer hcp_fmri_volume hcp_fmri_surface hcpd compute_bold_stats create_stats_report extract_nuisance_signal preprocess_bold preprocess_conc"
-
-        ## deprecated to support parallel processing # -- Check for completion of turnkey function for python qx_utilities
-        ## deprecated to support parallel processing if [ -z "${NiUtilsFunctions##*${TURNKEY_STEP}*}" ] && [ ! -z "${BashBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
-        ## deprecated to support parallel processing     geho " -- Looking for incomplete/failed process ."; echo ""
-        ## deprecated to support parallel processing     if [ -z "${CheckRunLog}" ]; then
-        ## deprecated to support parallel processing        TURNKEY_STEP_ERRORS="yes"
-        ## deprecated to support parallel processing        reho " ===> ERROR: Runlog file not found!"; echo ""
-        ## deprecated to support parallel processing     fi
-        ## deprecated to support parallel processing     if [ ! -z "${CheckRunLog}" ]; then
-        ## deprecated to support parallel processing        geho " ===> Runlog file: ${CheckRunLog} "; echo ""
-        ## deprecated to support parallel processing        CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
-        ## deprecated to support parallel processing     fi
-        ## deprecated to support parallel processing     if [ -z "${CheckRunLogOut}" ]; then
-        ## deprecated to support parallel processing            TURNKEY_STEP_ERRORS="yes"
-        ## deprecated to support parallel processing            reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
-        ## deprecated to support parallel processing        else
-        ## deprecated to support parallel processing            echo ""; cyaneho " ===> run_turnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
-        ## deprecated to support parallel processing            TURNKEY_STEP_ERRORS="no"
-        ## deprecated to support parallel processing     fi
-        ## deprecated to support parallel processing fi
 
         # -- Specific checks for all other functions
         if [ ! -z "${NiUtilsFunctions##*${TURNKEY_STEP}*}" ] && [ ! -z "${BashBOLDFunctions##*${TURNKEY_STEP}*}" ]; then

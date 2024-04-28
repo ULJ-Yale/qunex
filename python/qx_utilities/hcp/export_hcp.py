@@ -308,7 +308,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
             os.remove(tfile)
 
     # -> map
-    mapactions = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
+    mapactions = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.link_or_copy}
     descriptions = {'copy': 'copying', 'move': 'moving', 'link': 'linking'}
     
     do   = mapactions[mapaction]

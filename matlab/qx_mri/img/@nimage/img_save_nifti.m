@@ -89,13 +89,13 @@ switch img.imageformat
         end
             
         % --- if series create series information
-        if contains(img.filetype, 'tseries') 
+        if strfind(img.filetype, 'tseries') 
             try series_unit = img.cifti.metadata.diminfo{2}.seriesUnit; catch series_unit = 'SECOND'; end
             try series_start = img.cifti.metadata.diminfo{2}.seriesStart; catch series_start = 0; end
             img.cifti.metadata.diminfo{2} = cifti_diminfo_make_series(img.frames, series_start, img.TR, series_unit);
             
         % --- if scalar or label create scalar information
-        elseif contains(img.filetype, 'scalar') || contains(img.filetype, 'label')
+        elseif strfind(img.filetype, 'scalar') || strfind(img.filetype, 'label')
             if length(img.cifti.maps) == img.frames
                 img.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(img.frames, img.cifti.maps);
             else
@@ -107,7 +107,7 @@ switch img.imageformat
             end        
         end
 
-        if contains(img.filetype, 'label') 
+        if strfind(img.filetype, 'label') 
             img.cifti.metadata.diminfo{2}.type = 'labels';
             for imap = 1:img.frames
                 img.cifti.metadata.diminfo{2}.maps(imap).table = img.cifti.labels{imap};
@@ -115,7 +115,7 @@ switch img.imageformat
         end
 
         % --- get correct dimensions (not needed - set by cifi-matlab)
-        % if contains(img.filetype, 'conn')
+        % if strfind(img.filetype, 'conn')
         %     img.hdrnifti.dim(6:7) = img.dim;
         % else
         %     img.hdrnifti.dim(6) = img.frames;

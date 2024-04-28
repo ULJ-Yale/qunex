@@ -93,9 +93,9 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %                   compute mean values across the ROI
 %               - median
 %                   compute median value across the ROI
-%	            - max
+%               - max
 %                   compute maximum value across the ROI
-%	            - min
+%               - min
 %                   compute mimimum value across the ROI
 %               - pca
 %                   compute first eigenvariate of the ROI.
@@ -399,6 +399,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %           specified, saved.
 %
 
+
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
@@ -412,8 +413,7 @@ if nargin < 2 error('ERROR: At least file list and ROI .names file have to be sp
 %                                              parcel processing
 
 parcels = {};
-
-if startsWith(roiinfo, 'parcels:')
+if strncmp(roiinfo, 'parcels:', 8)
     parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
 end
 

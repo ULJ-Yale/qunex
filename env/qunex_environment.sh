@@ -231,7 +231,7 @@ if [ -e ~/qunexinit.sh ]; then
 fi
 
 QUNEXPATH=${TOOLS}/${QUNEXREPO}
-QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+QuNexVer=`cat ${QUNEXPATH}/VERSION.md`
 export QUNEXPATH QUNEXREPO QuNexVer
 
 if [ -e ~/qunexinit.sh ]; then
@@ -280,7 +280,7 @@ if [[ -z ${ASLDIR} ]]; then ASLDIR="${TOOLS}/HCP/hcp-asl"; export ASLDIR; fi
 # -- License and version disclaimer
 # ------------------------------------------------------------------------------
 
-QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
+QuNexVer=`cat ${QUNEXPATH}/VERSION.md`
 
 # ------------------------------------------------------------------------------
 # -- Setup server login messages
@@ -314,8 +314,8 @@ geho ""
 geho "                      COPYRIGHT & LICENSE NOTICE:"
 geho ""
 geho "Use of this software is subject to the terms and conditions defined in"
-geho "'LICENSES' which is a part of the QuNex Suite source code package:"
-geho "https://gitlab.qunex.yale.edu/qunex/qunex/-/tree/master/LICENSES"
+geho "QuNex LICENSES which can be found in the LICENSES folder of the QuNex"
+geho "repository or at https://qunex.yale.edu/qunex-registration"
 geho ""
 
 # ------------------------------------------------------------------------------
@@ -323,19 +323,17 @@ geho ""
 # ------------------------------------------------------------------------------
 
 if [ "$USEOCTAVE" == "TRUE" ]; then
-    if [[ ${OctaveTest} == "fail" ]]; then 
-        reho " ===> ERROR: Cannot setup Octave because module test failed."
-    else
-         ln -s `which octave` ${OCTAVEDIR}/octave > /dev/null 2>&1
-         export OCTAVEDIR
-         cyaneho " ---> Setting up Octave "; echo ""
-         QUNEXMCOMMAND='octave -q --no-init-file --eval'
-         if [ ! -e ~/.octaverc ]; then
-             cp ${QUNEXPATH}/qx_library/etc/.octaverc ~/.octaverc
-         fi
-         export LD_LIBRARY_PATH=/usr/lib64/hdf5/:${LD_LIBRARY_PATH} > /dev/null 2>&1
-         if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
+    # Octave needs this for some reason
+    if [[ ! -e ~/.local/share ]]; then
+        mkdir -p ~/.local/share
     fi
+    cyaneho " ---> Setting up Octave "; echo ""
+    QUNEXMCOMMAND='octave -q --eval'
+    if [ ! -e ~/.octaverc ]; then
+        cp ${QUNEXPATH}/qx_library/etc/.octaverc ~/.octaverc
+    fi
+    export LD_LIBRARY_PATH=/usr/lib64/hdf5/:${LD_LIBRARY_PATH} > /dev/null 2>&1
+    if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
 else
     cyaneho " ---> Setting up Matlab "; echo ""
     QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
@@ -488,31 +486,52 @@ NIUTemplateFolder=$QUNEXPATH/python/qx_utilities/templates/
 PATH=${NIUTemplateFolder}:${PATH}
 export NIUTemplateFolder PATH
 
-# -- Define submodules, but omit hcpextendedpull to avoid conflicts
-alias qunex_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
-alias qx_envset='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
-alias qunex_environment_set='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
-alias qx_environment_set='source ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh'
+# -- useful aliases
+alias qunex_env_source='source ${QUNEXPATH}/env/qunex_environment.sh'
+alias qx_env_source='source ${QUNEXPATH}/env/qunex_environment.sh'
 
-alias qunex_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
-alias qx_envhelp='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
-alias qunex_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
-alias qx_environment_help='bash ${TOOLS}/${QUNEXREPO}/env/qunex_environment.sh --help'
+alias qunex_env_help='bash ${QUNEXPATH}/env/qunex_environment.sh --help'
+alias qx_env_help='bash ${QUNEXPATH}/env/qunex_environment.sh --help'
 
-alias qunex_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qx_env_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qunex_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qx_envstatus='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qunex_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envstatus'
-alias qx_environment_status='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh'
+alias qunex_env_status='source ${QUNEXPATH}/env/qunex_env_status.sh --envstatus'
+alias qx_env_status='source ${QUNEXPATH}/env/qunex_env_status.sh --envstatus'
 
 alias qunex_container_env_status=`qunex_container --env_status`
-alias qunex_container_envstatus=`qunex_container --env_status`
 
-alias qunex_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
-alias qx_envreset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
-alias qunex_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
-alias qx_environment_reset='source ${TOOLS}/${QUNEXREPO}/env/qunex_env_status.sh --envclear'
+alias qunex_env_reset='source ${QUNEXPATH}/env/qunex_env_status.sh --envclear'
+alias qx_env_reset='source ${QUNEXPATH}/env/qunex_env_status.sh --envclear'
+
+# -- easy swapping between matlab and octave
+qx_env_matlab() {
+    # copy over precompiled matlab mex
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mex ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mexa64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mexmaci64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mex ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mexa64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mexmaci64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+
+    # source env
+    export USEOCTAVE="FALSE"
+    source ${QUNEXPATH}/env/qunex_environment.sh
+}
+
+qx_env_octave() {
+    # compile octave's mex
+    pushd ${QUNEXPATH}/matlab/qx_mri/img/@nimage > /dev/null
+    rm *.mex*
+    cp img_read_nifti_mx_octave.cpp img_read_nifti_mx.cpp
+    cp img_save_nifti_mx_octave.cpp img_save_nifti_mx.cpp
+    mkoctfile --mex -lz img_read_nifti_mx.cpp qx_nifti.c znzlib.c
+    mkoctfile --mex -lz img_save_nifti_mx.cpp qx_nifti.c znzlib.c
+    rm img_read_nifti_mx.cpp
+    rm img_save_nifti_mx.cpp
+
+    # source env
+    export USEOCTAVE="TRUE"
+    source ${QUNEXPATH}/env/qunex_environment.sh
+    popd > /dev/null
+}
 
 
 # ------------------------------------------------------------------------------
@@ -523,8 +542,10 @@ extensions_notice_printed=FALSE
 QUNEXEXTENSIONS=""
 QXEXTENSIONSPY=""
 
-# -- loop through plugin folders
+# -- covert $QUNEXEXTENSIONSFOLDERS from colon separated to space
+QUNEXEXTENSIONSFOLDERS=`echo $QUNEXEXTENSIONSFOLDERS | tr ':' ' '`
 
+# -- loop through plugin folders
 for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNEXEXTENSIONSFOLDERS
 do
     # -- identify extensions and loop through them
@@ -538,14 +559,12 @@ do
         fi
         
         # -- Process plugin
-
         extension_name=`basename $extension`
         echo "--> Registering extension $extension_name"
 
         QUNEXEXTENSIONS="$QUNEXEXTENSIONS:$extensions_folder/$extension_name"
 
         # -- Register paths
-
         extension_root=`echo $extension_name | tr -d "_" | tr '[:lower:]' '[:upper:]'`
         echo "    ... setting ${extension_root}PATH to '$extensions_folder/$extension_name'"
         export ${extension_root}PATH="$extensions_folder/$extension_name"
@@ -557,7 +576,6 @@ do
         fi
         
         # -- Add bin folder to PATH
-
         if [ -e "$extensions_folder/$extension_name/bin" ]
         then
             echo "    ... setting ${extension_root}BIN to '$extensions_folder/$extension_name/bin'"
@@ -567,7 +585,6 @@ do
         fi
 
         # -- Add python folder to QXEXTENSIONSPY
-
         if [ -e "$extensions_folder/$extension_name/python/qx_modules" ]
         then
             QXEXTENSIONSPY="$extensions_folder/$extension_name/python":$QXEXTENSIONSPY
@@ -575,7 +592,6 @@ do
         fi
 
         # -- Add matlab folder and content to MATLABPATH
-
         if [ -e "$extensions_folder/$extension_name/matlab" ]
         then
             MATLABPATH="$extensions_folder/$extension_name/matlab":$MATLABPATH
@@ -631,9 +647,9 @@ export HCPPIPEDIR_tfMRI=${HCPPIPEDIR}/tfMRI/scripts; PATH=${HCPPIPEDIR_tfMRI}:${
 export HCPPIPEDIR_dMRI=${HCPPIPEDIR}/DiffusionPreprocessing/scripts; PATH=${HCPPIPEDIR_dMRI}:${PATH}; export PATH
 export HCPPIPEDIR_Global=${HCPPIPEDIR}/global/scripts; PATH=${HCPPIPEDIR_Global}:${PATH}; export PATH
 export HCPPIPEDIR_tfMRIAnalysis=${HCPPIPEDIR}/TaskfMRIAnalysis/scripts; PATH=${HCPPIPEDIR_tfMRIAnalysis}:${PATH}; export PATH
-export HCPPIPEDIR_dMRITract=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tractography/scripts; PATH=${HCPPIPEDIR_dMRITract}:${PATH}; export PATH
-export HCPPIPEDIR_dMRITractFull=${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
-export HCPPIPEDIR_dMRILegacy=${TOOLS}/${QUNEXREPO}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
+export HCPPIPEDIR_dMRITract=${QUNEXPATH}/bash/qx_utilities/diffusion_tractography/scripts; PATH=${HCPPIPEDIR_dMRITract}:${PATH}; export PATH
+export HCPPIPEDIR_dMRITractFull=${QUNEXPATH}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
+export HCPPIPEDIR_dMRILegacy=${QUNEXPATH}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
 export DEFAULT_CUDA_VERSION="10.2";
 export EDDYCUDA=${FSLBINDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}

@@ -769,7 +769,7 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
-    # deprecation warnings, TODO remove in 1.0.0
+    # deprecation warnings
     for arg in args:
         if "sessionids=" in arg:
             print(
@@ -882,7 +882,11 @@ def main(args=None):
     ]
     qx_command = command.split(" ")[0]
     # ban parallel execution of these commands
-    if overwrite == "yes" and parsessions > 1 and qx_command in commands_blacklist:
+    if (
+        (overwrite == "yes" or overwrite is True)
+        and parsessions > 1
+        and qx_command in commands_blacklist
+    ):
         print(
             "ERROR: Parallel execution of this command is not supported when overwrite is set to yes!"
         )
@@ -1142,8 +1146,14 @@ def main(args=None):
             if i < len(sessionids_array):
                 if not old_sessions_naming:
                     qx_command += '--sessions="%s" ' % (sessionids_array[i])
+                    # run_turnkey requires both
+                    if "run_turnkey" in qx_command:
+                        qx_command += '--sessionids="%s" ' % (sessionids_array[i])
                 else:
                     qx_command += '--sessionids="%s" ' % (sessionids_array[i])
+                    # run_turnkey requires both
+                    if "run_turnkey" in qx_command:
+                        qx_command += '--sessions="%s" ' % (sessionids_array[i])
 
             # setup script
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -1227,7 +1237,6 @@ def main(args=None):
                     conimage,
                     script_path,
                 )
-
             if scheduler:
                 schedule(
                     command=container_command,

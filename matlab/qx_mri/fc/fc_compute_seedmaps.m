@@ -95,9 +95,9 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %                   compute mean values across the ROI
 %               - median
 %                   compute median value across the ROI
-%	            - max
+%               - max
 %                   compute maximum value across the ROI
-%	            - min
+%               - min
 %                   compute mimimum value across the ROI
 %               - pca
 %                   compute first eigenvariate of the ROI.
@@ -307,7 +307,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %       Definitions:
 %
-%       - `<targetf>' is the group target folder.
+%       - `<targetf>` is the group target folder.
 %       - `<roi>` is the name of the ROI for which the seed map was computed
 %         for.
 %       - `<listname>` is the listname name of the flist.
@@ -330,7 +330,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %       Definitions:
 %
-%       - `<targetf>' is either the group target folder or the individual
+%       - `<targetf>` is either the group target folder or the individual
 %         image folder.
 %       - `<listname>` is the provided name of the bold(s).
 %       - `<sessionid>` is the id of the session/subject, if it was requested

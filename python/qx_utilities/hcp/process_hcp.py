@@ -133,7 +133,10 @@ def getHCPPaths(sinfo, options):
         print(
             "ERROR: HCP path does not exists, check your parameters and the batch file!"
         )
-        raise
+        raise ge.CommandFailed(
+            options["command_ran"],
+            "No sufficient input data, perhaps you did not provide the batch file?",
+        )
 
     d["base"] = hcpbase
     if options["hcp_folderstructure"] == "hcpya":
@@ -207,6 +210,7 @@ def getHCPPaths(sinfo, options):
         "FIELDMAP",
         "SiemensFieldMap",
         "PhilipsFieldMap",
+        "GEHealthCareFieldMap",
     ] or options["hcp_bold_dcmethod"] in ["SiemensFieldMap", "PhilipsFieldMap"]:
         fmapmag = glob.glob(
             os.path.join(
@@ -235,8 +239,8 @@ def getHCPPaths(sinfo, options):
                 if fmnum in d["fieldmap"]:
                     d["fieldmap"][fmnum].update({"phase": imagepath})
     elif (
-        options["hcp_avgrdcmethod"] == "GeneralElectricFieldMap"
-        or options["hcp_bold_dcmethod"] == "GeneralElectricFieldMap"
+        options["hcp_avgrdcmethod"] == "GEHealthCareLegacyFieldMap"
+        or options["hcp_bold_dcmethod"] == "GEHealthCareLegacyFieldMap"
     ):
         fmapge = glob.glob(
             os.path.join(
@@ -411,19 +415,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             SpinEchoFieldMap[N]\*/\*_<hcp_sephasepos>_\*
             SpinEchoFieldMap[N]\*/\*_<hcp_sephaseneg>_\*
 
-        **SiemensFieldMap**::
+        **SiemensFieldMap, GEHealthCareFieldMap or PhilipsFieldMap**::
 
             FieldMap/<session id>_FieldMap_Magnitude.nii.gz
             FieldMap/<session id>_FieldMap_Phase.nii.gz
 
-        **GeneralElectricFieldMap**::
+        **GEHealthCareLegacyFieldMap**::
 
             FieldMap/<session id>_FieldMap_GE.nii.gz
-
-        **PhilipsFieldMap**::
-
-            FieldMap/<session id>_FieldMap_Magnitude.nii.gz
-            FieldMap/<session id>_FieldMap_Phase.nii.gz
 
     Parameters:
         --batchfile (str, default ''):
@@ -504,8 +503,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
               readout correction)
             - 'SiemensFieldMap' (average any repeats and use Siemens field map
               for readout correction)
-            - 'GeneralElectricFieldMap' (average any repeats and use GE field
+            - 'GEHealthCareFieldMap' (average any repeats and use GE field
               map for readout correction)
+            - 'GEHealthCareLegacyFieldMap' (average any repeats and use GE field
+              map for readout correction, for legacy, combined GE field maps)
             - 'PhilipsFieldMap' (average any repeats and use Philips field map
               for readout correction)
             - 'TOPUP' (average any repeats and use spin echo field map for
@@ -802,7 +803,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         tufolder = None
         fmmag = ""
         fmphase = ""
-        fmge = ""
+        fmcombined = ""
 
         if options["hcp_avgrdcmethod"] == "TOPUP":
             # -- spin echo settings
@@ -959,7 +960,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     run = False
                     raise
 
-        elif options["hcp_avgrdcmethod"] == "GeneralElectricFieldMap":
+        elif options["hcp_avgrdcmethod"] == "GEHealthCareLegacyFieldMap":
             fmnum = T1w.get("fm", None)
 
             if fmnum is None:
@@ -978,12 +979,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 fmmag = None
                 fmphase = None
-                fmge = hcp["fieldmap"][int(fmnum)]["GE"]
+                fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
 
         elif options["hcp_avgrdcmethod"] in [
             "FIELDMAP",
             "SiemensFieldMap",
             "PhilipsFieldMap",
+            "GEHealthCareFieldMap",
         ]:
             fmnum = T1w.get("fm", None)
 
@@ -1011,7 +1013,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                 fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                fmge = None
+                fmcombined = None
 
         else:
             r += "\n---> WARNING: No distortion correction method specified."
@@ -1167,7 +1169,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ("fnirtconfig", fnirtconfig),
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
-            ("fmapgeneralelectric", fmge),
+            ("fmapcombined", fmcombined),
             ("echodiff", options["hcp_echodiff"]),
             ("SEPhaseNeg", seneg),
             ("SEPhasePos", sepos),
@@ -2266,7 +2268,7 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
             run = False
 
         target_dir = os.path.join(study_folder, session)
-        gc.linkOrCopy(source_dir, target_dir, symlink=True)
+        gc.link_or_copy(source_dir, target_dir, symlink=True)
         i += 1
 
     # build the command
@@ -3096,8 +3098,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_bold_dcmethod (str, default 'TOPUP'):
             BOLD image deformation correction that should be used: TOPUP,
-            FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap,
-            PhilipsFieldMap or NONE.
+            FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
+            GEHealthCareLegacyFieldMap, PhilipsFieldMap or NONE.
 
         --hcp_bold_echodiff (str, default 'NONE'):
             Delta TE for BOLD fieldmap images or NONE if not used.
@@ -3547,7 +3549,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         orient = ""
         fmmag = "NONE"
         fmphase = "NONE"
-        fmge = "NONE"
+        fmcombined = "NONE"
 
         # -> Check for SE images
         sepresent = []
@@ -3560,8 +3562,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "FIELDMAP",
             "SiemensFieldmap",
             "PhilipsFieldMap",
-            "GeneralElectricFieldMap",
-            "NONE",
+            "GEHealthCareFieldMap",
+            "GEHealthCareLegacyFieldMap" "NONE",
         ]:
             r += "\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter!"
             run = False
@@ -3685,7 +3687,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "FIELDMAP",
             "SiemensFieldmap",
             "PhilipsFieldMap",
-            "GeneralElectricFieldMap",
+            "GEHealthCareFieldMap",
+            "GEHealthCareLegacyFieldMap",
         ]:
             unwarpdirs = [
                 [f.strip() for f in e.strip().split("=")]
@@ -3740,7 +3743,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "FIELDMAP",
                 "SiemensFieldmap",
                 "PhilipsFieldMap",
-                "GeneralElectricFieldMap",
+                "GEHealthCareFieldMap",
+                "GEHealthCareLegacyFieldMap",
             ]
 
             # --- set unwarpdir and orient
@@ -3908,12 +3912,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                    fmge = None
+                    fmcombined = None
 
-            # --- check for GE fieldmap image
+            # --- check for GE legacy fieldmap image
             elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
                 "hcp_bold_dcmethod"
-            ] in ["GeneralElectricFieldMap"]:
+            ] in ["GEHealthCareLegacyFieldMap"]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
                     r += (
@@ -3926,16 +3930,57 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["GE"],
-                            "\n     ... GeneralElectric fieldmap image %d present "
+                            "\n     ... GeneralElectric legacy fieldmap image %d present "
                             % (i),
-                            "\n     ... ERROR: GeneralElectric fieldmap image %d missing!"
+                            "\n     ... ERROR: GeneralElectric legacy fieldmap image %d missing!"
                             % (i),
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
                     fmmag = None
                     fmphase = None
-                    fmge = hcp["fieldmap"][int(fmnum)]["GE"]
+                    fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
+
+            # --- check for GE double TE-fieldmap image
+            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
+                "hcp_bold_dcmethod"
+            ] in ["GEHealthCareFieldMap"]:
+                fmnum = boldinfo.get("fm", None)
+                if fmnum is None:
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp["fieldmap"].items():
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["magnitude"],
+                            "\n     ... GE fieldmap magnitude image %d present " % (i),
+                            "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["phase"],
+                            "\n     ... GE fieldmap phase image %d present " % (i),
+                            "\n     ... ERROR: GE fieldmap phase image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        boldok = boldok and fieldok
+                    if not pc.is_number(options["hcp_bold_echospacing"]):
+                        fieldok = False
+                        r += (
+                            '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
+                            % (options["hcp_bold_echospacing"])
+                        )
+                    boldok = boldok and fieldok
+                    fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                    fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
+                    fmcombined = None
 
             # --- check for Philips double TE-fieldmap image
             elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
@@ -3977,7 +4022,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                    fmge = None
+                    fmcombined = None
 
             # --- NO DC used
             elif options["hcp_bold_dcmethod"] == "NONE":
@@ -4122,7 +4167,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "topupconfig": topupconfig,
                 "fmmag": fmmag,
                 "fmphase": fmphase,
-                "fmge": fmge,
+                "fmcombined": fmcombined,
                 "fmriref": fmriref,
             }
             boldsData.append(b)
@@ -4293,7 +4338,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     topupconfig = b["topupconfig"]
     fmmag = b["fmmag"]
     fmphase = b["fmphase"]
-    fmge = b["fmge"]
+    fmcombined = b["fmcombined"]
     fmriref = b["fmriref"]
 
     # prepare return variables
@@ -4369,7 +4414,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             ("SEPhasePos", spinPos),
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
-            ("fmapgeneralelectric", fmge),
+            ("fmapcombined", fmcombined),
             ("echospacing", echospacing),
             ("echodiff", options["hcp_bold_echodiff"]),
             ("unwarpdir", unwarpdir),
@@ -5315,6 +5360,13 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             Whether to automatically run HCP PostFix if HCP ICAFix finishes
             successfully.
 
+        --hcp_icafix_processingmode (str, default ''):
+            HCPStyleData (default) or LegacyStyleData, controls whether
+            --icadim-mode=fewtimepoints is allowed.
+
+        --hcp_icafix_fixonly (str, default 'FALSE'):
+            Whether to execute only the FIX step of the pipeline.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -5346,16 +5398,15 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ================================== =======================
             QuNex parameter                    HCPpipelines parameter
             ================================== =======================
-            ``hcp_icafix_highpass``            ``bandpass``
-            ``hcp_icafix_domotionreg``         ``domot``
-            ``hcp_icafix_traindata``           ``trainingdata``
-            ``hcp_icafix_threshold``           ``fix-threshold``
-            ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
+            ``hcp_icafix_highpass``            ``high-pass``
             ``hcp_icafix_domotionreg``         ``motion-regression``
             ``hcp_icafix_traindata``           ``training-file``
+            ``hcp_icafix_threshold``           ``fix-threshold``
+            ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
-            ``hcp_config``                     ``training-file``
-            ``hcp_icafix_traindata``           ``config``
+            ``hcp_config``                     ``config``
+            ``hcp_icafix_processingmode``      ``processing-mode``
+            ``hcp_icafix_fixonly``             ``fix-only``
             ``hcp_matlab_mode``                ``matlabrunmode``
             ================================== =======================
 
@@ -5637,12 +5688,16 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 "script": os.path.join(hcp["hcp_base"], "ICAFIX", "hcp_fix"),
                 "inputfile": inputfile,
                 "bandpass": bandpass,
-                "domot": "TRUE"
-                if options["hcp_icafix_domotionreg"] is None
-                else options["hcp_icafix_domotionreg"],
-                "trainingdata": f"HCP_hp{bandpass}.RData"
-                if options["hcp_icafix_traindata"] is None
-                else options["hcp_icafix_traindata"],
+                "domot": (
+                    "TRUE"
+                    if options["hcp_icafix_domotionreg"] is None
+                    else options["hcp_icafix_domotionreg"]
+                ),
+                "trainingdata": (
+                    f"HCP_hp{bandpass}.RData"
+                    if options["hcp_icafix_traindata"] is None
+                    else options["hcp_icafix_traindata"]
+                ),
                 "fixthreshold": icafix_threshold,
                 "deleteintermediates": delete_intermediates,
             }
@@ -5856,6 +5911,15 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if options["hcp_config"] is not None:
             comm += '             --config="%s"' % options["hcp_config"]
+
+        if options["hcp_icafix_processingmode"] is not None:
+            comm += (
+                '             --processing-mode="%s"'
+                % options["hcp_icafix_processingmode"]
+            )
+
+        if options["hcp_icafix_fixonly"] is not None:
+            comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
 
         # -- Report command
         if groupok:
@@ -6803,9 +6867,11 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
                     "regname": options["hcp_icafix_regname"],
                     "lowresmesh": options["hcp_lowresmesh"],
                     "matlabrunmode": matlabrunmode,
-                    "motionregression": "TRUE"
-                    if options["hcp_icafix_domotionreg"] is None
-                    else options["hcp_icafix_domotionreg"],
+                    "motionregression": (
+                        "TRUE"
+                        if options["hcp_icafix_domotionreg"] is None
+                        else options["hcp_icafix_domotionreg"]
+                    ),
                     "deleteintermediates": options["hcp_icafix_deleteintermediates"],
                 }
             )
@@ -7022,9 +7088,11 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     "regname": options["hcp_icafix_regname"],
                     "lowresmesh": options["hcp_lowresmesh"],
                     "matlabrunmode": matlabrunmode,
-                    "motionregression": "FALSE"
-                    if options["hcp_icafix_domotionreg"] is None
-                    else options["hcp_icafix_domotionreg"],
+                    "motionregression": (
+                        "FALSE"
+                        if options["hcp_icafix_domotionreg"] is None
+                        else options["hcp_icafix_domotionreg"]
+                    ),
                     "deleteintermediates": options["hcp_icafix_deleteintermediates"],
                 }
             )
@@ -8462,15 +8530,17 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
                 "path": sinfo["hcp"],
                 "subject": sinfo["id"] + options["hcp_suffix"],
                 "fixnames": boldtargets,
-                "highresmesh": options["hcp_highresmesh"],
+                "highresmesh": options["hcp_hiresmesh"],
                 "lowresmeshes": options["hcp_lowresmeshes"].replace(",", "@"),
                 "regname": regname,
                 "maps": options["hcp_resample_maps"].replace(",", "@"),
                 "smoothingfwhm": options["hcp_bold_smoothFWHM"],
                 "highpass": highpass,
-                "motionregression": "TRUE"
-                if options["hcp_icafix_domotionreg"] is None
-                else options["hcp_icafix_domotionreg"],
+                "motionregression": (
+                    "TRUE"
+                    if options["hcp_icafix_domotionreg"] is None
+                    else options["hcp_icafix_domotionreg"]
+                ),
                 "regfiles": regfiles,
                 "concatregname": options["hcp_resample_concatregname"],
                 "myelinmaps": options["hcp_resample_myelinmaps"].replace(",", "@"),
@@ -8741,9 +8811,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 "maps": options["hcp_resample_maps"].replace(",", "@"),
                 "smoothingfwhm": options["hcp_bold_smoothFWHM"],
                 "highpass": highpass,
-                "motionregression": "FALSE"
-                if options["hcp_icafix_domotionreg"] is None
-                else options["hcp_icafix_domotionreg"],
+                "motionregression": (
+                    "FALSE"
+                    if options["hcp_icafix_domotionreg"] is None
+                    else options["hcp_icafix_domotionreg"]
+                ),
                 "regfiles": regfiles,
                 "concatregname": options["hcp_resample_concatregname"],
                 "myelinmaps": options["hcp_resample_myelinmaps"].replace(",", "@"),
@@ -9524,6 +9596,14 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             from another study, this is usually used in combination with
             REUSE_TICA mode.
 
+        --hcp_tica_extract_fmri_name_list (str, default ''):
+            A comma separated list of list of fMRI run names to concatenate into
+            the --hcp_tica_extract_fmri_out output after tICA cleanup.
+
+        --hcp_tica_extract_fmri_out (str, default ''):
+            fMRI name for concatenated extracted runs, requires
+            --hcp_tica_extract_fmri_name_list.
+
         --hcp_matlab_mode (str, default 'compiled'):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'.
@@ -9658,6 +9738,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_tica_fix_legacy_bias``          ``fix-legacy-bias``
             ``hcp_parallel_limit``                ``parallel-limit``
             ``hcp_tica_config_out``               ``config-out``
+            ``hcp_tica_extract_fmri_name_list``   ``extract-fmri-name-list``
+            ``hcp_tica_extract_fmri_out``         ``extract-fmri-out``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
             ===================================== ===============================
 
@@ -9838,7 +9920,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     target_dir = os.path.join(study_dir, session_name)
 
                     # link
-                    gc.linkOrCopy(source_dir, target_dir, symlink=True)
+                    gc.link_or_copy(source_dir, target_dir, symlink=True)
 
                 # check for make average dataset outputs
                 mad_file = os.path.join(
@@ -9865,7 +9947,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             if options["hcp_tica_precomputed_clean_folder"] is not None:
                 mad_dir = options["hcp_tica_precomputed_clean_folder"]
 
-            gc.linkOrCopy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
+            gc.link_or_copy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] == "compiled":
@@ -10039,6 +10121,14 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             # hcp_tica_config_out
             if options["hcp_tica_config_out"]:
                 comm += "                    --config-out"
+
+            # hcp_tica_extract_fmri_name_list
+            if options["hcp_tica_extract_fmri_name_list"]:
+                comm += f'                    --extract-fmri-name-list="{options["hcp_tica_extract_fmri_name_list"].replace(",", "@")}"'
+
+            # hcp_tica_extract_fmri_out
+            if options["hcp_tica_extract_fmri_out"]:
+                comm += f'                    --extract-fmri-out="{options["hcp_tica_extract_fmri_out"]}"'
 
             # -- Report command
             if run:
@@ -10276,7 +10366,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
                 target_dir = os.path.join(study_dir, session_name)
 
                 # link
-                gc.linkOrCopy(source_dir, target_dir, symlink=True)
+                gc.link_or_copy(source_dir, target_dir, symlink=True)
 
         # hcp_surface_atlas_dir
         surface_atlas = ""
@@ -10812,10 +10902,9 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             )
 
         if options["hcp_autoreclean_model_to_use"] is not None:
-            comm += (
-                '             --model-to-use="%s"'
-                % options["hcp_autoreclean_model_to_use"]
-            )
+            comm += '             --model-to-use="%s"' % options[
+                "hcp_autoreclean_model_to_use"
+            ].replace(",", "@")
 
         if options["hcp_autoreclean_vote_threshold"] is not None:
             comm += (
@@ -11352,7 +11441,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         r += "\n ... T1 ready"
         report["T1"] = "present"
     else:
-        status, r = gc.linkOrCopy(
+        status, r = gc.link_or_copy(
             os.path.join(d["hcp"], "MNINonLinear", "T1w.nii.gz"),
             f["t1"],
             r,
@@ -11365,7 +11454,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         r += "\n ... highres aseg+aparc ready"
         report["hires aseg+aparc"] = "present"
     else:
-        status, r = gc.linkOrCopy(
+        status, r = gc.link_or_copy(
             os.path.join(d["hcp"], "MNINonLinear", "aparc+aseg.nii.gz"),
             f["fs_aparc_t1"],
             r,
@@ -11442,7 +11531,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     -> updated .spec file [%s]" % (sid)
                     ncp += 1
                     continue
-                if gc.linkOrCopy(sfile, tfile):
+                if gc.link_or_copy(sfile, tfile):
                     ncp += 1
                 else:
                     r += "\n     -> ERROR: could not map or copy %s" % (sfile)
@@ -11519,7 +11608,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... volume image ready"
                 else:
                     # r += "\n     ... linking volume image \n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + '.nii.gz'), f['bold'])
-                    status, r = gc.linkOrCopy(
+                    status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
                             hcp_bold_name + options["hcp_nifti_tail"] + ".nii.gz",
@@ -11535,7 +11624,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... grayordinate image ready"
                 else:
                     # r += "\n     ... linking cifti image\n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
-                    status, r = gc.linkOrCopy(
+                    status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
                             hcp_bold_name + options["hcp_cifti_tail"] + ".dtseries.nii",

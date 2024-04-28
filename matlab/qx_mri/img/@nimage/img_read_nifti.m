@@ -37,8 +37,11 @@ if ~exist(filename)
 end
 
 % --- read the file
-
 [fhdr fdata fmeta fswap] = nimage.img_read_nifti_mx(filename, verbose);
+
+% fmeta to str (remove starting chars before < as they are not UTF-8)
+idx = find(fmeta' == 60, 1);
+fmeta_str = char(fmeta'(idx:end));
 
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;
@@ -66,7 +69,7 @@ switch  img.hdrnifti.datatype
     case 4
         datatype = 'int16';
     case 8
-        datatype = 'int32'
+        datatype = 'int32';
     case 16
         datatype = 'single';
     case 64
@@ -79,8 +82,6 @@ switch  img.hdrnifti.datatype
         datatype = 'uint32';
     case 1024
         datatype = 'int64';
-    case 1280
-        datatype = 'uint64';
     case 1280
         datatype = 'uint64';
     otherwise
@@ -112,7 +113,9 @@ end
 if strcmp(img.imageformat, 'NIfTI')
     img.TR = [];
     img.frames = 1;
-    if img.hdrnifti.dim(1) == 4    % we probably have a BOLD (4D) file
+
+    % we probably have a BOLD (4D) file
+    if img.hdrnifti.dim(1) == 4
         if ~isempty(frames)
             img.hdrnifti.dim(5) = frames;
             img.frames = frames;
@@ -138,8 +141,9 @@ elseif strcmp(img.imageformat, 'CIFTI')
 
     img.TR     = [];
 
-    if img.hdrnifti.dim(1) == 6                             % we probably have 2d cifi file
-        cver = regexp(char(fmeta'), 'CIFTI Version="(.)"', 'tokens');
+    % we probably have a 2d cifti file
+    if img.hdrnifti.dim(1) == 6
+        cver = regexp(fmeta_str, 'CIFTI Version="(.)"', 'tokens');
         if length(cver) == 0
             error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', img.filename);
         end
@@ -346,7 +350,7 @@ if mi > 0
                 if strcmp(img.cifti.metadata.diminfo{2}.type, 'scalars')
                     img.cifti.maps = {img.cifti.metadata.diminfo{2}.maps.name};
                 elseif strcmp(img.cifti.metadata.diminfo{2}.type, 'series')
-                    TR = img.cifti.metadata.diminfo{2}.seriesStep;
+                    img.TR = img.cifti.metadata.diminfo{2}.seriesStep;
                 elseif strcmp(img.cifti.metadata.diminfo{2}.type, 'labels')
                     img.cifti.maps = {img.cifti.metadata.diminfo{2}.maps.name};
                     for imap = 1:length(img.cifti.metadata.diminfo{2}.maps);

@@ -331,7 +331,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
         if overwrite == 'yes':
             print(" --> cleaning up preexisiting image files")
             for file in files:
-                print("     ... removing %s" % file)
+                print(" ... removing %s" % file)
                 os.remove(file)
         else:
             raise ge.CommandFailed("run_palm", "Preexisting image files", "There are preexisting image files with the specified root.", "Please inspect and remove them to prevent conflicts or specify 'overwrite=yes'!")
@@ -362,7 +362,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
 
     rfolder = os.path.dirname(root)
     if (rfolder != '') and (not os.path.exists(rfolder)):
-        print("     ... creating target folder [%s]" % (rfolder))
+        print(" ... creating target folder [%s]" % (rfolder))
         os.makedirs(rfolder)
 
     # missing = []
@@ -455,9 +455,9 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
                 tfile = "%s_%s.csv" % (doptions['name'], doptions[f])
                 if os.path.exists(tfile):
                     dargs += ['-' + f, tfile]
-                    print("     ... %s file set to %s" % (f, tfile))
+                    print(" ... %s file set to %s" % (f, tfile))
                 else:
-                    print("     ... %s file not found and won't be used [%s]" % (f, os.path.abspath(tfile)))
+                    print(" ... %s file not found and won't be used [%s]" % (f, os.path.abspath(tfile)))
 
 
         # --- prepare (custom) mask(s)
@@ -593,7 +593,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
             calls = []
 
             if not surface:
-                print("     ... Volume")
+                print(" ... Volume")
                 infiles = setInFiles(root, 'volume.nii', nimages)
                 inargs  = ['-m', mask_volume]
                 command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
@@ -601,7 +601,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
                 if '-T' in command and t3set is not None:
                     command += [t3set]
 
-            print("     ... Left Surface")
+            print(" ... Left Surface")
             infiles = setInFiles(root, 'left.func.gii', nimages)
             inargs  = ['-m', mask_left, '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_L']
@@ -609,7 +609,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
                 command += [t2set]
             calls.append({'name': 'PALM Left Surface', 'args': command, 'sout': root + '_left_surface.log'})
 
-            print("     ... Right Surface")
+            print(" ... Right Surface")
             infiles = setInFiles(root, 'right.func.gii', nimages)
             inargs  = ['-m', mask_right, '-s', os.path.join(atlas, 'hcp', 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_R']
@@ -658,12 +658,12 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
                         if surface:
                             if rleftsurfaces:
                                 if len(rleftsurfaces) != len(rrightsurfaces):
-                                    print("     ... WARNING: Nonmatching number of resulting surface files, please check PALM log for errors!")
+                                    print(" ... WARNING: Nonmatching number of resulting surface files, please check PALM log for errors!")
                                     continue    
                         else:
                             if rvolumes:
                                 if len(rvolumes) != len(rleftsurfaces) or len(rvolumes) != len(rrightsurfaces):
-                                    print("     ... WARNING: Nonmatching number of resulting volume and surface files, please check PALM log for errors!")
+                                    print(" ... WARNING: Nonmatching number of resulting volume and surface files, please check PALM log for errors!")
                                     continue
 
                         while rleftsurfaces:
@@ -688,7 +688,7 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
 
                             # --- compile target name
                             targetfile     = "%s_%s_%s%s%s_C%s.dscalar.nii" % (root, unitKind, stat, pval, M, C)
-                            print("     ... creating", targetfile,)
+                            print(" ... creating", targetfile,)
 
                             # --- and func to gii
                             os.rename(rleftsurface, rleftsurface.replace('.gii', '.func.gii'))

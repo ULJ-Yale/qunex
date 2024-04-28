@@ -977,7 +977,7 @@ finalReport(){
         reho "------------------------- ERROR --------------------------------"
         echo ""
         reho "   QC generation did not complete correctly."
-        reho "   Check outputs: ${RunQCLogFolder}/QC_${CASE}_UserRunQUEUE_${Modality}_${TimeStamp}.log"
+        reho "   Check outputs: ${RunQCLogFolder}/QC_${CASE}_ComQUEUE_${Modality}_${TimeStamp}.log"
         echo ""
         reho "----------------------------------------------------------------"
         echo ""
@@ -1521,7 +1521,7 @@ main() {
             unset CompletionCheck
             pushd ${SessionsFolder}/${CASE}/nii/
             slicesdir ${SessionsFolder}/${CASE}/nii/*.nii*
-            popd
+            popd > /dev/null
             if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
                 CompletionCheck="fail"
             else
@@ -1859,26 +1859,6 @@ main() {
                                     completionCheck
                                 fi
                             fi
-                            # # -- Check if user specific scene path was provided
-                            # if [ ! -z "$UserSceneFile" ]; then
-                            #     WorkingSceneFile="${CASE}.${Modality}.${BOLD}.${UserSceneFile}"
-                            #     Com1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
-                            #     Com2="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
-                            #     ComQueue="$Com1; $Com2"
-                            #     DummyVariable_Check
-                            #     runscene_BOLD
-                            #     UserRunQUEUE=${ComRunBoldQUEUE}
-                            #     # -- Clean up prior conflicting scripts, generate script and set permissions
-                            #     rm -f "$RunQCLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
-                            #     echo "$UserRunQUEUE" >> "$RunQCLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-                            #     chmod 770 "$RunQCLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-                            #     # -- Run script
-                            #     "$RunQCLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$RunQCLogFolder"/QC_"$CASE"_UserRunQUEUE_"$Modality"_"$TimeStamp".log
-                            #     # only run completion check if file are missing for the previous run
-                            #     if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
-                            #         completionCheck
-                            #     fi
-                            # fi
                         fi
                     fi
                 done
@@ -2299,7 +2279,7 @@ main() {
                             fi
                         fi
                     else
-                        ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $ComRunBoldPngNameGSMap; $Com6; $Com7; $Com9"
+                        ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9"
                     fi
                     # -- Clean up prior conflicting scripts, generate script and set permissions
                     rm -f "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
@@ -2392,7 +2372,7 @@ main() {
                     # -- Clean templates and files for next session
                     RunQCUser7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
                     RunQCUser9="rm -f ${OutPath}/data_split*"
-                    UserRunQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser9"
+                    ComQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser9"
                     if [ "$SceneZip" == "yes" ]; then
                         geho "---> Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
                         geho "    ${HCPFolder}"
@@ -2408,15 +2388,15 @@ main() {
                         RunQCUser14="rm ${HCPFolder}/${WorkingSceneFile}"
                         RunQCUser15="mkdir -p ${HCPFolder}/qc &> /dev/null"
                         RunQCUser16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
-                        UserRunQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser9; $RunQCUser10; $RunQCUser11; $RunQCUser12; $RunQCUser13; $RunQCUser14; $RunQCUser15; $RunQCUser16"
+                        ComQUEUE="$RunQCUser1; $RunQCUser2; $RunQCUser3; $RunQCUser4; $RunQCUser5; $ComRunBoldPngNameGSMap; $RunQCUser6; $RunQCUser7; $RunQCUser9; $RunQCUser10; $RunQCUser11; $RunQCUser12; $RunQCUser13; $RunQCUser14; $RunQCUser15; $RunQCUser16"
                     fi
                     # -- Clean up prior conflicting scripts, generate script and set permissions
-                    rm -f "$RunQCLogFolder"/${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
-                    echo "$UserRunQUEUE" >> "$RunQCLogFolder"/${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.sh
-                    chmod 770 "$RunQCLogFolder"/${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.sh
+                    rm -f "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
+                    echo "$ComQUEUE" >> "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh
+                    chmod 770 "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh
                     # -- Run Job
-                    "$RunQCLogFolder"/${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.log
-                    FinalLog="${RunQCLogFolder}/QC_${CASEName}_UserRunQUEUE_${Modality}_${TimeStamp}.log"
+                    "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log
+                    FinalLog="${RunQCLogFolder}/QC_${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.log"
                     # only run completion check if file are missing for the previous run
                     if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
                         completionCheck

@@ -71,14 +71,14 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 % 
 %                   <filename parameter><the filename of the first specified file>_tsplot.<fformat>
 %
-%               An example with bold1.nii.gz as the first file, `QA_` as value
+%               An example with bold1.nii.gz as the first file, QA as value
 %               of the filename parameter, and `pdf` as the value of fformat
 %               parameter would be::
 %
-%                   QA_bold1_tsplot.pdf
+%                   QAbold1_tsplot.pdf
 %
 %           fformat
-%               File format in which the plot is to be saved. 'pdf' by default.
+%               File format in which the plot is to be saved, 'pdf' by default.
 %
 %           skip
 %               If no initial dummy scans were used during image acquisition,
@@ -93,13 +93,14 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %       ::
 %
 %           qunex general_plot_bold_timeseries_list \
-%               --flist='bolds.list' \
-%               --elements='[]' \
-%               --filename='QA_' \
+%               --flist=bolds.list \
+%               --elements=[] \
+%               --filename=QA \
 %               --skip=5 \
 %               --fformat=png \
 %               --verbose=true
 %
+
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %

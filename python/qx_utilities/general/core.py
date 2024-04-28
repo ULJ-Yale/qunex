@@ -93,6 +93,7 @@ def read_session_data(filename, verbose=False):
     gpref = {}
 
     c = 0
+    # first "session" is the parameters block
     first = True
     try:
         for sub in s:
@@ -200,6 +201,9 @@ def read_session_data(filename, verbose=False):
                             % (dic["id"], field, dic[field], os.path.basename(filename))
                         )
 
+            # done with the parameters block
+            first = False
+
     except:
         print(
             "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n"
@@ -289,12 +293,21 @@ def get_sessions_list(
     elif os.path.isfile(listString):
         slist, gpref = read_session_data(listString, verbose=verbose)
 
-    elif re.match(r".*\.txt$", listString) or "/" in listString:
+    elif (
+        re.match(r".*\.txt$", listString) or "/" in listString
+    ) and sessionids is None:
         raise ValueError(
-            "ERROR: The specified session file is not found! [%s]!" % listString
+            f"ERROR: The specified session file is not found and sessionids are not provided! [{listString}]!"
         )
 
     else:
+        if (
+            re.match(r".*\.txt$", listString)
+            or "/" in listString
+            and sessionids is not None
+        ):
+            listString = sessionids
+
         slist = [e.strip() for e in re.split(r" +|,|\|", listString)]
 
         if sessionsfolder is None:
@@ -306,6 +319,7 @@ def get_sessions_list(
                 nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{"id": os.path.basename(e)} for e in nlist]
 
+    # filter with sessionids
     if sessionids is not None and sessionids.strip() != "":
         sessionids = re.split(r" +|,|\|", sessionids)
         filtered_slist = []
@@ -317,6 +331,7 @@ def get_sessions_list(
 
         slist = filtered_slist
 
+    # filter with filter
     if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(":")] for e in filter.split("|")]
@@ -443,7 +458,7 @@ def runExternalParallel(calls, cores=None, prepend=""):
             cores=1, prepend=' ... ')
     """
 
-    if cores is None or cores in ['all', 'All', 'ALL']:
+    if cores is None or cores in ["all", "All", "ALL"]:
         try:
             cores = len(os.sched_getaffinity(0))
         except:
@@ -1124,11 +1139,11 @@ def pcslist(s):
     return s
 
 
-def linkOrCopy(
+def link_or_copy(
     source, target, r=None, status=None, name=None, prefix=None, symlink=False
 ):
     """
-    linkOrCopy - documentation not yet available.
+    link_or_copy - documentation not yet available.
     """
     if status is None:
         status = True
@@ -1298,7 +1313,7 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     # open fifle
     sfile = os.path.join(sfolder, "session.txt")
     if os.path.exists(sfile):
-        if overwrite == "yes":
+        if overwrite == "yes" or overwrite is True:
             os.remove(sfile)
             print(prefix + "--> removed existing session.txt file")
         else:

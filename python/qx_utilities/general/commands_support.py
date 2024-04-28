@@ -25,8 +25,16 @@ deprecated_commands = {
     "fc_compute_ab_corr_kca": ["fc_ComputeABCorrKCA"],
     "fc_compute_gbc3": ["fc_ComputeGBC3"],
     "fc_compute_gbcd": ["fc_ComputeGBCd"],
-    "fc_compute_roifc": ["fc_ComputeROIFC", "fc_ComputeROIFCGroup", "fc_compute_roifc_group"],
-    "fc_compute_seedmaps": ["fc_ComputeSeedMaps", "fc_compute_seedmaps_group", "fc_ComputeSeedMapsGroup"],
+    "fc_compute_roifc": [
+        "fc_ComputeROIFC",
+        "fc_ComputeROIFCGroup",
+        "fc_compute_roifc_group",
+    ],
+    "fc_compute_seedmaps": [
+        "fc_ComputeSeedMaps",
+        "fc_compute_seedmaps_group",
+        "fc_ComputeSeedMapsGroup",
+    ],
     "fc_compute_seedmaps_multiple": ["fc_ComputeSeedMapsMultiple"],
     "fc_extract_roi_timeseries_masked": ["fc_ExtractROITimeseriesMasked"],
     "fc_extract_trial_timeseries_masked": ["fc_ExtractTrialTimeseriesMasked"],
@@ -60,7 +68,11 @@ deprecated_commands = {
     "dwi_eddy_qc": ["DWIeddyQC"],
     "dwi_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU", "dwi_fsl_bedpostx_gpu"],
     "dwi_dtifit": ["DWIFSLdtifit", "FSLDTtifit", "dwi_fsl_dtifit"],
-    "run_qc_dwi_dtifit": ["runQC_DWIFSLdtifit", "run_qc_dwi_fsl_dtifit", "runQC_DWIDTIFIT"],
+    "run_qc_dwi_dtifit": [
+        "runQC_DWIFSLdtifit",
+        "run_qc_dwi_fsl_dtifit",
+        "runQC_DWIDTIFIT",
+    ],
     "dwi_legacy_gpu": ["dwi_legacy", "hcpdLegacy", "DWILegacy"],
     "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
     "dwi_probtrackx_dense_gpu": ["DWIprobtrackxDenseGPU", "ProbtrackxGPUDense"],
@@ -155,11 +167,11 @@ deprecated_commands = {
     "map_raw_data": ["mapRawData"],
     "hcp_task_fmri_analysis": ["hcp_TaskfMRIAnalysis"],
     "dwi_xtract": ["fsl_xtract"],
-    "dwi_f99": ["fsl_f99"]
+    "dwi_f99": ["fsl_f99"],
 }
 
 # Add information provided in extensions
-deprecated_commands.update(extensions.compile_dict('deprecated_commands'))
+deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
 # the function for checking whether a command is deprecated or not
 
@@ -178,8 +190,10 @@ def check_deprecated_commands(command):
         # if deprecated warn the user and call the new one
         if command.lower() in [s.lower() for s in old_names] and command != new_name:
             new_command = new_name
-            print("\n\nWARNING: Use of a deprecated command! Command %s is now known as %s" % (
-                command, new_command))
+            print(
+                "\n\nWARNING: Use of a deprecated command! Command %s is now known as %s"
+                % (command, new_command)
+            )
             print("")
             break
 
@@ -196,67 +210,70 @@ def check_deprecated_commands(command):
 # for each mapping define the new_value and the functions that use it
 # None value tells that the parameter is no longer used by QuNex
 deprecated_parameters = {
-    'bppt':                     'bolds',
-    'bppa':                     'bold_actions',
-    'bppn':                     'bold_nuisance',
-    'eventstring':              'event_string',
-    'eventfile':                'event_file',
-    'basefolder':               'sessionsfolder',
-    'subjects':                 'sessions',
-    'bold_preprocess':          'bolds',
-    'hcp_prefs_brainmask':      'hcp_prefs_custombrain',
-    'hcp_mppversion':           'hcp_processing_mode',
-    'hcp_dwelltime':            'hcp_seechospacing',
-    'hcp_bold_ref':             'hcp_bold_sbref',
-    'hcp_bold_preregister':     'hcp_bold_preregistertool',
-    'hcp_bold_stcorr':          'hcp_bold_doslicetime',
-    'hcp_bold_correct':         'hcp_bold_dcmethod',
-    'hcp_bold_usemask':         'hcp_bold_mask',
-    'hcp_bold_boldnamekey':     'hcp_filename',
-    'hcp_dwi_dwelltime':        'hcp_dwi_echospacing',
-    'cores':                    'parsessions',
-    'threads':                  'parelements',
-    'sfolder':                  'sourcefolder',
-    'tfolder':                  'targetfolder',
-    'tfile':                    'targetfile',
-    'sfile':                    {
-        'sourcefiles': ['create_batch', 'pull_sequence_names', 'gather_behavior'],
-        'sourcefile': ['create_session_info', 'setup_hcp', 'slice_image', 'run_nil', 'run_nil_folder'],
-        'default': 'sourcefile'
+    "bppt": "bolds",
+    "bppa": "bold_actions",
+    "bppn": "bold_nuisance",
+    "eventstring": "event_string",
+    "eventfile": "event_file",
+    "basefolder": "sessionsfolder",
+    "subjects": "sessions",
+    "bold_preprocess": "bolds",
+    "hcp_prefs_brainmask": "hcp_prefs_custombrain",
+    "hcp_mppversion": "hcp_processing_mode",
+    "hcp_dwelltime": "hcp_seechospacing",
+    "hcp_bold_ref": "hcp_bold_sbref",
+    "hcp_bold_preregister": "hcp_bold_preregistertool",
+    "hcp_bold_stcorr": "hcp_bold_doslicetime",
+    "hcp_bold_correct": "hcp_bold_dcmethod",
+    "hcp_bold_usemask": "hcp_bold_mask",
+    "hcp_bold_boldnamekey": "hcp_filename",
+    "hcp_dwi_dwelltime": "hcp_dwi_echospacing",
+    "cores": "parsessions",
+    "threads": "parelements",
+    "sfolder": "sourcefolder",
+    "tfolder": "targetfolder",
+    "tfile": "targetfile",
+    "sfile": {
+        "sourcefiles": ["create_batch", "pull_sequence_names", "gather_behavior"],
+        "sourcefile": [
+            "create_session_info",
+            "setup_hcp",
+            "slice_image",
+            "run_nil",
+            "run_nil_folder",
+        ],
+        "default": "sourcefile",
     },
-    'sfilter':                 'filter',
-    'hcp_fs_existing_subject': 'hcp_fs_existing_session',
-    'subjectsfolder':          'sessionsfolder',
-    'subjid':                   {
-        'sessionid': ['dicom2niix', 'batch_tag2namekey'],
-        'sessionids': 'export_hcp',
-        'default': 'sessionid'
+    "sfilter": "filter",
+    "hcp_fs_existing_subject": "hcp_fs_existing_session",
+    "subjectsfolder": "sessionsfolder",
+    "subjid": {
+        "sessionid": ["dicom2niix", "batch_tag2namekey"],
+        "sessionids": "export_hcp",
+        "default": "sessionid",
     },
-    'sbjroi':                  'sessionroi',
-    'subjectf':                'sessionf',
-    'hcp_bold_sequencetype':    None,
-    'hcp_biascorrect_t1w':      None,
-    'args':                     'palm_args',
-    'TR':                       'tr',
-    'PEdir':                    'pedir'
+    "sbjroi": "sessionroi",
+    "subjectf": "sessionf",
+    "hcp_bold_sequencetype": None,
+    "hcp_biascorrect_t1w": None,
+    "args": "palm_args",
+    "TR": "tr",
+    "PEdir": "pedir",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
 deprecated_values = {
-    'hcp_processing_mode': {
-        'hcp': 'HCPStyleData',
-        'legacy': 'LegacyStyleData'
+    "hcp_processing_mode": {"hcp": "HCPStyleData", "legacy": "LegacyStyleData"},
+    "hcp_filename": {
+        "name": "userdefined",
+        "number": "automated",
+        "original": "userdefined",
+        "standard": "automated",
     },
-    'hcp_filename': {
-        'name': 'userdefined',
-        'number': 'automated',
-        'original': 'userdefined',
-        'standard': 'automated'
-    },
-    'hcp_folderstructure': {'initial': 'hcpya'},
-    'gzip': {'yes': 'folder', 'ask': 'folder'},
-    'clean': {'ask': 'no'},
-    'unzip': {'ask': 'yes'}
+    "hcp_folderstructure": {"initial": "hcpya"},
+    "gzip": {"yes": "folder", "ask": "folder"},
+    "clean": {"ask": "no"},
+    "unzip": {"ask": "yes"},
 }
 
 
@@ -268,10 +285,10 @@ deprecated_values = {
 # that the imputation will follow the order in which tuples are listed.
 
 to_impute = [
-    ('qx_cifti_tail', 'hcp_cifti_tail'),
-    ('qx_nifti_tail', 'hcp_nifti_tail'),
-    ('cifti_tail', 'qx_cifti_tail'),
-    ('nifti_tail', 'qx_nifti_tail')
+    ("qx_cifti_tail", "hcp_cifti_tail"),
+    ("qx_nifti_tail", "hcp_nifti_tail"),
+    ("cifti_tail", "qx_cifti_tail"),
+    ("nifti_tail", "qx_nifti_tail"),
 ]
 
 # The "towarn_parameters" dictionary warns users to check the provided values
@@ -279,26 +296,35 @@ to_impute = [
 # 1 - the value to look for in parameter value
 # 2 - the warning message that gets printer if the value is found
 towarn_parameters = {
-    'sessionsfolder': ['subject',
-                       'The sessionfolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
-    'sourcefolder':   ['subject',
-                       'The sourcefolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
-    'sourcefile':     ['subject',
-                       'The sourcefile parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.'],
-    'sourcefiles':    ['subject',
-                       'The sourcefiles parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.']
+    "sessionsfolder": [
+        "subject",
+        'The sessionfolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.',
+    ],
+    "sourcefolder": [
+        "subject",
+        'The sourcefolder parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.',
+    ],
+    "sourcefile": [
+        "subject",
+        'The sourcefile parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.',
+    ],
+    "sourcefiles": [
+        "subject",
+        'The sourcefiles parameter includes "subject", in a recent QuNex update "subject" was renamed to "session". Please check if the value you provided is correct.',
+    ],
 }
 
 # Add information provided in extensions
-deprecated_parameters.update(extensions.compile_dict('deprecated_parameters'))
-deprecated_values.update(extensions.compile_dict('deprecated_values'))
-to_impute += extensions.compile_list('to_impute')
-towarn_parameters.update(extensions.compile_dict('towarn_parameters'))
+deprecated_parameters.update(extensions.compile_dict("deprecated_parameters"))
+deprecated_values.update(extensions.compile_dict("deprecated_values"))
+to_impute += extensions.compile_list("to_impute")
+towarn_parameters.update(extensions.compile_dict("towarn_parameters"))
 
 
 # ==============================================================================
 #                                                  MAPPING DEPRECATED PARAMETERS
 #
+
 
 def check_deprecated_parameters(options, command):
     """
@@ -326,7 +352,7 @@ def check_deprecated_parameters(options, command):
                     if command in v2:
                         mapto = k2
                         break
-                    elif k2 == 'default':
+                    elif k2 == "default":
                         mapto = v2
                         break
 
@@ -347,12 +373,16 @@ def check_deprecated_parameters(options, command):
     if "batchfile" in new_options:
         # if sessions and batchfile both provide a file
         if sessions is not None and ".txt" in sessions:
-            print("ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!")
+            print(
+                "ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!"
+            )
             exit(1)
         elif sessions is not None:
             # did we provide a list of sessions in sessionsids as well
             if "sessionids" in new_options:
-                print("ERROR: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!")
+                print(
+                    "ERROR: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!"
+                )
                 exit(1)
             # remap so session are sessionids and batchfile is sessions
             else:
@@ -362,14 +392,6 @@ def check_deprecated_parameters(options, command):
         else:
             new_options["sessions"] = new_options["batchfile"]
             del new_options["batchfile"]
-
-    if remapped:
-        print("\nWARNING: Use of parameters with changed name(s)!")
-        print("         The following parameters have new names:")
-        for k in remapped:
-            print("         ... %s is now %s!" % (k, deprecated_parameters[k]))
-
-        print("         Please correct the listed parameter names in command line or batch file!")
 
     if deprecated:
         print("\nWARNING: Use of deprecated parameters!")
@@ -389,7 +411,9 @@ def check_deprecated_parameters(options, command):
         print("       The following parameter values have changed:")
         for k, v, n in newvalues:
             print("         ... %s (%s) is now %s!" % (str(v), k, n))
-        print("         Please correct the listed parameter values in command line or batch file!")
+        print(
+            "         Please correct the listed parameter values in command line or batch file!"
+        )
 
     # -> warn if some parameter values might be deprecated
     for k, v in new_options.items():
@@ -408,6 +432,7 @@ def check_deprecated_parameters(options, command):
 #                                                IMPUTING UNSPECIFIED PARAMETERS
 #
 
+
 def impute_parameters(options, command):
     """
     ``impute_parameters(options, command)``
@@ -419,8 +444,6 @@ def impute_parameters(options, command):
     for target_option, source_option in to_impute:
         if options[target_option] is None:
             options[target_option] = options[source_option]
-            print("WARNING: Parameter %s was not specified. Its value was imputed from parameter %s and set to '%s'!" % (
-                target_option, source_option, str(options[source_option])))
 
     return options
 
@@ -429,18 +452,20 @@ def impute_parameters(options, command):
 #                                                               EXTRA PARAMETERS
 #
 
-extra_parameters = ['batchfile', 'sessions', 'sessionids', 'filter', 'sessionid', 'scheduler', 'parelements', 'scheduler_environment',
-                    'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'runinpar', 'ignore', 'bash']
+extra_parameters = ['batchfile', 'sessions', 'sessionids', 'filter', 'sessionid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash', 'existing_study']
 
 
 # ==============================================================================
 #                                                SKIP LOGGING FOR THESE COMMANDS
 #
 
-logskip_commands = ["batch_tag2namekey",
-                    "check_deprecated_commands", "get_sessions_for_slurm_array"]
+logskip_commands = [
+    "batch_tag2namekey",
+    "check_deprecated_commands",
+    "get_sessions_for_slurm_array",
+]
 
 
 # Add information from in extensions
-extra_parameters += extensions.compile_list('extra_parameters')
-logskip_commands += extensions.compile_list('logskip_commands')
+extra_parameters += extensions.compile_list("extra_parameters")
+logskip_commands += extensions.compile_list("logskip_commands")

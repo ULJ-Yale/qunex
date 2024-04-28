@@ -155,10 +155,10 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     opened_dicom, gz = readDICOMBase(full_filename)
 
                 if opened_dicom:
-                    print("     ... read as dicom")
+                    print(" ... read as dicom")
 
                 modified_dicom = deid_function(opened_dicom, filename=os.path.relpath(full_filename, folder))
-                print("     ... processed")
+                print(" ... processed")
 
                 if save:
                     if output_folder is None:
@@ -334,7 +334,7 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
     # order the dicom tags
 
     if debug:
-        print("     ... recursing tree")
+        print(" ... recursing tree")
 
     for data_element in dataset:
         if data_element.name == "Pixel Data":
@@ -372,7 +372,7 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
             node_func(node_id, node_path, data_element)
 
     if debug:
-        print("     ... end recursing")
+        print(" ... end recursing")
 
 def dicom_scan(opened_dicom, filename=""):
     recurse_tree(opened_dicom, field_dict_modifier)

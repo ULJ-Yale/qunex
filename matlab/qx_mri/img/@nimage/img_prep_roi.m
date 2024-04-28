@@ -274,7 +274,7 @@ options = general_parse_options([], options, default);
 
 % ---> are there options in roi variable
 
-if ischar(roi) && contains(roi, '|')
+if ischar(roi) && strfind(roi, '|')
     [roi, noptions] = strtok(roi, '|');
     roi = strip(roi);
     noptions = noptions(2:end);
@@ -395,9 +395,6 @@ end
 
 if ~isempty(options.rois)
     keep_roi = ismember({img.roi.roiname}, options.rois);
-    % TODO 
-    % --> remove excluded ROI from img.data
-    % --> recode kept ROI in img.data and in img.roi
     img.roi = img.roi(keep_roi);
     
     if isempty(img.roi)
@@ -570,7 +567,7 @@ function [roi] = process_label(roi, options)
         error('ERROR: In img_prep_roi there are no volumes/maps left to define ROI. Please check your ROI file and options!');
     end
 
-    % --> process and check for overlapping labels  %TODO -- check no of ROI names -> first process labels, then make ROIs
+    % --> process and check for overlapping labels
     c = 0;
     labels = {};
     overlap = {};
@@ -601,14 +598,47 @@ function [roi] = process_label(roi, options)
         end
     end
 
-    % TODO – consider dealing with labels with the same name.
-    % overlap = unique(overlap); <- 
-
 % --------------------------------------------------------------------------------------------
 %                                                                                process_parcel
 
 function [img] = process_parcel(roi, options)
-    error('\nERROR: processing parcel files not yet implemented!');
+
+    roi = roi.selectframes(1);
+    nparcels = length(roi.cifti.parcels);
+    roi.data = [1:nparcels]';
+
+    error('ERROR: Processing parcel images is not yet implemented!');
+
+    img = nimage('dscalar:1');
+
+    for p = 1:length(roi.cifti.parcels)
+        
+        % --> set basic info
+        img.roi(p).roiname   = roi.cifti.metadata.diminfo{1}.parcels(p).name;
+        img.roi(p).roicode   = p;
+        img.roi(p).roicodes1 = {p};
+        img.roi(p).roicodes2 = {};
+        img.roi(p).map       = roi.rootfilename;
+        img.roi(p).indeces   = [];
+        img.roi(p).weights   = [];
+
+        nmodels = length(img.cifti.metadata.diminfo{1}.models);
+
+        % --> process surfs
+        for s = 1:length(roi.cifti.metadata.diminfo{1}.parcels(p).surfs)
+            sname    = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).struct;
+            sindeces = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).vertlist;
+            for tm = 1:nmodels
+                if strcmpi(sname, img.cifti.metadata.diminfo{1}.models{tm}.struct)
+                    img.roi(p).indeces = [img.roi(p).indeces sindeces + img.cifti.metadata.diminfo{1}.models{tm}.start];                    
+                end
+            end
+        end
+        % --> process vols
+
+        img.data(img.roi(p).indeces) = p;
+    end
+
 
 
 % --------------------------------------------------------------------------------------------

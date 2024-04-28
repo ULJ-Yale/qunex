@@ -272,8 +272,7 @@ classdef nimage
 
             if nargin > 0
                 if isa(varone, 'char')
-
-                    if startsWith(varone, 'dscalar:') || startsWith(varone, 'dtseries:')
+                    if strncmp(varone, 'dscalar:', 8) || strncmp(varone, 'dtseries:', 9)
                         parts = strip(regexp(varone, ':', 'split'));
                         frames = str2num(parts{2});
                         obj.data = zeros(91282, frames);
@@ -586,7 +585,6 @@ classdef nimage
         %  Returns a 2D volume by frames representation of the image
         %
             image2D = reshape(obj.data, obj.voxels, []);
-
         end
 
         function image4D = image4D(obj)
@@ -594,7 +592,6 @@ classdef nimage
         %  Returns a 4D x by y by z by frames representation of the image
         %
             image4D = reshape(obj.data, [obj.dim obj.frames]);
-
         end
 
         function obj = maskimg(obj, mask)
@@ -602,18 +599,14 @@ classdef nimage
         %
         %  Alias for img_mask
         %
-            
-            obj = obj.img_mask();
-
+            obj = obj.img_mask(mask);
         end
 
         function obj = unmaskimg(obj)
         %function obj = unmaskimg(obj)
         %  
         %   Alias for img_unmask
-
             obj = obj.img_unmask();
-
         end
 
         function obj = img_mask(obj, mask)
@@ -655,15 +648,16 @@ classdef nimage
             obj.data = obj.image2D;
 
             % - extract mask from nimage object
-            if isa(mask, 'nimage')                
-                mask = mask.image2D;
+            if isa(mask, 'nimage')
+                mask.data = mask.image2D;
                 if prod(obj.dim) ~= prod(mask.dim)
                     error('ERROR: in img_mask, the mask image does not match the target image in size!');
                 end
                 if mask.frames > 1
-                    mask = mask(:, 1);
+                    mask = mask.selectframes(1);
                     warning('WARNING: in img_mask, the provided mask has more than one frame. Only the first frame will be used!');
                 end                
+                mask = mask.data;
             end
 
             if length(mask) > obj.voxels
@@ -811,9 +805,6 @@ classdef nimage
         %
         %   method for concatenation of image volumes
         %
-
-        % TODO: Add parcel matching check
-
         function obj = horzcat(obj, add)
 
             if isempty(obj)
