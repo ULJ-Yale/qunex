@@ -445,23 +445,34 @@ options.targetf = targetf;
 
 general_check_options(options, 'fc, eventdata, roimethod, flist, roiinfo, targetf', 'stop');
 
+%   ------------------------------------------------------------------------------------------
+%                                                                          check files to save
 
-% ----- What should be saved
 % -> group files
 
 options.savegroup = strtrim(regexp(options.savegroup, ',', 'split'));
 
 if ismember({'none'}, options.savegroup)
     options.savegroup = {};
-end
 
-if ismember({'all'}, options.savegroup)
+elseif ismember({'all'}, options.savegroup)
+
     if ismember(options.fcmeasure, {'cv', 'mi', 'cc'})
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'all_r'};
     elseif ismember(options.fcmeasure, {'r', 'rho', 'coh'})
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'};
-    end    
+    end
+
+else
+
+    if ismember(options.fcmeasure, {'cv', 'mi', 'cc'})
+        options.savegroup = intersect(options.savegroup, {'group_z', 'group_p', 'mean_r', 'all_r'});
+    elseif ismember(options.fcmeasure, {'r', 'rho', 'coh'})
+        options.savegroup = intersect(options.savegroup, {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'});
+    end
+
 end
+
 
 % -> individual files
 
