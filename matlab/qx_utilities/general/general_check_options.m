@@ -31,7 +31,7 @@ function [ok, bad_parameters, warnings] = general_check_options(options, check, 
 %
 %           - 'targetf'
 %               check presence of target folder
-%
+%           
 %           - 'all'
 %               check all the above listed parameter options
 %   
@@ -208,7 +208,7 @@ if any(ismember({'targetf', 'all'}, check))
     if ~isfield(options, 'targetf')
         warnings{end + 1} = 'targetf option is not defined!';
         bad_parameters{end + 1} = 'targetf';
-    elseif ~strcmp(options.savegroup, 'none') || (~strcmp(options.saveind, 'none') && strcmp(options.itargetf, 'sfolder'))
+    elseif (~strcmp(options.savegroup, 'none') && ~isempty(options.savegroup) || (~strcmp(options.saveind, 'none') && ~isempty(options.saveind) && strcmp(options.itargetf, 'sfolder'))
         general_check_folder(options.targetf, 'results folder');
     end
 end
