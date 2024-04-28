@@ -198,35 +198,45 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               Defaults to 'use'.
 %
 %           - fcmeasure
-%               Which functional connectivity measure to use, the options
+%               Which functional connectivity measure to compute, the options
 %               are:
 %
 %               - r
-%                   Pearson's r coefficient of correlation
+%                   Pearson's r value
 %               - rho
-%                   Spearman's rho coefficient of correlation
+%                   Spearman's rho value
 %               - cv
-%                   covariance estimate.               
+%                   covariance estimate
+%               - cc
+%                   cross correlation
+%               - icv
+%                   inverse covariance
+%               - coh
+%                   coherence
+%               - mi
+%                   mutual information
+%               - mar
+%                   multivariate autoregressive model (coefficients)
 %
 %               Defaults to 'r'.
+%
+%               Additional parameters for specific measures can be added, e.g.
+%               for inverse covariance shrinkage and standardize options can be
+%               set as follows 'fcmeasure=icv|shrinkage=LW|standardize=partialcorr'.
 %
 %           - savegroup
 %               A comma separated list of files to save, options are:
 %
-%               - mean_r
-%                   mean group functional connectivity estimates
-%               - mean_fz
-%                   mean group Fisher Z values
+%               - mean
+%                   mean group GBC estimates
 %               - group_z
 %                   Z converted p values testing difference from 0
 %               - group_p
 %                   p values testing difference from 0
-%               - all_r
-%                   functional connectivity estimates for all the sessions
-%               - all_fz
-%                   Fz values for all the sessions
+%               - sessions
+%                   GBC estimates for all the sessions
 %               - all
-%                   save all the relevant group level results
+%                   all the above files
 %               - none
 %                   do not save any group level results.
 %
@@ -237,14 +247,12 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               A comma separted list of individual session / subject files
 %               to save:
 %
-%               - r
-%                   save functional connectivity estimates
-%               - fz
-%                   save Fisher Z values 
+%               - fc
+%                   save GBC estimates
 %               - z
-%                   save Z statistic
+%                   save Z statistic (only valid for Pearson's r)
 %               - p
-%                   save p value
+%                   save p value (only valid for Pearson's r)
 %               - all
 %                   save all relevant files
 %               - none
@@ -312,43 +320,33 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               The title of the extraction as specifed in the frames string,
 %               empty if extraction was specified using a numeric value.
 %           commands
-%               A cell array with the names of the commands used in the they
+%               A cell array with the names of the commands used as they
 %               were specified.
 %           subjects
 %               A cell array with the names of subjects for which the GBC maps
 %               were computed.
 %           gbc
-%               A structure array with data per subject/session. With the 
-%               following fields:
-%
-%               - fc
-%                   The GBC maps, with one command per frame.
-%               - fz
-%                   The GBC maps converted to Fisher z-values.
-%               - N
-%                   Number of frames over which the maps were computed.
+%               An array of GBC images, each holding the results for a single
+%               subject across all commands.
+%           N
+%               Number of frames over which the maps were computed for each
+%               participant.
 %
 %
 %   Output files:
 %       Based on savegroup specification it saves the following group files:
 %
-%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>_mean_<fcmeasure>`
-%           Mean group requested correlation coefficient or covariance.
+%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>[_v<volume>]<fcmeasure>_group_mean`
+%           Mean group GBC map.
 %
-%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>_mean_<fcmeasure>_Fz`
-%           Mean group Fisher Z values.
-%
-%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>_group_<fcmeasure>_p`
+%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>[_v<volume>]<fcmeasure>_group_p`
 %           Group p values testing difference from 0.
 %
-%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>_group_<fcmeasure>_Z`
+%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>[_v<volume>]<fcmeasure>_group_Z`
 %           Group Z converted p values testing difference from 0.
 %
-%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>_all_<fcmeasure>`
-%           Correlation coefficients or covariance for all sessions.
-%
-%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>_all_<fcmeasure>_Fz`
-%           Fisher Z values for all sessions.
+%       `<targetf>/gbc_<listname>[_<title>]_<command>_<parameter>[_v<volume>]<fcmeasure>_all_sessions`
+%           GBC maps for all sessions.
 %
 %       Definitions:
 %
@@ -360,6 +358,8 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           command parameter above).
 %       - `<parameter>` is the additional parameter used with the specified type
 %           of GBC run.
+%       - `<volume>` is the volume number for those GBC results that return multiple
+%           maps.
 %       - `<fcmeasure>` is the functional connectivity measure used to compute
 %           the GBC.
 %
@@ -496,10 +496,10 @@ if nargin < 6 || isempty(targetf), targetf = '.'; end
 if nargin < 5 frames  = []; end
 if nargin < 4 troiinfo = []; end
 if nargin < 3 sroiinfo  = []; end
-if nargin < 2 error('ERROR: At least list information and ROI .names file have to be specified!'); end
+if nargin < 2 error('ERROR: At least list information and command have to be specified!'); end
 
 % ----- parse options
-default = 'sessions=all|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|savesessionid=false|itargetf=gfolder|rsmooth=|rdilate=|verbose=false|debug=false';
+default = 'sessions=all|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|savesessionid=false|itargetf=gfolder|rsmooth=|rdilate=|vstep=12000|verbose=false|debug=false';
 options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
@@ -512,79 +512,47 @@ if printdebug
     general_print_struct(options, 'fc_compute_seedmaps options used');
 end
 
-if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
-    error('ERROR: Invalid eventdata option: %s', options.eventdata);
-end
-
-if ~ismember(options.roimethod, {'mean', 'pca', 'median'})
-    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
-end
-
-if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc'})
-    error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
-end
-
-% ----- Check if the files are there!
-
-go = true;
-
 if verbose; fprintf('\n\nChecking ...\n'); end
 
-% - check for presence of listfile unless the list is provided as a string
-if ~startsWith(flist, 'listname:')    
-    go = go & general_check_file(flist, 'image file list', 'error');
-end
-go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
-% - check for presence of target folder no data needs to be saved there
-if ~strcmp(options.savegroup, 'none') || (~strcmp(options.saveind, 'none') && strcmp(options.itargetf, 'sfolder'))
-    general_check_folder(targetf, 'results folder');
-end
+options.flist = flist;
+options.sroiinfo = sroiinfo;
+options.troiinfo = troiinfo;
+options.targetf = targetf;
 
-if ~go
-    error('ERROR: Some of the specified files or folders were not found. Please check the paths and start again!\n\n');
-end
+general_check_options(options, 'fc, eventdata, roimethod, flist, sroiinfo, troiinfo, targetf', 'stop');
 
 
-% ----- What should be saved
+%   ------------------------------------------------------------------------------------------
+%                                                                 check what needs to be saved
+
 % -> group files
 
 options.savegroup = strtrim(regexp(options.savegroup, ',', 'split'));
 
 if ismember({'none'}, options.savegroup)
     options.savegroup = {};
+elseif ismember({'all'}, options.savegroup)
+    options.savegroup = {'mean', 'sessions', 'group_p', 'group_z'};
+else
+    options.savegroup = intersect(options.savegroup, {'mean', 'sessions', 'group_p', 'group_z'});
 end
 
-if ismember({'all'}, options.savegroup)
-    if strcmp(options.fcmeasure, 'cv')
-        options.savegroup = {'group_z', 'group_p', 'mean_r', 'all_r'};
-    elseif ismember(options.fcmeasure, {'r', 'rho'})
-        options.savegroup = {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'};
-    end    
-end
 
 % -> individual files
 
 options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 
-if ismember({'all_by_roi'}, options.saveind)    
-    options.saveind = options.saveind(~ismember(options.saveind, {'all_by_roi', 'r', 'fz', 'z', 'p'}));
-    options.saveind = [options.saveind, 'r', 'fz', 'z', 'p'];
-end
-if ismember({'all_joint'}, options.saveind)
-    options.saveind = options.saveind(~ismember(options.saveind, {'all_joint', 'jr', 'jfz', 'jz', 'jp'}));
-    options.saveind = [options.saveind, 'jr', 'jfz', 'jz', 'jp'];
-end
 if ismember({'none'}, options.saveind)
     options.saveind = [];
+elseif ismember({'all'}, options.saveind)    
+    options.saveind = ['fc', 'r', 'z', 'p'];
 end
 
-if length(options.saveind) 
+if ~isempty(options.saveind)
     if strcmp(options.fcmeasure, 'r')
-        options.saveind = intersect(options.saveind, {'r', 'fz', 'z', 'p', 'jr', 'jfz', 'jz', 'jp'});
-    elseif strcmp(options.fcmeasure, 'rho')
-        options.saveind = intersect(options.saveind, {'r', 'fz', 'jr', 'jfz'});
+        options.saveind = intersect(options.saveind, {'fc', 'r', 'z', 'p'});
     else
-        options.saveind = intersect(options.saveind, {'r', 'jr'});
+        options.saveind = intersect(options.saveind, {'fc'});
     end
 end
 
@@ -674,12 +642,23 @@ for s = 1:nsub
 
     % ---> run individual session
 
-    if verbose; fprintf('     ... creating ROI mask'); end
+    if verbose; fprintf('     ... creating ROI masks'); end
 
-    roi  = nimage.img_read_roi(roiinfo, sroifile);
-    nroi = length(roi.roi.roinames);
+    if isempty(sroiinfo)
+        sroi = [];
+    else
+        sroi = nimage.img_read_roi(sroiinfo, sroifile);
+        nsroi = length(troi.roi.roinames);
+    end
 
-    if verbose; fprintf(' ... read %d ROI\n', nroi); end
+    if isempty(troiinfo)
+        troi = [];
+    else
+        troi = nimage.img_read_roi(troiinfo, sroifile);
+        ntroi = length(troi.roi.roinames);
+    end
+
+    if verbose; fprintf(' ... done\n', nroi); end
 
     % ---> reading image files
 
@@ -695,7 +674,7 @@ for s = 1:nsub
 
     % ---> loop through extraction sets
 
-    if verbose; fprintf('     ... computing seedmaps\n'); end
+    if verbose; fprintf('     ... computing gbc\n'); end
 
     nsets = length(exsets);
     for n = 1:nsets
@@ -708,160 +687,86 @@ for s = 1:nsub
 
         if verbose; fprintf(' ... extracted ts'); end
         
-        % --> generate seedmaps
+        % --> generate gbc maps
 
-        rs = ts.img_extract_roi(roi, [], options.roimethod);
-        %fprintf('\n size(rs) is %s\n', mat2str(size(rs)));
-        %fprintf('\n size(ts) is %s\n', mat2str(size(ts.data)));
-        fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'));
+        [gbc, commands] = ts.img_compute_gbc_fc(command, sroi, troi, options);
+        ncomm = length(commands);
 
-        if verbose; fprintf(' ... computed seedmap'); end
+        if verbose; fprintf(' ... computed gbc maps'); end
 
         % ------> Embedd results (if group data is requested)
         
         if embed_data
             if first_subject
-                fcmaps(n).title    = exsets(n).title;
-                fcmaps(n).roi      = roi.roi.roinames;
-                fcmaps(n).subjects = {};
+                gbcmaps(n).title    = exsets(n).title;
+                gbcmaps(n).commands = command;
+                gbcmaps(n).subjects = {};
             end
-            fcmaps(n).subjects{s}  = subjectid;
-            fcmaps(n).fc(s).(fcmeasure) = fc;
-            fcmaps(n).fc(s).N = ts.frames;
+            gbcmaps(n).subjects{s}  = subjectid;
+            gbcmaps(n).gbc(s) = gbc;
+            gbcmaps(n).N(s) = ts.frames;
                         
             if verbose; fprintf(' ... embedded\n'); end
         end
-    end
 
-    % ---> save individual results
+        % ---> save individual results
 
-    if ~isempty(options.saveind)
+        if ~isempty(options.saveind)
 
-        if verbose; fprintf('     ... saving seedmaps\n'); end
+            if verbose; fprintf('     ... saving gcb\n'); end
 
-        % set subjectname
+            % set subjectname
+            if strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder')
+                subjectname = [subjectid, '_'];
+            else
+                subjectname = '';
+            end
 
-        if strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder')
-            subjectname = [subjectid, '_'];
-        else
-            subjectname = '';
-        end
+            % set up filetype for single images
+            switch y.filetype
+                case '.dtseries'
+                    tfiletype = '.dscalar';
+                case '.ptseries'
+                    tfiletype = '.pscalar';
+                otherwise
+                    tfiletype = y.filetype;
+            end
 
-        % set up filetype for single images
-
-        if strcmp(y.filetype, '.dtseries')
-            tfiletype = '.dscalar';
-        else
-            tfiletype = y.filetype;
-        end
-
-        % --- loop through sets
-
-        for n = 1:nsets
+            % set up extraction set title
             if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
 
-            % --- prepare computed data
+            % set up base filename            
+            basefilename = sprintf('gbc_%s%s%s', subjectname, lname, settitle);
+            
+            % save results of all commands
+            sframe = 0;
+            eframe = 0;
+            for c = 1:ncomm
 
-            if verbose; fprintf('         ... preparing data'); end
+                % get start and end frames
+                sframe = eframe + 1;
+                eframe = sframe + commands(c).volumes - 1;
+                frame_mask = zeros(1, gbc.frames);
+                frame_mask(sframe:eframe) = 1;
 
-            if any(ismember(options.saveind, {'fz', 'p', 'z', 'jfz', 'jp', 'jz'}))
-                fz = fc;
-                fz.data = fc_fisher(fz.data);
-            end
+                % extract and save data
+                t = gbc.sliceframes(frame_mask == 1);
+                t.filetype = tfiletype;
 
-            if any(ismember(options.saveind, {'p', 'z', 'jp', 'jz'}))
-                Z = fc;
-                Z.data = fz.data/(1/sqrt(ts.frames-3));
-            end
+                tfilename = fullfile(starget, [basefilename '_' commands(c).command '_' num2str(commands(c).parameter) '_' fcmeasure])                
+                t.img_saveimage(tfilename);
+                if printdebug; fprintf(['\n             -> ' tfilename]); end
 
-            if any(ismember(options.saveind, {'p', 'jp'}))
-                p = fc;
-                p.data = (1 - normcdf(abs(Z.data), 0, 1)) * 2 .* sign(fz.data);
-            end
-
-            if verbose; fprintf(' ... done\n'); end
-
-            % --- loop through roi
-
-            if verbose; fprintf('         ... saving set %s, roi:', exsets(n).title); end
-
-            % --- print for each ROI separately
-        
-            if any(ismember(options.saveind, {'r', 'fz', 'z', 'p', 'rho', 'cv'}));
-
-                for r = 1:nroi
-
-                    if verbose; fprintf(' %s', roi.roi.roinames{r}); end
-
-                    % --- prepare basename
-
-                    basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, roi.roi.roinames{r});
-
-                    % --- save images
-
-                    for sn = 1:length(options.saveind)
-                        switch options.saveind{sn}
-                            case 'r'
-                                t = fc.sliceframes([1:nroi] == r);                                              
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
-                            case 'fz'
-                                t = fz.sliceframes([1:nroi] == r);
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
-                            case 'z'
-                                t = Z.sliceframes([1:nroi] == r);
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
-                            case 'p'
-                                t = p.sliceframes([1:nroi] == r);
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
-                        end
-                    end
+                if ismember('z', options.saveind)
+                    % TODO -> compute and save z image
                 end
-            end
-
-            % --- print for all ROI jointly
-
-            if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv'}));
-
-                allroi = strjoin(roi.roi.roinames, '-');
-                basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, allroi);
-
-                if verbose; fprintf(' %s', allroi); end
-
-                % --- save images
-
-                for sn = 1:length(options.saveind)
-                    switch options.saveind{sn}
-                        case 'jr'
-                            t = fc;  
-                            t.filetype = tfiletype;
-                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
-                            t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
-                        case 'jfz'
-                            t = fz;
-                            t.filetype = tfiletype;
-                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
-                            t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
-                        case 'jz'
-                            t = Z;
-                            t.filetype = tfiletype;
-                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
-                            t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
-                        case 'jp'
-                            t = p;
-                            t.filetype = tfiletype;
-                            if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
-                            t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
-                    end
+                
+                if ismember('p', options.saveind) 
+                    % TODO -> compute and save p image
                 end
+                
             end
+
             if verbose; fprintf(' done.\n'); end
         end
     end
@@ -879,93 +784,70 @@ if ~isempty(options.savegroup)
     end
 
     for setid = 1:nsets
-        if verbose; fprintf(' -> %s\n', fcmaps(setid).title); end
-        if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
-
-        for roiid = 1:nroi
-            roiname = fcmaps(setid).roi{roiid};
+        if verbose; fprintf(' -> %s\n', gbcmaps(setid).title); end
+        if gbcmaps(setid).title, settitle = ['_' gbcmaps(setid).title]; else settitle = ''; end
         
-            if verbose; fprintf('    ... for region %s', roiname); end
+        frame = 0;
+        for cid = 1:ncomm
+            comname = [commands(cid).command '_' num2str(commands(cid).parameter)];
+        
+            if verbose; fprintf('    ... for command %s', comname); end
             
-            % -- prepare group fc maps for the ROI
-            fc = fcmaps(setid).fc(1).(fcmeasure).zeroframes(nsub);
-            for sid = 1:nsub
-                fc.data(:, sid) = fcmaps(setid).fc(sid).(fcmeasure).data(:, roiid);
-            end
+            % -- prepare group gbc maps for the command
+            for v = 1:commands(cid).volumes
 
-            % -- compute Fisher-z values
-            if any(ismember(options.savegroup, {'mean_fz', 'group_p', 'group_z', 'mean_r', 'all_fz'}))
-                fz = fc;
-                fz.data = fc_fisher(fz.data);
-            end
-
-            % -- compute p-values
-            if any(ismember(options.savegroup, {'group_p', 'group_z'}))
-                if ismember(fcmeasure, {'cv'})
-                    [p Z M] = fc.img_ttest_zero();
-                elseif ismember(fcmeasure, {'r', 'rho'})
-                    [p Z MFz] = fz.img_ttest_zero();
-                    M = MFz.img_FisherInv();
-                end
-            end
-
-            % -- compute mean
-            if any(ismember(options.savegroup, {'mean_r'})) && isempty(M)
-                M = fc.zeroframes(1);
-                if ismember(fcmeasure, {'cv'})
-                    M.data = mean(fc.data, 2);
-                elseif ismember(fcmeasure, {'r', 'rho'})
-                    MFz = fc.zeroframes(1);
-                    MFz.data = mean(fz.data, 2);
-                    M = MFz.img_FisherInv();
-                end
-            end
-
-            % --- save requested data
-            if verbose; fprintf(' ... saving ...'); end
-            basefilename = sprintf('seedmap_%s%s_%s', lname, settitle, roiname);
-
-            % -- save group mean results
-            if any(ismember(options.savegroup, {'mean_r'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_mean_' fcmeasure])]); end
-                M.img_saveimage(fullfile(targetf, [basefilename '_mean_' fcmeasure]), extra);
-                if verbose && ~printdebug; fprintf([' ' fcmeasure]); end
-            end
-
-            % -- save group mean fz results
-            if any(ismember(options.savegroup, {'mean_fz'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_mean_' fcmeasure '_Fz'])]); end
-                MFz.img_saveimage(fullfile(targetf, [basefilename '_mean_' fcmeasure '_Fz']), extra);
-                if verbose && ~printdebug; fprintf(' fz'); end
-            end
-
-            % -- save all results
-            if any(ismember(options.savegroup, {'all_r'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_' fcmeasure])]); end
-                fc.img_saveimage(fullfile(targetf, [basefilename '_all_' fcmeasure]), extra);
-                if verbose && ~printdebug; fprintf(' all_r'); end
-            end
-
-            % -- save all fz results
-            if any(ismember(options.savegroup, {'all_fz'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_' fcmeasure '_Fz'])]); end
-                fz.img_saveimage(fullfile(targetf, [basefilename '_all_' fcmeasure '_Fz']), extra);
-                if verbose && ~printdebug; fprintf(' all_fz'); end
-            end
+                % -- setup
+                frame = frame + 1;                
+                gbc = gbcmaps(setid).gbc(1).zeroframes(nsub);
             
-            % -- save group p results
-            if any(ismember(options.savegroup, {'group_p'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_' fcmeasure '_p'])]); end
-                p.img_saveimage(fullfile(targetf, [basefilename '_group_' fcmeasure '_p']), extra);
-                if verbose && ~printdebug; fprintf(' p'); end
-            end
+                % -- loop through subjects
+                for sid = 1:nsub
+                    gbc.data(:,sid) = gbcmaps(setid).gbc(sid).data(:, frame);
+                end
 
-            % -- save group Z results
-            if any(ismember(options.savegroup, {'group_z'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_' fcmeasure '_Z'])]); end
-                Z.img_saveimage(fullfile(targetf, [basefilename '_group_' fcmeasure '_Z']), extra);
-                if verbose && ~printdebug; fprintf(' Z'); end
-            end
+                % -- compute p-values
+                if any(ismember(options.savegroup, {'group_p', 'group_z'}))
+                    [p Z M] = gbc.img_ttest_zero();
+                end
+
+                % -- compute mean
+                if any(ismember(options.savegroup, {'mean'})) && isempty(M)
+                    M = gbc.zeroframes(1);
+                    M.data = mean(gbc.data, 2);
+                end
+
+                % --- save requested data
+                if verbose; fprintf(' ... saving ...'); end
+                if commands(cid).volumes > 1 vol = ['_v' num2str(v)]; else vol = ''; end
+                basefilename = sprintf('gbc_%s%s_%s%s_%s', lname, settitle, comname, vol, fcmeasure);
+
+                % -- save group mean results
+                if any(ismember(options.savegroup, {'mean', 'all'}))
+                    if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_mean'])]); end
+                    M.img_saveimage(fullfile(targetf, [basefilename '_group_mean']), extra);
+                    if verbose && ~printdebug; fprintf([' mean']); end
+                end
+
+                % -- save all results
+                if any(ismember(options.savegroup, {'sessions', 'all'}))
+                    if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_sessions'])]); end
+                    gbc.img_saveimage(fullfile(targetf, [basefilename '_all_sessions']), extra);
+                    if verbose && ~printdebug; fprintf(' sessions'); end
+                end
+
+                % -- save group p results
+                if any(ismember(options.savegroup, {'group_p', 'all'}))
+                    if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_p'])]); end
+                    p.img_saveimage(fullfile(targetf, [basefilename '_group_p']), extra);
+                    if verbose && ~printdebug; fprintf(' p'); end
+                end
+
+                % -- save group Z results
+                if any(ismember(options.savegroup, {'group_z', 'all'}))
+                    if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_Z'])]); end
+                    Z.img_saveimage(fullfile(targetf, [basefilename '_group_Z']), extra);
+                    if verbose && ~printdebug; fprintf(' Z'); end
+                end
 
             if verbose; fprintf(' ... done.\n'); end
         end

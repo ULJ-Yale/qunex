@@ -1,190 +1,186 @@
-function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)
+function [obj, commands] = img_compute_gbc(obj, command, sroi, troi, options)
 
-%``img_compute_gbc(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)``
+%``img_compute_gbc_fc(obj, command, sroi, troi, options)``
 %
-%    Computes whole brain GBC based on the specified mask and command string.
+%   Computes whole brain GBC based on the specified masks and command string.
 %
-%   INPUTS
-%   ======
+%   Parameters
+%       --obj (nimage object):
+%           Image with the timeseries to compute the GBC over.
+%       --command (str):
+%           A pipe separated string describing GBC to compute. The possible 
+%           commands and parameters are
 %
-%    --obj       nimage object.
-%    --command   Pipe separated string describing GBC to compute.
+%            - mFz:t
+%                computes mean Fz value across all voxels (over threshold t)
+%            - aFz:t
+%                computes mean absolute Fz value across all voxels (over 
+%                threshold t)
+%            - pFz:t
+%                computes mean positive Fz value across all voxels (over 
+%                threshold t)
+%            - nFz:t
+%                computes mean positive Fz value across all voxels (below 
+%                threshold t)
+%            - aD:t
+%                computes proportion of voxels with absolute r over t
+%            - pD:t
+%                computes proportion of voxels with positive r over t
+%            - nD:t
+%                computes proportion of voxels with negative r below t
+%            - mFzp:n
+%                computes mean Fz value across n proportional ranges
+%            - aFzp:n
+%                computes mean absolute Fz value across n proportional ranges
+%            - mFzs:n
+%                computes mean Fz value across n strength ranges
+%            - pFzs:n
+%                computes mean Fz value across n strength ranges for positive 
+%                correlations
+%            - nFzs:n
+%                computes mean Fz value across n strength ranges for negative 
+%                correlations
+%            - aFzs:n
+%                computes mean absolute Fz value across n strength ranges
+%            - mDs:n
+%                computes proportion of voxels within n strength ranges of r
+%            - aDs:n
+%                computes proportion of voxels within n strength ranges of 
+%                absolute r
+%            - pDs:n
+%                computes proportion of voxels within n strength ranges of 
+%                positive r
+%            - nDs:n
+%                computes proportion of voxels within n strength ranges of 
+%                negative r
 %
-%               mFz:t
-%                   computes mean Fz value across all voxels (over threshold t)
-%               aFz:t
-%                   computes mean absolute Fz value across all voxels (over 
-%                   threshold t)
-%               pFz:t
-%                   computes mean positive Fz value across all voxels (over 
-%                   threshold t)
-%               nFz:t
-%                   computes mean positive Fz value across all voxels (below 
-%                   threshold t)
-%               aD:t
-%                   computes proportion of voxels with absolute r over t
-%               pD:t
-%                   computes proportion of voxels with positive r over t
-%               nD:t
-%                   computes proportion of voxels with negative r below t
-%               mFzp:n
-%                   computes mean Fz value across n proportional ranges
-%               aFzp:n
-%                   computes mean absolute Fz value across n proportional ranges
-%               mFzs:n
-%                   computes mean Fz value across n strength ranges
-%               pFzs:n
-%                   computes mean Fz value across n strength ranges for positive 
-%                   correlations
-%               nFzs:n
-%                   computes mean Fz value across n strength ranges for negative 
-%                   correlations
-%               aFzs:n
-%                   computes mean absolute Fz value across n strength ranges
-%               mDs:n
-%                   computes proportion of voxels within n strength ranges of r
-%               aDs:n
-%                   computes proportion of voxels within n strength ranges of 
-%                   absolute r
-%               pDs:n
-%                   computes proportion of voxels within n strength ranges of 
-%                   positive r
-%               nDs:n
-%                   computes proportion of voxels within n strength ranges of 
-%                   negative r
+%       --sroi (nimage object):
+%           A mask specifying the voxels or greyordinates for which to compute
+%           the GBC for.
+%       --troi (nimage object):
+%           A mask specifying the voxels over which the GBC is to be computed.
+%       --options (struct field or string):
+%           Either a struct field or a pipe separated string of <key>:<value>
+%           pairs specifying additional options.
 %
-%   --fmask     Mask specifying which frames of the original image to use. []
-%   --mask      Mask specifying which voxels to compute GBC for. []
-%   --verbose   Should it talk a lot. [false]
-%   --rmax      The r value above which the correlations are considered to be of 
+%           It accepts the following keys and values:
+%
+%           - rmax
+%               The r value above which the correlations are considered to be of 
 %               the same functional ROI - or false if it should not be used. 
 %               [false]
-%   --time      Whether to print timing information. [false]
-%   --cv        Whether to work with covariances instead of correlations [false]
-%   --vstep     How many voxels to process in a single step [1200]
+%           - time
+%               Whether to print timing information. [false]
+%           - step
+%               How many voxels or greyordinates to process in a single step 
+%               [12000]
 %
-%   OUTPUTS
-%   =======
+%   Returns
+%       --obj
+%           The resulting nimage object with as many frames as there were commands 
+%           given.
 %
-%   obj
-%       The resulting nimage object with as many frames as there were commands 
-%       given.
+%       --commands
+%           A data structure describing the parameters of commands used.
 %
-%   commands
-%       A data structure describing the parameters of commands used.
-%
-%   USE
-%   ===
-%
-%   The method enables computing a set of Global Brain Connectivity values. The
-%   input image is expected to hold a time- or data-series for each voxel,
-%   across which the correlations (or covariances) will be computed. What is to
-%   be computed is specified using the command string. The string consists of a
-%   pipe separated key:value pairs. Key specifies what is to be computed (as
-%   listed above), whereas value specifies what threshold or number of strength
-%   or proportional ranges is to be used. Strength range is here defined as n
-%   intervals of correlation values. For instance, when computing mean Fz with n
-%   of 4 the ranges would be [-1 -.5], [-.5 0] [0 .5] [.5 1]. Proportional range
-%   would separate all the correlations into n strength groups of the same
-%   number of voxels in each group. An example of command string can be::
+%   Notes:
+%       The method enables computing a set of Global Brain Connectivity values. 
+%       The input image is expected to hold a time- or data-series for each voxel,
+%       across which the correlations (or covariances) will be computed. What is 
+%       to be computed is specified using the command string. The string consists 
+%       of a pipe separated key:value pairs. Key specifies what is to be computed 
+%       (as listed above), whereas value specifies what threshold or number of 
+%       strength or proportional ranges is to be used. Strength range is here 
+%       defined as n intervals of correlation values. For instance, when 
+%       computing mean Fz with n of 4 the ranges would be [-1 -.5], [-.5 0] 
+%       [0 .5] [.5 1]. Proportional range would separate all the correlations 
+%       into n strength groups of the same number of voxels in each group. An 
+%       example of command string can be::
 %
 %       'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2'
 %
-%   This would result in an image with 6 frames. The first frame would hold for
-%   each voxel the mean Fz of its correlation with all other voxels, where the
-%   correlation is higher than .1 or lower than -.1. The second frame would hold
-%   the results with the threshold of .2. The third and fourth would hold the
-%   mean absolute correlation above the respective thresholds, the fifth and
-%   sixth the mean of only positive correlations above the specified thresholds.
-%   Combining multiple commands in a single call significantly cuts down on time
-%   as the correlations need to be computed only once, just their aggregation
-%   function changes.
+%       This would result in an image with 6 frames. The first frame would hold 
+%       for each voxel the mean Fz of its correlation with all other voxels, 
+%       where the correlation is higher than .1 or lower than -.1. The second 
+%       frame would hold the results with the threshold of .2. The third and 
+%       fourth frames would hold the mean absolute correlation above the 
+%       respective thresholds, the fifth and sixth the mean of only positive 
+%       correlations above the specified thresholds. Combining multiple commands 
+%       in a single call significantly cuts down on time as the correlations 
+%       need to be computed only once, just their aggregation function changes.
 %
-%   fmask defines what frames from the original image are to be used for
-%   computing correlations (covariances). It is to be provided as a string of
-%   nonzero/zero or true/false values. If empty or not provided, the
-%   correlations will be computed across all frames. mask specifies which voxels
-%   to compute GBC for, and at the same time, with which voxels it is to be
-%   computed with. It can be provided as a vector of nonzero/zero values or a
-%   nimage object storing the same values. It has to match the number of voxels
-%   in the original image.
+%       sroi defines the source mask, the voxels or grayordinates over which the
+%       functiona connectivity is to be computed. troi defines the target mask, 
+%       the voxels or grayordinates for which the functional connectivity with 
+%       the source is to be computed. The final image will only contain values 
+%       for the target mask.
 %
-%   As neighboring voxels can belong to the same functional parcel, correlation
-%   between them approaches 1. Including them in the computation of GBC can
-%   inflate its value. One way to deal with that is to assume that voxels that
-%   have correlation higher than rmax belong to the same parcel and need to be
-%   excluded from the computation of the GBC. It has to be taken into account
-%   that sepecifying rmax does not exclude only the contiguous voxels but any
-%   voxel for which correlation is above threshold.
+%       As neighboring voxels can belong to the same functional parcel, 
+%       correlation between them approaches 1. Including them in the computation 
+%       of GBC can inflate its value. One way to deal with that is to assume 
+%       that voxels or grayordinates  that have correlation higher than rmax 
+%       belong to the same functional parcel and need to be excluded from the 
+%       computation of the GBC. It has to be taken into account that sepecifying 
+%       rmax does not exclude only the contiguous voxels or grayordinates but 
+%       any voxel or grayordinate for which correlation is above threshold.
 %
-%   Computing GBC is computationally expensive. If time is set to true, the time
-%   it takes to compute GBC will be reported. This can inform setting of vstep.
-%   vstep defines how many voxels to compute the GBC for in a single step.
-%   Having too small vstep results in more steps, which reduces the inherent
-%   paralelization in computing correlations. Too large vstep can result in
-%   chunks that don't fit into memory, which requires use of memory paging and
-%   consequent longer execution times.
+%       Computing GBC is computationally expensive. If time is set to true, the 
+%       time it takes to compute GBC will be reported. This can inform setting 
+%       of step. step defines how many voxels to compute the GBC for in a single
+%       step. Having too small vstep results in more steps, which reduces the
+%       inherent paralelization in computing correlations. Too large vstep can
+%       result in chunks that don't fit into memory, which requires use of 
+%       memory paging and consequent longer execution times.
 %
-%   The resulting commands variable will be a structure list. It will provide
-%   fields 'command' with the type of GBC computed, 'parameter' with the
-%   threshold or limits used in computation of GBC, and 'volumes' with the
-%   information on how many volumes the results of the command will span (e.g. 5
-%   for 5 strength ranges). The list will be in the same order as the volumes in
-%   the resulting image.
+%       The resulting commands variable will be a structure list. It will provide
+%       fields 'command' with the type of GBC computed, 'parameter' with the
+%       threshold or limits used in computation of GBC, and 'volumes' with the
+%       information on how many volumes the results of the command will span 
+%       (e.g. 5 for 5 strength ranges). The list will be in the same order as 
+%       the volumes in the resulting image.
 %
-%   EXAMPLE USE
-%   ===========
+%   Example:
 %
-%   ::
-%   
-%       img = img.img_compute_gbc('mFz:0.1|pFz:0.1|nFz:0.1', [], roiPFCimage, ...
-%           false, 0.99, false, false, 100000);
+%       img = img.img_compute_gbc_fc('mFz:0.1|pFz:0.1|nFz:0.1', sroi, troi, ...
+%           'rmax:0.99|time:false|step:100000');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 9 || isempty(vstep), vstep = 1200; end
-if nargin < 8, cv = [];         end
-if nargin < 7, time = [];       end
-if nargin < 6, rmax = [];       end
-if nargin < 5, verbose = false; end
-if nargin < 4, mask = [];       end
-if nargin < 3, fmask = [];      end
+if nargin < 5, options = ''; end
+if nargin < 4, troi = [];    end
+if nargin < 3, sroi = [];    end
 if nargin < 2, error('ERROR: No command given to compute GBC!'); end
 
+% ----- parse options
+default = 'rmaks=false|time=false|step=12000|verbose=true|printdebug=false';
+options = general_parse_options([], options, default);
 
-if ~isempty(fmask)
-    obj = obj.sliceframes(fmask);
-end
-if isempty(rmax), rmax = false; end
-if isempty(time), time = false; end
-if isempty(cv),   cv   = false; end
+verbose = strcmp(options.verbose, 'true');
+printdebug = strcmp(options.debug, 'true');
 
+if ischar(options.rmax), options.rmax = false; end
+options.time = strcmp(options.time, 'true');
 
 % ---- prepare data
 
 if verbose, fprintf('\n... setting up data'), end
 
-if ~obj.masked
-    if ~isempty(mask)
-        obj = obj.maskimg(mask);
-    end
-end
-
-if ~obj.correlized && ~cv
-    obj = obj.correlize;
-end
-
 obj.data = obj.image2D;
 nvox = size(obj.image2D, 1);
 
-if cv
-    if verbose, fprintf('\n... setting up for covariances instead of correlations '), end
-    obj.data = obj.data';
-    obj.data = bsxfun(@minus, obj.data, mean(obj.data)) ./ sqrt(nvox-1);
-    obj.data = obj.data';
+if isempty(troi)
+    ntvox = nvox;
+else
+    ntvox = length(troi);
+end
+
+if isempty(sroi)
+    nsvox = nvox;
+else
+    nsvox = length(sroi);
 end
 
 % ---- parse command
@@ -195,7 +191,6 @@ ncommands = length(commands);
 nvolumes  = sum([commands.volumes]);
 coffsets  = [1 cumsum([commands.volumes])+1];
 coffsets  = coffsets(1:ncommands);
-
 
 % ---- set up results
 
