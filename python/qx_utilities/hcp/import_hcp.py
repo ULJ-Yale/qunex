@@ -1510,7 +1510,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                                 ": EchoSpacing(%.10f)"
                                 % (
                                     fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
-                                    * 1000.0
                                 ),
                                 end=" ",
                                 file=sout,
@@ -1519,7 +1518,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                                 ": EchoSpacing(%.10f)"
                                 % (
                                     fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
-                                    * 1000.0
                                 ),
                                 end=" ",
                                 file=sout_hcp,
@@ -1537,7 +1535,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                         if fileInfo["json"].get("EffectiveEchoSpacing", None):
                             out = ": EchoSpacing(%.10f)" % (
                                 fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
-                                * 1000.0
                             )
                             print(out, end=" ", file=sout)
                             print(out, end=" ", file=sout_hcp)
@@ -1554,7 +1551,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                             % (
                                 "_hcp_dwi_echospacing",
                                 fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
-                                * 1000.0,
                             ),
                             file=rout,
                         )
@@ -1600,8 +1596,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                         "%-25s : %.8f"
                         % (
                             "_hcp_%ssamplespacing" % (fileInfo["parts"][0][:2]),
-                            fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
-                            * 1000.0,
+                            fileInfo["json"].get("EffectiveEchoSpacing", -0.009),
                         ),
                         file=rout,
                     )
