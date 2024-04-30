@@ -2792,18 +2792,22 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if "EchoSpacing" in dwiinfo and checkInlineParameterUse(
                 "dMRI", "EchoSpacing", options
             ):
-                echospacing = dwiinfo["EchoSpacing"]
-                r += "\n---> Using image specific EchoSpacing: %s" % (echospacing)
+                # echospacing converted to ms as expected by the HCP Pipelines
+                echospacing = dwiinfo["EchoSpacing"] * 1000.0
+                r += f"\n---> Using image specific EchoSpacing: {echospacing} ms"
             else:
                 echospacing = options["hcp_dwi_echospacing"]
-                r += "\n---> Using study general EchoSpacing: %s" % (echospacing)
+                r += f"\n---> Using study general EchoSpacing: {echospacing} ms"
 
             # -- check echospacing
             if not echospacing:
                 r += "\n---> ERROR: QuNex was unable to acquire echospacing from the data and the parameter is not set!"
                 run = False
-            elif float(echospacing) < 0.5 and float(echospacing) > 1:
-                r += f"\nWARNING: the value of echospacing [{echospacing}] is not within the expected range!"
+            elif float(echospacing) < 0.01 or float(echospacing) > 10:
+                r += f"\n---> ERROR: the value of echospacing in ms [{echospacing}] is way out of the expected range!"
+                run = False
+            elif float(echospacing) < 0.1 or float(echospacing) > 1:
+                r += f"\nWARNING: the value of echospacing in ms [{echospacing}] is out of the expected range, please check!"
 
         # --- build the command
         if run:
