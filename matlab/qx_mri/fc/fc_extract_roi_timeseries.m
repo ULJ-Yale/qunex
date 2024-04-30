@@ -307,7 +307,7 @@ if nargin < 2 error('ERROR: At least file list and ROI .names file have to be sp
 %                                              parcel processing
 
 parcels = {};
-if strncmp(roiinfo, 'parcels:', 8)
+if starts_with(roiinfo, 'parcels:')
     parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
 end
 

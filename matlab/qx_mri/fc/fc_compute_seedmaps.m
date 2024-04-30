@@ -168,6 +168,16 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %               Defaults to 'r'.
 %
+%               Additional parameters for specific measures can be added using
+%               fcargs optional parameter (see below).
+%
+%           - fcargs
+%               Additional arguments for computing functional connectivity, e.g.
+%               k for computation of mutual information or standardize and
+%               shrinkage for computation of inverse covariance. These parameters
+%               need to be provided as subfields of fcargs, e.g.:
+%               'fcargs>standardize:partialcorr,shrinkage:LW'
+%
 %           - savegroup
 %               A comma separated list of files to save, options are:
 %
@@ -623,7 +633,9 @@ for s = 1:list.nsessions
         % --> generate seedmaps
 
         rs = ts.img_extract_roi(roi, [], options.roimethod);
-        fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'), options);
+        fc = ts.zeroframes(size(rs, 1));
+        fc.data = fc_compute(ts.data, rs, options.fcmeasure, false, options);
+        % fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'), options);
 
         if verbose; fprintf(' ... computed seedmap'); end
 
@@ -655,8 +667,9 @@ for s = 1:list.nsessions
             else
                 subjectname = '';
             end
+        end
 
-            % set up filetype for single images
+        % set up filetype for single images
 
         if strcmp(y.filetype, 'dtseries')
             tfiletype = 'dscalar';

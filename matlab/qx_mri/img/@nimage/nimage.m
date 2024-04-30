@@ -272,7 +272,7 @@ classdef nimage
 
             if nargin > 0
                 if isa(varone, 'char')
-                    if strncmp(varone, 'dscalar:', 8) || strncmp(varone, 'dtseries:', 9)
+                    if starts_with(varone, 'dscalar:') || starts_with(varone, 'dtseries:')
                         parts = strip(regexp(varone, ':', 'split'));
                         frames = str2num(parts{2});
                         obj.data = zeros(91282, frames);
