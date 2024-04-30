@@ -93,7 +93,7 @@ if nargin < 1, error('ERROR: No files to extract the values from provided!');  e
 %                                              parcel processing
 
 parcels = {};
-if strncmp(roif, 'parcels:', 8)
+if starts_with(roif, 'parcels:')
     parcels = strtrim(regexp(roif(9:end), ',', 'split'));    
 end
 

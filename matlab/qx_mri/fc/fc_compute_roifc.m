@@ -173,10 +173,15 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %
 %               Defaults to 'r'.
 %
-%               Additional parameters for specific measures can be added, e.g.
-%               for inverse covariance shrinkage and standardize options can be
-%               set as follows 'fcmeasure=icv|shrinkage=LW|standardize=partialcorr'.
+%               Additional parameters for specific measures can be added using
+%               fcargs optional parameter (see below).
 %
+%           - fcargs
+%               Additional arguments for computing functional connectivity, e.g.
+%               k for computation of mutual information or standardize and
+%               shrinkage for computation of inverse covariance. These parameters
+%               need to be provided as subfields of fcargs, e.g.:
+%               'fcargs>standardize:partialcorr,shrinkage:LW'
 %
 %           - savegroup
 %               A comma separated list of formats to use to save the group 
@@ -413,13 +418,13 @@ if nargin < 2 error('ERROR: At least file list and ROI .names file have to be sp
 %                                              parcel processing
 
 parcels = {};
-if strncmp(roiinfo, 'parcels:', 8)
+if starts_with(roiinfo, 'parcels:')
     parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
 end
 
 % ----- parse options
 
-default = 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=none|saveind=none|savesessionid=true|itargetf=gfolder|verbose=false|debug=false|fcname=|verbose=true|debug=false';
+default = 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|fcargs=|savegroup=none|saveind=none|savesessionid=true|itargetf=gfolder|verbose=false|debug=false|fcname=|verbose=true|debug=false';
 options = general_parse_options([], options, default);
 
 verbose     = strcmp(options.verbose, 'true');

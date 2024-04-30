@@ -8,7 +8,7 @@ function ts = img_extract_roi(obj, roi, rcodes, method, weights, criterium, retu
 %   INPUTS
 %   ======
 %
-%    --obj         current image
+%   --obj         current image
 %   --roi         roi image file
 %   --rcodes      roi values to use [all but 0]
 %   --method      method name [mean]
@@ -73,7 +73,7 @@ if isa(roi, 'nimage')
         error('ERROR: ROI image does not match target in dimensions!');
     end
 elseif isa(roi, 'char') || isa(roi, 'string')
-    if strncmp(roi, 'parcels:', 8)
+    if starts_with(roi, 'parcels:')
         if ~isfield(obj.cifti, 'parcels') || isempty(obj.cifti.parcels)
             error('ERROR: The file lacks parcel specification!');
         end

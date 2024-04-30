@@ -160,7 +160,7 @@ if any(ismember({'roiinfo', 'all'}, check))
     if ~isfield(options, 'roiinfo')
         warnings{end + 1} = 'roiinfo option is not defined!';
         bad_parameters{end + 1} = 'roiinfo';
-    elseif ~startsWith(options.roiinfo, 'parcels:') && ~general_check_file(options.roiinfo, 'ROI definition file', 'nothing');
+    elseif ~starts_with(options.roiinfo, 'parcels:') && ~general_check_file(options.roiinfo, 'ROI definition file', 'nothing');
         warnings{end + 1} = sprintf('Could not find ROI definition file: %s!', options.roiinfo);
         bad_parameters{end + 1} = 'roiinfo';
     end
@@ -172,7 +172,7 @@ if any(ismember({'sroiinfo', 'all'}, check))
     if ~isfield(options, 'sroiinfo')
         warnings{end + 1} = 'sroiinfo option is not defined!';
         bad_parameters{end + 1} = 'sroiinfo';
-    elseif ~startsWith(options.sroiinfo, 'parcels:') && ~general_check_file(options.sroiinfo, 'ROI definition file', 'nothing');
+    elseif ~starts_with(options.sroiinfo, 'parcels:') && ~general_check_file(options.sroiinfo, 'ROI definition file', 'nothing');
         warnings{end + 1} = sprintf('Could not find source ROI definition file: %s!', options.sroiinfo);
         bad_parameters{end + 1} = 'sroiinfo';
     end
@@ -184,7 +184,7 @@ if any(ismember({'troiinfo', 'all'}, check))
     if ~isfield(options, 'troiinfo')
         warnings{end + 1} = 'troiinfo option is not defined!';
         bad_parameters{end + 1} = 'troiinfo';
-    elseif ~startsWith(options.troiinfo, 'parcels:') && ~general_check_file(options.troiinfo, 'ROI definition file', 'nothing');
+    elseif ~starts_with(options.troiinfo, 'parcels:') && ~general_check_file(options.troiinfo, 'ROI definition file', 'nothing');
         warnings{end + 1} = sprintf('Could not find target ROI definition file: %s!', options.troiinfo);
         bad_parameters{end + 1} = 'troiinfo';
     end
@@ -196,7 +196,7 @@ if any(ismember({'flist', 'all'}, check))
     if ~isfield(options, 'flist')
         warnings{end + 1} = 'flist option is not defined!';
         bad_parameters{end + 1} = 'flist';
-    elseif ~startsWith(flist, 'listname:') && ~general_check_file(options.flist, 'Image list file', 'nothing');
+    elseif ~starts_with(options.flist, 'listname:') && ~general_check_file(options.flist, 'Image list file', 'nothing');
         warnings{end + 1} = sprintf('Could not find image list file: %s!', options.flist);
         bad_parameters{end + 1} = 'flist';
     end
@@ -208,7 +208,7 @@ if any(ismember({'targetf', 'all'}, check))
     if ~isfield(options, 'targetf')
         warnings{end + 1} = 'targetf option is not defined!';
         bad_parameters{end + 1} = 'targetf';
-    elseif (~strcmp(options.savegroup, 'none') && ~isempty(options.savegroup) || (~strcmp(options.saveind, 'none') && ~isempty(options.saveind) && strcmp(options.itargetf, 'sfolder'))
+    elseif (~strcmp(options.savegroup, 'none') && ~isempty(options.savegroup)) || (~strcmp(options.saveind, 'none') && ~isempty(options.saveind) && strcmp(options.itargetf, 'sfolder'))
         general_check_folder(options.targetf, 'results folder');
     end
 end
@@ -219,7 +219,7 @@ if length(warnings) > 0
     bad_parameters = unique(bad_parameters);
     if ismember(error, {'warn', 'stop'})
         fprintf('ERROR: Options check failed:\n');
-        for n = 1:length(warnings):
+        for n = 1:length(warnings)
             fprintf('       %s\n', warnings{n});
         end
     end
