@@ -79,8 +79,7 @@ if any(ismember({'fc', 'all'}, check))
     if ~isfield(options, 'fcmeasure')
         warnings{end + 1} = 'fcmeasure option is not defined!';
         bad_parameters{end + 1} = 'fcmeasure';
-    elseif ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc', 'coh', 'mar'}) && sum(strcmp(fieldnames(options), 'fcargs')) > 0
-        % --> TODO: change to checking that it is not empty or none.
+elseif ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc', 'coh', 'mar'}) && isfield(options, 'fcargs') && ~isempty(options.fcargs)
         warnings{end + 1} = sprintf('FC measure %s should have no additional arguments defined!', options.fcmeasure);
         bad_parameters{end + 1} = 'fcargs';
     elseif strcmp(options.fcmeasure, 'icv') && ismember('fcargs', fieldnames(options))

@@ -29,7 +29,7 @@ if nargin < 1, filename = ''; end
 
 [filepath, name, ext] = fileparts(filename);
 
-file_info = struct('filename', filename, 'path', filepath, 'basename', [name ext], 'rootname', name, 'extension', ext, 'is_image', false, 'image_type', '', 'exists', exist(path, 'file') == 2);
+file_info = struct('filename', filename, 'path', filepath, 'basename', [name ext], 'rootname', name, 'extension', ext, 'is_image', false, 'image_type', '', 'exists', exist(filename, 'file') == 2);
 
 image_type = regexp(filename, '(\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
 if ~isempty(image_type)
