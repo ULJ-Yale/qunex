@@ -8,8 +8,9 @@ function [img] = img_prep_roi(roi, mask, options)
 %   Parameters:
 %       --roi (str or nimage object):
 %           A path to a file or an nimage object that specifies the ROI
-%           to be generated. It may include optional information. For
-%           details see Notes section.
+%           to be generated. In case of a pipe separated string, the first
+%           item will be considered a path, and all others as <key>:<value>
+%           pairs of optional information. For details see Notes section.
 %
 %       --mask (str, integer, or nimage object, default ''):
 %           A path to a file or a nimage object to be used as a mask, an
@@ -172,12 +173,13 @@ function [img] = img_prep_roi(roi, mask, options)
 %               
 %       Specification of optional parameters:
 %           Optional parameters can be specified in three ways. First, as
-%           <key>:<value> pairs in the `options` parameter. Second, as
-%           values passed to the `mask` parameter, and third as <key>:
-%           <value> pairs following the file path in the `roi` parameter.
-%           The priority will be in the order: `mask`, `roi`, `options`
-%           with `mask` having the highest priority.
-%       
+%           <key>:<value> pairs in the `options` parameter. Second, as <key>:
+%           <value> pairs following the path provided in the `roi` parameter. 
+%           Finally, as the content of the `mask` parameter. In the last case
+%           comma separated string will be treated as options -> maps, whereas
+%           a numeric array will be treated as options -> volumes. The priority 
+%           will be in the order: `mask`, `roi`, `options` with `mask` having 
+%           the highest priority.       
 %
 %       Names file specification:
 %           Names file is a regular text file with .names ending. It specifies

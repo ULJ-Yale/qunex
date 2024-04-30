@@ -1,4 +1,4 @@
-function [fcmat] = fc_cc(A,B)
+function [fcmat] = fc_cc(A, B)
 
 %``fc_cc(A,B)``
 %

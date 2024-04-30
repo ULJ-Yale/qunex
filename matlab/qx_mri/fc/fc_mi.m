@@ -11,7 +11,6 @@ function [fcmat] = fc_mi(A, B, fcargs)
 %           .k  (positive integer): argument used in KNN algorithm
 %               default = 3
 %          
-%
 %   Returns:
 %       fcmat (numeric matrix): 
 %           rois (B=[]): size = NxN
