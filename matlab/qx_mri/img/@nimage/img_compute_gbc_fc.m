@@ -1,4 +1,4 @@
-function [obj, commands] = img_compute_gbc(obj, command, sroi, troi, options)
+function [obj, commands] = img_compute_gbc_fc(obj, command, sroi, troi, options)
 
 %``img_compute_gbc_fc(obj, command, sroi, troi, options)``
 %
@@ -212,18 +212,19 @@ if nargin < 3, sroi = [];    end
 if nargin < 2, error('ERROR: No command given to compute GBC!'); end
 
 % ----- parse options
-default = 'rmaks=0|time=false|step=12000|verbose=true|printdebug=false';
+default = 'rmax=0|time=false|step=12000|verbose=true|printdebug=false';
 options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
+time = strcmp(options.time, 'true');
 
 if ischar(options.rmax), options.rmax = false; end
 options.time = strcmp(options.time, 'true');
 
 % ---- prepare data
 
-if verbose, fprintf('\n... setting up data'), end
+if verbose, fprintf('\nimg_compute_gbc_fc\n... setting up data\n'), end
 
 obj.data = obj.image2D;
 nvox = size(obj.image2D, 1);
@@ -232,7 +233,7 @@ if isempty(troi)
     ntvox = nvox;
     tmask = [1:ntvox];
 else
-    tmask = unique([troi.roi.indeces]);
+    tmask = unique(vertcat(troi.roi.indeces));
     ntvox = length(tmask);
 end
 
@@ -240,14 +241,14 @@ if isempty(sroi)
     nsvox = nvox;
     smask = [1:nsvox];
 else
-    smask = unique([sroi.roi.indeces])
+    smask = unique(vertcat(sroi.roi.indeces));
     nsvox = length(smask);
 end
 
 % ---- parse command
 
-if verbose, fprintf('\n\nStarting GBC on %s', obj.filename); stime = tic; end
-[commands, sortit] = parseCommand(command, nvox);
+if verbose, fprintf('... starting GBC on %s\n', obj.filename); stime = tic; end
+commands  = parseCommand(command, nvox);
 ncommands = length(commands);
 nvolumes  = sum([commands.volumes]);
 coffsets  = [1 cumsum([commands.volumes])+1];
@@ -267,7 +268,7 @@ nsteps = floor(ntvox/options.step);
 lstep  = mod(ntvox,options.step);
 
 if verbose
-    fprintf('\n... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels:', ntvox, obj.frames, nsteps+1);
+    if verbose, fprintf('... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels:\n', ntvox, obj.frames, nsteps + 1); end
 end
 
 x = data';
@@ -275,20 +276,20 @@ x = data';
 for n = 1:nsteps+1
 
     if n > nsteps, cstep=lstep; end
-    fstart = vstep*(n-1) + 1;
-    fend   = vstep*(n-1) + cstep;
+    fstart = options.step * (n-1) + 1;
+    fend   = options.step * (n-1) + cstep;
     pevox  = false;
 
     if verbose
         crange = [num2str(fstart) ':' num2str(fend)];
         % for c = 1:slen, fprintf('\b'), end
-        fprintf('\n     ... %14s', crange);
+        fprintf('     ... %14s\n', crange);
         slen = length(crange);
     end
 
-    if time, fprintf(' r'); tic; end
+    if time, fprintf('     -> fc'); tic; end
     Fc = fc_compute(data(tmask(fstart:fend),:), data(smask, :), options.fcmeasure, true, options);
-    if time fprintf(' [%.3f s]', toc); end
+    if time fprintf(' [%.3f s]\n', toc); end
 
     % -------- Compute common stuff ---------
 
@@ -298,19 +299,19 @@ for n = 1:nsteps+1
     % specified rmax threshold. If not, it does not remove correlation with 
     % itself.
 
-    if time, fprintf(' clip'); tic; end
+    if time, fprintf('     -> clip'); tic; end
     evoxels = voxels;
-    if rmax
-        clip = Fc < rmax;
+    if options.rmax
+        clip = Fc < options.rmax;
         Fc = Fc .* clip;
         evoxels = sum(clip,1);
         clipped = voxels - evoxels;
-        if verbose == 3, fprintf(' cliped: %d ', sum(sum(clip))); end;
+        if verbose, fprintf(' cliped: %d ', sum(sum(clip))); end;
     else
         clipped = 0;
         evoxels = voxels;
     end
-    if time fprintf(' [%.3f s]', toc); end
+    if time fprintf(' [%.3f s]\n', toc); end    
 
     % -------- Run the command loop ---------
     
@@ -329,15 +330,15 @@ for n = 1:nsteps+1
 
         % ---> are we converting to Fisher z values
 
-        if strfind(tcommand, 'Fz') && ~fishered
+        if ~isempty(strfind(tcommand, 'Fz')) && ~fishered
 
-            if time, fprintf(' Fz'); tic; end
+            if time, fprintf('     -> Fz'); tic; end
             Fc = fc_fisher(Fc);
             if ~isreal(Fc)
-                fprintf(' c>r')
+                if verbose, fprintf(' c>r'); end
                 Fc = real(Fc);
             end
-            if time fprintf(' [%.3f s]', toc); end
+            if time fprintf(' [%.3f s]\n', toc); end
             
             aFc = [];
             asorted = false;
@@ -346,24 +347,24 @@ for n = 1:nsteps+1
         % ---> are we computing absolute values
 
         if strcmp(tprefix, 'a') && isempty(aFc)
-            if time, fprintf(' abs'); tic; end
+            if time, fprintf('     -> abs'); tic; end
             aFc = abs(Fc);
-            if time fprintf(' [%.3f s]', toc); end
+            if time fprintf(' [%.3f s]\n', toc); end
         end
 
         % ---> are we sorting
         if strcmp(tsuffix, 'p')
             if strcmp(tprefix, 'a') && ~asorted
-                if time, fprintf(' sort'); tic; end
+                if time, fprintf('     -> sort'); tic; end
                 aFc = sort(aFc, 1);
-                if time fprintf(' [%.3f s]', toc); end
-                fprintf(' %.3f %.3f', aFc(1, 1), aFc(end, 1));
+                if time fprintf(' [%.3f s]\n', toc); end
+                % fprintf(' %.3f %.3f', aFc(1, 1), aFc(end, 1));
                 asorted = true;
             elseif ~sorted
-                if time, fprintf(' sort'); tic; end
+                if time, fprintf('     -> sort'); tic; end
                 Fc = sort(Fc, 1);
-                if time fprintf(' [%.3f s]', toc); end
-                fprintf(' %.3f %.3f', Fc(1, 1), Fc(end, 1));
+                if time fprintf(' [%.3f s]\n', toc); end
+                % fprintf(' %.3f %.3f', Fc(1, 1), Fc(end, 1));
                 % if Fc(1,1) > -0.001
                 %     fprintf(' resort');
                 %     Fc = sort(Fc);
@@ -373,58 +374,61 @@ for n = 1:nsteps+1
             end
         end
 
-        if time, fprintf(' %s', tcommand); tic; end
+        if time, fprintf('     -> %s', tcommand); tic; end
 
         switch tcommand
 
             % -----> compute mFz, mFc
 
             case {'mFz', 'mFc'}
-                results(fstart:fend,toffset) = sum(Fc, 1) ./ evoxels;
-
+                if tparameter == 0
+                    results(fstart:fend, toffset) = sum(Fc, 2) ./ evoxels;
+                else
+                    results(fstart:fend, toffset) = rmean(Fc, (Fc >= tparameter) | (Fc <= tparameter), 2);
+                end
             % -----> compute aFz, aFc
 
             case {'aFz', 'aFc'}
                 if tparameter == 0
-                    results(fstart:fend,toffset) = sum(aFc,1)./evoxels;
+                    results(fstart:fend, toffset) = sum(aFc, 2)./evoxels;
                 else
-                    results(fstart:fend,toffset) = rmean(aFc, (aFc > tparameter), 1);
+                    results(fstart:fend, toffset) = rmean(aFc, (aFc >= tparameter), 2);
                 end
 
             % -----> compute pFz, pFc
 
             case {'pFz', 'pFc'}
-                results(fstart:fend,toffset) = rmean(Fc, Fc >= tparameter, 1);
+                results(fstart:fend, toffset) = rmean(Fc, (Fc >= tparameter), 2);
 
             % -----> compute nFz, nFc
 
             case {'nFz', 'nFc'}
-                results(fstart:fend,toffset) = rmean(Fc, Fc <= tparameter, 1);
+                results(fstart:fend, toffset) = rmean(Fc, (Fc <= tparameter), 2);
 
             % -----> compute pD
 
             case 'pD'
-                results(fstart:fend,toffset) = sum(Fc >= tparameter, 1)./evoxels;
+                results(fstart:fend, toffset) = sum(Fc >= tparameter, 2)./evoxels;
 
             % -----> compute nD
 
             case 'nD'
-                results(fstart:fend,toffset) = sum(Fc <= tparameter, 1)./evoxels;
+                results(fstart:fend, toffset) = sum(Fc <= tparameter, 2)./evoxels;
 
             % -----> compute aD
 
             case 'aD'
-                results(fstart:fend,toffset) = sum(aFc >= tparameter, 1)./evoxels;
+                results(fstart:fend, toffset) = sum(aFc >= tparameter, 2)./evoxels;
 
             % -----> compute over prange
 
             case {'mFzp', 'aFzp', 'mFcp', 'aFcp'}
 
                 if ~pevox
-                    pevox = tparameter(:,2) - tparameter(:,1) + 1;
+                    pevox = tparameter(:, 2) - tparameter(:, 1) + 1;
                     if rmax
                         pevox = repmat(pevox, 1, cstep);
-                        pevox(tvolumes,:) = pevox(tvolumes,:) - clipped;  % we're assuming all clipped voxels are in the top group
+                        pevox(tvolumes, :) = pevox(tvolumes, :) - clipped;  % we're assuming all clipped voxels are in the top group
                     else
                         pevox(tvolumes) = pevox(tvolumes) - clipped;  % we're assuming all clipped voxels are in the top group
                     end
@@ -433,9 +437,9 @@ for n = 1:nsteps+1
 
                 for p = 1:tvolumes
                     if strcmp(tcommand, 'mFzp') || strcmp(tcommand, 'mFcp')
-                        results(fstart:fend,toffset+(p-1)) = sum(Fc([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
+                        results(fstart:fend,toffset+(p-1)) = sum(Fc([tparameter(p, 1):tparameter(p, 2)],:), 2)./pevox(p);
                     else
-                        results(fstart:fend,toffset+(p-1)) = sum(aFc([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
+                        results(fstart:fend,toffset+(p-1)) = sum(aFc([tparameter(p, 1):tparameter(p, 2)],:), 2)./pevox(p);
                     end
                 end
 
@@ -444,47 +448,47 @@ for n = 1:nsteps+1
             case {'mFzs', 'nFzs', 'pFzs', 'mFcs', 'nFcs', 'pFcs'}
 
                 for s = 1:tvolumes
-                    smask = (Fc >= tparameter(s)) & (Fc < tparameter(s+1));
-                    pevox = sum(smask, 1);
-                    results(fstart:fend,toffset+(s-1)) = rsum(Fc, smask, 1)./pevox;
+                    strength_mask = (Fc >= tparameter(s)) & (Fc < tparameter(s+1));
+                    pevox = sum(strength_mask, 2);
+                    results(fstart:fend,toffset+(s-1)) = rsum(Fc, strength_mask, 2) ./ pevox;
                 end
 
 
             case {'aFzs', 'aFcs'}
 
                 for s = 1:tvolumes
-                    smask = (aFc >= tparameter(s)) & (aFc < tparameter(s+1));
-                    pevox = sum(smask, 1);
-                    results(fstart:fend,toffset+(s-1)) = rsum(aFc, smask , 1)./pevox;
+                    strength_mask = (aFc >= tparameter(s)) & (aFc < tparameter(s+1));
+                    pevox = sum(strength_mask, 1);
+                    results(fstart:fend,toffset+(s-1)) = rsum(aFc, strength_mask , 2) ./ pevox;
                 end
 
             case {'mDs', 'nDs', 'pDs'}
 
                 for s = 1:tvolumes
-                    smask = (Fc >= tparameter(s)) & (Fc < tparameter(s+1));
-                    results(fstart:fend,toffset+(s-1)) = sum(smask, 1)./evoxels;
+                    strength_mask = (Fc >= tparameter(s)) & (Fc < tparameter(s+1));
+                    results(fstart:fend,toffset+(s-1)) = sum(strength_mask, 2) ./ evoxels;
                 end
 
             case 'aDs'
 
                 for s = 1:tvolumes
-                    smask = (aFc >= tparameter(s)) & (aFc < tparameter(s+1));
-                    results(fstart:fend,toffset+(s-1)) = sum(smask, 1)./evoxels;
+                    strength_mask = (aFc >= tparameter(s)) & (aFc < tparameter(s+1));
+                    results(fstart:fend,toffset+(s-1)) = sum(strength_mask, 2) ./ evoxels;
                 end
 
         end
 
-        if time fprintf(' [%.3f s]', toc); end
+        if time fprintf(' [%.3f s]\n', toc); end
 
     end
 
 end
 
-if verbose, fprintf('\n... done! [%.3f s]', toc(stime)), end
+if verbose, fprintf('... done! [%.3f s]\n', toc(stime)), end
 
-obj.data = results;
+obj = obj.zeroframes(nvolumes);
+obj.data(tmask,:) = results;
 obj.info = command;
-obj.frames = nvolumes;
 
 end
 
@@ -591,13 +595,15 @@ end
 
 function [matrix] = rmean(matrix, mask, dim)
     if nargin < 3, dim = 1; end
-    matrix(~mask) = 0;
+    % matrix(~mask) = 0;
+    matrix = matrix .* mask;
     matrix = sum(matrix, dim) ./ sum(mask, dim);
 end
 
 function [matrix] = rsum(matrix, mask, dim)
     if nargin < 3, dim = 1; end
-    matrix(~mask) = 0;
+    % matrix(~mask) = 0;
+    matrix = matrix .* mask;
     matrix = sum(matrix, dim);
 end
 
