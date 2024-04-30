@@ -7,58 +7,106 @@ function [obj, commands] = img_compute_gbc(obj, command, sroi, troi, options)
 %   Parameters
 %       --obj (nimage object):
 %           Image with the timeseries to compute the GBC over.
-%       --command (str):
-%           A pipe separated string describing GBC to compute. The possible 
-%           commands and parameters are
 %
-%            - mFz:t
-%                computes mean Fz value across all voxels (over threshold t)
-%            - aFz:t
-%                computes mean absolute Fz value across all voxels (over 
-%                threshold t)
-%            - pFz:t
-%                computes mean positive Fz value across all voxels (over 
-%                threshold t)
-%            - nFz:t
-%                computes mean positive Fz value across all voxels (below 
-%                threshold t)
-%            - aD:t
-%                computes proportion of voxels with absolute r over t
-%            - pD:t
-%                computes proportion of voxels with positive r over t
-%            - nD:t
-%                computes proportion of voxels with negative r below t
-%            - mFzp:n
-%                computes mean Fz value across n proportional ranges
-%            - aFzp:n
-%                computes mean absolute Fz value across n proportional ranges
-%            - mFzs:n
-%                computes mean Fz value across n strength ranges
-%            - pFzs:n
-%                computes mean Fz value across n strength ranges for positive 
-%                correlations
-%            - nFzs:n
-%                computes mean Fz value across n strength ranges for negative 
-%                correlations
-%            - aFzs:n
-%                computes mean absolute Fz value across n strength ranges
-%            - mDs:n
-%                computes proportion of voxels within n strength ranges of r
-%            - aDs:n
-%                computes proportion of voxels within n strength ranges of 
-%                absolute r
-%            - pDs:n
-%                computes proportion of voxels within n strength ranges of 
-%                positive r
-%            - nDs:n
-%                computes proportion of voxels within n strength ranges of 
-%                negative r
+%       --command (str):
+%           A pipe separated string describing GBC to compute. 
+%           There are a number of options available. They can be divided by
+%           those that work on untransformed functional connectivity (Fc) values
+%           e.g. covariance, and those that work on functional connectivity
+%           estimates transformed to Fisher z (Fz) values. Note that the function
+%           does not check the validity of using untransformed values or the
+%           validity of their transform to Fz values.
+%
+%           The options that work on untransformed values are:
+%
+%           - mFc:t
+%               computes mean Fc value across all voxels (over threshold t)
+%           - aFc:t
+%               computes mean absolute Fc value across all voxels (over
+%               threshold t)
+%           - pFc:t
+%               computes mean positive Fc value across all voxels (over
+%               threshold t)
+%           - nFc:t
+%               computes mean negative Fc value across all voxels (below
+%               threshold t)
+%
+%           - aD:t
+%               computes proportion of voxels with absolute Fc over t
+%           - pD:t
+%               computes proportion of voxels with positive Fc over t
+%           - nD:t
+%               computes proportion of voxels with negative Fc below t
+%
+%           - mFcp:n
+%               computes mean Fc value across n proportional ranges
+%           - aFcp:n
+%               computes mean absolute Fc value across n proportional ranges
+%           - mFcs:n
+%               computes mean Fc value across n strength ranges
+%           - pFcs:n
+%               computes mean Fc value across n strength ranges for positive
+%               correlations
+%           - nFcs:n
+%               computes mean Fc value across n strength ranges for negative
+%               correlations
+%           - aFcs:n
+%               computes mean absolute Fc value across n strength ranges
+%
+%           - mDs:n
+%               computes proportion of voxels within n strength ranges of Fc
+%           - aDs:n
+%               computes proportion of voxels within n strength ranges of
+%               absolute Fc
+%           - pDs:n
+%               computes proportion of voxels within n strength ranges of
+%               positive Fc
+%           - nDs:n
+%               computes proportion of voxels within n strength ranges of
+%               negative Fc.
+%
+%           The options that first transform functional connectivity estimates
+%           to Fisher z values are:
+%
+%           - mFz:t
+%               computes mean Fz value across all voxels (over threshold t)
+%           - aFz:t
+%               computes mean absolute Fz value across all voxels (over
+%               threshold t)
+%           - pFz:t
+%               computes mean positive Fz value across all voxels (over
+%               threshold t)
+%           - nFz:t
+%               computes mean negative Fz value across all voxels (below
+%               threshold t)
+%
+%           - mFzp:n
+%               computes mean Fz value across n proportional ranges
+%           - aFzp:n
+%               computes mean absolute Fz value across n proportional ranges
+%           - mFzs:n
+%               computes mean Fz value across n strength ranges
+%           - pFzs:n
+%               computes mean Fz value across n strength ranges for positive
+%               correlations
+%           - nFzs:n
+%               computes mean Fz value across n strength ranges for negative
+%               correlations
+%           - aFzs:n
+%               computes mean absolute Fz value across n strength ranges
 %
 %       --sroi (nimage object):
-%           A mask specifying the voxels or greyordinates for which to compute
-%           the GBC for.
+%           An roi image specifying the voxels or greyordinates over which to 
+%           compute the GBC. If multiple ROI are present, their union will be 
+%           used. This image should be prepared using `img_prep_roi` function
+%           and include the roi structure.
+%
 %       --troi (nimage object):
-%           A mask specifying the voxels over which the GBC is to be computed.
+%           An roi image specifying the voxels or greyordinates for which to
+%           compute the GBC. If multiple ROI are present, their union will be
+%           used. This image should be prepared using `img_prep_roi` function
+%           and include the roi structure.
+%
 %       --options (struct field or string):
 %           Either a struct field or a pipe separated string of <key>:<value>
 %           pairs specifying additional options.
@@ -67,13 +115,22 @@ function [obj, commands] = img_compute_gbc(obj, command, sroi, troi, options)
 %
 %           - rmax
 %               The r value above which the correlations are considered to be of 
-%               the same functional ROI - or false if it should not be used. 
-%               [false]
+%               the same functional ROI. Set to 0 if it should not be used.
+%               Defaults to 0.
+%
 %           - time
-%               Whether to print timing information. [false]
+%               Whether to print timing information. Defaults to 'false'.
+%
 %           - step
-%               How many voxels or greyordinates to process in a single step 
-%               [12000]
+%               How many voxels or greyordinates to process in a single step.
+%               Defaults to 12000.
+%
+%           - fcargs
+%               Additional arguments for computing functional connectivity, e.g.
+%               k for computation of mutual information or standardize and
+%               shrinkage for computation of inverse covariance. These parameters
+%               need to be provided as subfields of fcargs, e.g.:
+%               'fcargs>standardize:partialcorr,shrinkage:LW'
 %
 %   Returns
 %       --obj
@@ -155,7 +212,7 @@ if nargin < 3, sroi = [];    end
 if nargin < 2, error('ERROR: No command given to compute GBC!'); end
 
 % ----- parse options
-default = 'rmaks=false|time=false|step=12000|verbose=true|printdebug=false';
+default = 'rmaks=0|time=false|step=12000|verbose=true|printdebug=false';
 options = general_parse_options([], options, default);
 
 verbose = strcmp(options.verbose, 'true');
@@ -173,14 +230,18 @@ nvox = size(obj.image2D, 1);
 
 if isempty(troi)
     ntvox = nvox;
+    tmask = [1:ntvox];
 else
-    ntvox = length(troi);
+    tmask = unique([troi.roi.indeces]);
+    ntvox = length(tmask);
 end
 
 if isempty(sroi)
     nsvox = nvox;
+    smask = [1:nsvox];
 else
-    nsvox = length(sroi);
+    smask = unique([sroi.roi.indeces])
+    nsvox = length(smask);
 end
 
 % ---- parse command
@@ -194,24 +255,19 @@ coffsets  = coffsets(1:ncommands);
 
 % ---- set up results
 
-results = zeros(nvox, nvolumes);
+results = zeros(ntvox, nvolumes);
 
 
 % ---- do the loop
 
 voxels = obj.voxels;
-data   = obj.data;
-% vstep = floor(56250/obj.frames);    % optimal matrix size : 5625000
-% vstep  = 12000/2;
-% vstep  = 100000;
-cstep  = vstep;
-nsteps = floor(voxels/vstep);
-lstep  = mod(voxels,vstep);
-rmax   = fc_fisher(rmax);
-aFz    = false;
+data   = fc_prepare(obj.data, options.fcmeasure);
+cstep  = options.step;
+nsteps = floor(ntvox/options.step);
+lstep  = mod(ntvox,options.step);
 
 if verbose
-    fprintf('\n... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels:', voxels, obj.frames, nsteps+1);
+    fprintf('\n... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels:', ntvox, obj.frames, nsteps+1);
 end
 
 x = data';
@@ -231,147 +287,138 @@ for n = 1:nsteps+1
     end
 
     if time, fprintf(' r'); tic; end
-    r = (data * x(:,fstart:fend));
+    Fc = fc_compute(data(tmask(fstart:fend),:), data(smask, :), options.fcmeasure, true, options);
     if time fprintf(' [%.3f s]', toc); end
-
-    % fprintf('NaN: %d ', sum(sum(isnan(r))));
-
-
-    % To save space we're switching to Fz and replacing r.
-    % From here on, everything needs to be adjusted to work with Fz
-
-    if time, fprintf(' Fz'); tic; end
-    if ~cv, r = fc_fisher(r); end
-    if ~isreal(r)
-        fprintf(' c>r')
-        r = real(r);
-    end
-    if time fprintf(' [%.3f s]', toc); end
-
 
     % -------- Compute common stuff ---------
 
     coms = {commands.command};
 
-    % -- do we need absolute values?
-
-    if strfind(strjoin(coms), 'aFz')
-        if time, fprintf(' aFz'); tic; end
-        aFz = abs(r);
-        if time fprintf(' [%.3f s]', toc); end
-    end
-
-    % -- are we sorting?
-
-    if sortit
-        if time, fprintf(' sort'); tic; end
-        r = sort(r, 1);
-        fprintf(' %.3f %.3f', r(1,1), r(end,1));
-        % if r(1,1) > -0.001
-        %     fprintf(' resort');
-        %     r = sort(r);
-        %     fprintf(' %.3f %.3f', min(r(1,:)), max(r(end,:)));
-        % end
-
-        if strfind(strjoin(coms), 'aFz')
-            fprintf('+');
-            aFz = sort(aFz, 1);
-        end
-        if time fprintf(' [%.3f s]', toc); end
-    end
-
-
-    % added to remove within region correlations defined as
-    % correlations above a specified rmax threshold if not, it
-    % sets the correlation with itself to 0
+    % Added to remove within region correlations defined as correlations above a 
+    % specified rmax threshold. If not, it does not remove correlation with 
+    % itself.
 
     if time, fprintf(' clip'); tic; end
     evoxels = voxels;
     if rmax
-        clip = r < rmax;
-        r = r.*clip;
+        clip = Fc < rmax;
+        Fc = Fc .* clip;
         evoxels = sum(clip,1);
         clipped = voxels - evoxels;
         if verbose == 3, fprintf(' cliped: %d ', sum(sum(clip))); end;
     else
-        if sortit
-            r(end,:) = 0;
-            if aFz
-                aFz(end,:) = 0;
-            end
-        else
-            l = [0:(cstep-1)] * voxels + [fstart:fend];
-            r(l) = 0;
-        end
-        clipped = 1;
-        evoxels = voxels-1;
+        clipped = 0;
+        evoxels = voxels;
     end
     if time fprintf(' [%.3f s]', toc); end
 
-    % .... let's not transpose to save on time
-
-    % if time, fprintf(' transpose'); tic; end
-    % r = r';
-    % if time fprintf(' [%.3f s]', toc); end
-
-
     % -------- Run the command loop ---------
+    
+    sorted   = false;
+    asorted  = false;
+    fishered = false;
+    aFc      = [];
 
     for c = 1:ncommands
         tcommand   = commands(c).command;
         tparameter = commands(c).parameter;
         tvolumes   = commands(c).volumes;
         toffset    = coffsets(c);
+        tprefix    = tcommand(1);
+        tsuffix    = tcommand(end);
+
+        % ---> are we converting to Fisher z values
+
+        if strfind(tcommand, 'Fz') && ~fishered
+
+            if time, fprintf(' Fz'); tic; end
+            Fc = fc_fisher(Fc);
+            if ~isreal(Fc)
+                fprintf(' c>r')
+                Fc = real(Fc);
+            end
+            if time fprintf(' [%.3f s]', toc); end
+            
+            aFc = [];
+            asorted = false;
+        end
+
+        % ---> are we computing absolute values
+
+        if strcmp(tprefix, 'a') && isempty(aFc)
+            if time, fprintf(' abs'); tic; end
+            aFc = abs(Fc);
+            if time fprintf(' [%.3f s]', toc); end
+        end
+
+        % ---> are we sorting
+        if strcmp(tsuffix, 'p')
+            if strcmp(tprefix, 'a') && ~asorted
+                if time, fprintf(' sort'); tic; end
+                aFc = sort(aFc, 1);
+                if time fprintf(' [%.3f s]', toc); end
+                fprintf(' %.3f %.3f', aFc(1, 1), aFc(end, 1));
+                asorted = true;
+            elseif ~sorted
+                if time, fprintf(' sort'); tic; end
+                Fc = sort(Fc, 1);
+                if time fprintf(' [%.3f s]', toc); end
+                fprintf(' %.3f %.3f', Fc(1, 1), Fc(end, 1));
+                % if Fc(1,1) > -0.001
+                %     fprintf(' resort');
+                %     Fc = sort(Fc);
+                %     fprintf(' %.3f %.3f', min(Fc(1,:)), max(Fc(end,:)));
+                % end
+                sorted = true
+            end
+        end
 
         if time, fprintf(' %s', tcommand); tic; end
 
         switch tcommand
 
-            % -----> compute mFz
+            % -----> compute mFz, mFc
 
-            case 'mFz'
-                results(fstart:fend,toffset) = sum(r,1)./evoxels;
+            case {'mFz', 'mFc'}
+                results(fstart:fend,toffset) = sum(Fc, 1) ./ evoxels;
 
-            % -----> compute aFz
+            % -----> compute aFz, aFc
 
-            case 'aFz'
+            case {'aFz', 'aFc'}
                 if tparameter == 0
-                    results(fstart:fend,toffset) = sum(aFz,1)./evoxels;
+                    results(fstart:fend,toffset) = sum(aFc,1)./evoxels;
                 else
-                    results(fstart:fend,toffset) = rmean(aFz, (aFz > tparameter), 1);
+                    results(fstart:fend,toffset) = rmean(aFc, (aFc > tparameter), 1);
                 end
 
-            % -----> compute pFz
+            % -----> compute pFz, pFc
 
-            case 'pFz'
-                results(fstart:fend,toffset) = rmean(r, r >= tparameter, 1);
+            case {'pFz', 'pFc'}
+                results(fstart:fend,toffset) = rmean(Fc, Fc >= tparameter, 1);
 
+            % -----> compute nFz, nFc
 
-            % -----> compute pFz
-
-            case 'nFz'
-                results(fstart:fend,toffset) = rmean(r, r <= tparameter, 1);
+            case {'nFz', 'nFc'}
+                results(fstart:fend,toffset) = rmean(Fc, Fc <= tparameter, 1);
 
             % -----> compute pD
 
             case 'pD'
-                results(fstart:fend,toffset) = sum(r >= tparameter, 1)./evoxels;
-
+                results(fstart:fend,toffset) = sum(Fc >= tparameter, 1)./evoxels;
 
             % -----> compute nD
 
             case 'nD'
-                results(fstart:fend,toffset) = sum(r <= tparameter, 1)./evoxels;
+                results(fstart:fend,toffset) = sum(Fc <= tparameter, 1)./evoxels;
 
             % -----> compute aD
 
             case 'aD'
-                results(fstart:fend,toffset) = sum(aFz >= tparameter, 1)./evoxels;
-
+                results(fstart:fend,toffset) = sum(aFc >= tparameter, 1)./evoxels;
 
             % -----> compute over prange
 
-            case {'mFzp', 'aFzp'}
+            case {'mFzp', 'aFzp', 'mFcp', 'aFcp'}
 
                 if ~pevox
                     pevox = tparameter(:,2) - tparameter(:,1) + 1;
@@ -385,43 +432,43 @@ for n = 1:nsteps+1
 
 
                 for p = 1:tvolumes
-                    if strcmp(tcommand, 'mFzp')
-                        results(fstart:fend,toffset+(p-1)) = sum(r([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
+                    if strcmp(tcommand, 'mFzp') || strcmp(tcommand, 'mFcp')
+                        results(fstart:fend,toffset+(p-1)) = sum(Fc([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
                     else
-                        results(fstart:fend,toffset+(p-1)) = sum(aFz([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
+                        results(fstart:fend,toffset+(p-1)) = sum(aFc([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
                     end
                 end
 
             % -----> compute over srange
 
-            case {'mFzs', 'nFzs', 'pFzs'}
+            case {'mFzs', 'nFzs', 'pFzs', 'mFcs', 'nFcs', 'pFcs'}
 
                 for s = 1:tvolumes
-                    smask = (r >= tparameter(s)) & (r < tparameter(s+1));
+                    smask = (Fc >= tparameter(s)) & (Fc < tparameter(s+1));
                     pevox = sum(smask, 1);
-                    results(fstart:fend,toffset+(s-1)) = rsum(r, smask, 1)./pevox;
+                    results(fstart:fend,toffset+(s-1)) = rsum(Fc, smask, 1)./pevox;
                 end
 
 
-            case 'aFzs'
+            case {'aFzs', 'aFcs'}
 
                 for s = 1:tvolumes
-                    smask = (aFz >= tparameter(s)) & (aFz < tparameter(s+1));
+                    smask = (aFc >= tparameter(s)) & (aFc < tparameter(s+1));
                     pevox = sum(smask, 1);
-                    results(fstart:fend,toffset+(s-1)) = rsum(aFz, smask , 1)./pevox;
+                    results(fstart:fend,toffset+(s-1)) = rsum(aFc, smask , 1)./pevox;
                 end
 
             case {'mDs', 'nDs', 'pDs'}
 
                 for s = 1:tvolumes
-                    smask = (r >= tparameter(s)) & (r < tparameter(s+1));
+                    smask = (Fc >= tparameter(s)) & (Fc < tparameter(s+1));
                     results(fstart:fend,toffset+(s-1)) = sum(smask, 1)./evoxels;
                 end
 
             case 'aDs'
 
                 for s = 1:tvolumes
-                    smask = (aFz >= tparameter(s)) & (aFz < tparameter(s+1));
+                    smask = (aFc >= tparameter(s)) & (aFc < tparameter(s+1));
                     results(fstart:fend,toffset+(s-1)) = sum(smask, 1)./evoxels;
                 end
 
@@ -460,18 +507,23 @@ end
 %                - command      ... type of GBC to run
 %                - parameter    ... threshold or limits to be used
 %                - volumes      ... how many volumes the results will span
+%
+%  Notes:
+%       The commands are sorted so that all the Fz commands are at the end. This enables
+%       in-place replacement of Fc values by Fz. Also all commands that require absolute
+%       values are computed at the end. This enables having memory as free as possible
+%       as long as possible.
 
 
-function [out, sortit] = parseCommand(s, nvox)
+function [out] = parseCommand(s, nvox)
 
-    sortit = false;
     a = splitby(s,'|');
     for n = 1:length(a)
         b = splitby(a{n}, ':');
 
         com = b{1};
         par = str2num(b{2});
-        out(n).command = com;
+        cmd(n).command = com;
 
         pre = com(1);
         pos = com(end);
@@ -479,8 +531,7 @@ function [out, sortit] = parseCommand(s, nvox)
         if ismember(pos, 'ps')
             if pos == 'p'
                 sstep = nvox / par;
-                out(n).parameter = floor([[1:sstep:nvox]', [1:sstep:nvox]'+(sstep-1)]);
-                sortit = true;
+                cmd(n).parameter = floor([[1:sstep:nvox]', [1:sstep:nvox]'+(sstep-1)]);
             else
                 if ismember(pre, 'ap')
                     sv = 0;
@@ -497,18 +548,35 @@ function [out, sortit] = parseCommand(s, nvox)
                 end
 
                 sstep = (ev-sv) / par;
-                out(n).parameter = [sv:sstep:ev];
+                cmd(n).parameter = [sv:sstep:ev];
 
                 % --- Switching to Fz
-                out(n).parameter = fc_fisher(out(n).parameter);
-                out(n).parameter(end) = out(n).parameter(end) + al;
+                if strfind(com, 'Fz')
+                    cmd(n).parameter = fc_fisher(cmd(n).parameter);
+                end
+                cmd(n).parameter(end) = cmd(n).parameter(end) + al;
             end
-            out(n).volumes = par;
+            cmd(n).volumes = par;
         else
-            out(n).parameter = fc_fisher(par);
-            out(n).volumes = 1;
+            if strfind(com, 'Fz')
+                cmd(n).parameter = fc_fisher(par);
+            else
+                cmd(n).parameter = par;
+            end
+            cmd(n).volumes = 1;
         end
     end
+
+    % --> sort command in optimal order that ensures that all Fz follow all Fc commands, and that
+    %     absolute values are used at the end.
+
+    process_order = {'mFc', 'pFc', 'nFc', 'pD', 'nD', 'mFcp', 'nFcp', 'pFcp', 'mFcs', ...
+                     'pFcs', 'nFcs', 'mDs', 'pDs', 'nDs', 'aFc', 'aD', 'aFcp', 'aFcs', 'aDs', ...
+                     'mFz', 'pFz', 'nFz', 'mFzp', 'mFzs', 'pFzs', 'nFzs', 'aFz', 'aFzp', 'aFzs'};
+
+    [t, i] = ismember(process_order, {cmd.command});
+    out = cmd(i(t));
+
 end
 
 function [out] = splitby(s, d)
@@ -520,7 +588,6 @@ function [out] = splitby(s, d)
         out{c} = t;
     end
 end
-
 
 function [matrix] = rmean(matrix, mask, dim)
     if nargin < 3, dim = 1; end

@@ -41,7 +41,7 @@ end
 
 % fmeta to str (remove starting chars before < as they are not UTF-8)
 idx = find(fmeta' == 60, 1);
-fmeta_str = char(fmeta'(idx:end));
+fmeta_str = char(fmeta(idx:end)');
 
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;

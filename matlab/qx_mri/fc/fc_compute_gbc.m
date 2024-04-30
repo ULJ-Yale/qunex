@@ -30,7 +30,63 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %
 %           ``<type of gbc>:<parameter>|<type of gbc>:<parameter> ...``
 %
-%           Following options are available:
+%           There are a number of options available. They can be divided by
+%           those that work on untransformed functional connectivity (Fc) values
+%           e.g. covariance, and those that work on functional connectivity
+%           estimates transformed to Fisher z (Fz) values. Note that the function
+%           does not check the validity of using untransformed values or the 
+%           validity of their transform to Fz values.
+%
+%           The options that work on untransformed values are:
+%
+%           - mFc:t
+%               computes mean Fc value across all voxels (over threshold t)
+%           - aFc:t
+%               computes mean absolute Fc value across all voxels (over
+%               threshold t)
+%           - pFc:t
+%               computes mean positive Fc value across all voxels (over
+%               threshold t)
+%           - nFc:t
+%               computes mean negative Fc value across all voxels (below
+%               threshold t)
+%
+%           - aD:t
+%               computes proportion of voxels with absolute Fc over t
+%           - pD:t
+%               computes proportion of voxels with positive Fc over t
+%           - nD:t
+%               computes proportion of voxels with negative Fc below t
+%
+%           - mFcp:n
+%               computes mean Fc value across n proportional ranges
+%           - aFcp:n
+%               computes mean absolute Fc value across n proportional ranges
+%           - mFcs:n
+%               computes mean Fc value across n strength ranges
+%           - pFcs:n
+%               computes mean Fc value across n strength ranges for positive
+%               correlations
+%           - nFcs:n
+%               computes mean Fc value across n strength ranges for negative
+%               correlations
+%           - aFcs:n
+%               computes mean absolute Fc value across n strength ranges
+%
+%           - mDs:n
+%               computes proportion of voxels within n strength ranges of Fc
+%           - aDs:n
+%               computes proportion of voxels within n strength ranges of
+%               absolute Fc
+%           - pDs:n
+%               computes proportion of voxels within n strength ranges of
+%               positive Fc
+%           - nDs:n
+%               computes proportion of voxels within n strength ranges of
+%               negative Fc.
+%
+%           The options that first transform functional connectivity estimates 
+%           to Fisher z values are:
 %
 %           - mFz:t
 %               computes mean Fz value across all voxels (over threshold t)
@@ -41,14 +97,9 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               computes mean positive Fz value across all voxels (over
 %               threshold t)
 %           - nFz:t
-%               computes mean positive Fz value across all voxels (below
+%               computes mean negative Fz value across all voxels (below
 %               threshold t)
-%           - aD:t
-%               computes proportion of voxels with absolute r over t
-%           - pD:t
-%               computes proportion of voxels with positive r over t
-%           - nD:t
-%               computes proportion of voxels with negative r below t
+%
 %           - mFzp:n
 %               computes mean Fz value across n proportional ranges
 %           - aFzp:n
@@ -63,35 +114,22 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               correlations
 %           - aFzs:n
 %               computes mean absolute Fz value across n strength ranges
-%           - mDs:n
-%               computes proportion of voxels within n strength ranges of r
-%           - aDs:n
-%               computes proportion of voxels within n strength ranges of
-%               absolute r
-%           - pDs:n
-%               computes proportion of voxels within n strength ranges of
-%               positive r
-%           - nDs:n
-%               computes proportion of voxels within n strength ranges of
-%               negative r.
 %
 %       --sroiinfo (str):
-%           A path to the names file specifying group based ROI that defines
-%           the source ROIs for which the GBC is to be computed. If empty
-%           GBC will be computed for all grayordinates or voxels. 
-%
-%           Alternatively, for volume images, if subject specific roi files
-%           are provided, a string specifying gray matter extent to be 
-%           included (see Notes).
+%           A specification of the source voxels over which the GBC is to be 
+%           computed. This will be passed as the first parameter to the
+%           img_prep_roi method. If individual roi files are listed in the
+%           file list, they will be passed as the second parameter to the
+%           img_prep_roi method. If empty GBC will be computed over all 
+%           grayordinates or voxels. 
 %
 %       --troiinfo (str):
-%           A path to the names file specifying group based ROI that defines
-%           the target ROIs across which the GBC is to be computed. If empty
-%           GBC will be computed across all grayordinates or voxels. 
-%
-%           Alternatively, for volume images, if subject specific roi files
-%           are provided, a string specifying gray matter extent to be 
-%           included (see Notes).
+%           A specification of the target voxels for which the GBC is to be
+%           computed. This will be passed as the first parameter to the
+%           img_prep_roi method. If individual roi files are listed in the
+%           file list, they will be passed as the second parameter to the
+%           img_prep_roi method. If empty GBC will be computed over all
+%           grayordinates or voxels.
 %
 %       --frames (matrix | int | str, default ''):
 %           The definition of which frames to extract, specifically:
@@ -220,9 +258,15 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %
 %               Defaults to 'r'.
 %
-%               Additional parameters for specific measures can be added, e.g.
-%               for inverse covariance shrinkage and standardize options can be
-%               set as follows 'fcmeasure=icv|shrinkage=LW|standardize=partialcorr'.
+%               Additional parameters for specific measures can be added using 
+%               fcargs optional parameter (see below).
+%
+%           - fcargs
+%               Additional arguments for computing functional connectivity, e.g.
+%               k for computation of mutual information or standardize and
+%               shrinkage for computation of inverse covariance. These parameters
+%               need to be provided as subfields of fcargs, e.g.:
+%               'fcargs>standardize:partialcorr,shrinkage:LW'
 %
 %           - savegroup
 %               A comma separated list of files to save, options are:
@@ -291,9 +335,17 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               which to dilate the masks before use. No dillation will be 
 %               performed if empty. Defaults to ''.
 %
-%           - vstep:
+%           - step:
 %               how many voxels/grayordinates/parcels to process in a single 
 %               step. Defaults to 12000.
+%
+%           - rmax
+%               The Fc value above which the estimates are considered to be of
+%               the same functional ROI. Set to 0 if it should not be used.
+%               Defaults to 0.
+%
+%           - time
+%               Whether to print timing information. [false]
 %
 %           - verbose
 %               Whether to be verbose when running the analysis:
@@ -647,14 +699,14 @@ for s = 1:nsub
     if isempty(sroiinfo)
         sroi = [];
     else
-        sroi = nimage.img_read_roi(sroiinfo, sroifile);
+        sroi = nimage.img_prep_roi(sroiinfo, sroifile);
         nsroi = length(troi.roi.roinames);
     end
 
     if isempty(troiinfo)
         troi = [];
     else
-        troi = nimage.img_read_roi(troiinfo, sroifile);
+        troi = nimage.img_prep_roi(troiinfo, sroifile);
         ntroi = length(troi.roi.roinames);
     end
 
