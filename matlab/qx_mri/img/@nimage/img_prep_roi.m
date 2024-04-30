@@ -276,7 +276,7 @@ options = general_parse_options([], options, default);
 
 % ---> are there options in roi variable
 
-if ischar(roi) && strfind(roi, '|')
+if ischar(roi) && ~isempty(strfind(roi, '|'))
     [roi, noptions] = strtok(roi, '|');
     roi = strip(roi);
     noptions = noptions(2:end);
@@ -430,7 +430,7 @@ function [img] = process_names(names_filename, mask, options, rcodes)
     
     % ---> process information from the .names file
 
-    [~, map_name, ~] = fileparts(names_filename);
+    [names_path, map_name, ~] = fileparts(names_filename);
 
     names_file   = fopen(names_filename);
     roi_filename = fgetl(names_file);
@@ -439,13 +439,16 @@ function [img] = process_names(names_filename, mask, options, rcodes)
         roi = [];
     else
         file_info = general_check_image_file(roi_filename);
+        if ~file_info.exists
+            file_info = general_check_image_file(fullfile(names_path, roi_filename));
+        end
 
         if file_info.is_image && file_info.exists
-            roi = nimage(roi_filename);
+            roi = nimage(file_info.filename);
         elseif ~file_info.is_image
-            error('\nERROR: The roi file [%s] specified in the .names file [%s] is not a valid image file!\n', roi_filename, names_filename);
+            error('\nERROR: The roi file [%s] specified in the .names file [%s] is not a valid image file!\n', file_info.filename, names_filename);
         elseif ~file_info.exists
-            error('\nERROR: The roi file [%s] specified in the .names file [%s] does not exist! Check your paths!\n', roi_filename, names_filename);
+            error('\nERROR: The roi file [%s] specified in the .names file [%s] does not exist! Check your paths!\n', file_info.filename, names_filename);
         end
     end
 
