@@ -604,13 +604,13 @@ for s = 1:list.nsessions
 
     nsets = length(exsets);
     for n = 1:nsets        
-        if verbose; fprintf('         ... set %s', exsets(n).title); end
+        if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
         % --> get the extracted timeseries
     
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
     
-        if verbose; fprintf(' ... extracted ts'); end
+        if verbose; fprintf('         ... extracted ts\n'); end
         
         % --> generate fc matrice
         
@@ -620,10 +620,9 @@ for s = 1:list.nsessions
             rs = ts.img_extract_roi(roiinfo, [], options.roimethod); 
         end
     
-        options
         fc = fc_compute(rs, [], fcmeasure, false, options);
         
-        if verbose; fprintf(' ... computed fc matrix'); end
+        if verbose; fprintf('         ... computed fc matrix\n'); end
     
         % ------> store 
         

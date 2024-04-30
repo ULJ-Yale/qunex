@@ -329,9 +329,9 @@ if verbose; fprintf('\nChecking ...\n'); end
 
 options.flist = flist;
 options.roiinfo = roiinfo;
-options.tfolder = tfolder;
+options.targetf = targetf;
 
-general_check_options(options, 'eventdata, roimethod, flist, roiinfo, tfolder', 'stop');
+general_check_options(options, 'eventdata, roimethod, flist, roiinfo, targetf', 'stop');
 
 
 % --- File saving related options
@@ -512,7 +512,7 @@ for s = 1:list.nsessions
 
     nsets = length(exsets);
     for n = 1:nsets        
-        if verbose; fprintf('         ... set %s', exsets(n).title); end
+        if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
         % --> get the extracted timeseries
     
@@ -524,7 +524,7 @@ for s = 1:list.nsessions
             ts = tsimg.img_extract_roi(roiinfo, [], options.roimethod); 
         end
 
-        if verbose; fprintf(' ... extracted ts'); end
+        if verbose; fprintf('         ... extracted ts\n'); end
 
         % ------> Embed results
         
@@ -536,7 +536,7 @@ for s = 1:list.nsessions
         tsmat(n).tevents  = tsimg.tevents;
         tsmat(n).tframes  = tsimg.tframes;
 
-        if verbose; fprintf(', embedded\n'); end
+        if verbose; fprintf('         ... embedded ts\n'); end
     end
     c = c + 1;
 
