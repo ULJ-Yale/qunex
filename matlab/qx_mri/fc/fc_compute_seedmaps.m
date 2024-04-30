@@ -443,7 +443,7 @@ printdebug = strcmp(options.debug, 'true');
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 fcmeasure = options.fcmeasure;
 
-if printdebug
+if verbose
     general_print_struct(options, 'fc_compute_seedmaps options used');
 end
 
@@ -497,7 +497,7 @@ if ismember({'all_joint'}, options.saveind)
     options.saveind = [options.saveind, 'jr', 'jfz', 'jz', 'jp'];
 end
 if ismember({'none'}, options.saveind)
-    options.saveind = [];
+    options.saveind = {};
 end
 
 if length(options.saveind) 
@@ -528,7 +528,7 @@ fprintf(' ... done.\n');
 %                                                The main loop ... go through all the sessions
 
 first_subject = true;
-oksub         = zeros(1, length(list.nsessions));
+oksub         = zeros(1, list.nsessions);
 embed_data    = nargout > 0 || ~isempty(options.savegroup);
 
 for s = 1:list.nsessions
@@ -622,13 +622,13 @@ for s = 1:list.nsessions
     nsets = length(exsets);
     for n = 1:nsets
 
-        if verbose; fprintf('         ... set %s', exsets(n).title); end
+        if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
         % --> get the extracted timeseries
 
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
 
-        if verbose; fprintf(' ... extracted ts'); end
+        if verbose; fprintf('         ... extracted ts\n'); end
         
         % --> generate seedmaps
 
@@ -637,7 +637,7 @@ for s = 1:list.nsessions
         fc.data = fc_compute(ts.data, rs, options.fcmeasure, false, options);
         % fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'), options);
 
-        if verbose; fprintf(' ... computed seedmap'); end
+        if verbose; fprintf('         ... computed seedmap\n'); end
 
         % ------> Embedd results (if group data is requested)
         
@@ -651,7 +651,7 @@ for s = 1:list.nsessions
             fcmaps(n).fc(s).(fcmeasure) = fc;
             fcmaps(n).fc(s).N = ts.frames;
                         
-            if verbose; fprintf(' ... embedded\n'); end
+            if verbose; fprintf('         ... embedded\n'); end
         end
 
         % ---> save individual results
