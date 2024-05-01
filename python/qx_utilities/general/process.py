@@ -901,7 +901,7 @@ arglist = [
         "Whether slices were acquired in an interleaved fashion (odd) or not (empty) NOTE: deprecated!",
     ],
     ["# --- hcp_diffusion options"],
-    ["hcp_dwi_echospacing", "", str, "Echo spacing in msec."],
+    ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],
     [
         "hcp_dwi_gdcoeffs",

@@ -43,7 +43,7 @@ Parameters:
         Comma separated list of sessions to run.
 
     --echospacing (str):
-        EPI Echo Spacing for data [in msec]; e.g. 0.69.
+        EPI Echo Spacing for data [in ms]; e.g. 0.69.
 
     --pedir (int):
         Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior.
@@ -318,7 +318,7 @@ main() {
     #############################
 
     # -- Parse all Parameters
-    echospacing="$echospacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
+    echospacing="$echospacing" #EPI Echo Spacing for data (in ms); e.g. 0.69
     pedir="$pedir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
     te="$te" #delta te in ms for field map or "NONE" if not used
     unwarpdir="$unwarpdir" # direction along which to unwarp

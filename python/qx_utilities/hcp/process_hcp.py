@@ -2391,8 +2391,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_dwi_echospacing (str, default detailed below):
-            Echo Spacing or Dwelltime of DWI images in msec. Default is
-            image specific.
+            Echo Spacing or Dwelltime of DWI images in s. Default is image
+            specific.
 
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence
@@ -2789,25 +2789,32 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "DWI"
             ][0]
 
+            echospacing = None
             if "EchoSpacing" in dwiinfo and checkInlineParameterUse(
                 "dMRI", "EchoSpacing", options
             ):
-                # echospacing converted to ms as expected by the HCP Pipelines
-                echospacing = dwiinfo["EchoSpacing"] * 1000.0
-                r += f"\n---> Using image specific EchoSpacing: {echospacing} ms"
-            else:
+                # echospacing read from image data
+                echospacing = dwiinfo["EchoSpacing"]
+                r += f"\n---> Using image specific EchoSpacing: {echospacing} s"
+
+                # check validity
+                echospacing, message = _check_dwi_echospacing(echospacing)
+                r += message
+
+            # if echospacing is none, set from parameter
+            if not echospacing and "hcp_dwi_echospacing" in options:
                 echospacing = options["hcp_dwi_echospacing"]
-                r += f"\n---> Using study general EchoSpacing: {echospacing} ms"
+                r += f"\n---> Using study general EchoSpacing: {echospacing} s"
+
+                # check validity
+                echospacing, message = _check_dwi_echospacing(echospacing)
+                r += message
 
             # -- check echospacing
+            echospacing_mili = float(echospacing) * 1000
             if not echospacing:
                 r += "\n---> ERROR: QuNex was unable to acquire echospacing from the data and the parameter is not set!"
                 run = False
-            elif float(echospacing) < 0.01 or float(echospacing) > 10:
-                r += f"\n---> ERROR: the value of echospacing in ms [{echospacing}] is way out of the expected range!"
-                run = False
-            elif float(echospacing) < 0.1 or float(echospacing) > 1:
-                r += f"\nWARNING: the value of echospacing in ms [{echospacing}] is out of the expected range, please check!"
 
         # --- build the command
         if run:
@@ -2818,7 +2825,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --PEdir=%(pe_dir)s \
                 --posData="%(pos_data)s" \
                 --negData="%(neg_data)s" \
-                --echospacing="%(echospacing)s" \
+                --echospacing-seconds="%(echospacing)s" \
                 --gdcoeffs="%(gdcoeffs)s" \
                 --dof="%(dof)s" \
                 --b0maxbval="%(b0maxbval)s" \
@@ -2986,6 +2993,48 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo["id"], report, failed))
+
+
+def _check_dwi_echospacing(echospacing):
+    """
+    Checks the echospacing parameter for the hcp_diffusion command.
+    """
+    echospacing = float(echospacing)
+
+    # convert to milis
+    echospacing_mili = float(echospacing) * 1000
+
+    # all good
+    if echospacing_mili > 0.1 and echospacing_mili < 1:
+        return (echospacing, "")
+
+    # maybe it was provided in miliseconds already
+    if echospacing > 0.1 and echospacing < 1:
+        echospacing = echospacing / 1000
+        return (
+            echospacing,
+            f"\nWARNING: the provided value of echospacing seems to be in ms, converted to s [{echospacing}]!",
+        )
+
+    # maybe OK?
+    if echospacing_mili > 0.01 and echospacing_mili < 10:
+        return (
+            echospacing,
+            f"\nWARNING: the value of echospacing in seconds [{echospacing}] is out of the expected range, please check!",
+        )
+
+    # maybe OK in ms?
+    if echospacing > 0.01 and echospacing < 10:
+        echospacing = echospacing / 1000
+        message = f"\nWARNING: the provided value of echospacing seems to be in ms, converted to s [{echospacing}]!"
+        message += f"\nWARNING: the value of echospacing in seconds [{echospacing}] is out of the expected range, please check!"
+        return (echospacing, message)
+
+    # not OK
+    return (
+        None,
+        f"\n---> ERROR: the value of echospacing in seconds [{echospacing}] is way out of the expected range!",
+    )
 
 
 def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
