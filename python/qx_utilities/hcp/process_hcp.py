@@ -2434,8 +2434,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             A full path to the topup configuration file to use.
 
         --hcp_dwi_dof (int, default 6):
-            Degrees of Freedom for post eddy registration to structural
-            images.
+            Degrees of Freedom for post eddy registration to structural images.
 
         --hcp_dwi_b0maxbval (int, default 50):
             Volumes with a bvalue smaller than this value will be
@@ -2827,8 +2826,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --negData="%(neg_data)s" \
                 --echospacing-seconds="%(echospacing)s" \
                 --gdcoeffs="%(gdcoeffs)s" \
-                --dof="%(dof)s" \
-                --b0maxbval="%(b0maxbval)s" \
                 --combine-data-flag="%(combinedataflag)s" \
                 --printcom="%(printcom)s"'
                 % {
@@ -2844,14 +2841,19 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     "echospacing": echospacing,
                     "pe_dir": pe_dir,
                     "gdcoeffs": gdcfile,
-                    "dof": options["hcp_dwi_dof"],
-                    "b0maxbval": options["hcp_dwi_b0maxbval"],
+
                     "combinedataflag": options["hcp_dwi_combinedata"],
                     "printcom": options["hcp_printcom"],
                 }
             )
 
             # -- Optional parameters
+            if options["hcp_dwi_b0maxbval"] is not None:
+                comm += "                --b0maxbval=" + options["hcp_dwi_b0maxbval"]
+
+            if options["hcp_dwi_dof"] is not None:
+                comm += "                --dof=" + options["hcp_dwi_dof"] 
+
             if options["hcp_dwi_extraeddyarg"] is not None:
                 eddyoptions = options["hcp_dwi_extraeddyarg"].split("|")
 
