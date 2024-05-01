@@ -912,13 +912,13 @@ arglist = [
     [
         "hcp_dwi_dof",
         "",
-        str,
+        isNone,
         "Degrees of Freedom for post eddy registration to structural images. Defaults to 6.",
     ],
     [
         "hcp_dwi_b0maxbval",
         "",
-        str,
+        isNone,
         "Volumes with a bvalue smaller than this value will be considered as b0s. Defaults to 50.",
     ],
     [
