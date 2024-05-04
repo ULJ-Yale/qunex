@@ -359,7 +359,7 @@ end
 
 if isa(roi, 'char')
 
-    if endsWith(roi, '.names')
+    if ends_with(roi, '.names')
         img = process_names(roi, mask, options, rcodes);
     else 
         file_info = general_check_image_file(roi);

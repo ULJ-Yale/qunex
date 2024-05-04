@@ -461,7 +461,7 @@ for s = 1:list.nsessions
 
     if strcmp(options.itargetf, 'sfolder')
         stargetf = fileparts(reference_file);
-        if endsWith(stargetf, '/concs')
+        if ends_with(stargetf, '/concs')
             stargetf = strrep(stargetf, '/concs', '');
         end
     else
