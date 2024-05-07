@@ -496,10 +496,6 @@ def import_bids(
                 --bidsname=swga
     """
 
-    print("!!!!!!!!!!!!!!!")
-    print(overwrite)
-    exit(1)
-
     print("Running import_bids\n==================")
 
     if action not in ["link", "copy", "move"]:
