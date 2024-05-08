@@ -3618,14 +3618,15 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "SiemensFieldmap",
             "PhilipsFieldMap",
             "GEHealthCareFieldMap",
-            "GEHealthCareLegacyFieldMap" "NONE",
+            "GEHealthCareLegacyFieldMap",
+            "NONE",
         ]:
-            r += "\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter!"
+            r += f"\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter {options['hcp_bold_dcmethod']}!"
             run = False
 
         if options["hcp_bold_biascorrection"] not in ["LEGACY", "SEBASED", "NONE"]:
             r += (
-                "\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter!"
+                f"\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter {options['hcp_bold_biascorrection']}!"
             )
             run = False
 
