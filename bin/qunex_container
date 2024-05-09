@@ -1165,10 +1165,6 @@ def main(args=None):
                     container_command += f"-B {bind} "
 
                 container_command += f"{container} bash {script_path}"
-                print("!!!!!!!!!!!!!!!!")
-                print(container_command)
-                print("!!!!!!!!!!!!!!!!")
-                sys.exit(1)
             else:
                 # docker options
                 if dockeropt is None:
