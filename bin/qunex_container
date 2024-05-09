@@ -720,11 +720,11 @@ def main(args=None):
     ::
 
         qunex_container hcp_freesurfer \\
-        --sessionsfolder=/data/study/sessions \\
-        --batchfile=/data/study/processing/batch.txt \\
-        --parsessions=4 \\
-        --container=/apptainer/qunex_suite-0_38_10.sif \\
-        --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=week"
+            --sessionsfolder=/data/study/sessions \\
+            --batchfile=/data/study/processing/batch.txt \\
+            --parsessions=4 \\
+            --container=/apptainer/qunex_suite-0_38_10.sif \\
+            --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=week"
     """
 
     if args is None:
@@ -747,7 +747,7 @@ def main(args=None):
 
     env_status = False
     scheduler = None
-    conimage = None
+    container = None
     command = ""
     bash_pre = None
     bash_post = None
@@ -879,7 +879,7 @@ def main(args=None):
 
         # docker
         else:
-            env_command = f'docker run {conimage} bash -c "/opt/qunex/env/qunex_container_env_status.sh"'
+            env_command = f'docker run {container} bash -c "/opt/qunex/env/qunex_container_env_status.sh"'
 
         # run
         subprocess.Popen(env_command, shell=True)
@@ -1147,11 +1147,11 @@ def main(args=None):
 
                 # cuda
                 if cuda:
-                    container_command += " --nvccli -u "
+                    container_command += "--nvccli -u "
 
                 # nv
                 if nv:
-                    container_command += " --nv "
+                    container_command += "--nv "
 
                 # bind cuda path if provided
                 if cuda_path:
@@ -1164,7 +1164,11 @@ def main(args=None):
                 if bind:
                     container_command += f"-B {bind} "
 
-                container_command += f"{conimage} bash {script_path}"
+                container_command += f"{container} bash {script_path}"
+                print("!!!!!!!!!!!!!!!!")
+                print(container_command)
+                print("!!!!!!!!!!!!!!!!")
+                sys.exit(1)
             else:
                 # docker options
                 if dockeropt is None:
@@ -1186,7 +1190,7 @@ def main(args=None):
                 if bind:
                     dockeropt += f" -v {bind}"
 
-                container_command = f"docker run {dockeropt.strip()} {conimage.strip()} bash {script_path.strip()}"
+                container_command = f"docker run {dockeropt.strip()} {container.strip()} bash {script_path.strip()}"
             if scheduler:
                 schedule(
                     command=container_command,
