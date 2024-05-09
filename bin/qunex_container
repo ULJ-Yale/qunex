@@ -258,7 +258,7 @@ def schedule(
                 raise CommandFailed(
                     "schedule",
                     "Folder does not exist",
-                    f"The specified folder for the '{k}' log file does not exist [{os.path.dirname(v)}]!",
+                    f"The specified folder for the {k} log file does not exist [{os.path.dirname(v)}]!",
                     "Please check your paths!",
                 )
             outputs[k] = v
@@ -319,9 +319,9 @@ def schedule(
         s_command += f"#PBS -N {jobname}\n"
 
         if outputs["stdout"] is not None:
-            s_command += f"#PBS -o {outputs["stdout"]}\n"
+            s_command += f"#PBS -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
-            s_command += f"#PBS -e {outputs["stderr"]}\n"
+            s_command += f"#PBS -e {outputs['stderr']}\n"
         if outputs["both"]:
             s_command += "#PBS -j oe\n"
         com = "qsub"
@@ -348,9 +348,9 @@ def schedule(
         s_command += f"#SBATCH --job-name={jobname}\n"
 
         if outputs["stdout"] is not None:
-            s_command += f"#SBATCH -o {outputs["stdout"]}\n"
+            s_command += f"#SBATCH -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
-            s_command += f"#SBATCH -e {outputs["stdout"]}\n"
+            s_command += f"#SBATCH -e {outputs['stdout']}\n"
         com = "sbatch"
 
     # run the scheduler
@@ -398,7 +398,9 @@ def get_sessionids_from_batch(filename, batchfilter=None):
     """
 
     if not os.path.exists(filename):
-        print("\n\n=====================================================\nERROR: Batch file does not exist [{filename}]")
+        print(
+            "\n\n=====================================================\nERROR: Batch file does not exist [{filename}]"
+        )
         raise ValueError(f"ERROR: Batch file not found: {filename}")
 
     s = open(filename, "r", encoding="UTF-8").read()
@@ -480,7 +482,9 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
             if os.path.isfile(sessions):
                 sessionids = get_sessionids_from_list(sessions)
             else:
-                raise ValueError(f"ERROR: The specified file is not found! [{batchfile}]!")
+                raise ValueError(
+                    f"ERROR: The specified file is not found! [{batchfile}]!"
+                )
         else:
             sessionids = [
                 e.strip() for e in re.split(r" +|,|\|", sessions.replace(" ", ""))
@@ -1061,9 +1065,7 @@ def main(args=None):
             print(f"    Using SLURM job array over sessions: {sessionids_array[0]}")
         else:
             for i in range(0, parjobs):
-                print(
-                    f"    Job #{i + 1} will run sessions: {sessionids_array[i]}"
-                )
+                print(f"    Job #{i + 1} will run sessions: {sessionids_array[i]}")
 
     # execute
     if parinfo is None:
@@ -1155,16 +1157,16 @@ def main(args=None):
                 if nv:
                     container_command += "--nv "
 
+                # bind
+                if bind:
+                    container_command += f"-B {bind} "
+
                 # bind cuda path if provided
                 if cuda_path:
                     if not bind:
                         container_command += f"-B {cuda_path}:/usr/local/cuda/ "
                     else:
                         container_command += f",{cuda_path}:/usr/local/cuda/ "
-
-                # bind
-                if bind:
-                    container_command += f"-B {bind} "
 
                 container_command += f"{container} bash {script_path}"
             else:
