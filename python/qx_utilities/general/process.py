@@ -788,7 +788,7 @@ arglist = [
     ],
     [
         "hcp_bold_dcmethod",
-        "NONE",
+        "TOPUP",
         str,
         "BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE.",
     ],
