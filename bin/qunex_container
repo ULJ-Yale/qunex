@@ -603,7 +603,8 @@ def main(args=None):
     --nocleanenv    By default QuNex will use the --cleanenv flag of
                     Singularity/Apptainer so your local environment setup will
                     not be propagated into the container. If you want to disable
-                    this functionality use this flag. The flag is not set by default.
+                    this functionality use this flag. The flag is not set by
+                    default.
     --cuda          Use in order to prepare the container for CUDA usage. This
                     flag is not set by default.
     --cuda_path     Can be used to bind a local CUDA version over the one in the
@@ -1128,7 +1129,7 @@ def main(args=None):
 
                 # bind home
                 homedir = os.path.expanduser("~")
-                container_command += f"-bind {homedir}:{homedir} "
+                container_command += f"--bind {homedir}:{homedir} "
 
                 # containeropt
                 if containeropt:
@@ -1162,12 +1163,12 @@ def main(args=None):
 
                 # bind
                 if bind:
-                    container_command += f"-B {bind} "
+                    container_command += f"--bind {bind} "
 
                 # bind cuda path if provided
                 if cuda_path:
                     if not bind:
-                        container_command += f"-B {cuda_path}:/usr/local/cuda/ "
+                        container_command += f"--bind {cuda_path}:/usr/local/cuda/ "
                     else:
                         container_command += f",{cuda_path}:/usr/local/cuda/ "
 

@@ -134,22 +134,13 @@ if [[ -e /opt/.container ]]; then
         # -- Set PATH
         export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
-        # -- Check for specific settings a user might want:
-
-        # --- This is a file that should reside in a user's home folder and it should contain the settings the user wants to make that are different from the defaults.
-        if [ -f ~/.qunex_container.rc ]; then
-            echo "--> sourcing  ~/.qunex_container.rc"
-            . ~/.qunex_container.rc
-        fi
-
         # --- This is an environmental variable that if set should hold a path to a bash script that contains the settings the user wants to make that are different from the defaults.
         if [[ ! -z "$QUNEXCONTAINERENV" ]]; then    
             echo "--> QUNEXCONTAINERENV set: sourcing $QUNEXCONTAINERENV"
             . $QUNEXCONTAINERENV
         fi
 
-        # --- Check for presence of set con_<VariableName>. If present <VariableName> is set to con_<VariableName>
-
+        # --- Check for presence of set con_<VariableName>. If present <VariableName> is set to value of con_<VariableName>
         for ENVVAR in $ENVVARIABLES
         do
             if [[ ! -z $(eval echo "\${con_$ENVVAR+x}") ]]; then
