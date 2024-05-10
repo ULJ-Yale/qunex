@@ -1507,6 +1507,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- General operational flags
     Overwrite=`get_parameters "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
+    if [[ -z ${Overwrite} ]]; then
+        Overwrite=`get_flags "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
+    fi
     PRINTCOM=`get_parameters "${setflag}printcom" $@`    # Option for printing the entire command
     Scheduler=`get_parameters "${setflag}scheduler" $@`  # Specify the type of scheduler to use
     Bash=`get_parameters "${setflag}bash" "$@"`          # Specify bash commands to run on the compute node

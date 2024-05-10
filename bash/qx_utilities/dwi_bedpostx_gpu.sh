@@ -328,10 +328,16 @@ main() {
     geho "--> Checking if bedpostx was completed on $session..."
     checkCompletion
     if [[ ${RunCompleted} == "yes" ]]; then
-    exit 0
+        echo ""
+        geho "--> bedpostx completed: ${bedpostx_folder}"
+        reho "--> bedpostx successfully completed"
+        echo ""
+        geho "------------------------- Successful completion of work --------------------------------"
+        echo ""
+        exit 0
     else
-    echo ""
-    reho "--> Prior bedpostx run not found or incomplete for $session. Setting up new run..."
+        echo ""
+        reho "--> Prior bedpostx run not found or incomplete for $session. Setting up new run..."
     fi
 
     # -- Set rician flag
