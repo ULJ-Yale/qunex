@@ -248,7 +248,11 @@ get_options() {
     fi
 
     # -- Check if Matrix 1 or 3 flag set
-    if [[ -z "$MatrixOne" ]]  && [[ -z "$MatrixThree" ]]; then reho "ERROR: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix3='yes']"; exit 1; fi
+    if [[ -z "$MatrixOne" ]]  && [[ -z "$MatrixThree" ]]; then
+        geho "WARNING: Matrix option missing, setting both omatrix1 and omatrix3 to yes!"
+        MatrixOne="yes"
+        MatrixThree="yes"
+    fi
     if [ -z "$MatrixOne" ]; then MatrixOne="no"; fi
     if [ -z "$MatrixThree" ]; then MatrixThree="no"; fi
     if [[ -z "$NSamplesMatrixOne" ]]; then NSamplesMatrixOne=10000; fi
