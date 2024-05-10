@@ -613,19 +613,14 @@ def main(args=None):
     --script        If a script is to be run against the Singularity/Apptainer
                     container rather than a single command, the path to the
                     script to be run is specified here. ['']
-    --dockeropt     A string that lists the additional options to be used when
-                    running the Docker container. If the parameter is ommited, 
-                    the content of `QUNEXDOCKEROPT` environment variable will
-                    be used. If neither is specified, the container will mount
-                    the current as `data` by specifying the following options::
-
-                        '-v "$(pwd)":/data'
-                    
-                    The parameters are to be specified in a string exactly as 
-                    they would be on a command line, e.g. to run in detached
-                    mode and mount a specific folder use::
+    --containeropt  A string that lists the additional options to be used when
+                    running the container. The parameters are to be specified in
+                    a string exactly as they would be on a command line, e.g.
+                    to run Docker in detached mode and mount a specific folder
+                    use::
 
                         "-d -v /host/directory:/container/directory"
+
     --scheduler     A string that specifies the details to use to submit the 
                     container job to a scheduling system. 
     --output        A string specifying where to redirect the standard output 
@@ -771,7 +766,7 @@ def main(args=None):
     sessions = None
     sessionsfolder = None
     sessionids = None
-    dockeropt = None
+    containeropt = ""
     output = None
     parinfo = None
     overwrite = None
@@ -783,8 +778,8 @@ def main(args=None):
             k, scheduler = arg.split("=", 1)
         elif "container=" in arg:
             k, container = arg.split("=", 1)
-        elif "dockeropt=" in arg:
-            k, dockeropt = arg.split("=", 1)
+        elif "containeropt=" in arg:
+            k, containeropt = arg.split("=", 1)
         elif "output=" in arg:
             k, output = arg.split("=", 1)
         elif "bash_pre=" in arg:
@@ -1131,6 +1126,14 @@ def main(args=None):
             if apptainer:
                 container_command += "singularity exec "
 
+                # bind home
+                homedir = os.path.expanduser("~")
+                container_command += f"-bind {homedir}:{homedir} "
+
+                # containeropt
+                if containeropt:
+                    container_command += containeropt + " "
+
                 # no clean env
                 if nocleanenv is None:
                     container_command += "--cleanenv "
@@ -1146,7 +1149,7 @@ def main(args=None):
                         container_command += ",".join(
                             [f"{p}=${{p}}" for p in slurm_array_params]
                         )
-                        # replace trailing comma with space
+                        # add trailing space
                         container_command += " "
 
                 # cuda
@@ -1168,29 +1171,31 @@ def main(args=None):
                     else:
                         container_command += f",{cuda_path}:/usr/local/cuda/ "
 
-                container_command += f"{container} bash {script_path}"
+                container_command += f"{container.strip()} bash {script_path.strip()}"
             else:
-                # docker options
-                if dockeropt is None:
-                    dockeropt = ""
+                container_command += "docker run "
 
                 # bind home
                 homedir = os.path.expanduser("~")
-                dockeropt += f" -v {homedir}:{homedir}"
+                container_command += f"-v {homedir}:{homedir} "
+
+                # containeropt
+                if containeropt:
+                    container_command += containeropt + " "
 
                 # cuda
                 if cuda:
-                    dockeropt += " --gpus all"
+                    container_command += "--gpus all "
 
                 # bind cuda path if provided
                 if cuda_path:
-                    dockeropt += f" -v {cuda_path}:/usr/local/cuda/"
+                    container_command += f"-v {cuda_path}:/usr/local/cuda "
 
                 # bind
                 if bind:
-                    dockeropt += f" -v {bind}"
+                    container_command += f"-v {bind} "
 
-                container_command = f"docker run {dockeropt.strip()} {container.strip()} bash {script_path.strip()}"
+                container_command += f"{container.strip()} bash {script_path.strip()}"
             if scheduler:
                 schedule(
                     command=container_command,
