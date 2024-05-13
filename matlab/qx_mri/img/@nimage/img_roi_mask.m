@@ -45,7 +45,7 @@ if ~isa(roi, 'numeric') & ~isa(roi, 'logical')
     roi = find(ismember(img.roi.roinames, roi));
 end
 
-% ----> Do the deed
+% ---> Do the deed
 
 if multiframe
     mask = sum(img.data(:,roi),2) > 0;

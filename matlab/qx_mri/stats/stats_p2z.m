@@ -37,7 +37,7 @@ if nargin < 3 || isempty(tail), tail = 'two'; end
 if nargin < 2 out = ''; end
 
 % ======================================================
-%     ----> read files
+%     ---> read files
 
 if ~isobject(img)
     img = nimage(img);
@@ -45,13 +45,13 @@ end
 
 
 % ======================================================
-%     ----> adjust small p values to not trigger inf
+%     ---> adjust small p values to not trigger inf
 
 img.data(abs(img.data) < 0.0000001) = sign(img.data(abs(img.data) < 0.0000001)) .* 0.0000001;
 
 
 % ======================================================
-%     ----> convert
+%     ---> convert
 
 if strcmp(tail, 'two')
     img.data = norminv((1-(img.data/2)), 0, 1);    
@@ -62,7 +62,7 @@ end
 
 
 % ======================================================
-%     ----> save results
+%     ---> save results
 
 if ~isempty(out)
     img.img_saveimage(out);

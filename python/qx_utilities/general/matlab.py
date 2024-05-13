@@ -167,4 +167,4 @@ def run(command, args):
     if ret:
         print("\n\nERROR: %s failed! Please check output / log!\n" % (command))
     else:
-        print("\n\n===> Successful completion of task\n")
+        print("\n\n---> Successful completion of task\n")

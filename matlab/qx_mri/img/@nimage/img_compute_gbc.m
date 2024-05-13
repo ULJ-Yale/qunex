@@ -332,12 +332,12 @@ for n = 1:nsteps+1
 
         switch tcommand
 
-            % -----> compute mFz
+            % ---> compute mFz
 
             case 'mFz'
                 results(fstart:fend,toffset) = sum(r,1)./evoxels;
 
-            % -----> compute aFz
+            % ---> compute aFz
 
             case 'aFz'
                 if tparameter == 0
@@ -346,35 +346,35 @@ for n = 1:nsteps+1
                     results(fstart:fend,toffset) = rmean(aFz, (aFz > tparameter), 1);
                 end
 
-            % -----> compute pFz
+            % ---> compute pFz
 
             case 'pFz'
                 results(fstart:fend,toffset) = rmean(r, r >= tparameter, 1);
 
 
-            % -----> compute pFz
+            % ---> compute pFz
 
             case 'nFz'
                 results(fstart:fend,toffset) = rmean(r, r <= tparameter, 1);
 
-            % -----> compute pD
+            % ---> compute pD
 
             case 'pD'
                 results(fstart:fend,toffset) = sum(r >= tparameter, 1)./evoxels;
 
 
-            % -----> compute nD
+            % ---> compute nD
 
             case 'nD'
                 results(fstart:fend,toffset) = sum(r <= tparameter, 1)./evoxels;
 
-            % -----> compute aD
+            % ---> compute aD
 
             case 'aD'
                 results(fstart:fend,toffset) = sum(aFz >= tparameter, 1)./evoxels;
 
 
-            % -----> compute over prange
+            % ---> compute over prange
 
             case {'mFzp', 'aFzp'}
 
@@ -397,7 +397,7 @@ for n = 1:nsteps+1
                     end
                 end
 
-            % -----> compute over srange
+            % ---> compute over srange
 
             case {'mFzs', 'nFzs', 'pFzs'}
 

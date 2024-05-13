@@ -52,7 +52,7 @@ function [img] = img_embed_meta(img, data, code, name, verbose)
 if nargin < 5 || isempty(verbose), verbose = false; end
 if nargin < 4,                     name = []; end
 if nargin < 3 || isempty(code),    code = 64; end
-if nargin < 2, error('\n==> ERROR: Missing data to be embedded!'); end
+if nargin < 2, error('\n---> ERROR: Missing data to be embedded!'); end
 
 if ~isempty(name)
     data = ['# meta: ' name char(10) data];

@@ -105,19 +105,19 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
     # check for folders
     if not os.path.exists(os.path.join(sessionsfolder, 'inbox', 'bruker')):
         os.makedirs(os.path.join(sessionsfolder, 'inbox', 'bruker'))
-        print('--> creating inbox bruker folder')
+        print('---> creating inbox bruker folder')
 
     # archive
     archive_dir = os.path.join(sessionsfolder, 'archive', 'bruker')
     if not os.path.exists(os.path.join(sessionsfolder, 'archive', 'bruker')):
         os.makedirs(archive_dir)
-        print('--> creating archive bruker folder')
+        print('---> creating archive bruker folder')
 
     # identification of files
     if sessions:
         sessions = [e.strip() for e in re.split(r' +|\| *|, *', sessions)]
 
-    print('--> identifying files in %s' % (inbox))
+    print('---> identifying files in %s' % (inbox))
 
     # prepare calls
     calls = []
@@ -141,7 +141,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
 
             # onboard
             if onboard:
-                print(f'\n--> importing {d}')
+                print(f'\n---> importing {d}')
 
                 # target path
                 target_path = os.path.join(sessionsfolder, 'inbox', 'MR', d)
@@ -168,7 +168,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
                 dirs.append(dir_dict)
 
     # execute
-    print('\n--> running conversions')
+    print('\n---> running conversions')
     done = gc.runExternalParallel(calls, cores=parelements, prepend=' ... ')
 
     # archive
@@ -182,7 +182,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
         elif archive != 'leave':
             source_path =  dirs[i]['source']
 
-            print(f'--> archiving {session}')
+            print(f'---> archiving {session}')
             if archive == 'move':
                 print('... moving dataset to archive')
                 shutil.move(source_path, archive_dir)

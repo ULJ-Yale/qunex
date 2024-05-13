@@ -234,6 +234,6 @@ if ~isempty(strfind(tformat, 'mat'))
     save([outf '.mat'], 'data');
 end
 
-if verbose, fprintf('\n===> DONE\n'); end
+if verbose, fprintf('\n---> DONE\n'); end
 
 

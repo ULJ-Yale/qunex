@@ -61,7 +61,7 @@ if nvox == 0
 end
 
 %------- Interpolate?
-if verbose, fprintf('\n===> Temporal filtering (15/10/22)'); end
+if verbose, fprintf('\n---> Temporal filtering (15/10/22)'); end
 if verbose, fprintf('\n---> triming: %d on start, %d on end', ffirst-1, img.frames-flast); end
 if verbose, fprintf('\n---> remaining bad frames: %d, action: %s', sum(use==0), ignore); end
 

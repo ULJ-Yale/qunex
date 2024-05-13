@@ -362,4 +362,4 @@ elseif strcmpi(img.imageformat, 'NIFTI')
     peak = [];
 end
 
-if verbose, fprintf('\nMAIN FIND PEAKS===> DONE\n'); end
+if verbose, fprintf('\nMAIN FIND PEAKS---> DONE\n'); end

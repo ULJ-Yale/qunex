@@ -128,16 +128,16 @@ def mapToQUNEXBids(
     else:
         session = "bids"
 
-    # --> session marked to skip
+    # ---> session marked to skip
     if session in sessionsList["skip"]:
         return False, False
 
-    # --> processing a new session
+    # ---> processing a new session
     elif session not in sessionsList["list"]:
 
         sessionsList["list"].append(session)
 
-        # --> processing study level data
+        # ---> processing study level data
         if session == "bids":
             io = fl.makedirs(bidsfolder)
             if io and io != "File exists":
@@ -154,19 +154,19 @@ def mapToQUNEXBids(
                 % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")),
             )
 
-            # --> status created
+            # ---> status created
             if io is None:
-                print(prefix + "--> processing BIDS info folder")
+                print(prefix + "---> processing BIDS info folder")
                 sessionsList["bids"] = "open"
 
-            # --> status exists
+            # ---> status exists
             elif io == "File exists" and not (overwrite == "yes" or overwrite is True):
-                print(prefix + "--> skipping processing of BIDS info folder")
+                print(prefix + "---> skipping processing of BIDS info folder")
                 sessionsList["skip"].append("bids")
                 sessionsList["bids"] = "locked"
                 return False, False
 
-            # --> an error
+            # ---> an error
             elif io != "File exists":
                 raise ge.CommandFailed(
                     "import_bids",
@@ -176,12 +176,12 @@ def mapToQUNEXBids(
                     "Please check paths and permissions!",
                 )
 
-        # --> session folder exists
+        # ---> session folder exists
         elif os.path.exists(folder):
             if overwrite == "yes" or overwrite is True:
                 print(
                     prefix
-                    + "--> bids for session %s already exists: cleaning session"
+                    + "---> bids for session %s already exists: cleaning session"
                     % (session)
                 )
                 shutil.rmtree(folder)
@@ -189,7 +189,7 @@ def mapToQUNEXBids(
             elif not os.path.exists(os.path.join(folder, "bids2nii.log")):
                 print(
                     prefix
-                    + "--> incomplete bids for session %s already exists: cleaning session"
+                    + "---> incomplete bids for session %s already exists: cleaning session"
                     % (session)
                 )
                 shutil.rmtree(folder)
@@ -198,7 +198,7 @@ def mapToQUNEXBids(
                 sessionsList["skip"].append(session)
                 print(
                     prefix
-                    + "--> bids for session %s already exists: skipping session"
+                    + "---> bids for session %s already exists: skipping session"
                     % (session)
                 )
                 print(prefix + "    files previously mapped:")
@@ -213,12 +213,12 @@ def mapToQUNEXBids(
                             )
                 return False, False
 
-        # --> session folder does not exist and is not 'bids'
+        # ---> session folder does not exist and is not 'bids'
         else:
-            print(prefix + "--> creating bids session %s" % (session))
+            print(prefix + "---> creating bids session %s" % (session))
             sessionsList["map"].append(session)
 
-    # --> compile target filename
+    # ---> compile target filename
     if isoptional:
         oparts = file.split(os.sep)
         fparts = [folder] + oparts[oparts.index(optional) :]
@@ -226,7 +226,7 @@ def mapToQUNEXBids(
     else:
         tfile = os.path.join(folder, optional, modality, os.path.basename(file))
 
-    # --> check folder
+    # ---> check folder
     io = fl.makedirs(os.path.dirname(tfile))
 
     if io and io != "File exists":
@@ -237,7 +237,7 @@ def mapToQUNEXBids(
             "Please check paths and permissions!",
         )
 
-    # --> return file and locking info
+    # ---> return file and locking info
     return tfile, session == "bids"
 
 
@@ -556,7 +556,7 @@ def import_bids(
     if not os.path.exists(bidsinbox):
         io = fl.makedirs(bidsinbox)
         if not io:
-            print("--> created inbox BIDS folder")
+            print("---> created inbox BIDS folder")
         elif io != "File exists":
             raise ge.CommandFailed(
                 "import_bids",
@@ -569,7 +569,7 @@ def import_bids(
     if not os.path.exists(bidsarchive):
         io = fl.makedirs(bidsarchive)
         if not io:
-            print("--> created BIDS archive folder")
+            print("---> created BIDS archive folder")
         elif io != "File exists":
             raise ge.CommandFailed(
                 "import_bids",
@@ -596,7 +596,7 @@ def import_bids(
     bids = ast.literal_eval(content)
 
     # ---> identification of files
-    print("--> identifying files in %s" % (inbox))
+    print("---> identifying files in %s" % (inbox))
 
     sourceFiles = []
     processAll = True
@@ -624,7 +624,7 @@ def import_bids(
             else:
                 folderType = "inbox"
 
-            print("--> Inbox type:", folderType)
+            print("---> Inbox type:", folderType)
 
             # -- process sessions
             globfor = {
@@ -745,16 +745,16 @@ def import_bids(
     else:
         bidsinfo = os.path.join(qxfolders["basefolder"], "info", "bids", bidsname)
 
-    print("==> Paths:")
+    print("---> Paths:")
     print("    bidsinfo    ->", bidsinfo)
     print("    bidsinbox   ->", bidsinbox)
     print("    bidsarchive ->", bidsarchive)
 
     # ---> mapping data to sessions' folders
-    print("--> mapping files to QuNex bids folders")
+    print("---> mapping files to QuNex bids folders")
     for file in sourceFiles:
         if file.endswith(".zip"):
-            print("    --> processing zip package [%s]" % (file))
+            print("    ---> processing zip package [%s]" % (file))
 
             try:
                 z = zipfile.ZipFile(file, "r")
@@ -792,7 +792,7 @@ def import_bids(
                 raise
 
         elif ".tar" in file or ".tgz" in file:
-            print("   --> processing tar package [%s]" % (file))
+            print("   ---> processing tar package [%s]" % (file))
 
             try:
                 tar = tarfile.open(file)
@@ -861,12 +861,12 @@ def import_bids(
 
     # ---> archiving the dataset
     if errors:
-        print("   ==> The following errors were encountered when mapping the files:")
+        print("   ---> The following errors were encountered when mapping the files:")
         print(errors)
     else:
         archiveList = []
 
-        # --> review what to archive
+        # ---> review what to archive
         # -> we're archiving a file
         if os.path.isfile(inbox):
             archiveList = [inbox]
@@ -887,9 +887,9 @@ def import_bids(
         else:
             archiveList = candidates
 
-        # --> archive
+        # ---> archive
         if archive in ["move", "copy", "delete"]:
-            print("--> Archiving: %sing items" % (archive.replace("y", "yy")[:-1]))
+            print("---> Archiving: %sing items" % (archive.replace("y", "yy")[:-1]))
 
         # -> prepare target folder
         if archive in ["move", "copy"]:
@@ -933,9 +933,9 @@ def import_bids(
                 archiveTarget = os.path.join(archiveFolder, targetItem)
                 archiveTargetFolder = os.path.dirname(archiveTarget)
 
-                # print("==> Archive folder:", archiveFolder)
-                # print("==> Archive item:", targetItem)
-                # print("==> Archive target:", archiveTarget)
+                # print("---> Archive folder:", archiveFolder)
+                # print("---> Archive item:", targetItem)
+                # print("---> Archive target:", archiveTarget)
 
                 io = fl.makedirs(archiveTargetFolder)
                 if io and io != "File exists":
@@ -971,15 +971,15 @@ def import_bids(
         )
         if BIDSInfoStatus != "done":
             print(
-                "===> WARNING: Status of behavioral files is unknown! Please check the data!"
+                "---> WARNING: Status of behavioral files is unknown! Please check the data!"
             )
 
-    # --> get a list of behavioral data:
+    # ---> get a list of behavioral data:
     behavior = []
     behavior += glob.glob(os.path.join(bidsinfo, "participants.tsv"))
     behavior += glob.glob(os.path.join(bidsinfo, "phenotype/*.tsv"))
 
-    # --> run the mapping
+    # ---> run the mapping
     report = []
     for execute in ["map", "clean"]:
         for session in sessionsList[execute]:
@@ -1002,7 +1002,7 @@ def import_bids(
                     )
                     nmapping = True
                 except ge.CommandFailed as e:
-                    print("===> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                    print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
                     nmapping = False
 
                 # -- do behavioral mapping
@@ -1011,7 +1011,7 @@ def import_bids(
                         os.path.join(sessionsfolder, session), behavior, overwrite
                     )
                 except ge.CommandFailed as e:
-                    print("===> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                    print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
                     bmapping = False
 
                 # -- compile report
@@ -1094,12 +1094,12 @@ def processBIDS(bfolder):
     for sfile in sourceFiles:
         parts = re.split(r"_|/|\.", sfile)
 
-        # --> is it optional content
+        # ---> is it optional content
         optional = [e for e in parts if e in bids["optional"]]
         if optional:
             optional = optional[0]
 
-        # --> get session ID
+        # ---> get session ID
         subject = [e.split("-")[1] for e in parts if e.startswith("sub-")] + [""]
         session = [e.split("-")[1] for e in parts if e.startswith("ses-")] + [""]
         session = "_".join([e for e in [subject[0], session[0]] if e])
@@ -1109,7 +1109,7 @@ def processBIDS(bfolder):
         if session not in bidsData:
             bidsData[session] = {}
 
-        # --> get and process .json file
+        # ---> get and process .json file
         sidecar, sideinfo = None, None
         filename = os.path.basename(sfile)
         filedir = os.path.dirname(sfile)
@@ -1120,7 +1120,7 @@ def processBIDS(bfolder):
                 with open(sidecar) as json_file:
                     sideinfo = json.load(json_file)
 
-        # --> get modality
+        # ---> get modality
         modality = [e for e in parts if e in bids["modalities"]]
         if modality:
             modality = modality[0]
@@ -1160,10 +1160,10 @@ def processBIDS(bfolder):
                 "json_info": sideinfo,
             }
 
-    # --> sort within modalities
+    # ---> sort within modalities
     _sort_bids_images(bidsData, bids)
 
-    # --> prepare and sort images
+    # ---> prepare and sort images
     for session in bidsData:
         bidsData[session]["images"] = {"list": [], "info": {}}
         imgn = 0
@@ -1187,18 +1187,18 @@ def processBIDS(bfolder):
                             element["filename"]
                         ] = element
 
-    # --> process fieldmap matching
+    # ---> process fieldmap matching
     for session in bidsData:
         for element in bidsData[session].get("fmap", []):
             if ".nii" in element["filename"]:
 
-                # --> is fieldmap a spin-echo type or a "regular" fieldmap?
+                # ---> is fieldmap a spin-echo type or a "regular" fieldmap?
                 if element["label"] == "epi":
                     fmtype = "se"
                 else:
                     fmtype = "fm"
 
-                # --> is there a run information or is there just a single fieldmap
+                # ---> is there a run information or is there just a single fieldmap
                 if element["run"] is None:
                     fmindex = 1
                 else:
@@ -1206,7 +1206,7 @@ def processBIDS(bfolder):
 
                 tag = f"{fmtype}({fmindex})"
 
-                # --> add a tag to the fieldmap image
+                # ---> add a tag to the fieldmap image
                 bidsData[session]["images"]["info"][element["filename"]]["seq_info"] = (
                     bidsData[session]["images"]["info"][element["filename"]].get(
                         "seq_info", []
@@ -1503,7 +1503,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
             else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
-                print("--> cleaned nii folder, removed existing files")
+                print("---> cleaned nii folder, removed existing files")
     else:
         os.makedirs(nfolder)
 
@@ -1543,16 +1543,16 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
             )
         if status:
             print(
-                "--> linked %d.nii.gz <-- %s"
+                "---> linked %d.nii.gz <-- %s"
                 % (imgn, bidsData["images"]["info"][image]["filename"])
             )
 
-            # --> check if there is sequence info present
+            # ---> check if there is sequence info present
             seq_info = ":".join(bidsData["images"]["info"][image].get("seq_info", []))
             if seq_info:
                 seq_info = ":" + seq_info
 
-            # --> check if there is json info present
+            # ---> check if there is json info present
             json_info = []
             json_data = bidsData["images"]["info"][image].get("json_info", None)
             if json_data and sequenceinfo:
@@ -1569,7 +1569,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
             else:
                 json_info = ""
 
-            # --> compile file information
+            # ---> compile file information
             if fileinfo == "short":
                 file_info = bidsData["images"]["info"][image]["tag"]
             elif fileinfo == "full":
@@ -1580,7 +1580,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
                     .replace("ses-%s_" % (sessionid), "")
                 )
 
-            # --> print info to session.txt
+            # ---> print info to session.txt
             print(f"{imgn}: {file_info} {seq_info} {json_info}", file=sout)
 
             print(
@@ -1590,7 +1590,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
         else:
             allOk = False
             print(
-                "==> ERROR: Linking failed: %d.nii.gz <-- %s"
+                "---> ERROR: Linking failed: %d.nii.gz <-- %s"
                 % (imgn, bidsData["images"]["info"][image]["filename"])
             )
             print(
@@ -1621,7 +1621,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
 
             if not status:
                 print(
-                    "==> WARNING: bval/bvec files were not found and were not mapped for %d.nii.gz [%s]!"
+                    "---> WARNING: bval/bvec files were not found and were not mapped for %d.nii.gz [%s]!"
                     % (
                         imgn,
                         bidsData["images"]["info"][image]["filename"].replace(
@@ -1631,7 +1631,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
                     file=bout,
                 )
                 print(
-                    "==> ERROR: bval/bvec files were not found and were not mapped: %d.bval/.bvec <-- %s"
+                    "---> ERROR: bval/bvec files were not found and were not mapped: %d.bval/.bvec <-- %s"
                     % (
                         imgn,
                         bidsData["images"]["info"][image]["filename"].replace(
@@ -1682,7 +1682,7 @@ def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
 
     subjectid = "sub-" + subject
     if not os.path.exists(bfolder):
-        print("--> created behavior subfolder")
+        print("---> created behavior subfolder")
         os.makedirs(bfolder)
 
     for bfile in behavior:
@@ -1711,17 +1711,17 @@ def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
             with open(os.path.join(bfolder, bfilename), "w") as ofile:
                 for oline in outlines:
                     print(oline, file=ofile)
-            print("--> mapped:", bfilename)
+            print("---> mapped:", bfilename)
             report["mapped"].append(bfilename)
         elif len(outlines) < 2:
             print(
-                "==> WARNING: Could not map %s! %s Please inspect file for validity!"
+                "---> WARNING: Could not map %s! %s Please inspect file for validity!"
                 % (bfilename, error)
             )
             report["invalid"].append(bfilename)
         else:
             print(
-                "==> WARNING: Could not map %s! More than one line matching %s! Please inspect file for validity!"
+                "---> WARNING: Could not map %s! More than one line matching %s! Please inspect file for validity!"
                 % (bfilename, subjectid)
             )
             report["invalid"].append(bfilename)

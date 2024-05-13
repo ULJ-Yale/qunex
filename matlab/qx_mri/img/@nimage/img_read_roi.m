@@ -144,7 +144,7 @@ if ~any(strcmpi({'ignore','warning','error'}, check))
     error('\nERROR: Option [%s] for check argument is invalid! Valid options are ''ignore'', ''warning'' and ''error''.\n', check);
 end
 
-% ----> Read the ROI info
+% ---> Read the ROI info
 
 if isempty(strfind(roiinfo, '.names'))
     img = nimage(roiinfo);
@@ -195,7 +195,7 @@ end
 nroi = c;
 fclose(rois);
 
-% ----> Read the first ROI file
+% ---> Read the first ROI file
 
 if strcmp('none', roif1) || isempty(roif1)
     roi1 = [];
@@ -207,7 +207,7 @@ else
     roi1.data = roi1.image2D;
 end
 
-% ----> Read the second ROI file if needed
+% ---> Read the second ROI file if needed
 
 if ~isa(roi2, 'nimage') & ~isempty(roi2)
     roi2 = nimage(roi2);
@@ -223,7 +223,7 @@ else
 end
 
 
-% ----> Set up final ROI image
+% ---> Set up final ROI image
 
 if isempty(roi2)
     img = roi1.zeroframes(nroi);
@@ -263,7 +263,7 @@ if isa(roi2, 'nimage')
     end
 end
 
-% ----> Process ROI
+% ---> Process ROI
 
 for n = 1:nroi
     
@@ -282,14 +282,14 @@ for n = 1:nroi
     
 end
 
-% ----> Collapse to a single volume when there is no overlap between ROI
+% ---> Collapse to a single volume when there is no overlap between ROI
 
 if max(sum(img.data > 0, 2)) == 1
     img.data   = sum(img.data, 2);
     img.frames = 1;
 end
 
-% ----> Encode metadata
+% ---> Encode metadata
 
 img.roi.roinames  = roinames;
 img.roi.roicodes  = [1:nroi];

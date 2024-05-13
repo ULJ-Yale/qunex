@@ -617,7 +617,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         log_prefix = "error"
     elif not overwrite and final_log == "":
         final_log = "Previous results present, overwrite set to no.\n\n"
-        final_log = final_log + "===> Successful completion of task"
+        final_log = final_log + "---> Successful completion of task"
 
     # print to log file
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -979,7 +979,7 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
 
         # --- check
         if not status:
-            r += "\n--> ERROR: Files missing, skipping this bold run!"
+            r += "\n---> ERROR: Files missing, skipping this bold run!"
             report["boldmissing"] += 1
             return {"r": r, "report": report}
 
@@ -1406,7 +1406,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                     procbolds.append(boldnum)
                     preport["boldok"] += 1
                 else:
-                    r += "\n--> ERROR: Files missing, skipping this bold run!"
+                    r += "\n---> ERROR: Files missing, skipping this bold run!"
                     preport["boldmissing"] += 1
 
             except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -1902,7 +1902,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
 
         # --- check
         if not status:
-            r += "\n--> ERROR: Files missing, skipping this bold run!"
+            r += "\n---> ERROR: Files missing, skipping this bold run!"
             report["boldmissing"] += 1
             return {"r": r, "report": report}
 
@@ -2633,7 +2633,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
         # --- check
         if not status:
-            r += "\n--> ERROR: Files missing, skipping this bold run!"
+            r += "\n---> ERROR: Files missing, skipping this bold run!"
             report["not ready"].append(boldnum)
             return {"r": r, "report": report}
         else:
@@ -2725,7 +2725,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
                 r, status = pc.checkForFile(
                     r,
                     f["bold_final"],
-                    "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n"
+                    "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> %s\n"
                     % (mcomm),
                 )
                 if status:
@@ -3530,7 +3530,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
                     # --- check
                     if not status:
-                        r += "\n--> ERROR: Files missing!"
+                        r += "\n---> ERROR: Files missing!"
                         rstatus = False
                         check["bad"].append(boldnum)
                     else:
@@ -3653,7 +3653,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     r, status = pc.checkForFile(
                         r,
                         done,
-                        "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n"
+                        "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> %s\n"
                         % (mcomm),
                     )
                     if os.path.exists(done):

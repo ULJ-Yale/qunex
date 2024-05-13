@@ -693,7 +693,7 @@ def runCommand(command, args):
             else:
                 bargs["eargs"] = eargs
                 gcom.commands[command]["com"](**bargs)
-                print("\n===> Successful completion of task")
+                print("\n---> Successful completion of task")
 
     # -- all other commands
     else:
@@ -795,13 +795,13 @@ def runCommand(command, args):
         print(callInfo)
 
         print(
-            "\n===> Running %s through %d sessions in parallel" % (command, parsessions)
+            "\n---> Running %s through %d sessions in parallel" % (command, parsessions)
         )
 
         results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
-        print("\n===> Final report for command", command)
+        print("\n---> Final report for command", command)
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
             if result:
@@ -810,7 +810,7 @@ def runCommand(command, args):
                 result = "completed"
             print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
         if ok:
-            print("\n===> Successful completion of task")
+            print("\n---> Successful completion of task")
 
 
 def print_help(com):
@@ -889,7 +889,7 @@ def print_help(com):
     # --- print error
     else:
         print(
-            "\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n"
+            "\nERROR: %s ---> Requested command is not supported. Refer to general QuNex usage.\n"
             % com
         )
 

@@ -152,7 +152,7 @@ if nargin < 7 || isempty(ignore),  ignore  = 'no';   end
 if nargin < 6 || isempty(method),  method  = 'mean'; end
 if nargin < 5 || isempty(options), options = 'm';    end
 
-verbose = true;  % --> to be set by options in the future
+verbose = true;  % ---> to be set by options in the future
 
 if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');

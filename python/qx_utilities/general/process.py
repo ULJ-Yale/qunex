@@ -2065,7 +2065,7 @@ def run(command, args):
                     "Invalid parameter value!",
                     "Parameter `%s` is specified but is set to an invalid value:"
                     % (line[0]),
-                    "--> %s=%s" % (line[0], str(options[line[0]])),
+                    "---> %s=%s" % (line[0], str(options[line[0]])),
                     "Please check acceptable inputs for %s!" % (line[0]),
                 )
 
@@ -2359,8 +2359,8 @@ def run(command, args):
         for e in log:
             print(e, file=f)
 
-        print("\n\n===> Final report for command", options["command_ran"])
-        print("\n\n===> Final report for command", options["command_ran"], file=f)
+        print("\n\n---> Final report for command", options["command_ran"])
+        print("\n\n---> Final report for command", options["command_ran"], file=f)
         failedTotal = 0
 
         for sid, report, failed in stati:
@@ -2373,14 +2373,14 @@ def run(command, args):
                     if failedTotal is not None:
                         failedTotal += failed
         if failedTotal is None:
-            print("===> Success status not reported for some or all tasks")
-            print("===> Success status not reported for some or all tasks", file=f)
+            print("---> Success status not reported for some or all tasks")
+            print("---> Success status not reported for some or all tasks", file=f)
         elif failedTotal > 0:
-            print("===> Not all tasks completed fully!")
-            print("===> Not all tasks completed fully!", file=f)
+            print("---> Not all tasks completed fully!")
+            print("---> Not all tasks completed fully!", file=f)
         else:
-            print("===> Successful completion of all tasks")
-            print("===> Successful completion of all tasks", file=f)
+            print("---> Successful completion of all tasks")
+            print("---> Successful completion of all tasks", file=f)
 
         f.close()
 

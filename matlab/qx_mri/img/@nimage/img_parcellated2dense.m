@@ -28,11 +28,11 @@ function [img] = img_parcellated2dense(img, defineMissing)
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-% --> process variables
+% ---> process variables
 
 if nargin < 2 || isempty(defineMissing),  defineMissing = 0; end
 
-% --> load cifti templates
+% ---> load cifti templates
 load('cifti_templates.mat');
 
 % the new cifti_brainmodel should replace the old one in QuNex

@@ -138,7 +138,7 @@ for n = 1:list.nsessions
     general_plot_bold_timeseries(imgfiles, elements, maskfiles, tfile, skip, list.session(n).id, false);
 end
 
-if verbose, fprintf('\n ===> DONE\n'); end
+if verbose, fprintf('\n ---> DONE\n'); end
 
 function [s] = strjoin(c, d)
     s = [];

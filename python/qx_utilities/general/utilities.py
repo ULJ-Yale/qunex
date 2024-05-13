@@ -154,7 +154,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
         if verbose:
             print("\nPreparing template files:")
 
-        # --> parameter template
+        # ---> parameter template
         paramFile = os.path.join(
             studyfolder, "sessions", "specs", "parameters_example.txt"
         )
@@ -192,7 +192,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                     "Please check paths and permissions!",
                 )
 
-        # --> mapping example
+        # ---> mapping example
         # get all files that match the pattern
         examplesFolder = os.path.join(niuTemplateFolder, "templates")
         mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt")
@@ -224,7 +224,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                         "Please check paths and permissions!",
                     )
 
-        # --> markFile
+        # ---> markFile
         markFile = os.path.join(studyfolder, ".qunexstudy")
 
         # ... map .mnapstudy to qunexstudy
@@ -485,7 +485,7 @@ def copy_study(
 
     # check if mandatory parameters are provided
     print()
-    print("===> Checking input parameters")
+    print("---> Checking input parameters")
     if studyfolder is None:
         raise ge.CommandError(
             "copy_study",
@@ -2346,7 +2346,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     if not os.path.isdir(runlogfolder):
         os.makedirs(runlogfolder)
 
-    print(f"\n===> Saving the run_recipe runlog to: {runlogfolder}")
+    print(f"\n---> Saving the run_recipe runlog to: {runlogfolder}")
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = os.path.join(runlogfolder, f"Log-run_recipe-{logstamp}.log")
@@ -2371,8 +2371,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
     summary += f"\n\nRecipe: {recipe}"
 
-    print(f"===> Running commands from recipe: {recipe}")
-    print(f"===> Running commands from recipe: {recipe}\n", file=log)
+    print(f"---> Running commands from recipe: {recipe}")
+    print(f"---> Running commands from recipe: {recipe}\n", file=log)
 
     # commands
     if "commands" not in recipe_dict:
@@ -2419,10 +2419,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     "Please provide the path to the script!",
                 )
             print(
-                f"\n--------------------------------------------\n===> Running script: {script_path}"
+                f"\n--------------------------------------------\n---> Running script: {script_path}"
             )
             print(
-                f"\n--------------------------------------------\n===> Running script: {script_path}",
+                f"\n--------------------------------------------\n---> Running script: {script_path}",
                 file=log,
             )
             if not os.path.exists(script_path):
@@ -2554,7 +2554,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             command = ["qunex"]
             command.append(command_name)
             commandr = (
-                "\n--------------------------------------------\n===> Running command:\n\n     qunex "
+                "\n--------------------------------------------\n---> Running command:\n\n     qunex "
                 + command_name
             )
 
@@ -2645,7 +2645,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             else:
                 summary += f"\n - command {command_name} ... OK"
                 print(
-                    f"===> Successful completion of the run_recipe command {command_name}\n"
+                    f"---> Successful completion of the run_recipe command {command_name}\n"
                 )
 
             # XNAT individual command cleanup, creates _out checkpoint
@@ -2672,10 +2672,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     summary += "\n\n----------==== END SUMMARY ====----------"
 
     print(summary, file=log)
-    print("\n===> Successful completion of task: run_recipe", file=log)
+    print("\n---> Successful completion of task: run_recipe", file=log)
 
     print("\n------------------------")
-    print("===> Successful completion of run_recipe")
+    print("---> Successful completion of run_recipe")
     print(summary)
 
     log.close()
@@ -3173,7 +3173,7 @@ def gather_behavior(
     ]
 
     if any([processReport[status] for status, message in reportit]):
-        print("===> Final report")
+        print("---> Final report")
         for status, message in reportit:
             if processReport[status]:
                 print("--->", message)
@@ -3545,7 +3545,7 @@ def pull_sequence_names(
     ]
 
     if any([processReport[status] for status, message in reportit]):
-        print("===> Final report")
+        print("---> Final report")
         for status, message in reportit:
             if processReport[status]:
                 print("--->", message)
@@ -3929,7 +3929,7 @@ def create_session_info(
                 report["error"].append(sfolder)
                 print(traceback.format_exc())
 
-    print("\n===> Final report")
+    print("\n---> Final report")
 
     for status in [
         "pre-existing target",

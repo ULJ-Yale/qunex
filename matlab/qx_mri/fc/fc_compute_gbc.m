@@ -702,13 +702,13 @@ for s = 1:nsub
 
         if verbose; fprintf('         ... set %s', exsets(n).title); end
         
-        % --> get the extracted timeseries
+        % ---> get the extracted timeseries
 
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
 
         if verbose; fprintf(' ... extracted ts'); end
         
-        % --> generate seedmaps
+        % ---> generate seedmaps
 
         rs = ts.img_extract_roi(roi, [], options.roimethod);
         %fprintf('\n size(rs) is %s\n', mat2str(size(rs)));
@@ -717,7 +717,7 @@ for s = 1:nsub
 
         if verbose; fprintf(' ... computed seedmap'); end
 
-        % ------> Embedd results (if group data is requested)
+        % ---> Embedd results (if group data is requested)
         
         if embed_data
             if first_subject

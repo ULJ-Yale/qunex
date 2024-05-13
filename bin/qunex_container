@@ -1049,7 +1049,7 @@ def main(args=None):
 
     if n_sessions is not None:
         print(
-            f"\n--> QuNex will run the command over {n_sessions} sessions. It will utilize:\n"
+            f"\n---> QuNex will run the command over {n_sessions} sessions. It will utilize:\n"
         )
         print(f"    Maximum sessions run in parallel for a job: {parsessions}.")
         print(f"    Maximum elements run in parallel for a session: {parelements}.")

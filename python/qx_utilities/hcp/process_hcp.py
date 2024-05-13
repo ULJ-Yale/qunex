@@ -1546,7 +1546,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         # test file
         tfile = os.path.join(hcp["FS_folder"], "label", "BA_exvivo.thresh.ctab")
 
-        # --> Building the command string
+        # ---> Building the command string
         comm = (
             os.path.join(hcp["hcp_base"], "FreeSurfer", "FreeSurferPipeline.sh") + " "
         )
@@ -1582,10 +1582,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("extra-reconall-arg", "-expert"))
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
 
-        # --> Pull all together
+        # ---> Pull all together
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
-        # --> Add flags
+        # ---> Add flags
         for optionName, flag in [
             ("hcp_fs_flair", "--flair"),
             ("hcp_fs_existing_session", "--existing-subject"),
@@ -1615,7 +1615,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                # --> clean up test file if overwrite and hcp_fs_existing_session not set to True
+                # ---> clean up test file if overwrite and hcp_fs_existing_session not set to True
                 if (
                     overwrite
                     and os.path.lexists(tfile)
@@ -1623,7 +1623,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 ):
                     os.remove(tfile)
 
-                # --> clean up only if hcp_fs_existing_session is not set to True
+                # ---> clean up only if hcp_fs_existing_session is not set to True
                 if (overwrite or not os.path.exists(tfile)) and not options[
                     "hcp_fs_existing_session"
                 ]:
@@ -3714,7 +3714,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         sepresent.append(bold)
                         sepairs[bold] = {"spinPos": spinPos, "spinNeg": spinNeg}
 
-            # --> check for topupconfig
+            # ---> check for topupconfig
             if (
                 options["hcp_bold_topupconfig"]
                 and options["hcp_bold_topupconfig"] != ""
@@ -3790,7 +3790,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             )
             boldok = True
 
-            # ===> Check for and prepare distortion correction parameters
+            # ---> Check for and prepare distortion correction parameters
             echospacing = ""
             unwarpdir = ""
 
@@ -7004,7 +7004,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
                 r += "\n\n"
 
         else:
-            r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
+            r += "\n---> ERROR: Hand reclassification failed for bold: %s!" % printbold
             report["failed"].append(printbold)
             boldok = False
 
@@ -7225,7 +7225,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 r += "\n\n"
 
         else:
-            r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
+            r += "\n---> ERROR: Hand reclassification failed for bold: %s!" % printbold
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (

@@ -365,7 +365,7 @@ end
 
 
 % ======================================================
-%   ----> get XYZ voxel indices
+%   ---> get XYZ voxel indices
 %
 
 function [xyz] = getXYZ(id, dim)
