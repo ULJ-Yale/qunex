@@ -287,7 +287,7 @@ if [ "$USEOCTAVE" == "TRUE" ]; then
     if [[ ! -e ~/.local/share ]]; then
         mkdir -p ~/.local/share
     fi
-    echo " ---> Setting up Octave "; echo ""
+    echo "---> Setting up Octave "; echo ""
     QUNEXMCOMMAND='octave -q --eval'
     if [ ! -e ~/.octaverc ]; then
         cp ${QUNEXPATH}/qx_library/etc/.octaverc ~/.octaverc
@@ -295,7 +295,7 @@ if [ "$USEOCTAVE" == "TRUE" ]; then
     export LD_LIBRARY_PATH=/usr/lib64/hdf5/:${LD_LIBRARY_PATH} > /dev/null 2>&1
     if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-o"; fi
 else
-    echo " ---> Setting up Matlab "; echo ""
+    echo "---> Setting up Matlab "; echo ""
     QUNEXMCOMMAND='matlab -nodisplay -nosplash -r'
     if [[ -z ${PALMDIR} ]]; then PALMDIR="${TOOLS}/palm/palm-m"; fi
 fi
