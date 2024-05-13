@@ -224,6 +224,7 @@ def schedule(
             )
         command = open(script, "r", encoding="UTF-8")
 
+    # dirs
     if workdir is not None:
         if not os.path.exists(workdir):
             raise CommandFailed(
@@ -251,7 +252,6 @@ def schedule(
 
     # parse output
     outputs = {"stdout": None, "stderr": None, "both": None, "return": None}
-
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
             if not os.path.exists(os.path.dirname(v)) and k != "return":
@@ -1064,6 +1064,7 @@ def main(args=None):
                 print(f"    Job #{i + 1} will run sessions: {sessionids_array[i]}")
 
     # execute
+    homedir = os.path.expanduser("~")
     if parinfo is None:
         for i in range(0, parjobs):
             qx_command = command
@@ -1128,7 +1129,6 @@ def main(args=None):
                 container_command += "singularity exec "
 
                 # bind home
-                homedir = os.path.expanduser("~")
                 container_command += f"--bind {homedir}:{homedir} "
 
                 # containeropt
@@ -1177,7 +1177,6 @@ def main(args=None):
                 container_command += "docker run "
 
                 # bind home
-                homedir = os.path.expanduser("~")
                 container_command += f"-v {homedir}:{homedir} "
 
                 # containeropt
