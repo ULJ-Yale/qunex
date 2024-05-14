@@ -2159,7 +2159,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     - import_dicom:
                         masterinbox: /data/qx_data
                         archive: leave
-                    - create_session_info:
+                    - create_session_info
                         mapping: /data/qx_specs/hcp_mapping.txt
                     - create_batch:
                         targetfile: /data/qx_study/processing/batch.txt
@@ -4118,11 +4118,11 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
             elif state == FOUND_BOLD_REF:
                 bold_pairs.append((prev_boldref_image_number,))
                 prev_boldref_image_number = i
-                state = FOUND_BOLD_REF
+                # keep state - state = FOUND_BOLD_REF
         elif hcp_image_type[0] == "bold":
             if state == IDLE_STATE:
                 bold_pairs.append((i,))
-                state = IDLE_STATE
+                # keep state - state = IDLE_STATE
             elif state == FOUND_BOLD_REF:
                 bold_pairs.append((prev_boldref_image_number, i))
                 prev_boldref_image_number = None
