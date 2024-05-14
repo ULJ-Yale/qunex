@@ -4102,7 +4102,7 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
     IDLE_STATE = 0
     FOUND_BOLD_REF = 1
     state = IDLE_STATE
-    prev_boldref_imgage_number = None
+    prev_boldref_image_number = None
     for i in image_numbers:
         image = images[i]
         hcp_image_type = image["applied_rule"].get("hcp_image_type")
@@ -4113,26 +4113,26 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
         if hcp_image_type[0] == "boldref":
             # when a ref image is found save it and wait to pair it with a bold img
             if state == IDLE_STATE:
-                prev_boldref_imgage_number = i
+                prev_boldref_image_number = i
                 state = FOUND_BOLD_REF
             elif state == FOUND_BOLD_REF:
-                bold_pairs.append((prev_boldref_imgage_number,))
-                prev_boldref_imgage_number = i
+                bold_pairs.append((prev_boldref_image_number,))
+                prev_boldref_image_number = i
                 state = FOUND_BOLD_REF
         elif hcp_image_type[0] == "bold":
             if state == IDLE_STATE:
                 bold_pairs.append((i,))
                 state = IDLE_STATE
             elif state == FOUND_BOLD_REF:
-                bold_pairs.append((prev_boldref_imgage_number, i))
-                prev_boldref_imgage_number = None
+                bold_pairs.append((prev_boldref_image_number, i))
+                prev_boldref_image_number = None
                 state = IDLE_STATE
         else:
             continue
 
     if state == FOUND_BOLD_REF:
-        bold_pairs.append((prev_boldref_imgage_number,))
-        prev_boldref_imgage_number = None
+        bold_pairs.append((prev_boldref_image_number,))
+        prev_boldref_image_number = None
 
     used_bold_num = set()
     remaining_pairs = []
