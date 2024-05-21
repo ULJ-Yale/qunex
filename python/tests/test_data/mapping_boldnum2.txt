@@ -1,0 +1,10 @@
+#  HCP mapping file
+#  ----------------
+
+EXAMPLE T1 => T1w
+EXAMPLE TASK1 REF => boldref:task1:bold_num(6)
+EXAMPLE TASK1 => bold:task1:bold_num(6)
+EXAMPLE TASK2 REF => boldref:task2:bold_num(7)
+EXAMPLE TASK2 => bold:task2:bold_num(7)
+EXAMPLE REST REF => boldref:rest
+EXAMPLE REST => bold:rest

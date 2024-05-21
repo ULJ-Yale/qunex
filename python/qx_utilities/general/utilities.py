@@ -4109,9 +4109,13 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
         if hcp_image_type is None:
             continue
 
-        # bold ref
+        # when a ref image is found save it and wait to pair it with a bold img
         if hcp_image_type[0] == "boldref":
-            # when a ref image is found save it and wait to pair it with a bold img
+            # if it has manual numbering do not link it to any other bold image
+            bold_num = image.get("bold_num")
+            if bold_num is not None:
+                bold_pairs.append((i,))
+                continue
             if state == IDLE_STATE:
                 prev_boldref_image_number = i
                 state = FOUND_BOLD_REF
@@ -4135,10 +4139,12 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
         prev_boldref_image_number = None
 
     used_bold_num = set()
+    used_boldref_num = set()
     remaining_pairs = []
 
     for pair in bold_pairs:
         custom_bold_num = None
+        custom_boldref_num = None
         for e in pair:
             image = images[e]
             hcp_image_type = image["applied_rule"].get("hcp_image_type")
@@ -4146,6 +4152,12 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
                 bn = image.get("bold_num")
                 if bn is not None:
                     custom_bold_num = bn
+
+            if hcp_image_type[0] == "boldref":
+                bn = image.get("bold_num")
+                if bn is not None:
+                    custom_boldref_num = bn
+
         if custom_bold_num is not None:
             if custom_bold_num in used_bold_num:
                 raise ge.CommandError(
@@ -4162,7 +4174,25 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
                     custom_bold_num,
                     hcp_image_type[2],
                 )
-        else:
+
+        if custom_boldref_num is not None:
+            if custom_boldref_num in used_boldref_num:
+                raise ge.CommandError(
+                    "create_session_info",
+                    "Custom bold number conflict",
+                    "cannot apply the same bold number to multiple boldref images",
+                )
+            used_boldref_num.add(custom_boldref_num)
+            for e in pair:
+                image = images[e]
+                hcp_image_type = image["applied_rule"].get("hcp_image_type")
+                image["hcp_image_type"] = (
+                    hcp_image_type[0],
+                    custom_boldref_num,
+                    hcp_image_type[2],
+                )
+
+        if custom_bold_num is None and custom_boldref_num is None:
             remaining_pairs.append(pair)
 
     # exclude bold numbers previously used and reserved globally
