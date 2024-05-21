@@ -1,0 +1,28 @@
+session: WU01590_20220906
+subject: WU01590
+bids: /scratch/shingshiun/QuNex_AMPSCZ_ProNET_script_test/sessions/WU01590_20220906/bids
+raw_data: /scratch/shingshiun/QuNex_AMPSCZ_ProNET_script_test/sessions/WU01590_20220906/nii
+hcp: /scratch/shingshiun/QuNex_AMPSCZ_ProNET_script_test/sessions/WU01590_20220906/hcp
+
+1: T1w :se(1):se(1) :DwellTime(6.5e-06)
+2: T2w :se(1):se(1) :phenc(RL):UnwarpDir(x):DwellTime(2.1e-06)
+3: dir-AP_run-1_epi :se(1) :phenc(AP):UnwarpDir(y-):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+4: dir-AP_run-2_epi :se(2) :phenc(AP):UnwarpDir(y-):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+5: dir-AP_run-3_epi :se(3) :phenc(AP):UnwarpDir(y-):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+6: dir-PA_run-1_epi :se(1) :phenc(PA):UnwarpDir(y):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+7: dir-PA_run-2_epi :se(2) :phenc(PA):UnwarpDir(y):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+8: dir-PA_run-3_epi :se(3) :phenc(PA):UnwarpDir(y):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+9: acq-6shell_dir-PA_sbref  :phenc(PA):UnwarpDir(y):DwellTime(2.1e-06):EchoSpacing(0.000610009)
+10: acq-b0_dir-AP_run-1_sbref  :phenc(AP):UnwarpDir(y-):DwellTime(2.1e-06):EchoSpacing(0.000610009)
+11: acq-b0_dir-AP_run-2_sbref  :phenc(AP):UnwarpDir(y-):DwellTime(2.1e-06):EchoSpacing(0.000610009)
+12: task-rest_dir-AP_run-1_sbref  :phenc(AP):UnwarpDir(y-):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+13: task-rest_dir-PA_run-1_sbref  :phenc(PA):UnwarpDir(y):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+14: task-rest_dir-PA_run-1_bold :se(2) :phenc(PA):UnwarpDir(y):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+15: task-rest_dir-AP_run-1_bold :se(2) :phenc(AP):UnwarpDir(y-):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+16: task-rest_dir-AP_run-2_sbref  :phenc(AP):UnwarpDir(y-):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+17: task-rest_dir-PA_run-2_sbref  :phenc(PA):UnwarpDir(y):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+18: task-rest_dir-AP_run-2_bold :se(3) :phenc(AP):UnwarpDir(y-):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+19: task-rest_dir-PA_run-2_bold :se(3) :phenc(PA):UnwarpDir(y):DwellTime(2.6e-06):EchoSpacing(0.000609998)
+20: acq-6shell_dir-PA_dwi  :phenc(PA):UnwarpDir(y):DwellTime(2.1e-06):EchoSpacing(0.000610009)
+21: acq-b0_dir-AP_run-1_dwi  :phenc(AP):UnwarpDir(y-):DwellTime(2.1e-06):EchoSpacing(0.000610009)
+22: acq-b0_dir-AP_run-2_dwi  :phenc(AP):UnwarpDir(y-):DwellTime(2.1e-06):EchoSpacing(0.000610009)

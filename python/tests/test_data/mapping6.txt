@@ -1,0 +1,25 @@
+#  HCP mapping file
+#  ----------------
+
+dir-AP_run-1_epi              => SE-FM-AP
+dir-PA_run-1_epi              => SE-FM-PA
+T1w                           => T1w
+T2w                           => T2w
+dir-AP_run-2_epi              => SE-FM-AP
+dir-PA_run-2_epi              => SE-FM-PA
+task-rest_dir-PA_run-1_sbref  => boldref:REST1 : bold_num(1) : filename(rfMRI_REST1_PA_SBRef)
+task-rest_dir-PA_run-1_bold   => bold:REST1 : bold_num(1) : filename(rfMRI_REST1_PA)
+task-rest_dir-AP_run-1_sbref  => boldref:REST1 : bold_num(2) : filename(rfMRI_REST1_AP_SBRef)
+task-rest_dir-AP_run-1_bold   => bold:REST1 : bold_num(2) : filename(rfMRI_REST1_AP)
+dir-AP_run-3_epi              => SE-FM-AP
+dir-PA_run-3_epi              => SE-FM-PA
+task-rest_dir-PA_run-2_sbref  => boldref:REST2 : bold_num(3) : filename(rfMRI_REST2_PA_SBRef)
+task-rest_dir-PA_run-2_bold   => bold:REST2 : bold_num(3) : filename(rfMRI_REST2_PA)
+task-rest_dir-AP_run-2_sbref  => boldref:REST2 : bold_num(4) : filename(rfMRI_REST2_AP_SBRef)
+task-rest_dir-AP_run-2_bold   => bold:REST2 : bold_num(4) : filename(rfMRI_REST2_AP)
+acq-b0_dir-AP_run-1_sbref     => DWI:dir_b0-1_AP_ref
+acq-b0_dir-AP_run-1_dwi       => DWI:dir_b0-1_AP
+acq-6shell_dir-PA_sbref       => DWI:dir176_PA_ref
+acq-6shell_dir-PA_dwi         => DWI:dir176_PA
+acq-b0_dir-AP_run-2_sbref     => DWI:dir_b0-2_AP_ref
+acq-b0_dir-AP_run-2_dwi       => DWI:dir_b0-2_AP

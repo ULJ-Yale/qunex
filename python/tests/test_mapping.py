@@ -182,6 +182,18 @@ def test_mapping_bold_num2():
     assert result == expected
 
 
+def test_mapping_bold_num6():
+    """Mapping bold number
+
+    A torough test of bold_num mapping based on real world BIDS data.
+    """
+    _, lines = _run_mapping_test("session6.txt", "mapping6.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session6_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
 def test_mapping_manual_se_fm():
     """Honor manually assigned spin-echo and field-map numbers
 
