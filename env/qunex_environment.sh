@@ -233,6 +233,11 @@ if [[ -z ${ASLDIR} ]]; then ASLDIR="${TOOLS}/HCP/hcp-asl"; export ASLDIR; fi
 # only outside of the container
 if [ ! -f /opt/.container ]; then
     if [[ -z ${DICMNIIDIR} ]]; then DICMNIIDIR="${TOOLS}/dicm2nii/dicm2nii"; export DICMNIIDIR; fi
+
+    # -- dicm2nii path
+    export DICMNIIDIR
+    MATLABPATH=$DICMNIIDIR:$MATLABPATH
+    export MATLABPATH
 fi
 
 # ------------------------------------------------------------------------------
@@ -402,11 +407,6 @@ export ANTSDIR PATH
 DCMNIIBINDIR=${DCMNIIDIR}/bin
 PATH=${DCMNIIDIR}:${DCMNIIBINDIR}:${PATH}
 export DCMNIIDIR PATH
-
-# -- dicm2nii path
-export DICMNIIDIR PATH
-MATLABPATH=$DICMNIIDIR:$MATLABPATH
-export MATLABPATH
 
 # -- Octave path
 OCTAVEBINDIR=${OCTAVEDIR}/bin
