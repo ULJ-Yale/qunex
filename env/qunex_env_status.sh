@@ -249,67 +249,18 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     fi
     echo ""
 
-    ## -- Check for dicm2nii only if outside the container
-    if [ ! -f /opt/.container ]; then
-        echo "    dicm2nii Binary  : $DICMNIIDIR/dicm2nii.m"
-        if [[ -z `ls $DICMNIIDIR/dicm2nii.m 2> /dev/null` ]]; then 
-            BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport dicm2nii"
-            echo "    dicm2nii Version : Executable not found!"
-            if [[ -L "$DICMNIIDIR"  && ! -e "$DICMNIIDIR" ]]; then
-                echo "                     : $DICMNIIDIR is a link to a nonexisiting folder!"
-            fi
-        else    
-            echo "    dicm2nii Version : $(cat $DICMNIIDIR/README.md | grep "(version" )"
-        fi
-        echo ""
-    fi
-
     ## -- Check for fix
-    if [ ! -f /opt/.container ]; then
-        echo "         FIX Binary  : $(which fix 2>&1 | grep -v 'no fix')"
-        if [[ -z $(which fix 2>&1 | grep -v 'no fix') ]]; then 
-            BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport fix"
-            echo "         FIX Version : Binary not found!"
-            if [[ -L "$FSL_FIXDIR"  && ! -e "$FSL_FIXDIR" ]]; then
-                echo "                     : $FSL_FIXDIR is a link to a nonexisiting folder!"
-            fi
-        else
-            echo "         FIX Version : $(fix -v | grep FMRIB)"
+    echo "         FIX Binary  : $(which fix 2>&1 | grep -v 'no fix')"
+    if [[ -z $(which fix 2>&1 | grep -v 'no fix') ]]; then 
+        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport fix"
+        echo "         FIX Version : Binary not found!"
+        if [[ -L "$FSL_FIXDIR"  && ! -e "$FSL_FIXDIR" ]]; then
+            echo "                     : $FSL_FIXDIR is a link to a nonexisiting folder!"
         fi
-        echo ""
+    else
+        echo "         FIX Version : $(fix -v | grep FMRIB)"
     fi
-
-    ## -- Check for gradient_unwarp.py
-    if [ ! -f /opt/.container ]; then
-        echo "  Gradunwarp Binary  : $(which gradient_unwarp.py)"
-        if [[ -z $(which gradient_unwarp.py) ]]; then 
-            BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport gradient_unwarp.py"
-            echo "  Gradunwarp Version : Binary not found!"
-            if [[ -L "$GRADUNWARPDIR"  && ! -e "$GRADUNWARPDIR" ]]; then
-                echo "                     : $GRADUNWARPDIR is a link to a nonexisiting folder!"
-            fi
-        else
-            GradunwarpVersion=$((gradient_unwarp.py -v) 2>&1)
-            echo "  Gradunwarp Version : $GradunwarpVersion"
-        fi
-        echo ""
-    fi
-
-    ## -- Check for msm
-    if [ ! -f /opt/.container ]; then
-        echo "         MSM Binary  : ${MSMBINDIR}/msm"
-        if [[ ! -f ${MSMBINDIR}/msm ]]; then 
-            BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport msm"
-            echo "         MSM Version : Binary not found!"
-            if [[ -L "$MSMBINDIR"  && ! -e "$MSMBINDIR" ]]; then
-                echo "                     : $MSMBINDIR is a link to a nonexisiting folder!"
-            fi
-        else
-            MSMVersion=`${MSMBINDIR}/msm 2>&1 | grep "Part"`
-            echo "         MSM Version : $MSMVersion"
-        fi
-        echo ""
-    fi
+    echo ""
 
     ## -- Check for Octave
     if [ "$USEOCTAVE" == "TRUE" ]; then
