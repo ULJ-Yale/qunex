@@ -2327,11 +2327,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     # mustache injections to logfolder?
     if "{{" in logfolder and "}}" in logfolder:
         labels = _find_enclosed_substrings(logfolder)
-        logfolder = logfolder.replace("{", "").replace("}", "")
         for label in labels:
-            label = label.replace("{", "").replace("}", "")
-            os_label = label[1:]
-            if label[0] == "$" and os_label in os.environ:
+            cleaned_label = label.replace("{", "").replace("}", "")
+            os_label = cleaned_label[1:]
+            if cleaned_label[0] == "$" and os_label in os.environ:
                 logfolder = logfolder.replace(label, os.environ[os_label])
             else:
                 raise ge.CommandFailed(
@@ -2561,20 +2560,18 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             for param, value in command_parameters.items():
                 # inject mustache marked values
                 if (
-                    type(value) == str
+                    isinstance(value, str)
                     and len(value) > 0
                     and "{{" in value
                     and "}}" in value
                 ):
                     labels = _find_enclosed_substrings(value)
-                    value = value.replace("{", "").replace("}", "")
-
                     for label in labels:
-                        label = label.replace("{", "").replace("}", "")
-                        os_label = label[1:]
-                        if label in eargs:
+                        cleaned_label = label.replace("{", "").replace("}", "")
+                        os_label = cleaned_label[1:]
+                        if cleaned_label in eargs:
                             value = value.replace(label, eargs[label])
-                        elif label[0] == "$" and os_label in os.environ:
+                        elif cleaned_label[0] == "$" and os_label in os.environ:
                             value = value.replace(label, os.environ[os_label])
                         else:
                             raise ge.CommandFailed(
@@ -2707,7 +2704,7 @@ def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter=
         if end_pos == -1:
             break
 
-        substrings.append(input_string[start_pos + len(start_delimiter) : end_pos])
+        substrings.append(input_string[start_pos : (end_pos + len(end_delimiter))])
         start_index = end_pos + len(end_delimiter)
 
     return substrings
