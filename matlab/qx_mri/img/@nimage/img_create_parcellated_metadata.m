@@ -28,14 +28,17 @@ model = load('cifti_brainmodel');
 
 pimg = obj.zeroframes(obj.frames);
 pimg.TR = obj.TR;
-disp(obj.TR);
 
-if isempty (rcodes)
-    if isfield(roi.roi, 'roicodes') && ~isempty(roi.roi.roicodes)
-        rcodes = roi.roi.roicodes;
+if isempty(rcodes)
+    roi_idx = 1:length(roi.roi);
+else
+    % --- Check whether we have ROI names or ROI codes
+    if iscell(rcodes) && all(cellfun(@ischar, rcodes))
+        [~, roi_idx] = ismember(rcodes, {roi.roi.roiname});
+    elseif isnumeric(rcodes)
+        [~, roi_idx] = ismember(rcodes, [roi.roi.roicode]);
     else
-        rcodes = unique(roi.data);
-        rcodes = rcodes(rcodes ~= 0);
+        error('ERROR (img_extract_roi) invalid specification of roi to extract!');
     end
 end
 
@@ -45,7 +48,7 @@ pimg.data = zeros(nrois, obj.frames);
 pimg.dim = nrois;
 pimg.voxels = nrois;
 
-if obj.frames == 1
+if strcmpi(obj.filetype, 'dscalar')
     pimg.filetype = 'pscalar';
 else
     pimg.filetype = 'ptseries';
@@ -59,27 +62,24 @@ pimg.cifti.length     = [];
 pimg.cifti.maps       = {};
 pimg.cifti.parcels    = {};
 
-
-global_data = roi.data;
-vol_sections = roi.img_extract_cifti_volume();
-vol_4D_data = vol_sections.image4D;
-
-labels = struct([]);
-ctn = 1;
-for l = 1:length(roi.cifti.labels{1})
-    if roi.cifti.labels{1}(l).key ~= 0
-        labels(ctn).key = roi.cifti.labels{1}(l).key;
-        labels(ctn).name = roi.cifti.labels{1}(l).name;
-        pimg.cifti.parcels{ctn} = roi.cifti.labels{1}(l).name;
-        ctn = ctn + 1;
-    end
+global_data = zeros(size(roi.data,1),1);
+for p = 1:length(roi_idx)
+    pimg.cifti.parcels{p} = roi.roi(roi_idx(p)).roiname;
+    global_data(roi.roi(roi_idx(p)).indeces) = roi.roi(roi_idx(p)).roicode;
 end
+
+roi.data = global_data;
+tmp_frames = roi.frames;
+roi.frames = 1;
+vol_sections = roi.img_extract_cifti_volume();
+roi.frames = tmp_frames;
+vol_4D_data = vol_sections.image4D;
 
 n_structures = length(roi.cifti.shortnames);
 parcels = struct([]);
 for p = 1:nrois
-    parcels(p).name = labels(p).name;
-    key = labels(p).key;
+    parcels(p).name = roi.roi(roi_idx(p)).roiname;
+    key = roi.roi(roi_idx(p)).roicode;
     parcels(p).surfs = struct([]);
     parcels(p).voxlist = [];
 
@@ -90,12 +90,15 @@ for p = 1:nrois
         structure = model.cifti.(lower(s_name));
 
         if strcmpi(structure.type, 'surface')
-            ctn_surf = ctn_surf + 1;
             data = global_data(roi.cifti.start{s}:roi.cifti.end{s},:);
-            component_data = zeros(32492, 1);
-            component_data(structure.mask) = data;
-            parcels(p).surfs(ctn_surf).struct = s_name;
-            parcels(p).surfs(ctn_surf).vertlist = (find(component_data == key)-1)';
+            component_data = zeros(32492, size(data,2));
+            component_data(structure.mask,:) = data;
+            vertlist = (find(component_data == key)-1)';
+            if numel(vertlist) > 0
+                ctn_surf = ctn_surf + 1;
+                parcels(p).surfs(ctn_surf).vertlist = vertlist;
+                parcels(p).surfs(ctn_surf).struct = s_name;
+            end
         else
             ctn_vol = ctn_vol + 1;
             [i, j, k] = ind2sub(size(vol_4D_data),find(vol_4D_data == key));
@@ -125,3 +128,5 @@ pimg.cifti.metadata.diminfo{1} = struct('type', 'parcels',...
                                         'parcels', parcels,...
                                         'length', nrois);
 
+pimg.cifti.metadata.diminfo{2}.length = obj.frames;
+pimg.cifti.maps = obj.cifti.maps;
