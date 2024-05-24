@@ -655,12 +655,18 @@ if [[ -z ${HCPCIFTIRWDIR} ]]; then HCPCIFTIRWDIR=${HCPPIPEDIR}/global/matlab/cif
 MATLABPATH=$FSL_FIX_CIFTIRW:$HCPCIFTIRWDIR:$MATLABPATH
 export MATLABPATH
 
+# default is interpreted MATLAB
+export FSL_FIX_MATLAB_MODE=1
+
 # if in container set compiled matlab and CUDA path
 if [[ -e /opt/.container ]]; then
     # matlab runtime
     export MATLAB_COMPILER_RUNTIME=${MATLABDIR}/v93
     export FSL_FIX_MCRROOT=${MATLABDIR}
     export FSL_FIX_MCR=${MATLAB_COMPILER_RUNTIME}
+
+    # use octave for FIX
+    export FSL_FIX_MATLAB_MODE=2
 
     # add CUDA stuff to PATH and LD_LIBRARY_PATH
     export PATH=/usr/local/cuda/bin:$PATH

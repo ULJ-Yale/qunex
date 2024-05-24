@@ -146,7 +146,6 @@ echo " ---> MELODIC completed"
 # ------------------------------------------------------------------------------
 echo ""
 echo " ---> Running FIX"
-export FSL_FIX_MATLAB_MODE=1
 echo " ... Running fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass} ${aggressive_cleanup}"
 fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass} ${aggressive_cleanup}
 

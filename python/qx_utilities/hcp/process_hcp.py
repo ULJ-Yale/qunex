@@ -5538,11 +5538,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             r += "\nWARNING: ICAFix runs with octave results are unstable!\n"
             matlabrunmode = "2"
         else:
+            r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
             parsOK = False
 
         # set variable
-        os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
-
         if not parsOK:
             raise ge.CommandFailed("hcp_icafix", "... invalid input parameters!")
 
@@ -10736,10 +10735,8 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             r += "\nWARNING: ApplyAutoReclean runs with octave results are unstable!\n"
             matlabrunmode = "2"
         else:
+            r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
             pars_ok = False
-
-        # set variable
-        os.environ["FSL_FIX_MATLAB_MODE"] = matlabrunmode
 
         if not pars_ok:
             raise ge.CommandFailed(
@@ -10917,7 +10914,17 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             timepoints = options["hcp_autoreclean_timepoints"]
 
         # matlab run mode
-        matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        if options["hcp_matlab_mode"] == "compiled":
+            matlabrunmode = "0"
+        elif options["hcp_matlab_mode"] == "interpreted":
+            matlabrunmode = "1"
+        elif options["hcp_matlab_mode"] == "octave":
+            r += "\nWARNING: ApplyAutoReclean runs with octave results are unstable!\n"
+            matlabrunmode = "2"
+        else:
+            r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+            run = False
 
         comm = (
             '%(script)s \
