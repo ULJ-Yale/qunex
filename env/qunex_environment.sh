@@ -661,7 +661,6 @@ if [[ -e /opt/.container ]]; then
     export MATLAB_COMPILER_RUNTIME=${MATLABDIR}/v93
     export FSL_FIX_MCRROOT=${MATLABDIR}
     export FSL_FIX_MCR=${MATLAB_COMPILER_RUNTIME}
-    export LD_LIBRARY_PATH=/opt/matlab/v93/runtime/glnxa64:/opt/matlab/v93/bin/glnxa64:/opt/matlab/v93/sys/os/glnxa64:${LD_LIBRARY_PATH}
 
     # add CUDA stuff to PATH and LD_LIBRARY_PATH
     export PATH=/usr/local/cuda/bin:$PATH
