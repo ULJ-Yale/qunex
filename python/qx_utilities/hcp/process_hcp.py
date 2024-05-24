@@ -2841,7 +2841,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     "echospacing": echospacing,
                     "pe_dir": pe_dir,
                     "gdcoeffs": gdcfile,
-
                     "combinedataflag": options["hcp_dwi_combinedata"],
                     "printcom": options["hcp_printcom"],
                 }
@@ -2852,7 +2851,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 comm += "                --b0maxbval=" + options["hcp_dwi_b0maxbval"]
 
             if options["hcp_dwi_dof"] is not None:
-                comm += "                --dof=" + options["hcp_dwi_dof"] 
+                comm += "                --dof=" + options["hcp_dwi_dof"]
 
             if options["hcp_dwi_extraeddyarg"] is not None:
                 eddyoptions = options["hcp_dwi_extraeddyarg"].split("|")
@@ -3625,9 +3624,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             run = False
 
         if options["hcp_bold_biascorrection"] not in ["LEGACY", "SEBASED", "NONE"]:
-            r += (
-                f"\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter {options['hcp_bold_biascorrection']}!"
-            )
+            r += f"\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter {options['hcp_bold_biascorrection']}!"
             run = False
 
         if options["hcp_bold_dcmethod"] == "TOPUP":
@@ -3971,8 +3968,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmcombined = None
 
             # --- check for GE legacy fieldmap image
-            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
-                "hcp_bold_dcmethod"] == "GEHealthCareLegacyFieldMap":
+            elif (
+                options["hcp_bold_biascorrection"] != "SEBASED"
+                and options["hcp_bold_dcmethod"] == "GEHealthCareLegacyFieldMap"
+            ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
                     r += (
@@ -3997,8 +3996,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
 
             # --- check for GE double TE-fieldmap image
-            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
-                "hcp_bold_dcmethod"] == "GEHealthCareFieldMap":
+            elif (
+                options["hcp_bold_biascorrection"] != "SEBASED"
+                and options["hcp_bold_dcmethod"] == "GEHealthCareFieldMap"
+            ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
                     r += (
@@ -4037,8 +4038,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmcombined = None
 
             # --- check for Philips double TE-fieldmap image
-            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
-                "hcp_bold_dcmethod"] == "PhilipsFieldMap":
+            elif (
+                options["hcp_bold_biascorrection"] != "SEBASED"
+                and options["hcp_bold_dcmethod"] == "PhilipsFieldMap"
+            ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
                     r += (
@@ -5515,7 +5518,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
                 report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parse_icafix_bolds(
+        singleFix, icafixBolds, icafixGroups, pars_ok, r = parse_icafix_bolds(
             options, bolds, r
         )
 
@@ -5529,20 +5532,23 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             parelements,
         )
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = "0"
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = "1"
-        elif options["hcp_matlab_mode"] == "octave":
-            r += "\nWARNING: ICAFix runs with octave results are unstable!\n"
-            matlabrunmode = "2"
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
         else:
-            r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-            parsOK = False
+            if options["hcp_matlab_mode"] == "compiled":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                pars_ok = False
 
-        # set variable
-        if not parsOK:
+        if not pars_ok:
             raise ge.CommandFailed("hcp_icafix", "... invalid input parameters!")
 
         # --- Execute
@@ -6224,10 +6230,10 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
                 report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parse_icafix_bolds(
+        singleFix, icafixBolds, icafixGroups, pars_ok, r = parse_icafix_bolds(
             options, bolds, r
         )
-        if not parsOK:
+        if not pars_ok:
             raise ge.CommandFailed("hcp_post_fix", "... invalid input parameters!")
 
         # --- Multi threading
@@ -6704,10 +6710,10 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
                 report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse icafix_bolds
-        singleFix, icafixBolds, icafixGroups, parsOK, r = parse_icafix_bolds(
+        singleFix, icafixBolds, icafixGroups, pars_ok, r = parse_icafix_bolds(
             options, bolds, r
         )
-        if not parsOK:
+        if not pars_ok:
             raise ge.CommandFailed("hcp_reapply_fix", "... invalid input parameters!")
 
         # --- Multi threading
@@ -7629,8 +7635,8 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
                 report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse msmall_bolds
-        singleRun, msmallGroup, parsOK, r = parse_msmall_bolds(options, bolds, r)
-        if not parsOK:
+        singleRun, msmallGroup, pars_ok, r = parse_msmall_bolds(options, bolds, r)
+        if not pars_ok:
             raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")
 
         # --- Execute
@@ -8368,11 +8374,11 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
                 report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Parse msmall_bolds
-        singleRun, icafixBolds, dedriftGroups, parsOK, r = parse_icafix_bolds(
+        singleRun, icafixBolds, dedriftGroups, pars_ok, r = parse_icafix_bolds(
             options, bolds, r, True
         )
 
-        if not parsOK:
+        if not pars_ok:
             raise ge.CommandFailed(
                 "hcp_dedrift_and_resample", "... invalid input parameters!"
             )
@@ -10726,17 +10732,21 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             parelements,
         )
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = "0"
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = "1"
-        elif options["hcp_matlab_mode"] == "octave":
-            r += "\nWARNING: ApplyAutoReclean runs with octave results are unstable!\n"
-            matlabrunmode = "2"
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
         else:
-            r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-            pars_ok = False
+            if options["hcp_matlab_mode"] == "compiled":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                pars_ok = False
 
         if not pars_ok:
             raise ge.CommandFailed(
@@ -10913,18 +10923,21 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
         else:
             timepoints = options["hcp_autoreclean_timepoints"]
 
-        # matlab run mode
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = "0"
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = "1"
-        elif options["hcp_matlab_mode"] == "octave":
-            r += "\nWARNING: ApplyAutoReclean runs with octave results are unstable!\n"
-            matlabrunmode = "2"
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                run = False
         else:
-            r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-            run = False
+            if options["hcp_matlab_mode"] == "compiled":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                os.environ["FSL_FIX_MATLAB_MODE"] = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
 
         comm = (
             '%(script)s \

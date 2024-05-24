@@ -993,8 +993,8 @@ arglist = [
     ],
     [
         "hcp_matlab_mode",
-        "compiled",
-        str,
+        "",
+        isNone,
         "Specifies the Matlab version, can be interpreted, compiled or octave.",
     ],
     [
