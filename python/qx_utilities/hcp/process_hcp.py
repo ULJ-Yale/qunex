@@ -5379,9 +5379,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
 
-        --hcp_matlab_mode (str, default 'compiled'):
+        --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'.
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
 
         --hcp_icafix_domotionreg (str, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
@@ -6125,9 +6126,10 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
 
-        --hcp_matlab_mode (str, default 'compiled'):
-            Specifies the Matlab version, can be 'interpreted', 'compiled'
-            or 'octave'.
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
 
         --hcp_postfix_dualscene (str, default ''):
             Path to an alternative template scene, if empty HCP default dual
@@ -6426,17 +6428,23 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         if options["hcp_postfix_dualscene"] is not None:
             dualscene = options["hcp_postfix_dualscene"]
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = 0
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = 1
-        elif options["hcp_matlab_mode"] == "octave":
-            r += "\nWARNING: ICAFix runs with octave results are unstable!"
-            matlabrunmode = 2
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
-            r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
-            boldok = False
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                boldok = False
 
         # subject/session
         subject = sinfo["id"] + options["hcp_suffix"]
@@ -6598,9 +6606,10 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
 
-        --hcp_matlab_mode (str, default 'compiled'):
-            Specifies the MATLAB version, can be interpreted, compiled or
-            octave.
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
 
         --hcp_icafix_domotionreg (str, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
@@ -6891,17 +6900,23 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
                 else options["hcp_icafix_highpass"]
             )
 
-            # matlab run mode, compiled=0, interpreted=1, octave=2
-            if options["hcp_matlab_mode"] == "compiled":
-                matlabrunmode = 0
-            elif options["hcp_matlab_mode"] == "interpreted":
-                matlabrunmode = 1
-            elif options["hcp_matlab_mode"] == "octave":
-                r += "\nWARNING: ICAFix runs with octave results are unstable!"
-                matlabrunmode = 2
+            # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+            if options["hcp_matlab_mode"] is None:
+                if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                    r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                    pars_ok = False
+                else:
+                    matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
             else:
-                r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
-                boldok = False
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    boldok = False
 
             comm = (
                 '%(script)s \
@@ -7103,17 +7118,23 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
         ):
             groupok = True
 
-            # matlab run mode, compiled=0, interpreted=1, octave=2
-            if options["hcp_matlab_mode"] == "compiled":
-                matlabrunmode = 0
-            elif options["hcp_matlab_mode"] == "interpreted":
-                matlabrunmode = 1
-            elif options["hcp_matlab_mode"] == "octave":
-                r += "\nWARNING: ICAFix runs with octave results are unstable!"
-                matlabrunmode = 2
+            # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+            if options["hcp_matlab_mode"] is None:
+                if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                    r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                    pars_ok = False
+                else:
+                    matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
             else:
-                r += "\nERROR: wrong value for the hcp_matlab_mode parameter!"
-                groupok = False
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    groupok = False
 
             # highpass
             highpass = (
@@ -7508,9 +7529,10 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         --hcp_regname (str, default 'MSMSulc'):
             Input registration name.
 
-        --hcp_matlab_mode (str, default 'compiled'):
-            Specifies the MATLAB version, can be 'interpreted', 'compiled'
-            or 'octave'.
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
 
         --hcp_msmall_procstring (str, default <hcp_cifti_tail>_hp<hcp_highpass>_clean):
             Identification for FIX cleaned dtseries to use.
@@ -7824,16 +7846,23 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = 0
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = 1
-        elif options["hcp_matlab_mode"] == "octave":
-            matlabrunmode = 2
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
-            r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-            boldsok = False
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                boldsok = False
 
         comm = (
             '%(script)s \
@@ -8041,16 +8070,23 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = 0
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = 1
-        elif options["hcp_matlab_mode"] == "octave":
-            matlabrunmode = 2
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
-            r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-            boldok = False
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                boldok = False
 
         # fix names to use
         fixnamestouse = boldtargets
@@ -8239,11 +8275,10 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             Smoothing FWHM that matches what was used in the fMRISurface
             pipeline.
 
-        --hcp_matlab_mode (str, default 'compiled'):
-            Specifies the Matlab version, can be:
-            - 'interpreted'
-            - 'compiled' or
-            - 'octave'.
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
 
         --hcp_icafix_domotionreg (bool, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
@@ -8551,16 +8586,23 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = 0
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = 1
-        elif options["hcp_matlab_mode"] == "octave":
-            matlabrunmode = 2
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
-            r += "\n     ... ERROR: wrong value for the hcp_matlab_mode parameter!"
-            boldsok = False
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                boldsok = False
 
         comm = (
             '%(script)s \
@@ -8824,16 +8866,23 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = 0
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = 1
-        elif options["hcp_matlab_mode"] == "octave":
-            matlabrunmode = 2
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
-            r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-            runok = False
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                runok = False
 
         comm = (
             '%(script)s \
@@ -9662,9 +9711,10 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             fMRI name for concatenated extracted runs, requires
             --hcp_tica_extract_fmri_name_list.
 
-        --hcp_matlab_mode (str, default 'compiled'):
+        --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'.
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
 
     Output files:
         If ran on a single session the results of this step can be found in
@@ -10007,16 +10057,23 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             gc.link_or_copy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] == "compiled":
-            matlabrunmode = 0
-        elif options["hcp_matlab_mode"] == "interpreted":
-            matlabrunmode = 1
-        elif options["hcp_matlab_mode"] == "octave":
-            matlabrunmode = 2
+        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                pars_ok = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
-            r += "\n---> ERROR: wrong value for the hcp_matlab_mode parameter!"
-            run = False
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
 
         # build the command
         if run:
@@ -10634,9 +10691,10 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             A decision threshold for determing reclassifications,
             should be less than to equal to the number of models to use.
 
-        --hcp_matlab_mode (str, default 'compiled'):
-            The matlab run mode, can be 'compiled', 'interpreted' or 'octave'.
-            Default is 'compiled'.
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
 
     Output files:
         The results of this step will be generated and populated in the
@@ -10938,6 +10996,8 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             else:
                 r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 run = False
+
+        matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
 
         comm = (
             '%(script)s \
