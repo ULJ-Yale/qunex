@@ -81,7 +81,7 @@ else
     report = 'error';
 end
 
-% --> create structure from file or string
+% ---> create structure from file or string
 
 if ischar(flist)
 
@@ -152,7 +152,7 @@ else
     error('ERROR: unknown input to general_read_file_list! The flist parameter is neither a string nor a struct. Please check your call!');
 end
 
-% --> check structure
+% ---> check structure
 
 prepend   = '       ... ';
 nfiles    = 0;

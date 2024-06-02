@@ -283,7 +283,7 @@ else
 end
 
 
-if verbose, fprintf('\n===> DONE\n'); end
+if verbose, fprintf('\n---> DONE\n'); end
 
 
 % --- Support function
@@ -299,15 +299,15 @@ function [img] = setMeta(img, session, effect, frame, event, verbose)
 
 function [parcelnames] = getParcelNames(img)
 
-    % --> extract metadata from the input image
+    % ---> extract metadata from the input image
 
     xml  = cast(img.meta(find([img.meta.code] == 32)).data, 'char')';
 
-    % --> load cifti brain model
+    % ---> load cifti brain model
 
     model = load('cifti_brainmodel');
 
-    % --> process parcells
+    % ---> process parcells
 
     parcels = regexp(xml, '<Parcel Name="(?<name>.*?)">.*?(?<parcelparts><.*?)\s*</Parcel>', 'names');
     parcelnames = {parcels.name};

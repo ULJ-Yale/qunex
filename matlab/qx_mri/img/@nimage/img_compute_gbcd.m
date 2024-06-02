@@ -296,12 +296,12 @@ for c = 1:ncommands
 
             % .... recompute evoxels to reflect n for each roi ??????
 
-            % -----> compute mFz
+            % ---> compute mFz
 
             case 'mFz'
                 results(b,:,c) = rmean(Fz, md == b, 1);
 
-            % -----> compute aFz
+            % ---> compute aFz
 
             case 'aFz'
                 if tparameter == 0
@@ -310,29 +310,29 @@ for c = 1:ncommands
                     results(b,:,c) = rmean(aFz, (aFz > tparameter & md == b), 1);
                 end
 
-            % -----> compute pFz
+            % ---> compute pFz
 
             case 'pFz'
                 results(b,:,c) = rmean(r, (r >= tparameter & md == b), 1);
 
 
-            % -----> compute pFz
+            % ---> compute pFz
 
             case 'nFz'
                 results(b,:,c) = rmean(r, (r <= tparameter & md == b), 1);
 
-            % -----> compute pD
+            % ---> compute pD
 
             case 'pD'
                 results(b,:,c) = rmean(r >= tparameter, md == b, 1);
 
 
-            % -----> compute nD
+            % ---> compute nD
 
             case 'nD'
                 results(b,:,c) = rmean(r <= tparameter, md == b, 1);
 
-            % -----> compute aD
+            % ---> compute aD
 
             case 'aD'
                 results(b,:,c) = rmean(aFz >= tparameter, md == b, 1);

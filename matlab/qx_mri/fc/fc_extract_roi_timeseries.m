@@ -518,7 +518,7 @@ for s = 1:list.nsessions
     for n = 1:nsets        
         if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
-        % --> get the extracted timeseries
+        % ---> get the extracted timeseries
     
         tsimg = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
     
@@ -534,7 +534,7 @@ for s = 1:list.nsessions
 
         if verbose; fprintf('         ... extracted ts\n'); end
 
-        % ------> Embed results
+        % ---> Embed results
         
         tsmat(n).title    = exsets(n).title;
         tsmat(n).roinames = {roi.roi.roiname};
@@ -669,7 +669,7 @@ for s = 1:list.nsessions
             tsset(n).roinames = tsmat(n).roinames;                
             tsset(n).roicodes = tsmat(n).roicodes;                
 
-            % -------> Embed data
+            % ---> Embed data
             tsset(n).subject(c).id      = list.session(c).id;
             tsset(n).subject(c).N       = tsmat(n).N;
             tsset(n).subject(c).ts      = tsmat(n).ts;

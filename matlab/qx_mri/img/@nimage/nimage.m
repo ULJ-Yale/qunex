@@ -318,7 +318,7 @@ classdef nimage
                         return
                     end
                     
-                    % --> otherwise we need to load
+                    % ---> otherwise we need to load
 
                     images = regexp(varone, ';', 'split');
                     for n = 1:length(images)
@@ -819,7 +819,7 @@ classdef nimage
             obj.runframes = [obj.runframes add.frames];
             obj.use  = [obj.use add.use];
 
-            % --> dimensions for cifti files
+            % ---> dimensions for cifti files
             %     commented as the second dimension should not be used
             % if strcmp(obj.imageformat, 'CIFTI-2')
             %     obj.dim = size(obj.data);
@@ -827,7 +827,7 @@ classdef nimage
             obj.filenames = [obj.filenames, add.filenames];
             obj.rootfilenames = [obj.rootfilenames, add.rootfilenames];
 
-            % --> combine movement data
+            % ---> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)
                 obj.mov = [obj.mov; add.mov];
             else
@@ -835,7 +835,7 @@ classdef nimage
                 obj.mov_hdr = [];
             end
 
-            % --> combine fstats data
+            % ---> combine fstats data
             if ~isempty(obj.fstats) && ~isempty(add.fstats)
                 obj.fstats = [obj.fstats; add.fstats];
             else
@@ -843,7 +843,7 @@ classdef nimage
                 obj.fstats_hdr = [];
             end
 
-            % --> combine scrub data
+            % ---> combine scrub data
             if ~isempty(obj.scrub) & ~isempty(add.scrub)
                 obj.scrub = [obj.scrub; add.scrub];
             else
@@ -851,7 +851,7 @@ classdef nimage
                 obj.scrub_hdr = [];
             end
 
-            % --> combine list data
+            % ---> combine list data
             if ~isempty(obj.list) & ~isempty(add.list)
                 for f = fields(obj.list)'
                     f = f{1};
@@ -867,11 +867,11 @@ classdef nimage
                 obj.list     = [];
             end
 
-            % --> combine events data
+            % ---> combine events data
 
             obj.tevents = [obj.tevents add.tevents];
 
-            % --> combine maps data
+            % ---> combine maps data
             if isfield(obj.cifti, 'maps') && ~isempty(obj.cifti.maps)
                 if isfield(add.cifti, 'maps') && ~isempty(add.cifti.maps)
                     obj.cifti.maps = [obj.cifti.maps add.cifti.maps];

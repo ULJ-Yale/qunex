@@ -52,13 +52,13 @@ if nargin < 2
     error('\nERROR: Please provide information on second ROI file to mask the original one!\n');
 end
 
-% ----> Load ROI2 if necessary
+% ---> Load ROI2 if necessary
 
 roi2 = nimage(roi2);
 roi2.data = roi2.image2D;
 roi2 = roi2.selectframes(1);
 
-% ----> Process ROI
+% ---> Process ROI
 
 nroi = length(img.roi.roinames);
 roi  = img.zeroframes(nroi);
@@ -75,7 +75,7 @@ for r = 1:nroi
     roi.roi(r).nvox = length(roi.roi(r).indeces);
 end
 
-% ----> Collapse to a single volume when there is no overlap between ROI
+% ---> Collapse to a single volume when there is no overlap between ROI
 
 if max(sum(roi.data > 0, 2)) == 1
     roi.data   = sum(roi.data, 2);
@@ -83,7 +83,7 @@ if max(sum(roi.data > 0, 2)) == 1
 end
 
 
-% ----> Encode metadata
+% ---> Encode metadata
 
 img.roi.roifile2  = roi2.filename;
 

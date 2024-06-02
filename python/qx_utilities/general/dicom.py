@@ -48,18 +48,31 @@ import general.nifti as gn
 import general.qximg as qxi
 import general.exceptions as ge
 from datetime import datetime
+
 if "QUNEXMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
-    mcommand = os.environ['QUNEXMCOMMAND']
+    mcommand = os.environ["QUNEXMCOMMAND"]
 
 try:
     import pydicom.filereader as dfr
 except:
     import dicom.filereader as dfr
 
-dcm_info_list = (('sessionid', str, "NA"), ('seriesNumber', int, 0), ('seriesDescription', str, "NA"), ('TR', float, 0.), ('TE', float, 0.), ('frames',
-                 int, 0), ('directions', int, 0), ('volumes', int, 0), ('slices', int, 0), ('datetime', str, ""), ('ImageType', str, ""), ('fileid', str, ""))
+dcm_info_list = (
+    ("sessionid", str, "NA"),
+    ("seriesNumber", int, 0),
+    ("seriesDescription", str, "NA"),
+    ("TR", float, 0.0),
+    ("TE", float, 0.0),
+    ("frames", int, 0),
+    ("directions", int, 0),
+    ("volumes", int, 0),
+    ("slices", int, 0),
+    ("datetime", str, ""),
+    ("ImageType", str, ""),
+    ("fileid", str, ""),
+)
 
 if "QUNEXMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
@@ -116,6 +129,7 @@ def cleanName(string):
     should not be in a file name.
     """
     return re.sub(r"[^A-Za-z0-9]", r"", string)
+
 
 def matchAll(pattern, string):
     """
@@ -339,11 +353,11 @@ def readDICOMInfo(filename):
 
     info["fileid"], _ = os.path.splitext(os.path.basename(filename))
 
-    # --> institution name
+    # ---> institution name
     if [0x0008, 0x0080] in d:
         info["institution"] = d[0x0008, 0x0080].value
 
-    # --> manufacturer and model
+    # ---> manufacturer and model
     MR = []
     for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
         if e in d:
@@ -382,12 +396,12 @@ def readDICOMBase(filename):
         return d
     except:
         # return None
-        # print(" ===> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename))
+        # print(" ---> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename))
         try:
             d = dfr.read_file(filename, stop_before_pixels=True)
             return d
         except:
-            # print(" ===> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename))
+            # print(" ---> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename))
             return None
     finally:
         if f is not None and not f.closed:
@@ -683,8 +697,7 @@ def dicom2nii(
 
     # get a list of folders
 
-    folders = [e for e in os.listdir(
-        dmcf) if os.path.isdir(os.path.join(dmcf, e))]
+    folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
     folders = [int(e) for e in folders if e.isdigit()]
     folders.sort()
     folders = [os.path.join(dmcf, str(e)) for e in folders]
@@ -709,7 +722,7 @@ def dicom2nii(
                 file=r,
             )
             print(
-                "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+                "---> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
             )
             continue
 
@@ -734,12 +747,12 @@ def dicom2nii(
             print("hcp:", os.path.abspath(os.path.join(base, "hcp")), file=stxt)
             print("", file=stxt)
 
-            # --> institution name
+            # ---> institution name
             if [0x0008, 0x0080] in d:
                 print(f"Scanned at: {d[0x0008, 0x0080].value}", file=r)
                 print(f"institution: {d[0x0008, 0x0080].value}", file=stxt)
 
-            # --> manufacturer and model
+            # ---> manufacturer and model
             MR = []
             for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
                 if e in d:
@@ -760,7 +773,9 @@ def dicom2nii(
             time = datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
         except:
             try:
-                time = datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+                time = datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime(
+                    "%H:%M:%S"
+                )
             except:
                 time = ""
 
@@ -884,17 +899,17 @@ def dicom2nii(
         imgs = glob.glob(os.path.join(folder, "*.nii*"))
         if debug:
             print(
-                "     --> found nifti files: %s"
+                "     ---> found nifti files: %s"
                 % ("\n                            ".join(imgs))
             )
         for image in imgs:
             if not os.path.exists(image):
                 continue
             if debug:
-                print("     --> processing: %s [%s]" % (image, os.path.basename(image)))
+                print("     ---> processing: %s [%s]" % (image, os.path.basename(image)))
             if image[-3:] == "nii":
                 if debug:
-                    print("     --> gzipping: %s" % (image))
+                    print("     ---> gzipping: %s" % (image))
                 subprocess.call("gzip " + image, shell=True, stdout=null, stderr=null)
                 image += ".gz"
             if os.path.basename(image)[0:2] == "co":
@@ -925,8 +940,7 @@ def dicom2nii(
                 else:
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
                     if debug:
-                        print("         ... moving '%s' to '%s'" %
-                              (image, tfname))
+                        print("         ... moving '%s' to '%s'" % (image, tfname))
                     os.rename(image, tfname)
 
                 # -- remove original
@@ -1078,8 +1092,7 @@ def dicom2nii(
                 if r["status"] == "ok":
                     print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("archive failed {}".format(
-                        r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
@@ -1411,8 +1424,7 @@ def dicom2niix(
 
     # get a list of folders
 
-    folders = [e for e in os.listdir(
-        dmcf) if os.path.isdir(os.path.join(dmcf, e))]
+    folders = [e for e in os.listdir(dmcf) if os.path.isdir(os.path.join(dmcf, e))]
     folders = [int(e) for e in folders if e.isdigit()]
     folders.sort()
     folders = [os.path.join(dmcf, str(e)) for e in folders]
@@ -1468,7 +1480,7 @@ def dicom2niix(
                     file=r,
                 )
                 print(
-                    "===> WARNING: Could not read dicom file! Skipping folder %s"
+                    "---> WARNING: Could not read dicom file! Skipping folder %s"
                     % (folder)
                 )
                 continue
@@ -1752,7 +1764,7 @@ def dicom2niix(
 
             if debug:
                 print(
-                    "     --> found %s nifti file(s): %s"
+                    "     ---> found %s nifti file(s): %s"
                     % (nimg, "\n                            ".join(imgs))
                 )
 
@@ -1761,23 +1773,23 @@ def dicom2niix(
                     continue
                 if debug:
                     print(
-                        "     --> processing: %s [%s]"
+                        "     ---> processing: %s [%s]"
                         % (image, os.path.basename(image))
                     )
                 if image.endswith(".nii"):
                     if debug:
-                        print("     --> gzipping: %s" % (image))
+                        print("     ---> gzipping: %s" % (image))
                     subprocess.call(
                         "gzip " + image, shell=True, stdout=null, stderr=null
                     )
                     image += ".gz"
 
-                # --> compile the basename of the target file(s) for nii folder
+                # ---> compile the basename of the target file(s) for nii folder
                 imgnum += 1
                 imgname = os.path.basename(image)
                 tbasename = "%d" % (niinum + imgnum)
 
-                # --> extract any suffices to add to the session.txt
+                # ---> extract any suffices to add to the session.txt
                 suffix = ""
                 if "_" in imgname:
                     suffix = " " + "_".join(
@@ -1786,13 +1798,13 @@ def dicom2niix(
                         .split("_")[1:]
                     )
 
-                # --> generate the actual target file path and move the image
+                # ---> generate the actual target file path and move the image
                 tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
                 if debug:
                     print("         ... moving '%s' to '%s'" % (image, tfname))
                 os.rename(image, tfname)
 
-                # --> check for .bval and .bvec files
+                # ---> check for .bval and .bvec files
                 for dwiextra in [".bval", ".bvec"]:
                     dwisrc = image.replace(".nii.gz", dwiextra)
                     if os.path.exists(dwisrc):
@@ -1800,12 +1812,12 @@ def dicom2niix(
                             dwisrc, os.path.join(imgf, "%s%s" % (tbasename, dwiextra))
                         )
 
-                # --> initialize JSON information
+                # ---> initialize JSON information
 
                 jsoninfo = ""
                 jinf = {}
 
-                # --> check for .json files and extract info if present
+                # ---> check for .json files and extract info if present
 
                 for jsonextra in [".json", ".JSON"]:
                     jsonsrc = image.replace(".gz", "")
@@ -1813,8 +1825,7 @@ def dicom2niix(
                     jsonsrc += jsonextra
 
                     if not os.path.exists(jsonsrc):
-                        jsonfiles = glob.glob(
-                            os.path.join(folder, "*" + jsonextra))
+                        jsonfiles = glob.glob(os.path.join(folder, "*" + jsonextra))
                         if len(jsonfiles) == 1:
                             jsonsrc = jsonfiles[0]
 
@@ -1864,7 +1875,7 @@ def dicom2niix(
                                     % (jsonsrc)
                                 )
 
-                # --> print the info to session.txt file
+                # ---> print the info to session.txt file
 
                 numinfo = ""
                 if nimg > 1:
@@ -1974,8 +1985,7 @@ def dicom2niix(
                 if r["status"] == "ok":
                     print("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("archive failed {}".format(
-                        r["args"]["dicom_folder"]))
+                    print("archive failed {}".format(r["args"]["dicom_folder"]))
                     print(r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
@@ -2598,7 +2608,7 @@ def split_dicom(folder=None):
             if sid not in sessions:
                 sessions.append(sid)
                 os.makedirs(os.path.join(folder, sid))
-                print("===> creating subfolder for session %s" % (sid))
+                print("---> creating subfolder for session %s" % (sid))
             print(
                 "---> %s - %-6s %6d - %-30s scanned on %s"
                 % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
@@ -3207,8 +3217,7 @@ def import_dicom(
 
     def _process_folder(folder, fnum=0, dnum=0, target=None):
         # -- get list of files
-        files_iter = glob.iglob(os.path.join(
-            folder, "**", "*"), recursive=True)
+        files_iter = glob.iglob(os.path.join(folder, "**", "*"), recursive=True)
         for source_file in files_iter:
             fnum, dnum = _process_file(
                 source_file, os.path.basename(source_file), fnum, dnum, target
@@ -3735,12 +3744,12 @@ def import_dicom(
                         # print("...  copying %s dicom files" % (os.path.basename(p)))
                         # shutil.copytree(p, ifolder)
 
-            # ===> run sort dicom
+            # ---> run sort dicom
 
             print
             sort_dicom(folder=sfolder)
 
-            # ===> run dicom to nii
+            # ---> run dicom to nii
 
             print
             dicom2niix(
@@ -3756,7 +3765,7 @@ def import_dicom(
                 verbose=True,
             )
 
-            # ===> archive
+            # ---> archive
 
             if archive != "leave":
                 s = "Processing packages: " + archive
@@ -3782,8 +3791,7 @@ def import_dicom(
                                 % (os.path.basename(p))
                             )
                         else:
-                            print("...  moving %s to archive" %
-                                  (os.path.basename(p)))
+                            print("...  moving %s to archive" % (os.path.basename(p)))
                             shutil.move(p, archivetarget)
                             print("     -> done!")
 
@@ -3985,8 +3993,7 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
 
     if scanner == "philips":
         try:
-            print("        Repetition Time: %.2f" %
-                  (float(d[0x0018, 0x0080].value)))
+            print("        Repetition Time: %.2f" % (float(d[0x0018, 0x0080].value)))
         except:
             try:
                 print("        Repetition Time:", d[0x2005, 0x1030].value[0])

@@ -489,7 +489,7 @@ def runThroughScheduler(
     else:
         flog = None
 
-    gc.printAndLog("===> Running scheduler for command %s" % (command), file=flog)
+    gc.printAndLog("---> Running scheduler for command %s" % (command), file=flog)
 
     # ---- setup scheduler options
     settings = args["scheduler"]
@@ -660,7 +660,7 @@ def runThroughScheduler(
 
         # print out details
         print(
-            "\n--> QuNex will run the command over %s sessions. It will utilize:\n"
+            "\n---> QuNex will run the command over %s sessions. It will utilize:\n"
             % n_sessions
         )
         print("    Scheduled jobs: %s " % parjobs)
@@ -729,7 +729,7 @@ def runThroughScheduler(
 
     # --- print report
     if jobs:
-        gc.printAndLog("\n===> Submitted jobs", file=flog)
+        gc.printAndLog("\n---> Submitted jobs", file=flog)
         for jobid, jobname in jobs:
             gc.printAndLog("     %s -> %s" % (jobid, jobname), file=flog)
 

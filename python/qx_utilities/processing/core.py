@@ -1040,7 +1040,7 @@ def runExternalForFile(
 
         # --- End
         if status and status == "done":
-            print("\n\n===> Successful completion of task\n", file=nf)
+            print("\n\n---> Successful completion of task\n", file=nf)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
         else:
             if status and status == "incomplete":
@@ -1122,7 +1122,7 @@ def runScriptThroughShell(
         endlog = errlogfile
         raise ExternalFailed(r)
     else:
-        print("\n\n===> Successful completion of task\n", file=nf)
+        print("\n\n---> Successful completion of task\n", file=nf)
         nf.close()
         if remove:
             os.remove(tmplogfile)

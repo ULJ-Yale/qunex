@@ -373,7 +373,7 @@ def setup_hcp(
             "Please check specified path [%s]" % (rawf),
         )
 
-    print("===> Setting up HCP folder structure for %s\n" % (sid))
+    print("---> Setting up HCP folder structure for %s\n" % (sid))
 
     # -> does hcp folder already exist?
 

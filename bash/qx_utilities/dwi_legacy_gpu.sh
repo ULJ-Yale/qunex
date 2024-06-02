@@ -43,7 +43,7 @@ Parameters:
         Comma separated list of sessions to run.
 
     --echospacing (str):
-        EPI Echo Spacing for data [in msec]; e.g. 0.69.
+        EPI Echo Spacing for data [in ms]; e.g. 0.69.
 
     --pedir (int):
         Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior.
@@ -147,18 +147,6 @@ Examples:
 
 EOF
 exit 0
-}
-
-# ------------------------------------------------------------------------------
-#  Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
 }
 
 # ------------------------------------------------------------------------------
@@ -303,7 +291,7 @@ get_options() {
     echo "   No GPU: ${nogpu}"
     echo "-- ${script_name}: Specified Command-Line Options - End --"
     echo ""
-    geho "------------------------- Start of work --------------------------------"
+    echo "------------------------- Start of work --------------------------------"
     echo ""
 }
 
@@ -318,7 +306,7 @@ main() {
     #############################
 
     # -- Parse all Parameters
-    echospacing="$echospacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
+    echospacing="$echospacing" #EPI Echo Spacing for data (in ms); e.g. 0.69
     pedir="$pedir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
     te="$te" #delta te in ms for field map or "NONE" if not used
     unwarpdir="$unwarpdir" # direction along which to unwarp
@@ -326,7 +314,7 @@ main() {
     dwelltimesec=`echo "scale=6; $dwelltime/1000" | bc` # set the dwell time to seconds
 
     # -- Establish global directory paths
-    geho "--- Establishing paths for all input and output folders:"
+    echo "--- Establishing paths for all input and output folders:"
     echo ""
 
     # -- Establish global directory paths
@@ -421,7 +409,7 @@ main() {
 
     # -- Delete any existing output sub-directories
     if [ "$overwrite" == "yes" ]; then
-        reho "--- Deleting prior runs for $diffdata ..."
+        echo "--- Deleting prior runs for $diffdata ..."
         echo ""
         rm -rf "$difffolder"/rawdata/"$diffdata"* > /dev/null 2>&1
         rm -rf "$difffolder"/eddy/"$diffdata"* > /dev/null 2>&1
@@ -432,12 +420,12 @@ main() {
     else
         timestamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
         if [ -d $difffolder ]; then
-            reho "--- Backing up previous ${difffolder} as $difffolder_${timestamp} ..."
+            echo "--- Backing up previous ${difffolder} as $difffolder_${timestamp} ..."
             echo ""
             cp $difffolder $difffolder_${timestamp}
         fi
         if [ -d $t1wdifffolder ]; then
-            reho "--- Backing up previous ${t1wdifffolder} as $t1wdifffolder_${timestamp} ..."
+            echo "--- Backing up previous ${t1wdifffolder} as $t1wdifffolder_${timestamp} ..."
             echo ""
             cp $t1wdifffolder $t1wdifffolder_${timestamp}
         fi
@@ -455,7 +443,7 @@ main() {
     # STEP 0 - move the unprocessed data
     #########################################
 
-    geho "--- Copying unprocesed data into the Diffusion folder"
+    echo "--- Copying unprocesed data into the Diffusion folder"
     echo ""
     unproc_file="${sessionsfolder}/${session}/hcp/${session}/unprocessed/Diffusion/${session}_${diffdatasuffix}"
     if [ -f "${unproc_file}.bval" ]; then
@@ -487,7 +475,7 @@ main() {
     # STEP 1 - setup acquisition parameters
     #########################################
 
-    geho "--- Setting up acquisition parameters:"
+    echo "--- Setting up acquisition parameters:"
     echo ""
     # -- Make session-specific and acquisition-specific parameter folder
     mkdir "$difffolder"/acqparams/"$diffdata" > /dev/null 2>&1
@@ -519,87 +507,87 @@ main() {
     ############################################
 
     if [ ${usefieldmap} == "yes" ]; then
-        geho "--- Preparing FieldMaps and T1w images..."
+        echo "--- Preparing FieldMaps and T1w images..."
         echo ""
-        geho "Running conservative BET on the FieldMap Magnitude image..."
+        echo "Running conservative BET on the FieldMap Magnitude image..."
         echo ""
         bet "$difffolder"/"$session"_FieldMap_Magnitude.nii.gz "$difffolder"/fieldmap/"$session"_FieldMap_Magnitude_brain -m -f 0.65 -v
         echo ""
-        geho "Running fsl_prepare_fieldmap assuming SIEMENS data..."
+        echo "Running fsl_prepare_fieldmap assuming SIEMENS data..."
         echo ""
         fsl_prepare_fieldmap SIEMENS "$difffolder"/"$session"_FieldMap_Phase.nii.gz "$difffolder"/fieldmap/"$session"_FieldMap_Magnitude_brain.nii.gz "$difffolder"/fieldmap/"$session"_fmap_rads "$te"
         echo ""
     else 
         echo ""
-        geho "--- Omitting FieldMap step..."
+        echo "--- Omitting FieldMap step..."
         echo ""
     fi
 
     # -- Run BET on the DWI data
-    geho "Getting the first volume of each DWI image..."
+    echo "Getting the first volume of each DWI image..."
     echo ""
     fslroi "$difffolder"/"$diffdata" "$difffolder"/rawdata/"$diffdata"_nodif 0 1
-    geho "Run BET on the B0 EPI image to create masks..."
+    echo "Run BET on the B0 EPI image to create masks..."
     echo ""
     bet "$difffolder"/rawdata/"$diffdata"_nodif "$difffolder"/rawdata/"$diffdata"_nodif_brain -m -f 0.35 -v
     echo ""
 
     # -- Check if PreFreeSurfer was completed to use existing inputs and avoid re-running BET
-    geho "--- Checking if PreFreeSurfer was completed to obtain inputs for epi_reg..."
+    echo "--- Checking if PreFreeSurfer was completed to obtain inputs for epi_reg..."
     echo ""
 
     if [ -f "$t1wfolder"/T1w_acpc_dc_restore_brain.nii.gz ]; then
-        geho "PreFreeSurfer data found: "
+        echo "PreFreeSurfer data found: "
         echo ""
         echo "$t1wfolder/T1w_acpc_dc_restore_brain.nii.gz"
         echo ""
         if [ -f "$t1wfolder"/T1w_acpc_dc_restore_brain_pve_2.nii.gz ]; then
-            geho "FAST already completed."
+            echo "FAST already completed."
             echo ""
         else
-            geho "Running FAST for the $t1wfolder/T1w_acpc_dc_restore_brain.nii.gz image..."
+            echo "Running FAST for the $t1wfolder/T1w_acpc_dc_restore_brain.nii.gz image..."
             echo ""
             fast -v -b -B "$t1wfolder"/T1w_acpc_dc_restore_brain
         fi
         # -- Set all the input image variables for epi_reg
-        geho "Setting inputs for epi_reg:"
+        echo "Setting inputs for epi_reg:"
         t1wimage="$t1wfolder"/T1w_acpc_dc_restore
         t1wbrainimage="$t1wfolder"/T1w_acpc_dc_restore_brain
         wmsegimage="$t1wfolder"/T1w_acpc_dc_restore_brain_pve_2
         t1wimagemask="$t1wfolder"/T1w_acpc_brain_mask
-        geho ""
-        geho "--> T1w Data:             $t1wimage"
-        geho "--> T1w BET+FAST Data:    $t1wbrainimage"
-        geho "--> WM Segment FAST Data: $wmsegimage"
-        geho "--> T1w Brain Mask Data:  $t1wimagemask"
+        echo ""
+        echo "---> T1w Data:             $t1wimage"
+        echo "---> T1w BET+FAST Data:    $t1wbrainimage"
+        echo "---> WM Segment FAST Data: $wmsegimage"
+        echo "---> T1w Brain Mask Data:  $t1wimagemask"
         echo ""
     else
-        geho "PreFreeSurfer data not found. Using raw ${session}_strc_T1w_MPR1.nii.gz as input..."
+        echo "PreFreeSurfer data not found. Using raw ${session}_strc_T1w_MPR1.nii.gz as input..."
         echo ""
         if [ -f "$t1wdifffolder"/"$session"_strc_T1w_MPR1_brain_pve_2.nii.gz ]; then
-            geho "BET & FAST already completed."
+            echo "BET & FAST already completed."
             echo ""
         else
-            geho "Running BET for ${t1wfolder}/${session}_strc_T1w_MPR1.nii.gz image..."
+            echo "Running BET for ${t1wfolder}/${session}_strc_T1w_MPR1.nii.gz image..."
             echo ""
             bet "$t1wfolder"/"$session"_strc_T1w_MPR1 "$t1wdifffolder"/"$session"_strc_T1w_MPR1_brain -m -B -f 0.3 -v
             echo ""
-            geho "Running FAST for the T1w image..."
+            echo "Running FAST for the T1w image..."
             echo ""
             fast -v -b -B "$t1wdifffolder"/"$session"_strc_T1w_MPR1_brain
             echo ""
         fi
         # -- Set all the input image variables for epi_reg
-        geho "Setting inputs for epi_reg:"
+        echo "Setting inputs for epi_reg:"
         t1wimage="$t1wfolder"/"$session"_strc_T1w_MPR1
         t1wbrainimage="$t1wdifffolder"/"$session"_strc_T1w_MPR1_brain_restore
         wmsegimage="$t1wdifffolder"/"$session"_strc_T1w_MPR1_brain_pve_2
         t1wimagemask="$t1wfolder"/"$session"_strc_T1w_MPR1_brain_mask
-        geho ""
-        geho "--> T1w data:             $t1wimage"
-        geho "--> T1w BET+FAST data:    $t1wbrainimage"
-        geho "--> WM segment FAST data: $wmsegimage"
-        geho "--> T1w brain mask data:  $t1wimagemask"
+        echo ""
+        echo "---> T1w data:             $t1wimage"
+        echo "---> T1w BET+FAST data:    $t1wbrainimage"
+        echo "---> WM segment FAST data: $wmsegimage"
+        echo "---> T1w brain mask data:  $t1wimagemask"
         echo ""
     fi
 
@@ -609,7 +597,7 @@ main() {
 
     # -- Performs eddy call with --fwhm=10,0,0,0,0  --ff=10 -- this performs an initial FWHM smoothing for the first step of registration, then re-run with 4 more iterations without smoothing; the --ff flag adds a fat factor for angular smoothing. 
     # -- For best possible results you want opposing diff directions but in practice we distribute directions on the sphere. Instead we look at 'cones'. This does not smooth the data but rather the predictions to allow best possible estimation via EDDY.
-    geho "--- Running eddy..."    
+    echo "--- Running eddy..."    
     echo ""
 
     if [[ ${nogpu} == "yes" ]]; then
@@ -618,13 +606,13 @@ main() {
         eddy_bin=${FSLBINDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
     fi
 
-    geho "Using the following eddy binary: ${eddy_bin}"
+    echo "Using the following eddy binary: ${eddy_bin}"
     echo ""
 
     # -- Eddy call with cuda with extra QC options
     echo "Running command:"
     echo ""
-    geho "${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v"
+    echo "${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v"
     echo ""
     ${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
 
@@ -633,17 +621,17 @@ main() {
     ############################################
 
     # -- Performs registration on the DWI EPI raw B0 image to T1w while using the Fieldmap. 
-    # -- This gives the EPI --> T1 transformation given the FieldMap. 
+    # -- This gives the EPI ---> T1 transformation given the FieldMap. 
     # -- This yields a transformation matrix that can then be applied to the DWI data. 
 
     if [ ${usefieldmap} == "yes" ]; then
         echo ""
-        geho "--- Running epi_reg for EPI--T1 data with fieldmap specification..." 
+        echo "--- Running epi_reg for EPI--T1 data with fieldmap specification..." 
         echo ""
         epi_reg --epi="$difffolder"/rawdata/"$diffdata"_nodif_brain --t1="$t1wimage" --t1brain="$t1wbrainimage" --out="$difffolder"/reg/"$diffdata"_nodif2T1 --fmap="$difffolder"/fieldmap/"$session"_fmap_rads --wmseg="$wmsegimage" --fmapmag="$difffolder"/"$session"_FieldMap_Magnitude --fmapmagbrain="$difffolder"/fieldmap/"$session"_FieldMap_Magnitude_brain --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     else
         echo ""
-        geho "--- Running epi_reg for EPI--T1 data without fieldmap specification..." 
+        echo "--- Running epi_reg for EPI--T1 data without fieldmap specification..." 
         echo ""
         epi_reg --epi="$difffolder"/rawdata/"$diffdata"_nodif_brain --t1="$t1wimage" --t1brain="$t1wbrainimage" --out="$difffolder"/reg/"$diffdata"_nodif2T1 --wmseg="$wmsegimage" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     fi
@@ -654,12 +642,12 @@ main() {
 
     # -- Registers the eddy_corrected DWI data to T1w space
     echo ""
-    geho "--- Registering the eddy_corrected DWI data to T1w space..."
+    echo "--- Registering the eddy_corrected DWI data to T1w space..."
     echo ""
     # -- First create a downsampled T1w image to use a target
     diffres=`fslval "$difffolder"/"$diffdata" pixdim1`
     diffresext=`echo $diffres | cut -c1-3`
-    geho "Downsampling the $t1wimage, $t1wbrainimage and $t1wimagemask to $diffdata resolution: $diffresext mm ..."
+    echo "Downsampling the $t1wimage, $t1wbrainimage and $t1wimagemask to $diffdata resolution: $diffresext mm ..."
     echo ""
     flirt -in "$t1wimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" -v
     flirt -in "$t1wbrainimage" -ref "$t1wimage" -applyisoxfm "$diffres" -interp spline -out "$t1wdifffolder"/T1w_brain_downsampled2diff_"$diffresext" -v
@@ -670,23 +658,23 @@ main() {
 
     # -- Registers the DWI data to T1w space
     if [ ${usefieldmap} == "yes" ]; then
-        geho "Applying the warp for $diffdata to T1w space with fieldmap specification..."; echo ""
+        echo "Applying the warp for $diffdata to T1w space with fieldmap specification..."; echo ""
         applywarp -i "$difffolder"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
     else
-        geho "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
+        echo "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
         epi_reg --epi="$difffolder"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" --t1brain="$t1wdifffolder"/T1w_brain_downsampled2diff_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/T1w_wmsegimage_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     fi
     echo ""
 
-    geho "Getting the first volume of the registered DWI image..."
+    echo "Getting the first volume of the registered DWI image..."
     echo ""
     fslroi "$t1wdifffolder"/data "$t1wdifffolder"/data_1stframe 0 1
-    geho "Running BET for final DWI data: $t1wdifffolder/$diffdata_data"
+    echo "Running BET for final DWI data: $t1wdifffolder/$diffdata_data"
     echo ""
     bet "$t1wdifffolder"/data_1stframe "$t1wdifffolder"/data_1stframe -m -f 0.35 -v
 
     echo ""
-    geho "Running fslmaths to brain-mask $diffdata using the down-sampled $t1wimagemask..."
+    echo "Running fslmaths to brain-mask $diffdata using the down-sampled $t1wimagemask..."
     fslmaths "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}" -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}"_masked_with_DWI1stframe
     fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}" "$t1wdifffolder"/data_brain_masked_with_T1.nii.gz 
     fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/data_brain_masked_with_DWI.nii.gz 
@@ -694,7 +682,7 @@ main() {
 
     echo ""
     # -- Aligns the BVECS and BVALS using HCP 
-    geho "--- Aligning BVECS to T1 space using HCP code"
+    echo "--- Aligning BVECS to T1 space using HCP code"
     echo ""
     $HCPPIPEDIR_Global/Rotate_bvecs.sh "$difffolder"/"$diffdata".bvec "$difffolder"/reg/"$diffdata"_nodif2T1.mat "$t1wdifffolder"/bvecs
     cp "$difffolder"/"$diffdata".bval "$t1wdifffolder"/bvals
@@ -705,62 +693,62 @@ main() {
 
     # -- Perform completion checks
     unset run_error
-    geho "--- Checking outputs..."
+    echo "--- Checking outputs..."
     echo ""
     if [ -f "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext".nii.gz ]; then
         OutFile="$t1wdifffolder"/T1w_downsampled2diff_"$diffresext".nii.gz
-        geho "T1w data in DWI resolution:   $OutFile"
+        echo "T1w data in DWI resolution:   $OutFile"
         echo ""
     else
-        reho "T1w data in DWI resolution missing. Something went wrong."
+        echo "T1w data in DWI resolution missing. Something went wrong."
         echo ""
         run_error="yes"
     fi
     if [ -f "$t1wdifffolder"/data.nii.gz ]; then
         OutFile="$t1wdifffolder"/data.nii.gz
-        geho "DWI final processed data:     $OutFile"
+        echo "DWI final processed data:     $OutFile"
         echo ""
     else
-        reho "DWI final processed data missing. Something went wrong."
+        echo "DWI final processed data missing. Something went wrong."
         echo ""
         run_error="yes"
     fi
     if [ -f  "$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz ]; then
         OutFile="$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz 
-        geho "DWI brain-masked data:        $OutFile"
+        echo "DWI brain-masked data:        $OutFile"
         echo ""
     else
-        reho "DWI brain-masked data missing. Something went wrong."
+        echo "DWI brain-masked data missing. Something went wrong."
         echo ""
         run_error="yes"
     fi
     if [ -f  "$t1wdifffolder"/bvecs ]; then
         OutFile="$t1wdifffolder"/bvecs
-        geho "DWI bvecs:                    $OutFile"
+        echo "DWI bvecs:                    $OutFile"
         echo ""
     else
-        reho "BVECS in $t1wdifffolder missing. Something went wrong."
+        echo "BVECS in $t1wdifffolder missing. Something went wrong."
         echo ""
         run_error="yes"
     fi
     if [ -f  "$t1wdifffolder"/bvals ]; then
         OutFile="$t1wdifffolder"/bvals
-        geho "DWI bvals:                    $OutFile"
+        echo "DWI bvals:                    $OutFile"
         echo ""
     else
-        reho "BVALS in $t1wdifffolder missing. Something went wrong."
+        echo "BVALS in $t1wdifffolder missing. Something went wrong."
         echo ""
         run_error="yes"
     fi
     if [[ -z ${run_error} ]]; then 
         echo ""
-        geho "--- DWI preprocessing successfully completed"
+        echo "--- DWI preprocessing successfully completed"
         echo ""
-        geho "------------------------- Successful completion of work -------------------------"
+        echo "------------------------- Successful completion of work -------------------------"
         echo ""
     else
         echo ""
-        reho "--- Results missing. Something went wrong with calculation."
+        echo "--- Results missing. Something went wrong with calculation."
         echo ""
         exit 1
     fi

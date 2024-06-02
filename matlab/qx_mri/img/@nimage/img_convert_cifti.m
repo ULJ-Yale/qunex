@@ -76,7 +76,7 @@ end
 % --- convert the image to the desired format
 if strcmpi(input_format, 'dense') && strcmpi(output_format, 'parcellated')
     % --- convert dense to parcellated
-    if verbose, fprintf('==> converting dense to parcellated\n'); end
+    if verbose, fprintf('---> converting dense to parcellated\n'); end
     if isempty(parcel_img)
         error('A parcellated reference image is required for dense to parcellated conversion');
     end
@@ -84,12 +84,12 @@ if strcmpi(input_format, 'dense') && strcmpi(output_format, 'parcellated')
 
 elseif strcmpi(input_format, 'parcellated') && strcmpi(output_format, 'dense')
     % --- convert parcellated to dense
-    if verbose, fprintf('==> converting parcellated to dense\n'); end
+    if verbose, fprintf('---> converting parcellated to dense\n'); end
     img = img.img_parcellated2dense();
 
 elseif strcmpi(input_format, 'parcellated') && strcmpi(output_format, 'label')
     % --- convert parcellated to label
-    if verbose, fprintf('==> converting parcellated to label\n'); end
+    if verbose, fprintf('---> converting parcellated to label\n'); end
     img_d = img.img_parcellated2dense();
     img_d_single_frame = img_d;
     img_d_single_frame.data = img_d_single_frame.data(:,1);
@@ -103,7 +103,7 @@ elseif strcmpi(input_format, 'parcellated') && strcmpi(output_format, 'label')
 
 elseif strcmpi(input_format, 'dense') && strcmpi(output_format, 'label')
     % --- convert dense to label
-    if verbose, fprintf('==> converting dense to label\n'); end
+    if verbose, fprintf('---> converting dense to label\n'); end
     img = img.img_dense2label(map_names);
 
 end

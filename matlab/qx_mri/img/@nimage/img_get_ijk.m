@@ -43,10 +43,10 @@ img.data = img.image4D;
 % =================================================================================================
 % ---                                                                               The main switch
 
-% --> if we have no input matrix, assume and check we have an ROI image
+% ---> if we have no input matrix, assume and check we have an ROI image
 if size(xyz, 2) >= 3
     ijk = getIJK(img, xyz);
-% --> nothing matches
+% ---> nothing matches
 else
     error('\nERROR img_get_ijk: Invalid input. Please check the use of the function and the provided input!\n');
 end
@@ -56,7 +56,7 @@ end
 % ---                                                                             Support functions
 
 
-% --> computing the XYZ from IJK
+% ---> computing the XYZ from IJK
 
 function [ijk] = getIJK(img, xyz)
 

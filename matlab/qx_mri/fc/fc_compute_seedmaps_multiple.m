@@ -238,12 +238,12 @@ for n = 1:list.nsessions
 
     fprintf(' ... done!');
 
-    % ------> Embedd results
+    % ---> Embedd results
 
     nroi = length(roi.roi.roinames);
     for r = 1:nroi
 
-        % -------> Create data files if it is the first run
+        % ---> Create data files if it is the first run
 
         if n == 1
             if cv
@@ -254,7 +254,7 @@ for n = 1:list.nsessions
             group(r).roi = roi.roi.roinames{r};
         end
 
-        % -------> Embedd data
+        % ---> Embedd data
 
         if cv
             group(r).cv.data(:,n) = pr.data(:,r);
@@ -262,7 +262,7 @@ for n = 1:list.nsessions
             group(r).Fz.data(:,n) = fc_fisher(pr.data(:,r));
         end
 
-        % ----> if needed, save individual images
+        % ---> if needed, save individual images
 
         if ~isempty(strfind(options, 'cv')) && cv
             pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_cov']); fprintf(' cov');

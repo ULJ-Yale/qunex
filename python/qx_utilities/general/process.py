@@ -788,7 +788,7 @@ arglist = [
     ],
     [
         "hcp_bold_dcmethod",
-        "",
+        "TOPUP",
         str,
         "BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE.",
     ],
@@ -901,7 +901,7 @@ arglist = [
         "Whether slices were acquired in an interleaved fashion (odd) or not (empty) NOTE: deprecated!",
     ],
     ["# --- hcp_diffusion options"],
-    ["hcp_dwi_echospacing", "", str, "Echo spacing in msec."],
+    ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],
     [
         "hcp_dwi_gdcoeffs",
@@ -911,14 +911,14 @@ arglist = [
     ],
     [
         "hcp_dwi_dof",
-        "6",
-        str,
+        "",
+        isNone,
         "Degrees of Freedom for post eddy registration to structural images. Defaults to 6.",
     ],
     [
         "hcp_dwi_b0maxbval",
-        "50",
-        str,
+        "",
+        isNone,
         "Volumes with a bvalue smaller than this value will be considered as b0s. Defaults to 50.",
     ],
     [
@@ -993,8 +993,8 @@ arglist = [
     ],
     [
         "hcp_matlab_mode",
-        "compiled",
-        str,
+        "",
+        isNone,
         "Specifies the Matlab version, can be interpreted, compiled or octave.",
     ],
     [
@@ -2065,7 +2065,7 @@ def run(command, args):
                     "Invalid parameter value!",
                     "Parameter `%s` is specified but is set to an invalid value:"
                     % (line[0]),
-                    "--> %s=%s" % (line[0], str(options[line[0]])),
+                    "---> %s=%s" % (line[0], str(options[line[0]])),
                     "Please check acceptable inputs for %s!" % (line[0]),
                 )
 
@@ -2359,8 +2359,8 @@ def run(command, args):
         for e in log:
             print(e, file=f)
 
-        print("\n\n===> Final report for command", options["command_ran"])
-        print("\n\n===> Final report for command", options["command_ran"], file=f)
+        print("\n\n---> Final report for command", options["command_ran"])
+        print("\n\n---> Final report for command", options["command_ran"], file=f)
         failedTotal = 0
 
         for sid, report, failed in stati:
@@ -2373,14 +2373,14 @@ def run(command, args):
                     if failedTotal is not None:
                         failedTotal += failed
         if failedTotal is None:
-            print("===> Success status not reported for some or all tasks")
-            print("===> Success status not reported for some or all tasks", file=f)
+            print("---> Success status not reported for some or all tasks")
+            print("---> Success status not reported for some or all tasks", file=f)
         elif failedTotal > 0:
-            print("===> Not all tasks completed fully!")
-            print("===> Not all tasks completed fully!", file=f)
+            print("---> Not all tasks completed fully!")
+            print("---> Not all tasks completed fully!", file=f)
         else:
-            print("===> Successful completion of all tasks")
-            print("===> Successful completion of all tasks", file=f)
+            print("---> Successful completion of all tasks")
+            print("---> Successful completion of all tasks", file=f)
 
         f.close()
 

@@ -101,7 +101,7 @@ def mapToQUNEXcpls(
             if overwrite == "yes" or overwrite is True:
                 print(
                     prefix
-                    + "--> hcpls for session %s already exists: cleaning session"
+                    + "---> hcpls for session %s already exists: cleaning session"
                     % (sessionid)
                 )
                 shutil.rmtree(tfolder)
@@ -109,7 +109,7 @@ def mapToQUNEXcpls(
             elif not os.path.exists(os.path.join(tfolder, "hcpfs2nii.log")):
                 print(
                     prefix
-                    + "--> incomplete hcpls for session %s already exists: cleaning session"
+                    + "---> incomplete hcpls for session %s already exists: cleaning session"
                     % (session)
                 )
                 shutil.rmtree(tfolder)
@@ -118,7 +118,7 @@ def mapToQUNEXcpls(
                 sessions["skip"].append(session)
                 print(
                     prefix
-                    + "--> hcpls for session %s already exists: skipping session"
+                    + "---> hcpls for session %s already exists: skipping session"
                     % (session)
                 )
                 print(prefix + "    files previously mapped:")
@@ -132,7 +132,7 @@ def mapToQUNEXcpls(
                                 prefix + "    ... %s" % (os.path.basename(mappedFile))
                             )
         else:
-            print(prefix + "--> creating hcpl session %s" % (sessionid))
+            print(prefix + "---> creating hcpl session %s" % (sessionid))
             sessions["map"].append(sessionid)
 
     if os.path.exists(tfile):
@@ -458,17 +458,17 @@ def import_hcp(
     # ---> Check for folders
     if not os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS")):
         os.makedirs(os.path.join(sessionsfolder, "inbox", "HCPLS"))
-        print("--> creating inbox HCPLS folder")
+        print("---> creating inbox HCPLS folder")
 
     if not os.path.exists(os.path.join(sessionsfolder, "archive", "HCPLS")):
         os.makedirs(os.path.join(sessionsfolder, "archive", "HCPLS"))
-        print("--> creating archive HCPLS folder")
+        print("---> creating archive HCPLS folder")
 
     # ---> identification of files
     if sessions:
         sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
-    print("--> identifying files in %s" % (inbox))
+    print("---> identifying files in %s" % (inbox))
 
     sourceFiles = []
 
@@ -537,11 +537,11 @@ def import_hcp(
         )
 
     # ---> mapping data to sessions' folders
-    print("--> mapping files to QuNex hcpls folders")
+    print("---> mapping files to QuNex hcpls folders")
 
     for file in sourceFiles:
         if file.endswith(".zip"):
-            print("    --> processing zip package [%s]" % (file))
+            print("    ---> processing zip package [%s]" % (file))
 
             try:
                 z = zipfile.ZipFile(file, "r")
@@ -573,7 +573,7 @@ def import_hcp(
                 raise
 
         elif ".tar" in file or ".tgz" in file:
-            print("   --> processing tar package [%s]" % (file))
+            print("   ---> processing tar package [%s]" % (file))
 
             try:
                 tar = tarfile.open(file)
@@ -625,7 +625,7 @@ def import_hcp(
 
     # ---> archiving the dataset
     if errors:
-        print("   ==> The following errors were encountered when mapping the files:")
+        print("   ---> The following errors were encountered when mapping the files:")
         print(errors)
     else:
         if os.path.isfile(inbox) or not os.path.samefile(
@@ -633,43 +633,43 @@ def import_hcp(
         ):
             try:
                 if archive == "move":
-                    print("--> moving dataset to archive")
+                    print("---> moving dataset to archive")
                     shutil.move(inbox, os.path.join(sessionsfolder, "archive", "HCPLS"))
                 elif archive == "copy":
-                    print("--> copying dataset to archive")
+                    print("---> copying dataset to archive")
                     shutil.copy2(
                         inbox, os.path.join(sessionsfolder, "archive", "HCPLS")
                     )
                 elif archive == "delete":
-                    print("--> deleting dataset")
+                    print("---> deleting dataset")
                     if os.path.isfile(inbox):
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
             except:
-                print("==> %s failed!" % (archive))
+                print("---> %s failed!" % (archive))
         else:
             files = glob.glob(os.path.join(inbox, "*"))
             for file in files:
                 try:
                     if archive == "move":
-                        print("--> moving dataset to archive")
+                        print("---> moving dataset to archive")
                         shutil.move(
                             file, os.path.join(sessionsfolder, "archive", "HCPLS")
                         )
                     elif archive == "copy":
-                        print("--> copying dataset to archive")
+                        print("---> copying dataset to archive")
                         shutil.copy2(
                             file, os.path.join(sessionsfolder, "archive", "HCPLS")
                         )
                     elif archive == "delete":
-                        print("--> deleting dataset")
+                        print("---> deleting dataset")
                         if os.path.isfile(file):
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
                 except:
-                    print("==> %s of %s failed!" % (archive, file))
+                    print("---> %s of %s failed!" % (archive, file))
 
     # ---> check status
     if not allOk:
@@ -715,13 +715,13 @@ def import_hcp(
                         )
                         allOk = False
                 except ge.CommandFailed as e:
-                    print("===> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                    print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
                     report.append("%s failed" % (info))
                     allOk = False
 
             # ---> also copy over processed data
             if processed_data:
-                print("\n--> copying processed data")
+                print("\n---> copying processed data")
                 # path to the session's processed data
                 session_path = processed_data.replace("<session_id>", sessionid)
                 if not os.path.exists(session_path):
@@ -916,7 +916,7 @@ def processHCPLS(sessionfolder, filesort):
         )
 
     # sort folders
-    print("--> filesort:", filesort)
+    print("---> filesort:", filesort)
     for sortkey in filesort.split("_"):
         if sortkey == "name":
             checkedFolders.sort(key=lambda x: x["name"])
@@ -1163,7 +1163,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
             else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
-                print("--> cleaned nii folder, removed existing files")
+                print("---> cleaned nii folder, removed existing files")
     else:
         os.makedirs(nfolder)
 
@@ -1175,7 +1175,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     if os.path.exists(sfile):
         if overwrite == "yes" or overwrite is True:
             os.remove(sfile)
-            print("--> removed existing session_hcp.txt file")
+            print("---> removed existing session_hcp.txt file")
         else:
             raise ge.CommandFailed(
                 "map_hcpls2nii",
@@ -1238,7 +1238,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
 
             if status:
                 nmapped += 1
-                print("--> linked %02d.nii.gz <-- %s" % (imgn, fileInfo["name"]))
+                print("---> linked %02d.nii.gz <-- %s" % (imgn, fileInfo["name"]))
 
                 # -- Institution and device information
 
@@ -1405,7 +1405,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
 
                     if phenc == "NA":
                         print(
-                            "==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!"
+                            "---> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!"
                             % (imgn, fileInfo["name"])
                         )
                         phencstr = ""
@@ -1489,7 +1489,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
 
                     if phenc == "NA":
                         print(
-                            "==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!"
+                            "---> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!"
                             % (imgn, fileInfo["name"])
                         )
                         phencstr = ""
@@ -1613,7 +1613,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
             else:
                 allOk = False
                 print(
-                    "==> ERROR: Linking failed: %02d.nii.gz <-- %s"
+                    "---> ERROR: Linking failed: %02d.nii.gz <-- %s"
                     % (imgn, fileInfo["name"])
                 )
                 print("FAILED: %s => %s" % (fileInfo["path"], tfile), file=bout)
@@ -1654,11 +1654,11 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
 
                 if not all([statusA, statusB]):
                     print(
-                        "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!"
+                        "---> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!"
                         % (imgn)
                     )
                     print(
-                        "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s"
+                        "---> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s"
                         % (imgn, fileInfo["name"].replace(".nii.gz", ".bval/.bvec"))
                     )
                     allOk = False

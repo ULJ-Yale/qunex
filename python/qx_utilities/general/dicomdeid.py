@@ -222,7 +222,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                             relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
                         
-                        print("===> zipping to", target_file)
+                        print("---> zipping to", target_file)
                         file = zipfile.ZipFile(target_file, mode='w')
 
                         for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
@@ -263,7 +263,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                             relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
 
-                        print("====> archiving to", target_file)
+                        print("---> archiving to", target_file)
                         file = tarfile.open(target_file, mode2)                                                
 
                         for item in glob.glob(os.path.join(temp_out_directory, '*')):
@@ -724,7 +724,7 @@ def read_spec_file(spec_file):
                     if key not in action_dict:
                         action_dict[key] = []
                     else:
-                        print("===> Warning, actions for tag %s specified more than once! [line: %d]" % (key, lineNumber))
+                        print("---> Warning, actions for tag %s specified more than once! [line: %d]" % (key, lineNumber))
 
                     for action in actions:
                         if "replace" in action:
@@ -733,7 +733,7 @@ def read_spec_file(spec_file):
                                 action, replacement = parts
                                 replace_map[key] = replacement
                             else:
-                                print("===> Warning, no replacement specified, skipping replacement! [line %d: %s]" % (lineNumber, action))
+                                print("---> Warning, no replacement specified, skipping replacement! [line %d: %s]" % (lineNumber, action))
 
                         action_dict[key].append(action)
 

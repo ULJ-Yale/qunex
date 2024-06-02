@@ -131,22 +131,6 @@ usage() {
 }
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
-ceho() {
-    echo -e "\033[36m $1 \033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- Parse and check all arguments
 # ------------------------------------------------------------------------------
 
@@ -221,21 +205,21 @@ DownloadPath=`opts_GetOpt "--downloadpath" $@`
 ## -- Check run type
 if [[ -z ${RUN_TYPE} ]]; then
     usage
-    reho "ERROR: --runtype flag not specified. Specify --runtype='upload' or --runtype='download'."
+    echo "ERROR: --runtype flag not specified. Specify --runtype='upload' or --runtype='download'."
     echo ""
     exit 1
 fi
 ## -- Check XNAT Host variable
 if [[ -z ${XNAT_HOST_NAME} ]]; then
     usage
-    reho "ERROR: --xnathost flag not specified"
+    echo "ERROR: --xnathost flag not specified"
     echo ""
     exit 1
 fi
 ## -- Check for session variables
 if [[ -z ${CASES} ]] && [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
     usage
-    reho "ERROR: --sessions flag and --xnatsubjectlabels flag not specified. No cases to work with. Please specify either."
+    echo "ERROR: --sessions flag and --xnatsubjectlabels flag not specified. No cases to work with. Please specify either."
     echo ""
     exit 1
 fi
@@ -243,21 +227,21 @@ fi
 if [[ -z ${XNAT_SESSION_LABEL} ]]; then
     XNAT_SESSION_LABEL=""
     usage
-    reho "Note: --xnatsessionlabel flag not specified. Assuming that the experiment / session label matches XNAT subject label."
+    echo "Note: --xnatsessionlabel flag not specified. Assuming that the experiment / session label matches XNAT subject label."
     echo ""
 fi
 ## -- Check CASES variable is not set
 if [[ -z ${CASES} ]]; then
     CASES="$XNAT_SUBJECT_LABELS"
     echo ""
-    reho "Note: --sessions flag omitted. Assuming specified --xnatsubjectlabels names match the sessions folders on the file system."
+    echo "Note: --sessions flag omitted. Assuming specified --xnatsubjectlabels names match the sessions folders on the file system."
     echo ""
 fi
 ## -- Check XNAT_SUBJECT_LABELS
 if [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
     XNAT_SUBJECT_LABELS="$CASES"
     echo ""
-    reho "Note: --xnatsubjectlabels flag omitted. Assuming specified --sessions names match the subject labels in XNAT."
+    echo "Note: --xnatsubjectlabels flag omitted. Assuming specified --sessions names match the subject labels in XNAT."
     echo ""
 fi
 
@@ -266,14 +250,14 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     ## -- Check XNAT Project variable
     if [ -z ${XNAT_PROJECT_ID} ]; then
         usage
-        reho "ERROR: --xnatprojectid flag, which defines the XNAT Site Project is not specified."
+        echo "ERROR: --xnatprojectid flag, which defines the XNAT Site Project is not specified."
         echo ""
         exit 1
     fi
     if [[ -z ${DownloadPath} ]]; then
         if [] -z ${StudyFolder} []; then
             usage
-            reho "ERROR: --studyfolder not specified."
+            echo "ERROR: --studyfolder not specified."
             echo ""
             exit 1
         fi
@@ -285,7 +269,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     ## -- Check BIDS format
     if [[ -z ${BIDSFormat} ]]; then
         BIDSFormat="no"
-        reho "Note: --bidsformat flag not specified. Setting to --bidsformat=$BIDSFormat."
+        echo "Note: --bidsformat flag not specified. Setting to --bidsformat=$BIDSFormat."
         echo ""
     fi
 fi
@@ -295,8 +279,8 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     ## -- Check XNAT Project variable
     if [ -z ${XNAT_PROJECT_ID} ]; then
         echo ""
-        reho "Note: --xnatprojectid flag, which defines the XNAT Site Project is not specified."
-        reho "      Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
+        echo "Note: --xnatprojectid flag, which defines the XNAT Site Project is not specified."
+        echo "      Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
         echo ""
     fi
     ## -- Check if single upload requested
@@ -304,27 +288,27 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
         ## -- Check session folder if DICOMPath is not set
         if [ -z ${SessionsFolder} ]; then
             usage
-            reho "ERROR: --sessionsfolder=<folder-with-sessions> not specified."
+            echo "ERROR: --sessionsfolder=<folder-with-sessions> not specified."
             echo ""
             exit 1
         fi
     else 
         ## -- Generic DICOM path is set outside of QuNex hierarchy
-        reho "Note: --dicompath=${DICOMPath} specified, which assumes DICOM location for a single XNAT upload."; echo ""
+        echo "Note: --dicompath=${DICOMPath} specified, which assumes DICOM location for a single XNAT upload."; echo ""
         ## -- Check XNAT session label if DICOMPath is set
         if [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
             XNAT_SUBJECT_LABELS=""
             echo ""
-            reho "Note: --xnatsubjectlabels flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
-            reho "    If you wish to upload a new session for this subject id please supply this flag."
+            echo "Note: --xnatsubjectlabels flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
+            echo "    If you wish to upload a new session for this subject id please supply this flag."
             echo ""
         fi
         ## -- Check XNAT experiment label if DICOMPath is set
         if [[ -z ${XNAT_SESSION_LABEL} ]]; then
             XNAT_SESSION_LABEL=""
             echo ""
-            reho "Note: --xnatexperiment flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
-            reho "    If you wish to upload a new session for this subject id please supply this flag."
+            echo "Note: --xnatexperiment flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
+            echo "    If you wish to upload a new session for this subject id please supply this flag."
             echo ""
         fi
     fi
@@ -342,7 +326,7 @@ if [[ -z ${XNAT_CREDENTIAL_FILE} ]]; then XNAT_CREDENTIAL_FILE=".xnat"; fi
 ## -- Reset credentials
 if [[ "${ResetCredential}" == "yes" ]]; then
     echo ""
-    reho " -- Reseting XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} "
+    echo " -- Reseting XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} "
     echo ""
     rm -f ${HOME}/${XNAT_CREDENTIAL_FILE} &> /dev/null
     echo ""
@@ -363,20 +347,20 @@ if [ -f ${HOME}/${XNAT_CREDENTIAL_FILE} ]; then
     fi
 else
     echo ""
-    reho " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} NOT found. Checking for --xnatuser and --xnatpass flags."
+    echo " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} NOT found. Checking for --xnatuser and --xnatpass flags."
     echo ""
     if [[ -z ${XNAT_USER_NAME} ]] || [[ -z ${XNAT_PASSWORD} ]]; then
         
         echo ""
-        reho "ERROR: --xnatuser and/or --xnatpass flags are missing. Regenerating credentials now..."
+        echo "ERROR: --xnatuser and/or --xnatpass flags are missing. Regenerating credentials now..."
         echo ""
         
-        reho "   --> Enter your XNAT XNAT_HOST_NAME username:"
+        echo "   ---> Enter your XNAT XNAT_HOST_NAME username:"
         if read -s answer; then
             XNAT_USER_NAME=$answer
         fi
         
-        reho "   --> Enter your XNAT XNAT_HOST_NAME password:"
+        echo "   ---> Enter your XNAT XNAT_HOST_NAME password:"
         if read -s answer; then
             XNAT_PASSWORD=$answer
         fi
@@ -421,7 +405,7 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     fi
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
-    geho "------------------------- Start of work --------------------------------"
+    echo "------------------------- Start of work --------------------------------"
 echo ""
 
 ######################################### DO WORK ##########################################
@@ -449,22 +433,22 @@ if [[ ${RUN_TYPE} == "download" ]]; then
             # -- Report error if variables remain undefined
             if [[ -z ${XNAT_SUBJECT_ID} ]] || [[ -z ${XNAT_SUBJECT_LABEL} ]] || [[ -z ${XNAT_ACCSESSION_ID} ]] || [[ -z ${XNAT_SESSION_LABEL} ]]; then 
                 echo ""
-                reho "Some or all of XNAT database variables were not set correctly: "
+                echo "Some or all of XNAT database variables were not set correctly: "
                 echo ""
-                reho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
-                reho "  --> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
-                reho "  --> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
-                reho "  --> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL "
+                echo "  ---> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
+                echo "  ---> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
+                echo "  ---> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
+                echo "  ---> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL "
                 echo ""
                 exit 1
             else
                 echo ""
-                geho "Successfully read all XNAT database variables: "
+                echo "Successfully read all XNAT database variables: "
                 echo ""
-                geho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
-                geho "  --> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
-                geho "  --> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
-                geho "  --> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL "
+                echo "  ---> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
+                echo "  ---> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
+                echo "  ---> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
+                echo "  ---> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL "
                 echo ""
             fi
         
@@ -491,7 +475,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
             fi
             
             echo ""
-            geho " -- Running:    curl -k -b "JSESSIONID=$JSESSION" -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip "
+            echo " -- Running:    curl -k -b "JSESSIONID=$JSESSION" -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip "
             echo ""
             curl -k -b "JSESSIONID=$JSESSION" -m 3600 -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip
             
@@ -500,21 +484,21 @@ if [[ ${RUN_TYPE} == "download" ]]; then
                 CheckZIP=`zip -T ${DownloadPath}/${CASE}.zip | grep "error"`
                 if [[ -z ${CheckZIP} ]]; then
                      echo ""
-                     geho " -- XNAT download completed and validated for ${DownloadPath}/${CASE}.zip"
+                     echo " -- XNAT download completed and validated for ${DownloadPath}/${CASE}.zip"
                      echo ""
-                     XNATSuccessDownload="$XNATSuccessDownload\n   --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL | Download: ${DownloadPath}/${CASE}.zip"
+                     XNATSuccessDownload="$XNATSuccessDownload\n   ---> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL | Download: ${DownloadPath}/${CASE}.zip"
                 else
                      echo ""
-                     reho " -- XNAT download file found but not valid for ${DownloadPath}/${CASE}.zip"
+                     echo " -- XNAT download file found but not valid for ${DownloadPath}/${CASE}.zip"
                      echo ""
-                     XNATErrorsDownload="$XNATErrorsDownload\n   --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL | Download: ${DownloadPath}/${CASE}.zip"
+                     XNATErrorsDownload="$XNATErrorsDownload\n   ---> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL | Download: ${DownloadPath}/${CASE}.zip"
                      DownloadError="yes"
                 fi
             else
                 echo ""
-                reho " -- XNAT download file not found for ${DownloadPath}/${CASE}.zip"
+                echo " -- XNAT download file not found for ${DownloadPath}/${CASE}.zip"
                 echo ""
-                XNATErrorsDownload="$XNATErrorsDownload\n   --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL | Download: ${DownloadPath}/${CASE}.zip"
+                XNATErrorsDownload="$XNATErrorsDownload\n   ---> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL | Download: ${DownloadPath}/${CASE}.zip"
                 DownloadError="yes"
             fi
     }
@@ -524,7 +508,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     # ------------------------------------------------------------------------------
     TRANSFERNODE=`hostname`
         echo ""
-        geho "-- Transferring data from: $TRANSFERNODE"
+        echo "-- Transferring data from: $TRANSFERNODE"
         echo ""
     
     # ------------------------------------------------------------------------------
@@ -535,21 +519,21 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     ## -- Open JSESSION to the XNAT Site
     JSESSION=$(curl -k -X POST -u "$XNAT_CREDENTIALS" "${XNAT_HOST_NAME}/data/JSESSION" )
     echo ""
-    geho "-- JSESSION created: ${JSESSION}"; echo ""
+    echo "-- JSESSION created: ${JSESSION}"; echo ""
     
     ## -- Check if downloadpath can be found:
     if [[ -d ${DownloadPath} ]]; then
         echo ""
-        geho " -- Download path ${DownloadPath} found. Proceeding..."
+        echo " -- Download path ${DownloadPath} found. Proceeding..."
         echo ""
     else
         echo ""
-        reho " -- Download path ${DownloadPath} not found. Generating now..."
+        echo " -- Download path ${DownloadPath} not found. Generating now..."
         echo ""
         mkdir -p ${DownloadPath} &> /dev/null
         if [[ ! -d ${DownloadPath} ]]; then
             echo ""
-            reho " -- Download path ${DownloadPath} still not found. Check file system paths or permissions..."
+            echo " -- Download path ${DownloadPath} still not found. Check file system paths or permissions..."
             echo ""
             exit 1
         fi
@@ -566,12 +550,12 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     mkdir -p ${XNATInfoPath} &> /dev/null
     if [[ ! -d ${XNATInfoPath} ]]; then
         echo ""
-        reho " -- XNAT info folder ${XNATInfoPath} still not found. Check file system paths or permissions..."
+        echo " -- XNAT info folder ${XNATInfoPath} still not found. Check file system paths or permissions..."
         echo ""
         exit 1
     else
         echo ""
-        geho " -- XNAT info folder ${XNATInfoPath} generated. Proceeding..."
+        echo " -- XNAT info folder ${XNATInfoPath} generated. Proceeding..."
         echo ""
     fi
     TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
@@ -582,20 +566,20 @@ if [[ ${RUN_TYPE} == "download" ]]; then
         
     if [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv ] && [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv ]; then
        echo ""
-       geho "  --> Downloaded XNAT project info: "; echo ""
-       geho "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv"
-       geho "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv"
+       echo "  ---> Downloaded XNAT project info: "; echo ""
+       echo "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv"
+       echo "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv"
        echo ""
     else
        if [ ! -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv ]; then
            echo ""
-           reho " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv not found! "
+           echo " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv not found! "
            echo ""
            exit 1
        fi
        if [ ! -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv ]; then
            echo ""
-           reho " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv not found! "
+           echo " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv not found! "
            echo ""
            exit 1
        fi
@@ -611,19 +595,19 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     ## -- Close JSESSION
     curl -k -X DELETE -b "JSESSIONID=${JSESSION}" "${XNAT_HOST_NAME}/data/JSESSION"
     echo ""
-    geho "-- JSESSION closed: ${JSESSION}"
+    echo "-- JSESSION closed: ${JSESSION}"
     
     ## -- Final download check
     if [[ -z ${DownloadError} ]]; then
         echo ""
-        geho "-- SUCCESS: XNAT download from ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessDownload}"
+        echo "-- SUCCESS: XNAT download from ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessDownload}"
         echo ""
-        geho "------------------------- Successful completion of work --------------------------------"
+        echo "------------------------- Successful completion of work --------------------------------"
         echo ""
     fi
     if [[ ${DownloadError} == 'yes' ]]; then
         echo ""
-        reho "-- ERROR: XNAT download to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsDownload}"
+        echo "-- ERROR: XNAT download to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsDownload}"
         echo ""
     fi
     
@@ -658,7 +642,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
         unset UPLOADDICOMS
         unset FileCount
         unset DICOMCount
-        geho "-- Uploading individual DICOMs ... "
+        echo "-- Uploading individual DICOMs ... "
             if [ -z ${DICOMPath} ]; then
                 DICOMPath="${SessionsFolder}/xnatupload/temp_${TimeStamp}/working"
             fi
@@ -680,32 +664,32 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             ## -- Loop over DICOM files
             for DCM in ${UPLOADDICOMS}; do
                 if [[ -z `ls ${DICOMPath}/${DCM}` ]]; then
-                    reho "--> ERROR: File not found ${DICOMPath}/${DCM}"
+                    echo "---> ERROR: File not found ${DICOMPath}/${DCM}"
                     exit 1
                 fi
                 echo ""
-                geho "    -- Working on: ${DICOMPath}/${DCM}"
+                echo "    -- Working on: ${DICOMPath}/${DCM}"
                 echo ""
                 ## -- DESCRIPTION OF XNAT Site Variables for the curl command:
                 ## 
-                ##    -b "JSESSIONID=$JSESSION" --> XNAT Site Open Session Variable
-                ##    -X --> Here $XNAT_HOST_NAME corresponds to the XNAT URL; 
+                ##    -b "JSESSIONID=$JSESSION" ---> XNAT Site Open Session Variable
+                ##    -X ---> Here $XNAT_HOST_NAME corresponds to the XNAT URL; 
                 ##  
-                ##     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
+                ##     INFO ON XNAT VARIABLE MAPPING FROM QuNex ---> JSON ---> XML specification
                 ##
-                ## project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
+                ## project               --xnatprojectid        #  ---> mapping in QuNex: XNAT_PROJECT_ID     ---> mapping in JSON spec: #XNAT_PROJECT#   ---> Corresponding to project id in XML. 
                 ##   │ 
-                ##   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+                ##   └──subject          --xnatsubjectid        #  ---> mapping in QuNex: XNAT_SUBJECT_ID     ---> mapping in JSON spec: #SUBJECTID#      ---> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
                 ##        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-                ##        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+                ##        │              --xnatsubjectlabel     #  ---> mapping in QuNex: XNAT_SUBJECT_LABEL  ---> mapping in JSON spec: #SUBJECTLABEL#   ---> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
                 ##        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
                 ##        │ 
-                ##        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+                ##        └──experiment  --xnataccsessionid     #  ---> mapping in QuNex: XNAT_ACCSESSION_ID  ---> mapping in JSON spec: #ID#             ---> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
                 ##                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-                ##                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+                ##                       --xnatsessionlabel     #  ---> mapping in QuNex: XNAT_SESSION_LABEL  ---> mapping in JSON spec: #LABEL#          ---> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
                 ##                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
                 ##      
-                ##    -F "${DCM}=@${DCM}"       --> What you are sending to the XNAT Site
+                ##    -F "${DCM}=@${DCM}"       ---> What you are sending to the XNAT Site
                 ##
                 ## -------------------------------------------------------------
                 ##
@@ -719,20 +703,20 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             done
         echo ""
         ## -- Perform DICOM count check and report
-        CountCheck="${DICOMPath} ===> Uploaded DICOMS=${FileCount}"
+        CountCheck="${DICOMPath} ---> Uploaded DICOMS=${FileCount}"
         if [[ ${FileCount} == ${DICOMCount} ]]; then
             CountOKList="${CountOKList}\n${CountCheck}"
-            geho "-- Upload done for: ${CountCheck}"
-            geho "-- Total uploaded DICOMs OK: ${FileCount}"; echo ""
+            echo "-- Upload done for: ${CountCheck}"
+            echo "-- Total uploaded DICOMs OK: ${FileCount}"; echo ""
         else
             CountFailList="${CountFailList}\n${CountCheck}"
-            reho "-- Upload not complete for: ${CountCheck}"
-            reho "-- Total uploaded DICOMs ${FileCount} does not match input DICOM count ${DICOMCount}. Check and re-run."; echo ""
+            echo "-- Upload not complete for: ${CountCheck}"
+            echo "-- Total uploaded DICOMs ${FileCount} does not match input DICOM count ${DICOMCount}. Check and re-run."; echo ""
         fi
         echo ""
         ## -- Report PREARCHIVE XNAT path
         echo ""
-        geho "-- PREARCHIVE XNAT path: ${PREARCPATH}"
+        echo "-- PREARCHIVE XNAT path: ${PREARCPATH}"
         echo ""
     }
     
@@ -742,7 +726,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     
     TRANSFERNODE=`hostname`
         echo ""
-        geho "-- Transferring data from: $TRANSFERNODE"
+        echo "-- Transferring data from: $TRANSFERNODE"
         echo ""
     
     # ------------------------------------------------------------------------------
@@ -757,7 +741,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     ## -- Open JSESSION to the XNAT Site
     JSESSION=$(curl -k -X POST -u "$XNAT_CREDENTIALS" "${XNAT_HOST_NAME}/data/JSESSION" )
     echo ""
-    geho "-- JSESSION created: ${JSESSION}"; echo ""
+    echo "-- JSESSION created: ${JSESSION}"; echo ""
     
     ## -- Set DICOM counter
     COUNTER=1
@@ -793,20 +777,20 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             ## -- First check if data is present for upload
             if [ ! -d ${SessionsFolder}/${CASE}/dicom ]; then
                 echo ""
-                reho "-- ERROR: ${SessionsFolder}/${CASE}/dicom is not found on file system! Check your inputs. Proceeding to next session..."
+                echo "-- ERROR: ${SessionsFolder}/${CASE}/dicom is not found on file system! Check your inputs. Proceeding to next session..."
                 echo ""
                 XNATUploadError="yes"
-                XNATErrorsUpload="${XNATErrorsUpload}\n    --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
+                XNATErrorsUpload="${XNATErrorsUpload}\n    ---> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
             else
                 if [ -n "$(find "${SessionsFolder}/${CASE}/dicom" -maxdepth 0 -type d -empty 2>/dev/null)" ]; then 
                     echo ""
-                    reho "-- ERROR: ${SessionsFolder}/${CASE}/dicom is found but empty! Check your data. Proceeding to next session..."
+                    echo "-- ERROR: ${SessionsFolder}/${CASE}/dicom is found but empty! Check your data. Proceeding to next session..."
                     echo ""
                     XNATUploadError="yes"
-                    XNATErrorsUpload="${XNATErrorsUpload}\n    --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
+                    XNATErrorsUpload="${XNATErrorsUpload}\n    ---> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
                 else
                     echo ""
-                    geho "-- Found and working on ${SessionsFolder}/${CASE}/dicom ..."
+                    echo "-- Found and working on ${SessionsFolder}/${CASE}/dicom ..."
                     echo ""
                     
                     ## -- Obtain all dicoms
@@ -819,7 +803,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                         
                         DICOMCOUNTER=$((DICOMCOUNTER+1))
                         
-                        geho "-- Working on SERIES: $SERIES"
+                        echo "-- Working on SERIES: $SERIES"
                         echo ""
                         mkdir -p ${SessionsFolder}/xnatupload/ &> /dev/null
                         mkdir -p ${SessionsFolder}/xnatupload/ &> /dev/null
@@ -827,7 +811,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                         mkdir -p ${SessionsFolder}/xnatupload/temp_${TimeStamp}/working/ &> /dev/null
                         
                         ## -- Unzip DICOM files for upload
-                        geho "-- Unzipping DICOMs and linking into temp location --> ${SessionsFolder}/xnatupload/temp_${TimeStamp}/working/"
+                        echo "-- Unzipping DICOMs and linking into temp location ---> ${SessionsFolder}/xnatupload/temp_${TimeStamp}/working/"
                         echo ""
                         cp ${SessionsFolder}/${CASE}/dicom/${SERIES}/* ${SessionsFolder}/xnatupload/temp_${TimeStamp}/working/
                         gunzip ${SessionsFolder}/xnatupload/temp_${TimeStamp}/working/*.gz &> /dev/null
@@ -840,30 +824,30 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                         PATTERN="[0-9]_[0-9]"
                         if [[ ${TIMESTAMP} =~ ${PATTERN} ]]; then
                             PREARCPATHFINAL="/data/prearchive/projects/${XNAT_PROJECT_ID}/${TIMESTAMP}/${XNAT_SESSION_LABEL}"
-                            geho "-- Debug PAF is ${PREARCPATHFINAL}"
+                            echo "-- Debug PAF is ${PREARCPATHFINAL}"
                         else
-                            reho `date` "-- Debug TS doesn't pass: ${TIMESTAMP}"
+                            echo `date` "-- Debug TS doesn't pass: ${TIMESTAMP}"
                         fi
                         ## - Clean up and gzip data
                         rm -rf ${SessionsFolder}/xnatupload/temp_${TimeStamp}/ &> /dev/null
                         gzip ${SessionsFolder}/${CASE}/dicom/${SERIES}/* &> /dev/null
                         unset UPLOADDICOMS
                         echo ""
-                        geho "-- DICOM SERIES $SERIES upload completed"
-                        geho "------------------------------------------"
+                        echo "-- DICOM SERIES $SERIES upload completed"
+                        echo "------------------------------------------"
                         echo ""
                     done
             
                     ## -- Commit session (builds prearchive xml)
-                    geho "-- Committing XNAT session to prearchive..."
+                    echo "-- Committing XNAT session to prearchive..."
                     echo ""
                     curl -k -b "JSESSIONID=${JSESSION}" -X POST "${XNAT_HOST_NAME}${PREARCPATHFINAL}?action=build" &> /dev/null
                     ## -- Archive session
                     curl -k -b "JSESSIONID=${JSESSION}" -X POST -H "Content-Type: application/x-www-form-urlencoded" "${XNAT_HOST_NAME}/data/services/archive?src=${PREARCPATHFINAL}&overwrite=delete"
                     echo ""
                     echo ""
-                    geho "-- DICOM archiving completed completed for a total of $DICOMCOUNTER series"
-                    geho "--------------------------------------------------------------------------------"
+                    echo "-- DICOM archiving completed completed for a total of $DICOMCOUNTER series"
+                    echo "--------------------------------------------------------------------------------"
                     echo ""
                 fi
             fi
@@ -873,7 +857,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             ## ------------------------------------------------------------------
         
             if [ "$NIFTIUPLOAD" == "yes" ]; then
-                geho "-- Uploading individual NIFTIs ... "
+                echo "-- Uploading individual NIFTIs ... "
                 echo ""
                 cd ${SessionsFolder}/${CASE}/nii/
                 NIFTISERIES=`ls | cut -f1 -d"." | uniq`
@@ -886,7 +870,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                     FILESTOUPLOAD=`echo $MULTIFILES | sed -e 's,./,,g'`
                     for NIFTIFILEUPLOAD in $FILESTOUPLOAD; do
                         ## -- Start the upload for NIFTI files
-                        geho "-- Uploading NIFTI $NIFTIFILEUPLOAD"
+                        echo "-- Uploading NIFTI $NIFTIFILEUPLOAD"
                         echo ""
                         ## -- Clean existing nii session if requested
                         if [ "$OVERWRITE" == "yes" ]; then
@@ -897,14 +881,14 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                         ## -- Upload a specific nii session
                         curl -k -b "JSESSIONID=${JSESSION}" -X POST "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
                     done
-                    geho "-- NIFTI series $NIFTIFILE upload completed"
+                    echo "-- NIFTI series $NIFTIFILE upload completed"
                 done
                 echo ""
-                geho "-- NIFTI upload completed with a total of $SCANCOUNTER scans"
-                geho "--------------------------------------------------------------------------------"
+                echo "-- NIFTI upload completed with a total of $SCANCOUNTER scans"
+                echo "--------------------------------------------------------------------------------"
                 echo ""
             fi
-        XNATSuccessUpload="${XNATSuccessUpload}\n    --> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
+        XNATSuccessUpload="${XNATSuccessUpload}\n    ---> Subject label: $XNAT_SUBJECT_LABEL | Session label: $XNAT_SESSION_LABEL "
         done
     
     else
@@ -916,20 +900,20 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
          ## -- First check if data is present for upload
          if [ ! -d ${DICOMPath} ]; then
              echo ""
-             reho "-- ERROR: ${DICOMPath} is not found on file system! Check your inputs."
+             echo "-- ERROR: ${DICOMPath} is not found on file system! Check your inputs."
              echo ""
              XNATUploadError="yes"
              XNATErrorsUpload="$DICOMPath"
          else
              if [ -n "$(find "${DICOMPath}" -maxdepth 0 -type d -empty 2>/dev/null)" ]; then 
                  echo ""
-                 reho "-- ERROR: ${DICOMPath} is found but empty! Check your data."
+                 echo "-- ERROR: ${DICOMPath} is found but empty! Check your data."
                  echo ""
                  XNATUploadError="yes"
                  XNATErrorsUpload="$DICOMPath"
              else
                  echo ""
-                 geho "-- Found and working on ${DICOMPath} ..."
+                 echo "-- Found and working on ${DICOMPath} ..."
                  echo ""
                  
                  ## -- If XNAT_SUBJECT_LABEL is empty set it to CASE
@@ -952,22 +936,22 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                  PATTERN="[0-9]_[0-9]"
                  if [[ ${TIMESTAMP} =~ ${PATTERN} ]]; then
                      PREARCPATHFINAL="/data/prearchive/projects/${XNAT_PROJECT_ID}/${TIMESTAMP}/${XNAT_SESSION_LABEL}"
-                     geho "-- Debug PAF is ${PREARCPATHFINAL}"
+                     echo "-- Debug PAF is ${PREARCPATHFINAL}"
                  else
-                     reho `date` "-- Debug TS doesn't pass: ${TIMESTAMP}"
+                     echo `date` "-- Debug TS doesn't pass: ${TIMESTAMP}"
                  fi
                  ## - Clean up
                  unset UPLOADDICOMS
                  ## -- Commit session (builds prearchive xml)
-                 geho "-- Committing XNAT session to prearchive..."
+                 echo "-- Committing XNAT session to prearchive..."
                  echo ""
                  curl -k -b "JSESSIONID=${JSESSION}" -X POST "${XNAT_HOST_NAME}${PREARCPATHFINAL}?action=build" &> /dev/null
                  ## -- Archive session
                  curl -k -b "JSESSIONID=${JSESSION}" -X POST -H "Content-Type: application/x-www-form-urlencoded" "${XNAT_HOST_NAME}/data/services/archive?src=${PREARCPATHFINAL}&overwrite=delete"
                  echo ""
                  echo ""
-                 geho "-- DICOM archiving completed completed for a total of ${FileCount} files"
-                 geho "--------------------------------------------------------------------------------"
+                 echo "-- DICOM archiving completed completed for a total of ${FileCount} files"
+                 echo "--------------------------------------------------------------------------------"
                  echo ""
             fi
         fi
@@ -980,23 +964,23 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     ## -- DICOMPATH completion checks
     if [[ ! ${CountFailList}=="" ]]; then
         echo ""
-        reho "--- XNAT upload failed for the following uploads:"
-        reho "    -------------------------------------------------"
+        echo "--- XNAT upload failed for the following uploads:"
+        echo "    -------------------------------------------------"
         echo ""
         echo -e "${CountFailList}"
         echo ""
-        reho "   -------------------------------------------------"
+        echo "   -------------------------------------------------"
         echo ""
     fi
     
     if [[ ! ${CountOKList}=="" ]]; then
         echo ""
-        reho "--- XNAT upload failed for the following uploads:"
-        reho "    -------------------------------------------------"
+        echo "--- XNAT upload failed for the following uploads:"
+        echo "    -------------------------------------------------"
         echo ""
         echo -e "${CountOKList}"
         echo ""
-        reho "   -------------------------------------------------"
+        echo "   -------------------------------------------------"
         echo ""
     fi
     
@@ -1004,15 +988,15 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     if [[ ${CountFailList}=="" ]]; then 
         if [[ -z ${XNATUploadError} ]]; then
             echo ""
-            geho "-- SUCCESS: XNAT upload to ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessUpload}"
+            echo "-- SUCCESS: XNAT upload to ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessUpload}"
             echo ""
-            geho "------------------------- Successful completion of work --------------------------------"
+            echo "------------------------- Successful completion of work --------------------------------"
             echo ""
         fi
     fi
     if [[ ${XNATUploadError} == 'yes' ]]; then
         echo ""
-        reho "-- ERROR: XNAT upload to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsUpload}"
+        echo "-- ERROR: XNAT upload to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsUpload}"
         echo ""
     fi
     

@@ -31,18 +31,6 @@
 #~ND~END~
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- General help usage function
 # ------------------------------------------------------------------------------
 
@@ -130,7 +118,7 @@ LowResMesh=32
 StandardResolution="2"
 
 # -- Needed for making the fibre connectivity file in Diffusion space
-echo "--> Running make_trajectory_space.sh"
+echo "---> Running make_trajectory_space.sh"
 ${scriptsdir}/make_trajectory_space.sh \
     --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
@@ -139,7 +127,7 @@ ${scriptsdir}/make_trajectory_space.sh \
     --diffresol="${DiffusionResolution}" \
     --freesurferlabels="${FreeSurferLabels}"
 
-echo "--> Running make_workbench_uodfs.sh"
+echo "---> Running make_workbench_uodfs.sh"
 ${scriptsdir}/make_workbench_uodfs.sh \
 --path="${StudyFolder}" \
 --session="${Session}" \
@@ -147,7 +135,7 @@ ${scriptsdir}/make_workbench_uodfs.sh \
 --diffresol="${DiffusionResolution}"
 
 # -- Create lots of files in MNI space used in tractography
-echo "--> Running make_trajectory_space_mni.sh"
+echo "---> Running make_trajectory_space_mni.sh"
 ${scriptsdir}/make_trajectory_space_mni.sh \
     --path="$StudyFolder" --session="$Session" \
     --wholebrainlabels="$WholeBrainTrajectoryLabels" \
@@ -161,12 +149,12 @@ ${scriptsdir}/make_trajectory_space_mni.sh \
 # -- Check completion
 if [[ -s "${ResultsFolder}/pial.R.asc" ]]; then
     echo ""
-    geho "------------------------- Successful completion of work --------------------------------"
+    echo "------------------------- Successful completion of work --------------------------------"
     echo ""
     exit 0
 else
     echo ""
-    reho "ERROR: dwi_pre_tractography run did not complete successfully"
+    echo "ERROR: dwi_pre_tractography run did not complete successfully"
     echo ""
     exit 1
 fi

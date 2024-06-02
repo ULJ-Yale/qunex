@@ -489,7 +489,7 @@ model.fidl   = tevents;
 
 
 
-%   ----> function to parse model description to model structure
+%   ---> function to parse model description to model structure
 %
 %   - description
 %     - pipe separated list of regressor information for each event

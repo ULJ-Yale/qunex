@@ -56,7 +56,7 @@ img = nimage(imgfile);
 % ===================
 % ------ process data
 
-% ------------------------> Correlations
+% ------ Correlations
 
 if strfind(target, 'r')
     [r, Z] = img.img_compute_correlations(bdata.data, 'r', false, true);

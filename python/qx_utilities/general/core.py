@@ -751,7 +751,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         result = False
 
     if not result:
-        print("\n===> Successful completion of task")
+        print("\n---> Successful completion of task")
 
     if logfile:
         sys.stdout.close()
@@ -807,7 +807,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         if result:
             lf.write("\nERROR running %s\n" % name)
         else:
-            lf.write("\n===> Successful completion of task\n")
+            lf.write("\n---> Successful completion of task\n")
 
         lf.close()
     else:
@@ -1315,7 +1315,7 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     if os.path.exists(sfile):
         if overwrite == "yes" or overwrite is True:
             os.remove(sfile)
-            print(prefix + "--> removed existing session.txt file")
+            print(prefix + "---> removed existing session.txt file")
         else:
             raise ge.CommandFailed(
                 command,

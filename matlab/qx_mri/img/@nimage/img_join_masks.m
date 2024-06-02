@@ -136,7 +136,7 @@ elseif strcmp(class_a, 'struct')
     end
     can_standardize = true;
 else
-    % --> do we have indeces
+    % ---> do we have indeces
     if size(mask_a, 1) < obj.voxels && size(mask_b, 1) < obj.voxels && size(mask_a, 2) == 1 && size(mask_b, 2) == 1 && sum(mask_a - floor(mask_a)) == 0 && sum(mask_b - floor(mask_b)) == 0 && length(mask_a) == length(unique(mask_a)) && length(mask_b) == length(unique(mask_b))
         if max(mask_a) > obj.voxels || max(mask_b) > obj.voxsels || min(mask_a) < 1 || min(mask_b) < 1
             error('ERROR (img_join_masks): The provided indeces are invalid (higher than the number of image voxels or smaller than 1)!');
@@ -147,7 +147,7 @@ else
             mask = intersect(mask_a, mask_b);
         end
 
-    % --> we have masks
+    % ---> we have masks
     else
         if size(mask_a, 1) ~= obj.voxels || size(mask_b, 1) ~= obj.voxels
             error('ERROR (img_join_masks): The size of the masks does not match the size of the image!');

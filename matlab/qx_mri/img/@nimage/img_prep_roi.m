@@ -359,7 +359,7 @@ if ~isempty(mask)
     end
 end
 
-% ----> process ROI
+% ---> process ROI
 
 if isa(roi, 'char')
 
@@ -546,7 +546,7 @@ function [img] = process_names(names_filename, mask, options, rcodes)
         end
     end
 
-    % ----> Process ROI
+    % ---> Process ROI
 
     for n = 1:nroi
 
@@ -586,7 +586,7 @@ function [roi] = process_label(roi, options)
     
     roi.data = roi.image2D;
 
-    % --> check options
+    % ---> check options
 
     if ~isempty(options.volumes)
         roi = roi.selectframes(options.volumes);
@@ -598,7 +598,7 @@ function [roi] = process_label(roi, options)
         error('ERROR: In img_prep_roi there are no volumes/maps left to define ROI. Please check your ROI file and options!');
     end
 
-    % --> process and check for overlapping labels
+    % ---> process and check for overlapping labels
     c = 0;
     labels = {};
     overlap = {};
@@ -644,7 +644,7 @@ function [img] = process_parcel(roi, options)
 
     for p = 1:length(roi.cifti.parcels)
         
-        % --> set basic info
+        % ---> set basic info
         img.roi(p).roiname   = roi.cifti.metadata.diminfo{1}.parcels(p).name;
         img.roi(p).roicode   = p;
         img.roi(p).roicodes1 = {p};
@@ -655,7 +655,7 @@ function [img] = process_parcel(roi, options)
 
         nmodels = length(img.cifti.metadata.diminfo{1}.models);
 
-        % --> process surfs
+        % ---> process surfs
         for s = 1:length(roi.cifti.metadata.diminfo{1}.parcels(p).surfs)
             sname    = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).struct;
             sindeces = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).vertlist;
@@ -665,7 +665,7 @@ function [img] = process_parcel(roi, options)
                 end
             end
         end
-        % --> process vols
+        % ---> process vols
 
         img.data(img.roi(p).indeces) = p;
     end

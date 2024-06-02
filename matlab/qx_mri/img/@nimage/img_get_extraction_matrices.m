@@ -203,7 +203,7 @@ end
 c = 0;
 for n = 1:nexlists
 
-    % --> extract the definition
+    % ---> extract the definition
 
     exdef = strtrim(regexp(exlist{n}, ':', 'split'));
     if length(exdef) ~= 4
@@ -229,7 +229,7 @@ for n = 1:nexlists
         continue
     end
 
-    % --> create matrices
+    % ---> create matrices
 
     exmat = [];
 
@@ -257,15 +257,15 @@ for n = 1:nexlists
         for x = 1:nexevents
             exline = tstemplate;
 
-            % --> check that we are not outside of timeseries bounds
+            % ---> check that we are not outside of timeseries bounds
             if exstarts(x) < 1 | exends(x) > obj.frames
                 continue
             end
 
-            % --> create extraction mask
+            % ---> create extraction mask
             exline(exstarts(x):exends(x)) = 1;
 
-            % --> check that the extraction mask is in the same run as the event
+            % ---> check that the extraction mask is in the same run as the event
             eventrun = runid(eventstarts(x));
             exrun    = unique(runid(exline == 1));
             if length(exrun) == 1 && exrun == eventrun
@@ -274,7 +274,7 @@ for n = 1:nexlists
         end
     end
 
-    % --> check for bad frames
+    % ---> check for bad frames
 
     if isnumeric(options.badevents)
         minok = options.badevents;

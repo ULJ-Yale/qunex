@@ -672,7 +672,7 @@ doIt = strrep(doIt, ' ', '');
 
 
 % ======================================================
-%   ----> prepare paths
+%   ---> prepare paths
 
 froot = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
 
@@ -695,7 +695,7 @@ file.rsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/h
 
 
 % ======================================================
-%   ----> are we doing coefficients? [deprecated -> see glm_results options]
+%   ---> are we doing coefficients? [deprecated -> see glm_results options]
 do_coeff = false;
 if strfind(doIt, 'c')
     do_coeff = true;
@@ -703,7 +703,7 @@ if strfind(doIt, 'c')
 end
 
 % ======================================================
-%   ----> are we doing coefficient statistics?
+%   ---> are we doing coefficient statistics?
 
 if strfind(options.glm_results, 'c')
     do_coeff = true;
@@ -740,9 +740,9 @@ if strfind(options.glm_results, 'all')
 end
 
 % ======================================================
-%   ----> deal with nuisance and scrubbing
+%   ---> deal with nuisance and scrubbing
 
-%   ----> read data
+%   ---> read data
 
 if doscrubbing
     [nuisance.scrub  nuisance.scrub_hdr]  = general_read_table(file.oscrub);
@@ -754,7 +754,7 @@ if any(ismember(rgss, {'m', 'm1d', 'mSq', 'm1sSq'})) || ~isempty(strfind(doIt, '
     [nuisance.mov    nuisance.mov_hdr]    = general_read_table(file.movdata);
     nuisance.nframes = size(nuisance.mov,1);
 
-    %   ----> exclude extra data from mov
+    %   ---> exclude extra data from mov
     me               = {'frame', 'scale'};
     nuisance.mov     = nuisance.mov(:,~ismember(nuisance.mov_hdr, me));
     nuisance.mov_hdr = nuisance.mov_hdr(~ismember(nuisance.mov_hdr, me));
@@ -770,7 +770,7 @@ else
     mov_data_present = false;
 end
 
-%   ----> do scrubbing anew if needed!
+%   ---> do scrubbing anew if needed!
 
 if strfind(doIt, 'm')
     timg = nimage;
@@ -795,7 +795,7 @@ if strfind(doIt, 'm')
     general_write_table(file.tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ', header);
 end
 
-%  ----> what are the frames to be used
+%  ---> what are the frames to be used
 
 if doscrubbing
     nuisance.use = nuisance.scrub(:,ismember(nuisance.scrub_hdr, {'use'}))';
@@ -803,7 +803,7 @@ else
     nuisance.use = ones(1, nuisance.nframes);
 end
 
-%   ----> lets setup nuisances!
+%   ---> lets setup nuisances!
 
 if strfind(doIt, 'r')
 
@@ -889,7 +889,7 @@ end
 
 
 % ======================================================
-%   ----> run processing loop
+%   ---> run processing loop
 
 task = ['shrl'];
 exts = {'_s','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
@@ -1062,7 +1062,7 @@ for current = char(doIt)
 
 end
 
-fprintf('\n==> preproces BOLD finished successfully\n');
+fprintf('\n---> preproces BOLD finished successfully\n');
 
 return
 
@@ -1070,7 +1070,7 @@ return
 
 
 % ======================================================
-%   ----> do GLM removal of nuisance regressors
+%   ---> do GLM removal of nuisance regressors
 %
 
 
@@ -1102,7 +1102,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     nuisance.nsignal = sum(smask);
     nuisance.signal_hdr = nuisance.signal_hdr(smask);
 
-    %   ----> baseline and linear trend
+    %   ---> baseline and linear trend
 
     na = img.frames-omit;
     pl = zeros(na,1);
@@ -1123,7 +1123,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     eindex(end+1:end+2) = [1 1];
 
 
-    %   ----> movement
+    %   ---> movement
 
 
     if movement
@@ -1186,7 +1186,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
         end
     end
 
-    %   ----> signal
+    %   ---> signal
 
     if sum(smask)
         X = [X zscore(nuisance.signal(omit+1:end,:))];
@@ -1215,7 +1215,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     end
 
 
-    %   ----> task
+    %   ---> task
 
     if task && nuisance.ntask
         X = [X nuisance.task(omit+1:end,:)];
@@ -1231,7 +1231,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     end
 
 
-    %   ----> events
+    %   ---> events
 
     if event && nuisance.nevents
         X = [X nuisance.events(omit+1:end,:)];
@@ -1247,7 +1247,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     end
 
 
-    %   ----> do GLM
+    %   ---> do GLM
 
     if ~strcmp(ignore, 'keep')
         fprintf(' excluding %d bad frames', sum(img.use == 0));
@@ -1330,14 +1330,14 @@ return
 
 
 % ======================================================
-%                   ----> prepare nuisance for filtering
+%                   ---> prepare nuisance for filtering
 %
 
 function [img] = prepare_nuisance(nuisance, dofilter)
     data      = [];
     filtering = {};
 
-    fprintf('\n     --> filtering also: ');
+    fprintf('\n     ---> filtering also: ');
     for f = dofilter 
         switch f{1}
             case 'nuisance'
@@ -1361,7 +1361,7 @@ function [img] = prepare_nuisance(nuisance, dofilter)
 
 
 % ======================================================
-%                 ----> extract nuisance after filtering
+%                 ---> extract nuisance after filtering
 %
 
 function [nuisance] = extract_nuisance(img, nuisance, dofilter)
@@ -1398,7 +1398,7 @@ function [nuisance] = extract_nuisance(img, nuisance, dofilter)
 
 
 % ======================================================
-%                                    ----> read if empty
+%                                    ---> read if empty
 %
 
 function [img] = readIfEmpty(img, src, omit)
@@ -1414,7 +1414,7 @@ function [img] = readIfEmpty(img, src, omit)
 
 
 % ======================================================
-%                                         ----> wbSmooth
+%                                         ---> wbSmooth
 %
 
 function [] = wbSmooth(sfile, tfile, file, options)

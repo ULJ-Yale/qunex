@@ -496,14 +496,14 @@ end
 % --- gather statistics
 
 if isempty(peak)
-    if report, fprintf('\n===> No peaks to report on!\n'); end
+    if report, fprintf('\n---> No peaks to report on!\n'); end
 else
     
     roiinfo     = roi.img_get_xyz(img);
     roiinfo.ijk = [reshape([peak.label], [],1) reshape([peak.xyz], 3, [])' - 1];
     roiinfo.xyz = roi.img_get_xyz(roiinfo.ijk);
     
-    if report, fprintf('\n===> peak report - volume structures\n'); end
+    if report, fprintf('\n---> peak report - volume structures\n'); end
     
     for p = 1:length(peak)
         peak(p).ijk = peak(p).xyz - 1;
@@ -529,7 +529,7 @@ roi = roi_out;
 
 % --- the end
 
-if verbose, fprintf('\n===> DONE\n'); end
+if verbose, fprintf('\n---> DONE\n'); end
 
 
 

@@ -95,7 +95,7 @@ fi
 # -- key variables to set
 #
 
-echo "--> Parameters $@"
+echo "---> Parameters $@"
 
 for i in "$@"; do
   case "$i" in
@@ -126,10 +126,10 @@ echo ""
 
 
 # -- Setup paths for scripts folder and container
-if [[ -z ${QUNEXscript} ]] && [[ -z ${QUNEXstring} ]]; then reho "  --> Error: QuNex execute call or script is missing."; exit 1; echo ''; fi
-if [[ -z ${ConImage} ]]; then reho "  --> Error: QuNex Container image input is missing."; exit 1; echo ''; fi
-if [[ -z ${InputFolder} ]]; then reho "  --> Error: QuNex Input folder input is missing."; exit 1; echo ''; fi
-if [[ -z ${OutputFolder} ]]; then reho "  --> Error: QuNex Output folder input is missing."; exit 1; echo ''; fi
+if [[ -z ${QUNEXscript} ]] && [[ -z ${QUNEXstring} ]]; then echo "  ---> Error: QuNex execute call or script is missing."; exit 1; echo ''; fi
+if [[ -z ${ConImage} ]]; then echo "  ---> Error: QuNex Container image input is missing."; exit 1; echo ''; fi
+if [[ -z ${InputFolder} ]]; then echo "  ---> Error: QuNex Input folder input is missing."; exit 1; echo ''; fi
+if [[ -z ${OutputFolder} ]]; then echo "  ---> Error: QuNex Output folder input is missing."; exit 1; echo ''; fi
 
 if [[ `echo ${ConImage} | grep '.simg' ` ]] || [[ `echo ${ConImage} | grep '.sif' ` ]]; then 
     Apptainer="yes"
@@ -152,7 +152,7 @@ fi
 if [[ ${Docker} == 'yes' ]] ; then 
    
    echo ""
-   echo "--> Executing Docker container image"
+   echo "---> Executing Docker container image"
    
    # -- If script then parse folder name
    if [[ ! -z ${QUNEXscript} ]]; then
@@ -165,7 +165,7 @@ if [[ ${Docker} == 'yes' ]] ; then
    
    # -- Check for String or Script
    if [[ ! -z ${QUNEXscript} ]]; then
-        echo "    --> Running script ${QUNEXscript}"
+        echo "    ---> Running script ${QUNEXscript}"
         docker container run \
             --name ${ContainerName} -d \
             -v ${ScriptsDir}/:/data/scripts \
@@ -175,7 +175,7 @@ if [[ ${Docker} == 'yes' ]] ; then
             ${ConImage} bash -c "/data/scripts/${QUNEXscript}"
    fi
    if [[ ! -z ${QUNEXstring} ]]; then
-        echo "    --> Running command string ${QUNEXstring}"
+        echo "    ---> Running command string ${QUNEXstring}"
         docker container run \
             --name ${ContainerName} -d \
             -v ${InputFolder}/:/data/input \

@@ -315,7 +315,7 @@ if verbose, fprintf('\n---> done!\n'); end
 
 
 % ======================================================
-%   ----> open image
+%   ---> open image
 %
 
 function [mimg] = getImage(mimg, fsimg, verbose)
@@ -335,7 +335,7 @@ function [mimg] = getImage(mimg, fsimg, verbose)
 
 
 % ======================================================
-%   ----> process extra ROI name
+%   ---> process extra ROI name
 %
 
 function [filename nomask] = processeROI(s)

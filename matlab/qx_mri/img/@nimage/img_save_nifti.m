@@ -251,7 +251,7 @@ if length(img.meta) > 0
     metadata = zeros(4 + sum([img.meta.size]), 1, 'uint8');
     metadata(1:4) = sw([1 0 0 0], 'uint8');
     for n = 1:length(img.meta)
-        if verbose, fprintf('\n --> preparing meta %d [%d bytes]', img.meta(n).code, img.meta(n).size); end
+        if verbose, fprintf('\n ---> preparing meta %d [%d bytes]', img.meta(n).code, img.meta(n).size); end
         metadata(pt+1:pt+4) = sw(img.meta(n).size, 'int32');
         metadata(pt+5:pt+8) = sw(img.meta(n).code, 'int32');
         metadata(pt+9:pt+img.meta(n).size) = img.meta(n).data;
@@ -270,7 +270,7 @@ if img.hdrnifti.version == 1
 elseif img.hdrnifti.version == 2
     img.hdrnifti.vox_offset = 540 + pt;
     fhdr = packHeader_nifti2(img.hdrnifti);
-    if verbose, fprintf('\n --> data at offset %d', img.hdrnifti.vox_offset); end
+    if verbose, fprintf('\n ---> data at offset %d', img.hdrnifti.vox_offset); end
 else
     error('\nERROR: Unknown NIfTI version!');
 end

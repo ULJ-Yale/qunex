@@ -7,42 +7,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # ------------------------------------------------------------------------------
-#  Setup color outputs
-# ------------------------------------------------------------------------------
-
-BLACK_F="\033[30m"; BLACK_B="\033[40m"
-RED_F="\033[31m"; RED_B="\033[41m"
-GREEN_F="\033[32m"; GREEN_B="\033[42m"
-YELLOW_F="\033[33m"; YELLOW_B="\033[43m"
-BLUE_F="\033[34m"; BLUE_B="\033[44m"
-MAGENTA_F="\033[35m"; MAGENTA_B="\033[45m"
-CYAN_F="\033[36m"; CYAN_B="\033[46m"
-WHITE_F="\033[37m"; WHITE_B="\033[47m"
-
-reho() {
-    echo -e "$RED_F$1 \033[0m"
-}
-geho() {
-    echo -e "$GREEN_F$1 \033[0m"
-}
-yeho() {
-    echo -e "$YELLOW_F$1 \033[0m"
-}
-beho() {
-    echo -e "$BLUE_F$1 \033[0m"
-}
-mageho() {
-    echo -e "$MAGENTA_F$1 \033[0m"
-}
-cyaneho() {
-    echo -e "$CYAN_F$1 \033[0m"
-}
-weho() {
-    echo -e "$WHITE_F$1 \033[0m"
-}
-
-
-# ------------------------------------------------------------------------------
 # -- General help usage function
 # ------------------------------------------------------------------------------
 
@@ -152,18 +116,6 @@ EOF
 }
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1\033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1\033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- Check for help
 # ------------------------------------------------------------------------------
 
@@ -221,17 +173,17 @@ get_options() {
     nogpu=`opts_getopt "--nogpu" $@`
 
     # -- Check required parameters
-    if [ -z "$sessionsfolder" ]; then reho "Error: sessions folder"; exit 1; fi
-    if [ -z "$session" ]; then reho "Error: session missing"; exit 1; fi
+    if [ -z "$sessionsfolder" ]; then echo "Error: sessions folder"; exit 1; fi
+    if [ -z "$session" ]; then echo "Error: session missing"; exit 1; fi
 
     # -- Set defaults if not provided
-    if [ -z "$fibers" ]; then geho "Note: The fibers parameter is not set, using default [3]"; fibers=3; fi
-    if [ -z "$weight" ]; then geho "Note: The weight parameter is not set, using default [1]"; weight=1; fi
-    if [ -z "$burnin" ]; then geho "Note: The burnin parameter is not set, using default [1000]"; burnin=1000; fi
-    if [ -z "$jumps" ]; then geho "Note: The jumps parameter is not set, using default [1250]"; jumps=1250; fi
-    if [ -z "$sample" ]; then geho "Note: The sample parameter is not set, using default [25]"; sample=25; fi
-    if [ -z "$model" ]; then geho "Note: The model parameter is not set, using default [2]"; model=2; fi
-    if [ -z "$rician" ]; then geho "Note: The rician parameter is not set, using default [yes]"; rician="yes"; fi
+    if [ -z "$fibers" ]; then echo "Note: The fibers parameter is not set, using default [3]"; fibers=3; fi
+    if [ -z "$weight" ]; then echo "Note: The weight parameter is not set, using default [1]"; weight=1; fi
+    if [ -z "$burnin" ]; then echo "Note: The burnin parameter is not set, using default [1000]"; burnin=1000; fi
+    if [ -z "$jumps" ]; then echo "Note: The jumps parameter is not set, using default [1250]"; jumps=1250; fi
+    if [ -z "$sample" ]; then echo "Note: The sample parameter is not set, using default [25]"; sample=25; fi
+    if [ -z "$model" ]; then echo "Note: The model parameter is not set, using default [2]"; model=2; fi
+    if [ -z "$rician" ]; then echo "Note: The rician parameter is not set, using default [yes]"; rician="yes"; fi
 
     # -- Set StudyFolder
     cd $sessionsfolder/../ &> /dev/null
@@ -239,7 +191,7 @@ get_options() {
 
     # -- Report run parameters
     echo ""
-    echo " --> Executing ${script_name} dwi_bedpostx_gpu:"
+    echo " ---> Executing ${script_name} dwi_bedpostx_gpu:"
     echo "     Study folder: ${StudyFolder}"
     echo "     Sessions Folder: ${sessionsfolder}"
     echo "     Session: ${session}"
@@ -280,20 +232,20 @@ checkCompletion() {
     # -- Then check if run is complete based on file count
     if [ "$filecount" == 9 ]; then > /dev/null 2>&1
         echo ""
-        cyaneho " --> $filecount merged samples for $session found."
+        echo " ---> $filecount merged samples for $session found."
         # -- Then check if run is complete based on file size
         if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
             echo ""
-            cyaneho "--> bedpostx outputs found and completed for $session"
-            cyaneho "    Check prior output logs here: $bedpostx_folder/logs"
+            echo "---> bedpostx outputs found and completed for $session"
+            echo "    Check prior output logs here: $bedpostx_folder/logs"
             echo ""
             echo "-----------------------------------------------------"
             RunCompleted="yes"
         else
             echo ""
-            reho "--> bedpostx outputs missing or incomplete for $session"
+            echo "---> bedpostx outputs missing or incomplete for $session"
             echo ""
-            reho "----------------------------------------------------"
+            echo "----------------------------------------------------"
             RunCompleted="no"
         fi
     fi
@@ -303,7 +255,7 @@ checkCompletion() {
 
 main() {
 
-    geho "------------------------- Start of work --------------------------------"
+    echo "------------------------- Start of work --------------------------------"
 
     # -- Get Command Line Options
     get_options $@
@@ -321,17 +273,23 @@ main() {
     overwrite="$overwrite"
     if [ "$overwrite" == "yes" ]; then
         echo ""
-        reho "--> Removing existing bedpostx run for $session..."
+        echo "---> Removing existing bedpostx run for $session..."
         rm -rf "$bedpostx_folder" > /dev/null 2>&1
     fi
     echo ""
-    geho "--> Checking if bedpostx was completed on $session..."
+    echo "---> Checking if bedpostx was completed on $session..."
     checkCompletion
     if [[ ${RunCompleted} == "yes" ]]; then
-    exit 0
+        echo ""
+        echo "---> bedpostx completed: ${bedpostx_folder}"
+        echo "---> bedpostx successfully completed"
+        echo ""
+        echo "------------------------- Successful completion of work --------------------------------"
+        echo ""
+        exit 0
     else
-    echo ""
-    reho "--> Prior bedpostx run not found or incomplete for $session. Setting up new run..."
+        echo ""
+        echo "---> Prior bedpostx run not found or incomplete for $session. Setting up new run..."
     fi
 
     # -- Set rician flag
@@ -346,12 +304,12 @@ main() {
     if [ -z "$gradnonlin" ]; then
         if [ -f "$diffusion_folder"/grad_dev.nii.gz ]; then
             echo ""
-            geho "--> Using gradient nonlinearities flag -g"
+            echo "---> Using gradient nonlinearities flag -g"
             echo ""
             gradnonlin_flag=" -g"
         else
             echo ""
-            geho "--> Not using gradient nonlinearities flag -g"
+            echo "---> Not using gradient nonlinearities flag -g"
             echo ""
             gradnonlin_flag=""
         fi
@@ -364,7 +322,7 @@ main() {
     fi
 
     # -- Report
-    geho "--> Running FSL command:"
+    echo "---> Running FSL command:"
 
     if [[ ${nogpu} == "yes" ]]; then
         bedpostx_bin=${FSLBINDIR}/bedpostx
@@ -379,22 +337,22 @@ main() {
 
     # -- Perform completion checks
     echo ""
-    reho "--> Checking outputs..."
+    echo "---> Checking outputs..."
     checkCompletion
     if [[ ${RunCompleted} == "yes" ]]; then
         echo ""
-        geho "--> bedpostx completed: ${bedpostx_folder}"
-        reho "--> bedpostx successfully completed"
+        echo "---> bedpostx completed: ${bedpostx_folder}"
+        echo "---> bedpostx successfully completed"
         echo ""
-        geho "------------------------- Successful completion of work --------------------------------"
+        echo "------------------------- Successful completion of work --------------------------------"
         echo ""
         exit 0
     else
         echo ""
-        reho "--> bedpostx run not found or incomplete for $session. Something went wrong." 
-        reho "    Check output: ${bedpostx_folder}"
+        echo "---> bedpostx run not found or incomplete for $session. Something went wrong." 
+        echo "    Check output: ${bedpostx_folder}"
         echo ""
-        reho "ERROR: bedpostx run did not complete successfully"
+        echo "ERROR: bedpostx run did not complete successfully"
         echo ""
         exit 1
     fi

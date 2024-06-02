@@ -737,7 +737,7 @@ for s = 1:list.nsessions
 
         if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
-        % --> get the extracted timeseries
+        % ---> get the extracted timeseries
 
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
 
@@ -750,7 +750,7 @@ for s = 1:list.nsessions
 
         if verbose; fprintf('         ... computed gbc maps\n'); end
 
-        % ------> Embedd results (if group data is requested)
+        % ---> Embedd results (if group data is requested)
         
         if embed_data
             if first_subject

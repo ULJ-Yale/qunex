@@ -244,4 +244,4 @@ if ext
 end
 
 if verbose, fprintf('\n ... done!'); end
-if verbose, fprintf('\n===> Finished!\n'); end
+if verbose, fprintf('\n---> Finished!\n'); end

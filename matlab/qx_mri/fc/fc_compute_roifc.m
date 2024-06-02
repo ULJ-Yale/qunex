@@ -451,7 +451,7 @@ general_check_options(options, 'fc, eventdata, roimethod, flist, roiinfo, tfolde
 
 % ----- What should be saved
 
-% --> individual data
+% ---> individual data
 
 options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 if ismember({'none'}, options.saveind)
@@ -462,7 +462,7 @@ if ~isempty(sdiff)
     error('ERROR: Invalid individual save format specified: %s', strjoin(sdiff,","));
 end
 
-% --> group data
+% ---> group data
 
 options.savegroup = strtrim(regexp(options.savegroup, ',', 'split'));
 if ismember({'none'}, options.savegroup)
@@ -607,13 +607,13 @@ for s = 1:list.nsessions
     for n = 1:nsets        
         if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
-        % --> get the extracted timeseries
+        % ---> get the extracted timeseries
     
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
     
         if verbose; fprintf('         ... extracted ts\n'); end
         
-        % --> generate fc matrice
+        % ---> generate fc matrice
         
         if isempty(parcels)
             rs = ts.img_extract_roi(roi, [], options.roimethod);
@@ -625,7 +625,7 @@ for s = 1:list.nsessions
         
         if verbose; fprintf('         ... computed fc matrix\n'); end
     
-        % ------> store 
+        % ---> store 
         
         if first_subject
             fcmat(n).title     = exsets(n).title;
@@ -702,7 +702,7 @@ end
 % ===================================================================================================
 %                                                                                  save group results
 
-% --> save results
+% ---> save results
 
 if ~isempty(options.savegroup)
     if verbose; fprintf('\n---------------------------------\nProcessing group data\n'); end

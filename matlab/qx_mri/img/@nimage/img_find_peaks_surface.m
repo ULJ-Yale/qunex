@@ -239,12 +239,12 @@ switch (fp_param.boundary)
 end
 
 % --- the end
-if fp_param.verbose, fprintf('\n===> DONE\n'); end
+if fp_param.verbose, fprintf('\n---> DONE\n'); end
 
 if isempty(peak)
-    if report, fprintf('\n===> No peaks to report on!\n'); end
+    if report, fprintf('\n---> No peaks to report on!\n'); end
 else
-    if report, fprintf('\n===> peak report - %s\n',(fp_param.surfaceComponent)); end
+    if report, fprintf('\n---> peak report - %s\n',(fp_param.surfaceComponent)); end
     for p = 1:length(peak)
         if report, fprintf('\nROI:%3d  index: %3d  value: %5.1f  size: %3d  area: %3d', p, peak(p).index, peak(p).value, peak(p).size, peak(p).area); end
     end

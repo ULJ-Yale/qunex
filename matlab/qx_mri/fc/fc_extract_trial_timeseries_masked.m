@@ -113,7 +113,7 @@ if isempty(scrubvar)
 end
 
 % ======================================================
-%     ----> set up the variables
+%     ---> set up the variables
 
 fprintf('\n\nStarting ...');
 
@@ -196,7 +196,7 @@ for s = 1:list.nsessions
 
 
     % ======================================================
-    %     ----> filter out the events to include in the analysis
+    %     ---> filter out the events to include in the analysis
     %
     %   fevents: datastructure for coding events from fidl events file
     %       frame   - array with event start times in frames
@@ -228,7 +228,7 @@ for s = 1:list.nsessions
     end
 
     % ======================================================
-    %     ----> extract data
+    %     ---> extract data
 
     %------- extract baseline for this run
 
@@ -282,7 +282,7 @@ for s = 1:list.nsessions
 end
 
 % ======================================================
-%     ----> save
+%     ---> save
 
 fprintf('\nSaving ...');
 

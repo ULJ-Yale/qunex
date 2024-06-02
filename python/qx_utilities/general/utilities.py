@@ -154,7 +154,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
         if verbose:
             print("\nPreparing template files:")
 
-        # --> parameter template
+        # ---> parameter template
         paramFile = os.path.join(
             studyfolder, "sessions", "specs", "parameters_example.txt"
         )
@@ -192,7 +192,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                     "Please check paths and permissions!",
                 )
 
-        # --> mapping example
+        # ---> mapping example
         # get all files that match the pattern
         examplesFolder = os.path.join(niuTemplateFolder, "templates")
         mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt")
@@ -224,7 +224,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                         "Please check paths and permissions!",
                     )
 
-        # --> markFile
+        # ---> markFile
         markFile = os.path.join(studyfolder, ".qunexstudy")
 
         # ... map .mnapstudy to qunexstudy
@@ -485,7 +485,7 @@ def copy_study(
 
     # check if mandatory parameters are provided
     print()
-    print("===> Checking input parameters")
+    print("---> Checking input parameters")
     if studyfolder is None:
         raise ge.CommandError(
             "copy_study",
@@ -2159,7 +2159,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     - import_dicom:
                         masterinbox: /data/qx_data
                         archive: leave
-                    - create_session_info:
+                    - create_session_info
                         mapping: /data/qx_specs/hcp_mapping.txt
                     - create_batch:
                         targetfile: /data/qx_study/processing/batch.txt
@@ -2327,11 +2327,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     # mustache injections to logfolder?
     if "{{" in logfolder and "}}" in logfolder:
         labels = _find_enclosed_substrings(logfolder)
-        logfolder = logfolder.replace("{", "").replace("}", "")
         for label in labels:
-            label = label.replace("{", "").replace("}", "")
-            os_label = label[1:]
-            if label[0] == "$" and os_label in os.environ:
+            cleaned_label = label.replace("{", "").replace("}", "")
+            os_label = cleaned_label[1:]
+            if cleaned_label[0] == "$" and os_label in os.environ:
                 logfolder = logfolder.replace(label, os.environ[os_label])
             else:
                 raise ge.CommandFailed(
@@ -2346,7 +2345,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     if not os.path.isdir(runlogfolder):
         os.makedirs(runlogfolder)
 
-    print(f"\n===> Saving the run_recipe runlog to: {runlogfolder}")
+    print(f"\n---> Saving the run_recipe runlog to: {runlogfolder}")
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = os.path.join(runlogfolder, f"Log-run_recipe-{logstamp}.log")
@@ -2371,8 +2370,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
     summary += f"\n\nRecipe: {recipe}"
 
-    print(f"===> Running commands from recipe: {recipe}")
-    print(f"===> Running commands from recipe: {recipe}\n", file=log)
+    print(f"---> Running commands from recipe: {recipe}")
+    print(f"---> Running commands from recipe: {recipe}\n", file=log)
 
     # commands
     if "commands" not in recipe_dict:
@@ -2419,10 +2418,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     "Please provide the path to the script!",
                 )
             print(
-                f"\n--------------------------------------------\n===> Running script: {script_path}"
+                f"\n--------------------------------------------\n---> Running script: {script_path}"
             )
             print(
-                f"\n--------------------------------------------\n===> Running script: {script_path}",
+                f"\n--------------------------------------------\n---> Running script: {script_path}",
                 file=log,
             )
             if not os.path.exists(script_path):
@@ -2554,27 +2553,25 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             command = ["qunex"]
             command.append(command_name)
             commandr = (
-                "\n--------------------------------------------\n===> Running command:\n\n     qunex "
+                "\n--------------------------------------------\n---> Running command:\n\n     qunex "
                 + command_name
             )
 
             for param, value in command_parameters.items():
                 # inject mustache marked values
                 if (
-                    type(value) == str
+                    isinstance(value, str)
                     and len(value) > 0
                     and "{{" in value
                     and "}}" in value
                 ):
                     labels = _find_enclosed_substrings(value)
-                    value = value.replace("{", "").replace("}", "")
-
                     for label in labels:
-                        label = label.replace("{", "").replace("}", "")
-                        os_label = label[1:]
-                        if label in eargs:
+                        cleaned_label = label.replace("{", "").replace("}", "")
+                        os_label = cleaned_label[1:]
+                        if cleaned_label in eargs:
                             value = value.replace(label, eargs[label])
-                        elif label[0] == "$" and os_label in os.environ:
+                        elif cleaned_label[0] == "$" and os_label in os.environ:
                             value = value.replace(label, os.environ[os_label])
                         else:
                             raise ge.CommandFailed(
@@ -2645,7 +2642,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             else:
                 summary += f"\n - command {command_name} ... OK"
                 print(
-                    f"===> Successful completion of the run_recipe command {command_name}\n"
+                    f"---> Successful completion of the run_recipe command {command_name}\n"
                 )
 
             # XNAT individual command cleanup, creates _out checkpoint
@@ -2672,10 +2669,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     summary += "\n\n----------==== END SUMMARY ====----------"
 
     print(summary, file=log)
-    print("\n===> Successful completion of task: run_recipe", file=log)
+    print("\n---> Successful completion of task: run_recipe", file=log)
 
     print("\n------------------------")
-    print("===> Successful completion of run_recipe")
+    print("---> Successful completion of run_recipe")
     print(summary)
 
     log.close()
@@ -2707,7 +2704,7 @@ def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter=
         if end_pos == -1:
             break
 
-        substrings.append(input_string[start_pos + len(start_delimiter) : end_pos])
+        substrings.append(input_string[start_pos : (end_pos + len(end_delimiter))])
         start_index = end_pos + len(end_delimiter)
 
     return substrings
@@ -3173,7 +3170,7 @@ def gather_behavior(
     ]
 
     if any([processReport[status] for status, message in reportit]):
-        print("===> Final report")
+        print("---> Final report")
         for status, message in reportit:
             if processReport[status]:
                 print("--->", message)
@@ -3545,7 +3542,7 @@ def pull_sequence_names(
     ]
 
     if any([processReport[status] for status, message in reportit]):
-        print("===> Final report")
+        print("---> Final report")
         for status, message in reportit:
             if processReport[status]:
                 print("--->", message)
@@ -3929,7 +3926,7 @@ def create_session_info(
                 report["error"].append(sfolder)
                 print(traceback.format_exc())
 
-    print("\n===> Final report")
+    print("\n---> Final report")
 
     for status in [
         "pre-existing target",
@@ -4102,43 +4099,49 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
     IDLE_STATE = 0
     FOUND_BOLD_REF = 1
     state = IDLE_STATE
-    prev_boldref_imgage_number = None
+    prev_boldref_image_number = None
     for i in image_numbers:
         image = images[i]
         hcp_image_type = image["applied_rule"].get("hcp_image_type")
         if hcp_image_type is None:
             continue
 
-        # bold ref
+        # when a ref image is found save it and wait to pair it with a bold img
         if hcp_image_type[0] == "boldref":
-            # when a ref image is found save it and wait to pair it with a bold img
+            # if it has manual numbering do not link it to any other bold image
+            bold_num = image.get("bold_num")
+            if bold_num is not None:
+                bold_pairs.append((i,))
+                continue
             if state == IDLE_STATE:
-                prev_boldref_imgage_number = i
+                prev_boldref_image_number = i
                 state = FOUND_BOLD_REF
             elif state == FOUND_BOLD_REF:
-                bold_pairs.append((prev_boldref_imgage_number,))
-                prev_boldref_imgage_number = i
-                state = FOUND_BOLD_REF
+                bold_pairs.append((prev_boldref_image_number,))
+                prev_boldref_image_number = i
+                # keep state - state = FOUND_BOLD_REF
         elif hcp_image_type[0] == "bold":
             if state == IDLE_STATE:
                 bold_pairs.append((i,))
-                state = IDLE_STATE
+                # keep state - state = IDLE_STATE
             elif state == FOUND_BOLD_REF:
-                bold_pairs.append((prev_boldref_imgage_number, i))
-                prev_boldref_imgage_number = None
+                bold_pairs.append((prev_boldref_image_number, i))
+                prev_boldref_image_number = None
                 state = IDLE_STATE
         else:
             continue
 
     if state == FOUND_BOLD_REF:
-        bold_pairs.append((prev_boldref_imgage_number,))
-        prev_boldref_imgage_number = None
+        bold_pairs.append((prev_boldref_image_number,))
+        prev_boldref_image_number = None
 
     used_bold_num = set()
+    used_boldref_num = set()
     remaining_pairs = []
 
     for pair in bold_pairs:
         custom_bold_num = None
+        custom_boldref_num = None
         for e in pair:
             image = images[e]
             hcp_image_type = image["applied_rule"].get("hcp_image_type")
@@ -4146,6 +4149,12 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
                 bn = image.get("bold_num")
                 if bn is not None:
                     custom_bold_num = bn
+
+            if hcp_image_type[0] == "boldref":
+                bn = image.get("bold_num")
+                if bn is not None:
+                    custom_boldref_num = bn
+
         if custom_bold_num is not None:
             if custom_bold_num in used_bold_num:
                 raise ge.CommandError(
@@ -4162,7 +4171,25 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
                     custom_bold_num,
                     hcp_image_type[2],
                 )
-        else:
+
+        if custom_boldref_num is not None:
+            if custom_boldref_num in used_boldref_num:
+                raise ge.CommandError(
+                    "create_session_info",
+                    "Custom bold number conflict",
+                    "cannot apply the same bold number to multiple boldref images",
+                )
+            used_boldref_num.add(custom_boldref_num)
+            for e in pair:
+                image = images[e]
+                hcp_image_type = image["applied_rule"].get("hcp_image_type")
+                image["hcp_image_type"] = (
+                    hcp_image_type[0],
+                    custom_boldref_num,
+                    hcp_image_type[2],
+                )
+
+        if custom_bold_num is None and custom_boldref_num is None:
             remaining_pairs.append(pair)
 
     # exclude bold numbers previously used and reserved globally
