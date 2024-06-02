@@ -109,3 +109,6 @@ settings.json
 
 # DS* files
 .DS*
+
+# workspace images
+octave-workspace
