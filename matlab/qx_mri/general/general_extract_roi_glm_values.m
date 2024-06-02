@@ -114,18 +114,19 @@ list = general_read_file_list(flist);
 %                                                       read roi
 
 if isempty(parcels)
-    roi = nimage.img_read_roi(roif);
-    roi.data = roi.image2D;    
+    roi = nimage.img_prep_roi(roif);
 elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
     t = nimage(list.session(1).glm);
     if ~isfield(t.cifti, 'parcels') || isempty(t.cifti.parcels)
         error('ERROR: The glm file lacks parcel specification! [%s]', list.session(1).glm);
     end
     parcels = t.cifti.parcels;
-    roi.roi.roinames = parcels;    
-    roi.roi.roicodes = 1:length(parcels);
+    for r = 1:length(parcels)
+        roi.roi(r).roiname = parcels{r};
+        [_, roi.roi(r).roicode] = ismember(parcels{r}, y.cifti.parcels);
+    end
 end
-nroi = length(roi.roi.roinames);
+nroi = length(roi.roi);
 nparcels = length(parcels);
 
 % --------------------------------------------------------------
@@ -146,7 +147,7 @@ if ~isempty(strfind(tformat, 'wide'))
     wtext = fopen([outf '_wide.tsv'], 'w');
     fprintf(wtext, 'session\tevent\tframe');
     for r = 1:nroi
-        fprintf(wtext, '\t%s', roi.roi.roinames{r});
+        fprintf(wtext, '\t%s', roi.roi(r).roiname);
     end
 end
 

@@ -174,6 +174,8 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %                   save the resulting data in a wide format .tsv file
 %               - mat
 %                   save the resulting data in a matlab .mat file
+%               - ptseries
+%                   save the resulting data as a ptseries image
 %               - none
 %                   do not save any individual level results.
 %
@@ -318,7 +320,7 @@ options = general_parse_options([], options, default);
 
 verbose       = strcmp(options.verbose, 'true');
 printdebug    = strcmp(options.debug, 'true');
-savesessionid = strcmp(options.savesessionid, 'true');
+savesessionid = strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder');
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 
 if printdebug
@@ -363,10 +365,11 @@ options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 if ismember({'none'}, options.saveind)
     options.saveind = {};
 end
-sdiff = setdiff(options.saveind, {'mat', 'long', 'wide', ''});
+sdiff = setdiff(options.saveind, {'mat', 'long', 'wide', 'ptseries', ''});
 if ~isempty(sdiff)
     error('ERROR: Invalid individual save format specified: %s', strjoin(sdiff,","));
 end
+saveptseries = ismember('ptseries', options.saveind);
 
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
@@ -480,8 +483,7 @@ for s = 1:list.nsessions
 
     if isempty(parcels)
         if verbose; fprintf('     ... creating ROI mask\n'); end
-        roi = nimage.img_read_roi(roiinfo, sroifile);
-        roi.data = roi.image2D;    
+        roi = nimage.img_prep_roi(roiinfo, sroifile);
     else
         if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
             error('ERROR: The bold file lacks parcel specification! [%s]', list.session(s).id);
@@ -489,13 +491,15 @@ for s = 1:list.nsessions
         if length(parcels) == 1 && strcmp(parcels{1}, 'all')        
             parcels = y.cifti.parcels;
         end
-        roi.roi.roinames = parcels;
-        [x, roi.roi.roicodes] = ismember(parcels, y.cifti.parcels);
+        for r = 1:length(parcels)
+            roi.roi(r).roiname = parcels{r};
+            [~, roi.roi(r).roicode] = ismember(parcels{r}, y.cifti.parcels);
+        end
     end
 
-    roi_names = roi.roi.roinames;
-    roi_codes = roi.roi.roicodes;
-    nroi = length(roi.roi.roinames);
+    roi_names = {roi.roi.roiname};
+    roi_codes = [roi.roi.roicode];
+    nroi = length(roi.roi);
     nparcels = length(parcels);
 
     % ---> create extraction sets
@@ -519,9 +523,13 @@ for s = 1:list.nsessions
         tsimg = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
     
         if isempty(parcels)
-            ts = tsimg.img_extract_roi(roi, [], options.roimethod);
+            ts = tsimg.img_extract_roi(roi, [], options.roimethod, [], [], saveptseries);
         else
-            ts = tsimg.img_extract_roi(roiinfo, [], options.roimethod); 
+            ts = tsimg.img_extract_roi(roiinfo, [], options.roimethod, [], [], saveptseries); 
+        end
+        if saveptseries
+            ptimage = ts;
+            ts = ts.data;
         end
 
         if verbose; fprintf('         ... extracted ts\n'); end
@@ -529,8 +537,8 @@ for s = 1:list.nsessions
         % ------> Embed results
         
         tsmat(n).title    = exsets(n).title;
-        tsmat(n).roinames = roi.roi.roinames;
-        tsmat(n).roicodes = roi.roi.roicodes;
+        tsmat(n).roinames = {roi.roi.roiname};
+        tsmat(n).roicodes = [roi.roi.roicode];
         tsmat(n).N        = size(ts, 2);
         tsmat(n).ts       = ts;
         tsmat(n).tevents  = tsimg.tevents;
@@ -563,6 +571,15 @@ for s = 1:list.nsessions
     if ismember({'mat'}, options.saveind)
         if verbose; fprintf('         ... saving mat file'); end
         save(indbasefilename, 'tsmat', '-v7.3');
+        if verbose; fprintf(' ... done\n'); end
+    end
+
+    % ---------------------------------------------------------------------------------------------------
+    %                                                                                            ptseries
+
+    if ismember({'ptseries'}, options.saveind)
+        if verbose; fprintf('         ... saving ptseries image'); end
+        ptimage.img_saveimage([indbasefilename '.ptseries.nii']);
         if verbose; fprintf(' ... done\n'); end
     end
 
@@ -632,7 +649,7 @@ for s = 1:list.nsessions
             for f = 1:nframes
                 wide_line = sprintf('\n%s\t%s\t%s\t%d\t%d', lname, settitle, list.session(s).id, tsmat(n).tevents(f), tsmat(n).tframes(f));
                 wide_line = [wide_line sprintf('\t%.5f', tsmat(n).ts(:, f))];
-                if fout_iwide;   fprintf(fout_iwide,   wide_line); end
+                if fout_iwide; fprintf(fout_iwide, wide_line); end
                 if fout_gwide; fprintf(fout_gwide, wide_line); end
             end
         end

@@ -62,13 +62,12 @@ if nargin < 1, error('ERROR: No ROI provided for value extraction!');          e
 % --------------------------------------------------------------
 %                                                       read roi
 
-roi = nimage.img_read_roi(roif);
-roi.data = roi.image2D;
+roi = nimage.img_prep_roi(roif);
 
 % --------------------------------------------------------------
 %                                                   set up stats
 
-nroi     = length(roi.roi.roicodes);
+nroi     = length(roi.roi);
 
 stats    = regexp(stats, ',', 'split');
 nstats   = length(stats);
@@ -154,9 +153,8 @@ end
 %                                                       the loop
 
 for roin = 1:nroi
-    roicode = roi.roi.roicodes(roin);
-    rmask   = roi.data == roicode;
-    rids    = find(rmask);
+    roicode = roi.roi(roin).roicode;
+    rids    = roi.roi(roin).indeces;;
 
     for rstat = 1:rstatsn
         switch rstats{rstat}

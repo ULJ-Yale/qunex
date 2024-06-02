@@ -32,5 +32,5 @@ function [res] = ends_with(s, t)
         return;
     end
 
-    res = strcmp(s(end - lt:end), t);
+    res = strcmp(s(end - lt+1:end), t);
     

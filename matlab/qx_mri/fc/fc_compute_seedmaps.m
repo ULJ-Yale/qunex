@@ -598,8 +598,8 @@ for s = 1:list.nsessions
 
     if verbose; fprintf('     ... creating ROI mask'); end
 
-    roi  = nimage.img_read_roi(roiinfo, sroifile);
-    nroi = length(roi.roi.roinames);
+    roi  = nimage.img_prep_roi(roiinfo, sroifile);
+    nroi = length(roi.roi);
 
     if verbose; fprintf(' ... read %d ROI\n', nroi); end
 
@@ -644,7 +644,7 @@ for s = 1:list.nsessions
         if embed_data
             if first_subject
                 fcmaps(n).title    = exsets(n).title;
-                fcmaps(n).roi      = roi.roi.roinames;
+                fcmaps(n).roi      = {roi.roi.roiname};
                 fcmaps(n).subjects = {};
             end
             fcmaps(n).subjects{s}  = subjectid;
@@ -712,11 +712,11 @@ for s = 1:list.nsessions
 
             for r = 1:nroi
 
-                if verbose; fprintf(' %s', roi.roi.roinames{r}); end
+                if verbose; fprintf(' %s', roi.roi(r).roiname); end
 
                 % --- prepare basename
 
-                basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, roi.roi.roinames{r});
+                basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, roi.roi(r).roiname);
 
                 % --- save images
 
@@ -751,7 +751,7 @@ for s = 1:list.nsessions
 
         if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv', 'jcc', 'jmi', 'jcoh'}));
 
-            allroi = strjoin(roi.roi.roinames, '-');
+            allroi = strjoin({roi.roi.roiname}, '-');
             basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, allroi);
 
             if verbose; fprintf(' %s', allroi); end

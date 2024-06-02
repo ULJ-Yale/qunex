@@ -436,7 +436,7 @@ fcmeasure   = options.fcmeasure;
 if options.fcname, fcname = [options.fcname, '_']; else fcname = ''; end
 
 if printdebug
-    general_print_struct(options, 'fc_compute_roifc_options used');
+    general_print_struct(options, 'fc_compute_roifc options used');
 end
 
 % --> Check input
@@ -572,8 +572,7 @@ for s = 1:list.nsessions
 
     if isempty(parcels)
         if verbose; fprintf('     ... creating ROI mask\n'); end
-        roi = nimage.img_read_roi(roiinfo, sroifile);
-        roi.data = roi.image2D;    
+        roi = nimage.img_prep_roi(roiinfo, sroifile);
     else
         if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
             error('ERROR: The bold file lacks parcel specification! [%s]', list.session(s).id);
@@ -581,13 +580,15 @@ for s = 1:list.nsessions
         if length(parcels) == 1 && strcmp(parcels{1}, 'all')        
             parcels = y.cifti.parcels;
         end
-        roi.roi.roinames = parcels;
-        [x, roi.roi.roicodes] = ismember(parcels, y.cifti.parcels);
+        for r = 1:length(parcels)
+            roi.roi(r).roiname = parcels{r};
+            [~, roi.roi(r).roicode] = ismember(parcels{r}, y.cifti.parcels);
+        end
     end
 
-    roinames = roi.roi.roinames;
-    roicodes = roi.roi.roicodes;
-    nroi = length(roi.roi.roinames);
+    roinames = {roi.roi.roiname};
+    roicodes = [roi.roi.roicode];
+    nroi = length(roi.roi);
     nparcels = length(parcels);
 
     % ---> create extraction sets
@@ -628,7 +629,7 @@ for s = 1:list.nsessions
         
         if first_subject
             fcmat(n).title     = exsets(n).title;
-            fcmat(n).roi       = roi.roi.roinames;
+            fcmat(n).roi       = {roi.roi.roiname};
             fcmat(n).subjects = {};
         end
 
@@ -645,7 +646,7 @@ for s = 1:list.nsessions
         if embed_data
             if first_subject
                 fcmats(n).title     = exsets(n).title;
-                fcmats(n).roi       = roi.roi.roinames;
+                fcmats(n).roi       = {roi.roi.roiname};
                 fcmats(n).subjects = {};
             end
             fcmats(n).subjects(s) = {subjectid};
