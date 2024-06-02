@@ -5363,17 +5363,18 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
-            Specify a list of bolds for ICAFix. You can specify a comma
-            separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
-            case single-run HCP ICAFix will be executed over specified bolds.
-            You can also specify how to group/concatenate bolds together, e.g.
+            Specify a list of bolds for ICAFix. You should specify how to
+            group/concatenate bolds together along with bolds, e.g.
             "<group1>:<boldname1>,<boldname2>|
             <group2>:<boldname3>,<boldname4>", in this case multi-run HCP
-            ICAFix will be executed. Instead of full bold names, you can also
-            use bold tags from the batch file. If this parameter is not
-            provided ICAFix will bundle all bolds together and execute
-            multi-run HCP ICAFix, the concatenated file will be named
-            fMRI_CONCAT_ALL.
+            ICAFix will be executed, which is the default. Instead of full bold
+            names, you can also  use bold tags from the batch file. If this
+            parameter is not provided ICAFix will bundle all bolds together and
+            execute multi-run HCP ICAFix, the concatenated file will be named
+            fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
+            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in
+            this case single-run HCP ICAFix will be executed over specified
+            bolds. This is a legacy option and not recommended.
 
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
@@ -6110,17 +6111,18 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
-            Specify a list of bolds for ICAFix. You can specify a comma
-            separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
-            case single-run HCP ICAFix will be executed over specified bolds.
-            You can also specify how to group/concatenate bolds together, e.g.
+            Specify a list of bolds for ICAFix. You should specify how to
+            group/concatenate bolds together along with bolds, e.g.
             "<group1>:<boldname1>,<boldname2>|
             <group2>:<boldname3>,<boldname4>", in this case multi-run HCP
-            ICAFix will be executed. Instead of full bold names, you can also
-            use bold tags from the batch file. If this parameter is not
-            provided ICAFix will bundle all bolds together and execute
-            multi-run HCP ICAFix, the concatenated file will be named
-            fMRI_CONCAT_ALL.
+            ICAFix will be executed, which is the default. Instead of full bold
+            names, you can also  use bold tags from the batch file. If this
+            parameter is not provided ICAFix will bundle all bolds together and
+            execute multi-run HCP ICAFix, the concatenated file will be named
+            fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
+            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in
+            this case single-run HCP ICAFix will be executed over specified
+            bolds. This is a legacy option and not recommended.
 
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
@@ -6590,17 +6592,18 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
-            Specify a list of bolds for ICAFix. You can specify a comma
-            separated list of bolds, e.g. "<boldname1>,<boldname2>", in this
-            case single-run HCP ICAFix will be executed over specified bolds.
-            You can also specify how to group/concatenate bolds together, e.g.
+            Specify a list of bolds for ICAFix. You should specify how to
+            group/concatenate bolds together along with bolds, e.g.
             "<group1>:<boldname1>,<boldname2>|
             <group2>:<boldname3>,<boldname4>", in this case multi-run HCP
-            ICAFix will be executed. Instead of full bold names, you can also
-            use bold tags from the batch file. If this parameter is not
-            provided ICAFix will bundle all bolds together and execute
-            multi-run HCP ICAFix, the concatenated file will be named
-            fMRI_CONCAT_ALL.
+            ICAFix will be executed, which is the default. Instead of full bold
+            names, you can also  use bold tags from the batch file. If this
+            parameter is not provided ICAFix will bundle all bolds together and
+            execute multi-run HCP ICAFix, the concatenated file will be named
+            fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
+            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in
+            this case single-run HCP ICAFix will be executed over specified
+            bolds. This is a legacy option and not recommended.
 
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
@@ -8231,10 +8234,16 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_icafix_bolds (str, default detailed below):
-            List of bolds on which ICAFix was applied, with the same format as
-            for ICAFix. Typically, this should be identical to the list used in
-            the ICAFix run [same default as for hcp_icafix and hcp_msmall].
+        --hcp_icafix_bolds (str, default ''):
+            List of bolds on which ICAFix was applied, with the same format
+            as for ICAFix. Typically, this should be identical to the list
+            used in the ICAFix run. If multi-run ICAFix was run with two or
+            more groups then HCP MSMAll will be executed over the first
+            specified group (and the scans listed for hcp_msmall_bolds must
+            be limited to scans in the first concatenation group as well).
+            If not provided MSMAll will assume multi-run ICAFix was executed
+            with all bolds bundled together in a single concatenation called
+            fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
 
         --hcp_resample_concatregname (str, default 'MSMAll'):
             Output name of the dedrifted registration.
@@ -10654,15 +10663,18 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
-            Specify a list of bolds for ICAFix. If a multi run ICAFix was ran
-            you need to specifty the group/concatenation name along with a list
-            of bolds, e.g.
-            "<group1>:<boldname1>,<boldname2>|<group2>:<boldname3>,<boldname4>".
-            In the case of a single run, you need to specify a comma separated
-            list of bolds, e.g. "<boldname1>,<boldname2>". If this parameter is
-            not provided the command will use the same default as hcp_icafix,
-            it will bundle all bolds together with the concatenated file named
-            fMRI_CONCAT_ALL.
+            Specify a list of bolds for ICAFix. You should specify how to
+            group/concatenate bolds together along with bolds, e.g.
+            "<group1>:<boldname1>,<boldname2>|
+            <group2>:<boldname3>,<boldname4>", in this case multi-run HCP
+            ICAFix will be executed, which is the default. Instead of full bold
+            names, you can also  use bold tags from the batch file. If this
+            parameter is not provided ICAFix will bundle all bolds together and
+            execute multi-run HCP ICAFix, the concatenated file will be named
+            fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
+            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in
+            this case single-run HCP ICAFix will be executed over specified
+            bolds. This is a legacy option and not recommended.
 
         --hcp_icafix_highpass (int, default 0):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
