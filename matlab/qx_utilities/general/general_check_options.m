@@ -1,6 +1,6 @@
-function [ok, bad_parameters, warnings] = general_check_options(options, check, error)
+function [ok, bad_parameters, warnings] = general_check_options(options, check, onerror)
 
-%``general_check_options(options, check, error)``
+%``general_check_options(options, check, onerror)``
 %
 %   Function checks if the provided options arguments are valid.
 %
@@ -37,7 +37,7 @@ function [ok, bad_parameters, warnings] = general_check_options(options, check, 
 %   
 %           Defaults to 'all'.
 %
-%       --error (str):
+%       --onerror (str):
 %           What to do in case of an error:
 %
 %           - 'return'
@@ -62,9 +62,9 @@ function [ok, bad_parameters, warnings] = general_check_options(options, check, 
 %           A cell array of all the warnings.
 %
 
-if nargin < 3 || isempty(error), error = 'warn'; end
+if nargin < 3 || isempty(onerror), onerror = 'warn'; end
 if nargin < 2 || isempty(check), check = 'all'; end
-if nargin < 1 error ('ERROR: An options structure has to be provided!'); end
+if nargin < 1 error('ERROR: An options structure has to be provided!'); end
 
 warnings = {};
 bad_parameters = {};
@@ -159,7 +159,7 @@ if any(ismember({'roiinfo', 'all'}, check))
     if ~isfield(options, 'roiinfo')
         warnings{end + 1} = 'roiinfo option is not defined!';
         bad_parameters{end + 1} = 'roiinfo';
-    elseif ~starts_with(options.roiinfo, 'parcels:') && ~general_check_file(options.roiinfo, 'ROI definition file', 'nothing');
+    elseif ~starts_with(options.roiinfo, 'parcels:') && ~general_check_file(strtok(options.roiinfo, '|'), 'ROI definition file', 'nothing');
         warnings{end + 1} = sprintf('Could not find ROI definition file: %s!', options.roiinfo);
         bad_parameters{end + 1} = 'roiinfo';
     end
@@ -171,7 +171,7 @@ if any(ismember({'sroiinfo', 'all'}, check))
     if ~isfield(options, 'sroiinfo')
         warnings{end + 1} = 'sroiinfo option is not defined!';
         bad_parameters{end + 1} = 'sroiinfo';
-    elseif ~starts_with(options.sroiinfo, 'parcels:') && ~general_check_file(options.sroiinfo, 'ROI definition file', 'nothing');
+    elseif ~starts_with(options.sroiinfo, 'parcels:') && ~general_check_file(strtok(options.sroiinfo, '|'), 'ROI definition file', 'nothing');
         warnings{end + 1} = sprintf('Could not find source ROI definition file: %s!', options.sroiinfo);
         bad_parameters{end + 1} = 'sroiinfo';
     end
@@ -183,7 +183,7 @@ if any(ismember({'troiinfo', 'all'}, check))
     if ~isfield(options, 'troiinfo')
         warnings{end + 1} = 'troiinfo option is not defined!';
         bad_parameters{end + 1} = 'troiinfo';
-    elseif ~starts_with(options.troiinfo, 'parcels:') && ~general_check_file(options.troiinfo, 'ROI definition file', 'nothing');
+    elseif ~starts_with(options.troiinfo, 'parcels:') && ~general_check_file(strtok(options.troiinfo, '|'), 'ROI definition file', 'nothing');
         warnings{end + 1} = sprintf('Could not find target ROI definition file: %s!', options.troiinfo);
         bad_parameters{end + 1} = 'troiinfo';
     end
@@ -216,14 +216,15 @@ end
 
 if length(warnings) > 0
     bad_parameters = unique(bad_parameters);
-    if ismember(error, {'warn', 'stop'})
+    if ismember(onerror, {'warn', 'stop'})
         fprintf('ERROR: Options check failed:\n');
         for n = 1:length(warnings)
             fprintf('       %s\n', warnings{n});
         end
     end
 
-    if strcmp(error, 'stop')
-        error("       Aborting.");
+    if strcmp(onerror, 'stop')
+        fprintf("       Aborting.");
+        error("Stopped exectution.");
     end
 end
