@@ -342,6 +342,7 @@ for n = 1:nsteps+1
             
             aFc = [];
             asorted = false;
+            fishered = true;
         end
 
         % ---> are we computing absolute values
@@ -426,7 +427,7 @@ for n = 1:nsteps+1
 
                 if ~pevox
                     pevox = tparameter(:, 2) - tparameter(:, 1) + 1;
-                    if rmax
+                    if options.rmax
                         pevox = repmat(pevox, 1, cstep);
                         pevox(tvolumes, :) = pevox(tvolumes, :) - clipped;  % we're assuming all clipped voxels are in the top group
                     else

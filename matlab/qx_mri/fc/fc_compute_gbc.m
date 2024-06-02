@@ -561,15 +561,15 @@ gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.igno
 fcmeasure = options.fcmeasure;
 
 if printdebug
-    general_print_struct(options, 'fc_compute_seedmaps options used');
+    general_print_struct(options, 'fc_compute_gbc options used');
 end
 
 if verbose; fprintf('\n\nChecking ...\n'); end
 
-options.flist = flist;
+options.flist    = flist;
 options.sroiinfo = sroiinfo;
 options.troiinfo = troiinfo;
-options.targetf = targetf;
+options.targetf  = targetf;
 
 check = 'fc, eventdata, flist, targetf';
 if ~isempty(options.sroiinfo), check = [check, ', sroiinfo']; end
