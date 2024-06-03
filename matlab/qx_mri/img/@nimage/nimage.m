@@ -579,6 +579,42 @@ classdef nimage
             img_saveimage(obj, filename, [], verbose);
         end
 
+        function obj = img_name_maps(obj, maplist, filetype)
+        %
+        %   If CIFTI image, adds map information.
+        %   
+        %   Parameters:
+        %       --obj (nimage):
+        %           The object to add map info to.
+        %       --maplist (cell array of characters):
+        %           Names of maps in the correct order.
+        %       --filetype (string):
+        %           Target filetype, 'scalar' or 'label'
+        %
+        %   Returns:
+        %       --obj with the added maps metadata
+
+            if ~ismember({obj.imageformat}, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
+                return;
+            end
+            
+            if length(maplist) ~= obj.frames
+                error("In img_name_maps the number of maps [%d] does not match the number of frames [%d]", length(maplist), obj.frames);
+            end
+
+            obj.filetype = [obj.cifti.metadata.diminfo{1}.type(1) filetype];
+            obj.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(obj.frames, maplist);
+            
+            if strcmp(filetype, 'label')
+                obj.cifti.metadata.diminfo{2}.type = 'labels';
+
+                for imap = 1:obj.frames
+                    obj.cifti.metadata.diminfo{2}.maps(imap).table = obj.cifti.labels{imap};
+                end
+            end            
+        end
+
+
 
         function image2D = image2D(obj)
         %

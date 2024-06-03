@@ -671,8 +671,8 @@ for s = 1:list.nsessions
 
         % set up filetype for single images
 
-        if strcmp(y.filetype, 'dtseries')
-            tfiletype = 'dscalar';
+        if strcmp(y.filetype, 'dtseries') || strcmp(y.filetype, 'ptseries')
+            tfiletype = [y.filetype(1) 'scalar'];
         else
             tfiletype = y.filetype;
         end
@@ -726,21 +726,25 @@ for s = 1:list.nsessions
                             t = fc.sliceframes([1:nroi] == r);                                              
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure]};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
                         case 'fz'
                             t = fz.sliceframes([1:nroi] == r);
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure ' [Fz]']};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
                         case 'z'
                             t = Z.sliceframes([1:nroi] == r);
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure ' [Z]']};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
                         case 'p'
                             t = p.sliceframes([1:nroi] == r);
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure ' [p]']};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
                     end
                 end
@@ -753,6 +757,7 @@ for s = 1:list.nsessions
 
             allroi = strjoin({roi.roi.roiname}, '-');
             basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, allroi);
+            roi_names = {roi.roi.roiname};
 
             if verbose; fprintf(' %s', allroi); end
 
@@ -764,21 +769,25 @@ for s = 1:list.nsessions
                         t = fc;  
                         t.filetype = tfiletype;
                         if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure], roi_names, 'UniformOutput', false);
                         t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
                     case 'jfz'
                         t = fz;
                         t.filetype = tfiletype;
                         if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure ' [Fz]'], roi_names, 'UniformOutput', false);
                         t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
                     case 'jz'
                         t = Z;
                         t.filetype = tfiletype;
                         if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure ' [Z]'], roi_names, 'UniformOutput', false);
                         t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
                     case 'jp'
                         t = p;
                         t.filetype = tfiletype;
                         if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure ' [p]'], roi_names, 'UniformOutput', false);
                         t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
                 end
             end
@@ -797,6 +806,8 @@ if ~isempty(options.savegroup)
         extra(sid).key = ['session ' int2str(sid)];
         extra(sid).value = list.session(sid).id;
     end
+
+    session_names = {list.session.id};
 
     for setid = 1:nsets
         if verbose; fprintf(' -> %s\n', fcmaps(setid).title); end
@@ -848,13 +859,17 @@ if ~isempty(options.savegroup)
             % -- save group mean results
             if any(ismember(options.savegroup, {'mean_r'}))
                 if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_mean'])]); end
-                M.img_saveimage(fullfile(targetf, [basefilename '_group_mean']), extra);
+                M.filetype = tfiletype;
+                M.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [group mean]']};
+                M.img_saveimage(fullfile(targetf, [basefilename '_group_mean']), extra);                
                 if verbose && ~printdebug; fprintf([' ' fcmeasure]); end
             end
 
             % -- save group mean fz results
             if any(ismember(options.savegroup, {'mean_fz'}))
                 if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_Fz_group_mean'])]); end
+                MFz.filetype = tfiletype;
+                MFz.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [Fz group mean]']};
                 MFz.img_saveimage(fullfile(targetf, [basefilename '_Fz_group_mean']), extra);
                 if verbose && ~printdebug; fprintf(' fz'); end
             end
@@ -862,6 +877,8 @@ if ~isempty(options.savegroup)
             % -- save all results
             if any(ismember(options.savegroup, {'all_r'}))
                 if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_sessions'])]); end
+                fc.filetype = tfiletype;
+                fc.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' roiname ' ' fcmeasure], session_names, 'UniformOutput', false);
                 fc.img_saveimage(fullfile(targetf, [basefilename '_all_sessions']), extra);
                 if verbose && ~printdebug; fprintf(' all_r'); end
             end
@@ -869,6 +886,8 @@ if ~isempty(options.savegroup)
             % -- save all fz results
             if any(ismember(options.savegroup, {'all_fz'}))
                 if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_Fz_all_sessions'])]); end
+                fz.filetype = tfiletype;
+                fz.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' roiname ' ' fcmeasure ' [Fz]'], session_names, 'UniformOutput', false);
                 fz.img_saveimage(fullfile(targetf, [basefilename '_Fz_all_sessions']), extra);
                 if verbose && ~printdebug; fprintf(' all_fz'); end
             end
@@ -876,6 +895,8 @@ if ~isempty(options.savegroup)
             % -- save group p results
             if any(ismember(options.savegroup, {'group_p'}))
                 if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_p'])]); end
+                p.filetype = tfiletype;
+                p.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [group p]']};
                 p.img_saveimage(fullfile(targetf, [basefilename '_group_p']), extra);
                 if verbose && ~printdebug; fprintf(' p'); end
             end
@@ -883,6 +904,8 @@ if ~isempty(options.savegroup)
             % -- save group Z results
             if any(ismember(options.savegroup, {'group_z'}))
                 if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_Z'])]); end
+                Z.filetype = tfiletype;
+                Z.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [group Z]']};
                 Z.img_saveimage(fullfile(targetf, [basefilename '_group_Z']), extra);
                 if verbose && ~printdebug; fprintf(' Z'); end
             end
