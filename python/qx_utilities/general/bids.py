@@ -10,7 +10,7 @@
 
 Functions for importing and exporting BIDS data to QuNex file structure.
 
---import_bids          Maps BIDS data to QuNex structure.
+--import_bids         Maps BIDS data to QuNex structure.
 --BIDSExport          Exports QuNex data to BIDS structured folder.
 
 The commands are accessible from the terminal using qunex command.
@@ -30,10 +30,13 @@ import glob
 import gzip
 import ast
 import json
+import yaml
+import sys
 
 import general.exceptions as ge
 import general.core as gc
 import general.filelock as fl
+import processing.core as pc
 
 from datetime import datetime
 
@@ -62,6 +65,22 @@ json_mapping = {
     "UnwarpDir": ["PhaseEncodingDirection", lambda x: unwarp.get(x, "NA")],
     "EchoSpacing": ["EffectiveEchoSpacing", lambda x: x],
 }
+bids_mri_types = {
+        'T1w': {'folder': 'anat', 'subtype': 'nonparametric', 'suffix': 'T1w'},
+        'T2w': {'folder': 'anat', 'subtype': 'nonparametric', 'suffix': 'T2w'},
+        'FM-GE': {'folder': 'fmap', 'subtype': 'fieldmaps', 'suffix': 'fieldmap'},
+        'FM-Magnitude': {'folder': 'fmap', 'subtype': 'fieldmaps', 'suffix': 'magnitude'},
+        'FM-Phase': {'folder': 'fmap', 'subtype': 'fieldmaps', 'suffix': 'phasediff'},
+        'SE-FM-AP': {'folder': 'fmap', 'subtype': 'pepolar', 'suffix': 'epi'},
+        'SE-FM-PA': {'folder': 'fmap', 'subtype': 'pepolar', 'suffix': 'epi'},
+        'SE-FM-LR': {'folder': 'fmap', 'subtype': 'pepolar', 'suffix': 'epi'},
+        'SE-FM-RL': {'folder': 'fmap', 'subtype': 'pepolar', 'suffix': 'epi'},
+        'boldref': {'folder': 'func', 'subtype': 'func', 'suffix': 'sbref'},
+        'bold': {'folder': 'func', 'subtype': 'func', 'suffix': 'bold'},
+        'DWI': {'folder': 'dwi', 'subtype': 'dwi', 'suffix': 'dwi'}
+        }
+
+
 
 
 def mapToQUNEXBids(
@@ -1266,7 +1285,7 @@ def _sort_bids_images(bidsData, bids):
                         bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
 
-def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="all"):
+def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, sequenceinfo='all'):
     """
     ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [sequenceinfo='all']``
 
@@ -1453,7 +1472,6 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
     if sessionid:
         info += ", session " + sessionid
 
-    print
     splash = "Running map_bids2nii for %s" % (info)
     print(splash)
     print("".join(["=" for e in range(len(splash))]))
@@ -1653,8 +1671,331 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, sequenceinfo="
         )
 
 
-def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
-    """ """
+def map_nii2bids(sinfo, options, overwrite=False, action='hardlink', session_mapping_file=None):
+    """
+    ``map_nii2bids [batchfile=''] [sessionsfolder='.'] [sessions=''] [overwrite='no'] [action='hardlink'] [session_mapping_file=None]``
+
+    Maps data from the `nii` folder to the `bids` folder. Requires
+    `session_hcp.txt` files. Entities (key-value) pairs should be specified by
+    the user in `hcp_mapping.txt` file and `session_hcp.txt` should be created
+    using the `create_session_info` function. Suffix is inferred from data, but
+    can be specified manually in case of ambiguity (e.g. for fieldmaps).
+
+    In case session name contains non-alphanumeric characters, these characters
+    will be replaced with 'x' in the BIDS session name.
+
+    See examples below for details.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --sessions (str, ''):
+            The comma separated list of sessions to process. If not specified,
+            all sessions will be processed.
+
+        --overwrite (str, default 'no'):
+            Parameter that specifies what should be done in cases where there
+            are existing data stored in `nii` folder.
+            The options are:
+
+            - 'no'  ... do not overwrite the data, skip session
+            - 'yes' ... remove existing files in `bids` folder and redo the
+              mapping.
+
+        --action (str, default 'hardlink'):
+            The type of link that should be used for linking the files from
+            `nii` to `bids` folder. The options are:
+
+            - 'hardlink' ... use hard links to link the files
+            - 'copy'     ... copy the files to the `bids` folder
+
+        --session_mapping_file (str, default None):
+            The path to the session mapping file in yaml format. Can be used for
+            cases where original session name is not BIDS compliant, see example
+            below. If not specified, the mapping will be done based on the
+            session name.
+
+    Examples:
+
+        We have session_hcp.txt with following content::
+
+            session: 01_1
+            subject: 01
+            ...
+            7   :FM-Magnitude    :FM magnitude2: run(2): fm(2): suffix(magnitude2)
+            ...
+            11  :bold3:rest      : acq(fullbrain): run(2): fm(2)
+
+        We run the following command::
+
+            qunex map_nii2bids \
+              --sourcefolder="/data/studies/fMRI/import_bids_test/sessions/01_1" \
+              --overwrite='yes'
+
+        In this example, the following mappings are performed:
+
+        - 7.nii.gz --> `sub-01_ses-1_run-2_magnitude2.nii.gz`
+
+        Note that the suffix has been explicitly defined as `magnitude2`,
+        otherwise it would implicitly be set to `magnitude`.
+
+        - `11.nii.gz` --> `sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz`
+
+        In this case suffix was inferred from the image type. Key-value pairs
+        not defined in BIDS are ignored (e.g. `fm` in the above case)
+
+        Note that optional BIDS entities (e.g. acq and run) should be specified
+        manually as key-value pairs in hcp_mapping.txt.
+
+        If the session name contains non-alphanumeric characters, they will be
+        replaced with 'x' in the BIDS session name. However, if the session
+        name is specified in the session_mapping_file, the session name will be
+        remapped according to the mapping file.
+
+        Session mapping file example::
+
+            '01':
+              '01_1': 'first'
+              '01_2': 'second'
+
+        In this case, subject name is '01' and session name is '01_1'. The session
+        name will be remapped to 'first' according to the session_mapping_file,
+        and the BIDS session name will be 'sub-01_ses-first'.
+
+    """
+    
+    if 'action' in options:
+        action = options['action']
+    if action not in ['hardlink', 'copy']:
+        raise ge.CommandError("map_nii2bids", "Invalid option for action specified",
+                              "%s is not a valid option for the action parameter!" % (action),
+                              "Please specify one of: hardlink, copy!")
+
+    if 'session_mapping_file' in options:
+        session_mapping_file = options['session_mapping_file']
+
+    if session_mapping_file is not None:
+        remaps = yaml.safe_load(open(session_mapping_file))
+        print(f"Session mapping file {session_mapping_file} loaded")
+    else:
+        remaps = {}
+
+    for session_info in sinfo:
+        bidsfolder = session_info['bids']
+        sourcefolder = bidsfolder[:-5]
+        niifolder = session_info['raw_data']
+
+        # --- open nii2bids log file
+        if overwrite in ['yes', True, 'True']:
+            mode = 'w'
+        else:
+            mode = 'a'
+
+        bout = open(os.path.join(bidsfolder, 'nii2bids.log'), mode)
+        print("nii to BIDS mapping report, executed on %s" % (datetime.now().strftime("%Y-%m-%dT%H:%M:%S")), file=bout)
+
+        session = session_info['session']
+        subject = session_info['subject']
+        print('', file=sys.stdout)
+        [print(f'... mapping subject {subject}, session {session}', file=output) for output in [sys.stdout, bout]]
+        if subject in remaps.keys():
+            if session in remaps[subject].keys():
+                sessionid = remaps[subject][session]
+                if not sessionid.isalnum():
+                    [print(f'... WARNING: session name contains non-alphanumeric characters, skipping', file=output) for output in [sys.stdout, bout]]
+                    continue
+                [print(f'... remapping session {session} to {sessionid}', file=output) for output in [sys.stdout, bout]]
+            else:
+                sessionid = session
+        elif session == subject:
+            sessionid = None
+        else:
+            replacement = 'x'
+            sessionid = (session.split('_'))[1:]
+            sessionid = replacement.join(sessionid)
+            if not sessionid.isalnum():
+                [print(f'... WARNING: session name contains non-alphanumeric characters, replacing them with {replacement}', file=output) for output in [sys.stdout, bout]]
+                sessionid = re.sub(r'[^a-zA-Z0-9]', replacement, sessionid)
+
+        # --- check for presence of nifti files
+        if os.path.exists(bidsfolder):
+            bidsfiles = len(glob.glob(os.path.join(bidsfolder, '*/*.nii*')))
+            if bidsfiles > 0:
+                if overwrite in ['yes', True, 'True']:
+                    shutil.rmtree(bidsfolder)
+                    os.makedirs(bidsfolder)
+                    print("--> cleaned bids folder, removed existing files")
+                else:
+                    raise ge.CommandFailed("map_nii2bids", "Existing files present!", "There are existing files in the bids folder [%s]" % (bidsfolder), "Please check or set parameter 'overwrite' to yes!")
+        else:
+            os.makedirs(bidsfolder)
+
+        # --- read session_hcp.txt file
+        if os.path.exists(os.path.join(sourcefolder, 'session_hcp.txt')):
+            print("... session_hcp.txt found, reading session info")
+            session_info = gc.read_session_data(os.path.join(sourcefolder, 'session_hcp.txt'))[0][0]
+        else:
+            raise ge.CommandFailed("map_nii2bids", "session_hcp.txt is missing!", "Please prepare hcp_mapping.txt file and run create_session_info to prepare 'session_hcp.txt' files")
+
+
+        # --- map files to BIDS
+        images_ids = [i for i in session_info.keys() if i.isdigit()]
+
+        dwi_count = len([i for i in images_ids if session_info[i]['name'] in ['dwi', 'DWI']])
+        if dwi_count > 1:
+            [print(f'... WARNING: Multiple DWI images found, set entity run or other relevant entities to ensure that file names are unique.', file=output) for output in [sys.stdout, bout]]
+
+        errors = 0
+        for image_id in images_ids:
+            image_info = session_info[image_id]
+            image_type = image_info['name']
+            if image_type[:7] == 'boldref':
+                image_type = 'boldref'
+            elif image_type[:4] == 'bold':
+                image_type = 'bold'
+            elif image_type == '':
+                [print(f'... ERROR: image type is empty for image {image_id}, skipping', file=output) for output in [sys.stdout, bout]]
+                continue
+            elif image_type not in bids_mri_types.keys():
+                [print(f'... ERROR: image type {image_type} does not exists, skipping', file=output) for output in [sys.stdout, bout]]
+                continue
+
+            # create func, anat, fmap folders if needed
+            targetfolder = os.path.join(bidsfolder, bids_mri_types[image_type]['folder'])
+            if not os.path.exists(targetfolder):
+                print(f'... creating folder {targetfolder}')
+                os.makedirs(targetfolder)
+
+            files_to_map = [filename for filename in os.listdir(niifolder) if filename.startswith(f'{image_id}.')]
+            if len(files_to_map) == 0:
+                [print(f'... WARNING: no files found for id: {image_id}, skipping', file=output) for output in [sys.stdout, bout]]
+                continue
+
+            if 'suffix' in image_info.keys():
+                suffix = image_info['suffix']
+            else:
+                suffix = bids_mri_types[image_type]['suffix']
+
+            for file_to_map in files_to_map:
+                extension = '.'.join(file_to_map.split('.')[1::])
+                bids_name, errors_ = _create_bids_name(subject, image_info, image_type, suffix, extension, sessionid, bout)
+                errors += errors_
+
+                if bids_name is None:
+                    [print(f'... ERROR: could not create BIDS name for {file_to_map}, skipping', file=output) for output in [sys.stdout, bout]]
+                    errors += 1
+                    continue
+
+                source_file = os.path.join(niifolder, file_to_map)
+                target_file = os.path.join(targetfolder, bids_name)
+                if os.path.exists(target_file):
+                    [print(f'... WARNING: tried to map {file_to_map} to file {bids_name}, but this target already exists in {targetfolder}, check if mapping is unique', file=output) for output in [sys.stdout, bout]]
+                    continue
+
+                [print(f'... linking {file_to_map} to {os.path.basename(targetfolder)}/{bids_name}', file=output) for output in [sys.stdout, bout]]
+                if action == 'hardlink':
+                    os.link(source_file, target_file)
+                elif action == 'copy':
+                    shutil.copy(source_file, target_file)
+
+        if errors > 0:
+            raise ge.CommandFailed("map_nii2bids", "Errors during mapping", f"Errors occured during mapping, please check log file {os.path.join(bidsfolder, "nii2bids.log")} for details")
+
+        bout.close()
+
+
+def _create_bids_name(subject, image_info, image_type, suffix, extension, sessionid=None, report=None):
+
+    # prepare entities and rules
+    bids_spec_path = os.path.join(os.environ['QUNEXPATH'], 'qx_library/etc/bids/')
+    bids_schema = json.load(open(bids_spec_path + 'schema.json'))
+
+    raw_rules = bids_schema['rules']['files']['raw'][bids_mri_types[image_type]['folder']]
+
+    entities_order = bids_schema['rules']['entities']
+    entities_description = bids_schema['objects']['entities']
+    entities_short_names = {key: value['name'] for key, value in entities_description.items()}
+    entities_format = {key: value['format'] for key, value in entities_description.items()}
+
+    bids_name = f'sub-{subject}'
+    if sessionid is not None:
+        bids_name += f'_ses-{sessionid}'
+
+    errors = 0
+
+    if image_type in ['dwi', 'DWI'] and 'dir' not in image_info:
+        image_info['dir'] = image_info.pop('task')[-2:]
+
+    # check if extension is valid for this image type
+    allowed_extensions = raw_rules[bids_mri_types[image_type]['subtype']]['extensions']
+    allowed_extensions = [i[1:] for i in allowed_extensions if i[0] == '.'] # remove dot from extensions
+    if extension not in allowed_extensions:
+        [print(f'    ... ERROR: extension {extension} not allowed for {image_type}, skipping', file=output) for output in [sys.stdout, report]]
+        errors += 1
+        return (None, errors)
+
+    # check if suffix is valid for this image type
+    allowed_suffixes = raw_rules[bids_mri_types[image_type]['subtype']]['suffixes']
+    if suffix not in allowed_suffixes:
+        [print(f'    ... ERROR: suffix {suffix} not allowed for {image_type}, skipping', file=output) for output in [sys.stdout, report]]
+        errors += 1
+        return (None, errors)
+
+    # rename 'phenc' to 'dir' for BIDS compatibility
+    if 'phenc' in image_info:
+        image_info['dir'] = image_info.pop('phenc')
+
+    allowed_entities = raw_rules[bids_mri_types[image_type]['subtype']]['entities']
+    for entity in entities_order:
+        if entity in image_info:
+            entity_value = image_info[entity]
+        elif entities_short_names[entity] in image_info:
+            entity_value = image_info[entities_short_names[entity]]
+        elif image_type in ['SE-FM-PA', 'SE-FM-AP', 'SE-FM-RL', 'SE-FM-LR'] and entity == 'direction':
+            entity_value = image_type.split('-')[-1]
+        else:
+            continue
+
+        entity_key = entities_short_names[entity]
+        if entity not in allowed_entities.keys():
+            [print(f'    ... WARNING: entity {entity} not allowed for {image_type}', file=output) for output in [sys.stdout, report]]
+            continue
+
+        # check allowed characters in entity value
+        entity_format = entities_format[entity]
+        if entity_format == 'label' and not entity_value.isalnum():
+            [print(f'    ... ERROR: value {entity_value} for entity {entity} is not alphanumeric for {image_type}, skipping', file=output) for output in [sys.stdout, report]]
+            errors += 1
+            continue
+        if entity_format == 'index' and not entity_value.isdigit():
+            [print(f'    ... ERROR: value {entity_value} for entity {entity} is not an integer for {image_type}, skipping', file=output) for output in [sys.stdout, report]]
+            errors += 1
+            continue
+
+        bids_name += f'_{entity_key}-{entity_value}'
+
+    # check if all required entities are present
+    required_entities = [i for i in allowed_entities if allowed_entities[i] == 'required']
+    for required_entity in required_entities:
+        entity_key = entities_short_names[required_entity]
+        if entity_key not in bids_name:
+            [print(f'    ... ERROR: required entity {required_entity} not found for {image_type}, skipping', file=output) for output in [sys.stdout, report]]
+            errors += 1
+            return (None, errors)
+
+    bids_name = f'{bids_name}_{suffix}.{extension}'
+
+    return (bids_name, errors)
+
+
+def mapBIDS2behavior(sfolder='.', behavior=[], overwrite='no'):
+    """
+    """
 
     # -- set up variables
 
