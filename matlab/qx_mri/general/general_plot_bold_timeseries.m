@@ -408,20 +408,26 @@ vused = 1 - sz.VTop;
 
 % ... j2
 
-cjet = sortrows([[64:-1:1]', jet], 1);
+cjet = sortrows([[64:-1:1]', jet(64)], 1);
 cjet = [cjet(:,2:end); jet ];
 cjet = cjet(1:2:128,:);
 
-chsv = sortrows([[64:-1:1]', hsv], 1);
+chsv = sortrows([[64:-1:1]', hsv(64)], 1);
 chsv = [chsv(:,2:end); hsv ];
 chsv = chsv(1:2:128,:);
 
-cgray = sortrows([[64:-1:1]', gray], 1);
+cgray = sortrows([[64:-1:1]', gray(64)], 1);
 cgray = [cgray(:,2:end); gray ];
 cgray = cgray(1:2:128,:);
 
 
 for n = 1:nelements
+    if isempty(elements(n).scale)
+        elements(n).scale = 0;
+    end
+    if isempty(elements(n).colormap)
+        elements(n).colormap = 'gray';
+    end
 
     if strcmp(elements(n).type, 'stats')
         vuse = elements(n).size;
