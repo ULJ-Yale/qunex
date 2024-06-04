@@ -28,6 +28,8 @@ function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, nt
 %           ROI.names file to use to define additional nuisance ROI to regress 
 %           out when additionally provided a list of ROI, those will not be 
 %           masked by bold brain mask (e.g. 'nroi.names|eyes,scull')
+%       --shrink (boolean, true):
+%           Whether to erode ROI before using them. 
 %       --verbose (boolean):
 %           wheather to report on progress or not [not]
 %
