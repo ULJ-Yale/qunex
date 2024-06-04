@@ -231,7 +231,7 @@ nvox = size(obj.image2D, 1);
 
 if isempty(troi)
     ntvox = nvox;
-    tmask = [1:ntvox];
+    tmask = 1:ntvox;
 else
     tmask = unique(vertcat(troi.roi.indeces));
     ntvox = length(tmask);
@@ -239,7 +239,7 @@ end
 
 if isempty(sroi)
     nsvox = nvox;
-    smask = [1:nsvox];
+    smask = 1:nsvox;
 else
     smask = unique(vertcat(sroi.roi.indeces));
     nsvox = length(smask);
@@ -248,7 +248,7 @@ end
 % ---- parse command
 
 if verbose, fprintf('... starting GBC on %s\n', obj.filename); stime = tic; end
-commands  = parseCommand(command, nvox);
+commands  = parseCommand(command, nsvox);
 ncommands = length(commands);
 nvolumes  = sum([commands.volumes]);
 coffsets  = [1 cumsum([commands.volumes])+1];
@@ -271,7 +271,7 @@ if verbose
     if verbose, fprintf('... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels:\n', ntvox, obj.frames, nsteps + 1); end
 end
 
-x = data';
+% x = data';
 
 for n = 1:nsteps+1
 
@@ -284,34 +284,33 @@ for n = 1:nsteps+1
         crange = [num2str(fstart) ':' num2str(fend)];
         % for c = 1:slen, fprintf('\b'), end
         fprintf('     ... %14s\n', crange);
-        slen = length(crange);
+        % slen = length(crange);
     end
 
     if time, fprintf('     -> fc'); tic; end
     Fc = fc_compute(data(tmask(fstart:fend),:), data(smask, :), options.fcmeasure, true, options);
-    if time fprintf(' [%.3f s]\n', toc); end
+    if time, fprintf(' [%.3f s]\n', toc); end
 
     % -------- Compute common stuff ---------
 
-    coms = {commands.command};
+    % coms = {commands.command};
 
     % Added to remove within region correlations defined as correlations above a 
     % specified rmax threshold. If not, it does not remove correlation with 
     % itself.
 
-    if time, fprintf('     -> clip'); tic; end
-    evoxels = voxels;
+    if time, fprintf('     -> clip'); tic; end    
     if options.rmax
         clip = Fc < options.rmax;
         Fc = Fc .* clip;
         evoxels = sum(clip,1);
         clipped = voxels - evoxels;
-        if verbose, fprintf(' cliped: %d ', sum(sum(clip))); end;
+        if verbose, fprintf(' cliped: %d ', sum(sum(clip))); end
     else
         clipped = 0;
         evoxels = voxels;
     end
-    if time fprintf(' [%.3f s]\n', toc); end    
+    if time, fprintf(' [%.3f s]\n', toc); end    
 
     % -------- Run the command loop ---------
     
@@ -338,7 +337,7 @@ for n = 1:nsteps+1
                 if verbose, fprintf(' c>r'); end
                 Fc = real(Fc);
             end
-            if time fprintf(' [%.3f s]\n', toc); end
+            if time, fprintf(' [%.3f s]\n', toc); end
             
             aFc = [];
             asorted = false;
@@ -350,28 +349,28 @@ for n = 1:nsteps+1
         if strcmp(tprefix, 'a') && isempty(aFc)
             if time, fprintf('     -> abs'); tic; end
             aFc = abs(Fc);
-            if time fprintf(' [%.3f s]\n', toc); end
+            if time, fprintf(' [%.3f s]\n', toc); end
         end
 
         % ---> are we sorting
         if strcmp(tsuffix, 'p')
             if strcmp(tprefix, 'a') && ~asorted
                 if time, fprintf('     -> sort'); tic; end
-                aFc = sort(aFc, 1);
-                if time fprintf(' [%.3f s]\n', toc); end
+                aFc = sort(aFc, 2);
+                if time, fprintf(' [%.3f s]\n', toc); end
                 % fprintf(' %.3f %.3f', aFc(1, 1), aFc(end, 1));
                 asorted = true;
             elseif ~sorted
                 if time, fprintf('     -> sort'); tic; end
-                Fc = sort(Fc, 1);
-                if time fprintf(' [%.3f s]\n', toc); end
+                Fc = sort(Fc, 2);
+                if time, fprintf(' [%.3f s]\n', toc); end
                 % fprintf(' %.3f %.3f', Fc(1, 1), Fc(end, 1));
                 % if Fc(1,1) > -0.001
                 %     fprintf(' resort');
                 %     Fc = sort(Fc);
                 %     fprintf(' %.3f %.3f', min(Fc(1,:)), max(Fc(end,:)));
                 % end
-                sorted = true
+                sorted = true;
             end
         end
 
@@ -438,9 +437,9 @@ for n = 1:nsteps+1
 
                 for p = 1:tvolumes
                     if strcmp(tcommand, 'mFzp') || strcmp(tcommand, 'mFcp')
-                        results(fstart:fend,toffset+(p-1)) = sum(Fc([tparameter(p, 1):tparameter(p, 2)],:), 2)./pevox(p);
+                        results(fstart:fend,toffset+(p-1)) = sum(Fc(:, [tparameter(p, 1):tparameter(p, 2)]), 2)./pevox(p);
                     else
-                        results(fstart:fend,toffset+(p-1)) = sum(aFc([tparameter(p, 1):tparameter(p, 2)],:), 2)./pevox(p);
+                        results(fstart:fend,toffset+(p-1)) = sum(aFc(:, [tparameter(p, 1):tparameter(p, 2)]), 2)./pevox(p);
                     end
                 end
 
@@ -459,7 +458,7 @@ for n = 1:nsteps+1
 
                 for s = 1:tvolumes
                     strength_mask = (aFc >= tparameter(s)) & (aFc < tparameter(s+1));
-                    pevox = sum(strength_mask, 1);
+                    pevox = sum(strength_mask, 2);
                     results(fstart:fend,toffset+(s-1)) = rsum(aFc, strength_mask , 2) ./ pevox;
                 end
 
@@ -479,7 +478,7 @@ for n = 1:nsteps+1
 
         end
 
-        if time fprintf(' [%.3f s]\n', toc); end
+        if time, fprintf(' [%.3f s]\n', toc); end
 
     end
 
@@ -526,6 +525,7 @@ function [out] = parseCommand(s, nvox)
     for n = 1:length(a)
         b = splitby(a{n}, ':');
 
+        cmd(n).command_string = a{n};
         com = b{1};
         par = str2num(b{2});
         cmd(n).command = com;

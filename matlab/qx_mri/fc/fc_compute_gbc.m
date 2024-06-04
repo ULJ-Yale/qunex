@@ -601,7 +601,7 @@ options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 if ismember({'none'}, options.saveind)
     options.saveind = [];
 elseif ismember({'all'}, options.saveind)    
-    options.saveind = ['fc', 'r', 'z', 'p'];
+    options.saveind = {'fc', 'r', 'z', 'p'};
 end
 
 if ~isempty(options.saveind)
@@ -611,6 +611,8 @@ if ~isempty(options.saveind)
         options.saveind = intersect(options.saveind, {'fc'});
     end
 end
+
+options.saveind
 
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
@@ -722,6 +724,16 @@ for s = 1:list.nsessions
     y = nimage(bolds);
     if verbose; fprintf('         -> %d frames read, done.\n', y.frames); end
 
+    % --> get filetype
+    switch y.filetype
+        case 'dtseries'
+            tfiletype = 'dscalar';
+        case 'ptseries'
+            tfiletype = 'pscalar';
+        otherwise
+            tfiletype = y.filetype;
+    end
+
     % ---> create extraction sets
 
     if verbose; fprintf('     ... generating extraction sets ...'); end
@@ -776,17 +788,7 @@ for s = 1:list.nsessions
                 subjectname = [subjectid, '_'];
             else
                 subjectname = '';
-            end
-
-            % set up filetype for single images
-            switch y.filetype
-                case '.dtseries'
-                    tfiletype = '.dscalar';
-                case '.ptseries'
-                    tfiletype = '.pscalar';
-                otherwise
-                    tfiletype = y.filetype;
-            end
+            end            
 
             % set up extraction set title
             if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
@@ -809,7 +811,10 @@ for s = 1:list.nsessions
                 t = gbc.sliceframes(frame_mask == 1);
                 t.filetype = tfiletype;
 
-                tfilename = fullfile(starget, [basefilename '_' commands(c).command '_' num2str(commands(c).parameter) '_' fcmeasure])                
+                tfilename = fullfile(stargetf, [basefilename '_' regexprep(commands(c).command_string, ':', '_') '_' fcmeasure]);
+                t.filetype = tfiletype;
+                % t.cifti.maps = cellfun(@(x) ['GBC ' fcmeasure ' ' commands(c).command_string ' parameter = ' x], arrayfun(@num2str, commands(c).parameter, 'UniformOutput', false), 'UniformOutput', false);
+                t.cifti.maps = cellfun(@(x) ['GBC ' fcmeasure ' ' commands(c).command_string ' volume ' x], arrayfun(@num2str, 1:commands(c).volumes, 'UniformOutput', false), 'UniformOutput', false);
                 t.img_saveimage(tfilename);
                 if printdebug; fprintf(['\n             -> ' tfilename]); end
 
@@ -839,13 +844,15 @@ if ~isempty(options.savegroup)
         extra(sid).value = list.session(sid).id;
     end
 
+    session_names = {list.session.id};
+
     for setid = 1:nsets
         if verbose; fprintf(' -> %s\n', gbcmaps(setid).title); end
         if gbcmaps(setid).title, settitle = ['_' gbcmaps(setid).title]; else settitle = ''; end
         
         frame = 0;
         for cid = 1:ncomm
-            comname = [commands(cid).command '_' num2str(commands(cid).parameter)];
+            comname = [commands(cid).command '_' regexprep(num2str(commands(cid).parameter), '\s+', 'x')];
         
             if verbose; fprintf('    ... for command %s', comname); end
             
@@ -876,10 +883,13 @@ if ~isempty(options.savegroup)
                 if verbose; fprintf(' ... saving ...'); end
                 if commands(cid).volumes > 1 vol = ['_v' num2str(v)]; else vol = ''; end
                 basefilename = sprintf('gbc_%s%s_%s%s_%s', lname, settitle, comname, vol, fcmeasure);
+                basemap = sprintf('%s %s%s', fcmeasure, comname, vol);
 
                 % -- save group mean results
                 if any(ismember(options.savegroup, {'mean', 'all'}))
                     if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_mean'])]); end
+                    M.filetype = tfiletype;
+                    M.cifti.maps = {['GBC ' basemap ' [group mean]']};
                     M.img_saveimage(fullfile(targetf, [basefilename '_group_mean']), extra);
                     if verbose && ~printdebug; fprintf([' mean']); end
                 end
@@ -887,6 +897,8 @@ if ~isempty(options.savegroup)
                 % -- save all results
                 if any(ismember(options.savegroup, {'sessions', 'all'}))
                     if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_sessions'])]); end
+                    gbc.filetype = tfiletype;
+                    gbc.cifti.maps = cellfun(@(x) ['GBC ' x ' ' basemap], session_names, 'UniformOutput', false);
                     gbc.img_saveimage(fullfile(targetf, [basefilename '_all_sessions']), extra);
                     if verbose && ~printdebug; fprintf(' sessions'); end
                 end
@@ -894,6 +906,8 @@ if ~isempty(options.savegroup)
                 % -- save group p results
                 if any(ismember(options.savegroup, {'group_p', 'all'}))
                     if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_p'])]); end
+                    p.filetype = tfiletype;
+                    p.cifti.maps = {['GBC ' basemap ' [group p-values]']};
                     p.img_saveimage(fullfile(targetf, [basefilename '_group_p']), extra);
                     if verbose && ~printdebug; fprintf(' p'); end
                 end
@@ -901,6 +915,8 @@ if ~isempty(options.savegroup)
                 % -- save group Z results
                 if any(ismember(options.savegroup, {'group_z', 'all'}))
                     if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_Z'])]); end
+                    Z.filetype = tfiletype;
+                    Z.cifti.maps = {['GBC ' basemap ' [group Z-values]']};
                     Z.img_saveimage(fullfile(targetf, [basefilename '_group_Z']), extra);
                     if verbose && ~printdebug; fprintf(' Z'); end
                 end
