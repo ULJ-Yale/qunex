@@ -593,6 +593,9 @@ classdef nimage
         %
         %   Returns:
         %       --obj with the added maps metadata
+        %
+        %   TODO: Given that maps are added automatically upon save, this 
+        %         method might not be needed.
 
             if ~ismember({obj.imageformat}, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
                 return;

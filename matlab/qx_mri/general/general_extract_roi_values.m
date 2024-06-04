@@ -64,6 +64,7 @@ if nargin < 1, error('ERROR: No ROI provided for value extraction!');          e
 
 roi = nimage.img_prep_roi(roif);
 
+
 % --------------------------------------------------------------
 %                                                   set up stats
 
@@ -74,6 +75,12 @@ nstats   = length(stats);
 
 for n = 1:length(stats)
     stats{n} = strtrim(stats{n});
+end
+
+if length(roi.dim) == 1
+    if length(intersect(stats, {'rpeak', 'rmin', 'rmax', 'rsize', 'rmean'})) > 1
+        error('ERROR: Statistics related to ROI geometry are only supported for volume images!');
+    end
 end
 
 vstats   = intersect(stats, {'mean', 'median', 'min', 'max', 'peak'});
@@ -154,7 +161,7 @@ end
 
 for roin = 1:nroi
     roicode = roi.roi(roin).roicode;
-    rids    = roi.roi(roin).indeces;;
+    rids    = roi.roi(roin).indeces;
 
     for rstat = 1:rstatsn
         switch rstats{rstat}
@@ -167,7 +174,6 @@ for roin = 1:nroi
 
     for filen = 1:nfiles
         for framen = 1:frames(filen)
-
             for vstat = 1:vstatsn
 
                 tvdata = mimg(filen).data(rids, framen);
@@ -264,7 +270,7 @@ for output = outputs
         % --- print values
 
         for r = 1:nroi
-            sroidata = sprintf('\n%s', roi.roi.roinames{r});
+            sroidata = sprintf('\n%s', roi.roi(r).roiname);
             if ~isempty(rsize), sroidata = [sroidata sprintf('\t%d', rsize(r))]; end
             if ~isempty(rmean), sroidata = [sroidata sprintf('\t(%.1f, %.1f, %.1f)', rmean(r,:))]; end
 
@@ -332,7 +338,7 @@ for output = outputs
 
         for r = 1:nroi
 
-            fprintf(fout, '\n%s', roi.roi.roinames{r});
+            fprintf(fout, '\n%s', roi.roi(r).roiname);
             if ~isempty(rsize), fprintf(fout, '\t%d', rsize(r)); end
             if ~isempty(rmean), fprintf(fout, '\t(%.1f, %.1f, %.1f)', rmean(r,:)); end
             for filen = 1:nfiles

@@ -46,8 +46,7 @@ function [img] = img_read_roi(roiinfo, roi2, check)
 %
 %       If no file is specified as the second ROI, then no masking is performed. 
 %       If a second file exists, it will be used to mask the original data based 
-%       on the specified values in the third column of the .names file. For more 
-%       specific information see img_mask_roi method.
+%       on the specified values in the third column of the .names file. 
 %
 %       The function supports the specification of region codes in the .names 
 %       file using either numeric vaues (e.g. 3,8,9) or names. The names are 
