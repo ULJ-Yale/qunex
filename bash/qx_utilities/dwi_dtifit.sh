@@ -27,7 +27,7 @@ Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
 
-    --session (str):
+    --sessions (str):
         The sessions to run.
 
     --overwrite (str):
@@ -139,18 +139,6 @@ exit 0
 }
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- Check for help
 # ------------------------------------------------------------------------------
 
@@ -217,8 +205,8 @@ get_options() {
     gradnonlin=`opts_getopt "--gradnonlin" $@`
 
     # -- Check required parameters
-    if [ -z "$sessionsfolder" ]; then reho "Error: sessionsfolder missing"; exit 1; fi
-    if [ -z "$session" ]; then reho "Error: session missing"; exit 1; fi
+    if [ -z "$sessionsfolder" ]; then echo "Error: sessionsfolder missing"; exit 1; fi
+    if [ -z "$session" ]; then echo "Error: session missing"; exit 1; fi
 
     # -- Set study_folder
     cd $sessionsfolder/../ &> /dev/null
@@ -379,7 +367,7 @@ get_options() {
 
     echo "-- ${script_name}: Specified Command-Line Options - End --"
     echo ""
-    geho "------------------------- Start of work --------------------------------"
+    echo "------------------------- Start of work --------------------------------"
     echo ""
 
 }
@@ -395,7 +383,7 @@ main() {
     minimumfilesize=100000
     if [ "$overwrite" == "yes" ]; then
         echo ""
-        reho "Removing existing dtifit run for $session..."
+        echo "Removing existing dtifit run for $session..."
         echo ""
         rm -rf ${out_file} > /dev/null 2>&1
     fi
@@ -418,14 +406,14 @@ main() {
     check_completion
     if [[ ${run_completed} == "yes" ]]; then
         echo ""
-        geho "--- dtifit found and successfully completed for $session"
+        echo "--- dtifit found and successfully completed for $session"
         echo ""
-        geho "------------------------- Successful completion of work --------------------------------"
+        echo "------------------------- Successful completion of work --------------------------------"
         echo ""
         exit 0
     else
         echo ""
-        reho " -- Prior dtifit not found for $session. Setting up new run..."
+        echo " -- Prior dtifit not found for $session. Setting up new run..."
         echo ""
     fi
     fi
@@ -433,27 +421,27 @@ main() {
     # -- Command to run
     echo "Running command:"
     echo ""
-    geho "dtifit --data=${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}"
+    echo "dtifit --data=${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}"
     dtifit --data=${in_file} --out=${diffusion_folder}/dti --mask=${mask} --bvecs=${bvecs} --bvals=${bvals}${optional_parameters}
 
     # -- Perform completion checks
-    reho "--- Checking outputs..."
+    echo "--- Checking outputs..."
     echo ""
     check_completion
     if [[ ${run_completed} == "yes" ]]; then
-        geho "dtifit completed: ${diffusion_folder}"
+        echo "dtifit completed: ${diffusion_folder}"
         echo ""
-        reho "--- dtifit successfully completed"
+        echo "--- dtifit successfully completed"
         echo ""
-        geho "------------------------- Successful completion of work --------------------------------"
+        echo "------------------------- Successful completion of work --------------------------------"
         echo ""
         exit 0
     else
         echo ""
-        reho " -- dtifit run not found or incomplete for $session. Something went wrong." 
-        reho "    Check output: ${diffusion_folder}"
+        echo " -- dtifit run not found or incomplete for $session. Something went wrong." 
+        echo "    Check output: ${diffusion_folder}"
         echo ""
-        reho "ERROR: dtifit run did not complete successfully"
+        echo "ERROR: dtifit run did not complete successfully"
         echo ""
         exit 1
     fi

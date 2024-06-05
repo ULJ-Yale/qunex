@@ -24,12 +24,27 @@ function [exsets] = img_get_extraction_matrices(obj, frames, options)
 %                   -> extraction end   ... is a frame number relative to event start or end when the extraction should start    
 %                      the extraction start and end should be given as '<s|e><frame number>'. E.g.:
 %                       s0  ... the frame of the event onset 
-%                       s2  ... the second frame from the event onset 
-%                       e1  ... the first frame from the event end 
-%                       e0  ... the last frame of the event 
-%                       e-2 ... the two frames before the event end
+%                       s2  ... the third frame of the event
+%                       e0  ... the frame at the start of which the event ended
+%                       e1  ... the second frame after the event end 
+%                       e-1 ... the frame at the end of which the event ended
+%
+%                      | s0 | s1 | s2   ...   e-2 | e-1 | e0 | e1
+%                      |<- event start  ... event end ->|
+%
 %                      example:
 %                       '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%                       This example will extract two timeseries. The first timeseries will be named encoding, it will 
+%                       take the third frame following the onset of events e-color and e-shape. The second timeseries
+%                       will be named delay and will include all the frames from the third frame following the event 
+%                       onset to the first frame following the event end of the d-color or d-shape events.
+%
+%                       encoding: | 0 0 1 0 0 ...
+%                                 |<- e-color or e-shape event onset
+%
+%                       delay:    | 0 0 1 1 1 ..................... 1 | 1 0 0 
+%                                 |<- d-color or d-shape event onset  |<- d-color or d-shape event end
+%
 %   options   - A string specifying additional analysis options formated as pipe separated pairs of colon separated
 %               key, value pairs: "<key>:<value>|<key>:<value>"
 %               It takes the following keys and values:
@@ -72,7 +87,7 @@ verbose = strcmp(options.verbose, 'true');
 printdebug = strcmp(options.debug, 'true');
 
 if printdebug
-    general_print_struct(options, 'Options used');
+    general_print_struct(options, 'img_get_extraction_matrices options used');
 end
 
 % ---> creating use mask
@@ -96,7 +111,6 @@ for ti = toignore
 end
 
 obj.use = useframes;
-
 
 % ----- prepare run info
 
@@ -130,9 +144,14 @@ if isnumeric(frames)
         exmat = ones(1, obj.frames);
     end
 
-    exsets.title = '';
+    % mask out frames to ignore
+    exmat(obj.use ~= 1) = 0;
+
+    exsets.title = 'timeseries';
     exsets.exdef = frames;
     exsets.exmat = exmat;
+    exsets.eind  = [1];
+    exsets.estat = sum(exmat,2);
     return
 end
 
@@ -181,9 +200,10 @@ end
 
 % ----- prepare extraction matrices
 
+c = 0;
 for n = 1:nexlists
 
-    % --> extract the definition
+    % ---> extract the definition
 
     exdef = strtrim(regexp(exlist{n}, ':', 'split'));
     if length(exdef) ~= 4
@@ -191,8 +211,9 @@ for n = 1:nexlists
         continue
     end
     
-    exsets(n).exdef = exlist{n};
-    exsets(n).title = exdef{1};
+    c = c + 1;
+    exsets(c).exdef = exlist{n};
+    exsets(c).title = exdef{1};
 
     eventset = strtrim(regexp(exdef{2}, ',', 'split'));
     startref = exdef{3}(1);
@@ -208,7 +229,7 @@ for n = 1:nexlists
         continue
     end
 
-    % --> create matrices
+    % ---> create matrices
 
     exmat = [];
 
@@ -236,15 +257,15 @@ for n = 1:nexlists
         for x = 1:nexevents
             exline = tstemplate;
 
-            % --> check that we are not outside of timeseries bounds
+            % ---> check that we are not outside of timeseries bounds
             if exstarts(x) < 1 | exends(x) > obj.frames
                 continue
             end
 
-            % --> create extraction mask
+            % ---> create extraction mask
             exline(exstarts(x):exends(x)) = 1;
 
-            % --> check that the extraction mask is in the same run as the event
+            % ---> check that the extraction mask is in the same run as the event
             eventrun = runid(eventstarts(x));
             exrun    = unique(runid(exline == 1));
             if length(exrun) == 1 && exrun == eventrun
@@ -253,7 +274,7 @@ for n = 1:nexlists
         end
     end
 
-    % --> check for bad frames
+    % ---> check for bad frames
 
     if isnumeric(options.badevents)
         minok = options.badevents;
@@ -276,7 +297,7 @@ for n = 1:nexlists
         okrows = sum(bsxfun(@and, exmat, ignore), 2) == 0;
     end
 
-    exsets(n).exmat = exmat(okrows, :);
-    exsets(n).eind  = eind(okrows);
-    exsets(n).estat = estat;
+    exsets(c).exmat = exmat(okrows, :);
+    exsets(c).eind  = eind(okrows);
+    exsets(c).estat = estat;
 end

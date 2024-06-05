@@ -144,7 +144,7 @@ end
 
 % --- compute stats
 
-if verbose, fprintf(' ... computing stats'); end
+if verbose, fprintf('\n ... computing stats '); end
 stats = img.img_stats_time([], bmask);
 
 % --------------------------------------------------------------
@@ -187,7 +187,7 @@ img.fstats(:,8) = stats.dvarsme;
 %                                              compute scrubbing
 
 if ~strcmp(scrub, 'none')
-    if verbose, fprintf(' ... scrubbing'); end
+    if verbose, fprintf('\n ... scrubbing '); end
     [img, parameters] = img.img_compute_scrub(scrub);
 end
 
@@ -214,7 +214,7 @@ if ext
 
     % --- save stats
 
-    if verbose, fprintf(' ... saving stats'); end
+    if verbose, fprintf('\n ... saving stats '); end
 
     % if ismember('fd', img.fstats_hdr)
     %     stats.fd = img.fstats(:, ismember(img.fstats_hdr, {'fd'}));
@@ -231,7 +231,7 @@ if ext
     % --- save scrub
 
     if ~strcmp(scrub, 'none')
-        if verbose, fprintf(' ... saving scrubbing data'); end
+        if verbose, fprintf('\n ... saving scrubbing data '); end
 
         pre = sprintf('%s# Parameters used\n# radius:   %d\n# fdt:      %.2f\n# dvarsmt:  %.2f\n# dvarsmet: %.2f\n# after:    %d\n# before:   %d\n# reject:   %s', header, parameters.radius, parameters.fdt, parameters.dvarsmt, parameters.dvarsmet, parameters.after, parameters.before, parameters.reject);
         general_write_table(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ', pre);
@@ -243,5 +243,5 @@ if ext
     end
 end
 
-if verbose, fprintf(' ... done!\n'); end
-if verbose, fprintf('===> Finished!\n'); end
+if verbose, fprintf('\n ... done!'); end
+if verbose, fprintf('\n---> Finished!\n'); end

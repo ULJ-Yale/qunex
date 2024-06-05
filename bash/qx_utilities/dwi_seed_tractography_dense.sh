@@ -100,18 +100,6 @@ exit 0
 }
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- Check for help
 # ------------------------------------------------------------------------------
 
@@ -206,7 +194,7 @@ while [ ${index} -lt ${numArgs} ]; do
             ;;      
         *)
             usage
-            reho "ERROR: Unrecognized Option: ${argument}"
+            echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
             ;;
@@ -216,35 +204,35 @@ done
 # -- Check required parameters
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <sessions-folder-path> not specified>"
+    echo "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <session-id> not specified>"
+    echo "ERROR: <session-id> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${MatrixVersion} ]; then
     usage
-    reho "ERROR: <matrix_version_value> not specified"
+    echo "ERROR: <matrix_version_value> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${WayTotal} ]; then
-    reho "No <use_waytotal_normalized_data> specified. Assuming default [none]"
+    echo "No <use_waytotal_normalized_data> specified. Assuming default [none]"
     echo ""
 fi
 if [ -z ${SeedFile} ]; then
     usage
-    reho "ERROR: <structure_for_seeding> not specified"
+    echo "ERROR: <structure_for_seeding> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${OutName} ]; then
     usage
-    reho "ERROR: <name_of_output_dscalar_file> not specified"
+    echo "ERROR: <name_of_output_dscalar_file> not specified"
     exit 1
 fi
 
@@ -265,7 +253,7 @@ echo "   OutName: ${OutName}"
 echo "   Overwrite: ${Overwrite}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
-geho "------------------------- Start of work --------------------------------"
+echo "------------------------- Start of work --------------------------------"
 echo ""
 
 }
@@ -328,7 +316,7 @@ echo "--- Parcellated DWI Connectome Output:   ${DWIOutput}/${DWIOutFileDscalar}
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-    reho "--- Deleting prior runs in $DWIOutput..."; echo ""
+    echo "--- Deleting prior runs in $DWIOutput..."; echo ""
     rm -f ${DWIOutput}/${DWIOutFileDconn} > /dev/null 2>&1
     rm -f ${DWIOutput}/${DWIOutFileDscalar} > /dev/null 2>&1
 fi
@@ -337,22 +325,22 @@ fi
 echo "--- Checking if parcellation was completed..."; echo ""
 # -- Check if file present
 if [ -f ${DWIOutput}/${DWIOutFileDscalar} ]; then
-    geho "--- Dense scalar seed tractography data found: "
+    echo "--- Dense scalar seed tractography data found: "
     echo ""
     echo "      ${DWIOutput}/${DWIOutFileDscalar}"
     echo ""
     exit 1
 else
-    reho "--- Dense scalar seed tractography data not found."; echo ""
+    echo "--- Dense scalar seed tractography data not found."; echo ""
     # -- Check of GBC only was requested 
     if [ ${SeedFile} == "gbc" ]; then
-        geho "--- Computing dense DWI GBC on $DWIInput..."; echo ""
+        echo "--- Computing dense DWI GBC on $DWIInput..."; echo ""
         wb_command -cifti-reduce ${DWIInput} MEAN ${DWIOutput}/${DWIOutFileDscalar}
     else
         # -- First restrict by COLUMN and save a *dconn file
-        geho "--- Computing dense DWI connectome restriction by COLUMN on $DWIInput..."; echo ""
+        echo "--- Computing dense DWI connectome restriction by COLUMN on $DWIInput..."; echo ""
         wb_command -cifti-restrict-dense-map ${DWIInput} COLUMN ${DWIOutput}/${DWIOutFileDconn} -vol-roi ${SeedFile}
-        geho "--- Computing average of the restricted dense connectome across the input structure $SeedFile..."; echo ""
+        echo "--- Computing average of the restricted dense connectome across the input structure $SeedFile..."; echo ""
         # -- Next average the restricted dense connectome across the input structure and save the dscalar
         wb_command -cifti-average-dense-roi ${DWIOutput}/${DWIOutFileDscalar} -cifti ${DWIOutput}/${DWIOutFileDconn} -vol-roi ${SeedFile}
     fi
@@ -361,14 +349,14 @@ fi
 # -- Perform completion checks
 echo "--- Checking outputs..."; echo ""
 if [ -f ${DWIOutput}/${DWIOutFileDscalar} ]; then
-    geho "--- Dense scalar output file for Matrix ${MatrixVersion}:     ${DWIOutput}/${DWIOutFileDscalar}"
+    echo "--- Dense scalar output file for Matrix ${MatrixVersion}:     ${DWIOutput}/${DWIOutFileDscalar}"
     echo ""
-    geho "--- DWI restriction of dense connectome successfully completed "
+    echo "--- DWI restriction of dense connectome successfully completed "
     echo ""
-    geho "------------------------- Successful completion of work --------------------------------"
+    echo "------------------------- Successful completion of work --------------------------------"
     echo ""
 else
-    reho "--- Dense scalar output file for Matrix ${MatrixVersion} is missing. Something went wrong."
+    echo "--- Dense scalar output file for Matrix ${MatrixVersion} is missing. Something went wrong."
     echo ""
     exit 1
 fi

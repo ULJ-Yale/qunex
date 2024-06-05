@@ -53,7 +53,7 @@ if nargin < 3 || isempty(v), v = 'errorstop'; end
 if nargin < 2 || isempty(description), description = 'a file'; end
 
 if ~exist(filename, 'file')
-    pause(5);
+    pause(3);
 end
 
 if exist(filename, 'file')

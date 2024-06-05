@@ -52,7 +52,7 @@ root = strrep(root, '.conc', '');
 
 
 % ======================================================
-%     ----> read file
+%     ---> read file
 
 if verbose, fprintf('--------------------------\nComputing 2-Way Repeated Measures anova with factors A (%d levels) and B (%d levels)\n ... reading data (%s) ', a, b, dfile), end
 img = nimage(dfile);
@@ -60,7 +60,7 @@ img.data = img.image2D;
 
 
 % ======================================================
-%     ----> compute ANOVA
+%     ---> compute ANOVA
 
 if verbose, fprintf('\n ... computing\n --- '), end
 [p F Z M SE] = img.img_anova_2way_repeated(a, b, verbose);
@@ -68,7 +68,7 @@ if verbose, fprintf(' --- \n'), end
 
 
 % ======================================================
-%     ----> save results
+%     ---> save results
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)

@@ -261,7 +261,7 @@ for (b in bolds){
 
     if (verbose) cat("\n\nBOLD", b, "\n---> reading data")
 
-    # ------------------------------------------------------------------------------------------> READ DATA
+    # ---> READ DATA
     #
     # dat    --- frame    dx(mm)    dy(mm)    dz(mm)    X(deg)    Y(deg)    Z(deg)     scale
     # scrub  --- frame  mov dvars   dvarsme idvars  idvarsme    udvars  udvarsme

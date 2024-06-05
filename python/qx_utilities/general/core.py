@@ -145,11 +145,11 @@ def read_session_data(filename, verbose=False):
 
                     ni = len(line)
                     if ni > 1:
-                        image["name"] = line[1]
-                    if ni > 2:
-                        image["task"] = line[2]
+                        image['name'] = line[1]
+                    if ni > 2 and ("bold" in image['name']) or ("DWI" in image['name']):
+                        image['task'] = line[2]
                     if ni > 3:
-                        image["ext"] = line[3]
+                        image['ext'] = line[3]
 
                     dic[line[0]] = image
 
@@ -201,7 +201,7 @@ def read_session_data(filename, verbose=False):
                             % (dic["id"], field, dic[field], os.path.basename(filename))
                         )
 
-            # done with parsing parameters
+            # done with the parameters block
             first = False
 
     except:
@@ -233,7 +233,6 @@ def read_list(filename, verbose=False):
             line = [e.strip() for e in line.split(":")]
 
             if len(line) == 2:
-
                 if line[0] == "session id":
                     if session is not None:
                         slist.append(session)
@@ -294,12 +293,21 @@ def get_sessions_list(
     elif os.path.isfile(listString):
         slist, gpref = read_session_data(listString, verbose=verbose)
 
-    elif re.match(r".*\.txt$", listString) or "/" in listString:
+    elif (
+        re.match(r".*\.txt$", listString) or "/" in listString
+    ) and sessionids is None:
         raise ValueError(
-            "ERROR: The specified session file is not found! [%s]!" % listString
+            f"ERROR: The specified session file is not found and sessionids are not provided! [{listString}]!"
         )
 
     else:
+        if (
+            re.match(r".*\.txt$", listString)
+            or "/" in listString
+            and sessionids is not None
+        ):
+            listString = sessionids
+
         slist = [e.strip() for e in re.split(r" +|,|\|", listString)]
 
         if sessionsfolder is None:
@@ -311,6 +319,7 @@ def get_sessions_list(
                 nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{"id": os.path.basename(e)} for e in nlist]
 
+    # filter with sessionids
     if sessionids is not None and sessionids.strip() != "":
         sessionids = re.split(r" +|,|\|", sessionids)
         filtered_slist = []
@@ -322,6 +331,7 @@ def get_sessions_list(
 
         slist = filtered_slist
 
+    # filter with filter
     if filter is not None and filter.strip() != "":
         try:
             filters = [[f.strip() for f in e.split(":")] for e in filter.split("|")]
@@ -449,7 +459,10 @@ def runExternalParallel(calls, cores=None, prepend=""):
     """
 
     if cores is None or cores in ["all", "All", "ALL"]:
-        cores = len(os.sched_getaffinity(0))
+        try:
+            cores = len(os.sched_getaffinity(0))
+        except:
+            cores = multiprocessing.cpu_count()
     else:
         try:
             cores = int(cores)
@@ -460,7 +473,6 @@ def runExternalParallel(calls, cores=None, prepend=""):
     completed = []
 
     while True:
-
         # --- check if we can add a process to run
         if len(running) < cores:
             if calls:
@@ -739,7 +751,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         result = False
 
     if not result:
-        print("\n===> Successful completion of task")
+        print("\n---> Successful completion of task")
 
     if logfile:
         sys.stdout.close()
@@ -795,7 +807,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         if result:
             lf.write("\nERROR running %s\n" % name)
         else:
-            lf.write("\n===> Successful completion of task\n")
+            lf.write("\n---> Successful completion of task\n")
 
         lf.close()
     else:
@@ -1127,11 +1139,11 @@ def pcslist(s):
     return s
 
 
-def linkOrCopy(
+def link_or_copy(
     source, target, r=None, status=None, name=None, prefix=None, symlink=False
 ):
     """
-    linkOrCopy - documentation not yet available.
+    link_or_copy - documentation not yet available.
     """
     if status is None:
         status = True
@@ -1216,7 +1228,6 @@ def moveLinkOrCopy(
             return rstatus, r + prefix + msg
 
     if os.path.exists(source):
-
         targetfolder = os.path.dirname(target)
         if not os.path.exists(targetfolder):
             io = fl.makedirs(targetfolder)
@@ -1302,9 +1313,9 @@ def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
     # open fifle
     sfile = os.path.join(sfolder, "session.txt")
     if os.path.exists(sfile):
-        if overwrite == "yes":
+        if overwrite == "yes" or overwrite is True:
             os.remove(sfile)
-            print(prefix + "--> removed existing session.txt file")
+            print(prefix + "---> removed existing session.txt file")
         else:
             raise ge.CommandFailed(
                 command,

@@ -73,7 +73,7 @@ def readConc(concf, TR):
     s = [e for e in s if "file:" in e]
 
     if len(s) != nfiles:
-        print("===> ERROR: number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles))
+        print("---> ERROR: number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles))
         return []
 
     boldfiles = [e.split(":")[1].strip() for e in s]
@@ -81,7 +81,7 @@ def readConc(concf, TR):
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
             print
-            print("===> ERROR: image does not exist! (%s)" % (boldfile))
+            print("---> ERROR: image does not exist! (%s)" % (boldfile))
             return []
 
     # m = re.compile(r'_b.*?([0-9]+)')
@@ -145,7 +145,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     # ---> read the conc file, check if the number matches
 
-    print("\n===> reading %s" % (os.path.basename(concfile)))
+    print("\n---> reading %s" % (os.path.basename(concfile)))
     bolddata = readConc(concfile, TR)
 
     if len(fidldata) != len(bolddata):
@@ -188,7 +188,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     jointfile = fidlroot + fidlname + '.fidl'
     if outfolder is not None:
         if not os.path.exists(outfolder):
-            print("--> Creating output folder:", outfolder)
+            print("---> Creating output folder:", outfolder)
             os.makedirs(outfolder)
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 

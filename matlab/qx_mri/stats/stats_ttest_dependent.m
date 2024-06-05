@@ -61,7 +61,7 @@ root = strrep(root, '.gz', '');
 root = strrep(root, '.conc', '');
 
 % ======================================================
-%     ----> read file
+%     ---> read file
 
 if verbose, fprintf('--------------------------\nComputing dependent t-test\n ... reading data (%s and %s) ', filea, fileb), end
 A = nimage(filea);
@@ -74,7 +74,7 @@ end
 
 
 % ======================================================
-%     ----> compute t-test
+%     ---> compute t-test
 
 if verbose, fprintf('\n ... computing\n --- '), end
 [p Z M D SE t] = A.img_ttest_dependent(B, verbose);
@@ -82,7 +82,7 @@ if verbose, fprintf(' --- \n'), end
 
 
 % ======================================================
-%     ----> save results
+%     ---> save results
 
 if verbose, fprintf(' ... saving results'), end
 if ismember('m', output)

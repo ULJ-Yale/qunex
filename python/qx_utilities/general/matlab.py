@@ -44,6 +44,7 @@ functions = {
     'general_compute_bold_list_stats': [('flist', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'general_compute_bold_stats':      [('img', 'string'), ('mask', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'general_compute_group_bold_stats': [('flist', 'string'), ('tfile', 'string'), ('stats', 'string'), ('inmask', 'string'), ('ignore', 'string')],
+    'general_convert_cifti':           [('fin', 'string'), ('fout', 'string'), ('output_format', 'string'), ('atlas', 'string'), ('parcel_method', 'string'), ('verbose', 'bool')],
     'general_extract_roi_glm_values':  [('flist', 'string'), ('roif', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('values', 'string'), ('tformat', 'string'), ('verbose', 'bool')],
     'general_extract_roi_values':      [('roif', 'string'), ('mfs', 'string'), ('sefs', 'string'), ('vnames', 'string'), ('output', 'string'), ('stats', 'string'), ('verbose', 'bool')],
     'general_find_peaks':              [('fin', 'string'), ('fout', 'string'), ('mins', 'numeric'), ('maxs', 'numeric'), ('val', 'string'), ('t', 'numeric'), ('presmooth', 'string'), ('projection', 'string'), ('options', 'string'), ('verbose', 'bool')],
@@ -56,10 +57,10 @@ functions = {
     'fc_compute_ab_corr_kca':          [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('nc', 'numeric'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('dmeasure', 'string'), ('nrep', 'numeric'), ('verbose', 'bool')],
     'fc_compute_gbc3':                 [('flist', 'string'), ('command', 'string'), ('mask', 'numeric'), ('verbose', 'bool'), ('target', 'string'), ('targetf', 'string'), ('rsmooth', 'numeric'), ('rdilate', 'numeric'), ('ignore', 'string'), ('time', 'string'), ('cv', 'string'), ('vstep', 'numeric')],
     'fc_compute_gbcd':                 [('flist', 'string'), ('command', 'string'), ('roi', 'string'), ('rcodes', 'numeric'), ('nbands', 'numeric'), ('mask', 'numeric'), ('verbose', 'bool'), ('target', 'string'), ('targetf', 'string'), ('rsmooth', 'numeric'), ('rdilate', 'numeric'), ('ignore', 'string'), ('time', 'string'), ('method', 'string'), ('weights', 'string'), ('criterium', 'string')],
-    'fc_compute_roifc':                [('bolds', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_roifc_group':          [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_seedmaps':             [('bolds', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_seedmaps_group':       [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_extract_roi_timeseries':       [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_compute_roifc':                [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_compute_gbc':                  [('flist', 'string'), ('command', 'string'), ('sroiinfo', 'string'), ('troiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_compute_seedmaps':             [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_seedmaps_multiple':    [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'numeric'), ('options', 'string'), ('targetf', 'string'), ('method', 'string'), ('ignore', 'string'), ('cv', 'string')],
     'fc_extract_roi_timeseries_masked':   [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('targetf', 'string'), ('options', 'string'), ('method', 'string'), ('ignore', 'string'), ('rcodes', 'string'), ('mcodes', 'string'), ('bmask', 'string')],
     'fc_extract_trial_timeseries_masked': [('flist', 'string'), ('roif', 'string'), ('targetf', 'string'), ('tevents', 'string'), ('frames', 'numeric'), ('scrubvar', 'string')],
@@ -77,6 +78,8 @@ functions = {
 functions.update(extensions.compile_dict('functions')) 
 
 functionList = sorted(functions.keys())
+
+
 
 
 # ==============================================================================
@@ -165,4 +168,4 @@ def run(command, args):
     if ret:
         print("\n\nERROR: %s failed! Please check output / log!\n" % (command))
     else:
-        print("\n\n===> Successful completion of task\n")
+        print("\n\n---> Successful completion of task\n")

@@ -221,7 +221,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     gc.printAndLog(gc.underscore("Running export_hcp"), file=logfile)
     
     # -- prepare mapping
-    gc.printAndLog("--> Preparing mapping", file=logfile)
+    gc.printAndLog("---> Preparing mapping", file=logfile)
 
     # -- map
     toMap = []
@@ -261,9 +261,9 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
             process.append((sfile, tfile))
 
     if missing:
-        gc.printAndLog("==> ERROR: A number of source files are missing", file=logfile, silent=not verbose)
+        gc.printAndLog("---> ERROR: A number of source files are missing", file=logfile, silent=not verbose)
         for sfile, tfile in missing:
-            gc.printAndLog("           --> " + sfile, file=logfile)
+            gc.printAndLog("           ---> " + sfile, file=logfile)
         gc.printAndLog("\nMapping Aborted!", file=logfile)
         endlog = gc.closeLogFile(logfile, logfilename, status="error")
         raise ge.CommandFailed("export_hcp", "Source files missing" , "Mapping could not be run as some source files were missing!", "Please check your data and log [%s!" % (endlog))
@@ -271,33 +271,33 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     if existing:
         s = 'Some files already exist'
         if overwrite.lower() == 'yes':
-            s = "==> WARNING: " + s + " and will be overwritten"
+            s = "---> WARNING: " + s + " and will be overwritten"
             pre = "             "
             process += existing
         if overwrite.lower() == 'skip':
-            s = "==> WARNING: " + s + " and will be skipped"
+            s = "---> WARNING: " + s + " and will be skipped"
             pre = "             "
         else:
-            s = "==> ERROR: " + s 
+            s = "---> ERROR: " + s 
             pre = "           "
         gc.printAndLog(s, file=logfile)
 
         for sfile, tfile in existing:
-            gc.printAndLog(pre + "--> " + sfile, file=logfile, silent=not verbose)
+            gc.printAndLog(pre + "---> " + sfile, file=logfile, silent=not verbose)
 
         if overwrite.lower() == 'no':
-            gc.printAndLog("==> Mapping Aborted!", file=logfile)
+            gc.printAndLog("---> Mapping Aborted!", file=logfile)
             endlog = gc.closeLogFile(logfile, logfilename, status="error")
             raise ge.CommandFailed("export_hcp", "Target files exist" , "Mapping could not be run as some target file already exist!", "Please check your data and log [%s]!" % (endlog))
 
     if toexclude:
-        gc.printAndLog("==> WARNING: Some files will be excluded from mapping", file=logfile)
+        gc.printAndLog("---> WARNING: Some files will be excluded from mapping", file=logfile)
 
         for sfile, tfile in toexclude:
-            gc.printAndLog("             --> " + sfile, file=logfile, silent=not verbose)
+            gc.printAndLog("             ---> " + sfile, file=logfile, silent=not verbose)
 
     if not process:
-        gc.printAndLog("==> Nothing left to map!", file=logfile, silent=True)
+        gc.printAndLog("---> Nothing left to map!", file=logfile, silent=True)
         endlog = gc.closeLogFile(logfile, logfilename, status="done")
         raise ge.CommandNull("export_hcp", "Nothing left to map" , "After skipping and exclusion, no files were left to map!", "Please check your data!")
 
@@ -308,13 +308,13 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
             os.remove(tfile)
 
     # -> map
-    mapactions = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
+    mapactions = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.link_or_copy}
     descriptions = {'copy': 'copying', 'move': 'moving', 'link': 'linking'}
     
     do   = mapactions[mapaction]
     desc = descriptions[mapaction]
 
-    gc.printAndLog("--> Mapping files", file=logfile)
+    gc.printAndLog("---> Mapping files", file=logfile)
 
     failed = []
 
@@ -356,14 +356,14 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
                 except:
                     failed.append((sfile, tfile))
                     continue
-                gc.printAndLog("    --> creating folder: %s" % (tfolder), file=logfile, silent=not verbose)
+                gc.printAndLog("    ---> creating folder: %s" % (tfolder), file=logfile, silent=not verbose)
 
         try:
             do(sfile, tfile)
         except:
             raise
 
-        gc.printAndLog("    --> %s: %s --> %s" % (desc, sfile, tfile), file=logfile, silent=not verbose)
+        gc.printAndLog("    ---> %s: %s ---> %s" % (desc, sfile, tfile), file=logfile, silent=not verbose)
 
     # -- once files are copied set timestamps
     for mapping in timemapping:
@@ -371,17 +371,17 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
             # set target subfolder timestamp
             os.utime(mapping[0], (mapping[1], mapping[1]))
         except:
-            gc.printAndLog("    --> Setting time stamp of folder %s to %s failed" % (mapping[0], time.ctime(mapping[1])), file=logfile)
+            gc.printAndLog("    ---> Setting time stamp of folder %s to %s failed" % (mapping[0], time.ctime(mapping[1])), file=logfile)
             continue
 
     # -- check
     if failed:
         gc.printAndLog("\n" + gc.underscore("ERROR: The following files could not be mapped"), file=logfile)
         for sfile, tfile in failed:
-            gc.printAndLog("--> %s --> %s" % (sfile, tfile), file=logfile)
+            gc.printAndLog("---> %s ---> %s" % (sfile, tfile), file=logfile)
 
         endlog = gc.closeLogFile(logfile, logfilename, status="error")
         raise ge.CommandFailed("export_hcp", "Some files not mapped" , "Some files could not be mapped!", "Please see log and check your data [%s]!" % (endlog))
 
-    gc.printAndLog("--> Mapping completed", file=logfile)
+    gc.printAndLog("---> Mapping completed", file=logfile)
     endlog = gc.closeLogFile(logfile, logfilename, status="done")

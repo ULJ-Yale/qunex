@@ -5,4 +5,3 @@
 [submodule "library"]
 	path = qx_library
 	url = ../library
-	ignore = all

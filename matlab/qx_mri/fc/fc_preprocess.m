@@ -618,6 +618,7 @@ if nargin < 4 || isempty(doIt),   doIt = 'shrcl';           end
 if nargin < 3, omit = [];                                   end
 if nargin < 2, error('ERROR: At least session folder and BOLD number need to be specified for the function to run!'); end
 
+btail = strrep(tail, 'tseries', 'scalar');
 
 fprintf('\nRunning preproces script v0.9.17 [%s]\n--------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
@@ -633,6 +634,7 @@ fprintf('\n   eventrstring: %s', eventstring);
 fprintf('\n        variant: %s', variant);
 fprintf('\n      overwrite: %s', num2str(overwrite));
 fprintf('\n           tail: %s', tail);
+fprintf('\n          btail: %s', btail);
 fprintf('\n          scrub: %s', scrub);
 fprintf('\n        ignores: %s', ignores);
 fprintf('\n        options: %s', options);
@@ -641,7 +643,7 @@ fprintf('\n');
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
-general_print_struct(options, 'Options used');
+general_print_struct(options, 'fc_preprocess options used');
 
 options.hipass_do = strtrim(strsplit(options.hipass_do, ','));
 options.lopass_do = strtrim(strsplit(options.lopass_do, ','));
@@ -672,7 +674,7 @@ doIt = strrep(doIt, ' ', '');
 
 
 % ======================================================
-%   ----> prepare paths
+%   ---> prepare paths
 
 froot = strcat(sessionf, ['/images' options.img_suffix '/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
 
@@ -695,7 +697,7 @@ file.rsurf     = strcat(sessionf, ['/images' options.img_suffix '/segmentation/h
 
 
 % ======================================================
-%   ----> are we doing coefficients? [deprecated -> see glm_results options]
+%   ---> are we doing coefficients? [deprecated -> see glm_results options]
 do_coeff = false;
 if strfind(doIt, 'c')
     do_coeff = true;
@@ -703,7 +705,7 @@ if strfind(doIt, 'c')
 end
 
 % ======================================================
-%   ----> are we doing coefficient statistics?
+%   ---> are we doing coefficient statistics?
 
 if strfind(options.glm_results, 'c')
     do_coeff = true;
@@ -740,9 +742,9 @@ if strfind(options.glm_results, 'all')
 end
 
 % ======================================================
-%   ----> deal with nuisance and scrubbing
+%   ---> deal with nuisance and scrubbing
 
-%   ----> read data
+%   ---> read data
 
 if doscrubbing
     [nuisance.scrub  nuisance.scrub_hdr]  = general_read_table(file.oscrub);
@@ -754,7 +756,7 @@ if any(ismember(rgss, {'m', 'm1d', 'mSq', 'm1sSq'})) || ~isempty(strfind(doIt, '
     [nuisance.mov    nuisance.mov_hdr]    = general_read_table(file.movdata);
     nuisance.nframes = size(nuisance.mov,1);
 
-    %   ----> exclude extra data from mov
+    %   ---> exclude extra data from mov
     me               = {'frame', 'scale'};
     nuisance.mov     = nuisance.mov(:,~ismember(nuisance.mov_hdr, me));
     nuisance.mov_hdr = nuisance.mov_hdr(~ismember(nuisance.mov_hdr, me));
@@ -770,7 +772,7 @@ else
     mov_data_present = false;
 end
 
-%   ----> do scrubbing anew if needed!
+%   ---> do scrubbing anew if needed!
 
 if strfind(doIt, 'm')
     timg = nimage;
@@ -795,7 +797,7 @@ if strfind(doIt, 'm')
     general_write_table(file.tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ', header);
 end
 
-%  ----> what are the frames to be used
+%  ---> what are the frames to be used
 
 if doscrubbing
     nuisance.use = nuisance.scrub(:,ismember(nuisance.scrub_hdr, {'use'}))';
@@ -803,7 +805,7 @@ else
     nuisance.use = ones(1, nuisance.nframes);
 end
 
-%   ----> lets setup nuisances!
+%   ---> lets setup nuisances!
 
 if strfind(doIt, 'r')
 
@@ -889,7 +891,7 @@ end
 
 
 % ======================================================
-%   ----> run processing loop
+%   ---> run processing loop
 
 task = ['shrl'];
 exts = {'_s','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
@@ -1009,21 +1011,21 @@ for current = char(doIt)
                 if ~(do_zscores || do_pvals || do_stderrors)
                 	[img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore.regress, options, [file.Xroot ext], rmodel, sfile);
                 	if do_coeff
-                    	coeff.img_saveimage([froot ext '_coeff' tail]);
+                    	coeff.img_saveimage([froot ext '_coeff' btail]);
                 	end
                 else
                 	[img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ignore.regress, options, [file.Xroot ext], rmodel, sfile);
                 	if do_coeff
-                    	coeff.img_saveimage([froot ext '_coeff' tail]);
+                    	coeff.img_saveimage([froot ext '_coeff' btail]);
                 	end
                     if do_stderrors
-                        coeffstats.B_se.img_saveimage([froot ext '_coeff_stderrors' tail]);
+                        coeffstats.B_se.img_saveimage([froot ext '_coeff_stderrors' btail]);
                     end
                     if do_zscores
-                	    coeffstats.B_z.img_saveimage([froot ext '_coeff_zscores' tail]);
+                	    coeffstats.B_z.img_saveimage([froot ext '_coeff_zscores' btail]);
                     end
                     if do_pvals
-                        coeffstats.B_pval.img_saveimage([froot ext '_coeff_pvals' tail]);
+                        coeffstats.B_pval.img_saveimage([froot ext '_coeff_pvals' btail]);
                     end
                 end
                 dor = false;
@@ -1031,7 +1033,6 @@ for current = char(doIt)
 
         if ~img.empty && do_residuals
             img.img_saveimage(tfile);
-            tfile
             fprintf(' ... saved!');
         end
     end
@@ -1062,7 +1063,7 @@ for current = char(doIt)
 
 end
 
-fprintf('\n==> preproces BOLD finished successfully\n');
+fprintf('\n---> preproces BOLD finished successfully\n');
 
 return
 
@@ -1070,7 +1071,7 @@ return
 
 
 % ======================================================
-%   ----> do GLM removal of nuisance regressors
+%   ---> do GLM removal of nuisance regressors
 %
 
 
@@ -1102,7 +1103,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     nuisance.nsignal = sum(smask);
     nuisance.signal_hdr = nuisance.signal_hdr(smask);
 
-    %   ----> baseline and linear trend
+    %   ---> baseline and linear trend
 
     na = img.frames-omit;
     pl = zeros(na,1);
@@ -1123,7 +1124,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     eindex(end+1:end+2) = [1 1];
 
 
-    %   ----> movement
+    %   ---> movement
 
 
     if movement
@@ -1186,7 +1187,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
         end
     end
 
-    %   ----> signal
+    %   ---> signal
 
     if sum(smask)
         X = [X zscore(nuisance.signal(omit+1:end,:))];
@@ -1215,7 +1216,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     end
 
 
-    %   ----> task
+    %   ---> task
 
     if task && nuisance.ntask
         X = [X nuisance.task(omit+1:end,:)];
@@ -1231,7 +1232,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     end
 
 
-    %   ----> events
+    %   ---> events
 
     if event && nuisance.nevents
         X = [X nuisance.events(omit+1:end,:)];
@@ -1247,7 +1248,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     end
 
 
-    %   ----> do GLM
+    %   ---> do GLM
 
     if ~strcmp(ignore, 'keep')
         fprintf(' excluding %d bad frames', sum(img.use == 0));
@@ -1306,6 +1307,10 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     xeindex  = sprintf('%d\t', eindex);
     xuse     = sprintf('%d\t', mask);
 
+    for f = 1:length(hdr)
+        mapnames{f} = sprintf('%s f%d', hdre{f}, hdrf(f));
+    end
+
     % generate header
     version = general_get_qunex_version();
     header = sprintf('# Generated by QuNex %s on %s\n', version, datestr(now, 'YYYY-mm-dd_HH.MM.SS'));
@@ -1324,20 +1329,22 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
         end
     end
 
+    coeff.filetype = [coeff.filetype(1) 'scalar'];
+    coeff.cifti.maps = mapnames;
     coeff = coeff.img_embed_meta(xtable, 64, 'GLM');
 
 return
 
 
 % ======================================================
-%                   ----> prepare nuisance for filtering
+%                   ---> prepare nuisance for filtering
 %
 
 function [img] = prepare_nuisance(nuisance, dofilter)
     data      = [];
     filtering = {};
 
-    fprintf('\n     --> filtering also: ');
+    fprintf('\n     ---> filtering also: ');
     for f = dofilter 
         switch f{1}
             case 'nuisance'
@@ -1361,7 +1368,7 @@ function [img] = prepare_nuisance(nuisance, dofilter)
 
 
 % ======================================================
-%                 ----> extract nuisance after filtering
+%                 ---> extract nuisance after filtering
 %
 
 function [nuisance] = extract_nuisance(img, nuisance, dofilter)
@@ -1398,7 +1405,7 @@ function [nuisance] = extract_nuisance(img, nuisance, dofilter)
 
 
 % ======================================================
-%                                    ----> read if empty
+%                                    ---> read if empty
 %
 
 function [img] = readIfEmpty(img, src, omit)
@@ -1414,7 +1421,7 @@ function [img] = readIfEmpty(img, src, omit)
 
 
 % ======================================================
-%                                         ----> wbSmooth
+%                                         ---> wbSmooth
 %
 
 function [] = wbSmooth(sfile, tfile, file, options)

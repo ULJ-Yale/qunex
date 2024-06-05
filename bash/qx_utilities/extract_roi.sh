@@ -54,13 +54,6 @@ EOF
 }
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() { echo -e "\033[31m $1 \033[0m"; }
-geho() { echo -e "\033[32m $1 \033[0m"; }
-
-# ------------------------------------------------------------------------------
 # -- Check for help
 # ------------------------------------------------------------------------------
 
@@ -107,7 +100,7 @@ while [ ${index} -lt ${numArgs} ]; do
             outname=${argument/*=/""};   index=$(( index + 1 ))
             ;;
         *)
-            usage; echo ""; reho "ERROR: Unrecognized Option: ${argument}"; echo ""
+            usage; echo ""; echo "ERROR: Unrecognized Option: ${argument}"; echo ""
             exit 1
             ;;
     esac
@@ -115,19 +108,19 @@ done
 
 # -- Check required parameters and set defaults
 if [ -z ${roifile} ]; then
-    usage; echo ""; reho "ERROR: --roifile=<path to roi file> not specified>"; echo ""
+    usage; echo ""; echo "ERROR: --roifile=<path to roi file> not specified>"; echo ""
     exit 1
 fi
 if [ -z ${inputfile} ]; then
-    usage; echo ""; reho "ERROR: --inputfile=<path to file to be extracted> not specified>"; echo ""
+    usage; echo ""; echo "ERROR: --inputfile=<path to file to be extracted> not specified>"; echo ""
     exit 1
 fi
 if [ -z ${outpath} ]; then
-    usage; echo ""; reho "ERROR: --outdir=<path to output directory> not specified>"; echo ""
+    usage; echo ""; echo "ERROR: --outdir=<path to output directory> not specified>"; echo ""
     exit 1
 fi
 if [ -z ${outname} ]; then
-    usage; echo ""; reho "ERROR: --outname=<output file basename> not specified>"; echo ""
+    usage; echo ""; echo "ERROR: --outname=<output file basename> not specified>"; echo ""
     exit 1
 fi
 
@@ -143,7 +136,7 @@ echo "   Output name: ${outname}"
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
-geho "------------------------- Start of work --------------------------------"
+echo "------------------------- Start of work --------------------------------"
 echo ""
 
 }
@@ -155,7 +148,7 @@ main() {
 # -- Get Command Line Options
 get_options $@
 
-# -- Run img_extract_roi.m --> img_extract_roi(obj, roi, rcodes, method, weights, criterium)
+# -- Run img_extract_roi.m ---> img_extract_roi(obj, roi, rcodes, method, weights, criterium)
 cmd="imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
 echo ${QUNEXMCOMMAND}
 echo $cmd
@@ -164,14 +157,14 @@ ${QUNEXMCOMMAND} "imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(s
 # -- Completion check
 if [[ -f ${outpath}/${outname}.csv ]]; then
    echo ""
-   geho "------------------------- Successful completion of work --------------------------------"
+   echo "------------------------- Successful completion of work --------------------------------"
    echo ""
 else
-    reho "------------------------- ERROR --------------------------------"
+    echo "------------------------- ERROR --------------------------------"
     echo ""
-    reho "   roi_extract generation did not complete correctly."
+    echo "   roi_extract generation did not complete correctly."
     echo ""
-    reho "----------------------------------------------------------------"
+    echo "----------------------------------------------------------------"
 fi
 
 }

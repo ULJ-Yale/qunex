@@ -59,7 +59,7 @@ if [[ -z $volumes ]]; then volumes=900; fi
 
 # list parameters
 echo ""
-echo " --> Executing preprocess_mice:"
+echo " ---> Executing preprocess_mice:"
 echo "       Work directory: ${work_dir}"
 echo "       BOLD: ${bold}"
 echo "       Bias field correction: ${bias_field_correction}"
@@ -100,10 +100,10 @@ fi
 # ------------------------------------------------------------------------------
 if [[ $bias_field_correction == "yes" ]]; then
     echo ""
-    echo " --> Starting BIAS FIELD CORRECTION"
+    echo " ---> Starting BIAS FIELD CORRECTION"
     N4BiasFieldCorrection -d 4 -i ${work_dir}/${bold}_DS.nii.gz -o ${work_dir}/${bold}_BC.nii.gz
     bold_suffix="BC"
-    echo " --> BIAS FIELD CORRECTION completed"
+    echo " ---> BIAS FIELD CORRECTION completed"
 else
     bold_suffix="DS"
 fi
@@ -113,7 +113,7 @@ fi
 # -- MELODIC
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Starting MELODIC"
+echo " ---> Starting MELODIC"
 
 # set variables
 melodic_output="${work_dir}/${bold}_melodic_output"
@@ -138,15 +138,14 @@ done
 echo " ... Running feat ${work_dir}/${bold}_${bold_suffix}.fsf"
 feat ${work_dir}/${bold}_${bold_suffix}.fsf
 
-echo " --> MELODIC completed"
+echo " ---> MELODIC completed"
 
 
 # ------------------------------------------------------------------------------
 # -- FIX the data
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Running FIX"
-export FSL_FIX_MATLAB_MODE=1
+echo " ---> Running FIX"
 echo " ... Running fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass} ${aggressive_cleanup}"
 fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass} ${aggressive_cleanup}
 
@@ -155,7 +154,7 @@ fix ${ica_dir} ${fix_rdata} ${fix_threshold}${motion_cleanup} -h ${fix_highpass}
 # -- QC
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Copying registrations to the QC folder"
+echo " ---> Copying registrations to the QC folder"
 
 # create QC dir
 if [[ ! -d ${work_dir}/QC ]]; then
@@ -164,14 +163,14 @@ fi
 
 # copy the registration
 cp ${ica_dir}/reg/example_func2highres.png ${work_dir}/QC/${bold}_example_func2highres.png
-echo " --> You can check the registrations in ${work_dir}/QC"
+echo " ---> You can check the registrations in ${work_dir}/QC"
 
 
 # ------------------------------------------------------------------------------
 # -- apply registrations
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Applying registrations"
+echo " ---> Applying registrations"
 echo " ... Running flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm"
 flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz -init ${ica_dir}/reg/example_func2highres.mat -applyxfm
 
@@ -180,7 +179,7 @@ flirt -in ${ica_dir}/filtered_func_data_clean.nii.gz -ref ${flirt_ref} -out ${wo
 # -- bandpass
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Applying bandpass"
+echo " ---> Applying bandpass"
 if [[ -f ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK ]]; then
     rm ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK
 fi
@@ -195,7 +194,7 @@ echo " ... Running 3dBandpass -despike -prefix ${work_dir}/${bold}_filtered_func
 # -- transform to nifti
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Transforming to nifti"
+echo " ---> Transforming to nifti"
 echo " ... Running 3dAFNItoNIFTI -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK"
 3dAFNItoNIFTI -prefix ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP+orig.BRIK
 
@@ -204,7 +203,7 @@ echo " ... Running 3dAFNItoNIFTI -prefix ${work_dir}/${bold}_filtered_func_data_
 # -- Registration to Allen space
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Registering to Allen space"
+echo " ---> Registering to Allen space"
 echo " ... Running WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean_BP.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt"
 WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean_BP_EPI.nii.gz ${work_dir}/${bold}_filtered_func_data_clean_BP_ABI.nii.gz -R ${mice_templates}/ABI_template_2021_200um.nii ${mice_templates}/EPI_to_ABI_warp.nii.gz ${mice_templates}/EPI_to_ABI_affine.txt
 
@@ -212,7 +211,7 @@ WarpTimeSeriesImageMultiTransform 4 ${work_dir}/${bold}_filtered_func_data_clean
 # ------------------------------------------------------------------------------
 # -- wrap up
 # ------------------------------------------------------------------------------
-echo " --> Removing intermediate files"
+echo " ---> Removing intermediate files"
 rm ${work_dir}/${bold}_rsfMRI_Standard.fsf
 rm ${work_dir}/${bold}_${bold_suffix}.fsf
 rm ${work_dir}/${bold}*_BP+orig.BRIK
@@ -223,7 +222,7 @@ rm ${work_dir}/${bold}*_BP.nii.gz
 popd
 
 echo ""
-echo " --> preprocess_mice successfully completed"
+echo " ---> preprocess_mice successfully completed"
 echo ""
 echo "------------------------ Successful completion of work ------------------------"
 echo ""

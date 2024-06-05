@@ -37,18 +37,6 @@ usage() {
 }
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- Check for help
 # ------------------------------------------------------------------------------
 
@@ -92,7 +80,7 @@ echo ""
 
 # -- Check if command line options are requested and return to default run if not
 if [ -z "$1" ]; then
-	reho "ERROR: No inputs provided!"
+	echo "ERROR: No inputs provided!"
 	usage
 else
 	# -- First check if single or double flags are set
@@ -113,11 +101,11 @@ else
 		SyncServer=`opts_GetOpt "${setflag}syncserver" $@` # server to Sync to
 		SyncDestination=`opts_GetOpt "${setflag}syncdestination" $@` # server to Sync to
 		SyncLogFolder=`opts_GetOpt "${setflag}synclogfolder" $@`       # Log folder
-		if [ -z "$SyncFolders" ]; then reho "ERROR -- Sync folders flag missing. Backing up $SyncFolders"; exit 0; fi
-		if [ -z "$SyncServer" ]; then reho "ERROR -- Sync server flag missing"; show_usage; exit 0; fi
-		if [ -z "$SyncDestination" ]; then reho "ERROR -- Sync server path flag missing"; show_usage; exit 0; fi
-		if [ -z "$SyncLogFolder" ]; then reho "ERROR -- Log folder flag missing"; show_usage; exit 0; fi
-		if [ -z "$CASES" ]; then reho "NOTE -- Individual cases flag missing. Not working on specific sessions."; fi
+		if [ -z "$SyncFolders" ]; then echo "ERROR -- Sync folders flag missing. Backing up $SyncFolders"; exit 0; fi
+		if [ -z "$SyncServer" ]; then echo "ERROR -- Sync server flag missing"; show_usage; exit 0; fi
+		if [ -z "$SyncDestination" ]; then echo "ERROR -- Sync server path flag missing"; show_usage; exit 0; fi
+		if [ -z "$SyncLogFolder" ]; then echo "ERROR -- Log folder flag missing"; show_usage; exit 0; fi
+		if [ -z "$CASES" ]; then echo "NOTE -- Individual cases flag missing. Not working on specific sessions."; fi
 	fi
 fi
 
@@ -139,7 +127,7 @@ echo " Time stamp: $TimeStamp"
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
-geho "------------------------- Start of work --------------------------------"
+echo "------------------------- Start of work --------------------------------"
 echo ""
 
 # -- Setup logging
@@ -163,11 +151,11 @@ do
 	echo ""
 	if [[ `echo ${CheckSyncPath} | grep "YES"` == "" ]]; then
 		echo ""
-		reho "   * ERROR -- The specified ${SyncDestination} is missing on ${SyncServerName}. Make sure the folder is present on ${SyncServerName} and re-run"
+		echo "   * ERROR -- The specified ${SyncDestination} is missing on ${SyncServerName}. Make sure the folder is present on ${SyncServerName} and re-run"
 		echo ""
 		exit 1
 	else
-		geho "   * Found ${SyncDestination} on ${SyncServerName}. Starting Sync ..."
+		echo "   * Found ${SyncDestination} on ${SyncServerName}. Starting Sync ..."
 		echo ""
 		# -- Define command and initiate log
 		if [ -z "$CASES" ]; then
@@ -181,7 +169,7 @@ do
 			echo "Running command: ${cmd}" >> "$SyncLogFolder"/sync_log_"$now".txt
 			echo '' >> "$SyncLogFolder"/sync_log_"$now".txt
 			# -- Echo which study is being backed up
-			echo "Backing up: ${SyncFolder} --> ${SyncServerName}:${SyncDestination}" >> "$SyncLogFolder"/sync_log_"$now".txt
+			echo "Backing up: ${SyncFolder} ---> ${SyncServerName}:${SyncDestination}" >> "$SyncLogFolder"/sync_log_"$now".txt
 			echo '----------' >> "$SyncLogFolder"/sync_log_"$now".txt
 			# -- Run rsync command
 			echo "Running -- $cmd"; echo ""
@@ -193,9 +181,9 @@ do
 		else
 			for CASE in ${CASES}; do
 				if [[ -d ${SyncFolder}/${CASE} ]]; then 
-					geho "   * Found ${SyncFolder}/${CASE}. Proceeding."
+					echo "   * Found ${SyncFolder}/${CASE}. Proceeding."
 				else
-					reho "   ${SyncFolder}/${CASE} missing. Skipping."
+					echo "   ${SyncFolder}/${CASE} missing. Skipping."
 					return 1
 				fi
 				if [[ ${SyncServer} == "local" ]]; then
@@ -208,7 +196,7 @@ do
 				echo "Running command: ${cmd}" >> "$SyncLogFolder"/sync_log_"$now".txt
 				echo '' >> "$SyncLogFolder"/sync_log_"$now".txt
 				# -- Echo which study is being backed up
-				echo "Backing up: ${SyncFolder}/${CASE} --> ${SyncServerName}:${SyncDestination}" >> "$SyncLogFolder"/sync_log_"$now".txt
+				echo "Backing up: ${SyncFolder}/${CASE} ---> ${SyncServerName}:${SyncDestination}" >> "$SyncLogFolder"/sync_log_"$now".txt
 				echo '----------' >> "$SyncLogFolder"/sync_log_"$now".txt
 				# -- Run rsync command
 				echo "Running -- $cmd"; echo ""
@@ -224,11 +212,11 @@ done
 
 echo '----------' >> "$SyncLogFolder"/sync_log_"$now".txt
 
-geho "--- Data sync completed. Check outputs and logs for errors."
+echo "--- Data sync completed. Check outputs and logs for errors."
 echo ""
-geho "--- Check output logs here: ${SyncLogFolder}/sync_log_${now}.txt}"
+echo "--- Check output logs here: ${SyncLogFolder}/sync_log_${now}.txt}"
 echo ""
-geho "------------------------- Successful completion of work --------------------------------"
+echo "------------------------- Successful completion of work --------------------------------"
 echo ""
 }
 

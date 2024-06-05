@@ -10,18 +10,6 @@
 # -- General help usage function
 # ------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
 usage() {
     cat << EOF
 ``dwi_probtrackx_dense_gpu``
@@ -237,18 +225,22 @@ get_options() {
     nogpu=`opts_GetOpt "--nogpu" $@`
 
     if [[ -z ${SessionsFolder} ]]; then
-        reho "ERROR: <sessionsfolder> not specified"
+        echo "ERROR: <sessionsfolder> not specified"
         echo ""
         exit 1
     fi
     if [[ -z ${CASE} ]]; then
-        reho "ERROR: <sessions> not specified"
+        echo "ERROR: <sessions> not specified"
         echo ""
         exit 1
     fi
 
     # -- Check if Matrix 1 or 3 flag set
-    if [[ -z "$MatrixOne" ]]  && [[ -z "$MatrixThree" ]]; then reho "ERROR: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix3='yes']"; exit 1; fi
+    if [[ -z "$MatrixOne" ]]  && [[ -z "$MatrixThree" ]]; then
+        echo "WARNING: Matrix option missing, setting both omatrix1 and omatrix3 to yes!"
+        MatrixOne="yes"
+        MatrixThree="yes"
+    fi
     if [ -z "$MatrixOne" ]; then MatrixOne="no"; fi
     if [ -z "$MatrixThree" ]; then MatrixThree="no"; fi
     if [[ -z "$NSamplesMatrixOne" ]]; then NSamplesMatrixOne=10000; fi
@@ -304,7 +296,7 @@ get_options() {
     echo "   No GPU: ${nogpu}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
-    geho "------------------------- Start of work --------------------------------"
+    echo "------------------------- Start of work --------------------------------"
     echo ""
 }
 
@@ -328,7 +320,7 @@ main() {
 
     # -- Echo probtrackX log
     echo ""
-    geho "   --- probtrackX GPU for session $CASE..."
+    echo "   --- probtrackX GPU for session $CASE..."
     echo ""
     
     for MNum in $MNumber; do
@@ -338,14 +330,14 @@ main() {
         # -- Check of overwrite flag was set
         if [[ "$Overwrite" == "yes" ]]; then
             echo ""
-            reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
+            echo " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
             echo ""
             rm -f ${OutFolder}/Conn${MNum}.dconn.nii.gz &> /dev/null
         fi
 
         # -- Check for Matrix completion
         echo ""
-        geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
+        echo "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
         echo ""
 
         # -- Check if the file even exists
@@ -357,8 +349,8 @@ main() {
             # -- Then check if Matrix run is complete based on size
             if [[ $(echo ${actualfilesize} | bc) -ge $(echo ${minimumfilesize} | bc) ]]; then > /dev/null 2>&1
                 echo ""
-                cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}"
-                cyaneho "To re-run set overwrite flag to 'yes'"
+                echo "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}"
+                echo "To re-run set overwrite flag to 'yes'"
                 echo ""
                 echo "--------------------------------------------------------------"
                 echo ""
@@ -366,7 +358,7 @@ main() {
         else
             # -- If run is incomplete perform run for Matrix
             echo ""
-            geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
+            echo "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
             echo ""
 
             # -- Command to run
@@ -388,10 +380,10 @@ main() {
         # completion check
         if [[ ! -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
             # print error for this case
-            reho "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
+            echo "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
         else
             # print success for this case
-            geho "dwi_probtracx_dense_gpu for $CASE completed successfully!"
+            echo "dwi_probtracx_dense_gpu for $CASE completed successfully!"
             
             # set as success
             COMPLETIONCHECK=1
@@ -401,12 +393,12 @@ main() {
     # final completion check
     if [[ "$COMPLETIONCHECK" == 1 ]]; then
         echo ""
-        geho "------------------------- Successful completion of work --------------------------------"
+        echo "------------------------- Successful completion of work --------------------------------"
         echo ""
         exit 0
     else
         echo ""
-        reho "ERROR: dwi_probtracx_dense_gpu run did not complete successfully"
+        echo "ERROR: dwi_probtracx_dense_gpu run did not complete successfully"
         echo ""
         exit 1
     fi

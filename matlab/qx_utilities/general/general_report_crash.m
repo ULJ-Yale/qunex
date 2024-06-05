@@ -9,7 +9,7 @@ function [] = general_report_crash(ME)
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-fprintf('\n\n=========================================\nExecution error! Processing failed! \nPlease check arguments and/or try running the command in Matlab or Octave directly.\n\nThe exact error reported:\n-----------------------------------------\n%s\n\n=========================================\n', prepareErrorReport(ME))
+fprintf('\n\n=========================================\nExecution error! Processing failed! \nPlease check arguments and/or try running the command in Matlab or Octave directly.\n\nThe exact error reported:\n-----------------------------------------\n%s\n\n=========================================\n', prepareErrorReport(ME));
 
 function [s] = prepareErrorReport(ME)
 

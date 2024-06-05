@@ -71,7 +71,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         v = 2;
     }
 
-    if (verbose) mexPrintf("\n===> img_save_nifti_mx\n");
+    if (verbose) mexPrintf("\n---> img_save_nifti_mx\n");
     if (verbose) mexPrintf("---> Saving %s as NIfTI-%d image.\n", filename, v);
 
     // ---> are we swapping

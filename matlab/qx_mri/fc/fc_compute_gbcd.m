@@ -170,7 +170,7 @@ commands = regexp(command, '\|', 'split');
 
 fprintf('\n ... listing files to process');
 
-[session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose);
+list = general_read_file_list(flist, 'all', [], verbose);
 
 fprintf(' ... done.');
 
@@ -178,23 +178,23 @@ fprintf(' ... done.');
 %   ------------------------------------------------------------------------------------------
 %   -------------------------------------------- The main loop ... go through all the sessions
 
-fout = fopen([targetf '/' listname '_GBCd.tab'], 'w');
+fout = fopen([targetf '/' list.listname '_GBCd.tab'], 'w');
 fprintf(fout, 'session\tcommand\troi\tband\tvalue');
 
 %   --- Get variables ready first
 
-for s = 1:nsessions
+for s = 1:list.nsessions
 
     %   --- reading in image files
     tic;
-    fprintf('\n ... processing %s', session(s).id);
+    fprintf('\n ... processing %s', list.session(s).id);
     fprintf('\n     ... reading image file(s) ');
 
     y = [];
 
-    nfiles = length(session(s).files);
+    nfiles = length(list.session(s).files);
 
-    img = nimage(session(s).files{1});
+    img = nimage(list.session(s).files{1});
 
     fprintf('1');
     if ~isempty(mask),   img = img.sliceframes(mask); end
@@ -202,7 +202,7 @@ for s = 1:nsessions
 
     if nfiles > 1
         for n = 2:nfiles
-            new = nimage(session(s).files{n});
+            new = nimage(list.session(s).files{n});
             fprintf(', %d', n);
             if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = new.img_scrub(ignore); end
@@ -210,7 +210,7 @@ for s = 1:nsessions
         end
     end
 
-    imask = nimage(session(s).roi);
+    imask = nimage(list.session(s).roi);
     imask = imask.ismember(target);
 
     if rsmooth
@@ -222,7 +222,7 @@ for s = 1:nsessions
         imask = imask.img_grow_roi(rdilate);
     end
 
-    roiimg = nimage.img_read_roi(roi, session(s).roi);
+    roiimg = nimage.img_read_roi(roi, list.session(s).roi);
 
     [res, roiinfo, rdata] = img.img_compute_gbcd(command, roiimg, rcodes, nbands, [], imask);
 
@@ -235,7 +235,7 @@ for s = 1:nsessions
     for nc = 1:size(res,3)
         for nr = 1:size(res,2)
             for nb = 1:size(res,1)
-                fprintf(fout, '\n%s\t%s\t%s\t%d\t%.6f', session(s).id, commands{nc}, roiinfo.roinames{nr}, nb, res(nb, nr, nc));
+                fprintf(fout, '\n%s\t%s\t%s\t%d\t%.6f', list.session(s).id, commands{nc}, roiinfo.roinames{nr}, nb, res(nb, nr, nc));
             end
         end
     end
@@ -245,10 +245,10 @@ end
 
 data.roifile  = roi;
 data.rcodes   = rcodes;
-data.sessions = session;
+data.sessions = list.session;
 
 fclose(fout);
-save([targetf '/' listname '_GBCd'], data);
+save([targetf '/' list.listname '_GBCd'], data);
 
 
 

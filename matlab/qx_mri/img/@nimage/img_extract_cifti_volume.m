@@ -45,7 +45,7 @@ vol_img.data = vol_img.image2D();
 % remap the values from the imported CIFTI to the new NIfTI file
 for i = 1:1:numel(img.cifti.shortnames)
     if strcmp(cifti.(lower(img.cifti.shortnames{i})).type, 'Volume')
-        vol_img.data(components.indexMask == i,:) = img.data(img.cifti.start(i):img.cifti.end(i),:);
+        vol_img.data(components.indexMask == i,:) = img.data(img.cifti.start{i}:img.cifti.end{i},:);
     end
 end
 

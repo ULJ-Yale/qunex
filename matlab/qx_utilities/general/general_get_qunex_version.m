@@ -17,6 +17,11 @@ qunexrepo = getenv('QUNEXREPO');
 version_file = strcat(tools, '/', qunexrepo, '/VERSION.md');
 
 % read the version file
-fid = fopen(version_file);
-version = fgetl(fid);
-fclose(fid);
+fid = fopen(version_file, 'r');
+if fid == -1
+    version = 'unknown';
+else
+    version = fgetl(fid);
+    fclose(fid);
+end
+

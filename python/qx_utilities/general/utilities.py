@@ -28,6 +28,7 @@ import subprocess
 from datetime import datetime
 import traceback
 import itertools
+import yaml
 import general.commands_support as gcs
 import general.process as gp
 import general.core as gc
@@ -35,7 +36,8 @@ import processing.core as gpc
 import general.exceptions as ge
 import general.filelock as fl
 import general.parser as parser
-parameterTemplateHeader = '''#  Parameters file
+
+parameterTemplateHeader = """#  Parameters file
 #  =====================
 #
 #  This file is used to specify the default parameters used by various QuNex commands for
@@ -69,7 +71,7 @@ parameterTemplateHeader = '''#  Parameters file
 #  to. To specify parameters, uncomment the line (it should start with the
 #  underscore before the parameter name) and provide the desired value. In some
 #  cases default values are provided. Do take care to remove the descriptors
-#  (... <description>) after the values for the parameters to be used.'''
+#  (... <description>) after the values for the parameters to be used."""
 
 
 def manage_study(studyfolder=None, action="create", folders=None, verbose=False):
@@ -103,7 +105,10 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
             if not os.path.exists(folders):
                 # fail
                 raise ge.CommandFailed(
-                    "manage_study", "Folder structure file [%s] not found!" % folders, "Please check the value of the folders parameter.")
+                    "manage_study",
+                    "Folder structure file [%s] not found!" % folders,
+                    "Please check the value of the folders parameter.",
+                )
 
     # action
     create = action == "create"
@@ -129,8 +134,13 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                         print(" ... folder exists:", tfolder)
                 else:
                     errstr = os.strerror(e.errno)
-                    raise ge.CommandFailed("manage_study", "I/O error: %s" % (errstr), "Folder could not be created due to '%s' error!" % (
-                        errstr), "Folder to create: %s" % (tfolder), "Please check paths and permissions!")
+                    raise ge.CommandFailed(
+                        "manage_study",
+                        "I/O error: %s" % (errstr),
+                        "Folder could not be created due to '%s' error!" % (errstr),
+                        "Folder to create: %s" % (tfolder),
+                        "Please check paths and permissions!",
+                    )
 
         else:
             if os.path.exists(tfolder):
@@ -144,9 +154,10 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
         if verbose:
             print("\nPreparing template files:")
 
-        # --> parameter template
+        # ---> parameter template
         paramFile = os.path.join(
-            studyfolder, 'sessions', 'specs', 'parameters_example.txt')
+            studyfolder, "sessions", "specs", "parameters_example.txt"
+        )
         try:
             f = os.open(paramFile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.write(f, bytes(gc.print_qunex_header(), encoding="utf8"))
@@ -155,11 +166,15 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
             os.write(f, bytes((parameterTemplateHeader + "\n"), encoding="utf8"))
             for line in gp.arglist:
                 if len(line) == 4:
-                    os.write(f, bytes("# _%-24s : %-15s # ... %s\n" %
-                             (line[0], line[1], line[3]), encoding="utf8"))
-                elif len(line) > 0:
                     os.write(
-                        f, bytes("#\n# " + line[0] + '\n#\n', encoding="utf8"))
+                        f,
+                        bytes(
+                            "# _%-24s : %-15s # ... %s\n" % (line[0], line[1], line[3]),
+                            encoding="utf8",
+                        ),
+                    )
+                elif len(line) > 0:
+                    os.write(f, bytes("#\n# " + line[0] + "\n#\n", encoding="utf8"))
             os.close(f)
             if verbose:
                 print(" ... created parameters_example.txt file")
@@ -170,12 +185,16 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                     print(" ... parameters_example.txt file already exists")
             else:
                 errstr = os.strerror(e.errno)
-                raise ge.CommandFailed("manage_study", "I/O error: %s" % (
-                    errstr), "Parameters template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+                raise ge.CommandFailed(
+                    "manage_study",
+                    "I/O error: %s" % (errstr),
+                    "Parameters template file could not be created [%s]!" % (paramFile),
+                    "Please check paths and permissions!",
+                )
 
-        # --> mapping example
+        # ---> mapping example
         # get all files that match the pattern
-        examplesFolder = os.path.join(niuTemplateFolder, 'templates')
+        examplesFolder = os.path.join(niuTemplateFolder, "templates")
         mappingExamples = glob.glob(examplesFolder + "/*_mapping_example.txt")
         for srcFile in mappingExamples:
             try:
@@ -183,10 +202,9 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                 fileName = os.path.basename(srcFile)
                 # destination path and file
                 mapFile = os.path.join(studyfolder, fileName)
-                dstFile = os.open(mapFile, os.O_CREAT |
-                                  os.O_EXCL | os.O_WRONLY)
+                dstFile = os.open(mapFile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
                 # read src
-                srcContent = open(srcFile, 'r').read()
+                srcContent = open(srcFile, "r").read()
                 os.write(dstFile, bytes(srcContent, encoding="utf8"))
                 os.close(dstFile)
                 if verbose:
@@ -198,18 +216,22 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                         print(" ... %s file already exists" % dstFile)
                 else:
                     errstr = os.strerror(e.errno)
-                    raise ge.CommandFailed("manage_study", "I/O error: %s" % (
-                        errstr), "Parameters template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+                    raise ge.CommandFailed(
+                        "manage_study",
+                        "I/O error: %s" % (errstr),
+                        "Parameters template file could not be created [%s]!"
+                        % (paramFile),
+                        "Please check paths and permissions!",
+                    )
 
-        # --> markFile
-        markFile = os.path.join(studyfolder, '.qunexstudy')
+        # ---> markFile
+        markFile = os.path.join(studyfolder, ".qunexstudy")
 
         # ... map .mnapstudy to qunexstudy
-        if os.path.exists(os.path.join(studyfolder, '.mnapstudy')):
+        if os.path.exists(os.path.join(studyfolder, ".mnapstudy")):
             try:
                 f = os.open(markFile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-                markcontent = open(os.path.join(
-                    studyfolder, '.mnapstudy'), 'r').read()
+                markcontent = open(os.path.join(studyfolder, ".mnapstudy"), "r").read()
                 os.write(f, bytes(markcontent, encoding="utf8"))
                 os.close(f)
                 if verbose:
@@ -220,13 +242,16 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                         print(" ... .qunexstudy file already exists")
                 else:
                     errstr = os.strerror(e.errno)
-                    raise ge.CommandFailed("manage_study", "I/O error: %s" % (
-                        errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
+                    raise ge.CommandFailed(
+                        "manage_study",
+                        "I/O error: %s" % (errstr),
+                        ".qunexstudy file could not be created [%s]!" % (markFile),
+                        "Please check paths and permissions!",
+                    )
 
             try:
-                shutil.copystat(os.path.join(
-                    studyfolder, '.mnapstudy'), markFile)
-                os.unlink(os.path.join(studyfolder, '.mnapstudy'))
+                shutil.copystat(os.path.join(studyfolder, ".mnapstudy"), markFile)
+                os.unlink(os.path.join(studyfolder, ".mnapstudy"))
             except:
                 pass
 
@@ -237,8 +262,18 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
 
         try:
             f = os.open(markFile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.write(f, bytes("%s study folder created on %s by %s." % (os.path.basename(
-                studyfolder), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username), encoding="utf8"))
+            os.write(
+                f,
+                bytes(
+                    "%s study folder created on %s by %s."
+                    % (
+                        os.path.basename(studyfolder),
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        username,
+                    ),
+                    encoding="utf8",
+                ),
+            )
             os.close(f)
             if verbose:
                 print(" ... created .qunexstudy file")
@@ -249,8 +284,12 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                     print(" ... .qunexstudy file already exists")
             else:
                 errstr = os.strerror(e.errno)
-                raise ge.CommandFailed("manage_study", "I/O error: %s" % (
-                    errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
+                raise ge.CommandFailed(
+                    "manage_study",
+                    "I/O error: %s" % (errstr),
+                    ".qunexstudy file could not be created [%s]!" % (markFile),
+                    "Please check paths and permissions!",
+                )
 
 
 def create_study_folders(folders_spec):
@@ -289,7 +328,7 @@ def create_study_folders(folders_spec):
                 else:
                     i = 0
                     while indent > current_indents[i]:
-                        i = i+1
+                        i = i + 1
                         if i == len(current_indents):
                             break
 
@@ -351,19 +390,19 @@ def create_study(studyfolder=None, folders=None):
             │   └── hcpls
             └── sessions
                 ├── inbox
-                │   ├── MR
-                │   ├── EEG
-                │   ├── BIDS
-                │   ├── HCPLS
-                │   ├── behavior
-                │   ├── concs
-                │   └── events
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   ├── behavior
+                │   ├── concs
+                │   └── events
                 ├── archive
-                │   ├── MR
-                │   ├── EEG
-                │   ├── BIDS
-                │   ├── HCPLS
-                │   └── behavior
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   └── behavior
                 ├── specs
                 └── QC
 
@@ -383,21 +422,234 @@ def create_study(studyfolder=None, folders=None):
     print("Running create_study\n===================")
 
     if studyfolder is None:
-        raise ge.CommandError("create_study", "No studyfolder specified",
-                              "Please provide path for the new study folder using studyfolder parameter!")
+        raise ge.CommandError(
+            "create_study",
+            "No studyfolder specified",
+            "Please provide path for the new study folder using studyfolder parameter!",
+        )
 
-    manage_study(studyfolder=studyfolder, action="create",
-                 folders=folders, verbose=True)
+    manage_study(
+        studyfolder=studyfolder, action="create", folders=folders, verbose=True
+    )
+
+
+def copy_study(
+    studyfolder, existing_study, step=None, sessions=None, batchfile=None, filter=None
+):
+    """
+    ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [step=None] [sessions=None] [batchfile=None] [filter=None] ``
+
+    Copies an existing QuNex study onto a new location.
+
+    Parameters:
+        --studyfolder (str):
+            The path to the study folder to be generated.
+
+        --existing_study (str):
+            The path of an existing QuNex study that will be copied.
+
+        --step (str, default None):
+            The step which will be executed next, if provided only a subset of
+            data will be copied in some cases.
+
+        --sessions (str, default None):
+            If provided, only the specified sessions from the sessions folder
+            will be processed. They are to be specified as a comma separated
+            list.
+
+        --batchfile (str, default None):
+            If provided, only the sessions specified in the batch file will be
+            processed.
+
+        --filter (str, default None):
+            An optional parameter given as "key:value|key:value" string. Can be
+            used for filtering the session data within the provided batchfile.
+
+    Notes:
+        Can be used for backing up existing studies or when copying previous
+        study to continue with the processing or an analysis in a new study
+        folder. If sessions parameter is provided only a subset of sessions will
+        be copied over. If batchfile is provided, only the sessions specified
+        in the batch file will be copied. If filter is provided, it will be
+        applied to the provided batchfile before copying the study.
+
+    Examples:
+        ::
+
+            qunex copy_study \\
+                --studyfolder=/Volumes/data/studies/WM.v4 \\
+                --existing_study=/Volumes/data/studies/WM.v3
+    """
+
+    print("Running copy_study\n==================\n")
+
+    # check if mandatory parameters are provided
+    print()
+    print("---> Checking input parameters")
+    if studyfolder is None:
+        raise ge.CommandError(
+            "copy_study",
+            "No studyfolder specified",
+            "Please provide path for the new study folder using the studyfolder parameter!",
+        )
+    print(f" ... studyfolder: {studyfolder}")
+
+    if existing_study is None:
+        raise ge.CommandError(
+            "copy_study",
+            "No existing_study specified",
+            "Please provide path of an existing QuNex study by using the existing_study parameter!",
+        )
+    print(f" ... existing_study: {existing_study}")
+
+    # check if the source folder is a QuNex study
+    if not os.path.exists(os.path.join(existing_study, ".qunexstudy")):
+        raise ge.CommandError(
+            "copy_study",
+            "Existing study is not a QuNex study",
+            "The existing study folder does not contain a .qunexstudy file. Please provide a valid QuNex study folder.",
+        )
+
+    # if filter is provided, we need the batchfile as well
+    if filter is not None and batchfile is None:
+        raise ge.CommandError(
+            "copy_study",
+            "Filter provided, but no batchfile specified",
+            "Please provide the path to the batch file using the batchfile parameter.",
+        )
+
+    # other parameters
+    print(f" ... step: {step}")
+    print(f" ... sessions: {sessions}")
+    print(f" ... batchfile: {batchfile}")
+    print(f" ... filter: {filter}")
+
+    # create a new study at the specified location
+    create_study(studyfolder=studyfolder)
+
+    # copy analysis, processing, info folders as they are
+    print()
+    print("Copying top-level folders")
+    for folder in ["analysis", "processing", "info"]:
+        src = os.path.join(existing_study, folder)
+        dst = os.path.join(studyfolder, folder)
+        print(f" ... copying {src}")
+        shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+
+    # copy inbox, archive, specs and QC folders inside sessions
+    session_supplementary = ["inbox", "archive", "specs", "QC"]
+    for folder in session_supplementary:
+        src = os.path.join(existing_study, "sessions", folder)
+        dst = os.path.join(studyfolder, "sessions", folder)
+        print(f" ... copying {src}")
+        shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+
+    # get sessions
+    if batchfile is not None:
+        sessions, _ = gc.get_sessions_list(
+            batchfile, filter=filter, sessionids=sessions
+        )
+    elif sessions is not None:
+        sessions = sessions.split(",")
+
+    # copy sessions
+    if sessions is None:
+        sessions = os.listdir(os.path.join(existing_study, "sessions"))
+        # remove archive, inbox, QC, specs
+        sessions = [
+            session for session in sessions if session not in session_supplementary
+        ]
+
+    print()
+    print("Copying sessions")
+    for session in sessions:
+        src = os.path.join(existing_study, "sessions", session)
+        dst = os.path.join(studyfolder, "sessions", session)
+        print(f" ... copying {session}")
+
+        # copy all files and folder from src to dst, with the exception of the hcp folder
+        for item in os.listdir(src):
+            if os.path.isfile(os.path.join(src, item)):
+                os.makedirs(dst, exist_ok=True)
+                shutil.copy2(os.path.join(src, item), os.path.join(dst, item))
+            elif item != "hcp":
+                shutil.copytree(
+                    os.path.join(src, item),
+                    os.path.join(dst, item),
+                    dirs_exist_ok=True,
+                    ignore_dangling_symlinks=True,
+                )
+
+        # only copy hcp folder if "hcp_" in steps but not if steps is hcp_pre_freesurfer
+        if step is None or ("hcp_" in step and step != "hcp_pre_freesurfer"):
+            src = os.path.join(existing_study, "sessions", session, "hcp")
+            dst = os.path.join(studyfolder, "sessions", session)
+            shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+
+    # fix paths in txt, conc and list files
+    print()
+    print("Fixing paths in relevant files")
+    for root, _, files in os.walk(studyfolder):
+        for file in files:
+            if (
+                file.endswith(".txt")
+                or file.endswith(".conc")
+                or file.endswith(".list")
+            ):
+                with open(os.path.join(root, file), "r") as f:
+                    lines = f.readlines()
+                with open(os.path.join(root, file), "w") as f:
+                    for line in lines:
+                        f.write(line.replace(existing_study, studyfolder))
+
+    # remove unused sessions from batch files
+    # assume batch files are .txt files in the processing subfolder
+    if sessions:
+        print()
+        print("Removing unused sessions from batch files in the processing subfolder")
+        processing_folder = os.path.join(studyfolder, "processing")
+        for item in os.listdir(processing_folder):
+            if item.endswith(".txt"):
+                batchfile = os.path.join(processing_folder, item)
+                print(f" ... processing {batchfile}")
+                filter_batch(batchfile, sessions)
+
+
+def filter_batch(batchfile, sessions=None):
+    """
+    A helper function that removes all unused sessions from a batch file.
+    """
+    batch_content = ""
+
+    with open(batchfile, "r") as f:
+        for line in f:
+            batch_content += line
+
+    # split on ---
+    batch_list = batch_content.split("\n---\n")
+
+    # new batch
+    new_batch = batch_list[0]
+
+    # iterate over other items
+    for item in batch_list[1:]:
+        for session in sessions:
+            if session in item:
+                new_batch += "\n---\n" + item
+
+    # write back
+    with open(batchfile, "w") as f:
+        f.write(new_batch)
 
 
 def check_study(startfolder=".", folders=None):
     """
     ``check_study startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
 
-    The function looks for the path to the study folder in the hierarchy 
+    The function looks for the path to the study folder in the hierarchy
     starting from the provided startfolder. If found it checks that all the
     standard folders are present and creates any missing ones. It returns
-    the path to the study folder. If the study folder can not be identified, 
+    the path to the study folder. If the study folder can not be identified,
     it returns None.
 
     ---
@@ -407,8 +659,10 @@ def check_study(startfolder=".", folders=None):
     studyfolder = None
     testfolder = os.path.abspath(startfolder)
 
-    while os.path.dirname(testfolder) and os.path.dirname(testfolder) != '/':
-        if os.path.exists(os.path.join(testfolder, '.qunexstudy')) or os.path.exists(os.path.join(testfolder, '.mnapstudy')):
+    while os.path.dirname(testfolder) and os.path.dirname(testfolder) != "/":
+        if os.path.exists(os.path.join(testfolder, ".qunexstudy")) or os.path.exists(
+            os.path.join(testfolder, ".mnapstudy")
+        ):
             studyfolder = testfolder
             break
         testfolder = os.path.dirname(testfolder)
@@ -419,7 +673,15 @@ def check_study(startfolder=".", folders=None):
     return studyfolder
 
 
-def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions=None, filter=None, overwrite="no", paramfile=None):
+def create_batch(
+    sessionsfolder=".",
+    sourcefiles=None,
+    targetfile=None,
+    sessions=None,
+    filter=None,
+    overwrite="no",
+    paramfile=None,
+):
     """
     ``create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/parameters.txt]``
 
@@ -522,7 +784,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
             In order of priority, from lower to highest, they can be specified:
 
             -  in the header section of the study batch file
-            -  in the runlist file
+            -  in the recipe file
             -  as a command line parameter
             -  in the session section of the study batch file
             -  in the image specification of the session section of the study
@@ -548,13 +810,13 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                 If these parameters are not specified anywhere else, the above
                 values will be used.
 
-            runlist file:
-                When ``run_list`` utility is used, parameters can be specified
+            recipe file:
+                When ``run_recipe`` utility is used, parameters can be specified
                 at the global run list level, at a specific list level, and at
                 an individual command level. The parameters specified will then
                 be passed to the command as command line parameters. For
-                details on the ``run_list`` command itself and how to specify
-                parameters at different levels within the runlist.txt file,
+                details on the ``run_recipe`` command itself and how to specify
+                parameters at different levels within the recipe.yaml file,
                 please see `Running a list of QuNex commands
                 <../../wiki/UsageDocs/RunningListsOfCommands.html>`__. These
                 parameters will take priority over the parameters specified in
@@ -624,7 +886,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                    institution: MR Imaging Center New Amsterdam
                    device: Siemens|Prisma_fit|123456
 
-                   --hcp_brain_size: 150
+                   --hcp_brainsize: 150
                    --hcp_fs_no_conf2hires: TRUE
 
                    01: Survey
@@ -637,7 +899,7 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                    08: bold2:task:      BOLD 3mm 48 2.5s          : se(1): phenc(PA): EchoSpacing(0.0006029): filename(task1_PA)
                    09: bold2:task:      BOLD 3mm 48 2.5s          : se(1): phenc(PA): EchoSpacing(0.0006029): filename(task2_PA)
 
-                In the above example, ``_hcp_brain_size: 150`` and
+                In the above example, ``_hcp_brainsize: 150`` and
                 ``_hcp_fs_no_conf2hires: TRUE`` are specified for session
                 ``OP386_baseline`` specifically. The specified values would
                 take precedence over any other value specified either in the
@@ -692,10 +954,10 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
 
     print("Running create_batch\n====================")
 
-    if sessions and sessions.lower() == 'none':
+    if sessions and sessions.lower() == "none":
         sessions = None
 
-    if filter and filter.lower() == 'none':
+    if filter and filter.lower() == "none":
         filter = None
 
     sessionsfolder = os.path.abspath(sessionsfolder)
@@ -709,23 +971,33 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
 
     # --- prepare target file name and folder
     if targetfile is None:
-        targetfile = os.path.join(os.path.dirname(
-            sessionsfolder), 'processing', 'batch.txt')
+        targetfile = os.path.join(
+            os.path.dirname(sessionsfolder), "processing", "batch.txt"
+        )
 
     if os.path.exists(targetfile):
-        if overwrite == 'yes':
-            print("WARNING: target file %s already exists!" %
-                  (os.path.abspath(targetfile)))
+        if overwrite == "yes" or overwrite is True:
+            print(
+                "WARNING: target file %s already exists!"
+                % (os.path.abspath(targetfile))
+            )
             print("         Overwriting exisiting file.")
-        elif overwrite == 'append':
-            print("WARNING: target file %s already exists!" %
-                  (os.path.abspath(targetfile)))
+        elif overwrite == "append":
+            print(
+                "WARNING: target file %s already exists!"
+                % (os.path.abspath(targetfile))
+            )
             print("         Appending to an exisiting file.")
-        elif overwrite == 'no':
-            raise ge.CommandFailed("create_batch", "Target file exists", "A file with the specified path already exists [%s]" % (
-                os.path.abspath(targetfile)), "Please use set overwrite to `yes` or `append` for apropriate action")
+        elif overwrite == "no" or overwrite is False:
+            raise ge.CommandFailed(
+                "create_batch",
+                "Target file exists",
+                "A file with the specified path already exists [%s]"
+                % (os.path.abspath(targetfile)),
+                "Please use set overwrite to `yes` or `append` for apropriate action",
+            )
     else:
-        overwrite = 'yes'
+        overwrite = "yes"
 
     targetFolder = os.path.dirname(targetfile)
     if not os.path.exists(targetFolder):
@@ -742,43 +1014,49 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         # --- initalize slist
         slist = []
 
-        if overwrite == 'yes':
-            print("---> Creating file %s [%s]" %
-                  (os.path.basename(targetfile), targetfile))
-            jfile = open(targetfile, 'w')
+        if overwrite == "yes" or overwrite is True:
+            print(
+                "---> Creating file %s [%s]"
+                % (os.path.basename(targetfile), targetfile)
+            )
+            jfile = open(targetfile, "w")
             # header
             gc.print_qunex_header(file=jfile)
             print("#", file=jfile)
             print("# Sessions folder: %s" % (sessionsfolder), file=jfile)
             print("# Source files: %s" % (sfiles), file=jfile)
 
-        elif overwrite == 'append':
+        elif overwrite == "append":
             slist, parameters = gc.get_sessions_list(targetfile)
-            slist = [e['id'] for e in slist]
-            print("---> Appending to file %s [%s]" %
-                  (os.path.basename(targetfile), targetfile))
+            slist = [e["id"] for e in slist]
+            print(
+                "---> Appending to file %s [%s]"
+                % (os.path.basename(targetfile), targetfile)
+            )
             if paramfile and preexist:
                 print(
-                    "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!")
+                    "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
+                )
 
             # open the file
-            jfile = open(targetfile, 'a')
+            jfile = open(targetfile, "a")
 
         # --- check for param file
-        if overwrite == 'yes' or not preexist:
+        if overwrite == "yes" or overwrite is True or not preexist:
             if paramfile is None:
-                paramfile = os.path.join(
-                    sessionsfolder, 'specs', 'parameters.txt')
+                paramfile = os.path.join(sessionsfolder, "specs", "parameters.txt")
                 if not os.path.exists(paramfile):
                     print("---> WARNING: Creating empty parameter file!")
-                    pfile = open(paramfile, 'w')
+                    pfile = open(paramfile, "w")
                     print(parameterTemplateHeader, file=pfile)
                     for line in gp.arglist:
                         if len(line) == 4:
-                            print("# _%-24s : %-15s ... %s" %
-                                  (line[0], line[1], line[3]), file=pfile)
+                            print(
+                                "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3]),
+                                file=pfile,
+                            )
                         elif len(line) > 0:
-                            print("#\n# " + line[0] + '\n#', file=pfile)
+                            print("#\n# " + line[0] + "\n#", file=pfile)
                     pfile.close()
 
             if os.path.exists(paramfile):
@@ -789,29 +1067,39 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
                         jfile.write(line)
             else:
                 print(
-                    "---> parameter files does not exist, skipping [%s]." % (paramfile))
+                    "---> parameter files does not exist, skipping [%s]." % (paramfile)
+                )
+            jfile.write("\n")
 
         # -- get list of sessions folders
         missing = 0
 
         if sessions is not None:
             sessions, gopts = gc.get_sessions_list(
-                sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+                sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+            )
             files = []
             for session in sessions:
                 for sfile in sfiles:
-                    nfiles = glob.glob(os.path.join(
-                        sessionsfolder, session['id'], sfile))
+                    nfiles = glob.glob(
+                        os.path.join(sessionsfolder, session["id"], sfile)
+                    )
                     if nfiles:
                         files += nfiles
                     else:
-                        print("---> ERROR: no %s found for %s! Please check your data! [%s]" % (
-                            sfile, session['id'], os.path.join(sessionsfolder, session['id'], sfile)))
+                        print(
+                            "---> ERROR: no %s found for %s! Please check your data! [%s]"
+                            % (
+                                sfile,
+                                session["id"],
+                                os.path.join(sessionsfolder, session["id"], sfile),
+                            )
+                        )
                         missing += 1
         else:
             files = []
             for sfile in sfiles:
-                globres = glob.glob(os.path.join(sessionsfolder, '*', sfile))
+                globres = glob.glob(os.path.join(sessionsfolder, "*", sfile))
                 for gr in globres:
                     files.append(gr)
 
@@ -820,11 +1108,11 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
 
         for file in files:
             sessionid = os.path.basename(os.path.dirname(file))
-            if overwrite != 'append' and sessionid in slist:
+            if overwrite != "append" and sessionid in slist:
                 print("---> Skipping: %s" % (sessionid))
             else:
                 # if we are appending remove the session block
-                if overwrite == 'append':
+                if overwrite == "append":
                     remove_session_block(targetfile, sessionid)
 
                 print("---> Adding: %s" % (sessionid))
@@ -844,12 +1132,20 @@ def create_batch(sessionsfolder=".", sourcefiles=None, targetfile=None, sessions
         raise
 
     if not files:
-        raise ge.CommandFailed("create_batch", "No session found",
-                               "No sessions found to add to the batch file!", "Please check your data!")
+        raise ge.CommandFailed(
+            "create_batch",
+            "No session found",
+            "No sessions found to add to the batch file!",
+            "Please check your data!",
+        )
 
     if missing:
-        raise ge.CommandFailed("create_batch", "Not all sessions specified added to the batch file!",
-                               "%s was missing for %d session(s)!" % (sfile, missing), "Please check your data!")
+        raise ge.CommandFailed(
+            "create_batch",
+            "Not all sessions specified added to the batch file!",
+            "%s was missing for %d session(s)!" % (sfile, missing),
+            "Please check your data!",
+        )
 
 
 def remove_session_block(file_path, session_id):
@@ -857,11 +1153,11 @@ def remove_session_block(file_path, session_id):
     Removes session with session_id from the batch file.
     """
     # read the contents of the file
-    with open(file_path, 'r', encoding="UTF-8") as file:
+    with open(file_path, "r", encoding="UTF-8") as file:
         content = file.read()
 
     # split the contents into blocks using "---" separator
-    blocks = content.split('---')
+    blocks = content.split("---")
 
     # find and remove blocks containing the specified session_ids
     updated_blocks = blocks.copy()
@@ -870,14 +1166,31 @@ def remove_session_block(file_path, session_id):
             updated_blocks.remove(block)
 
     # join the remaining blocks back together
-    updated_content = '---'.join(updated_blocks)
+    updated_content = "---".join(updated_blocks)
 
     # write the updated contents back to the file
-    with open(file_path, 'w', encoding="UTF-8") as file:
+    with open(file_path, "w", encoding="UTF-8") as file:
         file.write(updated_content)
 
 
-def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
+def create_list(
+    sessionsfolder=".",
+    sessions=None,
+    sessionids=None,
+    filter=None,
+    listfile=None,
+    bolds=None,
+    conc=None,
+    fidl=None,
+    glm=None,
+    roi=None,
+    boldname="bold",
+    bold_tail=".nii.gz",
+    img_suffix="",
+    bold_variant="",
+    overwrite="no",
+    check="yes",
+):
     """
     ``create_list [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
@@ -1138,23 +1451,30 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     print("Running create_list\n==================")
 
     def checkFile(fileName):
-        if check == 'no':
+        if check == "no":
             return True
-        elif check == 'present':
+        elif check == "present":
             if not os.path.exists(fileName):
                 print("WARNING: File does not exist [%s]!" % (fileName))
                 return False
             else:
                 return True
-        elif check == 'warn':
+        elif check == "warn":
             if not os.path.exists(fileName):
-                print("WARNING: File does not exist, but will be included in the list anyway [%s]!" % (
-                    fileName))
+                print(
+                    "WARNING: File does not exist, but will be included in the list anyway [%s]!"
+                    % (fileName)
+                )
             return True
         else:
             if not os.path.exists(fileName):
-                raise ge.CommandFailed("create_list", "File does not exist", "A file to be included in the list does not exist [%s]" % (
-                    fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
+                raise ge.CommandFailed(
+                    "create_list",
+                    "File does not exist",
+                    "A file to be included in the list does not exist [%s]"
+                    % (fileName),
+                    "Please check paths or set `check` to `no` to add the missing files anyway",
+                )
 
         return True
 
@@ -1162,10 +1482,10 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
 
     sessionsfolder = os.path.abspath(sessionsfolder)
 
-    if sessions and sessions.lower() == 'none':
+    if sessions and sessions.lower() == "none":
         sessions = None
 
-    if filter and filter.lower() == 'none':
+    if filter and filter.lower() == "none":
         filter = None
 
     # --- prepare parameters
@@ -1173,34 +1493,43 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(r' *, *| *\| *| +', bolds)]
+        bolds = [e.strip() for e in re.split(r" *, *| *\| *| +", bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
 
-    bsearch = re.compile(r'bold([0-9]+)')
+    bsearch = re.compile(r"bold([0-9]+)")
 
-    images_folder = 'images' + img_suffix
-    functional_folder = 'functional' + bold_variant
+    images_folder = "images" + img_suffix
+    functional_folder = "functional" + bold_variant
 
     # --- prepare target file name and folder
 
     if listfile is None:
-        listfile = os.path.join(os.path.dirname(
-            sessionsfolder), 'processing', 'lists', 'sessions.list')
-        print("WARNING: No target list file name specified.\n         The list will be created as: %s!" % (listfile))
+        listfile = os.path.join(
+            os.path.dirname(sessionsfolder), "processing", "lists", "sessions.list"
+        )
+        print(
+            "WARNING: No target list file name specified.\n         The list will be created as: %s!"
+            % (listfile)
+        )
 
     if os.path.exists(listfile):
-        print("WARNING: Target list file %s already exists!" %
-              (os.path.abspath(listfile)))
-        if overwrite == 'yes':
+        print(
+            "WARNING: Target list file %s already exists!" % (os.path.abspath(listfile))
+        )
+        if overwrite == "yes" or overwrite is True:
             print("         Overwriting the exisiting file.")
-        elif overwrite == 'append':
+        elif overwrite == "append":
             print("         Appending to the exisiting file.")
-        elif overwrite == 'no':
-            raise ge.CommandFailed("create_list", "File exists", "The specified list file already exists [%s]" % (
-                listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
+        elif overwrite == "no" or overwrite is False:
+            raise ge.CommandFailed(
+                "create_list",
+                "File exists",
+                "The specified list file already exists [%s]" % (listfile),
+                "Please check paths or set `overwrite` to `yes` or `append` for apropriate action",
+            )
     else:
-        overwrite = 'yes'
+        overwrite = "yes"
 
     targetFolder = os.path.dirname(listfile)
     if targetFolder and not os.path.exists(targetFolder):
@@ -1210,37 +1539,52 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     # --- check sessions
 
     if sessions is None:
-        print("WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
-        sessions = glob.glob(os.path.join(sessionsfolder, '*', images_folder))
+        print(
+            "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        )
+        sessions = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
     sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+    )
 
     if not sessions:
-        raise ge.CommandFailed("create_list", "No session found",
-                               "No sessions found to add to the list file!", "Please check your data!")
+        raise ge.CommandFailed(
+            "create_list",
+            "No session found",
+            "No sessions found to add to the list file!",
+            "Please check your data!",
+        )
 
     # --- generate list entries
 
     lines = []
 
     for session in sessions:
-        lines.append("session id: %s" % (session['id']))
+        lines.append("session id: %s" % (session["id"]))
 
         if boldnums:
             for boldnum in boldnums:
                 tfile = os.path.join(
-                    sessionsfolder, session['id'], images_folder, functional_folder, boldname + boldnum + bold_tail)
+                    sessionsfolder,
+                    session["id"],
+                    images_folder,
+                    functional_folder,
+                    boldname + boldnum + bold_tail,
+                )
                 includeFile = checkFile(tfile)
                 if includeFile:
                     lines.append("    file:" + tfile)
 
         if boldtags:
             try:
-                bolds = [(bsearch.match(v['name']).group(1), v['name'], v['task']) for (
-                    k, v) in session.items() if k.isdigit() and bsearch.match(v['name'])]
+                bolds = [
+                    (bsearch.match(v["name"]).group(1), v["name"], v["task"])
+                    for (k, v) in session.items()
+                    if k.isdigit() and bsearch.match(v["name"])
+                ]
                 if "all" not in boldtags:
                     bolds = [n for n, b, t in bolds if t in boldtags]
                 else:
@@ -1250,50 +1594,67 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
                 pass
             for boldnum in bolds:
                 tfile = os.path.join(
-                    sessionsfolder, session['id'], images_folder, functional_folder, boldname + boldnum + bold_tail)
+                    sessionsfolder,
+                    session["id"],
+                    images_folder,
+                    functional_folder,
+                    boldname + boldnum + bold_tail,
+                )
                 includeFile = checkFile(tfile)
                 if includeFile:
                     lines.append("    file:" + tfile)
 
         if roi:
-            tfile = os.path.join(
-                sessionsfolder, session['id'], images_folder, roi)
+            tfile = os.path.join(sessionsfolder, session["id"], images_folder, roi)
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    roi:" + tfile)
 
         if glm:
             tfile = os.path.join(
-                sessionsfolder, session['id'], images_folder, functional_folder, glm)
+                sessionsfolder, session["id"], images_folder, functional_folder, glm
+            )
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    glm:" + tfile)
 
         if conc:
             tfile = os.path.join(
-                sessionsfolder, session['id'], images_folder, functional_folder, 'concs', conc)
+                sessionsfolder,
+                session["id"],
+                images_folder,
+                functional_folder,
+                "concs",
+                conc,
+            )
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    conc:" + tfile)
 
         if fidl:
             tfile = os.path.join(
-                sessionsfolder, session['id'], images_folder, functional_folder, 'events', fidl)
+                sessionsfolder,
+                session["id"],
+                images_folder,
+                functional_folder,
+                "events",
+                fidl,
+            )
             includeFile = checkFile(tfile)
             if includeFile:
                 lines.append("    fidl:" + tfile)
 
     # --- write to target file
 
-    if overwrite == 'yes':
+    if overwrite == "yes" or overwrite is True:
         print("---> Creating file %s" % (os.path.basename(listfile)))
-        lfile = open(listfile, 'w')
+        lfile = open(listfile, "w")
         gc.print_qunex_header(file=lfile)
         print("#", file=lfile)
 
-    elif overwrite == 'append':
+    elif overwrite == "append":
         print("---> Appending to file %s" % (os.path.basename(listfile)))
-        lfile = open(listfile, 'a')
+        lfile = open(listfile, "a")
         print("# Appended to file on %s" % (datetime.today()), file=lfile)
 
     for line in lines:
@@ -1302,7 +1663,21 @@ def create_list(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     lfile.close()
 
 
-def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None, concfolder=None, concname="", bolds=None, boldname="bold", bold_tail=".nii.gz", img_suffix="", bold_variant="", overwrite='no', check='yes'):
+def create_conc(
+    sessionsfolder=".",
+    sessions=None,
+    sessionids=None,
+    filter=None,
+    concfolder=None,
+    concname="",
+    bolds=None,
+    boldname="bold",
+    bold_tail=".nii.gz",
+    img_suffix="",
+    bold_variant="",
+    overwrite="no",
+    check="yes",
+):
     """
     ``create_conc [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
@@ -1486,10 +1861,10 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     """
 
     def checkFile(fileName):
-        if check == 'no':
+        if check == "no":
             return True
         elif not os.path.exists(fileName):
-            if check == 'warn':
+            if check == "warn":
                 print("     WARNING: File does not exist [%s]!" % (fileName))
                 return True
             else:
@@ -1501,10 +1876,10 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
 
     # --- check sessions
 
-    if sessions and sessions.lower() == 'none':
+    if sessions and sessions.lower() == "none":
         sessions = None
 
-    if filter and filter.lower() == 'none':
+    if filter and filter.lower() == "none":
         filter = None
 
     sessionsfolder = os.path.abspath(sessionsfolder)
@@ -1514,23 +1889,27 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     boldtags, boldnums = None, None
 
     if bolds:
-        bolds = [e.strip() for e in re.split(r' *, *| *\| *| +', bolds)]
+        bolds = [e.strip() for e in re.split(r" *, *| *\| *| +", bolds)]
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
     else:
         raise ge.CommandError(
-            "create_conc", "No bolds specified to be included in the conc files")
+            "create_conc", "No bolds specified to be included in the conc files"
+        )
 
-    bsearch = re.compile(r'bold([0-9]+)')
+    bsearch = re.compile(r"bold([0-9]+)")
 
-    images_folder = 'images' + img_suffix
-    functional_folder = 'functional' + bold_variant
+    images_folder = "images" + img_suffix
+    functional_folder = "functional" + bold_variant
 
     # --- prepare target file name and folder
 
     if concfolder is None:
-        concfolder = os.path.join(sessionsfolder, 'inbox', 'concs')
-        print("WARNING: No target conc folder specified.\n         The conc files will be created in folder: %s!" % (concfolder))
+        concfolder = os.path.join(sessionsfolder, "inbox", "concs")
+        print(
+            "WARNING: No target conc folder specified.\n         The conc files will be created in folder: %s!"
+            % (concfolder)
+        )
 
     if not os.path.exists(concfolder):
         print("---> Creating target folder %s" % (concfolder))
@@ -1539,38 +1918,52 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
     # --- check sessions
 
     if sessions is None:
-        print("WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
-        sessions = glob.glob(os.path.join(sessionsfolder, '*', images_folder))
+        print(
+            "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        )
+        sessions = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
     sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+    )
 
     if not sessions:
-        raise ge.CommandFailed("create_conc", "No session found",
-                               "No sessions found to add to the list file!", "Please check your data!")
+        raise ge.CommandFailed(
+            "create_conc",
+            "No session found",
+            "No sessions found to add to the list file!",
+            "Please check your data!",
+        )
 
     # --- generate list entries
 
     error = False
     for session in sessions:
-
-        print("---> Processing session %s" % (session['id']))
+        print("---> Processing session %s" % (session["id"]))
         files = []
         complete = True
 
         if boldnums:
             for boldnum in boldnums:
                 tfile = os.path.join(
-                    sessionsfolder, session['id'], images_folder, functional_folder, boldname + boldnum + bold_tail)
+                    sessionsfolder,
+                    session["id"],
+                    images_folder,
+                    functional_folder,
+                    boldname + boldnum + bold_tail,
+                )
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
         if boldtags:
             try:
-                bolds = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task']) for (
-                    k, v) in session.items() if k.isdigit() and bsearch.match(v['name'])]
+                bolds = [
+                    (int(bsearch.match(v["name"]).group(1)), v["name"], v["task"])
+                    for (k, v) in session.items()
+                    if k.isdigit() and bsearch.match(v["name"])
+                ]
                 if "all" not in boldtags:
                     bolds = [n for n, b, t in bolds if t in boldtags]
                 else:
@@ -1580,35 +1973,46 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
                 pass
             for boldnum in bolds:
                 tfile = os.path.join(
-                    sessionsfolder, session['id'], images_folder, functional_folder, boldname + str(boldnum) + bold_tail)
+                    sessionsfolder,
+                    session["id"],
+                    images_folder,
+                    functional_folder,
+                    boldname + str(boldnum) + bold_tail,
+                )
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
-        concfile = os.path.join(concfolder, session['id'] + concname + '.conc')
+        concfile = os.path.join(concfolder, session["id"] + concname + ".conc")
 
-        if not complete and check == 'yes':
-            print("     WARNING: Due to missing source files conc file was not created!")
+        if not complete and check == "yes":
+            print(
+                "     WARNING: Due to missing source files conc file was not created!"
+            )
             error = True
             continue
 
         if os.path.exists(concfile):
-            print("     WARNING: Conc file %s already exists!" %
-                  (os.path.abspath(concfile)))
-            if overwrite == 'yes':
+            print(
+                "     WARNING: Conc file %s already exists!"
+                % (os.path.abspath(concfile))
+            )
+            if overwrite == "yes" or overwrite is True:
                 print("              Overwriting the exisiting file.")
-            elif overwrite == 'no':
+            elif overwrite == "no" or overwrite is False:
                 print("              Skipping this conc file.")
                 error = True
                 continue
         else:
-            overwrite = 'yes'
+            overwrite = "yes"
 
         # --- write to target file
 
-        if overwrite == 'yes':
-            print("     ... creating %s with %d files" %
-                  (os.path.basename(concfile), len(files)))
-            cfile = open(concfile, 'w')
+        if overwrite == "yes" or overwrite is True:
+            print(
+                "     ... creating %s with %d files"
+                % (os.path.basename(concfile), len(files))
+            )
+            cfile = open(concfile, "w")
 
             print("number_of_files: %d" % (len(files)), file=cfile)
             for tfile in files:
@@ -1617,15 +2021,19 @@ def create_conc(sessionsfolder=".", sessions=None, sessionids=None, filter=None,
             cfile.close()
 
     if error:
-        raise ge.CommandFailed("create_conc", "Incomplete execution",
-                               ".conc files for some sessions were not generated", "Please check report for details!")
+        raise ge.CommandFailed(
+            "create_conc",
+            "Incomplete execution",
+            ".conc files for some sessions were not generated",
+            "Please check report for details!",
+        )
 
 
-def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=None):
+def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=None):
     """
-    ``run_list listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]``
+    ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [<extra arguments>]``
 
-    Executes the commands defined in each list.
+    Executes the commands defined in each recipe.
 
     INPUTS
     ======
@@ -1633,101 +2041,65 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
     General parameters
     ------------------
 
-    --listfile         The runlist file containing runlists and their 
-                       parameters.
-    --runlists         A comma, space or pipe separated list of lists specified 
-                       within runlist file to run.
-    --logfolder        The folder within which to save the log.
-    --mapvalues        Names of values of custom variables that will be injected
-                       into specifically marked fields in the runlist file.
-    --verbose          Whether to record in a log a full verbose report of the 
-                       output of each command that was run ('yes') or only a
-                       summary success report of each command ran. ['no']
+    --recipe_file   path to a YAML file that contains recipe definitions.
+    --recipe        Name of the recipe in the recipe_file to run.
+    --steps         A comma separated list of steps (QuNex commands) to run.
+                    This is an alternative to specifying the recipe file and
+                    a recipe name.
+    --logfolder     The folder within which to save the log.
 
-    Multiple run_list invocations
+    Multiple run_recipe invocations
     ----------------------------
 
     These parameters allow spreading processing of multiple sessions across 
-    multiple run_list invocations:
+    multiple run_recipe invocations:
 
     --batchfile             A path to a batch.txt file.
-    --sessions              Either a string with pipe `|` or comma separated 
-                            list of sessions (sessions ids) to be processed
-                            (use of grep patterns is possible), e.g. 
-                            `"OP128,OP139,ER*"` or `*list` file with a list
-                            of session ids.
-    --sessionids            An optional parameter explicitly specifying, which
-                            of the sessions from the list provided by the 
-                            `sessions` parameter are to be processed in this
-                            call. If not specified, all sessions will be 
-                            processed.
-    --sperlist              An optional parameter specifying, how many sessions
-                            to run per individual run_list invocation. If not 
-                            specified, all sessions will be run through the 
-                            same run_list invocation. 
-    --runinpar              If multiple run_list invocations are to be run, how 
-                            many should be run in parallel. The default is 1.
+    --sessions              Either a string with comma separated list of
+                            sessions (sessions ids) to be processed (use of grep
+                            patterns is possible), e.g.  `"OP128,OP139,ER*"` or
+                            `*list` file with a list of session ids.
     --scheduler             An optional scheduler settings description string. 
-                            If provided, each run_list invocation will be 
+                            If provided, each run_recipe invocation will be 
                             scheduled to run on a separate cluster node. For 
                             details about the settings string specification see 
                             the inline help for the `schedule` command.
 
-    If these parameters are provided, the processing of the sessions will
-    be split so that `sperlist` sessions will be processed by each separate
-    run_list invocation. If `scheduler` is specified, each run_list invocation
-    will be scheduled as a separate job on a cluster. 
+    Please take note that if `run_recipe` command is ran using a scheduler, any
+    scheduler specification within the `recipe_file` will be ignored to avoid
+    the attempts to spawn new cluster jobs when `run_recipe` instance is
+    already running on a cluster node.
 
-    When processing is spread across multiple run_list invocations, the 
-    `sperlist` parameter will be passed forward as `parsessions` parameter on
-    each separate invocation (see the next section). Similarly `sessionids` will
-    be passed on, adjusted for the sessions to be run with the specific run_list
-    invocation (see the next section).
+    Importantly, if `scheduler` is specified in the `run_recipe` file, do bear 
+    in mind, that all the commands in the recipe will be scheduled at the same 
+    time, and not in a succession, as `run_recipe` can not track execution of
+    jobs on individual cluster nodes.
 
-    Please take note that if `run_list` command is ran using a scheduler, any
-    scheduler specification within the `listfile` will be ignored to avoid the
-    attempts to spawn new cluster jobs when `run_list` instance is already 
-    running on a cluster node.
+    Parallel processing
+    -------------------
 
-    Importantly, if `scheduler` is specified in the `run_list` file, do bear 
-    in mind, that all the commands in the list will be scheduled at the same 
-    time, and not in a succession, as `run_list` can not track execution of jobs
-    on individual cluster nodes.
-
-
-    Parameters to pass on or ignore
-    -------------------------------
-
-    Sometimes the parameters specified in the `listfile` need to be adjusted
-    in a run_list invocation. If the following parameters are listed, they will
-    take precedence over parameters specified within the `listfile`: 
+    To setup run_recipe parallelism, you can use the traditional parsessions and
+    parelements parameters.
 
     --parsessions    An optional parameter specifying how many sessions to run
-                     in parallel. If parsessions parameter is already specified
-                     within the `listfile`, then the lower value will 
-                     take precedence.
+                     in parallel.
     --parelements    An optional parameter specifying how many elements to run
-                     in paralel within each of the jobs (e.g. how many bolds
-                     when bold processing). If parelements is already specified
-                     within the `listfile`, then the lower value will
-                     take precedence.
-    --sessionids     An optional parameter specifying which sessions are to be 
-                     processed within this run_list invocation. If `sessionids`
-                     is specified within the listfile, then the value passed to 
-                     run_list will take precedence.
+                     in parallel within each of the jobs (e.g. how many bolds
+                     when bold processing).
 
-    Sometimes one would wish to ignore a parameter specified in a list when
-    running a list. The parameters to ignore can be specified using:
-
-    --ignore            An optional comma or pipe separated list of parameters
-                        to ignore when running any of the specified lists.
+    The parsessions parameter defines the number of sessions that will be ran in
+    parallel within a single run_recipe invocation. The default is 1, which
+    means that each session will be ran in parallel within a separate job. If
+    parsessions is set to the number of sessions, then all the sessions will
+    be executed in sequence within a single run_recipe invocation.
 
     USE
     ===
 
-    runlist takes a `runlist` file and a `runlists` list of lists and executes
-    the commands defined in each list. The runlist file contains commands that 
-    should be run and parameters that it should use.
+    run_recipe takes a `recipe_file` and a `recipe` name and executes
+    the commands defined in the recipe. The `recipe_file` contains commands that 
+    should be run and parameters that it should use. Alternatively, you can
+    provide a comma separated list of commands with the `steps` parameter.
 
     LOGS AND FAILURES
     =================
@@ -1736,465 +2108,616 @@ def run_list(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=N
     `<study>/processing/logs/runlogs` stamped with date and time that the 
     log was started. If a study folder is not yet created, please provide a 
     valid folder to save the logs to. If the log can not be created the 
-    `run_list` command will exit with a failure.
+    `run_recipe` command will exit with a failure.
 
-    `run_list` is checking for a successful completion of commands that it runs.
+    `run_recipe` is checking for a successful completion of commands that it runs.
     If any of the commands fail to complete successfully, the execution of the
     commands will stop and the failure will be reported both in stdout as well
     as the log.
 
     Individual commands that are run can generate their own logs, the presence
     and location of those logs depend on the specific command and settings 
-    specified in the runlist file.
+    specified in the recipe file.
 
-    RUNLIST FILE
-    ============
+    THE RECIPE FILE
+    ===============
 
-    At the top of the runlist file global settings are defined in the form
-    of `<parameter>: <value>` pairs. These are the settings that will be used as 
-    defaults throughout the list and individual commands defined in the rest of 
-    the runlist file.
+    Recipe files use YAML markup language. At the top of the recipe file is the
+    global_parameters section, where the global settings are defined in the form
+    of `<parameter>: <value>` pairs. These are the settings that will be used as
+    defaults throughout all recipes and individual commands defined in the rest
+    of the recipe file.
 
-    Each list starts with a line that consists of three dashes "---" only. The
-    next line should define the name of the list by specifying:
-    `list: <listname>`. The list name is the one referenced in the run_list 
-    command. After the definition of the list, the default parameters for the
-    list can be specified as a <parameter>:<value> pairs. These values will be 
-    taken as the default for the list. They have priority over the general 
-    runlist file definition in that values that are defined within a specific 
-    list will be used rather than values defined at the higher level. It is 
-    recommended for readibility purposes for the content of the list to be 
-    indented by four spaces.
+    Recpies are defined in the recipes portion of the file where each recipe is
+    defined by its unique name. Each recipe has two sections, the parameters and
+    the commands. The parameters section defines the parameters and the values
+    that are specific to that recipe. The commands section defines the commands
+    that are specific to that recipe along with command specific parameters. All
+    parameters are provided in the form of <parameter>:<value> pairs. Recipe
+    level parameters have a higher priority than global parameters, while
+    command level parameters have a higher priority than recipe level
+    parameters. Parameters provided through the command line interface call have
+    the highest priority, meaning that their valus will override any values in
+    recipe files.
 
-    Each list then consists of commands. Commands are defined by the:
-    `command: <command name>` lines. Each `command: <command name>` specifies
-    a command to be run, where <command name> is a valid qunex command. The 
-    command within a list will be executed in the order they are listed. 
-
-    Each command can then list additional parameters to be provided to the
-    command in the form of `<parameter>:<value>` pairs. The values provided
-    here will take priority over the values specified at the beginning of the
-    list as well as over the default values provided at the beginning of the
-    runlist file. For readibility purposes it is advised that the 
-    <parameter>:<value> pairs are further indented for additional four spaces.
-
-    If a specific parameter specified at a higher level is not to be used at
-    this level or below, it can be listed prefixed by a dash / minus sign.
-
-    Example runlist file
-    --------------------
+    Example recipe file
+    -------------------
 
     ::
 
-        # global settings
-        sessionsfolder : /data/testStudy/sessions
-        overwrite      : yes
-        sessions       : *_baseline
+        global_parameters:
+            sessionsfolder    : /data/qx_study/sessions
+            sessions          : OP101,OP102
+            overwrite         : "yes"
+            batchfile         : /data/qx_study/processing/batch.txt
 
+        recipes:
+            onboard_dicom:
+                commands:
+                    - create_study:
+                        studyfolder: /data/qx_study
+                    - import_dicom:
+                        masterinbox: /data/qx_data
+                        archive: leave
+                    - create_session_info
+                        mapping: /data/qx_specs/hcp_mapping.txt
+                    - create_batch:
+                        targetfile: /data/qx_study/processing/batch.txt
+                        paramfile : /data/qx_specs/hcp_parameters.txt
+                    - setup_hcp
 
-        ---
-        list: dataImport
+            hcp_preprocess:
+                parsessions: 2
 
-            command: import_bids
-                inbox   : /data/datalake/EMBARC/inbox/BIDS
-                archive : leave
+                commands:
+                    - hcp_pre_freesurfer
+                    - hcp_freesurfer
+                    - hcp_post_freesurfer
+                    - hcp_fmri_volume
+                    - hcp_fmri_surface
 
-        ---
-        list: prepareHCP
-
-            command: create_session_info
-
-            command: create_batch
-                tfile: /data/testStudy/processing/batch_baseline.txt
-
-            command: setup_hcp
-
-        ---
-        list: doHCP
-
-            sessions: /data/testStudy/processing/batch_baseline.txt
-            parsessions: 4
-
-            command: hcp_pre_freesurfer
-
-            command: hcp_freesurfer
-
-            command: hcp_post_freesurfer
-
-            command: hcp_fmri_volume
-                parsessions : 1
-                parelements : 4
-
-            command: hcp_fmri_surface
-                parsessions : 1
-                parelements : 4
-
-        ---
-        list: prepareFCPreprocessing
-            parsessions : 6
-            sessions    : /data/testStudy/processing/batch_baseline.txt
-            bolds       : all
-
-            command: map_hcp_data
-
-            command: create_bold_brain_masks
-
-            command: compute_bold_stats
-                log: remove
-
-            command : create_stats_report
-                parsessions: 1
-
-            command: extract_nuisance_signal
-
-        ---
-        list: runFCPreprocessing
-
-            parsessions : 6
-            sessions    : /data/testStudy/processing/batch_baseline.txt
-            scheduler   : "SLURM,jobname=doHCP,time=00-02:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=day"
-
-            command: preprocess_bold
-                bold_actions     : shrc
-                glm_residuals    : save
-                bold_nuisance    : m,V,WM,WB,1d
-                pignore          : hipass=linear|regress=spline|lopass=linear
-                overwrite        : yes
-                bolds            : rest
-                image_target     : cifti
-                hcp_cifti_tail   : _Atlas
-
-        ---
-        list: doPreFS
-            sessions    : {sessions_var}
-            parsessions : 4
-
-            command: hcp_pre_freesurfer
+            hcp_denoise:
+                commands:
+                    - hcp_icafix:
+                        hcp_matlab_mode: "{{$MATLAB_MODE}}"
+                    - hcp_msmall
+                        hcp_matlab_mode: "{{$MATLAB_MODE}}"
 
     EXAMPLE USE
     ===========
 
     ::
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="dataImport,prepareHCP"
+        qunex run_recipe \\
+          --recipe_file="/data/settings/recipe.yaml" \\
+          --recipe="onboard_dicom"
 
     ::
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="doHCP" \\
+        qunex run_recipe \\
+          --recipe_file="/data/settings/recipe.yaml" \\
+          --recipe="hcp_preprocess" \\
           --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
-          --sperlist=4 \\
           --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=week"
 
     ::
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="prepareFCPreprocessing" \\
-          --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
-          --sperlist=4 \\
-          --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=day"
+        export MATLAB_MODE="interpreted"
+        qunex run_recipe \\
+          --recipe_file="/data/settings/recipe.yaml" \\
+          --recipe="hcp_denoise"
 
     ::
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="runFCPreprocessing" 
+        qunex run_recipe \\
+          --sessionsfolder="/data/qx_study/sessions" \\
+          --batchfile="/data/qx_study/processing/batch.txt" \\
+          --steps="hcp_pre_freesurfer,hcp_freesurfer,hcp_post_freesurfer"
 
-    ::
+    The first call will execute all the commands in recipe `onboard_dicom`.
 
-        qunex run_list \\
-          --listfile="/data/settings/runlist.txt" \\
-          --runlists="doPreFS" \\
-          --mapvalues="sessions_var:/data/testStudy/processing/batch_baseline.txt" 
+    The second call will execute all the steps of the HCP preprocessing pipeline
+    via a scheduler. It will execute two sessions in parallel within the run.
+    in sequence.
 
-    The first call will execute all the commands in lists `dataImport` and 
-    `prepareHCP` locally.
+    The third call will execute the hcp_denoise list where the  hcp_matlab_mode
+    parameter will be set to "interpreted" this value will be read from the
+    system environment variable $MATLAB_MODE. This is an example of how you can
+    inject custom values into specially marked slots (marked with "{{<label>}}")
+    in the recipe file. Note that the labels need to be provided in the form of
+    a string, so they need to be encapsulated with double quotes.  
 
-    The second call will execute all the steps of the HCP preprocessing pipeline, 
-    in sequence. Execution will be spread across the nodes with each `run_list` 
-    instance processing four sessions at a time. Based on the settings in the 
-    `runlist.txt` file, the first three HCP steps will be executed with four
-    sessions running in parallel, whereas the last two fMRI steps the sessions 
-    will be executed serially with four BOLDS from each session being processed in
-    parallel. 
-
-    The third call will again schedule multiple `run_list` invocations, each 
-    processing four sessions at a time (the lower number of `sperlist`
-    and `parsessions`). In this call, the initial steps will be performed
-    on all BOLD images.
-
-    The fourth call will start a single `run_list` instance locally, however,
-    this will submit both listed `preprocess_bold` commands as jobs to be run with
-    six sessions per node in parallel. These two commands will be run only on BOLD
-    images tagged as `rest`. 
-
-    The last, fifth call will execute hcp_pre_freesurfer, the value of the `sessions`
-    parameter here is set to a placeholder variable `sessions_var`, the value is 
-    then injected from the command call by using the `mapvalues` parameter.
-    Alternatively the value could be injected by setting the environmental variable
-    `$sessions_var`.
+    The forth example shows how to use the steps parameter to run a set of
+    commands sequentially.
     """
 
-    verbose = verbose.lower() == 'yes'
+    flags = ["test"]
 
-    flags = ['test']
+    if recipe_file is not None and steps is not None:
+        raise ge.CommandError(
+            "run_recipe",
+            "both recipe_file and steps are specified",
+            "BOth recipe file and steps specified",
+            "Please set only one parameter!",
+        )
 
-    if listfile is None:
-        raise ge.CommandError("run_list", "listfile not specified",
-                              "No runlist file specified", "Please provide path to the runlist file!")
+    if recipe_file is None and steps is None:
+        raise ge.CommandError(
+            "run_recipe",
+            "both recipe_file and steps are not specified",
+            "No recipe file or steps specified",
+            "Please provide path to the recipe file or a comma separated list of steps to run!",
+        )
 
-    if runlists is None:
-        raise ge.CommandError("run_list", "runlists not specified",
-                              "No runlists specified", "Please provide list of list names to run!")
+    if recipe_file is not None and recipe is None:
+        raise ge.CommandError(
+            "run_recipe",
+            "recipe not specified",
+            "No recipe specified",
+            "Please provide the recipe name!",
+        )
 
-    if not os.path.exists(listfile):
-        raise ge.CommandFailed("run_list", "runlist file does not exist",
-                               "Runlist file not found [%s]" % (listfile), "Please check your paths!")
+    if recipe_file is not None and not os.path.exists(recipe_file):
+        raise ge.CommandFailed(
+            "run_recipe",
+            "recipe file file does not exist",
+            "Recipe file file not found [%s]" % (recipe_file),
+            "Please check your paths!",
+        )
 
-    # -- parse runlist file
-    runList = {'parameters': {},
-               'lists': {}}
+    # parse the recipe file
+    parameters = {}
+    commands = []
 
-    parameters = runList['parameters']
-
-    # -- prepare mapvalues
-    mapvalues = {}
-    if "mapvalues" in eargs:
-        tempmap = eargs["mapvalues"].split("|")
-
-        for m in tempmap:
-            m = m.split(":")
-            mapvalues[m[0]] = m[1]
-
-        # remove
-        del eargs["mapvalues"]
-
-    with open(listfile, 'r') as file:
-        for line in file:
+    # open the recipe file
+    if not steps:
+        with open(recipe_file, "r", encoding="UTF-8") as file:
             try:
-                line = line.strip()
-                if line.startswith('#') or line.startswith('---') or line.strip() == "":
-                    continue
-                elif line.startswith('list'):
-                    listName = strip_quotes(line.split(':')[1].strip())
-                    runList['lists'][listName] = {'parameters': runList['parameters'].copy(
-                    ), 'commands': [], 'removed_parameters': []}
-                    parameters = runList['lists'][listName]['parameters']
-                    removedParameters = runList['lists'][listName]['removed_parameters']
-                elif line.startswith('command'):
-                    commandName = strip_quotes(line.split(':')[1].strip())
-                    parameters = runList['lists'][listName]['parameters'].copy(
-                    )
-                    removedParameters = list(
-                        runList['lists'][listName]['removed_parameters'])
-                    runList['lists'][listName]['commands'].append(
-                        {'name': commandName, 'parameters': parameters, 'removed_parameters': removedParameters})
-                elif ':' in line:
-                    parameter, value = [strip_quotes(
-                        e.strip()) for e in line.split(":", 1)]
-                    # is value something we should inject
-                    if "{" in value and "}" in value:
-                        value = value.strip("{").strip("}")
-                        # is value in global parameters or environment
-                        if value in mapvalues:
-                            value = mapvalues[value]
-                        elif value in os.environ:
-                            value = os.environ[value]
-                        else:
-                            raise ge.CommandFailed("run_list", "Cannot parse line", "Injection value [%s] in line [%s] not provided" % (
-                                value, line), "Please provide injection values as input parameters (--mapvalues) or as environmental variables!")
+                recipe_data = yaml.load(file, Loader=yaml.FullLoader)
+            except Exception as e:
+                raise ge.CommandFailed("run_recipe", "Cannot parse the recipe file")
 
-                    # set
-                    parameters[parameter] = value
-                elif line.strip() in flags:
-                    parameters[line.strip()] = "flag"
-                elif line.strip().startswith('-'):
-                    keyToRemove = line.strip()[1:]
-                    if keyToRemove in parameters:
-                        # mark parameter as removed
-                        removedParameters.append(keyToRemove)
-                        del parameters[keyToRemove]
-                    # also remove arguments that come from eargs
-                    elif eargs is not None and keyToRemove in eargs:
-                        # mark parameter as removed
-                        removedParameters.append(keyToRemove)
+        # get the recipe
+        if "recipes" not in recipe_data:
+            raise ge.CommandFailed("run_recipe", "Recipes not found in the recipe file")
 
-            except:
-                raise ge.CommandFailed("run_list", "Cannot parse line", "Unable to parse line [%s]" % (
-                    line), "Please check the runlist file [%s]" % listfile)
+        recipes = recipe_data["recipes"]
 
-    # -- log location
+        if recipe not in recipes:
+            raise ge.CommandFailed(
+                "run_recipe", f"Recipe {recipe} not found in the recipe file"
+            )
+
+        recipe_dict = recipes[recipe]
+
+        # global parameters
+        if "global_parameters" in recipe_data:
+            for parameter, value in recipe_data["global_parameters"].items():
+                parameters[parameter] = value
+
+        # recipe parameters
+        if "parameters" in recipe_dict:
+            for parameter, value in recipe_dict["parameters"].items():
+                parameters[parameter] = value
+    else:
+        # define recipe name
+        recipe = "steps parameter"
+
+        # create the commands dict
+        recipe_dict = {}
+        recipe_dict["commands"] = steps.split(",")
+
+    # log location
     if logfolder is None:
         if "studyfolder" in parameters:
-            logfolder = os.path.join(
-                parameters["studyfolder"], "processing", "logs")
+            logfolder = os.path.join(parameters["studyfolder"], "processing", "logs")
+        elif "studyfolder" in eargs:
+            logfolder = os.path.join(eargs["studyfolder"], "processing", "logs")
         elif "sessionsfolder" in parameters:
             logfolder = gc.deduceFolders(
-                {'sessionsfolder': parameters["sessionsfolder"]})["logfolder"]
-        else:
-            logfolder = gc.deduceFolders({'reference': listfile})["logfolder"]
-    runlogfolder = os.path.join(logfolder, 'runlogs')
+                {"sessionsfolder": parameters["sessionsfolder"]}
+            )["logfolder"]
+        elif "sessionsfolder" in eargs:
+            logfolder = gc.deduceFolders({"sessionsfolder": eargs["sessionsfolder"]})[
+                "logfolder"
+            ]
+
+    # mustache injections to logfolder?
+    if "{{" in logfolder and "}}" in logfolder:
+        labels = _find_enclosed_substrings(logfolder)
+        for label in labels:
+            cleaned_label = label.replace("{", "").replace("}", "")
+            os_label = cleaned_label[1:]
+            if cleaned_label[0] == "$" and os_label in os.environ:
+                logfolder = logfolder.replace(label, os.environ[os_label])
+            else:
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
+                )
+
+    runlogfolder = os.path.join(logfolder, "runlogs")
+    comlogfolder = os.path.join(logfolder, "comlogs")
 
     # create folder if it does not exist
     if not os.path.isdir(runlogfolder):
         os.makedirs(runlogfolder)
 
-    print("===> Saving the run_list runlog to: %s" % runlogfolder)
+    print(f"\n---> Saving the run_recipe runlog to: {runlogfolder}")
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = os.path.join(
-        runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
+    logname = os.path.join(runlogfolder, f"Log-run_recipe-{logstamp}.log")
 
-    # -- are there parameters to ignore
-    if 'ignore' in eargs:
-        ignore = [e.strip() for e in re.split(
-            r' ?, ?| ?\| ?| +|', eargs['ignore'])]
-    else:
-        ignore = None
-
-    # -- run through lists
-    runLists = re.split(r'[,\|\s]', runlists)
-    summary = "\n----==== LISTS EXECUTION SUMMARY ====----"
+    # run
+    summary = "\n----==== RECIPE EXECUTION SUMMARY ====----"
 
     try:
         log = open(logname, "w", encoding="utf-8")
     except:
-        raise ge.CommandFailed("run_list", "Cannot open log", "Unable to open log [%s]" % (
-            logname), "Please check the paths!")
+        raise ge.CommandFailed(
+            "run_recipe",
+            "Cannot open log",
+            f"Unable to open log [{logname}]",
+            "Please check the paths!",
+        )
 
-    print("\n\n============================== RUNLIST LOG ==============================\n", file=log)
-    print("===> Running commands from the following lists:", ", ".join(runLists))
-    print("===> Running commands from the following lists:",
-          ", ".join(runLists), "\n", file=log)
+    print(
+        "\n\n============================== RUN_RECIPE LOG ==============================\n",
+        file=log,
+    )
 
-    for runListName in runLists:
-        if runListName not in runList['lists']:
-            raise ge.CommandFailed("run_list", "List not found", "List with name %s not found" % (
-                runListName), "Please check the runlist file [%s]" % listfile)
+    summary += f"\n\nRecipe: {recipe}"
 
-        summary += "\n\n===> list: %s" % (runListName)
+    print(f"---> Running commands from recipe: {recipe}")
+    print(f"---> Running commands from recipe: {recipe}\n", file=log)
 
-        print("===> Running commands from list:", runListName)
-        print("\n----------==================== LIST ====================---------\n", file=log)
-        print("===> Running commands from list:", runListName, "\n", file=log)
+    # commands
+    if "commands" not in recipe_dict:
+        raise ge.CommandFailed(
+            "run_recipe", f"Recipe {recipe} missing commands specification"
+        )
 
-        commandsToRun = list(runList['lists'][runListName]['commands'])
+    commands = recipe_dict["commands"]
 
-        for runCommand in commandsToRun:
-            commandName = runCommand['name']
-            commandParameters = runCommand['parameters']
+    # XNAT initial setup
+    # If running on XNAT, try and load checkpoint if supplied
+    if os.environ.get("XNAT", "") == "yes":
+        checkpoint_str = os.environ.get("XNAT_CHECKPOINT", "")
+        print("Checkpoint Supplied: " + checkpoint_str, file=log)
+        print("Checkpoint Supplied: " + checkpoint_str)
 
-            # -- override params with those from eargs (passed because of parallelization on a higher level)
+        if checkpoint_str == "":
+            print("XNAT Checkpoint empty, skipping...", file=log)
+            print("XNAT Checkpoint empty, skipping...")
+        else:
+            file_path, find_summary = xnat_find_checkpoint(checkpoint_str)
+            print(find_summary, file=log)
+            load_summary = xnat_load_checkpoint(file_path)
+            print(load_summary, file=log)
 
+    for com in commands:
+        if isinstance(com, dict):
+            command_name = list(com.keys())[0]
+            command_parameters = list(com.values())[0]
+        else:
+            command_name = com
+            command_parameters = {}
+
+        # executing a custom script
+        if command_name == "script":
+            if "path" in command_parameters:
+                script_path = command_parameters["path"]
+                del command_parameters["path"]
+            else:
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script path not provided",
+                    f"Script path not provided [{command_parameters}]",
+                    "Please provide the path to the script!",
+                )
+            print(
+                f"\n--------------------------------------------\n---> Running script: {script_path}"
+            )
+            print(
+                f"\n--------------------------------------------\n---> Running script: {script_path}",
+                file=log,
+            )
+            if not os.path.exists(script_path):
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script not found",
+                    f"Script not found [{script_path}]",
+                    "Please check the script path!",
+                )
+
+            # log
+            script_name = os.path.basename(script_path)
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+            log_path = os.path.join(
+                comlogfolder,
+                f"tmp_{script_name}_{command_name}_{timestamp}.log",
+            )
+
+            # prep command
+            if script_path.endswith(".sh"):
+                command = ["bash", script_path]
+            elif script_path.endswith(".py"):
+                command = ["python", script_path]
+            else:
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script type not supported",
+                    f"Script type not supported [{script_path}]",
+                    "Please use .sh or .py scripts!",
+                )
+
+            # add parameters to the command
+            for param, value in command_parameters.items():
+                command.append(f"--{param}={value}")
+
+            # create comlogfolder folder if needed
+            if not os.path.isdir(comlogfolder):
+                print(f"    ... creating log folder [{comlogfolder}]")
+                print(f"    ... creating log folder [{comlogfolder}]", file=log)
+                os.makedirs(comlogfolder)
+
+            # run the command with subprocess Popen
+            with open(log_path, "w", encoding="UTF-8") as log_file:
+                process = subprocess.Popen(
+                    command, stdout=log_file, stderr=subprocess.STDOUT
+                )
+                process.communicate()
+
+            # Get the exit code
+            exit_code = process.returncode
+
+            if exit_code != 0:
+                summary += f"\n - script {script_path} ... FAILED"
+                error_log = log_path.replace("tmp_", "error_")
+                print(f"    ... failed [{script_path}], see [{error_log}]")
+                print(f"    ... failed [{script_path}], see [{error_log}]", file=log)
+                os.rename(log_path, error_log)
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "Script failed",
+                    f"Script failed [{script_path}]",
+                    "Please check the log for details!",
+                )
+            else:
+                summary += f"\n - script {script_path} ... OK"
+                done_log = log_path.replace("tmp_", "done_")
+                print(f"    ... done [{script_path}], see [{done_log}]")
+                print(f"    ... done [{script_path}], see [{done_log}]", file=log)
+                os.rename(log_path, done_log)
+
+        else:
+            # override params with those from eargs (passed because of parallelization on a higher level)
             if eargs is not None:
                 # do not add parameter if it is flagged as removed
-                removedParameters = runCommand['removed_parameters']
                 for k in eargs:
-                    if k not in removedParameters:
-                        if k in ['parsessions', 'parelements']:
-                            if k in commandParameters:
-                                commandParameters[k] = str(
-                                    min([int(e) for e in [eargs[k], commandParameters[k]]]))
-                        else:
-                            commandParameters[k] = eargs[k]
+                    if k in ["parsessions", "parelements"]:
+                        if k in command_parameters:
+                            command_parameters[k] = str(
+                                min([int(e) for e in [eargs[k], command_parameters[k]]])
+                            )
+                    else:
+                        command_parameters[k] = eargs[k]
 
-            # -- remove parameters that are not allowed
+            # append global and recipe parameters
+            for parameter, value in parameters.items():
+                if parameter not in command_parameters:
+                    command_parameters[parameter] = value
+
+            # remove parameters that are not allowed
             import general.commands as gcom
-            if commandName in gcom.commands:
-                allowedParameters = list(
-                    gcom.commands.get(commandName)["args"])
-                if any([e in allowedParameters for e in ['sourcefolder', 'folder']]):
-                    allowedParameters += gcs.extra_parameters
 
-                newParameters = commandParameters.copy()
-                for param in commandParameters.keys():
-                    if param not in allowedParameters:
-                        del newParameters[param]
-                commandParameters = newParameters
+            if command_name in gcom.commands:
+                allowed_parameters = list(gcom.commands.get(command_name)["args"])
+                if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
+                    allowed_parameters += gcs.extra_parameters
 
-            # -- remove parameters set to ignore
-            if ignore:
-                for toIgnore in ignore:
-                    if toIgnore in commandParameters:
-                        del commandParameters[toIgnore]
+                new_parameters = command_parameters.copy()
+                for param in command_parameters.keys():
+                    if param not in allowed_parameters:
+                        del new_parameters[param]
+                command_parameters = new_parameters
 
-            # -- setup command
-
-            command = ["qunex"]
-            command.append(commandName)
-            commandr = "\n--------------------------------------------\n===> Running command:\n---> qunex " + commandName
-            for param, value in commandParameters.items():
-                if param in flags:
-                    command.append('--%s' % (param))
-                    commandr += " \\\n          --%s" % (param)
+            # XNAT individual command prep, creates _in checkpoint
+            if os.environ.get("XNAT", "") == "yes":
+                print("Attemping XNAT specific setup...", file=log)
+                possibles = globals().copy()
+                possibles.update(locals())
+                # XNAT helper functions for individual commands must be in format xnat_ + command_name
+                xnat_command = possibles.get("xnat_" + command_name)
+                if not xnat_command:
+                    print("\n------------------------", file=log)
+                    print(
+                        "\nNo XNAT setup method detected for: "
+                        + command_name
+                        + ", continuing...",
+                        file=log,
+                    )
+                    print("\n------------------------", file=log)
                 else:
-                    command.append('--%s=%s' % (param, value))
-                    commandr += ' \\\n          --%s="%s"' % (param, value)
+                    print(xnat_command(prep=True), file=log)
+                print("Making checkpoint IN...", file=log)
+                print("Making checkpoint IN...")
+                xnat_make_checkpoint(
+                    command_name + "_in",
+                    tag=os.environ.get("XNAT_CHECKPOINT_TAG", "timestamp"),
+                )
+
+            # setup command
+            command = ["qunex"]
+            command.append(command_name)
+            commandr = (
+                "\n--------------------------------------------\n---> Running command:\n\n     qunex "
+                + command_name
+            )
+
+            for param, value in command_parameters.items():
+                # inject mustache marked values
+                if (
+                    isinstance(value, str)
+                    and len(value) > 0
+                    and "{{" in value
+                    and "}}" in value
+                ):
+                    labels = _find_enclosed_substrings(value)
+                    for label in labels:
+                        cleaned_label = label.replace("{", "").replace("}", "")
+                        os_label = cleaned_label[1:]
+                        if cleaned_label[0] == "$" and os_label in os.environ:
+                            value = value.replace(label, os.environ[os_label])
+                        else:
+                            raise ge.CommandFailed(
+                                "run_recipe",
+                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
+                            )
+
+                if param in flags:
+                    command.append(f"--{param}")
+                    commandr += f" \\\n          --{param}" % (param)
+                else:
+                    command.append(f"--{param}={value}")
+                    commandr += f" \\\n          --{param}='{value}'"
+
+            # warn if scheduler was used in the recipe file
+            if "scheduler" in command_parameters:
+                print(
+                    f"\nWARNING: the scheduler parameter defined in the recipe file will be ignored. Scheduling needs to be defined at the command call level."
+                )
 
             print(commandr)
             print(commandr, file=log)
 
-            # -- run command
+            # run command
             process = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
+            )
 
             # Poll process for new output until finished
             error = False
-            logging = verbose
+            logging = False
 
-            for line in iter(process.stdout.readline, b''):
+            for line in iter(process.stdout.readline, b""):
                 line = line.decode("utf-8")
-                if "ERROR in completing" in line or "ERROR:" in line or "failed with error" in line:
+                print(line)
+                if (
+                    "ERROR in completing" in line
+                    or "ERROR:" in line
+                    or "failed with error" in line
+                ):
+                    print("", file=log)
                     error = True
+
                 if "Final report" in line:
-                    if not verbose:
-                        print("", file=log)
+                    print("", file=log)
                     logging = True
 
                 # print
-                if logging:
+                if logging or error:
                     print(line, end=" ", file=log)
                     log.flush()
 
             if error:
-                summary += "\n---> command %-20s FAILED" % (commandName)
+                summary += f"\n - command {command_name} ... FAILED"
                 summary += "\n\n----------==== END SUMMARY ====----------"
                 print(summary, file=log)
-                print("\n---> Running lists not completed successfully: failed running command '%s' in list '%s'" %
-                      (commandName, runListName), file=log)
+                print(
+                    f"\n---> run_recipe not completed successfully: failed running command {command_name}",
+                    file=log,
+                )
                 log.close()
-                raise ge.CommandFailed("runlist", "Runlist command failed", "Command '%s' inside list '%s' failed" % (
-                    commandName, runListName), "See error logs in the study folder for details")
+                raise ge.CommandFailed(
+                    "run_recipe",
+                    "run_recipe command failed",
+                    f"Command {command_name} inside recipe {recipe} failed",
+                    "See error logs in the study folder for details",
+                )
             else:
-                summary += "\n---> command %-20s OK" % (commandName)
-                print("===> Successful completion of runlist command %s" %
-                      (commandName))
+                summary += f"\n - command {command_name} ... OK"
+                print(
+                    f"---> Successful completion of the run_recipe command {command_name}\n"
+                )
+
+            # XNAT individual command cleanup, creates _out checkpoint
+            if os.environ.get("XNAT", "") == "yes":
+                print("Attempting Xnat specific cleanup...", file=log)
+                if not xnat_command:
+                    print("\n------------------------")
+                    print(
+                        "\nNo Xnat cleanup method detected for: "
+                        + command_name
+                        + ", continuing...",
+                        file=log,
+                    )
+                    print("\n------------------------")
+                else:
+                    print(xnat_command(prep=False), file=log)
+                print("Making checkpoint OUT...", file=log)
+                print("Making checkpoint OUT...")
+                xnat_make_checkpoint(
+                    command_name + "_out",
+                    tag=os.environ.get("XNAT_CHECKPOINT_TAG", "timestamp"),
+                )
+
     summary += "\n\n----------==== END SUMMARY ====----------"
 
     print(summary, file=log)
-    print("\n===> Successful completion of task: run_lists %s" %
-          (", ".join(runLists)), file=log)
+    print("\n---> Successful completion of task: run_recipe", file=log)
 
-    print("===> Successful completion of run_lists %s" % (", ".join(runLists)))
+    print("\n------------------------")
+    print("---> Successful completion of run_recipe")
     print(summary)
 
     log.close()
 
+    # hack copy the log from runlogs to comlogs as well
+    comlog = logname.replace("runlogs", "comlogs")
+    if not error:
+        comlog = comlog.replace("Log-", "done_")
+    else:
+        comlog = comlog.replace("Log-", "error_")
+
+    # copy logname to comlog
+    shutil.copyfile(logname, comlog)
+
+
+def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter="}}"):
+    """
+    Find all substrings enclosed by start and end delimiters in a string.
+    """
+    substrings = []
+    start_index = 0
+
+    while True:
+        start_pos = input_string.find(start_delimiter, start_index)
+        if start_pos == -1:
+            break
+
+        end_pos = input_string.find(end_delimiter, start_pos + len(start_delimiter))
+        if end_pos == -1:
+            break
+
+        substrings.append(input_string[start_pos : (end_pos + len(end_delimiter))])
+        start_index = end_pos + len(end_delimiter)
+
+    return substrings
+
 
 def strip_quotes(string):
     """
-    A helper function for removing leading and trailing quotes in a string. 
+    A helper function for removing leading and trailing quotes in a string.
     """
-    string = string.strip("\"")
+    string = string.strip('"')
     string = string.strip("'")
     return string
 
 
-def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number', prefix="BOLD_"):
+def batch_tag2namekey(
+    filename=None, sessionid=None, bolds=None, output="number", prefix="BOLD_"
+):
     """
     batch_tag2namekey \\
       --filename=<path to batch file> \\
@@ -2216,12 +2739,12 @@ def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number'
                         batch.txt file) to process. It can be a single
                         type (e.g. 'task'), a pipe separated list (e.g.
                         'WM|Control|rest') or 'all' to process all.
-    --output        ... Whether to output numbers ('number') or bold names 
+    --output     ... Whether to output numbers ('number') or bold names 
                         ('name'). In the latter case the name will be extracted
                         from the 'filename' specification, if provided in the 
                         batch file, or '<prefix>[N]' if 'filename' is not 
                         specified.
-    --prefix        ... The default prefix to use if a filename is not specified
+    --prefix     ... The default prefix to use if a filename is not specified
                         in the batch file.
     """
 
@@ -2237,23 +2760,33 @@ def batch_tag2namekey(filename=None, sessionid=None, bolds=None, output='number'
     sessions, options = gc.get_sessions_list(filename, sessionids=sessionid)
 
     if not sessions:
-        raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (
-            sessionid, filename), "Please check your data!")
+        raise ge.CommandFailed(
+            "batchTag2Num",
+            "Session id not found",
+            "Session id %s is not present in the batch file [%s]"
+            % (sessionid, filename),
+            "Please check your data!",
+        )
 
     if len(sessions) > 1:
-        raise ge.CommandFailed("batchTag2Num", "More than one session id found", "More than one [%s] instance of session id [%s] is present in the batch file [%s]" % (
-            len(sessions), sessionid, filename), "Please check your data!")
+        raise ge.CommandFailed(
+            "batchTag2Num",
+            "More than one session id found",
+            "More than one [%s] instance of session id [%s] is present in the batch file [%s]"
+            % (len(sessions), sessionid, filename),
+            "Please check your data!",
+        )
 
     session = sessions[0]
-    options['bolds'] = bolds
+    options["bolds"] = bolds
 
     bolds, _, _, _ = gpc.useOrSkipBOLD(session, options)
 
     boldlist = []
     for boldnumber, boldname, boldtask, boldinfo in bolds:
-        if output == 'name':
-            if 'filename' in boldinfo:
-                boldlist.append(boldinfo['filename'])
+        if output == "name":
+            if "filename" in boldinfo:
+                boldlist.append(boldinfo["filename"])
             else:
                 boldlist.append("%s%d" % (prefix, boldnumber))
         else:
@@ -2282,12 +2815,21 @@ def get_sessions_for_slurm_array(sessions, sessionids):
     # print
     sarray = []
     for s in slist:
-        sarray.append(s['id'])
+        sarray.append(s["id"])
 
-    print(','.join(sarray))
+    print(",".join(sarray))
 
 
-def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles="behavior.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
+def gather_behavior(
+    sessionsfolder=".",
+    sessions=None,
+    filter=None,
+    sourcefiles="behavior.txt",
+    targetfile=None,
+    overwrite="no",
+    check="yes",
+    report="yes",
+):
     """
     ``gather_behavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``
 
@@ -2443,28 +2985,33 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
     # --- Support function
 
     def addData(file, sdata, keys):
-
         header = None
         data = None
 
-        with (open(file, 'r')) as f:
+        with open(file, "r") as f:
             for line in f:
-                if line.startswith('#'):
+                if line.startswith("#"):
                     continue
                 elif header is None:
-                    header = [e.strip() for e in line.split('\t')]
+                    header = [e.strip() for e in line.split("\t")]
                 elif data is None:
-                    data = [e.strip() for e in line.split('\t')]
+                    data = [e.strip() for e in line.split("\t")]
 
         ndata = len(data)
         nheader = len(header)
         if ndata != nheader:
-            return "Number of header [%d] and data [%d] fields do not match!" % (nheader, ndata)
+            return "Number of header [%d] and data [%d] fields do not match!" % (
+                nheader,
+                ndata,
+            )
 
         for n in range(ndata):
             if header[n] in sdata:
                 if sdata[header[n]] != data[n]:
-                    return "File [%s] has duplicate and nonmatching ['%s' vs '%s'] data for variable '%s'!" % (file, data[n], sdata[header[n]], header[n])
+                    return (
+                        "File [%s] has duplicate and nonmatching ['%s' vs '%s'] data for variable '%s'!"
+                        % (file, data[n], sdata[header[n]], header[n])
+                    )
             else:
                 sdata[header[n]] = data[n]
                 if header[n] not in keys:
@@ -2479,151 +3026,206 @@ def gather_behavior(sessionsfolder=".", sessions=None, filter=None, sourcefiles=
     sessionsfolder = os.path.abspath(sessionsfolder)
 
     if not os.path.exists(sessionsfolder):
-        raise ge.CommandFailed("gather_behavior", "Sessions folder does not exist",
-                               "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed(
+            "gather_behavior",
+            "Sessions folder does not exist",
+            "The specified sessions folder does not exist [%s]" % (sessionsfolder),
+            "Please check paths!",
+        )
 
     # --- check target file
 
     if targetfile is None:
-        targetfile = os.path.join(
-            sessionsfolder, 'inbox', 'behavior', 'behavior.txt')
+        targetfile = os.path.join(sessionsfolder, "inbox", "behavior", "behavior.txt")
 
-    overwrite = overwrite.lower() == 'yes'
+    overwrite = overwrite.lower() == "yes"
 
     if os.path.exists(targetfile):
         if overwrite:
             try:
                 os.remove(targetfile)
             except:
-                raise ge.CommandFailed("gather_behavior", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (
-                    targetfile), "Please check your paths and authorizations!")
+                raise ge.CommandFailed(
+                    "gather_behavior",
+                    "Could not remove target file",
+                    "Existing object at the specified target location could not be deleted [%s]"
+                    % (targetfile),
+                    "Please check your paths and authorizations!",
+                )
         else:
-            raise ge.CommandFailed("gather_behavior", "Target file exists", "The specified target file already exists [%s]" % (
-                targetfile), "Please check your paths or set overwrite to 'yes'!")
+            raise ge.CommandFailed(
+                "gather_behavior",
+                "Target file exists",
+                "The specified target file already exists [%s]" % (targetfile),
+                "Please check your paths or set overwrite to 'yes'!",
+            )
 
     # --- check sessions
 
-    if sessions and sessions.lower() == 'none':
+    if sessions and sessions.lower() == "none":
         sessions = None
 
-    if filter and filter.lower() == 'none':
+    if filter and filter.lower() == "none":
         filter = None
 
-    report = report.lower() == 'yes'
+    report = report.lower() == "yes"
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(r' *, *| *\| *| +', sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r" *, *| *\| *| +", sourcefiles)]
 
     # --- check sessions
 
     if sessions is None:
-        print("---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
-        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
+        print(
+            "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        )
+        sessions = glob.glob(os.path.join(sessionsfolder, "*", "behavior"))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
     sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+    )
 
     if not sessions:
-        raise ge.CommandFailed("gather_behavior", "No session found",
-                               "No sessions found to process behavioral data from!", "Please check your data!")
+        raise ge.CommandFailed(
+            "gather_behavior",
+            "No session found",
+            "No sessions found to process behavioral data from!",
+            "Please check your data!",
+        )
 
     # --- generate list entries
 
-    processReport = {'ok': [], 'missing': [], 'error': []}
+    processReport = {"ok": [], "missing": [], "error": []}
     data = {}
     keys = []
 
     for session in sessions:
-
         files = []
         for sfile in sfiles:
-            files += glob.glob(os.path.join(sessionsfolder,
-                               session['id'], 'behavior', sfile))
+            files += glob.glob(
+                os.path.join(sessionsfolder, session["id"], "behavior", sfile)
+            )
 
         if not files:
-            processReport['missing'].append(session['id'])
+            processReport["missing"].append(session["id"])
             continue
 
         sdata = {}
         for file in files:
             error = addData(file, sdata, keys)
             if error:
-                processReport['error'].append((session['id'], error))
+                processReport["error"].append((session["id"], error))
                 break
 
         if error:
             continue
 
-        processReport['ok'].append(session['id'])
-        data[session['id']] = dict(sdata)
+        processReport["ok"].append(session["id"])
+        data[session["id"]] = dict(sdata)
 
     # --- save group data
 
     try:
-        fout = open(targetfile, 'w')
+        fout = open(targetfile, "w")
     except:
-        raise ge.CommandFailed("gather_behavior", "Could not create target file", "Target file could not be created at the specified location [%s]" % (
-            targetfile), "Please check your paths and authorizations!")
+        raise ge.CommandFailed(
+            "gather_behavior",
+            "Could not create target file",
+            "Target file could not be created at the specified location [%s]"
+            % (targetfile),
+            "Please check your paths and authorizations!",
+        )
 
-    header = ['session id'] + keys
+    header = ["session id"] + keys
     if report:
-        print("# Data compiled using gather_behavior on %s" %
-              (datetime.today()), file=fout)
+        print(
+            "# Data compiled using gather_behavior on %s" % (datetime.today()),
+            file=fout,
+        )
     print("\t".join(header), file=fout)
 
-    for sessionid in processReport['ok']:
+    for sessionid in processReport["ok"]:
         sdata = data[sessionid]
         line = [sessionid]
         for key in keys:
             if key in sdata:
                 line.append(sdata[key])
             else:
-                line.append('NA')
+                line.append("NA")
         print("\t".join(line), file=fout)
 
     # --- print report
 
-    reportit = [('ok', 'Successfully processed sessions:'), ('missing',
-                                                             'Sessions for which no behavioral data was found'), ('error', 'Sessions for which an error was encountered')]
+    reportit = [
+        ("ok", "Successfully processed sessions:"),
+        ("missing", "Sessions for which no behavioral data was found"),
+        ("error", "Sessions for which an error was encountered"),
+    ]
 
     if any([processReport[status] for status, message in reportit]):
-        print("===> Final report")
+        print("---> Final report")
         for status, message in reportit:
             if processReport[status]:
-                print('--->', message)
-                if report and status != 'ok':
-                    print('#', message, file=fout)
+                print("--->", message)
+                if report and status != "ok":
+                    print("#", message, file=fout)
                 for info in processReport[status]:
-                    if status == 'error':
-                        print('     %s [%s]' % info)
+                    if status == "error":
+                        print("     %s [%s]" % info)
                         if report:
-                            print('# -> %s: %s' % info, file=fout)
+                            print("# -> %s: %s" % info, file=fout)
                     else:
-                        print('     %s' % (info))
-                        if report and status != 'ok':
-                            print('# -> %s' % (info), file=fout)
+                        print("     %s" % (info))
+                        if report and status != "ok":
+                            print("# -> %s" % (info), file=fout)
 
     fout.close()
 
     # --- exit
 
-    if processReport['error'] or processReport['missing']:
-        if check.lower() == 'yes':
-            raise ge.CommandFailed("gather_behavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (
-                len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")
-        elif check.lower() == 'warn':
-            raise ge.CommandNull("gather_behavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (
-                len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")
+    if processReport["error"] or processReport["missing"]:
+        if check.lower() == "yes":
+            raise ge.CommandFailed(
+                "gather_behavior",
+                "Errors encountered",
+                "Not all sessions processed successfully!",
+                "Sessions with missing behavioral data: %d"
+                % (len(processReport["missing"])),
+                "Sessions with errors in processing: %d"
+                % (len(processReport["error"])),
+                "Please check your data!",
+            )
+        elif check.lower() == "warn":
+            raise ge.CommandNull(
+                "gather_behavior",
+                "Errors encountered",
+                "Not all sessions processed successfully!",
+                "Sessions with missing behavioral data: %d"
+                % (len(processReport["missing"])),
+                "Sessions with errors in processing: %d"
+                % (len(processReport["error"])),
+                "Please check your data!",
+            )
 
-    if not processReport['ok']:
+    if not processReport["ok"]:
         raise ge.CommandNull(
-            "gather_behavior", "No files processed", "No valid data was found!")
+            "gather_behavior", "No files processed", "No valid data was found!"
+        )
 
 
-def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefiles="session.txt", targetfile=None, overwrite="no", check="yes", report="yes"):
+def pull_sequence_names(
+    sessionsfolder=".",
+    sessions=None,
+    filter=None,
+    sourcefiles="session.txt",
+    targetfile=None,
+    overwrite="no",
+    check="yes",
+    report="yes",
+):
     """
     ``pull_sequence_names [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
 
@@ -2772,18 +3374,17 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
     # --- Support function
 
     def addData(file, data):
-
         missingNames = []
         sequenceNames = []
 
         try:
-            f = open(file, 'r')
+            f = open(file, "r")
         except:
             return "Could not open %s for reading!" % (file)
 
         for line in f:
-            if ':' in line:
-                line = [e.strip() for e in line.split(':')]
+            if ":" in line:
+                line = [e.strip() for e in line.split(":")]
                 if line[0].isnumeric():
                     if len(line) > 1:
                         sequenceNames.append(line[1])
@@ -2797,7 +3398,9 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
         data += sequenceNames
 
         if missingNames:
-            return "The following sequences had no names: %s!" % (", ".join(missingNames))
+            return "The following sequences had no names: %s!" % (
+                ", ".join(missingNames)
+            )
 
     # --- Start it up
 
@@ -2808,95 +3411,119 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
     sessionsfolder = os.path.abspath(sessionsfolder)
 
     if not os.path.exists(sessionsfolder):
-        raise ge.CommandFailed("pull_sequence_names", "Sessions folder does not exist",
-                               "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed(
+            "pull_sequence_names",
+            "Sessions folder does not exist",
+            "The specified sessions folder does not exist [%s]" % (sessionsfolder),
+            "Please check paths!",
+        )
 
     # --- check target file
 
     if targetfile is None:
-        targetfile = os.path.join(
-            sessionsfolder, 'inbox', 'MR', 'sequences.txt')
+        targetfile = os.path.join(sessionsfolder, "inbox", "MR", "sequences.txt")
 
-    overwrite = overwrite.lower() == 'yes'
+    overwrite = overwrite.lower() == "yes"
 
     if os.path.exists(targetfile):
         if overwrite:
             try:
                 os.remove(targetfile)
             except:
-                raise ge.CommandFailed("pull_sequence_names", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (
-                    targetfile), "Please check your paths and authorizations!")
+                raise ge.CommandFailed(
+                    "pull_sequence_names",
+                    "Could not remove target file",
+                    "Existing object at the specified target location could not be deleted [%s]"
+                    % (targetfile),
+                    "Please check your paths and authorizations!",
+                )
         else:
-            raise ge.CommandFailed("pull_sequence_names", "Target file exists", "The specified target file already exists [%s]" % (
-                targetfile), "Please check your paths or set overwrite to 'yes'!")
+            raise ge.CommandFailed(
+                "pull_sequence_names",
+                "Target file exists",
+                "The specified target file already exists [%s]" % (targetfile),
+                "Please check your paths or set overwrite to 'yes'!",
+            )
 
     # --- check sessions
 
-    if sessions and sessions.lower() == 'none':
+    if sessions and sessions.lower() == "none":
         sessions = None
 
-    if filter and filter.lower() == 'none':
+    if filter and filter.lower() == "none":
         filter = None
 
-    report = report.lower() == 'yes'
+    report = report.lower() == "yes"
 
     # --- check sourcefiles
 
-    sfiles = [e.strip() for e in re.split(r' *, *| *\| *| +', sourcefiles)]
+    sfiles = [e.strip() for e in re.split(r" *, *| *\| *| +", sourcefiles)]
 
     # --- check sessions
 
     if sessions is None:
-        print("---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!")
-        sessions = glob.glob(os.path.join(sessionsfolder, '*', 'behavior'))
+        print(
+            "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        )
+        sessions = glob.glob(os.path.join(sessionsfolder, "*", "behavior"))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
     sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder)
+        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+    )
 
     if not sessions:
-        raise ge.CommandFailed("pull_sequence_names", "No session found",
-                               "No sessions found to process neuroimaging data from!", "Please check your data!")
+        raise ge.CommandFailed(
+            "pull_sequence_names",
+            "No session found",
+            "No sessions found to process neuroimaging data from!",
+            "Please check your data!",
+        )
 
     # --- generate list entries
 
-    processReport = {'ok': [], 'missing': [], 'error': []}
+    processReport = {"ok": [], "missing": [], "error": []}
     data = []
 
     for session in sessions:
-
         files = []
         for sfile in sfiles:
-            files += glob.glob(os.path.join(sessionsfolder,
-                               session['id'], sfile))
+            files += glob.glob(os.path.join(sessionsfolder, session["id"], sfile))
 
         if not files:
-            processReport['missing'].append(session['id'])
+            processReport["missing"].append(session["id"])
             continue
 
         for file in files:
             error = addData(file, data)
             if error:
-                processReport['error'].append((session['id'], error))
+                processReport["error"].append((session["id"], error))
                 break
 
         if error:
             continue
 
-        processReport['ok'].append(session['id'])
+        processReport["ok"].append(session["id"])
 
     # --- save group data
 
     try:
-        fout = open(targetfile, 'w')
+        fout = open(targetfile, "w")
     except:
-        raise ge.CommandFailed("pull_sequence_names", "Could not create target file", "Target file could not be created at the specified location [%s]" % (
-            targetfile), "Please check your paths and authorizations!")
+        raise ge.CommandFailed(
+            "pull_sequence_names",
+            "Could not create target file",
+            "Target file could not be created at the specified location [%s]"
+            % (targetfile),
+            "Please check your paths and authorizations!",
+        )
 
     if report:
-        print("# Data compiled using pull_sequence_names on %s" %
-              (datetime.today()), file=fout)
+        print(
+            "# Data compiled using pull_sequence_names on %s" % (datetime.today()),
+            file=fout,
+        )
 
     data = sorted(set(data))
     for sname in data:
@@ -2904,41 +3531,61 @@ def pull_sequence_names(sessionsfolder=".", sessions=None, filter=None, sourcefi
 
     # --- print report
 
-    reportit = [('ok', 'Successfully processed sessions:'), ('missing',
-                                                             'Sessions for which no imaging data was found'), ('error', 'Sessions for which an error was encountered')]
+    reportit = [
+        ("ok", "Successfully processed sessions:"),
+        ("missing", "Sessions for which no imaging data was found"),
+        ("error", "Sessions for which an error was encountered"),
+    ]
 
     if any([processReport[status] for status, message in reportit]):
-        print("===> Final report")
+        print("---> Final report")
         for status, message in reportit:
             if processReport[status]:
-                print('--->', message)
-                if report and status != 'ok':
-                    print('#', message, file=fout)
+                print("--->", message)
+                if report and status != "ok":
+                    print("#", message, file=fout)
                 for info in processReport[status]:
-                    if status == 'error':
-                        print('     %s [%s]' % info)
+                    if status == "error":
+                        print("     %s [%s]" % info)
                         if report:
-                            print('# -> %s: %s' % info, file=fout)
+                            print("# -> %s: %s" % info, file=fout)
                     else:
-                        print('     %s' % (info))
-                        if report and status != 'ok':
-                            print('# -> %s' % (info), file=fout)
+                        print("     %s" % (info))
+                        if report and status != "ok":
+                            print("# -> %s" % (info), file=fout)
 
     fout.close()
 
     # --- exit
 
-    if processReport['error'] or processReport['missing']:
-        if check.lower() == 'yes':
-            raise ge.CommandFailed("pull_sequence_names", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (
-                len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")
-        elif check.lower() == 'warn':
-            raise ge.CommandNull("pull_sequence_names", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (
-                len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")
+    if processReport["error"] or processReport["missing"]:
+        if check.lower() == "yes":
+            raise ge.CommandFailed(
+                "pull_sequence_names",
+                "Errors encountered",
+                "Not all sessions processed successfully!",
+                "Sessions with missing imaging data: %d"
+                % (len(processReport["missing"])),
+                "Sessions with errors in processing: %d"
+                % (len(processReport["error"])),
+                "Please check your data!",
+            )
+        elif check.lower() == "warn":
+            raise ge.CommandNull(
+                "pull_sequence_names",
+                "Errors encountered",
+                "Not all sessions processed successfully!",
+                "Sessions with missing imaging data: %d"
+                % (len(processReport["missing"])),
+                "Sessions with errors in processing: %d"
+                % (len(processReport["error"])),
+                "Please check your data!",
+            )
 
-    if not processReport['ok']:
-        raise ge.CommandNull("pull_sequence_names",
-                             "No files processed", "No valid data was found!")
+    if not processReport["ok"]:
+        raise ge.CommandNull(
+            "pull_sequence_names", "No files processed", "No valid data was found!"
+        )
 
 
 def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
@@ -2948,34 +3595,59 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
     if os.path.exists(sessionsfolder):
         sessionsfolder = os.path.abspath(sessionsfolder)
     else:
-        raise ge.CommandFailed(commandName, "Sessions folder does not exist",
-                               "The specified sessions folder does not exist [%s]" % (sessionsfolder), "Please check paths!")
+        raise ge.CommandFailed(
+            commandName,
+            "Sessions folder does not exist",
+            "The specified sessions folder does not exist [%s]" % (sessionsfolder),
+            "Please check paths!",
+        )
 
     if mapto:
         mapto = os.path.abspath(mapto)
     else:
-        raise ge.CommandFailed(commandName, "Target not specified",
-                               "To execute the specified mapping `mapto` parameter has to be specified!", "Please check your command call!")
+        raise ge.CommandFailed(
+            commandName,
+            "Target not specified",
+            "To execute the specified mapping `mapto` parameter has to be specified!",
+            "Please check your command call!",
+        )
 
-    if mapaction not in ['link', 'copy', 'move']:
-        raise ge.CommandFailed(commandName, "Invalid action",
-                               "The action specified is not valid!", "Please specify a valid action!")
+    if mapaction not in ["link", "copy", "move"]:
+        raise ge.CommandFailed(
+            commandName,
+            "Invalid action",
+            "The action specified is not valid!",
+            "Please specify a valid action!",
+        )
 
     # -- prepare exclusion
     if mapexclude:
-        patterns = [e.strip() for e in re.split(r', *', mapexclude)]
+        patterns = [e.strip() for e in re.split(r", *", mapexclude)]
         mapexclude = []
         for e in patterns:
             try:
                 mapexclude.append(re.compile(e))
             except:
-                raise ge.CommandFailed(commandName, "Invalid exclusion", "Could not parse the exclusion regular expression: '%s'!" % (
-                    e), "Please check mapexclude parameter!")
+                raise ge.CommandFailed(
+                    commandName,
+                    "Invalid exclusion",
+                    "Could not parse the exclusion regular expression: '%s'!" % (e),
+                    "Please check mapexclude parameter!",
+                )
 
     return sessionsfolder, mapto, mapexclude
 
 
-def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sourcefile="session.txt", targetfile=None, mapping=None, filter=None, overwrite="no"):
+def create_session_info(
+    sessions=None,
+    pipelines="hcp",
+    sessionsfolder=".",
+    sourcefile="session.txt",
+    targetfile=None,
+    mapping=None,
+    filter=None,
+    overwrite="no",
+):
     """
     ``create_session_info sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]``
 
@@ -3138,14 +3810,16 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
     for pipeline in pipelines:
         if pipeline not in ["hcp", "mice"]:
             raise ge.CommandFailed(
-                "create_session_info", "Invalid pipeline type!", "Only hcp and mice mapping are currently supported")
+                "create_session_info",
+                "Invalid pipeline type!",
+                "Only hcp and mice mapping are currently supported",
+            )
 
         if sessions is None:
             sessions = "*"
 
         if mapping is None:
-            mapping = os.path.join(
-                sessionsfolder, 'specs', '%s_mapping.txt' % pipeline)
+            mapping = os.path.join(sessionsfolder, "specs", "%s_mapping.txt" % pipeline)
 
         if targetfile is None:
             targetfile = "session_%s.txt" % pipeline
@@ -3153,8 +3827,12 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
         # -- get mapping ready
 
         if not os.path.exists(mapping):
-            raise ge.CommandFailed("create_session_info", "No pipeline mapping file",
-                                   "The expected pipeline mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
+            raise ge.CommandFailed(
+                "create_session_info",
+                "No pipeline mapping file",
+                "The expected pipeline mapping file does not exist!",
+                "Please check the specified path [%s]" % (mapping),
+            )
 
         print(" ... Reading pipeline mapping from %s" % (mapping))
 
@@ -3165,63 +3843,72 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
                 "create_session_info",
                 "Invalid mapping file.",
                 "Please check the specified file [{}].".format(mapping),
-                "Syntax error: {}".format(e.error))
+                "Syntax error: {}".format(e.error),
+            )
 
         # -- get list of session folders
 
-        sessions, gopts = gc.get_sessions_list(
-            sessions, filter=filter, verbose=False)
+        sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False)
 
         sfolders = []
         for session in sessions:
-            newSet = glob.glob(os.path.join(sessionsfolder, session['id']))
+            newSet = glob.glob(os.path.join(sessionsfolder, session["id"]))
             if not newSet:
-                print("WARNING: No folders found that match %s. Please check your data!" % (
-                    os.path.join(sessionsfolder, session['id'])))
+                print(
+                    "WARNING: No folders found that match %s. Please check your data!"
+                    % (os.path.join(sessionsfolder, session["id"]))
+                )
             sfolders += newSet
 
         # -- check if we have any
 
         if not sfolders:
-            raise ge.CommandFailed("create_session_info", "No sessions found to process",
-                                   "No sessions were found to process!", "Please check the data and sessions parameter!")
+            raise ge.CommandFailed(
+                "create_session_info",
+                "No sessions found to process",
+                "No sessions were found to process!",
+                "Please check the data and sessions parameter!",
+            )
 
         # -- loop through sessions folders
-        report = {'missing source': [], 'pre-existing target': [],
-                  'pre-processed source': [], 'processed': [], 'error': []}
+        report = {
+            "missing source": [],
+            "pre-existing target": [],
+            "pre-processed source": [],
+            "processed": [],
+            "error": [],
+        }
 
         for sfolder in sfolders:
             ssfile = os.path.join(sfolder, sourcefile)
             stfile = os.path.join(sfolder, targetfile)
 
             if not os.path.exists(ssfile):
-                if os.path.basename(sfolder) not in ['archive', 'specs', 'QC', 'inbox']:
-                    report['missing source'].append(sfolder)
+                if os.path.basename(sfolder) not in ["archive", "specs", "QC", "inbox"]:
+                    report["missing source"].append(sfolder)
                 continue
             print(" ... Processing folder %s" % (sfolder))
 
             if os.path.exists(stfile) and overwrite != "yes":
-                print(
-                    "     ... Target file already exists, skipping! [%s]" % (stfile))
-                report['pre-existing target'].append(sfolder)
+                print("  ... Target file already exists, skipping! [%s]" % (stfile))
+                report["pre-existing target"].append(sfolder)
                 continue
 
             try:
                 src_session = parser.read_generic_session_file(ssfile)
 
                 if "hcp" in src_session["pipeline_ready"]:
-                    print("     ... %s already pipeline ready" % (sourcefile))
+                    print("  ... %s already pipeline ready" % (sourcefile))
                     if sourcefile != targetfile:
                         shutil.copyfile(sourcefile, targetfile)
-                    report['pre-processed source'].append(sfolder)
+                    report["pre-processed source"].append(sfolder)
 
-                tgt_session = _process_pipeline_hcp_mapping(
-                    src_session, mapping_rules)
+                tgt_session = _process_pipeline_hcp_mapping(src_session, mapping_rules)
 
                 output_lines = _serialize_session(tgt_session)
 
-                print("     ... writing %s" % (targetfile))
-                fout = open(stfile, 'w')
+                print(" ... writing %s" % (targetfile))
+                fout = open(stfile, "w")
 
                 # qunex header
                 gc.print_qunex_header(file=fout)
@@ -3229,37 +3916,45 @@ def create_session_info(sessions=None, pipelines="hcp", sessionsfolder=".", sour
 
                 for line in output_lines:
                     print(line, file=fout)
-                report['processed'].append(sfolder)
+                report["processed"].append(sfolder)
 
             except e:  # session file syntax error, conflicting rules
-                report['error'].append(sfolder)
+                report["error"].append(sfolder)
                 print(traceback.format_exc())
 
-    print("\n===> Final report")
+    print("\n---> Final report")
 
-    for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source', 'error']:
+    for status in [
+        "pre-existing target",
+        "pre-processed source",
+        "processed",
+        "missing source",
+        "error",
+    ]:
         if report[status]:
             print("---> sessions with %s file:" % (status))
             for session in report[status]:
                 print("     -> %s " % (os.path.basename(session)))
 
-    if report['missing source'] or report['error']:
+    if report["missing source"] or report["error"]:
         raise ge.CommandFailed(
             "create_session_info",
             "Error",
             "Some sessions were missing source files {}!".format(
-                report['missing source']),
-            "Some sessions encountered errors {}!".format(report['error']),
-            "Please check the data and parameters!")
+                report["missing source"]
+            ),
+            "Some sessions encountered errors {}!".format(report["error"]),
+            "Please check the data and parameters!",
+        )
 
     return
 
 
 def _process_pipeline_hcp_mapping(src_session, mapping_rules):
-    """ Apply mapping rule and assign spin-echo and field-map pairs
+    """Apply mapping rule and assign spin-echo and field-map pairs
 
-    The algorithm for assign field-map requires two passes. It need to find 
-    correct se / fm pairs with a finite-state machine. 
+    The algorithm for assign field-map requires two passes. It need to find
+    correct se / fm pairs with a finite-state machine.
     """
 
     # construct mapped session object by making a shallow copy of the image
@@ -3272,10 +3967,8 @@ def _process_pipeline_hcp_mapping(src_session, mapping_rules):
     _assign_bold_number(tgt_session, reserved_bold_numbers)
 
     # find user defined se/fm in session or mapping file
-    user_defined_field_map_fm = _find_user_defined_field_maps(
-        tgt_session, "fm")
-    user_defined_field_map_se = _find_user_defined_field_maps(
-        tgt_session, "se")
+    user_defined_field_map_fm = _find_user_defined_field_maps(tgt_session, "fm")
+    user_defined_field_map_se = _find_user_defined_field_maps(tgt_session, "se")
 
     # skip this step when there are user defined entries.
     # execute FSM to identify proper se/fm pairs
@@ -3304,12 +3997,12 @@ def _process_pipeline_hcp_mapping(src_session, mapping_rules):
 
 
 def _apply_rules(src_session, mapping_rules):
-    """ Apply mapping rules for each image
+    """Apply mapping rules for each image
 
     A mapping rule will be attached to images if exists
-    A mapping rule identified by image numbers always takes precedence 
+    A mapping rule identified by image numbers always takes precedence
 
-    Note: 
+    Note:
     src_session object should not be used after this function
     """
     tgt_session = {
@@ -3350,7 +4043,9 @@ def _apply_image_rule(img_info, rule):
         "image_number": img_info["image_number"],
         "raw_image_number": img_info["raw_image_number"],
         "applied_rule": rule,
-        "additional_tags": [img_info["series_description"]] + img_info["additional_tags"] + rule["additional_tags"]
+        "additional_tags": [img_info["series_description"]]
+        + img_info["additional_tags"]
+        + rule["additional_tags"],
     }
     if "se" in img_info:
         new_img_info["se"] = img_info["se"]
@@ -3359,7 +4054,8 @@ def _apply_image_rule(img_info, rule):
     for i in pass_through_tags:
         if i in img_info and i in rule:
             raise ge.SpecFileSyntaxError(
-                error=f"""Multiple definitions of tag {i} for image {img_info["image_number"]}""")
+                error=f"""Multiple definitions of tag {i} for image {img_info["image_number"]}"""
+            )
 
         if i in img_info:
             new_img_info[i] = img_info[i]
@@ -3375,7 +4071,9 @@ def _reserved_bold_numbers(mapping_rules):
     bold_nums = set()
     grp_img_num_rules = mapping_rules["group_rules"]["image_number"]
     grp_img_name_rules = mapping_rules["group_rules"]["name"]
-    for rule in itertools.chain(grp_img_num_rules.values(), grp_img_name_rules.values()):
+    for rule in itertools.chain(
+        grp_img_num_rules.values(), grp_img_name_rules.values()
+    ):
         image_type = rule.get("hcp_image_type")
         if image_type is None:
             continue
@@ -3389,7 +4087,7 @@ def _reserved_bold_numbers(mapping_rules):
 def _assign_bold_number(tgt_session, reserved_bold_numbers):
     """
     bold numbers are assigned sequentially, consecutively by default
-    Currently, this function does not respect the bold_num hint in the mapping file 
+    Currently, this function does not respect the bold_num hint in the mapping file
     """
     images = tgt_session["images"]
     image_numbers = list(sorted(images.keys()))
@@ -3397,61 +4095,97 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
     IDLE_STATE = 0
     FOUND_BOLD_REF = 1
     state = IDLE_STATE
-    prev_boldref_imgage_number = None
+    prev_boldref_image_number = None
     for i in image_numbers:
         image = images[i]
         hcp_image_type = image["applied_rule"].get("hcp_image_type")
         if hcp_image_type is None:
             continue
 
-        # bold ref
+        # when a ref image is found save it and wait to pair it with a bold img
         if hcp_image_type[0] == "boldref":
-            # when a ref image is found save it and wait to pair it with a bold img
+            # if it has manual numbering do not link it to any other bold image
+            bold_num = image.get("bold_num")
+            if bold_num is not None:
+                bold_pairs.append((i,))
+                continue
             if state == IDLE_STATE:
-                prev_boldref_imgage_number = i
+                prev_boldref_image_number = i
                 state = FOUND_BOLD_REF
             elif state == FOUND_BOLD_REF:
-                bold_pairs.append((prev_boldref_imgage_number,))
-                prev_boldref_imgage_number = i
-                state = FOUND_BOLD_REF
+                bold_pairs.append((prev_boldref_image_number,))
+                prev_boldref_image_number = i
+                # keep state - state = FOUND_BOLD_REF
         elif hcp_image_type[0] == "bold":
             if state == IDLE_STATE:
                 bold_pairs.append((i,))
-                state = IDLE_STATE
+                # keep state - state = IDLE_STATE
             elif state == FOUND_BOLD_REF:
-                bold_pairs.append((prev_boldref_imgage_number, i))
-                prev_boldref_imgage_number = None
+                bold_pairs.append((prev_boldref_image_number, i))
+                prev_boldref_image_number = None
                 state = IDLE_STATE
         else:
             continue
 
     if state == FOUND_BOLD_REF:
-        bold_pairs.append((prev_boldref_imgage_number,))
-        prev_boldref_imgage_number = None
+        bold_pairs.append((prev_boldref_image_number,))
+        prev_boldref_image_number = None
 
     used_bold_num = set()
+    used_boldref_num = set()
     remaining_pairs = []
 
     for pair in bold_pairs:
         custom_bold_num = None
+        custom_boldref_num = None
         for e in pair:
             image = images[e]
             hcp_image_type = image["applied_rule"].get("hcp_image_type")
-            if hcp_image_type[0] == 'bold':
+            if hcp_image_type[0] == "bold":
                 bn = image.get("bold_num")
                 if bn is not None:
                     custom_bold_num = bn
+
+            if hcp_image_type[0] == "boldref":
+                bn = image.get("bold_num")
+                if bn is not None:
+                    custom_boldref_num = bn
+
         if custom_bold_num is not None:
             if custom_bold_num in used_bold_num:
-                raise ge.CommandError("create_session_info", "Custom bold number conflict",
-                                      "cannot apply the same bold number to multiple bold images")
+                raise ge.CommandError(
+                    "create_session_info",
+                    "Custom bold number conflict",
+                    "cannot apply the same bold number to multiple bold images",
+                )
             used_bold_num.add(custom_bold_num)
             for e in pair:
                 image = images[e]
                 hcp_image_type = image["applied_rule"].get("hcp_image_type")
                 image["hcp_image_type"] = (
-                    hcp_image_type[0], custom_bold_num, hcp_image_type[2])
-        else:
+                    hcp_image_type[0],
+                    custom_bold_num,
+                    hcp_image_type[2],
+                )
+
+        if custom_boldref_num is not None:
+            if custom_boldref_num in used_boldref_num:
+                raise ge.CommandError(
+                    "create_session_info",
+                    "Custom bold number conflict",
+                    "cannot apply the same bold number to multiple boldref images",
+                )
+            used_boldref_num.add(custom_boldref_num)
+            for e in pair:
+                image = images[e]
+                hcp_image_type = image["applied_rule"].get("hcp_image_type")
+                image["hcp_image_type"] = (
+                    hcp_image_type[0],
+                    custom_boldref_num,
+                    hcp_image_type[2],
+                )
+
+        if custom_bold_num is None and custom_boldref_num is None:
             remaining_pairs.append(pair)
 
     # exclude bold numbers previously used and reserved globally
@@ -3464,20 +4198,16 @@ def _assign_bold_number(tgt_session, reserved_bold_numbers):
         for e in pair:
             image = images[e]
             hcp_image_type = image["applied_rule"].get("hcp_image_type")
-            image["hcp_image_type"] = (
-                hcp_image_type[0], bold_num, hcp_image_type[2])
+            image["hcp_image_type"] = (hcp_image_type[0], bold_num, hcp_image_type[2])
 
 
 def _find_user_defined_field_maps(tgt_session, field_map_type):
     """
-    Find user-defined spin-echo / field map numbers. 
+    Find user-defined spin-echo / field map numbers.
 
     User could define se/fm in mapping or session file. Here we only record
     se/fm numbers defined on actual field map images. The output of this function
-    is used to decide whether we will run the auto-assign FSM. 
-
-    TODO: currently this function does not check the number for images associated
-    with each se/fm number.
+    is used to decide whether we will run the auto-assign FSM.
     """
 
     user_defined = {}
@@ -3491,9 +4221,9 @@ def _find_user_defined_field_maps(tgt_session, field_map_type):
         if fm_num is None or hcp_image_type is None:
             continue
 
-        if (field_map_type == "fm" and hcp_image_type[0] in ("FM", "FM-GE")) \
-                or (field_map_type == "se" and hcp_image_type[0] == "SE-FM"):
-
+        if (field_map_type == "fm" and hcp_image_type[0] in ("FM", "FM-GE")) or (
+            field_map_type == "se" and hcp_image_type[0] == "SE-FM"
+        ):
             fm_images = user_defined.get(fm_num, list())
             fm_images.append(img_num)
 
@@ -3509,7 +4239,7 @@ def _find_field_maps(tgt_session, field_map_type):
     identify the second and third image as a pair in this case AP (PA AP).
 
     Returns: A dictionary where the key is the field map number and the value is a tuple
-             containing the image number of one or two images. 
+             containing the image number of one or two images.
     """
     IDLE_STATE = 0
     LOOKING_FOR_PAIR_STATE = 1
@@ -3518,7 +4248,7 @@ def _find_field_maps(tgt_session, field_map_type):
 
     def get_fm_info(hcp_image_type):
         """
-        Returns: 
+        Returns:
             is_field_map: depending on field_map_type
             current_dir: direction/type of the current image, None if FM-GE
             opposite_dir: opposite direction/type of the current image, None if FM-GE
@@ -3607,7 +4337,7 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
     """
     field_maps shall not be empty
 
-    This function assigns field map hint to identified images and 
+    This function assigns field map hint to identified images and
     hcp image type for field maps.
     """
     if len(field_maps) == 0:
@@ -3648,12 +4378,16 @@ def _assign_field_maps(tgt_session, field_maps, field_map_type):
 
             if hcp_image_type is None:
                 continue
-            elif image.get(field_map_type) is not None or rule.get(field_map_type) is not None:
-                user_defined_sefm = image.get(
-                    field_map_type, rule.get(field_map_type))
+            elif (
+                image.get(field_map_type) is not None
+                or rule.get(field_map_type) is not None
+            ):
+                user_defined_sefm = image.get(field_map_type, rule.get(field_map_type))
                 if user_defined_sefm not in fm_number:
                     raise ge.CommandError(
-                        "create_session_info", f"User specified spin-echo or field map number {field_map_type}({user_defined_sefm}) does not exist")
+                        "create_session_info",
+                        f"User specified spin-echo or field map number {field_map_type}({user_defined_sefm}) does not exist",
+                    )
                 image[field_map_type] = user_defined_sefm
             elif hcp_image_type[0] in ["T1w", "T2w", "DWI", "ASL", "bold", "boldref"]:
                 image[field_map_type] = fm_hint
@@ -3671,7 +4405,12 @@ def _assign_remaining_image_type(tgt_session):
     for _, image in images.items():
         rule = image["applied_rule"]
         hcp_image_type = rule.get("hcp_image_type")
-        if hcp_image_type is not None and hcp_image_type[0] in ["T1w", "T2w", "DWI", "ASL"]:
+        if hcp_image_type is not None and hcp_image_type[0] in [
+            "T1w",
+            "T2w",
+            "DWI",
+            "ASL",
+        ]:
             image["hcp_image_type"] = hcp_image_type
 
 
@@ -3687,14 +4426,22 @@ def _serialize_session(tgt_session):
         raise ge.SpecFileSyntaxError(error="subject id cannot be empty")
     lines.append("subject: {}".format(tgt_session["subject"]))
 
+    lines.append("")
+
     for path_name, path in tgt_session["paths"].items():
         lines.append("{}: {}".format(path_name, path))
+
+    lines.append("")
 
     for tag_key, tag_value in tgt_session["custom_tags"].items():
         lines.append("{}: {}".format(tag_key, tag_value))
 
+    lines.append("")
+
     for pipeline in tgt_session["pipeline_ready"]:
         lines.append("{}ready: true".format(pipeline))
+
+    lines.append("")
 
     for img_num in sorted(tgt_session["images"].keys()):
         image = tgt_session["images"][img_num]
@@ -3736,9 +4483,507 @@ def _serialize_session(tgt_session):
                     raise Exception()
             remaining_tags = ":" + ": ".join(serialized_tags)
 
-        lines.append("{:<4}:{:<16}{}".format(
-            image_num_str,
-            tags[0],
-            remaining_tags
-        ))
+        lines.append("{:<4}:{:<16}{}".format(image_num_str, tags[0], remaining_tags))
     return lines
+
+
+def xnat_run_cmd(cmd):
+    """
+    xnat_run_cmd
+
+    A helper function called by xnat_ functions to run bash commands on XNAT
+
+    Parameters:
+        --cmd (str list):
+            Bash command to run split into a list of strings.
+
+    Returns:
+        --summary (str):
+            stdout of the run bash command plus other details to print to a log
+    """
+    cmdS = " ".join(cmd)
+    summary = "\nRunning: " + cmdS
+    cmdP = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
+    )
+    summary += "\n          --- stdout start --- \n"
+    for line in iter(cmdP.stdout.readline, b""):
+        line = line.decode("utf-8")
+        summary += "\n"
+        summary += line
+    summary += "\n          ---  stdout end  --- \n"
+    print(summary)
+    return summary
+
+
+def xnat_make_checkpoint(step, tag="timestamp"):
+    """
+    xnat_make_checkpoint
+
+    Creates a 'checkpoint' of the current build directory, called by run_recipe if running on XNAT
+
+    Parameters:
+        --step (str):
+            Prefix of the checkpoint, usually the step plus either _in or _out. (eg. import_dicom_in). See Notes
+        --tag (str):
+            Suffix of the checkpoint, if 'timestamp' or 'xnat_id' then the current timestamp or XNAT_WORKFLOW_ID
+            will be used. Otherwise, the supplied string will be used. Default: 'timestamp'
+
+    Notes:
+        The output file is in format step:tag.txt, to be input into xnat_load_checkpoint.
+
+        A checkpoint is a .txt containing a new-line seperated list of filepaths. This is designed with
+        XNAT in mind and makes use of environmental variables. This checkpoint is created in a
+        directory called 'checkpoints' inside the sessions folder.
+
+        There is also a special checkpoint type called 'all', which lists the archive instead of the build
+        directory. When run at the start of run_recipe, it allows users to copy the entire archive into build.
+    """
+    if step == "all":
+        files = glob.glob("/input/RESOURCES/qunex_study/**", recursive=True)
+        for i in range(len(files)):
+            files[i] = files[i].replace(
+                "/input/RESOURCES/qunex_study/", os.environ["STUDY_FOLDER"]
+            )
+    else:
+        files = glob.glob(os.environ["STUDY_FOLDER"] + "/**", recursive=True)
+
+    if tag == "timestamp":
+        suffix = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    elif tag == "xnat_id":
+        suffix = os.environ.get("XNAT_WORKFLOW_ID", "XNAT")
+    else:
+        suffix = tag
+
+    outPath = (
+        os.environ["SESSIONS_FOLDER"] + "/checkpoints/" + step + ":" + suffix + ".txt"
+    )
+    with open(outPath, "w") as fp:
+        fp.write("\n".join(files))
+    return
+
+
+def xnat_find_checkpoint(checkpoint_str):
+    """
+    xnat_find_checkpoint
+
+    Determines if a valid checkpoint exists for the input and finds it if it exists
+
+    Parameters:
+        --checkpoint_str (str):
+            The checkpoint to load, valid input being checkpoint 'tag', 'step:tag', or 'all'. See Notes.
+
+    Returns:
+        --checkpoint_path (str):
+            The full path to the appropriate checkpoint if found, otherwise raises an error.
+        --summary (str):
+            Info used for logging plus bash stdout
+
+    Notes:
+        Only the tag needs to be supplied, the step is optional for more specificity. The tag can either be the
+        exact tag used by a checkpoint, the String 'latest'
+
+        If the step is not supplied and there are multiple checkpoints with the same tag, it will provide the
+        latest checkpoint.
+
+        If 'latest' is supplied without a step, it will provide the path to the most recently generated
+        checkpoint. When combined with a step, it will locate the most recently generated checkpoint for that
+        step.
+
+        If 'all' is supplied without a step or tag, then it will create a new checkpoint of the archive/input
+        directory and provide the path to this new file. This can effectively be used to load the entire archive,
+        though it is still subject to the filters supplied in xnat_load_checkpoint
+    """
+    summary = "Starting xnat_find_checkpoint..."
+
+    c_path = "/input/RESOURCES/qunex_study/sessions/checkpoints/"
+
+    # split into step and tag
+    checkpoint = checkpoint_str.split(":")
+    if len(checkpoint) == 1:
+        if checkpoint[0].lower() == "all":
+            xnat_make_checkpoint("all")
+            step = "all"
+            tag = "latest"
+            c_path = os.environ["SESSIONS_FOLDER"] + "/checkpoints/"
+        elif checkpoint[0].lower() == "latest":
+            step = ""
+            tag = "latest"
+        else:
+            step = "*" + checkpoint[0]
+            tag = "latest"
+
+    elif len(checkpoint) == 2:
+        step = checkpoint[0]
+        tag = checkpoint[1]
+
+    else:
+        summary += "\nXNAT Checkpoint invalid, please supply one of ['', 'command':'timestamp', 'command':latest, latest]"
+        print(
+            "XNAT Checkpoint invalid, please supply one of ['', 'command':'timestamp', 'command':latest, latest]"
+        )
+        raise ge.CommandFailed(
+            "run_recipe",
+            "Cannot open checkpoint",
+            f"Invalid Checkpoint supplied [{checkpoint_str}]",
+            "Checkpoint must be one of ['', 'command'_'in/out':'timestamp', 'command'_'in/out':latest, latest]",
+        )
+
+    checkpoints = glob.glob(c_path + step + "*.txt")
+
+    if len(checkpoints) == 0:
+        summary += (
+            "\nXNAT Checkpoint supplied, but no checkpoints found in: "
+            + c_path
+            + " for step: "
+            + step
+        )
+        print(
+            "XNAT Checkpoint supplied, but no checkpoints found in: "
+            + c_path
+            + " for step: "
+            + step
+        )
+        raise ge.CommandFailed(
+            "run_recipe",
+            "No checkpoint found",
+            f"Invalid Checkpoint supplied [{checkpoint_str}]",
+            "Checkpoint not found",
+        )
+
+    if tag == "latest":
+        print("Getting latest XNAT Checkpoint for step: " + step)
+        summary += "Getting latest XNAT Checkpoint for step: " + step
+        file_name = max(checkpoints, key=os.path.getctime)
+    else:
+        file_name = c_path + step + ":" + tag
+        print("\nSearching for checkpoint: " + file_name)
+        summary += "\nSearching for checkpoint: " + file_name
+        if file_name not in checkpoints:
+            summary += (
+                "\nERROR: XNAT Checkpoint tag supplied but not found! Check your paths!"
+            )
+            summary += "\nFound the following checkpoints for step: " + step
+            print(
+                "ERROR: XNAT Checkpoint tag supplied but not found! Check your paths!"
+            )
+            print("Found the following checkpoints for step: " + step)
+            summary += "\n".join(checkpoints)
+            print("\n".join(checkpoints))
+            raise ge.CommandFailed(
+                "run_recipe",
+                "Cannot open checkpoint",
+                f"Unable to find checkpoint [{file_name}]",
+                "Please check your paths!",
+            )
+        else:
+            summary += "\nXNAT Checkpoint found!"
+            print("XNAT Checkpoint found!")
+
+    summary += "\nPrepared Checkpoint: " + file_name
+    print("Prepared Checkpoint: " + file_name)
+    return file_name, summary
+
+
+def xnat_load_checkpoint(file_path):
+    """
+    xnat_load_checkpoint
+
+    Loads a valid checkpoint and sets the build directory to that state via rsync
+
+    Parameters:
+        --file_path (str):
+            Exact path to the checkpoint to load
+
+    Returns:
+        --summary (str):
+            Info used for logging plus bash stdout from rsync
+
+    Notes:
+        For XNAT, there are a number of environmental variables that can be set to control what gets copied. Logs
+        are always filtered out.
+
+        With XNAT_DEFAULT_FILTERS=yes (default 'yes), the default filters will be applied for certain steps to
+        avoid copying unneccesary files. At the moment, this affects the raw nifti files (/nii/), and hcp files
+        (/hcp/). Set to 'no' to disable these filters.
+
+        With XNAT_CUSTOM_FILTERS={filters} (default 'no'), users can provide custom filters to prevent files
+        they deem unneccesary from copying into build, {filters} being comma seperated substrings. If a filepath
+        contains one of these substrings, it will not  be copied. If 'no' is provided, this will be ignored.
+
+        With XNAT_CUSTOM_RSYNC={filepaths} (default 'no'), users can provide files they want copied from archive
+        that may not be present in the checkpoint, {filepaths} being comma seperated substrings. These
+        substrings are the relative paths to the files from the Study Folder (where Sessions is located). This
+        is used directly by the rsync command so wildcards like '*' and '**' are accepted. The same limitations
+        that affect rsync also affect this command, however.
+    """
+
+    summary = "Starting xnat_load_checkpoint..."
+
+    cmd = [
+        "rsync",
+        "-avzh",
+        "/input/RESOURCES/qunex_study/",
+        os.environ["STUDY_FOLDER"],
+    ]
+    try:
+        files = [line.rstrip() for line in open(file_path)]
+    except:
+        raise ge.CommandFailed(
+            "run_recipe",
+            "Cannot open checkpoint",
+            f"Unable to open checkpoint [{file_path}]",
+            "Please check your paths!",
+        )
+
+    # Filters out logs
+    # Dicoms are deleted Xnat, so /dicom/ only contains logs
+    files = list(filter(lambda n: "/dicom/" not in n, files))
+    files = list(filter(lambda n: "/checkpoints/" not in n, files))
+    files = list(filter(lambda n: "/processing/logs" not in n, files))
+
+    use_filter = os.environ.get("XNAT_DEFAULT_FILTERS", "")
+
+    if use_filter == "":
+        use_filter = "yes"
+        print("WARNING: XNAT_DEFAULT_FILTERS empty, setting to default: " + use_filter)
+        summary += (
+            "\nWARNING: XNAT_DEFAULT_FILTERS empty, setting to default: " + use_filter
+        )
+
+    if use_filter.lower() == "no":
+        print("XNAT_DEFAULT_FILTERS set as 'no', skipping default filters...")
+        summary += "\nXNAT_DEFAULT_FILTERS set as 'no', skipping default filters..."
+
+    elif use_filter.lower() == "yes":
+        print("XNAT_DEFAULT_FILTERS set as 'yes', filtering files now...")
+        summary += "\nXNAT_DEFAULT_FILTERS set as 'yes', filtering files now..."
+
+        if (
+            "create_session_info" in file_path
+            or "setup_hcp_in" in file_path
+            or "export_hcp" in file_path
+            or "run_qc_in" in file_path
+        ):
+            pass
+        else:
+            print("Filtering '/nii/' ...")
+            summary += "\nFiltering '/nii/' ..."
+            files = list(filter(lambda n: "/nii/" not in n, files))
+
+        if (
+            "hcp" in file_path or "run_qc" in file_path or "dwi" in file_path
+        ) and "map_hcp_data_out" not in file_path:
+            pass
+        else:
+            print("Filtering '/hcp/' ...")
+            summary += "\nFiltering '/hcp/' ..."
+            files = list(filter(lambda n: "/hcp/" not in n, files))
+
+    else:
+        print("XNAT_DEFAULT_FILTERS value: '" + use_filter + "' unrecognized!")
+        print("XNAT_DEFAULT_FILTERS must be one of: ['yes', 'no', '']")
+        summary += "\nXNAT_DEFAULT_FILTERS value: '" + use_filter + "' unrecognized!"
+        summary += "\nXNAT_DEFAULT_FILTERS must be one of: ['yes', 'no', '']"
+
+        raise ge.CommandFailed(
+            "run_recipe",
+            "Invalid XNAT_DEFAULT_FILTERS value",
+            f"Invalid filter supplied '{use_filter}'",
+            "XNAT_DEFAULT_FILTERS must be one of: ['yes', 'no', '']",
+        )
+
+    custom_filter = os.environ.get("XNAT_CUSTOM_FILTERS", "")
+
+    if custom_filter != "" and custom_filter.lower() != "no":
+        print(
+            "Custom Filter detected! File paths containing these strings will not be loaded from the checkpoint"
+        )
+        print("XNAT_CUSTOM_FILTERS value: '" + custom_filter + "'")
+        summary += "\nCustom Filter detected!"
+        summary += "\nXNAT_CUSTOM_FILTERS value: '" + custom_filter + "'"
+        filter_list = custom_filter.split(",")
+        for to_filter in filter_list:
+            print(f"Filtering '{to_filter}' ...")
+            summary += f"\nFiltering '{to_filter}' ..."
+            files = list(filter(lambda n: to_filter not in n, files))
+
+    custom_rsync = os.environ.get("XNAT_CUSTOM_RSYNC", "")
+
+    if custom_rsync != "" and custom_rsync.lower() != "no":
+        print(
+            "Custom Rsync detected! This will be loaded in addition to the checkpoint"
+        )
+        print("XNAT_CUSTOM_RSYNC value: '" + custom_rsync + "'")
+        summary += (
+            "Custom Rsync detected! This will be loaded in addition to the checkpoint"
+        )
+        summary += "XNAT_CUSTOM_RSYNC value: '" + custom_rsync + "'"
+        rsync_list = custom_rsync.split(",")
+        for to_rsync in rsync_list:
+            print(f"Adding '{to_rsync}' ...")
+            summary += f"\nAdding'{to_rsync}' ..."
+            cmd.append("--include=" + to_rsync)
+
+    for file in files:
+        cmd.append("--include=" + file.replace(os.environ["STUDY_FOLDER"], ""))
+
+    cmd.append("--exclude=*")
+
+    summary += xnat_run_cmd(cmd)
+    return summary
+
+
+def xnat_import_dicom(prep=True):
+    """
+    xnat_import_dicom
+
+    A helper function called by run_recipe to run import_dicom on XNAT
+
+    Parameters:
+        --prep (boolean):
+            Whether to run prep or cleanup related code. Default: True
+
+    Returns:
+        --summary (str):
+            stdout of the run bash commands plus other details to print to a log
+
+    Notes:
+        When run with prep=True, replaces map_raw_data from the old run_recipe, copying scans to the inbox
+        folder (qunex hierarchy). Also copies the initial batch parameters from the project level.
+
+        When run with prep=False, replaces the cleanup function from run_turnkey, removing unneeded dicoms and
+        the inbox folder.
+    """
+
+    summary = "\n\n----==== XNAT IMPORT_DICOM EXECUTION SUMMARY ====----\n\n"
+    summary += "\n Running with prep:" + str(prep)
+    if prep:
+        summary += "\nimport_dicom set up finished"
+
+        summary += "\nCopying SCANS..."
+
+        inPath = "/input/SCANS"
+        outPath = os.path.join(
+            os.environ["SESSIONS_FOLDER"], os.path.join(os.environ["LABEL"], "inbox")
+        )
+        cmd = ["rsync", "-avzh", inPath, outPath]
+        summary += xnat_run_cmd(cmd)
+
+    else:
+        summary += "\n Removing dicoms..."
+        # dicoms currently all gunzipped, update if that changes
+        files = glob.glob(
+            os.environ["SESSIONS_FOLDER"] + "/" + os.environ["LABEL"] + "/dicom/*.gz"
+        )  #
+        cmd = ["rm", "-f"] + files
+        summary += xnat_run_cmd(cmd)
+
+        summary += "\n Removing inbox folders..."
+        inPath = os.environ["SESSIONS_FOLDER"] + "/" + os.environ["LABEL"] + "/inbox"
+        cmd = ["rm", "-rf", inPath]
+        summary += xnat_run_cmd(cmd)
+
+    summary += "\n\n----==== XNAT IMPORT_DICOM EXECUTION END ====----\n\n"
+    print(summary)
+    return summary
+
+
+def xnat_create_session_info(prep=True):
+    """
+    xnat_create_session_info
+
+    A helper function called by run_recipe to run create_session_info on XNAT
+
+    Parameters:
+        --prep (boolean):
+            Whether to run prep or cleanup related code. Default: True
+
+    Returns:
+        --summary (str):
+            stdout of the run bash commands plus other details to print to a log
+
+    Notes:
+        When run with prep=True, it copies over the mapping from the project level
+
+        When run with prep=False, does nothing
+    """
+    summary = "\n\n----==== XNAT CREATE_SESSION_INFO EXECUTION SUMMARY ====----\n\n"
+    summary += "\n Running with prep:" + str(prep)
+    if prep:
+        summary += "\nGetting Mapping file from project..."
+
+        inPath = (
+            os.environ["XNAT_HOST"]
+            + "/data/projects/"
+            + os.environ["XNAT_PROJECT"]
+            + "/resources/QUNEX_PROC/files/"
+            + os.environ["SCAN_MAPPING_FILENAME"]
+        )
+        outPath = os.environ["MAPPING"]
+        cmd = [
+            "curl",
+            "-k",
+            "-u",
+            os.environ["XNAT_USER"] + ":" + os.environ["XNAT_PASS"],
+            "-X",
+            "GET",
+            inPath,
+            "-o",
+            outPath,
+        ]
+        summary += xnat_run_cmd(cmd)
+
+    summary += "\n\n----==== XNAT CREATE_SESSION_INFO EXECUTION END ====----\n\n"
+    print(summary)
+    return summary
+
+
+def xnat_create_batch(prep=True):
+    """
+    xnat_create_batch
+
+    A helper function called by run_recipe to run create_batch on XNAT, in this case copying the batch parameters file
+
+    Parameters:
+        --prep (boolean):
+            Whether to run prep or cleanup related code. Default: True
+
+    Returns:
+        --summary (str):
+            stdout of the run bash commands plus other details to print to a log
+
+    Notes:
+        When run with prep=True, it copies over the mapping from the project level
+
+        When run with prep=False, does nothing
+    """
+    summary = "\n\n----==== XNAT CREATE_BATCH EXECUTION SUMMARY ====----\n\n"
+    summary += "\n Running with prep:" + str(prep)
+    if prep:
+        summary += "\nGetting Parameter file from project..."
+
+        inPath = (
+            os.environ["XNAT_HOST"]
+            + "/data/projects/"
+            + os.environ["XNAT_PROJECT"]
+            + "/resources/QUNEX_PROC/files/"
+            + os.environ["BATCH_PARAMETERS_FILENAME"]
+        )
+        outPath = os.environ["INITIAL_PARAMETERS"]
+        cmd = [
+            "curl",
+            "-k",
+            "-u",
+            os.environ["XNAT_USER"] + ":" + os.environ["XNAT_PASS"],
+            "-X",
+            "GET",
+            inPath,
+            "-o",
+            outPath,
+        ]
+        summary += xnat_run_cmd(cmd)
+
+    summary += "\n\n----==== XNAT CREATE_BATCH EXECUTION END ====----\n\n"
+    print(summary)
+    return summary

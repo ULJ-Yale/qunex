@@ -54,6 +54,44 @@
                 "label": "T2w"
             }
         ],
+        "dwi": [
+            {
+                "acq": "pre",
+                "run": "01",
+                "ses": null,
+                "dir": "AP",
+                "filepath": "/data/sessions/10/bids/dwi/sub-10_acq-pre_run-01_dir-AP_dwi.json",
+                "filename": "sub-10_acq-pre_run-01_dir-AP_dwi.nii.gz",
+                "label": "dwi"
+            },
+            {
+                "acq": "pre",
+                "run": "01",
+                "ses": null,
+                "dir": "PA",
+                "filepath": "/data/sessions/10/bids/dwi/sub-10_acq-pre_run-01_dir-PA_dwi.json",
+                "filename": "sub-10_acq-pre_run-01_dir-PA_dwi.nii.gz",
+                "label": "dwi"
+            },
+            {
+                "acq": "pre",
+                "run": "02",
+                "ses": null,
+                "dir": "AP",
+                "filepath": "/data/sessions/10/bids/dwi/sub-10_acq-pre_run-02_dir-AP_dwi.json",
+                "filename": "sub-10_acq-pre_run-02_dir-AP_dwi.nii.gz",
+                "label": "dwi"
+            },
+            {
+                "acq": "pre",
+                "run": "02",
+                "ses": null,
+                "dir": "PA",
+                "filepath": "/data/sessions/10/bids/dwi/sub-10_acq-pre_run-02_dir-PA_dwi.json",
+                "filename": "sub-10_acq-pre_run-02_dir-PA_dwi.nii.gz",
+                "label": "dwi"
+            }
+        ],
         "fmap": [
             {
                 "acq": "pre",
@@ -100,6 +138,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-01_events.tsv",
                 "filename": "sub-10_task-new_dir-AP_run-01_events.tsv",
                 "label": null
@@ -111,6 +150,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-01_sbref.json",
                 "filename": "sub-10_task-new_dir-AP_run-01_sbref.json",
                 "label": "sbref"
@@ -122,6 +162,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-01_sbref.nii.gz",
                 "filename": "sub-10_task-new_dir-AP_run-01_sbref.nii.gz",
                 "label": "sbref"
@@ -133,6 +174,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-01_bold.json",
                 "filename": "sub-10_task-new_dir-AP_run-01_bold.json",
                 "label": "bold"
@@ -144,6 +186,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-01_bold.nii.gz",
                 "filename": "sub-10_task-new_dir-AP_run-01_bold.nii.gz",
                 "label": "bold"
@@ -155,6 +198,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-02_events.tsv",
                 "filename": "sub-10_task-new_dir-AP_run-02_events.tsv",
                 "label": null
@@ -166,6 +210,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-02_sbref.json",
                 "filename": "sub-10_task-new_dir-AP_run-02_sbref.json",
                 "label": "sbref"
@@ -177,6 +222,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-02_sbref.nii.gz",
                 "filename": "sub-10_task-new_dir-AP_run-02_sbref.nii.gz",
                 "label": "sbref"
@@ -188,6 +234,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-02_bold.json",
                 "filename": "sub-10_task-new_dir-AP_run-02_bold.json",
                 "label": "bold"
@@ -199,6 +246,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-new_dir-AP_run-02_bold.nii.gz",
                 "filename": "sub-10_task-new_dir-AP_run-02_bold.nii.gz",
                 "label": "bold"
@@ -210,6 +258,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-AP_run-01_events.tsv",
                 "filename": "sub-10_task-rest_dir-AP_run-01_events.tsv",
                 "label": null
@@ -221,6 +270,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-AP_run-01_sbref.json",
                 "filename": "sub-10_task-rest_dir-AP_run-01_sbref.json",
                 "label": "sbref"
@@ -232,6 +282,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-AP_run-01_sbref.nii.gz",
                 "filename": "sub-10_task-rest_dir-AP_run-01_sbref.nii.gz",
                 "label": "sbref"
@@ -243,6 +294,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-AP_run-01_bold.json",
                 "filename": "sub-10_task-rest_dir-AP_run-01_bold.json",
                 "label": "bold"
@@ -254,6 +306,7 @@
                 "run": "01",
                 "echo": null,
                 "ses": null,
+                "dir": "AP",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-AP_run-01_bold.nii.gz",
                 "filename": "sub-10_task-rest_dir-AP_run-01_bold.nii.gz",
                 "label": "bold"
@@ -265,6 +318,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "PA",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-PA_run-02_events.tsv",
                 "filename": "sub-10_task-rest_dir-PA_run-02_events.tsv",
                 "label": null
@@ -276,6 +330,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "PA",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-PA_run-02_sbref.json",
                 "filename": "sub-10_task-rest_dir-PA_run-02_sbref.json",
                 "label": "sbref"
@@ -287,6 +342,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "PA",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-PA_run-02_sbref.nii.gz",
                 "filename": "sub-10_task-rest_dir-PA_run-02_sbref.nii.gz",
                 "label": "sbref"
@@ -298,6 +354,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "PA",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-PA_run-02_bold.json",
                 "filename": "sub-10_task-rest_dir-PA_run-02_bold.json",
                 "label": "bold"
@@ -309,6 +366,7 @@
                 "run": "02",
                 "echo": null,
                 "ses": null,
+                "dir": "PA",
                 "filepath": "/data/sessions/10/bids/func/sub-10_task-rest_dir-PA_run-02_bold.nii.gz",
                 "filename": "sub-10_task-rest_dir-PA_run-02_bold.nii.gz",
                 "label": "bold"

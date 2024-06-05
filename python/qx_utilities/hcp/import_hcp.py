@@ -33,24 +33,42 @@ import glob
 import json
 import ast
 from datetime import datetime
-unwarp = {None: "Unknown", 'i': 'x', 'j': 'y',
-          'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
-PEDirMap = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA',
-            'RL': 'i', 'i': 'RL', 'LR': 'i-', 'i-': 'LR'}
+
+unwarp = {
+    None: "Unknown",
+    "i": "x",
+    "j": "y",
+    "k": "z",
+    "i-": "x-",
+    "j-": "y-",
+    "k-": "z-",
+}
+PEDirMap = {
+    "AP": "j-",
+    "j-": "AP",
+    "PA": "j",
+    "j": "PA",
+    "RL": "i",
+    "i": "RL",
+    "LR": "i-",
+    "i-": "LR",
+}
 
 
-def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
+def mapToQUNEXcpls(
+    file, sessionsfolder, hcplsname, sessions, overwrite, prefix, nameformat
+):
     """
     Identifies and returns the intended location of the file based on its name.
     """
 
     try:
-        if sessionsfolder[-1] == '/':
+        if sessionsfolder[-1] == "/":
             sessionsfolder = sessionsfolder[:-1]
     except:
         pass
 
-    if '\\' in file:
+    if "\\" in file:
         pathsep = "\\"
     else:
         pathsep = "/"
@@ -59,69 +77,90 @@ def mapToQUNEXcpls(file, sessionsfolder, hcplsname, sessions, overwrite, prefix,
 
     m = re.search(nameformat, file)
     try:
-        subjid = m.group('subject_id')
-        session = m.group('session_name')
-        data = m.group('data').split(pathsep)
+        subjid = m.group("subject_id")
+        session = m.group("session_name")
+        data = m.group("data").split(pathsep)
     except:
         print("ERROR: Could not parse file:", file)
         return False
 
-    if any([e[0] == '.' for e in [subjid, session] + data]):
+    if any([e[0] == "." for e in [subjid, session] + data]):
         return False
 
     sessionid = subjid + "_" + session
 
-    tfolder = os.path.join(sessionsfolder, sessionid, 'hcpls')
+    tfolder = os.path.join(sessionsfolder, sessionid, "hcpls")
 
     tfile = os.path.join(tfolder, os.sep.join(data))
 
-    if sessionid in sessions['skip']:
+    if sessionid in sessions["skip"]:
         return False
-    elif sessionid not in sessions['list']:
-        sessions['list'].append(sessionid)
+    elif sessionid not in sessions["list"]:
+        sessions["list"].append(sessionid)
         if os.path.exists(tfolder):
-            if overwrite == 'yes':
+            if overwrite == "yes" or overwrite is True:
                 print(
-                    prefix + "--> hcpls for session %s already exists: cleaning session" % (sessionid))
+                    prefix
+                    + "---> hcpls for session %s already exists: cleaning session"
+                    % (sessionid)
+                )
                 shutil.rmtree(tfolder)
-                sessions['clean'].append(sessionid)
-            elif not os.path.exists(os.path.join(tfolder, 'hcpfs2nii.log')):
+                sessions["clean"].append(sessionid)
+            elif not os.path.exists(os.path.join(tfolder, "hcpfs2nii.log")):
                 print(
-                    prefix + "--> incomplete hcpls for session %s already exists: cleaning session" % (session))
+                    prefix
+                    + "---> incomplete hcpls for session %s already exists: cleaning session"
+                    % (session)
+                )
                 shutil.rmtree(tfolder)
-                sessions['clean'].append(session)
+                sessions["clean"].append(session)
             else:
-                sessions['skip'].append(session)
+                sessions["skip"].append(session)
                 print(
-                    prefix + "--> hcpls for session %s already exists: skipping session" % (session))
+                    prefix
+                    + "---> hcpls for session %s already exists: skipping session"
+                    % (session)
+                )
                 print(prefix + "    files previously mapped:")
-                with open(os.path.join(tfolder, 'hcpfs2nii.log')) as hcplsLog:
+                with open(os.path.join(tfolder, "hcpfs2nii.log")) as hcplsLog:
                     for logline in hcplsLog:
-                        if 'HCPFS to nii mapping report' in logline:
+                        if "HCPFS to nii mapping report" in logline:
                             continue
-                        elif '=>' in logline:
-                            mappedFile = logline.split('=>')[0].strip()
-                            print(prefix + "    ... %s" %
-                                  (os.path.basename(mappedFile)))
+                        elif "=>" in logline:
+                            mappedFile = logline.split("=>")[0].strip()
+                            print(
+                                prefix + "    ... %s" % (os.path.basename(mappedFile))
+                            )
         else:
-            print(prefix + "--> creating hcpl session %s" % (sessionid))
-            sessions['map'].append(sessionid)
+            print(prefix + "---> creating hcpl session %s" % (sessionid))
+            sessions["map"].append(sessionid)
 
     if os.path.exists(tfile):
-        if sessionid in sessions['skip']:
+        if sessionid in sessions["skip"]:
             return False
         else:
             os.remove(tfile)
     elif not os.path.exists(os.path.dirname(tfile)):
         os.makedirs(os.path.dirname(tfile))
 
-    if session in sessions['skip']:
+    if session in sessions["skip"]:
         return False
 
     return tfile
 
 
-def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None, filesort=None, processed_data=None):
+def import_hcp(
+    sessionsfolder=None,
+    inbox=None,
+    sessions=None,
+    action="link",
+    overwrite="no",
+    archive="move",
+    hcplsname=None,
+    nameformat=None,
+    filesort=None,
+    processed_data=None,
+):
     """
     ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>]``
 
@@ -369,57 +408,67 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
     print("Running import_hcp\n==================")
 
-    if action not in ['link', 'copy', 'move']:
-        raise ge.CommandError("import_hcp", "Invalid action specified", "%s is not a valid action!" % (
-            action), "Please specify one of: copy, link, move!")
+    if action not in ["link", "copy", "move"]:
+        raise ge.CommandError(
+            "import_hcp",
+            "Invalid action specified",
+            "%s is not a valid action!" % (action),
+            "Please specify one of: copy, link, move!",
+        )
 
-    if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("import_hcp", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (
-            overwrite), "Please specify one of: yes, no!")
-
-    if archive not in ['leave', 'move', 'copy', 'delete']:
-        raise ge.CommandError("import_hcp", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (
-            archive), "Please specify one of: move, copy, delete!")
+    if archive not in ["leave", "move", "copy", "delete"]:
+        raise ge.CommandError(
+            "import_hcp",
+            "Invalid dataset archive option",
+            "%s is not a valid option for dataset archive option!" % (archive),
+            "Please specify one of: move, copy, delete!",
+        )
 
     if not filesort:
         filesort = "name_type_se"
 
-    if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("import_hcp", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (
-            filesort), "Please only use keys: name, type, se!")
+    if any([e not in ["name", "type", "se"] for e in filesort.split("_")]):
+        raise ge.CommandError(
+            "import_hcp",
+            "invalid filesort option",
+            "%s is not a valid option for filesort parameter!" % (filesort),
+            "Please only use keys: name, type, se!",
+        )
 
     if sessionsfolder is None:
         sessionsfolder = os.path.abspath(".")
 
     if inbox is None:
-        inbox = os.path.join(sessionsfolder, 'inbox', 'HCPLS')
+        inbox = os.path.join(sessionsfolder, "inbox", "HCPLS")
         hcplsname = ""
     else:
         hcplsname = os.path.basename(inbox)
-        hcplsname = re.sub('.zip$|.gz$|.tgz$', '', hcplsname)
-        hcplsname = re.sub('.tar$', '', hcplsname)
+        hcplsname = re.sub(".zip$|.gz$|.tgz$", "", hcplsname)
+        hcplsname = re.sub(".tar$", "", hcplsname)
 
     if not nameformat:
-        nameformat = r"(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)"
+        nameformat = (
+            r"(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)"
+        )
 
-    sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': []}
+    sessionsList = {"list": [], "clean": [], "skip": [], "map": []}
     allOk = True
     errors = ""
 
     # ---> Check for folders
-    if not os.path.exists(os.path.join(sessionsfolder, 'inbox', 'HCPLS')):
-        os.makedirs(os.path.join(sessionsfolder, 'inbox', 'HCPLS'))
-        print("--> creating inbox HCPLS folder")
+    if not os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS")):
+        os.makedirs(os.path.join(sessionsfolder, "inbox", "HCPLS"))
+        print("---> creating inbox HCPLS folder")
 
-    if not os.path.exists(os.path.join(sessionsfolder, 'archive', 'HCPLS')):
-        os.makedirs(os.path.join(sessionsfolder, 'archive', 'HCPLS'))
-        print("--> creating archive HCPLS folder")
+    if not os.path.exists(os.path.join(sessionsfolder, "archive", "HCPLS")):
+        os.makedirs(os.path.join(sessionsfolder, "archive", "HCPLS"))
+        print("---> creating archive HCPLS folder")
 
     # ---> identification of files
     if sessions:
-        sessions = [e.strip() for e in re.split(r' +|\| *|, *', sessions)]
+        sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
-    print("--> identifying files in %s" % (inbox))
+    print("---> identifying files in %s" % (inbox))
 
     sourceFiles = []
 
@@ -431,7 +480,20 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                 for file in files:
                     filepath = os.path.join(path, file)
                     if sessions:
-                        if any([file.endswith(e) for e in ['.zip', '.tar', '.tar.gz', '.tar.bz', '.tarz', '.tar.bzip2', '.tgz']]):
+                        if any(
+                            [
+                                file.endswith(e)
+                                for e in [
+                                    ".zip",
+                                    ".tar",
+                                    ".tar.gz",
+                                    ".tar.bz",
+                                    ".tarz",
+                                    ".tar.bzip2",
+                                    ".tgz",
+                                ]
+                            ]
+                        ):
                             for session in sessions:
                                 if re.search(session, file):
                                     sourceFiles.append(filepath)
@@ -439,10 +501,9 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                         else:
                             m = re.search(nameformat, filepath)
                             try:
-                                file_subjid = m.group('subject_id')
-                                file_session = m.group('session_name')
-                                file_sessionid = "%s_%s" % (
-                                    file_subjid, file_session)
+                                file_subjid = m.group("subject_id")
+                                file_session = m.group("session_name")
+                                file_sessionid = "%s_%s" % (file_subjid, file_session)
                                 for session in sessions:
                                     if re.search(session, file_sessionid):
                                         sourceFiles.append(filepath)
@@ -452,32 +513,52 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                     else:
                         sourceFiles.append(filepath)
         else:
-            raise ge.CommandFailed("import_hcp", "Invalid inbox", "%s is neither a file or a folder!" % (
-                inbox), "Please check your path!")
+            raise ge.CommandFailed(
+                "import_hcp",
+                "Invalid inbox",
+                "%s is neither a file or a folder!" % (inbox),
+                "Please check your path!",
+            )
     else:
-        raise ge.CommandFailed("import_hcp", "Inbox does not exist",
-                               "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed(
+            "import_hcp",
+            "Inbox does not exist",
+            "The specified inbox [%s] does not exist!" % (inbox),
+            "Please check your path!",
+        )
 
     if not sourceFiles:
-        raise ge.CommandFailed("import_hcp", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (
-            inbox), "Please check your path!")
+        raise ge.CommandFailed(
+            "import_hcp",
+            "No files found",
+            "No files were found to be processed at the specified inbox [%s]!"
+            % (inbox),
+            "Please check your path!",
+        )
 
     # ---> mapping data to sessions' folders
-    print("--> mapping files to QuNex hcpls folders")
+    print("---> mapping files to QuNex hcpls folders")
 
     for file in sourceFiles:
-        if file.endswith('.zip'):
-            print("    --> processing zip package [%s]" % (file))
+        if file.endswith(".zip"):
+            print("    ---> processing zip package [%s]" % (file))
 
             try:
-                z = zipfile.ZipFile(file, 'r')
+                z = zipfile.ZipFile(file, "r")
                 for sf in z.infolist():
-                    if sf.filename[-1] != '/':
+                    if sf.filename[-1] != "/":
                         tfile = mapToQUNEXcpls(
-                            sf.filename, sessionsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
+                            sf.filename,
+                            sessionsfolder,
+                            hcplsname,
+                            sessionsList,
+                            overwrite,
+                            "        ",
+                            nameformat,
+                        )
                         if tfile:
                             fdata = z.read(sf)
-                            fout = open(tfile, 'wb')
+                            fout = open(tfile, "wb")
                             fout.write(fdata)
                             fout.close()
                 z.close()
@@ -485,25 +566,33 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                 print("        -> done!")
             except:
                 print(
-                    "        => Error: Processing of zip package failed. Please check the package!")
+                    "        => Error: Processing of zip package failed. Please check the package!"
+                )
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 allOk = False
                 raise
 
-        elif '.tar' in file or '.tgz' in file:
-            print("   --> processing tar package [%s]" % (file))
+        elif ".tar" in file or ".tgz" in file:
+            print("   ---> processing tar package [%s]" % (file))
 
             try:
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
                         tfile = mapToQUNEXcpls(
-                            member.name, sessionsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
+                            member.name,
+                            sessionsfolder,
+                            hcplsname,
+                            sessionsList,
+                            overwrite,
+                            "        ",
+                            nameformat,
+                        )
                         if tfile:
                             fobj = tar.extractfile(member)
                             fdata = fobj.read()
                             fobj.close()
-                            fout = open(tfile, 'wb')
+                            fout = open(tfile, "wb")
                             fout.write(fdata)
                             fout.close()
                 tar.close()
@@ -511,121 +600,139 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                 print("        -> done!")
             except:
                 print(
-                    "        => Error: Processing of tar package failed. Please check the package!")
+                    "        => Error: Processing of tar package failed. Please check the package!"
+                )
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 allOk = False
 
         else:
             tfile = mapToQUNEXcpls(
-                file, sessionsfolder, hcplsname, sessionsList, overwrite, "    ", nameformat)
+                file,
+                sessionsfolder,
+                hcplsname,
+                sessionsList,
+                overwrite,
+                "    ",
+                nameformat,
+            )
             if tfile:
                 status, msg = gc.moveLinkOrCopy(
-                    file, tfile, action, r="", prefix='    .. ')
+                    file, tfile, action, r="", prefix="    .. "
+                )
                 allOk = allOk and status
                 if not status:
                     errors += msg
 
     # ---> archiving the dataset
     if errors:
-        print("   ==> The following errors were encountered when mapping the files:")
+        print("   ---> The following errors were encountered when mapping the files:")
         print(errors)
     else:
-        if os.path.isfile(inbox) or not os.path.samefile(inbox, os.path.join(sessionsfolder, 'inbox', 'HCPLS')):
+        if os.path.isfile(inbox) or not os.path.samefile(
+            inbox, os.path.join(sessionsfolder, "inbox", "HCPLS")
+        ):
             try:
-                if archive == 'move':
-                    print("--> moving dataset to archive")
-                    shutil.move(inbox, os.path.join(
-                        sessionsfolder, 'archive', 'HCPLS'))
-                elif archive == 'copy':
-                    print("--> copying dataset to archive")
-                    shutil.copy2(inbox, os.path.join(
-                        sessionsfolder, 'archive', 'HCPLS'))
-                elif archive == 'delete':
-                    print("--> deleting dataset")
+                if archive == "move":
+                    print("---> moving dataset to archive")
+                    shutil.move(inbox, os.path.join(sessionsfolder, "archive", "HCPLS"))
+                elif archive == "copy":
+                    print("---> copying dataset to archive")
+                    shutil.copy2(
+                        inbox, os.path.join(sessionsfolder, "archive", "HCPLS")
+                    )
+                elif archive == "delete":
+                    print("---> deleting dataset")
                     if os.path.isfile(inbox):
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
             except:
-                print("==> %s failed!" % (archive))
+                print("---> %s failed!" % (archive))
         else:
-            files = glob.glob(os.path.join(inbox, '*'))
+            files = glob.glob(os.path.join(inbox, "*"))
             for file in files:
                 try:
-                    if archive == 'move':
-                        print("--> moving dataset to archive")
-                        shutil.move(file, os.path.join(
-                            sessionsfolder, 'archive', 'HCPLS'))
-                    elif archive == 'copy':
-                        print("--> copying dataset to archive")
-                        shutil.copy2(file, os.path.join(
-                            sessionsfolder, 'archive', 'HCPLS'))
-                    elif archive == 'delete':
-                        print("--> deleting dataset")
+                    if archive == "move":
+                        print("---> moving dataset to archive")
+                        shutil.move(
+                            file, os.path.join(sessionsfolder, "archive", "HCPLS")
+                        )
+                    elif archive == "copy":
+                        print("---> copying dataset to archive")
+                        shutil.copy2(
+                            file, os.path.join(sessionsfolder, "archive", "HCPLS")
+                        )
+                    elif archive == "delete":
+                        print("---> deleting dataset")
                         if os.path.isfile(file):
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
                 except:
-                    print("==> %s of %s failed!" % (archive, file))
+                    print("---> %s of %s failed!" % (archive, file))
 
     # ---> check status
     if not allOk:
         print("\nFinal report\n============")
-        raise ge.CommandFailed("import_hcp", "Processing of some packages failed",
-                               "Mapping of image files aborted.", "Please check report!")
+        raise ge.CommandFailed(
+            "import_hcp",
+            "Processing of some packages failed",
+            "Mapping of image files aborted.",
+            "Please check report!",
+        )
 
     # ---> mapping data to QuNex nii folder
     report = []
-    for execute in ['map', 'clean']:
+    for execute in ["map", "clean"]:
         for session in sessionsList[execute]:
-            if session != 'hcpls':
+            if session != "hcpls":
 
-                sparts = session.split('_')
+                sparts = session.split("_")
                 subjectid = sparts.pop(0)
                 sessionid = "_".join([e for e in sparts + [""] if e])
-                info = 'subject ' + subjectid
+                info = "subject " + subjectid
                 if sessionid:
                     info += ", session " + sessionid
 
                 try:
                     print
-                    nimg, nmapped = map_hcpls2nii(os.path.join(
-                        sessionsfolder, session), overwrite, filesort=filesort)
+                    nimg, nmapped = map_hcpls2nii(
+                        os.path.join(sessionsfolder, session),
+                        overwrite,
+                        filesort=filesort,
+                    )
                     if nimg == 0:
-                        report.append(
-                            '%s had no images found to be mapped' % (info))
+                        report.append("%s had no images found to be mapped" % (info))
                         allOk = False
                     elif nimg == nmapped:
                         report.append(
-                            '%s completed ok. %d images mapped' % (info, nmapped))
+                            "%s completed ok. %d images mapped" % (info, nmapped)
+                        )
                     else:
-                        report.append('%s mapped incompletely [%d images, %d mapped]' % (
-                            info, nimg, nmapped))
+                        report.append(
+                            "%s mapped incompletely [%d images, %d mapped]"
+                            % (info, nimg, nmapped)
+                        )
                         allOk = False
                 except ge.CommandFailed as e:
-                    print("===> WARNING:\n     %s\n" %
-                          ("\n     ".join(e.report)))
-                    report.append('%s failed' % (info))
+                    print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                    report.append("%s failed" % (info))
                     allOk = False
 
             # ---> also copy over processed data
             if processed_data:
-                print("\n--> copying processed data")
+                print("\n---> copying processed data")
                 # path to the session's processed data
-                session_path = processed_data.replace(
-                    "<session_id>", sessionid)
+                session_path = processed_data.replace("<session_id>", sessionid)
                 if not os.path.exists(session_path):
-                    session_path = processed_data.replace(
-                        "<session_id>", subjectid)
+                    session_path = processed_data.replace("<session_id>", subjectid)
                 if not os.path.exists(session_path):
-                    session_path = processed_data.replace(
-                        "<session_id>", session)
+                    session_path = processed_data.replace("<session_id>", session)
                 if not os.path.exists(session_path):
                     session_path = processed_data
 
                 # target folder
-                tfolder = os.path.join(sessionsfolder, session, 'hcp', session)
+                tfolder = os.path.join(sessionsfolder, session, "hcp", session)
                 if not os.path.exists(tfolder):
                     os.makedirs(tfolder)
 
@@ -634,9 +741,9 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
                     modality_path = os.path.join(session_path, m)
                     if os.path.exists(modality_path):
                         print(
-                            f"    ... copying processed {m} data to QuNex session folder")
-                        shutil.copytree(
-                            modality_path, os.path.join(tfolder, m))
+                            f"    ... copying processed {m} data to QuNex session folder"
+                        )
+                        shutil.copytree(modality_path, os.path.join(tfolder, m))
 
     print("\nFinal report\n============")
     for line in report:
@@ -644,16 +751,20 @@ def import_hcp(sessionsfolder=None, inbox=None, sessions=None, action='link', ov
 
     if not allOk:
         raise ge.CommandFailed(
-            "import_hcp", "Some actions failed", "Please check report!")
+            "import_hcp", "Some actions failed", "Please check report!"
+        )
 
 
 def processHCPLS(sessionfolder, filesort):
-    """
-    """
+    """ """
 
     if not os.path.exists(sessionfolder):
-        raise ge.CommandFailed("processHCPLS", "No hcpls folder present!", "There is no hcpls data in session folder %s" % (
-            sessionfolder), "Please import HCPLS data first!")
+        raise ge.CommandFailed(
+            "processHCPLS",
+            "No hcpls folder present!",
+            "There is no hcpls data in session folder %s" % (sessionfolder),
+            "Please import HCPLS data first!",
+        )
 
     session = os.path.basename(os.path.dirname(sessionfolder))
     # sparts    = session.split('_')
@@ -666,15 +777,19 @@ def processHCPLS(sessionfolder, filesort):
     hcplsStructure = os.path.join(niuTemplateFolder, "import_hcp.txt")
 
     if not os.path.exists(hcplsStructure):
-        raise ge.CommandFailed("processHCPLS", "No HCPLS structure file present!", "There is no HCPLS structure file %s" % (
-            hcplsStructure), "Please check your QuNex installation")
+        raise ge.CommandFailed(
+            "processHCPLS",
+            "No HCPLS structure file present!",
+            "There is no HCPLS structure file %s" % (hcplsStructure),
+            "Please check your QuNex installation",
+        )
 
     hcpls_file = open(hcplsStructure)
     content = hcpls_file.read()
     hcpls = ast.literal_eval(content)
 
     # --- get a list of folders and process them
-    dfolders = glob.glob(os.path.join(sessionfolder, '*'))
+    dfolders = glob.glob(os.path.join(sessionfolder, "*"))
 
     # -- data: SE number, label, fodlerInfo, folderFiles, status
     checkedFolders = []
@@ -688,39 +803,43 @@ def processHCPLS(sessionfolder, filesort):
 
         # --- get folder information
         folderName = os.path.basename(dfolder)
-        folderTags = folderName.split('_')
+        folderTags = folderName.split("_")
         folderLabel = folderTags.pop(0)
-        if folderLabel not in hcpls['folders']:
+        if folderLabel not in hcpls["folders"]:
             continue
 
-        for info in hcpls['folders'][folderLabel]['info']:
+        for info in hcpls["folders"][folderLabel]["info"]:
             if folderTags:
                 folderInfo[info] = folderTags.pop(0)
 
         # --- Get files list
-        files = sorted(glob.glob(os.path.join(dfolder, '*')))
-        files = [e for e in files if e.endswith('.nii.gz')]
+        files = sorted(glob.glob(os.path.join(dfolder, "*")))
+        files = [e for e in files if e.endswith(".nii.gz")]
 
         # --- Exclude files
-        toExclude = ['InitialFrames']
+        toExclude = ["InitialFrames"]
         for exclude in toExclude:
             files = [e for e in files if exclude not in e]
 
         # --- Proces spin echo files
-        sefile = [e for e in files if 'SpinEchoFieldMap' in e]
+        sefile = [e for e in files if "SpinEchoFieldMap" in e]
         if sefile:
-            senum = [e for e in sefile[0].split(
-                '_') if 'SpinEchoFieldMap' in e][0].replace('SpinEchoFieldMap', "")
+            senum = [e for e in sefile[0].split("_") if "SpinEchoFieldMap" in e][
+                0
+            ].replace("SpinEchoFieldMap", "")
             if senum:
                 senum = int(senum)
             else:
                 senum = 1
 
         # --- Proces fieldmap files
-        fmfile = [e for e in files if 'FieldMap_Magnitude' in e]
+        fmfile = [e for e in files if "FieldMap_Magnitude" in e]
         if fmfile:
-            fmnum = [e for e in fmfile[0].split('_') if 'Magnitude' in e][0].replace(
-                'Magnitude', "").replace('.nii.gz', "")
+            fmnum = (
+                [e for e in fmfile[0].split("_") if "Magnitude" in e][0]
+                .replace("Magnitude", "")
+                .replace(".nii.gz", "")
+            )
             if fmnum:
                 fmnum = int(fmnum)
             else:
@@ -728,15 +847,24 @@ def processHCPLS(sessionfolder, filesort):
 
         for file in files:
             fileName = os.path.basename(file)
-            fileParts = fileName.replace(
-                session + "_", "").replace('.nii.gz', '').split('_')
+            fileParts = (
+                fileName.replace(session + "_", "").replace(".nii.gz", "").split("_")
+            )
             fileParts = [
-                'SpinEchoFieldMap' if 'SpinEchoFieldMap' in e else e for e in fileParts]
+                "SpinEchoFieldMap" if "SpinEchoFieldMap" in e else e for e in fileParts
+            ]
             folderFiles.append(
-                {'rank': 0, 'path': file, 'name': fileName, 'parts': fileParts, 'json': None})
+                {
+                    "rank": 0,
+                    "path": file,
+                    "name": fileName,
+                    "parts": fileParts,
+                    "json": None,
+                }
+            )
 
         # --- Check files
-        check = list(hcpls['folders'][folderLabel]['check'])
+        check = list(hcpls["folders"][folderLabel]["check"])
         rank = 0
         for fcheck in check:
             rank += 1
@@ -744,56 +872,65 @@ def processHCPLS(sessionfolder, filesort):
             for file in folderFiles:
                 match = True
                 for citem in fcheck:
-                    if citem[0] == '-':
-                        if citem[1:] in file['parts']:
+                    if citem[0] == "-":
+                        if citem[1:] in file["parts"]:
                             match = False
                     else:
-                        if citem not in file['parts']:
+                        if citem not in file["parts"]:
                             match = False
                 if match:
-                    file['rank'] = rank
+                    file["rank"] = rank
                     found = True
                     break
             if not found:
                 missingFiles.append([dfolder, fcheck])
 
         # --- Order files
-        folderFiles.sort(key=lambda x: x['rank'])
-        extraFiles = [e for e in folderFiles if e['rank'] == 0]
-        folderFiles = [e for e in folderFiles if e['rank'] > 0]
+        folderFiles.sort(key=lambda x: x["rank"])
+        extraFiles = [e for e in folderFiles if e["rank"] == 0]
+        folderFiles = [e for e in folderFiles if e["rank"] > 0]
 
         # --- Get json info
         for file in folderFiles:
-            jfile = file['path'].replace('.nii.gz', '.json')
+            jfile = file["path"].replace(".nii.gz", ".json")
             if not os.path.exists(jfile):
                 missingFiles.append([dfolder, os.path.basename(jfile)])
-                file['json'] = {}
+                file["json"] = {}
             else:
-                with open(jfile, 'r') as f:
+                with open(jfile, "r") as f:
                     jinf = json.load(f)
-                file['json'] = jinf
+                file["json"] = jinf
 
         # --- finish up folder
-        checkedFolders.append({'senum': senum, 'fmnum': fmnum, 'name': folderName, 'label': folderLabel,
-                              'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles})
+        checkedFolders.append(
+            {
+                "senum": senum,
+                "fmnum": fmnum,
+                "name": folderName,
+                "label": folderLabel,
+                "folderInfo": folderInfo,
+                "folderFiles": folderFiles,
+                "extraFiles": extraFiles,
+                "missingFiles": missingFiles,
+            }
+        )
 
     # sort folders
-    print("--> filesort:", filesort)
-    for sortkey in filesort.split('_'):
-        if sortkey == 'name':
-            checkedFolders.sort(key=lambda x: x['name'])
+    print("---> filesort:", filesort)
+    for sortkey in filesort.split("_"):
+        if sortkey == "name":
+            checkedFolders.sort(key=lambda x: x["name"])
 
-        if sortkey == 'type':
-            checkedFolders.sort(
-                key=lambda x: hcpls['folders']['order'][x['label']])
+        if sortkey == "type":
+            checkedFolders.sort(key=lambda x: hcpls["folders"]["order"][x["label"]])
 
-        if sortkey == 'se':
-            checkedFolders.sort(key=lambda x: x['senum'])
+        if sortkey == "se":
+            checkedFolders.sort(key=lambda x: x["senum"])
 
     return checkedFolders
 
 
-def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
+def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     """
     ``map_hcpls2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``
 
@@ -956,108 +1093,121 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     if not filesort:
         filesort = "name_type_se"
 
-    if any([e not in ['name', 'type', 'se'] for e in filesort.split("_")]):
-        raise ge.CommandError("import_hcp", "invalid filesort option", "%s is not a valid option for filesort parameter!" % (
-            filesort), "Please only use keys: name, type, se!")
+    if any([e not in ["name", "type", "se"] for e in filesort.split("_")]):
+        raise ge.CommandError(
+            "import_hcp",
+            "invalid filesort option",
+            "%s is not a valid option for filesort parameter!" % (filesort),
+            "Please only use keys: name, type, se!",
+        )
 
     sfolder = os.path.abspath(sourcefolder)
-    hfolder = os.path.join(sourcefolder, 'hcpls')
-    nfolder = os.path.join(sourcefolder, 'nii')
+    hfolder = os.path.join(sourcefolder, "hcpls")
+    nfolder = os.path.join(sourcefolder, "nii")
 
     # --- report file
 
     if report is None:
-        study = gc.deduceFolders({'sourcefolder': sfolder})
-        basefolder = study.get('basefolder')
+        study = gc.deduceFolders({"sourcefolder": sfolder})
+        basefolder = study.get("basefolder")
         if basefolder:
-            report = os.path.join(basefolder, 'info',
-                                  'hcpls', 'parameters.txt')
+            report = os.path.join(basefolder, "info", "hcpls", "parameters.txt")
 
     if report:
-        rout = open(report, 'a')
+        rout = open(report, "a")
     else:
-        rout = open(os.devnull, 'w')
+        rout = open(os.devnull, "w")
 
     # --- session info
 
     session = os.path.basename(sfolder)
-    sparts = session.split('_')
+    sparts = session.split("_")
     subjectid = sparts.pop(0)
     sessionid = "_".join([e for e in sparts + [""] if e])
 
-    info = 'subject ' + subjectid
+    info = "subject " + subjectid
     if sessionid:
         info += ", session " + sessionid
 
-    print('info:', info)
+    print("info:", info)
 
     splash = "Running map_hcpls2nii for %s" % (info)
     print(splash)
-    print("".join(['=' for e in range(len(splash))]))
+    print("".join(["=" for e in range(len(splash))]))
 
     splash = "\n\nParameters for " + info
     print(splash, file=rout)
-    print("".join(['=' for e in range(len(splash))]), file=rout)
-
-    if overwrite not in ['yes', 'no']:
-        raise ge.CommandError("map_hcpls2nii", "Invalid option for overwrite specified",
-                              "%s is not a valid option for the overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
+    print("".join(["=" for e in range(len(splash))]), file=rout)
 
     # --- process hcpls folder
     hcplsData = processHCPLS(hfolder, filesort)
     if not hcplsData:
-        raise ge.CommandFailed("map_hcpls2nii", "No image files in hcpls folder!",
-                               "There are no image files in the hcpls folder [%s]" % (hfolder), "Please check your data!")
+        raise ge.CommandFailed(
+            "map_hcpls2nii",
+            "No image files in hcpls folder!",
+            "There are no image files in the hcpls folder [%s]" % (hfolder),
+            "Please check your data!",
+        )
 
     # --- check for presence of nifti files
     if os.path.exists(nfolder):
-        nfiles = len(glob.glob(os.path.join(nfolder, '*.nii*')))
+        nfiles = len(glob.glob(os.path.join(nfolder, "*.nii*")))
         if nfiles > 0:
-            if overwrite == 'no':
-                raise ge.CommandFailed("map_hcpls2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (
-                    nfolder), "Please check or set parameter 'overwrite' to yes!")
+            if overwrite == "no" or overwrite is False:
+                raise ge.CommandFailed(
+                    "map_hcpls2nii",
+                    "Existing files present!",
+                    "There are existing files in the nii folder [%s]" % (nfolder),
+                    "Please check or set parameter 'overwrite' to yes!",
+                )
             else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
-                print("--> cleaned nii folder, removed existing files")
+                print("---> cleaned nii folder, removed existing files")
     else:
         os.makedirs(nfolder)
 
     # --- create session.txt file
-    sout = gc.createSessionFile(
-        "map_hcpls2nii", sfolder, session, subjectid, overwrite)
+    sout = gc.createSessionFile("map_hcpls2nii", sfolder, session, subjectid, overwrite)
 
     # --- create session_hcp.txt file
-    sfile = os.path.join(sfolder, 'session_hcp.txt')
+    sfile = os.path.join(sfolder, "session_hcp.txt")
     if os.path.exists(sfile):
-        if overwrite == 'yes':
+        if overwrite == "yes" or overwrite is True:
             os.remove(sfile)
-            print("--> removed existing session_hcp.txt file")
+            print("---> removed existing session_hcp.txt file")
         else:
-            raise ge.CommandFailed("map_hcpls2nii", "session_hcp.txt file already present!", "A session_hcp.txt file alredy exists [%s]" % (
-                sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
+            raise ge.CommandFailed(
+                "map_hcpls2nii",
+                "session_hcp.txt file already present!",
+                "A session_hcp.txt file alredy exists [%s]" % (sfile),
+                "Please check or set parameter 'overwrite' to 'yes' to rebuild it!",
+            )
 
-    sout_hcp = open(sfile, 'w')
+    sout_hcp = open(sfile, "w")
     gc.print_qunex_header(file=sout_hcp)
     print("#", file=sout_hcp)
-    print('session:', session, file=sout_hcp)
-    print('subject:', subjectid, file=sout_hcp)
-    print('hcpfs:', hfolder, file=sout_hcp)
-    print('raw_data:', nfolder, file=sout_hcp)
-    print('hcp:', os.path.join(sfolder, 'hcp'), file=sout_hcp)
+    print("session:", session, file=sout_hcp)
+    print("subject:", subjectid, file=sout_hcp)
+    print("hcpfs:", hfolder, file=sout_hcp)
+    print("raw_data:", nfolder, file=sout_hcp)
+    print("hcp:", os.path.join(sfolder, "hcp"), file=sout_hcp)
     print(file=sout_hcp)
-    print('hcpready: true', file=sout_hcp)
+    print("hcpready: true", file=sout_hcp)
 
     # --- open hcpfs2nii log file
 
-    if overwrite == 'yes':
-        mode = 'w'
+    if overwrite == "yes" or overwrite is True:
+        mode = "w"
     else:
-        mode = 'a'
+        mode = "a"
 
-    bout = open(os.path.join(hfolder, 'hcpls2nii.log'), mode)
-    print("HCPLS to nii mapping report, executed on %s" %
-          (datetime.now().strftime("%Y-%m-%dT%H:%M:%S")), file=bout)
+    bout = open(os.path.join(hfolder, "hcpls2nii.log"), mode)
+    print(
+        "HCPLS to nii mapping report, executed on %s"
+        % (datetime.now().strftime("%Y-%m-%dT%H:%M:%S")),
+        file=bout,
+    )
 
     # --- map files
 
@@ -1073,285 +1223,444 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     firstImage = True
 
     for folder in hcplsData:
-        if folder['label'] in ['rfMRI', 'tfMRI']:
+        if folder["label"] in ["rfMRI", "tfMRI"]:
             boldn += 1
 
-        for fileInfo in folder['folderFiles']:
-            if fileInfo['name'] in mapped:
+        for fileInfo in folder["folderFiles"]:
+            if fileInfo["name"] in mapped:
                 continue
 
-            mapped.append(fileInfo['name'])
+            mapped.append(fileInfo["name"])
 
             imgn += 1
             tfile = os.path.join(nfolder, "%02d.nii.gz" % (imgn))
-            status = gc.moveLinkOrCopy(fileInfo['path'], tfile, action='link')
+            status = gc.moveLinkOrCopy(fileInfo["path"], tfile, action="link")
 
             if status:
                 nmapped += 1
-                print("--> linked %02d.nii.gz <-- %s" %
-                      (imgn, fileInfo['name']))
+                print("---> linked %02d.nii.gz <-- %s" % (imgn, fileInfo["name"]))
 
                 # -- Institution and device information
 
                 if firstImage:
-                    deviceInfo = "%s|%s|%s" % (fileInfo['json'].get('Manufacturer', "NA"), fileInfo['json'].get(
-                        'ManufacturersModelName', "NA"), fileInfo['json'].get('DeviceSerialNumber', "NA"))
-                    institution = fileInfo['json'].get('InstitutionName', "NA")
-                    out = "\ninstitution: %s\ndevice: %s\n" % (
-                        institution, deviceInfo)
+                    deviceInfo = "%s|%s|%s" % (
+                        fileInfo["json"].get("Manufacturer", "NA"),
+                        fileInfo["json"].get("ManufacturersModelName", "NA"),
+                        fileInfo["json"].get("DeviceSerialNumber", "NA"),
+                    )
+                    institution = fileInfo["json"].get("InstitutionName", "NA")
+                    out = "\ninstitution: %s\ndevice: %s\n" % (institution, deviceInfo)
                     print(out, file=sout)
                     print(out, file=sout_hcp)
                     firstImage = False
 
                 # --T1w and T2w
-                if fileInfo['parts'][0] in ['T1w', 'T2w']:
+                if fileInfo["parts"][0] in ["T1w", "T2w"]:
                     # -29s for alignment purposes (output generation is slightly different with T1w and T2w)
                     out = "%02d: %-20s: %-29s" % (
-                        imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']))
+                        imgn,
+                        fileInfo["parts"][0],
+                        "_".join(fileInfo["parts"]),
+                    )
                     print(out, end=" ", file=sout)
                     print(out, end=" ", file=sout_hcp)
-                    if folder['senum']:
-                        out = ": se(%d)" % (folder['senum'])
+                    if folder["senum"]:
+                        out = ": se(%d)" % (folder["senum"])
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
-                    if folder['fmnum']:
-                        out = ": fm(%d)" % (folder['fmnum'])
+                    if folder["fmnum"]:
+                        out = ": fm(%d)" % (folder["fmnum"])
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
                     echospacing = 0
-                    if fileInfo['json'].get('DwellTime', None):
-                        echospacing = fileInfo['json'].get('DwellTime')
+                    if fileInfo["json"].get("DwellTime", None):
+                        echospacing = fileInfo["json"].get("DwellTime")
                         out = ": DwellTime(%.10f)" % (echospacing)
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
-                    elif fileInfo['json'].get('EchoSpacing', None):
-                        echospacing = fileInfo['json'].get('EchoSpacing')
+                    elif fileInfo["json"].get("EchoSpacing", None):
+                        echospacing = fileInfo["json"].get("EchoSpacing")
                         out = ": EchoSpacing(%.10f)" % (echospacing)
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
-                    if fileInfo['json'].get('ReadoutDirection', None):
+                    if fileInfo["json"].get("ReadoutDirection", None):
                         out = ": UnwarpDir(%s)" % (
-                            unwarp[fileInfo['json'].get('ReadoutDirection')])
+                            unwarp[fileInfo["json"].get("ReadoutDirection")]
+                        )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
 
                     # add filename
-                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
                     print(out, file=sout)
                     print(out, file=sout_hcp)
 
-                    print("\n" + fileInfo['parts'][0], file=rout)
+                    print("\n" + fileInfo["parts"][0], file=rout)
                     print(
-                        "".join(['-' for e in range(len(fileInfo['parts'][0]))]), file=rout)
-                    print("%-25s : %.8f" % ("_hcp_%ssamplespacing" %
-                          (fileInfo['parts'][0][:2]), echospacing), file=rout)
-                    print("%-25s : %s" % ("_hcp_unwarpdir",
-                          unwarp[fileInfo['json'].get('ReadoutDirection', None)]), file=rout)
+                        "".join(["-" for e in range(len(fileInfo["parts"][0]))]),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : %.8f"
+                        % (
+                            "_hcp_%ssamplespacing" % (fileInfo["parts"][0][:2]),
+                            echospacing,
+                        ),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : %s"
+                        % (
+                            "_hcp_unwarpdir",
+                            unwarp[fileInfo["json"].get("ReadoutDirection", None)],
+                        ),
+                        file=rout,
+                    )
 
                 # -- BOLDS
-                elif fileInfo['parts'][0] in ['tfMRI', 'rfMRI']:
+                elif fileInfo["parts"][0] in ["tfMRI", "rfMRI"]:
 
-                    phenc = fileInfo['json'].get(
-                        'PhaseEncodingDirection', None)
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
                     if phenc:
-                        phenc = PEDirMap.get(phenc, 'NA')
+                        phenc = PEDirMap.get(phenc, "NA")
                     else:
-                        phenc = fileInfo['parts'][2]
+                        phenc = fileInfo["parts"][2]
 
                     fmstr = ""
-                    if folder['fmnum']:
-                        fmstr += ": fm(%d)" % (folder['fmnum'])
-                    if folder['senum']:
-                        fmstr += ": se(%d)" % (folder['senum'])
+                    if folder["fmnum"]:
+                        fmstr += ": fm(%d)" % (folder["fmnum"])
+                    if folder["senum"]:
+                        fmstr += ": se(%d)" % (folder["senum"])
 
-                    if 'SBRef' in fileInfo['parts']:
-                        out = "%02d: %-20s: %-30s%s : phenc(%s)" % (imgn, "boldref%d:%s" % (
-                            boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), fmstr, phenc)
+                    if "SBRef" in fileInfo["parts"]:
+                        out = "%02d: %-20s: %-30s%s : phenc(%s)" % (
+                            imgn,
+                            "boldref%d:%s" % (boldn, fileInfo["parts"][1]),
+                            "_".join(fileInfo["parts"]),
+                            fmstr,
+                            phenc,
+                        )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
                     else:
-                        out = "%02d: %-20s: %-30s%s : phenc(%s)" % (imgn, "bold%d:%s" % (
-                            boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), fmstr, phenc)
+                        out = "%02d: %-20s: %-30s%s : phenc(%s)" % (
+                            imgn,
+                            "bold%d:%s" % (boldn, fileInfo["parts"][1]),
+                            "_".join(fileInfo["parts"]),
+                            fmstr,
+                            phenc,
+                        )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
 
-                    if fileInfo['json'].get('EffectiveEchoSpacing', None):
+                    if fileInfo["json"].get("EffectiveEchoSpacing", None):
                         out = ": EchoSpacing(%.10f)" % (
-                            fileInfo['json'].get('EffectiveEchoSpacing'))
+                            fileInfo["json"].get("EffectiveEchoSpacing")
+                        )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
 
                     # add filename
-                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
                     print(out, file=sout)
                     print(out, file=sout_hcp)
 
-                    print("\n" + "_".join(fileInfo['parts']), file=rout)
+                    print("\n" + "_".join(fileInfo["parts"]), file=rout)
                     print(
-                        "".join(['-' for e in range(len("_".join(fileInfo['parts'])))]), file=rout)
-                    print("%-25s : %.8f" % ("_hcp_bold_echospacing",
-                          fileInfo['json'].get('EffectiveEchoSpacing', -9.)), file=rout)
-                    print("%-25s : '%s=%s'" % ("_hcp_bold_unwarpdir", phenc,
-                          unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)]), file=rout)
+                        "".join(["-" for e in range(len("_".join(fileInfo["parts"])))]),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : %.8f"
+                        % (
+                            "_hcp_bold_echospacing",
+                            fileInfo["json"].get("EffectiveEchoSpacing", -9.0),
+                        ),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : '%s=%s'"
+                        % (
+                            "_hcp_bold_unwarpdir",
+                            phenc,
+                            unwarp[
+                                fileInfo["json"].get("PhaseEncodingDirection", None)
+                            ],
+                        ),
+                        file=rout,
+                    )
 
                 # -- SE
-                elif fileInfo['parts'][0] == 'SpinEchoFieldMap':
-                    phenc = fileInfo['json'].get(
-                        'PhaseEncodingDirection', None)
+                elif fileInfo["parts"][0] == "SpinEchoFieldMap":
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
                     if phenc:
-                        phenc = PEDirMap.get(phenc, 'NA')
+                        phenc = PEDirMap.get(phenc, "NA")
                     else:
-                        phenc = [e for e in ['LR', 'RL', 'AP', 'PA']
-                                 if e in fileInfo['parts']] + ['NA']
+                        phenc = [
+                            e
+                            for e in ["LR", "RL", "AP", "PA"]
+                            if e in fileInfo["parts"]
+                        ] + ["NA"]
                         phenc = phenc[0]
 
-                    if phenc == 'NA':
-                        print("==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (
-                            imgn, fileInfo['name']))
+                    if phenc == "NA":
+                        print(
+                            "---> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!"
+                            % (imgn, fileInfo["name"])
+                        )
                         phencstr = ""
                     else:
                         phencstr = ": phenc(%s) " % (phenc)
 
-                    if fileInfo['json'].get('EffectiveEchoSpacing', None):
+                    if fileInfo["json"].get("EffectiveEchoSpacing", None):
                         echospstr = ": EchoSpacing(%.10f) " % (
-                            fileInfo['json'].get('EffectiveEchoSpacing'))
+                            fileInfo["json"].get("EffectiveEchoSpacing")
+                        )
                     else:
                         echospstr = ""
 
-                    out = "%02d: %-20s: %-30s: se(%d) %s%s: filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(
-                        fileInfo['parts']), folder['senum'], phencstr, echospstr, "_".join(fileInfo['parts']))
+                    out = "%02d: %-20s: %-30s: se(%d) %s%s: filename(%s)" % (
+                        imgn,
+                        "SE-FM-%s" % (fileInfo["parts"][1]),
+                        "_".join(fileInfo["parts"]),
+                        folder["senum"],
+                        phencstr,
+                        echospstr,
+                        "_".join(fileInfo["parts"]),
+                    )
                     print(out, file=sout)
                     print(out, file=sout_hcp)
 
-                    print("\n" + "_".join(fileInfo['parts']), file=rout)
+                    print("\n" + "_".join(fileInfo["parts"]), file=rout)
                     print(
-                        "".join(['-' for e in range(len("_".join(fileInfo['parts'])))]), file=rout)
-                    print("%-25s : %.8f" % ("_hcp_seechospacing",
-                          fileInfo['json'].get('EffectiveEchoSpacing', -9.)), file=rout)
-                    print("%-25s : '%s=%s'" % ("_hcp_seunwarpdir", phenc,
-                          unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)]), file=rout)
+                        "".join(["-" for e in range(len("_".join(fileInfo["parts"])))]),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : %.8f"
+                        % (
+                            "_hcp_seechospacing",
+                            fileInfo["json"].get("EffectiveEchoSpacing", -9.0),
+                        ),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : '%s=%s'"
+                        % (
+                            "_hcp_seunwarpdir",
+                            phenc,
+                            unwarp[
+                                fileInfo["json"].get("PhaseEncodingDirection", None)
+                            ],
+                        ),
+                        file=rout,
+                    )
 
                 # -- Siemens fieldmap
-                elif fileInfo['parts'][0] == 'FieldMap':
-                    out = "%02d: %-20s: %-30s: fm(%d) : filename(%s)" % (imgn, "FM-%s" % (
-                        fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['fmnum'], "_".join(fileInfo['parts']))
+                elif fileInfo["parts"][0] == "FieldMap":
+                    out = "%02d: %-20s: %-30s: fm(%d) : filename(%s)" % (
+                        imgn,
+                        "FM-%s" % (fileInfo["parts"][1]),
+                        "_".join(fileInfo["parts"]),
+                        folder["fmnum"],
+                        "_".join(fileInfo["parts"]),
+                    )
                     print(out, file=sout)
                     print(out, file=sout_hcp)
 
-                    print("\n" + "_".join(fileInfo['parts']), file=rout)
+                    print("\n" + "_".join(fileInfo["parts"]), file=rout)
                     print(
-                        "".join(['-' for e in range(len("_".join(fileInfo['parts'])))]), file=rout)
+                        "".join(["-" for e in range(len("_".join(fileInfo["parts"])))]),
+                        file=rout,
+                    )
 
                 # -- dMRI
-                elif fileInfo['parts'][0] in ['dMRI', 'DWI']:
-                    phenc = fileInfo['json'].get(
-                        'PhaseEncodingDirection', None)
+                elif fileInfo["parts"][0] in ["dMRI", "DWI"]:
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
                     if phenc:
-                        phenc = PEDirMap.get(phenc, 'NA')
+                        phenc = PEDirMap.get(phenc, "NA")
                     else:
-                        phenc = [e for e in ['LR', 'RL', 'AP', 'PA']
-                                 if e in fileInfo['parts']] + ['NA']
+                        phenc = [
+                            e
+                            for e in ["LR", "RL", "AP", "PA"]
+                            if e in fileInfo["parts"]
+                        ] + ["NA"]
                         phenc = phenc[0]
 
-                    if phenc == 'NA':
-                        print("==> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!" % (
-                            imgn, fileInfo['name']))
+                    if phenc == "NA":
+                        print(
+                            "---> WARNING: Could not identify phase encoding direction for %d.nii.gz [%s]!"
+                            % (imgn, fileInfo["name"])
+                        )
                         phencstr = ""
                     else:
                         phencstr = ": phenc(%s)" % (phenc)
 
-                    if 'SBRef' in fileInfo['parts']:
-                        out = "%02d: %-20s: %-30s%s" % (imgn, "DWIref:%s_%s" % (
-                            fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phencstr)
+                    if "SBRef" in fileInfo["parts"]:
+                        out = "%02d: %-20s: %-30s%s" % (
+                            imgn,
+                            "DWIref:%s_%s" % (fileInfo["parts"][1], phenc),
+                            "_".join(fileInfo["parts"]),
+                            phencstr,
+                        )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
-                        if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                            print(": EchoSpacing(%.10f)" % (fileInfo['json'].get(
-                                'EffectiveEchoSpacing', -0.009) * 1000.), end=" ", file=sout)
-                            print(": EchoSpacing(%.10f)" % (fileInfo['json'].get(
-                                'EffectiveEchoSpacing', -0.009) * 1000.), end=" ", file=sout_hcp)
+                        if fileInfo["json"].get("EffectiveEchoSpacing", None):
+                            print(
+                                ": EchoSpacing(%.10f)"
+                                % (
+                                    fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
+                                ),
+                                end=" ",
+                                file=sout,
+                            )
+                            print(
+                                ": EchoSpacing(%.10f)"
+                                % (
+                                    fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
+                                ),
+                                end=" ",
+                                file=sout_hcp,
+                            )
 
                     else:
-                        out = "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWI:%s_%s" % (
-                            fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc)
+                        out = "%02d: %-20s: %-30s: phenc(%s)" % (
+                            imgn,
+                            "DWI:%s_%s" % (fileInfo["parts"][1], phenc),
+                            "_".join(fileInfo["parts"]),
+                            phenc,
+                        )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
-                        if fileInfo['json'].get('EffectiveEchoSpacing', None):
-                            out = ": EchoSpacing(%.10f)" % (fileInfo['json'].get(
-                                'EffectiveEchoSpacing', -0.009) * 1000.)
+                        if fileInfo["json"].get("EffectiveEchoSpacing", None):
+                            out = ": EchoSpacing(%.10f)" % (
+                                fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
+                            )
                             print(out, end=" ", file=sout)
                             print(out, end=" ", file=sout_hcp)
 
-                        print("\n" + "_".join(fileInfo['parts']), file=rout)
+                        print("\n" + "_".join(fileInfo["parts"]), file=rout)
                         print(
-                            "".join(['-' for e in range(len("_".join(fileInfo['parts'])))]), file=rout)
-                        print("%-25s : %.8f" % ("_hcp_dwi_echospacing", fileInfo['json'].get(
-                            'EffectiveEchoSpacing', -0.009) * 1000.), file=rout)
+                            "".join(
+                                ["-" for e in range(len("_".join(fileInfo["parts"])))]
+                            ),
+                            file=rout,
+                        )
+                        print(
+                            "%-25s : %.8f"
+                            % (
+                                "_hcp_dwi_echospacing",
+                                fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
+                            ),
+                            file=rout,
+                        )
 
                     # add filename
-                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
                     print(out, file=sout)
                     print(out, file=sout_hcp)
 
                 # -- ASL
-                elif fileInfo['parts'][0] in ['mbPCASLhr', 'PCASLhr', 'ASL']:
+                elif fileInfo["parts"][0] in ["mbPCASLhr", "PCASLhr", "ASL"]:
                     # phenc
-                    phenc = fileInfo['json'].get(
-                        'PhaseEncodingDirection', None)
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
                     if phenc:
-                        phenc = PEDirMap.get(phenc, 'NA')
+                        phenc = PEDirMap.get(phenc, "NA")
                     else:
-                        phenc = fileInfo['parts'][2]
+                        phenc = fileInfo["parts"][2]
 
-                    if fileInfo['parts'][1] == "SpinEchoFieldMap":
+                    if fileInfo["parts"][1] == "SpinEchoFieldMap":
                         phenc = "SE-FM-" + phenc
 
                     out = "%02d: %-20s: %-30s: phenc(%s)" % (
-                        imgn, "ASL", "_".join(fileInfo['parts']), phenc)
+                        imgn,
+                        "ASL",
+                        "_".join(fileInfo["parts"]),
+                        phenc,
+                    )
 
                     print(out, end=" ", file=sout)
                     print(out, end=" ", file=sout_hcp)
 
                     # add filename
-                    out = ": filename(%s)" % "_".join(fileInfo['parts'])
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
                     print(out, file=sout)
                     print(out, file=sout_hcp)
 
-                    print("\n" + fileInfo['parts'][0], file=rout)
+                    print("\n" + fileInfo["parts"][0], file=rout)
                     print(
-                        "".join(['-' for e in range(len(fileInfo['parts'][0]))]), file=rout)
-                    print("%-25s : %.8f" % ("_hcp_%ssamplespacing" % (fileInfo['parts'][0][:2]), fileInfo['json'].get(
-                        'EffectiveEchoSpacing', -0.009) * 1000.), file=rout)
-                    print("%-25s : %s" % ("_hcp_unwarpdir",
-                          unwarp[fileInfo['json'].get('ReadoutDirection', None)]), file=rout)
+                        "".join(["-" for e in range(len(fileInfo["parts"][0]))]),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : %.8f"
+                        % (
+                            "_hcp_%ssamplespacing" % (fileInfo["parts"][0][:2]),
+                            fileInfo["json"].get("EffectiveEchoSpacing", -0.009),
+                        ),
+                        file=rout,
+                    )
+                    print(
+                        "%-25s : %s"
+                        % (
+                            "_hcp_unwarpdir",
+                            unwarp[fileInfo["json"].get("ReadoutDirection", None)],
+                        ),
+                        file=rout,
+                    )
 
-                print("%s => %s" % (fileInfo['path'], tfile), file=bout)
+                print("%s => %s" % (fileInfo["path"], tfile), file=bout)
             else:
                 allOk = False
-                print("==> ERROR: Linking failed: %02d.nii.gz <-- %s" %
-                      (imgn, fileInfo['name']))
-                print("FAILED: %s => %s" %
-                      (fileInfo['path'], tfile), file=bout)
+                print(
+                    "---> ERROR: Linking failed: %02d.nii.gz <-- %s"
+                    % (imgn, fileInfo["name"])
+                )
+                print("FAILED: %s => %s" % (fileInfo["path"], tfile), file=bout)
 
             status = True
-            if ('dMRI' in fileInfo['parts'] or 'DWI' in fileInfo['parts']) and not 'SBRef' in fileInfo['parts']:
-                statusA = gc.moveLinkOrCopy(fileInfo['path'].replace(
-                    '.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
+            if (
+                "dMRI" in fileInfo["parts"] or "DWI" in fileInfo["parts"]
+            ) and not "SBRef" in fileInfo["parts"]:
+                statusA = gc.moveLinkOrCopy(
+                    fileInfo["path"].replace(".nii.gz", ".bvec"),
+                    tfile.replace(".nii.gz", ".bvec"),
+                    action="link",
+                )
                 if statusA:
-                    print("%s => %s" % (fileInfo['path'].replace(
-                        '.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec')), file=bout)
+                    print(
+                        "%s => %s"
+                        % (
+                            fileInfo["path"].replace(".nii.gz", ".bvec"),
+                            tfile.replace(".nii.gz", ".bvec"),
+                        ),
+                        file=bout,
+                    )
 
-                statusB = gc.moveLinkOrCopy(fileInfo['path'].replace(
-                    '.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link')
+                statusB = gc.moveLinkOrCopy(
+                    fileInfo["path"].replace(".nii.gz", ".bval"),
+                    tfile.replace(".nii.gz", ".bval"),
+                    action="link",
+                )
                 if statusB:
-                    print("%s => %s" % (fileInfo['path'].replace(
-                        '.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval')), file=bout)
+                    print(
+                        "%s => %s"
+                        % (
+                            fileInfo["path"].replace(".nii.gz", ".bval"),
+                            tfile.replace(".nii.gz", ".bval"),
+                        ),
+                        file=bout,
+                    )
 
                 if not all([statusA, statusB]):
                     print(
-                        "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn))
-                    print("==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" %
-                          (imgn, fileInfo['name'].replace('.nii.gz', '.bval/.bvec')))
+                        "---> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!"
+                        % (imgn)
+                    )
+                    print(
+                        "---> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s"
+                        % (imgn, fileInfo["name"].replace(".nii.gz", ".bval/.bvec"))
+                    )
                     allOk = False
 
     sout.close()
@@ -1359,7 +1668,11 @@ def map_hcpls2nii(sourcefolder='.', overwrite='no', report=None, filesort=None):
     bout.close()
 
     if not allOk:
-        raise ge.CommandFailed("map_hcpls2nii", "Not all actions completed successfully!",
-                               "Some files for session %s were not mapped successfully!" % (session), "Please check logs and data!")
+        raise ge.CommandFailed(
+            "map_hcpls2nii",
+            "Not all actions completed successfully!",
+            "Some files for session %s were not mapped successfully!" % (session),
+            "Please check logs and data!",
+        )
 
     return imgn, nmapped

@@ -293,12 +293,12 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     end
     for i=1:1:numel(img.cifti.shortnames)
         if strcmp(cifti.(lower(img.cifti.shortnames{i})).type,'Surface')
-            t_data = roi.data(img.cifti.start(i):img.cifti.end(i));
+            t_data = roi.data(img.cifti.start{i}:img.cifti.end{i});
             for j=1:1:length(peak.(lower(img.cifti.shortnames{i})))
                 peak.(lower(img.cifti.shortnames{i}))(j).index = offsetID + j;
             end
             t_data(t_data ~= 0) = t_data(t_data ~= 0) + offsetID;
-            roi.data(img.cifti.start(i):img.cifti.end(i)) = t_data;
+            roi.data(img.cifti.start{i}:img.cifti.end{i}) = t_data;
             if ~isempty(peak.(lower(img.cifti.shortnames{i})))
                 offsetID = peak.(lower(img.cifti.shortnames{i}))(end).index;
             else
@@ -362,4 +362,4 @@ elseif strcmpi(img.imageformat, 'NIFTI')
     peak = [];
 end
 
-if verbose, fprintf('\nMAIN FIND PEAKS===> DONE\n'); end
+if verbose, fprintf('\nMAIN FIND PEAKS---> DONE\n'); end

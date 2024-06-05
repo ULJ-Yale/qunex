@@ -8,7 +8,7 @@ function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, r
 %   ======
 %
 %    --obj       nimage object.
-%   --command   Pipe separated string describing GBC to compute.
+%    --command   Pipe separated string describing GBC to compute.
 %
 %               mFz:t
 %                   computes mean Fz value across all voxels (over threshold t)
@@ -121,7 +121,7 @@ function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, r
 %   it takes to compute GBC will be reported. This can inform setting of vstep.
 %   vstep defines how many voxels to compute the GBC for in a single step.
 %   Having too small vstep results in more steps, which reduces the inherent
-%   paralelization in computing correlations. Too large vstep can result in
+%   parallelization in computing correlations. Too large vstep can result in
 %   chunks that don't fit into memory, which requires use of memory paging and
 %   consequent longer execution times.
 %
@@ -332,12 +332,12 @@ for n = 1:nsteps+1
 
         switch tcommand
 
-            % -----> compute mFz
+            % ---> compute mFz
 
             case 'mFz'
                 results(fstart:fend,toffset) = sum(r,1)./evoxels;
 
-            % -----> compute aFz
+            % ---> compute aFz
 
             case 'aFz'
                 if tparameter == 0
@@ -346,35 +346,35 @@ for n = 1:nsteps+1
                     results(fstart:fend,toffset) = rmean(aFz, (aFz > tparameter), 1);
                 end
 
-            % -----> compute pFz
+            % ---> compute pFz
 
             case 'pFz'
                 results(fstart:fend,toffset) = rmean(r, r >= tparameter, 1);
 
 
-            % -----> compute pFz
+            % ---> compute pFz
 
             case 'nFz'
                 results(fstart:fend,toffset) = rmean(r, r <= tparameter, 1);
 
-            % -----> compute pD
+            % ---> compute pD
 
             case 'pD'
                 results(fstart:fend,toffset) = sum(r >= tparameter, 1)./evoxels;
 
 
-            % -----> compute nD
+            % ---> compute nD
 
             case 'nD'
                 results(fstart:fend,toffset) = sum(r <= tparameter, 1)./evoxels;
 
-            % -----> compute aD
+            % ---> compute aD
 
             case 'aD'
                 results(fstart:fend,toffset) = sum(aFz >= tparameter, 1)./evoxels;
 
 
-            % -----> compute over prange
+            % ---> compute over prange
 
             case {'mFzp', 'aFzp'}
 
@@ -397,7 +397,7 @@ for n = 1:nsteps+1
                     end
                 end
 
-            % -----> compute over srange
+            % ---> compute over srange
 
             case {'mFzs', 'nFzs', 'pFzs'}
 

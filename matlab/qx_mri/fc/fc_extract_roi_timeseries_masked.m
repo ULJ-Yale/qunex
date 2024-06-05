@@ -152,7 +152,7 @@ if nargin < 7 || isempty(ignore),  ignore  = 'no';   end
 if nargin < 6 || isempty(method),  method  = 'mean'; end
 if nargin < 5 || isempty(options), options = 'm';    end
 
-verbose = true;  % --> to be set by options in the future
+verbose = true;  % ---> to be set by options in the future
 
 if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
@@ -198,7 +198,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist, verbose);
+list = general_read_file_list(flist, 'all', [], verbose);
 
 fprintf(' ... done.');
 
@@ -220,17 +220,17 @@ nana = length(ana);
 
 groi = nimage.img_read_roi(roiinfo);
 
-for n = 1:nsub
+for n = 1:list.nsessions
 
-    fprintf('\n ... processing %s', session(n).id);
+    fprintf('\n ... processing %s', list.session(n).id);
 
     % ---> reading image files
 
     fprintf('\n     ... reading image file(s)');
 
-    y = nimage(session(n).files{1});
-    for f = 2:length(session(n).files)
-        y = [y nimage(session(n).files{f})];
+    y = nimage(list.session(n).files{1});
+    for f = 2:length(list.session(n).files)
+        y = [y nimage(list.session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -246,11 +246,11 @@ for n = 1:nsub
 
     imask = ones(roi.voxels, 1);
 
-    if isfield(session(n), 'roi')
+    if isfield(list.session(n), 'roi')
         if isempty(mcodes)
-            roi  = nimage.img_read_roi(roiinfo, session(n).roi);
+            roi  = nimage.img_read_roi(roiinfo, list.session(n).roi);
         else
-            sroi = nimage(session(n).roi);
+            sroi = nimage(list.session(n).roi);
             imask = imask & ismember(sroi.data, mcodes);
         end
     end
@@ -258,7 +258,7 @@ for n = 1:nsub
     % -- exclude voxels outside the BOLD brain mask
 
     if bmask
-        imask = imask & img_BOLDBrainMask(session(n).files);
+        imask = imask & img_BOLDBrainMask(list.session(n).files);
     end
 
     % -- exclude voxels with 0 variance
@@ -283,7 +283,7 @@ for n = 1:nsub
     % ---> creating task mask
 
     if eventbased
-        finfo = general_create_task_regressors(session(n).fidl, y.runframes, fstring, fignore);
+        finfo = general_create_task_regressors(list.session(n).fidl, y.runframes, fstring, fignore);
         finfo = finfo.run;
         matrix = [];
         for r = 1:length(finfo)
@@ -324,7 +324,7 @@ for n = 1:nsub
 
     fprintf('frames]');
 
-    data.sessions{n}     = session(n).id;
+    data.sessions{n}     = list.session(n).id;
     data.n_roi_vox(n, :) = roi.roi.nvox;
 
 end
@@ -361,7 +361,7 @@ if ismember('t', options)
         fprintf('WARNING: Export of textual data for all voxels in ROI not yet supported!');
     else
         for a = 1:nana
-            for is = 1:nsub
+            for is = 1:list.nsessions
                 ts = data.(ana(a).name).timeseries{is};
                 usevec = data.(ana(a).name).usevec{is};
                 tslen = size(ts, 2);

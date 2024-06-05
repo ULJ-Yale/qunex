@@ -86,8 +86,8 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
             r += "\n... copying %s" % (f["t1_source"])
             if options["image_target"] == "4dfp":
                 if gi.getImgFormat(f["t1_source"]) == ".4dfp.img":
-                    gc.linkOrCopy(f["t1_source"], f["t1"])
-                    gc.linkOrCopy(
+                    gc.link_or_copy(f["t1_source"], f["t1"])
+                    gc.link_or_copy(
                         f["t1_source"].replace(".img", ".ifh"),
                         f["t1"].replace(".img", ".ifh"),
                     )
@@ -95,7 +95,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                     tmpfile = f["t1"].replace(
                         ".4dfp.img", gi.getImgFormat(f["t1_source"])
                     )
-                    gc.linkOrCopy(f["t1_source"], tmpfile)
+                    gc.link_or_copy(f["t1_source"], tmpfile)
                     r, endlog, status, failed = pc.runExternalForFile(
                         f["t1"],
                         "g_FlipFormat %s %s"
@@ -112,8 +112,8 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                 if gi.getImgFormat(f["t1_source"]) == ".4dfp.img":
                     tmpimg = f["t1"] + ".4dfp.img"
                     tmpifh = f["t1"] + ".4dfp.ifh"
-                    gc.linkOrCopy(f["t1_source"], tmpimg)
-                    gc.linkOrCopy(f["t1_source"].replace(".img", ".ifh"), tmpifh)
+                    gc.link_or_copy(f["t1_source"], tmpimg)
+                    gc.link_or_copy(f["t1_source"].replace(".img", ".ifh"), tmpifh)
                     r, endlog, status, failed = pc.runExternalForFile(
                         f["t1"],
                         "g_FlipFormat %s %s"
@@ -130,7 +130,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                 else:
                     if gi.getImgFormat(f["t1_source"]) == ".nii.gz":
                         tmpfile = f["t1"] + ".gz"
-                        gc.linkOrCopy(f["t1_source"], tmpfile)
+                        gc.link_or_copy(f["t1_source"], tmpfile)
                         r, endlog, status, failed = pc.runExternalForFile(
                             f["t1"],
                             "gunzip -f %s" % (tmpfile),
@@ -144,7 +144,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                         if os.path.exists(tmpfile):
                             os.remove(tmpfile)
                     else:
-                        gc.linkOrCopy(f["t1_source"], f["t1"])
+                        gc.link_or_copy(f["t1_source"], f["t1"])
 
         else:
             r += "\n... %s present" % (f["t1"])
@@ -167,11 +167,6 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                         f = pc.getFileNames(sinfo, options)
                         f.update(pc.getBOLDFileNames(sinfo, boldname, options))
                         d = pc.getSessionFolders(sinfo, options)
-                        # f_conc = os.path.join(d['s_bold_concs'], tconc+".conc")
-                        # f_fidl = os.path.join(d['s_bold_events'], tfidl+".fidl")
-
-                        # TODO copyBOLDData does not exist!?
-                        # r, status = copyBOLDData(sinfo, options, overwrite, thread, d, f, r)
 
                         if status:
                             r += "\n---> Data ready!"
@@ -567,7 +562,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
             # create link
             if not os.path.exists(templatefile):
                 # r += '\n ... link %s to %s' % (f['bold1_brain'], f['bold_template'])
-                gc.linkOrCopy(f["bold1_brain"], f["bold_template"])
+                gc.link_or_copy(f["bold1_brain"], f["bold_template"])
 
             # unlock
             fl.unlock(templatefile)
@@ -622,15 +617,14 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         log_prefix = "error"
     elif not overwrite and final_log == "":
         final_log = "Previous results present, overwrite set to no.\n\n"
-        final_log = final_log + "===> Successful completion of task"
+        final_log = final_log + "---> Successful completion of task"
 
     # print to log file
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = "%s_create_bold_brain_masks_%s_%s_%s_%s.log" % (
+    logname = "%s_create_bold_brain_masks_B%s_%s_%s.log" % (
         log_prefix,
-        sinfo["id"],
-        boldname,
         boldnum,
+        sinfo["id"],
         logstamp,
     )
 
@@ -985,7 +979,7 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
 
         # --- check
         if not status:
-            r += "\n--> ERROR: Files missing, skipping this bold run!"
+            r += "\n---> ERROR: Files missing, skipping this bold run!"
             report["boldmissing"] += 1
             return {"r": r, "report": report}
 
@@ -1412,7 +1406,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                     procbolds.append(boldnum)
                     preport["boldok"] += 1
                 else:
-                    r += "\n--> ERROR: Files missing, skipping this bold run!"
+                    r += "\n---> ERROR: Files missing, skipping this bold run!"
                     preport["boldmissing"] += 1
 
             except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -1521,7 +1515,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                     os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot))
                 ):
                     os.remove(os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)))
-                gc.linkOrCopy(
+                gc.link_or_copy(
                     os.path.join(d["s_bold_mov"], froot),
                     os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
                 )
@@ -1908,7 +1902,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
 
         # --- check
         if not status:
-            r += "\n--> ERROR: Files missing, skipping this bold run!"
+            r += "\n---> ERROR: Files missing, skipping this bold run!"
             report["boldmissing"] += 1
             return {"r": r, "report": report}
 
@@ -2639,7 +2633,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
         # --- check
         if not status:
-            r += "\n--> ERROR: Files missing, skipping this bold run!"
+            r += "\n---> ERROR: Files missing, skipping this bold run!"
             report["not ready"].append(boldnum)
             return {"r": r, "report": report}
         else:
@@ -2731,7 +2725,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
                 r, status = pc.checkForFile(
                     r,
                     f["bold_final"],
-                    "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n"
+                    "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> %s\n"
                     % (mcomm),
                 )
                 if status:
@@ -3536,7 +3530,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
                     # --- check
                     if not status:
-                        r += "\n--> ERROR: Files missing!"
+                        r += "\n---> ERROR: Files missing!"
                         rstatus = False
                         check["bad"].append(boldnum)
                     else:
@@ -3659,7 +3653,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     r, status = pc.checkForFile(
                         r,
                         done,
-                        "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n"
+                        "ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> %s\n"
                         % (mcomm),
                     )
                     if os.path.exists(done):

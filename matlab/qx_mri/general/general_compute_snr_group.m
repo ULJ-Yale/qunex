@@ -42,25 +42,25 @@ end
 
 if verbose, fprintf('\n\nStarting ...'); end
 
-[session nsessions nallfiles] = general_read_file_list(flist, verbose);
+list = general_read_file_list(flist, 'all', [], verbose);
 
-snr = zeros(nallfiles,1);
-sd  = zeros(nallfiles,1);
+snr = zeros(list.nfiles,1);
+sd  = zeros(list.nfiles,1);
 [~, fname] = fileparts(flist);
 fout = fopen(fullfile(target, [fname '_SNR_report.txt']), 'w');
 fprintf(fout, 'image\tSNR\tSD\n');
 
 c = 1;
-for s = 1:nsessions
+for s = 1:list.nsessions
     
     %   --- reading in image files
     tic; 
-    if verbose, fprintf('\n ... processing %s', session(s).id); end
+    if verbose, fprintf('\n ... processing %s', list.session(s).id); end
 
-    nfiles = length(session(s).files);
+    nfiles = length(list.session(s).files);
     for n = 1:nfiles
-        [snr(c) sd(c)] = general_compute_snr(session(s).files{n}, [], fmask, target, [], [session(s).id '_file_' num2str(n)]);
-        fprintf(fout, '%s\t%.3f\t%.3f\n', session(s).files{n}, snr(c), sd(c));
+        [snr(c) sd(c)] = general_compute_snr(list.session(s).files{n}, [], fmask, target, [], [list.session(s).id '_file_' num2str(n)]);
+        fprintf(fout, '%s\t%.3f\t%.3f\n', list.session(s).files{n}, snr(c), sd(c));
         c = c +1;
     end
 

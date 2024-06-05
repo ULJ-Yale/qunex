@@ -79,7 +79,7 @@ function [hdr] = readHeader(fin)
         hdr.key{c} = key;
         hdr.value{c} = value;
         l = fgetl(fin);
-        % fprintf('\n --> "%s"', l);
+        % fprintf('\n ---> "%s"', l);
     end
 
 function [img] = processHeader(img, fin)

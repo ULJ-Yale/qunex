@@ -37,8 +37,11 @@ if ~exist(filename)
 end
 
 % --- read the file
-
 [fhdr fdata fmeta fswap] = nimage.img_read_nifti_mx(filename, verbose);
+
+% fmeta to str (remove starting chars before < as they are not UTF-8)
+idx = find(fmeta' == 60, 1);
+fmeta_str = char(fmeta(idx:end)');
 
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;
@@ -66,7 +69,7 @@ switch  img.hdrnifti.datatype
     case 4
         datatype = 'int16';
     case 8
-        datatype = 'int32'
+        datatype = 'int32';
     case 16
         datatype = 'single';
     case 64
@@ -81,8 +84,6 @@ switch  img.hdrnifti.datatype
         datatype = 'int64';
     case 1280
         datatype = 'uint64';
-    case 1280
-        datatype = 'uint64';
     otherwise
         error('Uknown datatype or datatype I can not handle!');
 end
@@ -93,19 +94,13 @@ if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 % --- file root
 
-root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.dscalar|\.pconn', '');
+fileinfo = general_check_image_file(filename);
 
-img.rootfilename = root;
-img.rootfilenames = {root};
-[p, n, e]        = fileparts(filename);
-img.filename     = [n e];
-img.filenames    = {img.filename};
-
-ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar|\.dscalar)', 'tokens');
-if length(ftype) > 0
-    ftype = char(ftype{1});
-    img.filetype = ftype;
-end
+img.rootfilename  = fileinfo.rootname;
+img.rootfilenames = {fileinfo.rootname};
+img.filename      = fileinfo.basename;
+img.filenames     = {fileinfo.basename};
+img.filetype      = fileinfo.image_type;
 
 % --- format and size details
 
@@ -115,11 +110,12 @@ else
     img.imageformat = 'NIfTI';
 end
 
-
 if strcmp(img.imageformat, 'NIfTI')
     img.TR = [];
     img.frames = 1;
-    if img.hdrnifti.dim(1) == 4    % we probably have a BOLD (4D) file
+
+    % we probably have a BOLD (4D) file
+    if img.hdrnifti.dim(1) == 4
         if ~isempty(frames)
             img.hdrnifti.dim(5) = frames;
             img.frames = frames;
@@ -145,8 +141,9 @@ elseif strcmp(img.imageformat, 'CIFTI')
 
     img.TR     = [];
 
-    if img.hdrnifti.dim(1) == 6                             % we probably have 2d cifi file
-        cver = regexp(char(fmeta'), 'CIFTI Version="(.)"', 'tokens');
+    % we probably have a 2d cifti file
+    if img.hdrnifti.dim(1) == 6
+        cver = regexp(fmeta_str, 'CIFTI Version="(.)"', 'tokens');
         if length(cver) == 0
             error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', img.filename);
         end
@@ -167,7 +164,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
         img.frames = 1;
     end
 
-    if strcmp(img.filetype, '.pconn')
+    if strcmp(img.filetype, 'pconn')
         if length(img.dim) > 1
             img.voxels  = img.dim(1) .* img.dim(2);
         else
@@ -194,17 +191,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
 
     % ---- Adjust datatype
 
-    img.hdrnifti.datatype = 16;
-
-    % ---- Add structure info
-
-    img.cifti.longnames  = {'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'};
-    img.cifti.shortnames = {'CORTEX_LEFT', 'CORTEX_RIGHT', 'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'};
-    img.cifti.start      = [1 29697 59413 59548 59688 60003 60335 63807 64535 65290 73999 83143 83849 84561 85325 86120 86417 86677 87737 88747 90035];
-    img.cifti.end        = [29696 59412 59547 59687 60002 60334 63806 64534 65289 73998 83142 83848 84560 85324 86119 86416 86676 87736 88746 90034 91282];
-    img.cifti.length     = [29696 29716 135 140 315 332 3472 728 755 8709 9144 706 712 764 795 297 260 1060 1010 1288 1248];
-    img.cifti.maps       = {};
-    img.cifti.parcels    = {};
+    img.hdrnifti.datatype = 16;    
 
 end
 
@@ -227,8 +214,6 @@ end
 
 
 % ---- Map metadata
-
-img.metadata = fmeta;
 
 if img.hdrnifti.swap
     sw = @(x) swapbytes(x);
@@ -323,21 +308,67 @@ if mi > 0
                 end
             end
         end
+
+        % --- cifti metadata
         if img.meta(m).code == 32
-            if strcmp(img.filetype, '.dscalar') || strcmp(img.filetype, '.pscalar')
-                t = regexp(char(img.meta(m).data)', '<MapName>(.*?)</MapName>', 'tokens');
-                for e = t
-                    img.cifti.maps(end+1) = e{1};
+            
+            % ---- set to be removed after processing
+            keepmeta(m) = false;
+
+            % ---- Initialize variables
+
+            img.cifti.longnames  = {};
+            img.cifti.shortnames = {};
+            img.cifti.start      = [];
+            img.cifti.end        = [];
+            img.cifti.length     = [];
+            img.cifti.maps       = {};
+            img.cifti.parcels    = {};
+            img.cifti.labels     = {};
+
+            short2long_structure = containers.Map({'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'ALL_WHITE_MATTER', 'ALL_GREY_MATTER', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLAR_WHITE_MATTER_LEFT', 'CEREBELLAR_WHITE_MATTER_RIGHT', 'CEREBELLUM', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'CEREBRAL_WHITE_MATTER_LEFT', 'CEREBRAL_WHITE_MATTER_RIGHT', 'CORTEX', 'CORTEX_LEFT', 'CORTEX_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'OTHER', 'OTHER_GREY_MATTER', 'OTHER_WHITE_MATTER', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'}, {'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_ALL_WHITE_MATTER', 'CIFTI_STRUCTURE_ALL_GREY_MATTER', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLAR_WHITE_MATTER_LEFT', 'CIFTI_STRUCTURE_CEREBELLAR_WHITE_MATTER_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_CEREBRAL_WHITE_MATTER_LEFT', 'CIFTI_STRUCTURE_CEREBRAL_WHITE_MATTER_RIGHT', 'CIFTI_STRUCTURE_CORTEX', 'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_OTHER', 'CIFTI_STRUCTURE_OTHER_GREY_MATTER', 'CIFTI_STRUCTURE_OTHER_WHITE_MATTER', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'});
+
+            % ---- Process CIFTI metadata
+
+            if strcmp(img.imageformat, 'CIFTI-2')
+                img.cifti.metadata = cifti_read_metadata(cast(img.meta(m).data, 'char')', img.hdrnifti, img.filename);
+
+                % -- get parcel or structure info
+                if strcmp(img.cifti.metadata.diminfo{1}.type, 'parcels')
+                    img.cifti.parcels = {img.cifti.metadata.diminfo{1}.parcels.name};
+                elseif strcmp(img.cifti.metadata.diminfo{1}.type, 'dense');
+                    for istruct = 1:length(img.cifti.metadata.diminfo{1}.models)
+                        img.cifti.longnames{istruct}  = short2long_structure(img.cifti.metadata.diminfo{1}.models{istruct}.struct);
+                        img.cifti.shortnames{istruct} = img.cifti.metadata.diminfo{1}.models{istruct}.struct;
+                        img.cifti.start{istruct}      = img.cifti.metadata.diminfo{1}.models{istruct}.start;
+                        img.cifti.end{istruct}        = img.cifti.metadata.diminfo{1}.models{istruct}.start + img.cifti.metadata.diminfo{1}.models{istruct}.count -1;
+                        img.cifti.length{istruct}     = img.cifti.metadata.diminfo{1}.models{istruct}.count;
+                    end
                 end
-            elseif strcmp(img.filetype, '.dtseries') || strcmp(img.filetype, '.ptseries')
-                TR = regexp(char(img.meta(m).data)', 'SeriesStep="(.*?)"', 'tokens');
-                img.TR = str2num(TR{1}{1});
-            end
-            if strcmp(img.filetype, '.ptseries') || strcmp(img.filetype, '.pscalar')
-                t = regexp(char(img.meta(m).data)', '<Parcel Name="(.*?)">', 'tokens');
-                for e = t
-                    img.cifti.parcels(end+1) = e{1};
+
+                % -- get maps or TR
+                if strcmp(img.cifti.metadata.diminfo{2}.type, 'scalars')
+                    img.cifti.maps = {img.cifti.metadata.diminfo{2}.maps.name};
+                elseif strcmp(img.cifti.metadata.diminfo{2}.type, 'series')
+                    img.TR = img.cifti.metadata.diminfo{2}.seriesStep;
+                elseif strcmp(img.cifti.metadata.diminfo{2}.type, 'labels')
+                    img.cifti.maps = {img.cifti.metadata.diminfo{2}.maps.name};
+                    for imap = 1:length(img.cifti.metadata.diminfo{2}.maps);
+                        img.cifti.labels{imap} = img.cifti.metadata.diminfo{2}.maps(imap).table;
+                    end
                 end
+
+            else
+                % ---- We are assumning that this holds for CIFTI-I, it might not!
+                fprintf('\nWARNING: file %s is in CIFTI-1 format.\n         Please transform to CIFTI-2 format (e.g. using wb_command) to ensure correct processing of XML metadata!\n', img.filename);
+
+                img.cifti.longnames  = {'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'};
+                img.cifti.shortnames = {'CORTEX_LEFT', 'CORTEX_RIGHT', 'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'};
+                img.cifti.start      = [1 29697 59413 59548 59688 60003 60335 63807 64535 65290 73999 83143 83849 84561 85325 86120 86417 86677 87737 88747 90035];
+                img.cifti.end        = [29696 59412 59547 59687 60002 60334 63806 64534 65289 73998 83142 83848 84560 85324 86119 86416 86676 87736 88746 90034 91282];
+                img.cifti.length     = [29696 29716 135 140 315 332 3472 728 755 8709 9144 706 712 764 795 297 260 1060 1010 1288 1248];
+                img.cifti.maps       = {};
+                img.cifti.parcels    = {};
             end
         end
     end
@@ -464,16 +495,3 @@ function [hdrnifti] = readHeader_nifti2(s, hdrnifti)
     hdrnifti.regular         = ' ';
     hdrnifti.glmax           = 0;
     hdrnifti.glmin           = 0;
-
-
-
-
-
-
-
-
-
-
-
-
-

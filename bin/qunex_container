@@ -4,6 +4,8 @@
 # SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Version 0.100.0 [QX IO]
 
 from __future__ import print_function, division
 import subprocess
@@ -23,7 +25,7 @@ class CommandError(Exception):
             function = "unknown function"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured in %s" % (error, function)
+        msg = f"Error '{error}' occured in {function}"
         super(CommandError, self).__init__(msg)
         self.function = function
         self.error = error
@@ -39,7 +41,7 @@ class CommandFailed(Exception):
             function = "unknown function"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured in %s" % (error, function)
+        msg = f"Error '{error}' occured in {function}"
         super(CommandFailed, self).__init__(msg)
         self.function = function
         self.error = error
@@ -177,10 +179,9 @@ def schedule(
     - mem-per-cpu      ... Memory requested per CPU in MB
     - mail-user        ... Email address to send notifications to
     - mail-type        ... On what events to send emails
-
     """
 
-    # --- check inputs
+    # check inputs
     if command is None and script is None:
         raise CommandError(
             "schedule",
@@ -202,11 +203,9 @@ def schedule(
             "Scheduler parameters need to be provided to run scheduler!",
         )
 
-    # --- parse settings
+    # parse settings
     try:
-        jobname = scheduler_params.pop("jobname", "schedule")
-        comname = scheduler_params.pop("comname", "")
-        jobnum = scheduler_params.pop("jobnum", "")
+        jobname = scheduler_params.pop("jobname", "qunex_job")
     except:
         raise CommandError(
             "schedule",
@@ -215,52 +214,51 @@ def schedule(
             scheduler_params,
         )
 
-    # --- compile command to pass
+    # compile command to pass
     if command is None:
         if not os.path.exists(script):
             raise CommandFailed(
                 "schedule",
                 "File not found",
-                "The specified script does not exist! [%s]" % (script),
+                f"The specified script does not exist! [{script}]",
             )
-        command = open(script, "r")
+        command = open(script, "r", encoding="UTF-8")
 
+    # dirs
     if workdir is not None:
         if not os.path.exists(workdir):
             raise CommandFailed(
                 "schedule",
                 "Folder does not exist",
-                "The specified working directory does not exist! [%s]" % (workdir),
+                f"The specified working directory does not exist! [{workdir}]",
             )
-        command = "cd %s\n" % (workdir) + command
+        command = f"cd {workdir}\n" + command
 
     if environment is not None:
         if not os.path.exists(environment):
             raise CommandFailed(
                 "schedule",
                 "File not found",
-                "The specified environment script does not exist! [%s]" % (environment),
+                f"The specified environment script does not exist! [{environment}]",
             )
-        command = open(environment, "r") + "\n" + command
+        command = open(environment, "r", encoding="UTF-8") + "\n" + command
 
-    # --- do search replace
+    # do search replace
     if replace is not None:
         replace = [e.strip().split(":") for e in replace.split("|")]
 
         for key, value in replace:
             command.replace("{{%s}}" % (key), value)
 
-    # --- parse output
+    # parse output
     outputs = {"stdout": None, "stderr": None, "both": None, "return": None}
-
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
             if not os.path.exists(os.path.dirname(v)) and k != "return":
                 raise CommandFailed(
                     "schedule",
                     "Folder does not exist",
-                    "The specified folder for the '%s' log file does not exist! [%s]"
-                    % (k, os.path.dirname(v)),
+                    f"The specified folder for the {k} log file does not exist [{os.path.dirname(v)}]!",
                     "Please check your paths!",
                 )
             outputs[k] = v
@@ -269,9 +267,9 @@ def schedule(
         timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
         if not slurm_array:
-            logname = "/qunex_container_" + timestamp + ".txt"
+            logname = f"/qunex_container_{timestamp}.txt"
         else:
-            logname = "/qunex_container_job%a_" + timestamp + ".txt"
+            logname = f"/qunex_container_job%a_{timestamp}.txt"
 
         # put in batchfolder
         if batchlogsfolder is not None:
@@ -286,7 +284,7 @@ def schedule(
         outputs["stderr"] = outputs["both"]
         outputs["stdout"] = outputs["both"]
 
-    # --- build scheduler commands
+    # build scheduler commands
     s_command = ""
 
     if scheduler_name == "PBS":
@@ -305,29 +303,25 @@ def schedule(
                 "prologue",
                 "select",
             ):
-                s_command += "#PBS -l %s=%s\n" % (k, v)
+                s_command += f"#PBS -l {k}={v}\n"
             elif k in ("j", "m", "o", "S", "a", "A", "M", "q", "t", "e", "l"):
-                s_command += "#PBS -%s %s\n" % (k, v)
+                s_command += f"#PBS -{k} {v}\n"
             elif k == "depend":
-                s_command += "#PBS -W depend=%s\n" % (v)
+                s_command += f"#PBS -W depend={v}\n"
             elif k == "umask":
-                s_command += "#PBS -W umask=%s\n" % (v)
-            elif k == "N" and jobname == "schedule":
+                s_command += f"#PBS -W umask={v}\n"
+            elif k == "N" and jobname == "qunex_job":
                 jobname = v
             elif k == "nodes":
-                s_command += "#PBS -l nodes=%s\n" % v
+                s_command += f"#PBS -l nodes={v}\n"
 
         # job name
-        if comname != "":
-            jobname = "%s-%s" % (jobname, comname)
-        if jobnum != "":
-            jobname = "%s(%s)" % (jobname, jobnum)
-        s_command += "#PBS -N %s\n" % jobname
+        s_command += f"#PBS -N {jobname}\n"
 
         if outputs["stdout"] is not None:
-            s_command += "#PBS -o %s\n" % (outputs["stdout"])
+            s_command += f"#PBS -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
-            s_command += "#PBS -e %s\n" % (outputs["stderr"])
+            s_command += f"#PBS -e {outputs['stderr']}\n"
         if outputs["both"]:
             s_command += "#PBS -j oe\n"
         com = "qsub"
@@ -335,35 +329,31 @@ def schedule(
     elif scheduler_name == "SLURM":
         s_command += "#!/bin/bash\n"
         for key, value in scheduler_params.items():
-            if key in ("J", "job-name") and jobname == "schedule":
-                jobname = v
+            if key in ("J", "job-name") and jobname == "qunex_job":
+                jobname = value
             elif value == "QX_FLAG":
-                s_command += "#SBATCH --%s\n" % (key.replace("--", ""))
+                s_command += f"#SBATCH --{key.replace('--', '')}\n"
 
             else:
-                s_command += "#SBATCH --%s=%s\n" % (key.replace("--", ""), value)
+                s_command += f"#SBATCH --{key.replace('--', '')}={value}\n"
 
         # set default cpus-per-task
         if (
             "cpus-per-task" not in scheduler_params.keys()
             and "c" not in scheduler_params.keys()
         ):
-            s_command += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
+            s_command += f"#SBATCH --cpus-per-task={parsessions * parelements}\n"
 
         # jobname
-        if comname != "":
-            jobname = "%s-%s" % (jobname, comname)
-        if jobnum != "":
-            jobname = "%s(%s)" % (jobname, jobnum)
-        s_command += "#SBATCH --job-name=%s\n" % jobname
+        s_command += f"#SBATCH --job-name={jobname}\n"
 
         if outputs["stdout"] is not None:
-            s_command += "#SBATCH -o %s\n" % (outputs["stdout"])
+            s_command += f"#SBATCH -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
-            s_command += "#SBATCH -e %s\n" % (outputs["stderr"])
+            s_command += f"#SBATCH -e {outputs['stdout']}\n"
         com = "sbatch"
 
-    # --- run the scheduler
+    # run the scheduler
     print("\nSubmitting:\n------------------------------")
     print(s_command)
     print(command + "\n")
@@ -387,7 +377,7 @@ def schedule(
     run.stdin.write((s_command + command).encode("utf-8"))
     run.stdin.close()
 
-    # ---- returning results
+    # returning results
     if outputs["return"] in ["both", "stdout"]:
         result = run.stdout.read()
         return result
@@ -409,12 +399,11 @@ def get_sessionids_from_batch(filename, batchfilter=None):
 
     if not os.path.exists(filename):
         print(
-            "\n\n=====================================================\nERROR: Batch file does not exist [%s]",
-            file=filename,
+            "\n\n=====================================================\nERROR: Batch file does not exist [{filename}]"
         )
-        raise ValueError("ERROR: Batch file not found: %s" % (filename))
+        raise ValueError(f"ERROR: Batch file not found: {filename}")
 
-    s = open(filename, "r").read()
+    s = open(filename, "r", encoding="UTF-8").read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")
     s = re.sub("^#.*?\n", "", s)
@@ -494,7 +483,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
                 sessionids = get_sessionids_from_list(sessions)
             else:
                 raise ValueError(
-                    "ERROR: The specified file is not found! [%s]!" % batchfile
+                    f"ERROR: The specified file is not found! [{batchfile}]!"
                 )
         else:
             sessionids = [
@@ -505,9 +494,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
         if os.path.isfile(batchfile):
             sessionids = get_sessionids_from_batch(batchfile, batchfilter)
         else:
-            raise ValueError(
-                "ERROR: The specified file is not found! [%s]!" % batchfile
-            )
+            raise ValueError(f"ERROR: The specified file is not found! [{batchfile}]!")
 
     return sessionids
 
@@ -523,14 +510,13 @@ def get_sessionids_from_list(filename):
 
     if not os.path.exists(filename):
         print(
-            "\n\n=====================================================\nERROR: List file does not exist [%s]",
-            file=filename,
+            f"\n\n=====================================================\nERROR: List file does not exist [{filename}]"
         )
-        raise ValueError("ERROR: List file not found: %s" % (filename))
+        raise ValueError(f"ERROR: List file not found: {filename}")
 
     sessionids = []
 
-    with open(filename) as f:
+    with open(filename, encoding="UTF-8") as f:
         for line in f:
             if line.strip()[:1] == "#":
                 continue
@@ -545,7 +531,7 @@ def get_sessionids_from_list(filename):
 
 def get_batchlogs_folder(sessionsfolder):
     """
-    ``deduceFolders(args)``
+    ``get_batchlogs_folder(args)``
 
     Tries to deduce the location of study specific folders based on the provided
     arguments. For internal use only.
@@ -579,12 +565,12 @@ def get_batchlogs_folder(sessionsfolder):
 def main(args=None):
     """
     qunex_container is a self-standing command that can run QuNex commands 
-    against an Apptainer or a Docker QuNex container. To run an QuNex command 
-    against a container the basic call is::
+    against a Singularity/Apptainer or a Docker QuNex container. To run an QuNex
+    command  against a container the basic call is::
 
         qunex_container <qunex command> [parameters] \
-        --container="<a path to the Apptainer image or a Docker container name>" [additional options]
-    
+        --container="<a path to the Singularity/Apptainer image or a Docker container name>" [additional options]
+
     `qunex command` is any command supported by QuNex. `parameters` are any
     parameters that should be passed to the qunex command. This part is the same
     as running::
@@ -600,11 +586,9 @@ def main(args=None):
     INPUTS
     ======
 
-    --container     specifies either the path to the Apptainer container image 
-                    or the full specification of the Docker container to be used
-                    (e.g. qunex/qunex_suite:0_45_07). This parameter can be 
-                    omitted if the value is specified in the `QUNEXCONIMAGE` 
-                    environmental variable.
+    --container     specifies either the path to the Singularity/Apptainer
+                    container image  or the full specification of the Docker
+                    container to be used (e.g. qunex/qunex_suite:0_45_07).
     --bash_pre      If any additional commands have to be run in bash before the
                     execution of qunex_container command itself. Use a semicolon
                     separated list to chain multiple commands. ['']
@@ -612,39 +596,32 @@ def main(args=None):
                     QuNex container before executing the desired QuNex command.
                     Use a semicolon separated list to chain multiple commands. 
                     ['']
-    --bind          Used for binding external folder for execution via an 
-                    Apptainer container, this is analog to the Apptainer's 
-                    -B flag. ['']
-    --nocleanenv    By default QuNex will use the --cleanevn flag of Apptainer
-                    so your local environment setup will not be propagated into
-                    the container. If you want to disable this functionality use
-                    this flag. The flag is not set by default.
-    --nv            Required when using CUDA inside Apptainer (Singularity). If
-                    provided then apptainer exec --nv option will be used.
-    --cuda_path     Required when using Apptainer (Singularity) and a CUDA
-                    version that is not the QuNex default.
-    --script        If a script is to be run against the Apptainer (Singularity)
+    --bind          Used for binding external folders in order for the system in 
+                    the container to have access to relvant data. Maps to -B
+                    parameter of Singularity/Apptainer and -v parmaeter of
+                    Docker.
+    --nocleanenv    By default QuNex will use the --cleanenv flag of
+                    Singularity/Apptainer so your local environment setup will
+                    not be propagated into the container. If you want to disable
+                    this functionality use this flag. The flag is not set by
+                    default.
+    --cuda          Use in order to prepare the container for CUDA usage. This
+                    flag is not set by default.
+    --cuda_path     Can be used to bind a local CUDA version over the one in the
+                    system.
+    --nv            An old way of using using CUDA inside Singularity/Apptainer.
+                    If provided then --nv option will be used when executing.
+    --script        If a script is to be run against the Singularity/Apptainer
                     container rather than a single command, the path to the
                     script to be run is specified here. ['']
-    --envars        If environment variables other than the default set by the
-                    container are to be used, they can be specified in a pipe
-                    separated string formatted as:
-                    "<variable>=><value>|<variable>=><value>"
-                    Note that only the variables recognized by the QuNex suite
-                    will be appropriately parsed and used in the container.
-    --dockeropt     A string that lists the additional options to be used when
-                    running the Docker container. If the parameter is ommited, 
-                    the content of `QUNEXDOCKEROPT` environment variable will
-                    be used. If neither is specified, the container will mount
-                    the current as `data` by specifying the following options::
-
-                        '-v "$(pwd)":/data'
-                    
-                    The parameters are to be specified in a string exactly as 
-                    they would be on a command line, e.g. to run in detached
-                    mode and mount a specific folder use::
+    --containeropt  A string that lists the additional options to be used when
+                    running the container. The parameters are to be specified in
+                    a string exactly as they would be on a command line, e.g.
+                    to run Docker in detached mode and mount a specific folder
+                    use::
 
                         "-d -v /host/directory:/container/directory"
+
     --scheduler     A string that specifies the details to use to submit the 
                     container job to a scheduling system. 
     --output        A string specifying where to redirect the standard output 
@@ -673,15 +650,14 @@ def main(args=None):
     home folder will be mounted as `/root` in the container, which is the home
     folder within the container.
 
-    If a script parameter is specified, in case of an Apptainer container, the 
-    script will be executed using the `bash <script>` command. In case of a 
-    Docker container, the content of the script will be appended to the 
-    temporary script generated by the `qunex_container`. Do note that in the 
-    case of the Apptainer container the script can reference paths on the 
-    host computer, whereas in the case of the Docker container, the script
-    has to reference the paths and mounts as they are visible within the
-    Docker container. 
-
+    If a script parameter is specified, in case of a Singularity/Apptainer
+    container, the script will be executed using the `bash <script>` command.
+    In case of a Docker container, the content of the script will be appended
+    to the temporary script generated by the `qunex_container`. Do note that in
+    the case of the Singularity/Apptainer container the script can reference
+    paths on the host computer, whereas in the case of the Docker container,
+    the script has to reference the paths and mounts as they are visible within
+    the Docker container.
 
     Scheduling jobs
     ---------------
@@ -691,21 +667,15 @@ def main(args=None):
     should be a comma separated list of parameters. The first parameter has to 
     be the scheduler name (PBS, LSF, SLURM), the rest of the parameters are 
     key-value pairs that are to be passed as settings to the scheduler. 
-    Additional parameters common to all the schedulers can be specified:
-
-    - jobname ... the name of the job to run
-    - comname ... the name of the command the job runs
-    - jobnum  ... the number of the job being run
 
     Example settings strings::
 
         "SLURM,jobname=hcp_freesurfer,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
-        "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=week"
-
+        "LSF,jobname=DWIproc,cores=20,mem=250000,walltime=650:00,queue=week"
 
     Scheduling multiple jobs in parallel
     ------------------------------------
-    
+
     If the parameters provided include --parjobs, --parsessions, --scheduler
     and --sessions or --batchfile, then qunex_container will spread the execution
     of the command by scheduling multiple jobs to run on separate nodes. Specifically,
@@ -716,7 +686,6 @@ def main(args=None):
     is set to 3 and parsessions is set to 4, QuNex will schedule 3 jobs. The first
     job will run 4 sessions in parallel and the other 2 jobs will run 3 sessions
     in parallel.
-
 
     Redirecting output
     ------------------
@@ -747,19 +716,17 @@ def main(args=None):
     scheduler specific options within settings string. It is best to provide 
     full absolute paths to the desired log.
 
-
     EXAMPLE USE
     ===========
 
     ::
 
         qunex_container hcp_freesurfer \\
-        --sessionsfolder=/data/study/sessions \\
-        --batchfile=/data/study/processing/batch.txt \\
-        --parsessions=4 \\
-        --container=/apptainer/qunex_suite-0_38_10.sif \\
-        --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=week"
-
+            --sessionsfolder=/data/study/sessions \\
+            --batchfile=/data/study/processing/batch.txt \\
+            --parsessions=4 \\
+            --container=/apptainer/qunex_suite-0_38_10.sif \\
+            --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=week"
     """
 
     if args is None:
@@ -769,7 +736,7 @@ def main(args=None):
         print(main.__doc__)
         exit()
 
-    # deprecation warnings, TODO remove in 1.0.0
+    # deprecation warnings
     for arg in args:
         if "sessionids=" in arg:
             print(
@@ -782,12 +749,13 @@ def main(args=None):
 
     env_status = False
     scheduler = None
-    conimage = None
+    container = None
     command = ""
     bash_pre = None
     bash_post = None
     bind = None
     nocleanenv = None
+    cuda = None
     nv = None
     cuda_path = None
     script = None
@@ -799,8 +767,7 @@ def main(args=None):
     sessions = None
     sessionsfolder = None
     sessionids = None
-    envars = None
-    dockeropt = None
+    containeropt = ""
     output = None
     parinfo = None
     overwrite = None
@@ -811,11 +778,9 @@ def main(args=None):
         if "scheduler=" in arg:
             k, scheduler = arg.split("=", 1)
         elif "container=" in arg:
-            k, conimage = arg.split("=", 1)
-        elif "envars=" in arg:
-            k, envars = arg.split("=", 1)
-        elif "dockeropt=" in arg:
-            k, dockeropt = arg.split("=", 1)
+            k, container = arg.split("=", 1)
+        elif "containeropt=" in arg:
+            k, containeropt = arg.split("=", 1)
         elif "output=" in arg:
             k, output = arg.split("=", 1)
         elif "bash_pre=" in arg:
@@ -826,6 +791,8 @@ def main(args=None):
             k, bind = arg.split("=", 1)
         elif arg == "--nocleanenv":
             nocleanenv = True
+        elif arg == "--cuda":
+            cuda = True
         elif arg == "--nv":
             nv = True
         elif "cuda_path=" in arg:
@@ -837,15 +804,15 @@ def main(args=None):
             parjobs = int(parjobs)
         elif "parsessions=" in arg:
             k, parsessions = arg.split("=", 1)
-            command += '%s="%s" ' % (k, parsessions)
+            command += f'{k}="{parsessions}" '
             parsessions = int(parsessions)
         elif "parelements=" in arg:
             k, parelements = arg.split("=", 1)
-            command += '%s="%s" ' % (k, parelements)
+            command += f'{k}="{parelements}" '
             parelements = int(parelements)
         elif "sessionsfolder=" in arg:
             k, sessionsfolder = arg.split("=", 1)
-            command += '%s="%s" ' % (k, sessionsfolder)
+            command += f'{k}="{sessionsfolder}" '
         elif "sessions=" in arg:
             k, sessions = arg.split("=", 1)
         elif "batchfile=" in arg:
@@ -856,14 +823,14 @@ def main(args=None):
             k, sessionids = arg.split("=", 1)
         elif "overwrite=" in arg:
             k, overwrite = arg.split("=", 1)
-            command += "%s " % (arg)
+            command += f"{arg} "
         elif "=" in arg:
             k, v = arg.split("=", 1)
-            command += '%s="%s" ' % (k, v)
+            command += f'{k}="{v}" '
         elif arg.replace("-", "") == "parinfo":
             parinfo = True
         else:
-            command += "%s " % (arg)
+            command += f"{arg} "
 
     # workaround for commands that are not supported
     commands_blacklist = [
@@ -882,7 +849,11 @@ def main(args=None):
     ]
     qx_command = command.split(" ")[0]
     # ban parallel execution of these commands
-    if overwrite == "yes" and parsessions > 1 and qx_command in commands_blacklist:
+    if (
+        (overwrite == "yes" or overwrite is True)
+        and parsessions > 1
+        and qx_command in commands_blacklist
+    ):
         print(
             "ERROR: Parallel execution of this command is not supported when overwrite is set to yes!"
         )
@@ -893,33 +864,24 @@ def main(args=None):
     if sessionsfolder is not None:
         batchlogsfolder = get_batchlogs_folder(sessionsfolder)
 
-    if conimage is None:
-        if "QUNEXCONIMAGE" in os.environ:
-            conimage = os.environ["QUNEXCONIMAGE"]
-        else:
-            print(
-                "ERROR: No Apptainer image or Docker container name specified either in the command line or as a QUNEXCONIMAGE environment variable!"
-            )
-            exit(1)
+    if container is None:
+        print(
+            "ERROR: No Singularity/Apptainer image or Docker container name specified through the --container parameter!"
+        )
+        exit(1)
 
     # Docker or Apptainer
-    apptainer = conimage.endswith(".simg") or conimage.endswith(".sif")
+    apptainer = container.endswith(".simg") or container.endswith(".sif")
 
     # just report env status and quit
     if env_status:
         # apptainer
         if apptainer:
-            env_command = (
-                "singularity exec %s bash /opt/qunex/env/qunex_container_env_status.sh"
-                % conimage
-            )
+            env_command = f"singularity exec {container} bash /opt/qunex/env/qunex_container_env_status.sh"
 
         # docker
         else:
-            env_command = (
-                'docker run %s bash -c "/opt/qunex/env/qunex_container_env_status.sh"'
-                % conimage
-            )
+            env_command = f'docker run {container} bash -c "/opt/qunex/env/qunex_container_env_status.sh"'
 
         # run
         subprocess.Popen(env_command, shell=True)
@@ -928,27 +890,6 @@ def main(args=None):
     if command.startswith("?scheduler"):
         print(schedule.__doc__)
         exit()
-
-    # -- check for environment variables
-    if envars:
-        envars = [e for e in envars.split("|")]
-        envars = [e.split("=>") for e in envars if "=>" in e]
-    else:
-        envars = []
-
-    # -- check for docker options
-    if dockeropt is None:
-        if "QUNEXDOCKEROPT" in os.environ:
-            dockeropt = os.environ["QUNEXDOCKEROPT"]
-        else:
-            dockeropt = '-v "$(pwd)":/data'
-
-    homedir = os.path.expanduser("~")
-    dockeropt += " -v %s:%s" % (homedir, homedir)
-
-    # bind cuda path if provided
-    if cuda_path:
-        dockeropt += f" -v {cuda_path}:/usr/local/cuda/"
 
     # if sessions is a batch file set as batchfile
     old_sessions_naming = False
@@ -1010,13 +951,13 @@ def main(args=None):
         for s in scheduler_params_list:
             # parameters with values
             if "=" in s:
-                sSplit = s.split("=", 1)
+                str_split = s.split("=", 1)
 
                 # SLURM job array?
-                if scheduler_name == "SLURM" and sSplit[0].strip() == "array":
+                if scheduler_name == "SLURM" and str_split[0].strip() == "array":
                     slurm_array = True
 
-                scheduler_params[sSplit[0].strip()] = sSplit[1].strip()
+                scheduler_params[str_split[0].strip()] = str_split[1].strip()
             # flags
             else:
                 # SLURM job array?
@@ -1026,9 +967,9 @@ def main(args=None):
                         n_jobs = n_sessions - 1
                     slurm_array = True
                     if parjobs is None:
-                        scheduler_params["array"] = "0-%s" % (n_jobs)
+                        scheduler_params["array"] = f"0-{n_jobs}"
                     else:
-                        scheduler_params["array"] = "0-%s%%%s" % (n_jobs, parjobs)
+                        scheduler_params["array"] = f"0-{n_jobs}%%{parjobs}"
                 else:
                     scheduler_params[s.strip()] = "QX_FLAG"
 
@@ -1043,6 +984,7 @@ def main(args=None):
                 "hcp_post_freesurfer",
                 "hcp_fmri_volume",
                 "hcp_fmri_surface",
+                "run_recipe",
             ]
             if qx_command not in array_commands:
                 print(
@@ -1103,29 +1045,26 @@ def main(args=None):
 
     # print out details
     if scheduler:
-        print("    Qunex will schedule %s jobs" % parjobs)
+        print(f"    Qunex will schedule {parjobs} jobs")
 
     if n_sessions is not None:
         print(
-            "\n--> QuNex will run the command over %s sessions. It will utilize:\n"
-            % n_sessions
+            f"\n---> QuNex will run the command over {n_sessions} sessions. It will utilize:\n"
         )
-        print("    Maximum sessions run in parallel for a job: %s." % parsessions)
-        print("    Maximum elements run in parallel for a session: %s." % parelements)
+        print(f"    Maximum sessions run in parallel for a job: {parsessions}.")
+        print(f"    Maximum elements run in parallel for a session: {parelements}.")
         print(
-            "    Up to %s processes will be utilized for a job.\n"
-            % (parelements * parsessions)
+            "    Up to {parelements * parsessions} processes will be utilized for a job.\n"
         )
 
         if slurm_array:
-            print("    Using SLURM job array over sessions: %s" % sessionids_array[0])
+            print(f"    Using SLURM job array over sessions: {sessionids_array[0]}")
         else:
             for i in range(0, parjobs):
-                print(
-                    "    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i])
-                )
+                print(f"    Job #{i + 1} will run sessions: {sessionids_array[i]}")
 
     # execute
+    homedir = os.path.expanduser("~")
     if parinfo is None:
         for i in range(0, parjobs):
             qx_command = command
@@ -1133,16 +1072,22 @@ def main(args=None):
             # add batchfile to command?
             if batchfile is not None:
                 if not old_sessions_naming:
-                    qx_command += '--batchfile="%s" ' % (batchfile)
+                    qx_command += f'--batchfile="{batchfile}" '
                 else:
-                    qx_command += '--sessions="%s" ' % (batchfile)
+                    qx_command += f'--sessions="{batchfile}" '
 
             # add sessions to command?
             if i < len(sessionids_array):
                 if not old_sessions_naming:
-                    qx_command += '--sessions="%s" ' % (sessionids_array[i])
+                    qx_command += f'--sessions="{sessionids_array[i]}" '
+                    # run_turnkey requires both
+                    if "run_turnkey" in qx_command:
+                        qx_command += f'--sessionids="{sessionids_array[i]}" '
                 else:
-                    qx_command += '--sessionids="%s" ' % (sessionids_array[i])
+                    qx_command += '--sessionids="{sessionids_array[i]}" '
+                    # run_turnkey requires both
+                    if "run_turnkey" in qx_command:
+                        qx_command += '--sessions="{sessionids_array[i]}" '
 
             # setup script
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -1156,10 +1101,7 @@ def main(args=None):
                     homedir, f"qunex_container_command_{timestamp}.sh"
                 )
 
-            f = open(script_path, "w")
-
-            for k, v in envars:
-                print('export con_%s="%s"' % (k, v), file=f)
+            f = open(script_path, "w", encoding="UTF-8")
 
             print("source /opt/qunex/env/qunex_environment.sh", file=f)
 
@@ -1170,7 +1112,7 @@ def main(args=None):
                 if apptainer:
                     print("bash " + script, file=f)
                 else:
-                    with open(script, "r") as sfile:
+                    with open(script, "r", encoding="UTF-8") as sfile:
                         for line in sfile:
                             print(line, file=f)
             else:
@@ -1186,6 +1128,13 @@ def main(args=None):
             if apptainer:
                 container_command += "singularity exec "
 
+                # bind home
+                container_command += f"--bind {homedir}:{homedir} "
+
+                # containeropt
+                if containeropt:
+                    container_command += containeropt + " "
+
                 # no clean env
                 if nocleanenv is None:
                     container_command += "--cleanenv "
@@ -1196,37 +1145,57 @@ def main(args=None):
                             "SLURM_ARRAY_TASK_ID",
                             "SLURM_ARRAY_TASK_MAX",
                         ]
-                        # pass variables into the Apptainer container
+                        # pass variables into the Singularity/Apptainer container
                         container_command += "--env "
                         container_command += ",".join(
-                            ["%s=${%s}" % (p, p) for p in slurm_array_params]
+                            [f"{p}=${{p}}" for p in slurm_array_params]
                         )
-                        # replace trailing comma with space
+                        # add trailing space
                         container_command += " "
+
+                # cuda
+                if cuda:
+                    container_command += "--nvccli -u "
 
                 # nv
                 if nv:
-                    container_command += " --nv "
+                    container_command += "--nv "
 
                 # bind
                 if bind:
-                    container_command += "-B %s " % bind
+                    container_command += f"--bind {bind} "
 
                 # bind cuda path if provided
                 if cuda_path:
                     if not bind:
-                        container_command += f"-B {cuda_path}:/usr/local/cuda/ "
+                        container_command += f"--bind {cuda_path}:/usr/local/cuda/ "
                     else:
                         container_command += f",{cuda_path}:/usr/local/cuda/ "
 
-                container_command += "%s bash %s" % (conimage, script_path)
+                container_command += f"{container.strip()} bash {script_path.strip()}"
             else:
-                container_command = "docker run %s %s bash %s" % (
-                    dockeropt,
-                    conimage,
-                    script_path,
-                )
+                container_command += "docker run "
 
+                # bind home
+                container_command += f"-v {homedir}:{homedir} "
+
+                # containeropt
+                if containeropt:
+                    container_command += containeropt + " "
+
+                # cuda
+                if cuda:
+                    container_command += "--gpus all "
+
+                # bind cuda path if provided
+                if cuda_path:
+                    container_command += f"-v {cuda_path}:/usr/local/cuda "
+
+                # bind
+                if bind:
+                    container_command += f"-v {bind} "
+
+                container_command += f"{container.strip()} bash {script_path.strip()}"
             if scheduler:
                 schedule(
                     command=container_command,
