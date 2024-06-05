@@ -4,6 +4,11 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 %
 %   Computes seed based correlations maps for individuals as well as group maps.
 %
+%   NOTE: Please, note that fc_compute_seedmaps_multiple function is being deprecated.
+%         The function will no longer be developed and will be removed in future
+%         releases of QuNex. Consider using fc_compute_seedmaps_multiple, which 
+%         offers additional functionality, instead.
+%
 %   Parameters:
 %       --flist (str):
 %           A .list file of session information, or a well strucutured
@@ -92,6 +97,9 @@ if nargin < 5 || isempty(targetf), targetf = '.';   end
 if nargin < 4 options = []; end
 if nargin < 3 inmask = [];  end
 if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be specified!'); end
+
+fprintf('\nWARNING: Please, note that fc_compute_seedmaps_multiple function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Consider using fc_compute_seedmaps, which offers additional functionality, instead');
+
 
 if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');

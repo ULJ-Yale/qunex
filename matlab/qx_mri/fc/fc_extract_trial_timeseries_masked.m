@@ -4,6 +4,11 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %
 %   Extracts trial timeseries for each of the specified ROI.
 %
+%   NOTE: Please, note that fc_extract_trial_timeseries_masked function is being 
+%         deprecated. The function will no longer be developed and will be 
+%         removed in future releases of QuNex. Consider using 
+%         fc_extract_roi_timeseries, which offers additional functionality, instead.
+%
 %   Parameters:
 %       --flist (str):
 %           File list with information on .conc, .fidl, and individual roi
@@ -114,6 +119,8 @@ end
 
 % ======================================================
 %     ---> set up the variables
+
+fprintf('\nWARNING: Please, note that fc_extract_trial_timeseries_masked function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Consider using fc_extract_roi_timeseries, which offers additional functionality, instead');
 
 fprintf('\n\nStarting ...');
 
