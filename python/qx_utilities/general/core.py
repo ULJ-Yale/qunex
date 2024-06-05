@@ -145,11 +145,11 @@ def read_session_data(filename, verbose=False):
 
                     ni = len(line)
                     if ni > 1:
-                        image["name"] = line[1]
-                    if ni > 2:
-                        image["task"] = line[2]
+                        image['name'] = line[1]
+                    if ni > 2 and ("bold" in image['name']) or ("DWI" in image['name']):
+                        image['task'] = line[2]
                     if ni > 3:
-                        image["ext"] = line[3]
+                        image['ext'] = line[3]
 
                     dic[line[0]] = image
 

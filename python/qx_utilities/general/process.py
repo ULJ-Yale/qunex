@@ -29,6 +29,7 @@ import general.core as gc
 import general.exceptions as ge
 import general.commands_support as gcs
 from processing import fs, simple, workflow, dwi, fsl
+from general.bids import map_nii2bids
 from general import extensions
 
 # pipelines imports
@@ -1924,6 +1925,7 @@ salist = [
     ["cbl", "create_bold_list", simple.create_bold_list, "Create BOLD list"],
     ["ccl", "create_conc_list", simple.create_conc_list, "Create conc list"],
     ["lsi", "list_session_info", simple.list_session_info, "List session info"],
+    ["mnb", "map_nii2bids", map_nii2bids, "Map NII files to BIDS"],
 ]
 
 # Add command lists used in extensions
@@ -2296,7 +2298,8 @@ def run(command, args):
             # simple processing commands
             elif command in sactions:
                 pending_actions = sactions[command]
-                soptions = update_options(session, options)
+                for session in sessions:
+                    soptions = update_options(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 

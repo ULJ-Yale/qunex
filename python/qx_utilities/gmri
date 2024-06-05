@@ -500,6 +500,11 @@ all_qunex_commands = [
         "Computes t-test against zero and saves specified results.",
         "matlab",
     ),
+    (
+        "qx_utilities.general.bids.map_nii2bids",
+        "Maps images from the sessions's nii folder to BIDS structure.",
+        "python"
+    ),
 ]
 
 

@@ -23,6 +23,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Fixed a bug where `run_qc` did not work if `scenezip` was set to no.
 * Several minor bug fixes and improvements that will make QuNex more stable and robust.
 
+## 0.99.3
+
+* Fixed a bug in parameter parsing from batch files.
+
 ## 0.99.2
 
 * Made HCP commands more robust to parameter types.
