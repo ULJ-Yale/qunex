@@ -688,7 +688,7 @@ function [roi] = process_mask(roi, options)
 
     % ---> check type of volumes
     
-    nozeros = roi.data;
+    nozeros = double(roi.data);
     nozeros(nozeros == 0) = NaN;
     is_binary  = var(nozeros, 'omitnan') == 0;
     is_scalar  = sum(roi.data - floor(roi.data)) ~= 0;
@@ -732,7 +732,7 @@ function [roi] = process_mask(roi, options)
         % ---> identify ROIs
 
         for f = 1:roi.frames
-            if ~isempty(roi.cifti.maps)
+            if isfield(roi.cifti, 'maps') && ~isempty(roi.cifti.maps)
                 roi.roi(f).roiname = roi.cifti.maps{f};                
             else
                 if roi.frames < 10
