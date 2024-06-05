@@ -194,34 +194,30 @@ def _parse_session_file_lines(lines, session_file_type):
 
         if tokens[0] == "id" or tokens[0] == "session":
             if len(tokens) != 2 or tokens[1] == "":
-                raise ge.SpecFileSyntaxError(
-                    error="unexpected number of tokens")
+                raise ge.SpecFileSyntaxError(error="unexpected number of tokens")
             session["session"] = tokens[1]
 
         elif tokens[0] == "subject":
             if len(tokens) != 2 or tokens[1] == "":
-                raise ge.SpecFileSyntaxError(
-                    error="unexpected number of tokens")
+                raise ge.SpecFileSyntaxError(error="unexpected number of tokens")
             session["subject"] = tokens[1]
 
         elif tokens[0] in ["dicom", "raw_data", "data", "hcp", "bids", "hcpls"]:
             if len(tokens) != 2 or tokens[1] == "":
-                raise ge.SpecFileSyntaxError(
-                    error="unexpected number of tokens")
+                raise ge.SpecFileSyntaxError(error="unexpected number of tokens")
             session["paths"][tokens[0]] = tokens[1]
 
         elif RE_READY.match(tokens[0]):
             pipeline_type = RE_READY.match(tokens[0]).group(1)
             if len(tokens) != 2 or tokens[1] == "":
-                raise ge.SpecFileSyntaxError(
-                    error="unexpected number of tokens")
+                raise ge.SpecFileSyntaxError(error="unexpected number of tokens")
             if tokens[1] == "true":
                 session["pipeline_ready"].append(pipeline_type)
 
         elif RE_IMAGE_NUM.match(tokens[0]):
             img = _parse_session_image_line(tokens, session_file_type)
             session["images"][img["image_number"]] = img
-        
+
         else:
             session["custom_tags"][tokens[0]] = l.split(":", 1)[1].strip()
 
@@ -334,8 +330,7 @@ def _parse_image_line_tags(tokens, line_type):
             img_info["hcp_image_type"] = ("FM", hcp_image_type.rsplit("-")[-1])
 
         elif RE_IMAGE_TYPE_SE_PATTERN.match(hcp_image_type):
-            img_info["hcp_image_type"] = (
-                "SE-FM", hcp_image_type.rsplit("-")[-1])
+            img_info["hcp_image_type"] = ("SE-FM", hcp_image_type.rsplit("-")[-1])
 
         elif RE_IMAGE_TYPE_BOLD_PATTERN.match(hcp_image_type):
             match = RE_IMAGE_TYPE_BOLD_PATTERN.match(hcp_image_type)
@@ -366,9 +361,6 @@ def _parse_image_line_tags(tokens, line_type):
         raise ge.SpecFileSyntaxError(error="unexpected session file type")
 
     for token in token_iter:
-        # TODO: python 3.8 https://docs.python.org/3/whatsnew/3.8.html#assignment-expressions
-        # assignment expressions will make the code much more readable and less error prone
-        
         if token == "":
             continue
 
@@ -384,7 +376,6 @@ def _parse_image_line_tags(tokens, line_type):
 
         phenc_match = RE_TAG_PHENC.match(token)
         if phenc_match:
-            # TODO: should validate phenc
             img_info["phenc"] = phenc_match.group(1)
             continue
 
@@ -403,7 +394,6 @@ def _parse_image_line_tags(tokens, line_type):
             img_info["additional_tags"].append(token)
             continue
 
-        raise ge.SpecFileSyntaxError(
-            error="invalid image tag: {}".format(token))
+        raise ge.SpecFileSyntaxError(error="invalid image tag: {}".format(token))
 
     return img_info

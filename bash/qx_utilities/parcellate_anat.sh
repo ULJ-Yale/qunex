@@ -86,19 +86,6 @@ EOF
 exit 0
 }
 
-
-# ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
 # ------------------------------------------------------------------------------
 # -- Check for help
 # ------------------------------------------------------------------------------
@@ -182,7 +169,7 @@ while [ ${index} -lt ${numArgs} ]; do
             ;;      
         *)
             usage
-            reho "ERROR: Unrecognized Option: ${argument}"
+            echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
             ;;
@@ -192,31 +179,31 @@ done
 # -- Check required parameters
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <sessions-folder-path> not specified>"
+    echo "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <session-id> not specified>"
+    echo "ERROR: <session-id> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${InputDataType} ]; then
     usage
-    reho "ERROR: <type_of_dense_data_for_input_file>"
+    echo "ERROR: <type_of_dense_data_for_input_file>"
     echo ""
     exit 1
 fi
 if [ -z ${ParcellationFile} ]; then
     usage
-    reho "ERROR: <file_for_parcellation> not specified>"
+    echo "ERROR: <file_for_parcellation> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${OutName} ]; then
     usage
-    reho "ERROR: <name_of_output_pconn_file> not specified>"
+    echo "ERROR: <name_of_output_pconn_file> not specified>"
     exit 1
 fi
 
@@ -237,7 +224,7 @@ echo "   Overwrite: ${Overwrite}"
 echo "   ExtractData: ${ExtractData}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
-geho "------------------------- Start of work --------------------------------"
+echo "------------------------- Start of work --------------------------------"
 echo ""
 }
 
@@ -248,7 +235,7 @@ main() {
 # -- Get Command Line Options
 get_options $@
 # -- Define inputs and output
-reho "--- Establishing paths for all input and output folders:"
+echo "--- Establishing paths for all input and output folders:"
 echo ""
 # -- Define all inputs and outputs depending on data type input
 echo "       Working with $InputDataType dscalar files..."
@@ -267,29 +254,29 @@ echo ""
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-	reho "--- Deleting prior $DATAOutput..."
+	echo "--- Deleting prior $DATAOutput..."
 	echo ""
 	rm -f "$DATAOutput" > /dev/null 2>&1
 fi
 # -- Check if parcellation was completed
-reho "--- Checking if parcellation was completed..."
+echo "--- Checking if parcellation was completed..."
 echo ""
 if [ -f "$DATAOutput" ]; then
-	geho "Parcellation data already completed: "
+	echo "Parcellation data already completed: "
 	echo ""
 	echo "      $DATAOutput"
 	echo ""
 	exit 0
 else
-	reho "Parcellation data not found."
+	echo "Parcellation data not found."
 	echo ""
-	geho "Computing parcellation on $DATAInput..."
+	echo "Computing parcellation on $DATAInput..."
 	echo ""
 	# -- First parcellate by COLUMN and save a parcellated file
 	wb_command -cifti-parcellate "$DATAInput" "$ParcellationFile" COLUMN "$DATAOutput"
 	# -- Then check if extraction of data is set to 'yes'
 	if [ "$ExtractData" == "yes" ]; then 
-		geho "Saving out the data in a CSV file..."
+		echo "Saving out the data in a CSV file..."
 		echo ""
 		DATACSVOutput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR_${OutName}.csv"
 		rm -f ${DATACSVOutput} > /dev/null 2>&1
@@ -298,20 +285,20 @@ else
 fi	
 
 # -- Perform completion checks
-geho "--- Checking outputs..."
+echo "--- Checking outputs..."
 echo ""
 if [ -f "$DATAOutput" ]; then
-	geho "Parcellated file:           $DATAOutput"
+	echo "Parcellated file:           $DATAOutput"
 	echo ""
 else
-	reho "Parcellated file $DATAOutput is missing. Something went wrong."
+	echo "Parcellated file $DATAOutput is missing. Something went wrong."
 	echo ""
 	exit 1
 fi
 
-geho "--- Parcellation successfully completed"
+echo "--- Parcellation successfully completed"
 echo ""
-geho "------------------------- Successful completion of work --------------------------------"
+echo "------------------------- Successful completion of work --------------------------------"
 echo ""
 
 }

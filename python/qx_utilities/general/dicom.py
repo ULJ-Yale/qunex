@@ -26,7 +26,7 @@ The commands are accessible from the terminal using gmri utility.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-# import dicom
+
 import os
 import io
 import os.path
@@ -42,26 +42,42 @@ import gzip as gz
 import csv
 import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
-
 import general.core as gc
 import general.img as gi
 import general.nifti as gn
 import general.qximg as qxi
 import general.exceptions as ge
-
 from datetime import datetime
-
-try:
-    import pydicom.filereader as dfr
-except:
-    import dicom.filereader as dfr
-
 
 if "QUNEXMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
     mcommand = os.environ["QUNEXMCOMMAND"]
 
+try:
+    import pydicom.filereader as dfr
+except:
+    import dicom.filereader as dfr
+
+dcm_info_list = (
+    ("sessionid", str, "NA"),
+    ("seriesNumber", int, 0),
+    ("seriesDescription", str, "NA"),
+    ("TR", float, 0.0),
+    ("TE", float, 0.0),
+    ("frames", int, 0),
+    ("directions", int, 0),
+    ("volumes", int, 0),
+    ("slices", int, 0),
+    ("datetime", str, ""),
+    ("ImageType", str, ""),
+    ("fileid", str, ""),
+)
+
+if "QUNEXMCOMMAND" not in os.environ:
+    mcommand = "matlab -nojvm -nodisplay -nosplash -r"
+else:
+    mcommand = os.environ["QUNEXMCOMMAND"]
 
 dcm_info_list = (
     ("sessionid", str, "NA"),
@@ -337,11 +353,11 @@ def readDICOMInfo(filename):
 
     info["fileid"], _ = os.path.splitext(os.path.basename(filename))
 
-    # --> institution name
+    # ---> institution name
     if [0x0008, 0x0080] in d:
         info["institution"] = d[0x0008, 0x0080].value
 
-    # --> manufacturer and model
+    # ---> manufacturer and model
     MR = []
     for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
         if e in d:
@@ -380,12 +396,12 @@ def readDICOMBase(filename):
         return d
     except:
         # return None
-        # print(" ===> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename))
+        # print(" ---> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename))
         try:
             d = dfr.read_file(filename, stop_before_pixels=True)
             return d
         except:
-            # print(" ===> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename))
+            # print(" ---> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename))
             return None
     finally:
         if f is not None and not f.closed:
@@ -706,7 +722,7 @@ def dicom2nii(
                 file=r,
             )
             print(
-                "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+                "---> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
             )
             continue
 
@@ -731,12 +747,12 @@ def dicom2nii(
             print("hcp:", os.path.abspath(os.path.join(base, "hcp")), file=stxt)
             print("", file=stxt)
 
-            # --> institution name
+            # ---> institution name
             if [0x0008, 0x0080] in d:
                 print(f"Scanned at: {d[0x0008, 0x0080].value}", file=r)
                 print(f"institution: {d[0x0008, 0x0080].value}", file=stxt)
 
-            # --> manufacturer and model
+            # ---> manufacturer and model
             MR = []
             for e in [[0x0008, 0x0070], [0x0008, 0x1090], [0x0008, 0x1010]]:
                 if e in d:
@@ -883,17 +899,17 @@ def dicom2nii(
         imgs = glob.glob(os.path.join(folder, "*.nii*"))
         if debug:
             print(
-                "     --> found nifti files: %s"
+                "     ---> found nifti files: %s"
                 % ("\n                            ".join(imgs))
             )
         for image in imgs:
             if not os.path.exists(image):
                 continue
             if debug:
-                print("     --> processing: %s [%s]" % (image, os.path.basename(image)))
+                print("     ---> processing: %s [%s]" % (image, os.path.basename(image)))
             if image[-3:] == "nii":
                 if debug:
-                    print("     --> gzipping: %s" % (image))
+                    print("     ---> gzipping: %s" % (image))
                 subprocess.call("gzip " + image, shell=True, stdout=null, stderr=null)
                 image += ".gz"
             if os.path.basename(image)[0:2] == "co":
@@ -1464,7 +1480,7 @@ def dicom2niix(
                     file=r,
                 )
                 print(
-                    "===> WARNING: Could not read dicom file! Skipping folder %s"
+                    "---> WARNING: Could not read dicom file! Skipping folder %s"
                     % (folder)
                 )
                 continue
@@ -1748,7 +1764,7 @@ def dicom2niix(
 
             if debug:
                 print(
-                    "     --> found %s nifti file(s): %s"
+                    "     ---> found %s nifti file(s): %s"
                     % (nimg, "\n                            ".join(imgs))
                 )
 
@@ -1757,23 +1773,23 @@ def dicom2niix(
                     continue
                 if debug:
                     print(
-                        "     --> processing: %s [%s]"
+                        "     ---> processing: %s [%s]"
                         % (image, os.path.basename(image))
                     )
                 if image.endswith(".nii"):
                     if debug:
-                        print("     --> gzipping: %s" % (image))
+                        print("     ---> gzipping: %s" % (image))
                     subprocess.call(
                         "gzip " + image, shell=True, stdout=null, stderr=null
                     )
                     image += ".gz"
 
-                # --> compile the basename of the target file(s) for nii folder
+                # ---> compile the basename of the target file(s) for nii folder
                 imgnum += 1
                 imgname = os.path.basename(image)
                 tbasename = "%d" % (niinum + imgnum)
 
-                # --> extract any suffices to add to the session.txt
+                # ---> extract any suffices to add to the session.txt
                 suffix = ""
                 if "_" in imgname:
                     suffix = " " + "_".join(
@@ -1782,13 +1798,13 @@ def dicom2niix(
                         .split("_")[1:]
                     )
 
-                # --> generate the actual target file path and move the image
+                # ---> generate the actual target file path and move the image
                 tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
                 if debug:
                     print("         ... moving '%s' to '%s'" % (image, tfname))
                 os.rename(image, tfname)
 
-                # --> check for .bval and .bvec files
+                # ---> check for .bval and .bvec files
                 for dwiextra in [".bval", ".bvec"]:
                     dwisrc = image.replace(".nii.gz", dwiextra)
                     if os.path.exists(dwisrc):
@@ -1796,12 +1812,12 @@ def dicom2niix(
                             dwisrc, os.path.join(imgf, "%s%s" % (tbasename, dwiextra))
                         )
 
-                # --> initialize JSON information
+                # ---> initialize JSON information
 
                 jsoninfo = ""
                 jinf = {}
 
-                # --> check for .json files and extract info if present
+                # ---> check for .json files and extract info if present
 
                 for jsonextra in [".json", ".JSON"]:
                     jsonsrc = image.replace(".gz", "")
@@ -1859,7 +1875,7 @@ def dicom2niix(
                                     % (jsonsrc)
                                 )
 
-                # --> print the info to session.txt file
+                # ---> print the info to session.txt file
 
                 numinfo = ""
                 if nimg > 1:
@@ -2592,7 +2608,7 @@ def split_dicom(folder=None):
             if sid not in sessions:
                 sessions.append(sid)
                 os.makedirs(os.path.join(folder, sid))
-                print("===> creating subfolder for session %s" % (sid))
+                print("---> creating subfolder for session %s" % (sid))
             print(
                 "---> %s - %-6s %6d - %-30s scanned on %s"
                 % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
@@ -2659,7 +2675,7 @@ def import_dicom(
             - 'no'  ... report and continue w/o additional checks
             - 'any' ... continue if any packages are ready to process report error otherwise.
 
-        --pattern (str, default '(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)'):
+        --pattern (str, default '(?P<session_id>.*?)(?:\\.zip$|\\.tar$|\\.tgz$|\\.tar\\..*$|$)'):
             The regex pattern to use to find the packages and to extract the
             session id.
 
@@ -2781,7 +2797,7 @@ def import_dicom(
             group, 'packet_name' that is used in further processing.
 
             The default `pattern` parameter is
-            `"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"`. This
+            `"(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|\\.tar\\..*$|$)"`. This
             pattern will identify the initial part of the packet file- or
             foldername, (without any extension that identifies a compressed
             package) as the packet name.
@@ -2822,7 +2838,7 @@ def import_dicom(
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
                 | Yale-EQ469-Placebo    | `".*?-(?P<subject_id>.*?)-(?P<session_name>.*)"` | EQ469      | Placebo      | EQ469_Placebo |
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
-                | Oxford.MR492.T3-Trio  | `".*?\.(?P<subject_id>.*?)\..*"`                 | MR492      | -            | MR492         |
+                | Oxford.MR492.T3-Trio  | `".*?\\.(?P<subject_id>.*?)\\..*"`               | MR492      | -            | MR492         |
                 +-----------------------+--------------------------------------------------+------------+--------------+---------------+
 
 
@@ -3031,7 +3047,7 @@ def import_dicom(
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --check="any"
 
@@ -3043,7 +3059,7 @@ def import_dicom(
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \\
                     --check="any"
@@ -3059,7 +3075,7 @@ def import_dicom(
 
                 qunex import_dicom \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \\
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
                     --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \\
                     --check="any"
@@ -3600,9 +3616,9 @@ def import_dicom(
 
             if tag == "exist":
                 # if overwrite:
-                #    print("     ... The folders will be cleaned and replaced with new data")
+                #    print(" ... The folders will be cleaned and replaced with new data")
                 # else:
-                #    print("     ... To process them, remove or rename the exisiting subject folders or set `overwrite` to 'yes'")
+                #    print(" ... To process them, remove or rename the exisiting subject folders or set `overwrite` to 'yes'")
                 print(
                     "     ... To process them, remove or rename the exisiting session folders"
                 )
@@ -3663,7 +3679,7 @@ def import_dicom(
             print("---> Cleaning exisiting data in folders:")
             for afile, session in packets["exist"]:
                 sfolder = os.path.join(sessionsfolder, session["sessionid"])
-                print("     ... %s" % (sfolder))
+                print(" ... %s" % (sfolder))
                 if masterinbox:
                     ifolder = os.path.join(sfolder, "inbox")
                     if os.path.exists(ifolder):
@@ -3728,12 +3744,12 @@ def import_dicom(
                         # print("...  copying %s dicom files" % (os.path.basename(p)))
                         # shutil.copytree(p, ifolder)
 
-            # ===> run sort dicom
+            # ---> run sort dicom
 
             print
             sort_dicom(folder=sfolder)
 
-            # ===> run dicom to nii
+            # ---> run dicom to nii
 
             print
             dicom2niix(
@@ -3749,7 +3765,7 @@ def import_dicom(
                 verbose=True,
             )
 
-            # ===> archive
+            # ---> archive
 
             if archive != "leave":
                 s = "Processing packages: " + archive

@@ -1,0 +1,20 @@
+# import hcp
+session: HCPA001
+subject: HCPA001
+dicom: /data/sessions/HCPA001/dicom
+raw_data: /data/sessions/HCPA001/nii
+data: /data/sessions/HCPA001/4dfp
+hcp: /data/sessions/HCPA001/hcp
+hcpready: true
+
+11  :T1w             :EXAMPLE T1
+21  :boldref5:task1  :EXAMPLE TASK1 REF 
+31  :bold5:task1     :EXAMPLE TASK1:bold_num(5)
+41  :boldref6:task2  :EXAMPLE TASK2 REF 
+51  :bold6:task2     :EXAMPLE TASK2:bold_num(6)
+61  :boldref1:rest   :EXAMPLE REST REF
+71  :bold1:rest      :EXAMPLE REST
+81  :boldref2:rest   :EXAMPLE REST REF
+91  :bold2:rest      :EXAMPLE REST
+101 :boldref3:rest   :EXAMPLE REST REF
+111 :bold3:rest      :EXAMPLE REST

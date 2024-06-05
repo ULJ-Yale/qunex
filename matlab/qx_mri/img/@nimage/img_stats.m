@@ -105,31 +105,31 @@ for d = doIt(:)'
         out.data(:,c) = m;
 
     case 'me'
-        out.data(:,c) = nanmedian(img.data, 2);
+        out.data(:,c) = median(img.data, 2, "omitnan");
 
     case 'max'
-        out.data(:,c) = nanmax(img.data, 2);
+        out.data(:,c) = max(img.data, 2);
 
     case 'min'
-        out.data(:,c) = nanmin(img.data, 2);
+        out.data(:,c) = min(img.data, 2);
 
     case 'sum'
         if isempty(s), s = nansum(img.data, 2); end
         out.data(:,c) = s;
 
     case 'sd'
-        if isempty(sd), sd = nanstd(img.data, 0, 2); end
+        if isempty(sd), sd = std(img.data, 0, 2, "omitnan"); end
         out.data(:,c) = sd;
 
     case 'var'
-        if isempty(v), v = nanvar(img.data, 1, 2); end
+        if isempty(v), v = var(img.data, 1, 2, "omitnan"); end
         out.data(:,c) = v;
 
     case 't'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
-        if isempty(v), v = nanvar(img.data, 1, 2); end
+        if isempty(v), v = var(img.data, 1, 2, "omitnan"); end
         if isempty(t), t = m./(sqrt(v./n)); end
         out.data(:,c) = t;
 
@@ -137,7 +137,7 @@ for d = doIt(:)'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
-        if isempty(v), v = nanvar(img.data, 1, 2); end
+        if isempty(v), v = var(img.data, 1, 2, "omitnan"); end
         if isempty(t), t = m./(sqrt(v./n)); end
         if isempty(p), p = tcdf(-abs(t), n-1).*2; end
         out.data(:,c) = p;
@@ -146,7 +146,7 @@ for d = doIt(:)'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
-        if isempty(v), v = nanvar(img.data, 1, 2); end
+        if isempty(v), v = var(img.data, 1, 2, "omitnan"); end
         if isempty(t), t = m./(sqrt(v./n)); end
         if isempty(p), p = tcdf(-abs(t), n-1).*2; end
         p(p<0.00000000000001)=0.00000000000001;

@@ -19,14 +19,12 @@ malist = []
 salist = []
 
 # -- process extensions
-
 def load_extensions():
     if "QXEXTENSIONSPY" in os.environ:
-        # print('=> processing extensions')
+        #print('=> processing extensions')
         extensions_paths = [e.strip() for e in os.environ['QXEXTENSIONSPY'].split(':') if e]
         
         # -- loop through paths and check that we have qx_modules file
-
         for extensions_path in extensions_paths:
             if os.path.exists(os.path.join(extensions_path, 'qx_modules')):
 
@@ -37,16 +35,16 @@ def load_extensions():
                 with open(os.path.join(extensions_path, 'qx_modules'), 'r') as f:
                     for line in f:
                         if (len(line.strip()) > 0) and (not line.strip().startswith('#')):
-                            module_name = line.strip()                        
+                            module_name = line.strip()
                             if os.path.isdir(os.path.join(extensions_path, module_name)):
                                 sys.path.append(os.path.join(extensions_path, module_name))
                             try:
                                 modules[module_name] = importlib.import_module(module_name)
                                 module_names.append(module_name)
                             except:
-                                print(f"WARNING: There was an error when trying to import extension module:\n         {extensions_path}/{module_name}.\n         The module is not loaded and will not be available for use.")                        
+                                print(f"WARNING: There was an error when trying to import extension module: {extensions_path}/{module_name}!")
+
         # -- load the modules
-        
         # if module_names:
         #     for module_name in module_names:
         #         print(f'   ... importing module {module_name}')
@@ -129,7 +127,6 @@ def qx_process(command_type="parallel", short_name=None, long_name=None, descrip
         f_decorated.__doc__ = f.__doc__
         
         # --- add options to arglist ---
-        
         def _check_default(x):
             if x == Parameter.empty:
                 return ""
@@ -148,7 +145,6 @@ def qx_process(command_type="parallel", short_name=None, long_name=None, descrip
         ]
 
         # --- add function to qunex command list ---
-        
         if short_name is None:
             short_name = f.__name__
         if long_name is None:

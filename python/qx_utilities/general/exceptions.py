@@ -83,9 +83,9 @@ class SpecFileSyntaxError(Exception):
 
 def reportCommandFailed(comm, e):
     if e.function == comm:
-        eString = "\n===> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
+        eString = "\n---> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
     else:
-        eString = "\n===> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
+        eString = "\n---> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
     return eString
 
 def reportCommandError(comm, e):

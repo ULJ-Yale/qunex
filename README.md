@@ -10,9 +10,9 @@ The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number 
 
 The QuNex code is co-developed and co-maintained by the:
 
-* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu/),
+* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu),
 * [Mind and Brain Lab, University of Ljubljana](https://mblab.si),
-* [Murray Lab, Yale University](https://medicine.yale.edu/lab/murray/).
+* [Murray Lab, Dartmouth College](https://murraylab.org).
 
 ## Quick links
 
@@ -24,12 +24,12 @@ The QuNex code is co-developed and co-maintained by the:
 
 ## Version
 
-* QuNex: 0.99.3
-* qx_library: 0.90.20
+* QuNex: 0.100.0 [QX IO]
+* qx_library: 0.100.0 [QX IO]
 
 ## References
 
-Jie Lisa Ji, Jure Demšar, Clara Fonteneau, Zailyn Tamayo, Lining Pan, Aleksij Kraljič, Andraž Matkovič, Nina Purg, Markus Helmer, Shaun Warrington, Anderson Winkler, Valerio Zerbi, Timothy S. Coalson, Matthew F. Glasser, Michael P. Harms, Stamatios N. Sotiropoulos, John D. Murray, Alan Anticevic, Grega Repovš; QuNex – An Integrative Platform for Reproducible Neuroimaging Analytics; bioRxiv 2022.06.03.494750; doi: <https://doi.org/10.1101/2022.06.03.494750>
+Jie Lisa Ji, Jure Demšar, Clara Fonteneau, Zailyn Tamayo, Lining Pan, Aleksij Kraljič, Andraž Matkovič, Nina Purg, Markus Helmer, Shaun Warrington, Anderson Winkler, Valerio Zerbi, Timothy S. Coalson, Matthew F. Glasser, Michael P. Harms, Stamatios N. Sotiropoulos, John D. Murray, Alan Anticevic, Grega Repovš; QuNex—An integrative platform for reproducible neuroimaging analytics. Frontiers in neuroinformatics 17 (2023). <https://www.frontiersin.org/articles/10.3389/fninf.2023.1104508>.
 
 ## GPL licenses
 

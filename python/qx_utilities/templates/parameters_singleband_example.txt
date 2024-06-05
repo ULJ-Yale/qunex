@@ -10,9 +10,9 @@
 # ==       NOTE: ADJUST SETTINGS AS NEEDED FOR YOUR STUDY BEFORE USE!          ==
 # ===============================================================================
 
-# -------------------------> General HCP settings
+# ---> General HCP settings
 
-_hcp_processing_mode    : LegacyStyleData # For HCP compliant data set to ==> HCPStyleData
+_hcp_processing_mode    : LegacyStyleData # For HCP compliant data set to ---> HCPStyleData
 
 # ---> Pre FreeSurfer
 

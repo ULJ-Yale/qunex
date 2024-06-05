@@ -20,7 +20,7 @@ from general import exceptions as ge
 from general import commands as gcom
 from general import commands_support as gcs
 
-help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
+help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 (qx_utilities) commands can be invoked via the "qunex <command>" call.
 
  General QuNex usage syntax
@@ -46,7 +46,7 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 ======================================
 
   qunex --a
-'''
+"""
 
 #
 # Took out these two commands until fully integrated to avoid documentation confusion w/ bash qx_utilities
@@ -59,206 +59,460 @@ help = r'''DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 # language can either be "bash", "matlab", "python", or "r"
 all_qunex_commands = [
     # ("qx_utilities.r.bold_movement",                                "Plots movement data, creates movement reports and information for data scrubbing.",      "r"), # added as an example for R language
-    ("qx_utilities.general.bruker.bruker_to_dicom",
-     "Converts bruker data into the dicom format.",                                              "python"),
-    ("qx_utilities.general.dicomdeid.change_dicom_files",
-     "Changes all the dicom files in the specified folder according the `paramfile`.",           "python"),
-    ("qx_utilities.general.fidl.check_fidl",
-     "Prints figures showing fidl events and their duration.",                                   "python"),
-    ("qx_utilities.processing.workflow.compute_bold_stats",
-     "Compute BOLD movement and signal statistics.",                                             "python"),
-    ("qx_utilities.general.utilities.create_batch",
-     "Creates a joint batch file from source files in all session folders.",                     "python"),
-    ("qx_utilities.processing.workflow.create_bold_brain_masks",
-     "Create brain masks for BOLD runs.",                                                        "python"),
-    ("qx_utilities.general.utilities.create_conc",
-     "Creates a set of .conc formated files.",                                                   "python"),
-    ("qx_utilities.general.utilities.create_list",
-     "Creates a .list formated file.",                                                           "python"),
-    ("qx_utilities.general.utilities.create_session_info",          "Creates session.txt files.",
-     "python"),
-    ("qx_utilities.processing.workflow.create_stats_report",
-     "Create BOLD movement statistic reports and plots.",                                        "python"),
-    ("qx_utilities.general.utilities.create_study",
-     "Creates the base study folder structure.",                                                 "python"),
-    ("qx_utilities.general.palm.create_ws_palm_design",             "Prepares the design file.",
-     "python"),
-    ("qx_utilities.bash.dwi_bedpostx_gpu",
-     "Runs FSL GPU-enabled bedpostx.",                                                           "bash"),
-    ("qx_utilities.bash.dwi_dtifit",
-     "Runs FSL's dtifit tool (cluster usable).",                                                 "bash",),
-    ("qx_utilities.processing.fsl.fsl_feat",                        "Runs FSL feat command.",
-     "python"),
-    ("qx_utilities.processing.fsl.fsl_melodic",                     "Runs FSL melodic command.",
-     "python"),
-    ("qx_utilities.processing.dwi.dwi_f99",                         "Runs FSL F99 command.",
-     "python"),
-    ("qx_utilities.bash.dwi_legacy_gpu",
-     "Diffusion image processing for data with or without standard fieldmaps.",                  "bash"),
-    ("qx_utilities.bash.dwi_parcellate",
-     "Parcellates dense tractography data.",                                                     "bash"),
-    ("qx_utilities.bash.dwi_pre_tractography",
-     "Generates space for dense whole-brain connectomes.",                                       "bash"),
-    ("qx_utilities.bash.dwi_probtrackx_dense_gpu",
-     "Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.",                     "bash"),
-    ("qx_utilities.bash.dwi_seed_tractography_dense",
-     "Reduces dense tractography data using a seed structure.",                                  "bash"),
-    ("qx_utilities.processing.dwi.dwi_xtract",                      "Runs FSL XTRACT command.",
-     "python"),
-    ("qx_utilities.processing.dwi.dwi_noddi_gpu",                   "Runs CUDIMOT's NODDI microstructure modelling.",
-     "python"),
-    ("qx_utilities.bash.dwi_eddy_qc",
-     "Runs DWI eddy QC.",                                                                        "bash"),
-    ("qx_utilities.processing.workflow.extract_nuisance_signal",
-     "Extracts nuisance signal from BOLD images.",                                               "python"),
-    ("qx_utilities.bash.extract_roi",
-     "Extracts data from pre-specified ROIs in CIFTI or NIFTI.",                                 "bash"),
-    ("qx_mri.fc.fc_compute_ab_corr",
-     "Computes the correlation of each source mask voxel with each target mask voxel.",          "matlab"),
-    ("qx_mri.fc.fc_compute_ab_corr_kca",
-     "Segments the voxels in smask based on their connectivity pattern with tmask voxels.",      "matlab"),
-    ("qx_mri.fc.fc_compute_gbc3",
-     "Computes GBC maps for individuals as well as group maps.",                                 "matlab"),
-    ("qx_mri.fc.fc_compute_gbcd",
-     "Computes GBC averages for each specified ROI for n bands defined as distance from ROI.",   "matlab"),
-    ("qx_mri.fc.fc_compute_roifc",
-     "Computes ROI functional connectivity matrices for individual subject / session.",          "matlab"),
-    ("qx_mri.fc.fc_compute_roifc_group",
-     "Computes ROI functional connectivity matrices for a group of sujects/sessions.",           "matlab"),
-    ("qx_mri.fc.fc_compute_seedmaps",
-     "Computes seed based functional connectivity maps for individual subject / session.",       "matlab"),
-    ("qx_mri.fc.fc_compute_seedmaps_group",
-     "Computes seed based correlations maps for individuals as well as group maps.",             "matlab"),
-    ("qx_mri.fc.fc_compute_seedmaps_multiple",
-     "Computes seed based correlations maps for individuals as well as group maps.",             "matlab"),
-    ("qx_mri.fc.fc_extract_roi_timeseries_masked",
-     "Extracts and saves region timeseries defined by provided roiinfo file",                    "matlab"),
-    ("qx_mri.fc.fc_extract_trial_timeseries_masked",
-     "Extracts trial timeseries for each of the specified ROI.",                                 "matlab"),
-    ("qx_mri.fc.fc_preprocess",
-     "Runs single BOLD file based functional connectivity preprocessing.",                       "matlab"),
-    ("qx_mri.fc.fc_preprocess_conc",
-     "Runs fcMRI preprocessing and GLM analysis a set of BOLD files.",                           "matlab"),
-    ("qx_mri.fc.fc_segment_mri",
-     "Segments the voxels in smask based on their connectivity with tmask ROI.",                 "matlab"),
-    ("qx_mri.general.general_compute_bold_list_stats",
-     "Computes BOLD run per frame statistics and scrubbing information for a list of sessions.", "matlab"),
-    ("qx_mri.general.general_compute_bold_stats",
-     "Computes BOLD run per frame statistics and scrubbing information.",                        "matlab"),
-    ("qx_mri.general.general_compute_group_bold_stats",
-     "Extracts image statistics over the whole group.",                                          "matlab"),
-    ("qx_mri.general.general_extract_glm_volumes",
-     "Extracts and saves the GLM estimates of the effects of interests.",                        "matlab"),
-    ("qx_mri.general.general_extract_roi_glm_values",
-     "Extracts per ROI estimates of specified effects from a volume or cifti GLM files.",        "matlab"),
-    ("qx_mri.general.general_extract_roi_values",
-     "Extracts desired statistics from provided files for each ROI.",                            "matlab"),
-    ("qx_mri.general.general_find_peaks",
-     "Performs smoothing and defines ROIs from peaks.",                                          "matlab"),
-    ("qx_mri.general.general_glm_predict",
-     "Computes predicted and residual signal based on GLM.",                                     "matlab"),
-    ("qx_mri.general.general_image_conjunction",
-     "Reads image file, computes conjunction using g_conjunction and saves results.",            "matlab"),
-    ("qx_mri.general.general_image_overlap",
-     "Prints the overlap of two images, one in red, another in green.",                          "matlab"),
-    ("qx_mri.general.general_parcellated2dense",
-     "Expands the parcelated file to a dense file.",                                             "matlab"),
-    ("qx_mri.general.general_plot_bold_timeseries",
-     "Creates and saves a plot of BOLD timeseries.",                                             "matlab"),
-    ("qx_mri.general.general_plot_bold_timeseries_list",
-     "Creates and saves a plot of BOLD timeseries for a list of sessions.",                      "matlab"),
-    ("qx_mri.general.general_qa_concfile",
-     "Computes and saves the specified statistics on images specified in the conc file.",        "matlab"),
-    ("qx_utilities.general.dicomdeid.get_dicom_fields",
-     "Returns an overview of DICOM fields across all the DICOM files.",                          "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_asl",                        "Runs HCP ASL pipeline.",
-     "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_dedrift_and_resample",       "Runs HCP MSMAll pipeline.",
-     "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_diffusion",                  "Runs HCP DWI pipeline.",
-     "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_fmri_surface",
-     "Runs HCP fMRI Surface pipeline.",                                                          "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_fmri_volume",
-     "Runs HCP fMRI Volume pipeline.",                                                           "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_freesurfer",
-     "Runs HCP FreeSurfer pipeline.",                                                            "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_icafix",                     "Runs HCP ICAFix pipeline.",
-     "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_make_average_dataset",
-     "Runs HCP make average dataset pipeline.",                                                  "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_msmall",                     "Runs HCP MSMAll pipeline.",
-     "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_post_fix",                   "Runs HCP PostFix pipeline.",
-     "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_post_freesurfer",
-     "Runs HCP Post FreeSurfer pipeline.",                                                       "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_pre_freesurfer",
-     "Runs HCP PreFreeSurfer pipeline.",                                                         "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_longitudinal_freesurfer",
-     "Runs HCP PreFreeSurfer pipeline.",                                                         "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_reapply_fix",
-     "Runs HCP ReApplyFix pipeline.",                                                            "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_task_fmri_analysis",
-     "Runs HCP fMRI task analysis pipeline.",                                                    "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_temporal_ica",
-     "Runs HCP temporal ICA pipeline.",                                                          "python"),
-    ("qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean",
-     "Runs HCP apply auto reclean pipeline.",                                                    "python"),
-    ("qx_utilities.general.bids.import_bids",
-     "Maps a BIDS dataset to the QuNex Suite file structure.",                                   "python"),
-    ("qx_utilities.general.dicom.import_dicom",
-     "Processes sessions's DICOM or PAR/REC files and generates NIfTI files.",                   "python"),
-    ("qx_utilities.hcp.import_hcp.import_hcp",
-     "Maps HCPLS data to the QuNex Suite file structure.",                                       "python"),
-    ("qx_utilities.general.fidl.join_fidl",
-     "Combines all the fidl files matching root based on the information in conc file.",         "python"),
-    ("qx_utilities.general.fidl.join_fidl_folder",
-     "Joins all the fidl files that match the name of each conc file in the concfolder.",        "python"),
-    ("qx_utilities.hcp.process_hcp.map_hcp_data",
-     "Maps HCP preprocessed data to sessions' image folder.",                                    "python"),
-    ("qx_mice.process_mice.map_mice_data",
-     "Maps mice pipeline data to sessions' image folder.",                                       "python"),
-    ("qx_utilities.bash.parcellate_anat",
-     "Parcellate T1w and T2w derived measures (e.g. myelin or thickness).",                      "bash"),
-    ("qx_utilities.bash.parcellate_bold",
-     "Parcellate BOLD data and generate pconn files.",                                           "bash"),
-    ("qx_utilities.processing.workflow.preprocess_bold",
-     "Preprocesses single BOLD images.",                                                         "python"),
-    ("qx_utilities.processing.workflow.preprocess_conc",
-     "Preprocesses conc bundles of BOLD images.",                                                "python"),
-    ("qx_mice.process_mice.preprocess_mice",                        "Mice preprocessing pipeline.",
-     "python"),
-    ("qx_utilities.general.palm.run_palm",
-     "Runs second level analysis using PALM permutation resampling.",                            "python"),
-    ("qx_utilities.bash.run_qc",
-     "Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.",                  "bash"),
-    ("qx_utilities.bash.run_turnkey",
-     "Exectues turnkey QuNex workflow compatible with XNAT Docker engine.",                      "bash"),
-    ("qx_utilities.hcp.setup_hcp.setup_hcp",
-     "Maps images from the sessions's nii folder to HCP minimal preprocessing structure.",       "python"),
-    ("qx_mice.setup_mice.setup_mice",
-     "Prepares mice data for the mice pipelines.",                                               "python"),
-    ("qx_utilities.general.fidl.split_fidl",
-     "Splits a multi-bold fidl file into run specific bold files.",                              "python"),
-    ("qx_mri.stats.stats_compute_behavioral_correlations",
-     "Computes correlations between given images and provided data.",                            "matlab"),
-    ("qx_mri.stats.stats_p2z",
-     "Converts p to Z values considering one or two tails.",                                     "matlab"),
-    ("qx_mri.stats.stats_ttest_dependent",
-     "Computes t-test of differences between two dependent groups.",                             "matlab"),
-    ("qx_mri.stats.stats_ttest_independent",
-     "Computes t-test of differences between two independent groups.",                           "matlab"),
-    ("qx_mri.stats.stats_ttest_zero",
-     "Computes t-test against zero and saves specified results.",                                "matlab"),
+    (
+        "qx_utilities.general.bruker.bruker_to_dicom",
+        "Converts bruker data into the dicom format.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.dicomdeid.change_dicom_files",
+        "Changes all the dicom files in the specified folder according the `paramfile`.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.fidl.check_fidl",
+        "Prints figures showing fidl events and their duration.",
+        "python",
+    ),
+    (
+        "qx_utilities.processing.workflow.compute_bold_stats",
+        "Compute BOLD movement and signal statistics.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.utilities.create_batch",
+        "Creates a joint batch file from source files in all session folders.",
+        "python",
+    ),
+    (
+        "qx_utilities.processing.workflow.create_bold_brain_masks",
+        "Create brain masks for BOLD runs.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.utilities.create_conc",
+        "Creates a set of .conc formated files.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.utilities.create_list",
+        "Creates a .list formated file.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.utilities.create_session_info",
+        "Creates session.txt files.",
+        "python",
+    ),
+    (
+        "qx_utilities.processing.workflow.create_stats_report",
+        "Create BOLD movement statistic reports and plots.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.utilities.create_study",
+        "Creates the base study folder structure.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.utilities.copy_study",
+        "Copies an existing QuNex study into a new one.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.palm.create_ws_palm_design",
+        "Prepares the design file.",
+        "python",
+    ),
+    ("qx_utilities.bash.dwi_bedpostx_gpu", "Runs FSL GPU-enabled bedpostx.", "bash"),
+    (
+        "qx_utilities.bash.dwi_dtifit",
+        "Runs FSL's dtifit tool (cluster usable).",
+        "bash",
+    ),
+    ("qx_utilities.processing.fsl.fsl_feat", "Runs FSL feat command.", "python"),
+    ("qx_utilities.processing.fsl.fsl_melodic", "Runs FSL melodic command.", "python"),
+    ("qx_utilities.processing.dwi.dwi_f99", "Runs FSL F99 command.", "python"),
+    (
+        "qx_utilities.bash.dwi_legacy_gpu",
+        "Diffusion image processing for data with or without standard fieldmaps.",
+        "bash",
+    ),
+    (
+        "qx_utilities.bash.dwi_parcellate",
+        "Parcellates dense tractography data.",
+        "bash",
+    ),
+    (
+        "qx_utilities.bash.dwi_pre_tractography",
+        "Generates space for dense whole-brain connectomes.",
+        "bash",
+    ),
+    (
+        "qx_utilities.bash.dwi_probtrackx_dense_gpu",
+        "Runs FSL's GPU-enabled probtrackx for dense whole-brain connectomes.",
+        "bash",
+    ),
+    (
+        "qx_utilities.bash.dwi_seed_tractography_dense",
+        "Reduces dense tractography data using a seed structure.",
+        "bash",
+    ),
+    ("qx_utilities.processing.dwi.dwi_xtract", "Runs FSL XTRACT command.", "python"),
+    (
+        "qx_utilities.processing.dwi.dwi_noddi_gpu",
+        "Runs CUDIMOT's NODDI microstructure modelling.",
+        "python",
+    ),
+    ("qx_utilities.bash.dwi_eddy_qc", "Runs DWI eddy QC.", "bash"),
+    (
+        "qx_utilities.processing.workflow.extract_nuisance_signal",
+        "Extracts nuisance signal from BOLD images.",
+        "python",
+    ),
+    (
+        "qx_utilities.bash.extract_roi",
+        "Extracts data from pre-specified ROIs in CIFTI or NIFTI.",
+        "bash",
+    ),
+    (
+        "qx_mri.fc.fc_compute_ab_corr",
+        "Computes the correlation of each source mask voxel with each target mask voxel.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_ab_corr_kca",
+        "Segments the voxels in smask based on their connectivity pattern with tmask voxels.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_gbc3",
+        "Computes GBC maps for individuals as well as group maps.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_gbcd",
+        "Computes GBC averages for each specified ROI for n bands defined as distance from ROI.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_roifc",
+        "Computes ROI functional connectivity matrices for individual subject / session.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_roifc_group",
+        "Computes ROI functional connectivity matrices for a group of sujects/sessions.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_seedmaps",
+        "Computes seed based functional connectivity maps for individual subject / session.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_seedmaps_group",
+        "Computes seed based correlations maps for individuals as well as group maps.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_compute_seedmaps_multiple",
+        "Computes seed based correlations maps for individuals as well as group maps.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_extract_roi_timeseries_masked",
+        "Extracts and saves region timeseries defined by provided roiinfo file",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_extract_trial_timeseries_masked",
+        "Extracts trial timeseries for each of the specified ROI.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_preprocess",
+        "Runs single BOLD file based functional connectivity preprocessing.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_preprocess_conc",
+        "Runs fcMRI preprocessing and GLM analysis a set of BOLD files.",
+        "matlab",
+    ),
+    (
+        "qx_mri.fc.fc_segment_mri",
+        "Segments the voxels in smask based on their connectivity with tmask ROI.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_compute_bold_list_stats",
+        "Computes BOLD run per frame statistics and scrubbing information for a list of sessions.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_compute_bold_stats",
+        "Computes BOLD run per frame statistics and scrubbing information.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_compute_group_bold_stats",
+        "Extracts image statistics over the whole group.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_extract_glm_volumes",
+        "Extracts and saves the GLM estimates of the effects of interests.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_extract_roi_glm_values",
+        "Extracts per ROI estimates of specified effects from a volume or cifti GLM files.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_extract_roi_values",
+        "Extracts desired statistics from provided files for each ROI.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_find_peaks",
+        "Performs smoothing and defines ROIs from peaks.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_glm_predict",
+        "Computes predicted and residual signal based on GLM.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_image_conjunction",
+        "Reads image file, computes conjunction using g_conjunction and saves results.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_image_overlap",
+        "Prints the overlap of two images, one in red, another in green.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_parcellated2dense",
+        "Expands the parcelated file to a dense file.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_plot_bold_timeseries",
+        "Creates and saves a plot of BOLD timeseries.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_plot_bold_timeseries_list",
+        "Creates and saves a plot of BOLD timeseries for a list of sessions.",
+        "matlab",
+    ),
+    (
+        "qx_mri.general.general_qa_concfile",
+        "Computes and saves the specified statistics on images specified in the conc file.",
+        "matlab",
+    ),
+    (
+        "qx_utilities.general.dicomdeid.get_dicom_fields",
+        "Returns an overview of DICOM fields across all the DICOM files.",
+        "python",
+    ),
+    ("qx_utilities.hcp.process_hcp.hcp_asl", "Runs HCP ASL pipeline.", "python"),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_dedrift_and_resample",
+        "Runs HCP MSMAll pipeline.",
+        "python",
+    ),
+    ("qx_utilities.hcp.process_hcp.hcp_diffusion", "Runs HCP DWI pipeline.", "python"),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_fmri_surface",
+        "Runs HCP fMRI Surface pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_fmri_volume",
+        "Runs HCP fMRI Volume pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_freesurfer",
+        "Runs HCP FreeSurfer pipeline.",
+        "python",
+    ),
+    ("qx_utilities.hcp.process_hcp.hcp_icafix", "Runs HCP ICAFix pipeline.", "python"),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_make_average_dataset",
+        "Runs HCP make average dataset pipeline.",
+        "python",
+    ),
+    ("qx_utilities.hcp.process_hcp.hcp_msmall", "Runs HCP MSMAll pipeline.", "python"),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_post_fix",
+        "Runs HCP PostFix pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_post_freesurfer",
+        "Runs HCP Post FreeSurfer pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_pre_freesurfer",
+        "Runs HCP PreFreeSurfer pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_longitudinal_freesurfer",
+        "Runs HCP PreFreeSurfer pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_reapply_fix",
+        "Runs HCP ReApplyFix pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_task_fmri_analysis",
+        "Runs HCP fMRI task analysis pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_temporal_ica",
+        "Runs HCP temporal ICA pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean",
+        "Runs HCP apply auto reclean pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.bids.import_bids",
+        "Maps a BIDS dataset to the QuNex Suite file structure.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.dicom.import_dicom",
+        "Processes sessions's DICOM or PAR/REC files and generates NIfTI files.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.import_hcp.import_hcp",
+        "Maps HCPLS data to the QuNex Suite file structure.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.fidl.join_fidl",
+        "Combines all the fidl files matching root based on the information in conc file.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.fidl.join_fidl_folder",
+        "Joins all the fidl files that match the name of each conc file in the concfolder.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.map_hcp_data",
+        "Maps HCP preprocessed data to sessions' image folder.",
+        "python",
+    ),
+    (
+        "qx_mice.process_mice.map_mice_data",
+        "Maps mice pipeline data to sessions' image folder.",
+        "python",
+    ),
+    (
+        "qx_utilities.bash.parcellate_anat",
+        "Parcellate T1w and T2w derived measures (e.g. myelin or thickness).",
+        "bash",
+    ),
+    (
+        "qx_utilities.bash.parcellate_bold",
+        "Parcellate BOLD data and generate pconn files.",
+        "bash",
+    ),
+    (
+        "qx_utilities.processing.workflow.preprocess_bold",
+        "Preprocesses single BOLD images.",
+        "python",
+    ),
+    (
+        "qx_utilities.processing.workflow.preprocess_conc",
+        "Preprocesses conc bundles of BOLD images.",
+        "python",
+    ),
+    ("qx_mice.process_mice.preprocess_mice", "Mice preprocessing pipeline.", "python"),
+    (
+        "qx_utilities.general.palm.run_palm",
+        "Runs second level analysis using PALM permutation resampling.",
+        "python",
+    ),
+    (
+        "qx_utilities.bash.run_qc",
+        "Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.",
+        "bash",
+    ),
+    (
+        "qx_utilities.bash.run_turnkey",
+        "Exectues turnkey QuNex workflow compatible with XNAT Docker engine.",
+        "bash",
+    ),
+    (
+        "qx_utilities.hcp.setup_hcp.setup_hcp",
+        "Maps images from the sessions's nii folder to HCP minimal preprocessing structure.",
+        "python",
+    ),
+    (
+        "qx_mice.setup_mice.setup_mice",
+        "Prepares mice data for the mice pipelines.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.fidl.split_fidl",
+        "Splits a multi-bold fidl file into run specific bold files.",
+        "python",
+    ),
+    (
+        "qx_mri.stats.stats_compute_behavioral_correlations",
+        "Computes correlations between given images and provided data.",
+        "matlab",
+    ),
+    (
+        "qx_mri.stats.stats_p2z",
+        "Converts p to Z values considering one or two tails.",
+        "matlab",
+    ),
+    (
+        "qx_mri.stats.stats_ttest_dependent",
+        "Computes t-test of differences between two dependent groups.",
+        "matlab",
+    ),
+    (
+        "qx_mri.stats.stats_ttest_independent",
+        "Computes t-test of differences between two independent groups.",
+        "matlab",
+    ),
+    (
+        "qx_mri.stats.stats_ttest_zero",
+        "Computes t-test against zero and saves specified results.",
+        "matlab",
+    ),
+    (
+        "qx_utilities.general.bids.map_nii2bids",
+        "Maps images from the sessions's nii folder to BIDS structure.",
+        "python"
+    ),
 ]
 
 
 def runCommand(command, args):
     folders = gc.deduceFolders(args)
 
-    if folders['basefolder']:
-        gu.check_study(folders['basefolder'])
+    if folders["basefolder"]:
+        gu.check_study(folders["basefolder"])
 
     # --- check if command is deprecated
     if command != "check_deprecated_commands":
@@ -274,14 +528,18 @@ def runCommand(command, args):
         gp.run(command, args)
         return
     elif command in gm.functions:
-        if 'scheduler' in args:
+        if "scheduler" in args:
             gs.runThroughScheduler(
-                command, sessions=None, args=args, logfolder=folders['logfolder'])
+                command, sessions=None, args=args, logfolder=folders["logfolder"]
+            )
         else:
             gm.run(command, args)
         return
     else:
-        print("ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command))
+        print(
+            "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands."
+            % (command)
+        )
         sys.exit(1)
 
     # --- process commands
@@ -289,210 +547,280 @@ def runCommand(command, args):
     bargs = {}
     eargs = {}
     for k, v in args.items():
-        if k in gcom.commands[command]['args']:
+        if k in gcom.commands[command]["args"]:
             bargs[k] = v
         else:
             eargs[k] = v
 
-    # -- check extra arguments, except for run_list
-    if eargs and command != "run_list":
+    # -- check extra arguments, except for run_recipe
+    if eargs and command != "run_recipe":
         bad = []
         for k, v in eargs.items():
             if k not in gcs.extra_parameters:
                 bad.append(k)
                 print(
-                    "ERROR: Extra argument %s is not valid! Please check your command!" % (k))
+                    "ERROR: Extra argument %s is not valid! Please check your command!"
+                    % (k)
+                )
         if bad:
             raise ge.CommandError(
-                "gmri", "Invalid arguments", "The extra argument(s) provided is/are not valid! [%s]" % (", ".join(bad)))
+                "gmri",
+                "Invalid arguments",
+                "The extra argument(s) provided is/are not valid! [%s]"
+                % (", ".join(bad)),
+            )
 
     # -- process extra arguments
     sessions = None
-    if 'sessions' in eargs:
-        if command != "run_list" and not any([e in gcom.commands[command]['args'] for e in ['sourcefolder', 'folder']]):
-            raise ge.CommandError("gmri", "Incompatible command",
-                                  "Command %s can not be run on multiple sessions!" % (command))
-        if folders['sessionsfolder'] is None:
-            folders['sessionsfolder'] = "."
-        sessions, _ = gc.get_sessions_list(eargs['sessions'], filter=eargs.get('filter'), sessionids=eargs.get(
-            'sessionids'), sessionsfolder=folders['sessionsfolder'], verbose=False)
+    if "sessions" in eargs:
+        if command != "run_recipe" and not any(
+            [e in gcom.commands[command]["args"] for e in ["sourcefolder", "folder"]]
+        ):
+            raise ge.CommandError(
+                "gmri",
+                "Incompatible command",
+                "Command %s can not be run on multiple sessions!" % (command),
+            )
+        if folders["sessionsfolder"] is None:
+            folders["sessionsfolder"] = "."
 
-    logname = eargs.get('logname')
+        sessions_param = eargs["sessions"]
+        sessions, _ = gc.get_sessions_list(
+            sessions_param,
+            filter=eargs.get("filter"),
+            sessionids=eargs.get("sessionids"),
+            sessionsfolder=folders["sessionsfolder"],
+            verbose=False,
+        )
+
+    logname = eargs.get("logname")
 
     calls = []
 
-    # -- run_list specifics
-    if command == "run_list":
-        if sessions and 'sperlist' in eargs:
+    # -- run_recipe specifics
+    if command == "run_recipe":
+        if sessions:
+            # -- default is a recipe for each session
+            parsessions = (int)(args.get("parsessions", 1))
 
-            if 'scheduler' in eargs:
-                # -- define number of sessions to run in each run_list
-                parsessions = int(eargs['sperlist'])
-                args['parsessions'] = eargs['sperlist']
-                if 'ignore' in args:
-                    args['ignore'] += 'scheduler'
-                else:
-                    args['ignore'] = 'scheduler'
-                del args['sperlist']
+            # all sessions
+            all_sessions = []
+            for session in sessions:
+                all_sessions.append(session["session"])
 
-                gs.runThroughScheduler(command, sessions=sessions, args=args,
-                                       parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+            if "scheduler" in eargs:
+                gs.runThroughScheduler(
+                    command,
+                    sessions=sessions,
+                    args=args,
+                    parsessions=parsessions,
+                    logfolder=folders["logfolder"],
+                    logname=logname,
+                )
 
             else:
-                # -- define number of sessions to run in each run_list
-                sperlist = args['sperlist']
-                del args['sperlist']
-
-                # -- define number of run_list to run in parallel
-                parsessions = eargs.get('runinpar', 1)
-                args['parsessions'] = parsessions
-                if 'runinpar' in args:
-                    del args['runinpar']
-
                 c = 0
-                while sessions:
+                while all_sessions:
                     c += 1
-                    largs = args.copy()
+                    recipe_args = args.copy()
 
-                    # -- set up a list of sessions to run in each run_list
+                    # -- set up a list of sessions to run in each run_recipe
+                    slist = [
+                        all_sessions.pop(0) for e in range(parsessions) if all_sessions
+                    ]
+                    recipe_args["sessionids"] = ",".join(slist)
 
-                    slist = [sessions.pop(0)['id']
-                             for e in range(sperlist) if sessions]
-                    largs['sessionids'] = "|".join(slist)
+                    # pass all sessions if in slurm array
+                    if "SLURM_ARRAY_TASK_ID" in os.environ:
+                        recipe_args["sessionids"] = (",").join(all_sessions)
 
-                    calls.append({'name': 'run_list_%d' % (
-                        c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
+                    # copy recipe args to eargs
+                    run_recipe_kwargs = [
+                        "recipe_file",
+                        "recipe",
+                        "steps",
+                        "xnat",
+                        "logfolder",
+                        "verbose",
+                    ]
+                    recipe_eargs = {}
+                    to_delete = []
+                    for k, v in recipe_args.items():
+                        if k not in run_recipe_kwargs:
+                            recipe_eargs[k] = v
+                            to_delete.append(k)
+
+                    for arg in to_delete:
+                        del recipe_args[arg]
+
+                    recipe_args["eargs"] = recipe_eargs
+
+                    # disable within recipe parallelism
+                    recipe_eargs["parsessions"] = 1
+
+                    calls.append(
+                        {
+                            "name": "run_recipe_%d" % (c),
+                            "function": gcom.commands[command]["com"],
+                            "args": recipe_args,
+                            "logfile": None,
+                        }
+                    )
+
+                # execute each run_recipe in parallel
+                parsessions = len(calls)
 
         else:
-            # -- if using a scheduler schedule the whole run_list commmand
-            if 'scheduler' in eargs:
-                if 'ignore' in args:
-                    args['ignore'] += 'scheduler'
-                else:
-                    args['ignore'] = 'scheduler'
-
-                runListFolder = folders['logfolder']
+            # -- if using a scheduler schedule the whole run_recipe commmand
+            if "scheduler" in eargs:
+                run_recipe_folder = folders["logfolder"]
 
                 # create folder if it does not exist
-                if not os.path.isdir(runListFolder):
-                    os.makedirs(runListFolder)
+                if not os.path.isdir(run_recipe_folder):
+                    os.makedirs(run_recipe_folder)
 
-                runListFolder = os.path.join(runListFolder, "batchlogs")
+                run_recipe_folder = os.path.join(run_recipe_folder, "batchlogs")
 
                 # create folder if it does not exist
-                if not os.path.isdir(runListFolder):
-                    os.makedirs(runListFolder)
+                if not os.path.isdir(run_recipe_folder):
+                    os.makedirs(run_recipe_folder)
 
                 logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-                logname = os.path.join(
-                    runListFolder, "Log-%s-%s.log") % ("runlist", logstamp)
+                logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
+                    "run_recipe",
+                    logstamp,
+                )
 
                 gs.runThroughScheduler(
-                    command, args=args, logfolder=runListFolder, logname=logname)
+                    command, args=args, logfolder=run_recipe_folder, logname=logname
+                )
 
             else:
-                bargs['eargs'] = eargs
-                gcom.commands[command]['com'](**bargs)
-                print("\n===> Successful completion of task")
+                bargs["eargs"] = eargs
+                gcom.commands[command]["com"](**bargs)
+                print("\n---> Successful completion of task")
 
     # -- all other commands
     else:
-        parsessions = int(eargs.get('parsessions', '1'))
+        parsessions = int(eargs.get("parsessions", "1"))
 
         # if we have sessions and sessionids filter and remove one
-        if 'sessions' in args and 'sessionids' in args:
+        if "sessions" in args and "sessionids" in args:
             args_filter = None
-            if 'filter' in args:
-                args_filter = args['filter']
+            if "filter" in args:
+                args_filter = args["filter"]
 
             sessions_dict, _ = gc.get_sessions_list(
-                args['sessions'], filter=args_filter, sessionids=args['sessionids'], verbose=False)
+                args["sessions"],
+                filter=args_filter,
+                sessionids=args["sessionids"],
+                verbose=False,
+            )
 
             sessions_list = []
             for session in sessions_dict:
-                sessions_list.append(session['session'])
+                if "id" in session:
+                    sessions_list.append(session["id"])
+                elif "session" in session:
+                    sessions_list.append(session["session"])
 
-            args['sessions'] = ','.join(sessions_list)
+            args["sessions"] = ",".join(sessions_list)
 
-            del args['sessionids']
+            del args["sessionids"]
 
         # -- are we using a scheduler
-        if 'scheduler' in eargs:
-            gs.runThroughScheduler(command, sessions=sessions, args=args,
-                                   parsessions=parsessions, logfolder=folders['logfolder'], logname=logname)
+        if "scheduler" in eargs:
+            gs.runThroughScheduler(
+                command,
+                sessions=sessions,
+                args=args,
+                parsessions=parsessions,
+                logfolder=folders["logfolder"],
+                logname=logname,
+            )
 
         # -- a basic call
         elif sessions is None:
             # logfolder
-            if not folders['logfolder']:
-                folders['logfolder'] = "."
+            if not folders["logfolder"]:
+                folders["logfolder"] = "."
 
             # createstudy exception
             if command == "create_study" and "studyfolder" in args:
-                folders['logfolder'] = args["studyfolder"] + "/processing/logs"
+                folders["logfolder"] = args["studyfolder"] + "/processing/logs"
             elif command == "create_study":
-                folders['logfolder'] = "./processing/logs"
+                folders["logfolder"] = "./processing/logs"
 
             sufix = ""
             if "sessionids" in args:
                 sufix = "_" + args["sessionids"]
 
             logfile = os.path.join(
-                folders['logfolder'], 'comlogs', "%s%s.log" % (command, sufix))
+                folders["logfolder"], "comlogs", "%s%s.log" % (command, sufix)
+            )
             # run without log for exceptions
             # remove logs for exceptions
             if command in gcs.logskip_commands:
-                gcom.commands[command]['com'](**args)
+                gcom.commands[command]["com"](**args)
             # run with log
             else:
                 _, result, _, _ = gc.runWithLog(
-                    gcom.commands[command]['com'], args=args, logfile=logfile)
+                    gcom.commands[command]["com"], args=args, logfile=logfile
+                )
 
         # -- sessions loop
         else:
             for session in sessions:
                 targs = dict(bargs)
-                name = command + ": " + session['id']
-                sessionsfolder = os.path.join(
-                    folders['sessionsfolder'], session['id'])
-                if folders['logfolder']:
+                name = command + ": " + session["id"]
+                sessionsfolder = os.path.join(folders["sessionsfolder"], session["id"])
+                if folders["logfolder"]:
                     logfile = os.path.join(
-                        folders['logfolder'], 'comlogs', "%s_%s.log" % (command, session['id']))
-                for targ in ['sourcefolder', 'folder']:
-                    if targ in gcom.commands[command]['args']:
+                        folders["logfolder"],
+                        "comlogs",
+                        "%s_%s.log" % (command, session["id"]),
+                    )
+                for targ in ["sourcefolder", "folder"]:
+                    if targ in gcom.commands[command]["args"]:
                         targs[targ] = sessionsfolder
 
                 calls.append(
-                    {'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
+                    {
+                        "name": name,
+                        "function": gcom.commands[command]["com"],
+                        "args": targs,
+                        "logfile": logfile,
+                    }
+                )
 
     # -- Have we set up calls to run in parallel?
     if calls:
         callInfo = "Running %s" % (command)
-        callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
+        callInfo += "\n" + "".join(["=" for e in range(len(callInfo))])
         print(callInfo)
 
-        print("\n===> Running %s through %d sessions in parallel" %
-              (command, parsessions))
+        print(
+            "\n---> Running %s through %d sessions in parallel" % (command, parsessions)
+        )
 
-        results = gc.runInParallel(
-            calls, cores=parsessions, prepend="     ... ")
+        results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
-        print("\n===> Final report for command", command)
+        print("\n---> Final report for command", command)
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
             if result:
                 ok = False
             else:
-                result = 'completed'
+                result = "completed"
             print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
         if ok:
-            print("\n===> Successful completion of task")
+            print("\n---> Successful completion of task")
 
 
 def print_help(com):
     # --- print list of available commands, required for qunex.sh checks
-    if com == 'available':
+    if com == "available":
         available_commands = []
         # -> gmri commands
         for c, _ in gcom.commands.items():
@@ -548,12 +876,12 @@ def print_help(com):
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
         os.system("qunex -splash")
-        for full_name, description, language in all_qunex_commands:
-            print(f'{full_name.split(".")[-1]:<39} {description}')
+        for full_name, description, _ in all_qunex_commands:
+            print(full_name.split(".")[-1] + " " + description)
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
-        print("\nqunex", gcom.commands[com]['com'].__doc__.strip(), "\n")
+        print("\nqunex", gcom.commands[com]["com"].__doc__.strip(), "\n")
 
     # --- print help for processing actions
     elif com in gp.allactions:
@@ -565,7 +893,10 @@ def print_help(com):
 
     # --- print error
     else:
-        print("\nERROR: %s --> Requested command is not supported. Refer to general QuNex usage.\n" % com)
+        print(
+            "\nERROR: %s ---> Requested command is not supported. Refer to general QuNex usage.\n"
+            % com
+        )
 
 
 def main(args=None):
@@ -579,25 +910,25 @@ def main(args=None):
         print(help)
         sys.exit(0)
 
-    comm = args[0].strip('-')
+    comm = args[0].strip("-")
     opts = dict()
 
     try:
         help_request = False
-        if comm in ['a', 'A', 'allcommands', 'available']:
+        if comm in ["a", "A", "allcommands", "available"]:
             help_request = True
         else:
             for n in range(1, len(args)):
                 # if --h, -h, --H or -H flag is provided user is looking for help
-                if args[n].strip('-') in ['h', 'H', 'help']:
+                if args[n].strip("-") in ["h", "H", "help"]:
                     help_request = True
                     break
                 elif "=" in args[n]:
                     k, v = args[n].split("=", 1)
-                    k = k.strip('-')
+                    k = k.strip("-")
                     opts[k] = v
                 else:
-                    k = args[n].strip('-')
+                    k = args[n].strip("-")
                     opts[k] = True
 
         # print help or run the command
@@ -607,7 +938,9 @@ def main(args=None):
                 print_help(comm)
             except:
                 print(
-                    "ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:]))
+                    "ERROR: '%s' is not a recognized command!\n-----------------------"
+                    % (comm[1:])
+                )
                 print(help)
                 raise
         else:
@@ -623,25 +956,43 @@ def main(args=None):
         sys.exit(1)
     except ge.CommandError as e:
         print(ge.reportCommandError(comm, e))
-        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (
-            " \\\n    ".join(oargs)))
-        print("\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm))
+        print(
+            "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
+            % (" \\\n    ".join(oargs))
+        )
+        print(
+            "\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm)
+        )
         sys.exit(1)
     except ValueError as e:
-        print("\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm))
+        print(
+            "\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!"
+            % (comm)
+        )
         print(e)
-        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (
-            " \\\n    ".join(oargs)))
+        print(
+            "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
+            % (" \\\n    ".join(oargs))
+        )
         raise
     except SystemExit as e:
         sys.exit(e)
     except:
-        print("\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm))
         print(
-            "       Please check documentation for the command (`qunex %s --h`)!" % (comm))
-        print("\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (
-            " \\\n    ".join(oargs)))
-        print("\n--------------------------------------------------------------\nHere's the error as caught by python:\n")
+            "\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!"
+            % (comm)
+        )
+        print(
+            "       Please check documentation for the command (`qunex %s --h`)!"
+            % (comm)
+        )
+        print(
+            "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
+            % (" \\\n    ".join(oargs))
+        )
+        print(
+            "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
+        )
         raise
 
 

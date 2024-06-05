@@ -1,0 +1,29 @@
+session: WU01590_20220906
+subject: WU01590
+bids: /scratch/shingshiun/QuNex_AMPSCZ_ProNET_script_test/sessions/WU01590_20220906/bids
+raw_data: /scratch/shingshiun/QuNex_AMPSCZ_ProNET_script_test/sessions/WU01590_20220906/nii
+hcp: /scratch/shingshiun/QuNex_AMPSCZ_ProNET_script_test/sessions/WU01590_20220906/hcp
+hcpready: true
+
+1   :T1w             :T1w: DwellTime(6.5e-06): se(1)
+2   :T2w             :T2w: UnwarpDir(x): DwellTime(2.1e-06): se(1): phenc(RL)
+3   :SE-FM-AP        :dir-AP_run-1_epi: UnwarpDir(y-): DwellTime(2.6e-06): EchoSpacing(0.000609998): se(1): phenc(AP)
+4   :SE-FM-AP        :dir-AP_run-2_epi: UnwarpDir(y-): DwellTime(2.6e-06): EchoSpacing(0.000609998): se(2): phenc(AP)
+5   :SE-FM-AP        :dir-AP_run-3_epi: UnwarpDir(y-): DwellTime(2.6e-06): EchoSpacing(0.000609998): se(3): phenc(AP)
+6   :SE-FM-PA        :dir-PA_run-1_epi: UnwarpDir(y): DwellTime(2.6e-06): EchoSpacing(0.000609998): se(1): phenc(PA)
+7   :SE-FM-PA        :dir-PA_run-2_epi: UnwarpDir(y): DwellTime(2.6e-06): EchoSpacing(0.000609998): se(2): phenc(PA)
+8   :SE-FM-PA        :dir-PA_run-3_epi: UnwarpDir(y): DwellTime(2.6e-06): EchoSpacing(0.000609998): se(3): phenc(PA)
+9   :DWI:dir176_PA_ref:acq-6shell_dir-PA_sbref: UnwarpDir(y): DwellTime(2.1e-06): EchoSpacing(0.000610009): se(3): phenc(PA)
+10  :DWI:dir_b0-1_AP_ref:acq-b0_dir-AP_run-1_sbref: UnwarpDir(y-): DwellTime(2.1e-06): EchoSpacing(0.000610009): se(3): phenc(AP)
+11  :DWI:dir_b0-2_AP_ref:acq-b0_dir-AP_run-2_sbref: UnwarpDir(y-): DwellTime(2.1e-06): EchoSpacing(0.000610009): se(3): phenc(AP)
+12  :boldref2:REST1  :task-rest_dir-AP_run-1_sbref: UnwarpDir(y-): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST1_AP_SBRef): se(3): bold_num(2): phenc(AP)
+13  :boldref1:REST1  :task-rest_dir-PA_run-1_sbref: UnwarpDir(y): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST1_PA_SBRef): se(3): bold_num(1): phenc(PA)
+14  :bold1:REST1     :task-rest_dir-PA_run-1_bold: UnwarpDir(y): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST1_PA): se(2): bold_num(1): phenc(PA)
+15  :bold2:REST1     :task-rest_dir-AP_run-1_bold: UnwarpDir(y-): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST1_AP): se(2): bold_num(2): phenc(AP)
+16  :boldref4:REST2  :task-rest_dir-AP_run-2_sbref: UnwarpDir(y-): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST2_AP_SBRef): se(3): bold_num(4): phenc(AP)
+17  :boldref3:REST2  :task-rest_dir-PA_run-2_sbref: UnwarpDir(y): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST2_PA_SBRef): se(3): bold_num(3): phenc(PA)
+18  :bold4:REST2     :task-rest_dir-AP_run-2_bold: UnwarpDir(y-): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST2_AP): se(3): bold_num(4): phenc(AP)
+19  :bold3:REST2     :task-rest_dir-PA_run-2_bold: UnwarpDir(y): DwellTime(2.6e-06): EchoSpacing(0.000609998): filename(rfMRI_REST2_PA): se(3): bold_num(3): phenc(PA)
+20  :DWI:dir176_PA   :acq-6shell_dir-PA_dwi: UnwarpDir(y): DwellTime(2.1e-06): EchoSpacing(0.000610009): se(3): phenc(PA)
+21  :DWI:dir_b0-1_AP :acq-b0_dir-AP_run-1_dwi: UnwarpDir(y-): DwellTime(2.1e-06): EchoSpacing(0.000610009): se(3): phenc(AP)
+22  :DWI:dir_b0-2_AP :acq-b0_dir-AP_run-2_dwi: UnwarpDir(y-): DwellTime(2.1e-06): EchoSpacing(0.000610009): se(3): phenc(AP)

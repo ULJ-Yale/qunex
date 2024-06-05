@@ -43,7 +43,7 @@ end
 if verbose, fprintf('\nSetting up data'), end
 
 obj.data = obj.image2D;
-obj = obj.sliceframes(~isnan(nanmean(obj.data)));
+obj = obj.sliceframes(~isnan(mean(obj.data)));
 
 M = obj.zeroframes(1);
 p = obj.zeroframes(1);
@@ -58,7 +58,7 @@ else
     [h, p.data] = ttest(obj.data, 0, 'Alpha', 0.05, 'Tail', 'both', 'Dim', 2);
 end
 
-M.data = nanmean(obj.data, 2);
+M.data = mean(obj.data, 2, "omitnan");
 
 % ---- compute Z scores
 

@@ -4,33 +4,42 @@ function [nuisance hdr] = general_extract_nuisance(img, fsimg, bmimg, target, nt
 %
 %    Extracts the specified nuisances and saves it into .nuisance file.
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --img (str or nimage):
+%           nimage or a path to a bold file to process
+%       --fsimg (str or nimage):
+%           nimage, a path to a freesurfer segmentation or '1b' for extraction 
+%           based on the first frame of the BOLD timeseries
+%       --bmimg (str or nimage):
+%           nimage, a path to brain mask for this specific bold or [] for
+%           image thresholding []
+%       --target (str):
+%           a path to the folder to save results into, default: where bold image 
+%           is, 'none': do not save in external file 
+%       --ntarget (str):
+%           where to store used masks and their png image, 'none' for nowhere
+%       --wbmask (str or nimage):
+%           nimage or a path to a mask used to exclude ROI from the whole-brain 
+%           nuisance regressor [none]
+%       --sessionroi (str or nimage):
+%           nimage or a path to a mask used to create session specific nroi 
+%           [none]
+%       --nroi (str):
+%           ROI.names file to use to define additional nuisance ROI to regress 
+%           out when additionally provided a list of ROI, those will not be 
+%           masked by bold brain mask (e.g. 'nroi.names|eyes,scull')
+%       --shrink (boolean, true):
+%           Whether to erode ROI before using them. 
+%       --verbose (boolean):
+%           wheather to report on progress or not [not]
 %
-%   --img         nimage or a path to a bold file to process
-%   --fsimg       nimage, a path to a freesurfer segmentation or '1b' for 
-%                 extraction based on first frame
-%    --bmimg       nimage, a path to brain mask for this specific bold or [] for
-%                 image thresholding []
-%   --target      folder to save results into, default: where bold image is, 
-%                 'none': do not save in external file 
-%   --ntarget     where to store used masks and their png image, 'none' for 
-%                 nowhere
-%   --wbmask      a mask used to exclude ROI from the whole-brain nuisance 
-%                 regressor [none]
-%   --sessionroi  a mask used to create session specific nroi [none]
-%   --nroi        ROI.names file to use to define additional nuisance ROI to 
-%                 regress out when additionally provided a list of ROI, those 
-%                 will not be masked by bold brain mask (e.g. 
-%                 'nroi.names|eyes,scull')
-%    --verbose     to report on progress or not [not]
+%   Outputs:
 %
-%   OUTPUTS
-%   =======
-%
-%   nuisance
-%
-%   hdr
+%       nuisance (numeric):
+%           A n-times-m matrix that contains a timeseries of each extracted 
+%           nuisance signal in a separate column.
+%       hdr (cell array):
+%           The names of extracted nuisance signals.
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -308,7 +317,7 @@ if verbose, fprintf('\n---> done!\n'); end
 
 
 % ======================================================
-%   ----> open image
+%   ---> open image
 %
 
 function [mimg] = getImage(mimg, fsimg, verbose)
@@ -318,7 +327,7 @@ function [mimg] = getImage(mimg, fsimg, verbose)
     if ~isa(mimg, 'nimage')
         if strfind(mimg, '.names')
             if verbose, fprintf(verbose, mimg); end
-            mimg = nimage.img_read_roi(mimg, fsimg);
+            mimg = nimage.img_prep_roi(mimg, fsimg);
         else
             if verbose, fprintf(verbose, mimg); end
             mimg = nimage(mimg);
@@ -328,7 +337,7 @@ function [mimg] = getImage(mimg, fsimg, verbose)
 
 
 % ======================================================
-%   ----> process extra ROI name
+%   ---> process extra ROI name
 %
 
 function [filename nomask] = processeROI(s)

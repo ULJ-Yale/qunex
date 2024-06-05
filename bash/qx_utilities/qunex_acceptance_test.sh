@@ -138,22 +138,6 @@ if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--
 fi
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo "\033[32m $1 \033[0m"
-}
-
-ceho() {
-    echo "\033[36m $1 \033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- Parse and check all arguments
 # ------------------------------------------------------------------------------
 
@@ -255,18 +239,18 @@ BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 
 # -- Start of parsing XNAT arguments
 #
-#     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
+#     INFO ON XNAT VARIABLE MAPPING FROM QuNex ---> JSON ---> XML specification
 #
-# project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
+# project               --xnatprojectid        #  ---> mapping in QuNex: XNAT_PROJECT_ID     ---> mapping in JSON spec: #XNAT_PROJECT#   ---> Corresponding to project id in XML. 
 #   │ 
-#   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+#   └──subject          --xnatsubjectid        #  ---> mapping in QuNex: XNAT_SUBJECT_ID     ---> mapping in JSON spec: #SUBJECTID#      ---> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-#        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+#        │              --xnatsubjectlabel     #  ---> mapping in QuNex: XNAT_SUBJECT_LABEL  ---> mapping in JSON spec: #SUBJECTLABEL#   ---> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
 #        │ 
-#        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#        └──experiment  --xnataccsessionid     #  ---> mapping in QuNex: XNAT_ACCSESSION_ID  ---> mapping in JSON spec: #ID#             ---> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-#                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#                       --xnatsessionlabel     #  ---> mapping in QuNex: XNAT_SESSION_LABEL  ---> mapping in JSON spec: #LABEL#          ---> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
 #
     XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
@@ -290,29 +274,29 @@ BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 # -- Check acceptance test flag
 if [[ -z ${AcceptanceTestSteps} ]]; then 
     usage
-    reho "ERROR: --acceptancetest flag not specified. No steps to perform acceptance testing on."; echo "";
+    echo "ERROR: --acceptancetest flag not specified. No steps to perform acceptance testing on."; echo "";
     exit 1
 else
     # -- Run checks for supported steps
     unset FoundSupported
     echo ""
-    geho "--> Checking that requested ${AcceptanceTestSteps} are supported..."
+    echo "---> Checking that requested ${AcceptanceTestSteps} are supported..."
     echo ""
     AcceptanceTestStepsChecks="$AcceptanceTestSteps"
     unset AcceptanceTestSteps
     for AcceptanceTestStep in ${AcceptanceTestStepsChecks}; do
        if [ ! -z "${SupportedAcceptanceTestSteps##*${AcceptanceTestStep}*}" ]; then
-           reho "--> ${AcceptanceTestStep} is not supported. Will remove from requested list."
+           echo "---> ${AcceptanceTestStep} is not supported. Will remove from requested list."
        else
-           geho "--> ${AcceptanceTestStep} is supported."
+           echo "---> ${AcceptanceTestStep} is supported."
            FoundSupported="yes"
            AcceptanceTestSteps="${AcceptanceTestSteps} ${AcceptanceTestStep}"
        fi
     done
     if [[ -z ${FoundSupported} ]]; then 
         usage
-        reho "ERROR: None of the requested acceptance tests are currently supported."; echo "";
-        reho "Supported: ${SupportedAcceptanceTestSteps}"; echo "";
+        echo "ERROR: None of the requested acceptance tests are currently supported."; echo "";
+        echo "Supported: ${SupportedAcceptanceTestSteps}"; echo "";
         exit 1
     fi
 fi
@@ -320,20 +304,20 @@ fi
 # -- Check and set run type
 if [[ -z ${RUN_TYPE} ]]; then 
     RUN_TYPE="local"
-    reho "Note: Run type not specified. Setting default turnkey type to local run."; echo ""
-    reho "Note: If you wish to run acceptance tests on an XNAT host, re-run with flag --runtype='xnat' "; echo ""
+    echo "Note: Run type not specified. Setting default turnkey type to local run."; echo ""
+    echo "Note: If you wish to run acceptance tests on an XNAT host, re-run with flag --runtype='xnat' "; echo ""
 fi
 
 ######################## START NON-XNAT SPECIFIC CHECKS  #######################
 #
 if [[ ${RUN_TYPE} != "xnat" ]]; then 
-   if [[ -z ${StudyFolder} ]]; then usage; reho "Error: Requesting local run but --studyfolder flag is missing."; echo ""; exit 1; fi
-   if [[ -z ${CASES} ]]; then usage; reho "Error: Requesting local run but --subject flag is missing."; echo ""; exit 1; fi
-   if [[ -z ${SESSION_LABELS} ]]; then usage; SESSION_LABELS=""; reho "Note: --sessionlabels are not defined. Assuming no label info."; echo ""; fi
+   if [[ -z ${StudyFolder} ]]; then usage; echo "Error: Requesting local run but --studyfolder flag is missing."; echo ""; exit 1; fi
+   if [[ -z ${CASES} ]]; then usage; echo "Error: Requesting local run but --subject flag is missing."; echo ""; exit 1; fi
+   if [[ -z ${SESSION_LABELS} ]]; then usage; SESSION_LABELS=""; echo "Note: --sessionlabels are not defined. Assuming no label info."; echo ""; fi
     RunAcceptanceTestDir="${StudyFolder}/processing/logs/acceptTests"
     if [ -z ${SessionsFolder} ]; then SessionsFolder="${StudyFolder}/sessions"; fi
     echo ""
-    reho "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestOut"
+    echo "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestOut"
     echo ""
     if [[ ! -d ${RunAcceptanceTestDir} ]]; then mkdir -p ${RunAcceptanceTestDir} > /dev/null 2>&1; fi
 fi
@@ -344,34 +328,34 @@ fi
 #
 if [[ ${RUN_TYPE} == "xnat" ]]; then
     echo ""
-    if [[ -z ${XNAT_PROJECT_ID} ]]; then usage; reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_HOST_NAME} ]]; then usage; reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_SESSION_LABELS} ]] && [[ -z ${XNAT_ACCSESSION_ID} ]]; then usage; reho "Error: --xnatsessionlabels and --xnataccsessionid flags are both missing. Please specify session label and re-run."; echo ''; exit 1; fi
-    if [[ -z ${XNATArchiveCommit} ]]; then unset XNATArchiveCommit; reho "Note: --xnatarchivecommit not requested. Results will only be stored locally."; echo ''; fi
-    if [[  ${XNATArchiveCommit} != "session" &&  ${XNATArchiveCommit} != "project" &&  ${XNATArchiveCommit} != "all" ]]; then reho "Note: --xnatarchivecommit was set to '$XNATArchiveCommit', which is not supported. Check usage for available options."; unset XNATArchiveCommit; echo ''; fi
-    if [[ -z ${XNATgetQC} ]]; then unset XNATgetQC; reho "Note: --xnatgetqc not requested. QC images will not be downloaded."; echo ''; fi
+    if [[ -z ${XNAT_PROJECT_ID} ]]; then usage; echo "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_HOST_NAME} ]]; then usage; echo "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_SESSION_LABELS} ]] && [[ -z ${XNAT_ACCSESSION_ID} ]]; then usage; echo "Error: --xnatsessionlabels and --xnataccsessionid flags are both missing. Please specify session label and re-run."; echo ''; exit 1; fi
+    if [[ -z ${XNATArchiveCommit} ]]; then unset XNATArchiveCommit; echo "Note: --xnatarchivecommit not requested. Results will only be stored locally."; echo ''; fi
+    if [[  ${XNATArchiveCommit} != "session" &&  ${XNATArchiveCommit} != "project" &&  ${XNATArchiveCommit} != "all" ]]; then echo "Note: --xnatarchivecommit was set to '$XNATArchiveCommit', which is not supported. Check usage for available options."; unset XNATArchiveCommit; echo ''; fi
+    if [[ -z ${XNATgetQC} ]]; then unset XNATgetQC; echo "Note: --xnatgetqc not requested. QC images will not be downloaded."; echo ''; fi
     if [[ ${XNATgetQC} != "scene" &&  ${XNATgetQC} != "image" &&  ${XNATgetQC} != "all" &&  ${XNATgetQC} != "png" &&  ${XNATgetQC} != "pngs" &&  ${XNATgetQC} != "images" &&  ${XNATgetQC} != "scenes" &&  ${XNATgetQC} != "snr" &&  ${XNATgetQC} != "SNR" &&  ${XNATgetQC} != "TSNR" &&  ${XNATgetQC} != "SNR" ]]; then 
-        reho "Note: --xnatgetqc was set to '$XNATgetQC', which is not supported. Check usage for available options."; unset XNATgetQC; echo ''; 
+        echo "Note: --xnatgetqc was set to '$XNATgetQC', which is not supported. Check usage for available options."; unset XNATgetQC; echo ''; 
     fi
 
     ## -- Check for subject labels
     if [[ -z ${CASES} ]] && [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
         usage
-        reho "ERROR: --subjects flag and --xnatsubjectlabels flag not specified. No cases to work with. Please specify either."
+        echo "ERROR: --subjects flag and --xnatsubjectlabels flag not specified. No cases to work with. Please specify either."
         echo ""
         exit 1
     fi
     ## -- Check CASES variable
     if [[ -z ${CASES} ]]; then
         CASES="$XNAT_SUBJECT_LABELS"
-        reho "Note: --subjects flag omitted. Assuming specified --xnatsubjectlabels names match the subjects folders on the file system."
+        echo "Note: --subjects flag omitted. Assuming specified --xnatsubjectlabels names match the subjects folders on the file system."
         echo ""
     fi
     ## -- Check XNAT_SUBJECT_LABELS
     if [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
         XNAT_SUBJECT_LABELS="$CASES"
         echo ""
-        reho "Note: --xnatsubjectlabels flag omitted. Assuming specified --subjects names match the subject labels in XNAT."
+        echo "Note: --xnatsubjectlabels flag omitted. Assuming specified --subjects names match the subject labels in XNAT."
         echo ""
     fi
 
@@ -387,7 +371,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     ## -- Reset credentials
     if [[ "${ResetCredential}" == "yes" ]]; then
         echo ""
-        reho " -- Reseting XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} "
+        echo " -- Reseting XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} "
         rm -f ${HOME}/${XNAT_CREDENTIAL_FILE} &> /dev/null
     fi
     ## -- Check for valid xNAT credential file
@@ -403,17 +387,17 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
         fi
     else
         echo ""
-        reho " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} NOT found. Checking for --xnatuser and --xnatpass flags."
+        echo " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} NOT found. Checking for --xnatuser and --xnatpass flags."
         echo ""
         if [[ -z ${XNAT_USER_NAME} ]] || [[ -z ${XNAT_PASSWORD} ]]; then
             echo ""
-            reho "ERROR: --xnatuser and/or --xnatpass flags are missing. Regenerating credentials now..."
+            echo "ERROR: --xnatuser and/or --xnatpass flags are missing. Regenerating credentials now..."
             echo ""
-            reho "   --> Enter your XNAT XNAT_HOST_NAME username:"
+            echo "   ---> Enter your XNAT XNAT_HOST_NAME username:"
             if read -s answer; then
                 XNAT_USER_NAME=$answer
             fi
-            reho "   --> Enter your XNAT XNAT_HOST_NAME password:"
+            echo "   ---> Enter your XNAT XNAT_HOST_NAME password:"
             if read -s answer; then
                 XNAT_PASSWORD=$answer
             fi
@@ -432,7 +416,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
         echo ""
         XNAT_USER_NAME=`echo $XNAT_CREDENTIALS | cut -d: -f1`; XNAT_PASSWORD=`echo $XNAT_CREDENTIALS | cut -d: -f2`
     else 
-        reho "ERROR: XNAT credentials for ${XNAT_HOST_NAME} failed. Re-check your login and password and your ${HOME}/${XNAT_CREDENTIAL_FILE}"
+        echo "ERROR: XNAT credentials for ${XNAT_HOST_NAME} failed. Re-check your login and password and your ${HOME}/${XNAT_CREDENTIAL_FILE}"
         echo ""
         exit 1
     fi
@@ -440,7 +424,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     ## -- Setup XNAT log variables
     if [[ -z ${StudyFolder} ]]; then
         XNATInfoPath="${HOME}/acceptTests/xnatlogs"
-        reho "Note: --sessionsfolder flag omitted. Setting logs to $XNATInfoPath"
+        echo "Note: --sessionsfolder flag omitted. Setting logs to $XNATInfoPath"
         echo ""
     else
         XNATInfoPath="${StudyFolder}/processing/logs/acceptTests/xnatlogs"
@@ -448,12 +432,12 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     mkdir -p ${XNATInfoPath} &> /dev/null
     if [[ ! -d ${XNATInfoPath} ]]; then
         echo ""
-        reho " -- XNAT info folder ${XNATInfoPath} still not found. Check file system paths or permissions..."
+        echo " -- XNAT info folder ${XNATInfoPath} still not found. Check file system paths or permissions..."
         echo ""
         exit 1
     else
         echo ""
-        geho " -- XNAT info folder ${XNATInfoPath} generated. Proceeding..."
+        echo " -- XNAT info folder ${XNATInfoPath} generated. Proceeding..."
         echo ""
     fi
     
@@ -462,7 +446,7 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
     if [[ -z ${SessionsFolder} ]]; then SessionsFolder="${StudyFolder}/sessions"; fi
     
     echo ""
-    reho "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestDir"
+    echo "Note: Acceptance tests will be saved in selected study folder: $RunAcceptanceTestDir"
     echo ""
     if [[ ! -d ${RunAcceptanceTestDir} ]]; then mkdir -p ${RunAcceptanceTestDir} > /dev/null 2>&1; fi
     
@@ -473,20 +457,20 @@ if [[ ${RUN_TYPE} == "xnat" ]]; then
 
     if [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv ] && [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv ]; then
        echo ""
-       geho "  --> Downloaded XNAT project info: "; echo ""
-       geho "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv"
-       geho "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv"
+       echo "  ---> Downloaded XNAT project info: "; echo ""
+       echo "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv"
+       echo "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv"
        echo ""
     else
        if [ ! -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv ]; then
            echo ""
-           reho " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv not found! "
+           echo " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${XNATTimeStamp}.csv not found! "
            echo ""
            exit 1
        fi
        if [ ! -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv ]; then
            echo ""
-           reho " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv not found! "
+           echo " ERROR: ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${XNATTimeStamp}.csv not found! "
            echo ""
            exit 1
        fi
@@ -534,7 +518,7 @@ fi
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
-    geho "------------------------- Start of work --------------------------------"
+    echo "------------------------- Start of work --------------------------------"
     echo ""
 
 ################################ DO WORK #######################################
@@ -553,7 +537,7 @@ echo ""
 
 TRANSFERNODE=`hostname`
 echo ""
-geho "-- Checking data from: ${TRANSFERNODE}"
+echo "-- Checking data from: ${TRANSFERNODE}"
 echo ""
 
 # ------------------------------------------------------------------------------
@@ -581,24 +565,24 @@ echo ""
                 # -- Report error if variables remain undefined
                 if [[ -z ${XNAT_SUBJECT_ID} ]] || [[ -z ${XNAT_SUBJECT_LABEL} ]] || [[ -z ${XNAT_ACCSESSION_ID} ]] || [[ -z ${XNAT_SESSION_LABEL_HOST} ]]; then 
                     echo ""
-                    reho "Some or all of XNAT database variables were not set correctly: "
+                    echo "Some or all of XNAT database variables were not set correctly: "
                     echo ""
-                    reho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
-                    reho "  --> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
-                    reho "  --> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
-                    reho "  --> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL_HOST "
+                    echo "  ---> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
+                    echo "  ---> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
+                    echo "  ---> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
+                    echo "  ---> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL_HOST "
                     echo ""
                     Status="FAIL"
                     # -- Set the XNAT_SESSION_LABEL_HOST were it correct to allow naming of the *.txt files
                     XNAT_SESSION_LABEL_HOST="${CASE}_${XNAT_SESSION_LABEL}"
                 else
                     echo ""
-                    geho "Successfully read all XNAT database variables: "
+                    echo "Successfully read all XNAT database variables: "
                     echo ""
-                    geho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
-                    geho "  --> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
-                    geho "  --> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
-                    geho "  --> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL_HOST "
+                    echo "  ---> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
+                    echo "  ---> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
+                    echo "  ---> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
+                    echo "  ---> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL_HOST "
                     echo ""
                 fi
             
@@ -609,7 +593,7 @@ echo ""
         
             UnitTests=${AcceptanceTestSteps}
             echo ""
-            geho "-- Running QuNex unit tests: ${UnitTests}"
+            echo "-- Running QuNex unit tests: ${UnitTests}"
 
             
             ## -- Setup function to check presence of files on either local file system or on XNAT on 
@@ -618,28 +602,28 @@ echo ""
                 if [[ ${RUN_TYPE} == "xnat" ]]; then
                        if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData} ); then 
                            Status="PASS"
-                           geho "     ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}"
+                           echo "     ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}"
                            echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
                            echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
                        else 
                            Status="FAIL"
-                           reho "     ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}"
+                           echo "     ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}"
                            echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
                            echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
                        fi
                        if [ -f ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt ]; then 
                            echo ""
-                           geho "     Individual file saved for XNAT archiving: ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt "
+                           echo "     Individual file saved for XNAT archiving: ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt "
                        else
                            echo ""
-                           reho "     ERROR: Individual file for XNAT archiving missing: ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt "
+                           echo "     ERROR: Individual file for XNAT archiving missing: ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt "
                        fi
                 else
                        if [ -f ${StudyFolder}/sessions/${CASE}/${UnitTestData} ]; then
-                           geho "     ${UnitTest} PASS: ${StudyFolder}/sessions/${CASE}/${UnitTestData}"
+                           echo "     ${UnitTest} PASS: ${StudyFolder}/sessions/${CASE}/${UnitTestData}"
                            echo "  ${UnitTest} PASS: ${StudyFolder}/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
                        else 
-                           reho "     ${UnitTest} FAIL: ${StudyFolder}/sessions/${CASE}/${UnitTestData}"
+                           echo "     ${UnitTest} FAIL: ${StudyFolder}/sessions/${CASE}/${UnitTestData}"
                            echo "  ${UnitTest} FAIL: ${StudyFolder}/sessions/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
                        fi
                 fi
@@ -648,12 +632,12 @@ echo ""
                 if [[ ! -z ${XNATgetQC} ]] && [[ ${UnitTest} == "hcp_pre_freesurfer" ||  ${UnitTest} == "hcp_freesurfer" ]]; then
                     unset UnitTestQCFolders
                     echo ""
-                    reho "     Note: Requested XNAT QC for ${UnitTest} but this is step does not generate QC images."
+                    echo "     Note: Requested XNAT QC for ${UnitTest} but this is step does not generate QC images."
                     echo ""
                 fi
                 if [[ ! -z ${XNATgetQC} ]] && [[ ! -z ${UnitTestQCFolders} ]]; then
                     echo ""
-                    geho "     Requested XNAT QC ${XNATgetQC} for ${UnitTest}"
+                    echo "     Requested XNAT QC ${XNATgetQC} for ${UnitTest}"
                     echo ""
                     if [[ ${XNATgetQC} == "png" ]] || [[ ${XNATgetQC} == "image" ]] || [[ ${XNATgetQC} == "pngs" ]] || [[ ${XNATgetQC} == "images" ]]; then
                         FileTypes="png"
@@ -673,7 +657,7 @@ echo ""
                     for UnitTestQCFolder in ${UnitTestQCFolders}; do
                         mkdir -p ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder} > /dev/null 2>&1
                         cd ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}
-                        geho "      --> Working on QC folder $UnitTestQCFolder | Requested QC file types: ${FileTypes}"
+                        echo "      ---> Working on QC folder $UnitTestQCFolder | Requested QC file types: ${FileTypes}"
                         ceho "          Running: curl -k -b "JSESSIONID=$JSESSION" -s -m 30 -X GET ${XNAT_HOST_NAME}/data/experiments/${XNAT_ACCSESSION_ID}/resources/QC/files/${UnitTestQCFolder}/?format=csv > ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_QC_${UnitTestQCFolder}.csv"
                         curl -k -b "JSESSIONID=$JSESSION" -s -m 30 -X GET ${XNAT_HOST_NAME}/data/experiments/${XNAT_ACCSESSION_ID}/resources/QC/files/${UnitTestQCFolder}/?format=csv > ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_QC_${UnitTestQCFolder}.csv
                         unset QCFile QCFiles FileType
@@ -681,15 +665,15 @@ echo ""
                             QCFiles=`cat ${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_QC_${UnitTestQCFolder}.csv | sed -e '1,1d' | awk  -F, '{print $1}' | grep "${FileType}"`
                             echo ""
                             for QCFile in ${QCFiles}; do
-                                geho "          QC for ${UnitTest} found on XNAT: ${XNAT_HOST_NAME}/data/experiments/${XNAT_ACCSESSION_ID}/resources/QC/files/${UnitTestQCFolder}/${QCFile}"
+                                echo "          QC for ${UnitTest} found on XNAT: ${XNAT_HOST_NAME}/data/experiments/${XNAT_ACCSESSION_ID}/resources/QC/files/${UnitTestQCFolder}/${QCFile}"
                                 if [[ -f ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile} ]]; then
-                                    geho "          QC for ${UnitTest} found locally: ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile}"
+                                    echo "          QC for ${UnitTest} found locally: ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile}"
                                 else
                                     curl -k -b "JSESSIONID=$JSESSION" -s -m 30 -X GET "${XNAT_HOST_NAME}/data/experiments/${XNAT_ACCSESSION_ID}/resources/QC/files/${UnitTestQCFolder}/${QCFile}" > ${QCFile}
                                     if [[ -f ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile} ]]; then
-                                        geho "          Results found: ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile}"
+                                        echo "          Results found: ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile}"
                                     else
-                                        reho "          ERROR - results not found: ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile}"
+                                        echo "          ERROR - results not found: ${RunAcceptanceTestDir}/QC/${UnitTestQCFolder}/${QCFile}"
                                     fi
                                 fi
                             done
@@ -733,11 +717,11 @@ echo ""
                 
                 if [ ! -z "${SupportedAcceptanceTestSteps##*${UnitTest}*}" ]; then
                     echo ""
-                    reho "  -- ${UnitTest} is not supported. Skipping step for $CASE."
+                    echo "  -- ${UnitTest} is not supported. Skipping step for $CASE."
                     echo ""
                 else
                     echo ""
-                    geho "  -- ${UnitTest} is supported. Proceeding..."
+                    echo "  -- ${UnitTest} is supported. Proceeding..."
                     echo ""
                     echo "  -- Checking ${UnitTest} for $CASE " >> ${RunAcceptanceTestOut}
                     ## -- Check units that may have multiple bolds
@@ -771,22 +755,22 @@ echo ""
                     if [[ ${RUN_TYPE} == "xnat" ]]; then 
                         if [[ ${XNATArchiveCommit} == "session" ]] || [[ ${XNATArchiveCommit} == "all" ]]; then
                             echo ""
-                            geho "---> Setting recursive r+w+x permissions on ${RunAcceptanceTestOut}"
+                            echo "---> Setting recursive r+w+x permissions on ${RunAcceptanceTestOut}"
                             echo ""
                             chmod -R 777 ${RunAcceptanceTestDir} &> /dev/null
                             cd ${RunAcceptanceTestDir}
                             unset XNATUploadFile
                             XNATUploadFile="${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt"
                             echo ""
-                            geho "---> Uploading ${XNATUploadFile} to ${XNAT_HOST_NAME} "
-                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
+                            echo "---> Uploading ${XNATUploadFile} to ${XNAT_HOST_NAME} "
+                            echo "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
                             echo ""
                             curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} &> /dev/null
                             echo ""
                             if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/QUNEX_ACCEPT/files/${XNATUploadFile} ); then 
-                                geho " -- ${XNATUploadFile} uploaded to ${XNAT_HOST_NAME}"
+                                echo " -- ${XNATUploadFile} uploaded to ${XNAT_HOST_NAME}"
                             else 
-                                reho " -- ${XNATUploadFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
+                                echo " -- ${XNATUploadFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
                             fi
                         fi
                     fi
@@ -815,7 +799,7 @@ echo ""
             ## -- Open JSESSION to the XNAT Site
             JSESSION=$(curl -k -X POST -u "${XNAT_CREDENTIALS}" "${XNAT_HOST_NAME}/data/JSESSION" )
             echo ""
-            geho "-- JSESSION created: ${JSESSION}"; echo ""
+            echo "-- JSESSION created: ${JSESSION}"; echo ""
             echo "" >> ${RunAcceptanceTestOut}
             echo "  QuNex Acceptance Test Report for XNAT Run" >> ${RunAcceptanceTestOut}
             echo "  -----------------------------------------" >> ${RunAcceptanceTestOut}
@@ -852,16 +836,16 @@ echo ""
                  cd ${RunAcceptanceTestDir}
                  RunAcceptanceTestOutFile=$(basename $RunAcceptanceTestOut)
                  echo ""
-                 geho "---> Uploading ${RunAcceptanceTestOut} to ${XNAT_HOST_NAME} "
-                 geho "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} "
+                 echo "---> Uploading ${RunAcceptanceTestOut} to ${XNAT_HOST_NAME} "
+                 echo "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} "
                  echo ""
                  curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} &> /dev/null
                  echo ""
                  if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile} ); then 
-                     geho "-- Successfully uploaded ${RunAcceptanceTestOutFile} to ${XNAT_HOST_NAME} under project ${XNAT_PROJECT_ID} as a resource:"
-                     geho "                ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}"
+                     echo "-- Successfully uploaded ${RunAcceptanceTestOutFile} to ${XNAT_HOST_NAME} under project ${XNAT_PROJECT_ID} as a resource:"
+                     echo "                ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}"
                  else 
-                     reho "-- ${RunAcceptanceTestOutFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
+                     echo "-- ${RunAcceptanceTestOutFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
                  fi
             fi
         fi
@@ -870,24 +854,24 @@ echo ""
         if [[ ${RUN_TYPE} == "xnat" ]]; then
             curl -k -X DELETE -b "JSESSIONID=${JSESSION}" "${XNAT_HOST_NAME}/data/JSESSION"
             echo ""
-            geho "-- JSESSION closed: ${JSESSION}"
+            echo "-- JSESSION closed: ${JSESSION}"
         fi
         
     done
 
     echo ""
-    ceho "--> Attempted acceptance testing for ${UnitTests} finished."
+    ceho "---> Attempted acceptance testing for ${UnitTests} finished."
     echo ""
      if [ -f ${RunAcceptanceTestOut} ]; then
         echo ""
-        ceho "--> Final acceptance testing results are stored locally:" 
+        ceho "---> Final acceptance testing results are stored locally:" 
         ceho "    ${RunAcceptanceTestOut}"
         echo ""
     else 
         echo ""
-        reho " ERROR: None of the requested acceptance tests passed: ${UnitTests}"
-        reho "        Final results missing:"
-        reho "        ${RunAcceptanceTestOut}."
+        echo " ERROR: None of the requested acceptance tests passed: ${UnitTests}"
+        echo "        Final results missing:"
+        echo "        ${RunAcceptanceTestOut}."
         echo ""
         echo ""
     fi

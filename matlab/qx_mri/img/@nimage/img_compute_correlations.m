@@ -1,6 +1,6 @@
-function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, verbose, cv)
+function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata, fcmeasure, optimized, verbose, options)
 
-%``img_compute_correlations(obj, bdata, verbose, cv)``
+%``img_compute_correlations(obj, bdata, fcmeasure, verbose)``
 %
 %   For each voxel, computes correlation with the provided (behavioral or other)
 %   data.
@@ -8,10 +8,12 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %   INPUTS
 %   ======
 %
-%    --obj       nimage object
-%   --bdata     data matrix to compute correlations with
-%   --verbose   should it talk a lot [no]
-%   --cv        should it compute covariances instead of correlations
+%   --obj           nimage object
+%   --bdata         data matrix to compute correlations with
+%   --fcmeasure     functional connectivity measure to compute
+%   --optimized     has the data been optimized for the computation
+%   --verbose       should it talk a lot [no]
+%   --options       additional options
 %
 %   OUTPUTS
 %   =======
@@ -40,9 +42,6 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %   correlations between activation maps and behavioral variables across
 %   sessions.
 %
-%   If cv is set to true (or non-zero) the computed and reported values will be
-%   covariances instead of correlations.
-%
 %   EXAMPLE USE
 %   ===========
 %
@@ -55,8 +54,10 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 4 || isempty(cv),      cv      = false; end
-if nargin < 3 || isempty(verbose), verbose = false; end
+if nargin < 6 || isempty(options),   options = struct([]); end
+if nargin < 5 || isempty(verbose),   verbose   = false; end
+if nargin < 4 || isempty(optimized), optimized = false; end
+if nargin < 3 || isempty(fcmeasure), fcmeasure = false; end
 if nargin < 2 error('ERROR: No data provided to compute correlations!'); end
 
 if obj.frames ~= size(bdata,1)
@@ -64,62 +65,37 @@ if obj.frames ~= size(bdata,1)
 end
 
 ncorrelations = size(bdata, 2);
-if verbose, fprintf('\n\nComputing %d correlations with %s', ncorrelations, obj.filename), end
-
-% ---- prepare data
-
-if verbose, fprintf('\n... setting up data'), end
-
-if cv
-    if verbose, fprintf('\n... setting up for covariances instead of correlations '), end
-    obj.data = obj.data';
-    obj.data = bsxfun(@minus, obj.data, mean(obj.data)) ./ sqrt(obj.voxels-1);
-    obj.data = obj.data';
-elseif ~obj.correlized && ~cv
-    obj = obj.correlize;
-end
-
-if cv
-    bdata = bdata';
-    bdata = bsxfun(@minus, bdata, mean(bdata)) ./ sqrt(obj.voxels-1);
-    bdata = bdata';
+if optimized
+    datatype = 'optimized';
 else
-    bdata = zscore(bdata, 0, 1);
-    bdata = bdata ./ sqrt(obj.frames -1);
+    datatype = 'nonoptimized';
 end
+if verbose, fprintf('\n\nComputing %d correlations [%s] on %s data.', ncorrelations, fcmeasure, datatype), end
 
-correlations = zeroframes(obj, ncorrelations);
+% ---- compute correlations
 
-% ---- do the loop
+correlations = obj.zeroframes(ncorrelations);
+correlations.data = fc_compute(obj.data, bdata', fcmeasure, optimized, options);
 
-voxels = obj.voxels;
-data = obj.data;
-
-if verbose, fprintf('\n... computing correlations'), end
-
-for n = 1:ncorrelations
-    x = data(n,:)';
-    correlations.data(:,n) = data * bdata(:,n);
-end
+% ---- compute Z-scores if requested
 
 if nargout > 1
     if verbose, fprintf('\n... computing Z-scores'), end
-    zscores = zeroframes(obj, ncorrelations);
-    if cv
-        zscores.data(:) = 1;
-    else
+    zscores = obj.zeroframes(ncorrelations);
+    if strcmp(fcmeasure, 'r')
         zscores.data = fc_fisher(correlations.data);
         zscores.data = zscores.data/(1/sqrt(obj.frames-3));
+    else
+        zscores.data(:) = 0;
     end
 end
 
+% ---- compute p-values if requested
+
 if nargout > 2
     if verbose, fprintf('\n... computing p-values'), end
-    pvalues = obj.zeroframes(1);
+    pvalues = obj.zeroframes(ncorrelations);
     pvalues.data = (1 - normcdf(abs(zscores.data), 0, 1)) * 2 .* sign(correlations.data);
 end
 
 if verbose, fprintf('\n... done!'), end
-
-end
-

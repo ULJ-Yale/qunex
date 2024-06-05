@@ -111,18 +111,16 @@ end
 % --------------------------------------------------------------
 %                                                  read filelist
 
-sessions = general_read_file_list(flist);
-nsub = length(sessions);
-
+list = general_read_file_list(flist);
 
 % --------------------------------------------------------------
 %                             check that glm entries are present
 
 if verbose, fprintf('\n---> checking file list'); end
 allok = true;
-for s = 1:nsub
-    if ~isfield(sessions(s), 'glm')
-        fprintf('\n     WARNING: Session id: %s has no glm file specified!', sessions(s).id);
+for s = 1:list.nsessions
+    if ~isfield(list.session(s), 'glm')
+        fprintf('\n     WARNING: Session id: %s has no glm file specified!', list.session(s).id);
         allok = false;
     end
 end
@@ -131,6 +129,22 @@ if ~allok
     exit(1);
 end
 
+
+% --------------------------------------------------------------
+%                             check that glm entries are present
+
+if verbose, fprintf('\n---> checking file list'); end
+allok = true;
+for s = 1:list.nsessions
+    if ~isfield(list.session(s), 'glm')
+        fprintf('\n     WARNING: Session id: %s has no glm file specified!', list.session(s).id);
+        allok = false;
+    end
+end
+if ~allok
+    fprintf('\n\nERROR: Some sessions do not have a glm file specified in the file list.\n       Please, check your list file!\n');
+    exit(1);
+end
 
 % --------------------------------------------------------------
 %                                      parse estimates parameter
@@ -147,9 +161,9 @@ end
 
 % --- setup data holder
 
-if verbose, fprintf('\n---> processing session: %s', sessions(1).id); end
+if verbose, fprintf('\n---> processing session: %s', list.session(1).id); end
 
-glm = nimage(sessions(1).glm);
+glm = nimage(list.session(1).glm);
 sef = glm.glm.effects;
 glm = glm.img_extract_glm_estimates(effects, frames, values);
 effect = sef(glm.glm.effect);
@@ -157,26 +171,26 @@ frame  = glm.glm.frame;
 event  = glm.glm.event;
 
 [nvox nb]     = size(glm.image2D);
-data          = zeros(nvox, nb * (nsub + 5));
+data          = zeros(nvox, nb * (list.nsessions + 5));
 data(:, 1:nb) = glm.image2D;
-session       = repmat({sessions(1).id}, 1, nb);
+session       = repmat({list.session(1).id}, 1, nb);
 
 pt = nb;
 
-for s = 2:nsub
+for s = 2:list.nsessions
 
     % ---> read GLMs
 
-    if verbose, fprintf('\n---> processing session: %s', sessions(s).id); end
+    if verbose, fprintf('\n---> processing session: %s', list.session(s).id); end
 
-    glm = nimage(sessions(s).glm);
+    glm = nimage(list.session(s).glm);
     sef = glm.glm.effects;
     glm = glm.img_extract_glm_estimates(effects, frames, values);
     nb  = size(glm.image2D,2);
     effect  = [effect sef(glm.glm.effect)];
     frame   = [frame glm.glm.frame];
     event   = [event glm.glm.event];
-    session = [session repmat({sessions(s).id}, 1, nb)];
+    session = [session repmat({list.session(s).id}, 1, nb)];
 
     data(:, pt+1:pt+nb) = glm.image2D;
     pt = pt + nb;
@@ -206,15 +220,22 @@ end
 
 % --- will we use parcel names?
 
-if strcmp(glm.filetype, '.ptseries') & ~isempty(txtf)
+if strcmp(glm.filetype, 'ptseries') & ~isempty(txtf)
     parcelnames = getParcelNames(glm);
 end
 
 % --- save
 
+for f = 1:pt
+    mapnames{f} = sprintf('%s %s f%d', session{f}, event{f}, frame(f));
+end
+glm.filetype = [glm.filetype(1) 'scalar'];
+
+
 if ismember(saveoption, {'by_effect', 'by_session'})
     out = glm.zeroframes(pt);
-    out.data = data;
+    out.data = data;    
+    out.cifti.maps = mapnames;
     out = setMeta(out, session, effect, frame, event, verbose);
     if nargout > 0
         out.list.meta    = 'list';
@@ -226,7 +247,7 @@ if ismember(saveoption, {'by_effect', 'by_session'})
     if ~strcmp(outf, 'none')
         if verbose, fprintf('\n---> saving data in a single file, sorted %s', reportmsg); end
         out.img_saveimage(outf);
-        if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+        if out.filetype(1) == 'p' & ~isempty(txtf)
             if verbose, fprintf('\n---> saving data in a text file, sorted %s', reportmsg); end
             tout = fopen([outf '_long.txt'], 'w');
             fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
@@ -245,11 +266,12 @@ else
         mask = ismember(effect, e);
         out = glm.zeroframes(sum(mask));
         out.data = data(:, mask);
+        out.cifti.maps = mapnames(mask);
         out = setMeta(out, session(mask), effect(mask), frame(mask), event(mask), verbose);
         if ~strcmp(outf, 'none')
             if verbose, fprintf('\n---> saving data in separate files for each effect'); end
             out.img_saveimage([outf '_' e{1}]);
-            if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+            if out.filetype(1) == 'p' & ~isempty(txtf)
                 if verbose, fprintf('\n---> saving data in separate text files for each effect'); end
                 tout = fopen([outf '_' e{1} '_long.txt'], 'w');
                 fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
@@ -269,7 +291,7 @@ else
 end
 
 
-if verbose, fprintf('\n===> DONE\n'); end
+if verbose, fprintf('\n---> DONE\n'); end
 
 
 % --- Support function
@@ -285,15 +307,15 @@ function [img] = setMeta(img, session, effect, frame, event, verbose)
 
 function [parcelnames] = getParcelNames(img)
 
-    % --> extract metadata from the input image
+    % ---> extract metadata from the input image
 
     xml  = cast(img.meta(find([img.meta.code] == 32)).data, 'char')';
 
-    % --> load cifti brain model
+    % ---> load cifti brain model
 
     model = load('cifti_brainmodel');
 
-    % --> process parcells
+    % ---> process parcells
 
     parcels = regexp(xml, '<Parcel Name="(?<name>.*?)">.*?(?<parcelparts><.*?)\s*</Parcel>', 'names');
     parcelnames = {parcels.name};

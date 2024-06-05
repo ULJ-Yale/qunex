@@ -32,7 +32,7 @@ function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-% --> process variables
+% ---> process variables
 
 if nargin < 4 || isempty(missingvalues), missingvalues = '0'; end
 if nargin < 3 || isempty(verbose),       verbose  = false;    end
@@ -40,7 +40,7 @@ if nargin < 2,                           outimg   = [];       end
 
 missingvalues = str2num(missingvalues);
 
-% --> check that input is present
+% ---> check that input is present
 
 general_check_file(inimg, 'input file');
 
@@ -52,17 +52,17 @@ else
 end
 
 
-if verbose, fprintf('\n===> Loading %s', inimg), end
+if verbose, fprintf('\n---> Loading %s', inimg), end
 img = nimage(inimg);
 img = img.img_parcellated2dense(verbose, missingvalues);
 
-% --> save
+% ---> save
 if isempty(outimg)
-    outimg = [img.rootfilename img.filetype '.nii'];
+    outimg = [img.rootfilename '.' img.filetype '.nii'];
 end
 
-if verbose, fprintf('\n===> saving %s', outimg), end
+if verbose, fprintf('\n---> saving %s', outimg), end
 img.img_saveimage(outimg);
 
-if verbose, fprintf('\n===> done\n'), end
+if verbose, fprintf('\n---> done\n'), end
 

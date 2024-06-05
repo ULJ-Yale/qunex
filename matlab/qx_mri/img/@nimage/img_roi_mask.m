@@ -31,7 +31,7 @@ function [mask] = img_roi_mask(img, roi)
 img.data = img.image2D;
 
 if nargin < 2 || isempty(roi)
-    mask = sum(img.data, 2) > 0
+    mask = sum(img.data, 2) > 0;
     return
 end
 
@@ -45,7 +45,7 @@ if ~isa(roi, 'numeric') & ~isa(roi, 'logical')
     roi = find(ismember(img.roi.roinames, roi));
 end
 
-% ----> Do the deed
+% ---> Do the deed
 
 if multiframe
     mask = sum(img.data(:,roi),2) > 0;

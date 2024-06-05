@@ -1,5 +1,4 @@
 function [img] = stats_p2z(img, out, tail)
-
 %``stats_p2z(img, out, tail)``
 %
 %   Converts p to Z values considering one or two tails.
@@ -38,19 +37,32 @@ if nargin < 3 || isempty(tail), tail = 'two'; end
 if nargin < 2 out = ''; end
 
 % ======================================================
-%     ----> read files
+%     ---> read files
 
 if ~isobject(img)
     img = nimage(img);
 end
 
-% ======================================================
-%     ----> convert
-
-img.data = norminv((1-(img.data/2)), 0, 1);
 
 % ======================================================
-%     ----> save results
+%     ---> adjust small p values to not trigger inf
+
+img.data(abs(img.data) < 0.0000001) = sign(img.data(abs(img.data) < 0.0000001)) .* 0.0000001;
+
+
+% ======================================================
+%     ---> convert
+
+if strcmp(tail, 'two')
+    img.data = norminv((1-(img.data/2)), 0, 1);    
+else
+    img.data = norminv((1-img.data), 0, 1);
+end
+
+
+
+% ======================================================
+%     ---> save results
 
 if ~isempty(out)
     img.img_saveimage(out);

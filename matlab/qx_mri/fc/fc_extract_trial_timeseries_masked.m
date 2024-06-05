@@ -113,7 +113,7 @@ if isempty(scrubvar)
 end
 
 % ======================================================
-%     ----> set up the variables
+%     ---> set up the variables
 
 fprintf('\n\nStarting ...');
 
@@ -127,15 +127,15 @@ frames = int16(frames);
 
 fprintf('\n ... listing files to process');
 
-[session, nsub, nfiles, listname] = general_read_file_list(flist);
+list = general_read_file_list(flist);
 
 fprintf(' ... done.');
 
 %   ------------------------------------------------------------------------------------------
 %                                                         set up datastructure to save results
 
-for n = 1:nsub
-    data(n).session = session(n).id;
+for n = 1:list.nsessions
+    data(n).session = list.session(n).id;
 end
 
 
@@ -143,16 +143,16 @@ end
 %                                                The main loop ... go through all the sessions
 
 
-for s = 1:nsub
+for s = 1:list.nsessions
 
-    fprintf('\n ... processing %s', session(s).id);
+    fprintf('\n ... processing %s', list.session(s).id);
 
     % ---> reading ROI file
 
     fprintf('\n     ... creating ROI mask');
 
-    if isfield(session(s), 'roi')
-        sroifile = session(s).roi;
+    if isfield(list.session(s), 'roi')
+        sroifile = list.session(s).roi;
     else
         sroifile = [];
     end
@@ -168,9 +168,9 @@ for s = 1:nsub
 
     fprintf('\n     ... reading image file(s)');
 
-    y = nimage(session(s).files{1});
-      for f = 2:length(session(s).files)
-        y = [y nimage(session(s).files{f})];
+    y = nimage(list.session(s).files{1});
+    for f = 2:length(list.session(s).files)
+        y = [y nimage(list.session(s).files{f})];
     end
 
     if scrubit
@@ -196,7 +196,7 @@ for s = 1:nsub
 
 
     % ======================================================
-    %     ----> filter out the events to include in the analysis
+    %     ---> filter out the events to include in the analysis
     %
     %   fevents: datastructure for coding events from fidl events file
     %       frame   - array with event start times in frames
@@ -207,7 +207,7 @@ for s = 1:nsub
 
     fprintf('\n     ... reading event data');
 
-    fevents = general_read_event_file(session(s).fidl);
+    fevents = general_read_event_file(list.session(s).fidl);
     temp = fevents.frame(:,1) + 1;
     bframes = int16([temp; 999999]);
     for n = 1:nniz
@@ -228,7 +228,7 @@ for s = 1:nsub
     end
 
     % ======================================================
-    %     ----> extract data
+    %     ---> extract data
 
     %------- extract baseline for this run
 
@@ -277,12 +277,12 @@ for s = 1:nsub
     end
     fprintf(' done');
 
-    data(s).session = session(s).id;
+    data(s).session = list.session(s).id;
     data(s).set = niz;
 end
 
 % ======================================================
-%     ----> save
+%     ---> save
 
 fprintf('\nSaving ...');
 

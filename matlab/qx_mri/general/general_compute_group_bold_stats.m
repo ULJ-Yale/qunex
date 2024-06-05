@@ -151,8 +151,7 @@ end
 
 fprintf('\n ... listing files to process');
 
-session = general_read_file_list(flist);
-nsub = length(session);
+list = general_read_file_list(flist);
 
 fprintf(' ... done.');
 
@@ -162,17 +161,17 @@ fprintf(' ... done.');
 
 first = true;
 
-for n = 1:nsub
+for n = 1:list.nsessions
 
-    fprintf('\n ... processing %s', session(n).id);
+    fprintf('\n ... processing %s', list.session(n).id);
 
     % ---> reading image files
 
     fprintf('\n     ... reading image file(s)');
 
-    y = nimage(session(n).files{1});
-    for f = 2:length(session(n).files)
-        y = [y nimage(session(n).files{f})];
+    y = nimage(list.session(n).files{1});
+    for f = 2:length(list.session(n).files)
+        y = [y nimage(list.session(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -181,9 +180,9 @@ for n = 1:nsub
 
     if eventbased
         mask = [];
-        if isfield(session(n), 'fidl')
-            if session(n).fidl
-                rmodel = general_create_task_regressors(session(n).fidl, y.runframes, inmask, fignore);
+        if isfield(list.session(n), 'fidl')
+            if list.session(n).fidl
+                rmodel = general_create_task_regressors(list.session(n).fidl, y.runframes, inmask, fignore);
                 mask   = rmodel.run;
                 nmask  = [];
                 for r = 1:length(mask)
@@ -224,7 +223,7 @@ for n = 1:nsub
         t = y.img_stats(stats{s});
         t.data = t.image2D;
         if first
-            r(s) = t.zeroframes(nsub);
+            r(s) = t.zeroframes(list.nsessions);
         end
         r(s).data(:,n) = t.data();
     end

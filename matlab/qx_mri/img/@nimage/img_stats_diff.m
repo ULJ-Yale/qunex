@@ -144,13 +144,13 @@ for d = doIt(:)'
         out.data(:,c) = dm;
 
     case 'dme'
-        out.data(:,c) = nanmedian(img1.data, 2) - nanmedian(img2.data, 2) ;
+        out.data(:,c) = median(img1.data, 2, "omitnan") - median(img2.data, 2, "omitnan") ;
 
     case 'dmax'
-        out.data(:,c) = nanmax(img1.data, 2) - nanmax(img2.data, 2);
+        out.data(:,c) = max(img1.data, 2) - max(img2.data, 2);
 
     case 'dmin'
-        out.data(:,c) = nanmin(img1.data, 2) - nanmin(img2.data, 2);
+        out.data(:,c) = min(img1.data, 2) - min(img2.data, 2);
 
     case 'dsum'
         if isempty(s1), s1 = nansum(img1.data, 2); end
@@ -159,14 +159,14 @@ for d = doIt(:)'
         out.data(:,c) = ds;
 
     case 'sd'
-        if isempty(sd1), sd1 = nanstd(img1.data, 0, 2); end
-        if isempty(sd2), sd1 = nanstd(img2.data, 0, 2); end
+        if isempty(sd1), sd1 = std(img1.data, 0, 2, "omitnan"); end
+        if isempty(sd2), sd1 = std(img2.data, 0, 2, "omitnan"); end
         if isempty(dsd), dsd = sd1-sd2; end
         out.data(:,c) = dsd;
 
     case 'var'
-        if isempty(v1), v1 = nanvar(img1.data, 1, 2); end
-        if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
+        if isempty(v1), v1 = var(img1.data, 1, 2, "omitnan"); end
+        if isempty(v2), v2 = var(img2.data, 1, 2, "omitnan"); end
         if isempty(dvar), dvar = v1-v2; end
         out.data(:,c) = dvar;
 
@@ -178,9 +178,9 @@ for d = doIt(:)'
         if isempty(n2), n2 = sum(~isnan(img2.data), 2); end
         if isempty(m2), m2 = s2./n2; end
         if isempty(dm), dm = m1-m2; end
-        if isempty(v1), v1 = nanvar(img1.data, 1, 2); end
-        if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
-        if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
+        if isempty(v1), v1 = var(img1.data, 1, 2, "omitnan"); end
+        if isempty(v2), v2 = var(img2.data, 1, 2, "omitnan"); end
+        if isempty(v2), v2 = var(img2.data, 1, 2, "omitnan"); end
         if isempty(t2df), t2df = (n1+n2-2); end
         if isempty(t2), t2 = dm ./ sqrt(((n1-1).*v1 + (n2-1).*v2)./t2df); end
         out.data(:,c) = t2;
@@ -193,9 +193,9 @@ for d = doIt(:)'
         if isempty(n2), n2 = sum(~isnan(img2.data), 2); end
         if isempty(m2), m2 = s2./n2; end
         if isempty(dm), dm = m1-m2; end
-        if isempty(v1), v1 = nanvar(img1.data, 1, 2); end
-        if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
-        if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
+        if isempty(v1), v1 = var(img1.data, 1, 2, "omitnan"); end
+        if isempty(v2), v2 = var(img2.data, 1, 2, "omitnan"); end
+        if isempty(v2), v2 = var(img2.data, 1, 2, "omitnan"); end
         if isempty(t2df), t2df = (n1+n2-2); end
         if isempty(t2), t2 = dm ./ sqrt(((n1-1).*v1 + (n2-1).*v2)./t2df); end
         if isempty(t2p), t2p = tcdf(-abs(t2), t2df).*2; end
@@ -209,9 +209,9 @@ for d = doIt(:)'
         if isempty(n2), n2 = sum(~isnan(img2.data), 2); end
         if isempty(m2), m2 = s2./n2; end
         if isempty(dm), dm = m1-m2; end
-        if isempty(v1), v1 = nanvar(img1.data, 1, 2); end
-        if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
-        if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
+        if isempty(v1), v1 = var(img1.data, 1, 2, "omitnan"); end
+        if isempty(v2), v2 = var(img2.data, 1, 2, "omitnan"); end
+        if isempty(v2), v2 = var(img2.data, 1, 2, "omitnan"); end
         if isempty(t2df), t2df = (n1+n2-2); end
         if isempty(t2), t2 = dm ./ sqrt(((n1-1).*v1 + (n2-1).*v2)./t2df); end
         if isempty(t2p), t2p = tcdf(-abs(t2), t2df).*2; end

@@ -2,41 +2,41 @@ function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 
 %``img_compute_ab_correlation(obj, smask, tmask, verbose)``
 %
-%    Compute correlation between each source and target voxels and returns a
-%    correlational image.
+%   Computes correlation between each source and target voxels and returns a
+%   correlational image.
 %
-%   INPUTS
-%    ======
+%   Parameters
+%       --obj (nimage object)
+%           Image on which the correlations should be completed.
+%       --smask (nimage object or an array)
+%           Mask of source voxels. If nimage, then the first volume will be used
+%           as a mask. If an array the size of the image volume, it will be used
+%           as a mask. If a shorter numeric array, it will be used as a vector 
+%           of indices that define an ROI. The representation has to be the same
+%           as for tmask.
+%       --tmask (nimage object or an array)
+%           Mask of target voxels. The same applies as for smask
+%       --verbose (boolean, default 'true)
+%           Whether to print out the progress of computations.
 %
-%    --obj         nimage data object.
-%   --smask       Mask of source voxels. It can be a gmriimage file or a matrix.
-%   --tmask       Mask of target voxels. It can be a gmriimage file or a matrix.
-%   --verbose     should it talk a lot [no]
+%   Outputs:
+%       obj
+%           A resulting nimage object.
 %
-%   OUTPUT
-%    ======
+%   Notes:
+%       The method enables computing correlations betweeen specific sets of 
+%       source and target voxels from the same timeseries image. The resulting 
+%       image holds correlations of each target voxel with each source voxel. 
+%       Specifically, the first frame of the resulting image will hold 
+%       correlations of each target voxel with the first source voxel, the 
+%       second image will hold correlations of each target voxels with the 
+%       second source voxel and so on.
 %
-%   obj
-%        A resulting nimage data object.
+%       Masks can be provided as nimage objects in which all the nonzero voxels
+%       in the first volume will define the ROI, as a matrix of the same, or as
+%       an array of indices of voxels that form a ROI.
 %
-%   USE
-%    ===
-%
-%   The method enables computing correlations betweeen specific sets of source
-%   and target voxels from the same timeseries image. The resulting image holds
-%   correlations of each target voxel with each source voxel. Specifically, the
-%   first frame of the resulting image will hold correlations of each target
-%   voxel with the first source voxel, the second image will hold correlations
-%   of each target voxels with the second source voxel and so on.
-%
-%   Each mask can be provided either as a row vector the number of voxels in the
-%   image coding the voxels to use with true or more than 0, or as a nimage
-%   object with image data specifying the same.
-%
-%   EXAMPLE USE
-%    ===========
-%
-%    ::
+%   Examples:
 %
 %       img = img.img_compute_ab_correlation(roiAimage, roiBimage);
 %
@@ -45,13 +45,8 @@ function [obj] = img_compute_ab_correlation(obj, smask, tmask, verbose)
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 4
-    verbose = false;
-    if nargin < 3;
-        error('ERROR: Both mask for source and target voxels needs to be provided!');
-    end
-end
-
+if nargin < 4 || isempty(verbose), verbose = false; end
+if nargin < 3, error('ERROR: Both mask for source and target voxels needs to be provided!'), end
 
 % ---- prepare data
 

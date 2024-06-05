@@ -136,23 +136,21 @@ if script, fprintf('\n\nStarting ...'), end
 
 if script, fprintf('\n ... listing files to process'), end
 
-[session, nsessions, nfiles, listname] = general_read_file_list(flist, verbose);
+list = general_read_file_list(flist, 'all', [], verbose);
 
 if isempty(root)
-    root = listname;
+    root = list.listname;
 end
 
-
 if script, fprintf(' ... done.'), end
-
 
 %   ------------------------------------------------------------------------------------------
 %   -------------------------------------------- The main loop ... go through all the sessions
 
 %   --- Get variables ready first
 
-sROI = nimage.img_read_roi(smask, session(1).roi);
-tROI = nimage.img_read_roi(tmask, session(1).roi);
+sROI = nimage.img_read_roi(smask, list.session(1).roi);
+tROI = nimage.img_read_roi(tmask, list.session(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
     sROIload = false;
@@ -175,18 +173,18 @@ end
 
 %   --- Start the loop
 
-for s = 1:nsessions
+for s = 1:list.nsessions
 
     %   --- reading in image files
     if script, tic, end
-    if script, fprintf('\n------\nProcessing %s', session(s).id), end
+    if script, fprintf('\n------\nProcessing %s', list.session(s).id), end
     if script, fprintf('\n... reading file(s) '), end
 
     % --- check if we need to load the session region file
 
-    if ~strcmp(session(s).roi, 'none')
+    if ~strcmp(list.session(s).roi, 'none')
         if tROIload | sROIload
-            roif = nimage(session(s).roi);
+            roif = nimage(list.session(s).roi);
         end
     end
 
@@ -199,14 +197,14 @@ for s = 1:nsessions
 
     % --- load bold data
 
-    nfiles = length(session(s).files);
+    nfiles = length(list.session(s).files);
 
-    img = nimage(session(s).files{1});
+    img = nimage(list.session(s).files{1});
     if mask, img = img.sliceframes(mask); end
     if script, fprintf('1'), end
     if nfiles > 1
         for n = 2:nfiles
-            new = nimage(session(s).files{n});
+            new = nimage(list.session(s).files{n});
             if mask, new = new.sliceframes(mask); end
             img = [img new];
             if script, fprintf(', %d', n), end
@@ -225,7 +223,7 @@ for s = 1:nsessions
             k = nc(c);
 
             if script, fprintf('\n... computing %d individual CA solution', k), end
-            ifile = [root '_' session(s).id '_k' num2str(k)];
+            ifile = [root '_' list.session(s).id '_k' num2str(k)];
 
             Cent = Cent.zeroframes(k);
             [CA.data Cent.data] = kmeans(data, k, 'distance', dmeasure, 'replicates', nrep);
@@ -253,7 +251,7 @@ if group
     if script, fprintf('\n=======\nComputing group CA solution'), end
 
     if ~tROIload
-        gcnt.data = (tROI.image2D > 0) .* nsessions;
+        gcnt.data = (tROI.image2D > 0) .* list.nsessions;
     end
 
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);

@@ -71,14 +71,14 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 % 
 %                   <filename parameter><the filename of the first specified file>_tsplot.<fformat>
 %
-%               An example with bold1.nii.gz as the first file, `QA_` as value
+%               An example with bold1.nii.gz as the first file, QA as value
 %               of the filename parameter, and `pdf` as the value of fformat
 %               parameter would be::
 %
-%                   QA_bold1_tsplot.pdf
+%                   QAbold1_tsplot.pdf
 %
 %           fformat
-%               File format in which the plot is to be saved. 'pdf' by default.
+%               File format in which the plot is to be saved, 'pdf' by default.
 %
 %           skip
 %               If no initial dummy scans were used during image acquisition,
@@ -93,13 +93,14 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 %       ::
 %
 %           qunex general_plot_bold_timeseries_list \
-%               --flist='bolds.list' \
-%               --elements='[]' \
-%               --filename='QA_' \
+%               --flist=bolds.list \
+%               --elements=[] \
+%               --filename=QA \
 %               --skip=5 \
 %               --fformat=png \
 %               --verbose=true
 %
+
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
@@ -120,25 +121,24 @@ if nargin < 1, error('ERROR: Please specify at least file list!'); end
 if verbose, fprintf('\n\nChecking ...\n'); end
 general_check_file(flist, 'image file list', 'error');
 
-sessions = general_read_file_list(flist);
-nsub = length(sessions);
+list = general_read_file_list(flist);
 
-for n = 1:nsub
-    if verbose, fprintf('\n ---> processing %s', sessions(n).id); end
+for n = 1:list.nsessions
+    if verbose, fprintf('\n ---> processing %s', list.session(n).id); end
 
-    [tpath tfile] = fileparts(sessions(n).files{1});
+    [tpath tfile] = fileparts(list.session(n).files{1});
     tfile = regexp(tfile, '(^.*?)[._]', 'tokens');
     tfile = tfile{1};
     tfile = tfile{1};
     tfile = [tpath filesep 'movement' filesep filename tfile '_tsplot.' fformat];
 
-    imgfiles = strjoin(sessions(n).files, ';');
-    maskfiles = sessions(n).roi;
+    imgfiles = strjoin(list.session(n).files, ';');
+    maskfiles = list.session(n).roi;
 
-    general_plot_bold_timeseries(imgfiles, elements, maskfiles, tfile, skip, sessions(n).id, false);
+    general_plot_bold_timeseries(imgfiles, elements, maskfiles, tfile, skip, list.session(n).id, false);
 end
 
-if verbose, fprintf('\n ===> DONE\n'); end
+if verbose, fprintf('\n ---> DONE\n'); end
 
 function [s] = strjoin(c, d)
     s = [];

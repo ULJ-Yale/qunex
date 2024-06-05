@@ -33,7 +33,7 @@ if [[ -z ${bold} ]]; then echo "ERROR: BOLD missing!"; exit 1; fi
 
 # list parameters
 echo ""
-echo " --> Executing setup_mice:"
+echo " ---> Executing setup_mice:"
 echo "       Work directory: ${work_dir}"
 echo "       BOLD: ${bold}"
 echo "       TR: ${tr}"
@@ -56,7 +56,7 @@ fi
 # -- prep
 # ------------------------------------------------------------------------------
 # go to work dir
-pushd ${work_dir}
+pushd ${work_dir} > /dev/null
 
 # create a copy, leave the original
 cp ${bold}.nii.gz ${bold}_SM.nii.gz
@@ -66,7 +66,7 @@ cp ${bold}.nii.gz ${bold}_SM.nii.gz
 # ------------------------------------------------------------------------------
 if [[ -n ${voxel_increase} ]]; then
     echo ""
-    echo " --> Increasing voxel size"
+    echo " ---> Increasing voxel size"
 
     # remove tmp.m
     if [[ -f voxel_increase_${bold}.m ]]; then
@@ -93,7 +93,7 @@ fi
 # -- check if TR is correct
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Verifying TR"
+echo " ---> Verifying TR"
 
 # check
 echo " ... Running fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}"
@@ -104,7 +104,7 @@ fslmerge -tr ${bold}_SM.nii.gz ${bold}_SM.nii.gz ${tr}
 # -- orientation correction
 # ------------------------------------------------------------------------------
 if [[ -n ${orientation} ]]; then
-    echo " --> Correcting orientation"
+    echo " ---> Correcting orientation"
 
     echo " ... Running fslswapdim ${bold}_SM.nii.gz ${orientation} ${bold}_SM.nii.gz"
     fslswapdim ${bold}_SM.nii.gz ${orientation} ${bold}_SM.nii.gz 
@@ -119,7 +119,7 @@ fi
 # -- AFNI despike
 # ------------------------------------------------------------------------------
 echo ""
-echo " --> Despiking"
+echo " ---> Despiking"
 
 if [[ -f ${bold}_DS.nii.gz ]]; then
     rm ${bold}_DS.nii.gz
@@ -140,18 +140,18 @@ echo " ... Running 3dAFNItoNIFTI -prefix ${bold}_DS.nii.gz ${bold}_DS+orig.BRIK"
 # ------------------------------------------------------------------------------
 # -- wrap up
 # ------------------------------------------------------------------------------
-echo " --> Removing intermediate files"
+echo " ---> Removing intermediate files"
 rm ${bold}_DS+orig.BRIK
 rm ${bold}_DS+orig.HEAD
 rm ${bold}_SM*
 rm *${bold}_VI.m
 
 echo ""
-echo " --> setup_mice successfully completed"
+echo " ---> setup_mice successfully completed"
 echo ""
 echo "------------------------ Successful completion of work ------------------------"
 echo ""
 exit 0
 
 # back to starting dir
-popd
+popd > /dev/null

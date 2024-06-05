@@ -42,7 +42,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   filename = mxArrayToString(prhs[0]);
 
-  if (verbose) mexPrintf("\n===> img_read_nifti_mx\n");
+  if (verbose) mexPrintf("\n---> img_read_nifti_mx\n");
   if (verbose) mexPrintf("---> Reading %s \n", filename);
 
 

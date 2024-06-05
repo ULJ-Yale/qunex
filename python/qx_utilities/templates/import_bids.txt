@@ -5,24 +5,24 @@
         "label": ["T1w", "T2w", "T1rho", "T1map", "T2map", "T2star", "FLAIR", "FLASH", "PD", "PDMap", "PDT2", "inplaneT1", "inplaneT2", "angio", "defacemask"],
         "info":  ["acq", "run", "ce", "rec", "echo", "mod", "ses"],
         "sort":  ["mod", "rec", "ce", "echo","run", "acq", "label"],
-        "tag":   ["label", "acq", "ce", "rec", "mod", "echo", "run"],
+        "tag":   ["label", "acq", "ce", "rec", "mod", "echo", "run"]
     },
     "func": {
         "label": ["sbref", "bold"],
-        "info":  ["task", "acq", "rec", "run", "echo", "ses"],
-        "sort":  ["rec", "echo", "acq", "label", "run", "task"],
-        "tag":   ["label", "task", "acq", "echo", "rec", "run"]
+        "info":  ["task", "acq", "rec", "run", "echo", "ses", "dir"],
+        "sort":  ["rec", "echo", "acq", "label", "run", "dir", "task"],
+        "tag":   ["label", "task", "acq", "echo", "rec", "run", "dir"]
     },
     "dwi": {
         "label": ["dwi"],
-        "info":  ["acq", "run", "ses"],
-        "sort":  ["run", "acq"],
-        "tag":   ["label", "acq", "run"]
+        "info":  ["acq", "run", "ses", "dir"],
+        "sort":  ["dir", "run", "acq"],
+        "tag":   ["label", "dir", "acq", "run"]
     },
     "fmap": {
         "label": ["phasediff", "magnitude", "magnitude1", "magnitude2", "phase1", "phase2", "epi"],
         "info":  ["acq", "run", "ses", "dir"],
-        "sort":  ["run", "dir", "acq" ],
+        "sort":  ["run", "dir", "acq"],
         "tag":   ["label", "dir", "acq", "run"]
     },
     "asl": {

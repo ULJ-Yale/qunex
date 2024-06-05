@@ -295,7 +295,7 @@ nelements = length(elements);
 
 for n = 1:nelements
 
-    % ----> preprocess image entry
+    % ---> preprocess image entry
 
     if strcmp(elements(n).type, 'signal')
 
@@ -303,7 +303,7 @@ for n = 1:nelements
             error('ERROR: The specified image does not exist! [%d of %d]', elements(n).imageindex, length(img));
         end
 
-        % ----> Define ROI
+        % ---> Define ROI
 
         if isempty(elements(n).ROI)
             if isfield(roi, elements(n).name)
@@ -321,7 +321,7 @@ for n = 1:nelements
             end
         end
 
-        % ----> Create mask
+        % ---> Create mask
         if ~isempty(elements(n).maskindex)
             if elements(n).maskindex > length(mask)
                 error('ERROR: The specified mask does not exist! [%d of %d]', elements(n).maskindex, length(mask));
@@ -344,7 +344,7 @@ for n = 1:nelements
         end
 
 
-        % ----> Compute image size
+        % ---> Compute image size
 
         if isempty(elements(n).size)
             elements(n).size = sum(elements(n).maskindex);
@@ -352,7 +352,7 @@ for n = 1:nelements
         sz.Var = sz.Var + elements(n).size;
         if verbose, fprintf('\n ---> added %s of size %d', elements(n).name, elements(n).size); end
 
-    % ----> preprocess stats entry
+    % ---> preprocess stats entry
 
     elseif strcmp(elements(n).type, 'stats')
         for s = 1:length(elements(n).stats)
@@ -397,7 +397,7 @@ for n = 1:nelements
 end
 
 
-% ----> start building figure
+% ---> start building figure
 
 f = figure;
 set(f, 'PaperType', 'usletter');
@@ -516,7 +516,7 @@ for n = 1:nelements
 
 end
 
-% ----> Title
+% ---> Title
 
 if verbose, fprintf('\n ---> creating title'); end
 

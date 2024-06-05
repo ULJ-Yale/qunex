@@ -30,15 +30,54 @@ import general.core as gc
 import json
 
 # ---- some definitions
-unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
-PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA', 'RL': 'i', 'i': 'RL', 'LR': 'i-', 'i-': 'LR'}
-SEDirMap  = {'AP': 'y', 'PA': 'y', 'LR': 'x', 'RL': 'x'}
+unwarp = {
+    None: "Unknown",
+    "i": "x",
+    "j": "y",
+    "k": "z",
+    "i-": "x-",
+    "j-": "y-",
+    "k-": "z-",
+}
+PEDirMap = {
+    "AP": "j-",
+    "j-": "AP",
+    "PA": "j",
+    "j": "PA",
+    "RL": "i",
+    "i": "RL",
+    "LR": "i-",
+    "i-": "LR",
+}
+SEDirMap = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
+
 
 def checkInlineParameterUse(modality, parameter, options):
-    return any([e in options['use_sequence_info'] for e in ['all', parameter, '%s:all' % (modality), '%s:%s' % (modality, parameter)]])
+    return any(
+        [
+            e in options["use_sequence_info"]
+            for e in [
+                "all",
+                parameter,
+                "%s:all" % (modality),
+                "%s:%s" % (modality, parameter),
+            ]
+        ]
+    )
 
 
-def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt", check="yes", existing="add", hcp_filename="automated", hcp_folderstructure="hcpls", hcp_suffix="", use_sequence_info="all", slice_timing_info="no"):
+def setup_hcp(
+    sourcefolder=".",
+    targetfolder="hcp",
+    sourcefile="session_hcp.txt",
+    check="yes",
+    existing="add",
+    hcp_filename="automated",
+    hcp_folderstructure="hcpls",
+    hcp_suffix="",
+    use_sequence_info="all",
+    slice_timing_info="no",
+):
     """
     ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""] [use_sequence_info=all] [slice_timing_info=no]``
 
@@ -266,277 +305,318 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
     print("Running setup_hcp\n================")
 
-    inf   = gc.read_session_data(os.path.join(sourcefolder, sourcefile))[0][0]
-    rawf  = inf.get('raw_data', None)
-    options = {'use_sequence_info': gc.pcslist(use_sequence_info)}
+    inf = gc.read_session_data(os.path.join(sourcefolder, sourcefile))[0][0]
+    rawf = inf.get("raw_data", None)
+    options = {"use_sequence_info": gc.pcslist(use_sequence_info)}
 
     slice_timing_info = any([slice_timing_info.upper() == e for e in ["YES", "TRUE"]])
-    
+
     # backwards compatibility (session used to be id)
 
-    if 'id' in inf:
-        session_key = 'id'
-        sid   = inf[session_key]
+    if "id" in inf:
+        session_key = "id"
+        sid = inf[session_key]
     else:
-        session_key = 'session'
-        sid   = inf['session']
+        session_key = "session"
+        sid = inf["session"]
 
     bolds = collections.defaultdict(dict)
-    nT1w  = 0
-    nT2w  = 0
+    nT1w = 0
+    nT2w = 0
 
-    filename = hcp_filename == 'userdefined'
+    filename = hcp_filename == "userdefined"
 
-    if hcp_folderstructure not in ['hcpya', 'hcpls']:
-        raise ge.CommandFailed("setup_hcp", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (hcp_folderstructure), "Please check the command!")
+    if hcp_folderstructure not in ["hcpya", "hcpls"]:
+        raise ge.CommandFailed(
+            "setup_hcp",
+            "Unknown HCP folder structure",
+            "The specified HCP folder structure is unknown: %s" % (hcp_folderstructure),
+            "Please check the command!",
+        )
 
-    if hcp_folderstructure == 'hcpya':
-        fctail = '_fncb'
-        fmtail = '_strc'
+    if hcp_folderstructure == "hcpya":
+        fctail = "_fncb"
+        fmtail = "_strc"
         basef = os.path.join(sourcefolder, targetfolder, inf[session_key] + hcp_suffix)
     else:
         fctail = ""
         fmtail = ""
-        basef = os.path.join(sourcefolder, targetfolder, inf[session_key] + hcp_suffix, 'unprocessed')
+        basef = os.path.join(
+            sourcefolder, targetfolder, inf[session_key] + hcp_suffix, "unprocessed"
+        )
 
     # --- Check session
 
     # -> is it HCP ready
 
-    if inf.get('hcpready', 'no') != 'true':
-        if check == 'yes':
-            raise ge.CommandFailed("setup_hcp", "Session not ready", "Session %s is not marked ready for HCP" % (sid), "Please check or run with check=no!")
+    if inf.get("hcpready", "no") != "true":
+        if check == "yes":
+            raise ge.CommandFailed(
+                "setup_hcp",
+                "Session not ready",
+                "Session %s is not marked ready for HCP" % (sid),
+                "Please check or run with check=no!",
+            )
         else:
-            print("WARNING: Session %s is not marked ready for HCP. Processing anyway." % (sid))
+            print(
+                "WARNING: Session %s is not marked ready for HCP. Processing anyway."
+                % (sid)
+            )
 
     # -> does raw data exist
 
     if rawf is None or not os.path.exists(rawf):
-        raise ge.CommandFailed("setup_hcp", "Data folder does not exist", "raw_data folder for %s does not exist!" % (sid), "Please check specified path [%s]" % (rawf))
+        raise ge.CommandFailed(
+            "setup_hcp",
+            "Data folder does not exist",
+            "raw_data folder for %s does not exist!" % (sid),
+            "Please check specified path [%s]" % (rawf),
+        )
 
-    print("===> Setting up HCP folder structure for %s\n" % (sid))
+    print("---> Setting up HCP folder structure for %s\n" % (sid))
 
     # -> does hcp folder already exist?
 
     if os.path.exists(basef):
-        if existing == 'clear':
-            print(" ---> Base folder %s already exist! Clearing existing files and folders! " % (basef))
+        if existing == "clear":
+            print(
+                " ---> Base folder %s already exist! Clearing existing files and folders! "
+                % (basef)
+            )
             shutil.rmtree(basef)
             os.makedirs(basef)
-        elif existing == 'add':
-            print(" ---> Base folder %s already exist! Adding any new files specified! " % (basef))
+        elif existing == "add":
+            print(
+                " ---> Base folder %s already exist! Adding any new files specified! "
+                % (basef)
+            )
         else:
-            raise ge.CommandFailed("setup_hcp", "Base folder exists", "Base folder %s already exist!" % (basef), "Please check or specify `exisiting` as `add` or `clear` for desired action!")
+            raise ge.CommandFailed(
+                "setup_hcp",
+                "Base folder exists",
+                "Base folder %s already exist!" % (basef),
+                "Please check or specify `exisiting` as `add` or `clear` for desired action!",
+            )
     else:
         print(" ---> Creating base folder %s " % (basef))
         os.makedirs(basef)
 
     i = [k for k, v in inf.items() if k.isdigit()]
     i.sort(key=int, reverse=True)
-    boldn = '99'
+    boldn = "99"
     mapped = False
 
     for k in i:
         boldfile = False
 
         v = inf[k]
-        if 'o' in v:
-            orient = "_" + v['o']
-        elif 'phenc' in v:
-            orient = "_" + v['phenc']
-#        elif 'PEDirection' in v:
-#            orient = "_" + PEDirMap[v['PEDirection']]
-        elif 'PEDirection' in v and any([
-            "boldref" in v['name'] and checkInlineParameterUse('BOLD', 'PEDirection', options),
-            "bold"    in v['name'] and checkInlineParameterUse('BOLD', 'PEDirection', options), 
-            v['name'] in ["mbPCASLhr", "PCASLhr", "ASL"] and checkInlineParameterUse('ASL', 'PEDirection', options),
-            ]):
-                if v['PEDirection'] in PEDirMap:
-                    orient = "_" + PEDirMap[v['PEDirection']]
-                else:
-                    print("  ... unknown PEDirection %s for %s %s [not using, please check]" % (v['PEDirection'], v['ima'], v['name']))
-                    orient = ""
+        if "o" in v:
+            orient = "_" + v["o"]
+        elif "phenc" in v:
+            orient = "_" + v["phenc"]
+        #        elif 'PEDirection' in v:
+        #            orient = "_" + PEDirMap[v['PEDirection']]
+        elif "PEDirection" in v and any(
+            [
+                "boldref" in v["name"]
+                and checkInlineParameterUse("BOLD", "PEDirection", options),
+                "bold" in v["name"]
+                and checkInlineParameterUse("BOLD", "PEDirection", options),
+                v["name"] in ["mbPCASLhr", "PCASLhr", "ASL"]
+                and checkInlineParameterUse("ASL", "PEDirection", options),
+            ]
+        ):
+            if v["PEDirection"] in PEDirMap:
+                orient = "_" + PEDirMap[v["PEDirection"]]
+            else:
+                print(
+                    "  ... unknown PEDirection %s for %s %s [not using, please check]"
+                    % (v["PEDirection"], v["ima"], v["name"])
+                )
+                orient = ""
         else:
             orient = ""
-        if v['name'] == 'T1w':
+        if v["name"] == "T1w":
             nT1w += 1
             if os.path.exists(os.path.join(rawf, k + ".nii.gz")):
                 sfile = k + ".nii.gz"
             else:
                 sfile = k + "-o.nii.gz"
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
                 tfile = sid + "_T1w_MPR%d.nii.gz" % (nT1w)
-            
+
             tfold = "T1w"
 
-        elif v['name'] == "T2w":
+        elif v["name"] == "T2w":
             nT2w += 1
             if os.path.exists(os.path.join(rawf, k + ".nii.gz")):
                 sfile = k + ".nii.gz"
             else:
                 sfile = k + "-o.nii.gz"
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
                 tfile = sid + "_T2w_SPC%d.nii.gz" % (nT2w)
-            
+
             tfold = "T2w"
 
-        elif v['name'] == "FM-GE":
-            if 'fm' in v:
-                fmnum = v['fm']
+        elif v["name"] == "FM-GE":
+            if "fm" in v:
+                fmnum = v["fm"]
             else:
                 fmnum = boldn
             sfile = k + ".nii.gz"
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + fmnum + fmtail
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfold = v["filename"] + fmnum + fmtail
             else:
                 tfile = sid + "_FieldMap_GE.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
-        elif v['name'] == "FM-Magnitude":
-            if 'fm' in v:
-                fmnum = v['fm']
+        elif v["name"] == "FM-Magnitude":
+            if "fm" in v:
+                fmnum = v["fm"]
             else:
                 fmnum = boldn
             sfile = k + ".nii.gz"
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + fmnum + fmtail
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfold = v["filename"] + fmnum + fmtail
             else:
                 tfile = sid + "_FieldMap_Magnitude.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
-        elif v['name'] == "FM-Phase":
-            if 'fm' in v:
-                fmnum = v['fm']
+        elif v["name"] == "FM-Phase":
+            if "fm" in v:
+                fmnum = v["fm"]
             else:
                 fmnum = boldn
             sfile = k + ".nii.gz"
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + fmnum + fmtail
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfold = v["filename"] + fmnum + fmtail
             else:
                 tfile = sid + "_FieldMap_Phase.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
-        elif "boldref" in v['name']:
-            boldn = v['name'][7:]
+        elif "boldref" in v["name"]:
+            boldn = v["name"][7:]
             sfile = k + ".nii.gz"
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + fctail
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfold = v["filename"] + fctail
             else:
                 tfile = sid + "_BOLD_" + boldn + orient + "_SBRef.nii.gz"
                 tfold = "BOLD_" + boldn + orient + "_SBRef" + fctail
             bolds[boldn]["ref"] = sfile
 
-        elif "bold" in v['name']:
+        elif "bold" in v["name"]:
             boldfile = True
-            boldn = v['name'][4:]
+            boldn = v["name"][4:]
             sfile = k + ".nii.gz"
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + fctail
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfold = v["filename"] + fctail
             else:
                 tfile = sid + "_BOLD_" + boldn + orient + ".nii.gz"
-                tfold = "BOLD_" + boldn + orient + fctail                
+                tfold = "BOLD_" + boldn + orient + fctail
             bolds[boldn]["bold"] = sfile
 
-        elif v['name'] == "SE-FM-AP":
+        elif v["name"] == "SE-FM-AP":
             sfile = k + ".nii.gz"
-            if 'se' in v:
-                senum = v['se']
+            if "se" in v:
+                senum = v["se"]
             else:
                 senum = boldn
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
                 tfile = sid + "_BOLD_AP_SB_SE.nii.gz"
-            
+
             tfold = "SpinEchoFieldMap" + senum + fctail
 
-        elif v['name'] == "SE-FM-PA":
+        elif v["name"] == "SE-FM-PA":
             sfile = k + ".nii.gz"
 
-            if 'se' in v:
-                senum = v['se']
+            if "se" in v:
+                senum = v["se"]
             else:
                 senum = boldn
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
                 tfile = sid + "_BOLD_PA_SB_SE.nii.gz"
 
             tfold = "SpinEchoFieldMap" + senum + fctail
 
-        elif v['name'] == "SE-FM-LR":
+        elif v["name"] == "SE-FM-LR":
             sfile = k + ".nii.gz"
-            
-            if 'se' in v:
-                senum = v['se']
+
+            if "se" in v:
+                senum = v["se"]
             else:
                 senum = boldn
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
                 tfile = sid + "_BOLD_LR_SB_SE.nii.gz"
 
             tfold = "SpinEchoFieldMap" + senum + fctail
 
-
-        elif v['name'] == "SE-FM-RL":
+        elif v["name"] == "SE-FM-RL":
             sfile = k + ".nii.gz"
-            
-            if 'se' in v:
-                senum = v['se']
+
+            if "se" in v:
+                senum = v["se"]
             else:
                 senum = boldn
 
-            if filename and 'filename' in v:
-                tfile = sid + "_" + v['filename'] + ".nii.gz"
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
                 tfile = sid + "_BOLD_RL_SB_SE.nii.gz"
-            
+
             tfold = "SpinEchoFieldMap" + senum + fctail
 
-        elif v['name'] == "DWI":
-            sfile = [k + e for e in ['.nii.gz', '.bval', '.bvec']]
+        elif v["name"] == "DWI":
+            sfile = [k + e for e in [".nii.gz", ".bval", ".bvec"]]
 
-            if filename and 'filename' in v:
-                tbase = "_".join([sid, v['filename'], v['task']])
+            if filename and "filename" in v:
+                tbase = "_".join([sid, v["filename"], v["task"]])
             else:
-                tbase = "_".join([sid, 'DWI', v['task']])
+                tbase = "_".join([sid, "DWI", v["task"]])
 
-            tfile = [tbase + e for e in ['.nii.gz', '.bval', '.bvec']]
+            tfile = [tbase + e for e in [".nii.gz", ".bval", ".bvec"]]
             tfold = "Diffusion"
 
-        elif v['name'] in ["mbPCASLhr", "PCASLhr", "ASL"]:
-            sfile = [k + e for e in ['.nii.gz']]
+        elif v["name"] in ["mbPCASLhr", "PCASLhr", "ASL"]:
+            sfile = [k + e for e in [".nii.gz"]]
 
-            if filename and 'filename' in v:
-                tbase = "_".join([sid, v['filename']])
+            if filename and "filename" in v:
+                tbase = "_".join([sid, v["filename"]])
             else:
                 tbase = "_".join([sid, "ASL"])
                 tbase += orient
 
-            tfile = [tbase + e for e in ['.nii.gz']]
+            tfile = [tbase + e for e in [".nii.gz"]]
             tfold = "ASL"
 
         else:
-            print("  ... skipping %s %s [unknown sequence label, please check]" % (v['ima'], v['name']))
+            print(
+                "  ... skipping %s %s [unknown sequence label, please check]"
+                % (v["ima"], v["name"])
+            )
             continue
 
         if type(sfile) is not list:
@@ -546,7 +626,10 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
 
         for sfile, tfile in zip(list(sfile), list(tfile)):
             if not os.path.exists(os.path.join(rawf, sfile)):
-                print(" ---> WARNING: Can not locate %s - skipping the file" % (os.path.join(rawf, sfile)))
+                print(
+                    " ---> WARNING: Can not locate %s - skipping the file"
+                    % (os.path.join(rawf, sfile))
+                )
                 continue
 
             if not os.path.exists(os.path.join(basef, tfold)):
@@ -560,27 +643,36 @@ def setup_hcp(sourcefolder=".", targetfolder="hcp", sourcefile="session_hcp.txt"
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
                 # link the file
                 print(" ---> linking %s to %s" % (sfile, tfile))
-                gc.linkOrCopy(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
+                gc.link_or_copy(
+                    os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile)
+                )
 
                 # check if json exists
-                sfile_json = sfile.split('.')[0] + '.json'
-                tfile_json = tfile.split('.')[0] + '.json'
+                sfile_json = sfile.split(".")[0] + ".json"
+                tfile_json = tfile.split(".")[0] + ".json"
                 json_path = os.path.join(rawf, sfile_json)
-                
+
                 # link or copy if it exists
                 if os.path.exists(json_path):
-                    gc.linkOrCopy(json_path, os.path.join(basef, tfold, tfile_json))
+                    gc.link_or_copy(json_path, os.path.join(basef, tfold, tfile_json))
 
                     # prepare slice timing file if requested
                     if slice_timing_info and boldfile:
-                        stfile_path = os.path.join(basef, tfold, tfile.split('.')[0] + '_slicetimer.txt')
+                        stfile_path = os.path.join(
+                            basef, tfold, tfile.split(".")[0] + "_slicetimer.txt"
+                        )
                         prepare_slice_timing(json_path, stfile_path)
 
             else:
                 print("  ... %s already exists" % (tfile))
-    
+
     if not mapped:
-        raise ge.CommandFailed("setup_hcp", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder), "Please check your data!")
+        raise ge.CommandFailed(
+            "setup_hcp",
+            "No files mapped",
+            "No files were found to be mapped to the hcp folder [%s]!" % (sourcefolder),
+            "Please check your data!",
+        )
 
     return
 
@@ -589,7 +681,7 @@ def prepare_slice_timing(jsonfile, slicetimingfile):
     """
     ``prepare_slice_timing jsonfile=<path to json file> slicetimingfile=<path to slice timing file>``
 
-    The command reads the JSON sidecart file for slice timing information and 
+    The command reads the JSON sidecart file for slice timing information and
     prepares a slice timing txt file compatible with fsl slicetimer.
 
     Parameters:
@@ -606,27 +698,42 @@ def prepare_slice_timing(jsonfile, slicetimingfile):
     """
 
     if not os.path.exists(jsonfile):
-        raise ge.CommandFailed("prepare_slice_timing", "JSON sidecard files does not exist", "Slice timing file could not be created as the %s file does not exist!" % (json), "Please check your data!")
+        raise ge.CommandFailed(
+            "prepare_slice_timing",
+            "JSON sidecard files does not exist",
+            "Slice timing file could not be created as the %s file does not exist!"
+            % (json),
+            "Please check your data!",
+        )
 
     with open(jsonfile, "r") as f:
         data = json.load(f)
-    
+
     if "SliceTiming" not in data:
-        print(f"WARNING: JSON file does not contain slice timing information no slice timing file was generated. [{jsonfile}]")
+        print(
+            f"WARNING: JSON file does not contain slice timing information no slice timing file was generated. [{jsonfile}]"
+        )
         return
-    
-    if "SliceEncodingDirection" in data and data["SliceEncodingDirection"][0] == '-':
+
+    if "SliceEncodingDirection" in data and data["SliceEncodingDirection"][0] == "-":
         data["SliceTiming"].reverse()
-    
+
     if "RepetitionTime" not in data:
-        print(f"WARNING: JSON file does not contain repetition time information no slice timing file was generated. [{jsonfile}]")
+        print(
+            f"WARNING: JSON file does not contain repetition time information no slice timing file was generated. [{jsonfile}]"
+        )
         return
 
     try:
-        with open(slicetimingfile, "w") as f:            
+        with open(slicetimingfile, "w") as f:
             for slice_time in data["SliceTiming"]:
                 print(f"{-1 * slice_time / data['RepetitionTime'] + 0.5}", file=f)
-            print("  ... prepared slice timing file [%s]" % (os.path.basename(slicetimingfile)))
+            print(
+                "  ... prepared slice timing file [%s]"
+                % (os.path.basename(slicetimingfile))
+            )
     except:
-        print(f"WARNING: Could not write to slice timing file [{slicetimingfile}]. Please check your data and setting")
+        print(
+            f"WARNING: Could not write to slice timing file [{slicetimingfile}]. Please check your data and setting"
+        )
         return

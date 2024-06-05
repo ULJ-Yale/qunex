@@ -109,18 +109,6 @@ exit 0
 }
 
 # ------------------------------------------------------------------------------
-# -- Setup color outputs
-# ------------------------------------------------------------------------------
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
-# ------------------------------------------------------------------------------
 # -- Check for help
 # ------------------------------------------------------------------------------
 
@@ -214,7 +202,7 @@ while [ ${index} -lt ${numArgs} ]; do
             ;;
         *)
             usage
-            reho "ERROR: Unrecognized Option: ${argument}"
+            echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
             ;;
@@ -224,41 +212,41 @@ done
 # -- Check required parameters
 if [ -z ${SessionsFolder} ]; then
     usage
-    reho "ERROR: <sessions-folder-path> not specified>"
+    echo "ERROR: <sessions-folder-path> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
     usage
-    reho "ERROR: <session-id> not specified>"
+    echo "ERROR: <session-id> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${MatrixVersion} ]; then
     usage
-    reho "ERROR: <matrix_version_value> not specified>"
+    echo "ERROR: <matrix_version_value> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${ParcellationFile} ]; then
     usage
-    reho "ERROR: <file_for_parcellation> not specified>"
+    echo "ERROR: <file_for_parcellation> not specified>"
     echo ""
     exit 1
 fi
 if [ -z ${WayTotal} ]; then
-    reho "No <use_waytotal_normalized_data> specified. Assuming default [none]"
+    echo "No <use_waytotal_normalized_data> specified. Assuming default [none]"
     WayTotal=none
     echo ""
 fi
 if [ -z ${Lengths} ]; then
-    reho "No <parcellate_streamline_lengths> specified. Assuming default [no]"
+    echo "No <parcellate_streamline_lengths> specified. Assuming default [no]"
     Lengths="no"
     echo ""
 fi
 if [ -z ${OutName} ]; then
     usage
-    reho "ERROR: <name_of_output_pconn_file> not specified>"
+    echo "ERROR: <name_of_output_pconn_file> not specified>"
     exit 1
 fi
 
@@ -280,7 +268,7 @@ echo "   OutName: ${OutName}"
 echo "   Overwrite: ${Overwrite}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
-geho "------------------------- Start of work --------------------------------"
+echo "------------------------- Start of work --------------------------------"
 echo ""
 }
 
@@ -339,7 +327,7 @@ echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePc
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-    reho "--- Deleting prior runs for $DiffData..."
+    echo "--- Deleting prior runs for $DiffData..."
     echo ""
     rm -f "$DWIOutput"/"$DWIOutFileDPconn" > /dev/null 2>&1
     rm -f "$DWIOutput"/"$DWIOutFilePDconn" > /dev/null 2>&1
@@ -347,17 +335,17 @@ if [ "$Overwrite" == "yes" ]; then
 fi
 
 # -- Check if parcellation was completed
-reho "--- Checking if parcellation was completed..."
+echo "--- Checking if parcellation was completed..."
 echo ""
 
 if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
-    geho "--- Parcellation data found: "
+    echo "--- Parcellation data found: "
     echo ""
     echo "    ${DWIOutput}/${DWIOutFilePconn}"
     echo ""
     exit 1
 else
-    reho "--- Parcellation data not found."
+    echo "--- Parcellation data not found."
     echo ""
     echo "--- Computing parcellation by ROW on $DWIInput..."
     echo ""
@@ -372,20 +360,20 @@ else
 fi
 
 # -- Perform completion checks
-reho "--- Checking outputs..."
+echo "--- Checking outputs..."
 echo ""
 if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
-    geho "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
+    echo "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
     echo ""
 else
-    reho "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
+    echo "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
     echo ""
     exit 1
 fi
 
-reho "--- DWI Parcellation successfully completed"
+echo "--- DWI Parcellation successfully completed"
 echo ""
-geho "------------------------- Successful completion of work --------------------------------"
+echo "------------------------- Successful completion of work --------------------------------"
 echo ""
 
 }

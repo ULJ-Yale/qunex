@@ -61,7 +61,7 @@ if verbose, fprintf(' done.\n'), end
 
 
 % ======================================================
-%                     ----> helper - compute GLM residuals
+%                     ---> helper - compute GLM residuals
 
 
 function [r] = resid(X, Z)

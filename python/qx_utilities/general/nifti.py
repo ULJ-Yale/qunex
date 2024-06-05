@@ -105,7 +105,7 @@ def reslice(inf, slices, outf=None):
     Removes extra slices for interrupted BOLD sequences and creates an image with good
     frames with data in xyzf order.
 
-    WARNING: it assumes ascending interpolated acquisition of slices!!
+    WARNING: it assumes ascending interpolated acquisition of slices!
 
     EXAMPLE USE
     ===========

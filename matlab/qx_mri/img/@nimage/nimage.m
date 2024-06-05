@@ -89,12 +89,8 @@ classdef nimage
 %       If the image is an ROI mask, a structure with the information about the ROI
 %   glm           
 %       If the image contains results of GLM, the structure with the GLM information
-%   xml           
-%       For CIFTI images, the content of the xml metadata
 %   meta          
 %       A structure that describes metadata
-%   metadata      
-%       uint8 encoded metadata
 %   list          
 %       S structure with list information
 %   tevents        
@@ -151,11 +147,10 @@ classdef nimage
         info            = [];
         roi             = [];
         glm;
-        xml             = [];
         meta            = [];
-        metadata        = [];
         list            = [];
         tevents         = [];
+        tframes         = [];
 
         % ---> various statistical data
 
@@ -177,6 +172,7 @@ classdef nimage
         [files boldn sfolder] = img_read_concfile(file)
         img   = img_read_concimage(file, dtype, frames, verbose)
         roi   = img_read_roi(roiinfo, roif2, checks)
+        roi   = img_prep_roi(roi, mask, options)
         img_save_concfile(file, files)
         img_save_nifti_mx(filename, hdr, data, meta, doswap, verbose)
         [hdr, data, meta, doswap] = img_read_nifti_mx(filename, verbose)
@@ -192,6 +188,7 @@ classdef nimage
         output = img_get_xyz(obj, ijk)
         output = img_get_ijk(obj, xyz)
         output = img_create_roi_from_peaks(obj, peaksIn)
+        output = img_join_masks(obj, mask_a, mask_b, options);
     end
 
     methods
@@ -275,6 +272,54 @@ classdef nimage
 
             if nargin > 0
                 if isa(varone, 'char')
+                    if starts_with(varone, 'dscalar:') || starts_with(varone, 'dtseries:')
+                        parts = strip(regexp(varone, ':', 'split'));
+                        frames = str2num(parts{2});
+                        obj.data = zeros(91282, frames);
+                        obj.imageformat = 'CIFTI-2';
+                        obj.dim = 91282;
+                        obj.voxels = 91282;
+                        obj.frames = frames;
+                        obj.hdrnifti = struct('swap', 0, 'swapped', 0, 'magic', cast([110 43 50 0 13 10 26 10], 'char'), 'datatype', 16, 'bitpix', 32, ...
+                            'dim', [6 1 1 1 1 obj.frames 91282 1]', 'intent_p1', 0, 'intent_p2', 0, 'intent_p3', 0, ...
+                            'pixdim', [1 1 1 1 1 1 1 1]', ...
+                            'vox_offset', 0, 'scl_slope', 1, 'scl_inter', 0, 'cal_max', 0, 'cal_min', 0, 'slice_duration', 0, ...
+                            'toffset', 0, 'slice_start', 0, 'slice_end', 0, 'descrip', blanks(80), 'aux_file', blanks(24), ...
+                            'qform_code', 0, 'sform_code', 0, 'quatern_b', 0, 'quatern_c', 0, 'quatern_d', 0, ...
+                            'qoffset_x', 0, 'qoffset_y', 0, 'qoffset_z', 0, 'srow_x', [0; 0; 0; 0], 'srow_y', [0; 0; 0; 0], 'srow_z', [0; 0; 0; 0], ...
+                            'slice_code', 0, 'xyzt_units', 10, 'intent_code', 3006, 'intent_name', blanks(16), 'dim_info', ' ', ...
+                            'unused_str', blanks(15), 'version', 2, 'data_type', blanks(10), 'db_name', blanks(18), 'extents', 0, ...
+                            'session_error', 0, 'regular', ' ', 'glmax', 0, 'glmin', 0);
+                        load('cifti_templates.mat');
+
+                        switch parts{1}
+                            case {'single', 'dtseries'}
+                                obj.filetype = 'dtseries';
+                                obj.hdrnifti.intent_code = 3002;
+                                obj.hdrnifti.intent_name = 'ConnDenseSeries ';
+                                obj.TR = 1;
+                                obj.cifti = cifti_templates.dtseries;
+                                obj.cifti.metadata.diminfo{2}.length = obj.frames;
+                            case 'dscalar'
+                                obj.filetype = 'dscalar';
+                                obj.hdrnifti.intent_code = 3006;
+                                obj.hdrnifti.intent_name = 'ConnDenseScalar ';
+                                obj.cifti = cifti_templates.dscalar;
+                                obj.cifti.maps = {};
+                                if isempty(obj.cifti.maps)
+                                    for imap = 1:obj.frames
+                                        obj.cifti.maps{imap} = sprintf('Map %d', imap);
+                                    end
+                                end
+                                for imap = 1:obj.frames
+                                    obj.cifti.metadata.diminfo{2}.maps(imap) = struct('name', obj.cifti.maps{imap}, 'metadata', struct('key', '', 'value', ''));
+                                end                            
+                        end
+                        return
+                    end
+                    
+                    % ---> otherwise we need to load
+
                     images = regexp(varone, ';', 'split');
                     for n = 1:length(images)
                         parts = regexp(images{n}, '\|', 'split');
@@ -323,11 +368,14 @@ classdef nimage
                             'qoffset_z', -72, 'srow_x', [-2;0;0;90], 'srow_y', [0;2;0;-126],...
                             'srow_z', [0;0;2;-72], 'intent_name', blanks(16), 'magic', cast([110 43 49 0], 'char'),...
                             'version', 1, 'unused_str', blanks(24));
-                    elseif (obj.dim(1) == 91282)  % assuming it is a CIFTI file
+                    elseif (obj.dim(1) == 91282)  % assuming it is a CIFTI dense file
                         obj.filename = '';
                         obj.imageformat = 'CIFTI-2';
+                        obj.dim = 91282;
+                        obj.voxels = 91282;
+                        obj.frames = size(varone, 2);
                         obj.hdrnifti = struct('swap', 0, 'swapped', 0, 'magic', cast([110   43   50    0   13   10   26   10], 'char'), 'datatype', 16, 'bitpix', 32, ...
-                            'dim', [6 1 1 1 1 obj.dim(2) 91282 1]', 'intent_p1', 0, 'intent_p2', 0, 'intent_p3', 0, ...
+                            'dim', [6 1 1 1 1 obj.frames 91282 1]', 'intent_p1', 0, 'intent_p2', 0, 'intent_p3', 0, ...
                             'pixdim', [1 1 1 1 1 1 1 1]', ...
                             'vox_offset', 0, 'scl_slope', 1, 'scl_inter', 0, 'cal_max', 0, 'cal_min', 0, 'slice_duration', 0, ...
                             'toffset', 0, 'slice_start', 0, 'slice_end', 0, 'descrip', blanks(80), 'aux_file', blanks(24), ...
@@ -336,32 +384,34 @@ classdef nimage
                             'slice_code', 0, 'xyzt_units', 10, 'intent_code', 3006, 'intent_name', blanks(16), 'dim_info', ' ', ...
                             'unused_str', blanks(15), 'version', 2, 'data_type', blanks(10), 'db_name', blanks(18), 'extents', 0, ...
                             'session_error', 0, 'regular', ' ', 'glmax', 0, 'glmin', 0);
-                        obj.cifti.longnames  = {'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'};
-                        obj.cifti.shortnames = {'CORTEX_LEFT', 'CORTEX_RIGHT', 'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'};
-                        obj.cifti.start      = [1 29697 59413 59548 59688 60003 60335 63807 64535 65290 73999 83143 83849 84561 85325 86120 86417 86677 87737 88747 90035];
-                        obj.cifti.end        = [29696 59412 59547 59687 60002 60334 63806 64534 65289 73998 83142 83848 84560 85324 86119 86416 86676 87736 88746 90034 91282];
-                        obj.cifti.length     = [29696 29716 135 140 315 332 3472 728 755 8709 9144 706 712 764 795 297 260 1060 1010 1288 1248];
-                        obj.cifti.maps       = {};
-                        obj.frames = size(varone, 2);
-                        obj.dim    = 91282;
-                        obj.voxels = 91282;
+                        load('cifti_templates.mat');
                         switch dtype
                             case {'single', 'dtseries'}
-                                obj.filetype = '.dtseries';
-                                obj.TR = 1;
+                                obj.filetype = 'dtseries';
                                 obj.hdrnifti.intent_code = 3002;
                                 obj.hdrnifti.intent_name = 'ConnDenseSeries ';
-                                obj.meta = obj.dtseriesXML();
+                                obj.TR = 1;
+                                obj.cifti = cifti_templates.dtseries;
+                                obj.cifti.metadata.diminfo{2}.length = obj.frames;                                
                             case 'dscalar'
-                                obj.filetype = '.dscalar';
+                                obj.filetype = 'dscalar';
                                 obj.hdrnifti.intent_code = 3006;
                                 obj.hdrnifti.intent_name = 'ConnDenseScalar ';
+                                obj.cifti = cifti_templates.dscalar;
+                                obj.cifti.maps = {};
                                 if isa(frames, 'cell')
                                     if length(frames) == obj.frames
                                         obj.cifti.maps = frames;
                                     end
                                 end
-                                obj.meta = obj.dscalarXML();
+                                if isempty(obj.cifti.maps)
+                                    for imap = 1:obj.frames
+                                        obj.cifti.maps{imap} = sprintf('Map %d', imap);
+                                    end
+                                end
+                                for imap = 1:obj.frames
+                                    obj.cifti.metadata.diminfo{2}.maps(imap) = struct('name', obj.cifti.maps{imap}, 'metadata', struct('key', '', 'value', ''));
+                                end
                             otherwise
                                 error('ERROR: Unknown file type, could not generate nimage object! [%s]', dtype);
                         end
@@ -529,13 +579,51 @@ classdef nimage
             img_saveimage(obj, filename, [], verbose);
         end
 
+        function obj = img_name_maps(obj, maplist, filetype)
+        %
+        %   If CIFTI image, adds map information.
+        %   
+        %   Parameters:
+        %       --obj (nimage):
+        %           The object to add map info to.
+        %       --maplist (cell array of characters):
+        %           Names of maps in the correct order.
+        %       --filetype (string):
+        %           Target filetype, 'scalar' or 'label'
+        %
+        %   Returns:
+        %       --obj with the added maps metadata
+        %
+        %   TODO: Given that maps are added automatically upon save, this 
+        %         method might not be needed.
+
+            if ~ismember({obj.imageformat}, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
+                return;
+            end
+            
+            if length(maplist) ~= obj.frames
+                error("In img_name_maps the number of maps [%d] does not match the number of frames [%d]", length(maplist), obj.frames);
+            end
+
+            obj.filetype = [obj.cifti.metadata.diminfo{1}.type(1) filetype];
+            obj.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(obj.frames, maplist);
+            
+            if strcmp(filetype, 'label')
+                obj.cifti.metadata.diminfo{2}.type = 'labels';
+
+                for imap = 1:obj.frames
+                    obj.cifti.metadata.diminfo{2}.maps(imap).table = obj.cifti.labels{imap};
+                end
+            end            
+        end
+
+
 
         function image2D = image2D(obj)
         %
         %  Returns a 2D volume by frames representation of the image
         %
             image2D = reshape(obj.data, obj.voxels, []);
-
         end
 
         function image4D = image4D(obj)
@@ -543,44 +631,113 @@ classdef nimage
         %  Returns a 4D x by y by z by frames representation of the image
         %
             image4D = reshape(obj.data, [obj.dim obj.frames]);
-
         end
 
         function obj = maskimg(obj, mask)
+        %function obj = maskimg(obj, mask)
         %
-        %  Applies a mask so that all non 0 voxels are eliminated
+        %  Alias for img_mask
         %
+            obj = obj.img_mask(mask);
+        end
+
+        function obj = unmaskimg(obj)
+        %function obj = unmaskimg(obj)
+        %  
+        %   Alias for img_unmask
+            obj = obj.img_unmask();
+        end
+
+        function obj = img_mask(obj, mask)
+        %function [obj] = img_mask(obj, mask)
+        %  
+        %   Applies a mask and returns a nimage object
+        %
+        %   Parameters:
+        %       --obj (nimage): 
+        %           An nimage object to be masked.
+        %       --mask (nimage, array):
+        %           A mask to be applied. It can be either a nimage in which
+        %           all nonzero voxels of the first frame are used as a mask,
+        %           a mask array or an array of indeces to be retained.
+        %   
+        %   Output:
+        %      obj (nimage):
+        %           A copy of the original image in which all the rows
+        %           (voxels/grayordinates) that were not part of the mask
+        %           are removed from the data.
+        %           The mask used is present in obj.mask and the object has
+        %           img.masked set to true.
+        %
+        %   Notes:
+        %       The method allows removing all irrelevant data so that any
+        %       following operations are only performed on the relevant data.
+        %       To get back the original representation, use img_unmask method.  
+        %
+        %       To be able to return the image back to original dimensions, the
+        %       obj.dim are not changed from the original, however, to allow 
+        %       other methods to work, obj.voxels are set to the number of 
+        %       voxels in the current representation.   
 
             % - unmask first if already masked!
 
             if obj.masked
-                obj = obj.unmaskimg();
-            end
-
-            if isa(mask, 'nimage')
-                mask = mask.image2D;
-            end
-            if length(mask) ~= obj.voxels
-                error('ERROR: mask is not the same size as target image!');
+                obj = obj.img_unmask();
             end
             obj.data = obj.image2D;
-            obj.mask = mask ~= 0;
-            obj.data = obj.data(obj.mask,:);
+
+            % - extract mask from nimage object
+            if isa(mask, 'nimage')
+                mask.data = mask.image2D;
+                if prod(obj.dim) ~= prod(mask.dim)
+                    error('ERROR: in img_mask, the mask image does not match the target image in size!');
+                end
+                if mask.frames > 1
+                    mask = mask.selectframes(1);
+                    warning('WARNING: in img_mask, the provided mask has more than one frame. Only the first frame will be used!');
+                end                
+                mask = mask.data;
+            end
+
+            if length(mask) > obj.voxels
+                error('ERROR: in img_mask, the mask is larger than the target image!');
+            end
+
+            if length(mask) == obj.voxels
+                mask = mask ~= 0;
+            end
+            obj.mask   = mask;
+            obj.data   = obj.data(mask, :);
             obj.masked = true;
-            obj.voxels = size(obj.data,1);
+            obj.voxels = size(obj.data, 1);
         end
 
-        function obj = unmaskimg(obj)
+        function obj = img_unmask(obj)
+        %function [obj] = img_unmask(obj)
         %
-        %  Puts image back into the original size by setting all the unmasked voxels to 0
+        %  Puts Humpty back together again.
         %
+        %   Parameters:
+        %       --obj (nimage):
+        %           A nimage object to be restored to the original representation.
+        %
+        %   Output:
+        %       obj (nimage):
+        %           A full representation of the object in which all previously
+        %           trimmed voxels/grayordinates are set to 0.
+        %
+        %   Notes:
+        %       This method returns the data from an object that has been masked using
+        %       img_mask back to the original size. Only objects for which obj.masked
+        %       are set to true are reconstituted. Other objects are returned without
+        %       changes.
 
             if obj.masked
-                unmasked = zeros([prod(obj.dim) obj.frames]);
-                unmasked(obj.mask,:) = obj.data;
+                unmasked = zeros([prod(obj.dim) obj.frames]);                
+                unmasked(obj.mask, :) = obj.data;
                 obj.data = unmasked;
                 obj.masked = false;
-                obj.voxels = size(obj.data,1);
+                obj.voxels = size(obj.data, 1);
             end
         end
 
@@ -687,7 +844,6 @@ classdef nimage
         %
         %   method for concatenation of image volumes
         %
-
         function obj = horzcat(obj, add)
 
             if isempty(obj)
@@ -701,13 +857,16 @@ classdef nimage
             obj.frames = obj.frames + add.frames;
             obj.runframes = [obj.runframes add.frames];
             obj.use  = [obj.use add.use];
-            if strcmp(obj.imageformat, 'CIFTI-2')
-                obj.dim = size(obj.data);
-            end
+
+            % ---> dimensions for cifti files
+            %     commented as the second dimension should not be used
+            % if strcmp(obj.imageformat, 'CIFTI-2')
+            %     obj.dim = size(obj.data);
+            % end
             obj.filenames = [obj.filenames, add.filenames];
             obj.rootfilenames = [obj.rootfilenames, add.rootfilenames];
 
-            % --> combine movement data
+            % ---> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)
                 obj.mov = [obj.mov; add.mov];
             else
@@ -715,7 +874,7 @@ classdef nimage
                 obj.mov_hdr = [];
             end
 
-            % --> combine fstats data
+            % ---> combine fstats data
             if ~isempty(obj.fstats) && ~isempty(add.fstats)
                 obj.fstats = [obj.fstats; add.fstats];
             else
@@ -723,7 +882,7 @@ classdef nimage
                 obj.fstats_hdr = [];
             end
 
-            % --> combine scrub data
+            % ---> combine scrub data
             if ~isempty(obj.scrub) & ~isempty(add.scrub)
                 obj.scrub = [obj.scrub; add.scrub];
             else
@@ -731,7 +890,7 @@ classdef nimage
                 obj.scrub_hdr = [];
             end
 
-            % --> combine list data
+            % ---> combine list data
             if ~isempty(obj.list) & ~isempty(add.list)
                 for f = fields(obj.list)'
                     f = f{1};
@@ -747,11 +906,11 @@ classdef nimage
                 obj.list     = [];
             end
 
-            % --> combine events data
+            % ---> combine events data
 
             obj.tevents = [obj.tevents add.tevents];
 
-            % --> combine maps data
+            % ---> combine maps data
             if isfield(obj.cifti, 'maps') && ~isempty(obj.cifti.maps)
                 if isfield(add.cifti, 'maps') && ~isempty(add.cifti.maps)
                     obj.cifti.maps = [obj.cifti.maps add.cifti.maps];
@@ -818,7 +977,129 @@ classdef nimage
         end
 
 
+        % =================================================
+        %                                      selectframes
+        %
+        %   method for selecting the indicated frames from image
+        
+        function obj = selectframes(obj, selectframes, options)
+            % selectframes(selectframes, options)
+            %
+            %   Select the indicated frames from image.
+            %   
+            %   Parameters:
+            %       -- selectframes (array of int): 
+            %           The indices of frames to select or a mask of frames to
+            %           retain.
+            %       -- options (str)
+            %           If set to 'perrun' the selection is done for each run
+            %           if the object is a concatenated image
+            %
+            %   Notes:
+            %       The frames will be reordered in the order in which
+            %       they were specified!
+            if nargin < 3, options = []; end
+            if nargin < 2, selectframes = []; end
+            if isempty(selectframes), return; end
+            
+            % --> we have indices
+            if (length(selectframes) == length(unique(selectframes))) && (min(selectframes) > 0)
+                if strcmp(options, 'perrun') && length(obj.runframes > 1)
+                    offset = 0;
+                    nselectframes = [];
+                    for r = 1:length(obj.runframes)
+                        nselectframes = [nselectframes selectframes + offset]
+                        offset = offset + obj.runframes(r);
+                        obj.runframes(r) = length(selectframes);
+                    end
+                    selectframes = nselectframes;
+                else
+                    obj.runframes = length(selectframes);
+                end
 
+            % --> we have a mask
+            else 
+                mask = zeros(1, obj.frames);
+                if strcmp(options, 'perrun') && length(obj.runframes > 1)
+                    offset = 1;
+                    for r = 1:length(obj.runframes)
+                        mask(offset:offset + min([obj.runframes(r) length(selectframes)]) - 1) = selectframes(1:min([obj.runframes(r) length(selectframes)]));
+                        offset = offset + obj.runframes(r);
+                        obj.runframes(r) = sum(selectframes(1:min([obj.runframes(r) length(selectframes)])) > 0);
+                    end
+                else
+                    mask(1:min([length(selectframes), length(mask)])) = selectframes(1:min([length(selectframes), length(mask)]));
+                    obj.runframes = sum(selectframes > 0);
+                end
+                selectframes = find(mask);
+            end
+
+            obj.data = obj.image2D;
+            obj.data = obj.data(:, selectframes);
+            obj.frames = length(selectframes);
+
+            % ---> mask use data
+
+            if ~isempty(obj.use)
+                obj.use = obj.use(:, selectframes);
+            end
+
+            % ---> mask movement data
+
+            if ~isempty(obj.mov)
+                obj.mov = obj.mov(selectframes, :);
+            end
+
+            % ---> mask fstats data
+
+            if ~isempty(obj.fstats)
+                obj.fstats = obj.fstats(selectframes, :);
+            end
+
+            % ---> mask scrub data
+
+            if ~isempty(obj.scrub)
+                obj.scrub = obj.scrub(selectframes, :);
+            end
+
+            % ---> mask list data
+
+            if ~isempty(obj.list)
+                lists = fields(obj.list);
+                lists = lists(~ismember(lists, 'meta'));
+
+                for l = lists(:)'
+                    l = l{1};
+                    obj.list.(l) = obj.list.(l)(selectframes);
+                end
+
+            end
+
+            % ---> mask events data
+
+            if ~isempty(obj.tevents)
+                obj.tevents = obj.tevents(:, selectframes);
+            end
+
+            % ---> mask glm data
+
+            if ~isempty(obj.glm)
+                if isfield(obj.glm, 'c'), obj.glm.c = obj.glm.c(:, selectframes); end
+                if isfield(obj.glm, 'ATAm1'), obj.glm.ATAm1 = obj.glm.ATAm1(selectframes, selectframes); end
+                if isfield(obj.glm, 'event'), obj.glm.event = obj.glm.event(selectframes); end
+                if isfield(obj.glm, 'frame'), obj.glm.frame = obj.glm.frame(selectframes); end
+                if isfield(obj.glm, 'effect'), obj.glm.effect = obj.glm.effect(selectframes); end
+                if isfield(obj.glm, 'eindex'), obj.glm.eindex = obj.glm.eindex(selectframes); end
+                if isfield(obj.glm, 'hdr'), obj.glm.hdr = obj.glm.hdr(selectframes); end
+                if isfield(obj.glm, 'A'), obj.glm.A = obj.glm.A(:, selectframes); end
+            end
+
+            % ---> mask maps data
+
+            if isfield(obj.cifti, 'maps') && (~isempty(obj.cifti.maps))
+                obj.cifti.maps = obj.cifti.maps(selectframes);
+            end
+        end
 
         % =================================================
         %                                       sliceframes
@@ -827,117 +1108,36 @@ classdef nimage
         %
         %   fmask can be:
         %   - a scalar specifying how many frames to exclude from the start
+        %   - a vector of indeces specifying which frames to keep
         %   - a boolean or 1/0 vector specifying which frames to keep
-        %
+        %        
+        %   The function will call select frames to complete
 
         function obj = sliceframes(obj, fmask, options)
-            if nargin < 3
-                options = [];
-                if nargin < 2
-                    fmask = [];
-                end
-            end
+            if nargin < 3, options = []; end
+            if nargin < 2, fmask = []; end
+            if isempty(fmask), return; end
 
             % --- if fmask is a scalar, remove passed number of frames from start of image or each run
 
             if length(fmask) == 1 && ~isa(fmask, 'logical')
-                l = fmask;
-                fmask = ones(1, obj.frames);
-                if strcmp(options, 'perrun') && length(obj.runframes > 1)
-                    off = 1;
+                mask = ones(1, obj.frames);
+                runframes = [];
+                if strcmp(options, 'perrun')
+                    offset = 0;
                     for r = 1:length(obj.runframes)
-                        fmask(off:off+l-1) = 0;
-                        off = off + obj.runframes(r);
-                        obj.runframes(r) = obj.runframes(r) - l;
+                        mask(offset+1:offset+fmask) = 0;
+                        offset = offset + obj.runframes(r);
+                        runframes(r) = obj.runframes(r) - fmask;
                     end
+                    obj = obj.selectframes(mask == 1);
+                    obj.runframes = runframes;
                 else
-                    fmask(1:l) = 0;
-                    obj.runframes(1) = obj.runframes(1) - l;
-                end
-
-            % --- if fmask is a vector, apply it as a mask for the whole image or at each run
-
-            elseif ~isempty(fmask) && (length(fmask) > 1 || ~isa(fmask, 'logical'))
-                mask = zeros(1, obj.frames);
-                if strcmp(options, 'perrun') && length(obj.runframes > 1)
-                    off = 1;
-                    for r = 1:length(obj.runframes)
-                        mask(off:off+min([obj.runframes(r) length(fmask)])-1) = fmask(1:min([obj.runframes(r) length(fmask)]));
-                        off = off + obj.runframes(r);
-                        obj.runframes(r) = sum(fmask(1:min([obj.runframes(r) length(fmask)])) > 0);
-                    end
-                else
-                    mask(1:min([length(fmask), length(mask)])) = fmask(1:min([length(fmask), length(mask)]));
-                    obj.runframes = sum(fmask > 0);
-                end
-                fmask = mask;
-            end
-
-            if ~isempty(fmask)
-                fmask = fmask > 0;
-                obj.data = obj.image2D;
-                obj.data = obj.data(:, fmask);
-                obj.frames = sum(fmask);
-
-                % ---> mask use data
-
-                if ~isempty(obj.use)
-                    obj.use  = obj.use(:, fmask);
-                end
-
-                % ---> mask movement data
-
-                if ~isempty(obj.mov)
-                    obj.mov = obj.mov(fmask, :);
-                end
-
-                % ---> mask fstats data
-
-                if ~isempty(obj.fstats)
-                    obj.fstats = obj.fstats(fmask, :);
-                end
-
-                % ---> mask scrub data
-
-                if ~isempty(obj.scrub)
-                    obj.scrub = obj.scrub(fmask, :);
-                end
-
-                % ---> mask list data
-
-                if ~isempty(obj.list)
-                    lists     = fields(obj.list);
-                    lists     = lists(~ismember(lists, 'meta'));
-                    for l = lists(:)'
-                        l = l{1};
-                        obj.list.(l) = obj.list.(l)(fmask);
-                    end
-                end
-
-                % ---> mask events data
-
-                if ~isempty(obj.tevents)
-                    obj.tevents = obj.tevents(:, fmask);
-                end
-
-                % ---> mask glm data
-
-                if ~isempty(obj.glm)
-                    if isfield(obj.glm, 'c'),      obj.glm.c      = obj.glm.c(:, fmask);    end
-                    if isfield(obj.glm, 'ATAm1'),  obj.glm.ATAm1  = obj.glm.ATAm1(fmask, fmask); end
-                    if isfield(obj.glm, 'event'),  obj.glm.event  = obj.glm.event(fmask);   end
-                    if isfield(obj.glm, 'frame'),  obj.glm.frame  = obj.glm.frame(fmask);   end
-                    if isfield(obj.glm, 'effect'), obj.glm.effect = obj.glm.effect(fmask);  end
-                    if isfield(obj.glm, 'eindex'), obj.glm.eindex = obj.glm.eindex(fmask);  end
-                    if isfield(obj.glm, 'hdr'),    obj.glm.hdr    = obj.glm.hdr(fmask);     end
-                    if isfield(obj.glm, 'A'),      obj.glm.A      = obj.glm.A(:,fmask);     end
-                end
-
-                % ---> mask maps data
-
-                if isfield(obj.cifti, 'maps') && (~isempty(obj.cifti.maps))
-                    obj.cifti.maps = obj.cifti.maps(fmask);
-                end
+                    mask(1:fmask) = 0;
+                    obj = obj.selectframes(mask == 1);
+                end                  
+            else            
+                obj = obj.selectframes(fmask, options);
             end
 
         end

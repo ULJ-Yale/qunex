@@ -39,7 +39,7 @@ function [out, done] = img_stats_time(img, doIt, mask)
 % SPDX-License-Identifier: GPL-3.0-or-later
 
 if nargin < 3, mask = []; end
-if nargin < 2, doIt = [];   end
+if nargin < 2, doIt = []; end
 
 if isempty(doIt)
     doIt = {'n', 'm', 'me', 'max', 'min', 'sum', 'sd', 'var', 'dvars'};
@@ -95,15 +95,15 @@ for d = doIt
         done{c} = char(d);
 
     case 'me'
-        out.median = nanmedian(img.data, 1);
+        out.median = median(img.data, 1, "omitnan");
         done{c} = char(d);
 
     case 'max'
-        out.max = nanmax(img.data, [], 1);
+        out.max = max(img.data, [], 1);
         done{c} = char(d);
 
     case 'min'
-        out.min = nanmin(img.data, [], 1);
+        out.min = min(img.data, [], 1);
         done{c} = char(d);
 
     case 'sum'
@@ -112,12 +112,12 @@ for d = doIt
         done{c} = char(d);
 
     case 'sd'
-        if isempty(sd), sd = nanstd(img.data, 0, 1); end
+        if isempty(sd), sd = std(img.data, 0, 1, "omitnan"); end
         out.sd = sd;
         done{c} = char(d);
 
     case 'var'
-        if isempty(v), v = nanvar(img.data, 1, 1); end
+        if isempty(v), v = var(img.data, 1, 1, "omitnan"); end
         out.var = v;
         done{c} = char(d);
 
@@ -133,5 +133,3 @@ for d = doIt
         done{c} = char(d);
     end
 end
-
-

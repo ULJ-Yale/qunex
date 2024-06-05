@@ -70,26 +70,37 @@ target = obj.image2D;
 
 % ---- check ROI data
 
-if isa(roi, 'nimage')
-    if obj.voxels ~= roi.voxels;
-        error('ERROR: ROI image does not match target in dimensions!');
-    end
-else
-    roi = reshape(roi, [], 1);
-    if size(roi, 1) ~= obj.voxels
-        error('ERROR: ROI mask does not match target in size!');
-    end
-    roi = nimage(roi);
+% --> is it a an old roi object
+
+if isfield(roi.roi, 'roicodes')
+    roi = nimage.img_prep_roi(roi);
 end
 
-if isempty (rcodes)
-    if isfield(roi.roi, 'roicodes') && ~isempty(roi.roi.roicodes)
-        rcodes = roi.roi.roicodes;
+% --> is it a new roi object
+
+if ~isfield(roi.roi, 'roiname')
+    roi = nimage.img_prep_roi(roi);
+end
+
+if obj.voxels ~= roi.voxels;
+    error('ERROR: ROI image does not match target in dimensions!');
+end
+
+if isempty(rcodes)
+    rindeces = 1:length(roi.roi);
+else
+    % --- Check whether we have ROI names or ROI codes
+    if iscell(rcodes) && all(cellfun(@ischar, rcodes))
+        % rindeces = find(ismember({roi.roi.roiname}, rcodes));
+        [~, rindeces] = ismember(rcodes, {roi.roi.roiname});
+    elseif isnumeric(rcodes)
+        % rindeces = find(ismember([roi.roi.roicode], rcodes));
+        [~, rindeces] = ismember(rcodes, [roi.roi.roicode]);
     else
-        rcodes = unique(roi.data);
-        rcodes = rcodes(rcodes ~= 0);
+        error('ERROR (img_extract_roi) invalid specification of roi to extract!');
     end
 end
+rnames = {roi.roi(rindeces).roiname};
 
 % ---- check weight data
 
@@ -112,15 +123,15 @@ end
 
 % ---- start the loop
 
-nrois = length(rcodes);
+nrois = length(rindeces);
 nfrms = size(target, 2);
 
 for r = 1:nrois
 
-    stats(r).roiname = roi.roi.roinames{ismember(roi.roi.roicodes, rcodes(r))};
-    stats(r).roicode = rcodes(r);
+    stats(r).roiname = roi.roi(rindeces(r)).roiname;
+    stats(r).roicode = roi.roi(rindeces(r)).roicode;
 
-    msk = roi.img_roi_mask(rcodes(r));
+    msk = roi.roi(rindeces(r)).indeces;
     tmp = target(msk, :);
     twg = weight(msk, :);
     div = [];
@@ -128,13 +139,13 @@ for r = 1:nrois
     switch selection
 
         case 'threshold'
-            msk = twg >= criterium;
+            msk = msk(twg >= criterium);
             tmp = tmp(msk, :);
 
         case 'maxn'
             twgr = sort(twg, 'descend');
             twgt = twgr(criterium);
-            msk  = twg >= twgt;
+            msk  = msk(twg >= twgt);
             tmp  = tmp(msk, :);
     end
 

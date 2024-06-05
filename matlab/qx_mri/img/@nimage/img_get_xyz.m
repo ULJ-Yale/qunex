@@ -62,7 +62,7 @@ img.data = img.image4D;
 % =================================================================================================
 % ---                                                                               The main switch
 
-% --> if we have no input matrix, assume and check we have an ROI image
+% ---> if we have no input matrix, assume and check we have an ROI image
 if isempty(ijk)
     if isroi(img.data)
         xyz.cijk = getROICentroids(img.data);
@@ -71,7 +71,7 @@ if isempty(ijk)
         error('\nERROR img_XYZ: The image is not an ROI mask. Can not compute ROI coordinates!\n');
     end
 
-% --> is ijk an image or a 3D matrix?
+% ---> is ijk an image or a 3D matrix?
 
 elseif isa(ijk, 'nimage') || (length(size(ijk)) == 3)
 
@@ -104,12 +104,12 @@ elseif isa(ijk, 'nimage') || (length(size(ijk)) == 3)
     xyz.cxyz  = getXYZ(img, xyz.cijk);
     xyz.wcxyz = getXYZ(img, xyz.wcijk);
 
-% --> is ijk a 2D matrix
+% ---> is ijk a 2D matrix
 
 elseif size(ijk, 2) >= 3
     xyz = getXYZ(img, ijk);
 
-% --> nothing matches
+% ---> nothing matches
 
 else
     error('\nERROR img_XYZ: Invalid input. Please check the use of the function and the provided input!\n');
@@ -120,7 +120,7 @@ end
 % ---                                                                             Support functions
 
 
-% --> computing the XYZ from IJK
+% ---> computing the XYZ from IJK
 
 function [xyz] = getXYZ(img, ijk)
 
@@ -131,7 +131,7 @@ function [xyz] = getXYZ(img, ijk)
     end
 
 
-% --> getting ROI Centroids
+% ---> getting ROI Centroids
 
 function [xyz] = getROICentroids(roi)
 
@@ -145,7 +145,7 @@ function [xyz] = getROICentroids(roi)
     end
 
 
-% --> getting Weighted ROI Centroids
+% ---> getting Weighted ROI Centroids
 
 function [xyz] = getROIWeightedCentroids(roi, W)
 
@@ -159,7 +159,7 @@ function [xyz] = getROIWeightedCentroids(roi, W)
     end
 
 
-% --> checking if we have an ROI image
+% ---> checking if we have an ROI image
 
 function [isr] = isroi(img)
 

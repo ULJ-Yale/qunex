@@ -171,10 +171,9 @@ fp_param.cifti = cifti;
 fp_param = determineSurfaceProjection(fp_param);
 
 % --- Create an empty matrix to store the data globally for each hemisphere
-% TODO: unhardcode the size of the following array of zeros
 roiDataRaw = zeros(32492,1);
 %fp_param.surfaceComponent = lower(img.cifti.shortnames{fp_param.cmp});
-roiDataRaw(fp_param.cifti.(fp_param.surfaceComponent).mask) = img.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp));
+roiDataRaw(fp_param.cifti.(fp_param.surfaceComponent).mask) = img.data(img.cifti.start{fp_param.cmp}:img.cifti.end{fp_param.cmp});
 
 % --- Flip to focus on the relevant value(s)
 roiData = thresholdData(roiDataRaw, fp_param);
@@ -186,8 +185,8 @@ peak = [];
 indexedData = zeros(size(roiData));
 
 % --- store begining and end of the vertices
-fp_param.start = img.cifti.start(fp_param.cmp);
-fp_param.end = img.cifti.end(fp_param.cmp);
+fp_param.start = img.cifti.start{fp_param.cmp};
+fp_param.end = img.cifti.end{fp_param.cmp};
 
 %% - II - flooding - initial flooding
 [peak, indexedData] = performInitialFlooding(roiData, roiDataRaw, peak, indexedData, fp_param);
@@ -223,29 +222,29 @@ switch (fp_param.boundary)
         indexedData(boundary_map == -1) = 0;
         roiData = indexedData;
         % --- embed data to ROI image
-        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(fp_param.cifti.(fp_param.surfaceComponent).mask);
+        roi.data(img.cifti.start{fp_param.cmp}:img.cifti.end{fp_param.cmp}) = roiData(fp_param.cifti.(fp_param.surfaceComponent).mask);
     case 'highlight'
         indexedData(boundary_map == -1) = -100;
         roiData = indexedData;
         % --- embed data to ROI image
-        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(fp_param.cifti.(fp_param.surfaceComponent).mask);
+        roi.data(img.cifti.start{fp_param.cmp}:img.cifti.end{fp_param.cmp}) = roiData(fp_param.cifti.(fp_param.surfaceComponent).mask);
     case 'wire'
         roiData = boundary_map.*(-1);
         % --- embed data to ROI image
-        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(fp_param.cifti.(fp_param.surfaceComponent).mask);
+        roi.data(img.cifti.start{fp_param.cmp}:img.cifti.end{fp_param.cmp}) = roiData(fp_param.cifti.(fp_param.surfaceComponent).mask);
     otherwise
         roiData = indexedData;
         % --- embed data to ROI image
-        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(cifti.(fp_param.surfaceComponent).mask);
+        roi.data(img.cifti.start{fp_param.cmp}:img.cifti.end{fp_param.cmp}) = roiData(cifti.(fp_param.surfaceComponent).mask);
 end
 
 % --- the end
-if fp_param.verbose, fprintf('\n===> DONE\n'); end
+if fp_param.verbose, fprintf('\n---> DONE\n'); end
 
 if isempty(peak)
-    if report, fprintf('\n===> No peaks to report on!\n'); end
+    if report, fprintf('\n---> No peaks to report on!\n'); end
 else
-    if report, fprintf('\n===> peak report - %s\n',(fp_param.surfaceComponent)); end
+    if report, fprintf('\n---> peak report - %s\n',(fp_param.surfaceComponent)); end
     for p = 1:length(peak)
         if report, fprintf('\nROI:%3d  index: %3d  value: %5.1f  size: %3d  area: %3d', p, peak(p).index, peak(p).value, peak(p).size, peak(p).area); end
     end
