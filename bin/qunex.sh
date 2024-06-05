@@ -51,7 +51,7 @@ show_splash() {
     echo ""
     echo "                    Anticevic Lab, Yale University"
     echo "               Mind & Brain Lab, University of Ljubljana"
-    echo "                     Murray Lab, Yale University"
+    echo "                     Murray Lab, Darthmouth University"
     echo ""
     echo "                      COPYRIGHT & LICENSE NOTICE:"
     echo ""
