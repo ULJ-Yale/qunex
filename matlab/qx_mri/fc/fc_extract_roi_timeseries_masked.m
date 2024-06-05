@@ -158,14 +158,21 @@ if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
 end
 
+
+% ---> setting up inmask parameter
+
 fignore = 'ignore';
 eventbased = false;
+
 if isa(inmask, 'char')
-    eventbased = true;
-    if strcmp(ignore, 'fidl')
-        fignore = 'ignore';
-    else
-        fignore = 'no';
+    inmask = str2num(inmask);
+    if isempty(inmask)
+        eventbased = true;
+        if strcmp(ignore, 'fidl')
+            fignore = 'ignore';
+        else
+            fignore = 'no';
+        end
     end
 end
 
