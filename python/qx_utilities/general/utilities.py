@@ -2179,7 +2179,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             hcp_denoise:
                 commands:
                     - hcp_icafix:
-                        hcp_matlab_mode: "{{matlab_mode}}"
+                        hcp_matlab_mode: "{{$MATLAB_MODE}}"
                     - hcp_msmall
                         hcp_matlab_mode: "{{$MATLAB_MODE}}"
 
@@ -2202,10 +2202,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
     ::
 
+        export MATLAB_MODE="interpreted"
         qunex run_recipe \\
           --recipe_file="/data/settings/recipe.yaml" \\
-          --recipe="hcp_denoise" \\
-          --matlab_mode="interpreted"
+          --recipe="hcp_denoise"
 
     ::
 
@@ -2220,17 +2220,15 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     via a scheduler. It will execute two sessions in parallel within the run.
     in sequence.
 
-    The third call will execute the hcp_denoise list where the 
-    hcp_matlab_mode parameter will be set to "interpreted" for the hcp_icafix
-    and it will be read from the system environment variable $MATLAB_MODE for
-    hcp_msmall. This is an example of how you can inject custom values into
-    specially marked slots (marked with "{{<label>}}") in the recipe file. Note
-    that the labels need to be provided in the form of a string, so they need
-    to be encapsulated with double quotes.  
+    The third call will execute the hcp_denoise list where the  hcp_matlab_mode
+    parameter will be set to "interpreted" this value will be read from the
+    system environment variable $MATLAB_MODE. This is an example of how you can
+    inject custom values into specially marked slots (marked with "{{<label>}}")
+    in the recipe file. Note that the labels need to be provided in the form of
+    a string, so they need to be encapsulated with double quotes.  
 
     The forth example shows how to use the steps parameter to run a set of
     commands sequentially.
-
     """
 
     flags = ["test"]
@@ -2569,14 +2567,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     for label in labels:
                         cleaned_label = label.replace("{", "").replace("}", "")
                         os_label = cleaned_label[1:]
-                        if cleaned_label in eargs:
-                            value = value.replace(label, eargs[label])
-                        elif cleaned_label[0] == "$" and os_label in os.environ:
+                        if cleaned_label[0] == "$" and os_label in os.environ:
                             value = value.replace(label, os.environ[os_label])
                         else:
                             raise ge.CommandFailed(
                                 "run_recipe",
-                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in the parameters or in system environment variables.",
+                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
                             )
 
                 if param in flags:
