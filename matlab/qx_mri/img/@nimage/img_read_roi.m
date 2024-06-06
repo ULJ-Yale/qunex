@@ -5,96 +5,105 @@ function [img] = img_read_roi(roiinfo, roi2, check)
 %   Reads in an ROI file, if a second file is provided, it uses it to mask the
 %   first one.
 %
-%   INPUTS
-%   ======
+%   Parameters
+%       --roiinfo (str):
+%           A path to a .names ROI information file.
+%       --roi2 (str):
+%           A path to the second ROI image file matching ROI codes
+%           specified in the third column of the .names file. []
+%       --check  (str):   
+%           How to handle unknown integer codes from the .names file. Options
+%           are: 
 %
-%   --roiinfo   A .names formated ROI information file.
-%   --roi2      A path to the second ROI image file matching ROI codes
-%                  specified in the third column of the .names file. []
-%   --check     How to handle unknown integer codes from the .names file 
-%               ['warning']:
+%           - 'ignore' (don't do anything)
+%           - 'warning' (throw a warning)
+%           - 'error' (throw an error)
 %
-%                   - 'ignore' (don't do anything)
-%                   - 'warning' (throw a warning)
-%                   - 'error' (throw an error)
+%           Default is 'warning'.
 %
-%   OUTPUT
-%   ======
+%   Returns:
+%       img
+%           A nimage object with ROI coded using integer values and additional 
+%           data structure 'roi' describing the ROI:
 %
-%   img
-%       A nimage object with ROI coded using integer values and additional data 
-%       structure describing the ROI sources.
+%           .roinames  - a cell array of ROI names
+%           .roicodes  - a cell array of codes specifying the ROI
+%           .roicodes1 - a cell array of group level codes specifying the ROI
+%           .roicodes2 - a cell array of subject level codes specifying the ROI
+%           .nvox      - an array specifying the number of voxels for each ROI
+%           .roifile1  - path to the file providing group level specification
+%           .roifile2  - path to the file providing subject level specification
 %
-%   USE
-%   ===
+%   Notes:
+%       This method is being deprecated in favor of using img_prep_roi method
+%       which provides a more robust and optimized representation of ROI and
+%       enables using wider range of input sources for specifying ROI. Use
+%       img_roi_old_2_new to transform old ROI objects to new ones.
 %
-%   The method is used to generate an ROI object. It also supports masking the
-%   original image (usually a group ROI fle) with the second ROI image (usually)
-%   a subject specific segmentation file.
+%       The method is used to generate an ROI object. It also supports masking 
+%       the original image (usually a group ROI fle) with the second ROI image 
+%       (usually) a subject specific segmentation file.
 %
-%   If no file is specified as the second ROI, then no masking is performed. If
-%   a second file exists, it will be used to mask the original data based on the
-%   specified values in the third column of the .names file. For more specific
-%   information see img_mask_roi method.
+%       If no file is specified as the second ROI, then no masking is performed. 
+%       If a second file exists, it will be used to mask the original data based 
+%       on the specified values in the third column of the .names file. 
 %
-%   The function supports the specification of region codes in the .names file
-%   using either numeric vaues (e.g. 3,8,9) or names. The names are based on
-%   aseg+aparc segmentation. They are:
+%       The function supports the specification of region codes in the .names 
+%       file using either numeric vaues (e.g. 3,8,9) or names. The names are 
+%       based on FreeSurfer aseg+aparc segmentation. They are:
 %
-%   - lcgray  (left cortex gray matter)
-%   - rcgray  (right cortex gray matter)
-%   - cgray   (cortical gray matter)
-%   - lsubc   (left subcortical gray matter)
-%   - rsubc   (right subcortical gray matter)
-%   - subc    (subcortical gray matter)
-%   - lcerc   (left cerebellar gray matter)
-%   - rcerc   (right cerelebbar gray matter)
-%   - cerc    (cereberal gray matter)
-%   - lgray   (left hemisphere gray matter)
-%   - rgray   (right hemisphere gray matter)
-%   - gray    (whole brain gray matter)
+%       - lcgray  (left cortex gray matter)
+%       - rcgray  (right cortex gray matter)
+%       - cgray   (cortical gray matter)
+%       - lsubc   (left subcortical gray matter)
+%       - rsubc   (right subcortical gray matter)
+%       - subc    (subcortical gray matter)
+%       - lcerc   (left cerebellar gray matter)
+%       - rcerc   (right cerelebbar gray matter)
+%       - cerc    (cereberal gray matter)
+%       - lgray   (left hemisphere gray matter)
+%       - rgray   (right hemisphere gray matter)
+%       - gray    (whole brain gray matter)
 %
-%   NAMES FILE SPECIFICATION
-%   ========================
+%   Names file specification:
+%       Names file is a regular text file with .names extension. It specifies 
+%       how to generate a ROI file. It has the following example form::
 %
-%   Names file is a regular text file with .names ending. It specifies how to
-%   generate a ROI file. It has the following example form::
+%           /path-to-resources/CCN_ROI.nii.gz
+%           RDLPFC|1|rcgray
+%           LDLPFC|2|lcgray
+%           ACC|3,4|cgray
 %
-%       /path-to-resources/CCN_ROI.nii.gz
-%       RDLPFC|1|rcgray
-%       LDLPFC|2|lcgray
-%       ACC|3,4|cgray
+%       The above example file specifies three cognitive cotrol regions. The 
+%       original ROI file is referenced by the first line of the .names file. If 
+%       the path starts with a forward slash ('/'), it is assumed to be an 
+%       absolute path, otherwise it is assumed to be a path relative to the 
+%       location of the roiinfo '.names' file. If the line is empty or 
+%       references "none", it is assumed that all the ROI are defined by the 
+%       roi2 codes only.
 %
-%   This file specifies three cognitive cotrol regions. The original ROI file is
-%   referenced by the first line of the .names file. If the path starts with a
-%   forward slash ('/'), it is assumed to be an absolute path, otherwise it is
-%   assumed to be a path relative to the location of the roiinfo '.names' file.
-%   If the line is empty or references "none", it is assumed that all the ROI
-%   are defined by the roi2 codes only.
+%       The lines that follow specify the ROI to be generated with a pipe (|)
+%       separated columns. The first column specifies the name of the ROI. The
+%       second column specifies the integer codes that represent the desired 
+%       region. There can be more than one code used and the ROI will be a union 
+%       of all the specified, comma separated codes. The third column specifies 
+%       the codes to be used to mask the ROI generated from the original file. 
+%       If either the third or the second column is empty, the specified ROI 
+%       from the original or secondary image file will be used. Again, If the 
+%       first line is empty or set to none, only the third column will be used 
+%       to generate ROI.
 %
-%   The following lines specify the ROI to be generated with a pipe (|)
-%   separated columns. The first column specifies the name of the ROI. The
-%   second column specifies the integer codes that represent the desired region.
-%   There can be more than one code used and the ROI will be a union of all the
-%   specified, comma separated codes. The third column specifies the codes to be
-%   used to mask the ROI generated from the original file. If either the third
-%   or the second column is empty, the specified ROI from the original or
-%   secondary image file will be used. Again, If the first line is empty or set
-%   to none, only the third column will be used to generate ROI.
+%       In the case when the generated ROI would overlap, a multivolume file is
+%       generated with each volume specifying one ROI.
 %
-%   In the case when the generated ROI would overlap, a multivolume file is
-%   generated with each volume specifying one ROI.
+%   Examples:
+%       To create a group level roi file::
 %
-%   EXAMPLE USE
-%   ===========
+%           roi = nimage.img_read_roi('resources/CCN.names')
 %
-%   To create a group level roi file::
+%       To create a subject specific file::
 %
-%       roi = nimage.img_read_roi('resources/CCN.names')
-%
-%   To create a subject specific file::
-%
-%       roi = nimage.img_read_roi('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
+%           roi = nimage.img_read_roi('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>

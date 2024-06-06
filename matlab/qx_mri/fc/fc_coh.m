@@ -1,6 +1,6 @@
-function [fcmat] = fc_coh(A,B)
+function [fcmat] = fc_coh(A, B)
 
-%``fc_coh(A,B)``
+%``fc_coh(A, B)``
 %
 %   Function computes maximum values of Coherence for each of the given 
 %   pairs of signal
@@ -9,7 +9,6 @@ function [fcmat] = fc_coh(A,B)
 %       --A (numeric matrix): NxT (N=ROIs, T=number of timepoints)
 %       --B (numeric matrix): [] or MxT
 %          
-%
 %   Returns:
 %       fcmat (numeric matrix): 
 %           rois (B=[]): size = NxN

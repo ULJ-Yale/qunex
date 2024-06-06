@@ -8,8 +8,9 @@ function [img] = img_prep_roi(roi, mask, options)
 %   Parameters:
 %       --roi (str or nimage object):
 %           A path to a file or an nimage object that specifies the ROI
-%           to be generated. It may include optional information. For
-%           details see Notes section.
+%           to be generated. In case of a pipe separated string, the first
+%           item will be considered a path, and all others as <key>:<value>
+%           pairs of optional information. For details see Notes section.
 %
 %       --mask (str, integer, or nimage object, default ''):
 %           A path to a file or a nimage object to be used as a mask, an
@@ -33,11 +34,14 @@ function [img] = img_prep_roi(roi, mask, options)
 %               maps to use to define ROI.
 %           - rois : a comma separated list
 %               Which ROI to use - a list of ROI indices or ROI names to 
-%               retain and use.
+%               retain and use. The specification will reorder the roi in the
+%               structure in the order listed in rois parameter.
 %           - roinames: a comma separated list
 %               ROI names - a list of names for the ROI that are created. 
-%               They should  be listed in the order of the sorted ROI integer
-%               codes, or in the order of the volumes to be used as ROI masks.
+%               They should  be listed in the order the roi are set in the 
+%               roi structure. This is the order of the sorted ROI integer
+%               codes, the order of the volumes to be used as ROI masks, or the
+%               order specified in the 'rois' parameter.
 %               See Notes section for details.
 %           - standardize : no ('no' / 'within' / 'across')
 %               Whether and how to standardize ROI weights:
@@ -56,8 +60,6 @@ function [img] = img_prep_roi(roi, mask, options)
 %               and higher to the positive threshold and the values equal
 %               od lower than the negative threshold will be used.
 %
-%           
-%
 %   Output:
 %
 %       img
@@ -72,13 +74,14 @@ function [img] = img_prep_roi(roi, mask, options)
 %                       of the origial map with the ROI mask
 %           roicodes2 - an array of codes used to mask the primary ROI as
 %                       provided in the '.names' file
-%           mapname   - in case of 'label' or 'scalar' CIFTI files in which
+%           map       - in case of 'label' or 'scalar' CIFTI files in which
 %                       multiple ROI were defined in a single volume, the 
 %                       name of the map in which the ROI was defined, 
 %                       otherwise the name of the file
 %           indeces   - a vector of indeces of voxels/grayordinates in the 
 %                       2D representation of the image
 %           weights   - a vector of weights matching the indeces
+%           nvox      - number of voxels in ROI
 %
 %   Notes:
 %       The method is used to generate an ROI object, which holds information on 
@@ -96,8 +99,7 @@ function [img] = img_prep_roi(roi, mask, options)
 %           If no file is specified as the second ROI, then no masking is 
 %           performed. If a second file exists, it will be used to mask the 
 %           original data based on the specified values in the third column of 
-%           the .names file. For more specific information see img_mask_roi 
-%           method.
+%           the .names file. 
 %
 %           The function supports the specification of region codes in the 
 %           .names file using either numeric vaues (e.g. 3,8,9) or names. The 
@@ -172,12 +174,13 @@ function [img] = img_prep_roi(roi, mask, options)
 %               
 %       Specification of optional parameters:
 %           Optional parameters can be specified in three ways. First, as
-%           <key>:<value> pairs in the `options` parameter. Second, as
-%           values passed to the `mask` parameter, and third as <key>:
-%           <value> pairs following the file path in the `roi` parameter.
-%           The priority will be in the order: `mask`, `roi`, `options`
-%           with `mask` having the highest priority.
-%       
+%           <key>:<value> pairs in the `options` parameter. Second, as <key>:
+%           <value> pairs following the path provided in the `roi` parameter. 
+%           Finally, as the content of the `mask` parameter. In the last case
+%           comma separated string will be treated as options -> maps, whereas
+%           a numeric array will be treated as options -> volumes. The priority 
+%           will be in the order: `mask`, `roi`, `options` with `mask` having 
+%           the highest priority.       
 %
 %       Names file specification:
 %           Names file is a regular text file with .names ending. It specifies
@@ -207,16 +210,14 @@ function [img] = img_prep_roi(roi, mask, options)
 %           image file will be used. Again, If the first line is empty or set
 %           to 'none', only the third column will be used to generate ROI.
 %
-%   Examples
-%   ===========
+%   Examples:
+%       To create a group level roi file::
 %
-%   To create a group level roi file::
+%           roi = nimage.img_prep_roi('resources/CCN.names')
 %
-%       roi = nimage.img_prep_roi('resources/CCN.names')
+%       To create a subject specific file::
 %
-%   To create a subject specific file::
-%
-%       roi = nimage.img_prep_roi('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
+%           roi = nimage.img_prep_roi('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -268,13 +269,12 @@ img = [];
 
 % ---> process options
 
-
 default = 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:';
 options = general_parse_options([], options, default);
 
 % ---> are there options in roi variable
 
-if ischar(roi) && strfind(roi, '|')
+if ischar(roi) && ~isempty(strfind(roi, '|'))
     [roi, noptions] = strtok(roi, '|');
     roi = strip(roi);
     noptions = noptions(2:end);
@@ -298,7 +298,12 @@ if ~isempty(options.maps)
 end
 
 if ~isempty(options.rois)
-    options.rois = strip(strsplit(options.rois, ','));
+    t = str2num(options.rois);
+    if isempty(t)
+        options.rois = strip(strsplit(options.rois, ','));
+    else
+        options.rois = t;
+    end
 end
 
 if ~isempty(options.roinames)
@@ -357,7 +362,7 @@ end
 
 if isa(roi, 'char')
 
-    if endsWith(roi, '.names')
+    if ends_with(roi, '.names')
         img = process_names(roi, mask, options, rcodes);
     else 
         file_info = general_check_image_file(roi);
@@ -371,8 +376,12 @@ if isa(roi, 'char')
         end
     end
 
-elseif ~isa(roi, 'nimage')
-    error('\nERROR: Invalid value provided for roi parameter to img_prep_roi!\n');
+elseif ~isa(roi, 'nimage')    
+    error('\nERROR: Invalid value provided for roi parameter to img_prep_roi!\n');    
+elseif isfield(roi.roi, 'roinames')
+    img = process_old_roi(roi);
+elseif isfield(roi.roi, 'roiname') && ~isempty({roi.roi.roiname})
+    img = roi;
 end
 
 if isempty(img)
@@ -394,11 +403,29 @@ end
 % ---> select ROI
 
 if ~isempty(options.rois)
-    keep_roi = ismember({img.roi.roiname}, options.rois);
+    if isnumeric(options.rois)
+        [~, keep_roi] = ismember(options.rois, [1:length(img.roi)]);
+    else
+        [~, keep_roi] = ismember(options.rois, {img.roi.roiname});
+    end
     img.roi = img.roi(keep_roi);
+
+    if img.frames > 1
+        img = img.selectframes(keep_roi);
+    end
     
     if isempty(img.roi)
         error('\nERROR: In img_prep_roi no ROI present after processing and selection of ROI.');
+    end
+end
+
+% ---> name ROI
+if ~isempty(options.roinames) 
+    if length(options.roinames) ~= length(img.roi)
+        error('\nERROR: In img_prep_roi number of identified ROIs [%d] does not match the number of provided ROI names [%d]!', length(img.roi), length(options.roinames));
+    end
+    for r = 1:length(img.roi)
+        img.roi(r).roiname = options.roinames{r};
     end
 end
 
@@ -428,7 +455,7 @@ function [img] = process_names(names_filename, mask, options, rcodes)
     
     % ---> process information from the .names file
 
-    [~, map_name, ~] = fileparts(names_filename);
+    [names_path, map_name, ~] = fileparts(names_filename);
 
     names_file   = fopen(names_filename);
     roi_filename = fgetl(names_file);
@@ -437,13 +464,16 @@ function [img] = process_names(names_filename, mask, options, rcodes)
         roi = [];
     else
         file_info = general_check_image_file(roi_filename);
+        if ~file_info.exists
+            file_info = general_check_image_file(fullfile(names_path, roi_filename));
+        end
 
         if file_info.is_image && file_info.exists
-            roi = nimage(roi_filename);
+            roi = nimage(file_info.filename);
         elseif ~file_info.is_image
-            error('\nERROR: The roi file [%s] specified in the .names file [%s] is not a valid image file!\n', roi_filename, names_filename);
+            error('\nERROR: The roi file [%s] specified in the .names file [%s] is not a valid image file!\n', file_info.filename, names_filename);
         elseif ~file_info.exists
-            error('\nERROR: The roi file [%s] specified in the .names file [%s] does not exist! Check your paths!\n', roi_filename, names_filename);
+            error('\nERROR: The roi file [%s] specified in the .names file [%s] does not exist! Check your paths!\n', file_info.filename, names_filename);
         end
     end
 
@@ -658,7 +688,7 @@ function [roi] = process_mask(roi, options)
 
     % ---> check type of volumes
     
-    nozeros = roi.data;
+    nozeros = double(roi.data);
     nozeros(nozeros == 0) = NaN;
     is_binary  = var(nozeros, 'omitnan') == 0;
     is_scalar  = sum(roi.data - floor(roi.data)) ~= 0;
@@ -667,10 +697,6 @@ function [roi] = process_mask(roi, options)
     % ---> scalar and binary images
 
     if ~any(is_integer)
-
-        if ~isempty(options.roinames) && length(options.roinames) ~= roi.frames
-            error('\nERROR: In img_prep_roi number of identified ROIs [%d] does not match the number of prvided ROI names [%d]!', roi.frames, length(options.roinames));
-        end
 
         % ---> threshold scalar maps
 
@@ -706,9 +732,7 @@ function [roi] = process_mask(roi, options)
         % ---> identify ROIs
 
         for f = 1:roi.frames
-            if ~isempty(options.roinames)
-                roi.roi(f).roiname = options.roinames{f};
-            elseif ~isempty(roi.cifti.maps)
+            if isfield(roi.cifti, 'maps') && ~isempty(roi.cifti.maps)
                 roi.roi(f).roiname = roi.cifti.maps{f};                
             else
                 if roi.frames < 10
@@ -756,18 +780,14 @@ function [roi] = process_mask(roi, options)
             for key = keys(:)'
                 c = c + 1;
 
-                if ~isempty(options.roinames)
-                    roi.roi(c).roiname = options.roinames{c};
+                if nunique_all < 10
+                    roi.roi(c).roiname = sprintf('ROI_%d', c);
+                elseif nunique_all < 100
+                    roi.roi(c).roiname = sprintf('ROI_%02d', c);
+                elseif nunique_all < 1000
+                    roi.roi(c).roiname = sprintf('ROI_%03d', c);
                 else
-                    if nunique_all < 10
-                        roi.roi(c).roiname = sprintf('ROI_%d', c);
-                    elseif nunique_all < 100
-                        roi.roi(c).roiname = sprintf('ROI_%02d', c);
-                    elseif nunique_all < 1000
-                        roi.roi(c).roiname = sprintf('ROI_%03d', c);
-                    else
-                        roi.roi(c).roiname = sprintf('ROI_%04d', c);
-                    end
+                    roi.roi(c).roiname = sprintf('ROI_%04d', c);
                 end
 
                 roi.roi(c).roicode   = c;
@@ -799,18 +819,14 @@ function [roi] = process_mask(roi, options)
         for key = keys(:)'
             c = c + 1;
 
-            if ~isempty(options.roinames)
-                roi.roi(c).roiname = options.roinames{c};
+            if nkeys < 10
+                roi.roi(c).roiname = sprintf('ROI_%d', c);
+            elseif nkeys < 100
+                roi.roi(c).roiname = sprintf('ROI_%02d', c);
+            elseif nkeys < 1000
+                roi.roi(c).roiname = sprintf('ROI_%03d', c);
             else
-                if nkeys < 10
-                    roi.roi(c).roiname = sprintf('ROI_%d', c);
-                elseif nkeys < 100
-                    roi.roi(c).roiname = sprintf('ROI_%02d', c);
-                elseif nkeys < 1000
-                    roi.roi(c).roiname = sprintf('ROI_%03d', c);
-                else
-                    roi.roi(c).roiname = sprintf('ROI_%04d', c);
-                end
+                roi.roi(c).roiname = sprintf('ROI_%04d', c);
             end
 
             roi.roi(c).roicode = c;
@@ -883,3 +899,32 @@ function [indeces, weights] = get_roi_for_codes(img, roi)
         weights = img.data(indeces, 2);
     end
 
+% --------------------------------------------------------------------------------------------
+%                                                                               process_old_roi
+
+function [roi] = process_old_roi(roi, options)
+
+    roi.data = roi.image2D;
+    oldroi = roi.roi;
+    roi.roi = [];
+    nroi = length(oldroi.roinames)
+
+    for r = 1:nroi
+        roi.roi(r).roiname   = oldroi.roinames{r};
+        roi.roi(r).roicode   = r;
+        roi.roi(r).roicodes1 = oldroi.roicodes1{r};
+        roi.roi(r).roicodes2 = oldroi.roicodes2{r};
+        roi.roi(r).nvox      = oldroi.nvox(r);
+        roi.roi(r).weights   = [];
+        roi.roi(r).map       = oldroi.roifile1;
+
+        if roi.volumes > 1
+            v = r;
+        else
+            v = 1;
+        end
+
+        roi.roi(r).indeces   = find(roi.data(:, v) == r);
+    end
+
+    

@@ -272,7 +272,7 @@ classdef nimage
 
             if nargin > 0
                 if isa(varone, 'char')
-                    if strncmp(varone, 'dscalar:', 8) || strncmp(varone, 'dtseries:', 9)
+                    if starts_with(varone, 'dscalar:') || starts_with(varone, 'dtseries:')
                         parts = strip(regexp(varone, ':', 'split'));
                         frames = str2num(parts{2});
                         obj.data = zeros(91282, frames);
@@ -578,6 +578,45 @@ classdef nimage
 
             img_saveimage(obj, filename, [], verbose);
         end
+
+        function obj = img_name_maps(obj, maplist, filetype)
+        %
+        %   If CIFTI image, adds map information.
+        %   
+        %   Parameters:
+        %       --obj (nimage):
+        %           The object to add map info to.
+        %       --maplist (cell array of characters):
+        %           Names of maps in the correct order.
+        %       --filetype (string):
+        %           Target filetype, 'scalar' or 'label'
+        %
+        %   Returns:
+        %       --obj with the added maps metadata
+        %
+        %   TODO: Given that maps are added automatically upon save, this 
+        %         method might not be needed.
+
+            if ~ismember({obj.imageformat}, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
+                return;
+            end
+            
+            if length(maplist) ~= obj.frames
+                error("In img_name_maps the number of maps [%d] does not match the number of frames [%d]", length(maplist), obj.frames);
+            end
+
+            obj.filetype = [obj.cifti.metadata.diminfo{1}.type(1) filetype];
+            obj.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(obj.frames, maplist);
+            
+            if strcmp(filetype, 'label')
+                obj.cifti.metadata.diminfo{2}.type = 'labels';
+
+                for imap = 1:obj.frames
+                    obj.cifti.metadata.diminfo{2}.maps(imap).table = obj.cifti.labels{imap};
+                end
+            end            
+        end
+
 
 
         function image2D = image2D(obj)
@@ -950,27 +989,117 @@ classdef nimage
             %   
             %   Parameters:
             %       -- selectframes (array of int): 
-            %           The indices of frames to select
+            %           The indices of frames to select or a mask of frames to
+            %           retain.
             %       -- options (str)
             %           If set to 'perrun' the selection is done for each run
             %           if the object is a concatenated image
-
+            %
+            %   Notes:
+            %       The frames will be reordered in the order in which
+            %       they were specified!
             if nargin < 3, options = []; end
-            if nargin < 2, frames  = []; end
+            if nargin < 2, selectframes = []; end
+            if isempty(selectframes), return; end
             
-            if length(obj.runframes) > 1 & strcmpi(options, 'perrun')
-                frames = [];
-                for n = 1:length(obj.runframes)
-                    frames = [frames 1:obj.runframes(n)];
+            % --> we have indices
+            if (length(selectframes) == length(unique(selectframes))) && (min(selectframes) > 0)
+                if strcmp(options, 'perrun') && length(obj.runframes > 1)
+                    offset = 0;
+                    nselectframes = [];
+                    for r = 1:length(obj.runframes)
+                        nselectframes = [nselectframes selectframes + offset]
+                        offset = offset + obj.runframes(r);
+                        obj.runframes(r) = length(selectframes);
+                    end
+                    selectframes = nselectframes;
+                else
+                    obj.runframes = length(selectframes);
                 end
-            else
-                frames = [1:obj.frames];
+
+            % --> we have a mask
+            else 
+                mask = zeros(1, obj.frames);
+                if strcmp(options, 'perrun') && length(obj.runframes > 1)
+                    offset = 1;
+                    for r = 1:length(obj.runframes)
+                        mask(offset:offset + min([obj.runframes(r) length(selectframes)]) - 1) = selectframes(1:min([obj.runframes(r) length(selectframes)]));
+                        offset = offset + obj.runframes(r);
+                        obj.runframes(r) = sum(selectframes(1:min([obj.runframes(r) length(selectframes)])) > 0);
+                    end
+                else
+                    mask(1:min([length(selectframes), length(mask)])) = selectframes(1:min([length(selectframes), length(mask)]));
+                    obj.runframes = sum(selectframes > 0);
+                end
+                selectframes = find(mask);
             end
 
-            mask = ismember(frames, selectframes);
-            obj = obj.sliceframes(mask);
-        end
+            obj.data = obj.image2D;
+            obj.data = obj.data(:, selectframes);
+            obj.frames = length(selectframes);
 
+            % ---> mask use data
+
+            if ~isempty(obj.use)
+                obj.use = obj.use(:, selectframes);
+            end
+
+            % ---> mask movement data
+
+            if ~isempty(obj.mov)
+                obj.mov = obj.mov(selectframes, :);
+            end
+
+            % ---> mask fstats data
+
+            if ~isempty(obj.fstats)
+                obj.fstats = obj.fstats(selectframes, :);
+            end
+
+            % ---> mask scrub data
+
+            if ~isempty(obj.scrub)
+                obj.scrub = obj.scrub(selectframes, :);
+            end
+
+            % ---> mask list data
+
+            if ~isempty(obj.list)
+                lists = fields(obj.list);
+                lists = lists(~ismember(lists, 'meta'));
+
+                for l = lists(:)'
+                    l = l{1};
+                    obj.list.(l) = obj.list.(l)(selectframes);
+                end
+
+            end
+
+            % ---> mask events data
+
+            if ~isempty(obj.tevents)
+                obj.tevents = obj.tevents(:, selectframes);
+            end
+
+            % ---> mask glm data
+
+            if ~isempty(obj.glm)
+                if isfield(obj.glm, 'c'), obj.glm.c = obj.glm.c(:, selectframes); end
+                if isfield(obj.glm, 'ATAm1'), obj.glm.ATAm1 = obj.glm.ATAm1(selectframes, selectframes); end
+                if isfield(obj.glm, 'event'), obj.glm.event = obj.glm.event(selectframes); end
+                if isfield(obj.glm, 'frame'), obj.glm.frame = obj.glm.frame(selectframes); end
+                if isfield(obj.glm, 'effect'), obj.glm.effect = obj.glm.effect(selectframes); end
+                if isfield(obj.glm, 'eindex'), obj.glm.eindex = obj.glm.eindex(selectframes); end
+                if isfield(obj.glm, 'hdr'), obj.glm.hdr = obj.glm.hdr(selectframes); end
+                if isfield(obj.glm, 'A'), obj.glm.A = obj.glm.A(:, selectframes); end
+            end
+
+            % ---> mask maps data
+
+            if isfield(obj.cifti, 'maps') && (~isempty(obj.cifti.maps))
+                obj.cifti.maps = obj.cifti.maps(selectframes);
+            end
+        end
 
         % =================================================
         %                                       sliceframes
@@ -979,117 +1108,36 @@ classdef nimage
         %
         %   fmask can be:
         %   - a scalar specifying how many frames to exclude from the start
+        %   - a vector of indeces specifying which frames to keep
         %   - a boolean or 1/0 vector specifying which frames to keep
-        %
+        %        
+        %   The function will call select frames to complete
 
         function obj = sliceframes(obj, fmask, options)
-            if nargin < 3
-                options = [];
-                if nargin < 2
-                    fmask = [];
-                end
-            end
+            if nargin < 3, options = []; end
+            if nargin < 2, fmask = []; end
+            if isempty(fmask), return; end
 
             % --- if fmask is a scalar, remove passed number of frames from start of image or each run
 
             if length(fmask) == 1 && ~isa(fmask, 'logical')
-                l = fmask;
-                fmask = ones(1, obj.frames);
-                if strcmp(options, 'perrun') && length(obj.runframes > 1)
-                    off = 1;
+                mask = ones(1, obj.frames);
+                runframes = [];
+                if strcmp(options, 'perrun')
+                    offset = 0;
                     for r = 1:length(obj.runframes)
-                        fmask(off:off+l-1) = 0;
-                        off = off + obj.runframes(r);
-                        obj.runframes(r) = obj.runframes(r) - l;
+                        mask(offset+1:offset+fmask) = 0;
+                        offset = offset + obj.runframes(r);
+                        runframes(r) = obj.runframes(r) - fmask;
                     end
+                    obj = obj.selectframes(mask == 1);
+                    obj.runframes = runframes;
                 else
-                    fmask(1:l) = 0;
-                    obj.runframes(1) = obj.runframes(1) - l;
-                end
-
-            % --- if fmask is a vector, apply it as a mask for the whole image or at each run
-
-            elseif ~isempty(fmask) && (length(fmask) > 1 || ~isa(fmask, 'logical'))
-                mask = zeros(1, obj.frames);
-                if strcmp(options, 'perrun') && length(obj.runframes > 1)
-                    off = 1;
-                    for r = 1:length(obj.runframes)
-                        mask(off:off+min([obj.runframes(r) length(fmask)])-1) = fmask(1:min([obj.runframes(r) length(fmask)]));
-                        off = off + obj.runframes(r);
-                        obj.runframes(r) = sum(fmask(1:min([obj.runframes(r) length(fmask)])) > 0);
-                    end
-                else
-                    mask(1:min([length(fmask), length(mask)])) = fmask(1:min([length(fmask), length(mask)]));
-                    obj.runframes = sum(fmask > 0);
-                end
-                fmask = mask;
-            end
-
-            if ~isempty(fmask)
-                fmask = fmask > 0;
-                obj.data = obj.image2D;
-                obj.data = obj.data(:, fmask);
-                obj.frames = sum(fmask);
-
-                % ---> mask use data
-
-                if ~isempty(obj.use)
-                    obj.use  = obj.use(:, fmask);
-                end
-
-                % ---> mask movement data
-
-                if ~isempty(obj.mov)
-                    obj.mov = obj.mov(fmask, :);
-                end
-
-                % ---> mask fstats data
-
-                if ~isempty(obj.fstats)
-                    obj.fstats = obj.fstats(fmask, :);
-                end
-
-                % ---> mask scrub data
-
-                if ~isempty(obj.scrub)
-                    obj.scrub = obj.scrub(fmask, :);
-                end
-
-                % ---> mask list data
-
-                if ~isempty(obj.list)
-                    lists     = fields(obj.list);
-                    lists     = lists(~ismember(lists, 'meta'));
-                    for l = lists(:)'
-                        l = l{1};
-                        obj.list.(l) = obj.list.(l)(fmask);
-                    end
-                end
-
-                % ---> mask events data
-
-                if ~isempty(obj.tevents)
-                    obj.tevents = obj.tevents(:, fmask);
-                end
-
-                % ---> mask glm data
-
-                if ~isempty(obj.glm)
-                    if isfield(obj.glm, 'c'),      obj.glm.c      = obj.glm.c(:, fmask);    end
-                    if isfield(obj.glm, 'ATAm1'),  obj.glm.ATAm1  = obj.glm.ATAm1(fmask, fmask); end
-                    if isfield(obj.glm, 'event'),  obj.glm.event  = obj.glm.event(fmask);   end
-                    if isfield(obj.glm, 'frame'),  obj.glm.frame  = obj.glm.frame(fmask);   end
-                    if isfield(obj.glm, 'effect'), obj.glm.effect = obj.glm.effect(fmask);  end
-                    if isfield(obj.glm, 'eindex'), obj.glm.eindex = obj.glm.eindex(fmask);  end
-                    if isfield(obj.glm, 'hdr'),    obj.glm.hdr    = obj.glm.hdr(fmask);     end
-                    if isfield(obj.glm, 'A'),      obj.glm.A      = obj.glm.A(:,fmask);     end
-                end
-
-                % ---> mask maps data
-
-                if isfield(obj.cifti, 'maps') && (~isempty(obj.cifti.maps))
-                    obj.cifti.maps = obj.cifti.maps(fmask);
-                end
+                    mask(1:fmask) = 0;
+                    obj = obj.selectframes(mask == 1);
+                end                  
+            else            
+                obj = obj.selectframes(fmask, options);
             end
 
         end

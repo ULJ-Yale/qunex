@@ -174,6 +174,8 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %                   save the resulting data in a wide format .tsv file
 %               - mat
 %                   save the resulting data in a matlab .mat file
+%               - ptseries
+%                   save the resulting data as a ptseries image
 %               - none
 %                   do not save any individual level results.
 %
@@ -307,7 +309,7 @@ if nargin < 2 error('ERROR: At least file list and ROI .names file have to be sp
 %                                              parcel processing
 
 parcels = {};
-if strncmp(roiinfo, 'parcels:', 8)
+if starts_with(roiinfo, 'parcels:')
     parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
 end
 
@@ -318,20 +320,20 @@ options = general_parse_options([], options, default);
 
 verbose       = strcmp(options.verbose, 'true');
 printdebug    = strcmp(options.debug, 'true');
-savesessionid = strcmp(options.savesessionid, 'true');
+savesessionid = strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder');
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 
 if printdebug
     general_print_struct(options, 'fc_extract_roi_timeseries options used');
 end
 
-if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
-    error('ERROR: Invalid eventdata option: %s', options.eventdata);
-end
+if verbose; fprintf('\nChecking ...\n'); end
 
-if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'max', 'min'})
-    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
-end
+options.flist = flist;
+options.roiinfo = roiinfo;
+options.targetf = targetf;
+
+general_check_options(options, 'eventdata, roimethod, flist, roiinfo, targetf', 'stop');
 
 
 % --- File saving related options
@@ -363,34 +365,11 @@ options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 if ismember({'none'}, options.saveind)
     options.saveind = {};
 end
-sdiff = setdiff(options.saveind, {'mat', 'long', 'wide', ''});
+sdiff = setdiff(options.saveind, {'mat', 'long', 'wide', 'ptseries', ''});
 if ~isempty(sdiff)
     error('ERROR: Invalid individual save format specified: %s', strjoin(sdiff,","));
 end
-
-% ----- Check if the files are there!
-
-go = true;
-if verbose; fprintf('\nChecking ...\n'); end
-
-% - check for presence of listfile unless the list is provided as a string
-if ~strncmp(flist, 'listname:', 9)
-    go = go & general_check_file(flist, 'image file list', 'error');
-end
-
-% - check for presence of ROI specification file if we are not using parcells
-if isempty(parcels)
-    go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
-end
-
-% - check for presence of target folder no data needs to be saved there
-if ~isempty(options.savegroup) || (~isempty(options.saveind) && strcmp(options.itargetf, 'sfolder'))
-    general_check_folder(targetf, 'results folder');
-end
-
-if ~go
-    error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
-end
+saveptseries = ismember('ptseries', options.saveind);
 
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
@@ -485,7 +464,7 @@ for s = 1:list.nsessions
 
     if strcmp(options.itargetf, 'sfolder')
         stargetf = fileparts(reference_file);
-        if endsWith(stargetf, '/concs')
+        if ends_with(stargetf, '/concs')
             stargetf = strrep(stargetf, '/concs', '');
         end
     else
@@ -504,8 +483,7 @@ for s = 1:list.nsessions
 
     if isempty(parcels)
         if verbose; fprintf('     ... creating ROI mask\n'); end
-        roi = nimage.img_read_roi(roiinfo, sroifile);
-        roi.data = roi.image2D;    
+        roi = nimage.img_prep_roi(roiinfo, sroifile);
     else
         if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
             error('ERROR: The bold file lacks parcel specification! [%s]', list.session(s).id);
@@ -513,13 +491,15 @@ for s = 1:list.nsessions
         if length(parcels) == 1 && strcmp(parcels{1}, 'all')        
             parcels = y.cifti.parcels;
         end
-        roi.roi.roinames = parcels;
-        [x, roi.roi.roicodes] = ismember(parcels, y.cifti.parcels);
+        for r = 1:length(parcels)
+            roi.roi(r).roiname = parcels{r};
+            [~, roi.roi(r).roicode] = ismember(parcels{r}, y.cifti.parcels);
+        end
     end
 
-    roi_names = roi.roi.roinames;
-    roi_codes = roi.roi.roicodes;
-    nroi = length(roi.roi.roinames);
+    roi_names = {roi.roi.roiname};
+    roi_codes = [roi.roi.roicode];
+    nroi = length(roi.roi);
     nparcels = length(parcels);
 
     % ---> create extraction sets
@@ -536,31 +516,35 @@ for s = 1:list.nsessions
 
     nsets = length(exsets);
     for n = 1:nsets        
-        if verbose; fprintf('         ... set %s', exsets(n).title); end
+        if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
         % ---> get the extracted timeseries
     
         tsimg = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
     
         if isempty(parcels)
-            ts = tsimg.img_extract_roi(roi, [], options.roimethod);
+            ts = tsimg.img_extract_roi(roi, [], options.roimethod, [], [], saveptseries);
         else
-            ts = tsimg.img_extract_roi(roiinfo, [], options.roimethod); 
+            ts = tsimg.img_extract_roi(roiinfo, [], options.roimethod, [], [], saveptseries); 
+        end
+        if saveptseries
+            ptimage = ts;
+            ts = ts.data;
         end
 
-        if verbose; fprintf(' ... extracted ts'); end
+        if verbose; fprintf('         ... extracted ts\n'); end
 
         % ---> Embed results
         
         tsmat(n).title    = exsets(n).title;
-        tsmat(n).roinames = roi.roi.roinames;
-        tsmat(n).roicodes = roi.roi.roicodes;
+        tsmat(n).roinames = {roi.roi.roiname};
+        tsmat(n).roicodes = [roi.roi.roicode];
         tsmat(n).N        = size(ts, 2);
         tsmat(n).ts       = ts;
         tsmat(n).tevents  = tsimg.tevents;
         tsmat(n).tframes  = tsimg.tframes;
 
-        if verbose; fprintf(', embedded\n'); end
+        if verbose; fprintf('         ... embedded ts\n'); end
     end
     c = c + 1;
 
@@ -587,6 +571,15 @@ for s = 1:list.nsessions
     if ismember({'mat'}, options.saveind)
         if verbose; fprintf('         ... saving mat file'); end
         save(indbasefilename, 'tsmat', '-v7.3');
+        if verbose; fprintf(' ... done\n'); end
+    end
+
+    % ---------------------------------------------------------------------------------------------------
+    %                                                                                            ptseries
+
+    if ismember({'ptseries'}, options.saveind)
+        if verbose; fprintf('         ... saving ptseries image'); end
+        ptimage.img_saveimage([indbasefilename '.ptseries.nii']);
         if verbose; fprintf(' ... done\n'); end
     end
 
@@ -656,7 +649,7 @@ for s = 1:list.nsessions
             for f = 1:nframes
                 wide_line = sprintf('\n%s\t%s\t%s\t%d\t%d', lname, settitle, list.session(s).id, tsmat(n).tevents(f), tsmat(n).tframes(f));
                 wide_line = [wide_line sprintf('\t%.5f', tsmat(n).ts(:, f))];
-                if fout_iwide;   fprintf(fout_iwide,   wide_line); end
+                if fout_iwide; fprintf(fout_iwide, wide_line); end
                 if fout_gwide; fprintf(fout_gwide, wide_line); end
             end
         end

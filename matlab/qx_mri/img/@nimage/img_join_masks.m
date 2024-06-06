@@ -12,7 +12,8 @@ function mask = img_join_masks(obj, mask_a, mask_b, options)
 %           structure defining the first mask or a set of masks.
 %       --options (str, default 'volumes:1|join:union|standardize:no'):
 %           A string with pipe separated <key>:<value> pairs that define 
-%           additonal options. The current options are:
+%           additional options. The current options are:
+%
 %           - volumes: '1' (number, 'all')
 %               How many volumes from both masks to join. The relevant number
 %               has to match between the two masks.
@@ -24,6 +25,18 @@ function mask = img_join_masks(obj, mask_a, mask_b, options)
 %           - standardize: 'no' ('no'/'within'/'across')
 %               In case of an ROI structure, if weights exist, are they to be
 %               standardized to 1 within each ROI or across all ROI.
+%           - threshold: '0' (number)
+%               If set different from 0, it is used to threshold the images 
+%               before combining masks. The exact behavior will depend on the 
+%               prefix or suffix.
+%               If provided without a prefix or suffix, all voxels with absolute 
+%               value equal to or higher than threshold will be kept in the mask.
+%               If the value is preceeded with '<', only voxels with values lower
+%               than the threshold will be kept in the mask.
+%               If the value is followed with '<', only voxels with values
+%               higher than the threshold will be kept in the mask.
+%               Note: due to use of '>' in parsing of options, it can not be 
+%               used to define the type of threshold.
 %
 %   Output:
 %       mask
@@ -32,7 +45,7 @@ function mask = img_join_masks(obj, mask_a, mask_b, options)
 if nargin < 4, options = ''; end
 if nargin < 3, error('ERROR: in img_join_masks, both masks need to be provided as input!'); end
 
-defaults = 'volumes:1|join:union|standardize:no';
+defaults = 'volumes:1|join:union|standardize:no|threshold:0';
 options = general_parse_options([], options, defaults);
 can_standardize = false;
 
@@ -65,8 +78,8 @@ if strcmp(class_a, 'nimage')
         if mask_a.frames < options.volumes
             error(sprintf('ERROR (img_join_mask): The two images have less volumes [%d] than specified to join [%d]!', mask_a.frames, options.volumes));
         end
-        mask_a.data = mask_a.image2D;
-        mask_b.data = mask_b.image2D;
+        mask_a.data = threshold(mask_a.image2D, options);
+        mask_b.data = threshold(mask_b.image2D, options);
         mask = mask_a.zeroframes(options.volumes);
         if strcmp(options.join, 'union')
             mask.data = mask_a.data(:,1:options.volumes) ~= 0 | mask_b.data(:,1:options.volumes) ~= 0;
@@ -84,7 +97,7 @@ if strcmp(class_a, 'nimage')
         if length(mask_a.roi) < options.volumes
             error(sprintf('ERROR (img_join_mask): The two images have less ROI specified [%d] than specified to join [%d]!', length(mask_a.roi), options.volumes));
         end
-        mask = mask_a.selectframes(1:options.volumes);
+        mask = mask_a.zeroframes(options.volumes);
         mask.roi = mask_a.roi(1:options.volumes);
         for r = 1:options.volumes
             if strcmp(options.join, 'union')
@@ -92,6 +105,9 @@ if strcmp(class_a, 'nimage')
             else
                 mask.roi(r).indeces = intersect(mask_a.roi(r).indeces, mask_b.roi(r).indeces);
             end
+            mask.data(mask.roi(r).indeces, r) = r;
+            mask.roi(r).weights = [];
+            mask.roi(r).nvox = length(mask.roi(r).indeces);
         end
         can_standardize = true;
     else
@@ -115,6 +131,8 @@ elseif strcmp(class_a, 'struct')
         else
             mask(r).indeces = intersect(mask_a(r).indeces, mask_b(r).indeces);
         end
+        mask(r).weights = [];
+        mask(r).nvox = length(mask(r).indeces);
     end
     can_standardize = true;
 else
@@ -143,6 +161,8 @@ else
         if options.volumes > size(mask_a, 2) || options.volumes > size(mask_b,2)
             error(sprintf('ERROR (img_join_masks): The specified number of mask volumes to join [%d] is heigher of the number of volumes in mask_a [%d] and/or mask_b [%d]!', options.volumes, size(mask_a, 2), size(mask_b, 2)));
         end
+        mask_a = threshold(mask_a, options);
+        mask_b = threshold(mask_b, options);
         if strcmp(options.join, 'union')
             mask = mask_a(:, 1:options.volumes) ~= 0 | mask_b(:, 1:options.volumes) ~= 0;
         else
@@ -150,5 +170,25 @@ else
         end
     end
 end
+
+
+% --- support function for masking
+
+function mask = threshold(mask, options)
+
+    if ischar(options.threshold)
+        idx = strfind(options.threshold, "<");
+        if isempty(idx)
+            error(sprintf('ERROR (img_join_masks): The threshold specification is invalid: %s!', options.threshold));
+        elseif idx == 1
+            t = str2num(options.threshold(2:end));
+            mask = mask .* (mask < t);
+        else
+            t = str2num(options.threshold(1:idx-1));
+            mask = mask .* (mask > t);
+        end
+    else
+        mask = mask .* (abs(mask) > options.threshold);
+    end
 
 

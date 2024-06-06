@@ -173,10 +173,15 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %
 %               Defaults to 'r'.
 %
-%               Additional parameters for specific measures can be added, e.g.
-%               for inverse covariance shrinkage and standardize options can be
-%               set as follows 'fcmeasure=icv|shrinkage=LW|standardize=partialcorr'.
+%               Additional parameters for specific measures can be added using
+%               fcargs optional parameter (see below).
 %
+%           - fcargs
+%               Additional arguments for computing functional connectivity, e.g.
+%               k for computation of mutual information or standardize and
+%               shrinkage for computation of inverse covariance. These parameters
+%               need to be provided as subfields of fcargs, e.g.:
+%               'fcargs>standardize:partialcorr,shrinkage:LW'
 %
 %           - savegroup
 %               A comma separated list of formats to use to save the group 
@@ -413,13 +418,13 @@ if nargin < 2 error('ERROR: At least file list and ROI .names file have to be sp
 %                                              parcel processing
 
 parcels = {};
-if strncmp(roiinfo, 'parcels:', 8)
+if starts_with(roiinfo, 'parcels:')
     parcels = strtrim(regexp(roiinfo(9:end), ',', 'split'));
 end
 
 % ----- parse options
 
-default = 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=none|saveind=none|savesessionid=true|itargetf=gfolder|verbose=false|debug=false|fcname=|verbose=true|debug=false';
+default = 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|fcargs=|savegroup=none|saveind=none|savesessionid=true|itargetf=gfolder|verbose=false|debug=false|fcname=|verbose=true|debug=false';
 options = general_parse_options([], options, default);
 
 verbose     = strcmp(options.verbose, 'true');
@@ -428,27 +433,21 @@ addidtofile = strcmp(options.savesessionid, 'true') || strcmp(options.itargetf, 
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 fcmeasure   = options.fcmeasure;
 
-if ~general_check_fcargs(options)
-    error('ERROR: Invalid arguments for the fc measure: %s: ', fcmeasure);
-end
-
 if options.fcname, fcname = [options.fcname, '_']; else fcname = ''; end
 
 if printdebug
-    general_print_struct(options, 'fc_compute_roifc_options used');
+    general_print_struct(options, 'fc_compute_roifc options used');
 end
 
-if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
-    error('ERROR: Invalid eventdata option: %s', options.eventdata);
-end
+% --> Check input
 
-if ~ismember(options.roimethod, {'mean', 'pca', 'median', 'min', 'max'})
-    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
-end
+if verbose; fprintf('\nChecking ...\n'); end
 
-if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc', 'icv', 'mi', 'mar', 'coh'})
-    error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
-end
+options.flist = flist;
+options.roiinfo = roiinfo;
+options.targetf = targetf;
+
+general_check_options(options, 'fc, eventdata, roimethod, flist, roiinfo, tfolder', 'stop');
 
 % ----- What should be saved
 
@@ -473,31 +472,6 @@ sdiff = setdiff(options.savegroup, {'mat', 'all_long', 'all_wide_single', 'all_w
 if ~isempty(sdiff)
     error('ERROR: Invalid group save format specified: %s', strjoin(sdiff,","));
 end
-
-% ----- Check if the files are there!
-
-go = true;
-if verbose; fprintf('\nChecking ...\n'); end
-
-% - check for presence of listfile unless the list is provided as a string
-if ~strncmp(flist, 'listname:', 9)
-    go = go & general_check_file(flist, 'image file list', 'error');
-end
-
-% - check for presence of ROI specification file if we are not using parcells
-if isempty(parcels)
-    go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
-end
-
-% - check for presence of target folder no data needs to be saved there
-if ~isempty(options.savegroup) || (~isempty(options.saveind) && strcmp(options.itargetf, 'sfolder'))
-    general_check_folder(targetf, 'results folder');
-end
-
-if ~go
-    error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
-end
-
 
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
@@ -576,7 +550,7 @@ for s = 1:list.nsessions
 
     if strcmp(options.itargetf, 'sfolder')
         stargetf = fileparts(reference_file);
-        if endsWith(stargetf, '/concs')
+        if ends_with(stargetf, '/concs')
             stargetf = strrep(stargetf, '/concs', '');
         end
     else
@@ -598,8 +572,7 @@ for s = 1:list.nsessions
 
     if isempty(parcels)
         if verbose; fprintf('     ... creating ROI mask\n'); end
-        roi = nimage.img_read_roi(roiinfo, sroifile);
-        roi.data = roi.image2D;    
+        roi = nimage.img_prep_roi(roiinfo, sroifile);
     else
         if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
             error('ERROR: The bold file lacks parcel specification! [%s]', list.session(s).id);
@@ -607,13 +580,15 @@ for s = 1:list.nsessions
         if length(parcels) == 1 && strcmp(parcels{1}, 'all')        
             parcels = y.cifti.parcels;
         end
-        roi.roi.roinames = parcels;
-        [x, roi.roi.roicodes] = ismember(parcels, y.cifti.parcels);
+        for r = 1:length(parcels)
+            roi.roi(r).roiname = parcels{r};
+            [~, roi.roi(r).roicode] = ismember(parcels{r}, y.cifti.parcels);
+        end
     end
 
-    roinames = roi.roi.roinames;
-    roicodes = roi.roi.roicodes;
-    nroi = length(roi.roi.roinames);
+    roinames = {roi.roi.roiname};
+    roicodes = [roi.roi.roicode];
+    nroi = length(roi.roi);
     nparcels = length(parcels);
 
     % ---> create extraction sets
@@ -630,13 +605,13 @@ for s = 1:list.nsessions
 
     nsets = length(exsets);
     for n = 1:nsets        
-        if verbose; fprintf('         ... set %s', exsets(n).title); end
+        if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
         % ---> get the extracted timeseries
     
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
     
-        if verbose; fprintf(' ... extracted ts'); end
+        if verbose; fprintf('         ... extracted ts\n'); end
         
         % ---> generate fc matrice
         
@@ -646,16 +621,15 @@ for s = 1:list.nsessions
             rs = ts.img_extract_roi(roiinfo, [], options.roimethod); 
         end
     
-        options
         fc = fc_compute(rs, [], fcmeasure, false, options);
         
-        if verbose; fprintf(' ... computed fc matrix'); end
+        if verbose; fprintf('         ... computed fc matrix\n'); end
     
         % ---> store 
         
         if first_subject
             fcmat(n).title     = exsets(n).title;
-            fcmat(n).roi       = roi.roi.roinames;
+            fcmat(n).roi       = {roi.roi.roiname};
             fcmat(n).subjects = {};
         end
 
@@ -672,7 +646,7 @@ for s = 1:list.nsessions
         if embed_data
             if first_subject
                 fcmats(n).title     = exsets(n).title;
-                fcmats(n).roi       = roi.roi.roinames;
+                fcmats(n).roi       = {roi.roi.roiname};
                 fcmats(n).subjects = {};
             end
             fcmats(n).subjects(s) = {subjectid};

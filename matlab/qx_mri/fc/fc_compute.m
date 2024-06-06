@@ -65,16 +65,22 @@ function [fcmat, fzmat] = fc_compute(A, B, measure, prepared, options)
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 5 || isempty(options) || sum(strcmp(fieldnames(options), 'fcargs')) == 0
-    fcargs = general_parse_options([], options, '');
-else
-    fcargs = options.fcargs;
-end
-
-if nargin < 4 || isempty(prepared), prepared = false;   end
-if nargin < 3 || isempty(measure),   measure   = 'r';     end
-if nargin < 2,                       B         = [];      end
+if nargin < 5,                      options  = [];    end
+if nargin < 4 || isempty(prepared), prepared = false; end
+if nargin < 3 || isempty(measure),  measure  = 'r';   end
+if nargin < 2,                      B        = [];    end
 if nargin < 1, error('ERROR: A matrix with data needs to be provided!'); end
+
+% --- extract fcargs from options
+
+if ischar(options) || isempty(options)
+    options = general_parse_options([], options, '');
+end
+if isfield(options, 'fcargs')
+    fcargs = options.fcargs;
+else
+    fcargs = options;
+end
 
 % --- check data and parameters
 if ~isempty(B)

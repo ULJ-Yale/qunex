@@ -59,6 +59,7 @@ functions = {
     'fc_compute_gbcd':                 [('flist', 'string'), ('command', 'string'), ('roi', 'string'), ('rcodes', 'numeric'), ('nbands', 'numeric'), ('mask', 'numeric'), ('verbose', 'bool'), ('target', 'string'), ('targetf', 'string'), ('rsmooth', 'numeric'), ('rdilate', 'numeric'), ('ignore', 'string'), ('time', 'string'), ('method', 'string'), ('weights', 'string'), ('criterium', 'string')],
     'fc_extract_roi_timeseries':       [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_roifc':                [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
+    'fc_compute_gbc':                  [('flist', 'string'), ('command', 'string'), ('sroiinfo', 'string'), ('troiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_seedmaps':             [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_seedmaps_multiple':    [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('options', 'string'), ('targetf', 'string'), ('method', 'string'), ('ignore', 'string'), ('cv', 'string')],
     'fc_extract_roi_timeseries_masked':   [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('targetf', 'string'), ('options', 'string'), ('method', 'string'), ('ignore', 'string'), ('rcodes', 'string'), ('mcodes', 'string'), ('bmask', 'string')],

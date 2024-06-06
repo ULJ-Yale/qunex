@@ -2,49 +2,47 @@ function [roi] = img_mask_roi(img, roi2)
 
 %``img_mask_roi(img, roi2)``
 %
-%    Mask the ROI file based on the second ROI.
+%   Mask the ROI file based on the second ROI.
+%   NOTE: This method is being deprecated.  
 %
-%   INPUTS
-%   ======
+%   Parameters:
+%       --img (nimage object):
+%           The original nimage ROI image object.
+%       --roi2 (str or nimage object):
+%           The additional ROI image passed either as a gmriimage or a path 
+%           to the image. Of note, only the first frame of the image will be 
+%           used to mask the original ROI.
 %
-%   --img       The original nimage ROI image object.
-%   --roi2      The additional ROI image passed either as a gmriimage or a path 
-%               to the image.
+%   Output:
+%       roi 
+%           A new image with the original ROI masked with the ROI in the second
+%           ROI file.
 %
-%   OUTPUT
-%   ======
-%   
-%   roi 
-%       A new image with the original ROI masked with the ROI in the second ROI 
-%       file.
+%   Notes:
+%       The most frequent use case is to generate a subject specific ROI file in
+%       which the group defined ROI provided in the original image are masked by 
+%       the second image that provides subjects specific information on brain
+%       segmentation (e.g. aseg+aparc image).
 %
-%   USE
-%   ===
+%       For the method to work, the ROI had to be read using the img_prep_roi 
+%       method, called on a .names file, so that it has the information on both 
+%       group level and subject specific ROI codes. The method loops through all 
+%       the original ROI and if subject specific codes are specified for that 
+%       group level ROI, it masks the ROI using the specified codes for the 
+%       subject specific ROI.
 %
-%   The most frequent use case is to generate a subject specific ROI file in
-%   which the group defined ROI provided in the original image are masked by the
-%   second image that provides subjects specific information on brain
-%   segmentation (e.g. aseg+aparc image).
-%
-%   For method to work, the ROI had to be read using the img_read_roi method,
-%   called on a .names file, so that it has the information on both group level
-%   and subject specific ROI codes. The method loops through all the original
-%   ROI and if subject specific codes are specified for that group level ROI, it
-%   masks the ROI using the specified codes for the subject specific ROI.
-%
-%   EXAMPLE USE
-%   ===========
+%   Example:
 %
 %   ::
 %
-%       roi = nimage.img_read_roi('CCN.names');
+%       roi = nimage.img_prep_roi('CCN.names');
 %       sroi = roi.img_mask_roi('OP338.aseg+aparc.nii.gz');
 %
-%   Note that the above can be simplified by the use of img_read_roi itself,
-%   which internaly calls img_mask_roi if the name of the second ROI image file
-%   is provided::
+%       Note that the above can be simplified by the use of img_prep_roi itself,
+%       which internaly calls img_mask_roi if the name of the second ROI image 
+%       file is provided::
 %
-%       sroi = nimage.img_read_roi('CCN.names', 'OP338.aseg+aparc.nii.gz');
+%       sroi = nimage.img_prep_roi('CCN.names', 'OP338.aseg+aparc.nii.gz');
 %
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -58,24 +56,24 @@ end
 % ---> Load ROI2 if necessary
 
 roi2 = nimage(roi2);
+roi2.data = roi2.image2D;
+roi2 = roi2.selectframes(1);
 
 % ---> Process ROI
 
 nroi = length(img.roi.roinames);
 roi  = img.zeroframes(nroi);
 
-for n = 1:nroi
+for r = 1:nroi
 
-    % if length(img.roi.roicodes{n}) == 0
-    %   rmask = roi2.img_roi_mask(img.roi.roicodes2{n});
-    if length(img.roi.roicodes2{n}) == 0
-        rmask = img.img_roi_mask(img.roi.roicodes(n));
-    else
-        rmask = img.img_roi_mask(img.roi.roicodes(n)) & roi2.img_roi_mask(img.roi.roicodes2{n});
+    if length(img.roi(r).roicodes1) == 0
+        roi.roi(r).indeces = find(ismember(roi2.data, img.roi(r).roicodes2));
+    elseif length(img.roi(r).roicodes2) ~= 0
+        roi.roi(r).indeces = intersect(roi.roi(r).indeces, find(ismember(roi2.data, img.roi(r).roicodes2)));
     end
 
-    roi.data(rmask==1, n) = n;
-    roi.roi.nvox(n) = sum(rmask==1);
+    roi.data(roi.roi(r).indeces, r) = r;
+    roi.roi(r).nvox = length(roi.roi(r).indeces);
 end
 
 % ---> Collapse to a single volume when there is no overlap between ROI

@@ -168,6 +168,16 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %
 %               Defaults to 'r'.
 %
+%               Additional parameters for specific measures can be added using
+%               fcargs optional parameter (see below).
+%
+%           - fcargs
+%               Additional arguments for computing functional connectivity, e.g.
+%               k for computation of mutual information or standardize and
+%               shrinkage for computation of inverse covariance. These parameters
+%               need to be provided as subfields of fcargs, e.g.:
+%               'fcargs>standardize:partialcorr,shrinkage:LW'
+%
 %           - savegroup
 %               A comma separated list of files to save, options are:
 %
@@ -287,22 +297,22 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %   Output files:
 %       Based on savegroup specification it saves the following group files:
 %
-%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_mean_<fcmeasure>`
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_<fcmeasure>_group_mean`
 %           Mean group requested correlation coefficient or covariance.
 %
-%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_mean_<fcmeasure>_Fz`
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_<fcmeasure>_Fz_group_mean`
 %           Mean group Fisher Z values.
 %
-%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_group_<fcmeasure>_p`
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_<fcmeasure>_group_p`
 %           Group p values testing difference from 0.
 %
-%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_group_<fcmeasure>_Z`
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_<fcmeasure>_group_Z`
 %           Group Z converted p values testing difference from 0.
 %
-%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_all_<fcmeasure>`
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_<fcmeasure>_all_sessions`
 %           Correlation coefficients or covariance for all sessions.
 %
-%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_all_<fcmeasure>_Fz`
+%       `<targetf>/seedmap_<listname>[_<title>]_<roi>_<fcmeasure>_Fz_all_sessions`
 %           Fisher Z values for all sessions.
 %
 %       Definitions:
@@ -433,63 +443,46 @@ printdebug = strcmp(options.debug, 'true');
 gem_options = sprintf('ignore:%s|badevents:%s|verbose:%s|debug:%s', options.ignore, options.badevents, options.verbose, options.debug);
 fcmeasure = options.fcmeasure;
 
-if ~general_check_fcargs(options)
-    error('ERROR: Invalid arguments for the fc measure: %s: ', fcmeasure);
-end
-
-if printdebug
+if verbose
     general_print_struct(options, 'fc_compute_seedmaps options used');
 end
 
-if ~ismember(options.eventdata, {'all', 'mean', 'min', 'max', 'median'})
-    error('ERROR: Invalid eventdata option: %s', options.eventdata);
-end
-
-if ~ismember(options.roimethod, {'mean', 'pca', 'median'})
-    error('ERROR: Invalid roi extraction method: %s', options.roimethod);
-end
-
-if ~ismember(options.fcmeasure, {'r', 'cv', 'rho', 'cc', 'coh', 'mi'})
-    error('ERROR: Invalid functional connectivity computation method: %s', options.fcmeasure);
-end
-
-% ----- Check if the files are there!
-
-go = true;
-
 if verbose; fprintf('\n\nChecking ...\n'); end
 
-% - check for presence of listfile unless the list is provided as a string
-if ~strncmp(flist, 'listname:', 9)
-    go = go & general_check_file(flist, 'image file list', 'error');
-end
-go = go & general_check_file(roiinfo, 'ROI definition file', 'error');
-% - check for presence of target folder no data needs to be saved there
-if ~strcmp(options.savegroup, 'none') || (~strcmp(options.saveind, 'none') && strcmp(options.itargetf, 'sfolder'))
-    general_check_folder(targetf, 'results folder');
-end
+options.flist = flist;
+options.roiinfo = roiinfo;
+options.targetf = targetf;
 
-if ~go
-    error('ERROR: Some of the specified files or folders were not found. Please check the paths and start again!\n\n');
-end
+general_check_options(options, 'fc, eventdata, roimethod, flist, roiinfo, targetf', 'stop');
 
+%   ------------------------------------------------------------------------------------------
+%                                                                          check files to save
 
-% ----- What should be saved
 % -> group files
 
 options.savegroup = strtrim(regexp(options.savegroup, ',', 'split'));
 
 if ismember({'none'}, options.savegroup)
     options.savegroup = {};
-end
 
-if ismember({'all'}, options.savegroup)
+elseif ismember({'all'}, options.savegroup)
+
     if ismember(options.fcmeasure, {'cv', 'mi', 'cc'})
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'all_r'};
     elseif ismember(options.fcmeasure, {'r', 'rho', 'coh'})
         options.savegroup = {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'};
-    end    
+    end
+
+else
+
+    if ismember(options.fcmeasure, {'cv', 'mi', 'cc'})
+        options.savegroup = intersect(options.savegroup, {'group_z', 'group_p', 'mean_r', 'all_r'});
+    elseif ismember(options.fcmeasure, {'r', 'rho', 'coh'})
+        options.savegroup = intersect(options.savegroup, {'group_z', 'group_p', 'mean_r', 'mean_fz', 'all_fz', 'all_r'});
+    end
+
 end
+
 
 % -> individual files
 
@@ -504,7 +497,7 @@ if ismember({'all_joint'}, options.saveind)
     options.saveind = [options.saveind, 'jr', 'jfz', 'jz', 'jp'];
 end
 if ismember({'none'}, options.saveind)
-    options.saveind = [];
+    options.saveind = {};
 end
 
 if length(options.saveind) 
@@ -535,7 +528,7 @@ fprintf(' ... done.\n');
 %                                                The main loop ... go through all the sessions
 
 first_subject = true;
-oksub         = zeros(1, length(list.nsessions));
+oksub         = zeros(1, list.nsessions);
 embed_data    = nargout > 0 || ~isempty(options.savegroup);
 
 for s = 1:list.nsessions
@@ -593,7 +586,7 @@ for s = 1:list.nsessions
 
     if strcmp(options.itargetf, 'sfolder')
         stargetf = fileparts(reference_file);
-        if endsWith(stargetf, '/concs')
+        if ends_with(stargetf, '/concs')
             stargetf = strrep(stargetf, '/concs', '');
         end
     else
@@ -605,8 +598,8 @@ for s = 1:list.nsessions
 
     if verbose; fprintf('     ... creating ROI mask'); end
 
-    roi  = nimage.img_read_roi(roiinfo, sroifile);
-    nroi = length(roi.roi.roinames);
+    roi  = nimage.img_prep_roi(roiinfo, sroifile);
+    nroi = length(roi.roi);
 
     if verbose; fprintf(' ... read %d ROI\n', nroi); end
 
@@ -629,168 +622,177 @@ for s = 1:list.nsessions
     nsets = length(exsets);
     for n = 1:nsets
 
-        if verbose; fprintf('         ... set %s', exsets(n).title); end
+        if verbose; fprintf('         ... set %s\n', exsets(n).title); end
         
         % ---> get the extracted timeseries
 
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
 
-        if verbose; fprintf(' ... extracted ts'); end
+        if verbose; fprintf('         ... extracted ts\n'); end
         
         % ---> generate seedmaps
 
         rs = ts.img_extract_roi(roi, [], options.roimethod);
-        fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'), options);
+        fc = ts.zeroframes(size(rs, 1));
+        fc.data = fc_compute(ts.data, rs, options.fcmeasure, false, options);
+        % fc = ts.img_compute_correlations(rs', options.fcmeasure, false, strcmp(options.debug, 'true'), options);
 
-        if verbose; fprintf(' ... computed seedmap'); end
+        if verbose; fprintf('         ... computed seedmap\n'); end
 
         % ---> Embedd results (if group data is requested)
         
         if embed_data
             if first_subject
                 fcmaps(n).title    = exsets(n).title;
-                fcmaps(n).roi      = roi.roi.roinames;
+                fcmaps(n).roi      = {roi.roi.roiname};
                 fcmaps(n).subjects = {};
             end
             fcmaps(n).subjects{s}  = subjectid;
             fcmaps(n).fc(s).(fcmeasure) = fc;
             fcmaps(n).fc(s).N = ts.frames;
                         
-            if verbose; fprintf(' ... embedded\n'); end
+            if verbose; fprintf('         ... embedded\n'); end
         end
-    end
 
-    % ---> save individual results
+        % ---> save individual results
 
-    if ~isempty(options.saveind)
+        if ~isempty(options.saveind)
 
-        if verbose; fprintf('     ... saving seedmaps\n'); end
+            if verbose; fprintf('     ... saving seedmaps\n'); end
 
-        % set subjectname
+            % set subjectname
 
-        if strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder')
-            subjectname = [subjectid, '_'];
-        else
-            subjectname = '';
+            if strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder')
+                subjectname = [subjectid, '_'];
+            else
+                subjectname = '';
+            end
         end
 
         % set up filetype for single images
 
-    if strcmp(y.filetype, 'dtseries')
-        tfiletype = 'dscalar';
-    else
-        tfiletype = y.filetype;
-    end
+        if strcmp(y.filetype, 'dtseries') || strcmp(y.filetype, 'ptseries')
+            tfiletype = [y.filetype(1) 'scalar'];
+        else
+            tfiletype = y.filetype;
+        end
 
         % --- loop through sets
 
-        for n = 1:nsets
-            if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
+        if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
 
-            % --- prepare computed data
+        % --- prepare computed data
 
-            if verbose; fprintf('         ... preparing data'); end
+        if verbose; fprintf('         ... preparing data'); end
 
-            if any(ismember(options.saveind, {'fz', 'p', 'z', 'jfz', 'jp', 'jz'}))
-                fz = fc;
-                fz.data = fc_fisher(fz.data);
-            end
+        if any(ismember(options.saveind, {'fz', 'p', 'z', 'jfz', 'jp', 'jz'}))
+            fz = fc;
+            fz.data = fc_fisher(fz.data);
+        end
 
-            if any(ismember(options.saveind, {'p', 'z', 'jp', 'jz'}))
-                Z = fc;
-                Z.data = fz.data/(1/sqrt(ts.frames-3));
-            end
+        if any(ismember(options.saveind, {'p', 'z', 'jp', 'jz'}))
+            Z = fc;
+            Z.data = fz.data/(1/sqrt(ts.frames-3));
+        end
 
-            if any(ismember(options.saveind, {'p', 'jp'}))
-                p = fc;
-                p.data = (1 - normcdf(abs(Z.data), 0, 1)) * 2 .* sign(fz.data);
-            end
+        if any(ismember(options.saveind, {'p', 'jp'}))
+            p = fc;
+            p.data = (1 - normcdf(abs(Z.data), 0, 1)) * 2 .* sign(fz.data);
+        end
 
-            if verbose; fprintf(' ... done\n'); end
+        if verbose; fprintf(' ... done\n'); end
 
-            % --- loop through roi
+        % --- loop through roi
 
-            if verbose; fprintf('         ... saving set %s, roi:', exsets(n).title); end
+        if verbose; fprintf('         ... saving set %s, roi:', exsets(n).title); end
 
-            % --- print for each ROI separately
-        
-            if any(ismember(options.saveind, {'r', 'fz', 'z', 'p', 'rho', 'cv', 'cc', 'coh', 'mi'}));
+        % --- print for each ROI separately
+    
+        if any(ismember(options.saveind, {'r', 'fz', 'z', 'p', 'rho', 'cv', 'cc', 'coh', 'mi'}));
 
-                for r = 1:nroi
+            for r = 1:nroi
 
-                    if verbose; fprintf(' %s', roi.roi.roinames{r}); end
+                if verbose; fprintf(' %s', roi.roi(r).roiname); end
 
-                    % --- prepare basename
+                % --- prepare basename
 
-                    basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, roi.roi.roinames{r});
-
-                    % --- save images
-
-                    for sn = 1:length(options.saveind)
-                        switch options.saveind{sn}
-                            case 'r'
-                                t = fc.sliceframes([1:nroi] == r);                                              
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
-                            case 'fz'
-                                t = fz.sliceframes([1:nroi] == r);
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
-                            case 'z'
-                                t = Z.sliceframes([1:nroi] == r);
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
-                            case 'p'
-                                t = p.sliceframes([1:nroi] == r);
-                                t.filetype = tfiletype;
-                                if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
-                                t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
-                        end
-                    end
-                end
-            end
-
-            % --- print for all ROI jointly
-
-            if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv', 'jcc', 'jmi', 'jcoh'}));
-
-                allroi = strjoin(roi.roi.roinames, '-');
-                basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, allroi);
-
-                if verbose; fprintf(' %s', allroi); end
+                basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, roi.roi(r).roiname);
 
                 % --- save images
 
                 for sn = 1:length(options.saveind)
                     switch options.saveind{sn}
-                        case 'jr'
-                            t = fc;  
+                        case 'r'
+                            t = fc.sliceframes([1:nroi] == r);                                              
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure]};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
-                        case 'jfz'
-                            t = fz;
+                        case 'fz'
+                            t = fz.sliceframes([1:nroi] == r);
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure ' [Fz]']};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
-                        case 'jz'
-                            t = Z;
+                        case 'z'
+                            t = Z.sliceframes([1:nroi] == r);
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure ' [Z]']};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
-                        case 'jp'
-                            t = p;
+                        case 'p'
+                            t = p.sliceframes([1:nroi] == r);
                             t.filetype = tfiletype;
                             if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
+                            t.cifti.maps = {['seedmap ' roi.roi(r).roiname ' ' fcmeasure ' [p]']};
                             t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
                     end
                 end
             end
-            if verbose; fprintf(' done.\n'); end
         end
+
+        % --- print for all ROI jointly
+
+        if any(ismember(options.saveind, {'jr', 'jfz', 'jz', 'jp', 'jrho', 'jcv', 'jcc', 'jmi', 'jcoh'}));
+
+            allroi = strjoin({roi.roi.roiname}, '-');
+            basefilename = sprintf('seedmap_%s%s%s_%s', subjectname, lname, settitle, allroi);
+            roi_names = {roi.roi.roiname};
+
+            if verbose; fprintf(' %s', allroi); end
+
+            % --- save images
+
+            for sn = 1:length(options.saveind)
+                switch options.saveind{sn}
+                    case 'jr'
+                        t = fc;  
+                        t.filetype = tfiletype;
+                        if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure], roi_names, 'UniformOutput', false);
+                        t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure]));
+                    case 'jfz'
+                        t = fz;
+                        t.filetype = tfiletype;
+                        if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Fz'])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure ' [Fz]'], roi_names, 'UniformOutput', false);
+                        t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Fz']));
+                    case 'jz'
+                        t = Z;
+                        t.filetype = tfiletype;
+                        if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_Z'])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure ' [Z]'], roi_names, 'UniformOutput', false);
+                        t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_Z']));
+                    case 'jp'
+                        t = p;
+                        t.filetype = tfiletype;
+                        if printdebug; fprintf(['\n             -> ' fullfile(stargetf, [basefilename '_' fcmeasure '_p'])]); end
+                        t.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' fcmeasure ' [p]'], roi_names, 'UniformOutput', false);
+                        t.img_saveimage(fullfile(stargetf, [basefilename '_' fcmeasure '_p']));
+                end
+            end
+        end
+        if verbose; fprintf(' done.\n'); end
     end
     first_subject = false;
 end
@@ -804,6 +806,8 @@ if ~isempty(options.savegroup)
         extra(sid).key = ['session ' int2str(sid)];
         extra(sid).value = list.session(sid).id;
     end
+
+    session_names = {list.session.id};
 
     for setid = 1:nsets
         if verbose; fprintf(' -> %s\n', fcmaps(setid).title); end
@@ -850,47 +854,59 @@ if ~isempty(options.savegroup)
 
             % --- save requested data
             if verbose; fprintf(' ... saving ...'); end
-            basefilename = sprintf('seedmap_%s%s_%s', lname, settitle, roiname);
+            basefilename = sprintf('seedmap_%s%s_%s_%s', lname, settitle, roiname, fcmeasure);
 
             % -- save group mean results
             if any(ismember(options.savegroup, {'mean_r'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_mean_' fcmeasure])]); end
-                M.img_saveimage(fullfile(targetf, [basefilename '_mean_' fcmeasure]), extra);
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_mean'])]); end
+                M.filetype = tfiletype;
+                M.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [group mean]']};
+                M.img_saveimage(fullfile(targetf, [basefilename '_group_mean']), extra);                
                 if verbose && ~printdebug; fprintf([' ' fcmeasure]); end
             end
 
             % -- save group mean fz results
             if any(ismember(options.savegroup, {'mean_fz'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_mean_' fcmeasure '_Fz'])]); end
-                MFz.img_saveimage(fullfile(targetf, [basefilename '_mean_' fcmeasure '_Fz']), extra);
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_Fz_group_mean'])]); end
+                MFz.filetype = tfiletype;
+                MFz.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [Fz group mean]']};
+                MFz.img_saveimage(fullfile(targetf, [basefilename '_Fz_group_mean']), extra);
                 if verbose && ~printdebug; fprintf(' fz'); end
             end
 
             % -- save all results
             if any(ismember(options.savegroup, {'all_r'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_' fcmeasure])]); end
-                fc.img_saveimage(fullfile(targetf, [basefilename '_all_' fcmeasure]), extra);
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_sessions'])]); end
+                fc.filetype = tfiletype;
+                fc.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' roiname ' ' fcmeasure], session_names, 'UniformOutput', false);
+                fc.img_saveimage(fullfile(targetf, [basefilename '_all_sessions']), extra);
                 if verbose && ~printdebug; fprintf(' all_r'); end
             end
 
             % -- save all fz results
             if any(ismember(options.savegroup, {'all_fz'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_all_' fcmeasure '_Fz'])]); end
-                fz.img_saveimage(fullfile(targetf, [basefilename '_all_' fcmeasure '_Fz']), extra);
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_Fz_all_sessions'])]); end
+                fz.filetype = tfiletype;
+                fz.cifti.maps = cellfun(@(x) ['seedmap ' x ' ' roiname ' ' fcmeasure ' [Fz]'], session_names, 'UniformOutput', false);
+                fz.img_saveimage(fullfile(targetf, [basefilename '_Fz_all_sessions']), extra);
                 if verbose && ~printdebug; fprintf(' all_fz'); end
             end
             
             % -- save group p results
             if any(ismember(options.savegroup, {'group_p'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_' fcmeasure '_p'])]); end
-                p.img_saveimage(fullfile(targetf, [basefilename '_group_' fcmeasure '_p']), extra);
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_p'])]); end
+                p.filetype = tfiletype;
+                p.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [group p]']};
+                p.img_saveimage(fullfile(targetf, [basefilename '_group_p']), extra);
                 if verbose && ~printdebug; fprintf(' p'); end
             end
 
             % -- save group Z results
             if any(ismember(options.savegroup, {'group_z'}))
-                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_' fcmeasure '_Z'])]); end
-                Z.img_saveimage(fullfile(targetf, [basefilename '_group_' fcmeasure '_Z']), extra);
+                if printdebug; fprintf(['\n             -> ' fullfile(targetf, [basefilename '_group_Z'])]); end
+                Z.filetype = tfiletype;
+                Z.cifti.maps = {['seedmap ' roiname ' ' fcmeasure ' [group Z]']};
+                Z.img_saveimage(fullfile(targetf, [basefilename '_group_Z']), extra);
                 if verbose && ~printdebug; fprintf(' Z'); end
             end
 

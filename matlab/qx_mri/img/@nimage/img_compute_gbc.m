@@ -8,7 +8,7 @@ function [obj, commands] = img_compute_gbc(obj, command, fmask, mask, verbose, r
 %   ======
 %
 %    --obj       nimage object.
-%   --command   Pipe separated string describing GBC to compute.
+%    --command   Pipe separated string describing GBC to compute.
 %
 %               mFz:t
 %                   computes mean Fz value across all voxels (over threshold t)

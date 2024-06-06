@@ -86,7 +86,7 @@ end
 if ischar(flist)
 
     if any(strfind(flist, '|')) && (any(strfind(flist, 'subject id:')) || any(strfind(flist, 'session id:')))
-        if strncmp(flist, 'listname:', 9)
+        if starts_with(flist, 'listname:')
             files = regexp(flist, '\|', 'split');
             list.listname = strtrim(regexp(files{1}, ':', 'split'));
             list.listname = list.listname{2};

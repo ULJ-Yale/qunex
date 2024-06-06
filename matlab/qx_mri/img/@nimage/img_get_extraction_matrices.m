@@ -24,12 +24,27 @@ function [exsets] = img_get_extraction_matrices(obj, frames, options)
 %                   -> extraction end   ... is a frame number relative to event start or end when the extraction should start    
 %                      the extraction start and end should be given as '<s|e><frame number>'. E.g.:
 %                       s0  ... the frame of the event onset 
-%                       s2  ... the second frame from the event onset 
-%                       e1  ... the first frame from the event end 
-%                       e0  ... the last frame of the event 
-%                       e-2 ... the two frames before the event end
+%                       s2  ... the third frame of the event
+%                       e0  ... the frame at the start of which the event ended
+%                       e1  ... the second frame after the event end 
+%                       e-1 ... the frame at the end of which the event ended
+%
+%                      | s0 | s1 | s2   ...   e-2 | e-1 | e0 | e1
+%                      |<- event start  ... event end ->|
+%
 %                      example:
 %                       '<fidlfile>|encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
+%                       This example will extract two timeseries. The first timeseries will be named encoding, it will 
+%                       take the third frame following the onset of events e-color and e-shape. The second timeseries
+%                       will be named delay and will include all the frames from the third frame following the event 
+%                       onset to the first frame following the event end of the d-color or d-shape events.
+%
+%                       encoding: | 0 0 1 0 0 ...
+%                                 |<- e-color or e-shape event onset
+%
+%                       delay:    | 0 0 1 1 1 ..................... 1 | 1 0 0 
+%                                 |<- d-color or d-shape event onset  |<- d-color or d-shape event end
+%
 %   options   - A string specifying additional analysis options formated as pipe separated pairs of colon separated
 %               key, value pairs: "<key>:<value>|<key>:<value>"
 %               It takes the following keys and values:

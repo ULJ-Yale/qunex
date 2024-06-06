@@ -93,7 +93,7 @@ if nargin < 1, error('ERROR: No files to extract the values from provided!');  e
 %                                              parcel processing
 
 parcels = {};
-if strncmp(roif, 'parcels:', 8)
+if starts_with(roif, 'parcels:')
     parcels = strtrim(regexp(roif(9:end), ',', 'split'));    
 end
 
@@ -114,18 +114,19 @@ list = general_read_file_list(flist);
 %                                                       read roi
 
 if isempty(parcels)
-    roi = nimage.img_read_roi(roif);
-    roi.data = roi.image2D;    
+    roi = nimage.img_prep_roi(roif);
 elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
     t = nimage(list.session(1).glm);
     if ~isfield(t.cifti, 'parcels') || isempty(t.cifti.parcels)
         error('ERROR: The glm file lacks parcel specification! [%s]', list.session(1).glm);
     end
     parcels = t.cifti.parcels;
-    roi.roi.roinames = parcels;    
-    roi.roi.roicodes = 1:length(parcels);
+    for r = 1:length(parcels)
+        roi.roi(r).roiname = parcels{r};
+        [~, roi.roi(r).roicode] = ismember(parcels{r}, y.cifti.parcels);
+    end
 end
-nroi = length(roi.roi.roinames);
+nroi = length(roi.roi);
 nparcels = length(parcels);
 
 % --------------------------------------------------------------
@@ -146,7 +147,7 @@ if ~isempty(strfind(tformat, 'wide'))
     wtext = fopen([outf '_wide.tsv'], 'w');
     fprintf(wtext, 'session\tevent\tframe');
     for r = 1:nroi
-        fprintf(wtext, '\t%s', roi.roi.roinames{r});
+        fprintf(wtext, '\t%s', roi.roi(r).roiname);
     end
 end
 
@@ -168,7 +169,7 @@ for s = 1:list.nsessions
     % ---> update ROI
 
     if isempty(parcels) && isfield(list.session(s), 'roi') && ~isempty(list.session(s).roi)
-        sroi = roi.img_mask_roi(list.session(s).roi);
+        sroi = nimage.img_prep_roi(roif, list.session(s).roi);
     else
         sroi = roi;
     end
@@ -219,7 +220,8 @@ for s = 1:list.nsessions
     end
     if wtext
         for f = 1:nframes
-            fprintf(wtext, '\n%s\t%s\t%s', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f));
+            % fprintf(wtext, '\n%s\t%s\t%s', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f));            
+            fprintf(wtext, '\n%s\t%s\t%d', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.frame(f));            
             for r = 1:nroi
                 fprintf(wtext, '\t%.3f', stats(r).mean(f));
             end

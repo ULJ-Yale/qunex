@@ -13,6 +13,7 @@ function [correlations, zscores, pvalues] = img_compute_correlations(obj, bdata,
 %   --fcmeasure     functional connectivity measure to compute
 %   --optimized     has the data been optimized for the computation
 %   --verbose       should it talk a lot [no]
+%   --options       additional options
 %
 %   OUTPUTS
 %   =======

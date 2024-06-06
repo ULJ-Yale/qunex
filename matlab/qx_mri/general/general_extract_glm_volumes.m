@@ -226,9 +226,16 @@ end
 
 % --- save
 
+for f = 1:pt
+    mapnames{f} = sprintf('%s %s f%d', session{f}, event{f}, frame(f));
+end
+glm.filetype = [glm.filetype(1) 'scalar'];
+
+
 if ismember(saveoption, {'by_effect', 'by_session'})
     out = glm.zeroframes(pt);
-    out.data = data;
+    out.data = data;    
+    out.cifti.maps = mapnames;
     out = setMeta(out, session, effect, frame, event, verbose);
     if nargout > 0
         out.list.meta    = 'list';
@@ -240,7 +247,7 @@ if ismember(saveoption, {'by_effect', 'by_session'})
     if ~strcmp(outf, 'none')
         if verbose, fprintf('\n---> saving data in a single file, sorted %s', reportmsg); end
         out.img_saveimage(outf);
-        if strcmp(out.filetype, 'ptseries') & ~isempty(txtf)
+        if out.filetype(1) == 'p' & ~isempty(txtf)
             if verbose, fprintf('\n---> saving data in a text file, sorted %s', reportmsg); end
             tout = fopen([outf '_long.txt'], 'w');
             fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
@@ -259,11 +266,12 @@ else
         mask = ismember(effect, e);
         out = glm.zeroframes(sum(mask));
         out.data = data(:, mask);
+        out.cifti.maps = mapnames(mask);
         out = setMeta(out, session(mask), effect(mask), frame(mask), event(mask), verbose);
         if ~strcmp(outf, 'none')
             if verbose, fprintf('\n---> saving data in separate files for each effect'); end
             out.img_saveimage([outf '_' e{1}]);
-            if strcmp(out.filetype, 'ptseries') & ~isempty(txtf)
+            if out.filetype(1) == 'p' & ~isempty(txtf)
                 if verbose, fprintf('\n---> saving data in separate text files for each effect'); end
                 tout = fopen([outf '_' e{1} '_long.txt'], 'w');
                 fprintf(tout, 'session\troi code\troi name\teffect\tframe\tvalue');
