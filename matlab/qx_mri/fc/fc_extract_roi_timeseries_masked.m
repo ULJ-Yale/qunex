@@ -4,6 +4,11 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %
 %   Extracts and saves region timeseries defined by provided roiinfo file
 %
+%   NOTE: Please, note that fc_extract_roi_timeseries_masked function is being 
+%         deprecated. The function will no longer be developed and will be 
+%         removed in future releases of QuNex. Consider using 
+%         fc_extract_roi_timeseries, which offers additional functionality, instead.
+%
 %   Parameters:
 %       --flist (str):
 %           A .list file, or a well strucutured string (see
@@ -154,18 +159,27 @@ if nargin < 5 || isempty(options), options = 'm';    end
 
 verbose = true;  % ---> to be set by options in the future
 
+fprintf('\nWARNING: Please, note that fc_extract_roi_timeseries_masked function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Consider using fc_extract_roi_timeseries, which offers additional functionality, instead');
+
 if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
 end
 
+
+% ---> setting up inmask parameter
+
 fignore = 'ignore';
 eventbased = false;
+
 if isa(inmask, 'char')
-    eventbased = true;
-    if strcmp(ignore, 'fidl')
-        fignore = 'ignore';
-    else
-        fignore = 'no';
+    inmask = str2num(inmask);
+    if isempty(inmask)
+        eventbased = true;
+        if strcmp(ignore, 'fidl')
+            fignore = 'ignore';
+        else
+            fignore = 'no';
+        end
     end
 end
 

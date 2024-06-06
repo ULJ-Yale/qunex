@@ -4,6 +4,11 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %
 %   Computes GBC maps for individuals as well as group maps.
 %
+%   NOTE: Please, note that fc_compute_gbc3 function is being deprecated.
+%         The function will no longer be developed and will be removed in future 
+%         releases of QuNex. Consider using fc_compute_gbc, which offers 
+%           additional functionality, instead.
+%
 %   Parameters:
 %       --flist (str):
 %           Conc-like style list of session image files or conc files:
@@ -146,6 +151,8 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
+
+fprintf('\nWARNING: Please, note that fc_compute_gbc3 function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Consider using fc_compute_gbc, which offers additional functionality, instead');
 
 fprintf('\n\nStarting ...');
 

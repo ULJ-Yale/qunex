@@ -61,7 +61,7 @@ functions = {
     'fc_compute_roifc':                [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_gbc':                  [('flist', 'string'), ('command', 'string'), ('sroiinfo', 'string'), ('troiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
     'fc_compute_seedmaps':             [('flist', 'string'), ('roiinfo', 'string'), ('frames', 'string'), ('targetf', 'string'), ('options', 'string')],
-    'fc_compute_seedmaps_multiple':    [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'numeric'), ('options', 'string'), ('targetf', 'string'), ('method', 'string'), ('ignore', 'string'), ('cv', 'string')],
+    'fc_compute_seedmaps_multiple':    [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('options', 'string'), ('targetf', 'string'), ('method', 'string'), ('ignore', 'string'), ('cv', 'string')],
     'fc_extract_roi_timeseries_masked':   [('flist', 'string'), ('roiinfo', 'string'), ('inmask', 'string'), ('targetf', 'string'), ('options', 'string'), ('method', 'string'), ('ignore', 'string'), ('rcodes', 'string'), ('mcodes', 'string'), ('bmask', 'string')],
     'fc_extract_trial_timeseries_masked': [('flist', 'string'), ('roif', 'string'), ('targetf', 'string'), ('tevents', 'string'), ('frames', 'numeric'), ('scrubvar', 'string')],
     'fc_segment_mri':                  [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('verbose', 'string')],

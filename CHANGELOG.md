@@ -8,20 +8,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.100.0 [QX IO]
 
+* Completely new FC pipeline (`fc_compute_roifc`, `fc_compute_seedmap`).
+* Complete container rework with updates to almost all of the tools in it.
 * Added the ability to export unprocessed data into BIDS format.
-* New FC functionality (`fc_compute_roifc`, `fc_compute_seedmap`).
+* Improved `import_bids` image sorting.
+* Added the ability to manually assign boldrefs to bolds.
+* Added two additional `hcp_temporal_ica` parameters.
+* Added support to two new `hcp_icafix` parameters.
 * Fixed the wrong default value for `MSMSulc`.
 * Fixed a wrong name for the `hcp_highresmesh` parameter.
-* Added two additional `hcp_temporal_ica` parameters.
-* Improved `import_bids` DWI sorting.
 * Fixed a minor bug in regards to help and extensions.
-* Added support to two new `hcp_icafix` parameters.
 * Fixed img.TR writing from CIFTI metadata in `img_read_nifti`.
 * Fixed some typos and minor bugs in documentation.
-* Improved acceptance testing and extensions.
-* Pulled log tagging out of run_turnkey.
 * Fixed a bug where `run_qc` did not work if `scenezip` was set to no.
-* Several minor bug fixes and improvements that will make QuNex more stable and robust.
+* Several additional bug fixes and improvements that will make QuNex more stable and robust.
+* Improved acceptance testing and extensions.
 
 ## 0.99.3
 
