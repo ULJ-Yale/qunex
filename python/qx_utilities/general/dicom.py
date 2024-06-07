@@ -2029,7 +2029,7 @@ def _zip_dicom(gzip, dicom_folder):
 
             p = subprocess.run(
                 ["tar", "czf", dicom_folder_zip_tmp, os.path.basename(dicom_folder)],
-                cwd=os.path.dirname(dicom_folder),
+                cwd=os.path.abspath(os.path.dirname(dicom_folder)),
             )
 
             if p.returncode != 0:
