@@ -906,7 +906,9 @@ def dicom2nii(
             if not os.path.exists(image):
                 continue
             if debug:
-                print("     ---> processing: %s [%s]" % (image, os.path.basename(image)))
+                print(
+                    "     ---> processing: %s [%s]" % (image, os.path.basename(image))
+                )
             if image[-3:] == "nii":
                 if debug:
                     print("     ---> gzipping: %s" % (image))
@@ -2028,7 +2030,12 @@ def _zip_dicom(gzip, dicom_folder):
                 os.remove(dicom_folder_zip_tmp)
 
             p = subprocess.run(
-                ["tar", "czf", dicom_folder_zip_tmp, os.path.basename(dicom_folder)],
+                [
+                    "tar",
+                    "czf",
+                    os.path.abspath(dicom_folder_zip_tmp),
+                    os.path.basename(dicom_folder),
+                ],
                 cwd=os.path.dirname(dicom_folder),
             )
 

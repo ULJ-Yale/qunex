@@ -152,7 +152,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-fprintf('\nWARNING: Please, note that fc_compute_gbc3 function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Consider using fc_compute_gbc, which offers additional functionality, instead');
+fprintf('\nWARNING: Please, note that fc_compute_gbc3 function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Instead, consider using fc_compute_gbc, which offers additional functionality.');
 
 fprintf('\n\nStarting ...');
 

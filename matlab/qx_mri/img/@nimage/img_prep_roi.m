@@ -918,7 +918,7 @@ function [roi] = process_old_roi(roi, options)
         roi.roi(r).weights   = [];
         roi.roi(r).map       = oldroi.roifile1;
 
-        if roi.volumes > 1
+        if roi.frames > 1
             v = r;
         else
             v = 1;

@@ -2586,6 +2586,7 @@ fi
            echo "   QC Plot images: ${QCPlotImages}" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
            echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
            echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
+           echo ""
            echo " -- Command: " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
            echo "   " 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
            echo "${QuNexCommand} general_plot_bold_timeseries --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --sessionids="${CASE}" --verbose="true"" 2>&1 | tee -a ${general_plot_bold_timeseries_ComlogTmp}
@@ -2657,6 +2658,7 @@ fi
                --extractdata='${ExtractData}' \
                --useweights='${UseWeights}' \
                --weightsfile='${WeightsFile}'"
+               echo ""
                echo " -- Command: ${RunCommand}"
                eval ${RunCommand}
                BOLDfcLogCheck
@@ -2715,6 +2717,7 @@ fi
                    --extractdata='${ExtractData}' \
                    --useweights='${UseWeights}' \
                    --weightsfile='${WeightsFile}'"
+                   echo ""
                    echo " -- Command: ${RunCommand}"
                    eval ${RunCommand}
                    BOLDfcLogCheck
@@ -2766,6 +2769,7 @@ fi
                 --targetf='${OutPath}' \
                 --mask='${MaskFrames}' \
                 --covariance='${Covariance}'"
+                echo ""
                 echo " -- Command: ${RunCommand}"
                 eval ${RunCommand}
                 BOLDfcLogCheck
@@ -2819,6 +2823,7 @@ fi
             --time='${ComputeTime}' \
             --vstep='${VoxelStep}' \
             --covariance='${Covariance}'"
+            echo ""
             echo " -- Command: ${RunCommand}"
             eval ${RunCommand}
             BOLDfcLogCheck
@@ -2856,6 +2861,7 @@ fi
                 --sessions='${CASE}' \
                 --runtype='local' \
                 --acceptancetest='${UnitTest}'"
+                echo ""
                 echo " -- Command: ${RunCommand}"
                 eval ${RunCommand}
             done
@@ -2866,6 +2872,7 @@ fi
             --sessions='${CASE}' \
             --runtype='local' \
             --acceptancetest='${UnitTest}'"
+            echo ""
            echo " -- Command: ${RunCommand}"
            eval ${RunCommand}
         fi

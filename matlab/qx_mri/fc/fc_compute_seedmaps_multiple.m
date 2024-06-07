@@ -98,7 +98,7 @@ if nargin < 4 options = []; end
 if nargin < 3 inmask = [];  end
 if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be specified!'); end
 
-fprintf('\nWARNING: Please, note that fc_compute_seedmaps_multiple function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Consider using fc_compute_seedmaps, which offers additional functionality, instead');
+fprintf('\nWARNING: Please, note that fc_compute_seedmaps_multiple function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Instead, consider using fc_compute_seedmaps, which offers additional functionality.');
 
 
 if ~ischar(ignore)
