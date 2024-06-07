@@ -6,8 +6,8 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 %
 %   NOTE: Please, note that fc_extract_roi_timeseries_masked function is being 
 %         deprecated. The function will no longer be developed and will be 
-%         removed in future releases of QuNex. Consider using 
-%         fc_extract_roi_timeseries, which offers additional functionality, instead.
+%         removed in future releases of QuNex. Instead, consider using 
+%         fc_extract_roi_timeseries, which offers additional functionality.
 %
 %   Parameters:
 %       --flist (str):
@@ -159,7 +159,7 @@ if nargin < 5 || isempty(options), options = 'm';    end
 
 verbose = true;  % ---> to be set by options in the future
 
-fprintf('\nWARNING: Please, note that fc_extract_roi_timeseries_masked function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Consider using fc_extract_roi_timeseries, which offers additional functionality, instead');
+fprintf('\nWARNING: Please, note that fc_extract_roi_timeseries_masked function is being deprecated.\n         The function will no longer be developed and will be removed in future releases of QuNex. \n         Instead, consider using fc_extract_roi_timeseries, which offers additional functionality.');
 
 if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
