@@ -350,7 +350,7 @@ def schedule(
         if outputs["stdout"] is not None:
             s_command += f"#SBATCH -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
-            s_command += f"#SBATCH -e {outputs['stdout']}\n"
+            s_command += f"#SBATCH -e {outputs['stderr']}\n"
         com = "sbatch"
 
     # run the scheduler
@@ -1167,10 +1167,7 @@ def main(args=None):
 
                 # bind cuda path if provided
                 if cuda_path:
-                    if not bind:
-                        container_command += f"--bind {cuda_path}:/usr/local/cuda/ "
-                    else:
-                        container_command += f",{cuda_path}:/usr/local/cuda/ "
+                    container_command += f"--bind {cuda_path}:/usr/local/cuda/ "
 
                 container_command += f"{container.strip()} bash {script_path.strip()}"
             else:
