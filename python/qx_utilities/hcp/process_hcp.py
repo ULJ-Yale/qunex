@@ -11431,6 +11431,12 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             Optional variant for functional images. If specified, functional
             images will be mapped into `functional<bold_variant>` folder.
 
+        --additional_bolds (str, default ''):
+            A comma separated list of additional bolds to map. Use this
+            parameter to map HCP results/derivatives that are not part of the
+            session.txt file (for example concatenated rest denoised BOLDs
+            after runnning hcp_msmall).
+
     Notes:
         The parameters can be specified in command call or session.txt file. If
         possible, the files are not copied but rather hard links are created to
@@ -11499,15 +11505,23 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     Examples:
 
-        Example run from the base study folder with test flag::
+        A basic mapping example::
 
             qunex map_hcp_data \\
-                --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
-                --parsessions="10" \\
-                --hcp_cifti_tail="_Atlas" \\
-                --overwrite="no" \\
-                --test
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --hcp_cifti_tail=_Atlas \\
+                --bolds=all
+
+        Also map concatenated bolds and rest bolds from hcp_msmall::
+
+            qunex map_hcp_data \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --hcp_cifti_tail=_Atlas \\
+                --additional_bolds=rfMRI_REST,fMRI_CONCAT_ALL
 
         Run using absolute paths with scheduler::
 
@@ -11519,14 +11533,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 --overwrite="yes" \\
                 --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
 
-        Additional example::
 
-            qunex map_hcp_data \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --hcp_cifti_tail=_Atlas \\
-                --bolds=all
     """
 
     r = "\n------------------------------------------------------------"
@@ -11714,18 +11721,39 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     bolds, skipped, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
 
+    # add additional BOLDS
+    if options["additional_bolds"] is not None:
+        r += f"\n\nAdditional BOLD images to map: {options['additional_bolds']}\n"
+        additional_bolds = options["additional_bolds"].split(",")
+        boldnum = len(bolds) + 1
+        for ab in additional_bolds:
+            bolds.append((boldnum, ab, "additional_bold", {"bold": ab, "filename": ab}))
+            boldnum += 1
+
     for boldnum, boldname, boldtask, boldinfo in bolds:
         r += "\n ... " + boldname
 
         # --- filenames
-        f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        if boldtask != "additional_bold":
+            f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        else:
+            d = pc.getSessionFolders(sinfo, options)
+
+            f["bold_qx_vol"] = os.path.join(
+                d["s_bold"],
+                boldname + options["qx_nifti_tail"] + ".nii.gz",
+            )
+            f["bold_qx_dts"] = os.path.join(
+                d["s_bold"],
+                boldname + options["qx_cifti_tail"] + ".dtseries.nii",
+            )
+            f["bold_mov"] = os.path.join(d["s_bold_mov"], boldname + "_mov.dat")
 
         status = True
         hcp_bold_name = ""
 
         try:
             # -- get source bold name
-
             if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
                 hcp_bold_name = boldinfo["filename"]
             elif "bold" in boldinfo:
@@ -11734,7 +11762,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 hcp_bold_name = "%s%d" % (options["hcp_bold_prefix"], boldnum)
 
             # -- check if present and map
-
             hcp_bold_path = os.path.join(
                 d["hcp"],
                 "MNINonLinear",
@@ -11749,10 +11776,13 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 status = False
 
             else:
-                if os.path.exists(f["bold_vol"]) and not overwrite:
+                if os.path.exists(f["bold_qx_vol"]) and not overwrite:
                     r += "\n     ... volume image ready"
+                elif boldtask == "additional_bold" and not os.path.exists(
+                    hcp_bold_path
+                ):
+                    r += f"\n     ... WARNING: additional bold source does not exist: {f['bold_vol']}"
                 else:
-                    # r += "\n     ... linking volume image \n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + '.nii.gz'), f['bold'])
                     status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
@@ -11765,10 +11795,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         "\n     ... ",
                     )
 
-                if os.path.exists(f["bold_dts"]) and not overwrite:
+                if os.path.exists(f["bold_qx_dts"]) and not overwrite:
                     r += "\n     ... grayordinate image ready"
                 else:
-                    # r += "\n     ... linking cifti image\n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
                     status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
@@ -11784,13 +11813,12 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(f["bold_mov"]) and not overwrite:
                     r += "\n     ... movement data ready"
                 else:
-                    if os.path.exists(
-                        os.path.join(hcp_bold_path, "Movement_Regressors.txt")
-                    ):
+                    movement_regressors = f"Movement_Regressors{options['hcp_cifti_tail'].replace('_Atlas', '')}.txt"
+                    if os.path.exists(os.path.join(hcp_bold_path, movement_regressors)):
                         mdata = [
                             line.strip().split()
                             for line in open(
-                                os.path.join(hcp_bold_path, "Movement_Regressors.txt")
+                                os.path.join(hcp_bold_path, movement_regressors)
                             )
                         ]
                         mfile = open(f["bold_mov"], "w")
@@ -11808,10 +11836,15 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 print(mline.replace(" -", "-"), file=mfile)
                         mfile.close()
                         r += "\n     ... movement data prepared"
+                    elif boldtask == "additional_bold":
+                        r += (
+                            "\n     ... WARNING: could not prepare movement data for the additional bold, source does not exist: %s"
+                            % os.path.join(hcp_bold_path, movement_regressors)
+                        )
                     else:
                         r += (
                             "\n     ... ERROR: could not prepare movement data, source does not exist: %s"
-                            % os.path.join(hcp_bold_path, "Movement_Regressors.txt")
+                            % os.path.join(hcp_bold_path, movement_regressors)
                         )
                         failed += 1
                         status = False
