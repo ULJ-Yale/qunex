@@ -1123,11 +1123,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
                     )
 
-        print("!!!!!!!!!!!!!!")
-        print(r)
-        print(hcp["T1w"])
-        sys.exit(0)
-
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:
             t1template = os.path.join(
