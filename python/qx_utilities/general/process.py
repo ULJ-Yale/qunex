@@ -661,8 +661,8 @@ arglist = [
     ],
     [
         "hcp_prefs_template_res",
-        "0.7",
-        str,
+        "",
+        isNone,
         "The resolution (in mm) of the structural images templates to use in the prefs step.",
     ],
     [
