@@ -966,7 +966,7 @@ def main(args=None):
         sys.exit(1)
     except ValueError as e:
         print(
-            "\n--------------------==== QuNex failed! ====--------------------\nERROR: Execution of qunex command %s failed!"
+            "\n--------------------------------- QuNex failed ---------------------------------\nERROR: Execution of qunex command %s failed!"
             % (comm)
         )
         print(e)
@@ -979,11 +979,11 @@ def main(args=None):
         sys.exit(e)
     except:
         print(
-            "\n--------------------==== QuNex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!"
+            "\n--------------------------------- QuNex failed ---------------------------------\n\nERROR: Execution of command `%s` failed!"
             % (comm)
         )
         print(
-            "       Please check documentation for the command (`qunex %s --h`)!"
+            "       Please check documentation for the command (`qunex %s --help`)!"
             % (comm)
         )
         print(
