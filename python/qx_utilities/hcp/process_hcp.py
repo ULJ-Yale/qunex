@@ -5820,12 +5820,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = os.path.join(
-            hcp["hcp_nonlin"],
-            "Results",
-            boldtarget,
-            "%s_hp%s_clean.nii.gz" % (boldtarget, bandpass),
-        )
+        tfile = None
         fullTest = None
 
         # -- Run
@@ -6038,7 +6033,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
+        tfile = None
         fullTest = None
 
         # -- Run
