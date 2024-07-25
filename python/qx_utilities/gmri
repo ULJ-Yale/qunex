@@ -566,7 +566,7 @@ def runCommand(command, args):
             raise ge.CommandError(
                 "gmri",
                 "Invalid arguments",
-                "Provided unknown arguments: %s!"
+                "Provided unknown arguments: [%s]!"
                 % (", ".join(bad)),
             )
 
