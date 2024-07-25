@@ -5826,10 +5826,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running single-run HCP ICAFix",
@@ -6039,10 +6036,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         # -- Run
         if run and groupok:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running multi-run HCP ICAFix",
