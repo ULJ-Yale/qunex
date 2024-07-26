@@ -1047,12 +1047,6 @@ arglist = [
         isNone,
         "HCPStyleData (default) or LegacyStyleData, controls whether --icadim-mode=fewtimepoints is allowed.",
     ],
-    [
-        "hcp_icafix_fixonly",
-        "",
-        isNone,
-        "Whether to execute only the FIX step of the pipeline.",
-    ],
     ["# --- hcp_post_fix options"],
     [
         "hcp_postfix_dualscene",
