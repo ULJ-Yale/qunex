@@ -5471,6 +5471,9 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             HCPStyleData (default) or LegacyStyleData, controls whether
             --icadim-mode=fewtimepoints is allowed.
 
+        --hcp_icafix_fixonly (str, default 'FALSE'):
+            Whether to execute only the FIX step of the pipeline.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -5510,6 +5513,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
             ``hcp_config``                     ``config``
             ``hcp_icafix_processingmode``      ``processing-mode``
+            ``hcp_icafix_fixonly``             ``fix-only``
             ``hcp_matlab_mode``                ``matlabrunmode``
             ================================== =======================
 
@@ -6014,6 +6018,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 '             --processing-mode="%s"'
                 % options["hcp_icafix_processingmode"]
             )
+
+        if options["hcp_icafix_fixonly"] is not None:
+            comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
 
         # -- Report command
         if groupok:
