@@ -437,7 +437,7 @@ def copy_study(
     studyfolder, existing_study, step=None, sessions=None, batchfile=None, filter=None
 ):
     """
-    ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [step=None] [sessions=None] [batchfile=None] [filter=None] ``
+    ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [step=None] [sessions=None] [batchfile=None] [filter=None]``
 
     Copies an existing QuNex study onto a new location.
 

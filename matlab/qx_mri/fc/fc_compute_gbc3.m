@@ -89,7 +89,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %           Radius for dilating mask (no dilation if empty).
 %
 %       --ignore (str, default ''):
-%           The column in *_scrub.txt file that matches bold file to be
+%           The column in `*_scrub.txt` file that matches bold file to be
 %           used for ignore mask. All if empty.
 %
 %       --time (bool, default false):
