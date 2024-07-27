@@ -7,11 +7,11 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %   NOTE: Please, note that fc_compute_gbc3 function is being deprecated.
 %         The function will no longer be developed and will be removed in future 
 %         releases of QuNex. Consider using fc_compute_gbc, which offers 
-%           additional functionality, instead.
+%         additional functionality, instead.
 %
 %   Parameters:
 %       --flist (str):
-%           Conc-like style list of session image files or conc files:
+%           A conc-like style list of session image files or conc files:
 %
 %           - session id:<session_id>
 %           - roi:<path to the individual's ROI file>
@@ -89,7 +89,7 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %           Radius for dilating mask (no dilation if empty).
 %
 %       --ignore (str, default ''):
-%           The column in `*_scrub.txt` file that matches bold file to be
+%           The column in *_scrub.txt file that matches bold file to be
 %           used for ignore mask. All if empty.
 %
 %       --time (bool, default false):
