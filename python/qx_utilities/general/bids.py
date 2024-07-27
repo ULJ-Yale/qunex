@@ -1904,7 +1904,7 @@ def map_nii2bids(sinfo, options, overwrite=False, action='hardlink', session_map
                     shutil.copy(source_file, target_file)
 
         if errors > 0:
-            raise ge.CommandFailed("map_nii2bids", "Errors during mapping", f"Errors occured during mapping, please check log file {os.path.join(bidsfolder, "nii2bids.log")} for details")
+            raise ge.CommandFailed("map_nii2bids", "Errors during mapping", f"Errors occured during mapping, please check log file {os.path.join(bidsfolder, 'nii2bids.log')} for details")
 
         bout.close()
 
