@@ -926,5 +926,3 @@ function [roi] = process_old_roi(roi, options)
 
         roi.roi(r).indeces   = find(roi.data(:, v) == r);
     end
-
-    

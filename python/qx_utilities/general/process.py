@@ -579,6 +579,12 @@ arglist = [
         "The suffix to add to 'MNINonLinear/Results' folder. '' by default.",
     ],
     [
+        "additional_bolds",
+        "",
+        isNone,
+        "Used for mapping HCP results/derivatives to QuNex images/functional folder. A comma separated list of additional bolds to map.",
+    ],
+    [
         "hcp_nifti_tail",
         "",
         str,
@@ -655,8 +661,8 @@ arglist = [
     ],
     [
         "hcp_prefs_template_res",
-        "0.7",
-        str,
+        "",
+        isNone,
         "The resolution (in mm) of the structural images templates to use in the prefs step.",
     ],
     [

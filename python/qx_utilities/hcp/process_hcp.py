@@ -62,6 +62,7 @@ import general.core as gc
 import processing.core as pc
 import general.img as gi
 import general.exceptions as ge
+import nibabel as nib
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -551,10 +552,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             - `T2w_acpc_dc_restore_brain.nii.gz`
             - `T2w_acpc_dc_restore.nii.gz`.
 
-        --hcp_prefs_template_res (float, default 0.7):
+        --hcp_prefs_template_res (float, default set from image data):
             The resolution (in mm) of the structural images templates to use in
             the preFS step. Note: it should match the resolution of the
-            acquired structural images.
+            acquired structural images. If no value is provided, QuNex will try
+            to use the imaging data to set a sensible default value. It will
+            notify you about which setting it used, you should pay attention to
+            this piece of information and manually overwrite the default if
+            something is off.
 
         --hcp_prefs_t1template (str, default ""):
             Path to the T1 template to be used by PreFreeSurfer. By default the
@@ -1074,6 +1079,50 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     r += "\n                %s" % tfile
 
         # -- Prepare templates
+        # try to set hcp_prefs_template_res automatically if not set yet
+        if options["hcp_prefs_template_res"] is None:
+            r += (f"\n---> Trying to set the hcp_prefs_template_res parameter automatically.")
+            # read nii header of hcp["T1w"]
+            img = nib.load(hcp["T1w"])
+            pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+
+            # do they match
+            epsilon = 0.05
+            if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+                run = False
+                r += (
+                    f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+                )
+            else:
+                # upscale slightly and use the closest that matches
+                pixdim = pixdim1 * 1.05
+
+                if pixdim > 2:
+                    run = False
+                    r += (
+                        f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+                    )
+                elif pixdim > 1:
+                    r += (
+                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
+                    )
+                    options["hcp_prefs_template_res"] = 1.0
+                elif pixdim > 0.8:
+                    r += (
+                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
+                    )
+                    options["hcp_prefs_template_res"] = 0.8
+                elif pixdim > 0.65:
+                    r += (
+                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
+                    )
+                    options["hcp_prefs_template_res"] = 0.7
+                else:
+                    run = False
+                    r += (
+                        f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+                    )
+
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:
             t1template = os.path.join(
@@ -5771,21 +5820,13 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = os.path.join(
-            hcp["hcp_nonlin"],
-            "Results",
-            boldtarget,
-            "%s_hp%s_clean.nii.gz" % (boldtarget, bandpass),
-        )
+        tfile = None
         fullTest = None
 
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running single-run HCP ICAFix",
@@ -5989,16 +6030,13 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        tfile = concatfilename + "_hp%s_clean.nii.gz" % bandpass
+        tfile = None
         fullTest = None
 
         # -- Run
         if run and groupok:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running multi-run HCP ICAFix",
@@ -11431,6 +11469,12 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             Optional variant for functional images. If specified, functional
             images will be mapped into `functional<bold_variant>` folder.
 
+        --additional_bolds (str, default ''):
+            A comma separated list of additional bolds to map. Use this
+            parameter to map HCP results/derivatives that are not part of the
+            session.txt file (for example concatenated rest denoised BOLDs
+            after runnning hcp_msmall).
+
     Notes:
         The parameters can be specified in command call or session.txt file. If
         possible, the files are not copied but rather hard links are created to
@@ -11499,15 +11543,23 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     Examples:
 
-        Example run from the base study folder with test flag::
+        A basic mapping example::
 
             qunex map_hcp_data \\
-                --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
-                --parsessions="10" \\
-                --hcp_cifti_tail="_Atlas" \\
-                --overwrite="no" \\
-                --test
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --hcp_cifti_tail=_Atlas \\
+                --bolds=all
+
+        Also map concatenated bolds and rest bolds from hcp_msmall::
+
+            qunex map_hcp_data \\
+                --batchfile=fcMRI/sessions_hcp.txt \\
+                --sessionsfolder=sessions \\
+                --overwrite=no \\
+                --hcp_cifti_tail=_Atlas \\
+                --additional_bolds=rfMRI_REST,fMRI_CONCAT_ALL
 
         Run using absolute paths with scheduler::
 
@@ -11519,14 +11571,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 --overwrite="yes" \\
                 --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
 
-        Additional example::
 
-            qunex map_hcp_data \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --hcp_cifti_tail=_Atlas \\
-                --bolds=all
     """
 
     r = "\n------------------------------------------------------------"
@@ -11714,18 +11759,39 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     bolds, skipped, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
 
+    # add additional BOLDS
+    if options["additional_bolds"] is not None:
+        r += f"\n\nAdditional BOLD images to map: {options['additional_bolds']}\n"
+        additional_bolds = options["additional_bolds"].split(",")
+        boldnum = len(bolds) + 1
+        for ab in additional_bolds:
+            bolds.append((boldnum, ab, "additional_bold", {"bold": ab, "filename": ab}))
+            boldnum += 1
+
     for boldnum, boldname, boldtask, boldinfo in bolds:
         r += "\n ... " + boldname
 
         # --- filenames
-        f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        if boldtask != "additional_bold":
+            f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        else:
+            d = pc.getSessionFolders(sinfo, options)
+
+            f["bold_qx_vol"] = os.path.join(
+                d["s_bold"],
+                boldname + options["qx_nifti_tail"] + ".nii.gz",
+            )
+            f["bold_qx_dts"] = os.path.join(
+                d["s_bold"],
+                boldname + options["qx_cifti_tail"] + ".dtseries.nii",
+            )
+            f["bold_mov"] = os.path.join(d["s_bold_mov"], boldname + "_mov.dat")
 
         status = True
         hcp_bold_name = ""
 
         try:
             # -- get source bold name
-
             if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
                 hcp_bold_name = boldinfo["filename"]
             elif "bold" in boldinfo:
@@ -11734,7 +11800,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 hcp_bold_name = "%s%d" % (options["hcp_bold_prefix"], boldnum)
 
             # -- check if present and map
-
             hcp_bold_path = os.path.join(
                 d["hcp"],
                 "MNINonLinear",
@@ -11749,10 +11814,13 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 status = False
 
             else:
-                if os.path.exists(f["bold_vol"]) and not overwrite:
+                if os.path.exists(f["bold_qx_vol"]) and not overwrite:
                     r += "\n     ... volume image ready"
+                elif boldtask == "additional_bold" and not os.path.exists(
+                    hcp_bold_path
+                ):
+                    r += f"\n     ... WARNING: additional bold source does not exist: {f['bold_vol']}"
                 else:
-                    # r += "\n     ... linking volume image \n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + '.nii.gz'), f['bold'])
                     status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
@@ -11765,10 +11833,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         "\n     ... ",
                     )
 
-                if os.path.exists(f["bold_dts"]) and not overwrite:
+                if os.path.exists(f["bold_qx_dts"]) and not overwrite:
                     r += "\n     ... grayordinate image ready"
                 else:
-                    # r += "\n     ... linking cifti image\n         %s to\n         -> %s" % (os.path.join(hcp_bold_path, hcp_bold_name + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
                     status, r = gc.link_or_copy(
                         os.path.join(
                             hcp_bold_path,
@@ -11784,13 +11851,12 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(f["bold_mov"]) and not overwrite:
                     r += "\n     ... movement data ready"
                 else:
-                    if os.path.exists(
-                        os.path.join(hcp_bold_path, "Movement_Regressors.txt")
-                    ):
+                    movement_regressors = f"Movement_Regressors{options['hcp_cifti_tail'].replace('_Atlas', '')}.txt"
+                    if os.path.exists(os.path.join(hcp_bold_path, movement_regressors)):
                         mdata = [
                             line.strip().split()
                             for line in open(
-                                os.path.join(hcp_bold_path, "Movement_Regressors.txt")
+                                os.path.join(hcp_bold_path, movement_regressors)
                             )
                         ]
                         mfile = open(f["bold_mov"], "w")
@@ -11808,10 +11874,15 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 print(mline.replace(" -", "-"), file=mfile)
                         mfile.close()
                         r += "\n     ... movement data prepared"
+                    elif boldtask == "additional_bold":
+                        r += (
+                            "\n     ... WARNING: could not prepare movement data for the additional bold, source does not exist: %s"
+                            % os.path.join(hcp_bold_path, movement_regressors)
+                        )
                     else:
                         r += (
                             "\n     ... ERROR: could not prepare movement data, source does not exist: %s"
-                            % os.path.join(hcp_bold_path, "Movement_Regressors.txt")
+                            % os.path.join(hcp_bold_path, movement_regressors)
                         )
                         failed += 1
                         status = False
