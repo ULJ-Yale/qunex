@@ -62,7 +62,7 @@ import general.core as gc
 import processing.core as pc
 import general.img as gi
 import general.exceptions as ge
-import nibabel as nib
+# import nibabel as nib
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -1080,48 +1080,48 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # -- Prepare templates
         # try to set hcp_prefs_template_res automatically if not set yet
-        if options["hcp_prefs_template_res"] is None:
-            r += (f"\n---> Trying to set the hcp_prefs_template_res parameter automatically.")
-            # read nii header of hcp["T1w"]
-            img = nib.load(hcp["T1w"])
-            pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+        # if options["hcp_prefs_template_res"] is None:
+        #     r += (f"\n---> Trying to set the hcp_prefs_template_res parameter automatically.")
+        #     # read nii header of hcp["T1w"]
+        #     img = nib.load(hcp["T1w"])
+        #     pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
 
-            # do they match
-            epsilon = 0.05
-            if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
-                run = False
-                r += (
-                    f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
-                )
-            else:
-                # upscale slightly and use the closest that matches
-                pixdim = pixdim1 * 1.05
+        #     # do they match
+        #     epsilon = 0.05
+        #     if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+        #         run = False
+        #         r += (
+        #             f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+        #         )
+        #     else:
+        #         # upscale slightly and use the closest that matches
+        #         pixdim = pixdim1 * 1.05
 
-                if pixdim > 2:
-                    run = False
-                    r += (
-                        f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                    )
-                elif pixdim > 1:
-                    r += (
-                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                    )
-                    options["hcp_prefs_template_res"] = 1.0
-                elif pixdim > 0.8:
-                    r += (
-                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
-                    )
-                    options["hcp_prefs_template_res"] = 0.8
-                elif pixdim > 0.65:
-                    r += (
-                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
-                    )
-                    options["hcp_prefs_template_res"] = 0.7
-                else:
-                    run = False
-                    r += (
-                        f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                    )
+        #         if pixdim > 2:
+        #             run = False
+        #             r += (
+        #                 f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+        #             )
+        #         elif pixdim > 1:
+        #             r += (
+        #                 f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
+        #             )
+        #             options["hcp_prefs_template_res"] = 1.0
+        #         elif pixdim > 0.8:
+        #             r += (
+        #                 f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
+        #             )
+        #             options["hcp_prefs_template_res"] = 0.8
+        #         elif pixdim > 0.65:
+        #             r += (
+        #                 f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
+        #             )
+        #             options["hcp_prefs_template_res"] = 0.7
+        #         else:
+        #             run = False
+        #             r += (
+        #                 f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+        #             )
 
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:

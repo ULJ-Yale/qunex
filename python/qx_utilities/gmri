@@ -201,18 +201,8 @@ all_qunex_commands = [
         "matlab",
     ),
     (
-        "qx_mri.fc.fc_compute_roifc_group",
-        "Computes ROI functional connectivity matrices for a group of sujects/sessions.",
-        "matlab",
-    ),
-    (
         "qx_mri.fc.fc_compute_seedmaps",
         "Computes seed based functional connectivity maps for individual subject / session.",
-        "matlab",
-    ),
-    (
-        "qx_mri.fc.fc_compute_seedmaps_group",
-        "Computes seed based correlations maps for individuals as well as group maps.",
         "matlab",
     ),
     (
