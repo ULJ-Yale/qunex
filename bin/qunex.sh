@@ -120,7 +120,7 @@ qunex_done() {
 
 show_usage_qxutil() {
     echo ""
-    gmri ${usage_input} --h
+    gmri ${usage_input} --help
 }
 
 show_all_qunex_commands() {
@@ -1160,7 +1160,7 @@ if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     fi  
 fi
 
-# -- Check if one of args is -h, --h, -H or --H
+# -- Check if one of the flags is h, H or help
 for fn in "$@" ; do
     if [[ ${fn} == "-h" ]] || [[ ${fn} == "--h" ]] || [[ ${fn} == "-H" ]] || [[ ${fn} == "--H" ]] || [[ ${fn} == "--help" ]] || [[ ${fn} == "-help" ]]; then
         # -- Check if input part of function list

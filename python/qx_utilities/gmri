@@ -909,7 +909,7 @@ def main(args=None):
             help_request = True
         else:
             for n in range(1, len(args)):
-                # if --h, -h, --H or -H flag is provided user is looking for help
+                # if h, H or -help flag is provided user is looking for help
                 if args[n].strip("-") in ["h", "H", "help"]:
                     help_request = True
                     break
@@ -951,7 +951,7 @@ def main(args=None):
             % (" \\\n    ".join(oargs))
         )
         print(
-            "\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm)
+            "\nPlease run `qunex %s --help` to get help for the failed command.\n" % (comm)
         )
         sys.exit(1)
     except ValueError as e:
