@@ -1,0 +1,83 @@
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+#Example for D1 Yale
+datatypes:
+  raw_data:
+    - scan:
+        series_description: T1w_MPR|T1w_MPR2 #Actual name, MANDATORY. Pipe means OR
+        dicoms: 208
+        session:
+          image_count: 2 #Requires that there be 'x' files specified with this series_description. If map_multiple False, then it would still error if multiple scans matched
+          acquisition: 0
+        json: 
+          normalized: [True]
+        nifti: #data found in .nii file header, mix of extracted and explicit keys OPTIONAL
+          data_shape: [[208, 300, 320]]
+          pixdim: [[1., 0.79999995, 0.8, 0.8, 2.4, 0., 0., 0.]]
+
+    - scan:
+        series_description: T2w_SPC 
+        session:
+          image_count: 2
+        json: 
+          normalized: False
+        nifti:
+          data_shape: [208, 300, 320]
+
+    - scan:
+        series_description: SpinEchoFieldMap_AP
+        session:
+          image_count: 3
+
+    - scan:
+        series_description: SpinEchoFieldMap_PA
+        session:
+          image_count: 3
+
+    - scan:
+        series_description: rfMRI_Task_AP_SBRef #Cannot be a list, must be 1 value
+        session:
+          scan_index: [0,1,2,3] 
+          image_count: 5
+
+    - scan:
+        series_description: rfMRI_Task_AP
+        session:
+          scan_index: [0,1,2,3] #OPTIONAL, if multiple names specified will assume consecutive indices so here it doesn't matter
+          image_count: 5
+
+    - scan:
+        series_description: rfMRI_REST_AP_SBRef
+
+    - scan:
+        series_description: rfMRI_REST_AP
+
+    - scan:
+        series_description: rfMRI_Task_AP_Checkerboard_SBRef
+
+    - scan:
+        series_description: rfMRI_Task_AP_Checkerboard
+
+    - scan:
+        series_description: asl_3d_tra_iso_3.0_highres
+
+    - scan:
+        series_description: dMRI_dir98_AP
+        required: False
+
+    - scan:
+        series_description: dMRI_dir98_PA
+        required: False
+
+    - scan:
+        series_description: dMRI_dir99_AP
+        required: False
+
+    - scan:
+        series_description: dMRI_dir99_PA
+        required: False
+
+  config:
+    data_import: dicom

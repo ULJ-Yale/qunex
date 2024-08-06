@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Example for AMP-SCZ PREDICT data
+datatypes:
+  raw_data:
+    - scan:
+        series_description: T1w|T1w run-*
+        session:
+          image_count: 1
+        nifti:
+          data_shape: [208, 300, 320]
+        json:
+          RepetitionTime: 2.5
+          EchoTime: 0.00207
+
+    - scan:
+        series_description: T2w|T2w run-*
+        session:
+          image_count: 1
+        nifti:
+          data_shape: [208, 300, 320]
+        json:
+          RepetitionTime: 3.2
+          EchoTime: 0.564
+    
+    - scan:
+        series_description: epi dir-AP run-*
+        session:
+          image_count: 3
+        nifti:
+          data_shape: [90, 90, 60]
+        json:
+          RepetitionTime: 6.2
+          EchoTime: 0.06
+          PhaseEncodingDirection: j-
+    
+    - scan:
+        series_description: epi dir-PA run-*
+        session:
+          image_count: 3
+        nifti:
+          data_shape: [90, 90, 60]
+        json:
+          RepetitionTime: 6.2
+          EchoTime: 0.06
+          PhaseEncodingDirection: j
+
+    - scan:
+        series_description: sbref rest run-*
+        session:
+          image_count: 4
+        nifti:
+          data_shape: [90, 90, 60]
+        json:
+          RepetitionTime: 0.9
+          EchoTime: 0.035
+          PhaseEncodingDirection: [j-, j, j-, j]
+
+    - scan:
+        series_description: bold rest run-*
+        session:
+          image_count: 4
+        nifti:
+          data_shape: [90, 90, 60, 333]
+        json:
+          RepetitionTime: 0.9
+          EchoTime: 0.035
+          PhaseEncodingDirection: [j-, j, j-, j]
+
+  config:
+    data_type: bids

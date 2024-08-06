@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+#Example for the Glasgow dataset
+datatypes:
+  raw_data:
+    - scan:
+        series_description: 32ch_ep2d_pace TR2s_resting state
+        json:
+          EchoTime: 0.03
+          RepetitionTime: 2
+          PhaseEncodingDirection: j-
+        nifti:
+          data_shape: [70, 70, 32, 150]
+        
+    - scan:
+        series_description: gre_field_mapping_phase/mag
+        session:
+          image_count: 2
+          acquisition: 2
+        nifti:
+          data_shape: [70, 70, 32]
+        json:
+          normalized: False
+        
+    - scan:
+        series_description: gre_field_mapping_phase/mag e2_ph
+        session:
+          image_count: 1
+        nifti:
+          data_shape: [70, 70, 32]
+        json:
+          RepetitionTime: 0.488
+          EchoTime: 0.00738
+        
+    - scan:
+        series_description: t1_mpr_ns_sag_iso_ADNI_32ch
+        session:
+          image_count: 1
+        nifti:
+          data_shape: [192, 256, 256]
+        json:
+          EchoTime: 0.00296
+          RepetitionTime: 2.3
+          normalized: True

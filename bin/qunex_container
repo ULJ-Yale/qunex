@@ -523,7 +523,7 @@ def get_sessionids_from_list(filename):
 
             line = [e.strip() for e in line.split(":")]
 
-            if len(line) == 2 and line[0] == "subject id":
+            if len(line) == 2 and line[0] in ["session id", "subject_id"]:
                 sessionids.append(line[1])
 
     return sessionids
@@ -846,6 +846,7 @@ def main(args=None):
         "fc_extract_roi_timeseries",
         "general_extract_roi_values",
         "general_extract_roi_glm_values",
+        "run_qa",
     ]
     qx_command = command.split(" ")[0]
     # ban parallel execution of these commands
