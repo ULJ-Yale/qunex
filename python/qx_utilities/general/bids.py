@@ -1018,6 +1018,7 @@ def import_bids(
                         os.path.join(sessionsfolder, session),
                         overwrite=overwrite,
                         fileinfo=fileinfo,
+                        sequenceinfo=sequenceinfo
                     )
                     nmapping = True
                 except ge.CommandFailed as e:
