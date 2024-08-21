@@ -1043,16 +1043,6 @@ echo ""
 echo ".......................... Running QuNex v${QuNexVer} .........................."
 echo ""
 
-
-# -- Check if there are no parameters
-if [[ "$#" -lt 2 ]]; then
-    echo "--------------------------------- QuNex failed ---------------------------------"
-    echo ""
-    echo "ERROR: No input parameters found! You can use the --help flag to request help for a specific command."
-    echo ""
-    exit 1
-fi
-
 # ------------------------------------------------------------------------------
 # -- gmri outside local commands to bypass checking
 # ------------------------------------------------------------------------------
@@ -1158,6 +1148,15 @@ if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
         show_all_qunex_commands
         exit 0
     fi  
+fi
+
+# -- Check if there is no command or parameters
+if [[ "$#" -lt 2 ]]; then
+    echo "--------------------------------- QuNex failed ---------------------------------"
+    echo ""
+    echo "ERROR: No input parameters found! You can use the --help flag to request help for a specific command."
+    echo ""
+    exit 1
 fi
 
 # -- Check if one of the flags is h, H or help
