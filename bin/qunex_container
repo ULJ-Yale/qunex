@@ -921,7 +921,8 @@ def main(args=None):
     # do not run in parallel multi_session/longitudinal commands
     multi_session_command = False
     multi_commands = [
-        "hcp_longitudinal_freesurfer",
+        "hcp_long_freesurfer",
+        "hcp_long_post_freesurfer"
         "hcp_temporal_ica",
         "hcp_make_average_dataset",
         "fsl_melodic",

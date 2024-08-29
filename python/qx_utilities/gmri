@@ -355,8 +355,13 @@ all_qunex_commands = [
         "python",
     ),
     (
-        "qx_utilities.hcp.process_hcp.hcp_longitudinal_freesurfer",
-        "Runs HCP PreFreeSurfer pipeline.",
+        "qx_utilities.hcp.process_hcp.hcp_long_freesurfer",
+        "Runs the longitudinal HCP FreeSurfer pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_long_post_freesurfer",
+        "Runs the longitudinal HCP Post FreeSurfer pipeline.",
         "python",
     ),
     (

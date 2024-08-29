@@ -201,7 +201,8 @@ arglist = [
         "An optional additional tag to add to the log file after the command name.",
     ],
     ["overwrite", "no", torf, "Whether to overwrite existing results."],
-    ["parsessions", "1", int, "How many processor sessions to run in parallel."],
+    ["parsubjects", "1", int, "How many subjects to run in parralel."],
+    ["parsessions", "1", int, "How many sessions to run in parallel."],
     ["parelements", "1", int, "How many elements to run in parralel."],
     ["nprocess", "0", int, "How many sessions to process (0 - all)."],
     ["datainfo", "False", torf, "Whether to print information."],
@@ -215,6 +216,7 @@ arglist = [
         str,
         "list of | separated session ids for which to run the command",
     ],
+
     ["# ---- Preprocessing options"],
     ["bet", "-f 0.5", str, "options to be passed to BET in brain extraction"],
     [
@@ -348,6 +350,7 @@ arglist = [
         str,
         "how the paths in the .conc file will be used (relative, absolute)",
     ],
+
     ["# ---- GLM related options"],
     [
         "glm_matrix",
@@ -373,6 +376,7 @@ arglist = [
         str,
         "Additional name to the residuals and coefficient file to distinguish between different posible models.",
     ],
+
     ["# ---- Movement thresholding and report options"],
     [
         "mov_dvars",
@@ -445,6 +449,7 @@ arglist = [
         "the name of the folder that holds movement stats plots",
     ],
     ["mov_pref", "", str, "the prefix for the movement report files"],
+
     ["# ---- CIFTI related options"],
     ["surface_smooth", "2.0", float, "sigma for cifti surface smoothing"],
     ["volume_smooth", "2.0", float, "sigma for cifti volume smoothing"],
@@ -484,6 +489,7 @@ arglist = [
         str,
         "whether to print the command run within the preprocessing steps",
     ],
+
     ["# ---- scheduler options"],
     [
         "scheduler",
@@ -509,6 +515,7 @@ arglist = [
         float,
         "time in seconds between submission of individual scheduler jobs",
     ],
+
     ["# --- general HCP options"],
     [
         "hcp_processing_mode",
@@ -554,6 +561,10 @@ arglist = [
     ["hcp_hiresmesh", "164", int, "Usually 164 vertices."],
     ["hcp_bold_res", "2", str, "Target image resolution 2mm recommended."],
     ["hcp_grayordinatesres", "2", int, "Usually 2mm."],
+    ["hcp_surfatlasdir", "", isNone, "Surface atlas directory."],
+    ["hcp_grayordinatesdir", "", isNone, "Grayordinates space directory."],
+    ["hcp_subcortgraylabels", "", isNone, "The location of FreeSurferSubcorticalLabelTableLut.txt."],
+    ["hcp_refmyelinmaps", "", isNone, "Group myelin map to use for bias correction."],
     [
         "hcp_regname",
         "MSMSulc",
@@ -596,6 +607,7 @@ arglist = [
         isNone,
         "Path to the HCP config file where additional parameters can be specified.",
     ],
+
     ["# --- hcp_pre_freesurfer options"],
     ["hcp_brainsize", "150", int, "Human brain size in mm."],
     [
@@ -717,6 +729,7 @@ arglist = [
     ["hcp_prefs_templatemask", "", isNone, "Path to the template mask."],
     ["hcp_prefs_template2mmmask", "", isNone, "Path to the 2mm template mask."],
     ["hcp_prefs_fnirtconfig", "", isNone, "Path to the FNIRT config."],
+
     ["# --- hcp_freesurfer options"],
     [
         "hcp_fs_seed",
@@ -754,6 +767,7 @@ arglist = [
         torf,
         "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE].",
     ],
+
     ["# --- hcp_post_freesurfer options"],
     [
         "hcp_mcsigma",
@@ -768,6 +782,7 @@ arglist = [
         str,
         "Whether to use the mean of the subject's myelin map as reference [YES].",
     ],
+
     ["# --- hcp_fmri_volume options"],
     [
         "hcp_bold_biascorrection",
@@ -907,6 +922,7 @@ arglist = [
         str,
         "Whether slices were acquired in an interleaved fashion (odd) or not (empty) NOTE: deprecated!",
     ],
+
     ["# --- hcp_diffusion options"],
     ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],
@@ -1022,6 +1038,7 @@ arglist = [
         isNone,
         "If greater than zero, reruns icadim on any run with a VN mean more than this amount greater than the minimum VN mean [0].",
     ],
+
     ["# --- hcp_icafix options"],
     [
         "hcp_icafix_traindata",
@@ -1053,6 +1070,7 @@ arglist = [
         isNone,
         "Whether to execute only the FIX step of the pipeline.",
     ],
+
     ["# --- hcp_post_fix options"],
     [
         "hcp_postfix_dualscene",
@@ -1067,6 +1085,7 @@ arglist = [
         "Path to an alternative template scene, if empty HCP default single scene will be used.",
     ],
     ["hcp_postfix_reusehighpass", "TRUE", torf, "Whether to reuse highpass."],
+
     ["# --- hcp_reapply_fix options"],
     [
         "hcp_icafix_regname",
@@ -1074,6 +1093,7 @@ arglist = [
         str,
         "Specifies surface registration name. If NONE MSMSulc will be used.",
     ],
+
     ["# --- hcp_msmall options options"],
     [
         "hcp_msmall_bolds",
@@ -1112,6 +1132,7 @@ arglist = [
         isNone,
         "Myelin map target, will use Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii by default.",
     ],
+
     ["# --- hcp_dedrift_and_resample options"],
     [
         "hcp_resample_concatregname",
@@ -1174,6 +1195,7 @@ arglist = [
         isNone,
         "Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames to work.",
     ],
+
     ["# --- hcp_task_fmri_analysis options"],
     ["hcp_task_lvl1tasks", "", isNone, "Comma separated list of task fMRI scan names."],
     ["hcp_task_lvl1fsfs", "", isNone, "Comma separated list of of design names."],
@@ -1287,6 +1309,7 @@ arglist = [
         isNone,
         "A comma separated list of stages (zero-indexed) to run. All prior stages are assumed to have run successfully.",
     ],
+
     ["# --- hcp_temporal_ica options"],
     [
         "hcp_tica_studyfolder",
@@ -1448,6 +1471,7 @@ arglist = [
         flag,
         "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning.",
     ],
+
     ["# --- hcp_apply_auto_reclean options"],
     [
         "hcp_autoreclean_timepoints",
@@ -1463,6 +1487,7 @@ arglist = [
     ],
     ["hcp_autoreclean_model_to_use", "", isNone, "The model to use for cleaning."],
     ["hcp_autoreclean_vote_threshold", "", isNone, "The threshold for the vote."],
+
     ["# --- hcp_make_average_dataset options"],
     [
         "hcp_surface_atlas_dir",
@@ -1477,7 +1502,7 @@ arglist = [
         "Path to the location of the standard grayorinates space.",
     ],
     [
-        "hcp_free_surfer_labels",
+        "hcp_freesurfer_labels",
         "",
         isNone,
         "Path to the location of the FreeSurfer look up table file.",
@@ -1520,6 +1545,7 @@ arglist = [
         str,
         "Maps with more than one map (column) that cannot be merged and must be averaged.",
     ],
+
     ["# --- HCP file checking"],
     [
         "hcp_prefs_check",
@@ -1563,6 +1589,7 @@ arglist = [
         str,
         "Whether to check the results of Diffusion pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file).",
     ],
+
     ["# --- Processing options"],
     ["run", "run", str, "Run type: run - do the task, test - perform checks."],
     [
@@ -1571,6 +1598,7 @@ arglist = [
         str,
         "Whether to remove ('remove') the temporary logs once jobs are completed, keep them in the study level processing/logs/comlogs folder ('keep' or 'study') in the hcp folder ('hcp') or in a <session id>/logs/comlogs folder ('sessions'). Multiple options can be specified separated by '|'.",
     ],
+
     ["# --- mice pipelines"],
     ["voxel_increase", "", isNone, "The factor by which to increase voxel size."],
     [
@@ -1615,20 +1643,15 @@ arglist = [
         isNone,
         "Path to the template file. If not provided QuNex will use EPI_template.nii.gz from its library.",
     ],
-    ["# --- hcp_longitudinal_freesurfer options"],
-    ["hcp_long_fs_template_id", "base", str, "Name of the base template."],
-    [
-        "hcp_long_fs_extra_reconall_base",
-        "",
-        isNone,
-        "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all base template creation. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!",
-    ],
-    [
-        "hcp_long_fs_extra_reconall",
-        "",
-        isNone,
-        "A string with extra parameters to pass to Longitudinal FreeSurfer recon-all processing. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!",
-    ],
+
+    ["# --- hcp_long_freesurfer options"],
+    ["hcp_template_id", "base", str, "Name of the base template."],
+    ["hcp_no_t2w", "", flag, "Set this flag to process without T2w."],
+    ["hcp_seed", "", isNone, "The recon-all seed value."],
+    ["hcp_template_skip", "", flag, "Set this flag to skip template generation as it was already generated."],
+    ["hcp_timepoints_skip", "", flag, "Set this flag to skip timepoint generation as they were already generated."],
+    ["hcp_start_stage", "", isNone, "One of PREP-T (PostFSPrepLong build template, skip timepoint processing), POSTFS-TP1 (PostFreeSurfer timepoint stage 1), POSTFS-T (PostFreesurfer template), POSTFS-TP2 (PostFreesurfer timepoint stage 2)."],
+
     ["# --- fsl_feat options"],
     ["feat_file", "", isNone, "Path to the feat file."],
     ["# --- fsl_melodic options"],
@@ -1904,9 +1927,15 @@ calist = [
 lalist = [
     [
         "hcp_lfs",
-        "hcp_longitudinal_freesurfer",
-        process_hcp.hcp_longitudinal_freesurfer,
-        "Runs longitudinal FreeSurfer across sessions.",
+        "hcp_long_freesurfer",
+        process_hcp.hcp_long_freesurfer,
+        "Runs longitudinal FreeSurfer.",
+    ],
+    [
+        "hcp_lpfs",
+        "hcp_long_post_freesurfer",
+        process_hcp.hcp_long_post_freesurfer,
+        "Runs longitudinal Post FreeSurfer.",
     ],
     ["fslm", "fsl_melodic", fsl.fsl_melodic, "Runs FSL melodic"],
 ]
