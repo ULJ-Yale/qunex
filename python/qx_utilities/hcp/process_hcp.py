@@ -2222,7 +2222,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     )
 
     run = True
-    report = ""
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
     failed = 0
 
     try:
@@ -2268,7 +2268,10 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 
                 # merge
                 r += log
-                report += run_report
+                report["done"] += run_report["done"]
+                report["failed"] += run_report["failed"]
+                report["ready"] += run_report["ready"]
+                report["not ready"] += run_report["not ready"]
 
         else:  # parallel execution
             # create a multiprocessing Pool
@@ -2286,7 +2289,11 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             # merge r and report
             for result in results:
                 r += result["r"]
-                report += result["report"]
+                run_report = result["report"]
+                report["done"] += run_report["done"]
+                report["failed"] += run_report["failed"]
+                report["ready"] += run_report["ready"]
+                report["not ready"] += run_report["not ready"]
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -2315,7 +2322,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
     # prepare return variables
     r = ""
-    report = ""
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
 
     # get subject data
     subject_id = subject["id"]
@@ -2406,7 +2413,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         if options["run"] == "run":
             if overwrite and os.path.exists(tfile):
                 os.remove(tfile)
-            r, _, report, _ = pc.runExternalForFile(
+            r, _, _, failed = pc.runExternalForFile(
                 tfile,
                 comm,
                 "Running HCP Longitudinal FS",
@@ -2421,20 +2428,26 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 r=r,
             )
 
+            if failed == 0:
+                report["done"] = subject_id
+            else:
+                report["failed"] = subject_id
+
         # -- just checking
         else:
-            passed, report, r, _ = pc.checkRun(
+            passed, _, r, _ = pc.checkRun(
                 tfile, None, "HCP Longitudinal FS", r, overwrite=overwrite
             )
             if passed is None:
                 r += "\n---> HCP Longitudinal FS can be run"
-                report = "HCP Longitudinal FS can be run"
-                failed = 0
+                report["ready"] = subject_id
+            else:
+                r += "\n---> HCP Longitudinal FS cannot be run"
+                report["not ready"] = subject_id
 
     else:
         r += "\n---> Subject cannot be processed."
-        report = "HCP Longitudinal FS cannot be run"
-        failed = 1
+        report["not ready"] = subject_id
 
     return r, report
 
@@ -2474,8 +2487,6 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
-
-
 
         --hcp_template_id (str, default 'base'):
             ID of the base template.
@@ -2611,7 +2622,8 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
     )
 
     run = True
-    report = "Error"
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    failed = 0
 
     try:
         # checks
@@ -2650,19 +2662,18 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         parsubjects = options["parsubjects"]
         if parsubjects == 1:  # serial execution
             for subject in subjects_list:
-                result = _execute_hcp_long_post_freesurfer(
+                log, run_report = _execute_hcp_long_post_freesurfer(
                     options, overwrite, run, hcp, subject
                 )
 
                 # merge r
-                r += result["r"]
+                r += log
 
                 # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                report["done"] += run_report["done"]
+                report["failed"] += run_report["failed"]
+                report["ready"] += run_report["ready"]
+                report["not ready"] += run_report["not ready"]
 
         else:  # parallel execution
             # create a multiprocessing Pool
@@ -2680,11 +2691,11 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             # merge r and report
             for result in results:
                 r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                run_report = result["report"]
+                report["done"] += run_report["done"]
+                report["failed"] += run_report["failed"]
+                report["ready"] += run_report["ready"]
+                report["not ready"] += run_report["not ready"]
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -2902,7 +2913,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             # TODO
             # if overwrite and os.path.exists(tfile):
             #     os.remove(tfile)
-            r, endlog, report, failed = pc.runExternalForFile(
+            r, _, _, failed = pc.runExternalForFile(
                 tfile,
                 comm,
                 "Running HCP Longitudinal Post FS",
@@ -2917,20 +2928,26 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 r=r,
             )
 
+            if failed == 0:
+                report["done"] = subject_id
+            else:
+                report["failed"] = subject_id
+
         # -- just checking
         else:
-            passed, report, r, failed = pc.checkRun(
+            passed, _, r, failed = pc.checkRun(
                 tfile, None, "HCP Longitudinal Post FS", r, overwrite=overwrite
             )
             if passed is None:
-                r += "\n---> HCP Longitudinal Post FS can be run"
-                report = "HCP Longitudinal Post FS can be run"
-                failed = 0
+                r += "\n---> HCP Longitudinal FS can be run"
+                report["ready"] = subject_id
+            else:
+                r += "\n---> HCP Longitudinal FS cannot be run"
+                report["not ready"] = subject_id
 
     else:
         r += "\n---> Subject cannot be processed."
-        report = "HCP Longitudinal Post FS cannot be run"
-        failed = 1
+        report["not ready"] = subject_id
 
     return r, report
 
