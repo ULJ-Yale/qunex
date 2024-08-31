@@ -2843,7 +2843,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         comm = (
             '%(script)s \
             --subject="%(subject)s" \
-            --path="%(studyfolder)s" \
+            --study-folder="%(studyfolder)s" \
             --timepoints="%(sessions)s" \
             --template="%(templateid)s" \
             --t1template="%(t1template)s" \
@@ -2855,22 +2855,23 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             --templatemask="%(templatemask)s" \
             --template2mmmask="%(template2mmmask)s" \
             --fnirtconfig="%(fnirtconfig)s" \
-            --freesurferlabels"%(freesurferlabels)s" \
-            --surfatlasdir"%(surfatlasdir)s" \
-            --grayordinatesres"%(grayordinatesres)s" \
-            --grayordinatesdir"%(grayordinatesdir)s" \
-            --hiresmesh"%(hiresmesh)s" \
-            --lowresmesh"%(lowresmesh)s" \
-            --subcortgraylabels"%(subcortgraylabels)s" \
-            --refmyelinmaps"%(refmyelinmaps)s" \
-            --regname"%(regname)s"'
+            --freesurferlabels="%(freesurferlabels)s" \
+            --surfatlasdir="%(surfatlasdir)s" \
+            --grayordinatesres="%(grayordinatesres)s" \
+            --grayordinatesdir="%(grayordinatesdir)s" \
+            --hiresmesh"=%(hiresmesh)s" \
+            --lowresmesh"=%(lowresmesh)s" \
+            --subcortgraylabels"=%(subcortgraylabels)s" \
+            --refmyelinmaps"=%(refmyelinmaps)s" \
+            --regname"=%(regname)s" \
+            --parallel-mode="FSLSUB"'
             % {
                 "script": os.path.join(
                     hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
                 ),
                 "studyfolder": os.path.join(options["sessionsfolder"], subject_id),
                 "subject": subject["id"],
-                "sessions": "@".join(subject["sessions"]),
+                "sessions": ",".join(subject["sessions"]),
                 "templateid": options["hcp_template_id"],
                 "t1template": t1template,
                 "t1templatebrain": t1templatebrain,
