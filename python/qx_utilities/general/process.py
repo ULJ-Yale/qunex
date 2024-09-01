@@ -1651,6 +1651,8 @@ arglist = [
     ["hcp_template_skip", "", flag, "Set this flag to skip template generation as it was already generated."],
     ["hcp_timepoints_skip", "", flag, "Set this flag to skip timepoint generation as they were already generated."],
     ["hcp_start_stage", "", isNone, "One of PREP-T (PostFSPrepLong build template, skip timepoint processing), POSTFS-TP1 (PostFreeSurfer timepoint stage 1), POSTFS-T (PostFreesurfer template), POSTFS-TP2 (PostFreesurfer timepoint stage 2)."],
+    ["hcp_parallel_mode", "", isNone, "Parallelization execution mode, one of FSLSUB, BUILTIN."],
+    ["hcp_parallel_mode_param", "", isNone, "FSLSUB: queue name [long.q]; BUILTIN: maximum number of threads [4]."],
 
     ["# --- fsl_feat options"],
     ["feat_file", "", isNone, "Path to the feat file."],

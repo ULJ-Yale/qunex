@@ -2268,10 +2268,14 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 
                 # merge
                 r += log
-                report["done"] += run_report["done"]
-                report["failed"] += run_report["failed"]
-                report["ready"] += run_report["ready"]
-                report["not ready"] += run_report["not ready"]
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
 
         else:  # parallel execution
             # create a multiprocessing Pool
@@ -2289,11 +2293,14 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             # merge r and report
             for result in results:
                 r += result["r"]
-                run_report = result["report"]
-                report["done"] += run_report["done"]
-                report["failed"] += run_report["failed"]
-                report["ready"] += run_report["ready"]
-                report["not ready"] += run_report["not ready"]
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -2467,28 +2474,28 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         been run and finished successfully.
 
     Parameters:
-        --batchfile (str, default ''):
+        --batchfile (str, default ""):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
+        --sessionsfolder (str, default "."):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
 
         --parsubjects (int, default 1):
             How many subjects to run in parallel.
 
-        --overwrite (str, default 'no'):
+        --overwrite (str, default "no"):
             Whether to overwrite existing data (yes) or not (no).
 
-        --hcp_suffix (str, default ''):
+        --hcp_suffix (str, default ""):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
 
-        --logfolder (str, default ''):
+        --logfolder (str, default ""):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_template_id (str, default 'base'):
+        --hcp_template_id (str, default "base"):
             ID of the base template.
 
         --hcp_prefs_t1template (str, default ""):
@@ -2533,7 +2540,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             Path to the used FNIRT config. Set to the HCP's T1_2_MNI152_2mm.cnf
             by default.
 
-        --hcp_freesurfer_labels (str, default '${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt'):
+        --hcp_freesurfer_labels (str, default "${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt"):
             Path to the location of the FreeSurfer look up table file.
 
         --hcp_surfatlasdir (str, HCP "standard_mesh_atlases"):
@@ -2560,16 +2567,24 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             The number of vertices for the low resolution mesh of each
             hemisphere (in thousands).
 
-        --hcp_regname (str, default 'MSMSulc'):
+        --hcp_regname (str, default "MSMSulc"):
             The registration used, FS or MSMSulc.
 
-        --hcp_start_stage (str, default 'NONE'):
+        --hcp_start_stage (str, default "NONE"):
             One of:
                 - PREP-T (PostFSPrepLong build template, skip timepoint 
                          processing),
                 - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
                 - POSTFS-T (PostFreesurfer template),
                 - POSTFS-TP2 (PostFreesurfer timepoint stage 2).
+
+        --hcp_parallel_mode (str, default "FSLSUB"):
+            Parallelization execution mode, one of FSLSUB, BUILTIN.
+
+        --hcp_parallel_mode_param (str, default based on hcp_parallel_mode):
+            Additional parallelization parateres, defaults:
+                - FSLSUB: queue name [long.q];
+                - BUILTIN: maximum number of threads [4].
 
     Output files:
         The results of this step will be present in the
@@ -2601,6 +2616,8 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             ``hcp_lowresmesh``                  ``lowresmesh``
             ``hcp_regname``                     ``regname``
             ``hcp_start_stage``                 ``start-stage``
+            ``hcp_parallel_mode``               ``parallel_mode``
+            ``hcp_parallel_mode_param``         ``parallel_mode_param``
             =================================== ===========================
 
     Examples:
@@ -2666,15 +2683,16 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                     options, overwrite, run, hcp, subject
                 )
 
-                # merge r
+                # merge
                 r += log
-
-                # merge report
-                report["done"] += run_report["done"]
-                report["failed"] += run_report["failed"]
-                report["ready"] += run_report["ready"]
-                report["not ready"] += run_report["not ready"]
-
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
         else:  # parallel execution
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(parsubjects)
@@ -2688,23 +2706,29 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             )
             results = processPoolExecutor.map(f, subjects_list)
 
-            # merge r and report
+            # merge
             for result in results:
                 r += result["r"]
                 run_report = result["report"]
-                report["done"] += run_report["done"]
-                report["failed"] += run_report["failed"]
-                report["ready"] += run_report["ready"]
-                report["not ready"] += run_report["not ready"]
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
+        report = "Error"
         failed = 1
     except:
         r += (
             "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc())
         )
+        report = "Error"
         failed = 1
 
     r += (
@@ -2863,8 +2887,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             --lowresmesh"=%(lowresmesh)s" \
             --subcortgraylabels"=%(subcortgraylabels)s" \
             --refmyelinmaps"=%(refmyelinmaps)s" \
-            --regname"=%(regname)s" \
-            --parallel-mode="FSLSUB"'
+            --regname"=%(regname)s"'
             % {
                 "script": os.path.join(
                     hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
@@ -2897,6 +2920,12 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         # -- Optional parameters
         if options["hcp_start_stage"]:
             comm += f"                --start-stage={options['hcp_start_stage']}"
+
+        if options["hcp_parallel_mode"]:
+            comm += f"                --parallel-mode={options['hcp_parallel_mode']}"
+
+        if options["hcp_parallel_mode_param"]:
+            comm += f"                --parallel-mode-param={options['hcp_parallel_mode_param']}"
 
         # -- Report command
         if run:

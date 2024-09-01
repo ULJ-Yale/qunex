@@ -433,7 +433,8 @@ def get_sessionids_from_batch(filename, batchfilter=None):
         sub = [e for e in sub if len(e) > 0]
 
         # variable for storing the session id
-        session = ""
+        session = None
+        passes_filter = False
         for line in sub:
             line = [e.strip() for e in line.split(":")]
 
@@ -442,18 +443,23 @@ def get_sessionids_from_batch(filename, batchfilter=None):
                 # is it the id/session line
                 if line[0] == "id" or line[0] == "session":
                     session = line[1]
-
-                    # should I filter
-                    if filters_dict and line[0] in filters_dict:
-                        active_filter = filters_dict[line[0]].split(",")
-                        if line[1] in active_filter or re.match(
-                            filters_dict[line[0]], line[1]
-                        ):
-                            sessionids.append(session)
-                            break
-                    else:
+                    if passes_filter:
                         sessionids.append(session)
                         break
+
+                # should I filter
+                if filters_dict and line[0] in filters_dict:
+                    active_filter = filters_dict[line[0]].split(",")
+                    if line[1] in active_filter or re.match(
+                        filters_dict[line[0]], line[1]
+                    ):
+                        passes_filter = True
+                        if session:
+                            sessionids.append(session)
+                            break
+                elif session and not filters_dict:
+                    sessionids.append(session)
+                    break
 
     return sessionids
 
@@ -839,6 +845,17 @@ def main(args=None):
         else:
             command += f"{arg} "
 
+    # parsessions/parsubjects
+    if parsessions is None and parsubjects is None:
+        parsessions = 1
+    elif parsessions is not None and parsubjects is not None:
+        print(
+            "ERROR: You provided both the parsessions and the parsubjects. Please set only one top level paralellization parameter!"
+        )
+        exit(1)
+    elif parsubjects is not None:
+        parsessions = parsubjects
+
     # workaround for commands that are not supported
     commands_blacklist = [
         "create_batch",
@@ -866,17 +883,6 @@ def main(args=None):
             "ERROR: Parallel execution of this command is not supported when overwrite is set to yes!"
         )
         exit(1)
-
-    # parsessions/parsubjects
-    if parsessions is None and parsubjects is None:
-        parsessions = 1
-    elif parsessions is not None and parsubjects is not None:
-        print(
-            "ERROR: You provided both the parsessions and the parsubjects. Please set only one top level paralellization parameter!"
-        )
-        exit(1)
-    elif parsubjects is not None:
-        parsessions = parsubjects
 
     # batchlogs folder
     batchlogsfolder = None
