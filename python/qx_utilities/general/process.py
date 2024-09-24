@@ -1645,13 +1645,15 @@ arglist = [
     ],
 
     ["# --- hcp_long_freesurfer options"],
-    ["hcp_template_id", "base", str, "Name of the base template."],
+    ["hcp_longitudinal_template", "base", str, "Name of the longitudinal template."],
     ["hcp_no_t2w", "", flag, "Set this flag to process without T2w."],
     ["hcp_seed", "", isNone, "The recon-all seed value."],
-    ["hcp_template_skip", "", flag, "Set this flag to skip template generation as it was already generated."],
-    ["hcp_timepoints_skip", "", flag, "Set this flag to skip timepoint generation as they were already generated."],
-    ["hcp_start_stage", "", isNone, "One of PREP-T (PostFSPrepLong build template, skip timepoint processing), POSTFS-TP1 (PostFreeSurfer timepoint stage 1), POSTFS-T (PostFreesurfer template), POSTFS-TP2 (PostFreesurfer timepoint stage 2)."],
-    ["hcp_parallel_mode", "", isNone, "Parallelization execution mode, one of FSLSUB, BUILTIN."],
+    ["hcp_parallel_mode", "", isNone, "Parallelization execution mode, one of FSLSUB, BUILTIN, NONE."],
+    ["hcp_fslsub_queue", "", isNone, "FSLSUB queue name."],
+    ["hcp_max_jobs", "", isNone, "Maximum number of concurrent processes in BUILTIN mode. Set to -1 to auto-detect."],
+    ["hcp_start_stage", "", isNone, "Start stage for certain HCP pipelines that can be processed in stages."],
+    ["hcp_end_stage", "", isNone, "End stage for certain HCP pipelines that can be processed in stages."],
+
     ["hcp_parallel_mode_param", "", isNone, "FSLSUB: queue name [long.q]; BUILTIN: maximum number of threads [4]."],
 
     ["# --- fsl_feat options"],

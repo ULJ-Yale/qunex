@@ -2168,8 +2168,8 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_template_id (str, default 'base'):
-            ID of the base template.
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
 
         --hcp_no_t2w:
             Set this flag to process without T2w. Disabled by default.
@@ -2177,13 +2177,25 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         --hcp_seed (int):
             The recon-all seed value.
 
-        --hcp_template_skip:
-            Set this flag to skip template generation as it was already
-            generated. Disabled by default.
+        --hcp_parallel_mode (str, default "NONE"):
+            Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
 
-        --hcp_timepoints_skip:
-            Set this flag to skip timepoint generation as they were already
-            generated. Disabled by default.
+        --hcp_fslsub_queue (str, default ""):
+            FSLSUB queue name.
+
+        --hcp_max_jobs (int, default -1):
+            Maximum number of concurrent processes in BUILTIN mode. Set to -1 to
+            auto-detect.
+
+        --hcp_start_stage (str, default "TEMPLATE"):
+            One of:
+                - TEMPLATE,
+                - TIMEPOINTS.
+
+        --hcp_end_stage (str, default "TIMEPOINTS"):
+            One of:
+                - TEMPLATE,
+                - TIMEPOINTS.
 
     Output files:
         The results of this step will be present in the
@@ -2195,11 +2207,14 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             =================================== ===========================
             QuNex parameter                     HCPpipelines parameter
             =================================== ===========================
-            ``hcp_template_id``                 ``template-id``
+            ``hcp_longitudinal_template``       ``longitudinal-template``
             ``hcp_no_t2w``                      ``use-T2w``
             ``hcp_fs_seed``                     ``seed``
-            ``hcp_template_skip``               ``generate-template``
-            ``hcp_timepoints_skip``             ``generate-timepoints``
+            ``hcp_parallel_mode``               ``parallel-mode``
+            ``hcp_fslsub_queue``                ``fslsub-queue``
+            ``hcp_max_jobs``                    ``max-jobs``
+            ``hcp_start_stage``                 ``start-stage``
+            ``hcp_end_stage``                   ``end-stage``
             =================================== ===========================
 
     Examples:
@@ -2208,7 +2223,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             qunex hcp_long_freesurfer \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
-                --hcp_template_id="<template_id>"
+                --hcp_longitudinal_template="<template_id>"
     """
 
     r = "\n------------------------------------------------------------"
@@ -2342,8 +2357,8 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
     if not os.path.exists(study_folder):
         os.makedirs(study_folder)
 
-    templateid = options["hcp_template_id"]
-    long_dir = os.path.join(study_folder, f"{subject_id}.long.{templateid}")
+    longitudinal_template = options["hcp_longitudinal_template"]
+    long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
     # exit if overwrite is not set, else create folders
     if not overwrite and os.path.exists(long_dir):
         r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
@@ -2374,7 +2389,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
             --subject="%(subject)s" \
             --path="%(studyfolder)s" \
             --sessions="%(sessions)s" \
-            --template-id="%(templateid)s"'
+            --longitudinal-template="%(longitudinal_template)s"'
             % {
                 "script": os.path.join(
                     hcp_dir, "FreeSurfer", "LongitudinalFreeSurferPipeline.sh"
@@ -2382,22 +2397,34 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 "studyfolder": study_folder,
                 "subject": subject_id,
                 "sessions": ",".join(sessions_list),
-                "templateid": templateid,
+                "longitudinal_template": longitudinal_template,
             }
         )
 
         # -- Optional parameters
         if options["hcp_no_t2w"]:
-            comm += f"                --use-T2w=0"
+            comm += f'                --use-T2w="0"'
 
         if options["hcp_seed"]:
-            comm += f"                --seed={options['hcp_seed']}"
+            comm += f'                --seed="{options['hcp_seed']}"'
 
-        if options["hcp_template_skip"]:
-            comm += f"                --generate-template=0"
+        if options["hcp_parallel_mode"]:
+            comm += f'                --parallel-mode="{options['hcp_parallel_mode']}"'
 
-        if options["hcp_timepoints_skip"]:
-            comm += f"                --generate-timepoints=0"
+        if options["hcp_fslsub_queue"]:
+            comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
+
+        if options["hcp_max_jobs"]:
+            comm += f'                --max-jobs="{options['hcp_max_jobs']}"'
+
+        if options["hcp_start_stage"]:
+            comm += f'                --start-stage="{options['hcp_start_stage']}"'
+
+        if options["hcp_end_stage"]:
+            comm += f'                --end-stage="{options['hcp_end_stage']}"'
+
+        print(comm)
+        sys.exit(0)
 
         # -- Report command
         if run:
@@ -2410,9 +2437,9 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         last_session = sessions_list[-1]
         tfile = os.path.join(
             study_folder,
-            f"{subject_id}.long.{templateid}",
+            f"{subject_id}.long.{longitudinal_template}",
             "T1w",
-            f"{last_session}.long.{templateid}",
+            f"{last_session}.long.{longitudinal_template}",
             "mri",
             "T1.mgz",
         )
@@ -2495,8 +2522,8 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_template_id (str, default "base"):
-            ID of the base template.
+        --hcp_longitudinal_template (str, default "base"):
+            Name of the longitudinal template.
 
         --hcp_prefs_template_res (float, default set from image data):
             The resolution (in mm) of the structural images templates to use in
@@ -2587,8 +2614,8 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 - POSTFS-T (PostFreesurfer template),
                 - POSTFS-TP2 (PostFreesurfer timepoint stage 2).
 
-        --hcp_parallel_mode (str, default "FSLSUB"):
-            Parallelization execution mode, one of FSLSUB, BUILTIN.
+        --hcp_parallel_mode (str, default "NONE"):
+            Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
 
         --hcp_parallel_mode_param (str, default based on hcp_parallel_mode):
             Additional parallelization parateres, defaults:
@@ -2605,7 +2632,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             =================================== ===========================
             QuNex parameter                     HCPpipelines parameter
             =================================== ===========================
-            ``hcp_template_id``                 ``template``
+            ``hcp_longitudinal_template``       ``longitudinal_template``
             ``hcp_prefs_t1template``            ``t1template``
             ``hcp_prefs_t1templatebrain``       ``t1templatebrain``
             ``hcp_prefs_t1template2mm``         ``t1template2mm``
@@ -2922,7 +2949,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             --subject="%(subject)s" \
             --study-folder="%(studyfolder)s" \
             --timepoints="%(sessions)s" \
-            --template="%(templateid)s" \
+            --longitudinal-template="%(longitudinal_template)s" \
             --t1template="%(t1template)s" \
             --t1templatebrain="%(t1templatebrain)s" \
             --t1template2mm="%(t1template2mm)s" \
@@ -2948,7 +2975,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 "studyfolder": os.path.join(options["sessionsfolder"], subject_id),
                 "subject": subject["id"],
                 "sessions": ",".join(subject["sessions"]),
-                "templateid": options["hcp_template_id"],
+                "longitudinal_template": options["hcp_longitudinal_template"],
                 "t1template": t1template,
                 "t1templatebrain": t1templatebrain,
                 "t1template2mm": t1template2mm,
