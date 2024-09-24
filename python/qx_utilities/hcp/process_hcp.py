@@ -2396,7 +2396,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 ),
                 "studyfolder": study_folder,
                 "subject": subject_id,
-                "sessions": ",".join(sessions_list),
+                "sessions": "@".join(sessions_list),
                 "longitudinal_template": longitudinal_template,
             }
         )
@@ -2603,7 +2603,17 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --hcp_regname (str, default "MSMSulc"):
             The registration used, FS or MSMSulc.
 
-        --hcp_start_stage (str, default "NONE"):
+        --hcp_parallel_mode (str, default "NONE"):
+            Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
+
+        --hcp_fslsub_queue (str, default ""):
+            FSLSUB queue name.
+
+        --hcp_max_jobs (int, default -1):
+            Maximum number of concurrent processes in BUILTIN mode. Set to -1 to
+            auto-detect.
+
+        --hcp_start_stage (str, default "PREP-T"):
             One of:
                 - PREP-T (PostFSPrepLong build template, skip timepoint 
                          processing),
@@ -2611,13 +2621,13 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 - POSTFS-T (PostFreesurfer template),
                 - POSTFS-TP2 (PostFreesurfer timepoint stage 2).
 
-        --hcp_parallel_mode (str, default "NONE"):
-            Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
-
-        --hcp_parallel_mode_param (str, default based on hcp_parallel_mode):
-            Additional parallelization parateres, defaults:
-                - FSLSUB: queue name [long.q];
-                - BUILTIN: maximum number of threads [4].
+        --hcp_end_stage (str, default "POSTFS-TP2"):
+            One of:
+                - PREP-T (PostFSPrepLong build template, skip timepoint 
+                         processing),
+                - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
+                - POSTFS-T (PostFreesurfer template),
+                - POSTFS-TP2 (PostFreesurfer timepoint stage 2).
 
     Output files:
         The results of this step will be present in the
@@ -2648,9 +2658,11 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             ``hcp_hiresmesh``                   ``hiresmesh``
             ``hcp_lowresmesh``                  ``lowresmesh``
             ``hcp_regname``                     ``regname``
+            ``hcp_parallel_mode``               ``parallel-mode``
+            ``hcp_fslsub_queue``                ``fslsub-queue``
+            ``hcp_max_jobs``                    ``max-jobs``
             ``hcp_start_stage``                 ``start-stage``
-            ``hcp_parallel_mode``               ``parallel_mode``
-            ``hcp_parallel_mode_param``         ``parallel_mode_param``
+            ``hcp_end_stage``                   ``end-stage``
             =================================== ===========================
 
     Examples:
@@ -2943,8 +2955,8 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     if run:
         comm = (
             '%(script)s \
-            --subject="%(subject)s" \
             --study-folder="%(studyfolder)s" \
+            --subject="%(subject)s" \
             --timepoints="%(sessions)s" \
             --longitudinal-template="%(longitudinal_template)s" \
             --t1template="%(t1template)s" \
@@ -2960,18 +2972,18 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             --surfatlasdir="%(surfatlasdir)s" \
             --grayordinatesres="%(grayordinatesres)s" \
             --grayordinatesdir="%(grayordinatesdir)s" \
-            --hiresmesh"=%(hiresmesh)s" \
-            --lowresmesh"=%(lowresmesh)s" \
-            --subcortgraylabels"=%(subcortgraylabels)s" \
-            --refmyelinmaps"=%(refmyelinmaps)s" \
-            --regname"=%(regname)s"'
+            --hiresmesh="%(hiresmesh)s" \
+            --lowresmesh="%(lowresmesh)s" \
+            --subcortgraylabels="%(subcortgraylabels)s" \
+            --refmyelinmaps="%(refmyelinmaps)s" \
+            --regname="%(regname)s"'
             % {
                 "script": os.path.join(
                     hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
                 ),
                 "studyfolder": os.path.join(options["sessionsfolder"], subject_id),
                 "subject": subject["id"],
-                "sessions": ",".join(subject["sessions"]),
+                "sessions": "@".join(subject["sessions"]),
                 "longitudinal_template": options["hcp_longitudinal_template"],
                 "t1template": t1template,
                 "t1templatebrain": t1templatebrain,
@@ -2995,14 +3007,23 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         )
 
         # -- Optional parameters
-        if options["hcp_start_stage"]:
-            comm += f"                --start-stage={options['hcp_start_stage']}"
-
         if options["hcp_parallel_mode"]:
-            comm += f"                --parallel-mode={options['hcp_parallel_mode']}"
+            comm += f'                --parallel-mode="{options['hcp_parallel_mode']}"'
 
-        if options["hcp_parallel_mode_param"]:
-            comm += f"                --parallel-mode-param={options['hcp_parallel_mode_param']}"
+        if options["hcp_fslsub_queue"]:
+            comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
+
+        if options["hcp_max_jobs"]:
+            comm += f'                --max-jobs="{options['hcp_max_jobs']}"'
+
+        if options["hcp_start_stage"]:
+            comm += f'                --start-stage="{options['hcp_start_stage']}"'
+
+        if options["hcp_end_stage"]:
+            comm += f'                --end-stage="{options['hcp_end_stage']}"'
+
+        print(comm)
+        sys.exit(0)
 
         # -- Report command
         if run:
