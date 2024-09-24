@@ -1654,8 +1654,6 @@ arglist = [
     ["hcp_start_stage", "", isNone, "Start stage for certain HCP pipelines that can be processed in stages."],
     ["hcp_end_stage", "", isNone, "End stage for certain HCP pipelines that can be processed in stages."],
 
-    ["hcp_parallel_mode_param", "", isNone, "FSLSUB: queue name [long.q]; BUILTIN: maximum number of threads [4]."],
-
     ["# --- fsl_feat options"],
     ["feat_file", "", isNone, "Path to the feat file."],
     ["# --- fsl_melodic options"],
