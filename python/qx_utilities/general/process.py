@@ -907,6 +907,8 @@ arglist = [
         str,
         "Whether slices were acquired in an interleaved fashion (odd) or not (empty) NOTE: deprecated!",
     ],
+    ["hcp_wb_resample", "", flag, "Set this flag to use wb command to do volume resampling instead of applywarp."],
+    ["hcp_echo_te", "", isNone, "Comma delimited list of numbers which represent TE for each echo (unused for single echo)."],
     ["# --- hcp_diffusion options"],
     ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],

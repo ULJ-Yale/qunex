@@ -3289,6 +3289,19 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             This parameter is only valid when running HCPpipelines
             using the LegacyStyleData processing mode!
 
+        --hcp_wb_resample:
+            Set this flag to use wb command to do volume resampling instead of
+            applywarp.
+
+        --hcp_echo_te (str, default ''):
+            Comma delimited list of numbers which represent TE for each echo
+            (unused for single echo).
+
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'octave' will be used, outside
+            'interpreted' is the default.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder::
@@ -3521,6 +3534,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``hcp_bold_stcorrint``        ``slicetimerparams``
             ``hcp_bold_refreg``           ``fmrirefreg``
             ``hcp_bold_mask``             ``fmrimask``
+            ``wb-resample`                ``hcp_wb_resample``
+            ``echoTE``                    ``hcp_echo_te``
+            ``matlab-run-mode``           ``hcp_matlab_mode``
             ============================= =======================
 
     Examples:
@@ -4540,6 +4556,26 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             ("fmrirefreg", options["hcp_bold_refreg"]),
             ("fmrimask", options["hcp_bold_mask"]),
         ]
+
+        # optional parameters
+        if options["hcp_wb_resample"]:
+            elements.append(("wb-resample", "1"))
+
+        if options["hcp_echo_te"]:
+            echo_te = ("echoTE", options["hcp_echo_te"].replace("@", ","))
+            elements.append(echo_te)
+
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        if options["hcp_matlab_mode"]:
+            if options["hcp_matlab_mode"] == "compiled":
+                elements.append(("matlab-run-mode", "0"))
+            elif options["hcp_matlab_mode"] == "interpreted":
+                elements.append(("matlab-run-mode", "1"))
+            elif options["hcp_matlab_mode"] == "octave":
+                elements.append(("matlab-run-mode", "2"))
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
@@ -5583,7 +5619,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             parelements,
         )
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -6468,7 +6504,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         if options["hcp_postfix_dualscene"] is not None:
             dualscene = options["hcp_postfix_dualscene"]
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -6941,7 +6977,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
                 else options["hcp_icafix_highpass"]
             )
 
-            # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+            # matlab run mode, compiled=0, interpreted=1, octave=2
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
                     r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -7159,7 +7195,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
         ):
             groupok = True
 
-            # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+            # matlab run mode, compiled=0, interpreted=1, octave=2
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
                     r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -7887,7 +7923,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -8111,7 +8147,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -8633,7 +8669,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -8913,7 +8949,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         else:
             myelintarget = options["hcp_msmall_myelin_target"]
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -10104,7 +10140,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             gc.link_or_copy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -10840,7 +10876,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             parelements,
         )
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -11031,7 +11067,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
         else:
             timepoints = options["hcp_autoreclean_timepoints"]
 
-        # matlab run mode, compiled=0 (default), interpreted=1, octave=2
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
