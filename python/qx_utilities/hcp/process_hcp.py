@@ -3022,9 +3022,6 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         if options["hcp_end_stage"]:
             comm += f'                --end-stage="{options['hcp_end_stage']}"'
 
-        print(comm)
-        sys.exit(0)
-
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
