@@ -2383,6 +2383,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
     # logdir
     logdir = os.path.join(options["logfolder"], "comlog", f"tmp_hcp_long_freesurfer_{subject}")
+    os.makedirs(logdir)
 
     # build the command
     if run:
@@ -2971,6 +2972,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
 
     # logdir
     logdir = os.path.join(options["logfolder"], "comlog", f"tmp_hcp_long_post_freesurfer_{subject}")
+    os.makedirs(logdir)
 
     # build the command
     if run:
