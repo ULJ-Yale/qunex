@@ -813,10 +813,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_avgrdcmethod"] == "TOPUP":
             # -- spin echo settings
             sesettings = True
-            for p in ["hcp_sephaseneg", "hcp_sephasepos", "hcp_seunwarpdir"]:
-                if not options[p]:
+            for p in ["hcp_sephaseneg", "hcp_sephasepos", "hcp_seunwarpdir", "hcp_seechospacing"]:
+                if options[p] == "NONE":
                     r += (
-                        "\n---> ERROR: %s parameter is not set! Please review parameter file!"
+                        "\n---> ERROR: %s parameter is not set!"
                         % (p)
                     )
                     run = False
@@ -1283,7 +1283,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(bias):
                         os.remove(bias)
 
-                r, endlog, report, failed = pc.runExternalForFile(
+                r, _, report, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running HCP PreFS",

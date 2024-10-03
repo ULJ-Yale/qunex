@@ -637,13 +637,13 @@ arglist = [
     ],
     [
         "hcp_seechospacing",
-        "",
+        "NONE",
         str,
         "Echo Spacing or Dwelltime of Spin Echo Field Map or '' if not used.",
     ],
     [
         "hcp_seunwarpdir",
-        "",
+        "NONE",
         str,
         "Phase encoding direction of the spin echo field map. (Only applies when using a spin echo field map.) [''].",
     ],
@@ -667,13 +667,13 @@ arglist = [
     ],
     [
         "hcp_sephaseneg",
-        "",
+        "NONE",
         str,
         "spin echo field map volume with a negative phase encoding direction: (AP, PA, LR, RL) [''].",
     ],
     [
         "hcp_sephasepos",
-        "",
+        "NONE",
         str,
         "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) [''].",
     ],
