@@ -2382,7 +2382,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         i += 1
 
     # logdir
-    logdir = os.path.join(options["logfolder"], "comlog", f"tmp_hcp_long_freesurfer_{subject}")
+    logdir = os.path.join(options["logfolder"], "comlogs", f"tmp_hcp_long_freesurfer_{subject['id']}")
     os.makedirs(logdir)
 
     # build the command
@@ -2971,7 +2971,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         refmyelinmaps = options["hcp_refmyelinmaps"]
 
     # logdir
-    logdir = os.path.join(options["logfolder"], "comlog", f"tmp_hcp_long_post_freesurfer_{subject}")
+    logdir = os.path.join(options["logfolder"], "comlogs", f"tmp_hcp_long_post_freesurfer_{subject['id']}")
     os.makedirs(logdir)
 
     # build the command
