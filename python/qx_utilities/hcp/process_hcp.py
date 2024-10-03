@@ -56,7 +56,6 @@ import re
 import os.path
 import shutil
 import glob
-import sys
 import traceback
 import time
 import general.core as gc
@@ -2177,7 +2176,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         --hcp_seed (int):
             The recon-all seed value.
 
-        --hcp_parallel_mode (str, default "NONE"):
+        --hcp_parallel_mode (str, default "BUILTIN"):
             Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
 
         --hcp_fslsub_queue (str, default ""):
@@ -2382,6 +2381,9 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         gc.link_or_copy(source_dir, target_dir, symlink=True)
         i += 1
 
+    # logdir
+    logdir = os.path.join(options["logfolder"], "comlog", f"tmp_hcp_long_freesurfer_{subject}")
+
     # build the command
     if run:
         comm = (
@@ -2389,7 +2391,9 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
             --subject="%(subject)s" \
             --path="%(studyfolder)s" \
             --sessions="%(sessions)s" \
-            --longitudinal-template="%(longitudinal_template)s"'
+            --longitudinal-template="%(longitudinal_template)s" \
+            --parallel-mode="%(parallel_mode)s" \
+            --logdir="%(logdir)s"'
             % {
                 "script": os.path.join(
                     hcp_dir, "FreeSurfer", "LongitudinalFreeSurferPipeline.sh"
@@ -2398,6 +2402,8 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 "subject": subject_id,
                 "sessions": "@".join(sessions_list),
                 "longitudinal_template": longitudinal_template,
+                "parallel_mode": options['hcp_parallel_mode'],
+                "logdir": logdir,
             }
         )
 
@@ -2407,9 +2413,6 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
         if options["hcp_seed"]:
             comm += f'                --seed="{options['hcp_seed']}"'
-
-        if options["hcp_parallel_mode"]:
-            comm += f'                --parallel-mode="{options['hcp_parallel_mode']}"'
 
         if options["hcp_fslsub_queue"]:
             comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
@@ -2463,6 +2466,21 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 report["done"] = subject_id
             else:
                 report["failed"] = subject_id
+
+            # read and print all files in logdir
+            for filename in os.listdir(logdir):
+                file_path = os.path.join(logdir, filename)
+
+                with open(file_path, 'r') as file:
+                    content = file.read()
+                    print()
+                    print("----------------------------------------")
+                    print(f"Contents of {filename}:")
+                    print("----------------------------------------")
+                    print(content)
+
+            # remove the directory and its contents
+            shutil.rmtree(logdir)
 
         # -- just checking
         else:
@@ -2603,7 +2621,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --hcp_regname (str, default "MSMSulc"):
             The registration used, FS or MSMSulc.
 
-        --hcp_parallel_mode (str, default "NONE"):
+        --hcp_parallel_mode (str, default "BUILTIN"):
             Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
 
         --hcp_fslsub_queue (str, default ""):
@@ -2951,13 +2969,16 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     else:
         refmyelinmaps = options["hcp_refmyelinmaps"]
 
+    # logdir
+    logdir = os.path.join(options["logfolder"], "comlog", f"tmp_hcp_long_post_freesurfer_{subject}")
+
     # build the command
     if run:
         comm = (
             '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
-            --timepoints="%(sessions)s" \
+            --sessions="%(sessions)s" \
             --longitudinal-template="%(longitudinal_template)s" \
             --t1template="%(t1template)s" \
             --t1templatebrain="%(t1templatebrain)s" \
@@ -2976,7 +2997,9 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             --lowresmesh="%(lowresmesh)s" \
             --subcortgraylabels="%(subcortgraylabels)s" \
             --refmyelinmaps="%(refmyelinmaps)s" \
-            --regname="%(regname)s"'
+            --regname="%(regname)s" \
+            --parallel-mode="%(parallel_mode)s" \
+            --logdir="%(logdir)s"'
             % {
                 "script": os.path.join(
                     hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
@@ -3003,12 +3026,10 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 "subcortgraylabels": subcortgraylabels,
                 "refmyelinmaps": refmyelinmaps,
                 "regname": options["hcp_regname"],
+                "parallel_mode": options['hcp_parallel_mode'],
+                "logdir": logdir,
             }
         )
-
-        # -- Optional parameters
-        if options["hcp_parallel_mode"]:
-            comm += f'                --parallel-mode="{options['hcp_parallel_mode']}"'
 
         if options["hcp_fslsub_queue"]:
             comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
@@ -3058,17 +3079,20 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             else:
                 report["failed"] = subject_id
 
-        # -- just checking
-        else:
-            passed, _, r, failed = pc.checkRun(
-                tfile, None, "HCP Longitudinal Post FS", r, overwrite=overwrite
-            )
-            if passed is None:
-                r += "\n---> HCP Longitudinal FS can be run"
-                report["ready"] = subject_id
-            else:
-                r += "\n---> HCP Longitudinal FS cannot be run"
-                report["not ready"] = subject_id
+            # read and print all files in logdir
+            for filename in os.listdir(logdir):
+                file_path = os.path.join(logdir, filename)
+
+                with open(file_path, 'r') as file:
+                    content = file.read()
+                    print()
+                    print("----------------------------------------")
+                    print(f"Contents of {filename}:")
+                    print("----------------------------------------")
+                    print(content)
+
+            # remove the directory and its contents
+            shutil.rmtree(logdir)
 
     else:
         r += "\n---> Subject cannot be processed."

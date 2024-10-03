@@ -1648,7 +1648,7 @@ arglist = [
     ["hcp_longitudinal_template", "base", str, "Name of the longitudinal template."],
     ["hcp_no_t2w", "", flag, "Set this flag to process without T2w."],
     ["hcp_seed", "", isNone, "The recon-all seed value."],
-    ["hcp_parallel_mode", "", isNone, "Parallelization execution mode, one of FSLSUB, BUILTIN, NONE."],
+    ["hcp_parallel_mode", "BUILTIN", str, "Parallelization execution mode, one of FSLSUB, BUILTIN, NONE. Default is BUILTIN."],
     ["hcp_fslsub_queue", "", isNone, "FSLSUB queue name."],
     ["hcp_max_jobs", "", isNone, "Maximum number of concurrent processes in BUILTIN mode. Set to -1 to auto-detect."],
     ["hcp_start_stage", "", isNone, "Start stage for certain HCP pipelines that can be processed in stages."],
