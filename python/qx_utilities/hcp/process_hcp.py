@@ -3054,15 +3054,10 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test file
-        # last_session = sessions_list[-1]
-        # TODO
         tfile = None
 
         if options["run"] == "run":
-            # TODO
-            # if overwrite and os.path.exists(tfile):
-            #     os.remove(tfile)
-            r, _, _, failed = pc.runExternalForFile(
+            r, endlog, _, failed = pc.runExternalForFile(
                 tfile,
                 comm,
                 "Running HCP Longitudinal Post FS",
