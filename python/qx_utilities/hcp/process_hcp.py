@@ -2448,7 +2448,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         if options["run"] == "run":
             if overwrite and os.path.exists(tfile):
                 os.remove(tfile)
-            r, _, _, failed = pc.runExternalForFile(
+            r, endlog, _, failed = pc.runExternalForFile(
                 tfile,
                 comm,
                 "Running HCP Longitudinal FS",
@@ -2469,16 +2469,17 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            for filename in os.listdir(logdir):
-                file_path = os.path.join(logdir, filename)
+            with open(endlog, 'w') as log_file:
+                for filename in os.listdir(logdir):
+                    file_path = os.path.join(logdir, filename)
 
-                with open(file_path, 'r') as file:
-                    content = file.read()
-                    print()
-                    print("----------------------------------------")
-                    print(f"Contents of {filename}:")
-                    print("----------------------------------------")
-                    print(content)
+                    with open(file_path, 'r') as file:
+                        content = file.read()
+                        print(file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(f"Contents of {filename}:", file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(content, file=log_file)
 
             # remove the directory and its contents
             shutil.rmtree(logdir)
@@ -3082,16 +3083,17 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            for filename in os.listdir(logdir):
-                file_path = os.path.join(logdir, filename)
+            with open(endlog, 'w') as log_file:
+                for filename in os.listdir(logdir):
+                    file_path = os.path.join(logdir, filename)
 
-                with open(file_path, 'r') as file:
-                    content = file.read()
-                    print()
-                    print("----------------------------------------")
-                    print(f"Contents of {filename}:")
-                    print("----------------------------------------")
-                    print(content)
+                    with open(file_path, 'r') as file:
+                        content = file.read()
+                        print(file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(f"Contents of {filename}:", file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(content, file=log_file)
 
             # remove the directory and its contents
             shutil.rmtree(logdir)
