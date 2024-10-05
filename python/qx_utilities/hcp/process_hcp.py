@@ -14,7 +14,8 @@ consists of functions:
 --hcp_pre_freesurfer            Runs HCP PreFS preprocessing.
 --hcp_freesurfer                Runs HCP FS preprocessing.
 --hcp_post_freesurfer           Runs HCP PostFS preprocessing.
---hcp_longitudinal_freesurfer   Runs HCP Longitudinal FS preprocessing.
+--hcp_long_freesurfer           Runs HCP Longitudinal FS preprocessing.
+--hcp_long_post_freesurfer      Runs HCP Longitudinal Post FS preprocessing.
 --hcp_diffusion                 Runs HCP Diffusion weighted image preprocessing.
 --hcp_fmri_volume               Runs HCP BOLD Volume preprocessing.
 --hcp_fmri_surface              Runs HCP BOLD Surface preprocessing.
@@ -55,7 +56,6 @@ import re
 import os.path
 import shutil
 import glob
-import sys
 import traceback
 import time
 import general.core as gc
@@ -1308,8 +1308,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     report = "HCP Pre FS can be run"
                     failed = 0
         else:
-            r += "\n---> Due to missing files session can not be processed."
-            report = "Files missing, PreFS can not be run"
+            r += "\n---> Due to missing files session cannot be processed."
+            report = "Files missing, PreFS cannot be run"
             failed = 1
 
     except ge.CommandFailed as e:
@@ -1725,8 +1725,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     report = "HCP FS can be run"
                     failed = 0
         else:
-            r += "\n---> Subject can not be processed."
-            report = "FS can not be run"
+            r += "\n---> Subject cannot be processed."
+            report = "FS cannot be run"
             failed = 1
 
     except ge.CommandFailed as e:
@@ -1822,9 +1822,21 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             be run without them, anything else otherwise. 'NONE' is
             only valid if 'LegacyStyleData' processing mode was specified.
 
+        --hcp_surfatlasdir (str, HCP "standard_mesh_atlases"):
+            Surface atlas directory.
+
         --hcp_grayordinatesres (int, default 2):
             The resolution of the volume part of the grayordinate representation
             in mm.
+
+        --hcp_grayordinatesdir (str, default HCP "91282_Greyordinates"):
+            Grayordinates space directory.
+
+        --hcp_subcortgraylabels (str, default HCP "FreeSurferSubcorticalLabelTableLut.txt"):
+            The location of FreeSurferSubcorticalLabelTableLut.txt.
+
+        --hcp_refmyelinmaps (str, default HCP "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"):
+            Group myelin map to use for bias correction.
 
         --hcp_hiresmesh (int, default 164):
             The number of vertices for the high resolution mesh of each
@@ -1847,6 +1859,9 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             Whether to use the mean of the subject's myelin map as reference
             map's myelin map mean, YES or NO, defaults to YES.
 
+        --hcp_freesurfer_labels (str, default '${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt'):
+            Path to the location of the FreeSurfer look up table file.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder.
@@ -1863,7 +1878,12 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             ========================= =======================
             QuNex parameter           HCPpipelines parameter
             ========================= =======================
+            ``hcp_freesurfer_labels`` ``freesurferlabels``
+            ``hcp_surfatlasdir``      ``surfatlasdir``
+            ``hcp_grayordinatesdir``  ``grayordinatesdir``
             ``hcp_grayordinatesres``  ``grayordinatesres``
+            ``hcp_subcortgraylabels`` ``subcortgraylabels``
+            ``hcp_refmyelinmaps``     ``refmyelinmaps``
             ``hcp_hiresmesh``         ``hiresmesh``
             ``hcp_lowresmesh``        ``lowresmesh``
             ``hcp_mcsigma``           ``mcsigma``
@@ -1930,7 +1950,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
-
         if "hcp" not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
                 sinfo["id"]
@@ -1938,7 +1957,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> FS results
-
         if os.path.exists(os.path.join(hcp["FS_folder"], "mri", "aparc+aseg.mgz")):
             r += "\n---> FS results present."
         else:
@@ -1946,7 +1964,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> T2w image
-
         if (
             hcp["T2w"] in ["", "NONE"]
             and options["hcp_processing_mode"] == "HCPStyleData"
@@ -1954,42 +1971,62 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!"
             run = False
 
+        # hcp_freesurfer_labels
+        freesurferlabels = ""
+        if options["hcp_freesurfer_labels"] is None:
+            freesurferlabels = os.path.join(hcp["hcp_Config"], "FreeSurferAllLut.txt")
+        else:
+            freesurferlabels = options["hcp_freesurfer_labels"]
+
+        # hcp_surfatlasdir
+        surfatlasdir = ""
+        if options["hcp_surfatlasdir"] is None:
+            surfatlasdir = os.path.join(hcp["hcp_Templates"], "standard_mesh_atlases")
+        else:
+            surfatlasdir = options["hcp_surfatlasdir"]
+
+        # hcp_grayordinatesdir
+        grayordinatesdir = ""
+        if options["hcp_grayordinatesdir"] is None:
+            grayordinatesdir = os.path.join(hcp["hcp_Templates"], "91282_Greyordinates")
+        else:
+            grayordinatesdir = options["hcp_grayordinatesdir"]
+
+        # hcp_subcortgraylabels
+        subcortgraylabels = ""
+        if options["hcp_subcortgraylabels"] is None:
+            subcortgraylabels = os.path.join(hcp["hcp_Config"], "FreeSurferSubcorticalLabelTableLut.txt")
+        else:
+            subcortgraylabels = options["hcp_subcortgraylabels"]
+
+        # hcp_refmyelinmaps
+        refmyelinmaps = ""
+        if options["hcp_refmyelinmaps"] is None:
+            refmyelinmaps = os.path.join(
+                    hcp["hcp_Templates"],
+                    "standard_mesh_atlases",
+                    "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
+                )
+        else:
+            refmyelinmaps = options["hcp_refmyelinmaps"]
+
+        # compile the command
         comm = (
             os.path.join(hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipeline.sh")
             + " "
         )
+
         elements = [
             ("path", sinfo["hcp"]),
             ("subject", sinfo["id"] + options["hcp_suffix"]),
-            (
-                "surfatlasdir",
-                os.path.join(hcp["hcp_Templates"], "standard_mesh_atlases"),
-            ),
-            (
-                "grayordinatesdir",
-                os.path.join(hcp["hcp_Templates"], "91282_Greyordinates"),
-            ),
+            ("surfatlasdir", surfatlasdir),
+            ("grayordinatesdir", grayordinatesdir),
             ("grayordinatesres", options["hcp_grayordinatesres"]),
             ("hiresmesh", options["hcp_hiresmesh"]),
             ("lowresmesh", options["hcp_lowresmesh"]),
-            (
-                "subcortgraylabels",
-                os.path.join(
-                    hcp["hcp_Config"], "FreeSurferSubcorticalLabelTableLut.txt"
-                ),
-            ),
-            (
-                "freesurferlabels",
-                os.path.join(hcp["hcp_Config"], "FreeSurferAllLut.txt"),
-            ),
-            (
-                "refmyelinmaps",
-                os.path.join(
-                    hcp["hcp_Templates"],
-                    "standard_mesh_atlases",
-                    "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
-                ),
-            ),
+            ("subcortgraylabels", subcortgraylabels),
+            ("freesurferlabels", freesurferlabels),
+            ("refmyelinmaps", refmyelinmaps),
             ("mcsigma", options["hcp_mcsigma"]),
             ("regname", options["hcp_regname"]),
             ("inflatescale", options["hcp_inflatescale"]),
@@ -2035,7 +2072,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = pc.runExternalForFile(
+                r, _, report, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running HCP PostFS",
@@ -2060,8 +2097,8 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                     report = "HCP PostFS can be run"
                     failed = 0
         else:
-            r += "\n---> Session can not be processed."
-            report = "HCP PostFS can not be run"
+            r += "\n---> Session cannot be processed."
+            report = "HCP PostFS cannot be run"
             failed = 1
 
     except ge.CommandFailed as e:
@@ -2094,9 +2131,9 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
+def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
-    ``hcp_longitudinal_freesurfer [... processing options]``
+    ``hcp_long_freesurfer [... processing options]``
 
     ``hcp_lfs [... processing options]``
 
@@ -2116,8 +2153,8 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
 
-        --parsessions (int, default 1):
-            How many sessions to run in parallel.
+        --parsubjects (int, default 1):
+            How many subjects to run in parallel.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
@@ -2130,45 +2167,62 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_long_fs_template_id (str, default 'base'):
-            ID of the base template.
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
 
-        --hcp_long_fs_extra_reconall_base (str, default ''):
-            A string with extra parameters to pass to Longitudinal FreeSurfer
-            recon-all base template creation. The extra parameters are to be
-            listed in a pipe ('|') separated string. Parameters and their values
-            need to be listed separately. E.g. to pass `-norm3diters 3` to
-            reconall, the string has to be: '-norm3diters|3'.
+        --hcp_no_t2w:
+            Set this flag to process without T2w. Disabled by default.
 
-        --hcp_long_fs_extra_reconall (str, default ''):
-            A string with extra parameters to pass to Longitudinal FreeSurfer
-            recon-all processing. The extra parameters are to be listed in a
-            pipe ('|') separated string. Parameters and their values need to be
-            listed separately. E.g. to pass `-norm3diters 3` to reconall, the
-            string has to be: '-norm3diters|3'.
+        --hcp_seed (int):
+            The recon-all seed value.
+
+        --hcp_parallel_mode (str, default "BUILTIN"):
+            Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
+
+        --hcp_fslsub_queue (str, default ""):
+            FSLSUB queue name.
+
+        --hcp_max_jobs (int, default -1):
+            Maximum number of concurrent processes in BUILTIN mode. Set to -1 to
+            auto-detect.
+
+        --hcp_start_stage (str, default "TEMPLATE"):
+            One of:
+                - TEMPLATE,
+                - TIMEPOINTS.
+
+        --hcp_end_stage (str, default "TIMEPOINTS"):
+            One of:
+                - TEMPLATE,
+                - TIMEPOINTS.
 
     Output files:
         The results of this step will be present in the
         <study_folder>/<sessions_folder>/<subject_id>.
 
     Notes:
-        hcp_longitudinal_freesurfer parameter mapping:
+        hcp_long_freesurfer parameter mapping:
 
             =================================== ===========================
             QuNex parameter                     HCPpipelines parameter
             =================================== ===========================
-            ``hcp_long_fs_template``            ``template``
-            ``hcp_long_fs_extra_reconall_base`` ``extra-reconall-arg-base``
-            ``hcp_long_fs_extra_reconall_long`` ``extra-reconall-arg-long``
+            ``hcp_longitudinal_template``       ``longitudinal-template``
+            ``hcp_no_t2w``                      ``use-T2w``
+            ``hcp_fs_seed``                     ``seed``
+            ``hcp_parallel_mode``               ``parallel-mode``
+            ``hcp_fslsub_queue``                ``fslsub-queue``
+            ``hcp_max_jobs``                    ``max-jobs``
+            ``hcp_start_stage``                 ``start-stage``
+            ``hcp_end_stage``                   ``end-stage``
             =================================== ===========================
 
     Examples:
         ::
 
-            qunex hcp_longitudinal_freesurfer \\
+            qunex hcp_long_freesurfer \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
-                --hcp_long_fs_template_id="<template_id>"
+                --hcp_longitudinal_template="<template_id>"
     """
 
     r = "\n------------------------------------------------------------"
@@ -2182,12 +2236,13 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
     )
 
     run = True
-    report = "Error"
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    failed = 0
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_longitudinal_freesurfer")
-        doHCPOptionsCheck(options, "hcp_longitudinal_freesurfer")
+        pc.doOptionsCheck(options, sinfo[1], "hcp_long_freesurfer")
+        doHCPOptionsCheck(options, "hcp_long_freesurfer")
         hcp = getHCPPaths(sinfo[1], options)
 
         # get subjects and their sesssions from the batch file
@@ -2218,29 +2273,30 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             subjects_list.append(subjects_dict[subject])
 
         # launch
-        parelements = options["parelements"]
-        if parelements == 1:  # serial execution
+        parsubjects = options["parsubjects"]
+        if parsubjects == 1:  # serial execution
             for subject in subjects_list:
-                result = _execute_hcp_longitudinal_freesurfer(
+                log, run_report = _execute_hcp_long_freesurfer(
                     options, overwrite, run, hcp["hcp_base"], subject
                 )
 
-                # merge r
-                r += result["r"]
-
-                # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                # merge
+                r += log
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
 
         else:  # parallel execution
             # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parelements)
+            processPoolExecutor = ProcessPoolExecutor(parsubjects)
             # process
             f = partial(
-                _execute_hcp_longitudinal_freesurfer,
+                _execute_hcp_long_freesurfer,
                 options,
                 overwrite,
                 run,
@@ -2251,20 +2307,25 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
             # merge r and report
             for result in results:
                 r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
+        report = "Error"
         failed = 1
     except:
         r += (
             "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc())
         )
+        report = "Error"
         failed = 1
 
     r += (
@@ -2279,7 +2340,7 @@ def hcp_longitudinal_freesurfer(sinfo, subjectids, options, overwrite=False, thr
     return (r, (subjectids, report, failed))
 
 
-def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subject):
+def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
     # prepare return variables
     r = ""
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -2295,8 +2356,8 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
     if not os.path.exists(study_folder):
         os.makedirs(study_folder)
 
-    templateid = options["hcp_long_fs_template_id"]
-    long_dir = os.path.join(study_folder, f"{subject_id}.long.{templateid}")
+    longitudinal_template = options["hcp_longitudinal_template"]
+    long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
     # exit if overwrite is not set, else create folders
     if not overwrite and os.path.exists(long_dir):
         r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
@@ -2320,14 +2381,20 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
         gc.link_or_copy(source_dir, target_dir, symlink=True)
         i += 1
 
+    # logdir
+    logdir = os.path.join(options["logfolder"], "comlogs", f"tmp_hcp_long_freesurfer_{subject['id']}")
+    os.makedirs(logdir)
+
     # build the command
     if run:
         comm = (
             '%(script)s \
-            --path="%(studyfolder)s" \
             --subject="%(subject)s" \
+            --path="%(studyfolder)s" \
             --sessions="%(sessions)s" \
-            --template-id="%(templateid)s"'
+            --longitudinal-template="%(longitudinal_template)s" \
+            --parallel-mode="%(parallel_mode)s" \
+            --logdir="%(logdir)s"'
             % {
                 "script": os.path.join(
                     hcp_dir, "FreeSurfer", "LongitudinalFreeSurferPipeline.sh"
@@ -2335,18 +2402,30 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
                 "studyfolder": study_folder,
                 "subject": subject_id,
                 "sessions": "@".join(sessions_list),
-                "templateid": templateid,
+                "longitudinal_template": longitudinal_template,
+                "parallel_mode": options['hcp_parallel_mode'],
+                "logdir": logdir,
             }
         )
 
         # -- Optional parameters
-        if options["hcp_long_fs_extra_reconall_base"] is not None:
-            for e in options["hcp_fs_extra_reconall"].split("|"):
-                comm += "                --extra-reconall-arg-base=" + e
+        if options["hcp_no_t2w"]:
+            comm += f'                --use-T2w="0"'
 
-        if options["hcp_long_fs_extra_reconall"] is not None:
-            for e in options["hcp_fs_extra_reconall"].split("|"):
-                comm += "                --extra-reconall-arg-long=" + e
+        if options["hcp_seed"]:
+            comm += f'                --seed="{options['hcp_seed']}"'
+
+        if options["hcp_fslsub_queue"]:
+            comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
+
+        if options["hcp_max_jobs"]:
+            comm += f'                --max-jobs="{options['hcp_max_jobs']}"'
+
+        if options["hcp_start_stage"]:
+            comm += f'                --start-stage="{options['hcp_start_stage']}"'
+
+        if options["hcp_end_stage"]:
+            comm += f'                --end-stage="{options['hcp_end_stage']}"'
 
         # -- Report command
         if run:
@@ -2359,9 +2438,9 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
         last_session = sessions_list[-1]
         tfile = os.path.join(
             study_folder,
-            f"{subject_id}.long.{templateid}",
+            f"{subject_id}.long.{longitudinal_template}",
             "T1w",
-            f"{last_session}.long.{templateid}",
+            f"{last_session}.long.{longitudinal_template}",
             "mri",
             "T1.mgz",
         )
@@ -2369,7 +2448,7 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
         if options["run"] == "run":
             if overwrite and os.path.exists(tfile):
                 os.remove(tfile)
-            r, endlog, report, failed = pc.runExternalForFile(
+            r, endlog, _, failed = pc.runExternalForFile(
                 tfile,
                 comm,
                 "Running HCP Longitudinal FS",
@@ -2384,22 +2463,642 @@ def _execute_hcp_longitudinal_freesurfer(options, overwrite, run, hcp_dir, subje
                 r=r,
             )
 
+            if failed == 0:
+                report["done"] = subject_id
+            else:
+                report["failed"] = subject_id
+
+            # read and print all files in logdir
+            with open(endlog, 'w') as log_file:
+                for filename in os.listdir(logdir):
+                    file_path = os.path.join(logdir, filename)
+
+                    with open(file_path, 'r') as file:
+                        content = file.read()
+                        print(file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(f"Contents of {filename}:", file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(content, file=log_file)
+
+            # remove the directory and its contents
+            shutil.rmtree(logdir)
+
         # -- just checking
         else:
-            passed, report, r, failed = pc.checkRun(
+            passed, _, r, _ = pc.checkRun(
                 tfile, None, "HCP Longitudinal FS", r, overwrite=overwrite
             )
             if passed is None:
                 r += "\n---> HCP Longitudinal FS can be run"
-                report = "HCP Longitudinal FS can be run"
-                failed = 0
+                report["ready"] = subject_id
+            else:
+                r += "\n---> HCP Longitudinal FS cannot be run"
+                report["not ready"] = subject_id
 
     else:
-        r += "\n---> Session can not be processed."
-        report = "HCP Longitudinal FS can not be run"
-        failed = 1
+        r += "\n---> Subject cannot be processed."
+        report["not ready"] = subject_id
 
     return r, report
+
+
+def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
+    """
+    ``hcp_long_post_freesurfer [... processing options]``
+
+    ``hcp_lpfs [... processing options]``
+
+    Runs the HCP Longitudinal FreeSurfer Pipeline
+    (LongitudinalFreeSurferPipeline.sh).
+
+    Warning:
+        The code expects the first three HCP preprocessing steps
+        (hcp_pre_freesurfer, hcp_freesurfer and hcp_post_freesurfer) to have
+        been run and finished successfully.
+
+    Parameters:
+        --batchfile (str, default ""):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default "."):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsubjects (int, default 1):
+            How many subjects to run in parallel.
+
+        --overwrite (str, default "no"):
+            Whether to overwrite existing data (yes) or not (no).
+
+        --hcp_suffix (str, default ""):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ""):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_longitudinal_template (str, default "base"):
+            Name of the longitudinal template.
+
+        --hcp_prefs_template_res (float, default set from image data):
+            The resolution (in mm) of the structural images templates to use in
+            the preFS step. Note: it should match the resolution of the
+            acquired structural images. If no value is provided, QuNex will try
+            to use the imaging data to set a sensible default value. It will
+            notify you about which setting it used, you should pay attention to
+            this piece of information and manually overwrite the default if
+            something is off.
+
+        --hcp_prefs_t1template (str, default ""):
+            Path to the T1 template to be used by PreFreeSurfer. By default the
+            used template is determined through the resolution provided by the
+            hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t1templatebrain (str, default ""):
+            Path to the T1 brain template to be used by PreFreeSurfer. By
+            default the used template is determined through the resolution
+            provided by the hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t1template2mm (str, default ""):
+            Path to the T1 2mm template to be used by PreFreeSurfer. By default
+            the used template is HCP's MNI152_T1_2mm.nii.gz.
+
+        --hcp_prefs_t2template (str, default ""):
+            Path to the T2 template to be used by PreFreeSurfer. By default the
+            used template is determined through the resolution provided by the
+            hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t2templatebrain (str, default ""):
+            Path to the T2 brain template to be used by PreFreeSurfer. By
+            default the used template is determined through the resolution
+            provided by the hcp_prefs_template_res parameter.
+
+        --hcp_prefs_t2template2mm (str, default ""):
+            Path to the T2 2mm template to be used by PreFreeSurfer. By default
+            the used template is HCP's MNI152_T2_2mm.nii.gz.
+
+        --hcp_prefs_templatemask (str, default ""):
+            Path to the template mask to be used by PreFreeSurfer. By default
+            the used template mask is determined through the resolution provided
+            by the hcp_prefs_template_res parameter.
+
+        --hcp_prefs_template2mmmask (str, default ""):
+            Path to the template mask to be used by PreFreeSurfer. By default
+            the used 2mm template mask is HCP's
+            MNI152_T1_2mm_brain_mask_dil.nii.gz.
+
+        --hcp_prefs_fnirtconfig (str, default ""):
+            Path to the used FNIRT config. Set to the HCP's T1_2_MNI152_2mm.cnf
+            by default.
+
+        --hcp_freesurfer_labels (str, default "${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt"):
+            Path to the location of the FreeSurfer look up table file.
+
+        --hcp_surfatlasdir (str, HCP "standard_mesh_atlases"):
+            Surface atlas directory.
+
+        --hcp_grayordinatesres (int, default 2):
+            The resolution of the volume part of the grayordinate representation
+            in mm.
+
+        --hcp_grayordinatesdir (str, default HCP "91282_Greyordinates"):
+            Grayordinates space directory.
+
+        --hcp_subcortgraylabels (str, default HCP "FreeSurferSubcorticalLabelTableLut.txt"):
+            The location of FreeSurferSubcorticalLabelTableLut.txt.
+
+        --hcp_refmyelinmaps (str, default HCP "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"):
+            Group myelin map to use for bias correction.
+
+        --hcp_hiresmesh (int, default 164):
+            The number of vertices for the high resolution mesh of each
+            hemisphere (in thousands).
+
+        --hcp_lowresmesh (int, default 32):
+            The number of vertices for the low resolution mesh of each
+            hemisphere (in thousands).
+
+        --hcp_regname (str, default "MSMSulc"):
+            The registration used, FS or MSMSulc.
+
+        --hcp_parallel_mode (str, default "BUILTIN"):
+            Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
+
+        --hcp_fslsub_queue (str, default ""):
+            FSLSUB queue name.
+
+        --hcp_max_jobs (int, default -1):
+            Maximum number of concurrent processes in BUILTIN mode. Set to -1 to
+            auto-detect.
+
+        --hcp_start_stage (str, default "PREP-T"):
+            One of:
+                - PREP-T (PostFSPrepLong build template, skip timepoint 
+                         processing),
+                - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
+                - POSTFS-T (PostFreesurfer template),
+                - POSTFS-TP2 (PostFreesurfer timepoint stage 2).
+
+        --hcp_end_stage (str, default "POSTFS-TP2"):
+            One of:
+                - PREP-T (PostFSPrepLong build template, skip timepoint 
+                         processing),
+                - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
+                - POSTFS-T (PostFreesurfer template),
+                - POSTFS-TP2 (PostFreesurfer timepoint stage 2).
+
+    Output files:
+        The results of this step will be present in the
+        <study_folder>/<sessions_folder>/<subject_id>.
+
+    Notes:
+        hcp_long_post_freesurfer parameter mapping:
+
+            =================================== ===========================
+            QuNex parameter                     HCPpipelines parameter
+            =================================== ===========================
+            ``hcp_longitudinal_template``       ``longitudinal_template``
+            ``hcp_prefs_t1template``            ``t1template``
+            ``hcp_prefs_t1templatebrain``       ``t1templatebrain``
+            ``hcp_prefs_t1template2mm``         ``t1template2mm``
+            ``hcp_prefs_t2template``            ``t2template``
+            ``hcp_prefs_t2templatebrain``       ``t2templatebrain``
+            ``hcp_prefs_t2template2mm``         ``t2template2mm``
+            ``hcp_prefs_templatemask``          ``templatemask``
+            ``hcp_prefs_template2mmmask``       ``template2mmmask``
+            ``hcp_prefs_fnirtconfig``           ``fnirtconfig``
+            ``hcp_freesurfer_labels``           ``freesurferlabels``
+            ``hcp_surfatlasdir``                ``surfatlasdir``
+            ``hcp_grayordinatesres``            ``grayordinatesres``
+            ``hcp_grayordinatesdir``            ``grayordinatesdir``
+            ``hcp_subcortgraylabels``           ``subcortgraylabels``
+            ``hcp_refmyelinmaps``                ``refmyelinmaps``
+            ``hcp_hiresmesh``                   ``hiresmesh``
+            ``hcp_lowresmesh``                  ``lowresmesh``
+            ``hcp_regname``                     ``regname``
+            ``hcp_parallel_mode``               ``parallel-mode``
+            ``hcp_fslsub_queue``                ``fslsub-queue``
+            ``hcp_max_jobs``                    ``max-jobs``
+            ``hcp_start_stage``                 ``start-stage``
+            ``hcp_end_stage``                   ``end-stage``
+            =================================== ===========================
+
+    Examples:
+        ::
+
+            qunex hcp_long_post_freesurfer \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSessions: %s \n[started on %s]" % (
+        subjectids,
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP Longitudnal Post FS Pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    failed = 0
+
+    try:
+        # checks
+        pc.doOptionsCheck(options, sinfo[1], "hcp_long_post_freesurfer")
+        doHCPOptionsCheck(options, "hcp_long_post_freesurfer")
+        hcp = getHCPPaths(sinfo[1], options)
+
+        # get subjects and their sesssions from the batch file
+        subjects_dict = {}
+        for session in sinfo:
+            if "hcp" not in session:
+                r += (
+                    "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                    % (session["id"])
+                )
+                run = False
+
+            if hcp["T1w"] != "NONE":
+                subject = session["subject"]
+                if subject not in subjects_dict:
+                    subject_info = {}
+                    subject_info["id"] = subject
+                    subject_info["hcp"] = [session["hcp"]]
+                    subject_info["sessions"] = [session["id"]]
+                    subjects_dict[subject] = subject_info
+                else:
+                    subjects_dict[subject]["sessions"].append(session["id"])
+                    subjects_dict[subject]["hcp"].append(session["hcp"])
+
+        # dict to list
+        subjects_list = []
+        for subject in subjects_dict:
+            subjects_list.append(subjects_dict[subject])
+
+        # launch
+        parsubjects = options["parsubjects"]
+        if parsubjects == 1:  # serial execution
+            for subject in subjects_list:
+                log, run_report = _execute_hcp_long_post_freesurfer(
+                    options, overwrite, run, hcp, subject
+                )
+
+                # merge
+                r += log
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
+        else:  # parallel execution
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parsubjects)
+            # process
+            f = partial(
+                _execute_hcp_long_post_freesurfer,
+                options,
+                overwrite,
+                run,
+                hcp
+            )
+            results = processPoolExecutor.map(f, subjects_list)
+
+            # merge
+            for result in results:
+                r += result["r"]
+                run_report = result["report"]
+                if run_report["done"]:
+                    report["done"].append(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].append(run_report["failed"])
+                if run_report["ready"]:
+                    report["ready"].append(run_report["ready"])
+                if run_report["not ready"]:
+                    report["not ready"].append(run_report["not ready"])
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        report = "Error"
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        report = "Error"
+        failed = 1
+
+    r += (
+        "\n\nHCP Longitudinal Post FS Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (subjectids, report, failed))
+
+
+def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
+    # prepare return variables
+    r = ""
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+
+    # subject id
+    subject_id = subject["id"]
+
+    # try to set hcp_prefs_template_res automatically if not set yet
+    if options["hcp_prefs_template_res"] is None:
+        r += (f"\n---> Trying to set the hcp_prefs_template_res parameter automatically.")
+        # read nii header of hcp["T1w"]
+        img = nib.load(hcp["T1w"])
+        pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+
+        # do they match
+        epsilon = 0.05
+        if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+            run = False
+            r += (
+                f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+            )
+        else:
+            # upscale slightly and use the closest that matches
+            pixdim = pixdim1 * 1.05
+
+            if pixdim > 2:
+                run = False
+                r += (
+                    f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+                )
+            elif pixdim > 1:
+                r += (
+                    f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
+                )
+                options["hcp_prefs_template_res"] = 1.0
+            elif pixdim > 0.8:
+                r += (
+                    f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
+                )
+                options["hcp_prefs_template_res"] = 0.8
+            elif pixdim > 0.65:
+                r += (
+                    f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
+                )
+                options["hcp_prefs_template_res"] = 0.7
+            else:
+                run = False
+                r += (
+                    f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+                )
+
+    # hcp_prefs_t1template
+    if options["hcp_prefs_t1template"] is None:
+        t1template = os.path.join(
+            hcp["hcp_Templates"],
+            "MNI152_T1_%smm.nii.gz" % (options["hcp_prefs_template_res"]),
+        )
+    else:
+        t1template = options["hcp_prefs_t1template"]
+
+    # hcp_prefs_t1templatebrain
+    if options["hcp_prefs_t1templatebrain"] is None:
+        t1templatebrain = os.path.join(
+            hcp["hcp_Templates"],
+            "MNI152_T1_%smm_brain.nii.gz" % (options["hcp_prefs_template_res"]),
+        )
+    else:
+        t1templatebrain = options["hcp_prefs_t1templatebrain"]
+
+    # hcp_prefs_t1template2mm
+    if options["hcp_prefs_t1template2mm"] is None:
+        t1template2mm = os.path.join(hcp["hcp_Templates"], "MNI152_T1_2mm.nii.gz")
+    else:
+        t1template2mm = options["hcp_prefs_t1template2mm"]
+
+    # hcp_prefs_t2template
+    if options["hcp_prefs_t2template"] is None:
+        t2template = os.path.join(
+            hcp["hcp_Templates"],
+            "MNI152_T2_%smm.nii.gz" % (options["hcp_prefs_template_res"]),
+        )
+    else:
+        t2template = options["hcp_prefs_t2template"]
+
+    # hcp_prefs_t2templatebrain
+    if options["hcp_prefs_t2templatebrain"] is None:
+        t2templatebrain = os.path.join(
+            hcp["hcp_Templates"],
+            "MNI152_T2_%smm_brain.nii.gz" % (options["hcp_prefs_template_res"]),
+        )
+    else:
+        t2templatebrain = options["hcp_prefs_t2templatebrain"]
+
+    # hcp_prefs_t2template2mm
+    if options["hcp_prefs_t2template2mm"] is None:
+        t2template2mm = os.path.join(hcp["hcp_Templates"], "MNI152_T2_2mm.nii.gz")
+    else:
+        t2template2mm = options["hcp_prefs_t2template2mm"]
+
+    # hcp_prefs_templatemask
+    if options["hcp_prefs_templatemask"] is None:
+        templatemask = os.path.join(
+            hcp["hcp_Templates"],
+            "MNI152_T1_%smm_brain_mask.nii.gz"
+            % (options["hcp_prefs_template_res"]),
+        )
+    else:
+        templatemask = options["hcp_prefs_templatemask"]
+
+    # hcp_prefs_template2mmmask
+    if options["hcp_prefs_template2mmmask"] is None:
+        template2mmmask = os.path.join(
+            hcp["hcp_Templates"], "MNI152_T1_2mm_brain_mask_dil.nii.gz"
+        )
+    else:
+        template2mmmask = options["hcp_prefs_template2mmmask"]
+
+    # hcp_prefs_fnirtconfig
+    if options["hcp_prefs_fnirtconfig"] is None:
+        fnirtconfig = os.path.join(hcp["hcp_Config"], "T1_2_MNI152_2mm.cnf")
+    else:
+        fnirtconfig = options["hcp_prefs_fnirtconfig"]
+
+    # hcp_freesurfer_labels
+    freesurferlabels = ""
+    if options["hcp_freesurfer_labels"] is None:
+        freesurferlabels = os.path.join(hcp["hcp_Config"], "FreeSurferAllLut.txt")
+    else:
+        freesurferlabels = options["hcp_freesurfer_labels"]
+
+    # hcp_surfatlasdir
+    surfatlasdir = ""
+    if options["hcp_surfatlasdir"] is None:
+        surfatlasdir = os.path.join(hcp["hcp_Templates"], "standard_mesh_atlases")
+    else:
+        surfatlasdir = options["hcp_surfatlasdir"]
+
+    # hcp_grayordinatesdir
+    grayordinatesdir = ""
+    if options["hcp_grayordinatesdir"] is None:
+        grayordinatesdir = os.path.join(hcp["hcp_Templates"], "91282_Greyordinates")
+    else:
+        grayordinatesdir = options["hcp_grayordinatesdir"]
+
+    # hcp_subcortgraylabels
+    subcortgraylabels = ""
+    if options["hcp_subcortgraylabels"] is None:
+        subcortgraylabels = os.path.join(hcp["hcp_Config"], "FreeSurferSubcorticalLabelTableLut.txt")
+    else:
+        subcortgraylabels = options["hcp_subcortgraylabels"]
+
+    # hcp_refmyelinmaps
+    refmyelinmaps = ""
+    if options["hcp_refmyelinmaps"] is None:
+        refmyelinmaps = os.path.join(
+                hcp["hcp_Templates"],
+                "standard_mesh_atlases",
+                "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
+            )
+    else:
+        refmyelinmaps = options["hcp_refmyelinmaps"]
+
+    # logdir
+    logdir = os.path.join(options["logfolder"], "comlogs", f"tmp_hcp_long_post_freesurfer_{subject['id']}")
+    os.makedirs(logdir)
+
+    # build the command
+    if run:
+        comm = (
+            '%(script)s \
+            --study-folder="%(studyfolder)s" \
+            --subject="%(subject)s" \
+            --sessions="%(sessions)s" \
+            --longitudinal-template="%(longitudinal_template)s" \
+            --t1template="%(t1template)s" \
+            --t1templatebrain="%(t1templatebrain)s" \
+            --t1template2mm="%(t1template2mm)s" \
+            --t2template="%(t2template)s" \
+            --t2templatebrain="%(t2templatebrain)s" \
+            --t2template2mm="%(t2template2mm)s" \
+            --templatemask="%(templatemask)s" \
+            --template2mmmask="%(template2mmmask)s" \
+            --fnirtconfig="%(fnirtconfig)s" \
+            --freesurferlabels="%(freesurferlabels)s" \
+            --surfatlasdir="%(surfatlasdir)s" \
+            --grayordinatesres="%(grayordinatesres)s" \
+            --grayordinatesdir="%(grayordinatesdir)s" \
+            --hiresmesh="%(hiresmesh)s" \
+            --lowresmesh="%(lowresmesh)s" \
+            --subcortgraylabels="%(subcortgraylabels)s" \
+            --refmyelinmaps="%(refmyelinmaps)s" \
+            --regname="%(regname)s" \
+            --parallel-mode="%(parallel_mode)s" \
+            --logdir="%(logdir)s"'
+            % {
+                "script": os.path.join(
+                    hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
+                ),
+                "studyfolder": os.path.join(options["sessionsfolder"], subject_id),
+                "subject": subject["id"],
+                "sessions": "@".join(subject["sessions"]),
+                "longitudinal_template": options["hcp_longitudinal_template"],
+                "t1template": t1template,
+                "t1templatebrain": t1templatebrain,
+                "t1template2mm": t1template2mm,
+                "t2template": t2template,
+                "t2templatebrain": t2templatebrain,
+                "t2template2mm": t2template2mm,
+                "templatemask": templatemask,
+                "template2mmmask": template2mmmask,
+                "fnirtconfig": fnirtconfig,
+                "freesurferlabels": freesurferlabels,
+                "surfatlasdir": surfatlasdir,
+                "grayordinatesres": options["hcp_grayordinatesres"],
+                "grayordinatesdir": grayordinatesdir,
+                "hiresmesh": options["hcp_hiresmesh"],
+                "lowresmesh": options["hcp_lowresmesh"],
+                "subcortgraylabels": subcortgraylabels,
+                "refmyelinmaps": refmyelinmaps,
+                "regname": options["hcp_regname"],
+                "parallel_mode": options['hcp_parallel_mode'],
+                "logdir": logdir,
+            }
+        )
+
+        if options["hcp_fslsub_queue"]:
+            comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
+
+        if options["hcp_max_jobs"]:
+            comm += f'                --max-jobs="{options['hcp_max_jobs']}"'
+
+        if options["hcp_start_stage"]:
+            comm += f'                --start-stage="{options['hcp_start_stage']}"'
+
+        if options["hcp_end_stage"]:
+            comm += f'                --end-stage="{options['hcp_end_stage']}"'
+
+        # -- Report command
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
+            r += comm.replace("                --", "\n    --")
+            r += "\n------------------------------------------------------------\n"
+
+        # -- Test file
+        tfile = None
+
+        if options["run"] == "run":
+            r, endlog, _, failed = pc.runExternalForFile(
+                tfile,
+                comm,
+                "Running HCP Longitudinal Post FS",
+                overwrite=overwrite,
+                thread=subject_id,
+                remove=options["log"] == "remove",
+                task=options["command_ran"],
+                logfolder=options["comlogs"],
+                logtags=options["logtag"],
+                fullTest=None,
+                shell=True,
+                r=r,
+            )
+
+            if failed == 0:
+                report["done"] = subject_id
+            else:
+                report["failed"] = subject_id
+
+            # read and print all files in logdir
+            with open(endlog, 'w') as log_file:
+                for filename in os.listdir(logdir):
+                    file_path = os.path.join(logdir, filename)
+
+                    with open(file_path, 'r') as file:
+                        content = file.read()
+                        print(file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(f"Contents of {filename}:", file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(content, file=log_file)
+
+            # remove the directory and its contents
+            shutil.rmtree(logdir)
+
+    else:
+        r += "\n---> Subject cannot be processed."
+        report["not ready"] = subject_id
+
+    return r, report
+
 
 
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
@@ -3019,8 +3718,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     failed = 0
 
         else:
-            r += "\n---> Session can not be processed."
-            report = "HCP Diffusion can not be run"
+            r += "\n---> Session cannot be processed."
+            report = "HCP Diffusion cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -5013,11 +5712,11 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
     if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
         printbold = boldinfo["filename"]
-        boldsource = boldinfo["filename"]
+        _ = boldinfo["filename"]
         boldtarget = boldinfo["filename"]
     else:
         printbold = str(bold)
-        boldsource = "BOLD_%d" % (bold)
+        _ = "BOLD_%d" % (bold)
         boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
 
     # prepare return variables
@@ -9602,8 +10301,8 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     failed = 0
 
         else:
-            r += "\n---> Session can not be processed."
-            report = "HCP ASL can not be run"
+            r += "\n---> Session cannot be processed."
+            report = "HCP ASL cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -10366,8 +11065,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     failed = 0
 
         else:
-            r += "\n---> Session can not be processed."
-            report = "HCP temporal ICA can not be run"
+            r += "\n---> Session cannot be processed."
+            report = "HCP temporal ICA cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -10432,7 +11131,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             Low resolution meshes node count. To provide more values
             separate them with commas.
 
-        --hcp_free_surfer_labels (str, default '${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt'):
+        --hcp_freesurfer_labels (str, default '${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt'):
             Path to the location of the FreeSurfer look up table file.
 
         --hcp_pregradient_smoothing (int, default 1):
@@ -10580,12 +11279,12 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         else:
             grayordinates = options["hcp_grayordinates_dir"]
 
-        # hcp_free_surfer_labels
+        # hcp_freesurfer_labels
         freesurferlabels = ""
-        if options["hcp_free_surfer_labels"] is None:
+        if options["hcp_freesurfer_labels"] is None:
             freesurferlabels = os.path.join(hcp["hcp_Config"], "FreeSurferAllLut.txt")
         else:
-            freesurferlabels = options["hcp_free_surfer_labels"]
+            freesurferlabels = options["hcp_freesurfer_labels"]
 
         # build the command
         if run:
@@ -10671,8 +11370,8 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
                     failed = 0
 
         else:
-            r += "\n---> Session can not be processed."
-            report = "HCP make average dataset can not be run"
+            r += "\n---> Session cannot be processed."
+            report = "HCP make average dataset cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -11278,8 +11977,8 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
                     failed = 0
 
         else:
-            r += "---> Session can not be processed."
-            report = "HCP DTI Fit can not be run"
+            r += "---> Session cannot be processed."
+            report = "HCP DTI Fit cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -11402,8 +12101,8 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
                     failed = 0
 
         else:
-            r += "---> Session can not be processed."
-            report = "HCP BedpostX can not be run"
+            r += "---> Session cannot be processed."
+            report = "HCP BedpostX cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -11514,7 +12213,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     Notes:
         The parameters can be specified in command call or session.txt file. If
         possible, the files are not copied but rather hard links are created to
-        save space. If hard links can not be created, the files are copied.
+        save space. If hard links cannot be created, the files are copied.
 
         Specific attention needs to be paid to the use of `hcp_nifti_tail`,
         `hcp_cifti_tail`, `hcp_suffix`, and `hcp_bold_variant` that relate to
@@ -12335,8 +13034,8 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                     failed = 0
 
         else:
-            r += "\n---> Session can not be processed."
-            report = "HCP fMRI task analysis can not be run"
+            r += "\n---> Session cannot be processed."
+            report = "HCP fMRI task analysis cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:

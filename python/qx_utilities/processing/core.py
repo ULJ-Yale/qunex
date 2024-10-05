@@ -1025,7 +1025,7 @@ def runExternalForFile(
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
-        status, report, r, failed = checkRun(
+        status, _, r, failed = checkRun(
             checkfile,
             fullTest=fullTest,
             command=task,
