@@ -51,8 +51,10 @@ Parameters:
     --report (str, default 'individual'):
         If you want to generate a group report ('individual' or 'group').
 
-    --overwrite (str):
-        Delete prior run for a given session.
+    --overwrite (str, default 'no'):
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --eddypath (str, default '<study_folder>/<session>/hcp/<session>/Diffusion/eddy/'):
         Specify the relative path of the eddy folder you want to use for inputs.

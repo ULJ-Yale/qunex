@@ -62,8 +62,9 @@ def run_qa(
             If left blank, the name of the configfile will be used.
 
         --overwrite (str, default 'no'):
-            If output files already exists, this will control whether or not they
-            should be overwritten. Accepts 'yes' or 'no'.
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
     Notes:
         This command will generate four files. These consist of 2 sessions .list 

@@ -269,10 +269,10 @@ def import_bids(
     archive="move",
     bidsname=None,
     fileinfo=None,
-    sequenceinfo="all",
+    add_json_info="all",
 ):
     """
-    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short] [sequenceinfo='all']``
+    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all']``
     
     Maps a BIDS dataset to the QuNex Suite file structure.
 
@@ -312,14 +312,9 @@ def import_bids(
             - 'move' ... the files will be moved.
 
         --overwrite (str, default 'no'):
-            The parameter specifies what should be done with data that already
-            exists in the locations to which bids data would be mapped to.
-            Options are:
-
-            - 'no'  ... do not overwrite the data and skip processing of the
-              session
-            - 'yes' ... remove existing files in `nii` folder and redo the
-              mapping.
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --archive (str, default 'move'):
             What to do with the files after they were mapped.
@@ -351,7 +346,7 @@ def import_bids(
             - 'full' ... list the full file name excluding the
               participant id, session name and extension.
 
-        --sequenceinfo (str, default 'all'):
+        --add_json_info (str, default 'all'):
             A comma or space separated string, listing which info present in 
             `.json` sidecar files to include in the sequence information. 
             Options are:
@@ -1018,7 +1013,7 @@ def import_bids(
                         os.path.join(sessionsfolder, session),
                         overwrite=overwrite,
                         fileinfo=fileinfo,
-                        sequenceinfo=sequenceinfo
+                        add_json_info=add_json_info
                     )
                     nmapping = True
                 except ge.CommandFailed as e:
@@ -1286,9 +1281,9 @@ def _sort_bids_images(bidsData, bids):
                         bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
 
-def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, sequenceinfo='all'):
+def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, add_json_info='all'):
     """
-    ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [sequenceinfo='all']``
+    ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [add_json_info='all']``
 
     Maps data organized according to BIDS specification to `nii` folder 
     structure as expected by QuNex commands.
@@ -1334,7 +1329,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, sequenceinfo='
             - 'full' ... list the full file name excluding the
               participant id, session name and extension.
 
-        --sequenceinfo (str, default 'all'):
+        --add_json_info (str, default 'all'):
             A comma or space separated string, listing which info present in 
             `.json` sidecar files to include in the sequence information. 
             Options are:
@@ -1464,10 +1459,10 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, sequenceinfo='
     subject = session.split("_")[0]
     sessionid = (session.split("_") + [""])[1]
 
-    sequenceinfo = [e.strip() for e in sequenceinfo.replace(",", " ").split()]
-    sequenceinfo = [e for e in sequenceinfo if len(e) > 0]
-    if "all" in sequenceinfo:
-        sequenceinfo = list(set(sequenceinfo + json_all))
+    add_json_info = [e.strip() for e in add_json_info.replace(",", " ").split()]
+    add_json_info = [e for e in add_json_info if len(e) > 0]
+    if "all" in add_json_info:
+        add_json_info = list(set(add_json_info + json_all))
 
     info = "subject " + subject
     if sessionid:
@@ -1574,8 +1569,8 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, sequenceinfo='
             # ---> check if there is json info present
             json_info = []
             json_data = bidsData["images"]["info"][image].get("json_info", None)
-            if json_data and sequenceinfo:
-                for ji in sequenceinfo:
+            if json_data and add_json_info:
+                for ji in add_json_info:
                     if ji in json_mapping:
                         if json_mapping[ji][0] in json_data:
                             json_info.append(

@@ -63,7 +63,9 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
@@ -236,7 +238,9 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs
@@ -524,7 +528,9 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,

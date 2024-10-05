@@ -203,14 +203,9 @@ def import_hcp(
             - 'move' ... files will be moved.
 
         --overwrite (str, default 'no'):
-            The parameter specifies what should be done with data that already
-            exists in the locations to which HCPLS data would be mapped to.
-            Options are:
-
-            - 'no'  ... do not overwrite the data and skip processing of the
-              session
-            - 'yes' ... remove exising files in `nii` folder and redo the
-              mapping.
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --archive (str, default 'move'):
             What to do with the files after they were mapped.
@@ -951,17 +946,16 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
         --sourcefolder (str, default '.'):
             The base session folder in which bids folder with data and files for
             the session are present.
-        --overwrite (str, default 'no'):
-            Parameter that specifes what should be done in cases where there are
-            existing data stored in `nii` folder. The options are:
 
-            - 'no'  ... do not overwrite the data, skip session
-            - 'yes' ... remove exising files in `nii` folder and redo the
-              mapping.
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --report (str, default '<basefolder>/info/hcpls/parameters.txt'):
             The path to the file that will hold the information about the images
             that are relevant for HCP Pipelines.
+
         --filesort (str, default 'name_type_se'):
             An optional parameter that specifies how the files should
             be sorted before mapping to `nii` folder and inclusion in

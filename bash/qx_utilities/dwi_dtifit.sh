@@ -30,8 +30,10 @@ Parameters:
     --sessions (str):
         The sessions to run.
 
-    --overwrite (str):
-        Delete prior run for a given session ('yes' / 'no').
+    --overwrite (str, default 'no'):
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --species (str):
         dtifit currently supports processing of human and macaqu data. If

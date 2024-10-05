@@ -613,14 +613,14 @@ arglist = [
     [
         "hcp_t1samplespacing",
         "",
-        str,
-        "0.0000074 ... DICOM field (0019,1018) in s or '' if not used.",
+        isNone,
+        "T1 image sample spacing, 'NONE' if not used.",
     ],
     [
         "hcp_t2samplespacing",
         "",
-        str,
-        "0.0000021 ... DICOM field (0019,1018) in s or '' if not used.",
+        isNone,
+        "T2 image sample spacing, 'NONE' if not used.",
     ],
     [
         "hcp_gdcoeffs",
@@ -637,9 +637,9 @@ arglist = [
     ],
     [
         "hcp_unwarpdir",
-        "",
+        "z",
         str,
-        "Readout direction of the T1w and T2w images (Used with either a regular field map or a spin echo field map) z appears to be best or '' if not used.",
+        "Readout direction of the T1w and T2w images (Used with either a regular field map or a spin echo field map), z is the most common and also the default version.",
     ],
     [
         "hcp_echodiff",
@@ -649,8 +649,8 @@ arglist = [
     ],
     [
         "hcp_seechospacing",
-        "NONE",
-        str,
+        "",
+        isNone,
         "Echo Spacing or Dwelltime of Spin Echo Field Map or '' if not used.",
     ],
     [

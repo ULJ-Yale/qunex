@@ -1165,7 +1165,7 @@ def dicom2niix(
             The value should specify how many of image type labels from the end
             of the image type list to add.
 
-        --add_json_info (str, default ''):
+        --add_json_info (str, default 'all'):
             What sequence information to extract from JSON sidecar files and add
             to session.txt file. Specify a comma separated list of fields or
             'all'. See list in session.txt file description below.
@@ -2639,7 +2639,7 @@ def import_dicom(
     logfile=None,
     archive="move",
     add_image_type=0,
-    add_json_info="",
+    add_json_info="all",
     unzip="yes",
     gzip="folder",
     verbose="yes",
@@ -2730,7 +2730,7 @@ def import_dicom(
             The value should specify how many of image type labels from the end
             of the image type list to add.
 
-        --add_json_info (str, default ''):
+        --add_json_info (str, default 'all'):
             What sequence information to extract from JSON sidecar files and add
             to session.txt file. Specify a comma separated list of fields or
             'all'. See list in session.txt file description below.
@@ -2750,7 +2750,9 @@ def import_dicom(
             identified and/or are not matched with log file.
 
         --overwrite (str, default 'no'):
-            Whether to remove existing data in the dicom and nii folders.
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
     Notes:
         The command is used to automatically process packets with individual

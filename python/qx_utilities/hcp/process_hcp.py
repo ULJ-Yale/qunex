@@ -58,6 +58,7 @@ import shutil
 import glob
 import traceback
 import time
+import json
 import general.core as gc
 import processing.core as pc
 import general.img as gi
@@ -437,7 +438,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -513,7 +516,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             - 'TOPUP' (average any repeats and use spin echo field map for
               readout correction).
 
-        --hcp_unwarpdir (str, default 'NONE'):
+        --hcp_unwarpdir (str, default 'z'):
             Readout direction of the T1w and T2w images (x, y, z or NONE); used
             with either a regular field map or a spin echo field map.
 
@@ -742,6 +745,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 T1w = [
                     v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "T1w"
                 ][0]
+
                 if "DwellTime" in T1w and checkInlineParameterUse(
                     "T1w", "DwellTime", options
                 ):
@@ -763,9 +767,23 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> T1w image specific unwarp direction: %s" % (
                         options["hcp_unwarpdir"]
                     )
-            else:
-                r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
-                run = False
+
+                # try to set hcp_t1samplespacing from the JSON sidecar if not yet set
+                if not options["hcp_t1samplespacing"]:
+                    json_sidecar = tfile.replace("nii.gz", "json")
+                    if os.path.exists(json_sidecar):
+                        r += "\n---> Trying to set hcp_t1samplespacing from the JSON sidecar."
+                        with open(json_sidecar, 'r') as file:
+                            sidecar_data = json.load(file)
+                            if "DwellTime" in sidecar_data:
+                                options["hcp_t1samplespacing"] = f"{sidecar_data["DwellTime"]:.15f}"
+                                r += f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}"
+                    else:
+                        options["hcp_t1samplespacing"] = "NONE"
+                else:
+                    r += "\n---> hcp_t1samplespacing not provided and not found in the JSON sidecar, setting it to NONE."
+                    r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
+                    run = False
 
         if hcp["T2w"] in ["", "NONE"]:
             if options["hcp_processing_mode"] == "HCPStyleData":
@@ -796,6 +814,24 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (
                             options["hcp_t2samplespacing"]
                         )
+
+                    # try to set hcp_t2samplespacing from the JSON sidecar if not yet set
+                    if not options["hcp_t2samplespacing"]:
+                        json_sidecar = tfile.replace("nii.gz", "json")
+                        if os.path.exists(json_sidecar):
+                            r += "\n---> Trying to set hcp_t2samplespacing from the JSON sidecar."
+                            with open(json_sidecar, 'r') as file:
+                                sidecar_data = json.load(file)
+                                if "DwellTime" in sidecar_data:
+                                    options["hcp_t2samplespacing"] = f"{sidecar_data["DwellTime"]:.15f}"
+                                    r += f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}"
+                        else:
+                            r += "\n---> hcp_t2samplespacing not provided and not found in the JSON sidecar, setting it to NONE."
+                            options["hcp_t2samplespacing"] = "NONE"
+                    else:
+                        r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
+                        run = False
+
                 else:
                     r += "\n---> ERROR: Could not find T2w image file. [%s]" % (tfile)
                     run = False
@@ -811,18 +847,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmcombined = ""
 
         if options["hcp_avgrdcmethod"] == "TOPUP":
-            # -- spin echo settings
-            sesettings = True
-            for p in ["hcp_sephaseneg", "hcp_sephasepos", "hcp_seunwarpdir", "hcp_seechospacing"]:
-                if options[p] == "NONE":
-                    r += (
-                        "\n---> ERROR: %s parameter is not set!"
-                        % (p)
-                    )
-                    run = False
-                    sesettings = False
-
             try:
+                # -- spin echo settings
                 T1w = [
                     v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "T1w"
                 ][0]
@@ -876,6 +902,32 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     )
                     run = False
                     raise
+
+            # try to set hcp_seechospacing from the JSON sidecar if not yet set
+            if not options["hcp_seechospacing"] and tufolder:
+                fmap_ap_json = glob.glob(os.path.join(tufolder, "*AP*.json"))[0]
+                json_sidecar = os.path.join(tufolder, fmap_ap_json)
+
+                if os.path.exists(json_sidecar):
+                    r += "\n---> Trying to set hcp_seechospacing from the JSON sidecar."
+                    with open(json_sidecar, 'r') as file:
+                        sidecar_data = json.load(file)
+                        if "EffectiveEchoSpacing" in sidecar_data:
+                            options["hcp_seechospacing"] = f"{sidecar_data["EffectiveEchoSpacing"]:.15f}"
+                            r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
+                else:
+                    r += "\n---> hcp_seechospacing not provided and not found in the JSON sidecar, setting it to NONE."
+                    options["hcp_seechospacing"] = "NONE"
+
+            sesettings = True
+            for p in ["hcp_sephaseneg", "hcp_sephasepos", "hcp_seunwarpdir", "hcp_seechospacing"]:
+                if options[p] == "NONE":
+                    r += (
+                        "\n---> ERROR: %s parameter is not set!"
+                        % (p)
+                    )
+                    run = False
+                    sesettings = False
 
             if tufolder and sesettings:
                 try:
@@ -1368,7 +1420,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -1783,7 +1837,9 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -2157,7 +2213,9 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             How many subjects to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -2528,8 +2586,10 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --parsubjects (int, default 1):
             How many subjects to run in parallel.
 
-        --overwrite (str, default "no"):
-            Whether to overwrite existing data (yes) or not (no).
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ""):
             Specifies a suffix to the session id if multiple variants are run,
@@ -3128,7 +3188,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -3823,7 +3885,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             list (e.g. 'WM|Control|rest') or 'all' to process all.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -5456,7 +5520,9 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             list (e.g. 'WM|Control|rest') or 'all' to process all.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -6136,7 +6202,9 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             How many elements (e.g. bolds) to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -6873,7 +6941,9 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             How many elements (e.g. bolds) to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -9899,7 +9969,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -12168,7 +12240,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,

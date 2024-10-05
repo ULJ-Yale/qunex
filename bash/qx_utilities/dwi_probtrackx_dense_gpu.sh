@@ -44,10 +44,10 @@ Parameters:
     --sessions (str):
         Comma separated list of sessions to run.
 
-    --overwrite (str):
-        Delete a prior run for a given session ('yes' / 'no').
-        Note: this will delete only the Matrix run specified by the -omatrix
-        flag.
+    --overwrite (str, default 'no'):
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --omatrix1 (str):
         Specify if you wish to run matrix 1 model [yes or omit flag]

@@ -71,7 +71,9 @@ Parameters:
         all BOLD runs in the batch file will be processed.
 
     --overwrite (str, default 'no'):
-        Delete prior QC run: yes/no.
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --hcp_suffix (str, default ''):
         Allows user to specify session id suffix if running HCP preprocessing

@@ -211,8 +211,10 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         --parelements (int, default 1):
             How many elements (e.g. bolds) to run in parallel.
 
-        --overwrite (str, 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
@@ -672,7 +674,9 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             How many elements (e.g. bolds) to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
@@ -1064,7 +1068,9 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
@@ -1606,7 +1612,9 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             How many elements (e.g. bolds) to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --bolds (str, default 'rest'):
             Which bold images (as they are specified in the batch.txt file) to
@@ -2782,7 +2790,9 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data ('yes') or not ('no').
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.

@@ -46,8 +46,10 @@ Parameters:
        Parcellate only a single file in any location. Individual flags are not
        needed (--session, --sessionsfolder, --inputfile).
 
-    --overwrite (str):
-        Delete prior run ('yes' / 'no').
+    --overwrite (str, default 'no'):
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --computepconn (str, default 'no'):
         Specify if a parcellated connectivity file should be computed (pconn).

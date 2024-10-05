@@ -711,9 +711,11 @@ def create_batch(
 
         --overwrite (str, default 'yes'):
             In case that the specified batch file already exists, whether to
-            interactively ask ('ask'), overwrite ('yes'), abort action ('no') or
-            append ('append') the found / specified sessions to the batch file.
-
+            overwrite ('yes'), abort action ('no') or append ('append') the
+            found / specified sessions to the batch file. Note that
+            previous data is deleted before the run, so in the case of the "yes"
+            option and a failed command run, previous results will be lost.
+            
         --paramfile (str, default <sessionsfolder>/specs/parameters.txt):
             The path to the parameter file header to be used. If not explicitly
             provided it defaults to <sessionsfolder>/specs/parameters.txt.
@@ -1267,7 +1269,6 @@ def create_list(
         --overwrite (str, default 'no'):
             If the specified list file already exists:
 
-            - 'ask' (ask interactively, what to do)
             - 'yes' (overwrite the existing file)
             - 'no' (abort creating a file)
             - 'append' (append sessions to the existing list file).
@@ -1294,7 +1295,6 @@ def create_list(
             If a file already exists, depending on the `overwrite` parameter the
             function will:
 
-            - 'ask' (ask interactively, what to do)
             - 'yes' (overwrite the existing file)
             - 'no' (abort creating a file)
             - 'append' (append sessions to the existing list file)
@@ -1736,7 +1736,6 @@ def create_conc(
         --overwrite (str, default 'no'):
             If the specified list file already exists:
 
-            - ask    (ask interactively, what to do)
             - yes    (overwrite the existing file)
             - no     (abort creating a file)
             - append (append sessions to the existing list file).
@@ -3687,8 +3686,9 @@ def create_session_info(
             filter is provided.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite target files that already exist ('yes') or not
-            ('no').
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
     Notes:
         If an explicit list of parameters is provided, each element is treated

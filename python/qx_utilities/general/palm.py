@@ -232,9 +232,9 @@ def run_palm(image, design=None, palm_args=None, root=None, surface='no', mask=N
             used. One element per CPU core is processed at a time.
 
         --overwrite (str, default 'no'):
-            Whether to remove preexisting image files, if they exists,
-            the command will exit with a warning if there are
-            preexisting files and overwrite is set to 'no' (the default).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --cleanup (str, default 'yes'):
             Should the command clean all the temporary generated files
