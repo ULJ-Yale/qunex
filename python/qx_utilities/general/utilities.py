@@ -3825,7 +3825,6 @@ def create_session_info(
             targetfile = "session_%s.txt" % pipeline
 
         # -- get mapping ready
-
         if not os.path.exists(mapping):
             raise ge.CommandFailed(
                 "create_session_info",
@@ -3847,7 +3846,6 @@ def create_session_info(
             )
 
         # -- get list of session folders
-
         sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False)
 
         sfolders = []
@@ -3861,7 +3859,6 @@ def create_session_info(
             sfolders += newSet
 
         # -- check if we have any
-
         if not sfolders:
             raise ge.CommandFailed(
                 "create_session_info",

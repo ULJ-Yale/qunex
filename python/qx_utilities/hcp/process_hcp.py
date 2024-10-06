@@ -1076,7 +1076,11 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 # try to set hcp_echodiff from the JSON sidecar if not yet set
                 if not options["hcp_echodiff"]:
-                    fmfolder = "TODO"
+                    fmfolder = os.path.join(
+                        hcp["source"],
+                        "FieldMap%s%s" % (fmnum, options["fctail"]),
+                    )
+
                     fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
                     json_sidecar = os.path.join(fmfolder, fmap_json)
 
@@ -1084,13 +1088,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> Trying to set hcp_echodiff from the JSON sidecar."
                         with open(json_sidecar, 'r') as file:
                             sidecar_data = json.load(file)
-                            if "EchoDiffTODO" in sidecar_data:
-                                options["hcp_echodiff"] = f"{sidecar_data["EchoDiffTODO"]:.15f}"
+                            if "EchoTime1" in sidecar_data and "EchoTime2" in sidecar_data:
+                                echodiff = sidecar_data["EchoTime2"] - sidecar_data["EchoTime1"]
+                                options["hcp_echodiff"] = f"{echodiff:.15f}"
                                 r += f"\n       - hcp_echodiff set to {options['hcp_echodiff']}"
                     else:
                         r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
                         options["hcp_echodiff"] = "NONE"
-
         else:
             r += "\n---> WARNING: No distortion correction method specified."
 
