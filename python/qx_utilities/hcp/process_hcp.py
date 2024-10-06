@@ -989,6 +989,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> Spin-Echo unwarp direction: %s" % (
                             options["hcp_seunwarpdir"]
                         )
+                    if not options["hcp_seunwarpdir"]:
+                        options["hcp_seunwarpdir"] = "NONE"
 
                     if (
                         options["hcp_topupconfig"] != "NONE"
@@ -1071,6 +1073,23 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                 fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
                 fmcombined = None
+
+                # try to set hcp_echodiff from the JSON sidecar if not yet set
+                if not options["hcp_echodiff"]:
+                    fmfolder = "TODO"
+                    fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
+                    json_sidecar = os.path.join(fmfolder, fmap_json)
+
+                    if os.path.exists(json_sidecar):
+                        r += "\n---> Trying to set hcp_echodiff from the JSON sidecar."
+                        with open(json_sidecar, 'r') as file:
+                            sidecar_data = json.load(file)
+                            if "EchoDiffTODO" in sidecar_data:
+                                options["hcp_echodiff"] = f"{sidecar_data["EchoDiffTODO"]:.15f}"
+                                r += f"\n       - hcp_echodiff set to {options['hcp_echodiff']}"
+                    else:
+                        r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
+                        options["hcp_echodiff"] = "NONE"
 
         else:
             r += "\n---> WARNING: No distortion correction method specified."
@@ -1289,6 +1308,11 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         ]
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+
+        print("!!!!!!!!!!!!!!!!!!!!!!!!")
+        print(comm)
+        print("!!!!!!!!!!!!!!!!!!!!!!!!")
+        sys.exit(0)
 
         # -- Report command
         if run:
@@ -2440,7 +2464,9 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         i += 1
 
     # logdir
-    logdir = os.path.join(options["logfolder"], "comlogs", f"tmp_hcp_long_freesurfer_{subject['id']}")
+    logdir = os.path.join(options["logfolder"], "comlogs", f"extra_logs_hcp_long_freesurfer_{subject['id']}")
+    if os.path.exists(logdir):
+        shutil.rmtree(logdir)
     os.makedirs(logdir)
 
     # build the command
@@ -3032,7 +3058,9 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         refmyelinmaps = options["hcp_refmyelinmaps"]
 
     # logdir
-    logdir = os.path.join(options["logfolder"], "comlogs", f"tmp_hcp_long_post_freesurfer_{subject['id']}")
+    logdir = os.path.join(options["logfolder"], "comlogs", f"extra_logs_hcp_long_post_freesurfer_{subject['id']}")
+    if os.path.exists(logdir):
+        shutil.rmtree(logdir)
     os.makedirs(logdir)
 
     # build the command
@@ -3158,7 +3186,6 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         report["not ready"] = subject_id
 
     return r, report
-
 
 
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):

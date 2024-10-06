@@ -644,7 +644,7 @@ arglist = [
     [
         "hcp_echodiff",
         "",
-        str,
+        isNone,
         "the delta in TE times for the hi-res fieldmap image [''].",
     ],
     [
@@ -655,8 +655,8 @@ arglist = [
     ],
     [
         "hcp_seunwarpdir",
-        "NONE",
-        str,
+        "",
+        isNone,
         "Phase encoding direction of the spin echo field map. (Only applies when using a spin echo field map.) [''].",
     ],
     [
