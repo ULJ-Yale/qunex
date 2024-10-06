@@ -1313,11 +1313,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
-        print("!!!!!!!!!!!!!!!!!!!!!!!!")
-        print(comm)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!")
-        sys.exit(0)
-
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
