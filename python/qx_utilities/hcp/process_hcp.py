@@ -1090,6 +1090,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             sidecar_data = json.load(file)
                             if "EchoTime1" in sidecar_data and "EchoTime2" in sidecar_data:
                                 echodiff = sidecar_data["EchoTime2"] - sidecar_data["EchoTime1"]
+                                # from s to ms
+                                echodiff = echodiff * 1000
                                 options["hcp_echodiff"] = f"{echodiff:.15f}"
                                 r += f"\n       - hcp_echodiff set to {options['hcp_echodiff']}"
                     else:
