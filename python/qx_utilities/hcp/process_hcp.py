@@ -468,7 +468,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             working folders and the 'MNINonLinear' folder.
 
         --hcp_filename (str, default 'automated'):
-            How to name the BOLD files once mapped intothe hcp input folder
+            How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
