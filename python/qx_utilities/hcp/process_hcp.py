@@ -2435,7 +2435,10 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
     # sort out the folder structure
     sessionsfolder = options["sessionsfolder"]
-    study_folder = os.path.join(sessionsfolder, subject_id)
+    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
+    if not os.path.exists(subjectsfolder):
+        os.makedirs(subjectsfolder)
+    study_folder = os.path.join(subjectsfolder, subject_id)
     if not os.path.exists(study_folder):
         os.makedirs(study_folder)
 
@@ -3064,6 +3067,10 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         shutil.rmtree(logdir)
     os.makedirs(logdir)
 
+    # subjects folder
+    sessionsfolder = options["sessionsfolder"]
+    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
+
     # build the command
     if run:
         comm = (
@@ -3096,7 +3103,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 "script": os.path.join(
                     hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
                 ),
-                "studyfolder": os.path.join(options["sessionsfolder"], subject_id),
+                "studyfolder": subjectsfolder,
                 "subject": subject["id"],
                 "sessions": "@".join(subject["sessions"]),
                 "longitudinal_template": options["hcp_longitudinal_template"],
