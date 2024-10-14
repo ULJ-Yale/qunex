@@ -3074,7 +3074,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     # symlink sessions
     for session in subject["sessions"]:
         source_dir = os.path.join(sessionsfolder, session)
-        target_dir = os.path.join(subjectsfolder, session)
+        target_dir = os.path.join(sessionsfolder, session, "hcp", session)
         gc.link_or_copy(source_dir, target_dir, symlink=True)
 
     # build the command
@@ -3201,7 +3201,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
 
     # cleanup
     for session in subject["sessions"]:
-        session_link_dir = os.path.join(sessionsfolder, session)
+        session_link_dir = os.path.join(sessionsfolder, session, "hcp", session)
         shutil.rmtree(session_link_dir)
 
     return r, report
