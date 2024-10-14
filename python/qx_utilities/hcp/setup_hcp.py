@@ -115,9 +115,10 @@ def setup_hcp(
             What to do if the hcp folder already exists.
             Options are:
 
-            - 'abort' ... abort setting up hcp folder
-            - 'add'   ... leave existing files and add new ones
-            - 'clear' ... remove any existing files and redo hcp mapping.
+            - 'abort'  ... abort setting up hcp folder,
+            - 'add'    ... leave existing files and add new ones,
+            - 'backup' ... create a copy with the _bkp suffix,
+            - 'clear'  ... remove any existing files and redo hcp mapping.
 
         --hcp_filename (str, default 'automated'):
             How to name the BOLD files once mapped into the hcp input folder
@@ -312,7 +313,6 @@ def setup_hcp(
     slice_timing_info = any([slice_timing_info.upper() == e for e in ["YES", "TRUE"]])
 
     # backwards compatibility (session used to be id)
-
     if "id" in inf:
         session_key = "id"
         sid = inf[session_key]
@@ -346,9 +346,7 @@ def setup_hcp(
         )
 
     # --- Check session
-
     # -> is it HCP ready
-
     if inf.get("hcpready", "no") != "true":
         if check == "yes":
             raise ge.CommandFailed(
@@ -364,7 +362,6 @@ def setup_hcp(
             )
 
     # -> does raw data exist
-
     if rawf is None or not os.path.exists(rawf):
         raise ge.CommandFailed(
             "setup_hcp",
@@ -376,33 +373,49 @@ def setup_hcp(
     print("---> Setting up HCP folder structure for %s\n" % (sid))
 
     # -> does hcp folder already exist?
-
     if os.path.exists(basef):
         if existing == "clear":
             print(
-                " ---> Base folder %s already exist! Clearing existing files and folders! "
+                "---> Base folder %s already exist! Clearing existing files and folders! "
                 % (basef)
             )
             shutil.rmtree(basef)
             os.makedirs(basef)
         elif existing == "add":
             print(
-                " ---> Base folder %s already exist! Adding any new files specified! "
+                "---> Base folder %s already exist! Adding any new files specified! "
                 % (basef)
             )
+        elif existing == "backup":
+            print(
+                "---> Base folder %s already exist! Backking it up with the _bkp suffix! "
+                % (basef)
+            )
+            bkp_folder = f"{basef}_bkp"
+            if not os.path.exists(bkp_folder):
+                shutil.copytree(basef, bkp_folder)
+            else:
+                raise ge.CommandFailed(
+                    "setup_hcp",
+                    "Backup folder exists",
+                    "Backup folder %s already exist!" % (bkp_folder),
+                    "Please remove manually if you want to create another backup!",
+                )
         else:
             raise ge.CommandFailed(
                 "setup_hcp",
                 "Base folder exists",
                 "Base folder %s already exist!" % (basef),
-                "Please check or specify `exisiting` as `add` or `clear` for desired action!",
+                "Please check or specify `exisiting` as `add`, `clear` or `backup` for desired action!",
             )
     else:
-        print(" ---> Creating base folder %s " % (basef))
+        print("---> Creating base folder %s " % (basef))
         os.makedirs(basef)
 
+    print()
+    print("---> Mapping data")
     i = [k for k, v in inf.items() if k.isdigit()]
-    i.sort(key=int, reverse=True)
+    i.sort(key=int)
     boldn = "99"
     mapped = False
 
