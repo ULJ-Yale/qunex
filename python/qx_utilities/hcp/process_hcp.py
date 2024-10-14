@@ -3071,6 +3071,12 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     sessionsfolder = options["sessionsfolder"]
     subjectsfolder = sessionsfolder.replace("sessions", "subjects")
 
+    # symlink sessions
+    for session in subject["sessions"]:
+        source_dir = os.path.join(sessionsfolder, session)
+        target_dir = os.path.join(subjectsfolder, session)
+        gc.link_or_copy(source_dir, target_dir, symlink=True)
+
     # build the command
     if run:
         comm = (
@@ -3192,6 +3198,11 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     else:
         r += "\n---> Subject cannot be processed."
         report["not ready"] = subject_id
+
+    # cleanup
+    for session in subject["sessions"]:
+        session_link_dir = os.path.join(sessionsfolder, session)
+        shutil.rmtree(session_link_dir)
 
     return r, report
 
