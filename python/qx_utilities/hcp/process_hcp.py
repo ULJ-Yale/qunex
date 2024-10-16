@@ -2357,6 +2357,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 
         # launch
         parsubjects = options["parsubjects"]
+
         if parsubjects == 1:  # serial execution
             for subject in subjects_list:
                 log, run_report = _execute_hcp_long_freesurfer(
@@ -3067,15 +3068,8 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         shutil.rmtree(logdir)
     os.makedirs(logdir)
 
-    # subjects folder
-    sessionsfolder = options["sessionsfolder"]
-    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-
-    # symlink sessions
-    for session in subject["sessions"]:
-        source_dir = os.path.join(sessionsfolder, session, "hcp", session)
-        target_dir = os.path.join(subjectsfolder, session)
-        gc.link_or_copy(source_dir, target_dir, symlink=True)
+    # subject folder
+    studyfolder = os.path.join(options["sessionsfolder"].replace("sessions", "subjects"), subject["id"])
 
     # build the command
     if run:
@@ -3109,7 +3103,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 "script": os.path.join(
                     hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
                 ),
-                "studyfolder": subjectsfolder,
+                "studyfolder": studyfolder,
                 "subject": subject["id"],
                 "sessions": "@".join(subject["sessions"]),
                 "longitudinal_template": options["hcp_longitudinal_template"],
@@ -3198,11 +3192,6 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     else:
         r += "\n---> Subject cannot be processed."
         report["not ready"] = subject_id
-
-    # cleanup
-    for session in subject["sessions"]:
-        session_link_dir = os.path.join(sessionsfolder, session, "hcp", session)
-        shutil.rmtree(session_link_dir)
 
     return r, report
 
