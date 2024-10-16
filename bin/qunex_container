@@ -636,8 +636,6 @@ def main(args=None):
     --parjobs       Specify the maximum amount of jobs that will be created
                     and run in parallel. By default this equals the number
                     of sessions your provided.
-    --parsubjects   Specify the amount of subjects that will be run in parallel
-                    inside each created job. [1]
     --parsessions   Specify the amount of sessions that will be run in parallel
                     inside each created job. [1]
     --parelements   Specify the amount of elements that will be run in parallel
@@ -768,7 +766,6 @@ def main(args=None):
     cuda_path = None
     script = None
     parjobs = None
-    parsubjects = None
     parsessions = None
     parelements = 1
     batchfile = None
@@ -815,10 +812,6 @@ def main(args=None):
             k, parsessions = arg.split("=", 1)
             command += f'{k}="{parsessions}" '
             parsessions = int(parsessions)
-        elif "parsubjects=" in arg:
-            k, parsubjects = arg.split("=", 1)
-            command += f'{k}="{parsubjects}" '
-            parsubjects = int(parsubjects)
         elif "parelements=" in arg:
             k, parelements = arg.split("=", 1)
             command += f'{k}="{parelements}" '
@@ -845,16 +838,9 @@ def main(args=None):
         else:
             command += f"{arg} "
 
-    # parsessions/parsubjects
-    if parsessions is None and parsubjects is None:
+    # parsessions
+    if parsessions is None:
         parsessions = 1
-    elif parsessions is not None and parsubjects is not None:
-        print(
-            "ERROR: You provided both the parsessions and the parsubjects. Please set only one top level paralellization parameter!"
-        )
-        exit(1)
-    elif parsubjects is not None:
-        parsessions = parsubjects
 
     # workaround for commands that are not supported
     commands_blacklist = [
