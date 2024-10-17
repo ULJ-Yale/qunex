@@ -2360,9 +2360,11 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 
         if parsubjects == 1:  # serial execution
             for subject in subjects_list:
-                log, run_report = _execute_hcp_long_freesurfer(
+                result = _execute_hcp_long_freesurfer(
                     options, overwrite, run, hcp["hcp_base"], subject
                 )
+                log = result["log"]
+                run_report = result["report"]
 
                 # merge
                 r += log
@@ -2589,7 +2591,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         r += "\n---> Subject cannot be processed."
         report["not ready"] = subject_id
 
-    return r, report
+    return {"r": r, "report": report}
 
 
 def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
@@ -2835,9 +2837,11 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         parsubjects = options["parsubjects"]
         if parsubjects == 1:  # serial execution
             for subject in subjects_list:
-                log, run_report = _execute_hcp_long_post_freesurfer(
+                result = _execute_hcp_long_post_freesurfer(
                     options, overwrite, run, hcp, subject
                 )
+                log = result["log"]
+                run_report = result["report"]
 
                 # merge
                 r += log
@@ -3193,7 +3197,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         r += "\n---> Subject cannot be processed."
         report["not ready"] = subject_id
 
-    return r, report
+    return {"r": r, "report": report}
 
 
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
