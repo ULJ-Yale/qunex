@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 0.101.0 [QX IO]
+
+* TODO
+
 ## 0.100.0 [QX IO]
 
 * Completely new FC pipeline (`fc_compute_roifc`, `fc_compute_seedmap`).
