@@ -1066,7 +1066,7 @@ def main(args=None):
         print(f"    Maximum sessions run in parallel for a job: {parsessions}.")
         print(f"    Maximum elements run in parallel for a session: {parelements}.")
         print(
-            "    Up to {parelements * parsessions} processes will be utilized for a job.\n"
+            f"    Up to {parelements * parsessions} processes will be utilized for a job.\n"
         )
 
         if slurm_array:
