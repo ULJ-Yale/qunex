@@ -495,7 +495,7 @@ arglist = [
         "scheduler",
         "local",
         str,
-        "the scheduler to use (local|PBS|LSF|SLURM) and any additional settings",
+        "the scheduler to use (local|PBS|SLURM) and any additional settings",
     ],
     [
         "scheduler_environment",

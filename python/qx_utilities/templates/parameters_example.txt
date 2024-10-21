@@ -137,7 +137,7 @@
 # 
 # # ---- scheduler options
 # 
-# _scheduler                 The scheduler to use (local|PBS|LSF|SLURM) and any additional settings [local]
+# _scheduler                 The scheduler to use (local|PBS|SLURM) and any additional settings [local]
 # _scheduler_environment     The path to the script setting up the environment to run the commands in [None]
 # _scheduler_workdir         The path to working directory from which to run jobs on the cluster [None]
 # _scheduler_sleep           Time in seconds between submission of individual scheduler jobs [1]
