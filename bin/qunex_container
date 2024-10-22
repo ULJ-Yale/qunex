@@ -1080,10 +1080,10 @@ def main(args=None):
                     if "run_turnkey" in qx_command:
                         qx_command += f'--sessionids="{sessionids_array[i]}" '
                 else:
-                    qx_command += '--sessionids="{sessionids_array[i]}" '
+                    qx_command += f'--sessionids="{sessionids_array[i]}" '
                     # run_turnkey requires both
                     if "run_turnkey" in qx_command:
-                        qx_command += '--sessions="{sessionids_array[i]}" '
+                        qx_command += f'--sessions="{sessionids_array[i]}" '
 
             # setup script
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
