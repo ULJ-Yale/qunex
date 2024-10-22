@@ -769,7 +769,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     )
 
                 # try to set hcp_t1samplespacing from the JSON sidecar if not yet set
-                if not options["hcp_t1samplespacing"]:
+                if options["hcp_t1samplespacing"] == "NONE":
                     json_sidecar = tfile.replace("nii.gz", "json")
                     if os.path.exists(json_sidecar):
                         r += "\n---> Trying to set hcp_t1samplespacing from the JSON sidecar."
@@ -778,12 +778,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             if "DwellTime" in sidecar_data:
                                 options["hcp_t1samplespacing"] = f"{sidecar_data["DwellTime"]:.15f}"
                                 r += f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}"
-                    else:
-                        options["hcp_t1samplespacing"] = "NONE"
-                else:
-                    r += "\n---> hcp_t1samplespacing not provided and not found in the JSON sidecar, setting it to NONE."
-                    r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
-                    run = False
 
         if hcp["T2w"] in ["", "NONE"]:
             if options["hcp_processing_mode"] == "HCPStyleData":
@@ -816,7 +810,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         )
 
                     # try to set hcp_t2samplespacing from the JSON sidecar if not yet set
-                    if not options["hcp_t2samplespacing"]:
+                    if options["hcp_t2samplespacing"] == "NONE":
                         json_sidecar = tfile.replace("nii.gz", "json")
                         if os.path.exists(json_sidecar):
                             r += "\n---> Trying to set hcp_t2samplespacing from the JSON sidecar."
@@ -825,12 +819,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 if "DwellTime" in sidecar_data:
                                     options["hcp_t2samplespacing"] = f"{sidecar_data["DwellTime"]:.15f}"
                                     r += f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}"
-                        else:
-                            r += "\n---> hcp_t2samplespacing not provided and not found in the JSON sidecar, setting it to NONE."
-                            options["hcp_t2samplespacing"] = "NONE"
-                    else:
-                        r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
-                        run = False
 
                 else:
                     r += "\n---> ERROR: Could not find T2w image file. [%s]" % (tfile)
@@ -904,7 +892,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     raise
 
             # try to set hcp_seechospacing from the JSON sidecar if not yet set
-            if not options["hcp_seechospacing"] and tufolder:
+            if options["hcp_seechospacing"] == "NONE" and tufolder:
                 fmap_ap_json = glob.glob(os.path.join(tufolder, "*AP*.json"))[0]
                 json_sidecar = os.path.join(tufolder, fmap_ap_json)
 
@@ -915,9 +903,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         if "EffectiveEchoSpacing" in sidecar_data:
                             options["hcp_seechospacing"] = f"{sidecar_data["EffectiveEchoSpacing"]:.15f}"
                             r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
-                else:
-                    r += "\n---> hcp_seechospacing not provided and not found in the JSON sidecar, setting it to NONE."
-                    options["hcp_seechospacing"] = "NONE"
 
             sesettings = True
             for p in ["hcp_sephaseneg", "hcp_sephasepos", "hcp_seunwarpdir", "hcp_seechospacing"]:
@@ -989,8 +974,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> Spin-Echo unwarp direction: %s" % (
                             options["hcp_seunwarpdir"]
                         )
-                    if not options["hcp_seunwarpdir"]:
-                        options["hcp_seunwarpdir"] = "NONE"
 
                     if (
                         options["hcp_topupconfig"] != "NONE"

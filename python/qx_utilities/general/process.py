@@ -612,14 +612,14 @@ arglist = [
     ["hcp_brainsize", "150", int, "Human brain size in mm."],
     [
         "hcp_t1samplespacing",
-        "",
-        isNone,
+        "NONE",
+        str,
         "T1 image sample spacing, 'NONE' if not used.",
     ],
     [
         "hcp_t2samplespacing",
-        "",
-        isNone,
+        "NONE",
+        str,
         "T2 image sample spacing, 'NONE' if not used.",
     ],
     [
@@ -649,14 +649,14 @@ arglist = [
     ],
     [
         "hcp_seechospacing",
-        "",
-        isNone,
+        "NONE",
+        str,
         "Echo Spacing or Dwelltime of Spin Echo Field Map or '' if not used.",
     ],
     [
         "hcp_seunwarpdir",
-        "",
-        isNone,
+        "NONE",
+        str,
         "Phase encoding direction of the spin echo field map. (Only applies when using a spin echo field map.) [''].",
     ],
     [
