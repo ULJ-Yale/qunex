@@ -1072,6 +1072,18 @@ arglist = [
         isNone,
         "Whether to execute only the FIX step of the pipeline.",
     ],
+    [
+        "hcp_t1wtemplatebrain",
+        "",
+        isNone,
+        "Path to the T1w template brain.",
+    ],
+    [
+        "hcp_ica_method",
+        "",
+        isNone,
+        "MELODIC or ICASSO. Use single-pass MELODIC (default) or multi-pass ICASSO consensus method for ICA.",
+    ],
 
     ["# --- hcp_post_fix options"],
     [

@@ -6299,6 +6299,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_fixonly (str, default 'FALSE'):
             Whether to execute only the FIX step of the pipeline.
 
+        --hcp_t1wtemplatebrain (str, default '<HCPPIPEDIR>/global/templates/MNI152_T1_1mm_brain.nii.gz'):
+            Path to the T1w template brain.
+
+            
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -6340,6 +6344,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_processingmode``      ``processing-mode``
             ``hcp_icafix_fixonly``             ``fix-only``
             ``hcp_matlab_mode``                ``matlabrunmode``
+            ``hcp_t1wtemplatebrain``           ``T1wTemplateBrain``
+            ``hcp_ica_method``                 ``ica-method``
             ================================== =======================
 
     Examples:
@@ -6793,16 +6799,36 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             else options["hcp_icafix_highpass"]
         )
 
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                groupok = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
+        else:
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                groupok = False
+
         comm = (
             '%(script)s \
                 --fmri-names="%(fmrinames)s" \
                 --high-pass=%(bandpass)s \
-                --concat-fmri-name="%(concatfilename)s"'
+                --concat-fmri-name="%(concatfilename)s" \
+                --matlab-run-mode=%(matlabrunmode)s'
             % {
                 "script": os.path.join(hcp["hcp_base"], "ICAFIX", "hcp_fix_multi_run"),
                 "fmrinames": boldimgs,
                 "bandpass": bandpass,
                 "concatfilename": concatfilename,
+                "matlabrunmode": matlabrunmode,
             }
         )
 
@@ -6846,6 +6872,12 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if options["hcp_icafix_fixonly"] is not None:
             comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
+
+        if options["hcp_t1wtemplatebrain"] is not None:
+            comm += '             --T1wTemplateBrain="%s"' % options["hcp_t1wtemplatebrain"]
+
+        if options["hcp_ica_method"] is not None:
+            comm += '             --ica-method="%s"' % options["hcp_ica_method"]
 
         # -- Report command
         if groupok:
@@ -7299,7 +7331,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                boldok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
