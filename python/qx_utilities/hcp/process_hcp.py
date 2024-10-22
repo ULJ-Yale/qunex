@@ -6822,7 +6822,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 --fmri-names="%(fmrinames)s" \
                 --high-pass=%(bandpass)s \
                 --concat-fmri-name="%(concatfilename)s" \
-                --matlab-run-mode=%(matlabrunmode)s'
+                --matlab-mode=%(matlabrunmode)s'
             % {
                 "script": os.path.join(hcp["hcp_base"], "ICAFIX", "hcp_fix_multi_run"),
                 "fmrinames": boldimgs,
