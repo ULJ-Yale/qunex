@@ -2259,7 +2259,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         --hcp_seed (int):
             The recon-all seed value.
 
-        --hcp_parallel_mode (str, default "NONE"):
+        --hcp_parallel_mode (str, default "BUILTIN"):
             Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
 
         --hcp_fslsub_queue (str, default ""):
@@ -2716,7 +2716,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --hcp_regname (str, default "MSMSulc"):
             The registration used, FS or MSMSulc.
 
-        --hcp_parallel_mode (str, default "NONE"):
+        --hcp_parallel_mode (str, default "BUILTIN"):
             Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
 
         --hcp_fslsub_queue (str, default ""):
