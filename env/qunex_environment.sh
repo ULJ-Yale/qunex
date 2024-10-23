@@ -665,8 +665,8 @@ if [[ -e /opt/.container ]]; then
     export FSL_FIX_MCRROOT=${MATLABDIR}
     export FSL_FIX_MCR=${MATLAB_COMPILER_RUNTIME}
 
-    # use octave for FIX
-    export FSL_FIX_MATLAB_MODE=2
+    # use compiled inside the container
+    export FSL_FIX_MATLAB_MODE=0
 
     # add CUDA stuff to PATH and LD_LIBRARY_PATH
     export PATH=/usr/local/cuda/bin:$PATH

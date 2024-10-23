@@ -4085,7 +4085,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
     Output files:
@@ -6257,7 +6257,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
         --hcp_icafix_domotionreg (str, default detailed below):
@@ -7098,7 +7098,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
         --hcp_postfix_dualscene (str, default ''):
@@ -7579,7 +7579,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
         --hcp_icafix_domotionreg (str, default detailed below):
@@ -8531,7 +8531,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
         --hcp_msmall_procstring (str, default <hcp_cifti_tail>_hp<hcp_highpass>_clean):
@@ -9283,7 +9283,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
         --hcp_icafix_domotionreg (bool, default detailed below):
@@ -10225,7 +10225,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
-        Run with scheduler, while bumbing up the number of used cores::
+        Run with scheduler, while bumping up the number of used cores::
 
             qunex hcp_asl \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
@@ -10551,6 +10551,369 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_transmit_bias_individual [... processing options]``
+
+    Runs the HCP Transmit Bias Individual Only Pipeline.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_gmwm_template (str, default ''):
+            Location of the GMWMtemplate, the file containing GM+WM volume ROI.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            Input registration name.
+
+        --hcp_transmit_mode (str, default ''):
+            What type of transmit bias correction to apply, options and required
+            inputs are:
+                - AFI: actual flip angle sequence with two different echo times,
+                requires the following parameters:
+                    - afi-image,
+                    - afi-tr-one,
+                    - afi-tr-two,
+                    - afi-angle,
+                    - group-corrected-myelin.
+                - B1Tx: b1 transmit sequence magnitude/phase pair, requires the
+                following parameters:
+                    - b1tx-magnitude,
+                    - b1tx-phase,
+                    - group-corrected-myelin.
+                -  PseudoTransmit: use spin echo fieldmaps, SBRef, and a
+                template transmit-corrected myelin map to derive empirical
+                correction, requires the following parameters:
+                    - pt-fmri-names,
+                    - myelin-template,
+                    - group-uncorrected-myelin,
+                    - reference-value.
+
+        --hcp_group_corrected_myelin (str, default ''):
+            The group-corrected myelin file from AFI or B1Tx.
+
+        --hcp_afi_image (str, default ''):
+            Two-frame AFI image.
+
+        --hcp_afi_tr_one (str, default ''):
+            TR of first AFI frame.
+
+        --hcp_afi_tr_two (str, default ''):
+            TR of second AFI frame.
+
+        --hcp_afi_angle (str, default ''):
+            Target flip angle of AFI sequence.
+
+        --hcp_b1tx_magnitude (str, default ''):
+            B1Tx magnitude image (for alignment).
+
+        --hcp_b1tx_phase (str, default ''):
+            B1Tx phase image.
+
+        --hcp_b1tx_phase_divisor (str, default '800'):
+            What to divide the phase map by to obtain proportion of intended
+
+        --hcp_pt_fmri_names (str, default ''):
+            A comma separated list of fMRI runs to use SE/SBRef files from.
+        
+        --hcp_pt_bbr_threshold (str, default '0.5'):
+            Mincost threshold for reinitializing fMRI bbregister with flirt
+            (may need to be increased for aging-related reduction of gray/white
+            contrast).
+
+        --hcp_myelin_template (str, default ''):
+            Expected transmit-corrected group-average myelin pattern (for testing
+            correction parameters).
+
+        --hcp_group_uncorrected_myelin (str, default ''):
+            The group-average uncorrected myelin file (to set the appropriate
+            scaling of the myelin template).
+
+        --hcp_pt_reference_value_file (str, default ''):
+            Text file containing the value in the pseudotransmit map where the
+            flip angle best matches the intended angle, from the Phase2 group
+            script.
+
+        --hcp_unproc_t1w_list (str, default ''):
+            A comma separated list of unprocessed T1w images, for correcting
+            non-PSN data.
+
+        --hcp_unproc_t2w_list (str, default ''):
+            A comma separated list of unprocessed T2w images, for correcting
+            non-PSN data.
+
+        --hcp_receive_bias_body_coil (str, default ''):
+            Image acquired with body coil receive, to be used with
+            --hcp_receive_head_body_coil.
+
+        --hcp_receive_bias_head_coil (str, default ''):
+            Matched image acquired with head coil receive.
+
+        --hcp_raw_psn_t1w (str, default ''):
+            The bias-corrected version of the T1w image acquired with pre-scan
+            normalize, which was used to generate the original myelin maps.
+
+        --hcp_raw_nopsn_t1w (str, default ''):
+            The uncorrected version of the --raw-psn-t1w image.
+        
+        --hcp_transmit_res (str, default ''):
+            Resolution to use for transmit field, default equal to
+            hcp_grayordinatesres.
+
+        --hcp_myelin_mapping_fwhm (str, default '5'):
+            The fwhm value to use in -myelin-style [5]
+
+        --hcp_old_myelin_mapping (flag, not set by default):
+            If myelin mapping was done using version 1.2.3 or earlier of
+            wb_command, set this flag.
+
+        --hcp_gdcoeffs (str, default ''):
+            Path to a file containing gradient distortion coefficients.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            The name of the registration used.
+
+        --hcp_lowresmesh (int, default 32):
+            Mesh resolution.
+
+        --hcp_grayordinatesres (int, default 2):
+            The size of voxels for the subcortical and cerebellar data in
+            grayordinate space in mm.
+
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'compiled' will be used, outside
+            'interpreted' is the default.
+
+    Notes:
+        hcp_transmit_bias_individual parameter mapping:
+
+            ================================== ============================
+            QuNex parameter                    HCPpipelines parameter
+            ================================== ============================
+            ``hcp_gmwm_template``              ``gmwm-template``
+            ``hcp_regname``                    ``reg-name``
+            ``hcp_transmit_mode``              ``mode``
+            ``hcp_group_corrected_myelin``     ``group-corrected-myelin``
+            ``hcp_afi_image``                  ``afi-image``
+            ``hcp_afi_tr_one``                 ``afi-tr-one``
+            ``hcp_afi_tr_two``                 ``afi-tr-two``
+            ``hcp_afi_angle``                  ``afi-angle``
+            ``hcp_b1tx_magnitude``              ``b1tx-magnitude``
+            ``hcp_b1tx_phase``                 ``b1tx-phase``
+            ``hcp_b1tx_phase_divisor``         ``b1tx-phase-divisor``
+            ``hcp_pt_fmri_names``              ``pt-fmri-names``
+            ``hcp_pt_bbr_threshold``           ``pt-bbr-threshold``
+            ``hcp_myelin_template``            ``myelin-template``
+            ``hcp_group_uncorrected_myelin``   ``group-uncorrected-myelin``
+            ``hcp_pt_reference_value_file``    ``pt-reference-value-file``
+            ``hcp_unproc_t1w_list``            ``unproc-t1w-list``
+            ``hcp_unproc_t2w_list``            ``unproc-t2w-list``
+            ``hcp_receive_bias_body_coil``     ``receive-bias-body-coil``
+            ``hcp_receive_bias_head_coil``     ``receive-bias-head-coil``
+            ``hcp_raw_psn_t1w``                ``raw-psn-t1w``
+            ``hcp_raw_nopsn_t1w``              ``raw-nopsn-t1w``
+            ``hcp_transmit_res``               ``transmit-res``
+            ``hcp_myelin_mapping_fwhm``        ``myelin-mapping-fwhm``
+            ``hcp_old_myelin_mapping``         ``old-myelin-mapping``
+            ``hcp_gdcoeffs``                   ``scanner-grad-coeffs``
+            ``hcp_regname``                    ``reg-name``
+            ``hcp_lowresmesh``                 ``low-res-mesh``
+            ``hcp_grayordinatesres``           ``grayordinates-res``
+            ``hcp_matlab_mode``                ``matlab-run-mode``
+            ================================== ============================
+        
+    Examples:
+        Example run::
+            TODO
+            qunex hcp_transmit_bias_individual \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+
+    """
+
+    # mantadory:
+    # - study-folder,
+    # - subject,
+    # - mode/hcp_transmit_mode,
+    # - gmwm-template/hcp_gmwm_template
+    # - reg-name/hcp_regname
+
+    # optional:
+    # - group-corrected-myelin/hcp_group_corrected_myelin
+    # - afi-image/hcp_afi_image
+    # - afi-tr-one/hcp_afi_tr_one
+    # - afi-tr-two/hcp_afi_tr_two
+    # - afi-angle/hcp_afi_angle
+    # - b1tx-magnitude/hcp_b1tx_magnitude
+    # - b1tx-phase/hcp_b1tx_phase
+    # - b1tx-phase-divisor/hcp_b1tx_phase_divisor
+    # - pt-fmri-names/hcp_pt_fmri_names
+    # - pt-bbr-threshold/hcp_pt_bbr_threshold
+    # - myelin-template/hcp_myelin_template
+    # - group-uncorrected-myelin/hcp_group_uncorrected_myelin
+    # - pt-reference-value-file/hcp_pt_reference_value_file
+    # - unproc-t1w-list/hcp_unproc_t1w_list
+    # - unproc-t2w-list/hcp_unproc_t2w_list
+    # - receive-bias-body-coil/hcp_receive_bias_body_coil
+    # - receive-bias-head-coil/hcp_receive_bias_head_coil
+    # - raw-psn-t1w/hcp_raw_psn_t1w
+    # - raw-nopsn-t1w/hcp_raw_nopsn_t1w
+    # - transmit-res/hcp_transmit_res
+    # - myelin-mapping-fwhm/hcp_myelin_mapping_fwhm
+    # - old-myelin-mapping/hcp_old_myelin_mapping
+    # - scanner-grad-coeffs/hcp_gdcoeffs
+    # - reg-name/hcp_regname
+    # - low-res-mesh/hcp_lowresmesh
+    # - grayordinates-res/hcp_grayordinatesres
+    # - matlab-run-mode/hcp_matlab_mode
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP Transmit Bias Individual Only Pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, "hcp_transmit_bias_individual")
+        doHCPOptionsCheck(options, "hcp_transmit_bias_individual")
+        hcp = getHCPPaths(sinfo, options)
+
+        if "hcp" not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
+                sinfo["id"]
+            )
+            run = False
+
+        # build the command TODO
+        if run:
+            comm = (
+                '%(script)s \
+                --studydir="%(studydir)s" \
+                --subid="%(subid)s" \
+                --grads="%(grads)s" \
+                --struct="%(struct)s" \
+                --sbrain="%(sbrain)s" \
+                --mbpcasl="%(mbpcasl)s" \
+                --fmap_ap="%(fmap_ap)s" \
+                --fmap_pa="%(fmap_pa)s" \
+                --wmparc="%(wmparc)s" \
+                --ribbon="%(ribbon)s" \
+                --mtname="%(mtname)s" \
+                --territories_atlas="%(territories_atlas)s" \
+                --territories_labels="%(territories_labels)s"'
+                % {
+                    "script": "process_hcp_asl",
+                    "studydir": sinfo["hcp"],
+                    "subid": sinfo["id"] + options["hcp_suffix"],
+                    "grads": gdcfile,
+                    "struct": t1w_file,
+                    "sbrain": t1w_brain_file,
+                    "mbpcasl": asl_file,
+                    "fmap_ap": fmap_ap_file,
+                    "fmap_pa": fmap_pa_file,
+                    "wmparc": wmparc_file,
+                    "ribbon": ribbon_file,
+                    "mtname": mtname,
+                    "territories_atlas": territories_atlas,
+                    "territories_labels": territories_labels,
+                }
+            )
+
+            # -- Optional parameters
+            if options["hcp_asl_use_t1"]:
+                comm += "                --use_t1"
+
+            # -- Report command
+            if run:
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                r, endlog, report, failed = pc.runExternalForFile(
+                    None,
+                    comm,
+                    "Running HCP Transmit Bias Individual Only",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=options["logtag"],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    None, None, "HCP Transmit Bias Individual Only", r, overwrite=overwrite
+                )
+                if passed is None:
+                    r += "\n---> HCP Transmit Bias Individual Only can be run"
+                    report = "HCP Transmit Bias Individual Only can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session cannot be processed."
+            report = "HCP Transmit Bias Individual Only cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except Exception as e:
+        r += f"\nERROR: {e}"
+        r += f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
+        failed = 1
+
+    r += (
+        "\n\nHCP Transmit Bias Individual Only Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
+
+
 def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     """
     ``hcp_temporal_ica [... processing options]``
@@ -10721,7 +11084,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
     Output files:
@@ -11704,7 +12067,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
-            'octave'. Inside the container 'octave' will be used, outside
+            'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
     Output files:
