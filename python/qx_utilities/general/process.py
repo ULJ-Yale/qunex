@@ -1084,6 +1084,12 @@ arglist = [
         isNone,
         "MELODIC or ICASSO. Use single-pass MELODIC (default) or multi-pass ICASSO consensus method for ICA.",
     ],
+    [
+        "hcp_legacy_fix",
+        "",
+        flag,
+        "Whether to use the legacy MATLAB fix instead of the new pyfix.",
+    ],
 
     ["# --- hcp_post_fix options"],
     [

@@ -773,10 +773,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     json_sidecar = tfile.replace("nii.gz", "json")
                     if os.path.exists(json_sidecar):
                         r += "\n---> Trying to set hcp_t1samplespacing from the JSON sidecar."
-                        with open(json_sidecar, 'r') as file:
+                        with open(json_sidecar, "r") as file:
                             sidecar_data = json.load(file)
                             if "DwellTime" in sidecar_data:
-                                options["hcp_t1samplespacing"] = f"{sidecar_data["DwellTime"]:.15f}"
+                                options["hcp_t1samplespacing"] = (
+                                    f"{sidecar_data["DwellTime"]:.15f}"
+                                )
                                 r += f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}"
 
         if hcp["T2w"] in ["", "NONE"]:
@@ -814,10 +816,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         json_sidecar = tfile.replace("nii.gz", "json")
                         if os.path.exists(json_sidecar):
                             r += "\n---> Trying to set hcp_t2samplespacing from the JSON sidecar."
-                            with open(json_sidecar, 'r') as file:
+                            with open(json_sidecar, "r") as file:
                                 sidecar_data = json.load(file)
                                 if "DwellTime" in sidecar_data:
-                                    options["hcp_t2samplespacing"] = f"{sidecar_data["DwellTime"]:.15f}"
+                                    options["hcp_t2samplespacing"] = (
+                                        f"{sidecar_data["DwellTime"]:.15f}"
+                                    )
                                     r += f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}"
 
                 else:
@@ -898,19 +902,23 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 if os.path.exists(json_sidecar):
                     r += "\n---> Trying to set hcp_seechospacing from the JSON sidecar."
-                    with open(json_sidecar, 'r') as file:
+                    with open(json_sidecar, "r") as file:
                         sidecar_data = json.load(file)
                         if "EffectiveEchoSpacing" in sidecar_data:
-                            options["hcp_seechospacing"] = f"{sidecar_data["EffectiveEchoSpacing"]:.15f}"
+                            options["hcp_seechospacing"] = (
+                                f"{sidecar_data["EffectiveEchoSpacing"]:.15f}"
+                            )
                             r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
 
             sesettings = True
-            for p in ["hcp_sephaseneg", "hcp_sephasepos", "hcp_seunwarpdir", "hcp_seechospacing"]:
+            for p in [
+                "hcp_sephaseneg",
+                "hcp_sephasepos",
+                "hcp_seunwarpdir",
+                "hcp_seechospacing",
+            ]:
                 if options[p] == "NONE":
-                    r += (
-                        "\n---> ERROR: %s parameter is not set!"
-                        % (p)
-                    )
+                    r += "\n---> ERROR: %s parameter is not set!" % (p)
                     run = False
                     sesettings = False
 
@@ -1069,10 +1077,16 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                     if os.path.exists(json_sidecar):
                         r += "\n---> Trying to set hcp_echodiff from the JSON sidecar."
-                        with open(json_sidecar, 'r') as file:
+                        with open(json_sidecar, "r") as file:
                             sidecar_data = json.load(file)
-                            if "EchoTime1" in sidecar_data and "EchoTime2" in sidecar_data:
-                                echodiff = sidecar_data["EchoTime2"] - sidecar_data["EchoTime1"]
+                            if (
+                                "EchoTime1" in sidecar_data
+                                and "EchoTime2" in sidecar_data
+                            ):
+                                echodiff = (
+                                    sidecar_data["EchoTime2"]
+                                    - sidecar_data["EchoTime1"]
+                                )
                                 # from s to ms
                                 echodiff = echodiff * 1000
                                 options["hcp_echodiff"] = f"{echodiff:.15f}"
@@ -1141,7 +1155,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         # -- Prepare templates
         # try to set hcp_prefs_template_res automatically if not set yet
         if options["hcp_prefs_template_res"] is None:
-            r += (f"\n---> Trying to set the hcp_prefs_template_res parameter automatically.")
+            r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
             # read nii header of hcp["T1w"]
             img = nib.load(hcp["T1w"])
             pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
@@ -1150,38 +1164,26 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             epsilon = 0.05
             if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
                 run = False
-                r += (
-                    f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
-                )
+                r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
             else:
                 # upscale slightly and use the closest that matches
                 pixdim = pixdim1 * 1.05
 
                 if pixdim > 2:
                     run = False
-                    r += (
-                        f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                    )
+                    r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
                 elif pixdim > 1:
-                    r += (
-                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                    )
+                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
                     options["hcp_prefs_template_res"] = 1.0
                 elif pixdim > 0.8:
-                    r += (
-                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
-                    )
+                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
                     options["hcp_prefs_template_res"] = 0.8
                 elif pixdim > 0.65:
-                    r += (
-                        f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
-                    )
+                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
                     options["hcp_prefs_template_res"] = 0.7
                 else:
                     run = False
-                    r += (
-                        f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                    )
+                    r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
 
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:
@@ -2059,7 +2061,9 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         # hcp_subcortgraylabels
         subcortgraylabels = ""
         if options["hcp_subcortgraylabels"] is None:
-            subcortgraylabels = os.path.join(hcp["hcp_Config"], "FreeSurferSubcorticalLabelTableLut.txt")
+            subcortgraylabels = os.path.join(
+                hcp["hcp_Config"], "FreeSurferSubcorticalLabelTableLut.txt"
+            )
         else:
             subcortgraylabels = options["hcp_subcortgraylabels"]
 
@@ -2067,10 +2071,10 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         refmyelinmaps = ""
         if options["hcp_refmyelinmaps"] is None:
             refmyelinmaps = os.path.join(
-                    hcp["hcp_Templates"],
-                    "standard_mesh_atlases",
-                    "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
-                )
+                hcp["hcp_Templates"],
+                "standard_mesh_atlases",
+                "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
+            )
         else:
             refmyelinmaps = options["hcp_refmyelinmaps"]
 
@@ -2454,7 +2458,11 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         i += 1
 
     # logdir
-    logdir = os.path.join(options["logfolder"], "comlogs", f"extra_logs_hcp_long_freesurfer_{subject['id']}")
+    logdir = os.path.join(
+        options["logfolder"],
+        "comlogs",
+        f"extra_logs_hcp_long_freesurfer_{subject['id']}",
+    )
     if os.path.exists(logdir):
         shutil.rmtree(logdir)
     os.makedirs(logdir)
@@ -2477,7 +2485,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 "subject": subject_id,
                 "sessions": "@".join(sessions_list),
                 "longitudinal_template": longitudinal_template,
-                "parallel_mode": options['hcp_parallel_mode'],
+                "parallel_mode": options["hcp_parallel_mode"],
                 "logdir": logdir,
             }
         )
@@ -2543,11 +2551,11 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            with open(endlog, 'w') as log_file:
+            with open(endlog, "w") as log_file:
                 for filename in os.listdir(logdir):
                     file_path = os.path.join(logdir, filename)
 
-                    with open(file_path, 'r') as file:
+                    with open(file_path, "r") as file:
                         content = file.read()
                         print(file=log_file)
                         print("----------------------------------------", file=log_file)
@@ -2840,13 +2848,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(parsubjects)
             # process
-            f = partial(
-                _execute_hcp_long_post_freesurfer,
-                options,
-                overwrite,
-                run,
-                hcp
-            )
+            f = partial(_execute_hcp_long_post_freesurfer, options, overwrite, run, hcp)
             results = processPoolExecutor.map(f, subjects_list)
 
             # merge
@@ -2896,7 +2898,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
 
     # try to set hcp_prefs_template_res automatically if not set yet
     if options["hcp_prefs_template_res"] is None:
-        r += (f"\n---> Trying to set the hcp_prefs_template_res parameter automatically.")
+        r += f"\n---> Trying to set the hcp_prefs_template_res parameter automatically."
         # read nii header of hcp["T1w"]
         img = nib.load(hcp["T1w"])
         pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
@@ -2905,38 +2907,26 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         epsilon = 0.05
         if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
             run = False
-            r += (
-                f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
-            )
+            r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
         else:
             # upscale slightly and use the closest that matches
             pixdim = pixdim1 * 1.05
 
             if pixdim > 2:
                 run = False
-                r += (
-                    f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                )
+                r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
             elif pixdim > 1:
-                r += (
-                    f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                )
+                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
                 options["hcp_prefs_template_res"] = 1.0
             elif pixdim > 0.8:
-                r += (
-                    f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
-                )
+                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
                 options["hcp_prefs_template_res"] = 0.8
             elif pixdim > 0.65:
-                r += (
-                    f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
-                )
+                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
                 options["hcp_prefs_template_res"] = 0.7
             else:
                 run = False
-                r += (
-                    f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                )
+                r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
 
     # hcp_prefs_t1template
     if options["hcp_prefs_t1template"] is None:
@@ -2990,8 +2980,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     if options["hcp_prefs_templatemask"] is None:
         templatemask = os.path.join(
             hcp["hcp_Templates"],
-            "MNI152_T1_%smm_brain_mask.nii.gz"
-            % (options["hcp_prefs_template_res"]),
+            "MNI152_T1_%smm_brain_mask.nii.gz" % (options["hcp_prefs_template_res"]),
         )
     else:
         templatemask = options["hcp_prefs_templatemask"]
@@ -3034,7 +3023,9 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     # hcp_subcortgraylabels
     subcortgraylabels = ""
     if options["hcp_subcortgraylabels"] is None:
-        subcortgraylabels = os.path.join(hcp["hcp_Config"], "FreeSurferSubcorticalLabelTableLut.txt")
+        subcortgraylabels = os.path.join(
+            hcp["hcp_Config"], "FreeSurferSubcorticalLabelTableLut.txt"
+        )
     else:
         subcortgraylabels = options["hcp_subcortgraylabels"]
 
@@ -3042,21 +3033,27 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     refmyelinmaps = ""
     if options["hcp_refmyelinmaps"] is None:
         refmyelinmaps = os.path.join(
-                hcp["hcp_Templates"],
-                "standard_mesh_atlases",
-                "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
-            )
+            hcp["hcp_Templates"],
+            "standard_mesh_atlases",
+            "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
+        )
     else:
         refmyelinmaps = options["hcp_refmyelinmaps"]
 
     # logdir
-    logdir = os.path.join(options["logfolder"], "comlogs", f"extra_logs_hcp_long_post_freesurfer_{subject['id']}")
+    logdir = os.path.join(
+        options["logfolder"],
+        "comlogs",
+        f"extra_logs_hcp_long_post_freesurfer_{subject['id']}",
+    )
     if os.path.exists(logdir):
         shutil.rmtree(logdir)
     os.makedirs(logdir)
 
     # subject folder
-    studyfolder = os.path.join(options["sessionsfolder"].replace("sessions", "subjects"), subject["id"])
+    studyfolder = os.path.join(
+        options["sessionsfolder"].replace("sessions", "subjects"), subject["id"]
+    )
 
     # build the command
     if run:
@@ -3088,7 +3085,9 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             --logdir="%(logdir)s"'
             % {
                 "script": os.path.join(
-                    hcp["hcp_base"], "PostFreeSurfer", "PostFreeSurferPipelineLongLauncher.sh"
+                    hcp["hcp_base"],
+                    "PostFreeSurfer",
+                    "PostFreeSurferPipelineLongLauncher.sh",
                 ),
                 "studyfolder": studyfolder,
                 "subject": subject["id"],
@@ -3112,7 +3111,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 "subcortgraylabels": subcortgraylabels,
                 "refmyelinmaps": refmyelinmaps,
                 "regname": options["hcp_regname"],
-                "parallel_mode": options['hcp_parallel_mode'],
+                "parallel_mode": options["hcp_parallel_mode"],
                 "logdir": logdir,
             }
         )
@@ -3161,11 +3160,11 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            with open(endlog, 'w') as log_file:
+            with open(endlog, "w") as log_file:
                 for filename in os.listdir(logdir):
                     file_path = os.path.join(logdir, filename)
 
-                    with open(file_path, 'r') as file:
+                    with open(file_path, "r") as file:
                         content = file.read()
                         print(file=log_file)
                         print("----------------------------------------", file=log_file)
@@ -6299,10 +6298,12 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_fixonly (str, default 'FALSE'):
             Whether to execute only the FIX step of the pipeline.
 
-        --hcp_t1wtemplatebrain (str, default '<HCPPIPEDIR>/global/templates/MNI152_T1_1mm_brain.nii.gz'):
+        --hcp_t1wtemplatebrain (str, default '<HCPPIPEDIR>/global/templates/MNI152_T1_<RES>mm_brain.nii.gz'):
             Path to the T1w template brain.
 
-            
+        --hcp_legacy_fix (flag, not set by default):
+            Whether to use the legacy MATLAB fix instead of the new pyfix.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -6822,7 +6823,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 --fmri-names="%(fmrinames)s" \
                 --high-pass=%(bandpass)s \
                 --concat-fmri-name="%(concatfilename)s" \
-                --matlab-mode=%(matlabrunmode)s'
+                --matlab-run-mode=%(matlabrunmode)s'
             % {
                 "script": os.path.join(hcp["hcp_base"], "ICAFIX", "hcp_fix_multi_run"),
                 "fmrinames": boldimgs,
@@ -6874,10 +6875,62 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
 
         if options["hcp_t1wtemplatebrain"] is not None:
-            comm += '             --T1wTemplateBrain="%s"' % options["hcp_t1wtemplatebrain"]
+            comm += (
+                '             --T1wTemplateBrain="%s"' % options["hcp_t1wtemplatebrain"]
+            )
+        elif not options["hcp_legacy_fix"]:
+            if hcp["T1w"] is not None:
+                # try to set get the resolution automatically if not set yet
+                r += "\n---> Trying to set the hcp_t1wtemplatebrain parameter automatically."
+
+                # place holder
+                resolution = None
+
+                # read nii header of hcp["T1w"]
+                img = nib.load(hcp["T1w"])
+                pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+
+                # do they match
+                epsilon = 0.05
+                if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+                    run = False
+                    r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_t1wtemplatebrain manually!"
+                else:
+                    # upscale slightly and use the closest that matches
+                    pixdim = pixdim1 * 1.05
+
+                    if pixdim > 2:
+                        run = False
+                        r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+                    elif pixdim > 1:
+                        r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 1.0!"
+                        resolution = 1.0
+                    elif pixdim > 0.8:
+                        r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 0.8!"
+                        resolution = 0.8
+                    elif pixdim > 0.65:
+                        r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to to 0.7!"
+                        resolution = 0.7
+                    else:
+                        run = False
+                        r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+
+                if resolution is not None:
+                    t1wtemplatebrain = os.path.join(
+                        hcp["hcp_base"],
+                        "global",
+                        "templates",
+                        f"MNI152_T1_{resolution}mm_brain.nii.gz",
+                    )
+                    comm += '             --T1wTemplateBrain="%s"' % t1wtemplatebrain
 
         if options["hcp_ica_method"] is not None:
             comm += '             --ica-method="%s"' % options["hcp_ica_method"]
+
+        # pyfix or legacy, pyfix is used if FSL_FIXDIR does not point to the old fix
+        fsl_fixdir = os.environ["FSL_FIXDIR"]
+        if not options["hcp_legacy_fix"]:
+            os.environ["FSL_FIXDIR"] =  os.environ["FSLBINDIR"]
 
         # -- Report command
         if groupok:
@@ -6949,17 +7002,24 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 r += "\n---> ERROR: images missing, this group would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        if fsl_fixdir:
+            os.environ["FSL_FIXDIR"] = fsl_fixdir
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
             groupname
         )
         r += str(errormessage)
         report["failed"].append(groupname)
     except:
+        if fsl_fixdir:
+            os.environ["FSL_FIXDIR"] = fsl_fixdir
         r += "\n --- Failed during processing of group %s with error:\n %s\n" % (
             groupname,
             traceback.format_exc(),
         )
         report["failed"].append(groupname)
+
+    if fsl_fixdir:
+        os.environ["FSL_FIXDIR"] = fsl_fixdir
 
     return {"r": r, "report": report}
 
