@@ -10753,42 +10753,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
     """
 
-    # mantadory:
-    # - study-folder,
-    # - subject,
-    # - mode/hcp_transmit_mode,
-    # - gmwm-template/hcp_gmwm_template
-    # - reg-name/hcp_regname
-
-    # optional:
-    # - group-corrected-myelin/hcp_group_corrected_myelin
-    # - afi-image/hcp_afi_image
-    # - afi-tr-one/hcp_afi_tr_one
-    # - afi-tr-two/hcp_afi_tr_two
-    # - afi-angle/hcp_afi_angle
-    # - b1tx-magnitude/hcp_b1tx_magnitude
-    # - b1tx-phase/hcp_b1tx_phase
-    # - b1tx-phase-divisor/hcp_b1tx_phase_divisor
-    # - pt-fmri-names/hcp_pt_fmri_names
-    # - pt-bbr-threshold/hcp_pt_bbr_threshold
-    # - myelin-template/hcp_myelin_template
-    # - group-uncorrected-myelin/hcp_group_uncorrected_myelin
-    # - pt-reference-value-file/hcp_pt_reference_value_file
-    # - unproc-t1w-list/hcp_unproc_t1w_list
-    # - unproc-t2w-list/hcp_unproc_t2w_list
-    # - receive-bias-body-coil/hcp_receive_bias_body_coil
-    # - receive-bias-head-coil/hcp_receive_bias_head_coil
-    # - raw-psn-t1w/hcp_raw_psn_t1w
-    # - raw-nopsn-t1w/hcp_raw_nopsn_t1w
-    # - transmit-res/hcp_transmit_res
-    # - myelin-mapping-fwhm/hcp_myelin_mapping_fwhm
-    # - old-myelin-mapping/hcp_old_myelin_mapping
-    # - scanner-grad-coeffs/hcp_gdcoeffs
-    # - reg-name/hcp_regname
-    # - low-res-mesh/hcp_lowresmesh
-    # - grayordinates-res/hcp_grayordinatesres
-    # - matlab-run-mode/hcp_matlab_mode
-
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
@@ -10813,44 +10777,168 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
-        # build the command TODO
+        # check mandatory parameters given the mode
+        # AFI
+        if options["hcp_transmit_mode"] == "AFI":
+            if not options["hcp_afi_image"]:
+                r += "\n---> ERROR: the hcp_afi_image parameter is not provided!"
+                run = False
+            if not options["hcp_afi_tr_one"]:
+                r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
+                run = False
+            if not options["hcp_afi_tr_two"]:
+                r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
+                run = False
+            if not options["hcp_afi_angle"]:
+                r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
+                run = False
+            if not options["hcp_group_corrected_myelin"]:
+                r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+                run = False
+
+        # B1Tx
+        elif options["hcp_transmit_mode"] == "B1Tx":
+            if not options["hcp_b1tx_magnitude"]:
+                r += "\n---> ERROR: the hcp_b1tx_magnitude parameter is not provided!"
+                run = False
+            if not options["hcp_b1tx_phase"]:
+                r += "\n---> ERROR: the hcp_b1tx_phase parameter is not provided!"
+                run = False
+            if not options["hcp_group_corrected_myelin"]:
+                r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+
+        # PseudoTransmit
+        elif options["hcp_transmit_mode"] == "PseudoTransmit":
+            if not options["hcp_pt_fmri_names"]:
+                r += "\n---> ERROR: the hcp_pt_fmri_names parameter is not provided!"
+                run = False
+            if not options["hcp_myelin_template"]:
+                r += "\n---> ERROR: the hcp_myelin_template parameter is not provided!"
+                run = False
+            if not options["hcp_group_uncorrected_myelin"]:
+                r += "\n---> ERROR: the hcp_group_uncorrected_myelin parameter is not provided!"
+                run = False
+            if not options["hcp_pt_reference_value_file"]:
+                r += "\n---> ERROR: the hcp_pt_reference_value_file parameter is not provided!"
+                run = False
+
+        else:
+            r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
+            
+
+        # build the command
         if run:
             comm = (
                 '%(script)s \
-                --studydir="%(studydir)s" \
-                --subid="%(subid)s" \
-                --grads="%(grads)s" \
-                --struct="%(struct)s" \
-                --sbrain="%(sbrain)s" \
-                --mbpcasl="%(mbpcasl)s" \
-                --fmap_ap="%(fmap_ap)s" \
-                --fmap_pa="%(fmap_pa)s" \
-                --wmparc="%(wmparc)s" \
-                --ribbon="%(ribbon)s" \
-                --mtname="%(mtname)s" \
-                --territories_atlas="%(territories_atlas)s" \
-                --territories_labels="%(territories_labels)s"'
+                --study-folder="%(studyfolder)s" \
+                --subject="%(subject)s" \
+                --mode="%(mode)s" \
+                --gmwm-template="%(gmwm_template)s" \
+                --reg-name="%(reg_name)s"'
                 % {
-                    "script": "process_hcp_asl",
-                    "studydir": sinfo["hcp"],
-                    "subid": sinfo["id"] + options["hcp_suffix"],
-                    "grads": gdcfile,
-                    "struct": t1w_file,
-                    "sbrain": t1w_brain_file,
-                    "mbpcasl": asl_file,
-                    "fmap_ap": fmap_ap_file,
-                    "fmap_pa": fmap_pa_file,
-                    "wmparc": wmparc_file,
-                    "ribbon": ribbon_file,
-                    "mtname": mtname,
-                    "territories_atlas": territories_atlas,
-                    "territories_labels": territories_labels,
+                    "script": os.path.join(
+                        hcp["hcp_base"],
+                        "TransmitBias",
+                        "RunIndividualOnly.sh",
+                    ),
+                    "studyfolder": sinfo["hcp"],
+                    "subject": sinfo["id"] + options["hcp_suffix"],
+                    "mode": options["hcp_transmit_mode"],
+                    "gmwm_template": options["hcp_gmwm_template"],
+                    "reg_name": options["hcp_regname"],
                 }
             )
 
             # -- Optional parameters
-            if options["hcp_asl_use_t1"]:
-                comm += "                --use_t1"
+            if options["hcp_group_corrected_myelin"]:
+                comm += f"                --group-corrected-myelin={options['hcp_group_corrected_myelin']}"
+
+            if options["hcp_afi_image"]:
+                comm += f"                --afi-image={options['hcp_afi_image']}"
+
+            if options["hcp_afi_tr_one"]:
+                comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
+
+            if options["hcp_afi_tr_two"]:
+                comm += f"                --afi-tr-two={options['hcp_afi_tr_two']}"
+
+            if options["hcp_afi_angle"]:
+                comm += f"                --afi-angle={options['hcp_afi_angle']}"
+
+            if options["hcp_b1tx_magnitude"]:
+                comm += f"                --b1tx-magnitude={options['hcp_b1tx_magnitude']}"
+
+            if options["hcp_b1tx_phase"]:
+                comm += f"                --b1tx-phase={options['hcp_b1tx_phase']}"
+
+            if options["hcp_b1tx_phase_divisor"]:
+                comm += f"                --b1tx-phase-divisor={options['hcp_b1tx_phase_divisor']}"
+
+            if options["hcp_pt_fmri_names"]:
+                pt_fmri_names = options['hcp_pt_fmri_names'].replace(",", "@")
+                comm += f"                --pt-fmri-names={pt_fmri_names}"
+
+            if options["hcp_pt_bbr_threshold"]:
+                comm += f"                --pt-bbr-threshold={options['hcp_pt_bbr_threshold']}"
+
+            if options["hcp_myelin_template"]:
+                comm += f"                --myelin-template={options['hcp_myelin_template']}"
+            
+            if options["hcp_group_uncorrected_myelin"]:
+                comm += f"                --group-uncorrected-myelin={options['hcp_group_uncorrected_myelin']}"
+            
+            if options["hcp_pt_reference_value_file"]:
+                comm += f"                --pt-reference-value-file={options['hcp_pt_reference_value_file']}"
+            
+            if options["hcp_unproc_t1w_list"]:
+                unproc_t1w_list = options['hcp_unproc_t1w_list'].replace(",", "@")
+                comm += f"                --unproc-t1w-list={unproc_t1w_list}"
+
+            if options["hcp_unproc_t2w_list"]:
+                unproc_t2w_list = options['hcp_unproc_t2w_list'].replace(",", "@")
+                comm += f"                --unproc-t2w-list={unproc_t2w_list}"
+
+            if options["hcp_receive_bias_body_coil"]:
+                comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
+
+            if options["hcp_receive_bias_head_coil"]:
+                comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
+
+            if options["hcp_raw_psn_t1w"]:
+                comm += f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
+
+            if options["hcp_raw_nopsn_t1w"]:
+                comm += f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
+
+            if options["hcp_transmit_res"]:
+                comm += f"                --transmit-res={options['hcp_transmit_res']}"
+
+            if options["hcp_myelin_mapping_fwhm"]:
+                comm += f"                --myelin-mapping-fwhm={options['hcp_myelin_mapping_fwhm']}"
+
+            if options["hcp_old_myelin_mapping"]:
+                comm += f"                --old-myelin-mapping"
+
+            if options["hcp_gdcoeffs"]:
+                comm += f"                --scanner-grad-coeffs={options['hcp_gdcoeffs']}"
+
+            if options["hcp_lowresmesh"]:
+                comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
+
+            if options["hcp_grayordinatesres"]:
+                comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
+
+            if options["hcp_matlab_mode"]:
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    run = False
+                comm += f"                --matlab-run-mode={matlabrunmode}"
 
             # -- Report command
             if run:

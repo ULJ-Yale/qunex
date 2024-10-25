@@ -385,6 +385,11 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.hcp.process_hcp.hcp_transmit_bias_individual",
+        "Run HCP Transmit Bias Individual Only pipeline.",
+        "python",
+    ),
+    (
         "qx_utilities.general.bids.import_bids",
         "Maps a BIDS dataset to the QuNex Suite file structure.",
         "python",
