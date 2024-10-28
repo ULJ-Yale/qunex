@@ -6929,8 +6929,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         # pyfix or legacy, pyfix is used if FSL_FIXDIR does not point to the old fix
         fsl_fixdir = os.environ["FSL_FIXDIR"]
-        if not options["hcp_legacy_fix"]:
-            os.environ["FSL_FIXDIR"] =  os.environ["FSLBINDIR"]
+        if options["hcp_legacy_fix"]:
+            os.environ["FSL_FIXDIR"] = os.environ["LEGACY_FIXDIR"]
 
         # -- Report command
         if groupok:
