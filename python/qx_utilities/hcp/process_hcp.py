@@ -6876,57 +6876,65 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         if options["hcp_icafix_fixonly"] is not None:
             comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
 
-        if options["hcp_t1wtemplatebrain"] is not None:
-            comm += (
-                '             --T1wTemplateBrain="%s"' % options["hcp_t1wtemplatebrain"]
-            )
-        elif (
-            not options["hcp_legacy_fix"] and options["hcp_t1wtemplatebrain"] == "auto"
+        if (
+            not options["hcp_legacy_fix"]
+            and options["hcp_t1wtemplatebrain"] is not None
         ):
-            if hcp["T1w"] is not None:
-                # try to set get the resolution automatically if not set yet
-                r += "\n---> Trying to set the hcp_t1wtemplatebrain parameter automatically."
+            if options["hcp_t1wtemplatebrain"] == "auto":
+                if hcp["T1w"] is not None:
+                    # try to set get the resolution automatically if not set yet
+                    r += "\n---> Trying to set the hcp_t1wtemplatebrain parameter automatically."
 
-                # place holder
-                resolution = None
+                    # place holder
+                    resolution = None
 
-                # read nii header of hcp["T1w"]
-                img = nib.load(hcp["T1w"])
-                pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+                    # read nii header of hcp["T1w"]
+                    img = nib.load(hcp["T1w"])
+                    pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
 
-                # do they match
-                epsilon = 0.05
-                if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
-                    run = False
-                    r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_t1wtemplatebrain manually!"
-                else:
-                    # upscale slightly and use the closest that matches
-                    pixdim = pixdim1 * 1.05
-
-                    if pixdim > 2:
+                    # do they match
+                    epsilon = 0.05
+                    if (
+                        abs(pixdim1 - pixdim2) > epsilon
+                        or abs(pixdim1 - pixdim3) > epsilon
+                    ):
                         run = False
-                        r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
-                    elif pixdim > 1:
-                        r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 1.0!"
-                        resolution = 1.0
-                    elif pixdim > 0.8:
-                        r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 0.8!"
-                        resolution = 0.8
-                    elif pixdim > 0.65:
-                        r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to to 0.7!"
-                        resolution = 0.7
+                        r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_t1wtemplatebrain manually!"
                     else:
-                        run = False
-                        r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+                        # upscale slightly and use the closest that matches
+                        pixdim = pixdim1 * 1.05
 
-                if resolution is not None:
-                    t1wtemplatebrain = os.path.join(
-                        hcp["hcp_base"],
-                        "global",
-                        "templates",
-                        f"MNI152_T1_{resolution}mm_brain.nii.gz",
-                    )
-                    comm += '             --T1wTemplateBrain="%s"' % t1wtemplatebrain
+                        if pixdim > 2:
+                            run = False
+                            r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+                        elif pixdim > 1:
+                            r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 1.0!"
+                            resolution = 1.0
+                        elif pixdim > 0.8:
+                            r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 0.8!"
+                            resolution = 0.8
+                        elif pixdim > 0.65:
+                            r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to to 0.7!"
+                            resolution = 0.7
+                        else:
+                            run = False
+                            r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+
+                    if resolution is not None:
+                        t1wtemplatebrain = os.path.join(
+                            hcp["hcp_base"],
+                            "global",
+                            "templates",
+                            f"MNI152_T1_{resolution}mm_brain.nii.gz",
+                        )
+                        comm += (
+                            '             --T1wTemplateBrain="%s"' % t1wtemplatebrain
+                        )
+            else:
+                comm += (
+                    '             --T1wTemplateBrain="%s"'
+                    % options["hcp_t1wtemplatebrain"]
+                )
 
         if options["hcp_ica_method"] is not None:
             comm += '             --ica-method="%s"' % options["hcp_ica_method"]
