@@ -6298,8 +6298,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_fixonly (str, default 'FALSE'):
             Whether to execute only the FIX step of the pipeline.
 
-        --hcp_t1wtemplatebrain (str, default '<HCPPIPEDIR>/global/templates/MNI152_T1_<RES>mm_brain.nii.gz'):
-            Path to the T1w template brain.
+        --hcp_t1wtemplatebrain (str, default ''):
+            Path to the T1w template brain used by pyfix. Not set by default,
+            you can either set a path or set to "auto" to set as
+            <HCPPIPEDIR>/global/templates/MNI152_T1_<RES>mm_brain.nii.gz.
 
         --hcp_legacy_fix (flag, not set by default):
             Whether to use the legacy MATLAB fix instead of the new pyfix.
@@ -6878,7 +6880,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             comm += (
                 '             --T1wTemplateBrain="%s"' % options["hcp_t1wtemplatebrain"]
             )
-        elif not options["hcp_legacy_fix"]:
+        elif (
+            not options["hcp_legacy_fix"] and options["hcp_t1wtemplatebrain"] == "auto"
+        ):
             if hcp["T1w"] is not None:
                 # try to set get the resolution automatically if not set yet
                 r += "\n---> Trying to set the hcp_t1wtemplatebrain parameter automatically."
