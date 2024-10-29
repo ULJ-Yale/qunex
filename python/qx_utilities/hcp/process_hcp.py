@@ -10920,7 +10920,12 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --old-myelin-mapping"
 
             if options["hcp_gdcoeffs"]:
-                comm += f"                --scanner-grad-coeffs={options['hcp_gdcoeffs']}"
+                # lookup gdcoeffs file
+                gdcfile, r, run = check_gdc_coeff_file(
+                    options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
+                )
+                if gdcfile != "NONE":
+                    comm += f"                --scanner-grad-coeffs={gdcfile}"
 
             if options["hcp_lowresmesh"]:
                 comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
