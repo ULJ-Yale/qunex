@@ -6303,6 +6303,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             you can either set a path or set to "auto" to set as
             <HCPPIPEDIR>/global/templates/MNI152_T1_<RES>mm_brain.nii.gz.
 
+        --hcp_ica_method (str, default 'MELODIC'):
+            MELODIC or ICASSO. Use single-pass MELODIC (default) or multi-pass
+            ICASSO consensus method for ICA.
+
         --hcp_legacy_fix (flag, not set by default):
             Whether to use the legacy MATLAB fix instead of the new pyfix.
 
