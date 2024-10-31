@@ -286,6 +286,11 @@ all_qunex_commands = [
         "matlab",
     ),
     (
+        "qx_mri.general.general_create_roi",
+        "Creates ROI image file based on the provided specification.",
+        "matlab",
+    ),
+    (
         "qx_mri.general.general_parcellated2dense",
         "Expands the parcelated file to a dense file.",
         "matlab",
