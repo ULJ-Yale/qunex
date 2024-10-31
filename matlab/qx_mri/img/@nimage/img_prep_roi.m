@@ -348,7 +348,7 @@ options = general_parse_options([], options, default);
 
 if ischar(roi) && ~isempty(strfind(roi, '|'))
     [roi, noptions] = strtok(roi, '|');
-    roi = strip(roi);
+    roi = strtrim(roi);
     noptions = noptions(2:end);
     options = general_parse_options(options, noptions);
 end
@@ -366,20 +366,20 @@ if ~isempty(options.volumes)
 end
 
 if ~isempty(options.maps)
-    options.maps = strip(strsplit(options.maps, ','));
+    options.maps = strtrim(strsplit(options.maps, ','));
 end
 
 if ~isempty(options.rois)
     t = str2num(options.rois);
     if isempty(t)
-        options.rois = strip(strsplit(options.rois, ','));
+        options.rois = strtrim(strsplit(options.rois, ','));
     else
         options.rois = t;
     end
 end
 
 if ~isempty(options.roinames)
-    options.roinames = strip(strsplit(options.roinames, ','));
+    options.roinames = strtrim(strsplit(options.roinames, ','));
 end
 
 if ~isempty(options.threshold)
@@ -419,7 +419,7 @@ if ~isempty(mask)
         elseif file_info.exists && ~file_info.is_image
             error('\nERROR: The provided mask file is not a valid image file [%s]!\n', mask);
         else
-            options.maps = strip(strsplit(mask, ','));
+            options.maps = strtrim(strsplit(mask, ','));
             mask = [];
         end
     elseif isnumeric(mask)
