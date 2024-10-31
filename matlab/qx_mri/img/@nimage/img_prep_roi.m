@@ -59,6 +59,32 @@ function [img] = img_prep_roi(roi, mask, options)
 %               negative threshold are provided then both the values equal
 %               and higher to the positive threshold and the values equal
 %               od lower than the negative threshold will be used.
+%           - target : a string
+%               The target image format. The value should be one of the
+%               following: 'CIFTI', 'MNI2', 'MNI1', or a path to a volume
+%               image file. The default is 'CIFTI'.
+%               This is a necessary parameter when creating a new ROI file based 
+%               on a provided ROI file. 
+%           - limit_roi : yes ('no' / 'yes')
+%               When creating ROI based on an .roi file for a cifti image, 
+%               Whether to limit the ROI to the structure of the ROI center e.g. 
+%               limit the ROI to thalamus only or to allow the ROI to spread 
+%               across multiple structures, e.g., thalamus and pallidum.   
+%           - surface_roi : closest_sphere_sphere ('absolute_sphere', 'closest_sphere_midthickness', 'closest_sphere_sphere')
+%               How to define the ROI on the surface. The options are:  
+%               - absolute_sphere : 
+%                       include in the ROI all the vertices within the sphere
+%                       defined by the provided coordinates and radius
+%               - closest_sphere_midthickness : 
+%                       include in the ROI all the vertices within the sphere
+%                       defined by the location of the vertice closest to the 
+%                       provided coordinate, and the radius, computed on the 
+%                       midthickness surface representation.
+%               - closest_sphere_sphere : 
+%                       include in the ROI all the vertices within the sphere
+%                       defined by the location of the vertice closest to the
+%                       provided coordinate, and the radius, computed on the
+%                       spherical surface representation.
 %
 %   Output:
 %
@@ -71,7 +97,7 @@ function [img] = img_prep_roi(roi, mask, options)
 %           roicodes1 - an array of codes used to define the primary ROI as
 %                       provided in the '.names' file, the original integer
 %                       code in a label or volume image file, or the index
-%                       of the origial map with the ROI mask
+%                       of the original map with the ROI mask
 %           roicodes2 - an array of codes used to mask the primary ROI as
 %                       provided in the '.names' file
 %           map       - in case of 'label' or 'scalar' CIFTI files in which
@@ -121,6 +147,26 @@ function [img] = img_prep_roi(roi, mask, options)
 %           The use of the names assumes that the second image, specified in 
 %           the `mask` parameter uses integer codes as defined for the 
 %           freesurfer aseg+aparc segmentation. 
+%
+%       ROI file:
+%           If an '.roi' file is provided (see specification below), then ROIs
+%           will be created based on the specification provided in the .roi
+%           file. In this case, masking of the original image is also supported
+%           in which the created ROI are masked with a mask provided in an image
+%           file. In this case the mask has to be either a path to the image file
+%           or an nimage object. The generated ROI will only be defined for the 
+%           voxels/grayordinates with non-zero values in the mask.
+%
+%           Take note of the following:
+%           - If ROI overlap, each ROI will include all the voxels/grayordinates
+%             that are part of the ROI. To avoid the overlap of the image masks
+%             each ROI will be represented in a separate volume. In a dlabel 
+%             file each ROI will be represented in a separate map.
+%           - If the ROI are assigned the same value, they will still be 
+%             represented as separate ROIs in the ROI structure, however, if 
+%             there is no overlap between any ROI, they will be merged into a 
+%             single ROI in the image. In the case of overlap, each ROI will be
+%             represented in a separate volume.   
 %
 %       CIFTI label image:
 %           If a path to a CIFTI label image or a nimage object with a label
@@ -210,6 +256,32 @@ function [img] = img_prep_roi(roi, mask, options)
 %           image file will be used. Again, If the first line is empty or set
 %           to 'none', only the third column will be used to generate ROI.
 %
+%       ROI file specification:
+%           ROI file is a regular text file with .roi ending. It specifies how 
+%           to create spheric (or circular on surface) ROI. The ROI should be 
+%           specified one per line with the following information separated by 
+%           whitespace:
+%
+%           <ROI name> <x coordinate> <y coordinate> <z coordinate> <radius> <value>
+%
+%           The file should start with the line:
+%
+%           # ROI specification
+%
+%           Any following empty line or line that starts with # is ignored.
+%           Example:
+%
+%           # ROI specification
+%           # ROI    x  y  z r v
+%           LDLPFC -40 40 30 3 1
+%           RDLPFC  40 40 30 3 1
+%           LIFG   -45 25 10 3 3
+%           RIFG    45 25 10 3 1
+%           LACC    -5 40  5 3 1
+%           RACC     5 40  5 3 1
+%
+%
+%
 %   Examples:
 %       To create a group level roi file::
 %
@@ -269,7 +341,7 @@ img = [];
 
 % ---> process options
 
-default = 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:';
+default = 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:|target:CIFTI|limit_roi:yes|surface_roi:closest_sphere_sphere';
 options = general_parse_options([], options, default);
 
 % ---> are there options in roi variable
@@ -364,6 +436,8 @@ if isa(roi, 'char')
 
     if ends_with(roi, '.names')
         img = process_names(roi, mask, options, rcodes);
+    elseif ends_with(roi, '.roi')
+        img = process_roi(roi, mask, options, rcodes);
     else 
         file_info = general_check_image_file(roi);
 
@@ -440,6 +514,32 @@ if ~isempty(img.roi(1).weights)
         scale_by = 1 / sum(vertcat(img.roi.weights));
         for r = 1:length(img.roi)
             img.roi(r).weights = img.roi(r).weights .* scale_by;
+        end
+    end
+end
+
+% ---> prepare metadata for cifti
+
+if strcmp(img.imageformat, 'CIFTI-2')
+    if img.frames == 1
+        img.cifti.maps{1} = 'ROI';
+        labels = struct('name', '???', 'key', 0, 'rgba', [0; 0; 0; 0]);
+        f = 1;
+        colors = jet(length(img.roi));
+        for r = 1:length(img.roi)
+            labels(f).name = img.roi(r).roiname;
+            labels(f).key  = img.roi(r).roicode;
+            labels(f).rgba = [colors(r, :) 0.7]';
+            f = f + 1;
+        end
+        img.cifti.labels{1} = labels;
+    else
+        colors = jet(length(img.roi));
+        for r = 1:length(img.roi)
+            img.cifti.maps{r} = img.roi(r).roiname;
+            labels = struct('name', '???', 'key', 0, 'rgba', [0; 0; 0; 0]);
+            labels(2) = struct('name', img.roi(r).roiname, 'key', img.roi(r).roicode, 'rgba', [colors(r, :) 0.7]');
+            img.cifti.labels{r} = labels;
         end
     end
 end
@@ -900,7 +1000,7 @@ function [indeces, weights] = get_roi_for_codes(img, roi)
     end
 
 % --------------------------------------------------------------------------------------------
-%                                                                               process_old_roi
+%                                                                              process_old_roi
 
 function [roi] = process_old_roi(roi, options)
 
@@ -926,3 +1026,231 @@ function [roi] = process_old_roi(roi, options)
 
         roi.roi(r).indeces   = find(roi.data(:, v) == r);
     end
+
+
+
+% --------------------------------------------------------------------------------------------
+%                                                                                  process_roi
+
+function [roi] = process_roi(roi, mask, options, rcodes)
+
+    roi_list = read_roi_spec(roi);
+    mpath = mfilename('fullpath');
+    [mpath, ~, ~] = fileparts(mpath);
+    mpath = strsplit(mpath, filesep);
+    lpath = fullfile(strjoin(mpath(1:end-4), filesep), 'qx_library', 'data', 'atlases', 'mni_templates');
+
+    switch options.target
+        case 'CIFTI'
+            image_type = 'cifti';
+            bm = load('cifti_brainmodel');
+            roi = nimage('dscalar:1');
+        case 'MNI2'
+            image_type = 'volume';
+            roi = nimage(fullfile(lpath, 'MNI152_T1_2mm_brain.nii.gz'));
+        case 'MNI1'
+            image_type = 'volume';
+            roi = nimage(fullfile(lpath, 'MNI152_T1_1mm_brain.nii.gz'));
+        otherwise            
+            roi = nimage(options.target);
+            if strcmp(roi.filetype, 'NIfTI')
+                image_type = 'volume';
+            else
+                image_type = 'cifti';                
+            end           
+    end
+
+    if strcmp(image_type, 'volume')
+        roi = process_roi_volume(roi_list, roi, mask, options, rcodes);
+    else
+        roi = process_roi_cifti(roi_list, roi, mask, options, rcodes, bm);
+    end
+
+
+function [roi] = process_roi_cifti(roi_list, template, mask, options, rcodes, bm)
+
+    roi = template.zeroframes(length(roi_list));
+
+    % compute distances
+    distances = pdist2(bm.mapping.mni, horzcat([roi_list.x]', [roi_list.y]', [roi_list.z]'));
+    [min_d, min_i] = min(distances);
+    min_s_type = bm.mapping.structure_type(min_i);
+    min_s_id   = bm.mapping.structure_id(min_i);
+
+    % identify target structure
+    for r = 1:length(roi_list)
+        
+        % volume targets
+        if bm.mapping.structure_type(min_i(r)) == 3
+            if strcmp(options.limit_roi, 'yes')
+                roi.data(distances(:, r) <= roi_list(r).radius & bm.mapping.structure_id == min_s_id(r), r) = roi_list(r).value;
+            else
+                roi.data(distances(:, r) <= roi_list(r).radius & bm.mapping.structure_type == 3, r) = roi_list(r).value;
+            end
+        
+        % surface targets
+        else
+            switch options.surface_roi
+                case 'absolute_sphere'
+                    roi.data(distances(:, r) <= roi_list(r).radius & bm.mapping.structure_id == min_s_id(r), r) = roi_list(r).value;
+                
+                case 'closest_sphere_midthickness'
+                    closest_xyz = bm.mapping.mni(min_i(r), :);
+                    new_distances = pdist2(bm.mapping.mni, closest_xyz);
+                    roi.data(new_distances <= roi_list(r).radius & bm.mapping.structure_id == min_s_id(r), r) = roi_list(r).value;
+
+                case 'closest_sphere_sphere'
+                    shortname = bm.cifti.shortnames{min_s_id(r)};
+                    closest_xyz = bm.mapping.mni_sphere(min_i(r), :);
+                    % new_distances = pdist2(bm.cifti.(shortname).sphere.vertices(bm.cifti.(shortname).indices + 1, :), closest_xyz);
+                    %mask = zeros(size(new_distances));
+                    %mask(new_distances <= roi_list(r).radius) = roi_list(r).value;
+                    %roi.data(bm.mapping.structure_id == min_s_id(r), r) = mask;
+                    new_distances = pdist2(bm.mapping.mni_sphere, closest_xyz);
+                    roi.data(new_distances <= roi_list(r).radius & bm.mapping.structure_id == min_s_id(r), r) = roi_list(r).value;
+
+                otherwise
+                    error('ERROR: Unknown surface_roi option provided to img_prep_roi: %s!', options.surface_roi);
+            end
+            
+        end
+
+        roi.roi(r).roiname = roi_list(r).name;
+        roi.roi(r).roicode = roi_list(r).value;
+        roi.roi(r).roicodes1 = roi_list(r).value;
+        roi.roi(r).roicodes2 = [];
+        roi.roi(r).map = roi_list(r).name;
+        roi.roi(r).indeces = find(roi.data(:, r));
+        roi.roi(r).weights = [];
+        roi.roi(r).nvox = length(roi.roi(r).indeces);
+    end
+
+    % ---> Collapse volumes if possible
+
+    if max(sum(roi.data > 0, 2)) == 1
+        roi.data(:, 1) = sum(roi.data, 2);
+        roi = roi.selectframes(1);
+    end
+
+
+
+function [roi] = process_roi_volume(roi_list, template, mask, options, rcodes)
+    % process a list of rois and return a nimage object with the rois
+
+    % extract transformation matrix from the template image
+    roi = template.zeroframes(length(roi_list));
+    t = [roi.hdrnifti.srow_x'; roi.hdrnifti.srow_y'; roi.hdrnifti.srow_z'; 0 0 0 1];
+
+    % create a matrix of indeces for each voxel
+    dim_i = roi.hdrnifti.dim(2);
+    dim_j = roi.hdrnifti.dim(3);
+    dim_k = roi.hdrnifti.dim(4);
+    ijk = zeros(dim_i * dim_j * dim_k, 4);
+    c = 0;
+    for k = 0:(dim_k-1)
+        for j = 0:(dim_j-1)
+            for i = 0:(dim_i-1)
+                c = c + 1;
+                ijk(c, :) = [i j k 1];
+            end
+        end
+    end
+
+    % transform the indeces to the template space
+    xyz = (t * ijk')';
+    xyz = xyz(:, 1:3);
+
+    % compile matrix of roi locations
+    roi_locations = zeros(length(roi_list), 3);
+    for r = 1:length(roi_list)
+        roi_locations(r, :) = [roi_list(r).x roi_list(r).y roi_list(r).z];
+    end
+
+    % compute distances of each voxel to each roi
+    distances = pdist2(xyz, roi_locations);
+
+    % prepare mask
+    if ~isempty(mask)
+        mask.data = mask.image2D;
+        mask.data = mask.data(:, 1);        
+    end
+
+    % find voxels within radius of each roi
+    for r = 1:length(roi_list)
+        roi.data(distances(:, r) <= roi_list(r).radius, r) = roi_list(r).value;
+        if ~isempty(mask)
+            roi.data(mask.data == 0, r) = 0;
+        end
+        roi.roi(r).roiname = roi_list(r).name;
+        roi.roi(r).roicode = roi_list(r).value;
+        roi.roi(r).roicodes1 = roi_list(r).value;
+        roi.roi(r).roicodes2 = [];
+        roi.roi(r).map = roi_list(r).name;
+        roi.roi(r).indeces = find(roi.data(:, r));
+        roi.roi(r).weights = [];
+        roi.roi(r).nvox = length(roi.roi(r).indeces);
+    end
+
+    % ---> Collapse volumes if possible
+
+    if max(sum(roi.data > 0, 2)) == 1
+        roi.data(:, 1) = sum(roi.data, 2);
+        roi = roi.selectframes(1);
+    end
+
+
+function [roi_list] = read_roi_spec(roi)
+
+    % read a roi specification file and return a list of rois and the format
+    % of the file
+
+    % open roi file, read line by line, for each line split line by whitespace
+    % and create a new roi structure with the information in the following
+    % order: roi name, x, y, z, radius, value
+
+    fid = fopen(roi, 'r');
+
+    if fid == -1
+        error('Cannot open the file: %s', filename);
+    end
+
+    % Initialize an empty structure array
+    roi_list = struct('name', {}, 'x', {}, 'y', {}, 'z', {}, 'radius', {}, 'value', {});
+
+    % Read the file line by line
+    line_num = 0;
+
+    while ~feof(fid)
+        % Read a line from the file
+        line = fgetl(fid);
+
+        % - process first line
+        if line_num == 0            
+            if starts_with(line, '# ROI specification')
+                line_num = 1;
+            else
+                error('The first line of the ROI file should specify the format of the ROI file');
+            end
+        end
+
+        if isempty(strtrim(line)) || starts_with(line, '#')
+            continue
+        end
+
+        tokens = strsplit(line);
+
+        if length(tokens) ~= 6
+            error('Each line in the ROI file should have 6 elements');
+        end
+
+        roi_list(line_num).name = tokens{1};
+        roi_list(line_num).x = str2double(tokens{2});
+        roi_list(line_num).y = str2double(tokens{3});
+        roi_list(line_num).z = str2double(tokens{4});
+        roi_list(line_num).radius = str2double(tokens{5});
+        roi_list(line_num).value = str2double(tokens{6});
+
+        line_num = line_num + 1;
+    end
+
+    fclose(fid);

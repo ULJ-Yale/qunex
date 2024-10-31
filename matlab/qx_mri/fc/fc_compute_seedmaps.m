@@ -606,7 +606,7 @@ for s = 1:list.nsessions
     % ---> reading image files
 
     if verbose; fprintf('     ... reading image file(s)'); end
-    y = nimage(bolds);
+    y = nimage(strjoin(bolds, '|'));
     if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 
     % ---> create extraction sets
