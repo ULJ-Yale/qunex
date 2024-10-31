@@ -498,7 +498,7 @@ all_qunex_commands = [
     (
         "qx_utilities.general.bids.map_nii2bids",
         "Maps images from the sessions's nii folder to BIDS structure.",
-        "python"
+        "python",
     ),
 ]
 
@@ -561,8 +561,7 @@ def runCommand(command, args):
             raise ge.CommandError(
                 "gmri",
                 "Invalid arguments",
-                "Provided unknown arguments: [%s]!"
-                % (", ".join(bad)),
+                "Provided unknown arguments: [%s]!" % (", ".join(bad)),
             )
 
     # -- process extra arguments
@@ -872,7 +871,7 @@ def print_help(com):
     elif com in ["a", "all", "allcommands"]:
         os.system("qunex -splash")
         for full_name, description, _ in all_qunex_commands:
-            print(full_name.split(".")[-1] + " " + description)
+            print("- " + full_name.split(".")[-1] + ": " + description)
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
@@ -956,7 +955,8 @@ def main(args=None):
             % (" \\\n    ".join(oargs))
         )
         print(
-            "\nPlease run `qunex %s --help` to get help for the failed command.\n" % (comm)
+            "\nPlease run `qunex %s --help` to get help for the failed command.\n"
+            % (comm)
         )
         sys.exit(1)
     except ValueError as e:
