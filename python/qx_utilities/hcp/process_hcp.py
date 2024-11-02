@@ -6353,6 +6353,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_matlab_mode``                ``matlabrunmode``
             ``hcp_t1wtemplatebrain``           ``T1wTemplateBrain``
             ``hcp_ica_method``                 ``ica-method``
+            ``hcp_legacy_fix``                 ``enable-legacy-fix``
             ================================== =======================
 
     Examples:
@@ -6943,10 +6944,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         if options["hcp_ica_method"] is not None:
             comm += '             --ica-method="%s"' % options["hcp_ica_method"]
 
-        # pyfix or legacy, pyfix is used if FSL_FIXDIR does not point to the old fix
-        fsl_fixdir = os.environ["FSL_FIXDIR"]
-        if options["hcp_legacy_fix"]:
-            os.environ["FSL_FIXDIR"] = os.environ["LEGACY_FIXDIR"]
+        if options["hcp_legacy_fix"] is None:
+            comm += '             --enable-legacy-fix="FALSE"'
 
         # -- Report command
         if groupok:
@@ -7018,24 +7017,17 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 r += "\n---> ERROR: images missing, this group would be skipped!"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        if fsl_fixdir:
-            os.environ["FSL_FIXDIR"] = fsl_fixdir
         r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
             groupname
         )
         r += str(errormessage)
         report["failed"].append(groupname)
     except:
-        if fsl_fixdir:
-            os.environ["FSL_FIXDIR"] = fsl_fixdir
         r += "\n --- Failed during processing of group %s with error:\n %s\n" % (
             groupname,
             traceback.format_exc(),
         )
         report["failed"].append(groupname)
-
-    if fsl_fixdir:
-        os.environ["FSL_FIXDIR"] = fsl_fixdir
 
     return {"r": r, "report": report}
 
@@ -7635,9 +7627,10 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             QuNex parameter                    HCPpipelines parameter
             ================================== =======================
             ``hcp_icafix_highpass``            ``high-pass``
-            ``hcp_postfix_singlescene``        ``template-scene-single-screen``
-            ``hcp_postfix_dualscene``          ``template-scene-dual-screen``
-            ``hcp_postfix_reusehighpass``      ``reuse-high-pass``
+            ``hcp_icafix_regname``             ``reg-name``
+            ``hcp_lowresmesh``                 ``low-res-mesh``
+            ``hcp_icafix_domotionreg``         ``motion-regression``
+            ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
             ``hcp_matlab_mode``                ``matlabrunmode``
             ================================== =======================
 
