@@ -7632,6 +7632,9 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_domotionreg``         ``motion-regression``
             ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
             ``hcp_matlab_mode``                ``matlabrunmode``
+            ``hcp_clean_substring``            ``clean-substring``
+            ``hcp_config``                     ``config``
+            ``hcp_icafix_processingmode``      ``processing-mode``
             ================================== =======================
 
     Examples:
@@ -7873,7 +7876,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
                     r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                    pars_ok = False
+                    boldok = False
                 else:
                     matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
             else:
@@ -7917,6 +7920,12 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
                     "deleteintermediates": options["hcp_icafix_deleteintermediates"],
                 }
             )
+
+            if options["hcp_clean_substring"] is not None:
+                comm += (
+                    '             --clean-substring="%s"'
+                    % options["hcp_clean_substring"]
+                )
 
             # -- Report command
             if boldok:
@@ -8121,9 +8130,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 --high-pass="%(highpass)s" \
                 --reg-name="%(regname)s" \
                 --low-res-mesh="%(lowresmesh)s" \
-                --matlab-run-mode="%(matlabrunmode)s" \
-                --motion-regression="%(motionregression)s" \
-                --delete-intermediates="%(deleteintermediates)s"'
+                --matlab-run-mode="%(matlabrunmode)s"'
                 % {
                     "script": os.path.join(
                         hcp["hcp_base"], "ICAFIX", "ReApplyFixMultiRunPipeline.sh"
@@ -8136,14 +8143,35 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     "regname": options["hcp_icafix_regname"],
                     "lowresmesh": options["hcp_lowresmesh"],
                     "matlabrunmode": matlabrunmode,
-                    "motionregression": (
-                        "FALSE"
-                        if options["hcp_icafix_domotionreg"] is None
-                        else options["hcp_icafix_domotionreg"]
-                    ),
-                    "deleteintermediates": options["hcp_icafix_deleteintermediates"],
                 }
             )
+
+            if options["hcp_icafix_domotionreg"] is not None:
+                comm += (
+                    '             --motionregression"%s"'
+                    % options["hcp_icafix_domotionreg"]
+                )
+
+            if options["hcp_icafix_deleteintermediates"] is not None:
+                comm += (
+                    '             --deleteintermediates"%s"'
+                    % options["hcp_icafix_deleteintermediates"]
+                )
+
+            if options["hcp_icafix_processingmode"] is not None:
+                comm += (
+                    '             --processing-mode`"%s"'
+                    % options["hcp_icafix_processingmode"]
+                )
+
+            if options["hcp_clean_substring"] is not None:
+                comm += (
+                    '             --clean-substring`"%s"'
+                    % options["hcp_clean_substring"]
+                )
+
+            if options["hcp_config"] is not None:
+                comm += '             --config="%s"' % options["hcp_config"]
 
             # -- Report command
             if groupok:
