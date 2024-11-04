@@ -1293,7 +1293,7 @@ def map_bids2nii(sourcefolder='.', overwrite='no', fileinfo=None, add_json_info=
             The files are ordered according to best guess sorted primarily by
             modality. This can be problematic for further HCP processing when
             different fieldmap files are used for different BOLD and structural
-            files. In the a future version the files will be organized so that
+            files. In the future version the files will be organized so that
             fieldmaps will precede the files to which they correspond,
             according to HCP processing expectations.
 
