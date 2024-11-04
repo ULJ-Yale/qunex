@@ -1239,6 +1239,8 @@ def processBIDS(bfolder):
                         target_files = element["json_info"]["IntendedFor"]
                     for target_file in target_files:
                         target_file = os.path.basename(target_file)
+                        if target_file.endswith(".nii"):
+                            target_file = target_file.replace(".nii", ".nii.gz")
                         bidsData[session]["images"]["info"][target_file]["seq_info"] = (
                             bidsData[session]["images"]["info"][target_file].get(
                                 "seq_info", []
