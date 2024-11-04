@@ -4404,11 +4404,9 @@ def _assign_remaining_image_type(tgt_session):
         rule = image["applied_rule"]
         hcp_image_type = rule.get("hcp_image_type")
         if hcp_image_type is not None and hcp_image_type[0] in [
-            "T1w",
-            "T2w",
-            "DWI",
-            "ASL",
-        ]:
+                "T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr", "TB1DAM",
+                "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM", "TB1SRGE", "RB1COR"
+                ]:
             image["hcp_image_type"] = hcp_image_type
 
 
