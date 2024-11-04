@@ -20,7 +20,7 @@
         "tag":   ["label", "dir", "acq", "run"]
     },
     "fmap": {
-        "label": ["phasediff", "magnitude", "magnitude1", "magnitude2", "phase1", "phase2", "epi"],
+        "label": ["phasediff", "magnitude", "magnitude1", "magnitude2", "phase1", "phase2", "epi", "TB1DAM", "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM", "TB1SRGE", "RB1COR"],
         "info":  ["acq", "run", "ses", "dir"],
         "sort":  ["run", "dir", "acq"],
         "tag":   ["label", "dir", "acq", "run"]
