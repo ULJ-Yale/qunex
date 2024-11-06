@@ -2593,36 +2593,27 @@ if [ "$CommandToRun" == "extract_roi" ]; then
     if [ -z "$OutPath" ]; then echo "ERROR: Output path value missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then echo "ERROR: Output file name value missing"; exit 1; fi
     if [ -z "$ROIFile" ]; then echo "ERROR: File to use for ROI extraction missing"; exit 1; fi
-
+    if [ -z "$InputFile" ]; then echo "ERROR: Input file path value missing"; exit 1; fi
+  
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
-            if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
+        if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
 
     # -- Check optional parameters if not specified
     if [ -z "$ROIFileSessionSpecific" ]; then ROIFileSessionSpecific="no"; fi
-    if [ -z "$Overwrite" ]; then Overwrite="no"; fi
-    if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
-        if [ -z "$InputFile" ]; then echo "ERROR: Input file path value missing"; exit 1; fi
-        if [[ -z ${StudyFolder} ]]; then echo "ERROR: Study folder missing"; exit 1; fi
-        if [[ -z ${SessionsFolder} ]]; then echo "ERROR: Sessions folder missing"; exit 1; fi
-        if [[ -z ${CASES} ]]; then echo "ERROR: List of sessions missing"; exit 1; fi
-    fi
+    if [[ -z ${SingleInputFile} ]]; then SingleInputFile=""; fi
 
     # -- Report parameters
     echo ""
     echo "Running $CommandToRun with the following parameters:"
     echo "--------------------------------------------------------------"
-    echo "   Study Folder: ${StudyFolder}"
-    echo "   Sessions Folder: ${SessionsFolder}"
-    echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Input File: ${InputFile}"
     echo "   Output File Name: ${OutName}"
     echo "   Single Input File: ${SingleInputFile}"
     echo "   ROI File: ${ROIFile}"
     echo "   Session specific ROI file set: ${ROIFileSessionSpecific}"
-    echo "   Overwrite prior run: ${Overwrite}"
     echo ""
 
     if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
