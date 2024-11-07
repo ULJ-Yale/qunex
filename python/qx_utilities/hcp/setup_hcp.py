@@ -614,7 +614,7 @@ def setup_hcp(
             tfold = "Diffusion"
 
         elif v["name"] in ["mbPCASLhr", "PCASLhr", "ASL"]:
-            sfile = [k + e for e in [".nii.gz"]]
+            sfile = k + ".nii.gz"
 
             if filename and "filename" in v:
                 tbase = "_".join([sid, v["filename"]])
@@ -622,7 +622,7 @@ def setup_hcp(
                 tbase = "_".join([sid, "ASL"])
                 tbase += orient
 
-            tfile = [tbase + e for e in [".nii.gz"]]
+            tfile = tbase + ".nii.gz"
             tfold = "ASL"
 
         else:
