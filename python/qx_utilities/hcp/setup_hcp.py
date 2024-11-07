@@ -625,6 +625,19 @@ def setup_hcp(
             tfile = tbase + ".nii.gz"
             tfold = "ASL"
 
+        elif v["name"] in ["TB1DAM", "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM",
+                           "TB1SRGE", "RB1COR"]:
+
+            sfile = k + ".nii.gz"
+
+            if filename and "filename" in v:
+                tbase = "_".join([sid, v["filename"]])
+            else:
+                tbase = "_".join([sid, "B1"])
+
+            tfile = tbase + "_" + v["name"] + ".nii.gz"
+            tfold = "B1"
+
         else:
             print(
                 "  ... skipping %s %s [unknown sequence label, please check]"
