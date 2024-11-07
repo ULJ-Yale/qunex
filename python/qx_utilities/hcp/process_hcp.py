@@ -2492,22 +2492,22 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
         # -- Optional parameters
         if options["hcp_no_t2w"]:
-            comm += f'                --use-T2w="0"'
+            comm += f'                --use-T2w=0"
 
         if options["hcp_seed"]:
-            comm += f'                --seed="{options['hcp_seed']}"'
+            comm += f"                --seed={options['hcp_seed']}"
 
         if options["hcp_fslsub_queue"]:
-            comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
+            comm += f"                --fslsub-queue={options['hcp_fslsub_queue']}"
 
         if options["hcp_max_jobs"]:
-            comm += f'                --max-jobs="{options['hcp_max_jobs']}"'
+            comm += f"                --max-jobs={options['hcp_max_jobs']}"
 
         if options["hcp_start_stage"]:
-            comm += f'                --start-stage="{options['hcp_start_stage']}"'
+            comm += f"                --start-stage={options['hcp_start_stage']}"
 
         if options["hcp_end_stage"]:
-            comm += f'                --end-stage="{options['hcp_end_stage']}"'
+            comm += f"                --end-stage={options['hcp_end_stage']}"
 
         # -- Report command
         if run:
