@@ -2492,7 +2492,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
         # -- Optional parameters
         if options["hcp_no_t2w"]:
-            comm += f'                --use-T2w=0"
+            comm += f"                --use-T2w=0"
 
         if options["hcp_seed"]:
             comm += f"                --seed={options['hcp_seed']}"
