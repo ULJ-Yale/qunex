@@ -777,7 +777,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             sidecar_data = json.load(file)
                             if "DwellTime" in sidecar_data:
                                 options["hcp_t1samplespacing"] = (
-                                    f"{sidecar_data["DwellTime"]:.15f}"
+                                    f"{sidecar_data['DwellTime']:.15f}"
                                 )
                                 r += f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}"
 
@@ -820,7 +820,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 sidecar_data = json.load(file)
                                 if "DwellTime" in sidecar_data:
                                     options["hcp_t2samplespacing"] = (
-                                        f"{sidecar_data["DwellTime"]:.15f}"
+                                        f"{sidecar_data['DwellTime']:.15f}"
                                     )
                                     r += f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}"
 
