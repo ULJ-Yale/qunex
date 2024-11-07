@@ -3117,16 +3117,16 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         )
 
         if options["hcp_fslsub_queue"]:
-            comm += f'                --fslsub-queue="{options['hcp_fslsub_queue']}"'
+            comm += f"                --fslsub-queue={options['hcp_fslsub_queue']}"
 
         if options["hcp_max_jobs"]:
-            comm += f'                --max-jobs="{options['hcp_max_jobs']}"'
+            comm += f"                --max-jobs={options['hcp_max_jobs']}"
 
         if options["hcp_start_stage"]:
-            comm += f'                --start-stage="{options['hcp_start_stage']}"'
+            comm += f"                --start-stage={options['hcp_start_stage']}"
 
         if options["hcp_end_stage"]:
-            comm += f'                --end-stage="{options['hcp_end_stage']}"'
+            comm += f"                --end-stage={options['hcp_end_stage']}"
 
         # -- Report command
         if run:
