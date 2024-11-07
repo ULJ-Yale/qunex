@@ -906,7 +906,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         sidecar_data = json.load(file)
                         if "EffectiveEchoSpacing" in sidecar_data:
                             options["hcp_seechospacing"] = (
-                                f"{sidecar_data["EffectiveEchoSpacing"]:.15f}"
+                                f"{sidecar_data['EffectiveEchoSpacing']:.15f}"
                             )
                             r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
 
