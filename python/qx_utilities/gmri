@@ -171,11 +171,6 @@ all_qunex_commands = [
         "python",
     ),
     (
-        "qx_utilities.bash.extract_roi",
-        "Extracts data from pre-specified ROIs in CIFTI or NIFTI.",
-        "bash",
-    ),
-    (
         "qx_mri.fc.fc_compute_ab_corr",
         "Computes the correlation of each source mask voxel with each target mask voxel.",
         "matlab",
