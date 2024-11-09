@@ -1666,8 +1666,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # -> Key elements
         elements = [
-            ("subjectDIR", hcp["T1w_folder"]),
-            ("subject", sinfo["id"] + options["hcp_suffix"]),
+            ("session-dir", hcp["T1w_folder"]),
+            ("session", sinfo["id"] + options["hcp_suffix"]),
             ("seed", options["hcp_fs_seed"]),
             ("processing-mode", options["hcp_processing_mode"]),
         ]
