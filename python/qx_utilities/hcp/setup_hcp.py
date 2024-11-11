@@ -626,7 +626,7 @@ def setup_hcp(
             tfold = "ASL"
 
         elif v["name"] in ["TB1DAM", "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM",
-                           "TB1SRGE", "RB1COR"]:
+                           "TB1SRGE", "TB1map", "RB1COR", "RB1map"]:
 
             sfile = k + ".nii.gz"
 

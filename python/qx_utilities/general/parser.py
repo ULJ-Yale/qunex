@@ -323,7 +323,7 @@ def _parse_image_line_tags(tokens, line_type):
         if hcp_image_type == "":
             # image type not specified
             pass
-        elif hcp_image_type in ["T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr", "TB1DAM", "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM", "TB1SRGE", "RB1COR"]:
+        elif hcp_image_type in ["T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr", "TB1DAM", "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM", "TB1SRGE", "TB1map", "RB1COR", "RB1map"]:
             img_info["hcp_image_type"] = (hcp_image_type,)
 
         elif RE_IMAGE_TYPE_FM_PATTERN.match(hcp_image_type):

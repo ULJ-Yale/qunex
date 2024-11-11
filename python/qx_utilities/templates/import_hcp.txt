@@ -176,7 +176,9 @@
                         ["TB1TFL"],
                         ["TB1RFM"],
                         ["TB1SRGE"],
-                        ["RB1COR"]
+                        ["TB1map"],
+                        ["RB1COR"],
+                        ["RB1map"]
                       ]
         }
     }
