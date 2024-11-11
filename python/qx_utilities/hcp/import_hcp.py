@@ -74,8 +74,8 @@ def mapToQUNEXcpls(
         pathsep = "/"
 
     # -- extract file info
-
     m = re.search(nameformat, file)
+
     try:
         subjid = m.group("subject_id")
         session = m.group("session_name")
@@ -690,7 +690,6 @@ def import_hcp(
                     info += ", session " + sessionid
 
                 try:
-                    print
                     nimg, nmapped = map_hcpls2nii(
                         os.path.join(sessionsfolder, session),
                         overwrite,
@@ -1604,12 +1603,14 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                     )
 
                 elif fileInfo["parts"][0] in ["B1"]:
-                    out = "%02d: %-20s: %-30s: phenc(%s)" % (
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
+                    out = "%02d: %-20s: %-30s" % (
                         imgn,
                         fileInfo["parts"][1],
                         "_".join(fileInfo["parts"]),
-                        phenc,
                     )
+                    if phenc:
+                        out += ": phenc(%s)" % (phenc)
 
                     print(out, end=" ", file=sout)
                     print(out, end=" ", file=sout_hcp)
