@@ -1157,7 +1157,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_prefs_template_res"] is None:
             r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
             # read nii header of hcp["T1w"]
-            img = nib.load(hcp["T1w"])
+            t1w = hcp["T1w"].split("@")[0]
+            img = nib.load(t1w)
             pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
 
             # do they match
@@ -2900,7 +2901,8 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     if options["hcp_prefs_template_res"] is None:
         r += f"\n---> Trying to set the hcp_prefs_template_res parameter automatically."
         # read nii header of hcp["T1w"]
-        img = nib.load(hcp["T1w"])
+        t1w = hcp["T1w"].split("@")[0]
+        img = nib.load(t1w)
         pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
 
         # do they match
@@ -6894,7 +6896,8 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                     resolution = None
 
                     # read nii header of hcp["T1w"]
-                    img = nib.load(hcp["T1w"])
+                    t1w = hcp["T1w"].split("@")[0]
+                    img = nib.load(t1w)
                     pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
 
                     # do they match
