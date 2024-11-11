@@ -4455,6 +4455,8 @@ def _serialize_session(tgt_session):
             tags.append("{}-{}".format(*hcp_image_type))
         elif hcp_image_type[0] == "DWI":
             tags.append("{}:{}".format(*hcp_image_type))
+        elif hcp_image_type[0] == "TB1TFL":
+            tags.append("{}-{}".format(*hcp_image_type))
         else:
             tags.append(hcp_image_type[0])
 
