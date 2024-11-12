@@ -4465,7 +4465,7 @@ def _serialize_session(tgt_session):
 
         # add se, fm, bold_num at the end
         for k in ["se", "fm", "bold_num", "phenc"]:
-            if k in image:
+            if k in image and image[k] is not None:
                 tags.append("{}({})".format(k, image[k]))
 
         remaining_tags = ""
