@@ -3847,7 +3847,7 @@ def create_session_info(
             )
 
         # -- get list of session folders
-        sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False)
+        sessions, _ = gc.get_sessions_list(sessions, filter=filter, verbose=False)
 
         sfolders = []
         for session in sessions:
@@ -4320,10 +4320,12 @@ def _find_field_maps(tgt_session, field_map_type):
                         pending_image = None
                         looking_for_dir = None
             else:
-                print("WARNING: Incomplete pair detected")
-                state = IDLE_STATE
-                pending_image = None
-                looking_for_dir = None
+                # keep looking unless it is the end or the same direction of the pair
+                if inum == image_numbers[-1] or opposite_dir:
+                    print("WARNING: Incomplete pair detected")
+                    state = IDLE_STATE
+                    pending_image = None
+                    looking_for_dir = None
 
     res = {}
     for idx, fm in enumerate(reversed(found_fm)):
