@@ -388,7 +388,7 @@ def setup_hcp(
             )
         elif existing == "backup":
             print(
-                "---> Base folder %s already exist! Backking it up with the _bkp suffix! "
+                "---> Base folder %s already exist! Backing it up with the _bkp suffix! "
                 % (basef)
             )
             bkp_folder = f"{basef}_bkp"
