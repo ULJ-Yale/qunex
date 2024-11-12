@@ -284,11 +284,11 @@ def getHCPPaths(sinfo, options):
 
     rb1cor_32ch = glob.glob(
         os.path.join(
-            d["T1w_source"], sinfo["id"] + "*_32CH.nii.gz"
+            d["T1w_source"], sinfo["id"] + "*_*CH.nii.gz"
         )
     )
     if len(rb1cor_32ch) != 0:
-        d["RB1COR-32CH"] = rb1cor_32ch[0]
+        d["RB1COR-Head"] = rb1cor_32ch[0]
 
     rb1cor_bc = glob.glob(
         os.path.join(
@@ -296,7 +296,7 @@ def getHCPPaths(sinfo, options):
         )
     )
     if len(rb1cor_bc) != 0:
-        d["RB1COR-BC"] = rb1cor_bc[0]
+        d["RB1COR-Body"] = rb1cor_bc[0]
 
     # --- default check files
     for pipe, default in [
@@ -10990,8 +10990,8 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
             else:
                 r += "\n---> Setting hcp_receive_bias_body_coil automatically"
-                if "RB1COR-BC" in hcp:
-                    comm += f"                --receive-bias-body-coil={hcp['RB1COR-BC']}"
+                if "RB1COR-Body" in hcp:
+                    comm += f"                --receive-bias-body-coil={hcp['RB1COR-Body']}"
                 else:
                     r += "\n---> ERROR: the hcp_receive_bias_body_coil parameter is not provided, and QuNex cannot find the T1w BIAS 32CH image in the HCP unprocessed/T1w folder!"
                     run = False
@@ -11000,8 +11000,8 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
             else:
                 r += "\n---> Setting hcp_receive_bias_head_coil automatically"
-                if "RB1COR-32CH" in hcp:
-                    comm += f"                --receive-bias-head-coil={hcp['RB1COR-32CH']}"
+                if "RB1COR-Head" in hcp:
+                    comm += f"                --receive-bias-head-coil={hcp['RB1COR-Head']}"
                 else:
                     r += "\n---> ERROR: the hcp_receive_bias_head_coil parameter is not provided, and QuNex cannot find the T1w BIAS BC image in the HCP unprocessed/T1w folder!"
                     run = False
