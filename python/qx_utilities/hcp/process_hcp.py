@@ -257,6 +257,22 @@ def getHCPPaths(sinfo, options):
                 fmnum = int(fmnum.group())
                 d["fieldmap"].update({fmnum: {"GE": imagepath}})
 
+    # B1tx/TB1TFL phase and mag
+    tb1tlf_magnitude = glob.glob(
+        os.path.join(
+            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Magnitude.nii.gz",
+        )
+    )
+    if len(tb1tlf_magnitude) != 0:
+        d["TB1TFL-Magnitude"] = tb1tlf_magnitude[0]
+    tb1tlf_phase = glob.glob(
+        os.path.join(
+            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Phase.nii.gz",
+        )
+    )
+    if len(tb1tlf_phase) != 0:
+        d["TB1TFL-Phase"] = tb1tlf_phase[0]
+
     # --- default check files
     for pipe, default in [
         ("hcp_prefs_check", "check_PreFreeSurfer.txt"),
@@ -10634,9 +10650,10 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         --hcp_b1tx_phase_divisor (str, default '800'):
             What to divide the phase map by to obtain proportion of intended
 
-        --hcp_pt_fmri_names (str, default ''):
-            A comma separated list of fMRI runs to use SE/SBRef files from.
-        
+        --hcp_pt_fmri_names (str, default <list of all BOLDs>):
+            A comma separated list of fMRI runs to use SE/SBRef files from. Set
+            to a list of all BOLDs by default.
+
         --hcp_pt_bbr_threshold (str, default '0.5'):
             Mincost threshold for reinitializing fMRI bbregister with flirt
             (may need to be increased for aging-related reduction of gray/white
@@ -10777,55 +10794,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
-        # check mandatory parameters given the mode
-        # AFI
-        if options["hcp_transmit_mode"] == "AFI":
-            if not options["hcp_afi_image"]:
-                r += "\n---> ERROR: the hcp_afi_image parameter is not provided!"
-                run = False
-            if not options["hcp_afi_tr_one"]:
-                r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
-                run = False
-            if not options["hcp_afi_tr_two"]:
-                r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
-                run = False
-            if not options["hcp_afi_angle"]:
-                r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
-                run = False
-            if not options["hcp_group_corrected_myelin"]:
-                r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
-                run = False
-
-        # B1Tx
-        elif options["hcp_transmit_mode"] == "B1Tx":
-            if not options["hcp_b1tx_magnitude"]:
-                r += "\n---> ERROR: the hcp_b1tx_magnitude parameter is not provided!"
-                run = False
-            if not options["hcp_b1tx_phase"]:
-                r += "\n---> ERROR: the hcp_b1tx_phase parameter is not provided!"
-                run = False
-            if not options["hcp_group_corrected_myelin"]:
-                r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
-
-        # PseudoTransmit
-        elif options["hcp_transmit_mode"] == "PseudoTransmit":
-            if not options["hcp_pt_fmri_names"]:
-                r += "\n---> ERROR: the hcp_pt_fmri_names parameter is not provided!"
-                run = False
-            if not options["hcp_myelin_template"]:
-                r += "\n---> ERROR: the hcp_myelin_template parameter is not provided!"
-                run = False
-            if not options["hcp_group_uncorrected_myelin"]:
-                r += "\n---> ERROR: the hcp_group_uncorrected_myelin parameter is not provided!"
-                run = False
-            if not options["hcp_pt_reference_value_file"]:
-                r += "\n---> ERROR: the hcp_pt_reference_value_file parameter is not provided!"
-                run = False
-
-        else:
-            r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
-            
-
         # build the command
         if run:
             comm = (
@@ -10849,47 +10817,123 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 }
             )
 
-            # -- Optional parameters
-            if options["hcp_group_corrected_myelin"]:
-                comm += f"                --group-corrected-myelin={options['hcp_group_corrected_myelin']}"
+            # check and set parameters given the mode
+            # AFI
+            if options["hcp_transmit_mode"] == "AFI":
+                print(hcp)
+                print("!!!!!!!!!!")
+                os._exit(1)
+                if not options["hcp_afi_image"]:
+                    r += "\n---> ERROR: the hcp_afi_image parameter is not provided!"
+                    run = False
+                if not options["hcp_afi_tr_one"]:
+                    r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
+                    run = False
+                if not options["hcp_afi_tr_two"]:
+                    r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
+                    run = False
+                if not options["hcp_afi_angle"]:
+                    r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
+                    run = False
+                if not options["hcp_group_corrected_myelin"]:
+                    r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+                    run = False
 
-            if options["hcp_afi_image"]:
-                comm += f"                --afi-image={options['hcp_afi_image']}"
+                if options["hcp_afi_image"]:
+                    comm += f"                --afi-image={options['hcp_afi_image']}"
 
-            if options["hcp_afi_tr_one"]:
-                comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
+                if options["hcp_afi_tr_one"]:
+                    comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
 
-            if options["hcp_afi_tr_two"]:
-                comm += f"                --afi-tr-two={options['hcp_afi_tr_two']}"
+                if options["hcp_afi_tr_two"]:
+                    comm += f"                --afi-tr-two={options['hcp_afi_tr_two']}"
 
-            if options["hcp_afi_angle"]:
-                comm += f"                --afi-angle={options['hcp_afi_angle']}"
+                if options["hcp_afi_angle"]:
+                    comm += f"                --afi-angle={options['hcp_afi_angle']}"
 
-            if options["hcp_b1tx_magnitude"]:
-                comm += f"                --b1tx-magnitude={options['hcp_b1tx_magnitude']}"
+            # B1Tx
+            elif options["hcp_transmit_mode"] == "B1Tx":
+                if options["hcp_b1tx_magnitude"]:
+                    comm += f"                --b1tx-magnitude={options['hcp_b1tx_magnitude']}"
+                else:
+                    r += "\n---> Setting hcp_b1tx_magnitude automatically"
+                    if hcp["TB1TFL-Magnitude"]:
+                        comm += f"                --b1tx-magnitude={hcp['TB1TFL-Magnitude']}"
+                    else:
+                        r += "\n---> ERROR: the hcp_b1tx_magnitude parameter is not provided, and QuNex cannot find the b1tx magnitude image in the HCP unprocessed/B1 folder!"
+                        run = False
 
-            if options["hcp_b1tx_phase"]:
-                comm += f"                --b1tx-phase={options['hcp_b1tx_phase']}"
+                if options["hcp_b1tx_phase"]:
+                    comm += f"                --b1tx-phase={options['hcp_b1tx_phase']}"
+                else:
+                    r += "\n---> Setting hcp_b1tx_phase automatically"
+                    if hcp["TB1TFL-Phase"]:
+                        comm += f"                --b1tx-phase={hcp['TB1TFL-Phase']}"
+                    else:
+                        r += "\n---> ERROR: the hcp_b1tx_phase parameter is not provided, and QuNex cannot find the b1tx phase image in the HCP unprocessed/B1 folder!"
+                        run = False
 
-            if options["hcp_b1tx_phase_divisor"]:
-                comm += f"                --b1tx-phase-divisor={options['hcp_b1tx_phase_divisor']}"
+                if options["hcp_group_corrected_myelin"]:
+                    comm += f"                --group-corrected-myelin={options['hcp_group_corrected_myelin']}"
+                else:
+                    r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+                    run = False
 
-            if options["hcp_pt_fmri_names"]:
-                pt_fmri_names = options['hcp_pt_fmri_names'].replace(",", "@")
+                # optional B1Tx parameters
+                if options["hcp_b1tx_phase_divisor"]:
+                    comm += f"                --b1tx-phase-divisor={options['hcp_b1tx_phase_divisor']}"
+
+            # PseudoTransmit
+            elif options["hcp_transmit_mode"] == "PseudoTransmit":
+                if options["hcp_pt_fmri_names"]:
+                    pt_fmri_names = options['hcp_pt_fmri_names'].replace(",", "@")
+
+                else:
+                    r += "\n---> Setting hcp_pt_fmri_names automatically"
+                    # --- Get sorted bold numbers and bold data
+                    bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
+                    pt_fmri_names = []
+                    for bold in bolds:
+                        printbold, _, _, boldinfo = bold
+                        if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
+                            pt_fmri_names.append(boldinfo["filename"])
+                        else:
+                            pt_fmri_names.append(f"{options["hcp_bold_prefix"]}{printbold}")
+                    
+                    if len(pt_fmri_names) == 0:
+                        r += "\n---> ERROR: the hcp_pt_fmri_names parameter is not provided, and QuNex cannot find any BOLDs!"
+                        run = False
+                    else:
+                        pt_fmri_names = "@".join(pt_fmri_names)
+
                 comm += f"                --pt-fmri-names={pt_fmri_names}"
 
-            if options["hcp_pt_bbr_threshold"]:
-                comm += f"                --pt-bbr-threshold={options['hcp_pt_bbr_threshold']}"
+                if not options["hcp_myelin_template"]:
+                    r += "\n---> ERROR: the hcp_myelin_template parameter is not provided!"
+                    run = False
+                if not options["hcp_group_uncorrected_myelin"]:
+                    r += "\n---> ERROR: the hcp_group_uncorrected_myelin parameter is not provided!"
+                    run = False
+                if not options["hcp_pt_reference_value_file"]:
+                    r += "\n---> ERROR: the hcp_pt_reference_value_file parameter is not provided!"
+                    run = False
+                else:
+                    comm += f"                --pt-reference-value-file={options['hcp_pt_reference_value_file']}"
 
-            if options["hcp_myelin_template"]:
-                comm += f"                --myelin-template={options['hcp_myelin_template']}"
-            
-            if options["hcp_group_uncorrected_myelin"]:
-                comm += f"                --group-uncorrected-myelin={options['hcp_group_uncorrected_myelin']}"
-            
-            if options["hcp_pt_reference_value_file"]:
-                comm += f"                --pt-reference-value-file={options['hcp_pt_reference_value_file']}"
-            
+                # optional PseudoTransmit parameters
+                if options["hcp_pt_bbr_threshold"]:
+                    comm += f"                --pt-bbr-threshold={options['hcp_pt_bbr_threshold']}"
+
+                if options["hcp_myelin_template"]:
+                    comm += f"                --myelin-template={options['hcp_myelin_template']}"
+
+                if options["hcp_group_uncorrected_myelin"]:
+                    comm += f"                --group-uncorrected-myelin={options['hcp_group_uncorrected_myelin']}"
+
+            else:
+                r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
+
+            # optional general parameters
             if options["hcp_unproc_t1w_list"]:
                 unproc_t1w_list = options['hcp_unproc_t1w_list'].replace(",", "@")
                 comm += f"                --unproc-t1w-list={unproc_t1w_list}"
@@ -10917,7 +10961,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --myelin-mapping-fwhm={options['hcp_myelin_mapping_fwhm']}"
 
             if options["hcp_old_myelin_mapping"]:
-                comm += f"                --old-myelin-mapping"
+                comm += f"                --old-myelin-mapping=TRUE"
 
             if options["hcp_gdcoeffs"]:
                 # lookup gdcoeffs file
