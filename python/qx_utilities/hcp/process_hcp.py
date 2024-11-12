@@ -260,18 +260,43 @@ def getHCPPaths(sinfo, options):
     # B1tx/TB1TFL phase and mag
     tb1tlf_magnitude = glob.glob(
         os.path.join(
-            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Magnitude.nii.gz",
+            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Magnitude.nii.gz"
         )
     )
     if len(tb1tlf_magnitude) != 0:
         d["TB1TFL-Magnitude"] = tb1tlf_magnitude[0]
     tb1tlf_phase = glob.glob(
         os.path.join(
-            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Phase.nii.gz",
+            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Phase.nii.gz"
         )
     )
     if len(tb1tlf_phase) != 0:
         d["TB1TFL-Phase"] = tb1tlf_phase[0]
+
+    # AFI
+    t1w_afi = glob.glob(
+        os.path.join(
+            d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"
+        )
+    )
+    if len(t1w_afi) != 0:
+        d["T1w-AFI"] = t1w_afi[0]
+
+    rb1cor_32ch = glob.glob(
+        os.path.join(
+            d["T1w_source"], sinfo["id"] + "*_32CH.nii.gz"
+        )
+    )
+    if len(rb1cor_32ch) != 0:
+        d["RB1COR-32CH"] = rb1cor_32ch[0]
+
+    rb1cor_bc = glob.glob(
+        os.path.join(
+            d["T1w_source"], sinfo["id"] + "*_BC.nii.gz"
+        )
+    )
+    if len(rb1cor_bc) != 0:
+        d["RB1COR-BC"] = rb1cor_bc[0]
 
     # --- default check files
     for pipe, default in [
@@ -10820,15 +10845,16 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             # check and set parameters given the mode
             # AFI
             if options["hcp_transmit_mode"] == "AFI":
-                print(hcp)
-                print("!!!!!!!!!!")
-                os._exit(1)
-                if not options["hcp_afi_image"]:
-                    r += "\n---> ERROR: the hcp_afi_image parameter is not provided!"
-                    run = False
-                if not options["hcp_afi_tr_one"]:
-                    r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
-                    run = False
+                if options["hcp_afi_image"]:
+                    comm += f"                --afi-image={options['hcp_afi_image']}"
+                else:
+                    r += "\n---> Setting hcp_afi_image automatically"
+                    if "T1w-AFI" in hcp:
+                        comm += f"                --afi-image={hcp['T1w-AFI']}"
+                    else:
+                        r += "\n---> ERROR: the hcp_afi_image parameter is not provided, and QuNex cannot find the T1w AFI image in the HCP unprocessed/T1w folder!"
+                        run = False
+
                 if not options["hcp_afi_tr_two"]:
                     r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
                     run = False
@@ -10839,17 +10865,29 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
                     run = False
 
-                if options["hcp_afi_image"]:
-                    comm += f"                --afi-image={options['hcp_afi_image']}"
-
                 if options["hcp_afi_tr_one"]:
                     comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
+                    run = False
 
                 if options["hcp_afi_tr_two"]:
                     comm += f"                --afi-tr-two={options['hcp_afi_tr_two']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
+                    run = False
 
                 if options["hcp_afi_angle"]:
                     comm += f"                --afi-angle={options['hcp_afi_angle']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
+                    run = False
+
+                if options["hcp_group_corrected_myelin"]:
+                    comm += f"                --group-corrected-myelin={options['hcp_group_corrected_myelin']}"
+                else:
+                    r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+                    run = False
 
             # B1Tx
             elif options["hcp_transmit_mode"] == "B1Tx":
@@ -10857,7 +10895,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     comm += f"                --b1tx-magnitude={options['hcp_b1tx_magnitude']}"
                 else:
                     r += "\n---> Setting hcp_b1tx_magnitude automatically"
-                    if hcp["TB1TFL-Magnitude"]:
+                    if "TB1TFL-Magnitude" in hcp:
                         comm += f"                --b1tx-magnitude={hcp['TB1TFL-Magnitude']}"
                     else:
                         r += "\n---> ERROR: the hcp_b1tx_magnitude parameter is not provided, and QuNex cannot find the b1tx magnitude image in the HCP unprocessed/B1 folder!"
@@ -10867,7 +10905,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     comm += f"                --b1tx-phase={options['hcp_b1tx_phase']}"
                 else:
                     r += "\n---> Setting hcp_b1tx_phase automatically"
-                    if hcp["TB1TFL-Phase"]:
+                    if "TB1TFL-Phase" in hcp:
                         comm += f"                --b1tx-phase={hcp['TB1TFL-Phase']}"
                     else:
                         r += "\n---> ERROR: the hcp_b1tx_phase parameter is not provided, and QuNex cannot find the b1tx phase image in the HCP unprocessed/B1 folder!"
@@ -10937,16 +10975,36 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             if options["hcp_unproc_t1w_list"]:
                 unproc_t1w_list = options['hcp_unproc_t1w_list'].replace(",", "@")
                 comm += f"                --unproc-t1w-list={unproc_t1w_list}"
+            else:
+                r += "\n---> Setting hcp_unproc_t1w_list automatically"
+                comm += f"                --unproc-t1w-list={hcp['T1w']}"
 
             if options["hcp_unproc_t2w_list"]:
                 unproc_t2w_list = options['hcp_unproc_t2w_list'].replace(",", "@")
                 comm += f"                --unproc-t2w-list={unproc_t2w_list}"
+            else:
+                r += "\n---> Setting hcp_unproc_t2w_list automatically"
+                comm += f"                --unproc-t2w-list={hcp['T2w']}"
 
             if options["hcp_receive_bias_body_coil"]:
                 comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
+            else:
+                r += "\n---> Setting hcp_receive_bias_body_coil automatically"
+                if "RB1COR-BC" in hcp:
+                    comm += f"                --receive-bias-body-coil={hcp['RB1COR-BC']}"
+                else:
+                    r += "\n---> ERROR: the hcp_receive_bias_body_coil parameter is not provided, and QuNex cannot find the T1w BIAS 32CH image in the HCP unprocessed/T1w folder!"
+                    run = False
 
             if options["hcp_receive_bias_head_coil"]:
                 comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
+            else:
+                r += "\n---> Setting hcp_receive_bias_head_coil automatically"
+                if "RB1COR-32CH" in hcp:
+                    comm += f"                --receive-bias-head-coil={hcp['RB1COR-32CH']}"
+                else:
+                    r += "\n---> ERROR: the hcp_receive_bias_head_coil parameter is not provided, and QuNex cannot find the T1w BIAS BC image in the HCP unprocessed/T1w folder!"
+                    run = False
 
             if options["hcp_raw_psn_t1w"]:
                 comm += f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
