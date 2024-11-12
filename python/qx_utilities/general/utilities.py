@@ -984,13 +984,13 @@ def create_batch(
                 "WARNING: target file %s already exists!"
                 % (os.path.abspath(targetfile))
             )
-            print("         Overwriting exisiting file.")
+            print("         Overwriting existing file.")
         elif overwrite == "append":
             print(
                 "WARNING: target file %s already exists!"
                 % (os.path.abspath(targetfile))
             )
-            print("         Appending to an exisiting file.")
+            print("         Appending to an existing file.")
         elif overwrite == "no" or overwrite is False:
             raise ge.CommandFailed(
                 "create_batch",
@@ -1519,9 +1519,9 @@ def create_list(
             "WARNING: Target list file %s already exists!" % (os.path.abspath(listfile))
         )
         if overwrite == "yes" or overwrite is True:
-            print("         Overwriting the exisiting file.")
+            print("         Overwriting the existing file.")
         elif overwrite == "append":
-            print("         Appending to the exisiting file.")
+            print("         Appending to the existing file.")
         elif overwrite == "no" or overwrite is False:
             raise ge.CommandFailed(
                 "create_list",
@@ -1997,7 +1997,7 @@ def create_conc(
                 % (os.path.abspath(concfile))
             )
             if overwrite == "yes" or overwrite is True:
-                print("              Overwriting the exisiting file.")
+                print("              Overwriting the existing file.")
             elif overwrite == "no" or overwrite is False:
                 print("              Skipping this conc file.")
                 error = True

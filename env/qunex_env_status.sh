@@ -177,7 +177,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="HCPPipelines"
         echo "        HCPpipelines : Version not found!"
         if [[ -L "$HCPPIPEDIR"  && ! -e "$HCPPIPEDIR" ]]; then
-            echo "                     : $HCPPIPEDIR is a link to a nonexisiting folder!"
+            echo "                     : $HCPPIPEDIR is a link to a nonexisting folder!"
         fi
     fi
     echo ""
@@ -188,7 +188,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="fsl"
         echo "         FSL Version : Binary not found!"
         if [[ -L "$FSLDIR"  && ! -e "$FSLDIR" ]]; then
-            echo "                     : $FSLDIR is a link to a nonexisiting folder!"
+            echo "                     : $FSLDIR is a link to a nonexisting folder!"
         fi
     else
         echo "         FSL Version : $(cat $FSLDIR/etc/fslversion)"
@@ -201,7 +201,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport freesurfer"
         echo "  FreeSurfer Version : Binary not found!"
         if [[ -L "$FREESURFER_HOME"  && ! -e "$FREESURFER_HOME" ]]; then
-            echo "                     : $FREESURFER_HOME is a link to a nonexisiting folder!"
+            echo "                     : $FREESURFER_HOME is a link to a nonexisting folder!"
         fi
     else
         echo "  FreeSurfer Version : $(freesurfer | tail -n 2)"
@@ -214,7 +214,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
         echo "        AFNI Version : Binary not found!"
         if [[ -L "$AFNIDIR"  && ! -e "$AFNIDIR" ]]; then
-            echo "                     : $AFNIDIR is a link to a nonexisiting folder!"
+            echo "                     : $AFNIDIR is a link to a nonexisting folder!"
         fi
     else
         echo "        AFNI Version : $(afni --version)"
@@ -227,7 +227,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport ants"
         echo "        ANTs Version : Binary not found!"
         if [[ -L "$ANTSDIR"  && ! -e "$ANTSDIR" ]]; then
-            echo "                     : $ANTSDIR is a link to a nonexisiting folder!"
+            echo "                     : $ANTSDIR is a link to a nonexisting folder!"
         fi
     else
         echo "        ANTs Version : $(antsRegistration --version | head -1)"
@@ -240,7 +240,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport dcm2niix"
         echo "    dcm2niix Version : Binary not found!"
         if [[ -L "$DCMNIIDIR"  && ! -e "$DCMNIIDIR" ]]; then
-            echo "                     : $DCMNIIDIR is a link to a nonexisiting folder!"
+            echo "                     : $DCMNIIDIR is a link to a nonexisting folder!"
         fi
     else
         echo "    dcm2niix Version : $(dcm2niix -v | head -1)"
@@ -253,7 +253,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport fix"
         echo "         FIX Version : Binary not found!"
         if [[ -L "$FSL_FIXDIR"  && ! -e "$FSL_FIXDIR" ]]; then
-            echo "                     : $FSL_FIXDIR is a link to a nonexisiting folder!"
+            echo "                     : $FSL_FIXDIR is a link to a nonexisting folder!"
         fi
     else
         echo "         FIX Version : $(fix -v | grep FMRIB)"
@@ -275,7 +275,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
             BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport matlab"
             echo "      Matlab Version : Binary not found!"
             if [[ -L "$MATLABDIR"  && ! -e "$MATLABDIR" ]]; then
-                echo "                     : $MATLABDIR is a link to a nonexisiting folder!"
+                echo "                     : $MATLABDIR is a link to a nonexisting folder!"
             fi
         else
             echo "      Matlab Version : $(which matlab 2>&1 | grep -v 'no matlab')"
@@ -290,7 +290,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport R"
         echo "  R Version : Binary not found!"
         if [[ -L "$RDIR"  && ! -e "$RDIR" ]]; then
-            echo "                     : $RDIR is a link to a nonexisiting folder!"
+            echo "                     : $RDIR is a link to a nonexisting folder!"
         fi
     else
         echo "           R Version : $(R --version | head -1)"
@@ -313,7 +313,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport palm"
         echo "        PALM Version : Executable not found!"
         if [[ -L "$PALMDIR"  && ! -e "$PALMDIR" ]]; then
-            echo "                     : $PALMDIR is a link to a nonexisiting folder!"
+            echo "                     : $PALMDIR is a link to a nonexisting folder!"
         fi
     else
         echo "        PALM Version : $(cat $PALMDIR/palm_version.txt)"
@@ -326,7 +326,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport wb_command"
         echo "  wb_command Version : Binary not found!"
         if [[ -L "$WORKBENCHDIR"  && ! -e "$WORKBENCHDIR" ]]; then
-            echo "                     : $WORKBENCHDIR is a link to a nonexisiting folder!"
+            echo "                     : $WORKBENCHDIR is a link to a nonexisting folder!"
         fi
     else
         echo "  wb_command Version : $(wb_command | head -1)"

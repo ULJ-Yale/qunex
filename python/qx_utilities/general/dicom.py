@@ -3627,9 +3627,9 @@ def import_dicom(
                 # if overwrite:
                 #    print(" ... The folders will be cleaned and replaced with new data")
                 # else:
-                #    print(" ... To process them, remove or rename the exisiting subject folders or set `overwrite` to 'yes'")
+                #    print(" ... To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
                 print(
-                    "     ... To process them, remove or rename the exisiting session folders"
+                    "     ... To process them, remove or rename the existing session folders"
                 )
 
     nToProcess = len(packets["ok"])
@@ -3685,7 +3685,7 @@ def import_dicom(
     # ---> clean existing data if needed
     if overwrite:
         if packets["exist"]:
-            print("---> Cleaning exisiting data in folders:")
+            print("---> Cleaning existing data in folders:")
             for afile, session in packets["exist"]:
                 sfolder = os.path.join(sessionsfolder, session["sessionid"])
                 print(" ... %s" % (sfolder))

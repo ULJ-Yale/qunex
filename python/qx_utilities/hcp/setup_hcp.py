@@ -406,7 +406,7 @@ def setup_hcp(
                 "setup_hcp",
                 "Base folder exists",
                 "Base folder %s already exist!" % (basef),
-                "Please check or specify `exisiting` as `add`, `clear` or `backup` for desired action!",
+                "Please check or specify `existing` as `add`, `clear` or `backup` for desired action!",
             )
     else:
         print("---> Creating base folder %s " % (basef))
