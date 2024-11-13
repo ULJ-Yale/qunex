@@ -1602,6 +1602,58 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                         file=rout,
                     )
 
+                elif fileInfo["parts"][0] in ["AFI"]:
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
+                    out = "%02d: %-20s: %-30s" % (
+                        imgn,
+                        "TB1" + fileInfo["parts"][0],
+                        "_".join(fileInfo["parts"]),
+                    )
+                    if phenc:
+                        out += ": phenc(%s)" % (phenc)
+
+                    print(out, end=" ", file=sout)
+                    print(out, end=" ", file=sout_hcp)
+
+                    # add filename
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
+                    print(out, file=sout)
+                    print(out, file=sout_hcp)
+
+                    print("\n" + "TB1" + fileInfo["parts"][0], file=rout)
+                    print(
+                        "".join(["-" for e in range(len(fileInfo["parts"][0]))]),
+                        file=rout,
+                    )
+
+                elif fileInfo["parts"][0] in ["BIAS"]:
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
+                    if re.match(r"^\d+CH$", fileInfo["parts"][1]):
+                        tag = "RB1COR-Head"
+                    elif fileInfo["parts"][1] == "BC":
+                        tag = "RB1COR-Body"
+                    out = "%02d: %-20s: %-30s" % (
+                        imgn,
+                        tag,
+                        "_".join(fileInfo["parts"]),
+                    )
+                    if phenc:
+                        out += ": phenc(%s)" % (phenc)
+
+                    print(out, end=" ", file=sout)
+                    print(out, end=" ", file=sout_hcp)
+
+                    # add filename
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
+                    print(out, file=sout)
+                    print(out, file=sout_hcp)
+
+                    print("\n" + tag, file=rout)
+                    print(
+                        "".join(["-" for e in range(len(fileInfo["parts"][0]))]),
+                        file=rout,
+                    )
+
                 elif fileInfo["parts"][0] in ["B1"]:
                     phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
                     out = "%02d: %-20s: %-30s" % (

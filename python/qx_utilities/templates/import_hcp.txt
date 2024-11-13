@@ -41,7 +41,10 @@
                         ["SpinEchoFieldMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
-                        ["T1w"]
+                        ["T1w"],
+                        ["AFI"],
+                        ["BIAS", "32CH"],
+                        ["BIAS", "BC"],
                       ]
         },
         "T2w": {
