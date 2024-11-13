@@ -10989,22 +10989,16 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             if options["hcp_receive_bias_body_coil"]:
                 comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
             else:
-                r += "\n---> Setting hcp_receive_bias_body_coil automatically"
                 if "RB1COR-Body" in hcp:
+                    r += "\n---> Setting hcp_receive_bias_body_coil automatically"
                     comm += f"                --receive-bias-body-coil={hcp['RB1COR-Body']}"
-                else:
-                    r += "\n---> ERROR: the hcp_receive_bias_body_coil parameter is not provided, and QuNex cannot find the T1w BIAS 32CH image in the HCP unprocessed/T1w folder!"
-                    run = False
 
             if options["hcp_receive_bias_head_coil"]:
                 comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
             else:
-                r += "\n---> Setting hcp_receive_bias_head_coil automatically"
                 if "RB1COR-Head" in hcp:
+                    r += "\n---> Setting hcp_receive_bias_head_coil automatically"
                     comm += f"                --receive-bias-head-coil={hcp['RB1COR-Head']}"
-                else:
-                    r += "\n---> ERROR: the hcp_receive_bias_head_coil parameter is not provided, and QuNex cannot find the T1w BIAS BC image in the HCP unprocessed/T1w folder!"
-                    run = False
 
             if options["hcp_raw_psn_t1w"]:
                 comm += f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
