@@ -628,7 +628,7 @@ def setup_hcp(
         elif v["name"] in ["TB1DAM", "TB1EPI", "TB1AFI",
                            "TB1TFL-Magnitude", "TB1TFL-Phase",
                            "TB1RFM", "TB1SRGE", "TB1map",
-                           "RB1COR", "RB1map"]:
+                           "RB1COR-Head", "RB1COR-Body", "RB1map"]:
 
             sfile = k + ".nii.gz"
 
