@@ -6,9 +6,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
-## 0.101.0 [QX IO]
+## 1.0.0 [QIO]
 
-* TODO
+* Replacement of `run_turnkey` with `run_recipe`, a much more flexible and powerful engine for transparent and reproducible chaining of QuNex commands.
+* Simplification of the registration and access process.
+* Added support for the HCP longitudinal FreeSurfer pipeline (`hcp_long_freesurfer` and `hcp_long_post_freesurfer` commands).
+* Support for the HCP TransmitBias pipeline.
+* `hcp_icafix` now uses `pyfix` by default, to use legacy MATLAB fix, add the `--hcp_legacy_fix` flag to your command call
+* Made several optimizations that should make QuNex more user friendly (e.g., automatic setting of parameter values from JSON sidecars, more robust logic for automatic parameter values when they are inferred from imaging data ...).
+* `run_qa`, quality assurance functionality, which you can use to quickly verify if there are discrepancies between acquired sessions or images.
+* You can now map HCP derivatives (e.g., denoised concatenated REST BOLDs) from HCP folder structure to QuNex with `map_hcp_data`.
+* Default value for the `hcp_prefs_template_res` parameter of `hcp_pre_freesurfer` is now read and set from the imaging data.
+* Nicer errors if there are no parameters provided.
+* Connectome Workbench updated to the latest version.
+* You can now specify ROIs using a .roi file that defines ROIs by the center and radius of a sphere.
 
 ## 0.100.0 [QX IO]
 
