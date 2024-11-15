@@ -69,7 +69,7 @@ def schedule(
     USE
     ===
 
-    Schedules the provided command to be run by the specified scheduler (PBS and 
+    Schedules the provided command to be run by the specified scheduler (PBS and
     SLURM are currently supported).
 
     INPUTS
@@ -916,8 +916,7 @@ def main(args=None):
     multi_session_command = False
     multi_commands = [
         "hcp_long_freesurfer",
-        "hcp_long_post_freesurfer"
-        "hcp_temporal_ica",
+        "hcp_long_post_freesurfer" "hcp_temporal_ica",
         "hcp_make_average_dataset",
         "fsl_melodic",
     ]
@@ -1186,7 +1185,9 @@ def main(args=None):
 
                 # bind
                 if bind:
-                    container_command += f"-v {bind} "
+                    bind_list = bind.split(",")
+                    for b in bind_list:
+                        container_command += f"-v {b} "
 
                 container_command += f"{container.strip()} bash {script_path.strip()}"
             if scheduler:
