@@ -661,7 +661,7 @@ export FSL_FIX_MATLAB_MODE=1
 # if in container set compiled matlab and CUDA path
 if [[ -e /opt/.container ]]; then
     # matlab runtime
-    export MATLAB_COMPILER_RUNTIME=${MATLABDIR}/v93
+    export MATLAB_COMPILER_RUNTIME=${MATLABDIR}/R2022b
     export FSL_FIX_MCRROOT=${MATLABDIR}
     export FSL_FIX_MCR=${MATLAB_COMPILER_RUNTIME}
 
