@@ -10699,11 +10699,13 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         --hcp_unproc_t1w_list (str, default ''):
             A comma separated list of unprocessed T1w images, for correcting
-            non-PSN data.
+            non-PSN data. You can set this to "auto" and QuNex will try to fill
+            it automatically.
 
         --hcp_unproc_t2w_list (str, default ''):
             A comma separated list of unprocessed T2w images, for correcting
-            non-PSN data.
+            non-PSN data. You can set this to "auto" and QuNex will try to fill
+            it automatically.
 
         --hcp_receive_bias_body_coil (str, default ''):
             Image acquired with body coil receive, to be used with
@@ -10972,19 +10974,21 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
 
             # optional general parameters
-            if options["hcp_unproc_t1w_list"]:
-                unproc_t1w_list = options['hcp_unproc_t1w_list'].replace(",", "@")
-                comm += f"                --unproc-t1w-list={unproc_t1w_list}"
-            else:
-                r += "\n---> Setting hcp_unproc_t1w_list automatically"
-                comm += f"                --unproc-t1w-list={hcp['T1w']}"
+            if options["hcp_unproc_t1w_list"] is not None:
+                if options["hcp_unproc_t1w_list"] == "auto":
+                    r += "\n---> Setting hcp_unproc_t1w_list automatically"
+                    comm += f"                --unproc-t1w-list={hcp['T1w']}"
+                else:
+                    unproc_t1w_list = options['hcp_unproc_t1w_list'].replace(",", "@")
+                    comm += f"                --unproc-t1w-list={unproc_t1w_list}"
 
-            if options["hcp_unproc_t2w_list"]:
-                unproc_t2w_list = options['hcp_unproc_t2w_list'].replace(",", "@")
-                comm += f"                --unproc-t2w-list={unproc_t2w_list}"
-            else:
-                r += "\n---> Setting hcp_unproc_t2w_list automatically"
-                comm += f"                --unproc-t2w-list={hcp['T2w']}"
+            if options["hcp_unproc_t2w_list"] is not None:
+                if options["hcp_unproc_t2w_list"] == "auto":
+                    r += "\n---> Setting hcp_unproc_t2w_list automatically"
+                    comm += f"                --unproc-t2w-list={hcp['T2w']}"
+                else:
+                    unproc_t2w_list = options['hcp_unproc_t2w_list'].replace(",", "@")
+                    comm += f"                --unproc-t2w-list={unproc_t2w_list}"
 
             if options["hcp_receive_bias_body_coil"]:
                 comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
