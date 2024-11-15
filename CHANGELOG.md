@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Nicer errors if there are no parameters provided.
 * Connectome Workbench updated to the latest version.
 * You can now specify ROIs using a .roi file that defines ROIs by the center and radius of a sphere.
+* Yale University has signed its exclusive commercial rights for v1.0 of QuNex IO (QIO) to its startup Manifest Technologies, Inc. For any QuNex v1.0 commercial licensing inquiries please contact <qunex@manifesttech.io>.
 
 ## 0.100.0 [QX IO]
 
