@@ -259,42 +259,26 @@ def getHCPPaths(sinfo, options):
 
     # B1tx/TB1TFL phase and mag
     tb1tlf_magnitude = glob.glob(
-        os.path.join(
-            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Magnitude.nii.gz"
-        )
+        os.path.join(d["source"], "B1", sinfo["id"] + "*_TB1TFL-Magnitude.nii.gz")
     )
     if len(tb1tlf_magnitude) != 0:
         d["TB1TFL-Magnitude"] = tb1tlf_magnitude[0]
     tb1tlf_phase = glob.glob(
-        os.path.join(
-            d["source"], "B1", sinfo["id"] + "*_TB1TFL-Phase.nii.gz"
-        )
+        os.path.join(d["source"], "B1", sinfo["id"] + "*_TB1TFL-Phase.nii.gz")
     )
     if len(tb1tlf_phase) != 0:
         d["TB1TFL-Phase"] = tb1tlf_phase[0]
 
     # AFI
-    t1w_afi = glob.glob(
-        os.path.join(
-            d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"
-        )
-    )
+    t1w_afi = glob.glob(os.path.join(d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"))
     if len(t1w_afi) != 0:
         d["T1w-AFI"] = t1w_afi[0]
 
-    rb1cor_32ch = glob.glob(
-        os.path.join(
-            d["T1w_source"], sinfo["id"] + "*_*CH.nii.gz"
-        )
-    )
+    rb1cor_32ch = glob.glob(os.path.join(d["T1w_source"], sinfo["id"] + "*_*CH.nii.gz"))
     if len(rb1cor_32ch) != 0:
         d["RB1COR-Head"] = rb1cor_32ch[0]
 
-    rb1cor_bc = glob.glob(
-        os.path.join(
-            d["T1w_source"], sinfo["id"] + "*_BC.nii.gz"
-        )
-    )
+    rb1cor_bc = glob.glob(os.path.join(d["T1w_source"], sinfo["id"] + "*_BC.nii.gz"))
     if len(rb1cor_bc) != 0:
         d["RB1COR-Body"] = rb1cor_bc[0]
 
@@ -1216,7 +1200,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
                 elif pixdim > 1:
                     r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                    options["hcp_prefs_template_res"] = 1.0
+                    options["hcp_prefs_template_res"] = 1
                 elif pixdim > 0.8:
                     r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
                     options["hcp_prefs_template_res"] = 0.8
@@ -2960,7 +2944,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
             elif pixdim > 1:
                 r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                options["hcp_prefs_template_res"] = 1.0
+                options["hcp_prefs_template_res"] = 1
             elif pixdim > 0.8:
                 r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
                 options["hcp_prefs_template_res"] = 0.8
@@ -10926,7 +10910,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             # PseudoTransmit
             elif options["hcp_transmit_mode"] == "PseudoTransmit":
                 if options["hcp_pt_fmri_names"]:
-                    pt_fmri_names = options['hcp_pt_fmri_names'].replace(",", "@")
+                    pt_fmri_names = options["hcp_pt_fmri_names"].replace(",", "@")
 
                 else:
                     r += "\n---> Setting hcp_pt_fmri_names automatically"
@@ -10935,11 +10919,16 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     pt_fmri_names = []
                     for bold in bolds:
                         printbold, _, _, boldinfo = bold
-                        if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
+                        if (
+                            "filename" in boldinfo
+                            and options["hcp_filename"] == "userdefined"
+                        ):
                             pt_fmri_names.append(boldinfo["filename"])
                         else:
-                            pt_fmri_names.append(f"{options["hcp_bold_prefix"]}{printbold}")
-                    
+                            pt_fmri_names.append(
+                                f"{options["hcp_bold_prefix"]}{printbold}"
+                            )
+
                     if len(pt_fmri_names) == 0:
                         r += "\n---> ERROR: the hcp_pt_fmri_names parameter is not provided, and QuNex cannot find any BOLDs!"
                         run = False
@@ -10979,7 +10968,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> Setting hcp_unproc_t1w_list automatically"
                     comm += f"                --unproc-t1w-list={hcp['T1w']}"
                 else:
-                    unproc_t1w_list = options['hcp_unproc_t1w_list'].replace(",", "@")
+                    unproc_t1w_list = options["hcp_unproc_t1w_list"].replace(",", "@")
                     comm += f"                --unproc-t1w-list={unproc_t1w_list}"
 
             if options["hcp_unproc_t2w_list"] is not None:
@@ -10987,7 +10976,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> Setting hcp_unproc_t2w_list automatically"
                     comm += f"                --unproc-t2w-list={hcp['T2w']}"
                 else:
-                    unproc_t2w_list = options['hcp_unproc_t2w_list'].replace(",", "@")
+                    unproc_t2w_list = options["hcp_unproc_t2w_list"].replace(",", "@")
                     comm += f"                --unproc-t2w-list={unproc_t2w_list}"
 
             if options["hcp_receive_bias_body_coil"]:
@@ -10995,20 +10984,26 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             else:
                 if "RB1COR-Body" in hcp:
                     r += "\n---> Setting hcp_receive_bias_body_coil automatically"
-                    comm += f"                --receive-bias-body-coil={hcp['RB1COR-Body']}"
+                    comm += (
+                        f"                --receive-bias-body-coil={hcp['RB1COR-Body']}"
+                    )
 
             if options["hcp_receive_bias_head_coil"]:
                 comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
             else:
                 if "RB1COR-Head" in hcp:
                     r += "\n---> Setting hcp_receive_bias_head_coil automatically"
-                    comm += f"                --receive-bias-head-coil={hcp['RB1COR-Head']}"
+                    comm += (
+                        f"                --receive-bias-head-coil={hcp['RB1COR-Head']}"
+                    )
 
             if options["hcp_raw_psn_t1w"]:
                 comm += f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
 
             if options["hcp_raw_nopsn_t1w"]:
-                comm += f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
+                comm += (
+                    f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
+                )
 
             if options["hcp_transmit_res"]:
                 comm += f"                --transmit-res={options['hcp_transmit_res']}"
@@ -11075,7 +11070,11 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             # -- just checking
             else:
                 passed, report, r, failed = pc.checkRun(
-                    None, None, "HCP Transmit Bias Individual Only", r, overwrite=overwrite
+                    None,
+                    None,
+                    "HCP Transmit Bias Individual Only",
+                    r,
+                    overwrite=overwrite,
                 )
                 if passed is None:
                     r += "\n---> HCP Transmit Bias Individual Only can be run"
