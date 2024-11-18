@@ -6972,7 +6972,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         if options["hcp_ica_method"] is not None:
             comm += '             --ica-method="%s"' % options["hcp_ica_method"]
 
-        if options["hcp_legacy_fix"] is None:
+        if not options["hcp_legacy_fix"]:
             comm += '             --enable-legacy-fix="FALSE"'
 
         # -- Report command
