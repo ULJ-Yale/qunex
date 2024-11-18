@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * Replacement of `run_turnkey` with `run_recipe`, a much more flexible and powerful engine for transparent and reproducible chaining of QuNex commands (<https://qunex.readthedocs.io/en/latest/wiki/UsageDocs/RunningQuNexRecipes.html>).
 * `run_qa`, quality assurance functionality, which you can use to quickly verify if there are discrepancies between acquired sessions or images (<https://qunex.readthedocs.io/en/latest/api/gmri/run_qa.html>).
+* The container now includes the recently released version of HCP Pipelines (`v5.0.0`), which includes a number of new functionalities and improvements.
 * Added support for the HCP longitudinal FreeSurfer pipeline (`hcp_long_freesurfer` and `hcp_long_post_freesurfer` commands).
 * Support for the HCP TransmitBias pipeline (`hcp_transmit_bias_individual`). Also added onboading functionalities for imaging data required by this pipeline (B1).
 * `hcp_icafix` now uses `pyfix` by default, to use legacy MATLAB fix, add the `--hcp_legacy_fix` flag to your command call
