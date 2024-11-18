@@ -450,6 +450,7 @@ all_qunex_commands = [
         "Runs second level analysis using PALM permutation resampling.",
         "python",
     ),
+    ("qx_utilities.qa.run_qa.run_qa", "QuNex quality assurance pipeline.", "python"),
     (
         "qx_utilities.bash.run_qc",
         "Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.",
