@@ -274,11 +274,11 @@ def getHCPPaths(sinfo, options):
     if len(t1w_afi) != 0:
         d["T1w-AFI"] = t1w_afi[0]
 
-    rb1cor_32ch = os.path.join(d["source"], "B1", sinfo["id"] + "*_*CH.nii.gz"))
+    rb1cor_32ch = os.path.join(d["source"], "B1", sinfo["id"] + "*_*CH.nii.gz")
     if len(rb1cor_32ch) != 0:
         d["RB1COR-Head"] = rb1cor_32ch[0]
 
-    rb1cor_bc = os.path.join(d["source"], "B1", sinfo["id"] + "*_BC.nii.gz"))
+    rb1cor_bc = os.path.join(d["source"], "B1", sinfo["id"] + "*_BC.nii.gz")
     if len(rb1cor_bc) != 0:
         d["RB1COR-Body"] = rb1cor_bc[0]
 
