@@ -28,8 +28,8 @@ Past contributors to the QuNex code:
 
 ## Version
 
-* QuNex: 0.101.0 [QX IO]
-* qx_library: 0.100.0 [QX IO]
+* QuNex: 1.0.0 [QIO]
+* qx_library: 1.0.0 [QIO]
 
 ## References
 
