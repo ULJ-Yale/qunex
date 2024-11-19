@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * Replacement of `run_turnkey` with `run_recipe`, a much more flexible and powerful engine for transparent and reproducible chaining of QuNex commands (<https://qunex.readthedocs.io/en/latest/wiki/UsageDocs/RunningQuNexRecipes.html>).
 * `run_qa`, quality assurance (QA) functionality, which you can use to quickly validate raw neuroimaging data and metadata to check if there are discrepancies between acquired sessions or images. The commands generates input-friendly session lists that can be used in commands that follow and user-readable reports of the QA (<https://qunex.readthedocs.io/en/latest/api/gmri/run_qa.html>).
+* Updated core functions for functional connectivity analyses, enabling flexible extraction of timeseries and computation of seed-based, ROI-based, and global brain connectivity (GBC). Some of Specific improvements are: a) the ability to work with resting state and different types of task-based data, b) the ability to use different functional connectivity measures (r, rho, covariance, cross correlation, inverse covariance, coherence, mutual information and multivariate autoregressive model coefficients), c) a flexible specification of target ROI using different types of input data and masks, and d) the ability to process mulitple session in a single call, compute and store both session specific and group level results (<https://qunex.readthedocs.io/en/latest/wiki/UsageDocs/BOLDFunctionalConnectivity.html>).
 * The container now includes the recently released version of HCP Pipelines (`v5.0.0`), which includes a number of new functionalities and improvements.
 * Added support for the HCP longitudinal FreeSurfer pipeline (`hcp_long_freesurfer` and `hcp_long_post_freesurfer` commands).
 * Support for the HCP TransmitBias pipeline (`hcp_transmit_bias_individual`). Also added onboading functionalities for imaging data required by this pipeline (B1).
@@ -22,7 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * You can now specify ROIs using a .roi file that defines ROIs by the center and radius of a sphere.
 * Easier to understand error reports at several locations.
 * Connectome Workbench updated to the latest version.
-* The commercial rights for the container of QuNex 1.0 (QIO) were transferd to a Yale startup called Manifest Technologies, Inc. For any QuNex container v1.0 commercial licensing inquiries please contact <qunex@manifesttech.io>.
+* The commercial rights for the container of QuNex 1.0 (QIO) are transferd to a Yale startup called Manifest Technologies, Inc. For any QuNex container v1.0 commercial licensing inquiries please contact <qunex@manifesttech.io>.
 
 ## 0.100.0 [QX IO]
 
