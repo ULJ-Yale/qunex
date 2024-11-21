@@ -18,7 +18,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Simplification of the registration and access process.
 * You can now map HCP derivatives (e.g., denoised concatenated REST BOLDs) from HCP folder structure to QuNex with `map_hcp_data`.
 * Default value for the `hcp_prefs_template_res` parameter of `hcp_pre_freesurfer` is now read and set from the imaging data.
-* Made several optimizations that should make QuNex more user friendly (e.g., automatic setting of parameter values from JSON sidecars, more robust logic for automatic parameter values when they are inferred from imaging data ...).
+* Made several optimizations that should make QuNex more user friendly (e.g., automatic setting of parameter values from JSON sidecars, more robust logic for automatic setting of parameter values when they are inferred from imaging data ...).
 * Fixed some bugs in our data onboarding functions (`import_dicom`, `import_bids`, `import_hcp`).
 * You can now specify ROIs using a .roi file that defines ROIs by the center and radius of a sphere.
 * Easier to understand error reports at several locations.
