@@ -1105,11 +1105,11 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
         --mov_dvars (float, default 3.0):
             The (mean normalized) dvars threshold to use for identifying bad
-            frames.
+            frames. Later referred to as dvarsmt.
 
         --mov_dvarsme (float, default 1.5):
             The (median normalized) dvarsm threshold to use for identifying bad
-            frames.
+            frames. Later referred to as dvarsmet.
 
         --mov_after (int, default 0):
             How many frames after each frame identified as bad to also exclude
@@ -1118,26 +1118,6 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         --mov_before (int, default 0):
             How many frames before each frame identified as bad to also exclude
             from further processing and analysis.
-
-        --mov_bad (str, default 'udvarsme'):
-            Which criteria to use for identification of bad frames (mov, dvars,
-            dvarsme, idvars, uvars, idvarsme, udvarsme). See movement scrubbing
-            documentation for further information.
-            Criteria for identification of bad frames can be one out of:
-
-            - 'mov'      ... Frame displacement threshold (fdt) is exceeded.
-            - 'dvars'    ... Image intensity normalized root mean squared error
-              (RMSE) threshold (dvarsmt) is exceeded.
-            - 'dvarsme'  ... Median normalised RMSE (dvarsmet) threshold is
-              exceeded.
-            - 'idvars'   ... Both fdt and dvarsmt are exceeded (i for
-              intersection).
-            - 'uvars'    ... Either fdt or dvarsmt are exceeded (u for union).
-            - 'idvarsme' ... Both fdt and dvarsmet are exceeded.
-            - 'udvarsme' ... Either fdt or udvarsmet are exceeded.
-
-            For more detailed description please see wiki entry on Movement
-            scrubbing.
 
         --tr (float, default 2.5):
             TR of the BOLD files.
@@ -1166,29 +1146,39 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             The criterium for identification of bad frames that is used when
             generating a post scrubbing statistics group report:
 
-            - 'fd'
-            - 'dvars'
-            - 'dvars'
-            - 'dvarsme'
-            - 'idvars'
-            - 'idvarsme'
-            - 'udvars'
-            - 'udvarsme' ... default
+            - 'fd'        ... Frame displacement threshold (fdt) is exceeded.
+            - 'dvars'     ... Image intensity normalized root mean squared error
+              (RMSE) threshold (dvarsmt) is exceeded.
+            - 'dvarsme'   ... Median normalised RMSE threshold (dvarsmet) is
+              exceeded.
+            - 'idvars'    ... Both fdt and dvarsmt are exceeded (i for
+              intersection).
+            - 'idvarsme'  ... Both fdt and dvarsmet are exceeded.
+            - 'udvars'    ... Either fdt or dvarsmt are exceeded (u for union).
+            - 'udvarsme'  ... Either fdt or udvarsmet are exceeded (default).
             - 'none'.
+
+            For more detailed description please see wiki entry on Movement
+            scrubbing.
 
         --mov_fidl (str, default 'udvarsme'):
             Whether to create fidl file snippets with listed bad frames, and
             what criterium to use for the definition of bad frames:
 
-            - 'fd'
-            - 'dvars'
-            - 'dvars'
-            - 'dvarsme'
-            - 'idvars'
-            - 'idvarsme'
-            - 'udvars'
-            - 'udvarsme' ... default
-            - 'none'     ... Set to 'none' to not generate them.
+            - 'fd'        ... Frame displacement threshold (fdt) is exceeded.
+            - 'dvars'     ... Image intensity normalized root mean squared error
+              (RMSE) threshold (dvarsmt) is exceeded.
+            - 'dvarsme'   ... Median normalised RMSE threshold  (dvarsmet) is
+              exceeded.
+            - 'idvars'    ... Both fdt and dvarsmt are exceeded (i for
+              intersection).
+            - 'idvarsme'  ... Both fdt and dvarsmet are exceeded.
+            - 'udvars'    ... Either fdt or dvarsmt are exceeded (u for union).
+            - 'udvarsme'  ... Either fdt or udvarsmet are exceeded (default).
+            - 'none'      ... Set to 'none' to not generate them.
+
+            For more detailed description please see wiki entry on Movement
+            scrubbing.
 
         --mov_pdf (str, default 'movement_plots'):
             The name of the folder in sessions/QC/movement in which to copy
@@ -2965,7 +2955,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             --idvarsme
                 Both fdt and dvarsmet are exceeded.
             --udvarsme
-                Either fdt or udvarsmet are exceeded.
+                Either fdt or dvarsmet are exceeded.
 
             For more detailed description please see wiki entry on Movement
             scrubbing.
