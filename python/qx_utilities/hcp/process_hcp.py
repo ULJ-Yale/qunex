@@ -7031,7 +7031,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                     r,
                     overwrite=overwrite,
                 )
-                if passed is None:
+                if passed is "done":
                     r += "\n---> multi-run HCP ICAFix can be run"
                     report["ready"].append(groupname)
                 else:
