@@ -71,7 +71,9 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           A string to be prepended to files.
 %
 %       --overwrite (bool, default false):
-%           Whether old files should be overwritten.
+%           Whether to overwrite existing data (yes) or not (no). Note that
+%           previous data is deleted before the run, so in the case of a failed
+%           command run, previous results are lost.
 %
 %       --tail (str, default '.nii.gz'):
 %           What file extension to expect and use for images.

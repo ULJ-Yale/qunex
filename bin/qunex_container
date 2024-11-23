@@ -69,8 +69,8 @@ def schedule(
     USE
     ===
 
-    Schedules the provided command to be run by the specified scheduler (PBS,
-    LSF, SLURM are currently supported).
+    Schedules the provided command to be run by the specified scheduler (PBS and
+    SLURM are currently supported).
 
     INPUTS
     ======
@@ -147,21 +147,6 @@ def schedule(
     Key: nodes is a special case. It will be submitted as::
 
         "#PBS -l <value>"
-
-    LSF settings
-    ------------
-
-    For LSF the following key/value parameters are parsed as:
-
-    - queue    ... "#BSUB -q <queue>"
-    - mem      ... "#BSUB -R 'span[hosts=1] rusage[mem=<mem>]"
-    - walltime ... "#BSUB -W <walltime>"
-    - cores    ... "#BSUB -n <cores>"
-
-    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo,
-    jobName will be submitted using::
-
-        "#BSUB -<key> <value>"
 
     SLURM settings
     --------------
@@ -433,7 +418,8 @@ def get_sessionids_from_batch(filename, batchfilter=None):
         sub = [e for e in sub if len(e) > 0]
 
         # variable for storing the session id
-        session = ""
+        session = None
+        passes_filter = False
         for line in sub:
             line = [e.strip() for e in line.split(":")]
 
@@ -442,18 +428,23 @@ def get_sessionids_from_batch(filename, batchfilter=None):
                 # is it the id/session line
                 if line[0] == "id" or line[0] == "session":
                     session = line[1]
-
-                    # should I filter
-                    if filters_dict and line[0] in filters_dict:
-                        active_filter = filters_dict[line[0]].split(",")
-                        if line[1] in active_filter or re.match(
-                            filters_dict[line[0]], line[1]
-                        ):
-                            sessionids.append(session)
-                            break
-                    else:
+                    if passes_filter:
                         sessionids.append(session)
                         break
+
+                # should I filter
+                if filters_dict and line[0] in filters_dict:
+                    active_filter = filters_dict[line[0]].split(",")
+                    if line[1] in active_filter or re.match(
+                        filters_dict[line[0]], line[1]
+                    ):
+                        passes_filter = True
+                        if session:
+                            sessionids.append(session)
+                            break
+                elif session and not filters_dict:
+                    sessionids.append(session)
+                    break
 
     return sessionids
 
@@ -523,7 +514,7 @@ def get_sessionids_from_list(filename):
 
             line = [e.strip() for e in line.split(":")]
 
-            if len(line) == 2 and line[0] == "subject id":
+            if len(line) == 2 and line[0] in ["session id", "subject_id"]:
                 sessionids.append(line[1])
 
     return sessionids
@@ -665,13 +656,12 @@ def main(args=None):
     Container commands can be submitted to a scheduling system by specifying 
     the `--scheduler` parameter with a settings string. The settings string 
     should be a comma separated list of parameters. The first parameter has to 
-    be the scheduler name (PBS, LSF, SLURM), the rest of the parameters are 
+    be the scheduler name (PBS, SLURM), the rest of the parameters are 
     key-value pairs that are to be passed as settings to the scheduler. 
 
     Example settings strings::
 
         "SLURM,jobname=hcp_freesurfer,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
-        "LSF,jobname=DWIproc,cores=20,mem=250000,walltime=650:00,queue=week"
 
     Scheduling multiple jobs in parallel
     ------------------------------------
@@ -760,7 +750,7 @@ def main(args=None):
     cuda_path = None
     script = None
     parjobs = None
-    parsessions = 1
+    parsessions = None
     parelements = 1
     batchfile = None
     batchfilter = None
@@ -832,6 +822,10 @@ def main(args=None):
         else:
             command += f"{arg} "
 
+    # parsessions
+    if parsessions is None:
+        parsessions = 1
+
     # workaround for commands that are not supported
     commands_blacklist = [
         "create_batch",
@@ -846,6 +840,7 @@ def main(args=None):
         "fc_extract_roi_timeseries",
         "general_extract_roi_values",
         "general_extract_roi_glm_values",
+        "run_qa",
     ]
     qx_command = command.split(" ")[0]
     # ban parallel execution of these commands
@@ -920,8 +915,8 @@ def main(args=None):
     # do not run in parallel multi_session/longitudinal commands
     multi_session_command = False
     multi_commands = [
-        "hcp_longitudinal_freesurfer",
-        "hcp_temporal_ica",
+        "hcp_long_freesurfer",
+        "hcp_long_post_freesurfer" "hcp_temporal_ica",
         "hcp_make_average_dataset",
         "fsl_melodic",
     ]
@@ -937,11 +932,11 @@ def main(args=None):
         scheduler_name = scheduler_params_list.pop(0)
 
         # check scheduler
-        if scheduler_name not in ["PBS", "LSF", "SLURM"]:
+        if scheduler_name not in ["PBS", "SLURM"]:
             raise CommandError(
                 "schedule",
                 "Misspecified parameter",
-                "First value in the settings string has to specify one of PBS, LSF, SLURM!",
+                "First value in the settings string has to specify one of PBS or SLURM!",
                 "The settings string submitted was:",
                 scheduler_name,
             )
@@ -1054,7 +1049,7 @@ def main(args=None):
         print(f"    Maximum sessions run in parallel for a job: {parsessions}.")
         print(f"    Maximum elements run in parallel for a session: {parelements}.")
         print(
-            "    Up to {parelements * parsessions} processes will be utilized for a job.\n"
+            f"    Up to {parelements * parsessions} processes will be utilized for a job.\n"
         )
 
         if slurm_array:
@@ -1084,10 +1079,10 @@ def main(args=None):
                     if "run_turnkey" in qx_command:
                         qx_command += f'--sessionids="{sessionids_array[i]}" '
                 else:
-                    qx_command += '--sessionids="{sessionids_array[i]}" '
+                    qx_command += f'--sessionids="{sessionids_array[i]}" '
                     # run_turnkey requires both
                     if "run_turnkey" in qx_command:
-                        qx_command += '--sessions="{sessionids_array[i]}" '
+                        qx_command += f'--sessions="{sessionids_array[i]}" '
 
             # setup script
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -1190,7 +1185,9 @@ def main(args=None):
 
                 # bind
                 if bind:
-                    container_command += f"-v {bind} "
+                    bind_list = bind.split(",")
+                    for b in bind_list:
+                        container_command += f"-v {b} "
 
                 container_command += f"{container.strip()} bash {script_path.strip()}"
             if scheduler:

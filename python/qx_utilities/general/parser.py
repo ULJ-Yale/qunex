@@ -32,6 +32,8 @@ RE_TAG_WITH_VALUE = re.compile(r"^(\w+)\((\w+)\)$")
 
 RE_IMAGE_TYPE_SE_PATTERN = re.compile(r"^SE-FM-PA|SE-FM-AP|SE-FM-LR|SE-FM-RL$")
 RE_IMAGE_TYPE_FM_PATTERN = re.compile(r"^FM-Magnitude|FM-Phase$")
+RE_IMAGE_TYPE_RB1COR_PATTERN = re.compile(r"^RB1COR-Head|RB1COR-Body$")
+RE_IMAGE_TYPE_TB1TFL_PATTERN = re.compile(r"^TB1TFL-Magnitude|TB1TFL-Phase$")
 RE_IMAGE_TYPE_BOLD_PATTERN = re.compile(r"^(bold|boldref)(\d*)$")
 
 
@@ -323,8 +325,14 @@ def _parse_image_line_tags(tokens, line_type):
         if hcp_image_type == "":
             # image type not specified
             pass
-        elif hcp_image_type in ["T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr"]:
+        elif hcp_image_type in ["T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr", "TB1DAM", "TB1EPI", "TB1AFI", "TB1RFM", "TB1SRGE", "TB1map", "RB1map"]:
             img_info["hcp_image_type"] = (hcp_image_type,)
+
+        elif RE_IMAGE_TYPE_RB1COR_PATTERN.match(hcp_image_type):
+            img_info["hcp_image_type"] = ("RB1COR", hcp_image_type.rsplit("-")[-1])
+
+        elif RE_IMAGE_TYPE_TB1TFL_PATTERN.match(hcp_image_type):
+            img_info["hcp_image_type"] = ("TB1TFL", hcp_image_type.rsplit("-")[-1])
 
         elif RE_IMAGE_TYPE_FM_PATTERN.match(hcp_image_type):
             img_info["hcp_image_type"] = ("FM", hcp_image_type.rsplit("-")[-1])

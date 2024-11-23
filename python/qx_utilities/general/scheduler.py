@@ -9,8 +9,8 @@
 ``scheduler.py``
 
 This file holds the functions for running jobs through job schedulers on a
-computer cluster. It supports PBS, LSF, and SLURM. The functions are accessible
-and used both as terminal commands as well as internal use functions.
+computer cluster. It supports PBS  and SLURM. The functions are accessible and
+used both as terminal commands as well as internal use functions.
 """
 
 import subprocess
@@ -69,7 +69,7 @@ def schedule(
                 settings for it.
 
     Settings string should be a comma separated list of parameters. The first
-    parameter has to be the scheduler name (PBS, LSF, SLURM), the rest of the
+    parameter has to be the scheduler name (PBS, SLURM), the rest of the
     parameters are key-value pairs that are to be passed as settings to the
     scheduler. Additional parameters common to all the schedulers can be
     specified:
@@ -81,7 +81,6 @@ def schedule(
     Example settings strings::
 
         "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
-        "LSF,jobname=DWIproc,jobnum=1,cores=20,mem=250000,walltime=650:00,queue=week"
 
     Optional parameters
     -------------------
@@ -188,21 +187,6 @@ def schedule(
 
         "#PBS -l <value>"
 
-    LSF settings
-    ~~~~~~~~~~~~
-
-    For LSF the following key/value parameters are parsed as:
-
-    - queue     (``"#BSUB -q <queue>"``)
-    - mem       (``"#BSUB -R 'span[hosts=1] rusage[mem=<mem>]"``)
-    - walltime  (``"#BSUB -W <walltime>"``)
-    - cores     (``"#BSUB -n <cores>"``)
-
-    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo, 
-    jobName will be submitted using::
-
-        "#BSUB -<key> <value>"
-
     SLURM settings
     ~~~~~~~~~~~~~~
 
@@ -225,7 +209,7 @@ def schedule(
     ===
 
     Schedules the provided command the referenced script to be run by the
-    specified scheduler (PBS, LSF, SLURM are currently supported).
+    specified scheduler (PBS and SLURM are currently supported).
 
     EXAMPLE USE
     ===========
@@ -510,11 +494,11 @@ def runThroughScheduler(
     test = args.get("run", "run")
 
     # check scheduler
-    if scheduler not in ["PBS", "LSF", "SLURM"]:
+    if scheduler not in ["PBS", "SLURM"]:
         raise ge.CommandError(
             "schedule",
             "Misspecified parameter",
-            "First value in the settings string has to specify one of PBS, LSF, SLURM!",
+            "First value in the settings string has to specify one of PBS, SLURM!",
             "The settings string submitted was:",
             settings,
         )

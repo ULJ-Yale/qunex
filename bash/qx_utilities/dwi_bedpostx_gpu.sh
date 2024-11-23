@@ -62,7 +62,9 @@ Parameters:
         to 'no' if it is not.
 
     --overwrite (str, default 'no'):
-        Delete prior run for a given session.
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --scheduler (str):
         A string for the cluster scheduler (PBS or SLURM) followed by

@@ -273,13 +273,14 @@ classdef nimage
             if nargin > 0
                 if isa(varone, 'char')
                     if starts_with(varone, 'dscalar:') || starts_with(varone, 'dtseries:')
-                        parts = strip(regexp(varone, ':', 'split'));
+                        parts = strtrim(regexp(varone, ':', 'split'));
                         frames = str2num(parts{2});
                         obj.data = zeros(91282, frames);
                         obj.imageformat = 'CIFTI-2';
                         obj.dim = 91282;
                         obj.voxels = 91282;
                         obj.frames = frames;
+                        obj.empty = 0;
                         obj.hdrnifti = struct('swap', 0, 'swapped', 0, 'magic', cast([110 43 50 0 13 10 26 10], 'char'), 'datatype', 16, 'bitpix', 32, ...
                             'dim', [6 1 1 1 1 obj.frames 91282 1]', 'intent_p1', 0, 'intent_p2', 0, 'intent_p3', 0, ...
                             'pixdim', [1 1 1 1 1 1 1 1]', ...

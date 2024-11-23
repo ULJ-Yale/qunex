@@ -32,7 +32,9 @@ Parameters:
         --inputpath location for each session.
 
     --overwrite (str, default 'no'):
-        Delete prior run for a given session.
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --covariance (str, default 'false'):
         Whether to compute covariances instead of correlations ('true' /
@@ -171,7 +173,7 @@ Examples:
     NOTE: scheduler is available via qunex call.
 
     --scheduler
-        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        A string for the cluster scheduler (e.g. PBS or SLURM) followed by
         relevant options.
 
     For SLURM scheduler the string would look like this via the qunex call::

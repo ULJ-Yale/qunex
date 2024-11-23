@@ -388,23 +388,24 @@ def create_study(studyfolder=None, folders=None):
             │   ├── stimuli
             │   ├── bids
             │   └── hcpls
-            └── sessions
-                ├── inbox
-                │   ├── MR
-                │   ├── EEG
-                │   ├── BIDS
-                │   ├── HCPLS
-                │   ├── behavior
-                │   ├── concs
-                │   └── events
-                ├── archive
-                │   ├── MR
-                │   ├── EEG
-                │   ├── BIDS
-                │   ├── HCPLS
-                │   └── behavior
-                ├── specs
-                └── QC
+            ├── sessions
+            |   ├── inbox
+            |   │   ├── MR
+            |   │   ├── EEG
+            |   │   ├── BIDS
+            |   │   ├── HCPLS
+            |   │   ├── behavior
+            |   │   ├── concs
+            |   │   └── events
+            |   ├── archive
+            |   │   ├── MR
+            |   │   ├── EEG
+            |   │   ├── BIDS
+            |   │   ├── HCPLS
+            |   │   └── behavior
+            |   ├── specs
+            |   └── QC
+            └── subjects
 
         Do note that the command will create all the missing folders in which
         the specified study is to reside. The command also prepares template
@@ -711,9 +712,11 @@ def create_batch(
 
         --overwrite (str, default 'yes'):
             In case that the specified batch file already exists, whether to
-            interactively ask ('ask'), overwrite ('yes'), abort action ('no') or
-            append ('append') the found / specified sessions to the batch file.
-
+            overwrite ('yes'), abort action ('no') or append ('append') the
+            found / specified sessions to the batch file. Note that
+            previous data is deleted before the run, so in the case of the "yes"
+            option and a failed command run, previous results will be lost.
+            
         --paramfile (str, default <sessionsfolder>/specs/parameters.txt):
             The path to the parameter file header to be used. If not explicitly
             provided it defaults to <sessionsfolder>/specs/parameters.txt.
@@ -981,13 +984,13 @@ def create_batch(
                 "WARNING: target file %s already exists!"
                 % (os.path.abspath(targetfile))
             )
-            print("         Overwriting exisiting file.")
+            print("         Overwriting existing file.")
         elif overwrite == "append":
             print(
                 "WARNING: target file %s already exists!"
                 % (os.path.abspath(targetfile))
             )
-            print("         Appending to an exisiting file.")
+            print("         Appending to an existing file.")
         elif overwrite == "no" or overwrite is False:
             raise ge.CommandFailed(
                 "create_batch",
@@ -1267,7 +1270,6 @@ def create_list(
         --overwrite (str, default 'no'):
             If the specified list file already exists:
 
-            - 'ask' (ask interactively, what to do)
             - 'yes' (overwrite the existing file)
             - 'no' (abort creating a file)
             - 'append' (append sessions to the existing list file).
@@ -1294,7 +1296,6 @@ def create_list(
             If a file already exists, depending on the `overwrite` parameter the
             function will:
 
-            - 'ask' (ask interactively, what to do)
             - 'yes' (overwrite the existing file)
             - 'no' (abort creating a file)
             - 'append' (append sessions to the existing list file)
@@ -1518,9 +1519,9 @@ def create_list(
             "WARNING: Target list file %s already exists!" % (os.path.abspath(listfile))
         )
         if overwrite == "yes" or overwrite is True:
-            print("         Overwriting the exisiting file.")
+            print("         Overwriting the existing file.")
         elif overwrite == "append":
-            print("         Appending to the exisiting file.")
+            print("         Appending to the existing file.")
         elif overwrite == "no" or overwrite is False:
             raise ge.CommandFailed(
                 "create_list",
@@ -1736,7 +1737,6 @@ def create_conc(
         --overwrite (str, default 'no'):
             If the specified list file already exists:
 
-            - ask    (ask interactively, what to do)
             - yes    (overwrite the existing file)
             - no     (abort creating a file)
             - append (append sessions to the existing list file).
@@ -1997,7 +1997,7 @@ def create_conc(
                 % (os.path.abspath(concfile))
             )
             if overwrite == "yes" or overwrite is True:
-                print("              Overwriting the exisiting file.")
+                print("              Overwriting the existing file.")
             elif overwrite == "no" or overwrite is False:
                 print("              Skipping this conc file.")
                 error = True
@@ -3687,8 +3687,9 @@ def create_session_info(
             filter is provided.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite target files that already exist ('yes') or not
-            ('no').
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
     Notes:
         If an explicit list of parameters is provided, each element is treated
@@ -3825,7 +3826,6 @@ def create_session_info(
             targetfile = "session_%s.txt" % pipeline
 
         # -- get mapping ready
-
         if not os.path.exists(mapping):
             raise ge.CommandFailed(
                 "create_session_info",
@@ -3847,8 +3847,7 @@ def create_session_info(
             )
 
         # -- get list of session folders
-
-        sessions, gopts = gc.get_sessions_list(sessions, filter=filter, verbose=False)
+        sessions, _ = gc.get_sessions_list(sessions, filter=filter, verbose=False)
 
         sfolders = []
         for session in sessions:
@@ -3861,7 +3860,6 @@ def create_session_info(
             sfolders += newSet
 
         # -- check if we have any
-
         if not sfolders:
             raise ge.CommandFailed(
                 "create_session_info",
@@ -4322,10 +4320,12 @@ def _find_field_maps(tgt_session, field_map_type):
                         pending_image = None
                         looking_for_dir = None
             else:
-                print("WARNING: Incomplete pair detected")
-                state = IDLE_STATE
-                pending_image = None
-                looking_for_dir = None
+                # keep looking unless it is the end or the same direction of the pair
+                if inum == image_numbers[-1] or opposite_dir:
+                    print("WARNING: Incomplete pair detected")
+                    state = IDLE_STATE
+                    pending_image = None
+                    looking_for_dir = None
 
     res = {}
     for idx, fm in enumerate(reversed(found_fm)):
@@ -4406,11 +4406,10 @@ def _assign_remaining_image_type(tgt_session):
         rule = image["applied_rule"]
         hcp_image_type = rule.get("hcp_image_type")
         if hcp_image_type is not None and hcp_image_type[0] in [
-            "T1w",
-            "T2w",
-            "DWI",
-            "ASL",
-        ]:
+                "T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr", "TB1DAM",
+                "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM", "TB1SRGE", "TB1map", 
+                "RB1COR", "RB1map"
+                ]:
             image["hcp_image_type"] = hcp_image_type
 
 
@@ -4458,6 +4457,10 @@ def _serialize_session(tgt_session):
             tags.append("{}-{}".format(*hcp_image_type))
         elif hcp_image_type[0] == "DWI":
             tags.append("{}:{}".format(*hcp_image_type))
+        elif hcp_image_type[0] == "RB1COR":
+            tags.append("{}-{}".format(*hcp_image_type))
+        elif hcp_image_type[0] == "TB1TFL":
+            tags.append("{}-{}".format(*hcp_image_type))
         else:
             tags.append(hcp_image_type[0])
 
@@ -4466,7 +4469,7 @@ def _serialize_session(tgt_session):
 
         # add se, fm, bold_num at the end
         for k in ["se", "fm", "bold_num", "phenc"]:
-            if image.get(k):
+            if k in image and image[k] is not None:
                 tags.append("{}({})".format(k, image[k]))
 
         remaining_tags = ""

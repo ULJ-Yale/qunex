@@ -141,7 +141,10 @@ def import_nhp(
 
     --overwrite         The parameter specifies what should be done with
                         data that already exists in the locations to which NHP
-                        data would be mapped to. ["no"] Options are:
+                        data would be mapped to ["no"]. Note that if overwrite
+                        is enabled, the previous data is deleted before the run,
+                        so in the case of a failed command run, previous results
+                        are lost. Options are:
 
                         - no (do not overwrite the data and skip processing of
                           the session)

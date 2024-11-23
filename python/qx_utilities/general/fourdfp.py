@@ -127,7 +127,7 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
             elif overwrite:
                 print("overwriting existing params file", end=" ")
             else:
-                print("working with exisiting params file", end=" ")
+                print("working with existing params file", end=" ")
             do.append(subj)
         print("")
 

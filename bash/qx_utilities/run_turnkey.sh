@@ -357,7 +357,7 @@ Examples:
             --<parameterN>
 
     --scheduler
-        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        A string for the cluster scheduler (e.g. PBS or SLURM) followed by
         relevant options.
 
     For SLURM scheduler the string would look like this via the qunex call::

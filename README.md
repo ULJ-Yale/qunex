@@ -10,9 +10,13 @@ The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number 
 
 The QuNex code is co-developed and co-maintained by the:
 
-* [Anticevic Lab, Yale University](http://anticeviclab.yale.edu),
 * [Mind and Brain Lab, University of Ljubljana](https://mblab.si),
-* [Murray Lab, Dartmouth College](https://murraylab.org).
+* [Cho Lab, Yale University](https://medicine.yale.edu/lab/cho/).
+
+Past contributors to the QuNex code:
+
+* Anticevic Lab, Yale University,
+* Murray Lab, Dartmouth College.
 
 ## Quick links
 
@@ -24,8 +28,8 @@ The QuNex code is co-developed and co-maintained by the:
 
 ## Version
 
-* QuNex: 0.100.0 [QX IO]
-* qx_library: 0.100.0 [QX IO]
+* QuNex: 1.0.0 [QIO]
+* qx_library: 1.0.0 [QIO]
 
 ## References
 

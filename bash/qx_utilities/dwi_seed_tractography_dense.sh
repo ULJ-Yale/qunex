@@ -46,8 +46,10 @@ Parameters:
     --outname (str):
         Specify the suffix output name of the dscalar file.
 
-    --overwrite (str):
-        Delete prior run for a given session ('yes' / 'no').
+    --overwrite (str, default 'no'):
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --waytotal (str, default 'none'):
         Use the waytotal normalized version of the DWI dense connectome.
@@ -78,7 +80,7 @@ Examples:
     NOTE: scheduler is available via qunex call.
 
     --scheduler
-        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by
+        A string for the cluster scheduler (e.g. PBS or SLURM) followed by
         relevant options.
 
     For SLURM scheduler the string would look like this via the qunex call::

@@ -49,9 +49,8 @@ show_splash() {
     echo ""
     echo "                       DEVELOPED & MAINTAINED BY:"
     echo ""
-    echo "                    Anticevic Lab, Yale University"
     echo "               Mind & Brain Lab, University of Ljubljana"
-    echo "                     Murray Lab, Darthmouth College"
+    echo "                       Cho Lab, Yale University"
     echo ""
     echo "                      COPYRIGHT & LICENSE NOTICE:"
     echo ""
@@ -120,7 +119,7 @@ qunex_done() {
 
 show_usage_qxutil() {
     echo ""
-    gmri ${usage_input} --h
+    gmri ${usage_input} --help
 }
 
 show_all_qunex_commands() {
@@ -638,17 +637,6 @@ show_usage_parcellate_bold() {
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 extract_roi() {
-    # -- Parse general parameters
-    ROIFileSessionSpecific="$ROIFileSessionSpecific"
-    SingleInputFile="$SingleInputFile"
-    if [[ -n ${SingleInputFile} ]]; then
-        InputFile="${SingleInputFile}"
-    fi
-    if [[ ${ROIFileSessionSpecific} == "no" ]]; then
-        ROIFile="${ROIFile}"
-    else
-        ROIFile="${SessionsFolder}/${CASE}/${ROIFile}"
-    fi
     # -- Specify command variable
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/extract_roi.sh \
     --roifile='${ROIFile}' \
@@ -1043,16 +1031,6 @@ echo ""
 echo ".......................... Running QuNex v${QuNexVer} .........................."
 echo ""
 
-
-# -- Check if there are no parameters
-if [[ "$#" -lt 2 ]]; then
-    echo "--------------------------------- QuNex failed ---------------------------------"
-    echo ""
-    echo "ERROR: No input parameters found! You can use the --help flag to request help for a specific command."
-    echo ""
-    exit 1
-fi
-
 # ------------------------------------------------------------------------------
 # -- gmri outside local commands to bypass checking
 # ------------------------------------------------------------------------------
@@ -1160,7 +1138,16 @@ if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     fi  
 fi
 
-# -- Check if one of args is -h, --h, -H or --H
+# -- Check if there is no command or parameters
+if [[ "$#" -lt 2 ]]; then
+    echo "--------------------------------- QuNex failed ---------------------------------"
+    echo ""
+    echo "ERROR: No input parameters found! You can use the --help flag to request help for a specific command."
+    echo ""
+    exit 1
+fi
+
+# -- Check if one of the flags is h, H or help
 for fn in "$@" ; do
     if [[ ${fn} == "-h" ]] || [[ ${fn} == "--h" ]] || [[ ${fn} == "-H" ]] || [[ ${fn} == "--H" ]] || [[ ${fn} == "--help" ]] || [[ ${fn} == "-help" ]]; then
         # -- Check if input part of function list
@@ -1531,7 +1518,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Input flags for extract_roi
     ROIFile=`get_parameters "${setflag}roifile" $@`
-    ROIFileSessionSpecific=`get_parameters "${setflag}sessionroifile" $@`
 
     # -- Input flags for compute_bold_fc
     InputFiles=`get_parameters "${setflag}inputfiles" $@`
@@ -2589,49 +2575,37 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$CommandToRun" == "extract_roi" ]; then
-    # -- Check all the user-defined parameters:
-    if [[ -z ${CommandToRun} ]]; then echo "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$OutPath" ]; then echo "ERROR: Output path value missing"; exit 1; fi
-    if [[ -z ${OutName} ]]; then echo "ERROR: Output file name value missing"; exit 1; fi
+    # -- Check all the user-defined parameters
     if [ -z "$ROIFile" ]; then echo "ERROR: File to use for ROI extraction missing"; exit 1; fi
-
+    if [ -z "$InputFile" ]; then echo "ERROR: Input file path value missing"; exit 1; fi
+    if [ -z "$OutPath" ]; then echo "ERROR: Output path value missing"; exit 1; fi
+    if [[ -z $OutName ]]; then echo "ERROR: Output file name value missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
-            if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
-    fi
-
-    # -- Check optional parameters if not specified
-    if [ -z "$ROIFileSessionSpecific" ]; then ROIFileSessionSpecific="no"; fi
-    if [ -z "$Overwrite" ]; then Overwrite="no"; fi
-    if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
-        if [ -z "$InputFile" ]; then echo "ERROR: Input file path value missing"; exit 1; fi
-        if [[ -z ${StudyFolder} ]]; then echo "ERROR: Study folder missing"; exit 1; fi
-        if [[ -z ${SessionsFolder} ]]; then echo "ERROR: Sessions folder missing"; exit 1; fi
-        if [[ -z ${CASES} ]]; then echo "ERROR: List of sessions missing"; exit 1; fi
+        if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
 
     # -- Report parameters
     echo ""
     echo "Running $CommandToRun with the following parameters:"
     echo "--------------------------------------------------------------"
-    echo "   Study Folder: ${StudyFolder}"
-    echo "   Sessions Folder: ${SessionsFolder}"
-    echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
-    echo "   Input File: ${InputFile}"
-    echo "   Output File Name: ${OutName}"
-    echo "   Single Input File: ${SingleInputFile}"
-    echo "   ROI File: ${ROIFile}"
-    echo "   Session specific ROI file set: ${ROIFileSessionSpecific}"
-    echo "   Overwrite prior run: ${Overwrite}"
+    echo "   ROI file: ${roifile}"
+    echo "   Input file: ${inputfile}"
+    echo "   Output path: ${outpath}"
+    echo "   Output name: ${outname}"
     echo ""
 
-    if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
-        # -- Loop through all the cases
-        for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
-    else
-        # -- Execute on single input file
+    if [[ -z ${CASES} ]]; then;
+        # -- Execute on a single session
         ${CommandToRun}
+    else
+        if [ -z "$SessionsFolder" ]; then echo "ERROR: --sessionsfolder needs to be provided so we can loop over the sessions in there!"; exit 1; fi
+        # -- Loop through all the cases
+        CASE_ROIFile="${ROIFile}"
+        for CASE in ${CASES}; do
+            ROIFile="${SessionsFolder}/${CASE}/${CASE_ROIFile}"
+            ${CommandToRun} ${CASE}
+        done
     fi
 fi
 

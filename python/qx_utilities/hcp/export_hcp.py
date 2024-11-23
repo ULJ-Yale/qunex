@@ -77,7 +77,10 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
                       when mapping out of the QuNex folder structure. []
 
     --overwrite       Whether existing files at the target location should be
-                      overwritten.['no'] Possible options are:
+                      overwritten ['no']. Note that previous data is deleted
+                      before the run if overwrite is enabled, so in the case of
+                      a failed command run, previous results are lost. Possible
+                      options are:
 
                       - yes (any existing files should be replaced)
                       - no (no existing files should be replaced and the

@@ -1,6 +1,6 @@
 {
     "files": {
-        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap", "mbPCASLhr", "ASL"],
+        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap", "mbPCASLhr", "ASL", "B1"],
         "T1w": {
             "info":  [],
         },
@@ -24,11 +24,14 @@
         },
         "mbPCASLhr": {
             "info":  []
-        }
+        },
+        "B1": {
+            "info":  []
+        },
     },
     "folders": {
-        "order": {"T1w": 1, "T2w": 2, "rfMRI": 3, "tfMRI": 4, "Diffusion": 5, "mbPCASLhr": 6, "ASL": 7},
-        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "Diffusion", "mbPCASLhr", "ASL"],
+        "order": {"T1w": 1, "T2w": 2, "rfMRI": 3, "tfMRI": 4, "Diffusion": 5, "mbPCASLhr": 6, "ASL": 7, "B1": 8},
+        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "Diffusion", "mbPCASLhr", "ASL", "B1"],
         "T1w": {
             "info":  [],
             "check": [  
@@ -38,7 +41,10 @@
                         ["SpinEchoFieldMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
-                        ["T1w"]
+                        ["T1w"],
+                        ["AFI"],
+                        ["BIAS", "32CH"],
+                        ["BIAS", "BC"],
                       ]
         },
         "T2w": {
@@ -164,5 +170,21 @@
                         ["ASL"]
                       ]
         },
+        "B1": {
+            "info":  [],
+            "check": [
+                        ["TB1DAM"],
+                        ["TB1EPI"],
+                        ["TB1AFI"],
+                        ["TB1TFL"],
+                        ["TB1TFL-Magnitude"],
+                        ["TB1TFL-Phase"],
+                        ["TB1RFM"],
+                        ["TB1SRGE"],
+                        ["TB1map"],
+                        ["RB1COR"],
+                        ["RB1map"]
+                      ]
+        }
     }
 }

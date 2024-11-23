@@ -28,7 +28,7 @@ function [options] = general_parse_options(options, s, default)
 %       Starting structure:
 %           The starting structure can hold the initial values. Any
 %           value not changed by the string will remain as is. Any
-%           field name not yet exisiting will becreated. If an empty
+%           field name not yet existing will becreated. If an empty
 %           array is passed, the structure will be created anew.
 %
 %       String format:

@@ -259,6 +259,7 @@ deprecated_parameters = {
     "args": "palm_args",
     "TR": "tr",
     "PEdir": "pedir",
+    "sequenceinfo": "add_json_info",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

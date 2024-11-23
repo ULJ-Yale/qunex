@@ -821,15 +821,16 @@ def checkRun(
         failed = 0
 
         # check log contents for errors
-        log = open(logFile, "r")
-        lines = log.readlines()
+        if logFile is not None:
+            log = open(logFile, "r")
+            lines = log.readlines()
 
-        for line in lines:
-            if "Error" in line or "ERROR" in line:
-                report = "%s not finished" % (command)
-                passed = None
-                failed = 1
-                break
+            for line in lines:
+                if "Error" in line or "ERROR" in line:
+                    report = "%s not finished" % (command)
+                    passed = None
+                    failed = 1
+                    break
 
     else:
         if verbose and tfile is not None:
@@ -1025,7 +1026,7 @@ def runExternalForFile(
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
-        status, report, r, failed = checkRun(
+        status, _, r, failed = checkRun(
             checkfile,
             fullTest=fullTest,
             command=task,

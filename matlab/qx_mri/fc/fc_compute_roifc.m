@@ -561,10 +561,7 @@ for s = 1:list.nsessions
     % ---> reading image files
 
     if verbose; fprintf('     ... reading image file(s)'); end
-    if iscell(bolds)
-        bolds = strjoin(bolds, '|');
-    end
-    y = nimage(bolds);
+    y = nimage(strjoin(bolds, '|'));
     y.data = y.image2D;
     if verbose; fprintf(' ... %d frames read, done.\n', y.frames); end
 

@@ -171,11 +171,6 @@ all_qunex_commands = [
         "python",
     ),
     (
-        "qx_utilities.bash.extract_roi",
-        "Extracts data from pre-specified ROIs in CIFTI or NIFTI.",
-        "bash",
-    ),
-    (
         "qx_mri.fc.fc_compute_ab_corr",
         "Computes the correlation of each source mask voxel with each target mask voxel.",
         "matlab",
@@ -286,6 +281,11 @@ all_qunex_commands = [
         "matlab",
     ),
     (
+        "qx_mri.general.general_create_roi",
+        "Creates ROI image file based on the provided specification.",
+        "matlab",
+    ),
+    (
         "qx_mri.general.general_parcellated2dense",
         "Expands the parcelated file to a dense file.",
         "matlab",
@@ -355,8 +355,13 @@ all_qunex_commands = [
         "python",
     ),
     (
-        "qx_utilities.hcp.process_hcp.hcp_longitudinal_freesurfer",
-        "Runs HCP PreFreeSurfer pipeline.",
+        "qx_utilities.hcp.process_hcp.hcp_long_freesurfer",
+        "Runs the longitudinal HCP FreeSurfer pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_long_post_freesurfer",
+        "Runs the longitudinal HCP Post FreeSurfer pipeline.",
         "python",
     ),
     (
@@ -377,6 +382,11 @@ all_qunex_commands = [
     (
         "qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean",
         "Runs HCP apply auto reclean pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_transmit_bias_individual",
+        "Run HCP Transmit Bias Individual Only pipeline.",
         "python",
     ),
     (
@@ -440,6 +450,7 @@ all_qunex_commands = [
         "Runs second level analysis using PALM permutation resampling.",
         "python",
     ),
+    ("qx_utilities.qa.run_qa.run_qa", "QuNex quality assurance pipeline.", "python"),
     (
         "qx_utilities.bash.run_qc",
         "Runs visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi.",
@@ -493,7 +504,7 @@ all_qunex_commands = [
     (
         "qx_utilities.general.bids.map_nii2bids",
         "Maps images from the sessions's nii folder to BIDS structure.",
-        "python"
+        "python",
     ),
 ]
 
@@ -556,8 +567,7 @@ def runCommand(command, args):
             raise ge.CommandError(
                 "gmri",
                 "Invalid arguments",
-                "Provided unknown arguments: [%s]!"
-                % (", ".join(bad)),
+                "Provided unknown arguments: [%s]!" % (", ".join(bad)),
             )
 
     # -- process extra arguments
@@ -867,7 +877,7 @@ def print_help(com):
     elif com in ["a", "all", "allcommands"]:
         os.system("qunex -splash")
         for full_name, description, _ in all_qunex_commands:
-            print(full_name.split(".")[-1] + " " + description)
+            print("- " + full_name.split(".")[-1] + ": " + description)
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
@@ -909,7 +919,7 @@ def main(args=None):
             help_request = True
         else:
             for n in range(1, len(args)):
-                # if --h, -h, --H or -H flag is provided user is looking for help
+                # if h, H or -help flag is provided user is looking for help
                 if args[n].strip("-") in ["h", "H", "help"]:
                     help_request = True
                     break
@@ -951,7 +961,8 @@ def main(args=None):
             % (" \\\n    ".join(oargs))
         )
         print(
-            "\nPlease run `qunex %s --h` to get help for the failed command.\n" % (comm)
+            "\nPlease run `qunex %s --help` to get help for the failed command.\n"
+            % (comm)
         )
         sys.exit(1)
     except ValueError as e:

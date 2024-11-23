@@ -69,7 +69,9 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
             How many elements (e.g. bolds) to run in parallel.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite target files that already exist (yes) or not (no).
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,

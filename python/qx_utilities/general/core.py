@@ -234,8 +234,9 @@ def read_list(filename, verbose=False):
 
             if len(line) == 2:
                 if line[0] == "session id":
-                    if session is not None:
-                        slist.append(session)
+                    if session != {}:
+                        slist.append(session.copy())
+                    session = {}
                     session["id"] = line[1]
 
                 else:
@@ -243,7 +244,7 @@ def read_list(filename, verbose=False):
                         session[line[0]].append(line[1])
                     else:
                         session[line[0]] = [line[1]]
-
+        slist.append(session)
     return slist
 
 

@@ -62,8 +62,10 @@ Parameters:
         provide multiple suffixes, QuNex will merge the images along with their
         bvals and bvecs and run processing on the merged image.
 
-    --overwrite (str):
-        Delete prior run for a given session ('yes' | 'no').
+    --overwrite (str, default 'no'):
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
 
     --te (float):
         This is the echo time difference of the fieldmap sequence - find this

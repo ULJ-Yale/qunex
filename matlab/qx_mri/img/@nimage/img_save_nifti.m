@@ -95,7 +95,7 @@ switch img.imageformat
             img.cifti.metadata.diminfo{2} = cifti_diminfo_make_series(img.frames, series_start, img.TR, series_unit);
             
         % --- if scalar or label create scalar information
-        elseif strfind(img.filetype, 'scalar') || strfind(img.filetype, 'label')
+        elseif any(strfind(img.filetype, 'scalar')) || any(strfind(img.filetype, 'label'))
             if length(img.cifti.maps) == img.frames
                 img.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(img.frames, img.cifti.maps);
             else

@@ -74,8 +74,8 @@ def mapToQUNEXcpls(
         pathsep = "/"
 
     # -- extract file info
-
     m = re.search(nameformat, file)
+
     try:
         subjid = m.group("subject_id")
         session = m.group("session_name")
@@ -203,14 +203,9 @@ def import_hcp(
             - 'move' ... files will be moved.
 
         --overwrite (str, default 'no'):
-            The parameter specifies what should be done with data that already
-            exists in the locations to which HCPLS data would be mapped to.
-            Options are:
-
-            - 'no'  ... do not overwrite the data and skip processing of the
-              session
-            - 'yes' ... remove exising files in `nii` folder and redo the
-              mapping.
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --archive (str, default 'move'):
             What to do with the files after they were mapped.
@@ -695,7 +690,6 @@ def import_hcp(
                     info += ", session " + sessionid
 
                 try:
-                    print
                     nimg, nmapped = map_hcpls2nii(
                         os.path.join(sessionsfolder, session),
                         overwrite,
@@ -951,17 +945,16 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
         --sourcefolder (str, default '.'):
             The base session folder in which bids folder with data and files for
             the session are present.
-        --overwrite (str, default 'no'):
-            Parameter that specifes what should be done in cases where there are
-            existing data stored in `nii` folder. The options are:
 
-            - 'no'  ... do not overwrite the data, skip session
-            - 'yes' ... remove exising files in `nii` folder and redo the
-              mapping.
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
 
         --report (str, default '<basefolder>/info/hcpls/parameters.txt'):
             The path to the file that will hold the information about the images
             that are relevant for HCP Pipelines.
+
         --filesort (str, default 'name_type_se'):
             An optional parameter that specifies how the files should
             be sorted before mapping to `nii` folder and inclusion in
@@ -1606,6 +1599,82 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                             "_hcp_unwarpdir",
                             unwarp[fileInfo["json"].get("ReadoutDirection", None)],
                         ),
+                        file=rout,
+                    )
+
+                elif fileInfo["parts"][0] in ["AFI"]:
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
+                    out = "%02d: %-20s: %-30s" % (
+                        imgn,
+                        "TB1" + fileInfo["parts"][0],
+                        "_".join(fileInfo["parts"]),
+                    )
+                    if phenc:
+                        out += ": phenc(%s)" % (phenc)
+
+                    print(out, end=" ", file=sout)
+                    print(out, end=" ", file=sout_hcp)
+
+                    # add filename
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
+                    print(out, file=sout)
+                    print(out, file=sout_hcp)
+
+                    print("\n" + "TB1" + fileInfo["parts"][0], file=rout)
+                    print(
+                        "".join(["-" for e in range(len(fileInfo["parts"][0]))]),
+                        file=rout,
+                    )
+
+                elif fileInfo["parts"][0] in ["BIAS"]:
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
+                    if re.match(r"^\d+CH$", fileInfo["parts"][1]):
+                        tag = "RB1COR-Head"
+                    elif fileInfo["parts"][1] == "BC":
+                        tag = "RB1COR-Body"
+                    out = "%02d: %-20s: %-30s" % (
+                        imgn,
+                        tag,
+                        "_".join(fileInfo["parts"]),
+                    )
+                    if phenc:
+                        out += ": phenc(%s)" % (phenc)
+
+                    print(out, end=" ", file=sout)
+                    print(out, end=" ", file=sout_hcp)
+
+                    # add filename
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
+                    print(out, file=sout)
+                    print(out, file=sout_hcp)
+
+                    print("\n" + tag, file=rout)
+                    print(
+                        "".join(["-" for e in range(len(fileInfo["parts"][0]))]),
+                        file=rout,
+                    )
+
+                elif fileInfo["parts"][0] in ["B1"]:
+                    phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
+                    out = "%02d: %-20s: %-30s" % (
+                        imgn,
+                        fileInfo["parts"][1],
+                        "_".join(fileInfo["parts"]),
+                    )
+                    if phenc:
+                        out += ": phenc(%s)" % (phenc)
+
+                    print(out, end=" ", file=sout)
+                    print(out, end=" ", file=sout_hcp)
+
+                    # add filename
+                    out = ": filename(%s)" % "_".join(fileInfo["parts"])
+                    print(out, file=sout)
+                    print(out, file=sout_hcp)
+
+                    print("\n" + fileInfo["parts"][0], file=rout)
+                    print(
+                        "".join(["-" for e in range(len(fileInfo["parts"][0]))]),
                         file=rout,
                     )
 

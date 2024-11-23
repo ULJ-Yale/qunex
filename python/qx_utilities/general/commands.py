@@ -18,6 +18,9 @@ from general import dicom, bids, fourdfp, dicomdeid, fidl, qximg, img, nifti, pa
 from hcp import import_hcp, setup_hcp, export_hcp
 from nhp import import_nhp
 
+# QA imports
+from qa import run_qa
+
 # all command mappings
 commands = {'list_dicom': {'com': dicom.list_dicom, 'args': ('folder', )}, 
             'split_dicom': {'com': dicom.split_dicom, 'args': ('folder', )}, 
@@ -26,7 +29,7 @@ commands = {'list_dicom': {'com': dicom.list_dicom, 'args': ('folder', )},
             'dicom2niix': {'com': dicom.dicom2niix, 'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'parelements', 'debug', 'tool', 'add_image_type', 'add_json_info')}, 
             'import_dicom': {'com': dicom.import_dicom, 'args': ('sessionsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'nameformat', 'tool', 'parelements', 'logfile', 'archive', 'add_image_type', 'add_json_info', 'unzip', 'gzip', 'verbose', 'overwrite', 'test')}, 
             'get_dicom_info': {'com': dicom.get_dicom_info, 'args': ('dicomfile', 'scanner')}, 
-            'import_bids': {'com': bids.import_bids, 'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo')}, 
+            'import_bids': {'com': bids.import_bids, 'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname', 'fileinfo', 'add_json_info')}, 
             'map_bids2nii': {'com': bids.map_bids2nii, 'args': ('sourcefolder', 'overwrite', 'fileinfo')}, 
             'import_hcp': {'com': import_hcp.import_hcp, 'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat', 'filesort', 'processed_data')}, 
             'map_hcpls2nii': {'com': import_hcp.map_hcpls2nii, 'args': ('sourcefolder', 'overwrite', 'filesort')}, 
@@ -68,9 +71,10 @@ commands = {'list_dicom': {'com': dicom.list_dicom, 'args': ('folder', )},
             'get_dicom_fields': {'com': dicomdeid.get_dicom_fields, 'args': ('folder', 'targetfile', 'limit')}, 
             'change_dicom_files': {'com': dicomdeid.change_dicom_files, 'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')}, 
             'run_recipe': {'com': utilities.run_recipe,             'args': ('recipe_file', 'recipe', 'steps', 'logfolder', 'verbose', 'eargs')},
-            'import_nhp': {'com': import_nhp.import_nhp, 'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive')}, 
-            'bruker_to_dicom': {'com': bruker.bruker_to_dicom, 'args': ('sessionsfolder', 'inbox', 'sessions', 'archive', 'parelements')}, 
-            'get_sessions_for_slurm_array': {'com': utilities.get_sessions_for_slurm_array, 'args': ('sessions', 'sessionids')}
+            'import_nhp': {'com': import_nhp.import_nhp,          'args': ('sessionsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive')},
+            'bruker_to_dicom': {'com': bruker.bruker_to_dicom,         'args': ('sessionsfolder', 'inbox', 'sessions', 'archive', 'parelements')},
+            'get_sessions_for_slurm_array': {'com': utilities.get_sessions_for_slurm_array, 'args': ('sessions', 'sessionids')},
+            'run_qa': {'com': run_qa.run_qa, 'args': ('datatype', 'sessionsfolder', 'sessions', 'configfile', 'overwrite', 'tag')}
             }
 
 # -- update commands list with information from extensions
