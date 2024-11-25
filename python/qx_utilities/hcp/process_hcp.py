@@ -1550,6 +1550,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
 
+        --hcp_nogpu (flag, optional):
+            If specified, use the non-GPU-enabled version of FreeSurfer.
+
     Output files:
         The results of this step will be present in the above mentioned T1w
         folder as well as MNINonLinear folder in the sessions's root hcp
@@ -1577,6 +1580,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             ``hcp_fs_extra_reconall``    ``extra-reconall-arg``
             ``hcp_fs_no_conf2hires``     ``no-conf2hires``
             ``hcp_fs_flair``             ``flair``
+            ``hcp_nogpu``                ``gpu``
             ============================ =======================
 
     Examples:
@@ -1720,6 +1724,12 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_expert_file"]:
             elements.append(("extra-reconall-arg", "-expert"))
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
+
+        # gpu mode or not
+        if options["hcp_nogpu"]:
+            elements.append(("gpu", "False"))
+        else:
+            elements.append(("gpu", "True"))
 
         # ---> Pull all together
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
@@ -3215,8 +3225,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
     Runs the Diffusion step of HCP Pipeline (DiffPreprocPipeline.sh). This
     command uses GPUs by default so CUDA Libraries are required for this to
-    work. Use the hcp_dwi_nogpu flag to run without a GPU if needed, note that
-    this results in much slower processing speed.
+    work. Use the hcp_nogpu flag to run without a GPU if needed, note that this
+    results in much slower processing speed.
 
     Warning:
         The code expects the first HCP preprocessing step (hcp_pre_freesurfer)
@@ -3332,7 +3342,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         --hcp_dwi_name (str, default 'Diffusion'):
             Name to give DWI output directories.
 
-        --hcp_dwi_nogpu (flag, optional):
+        --hcp_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of eddy. The
             flag is not set by default.
 
@@ -3410,11 +3420,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             ``hcp_dwi_extraeddyarg`` ``extra-eddy-arg``
             ``hcp_dwi_name``         ``dwiname``
             ``hcp_dwi_selectbestb0`` ``select-best-b0``
-            ``hcp_dwi_nogpu``        ``no-gpu``
             ``hcp_dwi_topupconfig``  ``topup-config-file``
             ``hcp_dwi_even_slices``  ``ensure-even-slices``
             ``hcp_dwi_posdata``      ``posData``
             ``hcp_dwi_negdata``      ``negData``
+            ``hcp_nogpu``            ``gpu``
             ======================== ======================================
 
         Use:
@@ -3456,7 +3466,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="yes" \\
-                --hcp_dwi_nogpu
+                --hcp_nogpu
     """
 
     r = "\n------------------------------------------------------------"
@@ -3733,9 +3743,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options["hcp_dwi_even_slices"]:
                 comm += "                --ensure-even-slices"
 
-            if options["hcp_dwi_nogpu"]:
-                comm += "                --no-gpu"
+            if options["hcp_nogpu"]:
+                comm += "                --gpu=False"
             else:
+                comm += "                --gpu=True"
                 comm += "                --cuda-version=10.2"
 
             # create dummy bvals and bvecs if demanded

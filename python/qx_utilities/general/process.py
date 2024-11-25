@@ -964,7 +964,7 @@ arglist = [
     ],
     ["hcp_dwi_name", "", isNone, "Name to give DWI output directories."],
     [
-        "hcp_dwi_nogpu",
+        "hcp_nogpu",
         None,
         flag,
         "If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.",
@@ -1732,8 +1732,8 @@ flaglist = [
         "Whether to overwrite existing results.",
     ],
     [
-        "hcp_dwi_nogpu",
-        "hcp_dwi_nogpu",
+        "hcp_nogpu",
+        "hcp_nogpu",
         True,
         "If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.",
     ],
