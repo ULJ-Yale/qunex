@@ -1,6 +1,6 @@
 function [roi] = general_create_roi(targetf, roi, mask, options)
 
-%``img_prep_roi(targetf, roi, mask, options)``
+%``general_create_roi(targetf, roi, mask, options)``
 %
 % Creates an image file with regions of interest masks(s) based on the provided
 % ROI specification. This is a wrapper function that calls nimage.img_prep_roi
@@ -19,6 +19,7 @@ function [roi] = general_create_roi(targetf, roi, mask, options)
 %
 %       --mask (str, integer, or nimage object, default ''):
 %           See nimage.img_prep_roi documentation for details.
+%
 %   Output:
 %       img
 %           A nimage object with an `roi` structure array defining the ROI.
