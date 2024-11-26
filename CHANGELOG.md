@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Default value for the `hcp_prefs_template_res` parameter of `hcp_pre_freesurfer` is now read and set from the imaging data.
 * Made several optimizations that should make QuNex more user friendly (e.g., automatic setting of parameter values from JSON sidecars, more robust logic for automatic setting of parameter values when they are inferred from imaging data ...).
 * Fixed some bugs in our data onboarding functions (`import_dicom`, `import_bids`, `import_hcp`).
+* Fixed a bug in the use of IntendedFor BIDS field.
 * You can now specify ROIs using a .roi file that defines ROIs by the center and radius of a sphere.
 * Easier to understand error reports at several locations.
 * Connectome Workbench updated to the latest version.
