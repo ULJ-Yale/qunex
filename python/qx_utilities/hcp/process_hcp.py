@@ -10937,7 +10937,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                             pt_fmri_names.append(boldinfo["filename"])
                         else:
                             pt_fmri_names.append(
-                                f"{options["hcp_bold_prefix"]}{printbold}"
+                                f"{options['hcp_bold_prefix']}{printbold}"
                             )
 
                     if len(pt_fmri_names) == 0:
@@ -11817,7 +11817,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             # hcp_tica_extract_fmri_out
             if options["hcp_tica_extract_fmri_out"]:
-                comm += f'                    --extract-fmri-out="{options["hcp_tica_extract_fmri_out"]}"'
+                comm += f'                    --extract-fmri-out={options["hcp_tica_extract_fmri_out"]}'
 
             # -- Report command
             if run:
