@@ -17,7 +17,7 @@ function [img] = img_prep_roi(roi, mask, options)
 %           index or indeces of the frame(s), or the name or names of
 %           the maps to be used. For more details see Notes section.
 %
-%       --options (str, default 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:')
+%       --options (str, default ``'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:'``)
 %           A pipe separated '<key>:<value>|<key>:<value>' string 
 %           specifying further options. The possible options are:
 %           
