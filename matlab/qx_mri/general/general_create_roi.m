@@ -1,6 +1,6 @@
 function [roi] = general_create_roi(targetf, roi, mask, options)
 
-% `img_prep_roi(targetf, roi, mask, options)``
+%``img_prep_roi(targetf, roi, mask, options)``
 %
 % Creates an image file with regions of interest masks(s) based on the provided
 % ROI specification. This is a wrapper function that calls nimage.img_prep_roi
@@ -12,9 +12,9 @@ function [roi] = general_create_roi(targetf, roi, mask, options)
 %           include the full file name including the extension. If the extension
 %           is not provided or does not match the file format, the function will 
 %           create the appropriate extension. The default extension for volume
-%           images is '.nii.gz' and for cifti images '.dlabel.nii'.  
+%           images is '.nii.gz' and for cifti images '.dlabel.nii'.
 %
-%       -- roi: (str or nimage onject)
+%       -- roi: (str or nimage object)
 %           See nimage.img_prep_roi documentation for details.
 %
 %       --mask (str, integer, or nimage object, default ''):
