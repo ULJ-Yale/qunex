@@ -4356,7 +4356,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``hcp_bold_stcorrint``        ``slicetimerparams``
             ``hcp_bold_refreg``           ``fmrirefreg``
             ``hcp_bold_mask``             ``fmrimask``
-            ``wb-resample`                ``hcp_wb_resample``
+            ``wb-resample``               ``hcp_wb_resample``
             ``echoTE``                    ``hcp_echo_te``
             ``matlab-run-mode``           ``hcp_matlab_mode``
             ============================= =======================
@@ -4405,6 +4405,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 --hcp_bold_seimg=first \\
                 --hcp_bold_refreg=nonlinear \\
                 --hcp_bold_mask=DILATED
+
     """
 
     r = "\n------------------------------------------------------------"
@@ -10627,27 +10628,17 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             What type of transmit bias correction to apply, options and required
             inputs are:
 
-            - AFI: actual flip angle sequence with two different echo times,
-            requires the following parameters:
-                - afi-image,
-                - afi-tr-one,
-                - afi-tr-two,
-                - afi-angle,
-                - group-corrected-myelin.
+            a) AFI: actual flip angle sequence with two different echo times,
+            requires the following parameters: afi-image, afi-tr-one,afi-tr-two,
+            afi-angle, group-corrected-myelin.
 
-            - B1Tx: b1 transmit sequence magnitude/phase pair, requires the
-            following parameters:
-                - b1tx-magnitude,
-                - b1tx-phase,
-                - group-corrected-myelin.
+            b) B1Tx: b1 transmit sequence magnitude/phase pair, requires the
+            following parameters: b1tx-magnitude, b1tx-phase, group-corrected-myelin.
 
-            -  PseudoTransmit: use spin echo fieldmaps, SBRef, and a
+            c) PseudoTransmit: use spin echo fieldmaps, SBRef, and a
             template transmit-corrected myelin map to derive empirical
-            correction, requires the following parameters:
-                - pt-fmri-names,
-                - myelin-template,
-                - group-uncorrected-myelin,
-                - reference-value.
+            correction, requires the following parameters: pt-fmri-names,
+            myelin-template, group-uncorrected-myelin, reference-value.
 
         --hcp_group_corrected_myelin (str, default ''):
             The group-corrected myelin file from AFI or B1Tx.

@@ -14,13 +14,17 @@ function [roi] = general_create_roi(targetf, roi, mask, options)
 %           create the appropriate extension. The default extension for volume
 %           images is '.nii.gz' and for cifti images '.dlabel.nii'.
 %
-%       -- roi: (str or nimage object)
+%       -- roi: (str or nimage object):
 %           See nimage.img_prep_roi documentation for details.
 %
 %       --mask (str, integer, or nimage object, default ''):
 %           See nimage.img_prep_roi documentation for details.
 %
+%       --options (str, default 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:')
+%           See nimage.img_prep_roi documentation for details.
+%
 %   Output:
+%
 %       img
 %           A nimage object with an `roi` structure array defining the ROI.
 %           See nimage.img_prep_roi documentation for details.
