@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Replacement of `run_turnkey` with `run_recipe`, a much more flexible and powerful engine for transparent and reproducible chaining of QuNex commands (<https://qunex.readthedocs.io/en/latest/wiki/UsageDocs/RunningQuNexRecipes.html>).
 * `run_qa`, quality assurance (QA) functionality, which you can use to quickly validate raw neuroimaging data and metadata to check if there are discrepancies between acquired sessions or images. The commands generates input-friendly session lists that can be used in commands that follow and user-readable reports of the QA (<https://qunex.readthedocs.io/en/latest/api/gmri/run_qa.html>).
 * Updated core functions for functional connectivity analyses, enabling flexible extraction of timeseries and computation of seed-based, ROI-based, and global brain connectivity (GBC). Some of Specific improvements are: a) the ability to work with resting state and different types of task-based data, b) the ability to use different functional connectivity measures (r, rho, covariance, cross correlation, inverse covariance, coherence, mutual information and multivariate autoregressive model coefficients), c) a flexible specification of target ROI using different types of input data and masks, and d) the ability to process mulitple session in a single call, compute and store both session specific and group level results (<https://qunex.readthedocs.io/en/latest/wiki/UsageDocs/BOLDFunctionalConnectivity.html>).
-* The container now includes the recently released version of HCP Pipelines (`v5.0.0`), which includes a number of new functionalities and improvements.
+* The container now includes the recently released version of HCP Pipelines (`v5.0.0`), which includes a number of new functionalities and improvements (<https://github.com/Washington-University/HCPpipelines>).
 * Added support for the HCP longitudinal FreeSurfer pipeline (`hcp_long_freesurfer` and `hcp_long_post_freesurfer` commands).
 * Support for the HCP TransmitBias pipeline (`hcp_transmit_bias_individual`). Also added onboading functionalities for imaging data required by this pipeline (B1).
 * `hcp_icafix` now uses `pyfix` by default, to use legacy MATLAB fix, add the `--hcp_legacy_fix` flag to your command call
@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Default value for the `hcp_prefs_template_res` parameter of `hcp_pre_freesurfer` is now read and set from the imaging data.
 * Made several optimizations that should make QuNex more user friendly (e.g., automatic setting of parameter values from JSON sidecars, more robust logic for automatic setting of parameter values when they are inferred from imaging data ...).
 * Fixed some bugs in our data onboarding functions (`import_dicom`, `import_bids`, `import_hcp`).
+* Fixed a bug in the use of IntendedFor BIDS field.
 * You can now specify ROIs using a .roi file that defines ROIs by the center and radius of a sphere.
 * Easier to understand error reports at several locations.
 * Connectome Workbench updated to the latest version.
