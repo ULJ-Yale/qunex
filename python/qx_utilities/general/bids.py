@@ -1204,7 +1204,11 @@ def processBIDS(bfolder):
 
     # ---> process fieldmap matching
     for session in bidsData:
+        basenames = []
         for element in bidsData[session].get("fmap", []):
+            basename_no_suffix = element["filename"][:element["filename"].rfind('_')]
+            if basename_no_suffix not in basenames:
+                basenames.append(basename_no_suffix)
             if ".nii" in element["filename"]:
 
                 # ---> is fieldmap a spin-echo type or a "regular" fieldmap?
@@ -1213,11 +1217,7 @@ def processBIDS(bfolder):
                 else:
                     fmtype = "fm"
 
-                # ---> is there a run information or is there just a single fieldmap
-                if element["run"] is None:
-                    fmindex = 1
-                else:
-                    fmindex = element["run"]
+                fmindex = basenames.index(basename_no_suffix) + 1
 
                 tag = f"{fmtype}({fmindex})"
 
@@ -1241,12 +1241,15 @@ def processBIDS(bfolder):
                         target_file = os.path.basename(target_file)
                         if target_file.endswith(".nii"):
                             target_file = target_file.replace(".nii", ".nii.gz")
-                        bidsData[session]["images"]["info"][target_file]["seq_info"] = (
-                            bidsData[session]["images"]["info"][target_file].get(
-                                "seq_info", []
+                        if tag not in bidsData[session]["images"]["info"][target_file].get(
+                            "seq_info", []
+                        ):
+                            bidsData[session]["images"]["info"][target_file]["seq_info"] = (
+                                bidsData[session]["images"]["info"][target_file].get(
+                                    "seq_info", []
+                                )
+                                + [tag]
                             )
-                            + [tag]
-                        )
 
     return bidsData
 
