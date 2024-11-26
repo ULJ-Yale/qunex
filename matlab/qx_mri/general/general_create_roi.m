@@ -5,7 +5,7 @@ function [roi] = general_create_roi(targetf, roi, mask, options)
 % Creates an image file with regions of interest masks(s) based on the provided
 % ROI specification. This is a wrapper function that calls nimage.img_prep_roi
 % method. Please refer to the documentation of the latter for more details.
-% 
+%
 %   Parameters:
 %       -- targetf: (str)
 %           Path to the target image file that should be created. The path can
@@ -20,7 +20,7 @@ function [roi] = general_create_roi(targetf, roi, mask, options)
 %       --mask (str, integer, or nimage object, default ''):
 %           See nimage.img_prep_roi documentation for details.
 %
-%       --options (str, default 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:')
+%       --options (str, default ``'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:'``):
 %           See nimage.img_prep_roi documentation for details.
 %
 %   Output:
