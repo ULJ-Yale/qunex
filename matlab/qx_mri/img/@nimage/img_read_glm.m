@@ -50,8 +50,14 @@ if ismember('littleendian', img.hdr4dfp.value)
 end
 
 img = processHeader(img, fin);
-img.filename = fname;
-img.filenames = {fname};
+
+fileinfo = general_check_image_file(filename);
+img.filepath      = fileinfo.path;
+img.filepaths     = {fileinfo.path};
+img.rootfilename  = fileinfo.rootname;
+img.rootfilenames = {fileinfo.rootname};
+img.filename      = fileinfo.basename;
+img.filenames     = {fileinfo.basename};
 
 % [img.data, count] = fread(fin, img.voxels * img.frames, ['float32=>' dtype]);
 [img.data, count] = fread(fin, inf, ['float32=>' dtype]);

@@ -67,6 +67,8 @@ classdef nimage
 %       Number of frames in the image
 %   runframes     
 %       A vector with the number of frames from each run in the order the images were concatenated
+%   filepath      
+%       The path to the original image
 %   filename      
 %       The original image filename
 %   filetype      
@@ -134,6 +136,8 @@ classdef nimage
         runframes       = [];        
         concname        = [];
         rootconcname    = [];
+        filepath        = [];
+        filepaths       = {};
         filename        = [];
         filenames       = {};
         filetype        = [];
@@ -371,6 +375,8 @@ classdef nimage
                             'version', 1, 'unused_str', blanks(24));
                     elseif (obj.dim(1) == 91282)  % assuming it is a CIFTI dense file
                         obj.filename = '';
+                        obj.filepath = '';
+                        obj.rootfilename = '';
                         obj.imageformat = 'CIFTI-2';
                         obj.dim = 91282;
                         obj.voxels = 91282;
@@ -447,7 +453,7 @@ classdef nimage
 
             mpath = fileparts(mfilename('fullpath'));
             xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
-            xml = strrep(xml,'{{ParentProvenance}}', img.filename);
+            xml = strrep(xml,'{{ParentProvenance}}', fullfile(img.filepath, img.filename));
             xml = strrep(xml,'{{ProgramProvenance}}', 'QuNex');
             xml = strrep(xml,'{{Provenance}}', 'QuNex');
             xml = strrep(xml,'{{WorkingDirectory}}', pwd);
@@ -463,7 +469,7 @@ classdef nimage
         %
             mpath = fileparts(mfilename('fullpath'));
             xml = fileread(fullfile(mpath, 'dscalar-32k.xml'));
-            xml = strrep(xml, '{{ParentProvenance}}', img.filename);
+            xml = strrep(xml, '{{ParentProvenance}}', fullfile(img.filepath, img.filename));
             xml = strrep(xml, '{{ProgramProvenance}}', 'QuNex');
             xml = strrep(xml, '{{Provenance}}', 'QuNex');
             xml = strrep(xml, '{{WorkingDirectory}}', pwd);
@@ -534,7 +540,7 @@ classdef nimage
             if nargin < 5 verbose = [];            end
             if nargin < 4 datatype = [];           end
             if nargin < 3 extra = [];              end
-            if nargin < 2 filename = obj.filename; end
+            if nargin < 2 filename = fullfile(obj.filepath, obj.filename); end
 
             filename = strtrim(filename);
 
@@ -565,7 +571,7 @@ classdef nimage
         %
         %
             if nargin < 4, verbose = []; end
-            if nargin < 3, filename = obj.filename; end
+            if nargin < 3, filename = fullfile(obj.filepath, obj.filename); end
 
             filename = strtrim(filename);
 
@@ -864,6 +870,7 @@ classdef nimage
             % if strcmp(obj.imageformat, 'CIFTI-2')
             %     obj.dim = size(obj.data);
             % end
+            obj.filepaths = [obj.filepaths, add.filepaths];
             obj.filenames = [obj.filenames, add.filenames];
             obj.rootfilenames = [obj.rootfilenames, add.rootfilenames];
 
@@ -950,6 +957,8 @@ classdef nimage
             obj.frames = frames;
             obj.runframes = frames;
             obj.use = true(1, frames);
+            obj.filepath= '';
+            obj.filepaths = {};
             obj.filename = '';
             obj.filenames = {};
             obj.rootfilename = '';
@@ -1163,6 +1172,8 @@ classdef nimage
                 conc(n).data = obj.data(:, startframe:endframe);
 
                 % -- metadata
+                conc(n).filepath = obj.filepaths{n};
+                conc(n).filepaths = obj.filepaths(n);
                 conc(n).filename = obj.filenames{n};
                 conc(n).filenames = obj.filenames(n);
                 conc(n).rootfilename = obj.rootfilenames{n};

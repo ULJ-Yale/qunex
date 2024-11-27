@@ -31,7 +31,7 @@ if nargin < 1, filename = ''; end
 
 file_info = struct('filename', filename, 'path', filepath, 'basename', [name ext], 'rootname', name, 'extension', ext, 'is_image', false, 'image_type', '', 'exists', exist(filename, 'file') == 2);
 
-image_type = regexp(filename, '(\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
+image_type = regexp([name ext], '(\.4dfp\.img|\.4dfp\.ifh|.4dfp\.hdr|\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
 if ~isempty(image_type)
     image_type = image_type{1}{1};
     file_info.is_image = true;

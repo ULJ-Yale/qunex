@@ -139,7 +139,7 @@ else
             error('ERROR: The length of the GLM (%d frames) and source (%d frames) data do not match!', glm_n_frames, raw_n_frames);
         end
         if sum(abs(predicted.use - glm.glm.use)) > 0
-            fprintf('WARNING: When processing files, use information do not match! Using information provided in GLM. (glm file: %s, source file: %s)', predicted.filename, glm.filename);
+            fprintf('WARNING: When processing files, use information do not match! Using information provided in GLM. (glm file: %s, source file: %s)', fullfile(predicted.filepath, predicted.filename), fullfile(glm.filepath, glm.filename));
         end
         predicted.use = glm.glm.use;
     else

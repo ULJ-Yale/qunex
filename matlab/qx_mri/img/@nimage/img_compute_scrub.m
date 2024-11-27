@@ -118,6 +118,7 @@ if isempty(img.fstats)
     fstats = false;
     mov    = false;
 end
+
 if ismember('fd', img.fstats_hdr)
     fd = img.fstats(:,ismember(img.fstats_hdr, {'fd'}));
     if sum(fd > 0) == 0
@@ -128,6 +129,7 @@ if ismember('fd', img.fstats_hdr)
 else
     mov = false;
 end
+
 if ~mov
     if isempty(img.mov)
         fprintf('WARNING: img_compute_scrub(), missing movement data!');

@@ -221,10 +221,10 @@ end
 if ~isa(roi2, 'nimage') & ~isempty(roi2)
     roi2 = nimage(roi2);
     roi2.data = roi2.image2D;
-    roif2 = roi2.filename;
+    roif2 = fullfile(roi2.filepath, roi2.filename);
 else
     if isa(roi2, 'nimage')
-        roif2 = roi2.filename;
+        roif2 = fullfile(roi2.filepath, roi2.filename);
         roi2.data = roi2.image2D;
     else
         roif2 = roi2;

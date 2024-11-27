@@ -156,17 +156,11 @@ if target
         ext = false;
     end
 end
+if isempty(target)
+    target = img.filepath;
+end
 
-[w fname] = fileparts(img.filename);
-
-% --- get filename to save to
-
-fname = strrep(fname, '.img', '');
-fname = strrep(fname, '.ifh', '');
-fname = strrep(fname, '.4dfp', '');
-fname = strrep(fname, '.gz', '');
-fname = strrep(fname, '.nii', '');
-
+fname = img.rootfilename;
 
 % --------------------------------------------------------------
 %                                                  prepare stats

@@ -621,9 +621,9 @@ function [img] = process_names(names_filename, mask, options, rcodes)
                 if ~any(roi.data == roicodes1{i}(j))
                     switch lower(options.check)
                         case 'warning'
-                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in primary roi file [%s]!\n', roicodes1{i}(j), roi.filename);
+                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in primary roi file [%s]!\n', roicodes1{i}(j), fullfile(roi.filepath, roi.filename));
                         case 'error'
-                            error('\nERROR: img_prep_roi - code [%d] does not exist in primary roi file %s!\n', roicodes1{i}(j), roi.filename);
+                            error('\nERROR: img_prep_roi - code [%d] does not exist in primary roi file %s!\n', roicodes1{i}(j), fullfile(roi.filepath, roi.filename));
                     end
                 end
             end
@@ -636,9 +636,9 @@ function [img] = process_names(names_filename, mask, options, rcodes)
                 if ~any(mask.data == roicodes2{i}(j))
                     switch lower(options.check)
                         case 'warning'
-                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in mask roi file [%s]!\n', roicodes2{i}(j), mask.filename);
+                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in mask roi file [%s]!\n', roicodes2{i}(j), fullfile(mask.filepath, mask.filename));
                         case 'error'
-                            error('\nERROR: img_prep_roi - code [%d] does not exist in mask roi file %s!\n', roicodes2{i}(j), mask.filename);
+                            error('\nERROR: img_prep_roi - code [%d] does not exist in mask roi file %s!\n', roicodes2{i}(j), fullfile(mask.filepath, mask.filename));
                     end
                 end
             end
@@ -944,7 +944,7 @@ function [roi] = process_mask(roi, options)
             roi.roi(c).nvox    = length(roi.roi(c).indeces);
         end
     else 
-        error('\nERROR: In img_prep_roi could not deduce how to process ROIs. Please review inline help! [%s]', roi.filename);
+        error('\nERROR: In img_prep_roi could not deduce how to process ROIs. Please review inline help! [%s]', fullfile(roi.filepath, roi.filename));
     end
 
 

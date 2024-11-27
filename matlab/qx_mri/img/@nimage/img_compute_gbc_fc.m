@@ -247,7 +247,7 @@ end
 
 % ---- parse command
 
-if verbose, fprintf('... starting GBC on %s\n', obj.filename); stime = tic; end
+if verbose, fprintf('... starting GBC on %s\n', fullfile(obj.filepath, obj.filename)); stime = tic; end
 commands  = parseCommand(command, nsvox);
 ncommands = length(commands);
 nvolumes  = sum([commands.volumes]);

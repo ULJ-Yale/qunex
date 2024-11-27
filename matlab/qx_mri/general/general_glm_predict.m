@@ -260,8 +260,7 @@ for s = 1:list.nsessions
         savefiles = {};
         residual = residual.splitruns();
         for n = 1:length(residual)
-            [fp, fn, fe] = fileparts(residual(n).rootfilename);
-            savefilename = [targetpath fn fe options.residual_tail extension];
+            savefilename = [targetpath residual(n).rootfilename options.residual_tail extension];
             savefiles{end+1} = savefilename;
             if verbose && detailed; fprintf('         -> %s\n', savefilename); end
             residual(n).img_saveimage(savefilename);
@@ -280,8 +279,7 @@ for s = 1:list.nsessions
             savefiles = {};
             predicted = predicted.splitruns();
             for n = 1:length(predicted)
-                [fp, fn, fe] = fileparts(predicted(n).rootfilename);
-                savefilename = [targetpath fn fe options.predicted_tail extension];
+                savefilename = [targetpath fpredicted(n).rootfilename options.predicted_tail extension];
                 savefiles{end+1} = savefilename;
                 if verbose && detailed; fprintf('         -> %s\n', savefilename); end
                 predicted(n).img_saveimage(savefilename);
@@ -292,8 +290,7 @@ for s = 1:list.nsessions
                 nimage.img_save_concfile([targetconcpath fn fe options.predicted_tail '.conc'], savefiles);
             end
         else
-            [fp, fn, fe] = fileparts(glm.rootfilename);
-            savefilename = [targetpath fn fe options.predicted_tail];
+            savefilename = [targetpath glm.rootfilename options.predicted_tail];
             if verbose && detailed; fprintf('         -> %s\n', savefilename); end
             predicted.img_saveimage(savefilename);
         end
