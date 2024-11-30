@@ -144,8 +144,8 @@ if nargin < 1 || isempty(flist), error('ERROR: At least data and effects to pred
 
 % -- support variables
 
-filetypes = {'', 'dtseries', 'ptseries'};
-extensions = {'.nii.gz', '.dtseries.nii', '.ptseries.nii'};
+filetypes = {'',         'nifti',    'dtseries',     'ptseries'};
+extensions = {'.nii.gz', '.nii.gz', '.dtseries.nii', '.ptseries.nii'};
 
 % ----- parse options
 
@@ -260,7 +260,7 @@ for s = 1:list.nsessions
         savefiles = {};
         residual = residual.splitruns();
         for n = 1:length(residual)
-            savefilename = [targetpath residual(n).rootfilename options.residual_tail extension];
+            savefilename = [targetpath residual(n).img_basename() options.residual_tail extension];
             savefiles{end+1} = savefilename;
             if verbose && detailed; fprintf('         -> %s\n', savefilename); end
             residual(n).img_saveimage(savefilename);
@@ -279,7 +279,7 @@ for s = 1:list.nsessions
             savefiles = {};
             predicted = predicted.splitruns();
             for n = 1:length(predicted)
-                savefilename = [targetpath fpredicted(n).rootfilename options.predicted_tail extension];
+                savefilename = [targetpath fpredicted(n).img_basename() options.predicted_tail extension];
                 savefiles{end+1} = savefilename;
                 if verbose && detailed; fprintf('         -> %s\n', savefilename); end
                 predicted(n).img_saveimage(savefilename);
@@ -290,7 +290,7 @@ for s = 1:list.nsessions
                 nimage.img_save_concfile([targetconcpath fn fe options.predicted_tail '.conc'], savefiles);
             end
         else
-            savefilename = [targetpath glm.rootfilename options.predicted_tail];
+            savefilename = [targetpath glm.img_basename() options.predicted_tail];
             if verbose && detailed; fprintf('         -> %s\n', savefilename); end
             predicted.img_saveimage(savefilename);
         end

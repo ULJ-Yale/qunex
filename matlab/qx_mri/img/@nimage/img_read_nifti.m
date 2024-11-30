@@ -96,13 +96,9 @@ if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 fileinfo = general_check_image_file(filename);
 
-img.filepath      = fileinfo.path;
-img.filepaths     = {fileinfo.path};
-img.rootfilename  = fileinfo.rootname;
-img.rootfilenames = {fileinfo.rootname};
-img.filename      = fileinfo.basename;
-img.filenames     = {fileinfo.basename};
-img.filetype      = fileinfo.image_type;
+img.filenamepath = filename;
+img.filenamepaths = {filename};
+img.filetype      = img.img_filetype();
 
 % --- format and size details
 
@@ -147,7 +143,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
     if img.hdrnifti.dim(1) == 6
         cver = regexp(fmeta_str, 'CIFTI Version="(.)"', 'tokens');
         if length(cver) == 0
-            error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', fullfile(img.filepath, img.filename));
+            error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', img.filenamepath);
         end
         cver = cver{1};
         if strcmp(cver, '1')
@@ -159,7 +155,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
             img.dim = img.hdrnifti.dim([7])';
             img.frames = img.hdrnifti.dim(6);
         else
-            error('\nERROR: Unknown CIFTI version (%s) of the file [%s]!\n', cver, fullfile(img.filepath, img.filename));
+            error('\nERROR: Unknown CIFTI version (%s) of the file [%s]!\n', cver, img.filenamepath);
         end
     else
         img.dim    = img.hdrnifti.dim(6);
@@ -333,7 +329,7 @@ if mi > 0
             % ---- Process CIFTI metadata
 
             if strcmp(img.imageformat, 'CIFTI-2')
-                img.cifti.metadata = cifti_read_metadata(cast(img.meta(m).data, 'char')', img.hdrnifti, img.filename);
+                img.cifti.metadata = cifti_read_metadata(cast(img.meta(m).data, 'char')', img.hdrnifti, img.filenamepath);
 
                 % -- get parcel or structure info
                 if strcmp(img.cifti.metadata.diminfo{1}.type, 'parcels')
@@ -362,7 +358,7 @@ if mi > 0
 
             else
                 % ---- We are assumning that this holds for CIFTI-I, it might not!
-                fprintf('\nWARNING: file %s is in CIFTI-1 format.\n         Please transform to CIFTI-2 format (e.g. using wb_command) to ensure correct processing of XML metadata!\n', fullfile(img.filepath,img.filename));
+                fprintf('\nWARNING: file %s is in CIFTI-1 format.\n         Please transform to CIFTI-2 format (e.g. using wb_command) to ensure correct processing of XML metadata!\n', img.filenamepath);
 
                 img.cifti.longnames  = {'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'};
                 img.cifti.shortnames = {'CORTEX_LEFT', 'CORTEX_RIGHT', 'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'};

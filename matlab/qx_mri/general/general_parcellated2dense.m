@@ -58,7 +58,7 @@ img = img.img_parcellated2dense(verbose, missingvalues);
 
 % ---> save
 if isempty(outimg)
-    outimg = fullfile(img.filepath, [img.rootfilename '.' img.filetype '.nii']);
+    outimg = [img.img_basenamepath() '.' img.filetype '.nii']);
 end
 
 if verbose, fprintf('\n---> saving %s', outimg), end

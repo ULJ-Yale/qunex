@@ -157,10 +157,10 @@ if target
     end
 end
 if isempty(target)
-    target = img.filepath;
+    target = img.img_path();
 end
 
-fname = img.rootfilename;
+fname = img.basename();
 
 % --------------------------------------------------------------
 %                                                  prepare stats
@@ -195,7 +195,7 @@ end
 %     if strcmp(store, 'same')
 %         img.img_saveimage();
 %     else
-%         tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
+%         tname = [img.img_basenamepath() '_' store]);
 %         img.img_saveimage(tname);
 %     end
 % end

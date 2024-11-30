@@ -38,7 +38,7 @@ if ~isempty(image_type)
     file_info.extension = image_type;
     file_info.rootname = strrep(file_info.basename, image_type, '');
     if strcmp(image_type, '.nii') || strcmp(image_type, '.nii.gz')
-        file_info.image_type = 'NIfTI';
+        file_info.image_type = 'nifti';
     else
         image_type = strrep(image_type, '.nii', '');
         file_info.image_type = image_type(2:end);

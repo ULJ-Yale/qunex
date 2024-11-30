@@ -398,7 +398,7 @@ function [meta] = dtseriesXML(img)
 
     mpath = fileparts(mfilename('fullpath'));
     xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
-    xml = strrep(xml,'{{ParentProvenance}}', fullfile(img.filepath, img.filename));
+    xml = strrep(xml,'{{ParentProvenance}}', img.filenamepath);
     xml = strrep(xml,'{{ProgramProvenance}}', 'QuNex');
     xml = strrep(xml,'{{Provenance}}', 'QuNex');
     xml = strrep(xml,'{{WorkingDirectory}}', pwd);
@@ -412,7 +412,7 @@ function [meta] = dscalarXML(img)
 
     mpath = fileparts(mfilename('fullpath'));
     xml = fileread(fullfile(mpath, 'dscalar-32k.xml'));
-    xml = strrep(xml, '{{ParentProvenance}}', fullfile(img.filepath, img.filename));
+    xml = strrep(xml, '{{ParentProvenance}}', img.filenamepath);
     xml = strrep(xml, '{{ProgramProvenance}}', 'QuNex');
     xml = strrep(xml, '{{Provenance}}', 'QuNex');
     xml = strrep(xml, '{{WorkingDirectory}}', pwd);

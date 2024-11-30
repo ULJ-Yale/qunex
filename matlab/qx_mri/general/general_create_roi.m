@@ -56,13 +56,13 @@ file_info  = general_check_image_file(targetf);
 if strcmp(roi.imageformat, 'CIFTI-2')
     if ~file_info.is_image 
         targetf = [targetf '.dlabel.nii'];
-    elseif strcmp(file_info.image_type, 'NIfTI')
+    elseif strcmp(file_info.image_type, 'nifti')
         targetf = fullfile(file_info.path, [file_info.rootname '.dlabel.nii']);
     end
 else
     if ~file_info.is_image 
         targetf = [targetf '.nii.gz'];
-    elseif strcmp(file_info.image_type, 'CIFTI')
+    elseif strcmp(file_info.image_type, 'cifti')
         targetf = fullfile(file_info.path, [file_info.rootname '.nii.gz']);
     end
 end

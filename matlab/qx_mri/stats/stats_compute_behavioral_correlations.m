@@ -62,8 +62,8 @@ if strfind(target, 'r')
     [r, Z] = img.img_compute_correlations(bdata.data, 'r', false, true);
     
     for n = 1:length(bdata.colheaders)
-        r.img_saveimageframe(n, fullfile(r.filepath, [r.rootfilename '-' bdata.colheaders{n} '_r']));
-        Z.img_saveimageframe(n, fullfile(r.filepath, [r.rootfilename '-' bdata.colheaders{n} '_Z']));
+        r.img_saveimageframe(n, [r.img_basenamepath '-' bdata.colheaders{n} '_r']);
+        Z.img_saveimageframe(n, [r.img_basenamepath '-' bdata.colheaders{n} '_Z']);
     end
     
 end
@@ -72,8 +72,8 @@ if strfind(target, 't1')
     [B, Z] = img.img_compute_r_type1(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
-        B.img_saveimageframe(n, fullfile(r.filepath, [r.rootfilename '-' bdata.colheaders{n} '_T-I_B']));
-        Z.img_saveimageframe(n, fullfile(r.filepath, [r.rootfilename '-' bdata.colheaders{n} '_T-I_Z']));
+        B.img_saveimageframe(n, [r.img_basenamepath '-' bdata.colheaders{n} '_T-I_B']);
+        Z.img_saveimageframe(n, [r.img_basenamepath '-' bdata.colheaders{n} '_T-I_Z']);
     end
     
 end
@@ -82,8 +82,8 @@ if strfind(target, 't3')
     [B, Z] = img.img_compute_r_type3(bdata.data, true);
     
     for n = 1:length(bdata.colheaders)
-        B.img_saveimageframe(n, fullfile(r.filepath, [r.rootfilename '-' bdata.colheaders{n} '_T-III_B']));
-        Z.img_saveimageframe(n, fullfile(r.filepath, [r.rootfilename '-' bdata.colheaders{n} '_T-III_Z']));
+        B.img_saveimageframe(n, [r.img_basenamepath '-' bdata.colheaders{n} '_T-III_B']);
+        Z.img_saveimageframe(n, [r.img_basenamepath '-' bdata.colheaders{n} '_T-III_Z']);
     end
     
 end

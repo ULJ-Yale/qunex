@@ -39,16 +39,13 @@ if FileType(file)
     img = nimage(file);
 
 else
-    fileinfo = general_check_image_file(filename);
+    fileinfo = general_check_image_file(file);
 
-    img.filepath      = fileinfo.path;
-    img.filepaths     = {fileinfo.path};
-    img.rootfilename  = fileinfo.rootname;
-    img.rootfilenames = {fileinfo.rootname};
-    img.filename      = fileinfo.basename;
-    img.filenames     = {fileinfo.basename};
+    img.filenamepath  = file;
+    img.filenamepaths = {file};
+    img.filetype      = img.img_filetype();
 
-    root = fullfile(img.filepath, img.rootfilename);
+    root = img.img_basenamepath();
     
     img.hdr4dfp = img.img_read_ifh([root '.4dfp.ifh']);
 

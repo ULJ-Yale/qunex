@@ -114,8 +114,8 @@ if (~emov) | (~ebstats) | (~esel)
 
     % ---> check if movement folder exists
 
-    fpath = obj.filepath;
-    fname = obj.rootfilename;
+    fpath = obj.img_path();
+    fname = obj.img_basename();
     if isempty(fpath) || strcmp(fpath,'.') || strcmp(fpath, '~')
         fpath = pwd;
     end

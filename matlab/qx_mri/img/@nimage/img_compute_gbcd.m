@@ -227,7 +227,7 @@ nvox = size(obj.image2D, 1);
 
 % ---- parse command
 
-if verbose, fprintf('\n\nStarting GBC on %s', fullfile(obj.filepath, obj.filename)); stime = tic; end
+if verbose, fprintf('\n\nStarting GBC on %s', obj.filenamepath); stime = tic; end
 commands = parseCommand(command, nvox);
 ncommands = length(commands);
 

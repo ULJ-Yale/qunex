@@ -55,7 +55,7 @@ if obj.frames ~= size(bdata,1)
 end
 
 nX = size(bdata, 2);
-if verbose, fprintf('\n\nComputing GLM on %s with %d regressors, using Type III SS', fullfile(obj.filepath, obj.filename), nX), end
+if verbose, fprintf('\n\nComputing GLM on %s with %d regressors, using Type III SS', obj.filenamepath, nX), end
 
 % ---- prepare data
 

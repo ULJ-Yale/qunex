@@ -201,7 +201,7 @@ end
 
 if ~strcmp(target, 'none')
     
-    fname = img.rootfilename;
+    fname = img.img_basename();
 
     % --- save stats
 
@@ -244,7 +244,7 @@ if ~strcmp(ntarget, 'none')
 
     % --- get filename to save to
 
-    fname = [img.rootfilename '_nuisance'];
+    fname = [img.img_basename() '_nuisance'];
 
     nimg.img_saveimage(fullfile(ntarget, fname));
 
@@ -291,7 +291,7 @@ if ~strcmp(ntarget, 'none')
     % --- save png
 
     try
-        imwrite(pic, fullfile(ntarget, [img.rootfilename '_nuisance.png']), 'png');
+        imwrite(pic, fullfile(ntarget, [img.img_basename() '_nuisance.png']), 'png');
     catch
         fprintf('\n---> WARNING: Could not save mask PNG image! Check supported image formats!');
     end
