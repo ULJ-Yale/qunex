@@ -36,6 +36,8 @@ import processing.core as gpc
 import general.exceptions as ge
 import general.filelock as fl
 import general.parser as parser
+import general.all_commands as gac
+
 
 parameterTemplateHeader = """#  Parameters file
 #  =====================
@@ -2029,6 +2031,20 @@ def create_conc(
         )
 
 
+def _is_qunex_command(command):
+    """
+    Check if the command is a QuNex command.
+
+    Parameters:
+        command (str): The command to check.
+    """
+    for full_name, _, _ in gac.all_qunex_commands:
+        if full_name == command:
+            return True
+
+    return False
+
+
 def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=None):
     """
     ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [<extra arguments>]``
@@ -2490,7 +2506,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 print(f"    ... done [{script_path}], see [{done_log}]", file=log)
                 os.rename(log_path, done_log)
 
-        else:
+        elif _is_qunex_command(command_name):
             # override params with those from eargs (passed because of parallelization on a higher level)
             if eargs is not None:
                 # do not add parameter if it is flagged as removed
@@ -2661,6 +2677,15 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     command_name + "_out",
                     tag=os.environ.get("XNAT_CHECKPOINT_TAG", "timestamp"),
                 )
+
+        else:
+            print(f"\n---> ERROR: run_recipe failed, {command_name} is not known!")
+            raise ge.CommandFailed(
+                "run_recipe",
+                "Unknown command",
+                f"Unknown command [{command_name}]",
+                "This is not a QuNex command or a custom script!",
+            )
 
     summary += "\n\n----------==== END SUMMARY ====----------"
 
@@ -4406,10 +4431,22 @@ def _assign_remaining_image_type(tgt_session):
         rule = image["applied_rule"]
         hcp_image_type = rule.get("hcp_image_type")
         if hcp_image_type is not None and hcp_image_type[0] in [
-                "T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr", "TB1DAM",
-                "TB1EPI", "TB1AFI", "TB1TFL", "TB1RFM", "TB1SRGE", "TB1map", 
-                "RB1COR", "RB1map"
-                ]:
+            "T1w",
+            "T2w",
+            "FM-GE",
+            "ASL",
+            "mbPCASLhr",
+            "PCASLhr",
+            "TB1DAM",
+            "TB1EPI",
+            "TB1AFI",
+            "TB1TFL",
+            "TB1RFM",
+            "TB1SRGE",
+            "TB1map",
+            "RB1COR",
+            "RB1map",
+        ]:
             image["hcp_image_type"] = hcp_image_type
 
 
