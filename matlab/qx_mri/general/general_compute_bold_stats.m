@@ -160,7 +160,7 @@ if isempty(target)
     target = img.img_path();
 end
 
-fname = img.basename();
+fname = img.img_basename();
 
 % --------------------------------------------------------------
 %                                                  prepare stats

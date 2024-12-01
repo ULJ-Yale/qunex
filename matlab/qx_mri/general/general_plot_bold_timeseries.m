@@ -328,7 +328,7 @@ for n = 1:nelements
             end
 
             if img(elements(n).imageindex).voxels ~= mask(elements(n).maskindex).voxels
-                error('ERROR: Image and mask size does not match! [%d vs. %d]\n       image: %s\n       mask: %s', img(elements(n).imageindex).voxels, mask(elements(n).maskindex).voxels, img(elements(n).imageindex).filename, mask(elements(n).maskindex).filename);
+                error('ERROR: Image and mask size does not match! [%d vs. %d]\n       image: %s\n       mask: %s', img(elements(n).imageindex).voxels, mask(elements(n).maskindex).voxels, img(elements(n).imageindex).filenamepath, mask(elements(n).maskindex).filenamepath);
             end
 
             if isempty(elements(n).ROI)

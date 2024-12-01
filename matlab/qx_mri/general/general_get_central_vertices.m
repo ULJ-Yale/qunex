@@ -87,7 +87,7 @@ if ~is_octave
     if ~isempty(fout)
         repf = fopen(fout, 'w');
         
-        fprintf(repf, '#source: %s', img.filename);
+        fprintf(repf, '#source: %s', img.filenamepath);
         fprintf(repf, '\n#projection: %s', params.projection);
         
         for fr=1:img.frames
