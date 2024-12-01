@@ -2039,6 +2039,7 @@ def _is_qunex_command(command):
         command (str): The command to check.
     """
     for full_name, _, _ in gac.all_qunex_commands:
+        full_name = full_name.split(".")[-1]
         if full_name == command:
             return True
 
