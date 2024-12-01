@@ -6333,8 +6333,13 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             HCPStyleData (default) or LegacyStyleData, controls whether
             --icadim-mode=fewtimepoints is allowed.
 
-        --hcp_icafix_fixonly (str, default 'FALSE'):
-            Whether to execute only the FIX step of the pipeline.
+        --hcp_reuse_existing_ica (str, default 'FALSE'):
+            Whether to execute only the FIX step of the pipeline and reuse the
+            previous ICA results.
+
+        --hcp_fix_backup (str, default ''):
+            If provided, the previous FIX solution is backed up to the specified
+            folder, in case hcp_reuse_existing_ica is used.
 
         --hcp_t1wtemplatebrain (str, default ''):
             Path to the T1w template brain used by pyfix. Not set by default,
@@ -6387,7 +6392,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
             ``hcp_config``                     ``config``
             ``hcp_icafix_processingmode``      ``processing-mode``
-            ``hcp_icafix_fixonly``             ``fix-only``
+            ``hcp_reuse_existing_ica``         ``reuse-existing-ica``
+            ``hcp_fix_backup``                 ``fix-backup``
             ``hcp_matlab_mode``                ``matlabrunmode``
             ``hcp_t1wtemplatebrain``           ``T1wTemplateBrain``
             ``hcp_ica_method``                 ``ica-method``
@@ -6916,8 +6922,14 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 % options["hcp_icafix_processingmode"]
             )
 
-        if options["hcp_icafix_fixonly"] is not None:
-            comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
+        if options["hcp_reuse_existing_ica"] is not None:
+            comm += (
+                '             --reuse-existing-ica="%s"'
+                % options["hcp_reuse_existing_ica"]
+            )
+
+        if options["hcp_fix_backup"] is not None:
+            comm += '             --fix-backup="%s"' % options["hcp_fix_backup"]
 
         if (
             not options["hcp_legacy_fix"]
