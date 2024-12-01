@@ -1726,9 +1726,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
 
         # gpu mode or not
-        if options["hcp_nogpu"]:
-            elements.append(("gpu", "False"))
-        else:
+        if not options["hcp_nogpu"]:
             elements.append(("gpu", "True"))
 
         # ---> Pull all together
