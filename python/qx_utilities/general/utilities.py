@@ -3798,13 +3798,17 @@ def create_session_info(
             Note, that the old sequence names are preserved.
 
     Examples:
-        Specify the session folder for a given study to automatically loop over the entire folder::
+        Specify the session folder for a given study to automatically loop over
+        the entire folder::
 
             qunex create_session_info \\
                 --sessions="*" \\
                 --sessionsfolder=<study_folder>/sessions
 
-        Define source and target session parameter files and mapping file. In this example the --sourcefile flag points to the original session information file, --targetfile points to the session information file to generate, and --mapping points to a generic mapping file::
+        Define source and target session parameter files and mapping file. In
+        this example the --sourcefile flag points to the original session
+        information file, --targetfile points to the session information file to
+        generate, and --mapping points to a generic mapping file::
 
             qunex create_session_info \\
                 --sessionsfolder=/<study_folder>/sessions \\
