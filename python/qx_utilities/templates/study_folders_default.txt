@@ -6,7 +6,6 @@ processing
     batchlogs
     comlogs
     runlogs
-    runchecks
   lists
   scripts
   scenes
