@@ -718,7 +718,7 @@ def create_batch(
             found / specified sessions to the batch file. Note that
             previous data is deleted before the run, so in the case of the "yes"
             option and a failed command run, previous results will be lost.
-            
+
         --paramfile (str, default <sessionsfolder>/specs/parameters.txt):
             The path to the parameter file header to be used. If not explicitly
             provided it defaults to <sessionsfolder>/specs/parameters.txt.
@@ -2068,7 +2068,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     Multiple run_recipe invocations
     ----------------------------
 
-    These parameters allow spreading processing of multiple sessions across 
+    These parameters allow spreading processing of multiple sessions across
     multiple run_recipe invocations:
 
     --batchfile             A path to a batch.txt file.
@@ -2076,10 +2076,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                             sessions (sessions ids) to be processed (use of grep
                             patterns is possible), e.g.  `"OP128,OP139,ER*"` or
                             `*list` file with a list of session ids.
-    --scheduler             An optional scheduler settings description string. 
-                            If provided, each run_recipe invocation will be 
-                            scheduled to run on a separate cluster node. For 
-                            details about the settings string specification see 
+    --scheduler             An optional scheduler settings description string.
+                            If provided, each run_recipe invocation will be
+                            scheduled to run on a separate cluster node. For
+                            details about the settings string specification see
                             the inline help for the `schedule` command.
 
     Please take note that if `run_recipe` command is ran using a scheduler, any
@@ -2087,8 +2087,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     the attempts to spawn new cluster jobs when `run_recipe` instance is
     already running on a cluster node.
 
-    Importantly, if `scheduler` is specified in the `run_recipe` file, do bear 
-    in mind, that all the commands in the recipe will be scheduled at the same 
+    Importantly, if `scheduler` is specified in the `run_recipe` file, do bear
+    in mind, that all the commands in the recipe will be scheduled at the same
     time, and not in a succession, as `run_recipe` can not track execution of
     jobs on individual cluster nodes.
 
@@ -2114,17 +2114,17 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     ===
 
     run_recipe takes a `recipe_file` and a `recipe` name and executes
-    the commands defined in the recipe. The `recipe_file` contains commands that 
+    the commands defined in the recipe. The `recipe_file` contains commands that
     should be run and parameters that it should use. Alternatively, you can
     provide a comma separated list of commands with the `steps` parameter.
 
     LOGS AND FAILURES
     =================
 
-    The log of the commands ran will be by default stored in 
-    `<study>/processing/logs/runlogs` stamped with date and time that the 
-    log was started. If a study folder is not yet created, please provide a 
-    valid folder to save the logs to. If the log can not be created the 
+    The log of the commands ran will be by default stored in
+    `<study>/processing/logs/runlogs` stamped with date and time that the
+    log was started. If a study folder is not yet created, please provide a
+    valid folder to save the logs to. If the log can not be created the
     `run_recipe` command will exit with a failure.
 
     `run_recipe` is checking for a successful completion of commands that it runs.
@@ -2133,7 +2133,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     as the log.
 
     Individual commands that are run can generate their own logs, the presence
-    and location of those logs depend on the specific command and settings 
+    and location of those logs depend on the specific command and settings
     specified in the recipe file.
 
     THE RECIPE FILE
@@ -2242,7 +2242,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     system environment variable $MATLAB_MODE. This is an example of how you can
     inject custom values into specially marked slots (marked with "{{<label>}}")
     in the recipe file. Note that the labels need to be provided in the form of
-    a string, so they need to be encapsulated with double quotes.  
+    a string, so they need to be encapsulated with double quotes.
 
     The forth example shows how to use the steps parameter to run a set of
     commands sequentially.
@@ -2765,10 +2765,10 @@ def batch_tag2namekey(
                         batch.txt file) to process. It can be a single
                         type (e.g. 'task'), a pipe separated list (e.g.
                         'WM|Control|rest') or 'all' to process all.
-    --output     ... Whether to output numbers ('number') or bold names 
+    --output     ... Whether to output numbers ('number') or bold names
                         ('name'). In the latter case the name will be extracted
-                        from the 'filename' specification, if provided in the 
-                        batch file, or '<prefix>[N]' if 'filename' is not 
+                        from the 'filename' specification, if provided in the
+                        batch file, or '<prefix>[N]' if 'filename' is not
                         specified.
     --prefix     ... The default prefix to use if a filename is not specified
                         in the batch file.
@@ -2826,7 +2826,7 @@ def get_sessions_for_slurm_array(sessions, sessionids):
     get_sessions_for_slurm_array \\
       --sessions=<a list of sessions, or path to the batch file)
 
-    Returns the subset of sessions that will be processed 
+    Returns the subset of sessions that will be processed
 
     INPUTS
     ======
@@ -2866,14 +2866,14 @@ def gather_behavior(
     ======
 
     --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
-                      the inbox and individual session folders are. If not 
-                      specified, the current working folder will be taken as 
+                      the inbox and individual session folders are. If not
+                      specified, the current working folder will be taken as
                       the location of the sessionsfolder. [.]
 
     --batchfile       A path to a `batch.txt` file.
 
-    --sessions        Either a string with pipe `|` or comma separated list of 
-                      sessions (sessions ids) to be processed (use of grep 
+    --sessions        Either a string with pipe `|` or comma separated list of
+                      sessions (sessions ids) to be processed (use of grep
                       patterns is possible), e.g. `"AP128,OP139,ER*"`, or
                       `*list` file with a list of session ids. [*]
 
@@ -2886,8 +2886,8 @@ def gather_behavior(
                       the specified values will be included in the list.
 
     --sourcefiles     A file or comma or pipe `|` separated list of files or
-                      grep patterns that define, which session specific files 
-                      from the behavior folder to gather data from. 
+                      grep patterns that define, which session specific files
+                      from the behavior folder to gather data from.
                       [`'behavior.txt'`]
 
     --targetfile      The path to the target file, a file that will contain
@@ -2897,25 +2897,25 @@ def gather_behavior(
     --overwrite       Whether to overwrite an existing group behavioral file or
                       not. ['no']
 
-    --check           Check whether all the identified sessions have data to 
+    --check           Check whether all the identified sessions have data to
                       include in the compiled group file. The possible options
                       are:
 
                       - yes  (check and report an error if no behavioral
                         data exists for a session)
-                      - warn (warn and list the sessions for which the 
+                      - warn (warn and list the sessions for which the
                         behavioral data was not found)
                       - no (do not run a check, ignore sessions for which
                         no behavioral data was found)
 
-    --report          Whether to include date when file was generated and the 
-                      final report in the compiled file ('yes') or not ('no'). 
+    --report          Whether to include date when file was generated and the
+                      final report in the compiled file ('yes') or not ('no').
                       ['yes']
 
     USE
     ===
 
-    The command will use the `sessionsfolders`, `sessions` and `filter` 
+    The command will use the `sessionsfolders`, `sessions` and `filter`
     parameters to create a list of sessions to process. For each session, the
     command will use the `sourcefiles` parameter to identify behavioral files from
     which to compile the data from. If no file is found for a session and the
@@ -2923,7 +2923,7 @@ def gather_behavior(
 
     Once the files for each session are identified, the command will read all
     the files and compile the data into a key:value dictionary for that session.
-    Once all the sessions are processed, a group file will be generated for 
+    Once all the sessions are processed, a group file will be generated for
     all the values encountered across sessions. If any session is missing data,
     the missing data will be identified as 'NA'
 
@@ -2933,7 +2933,7 @@ def gather_behavior(
         <sessionsfolder>/inbox/behavior/behavior.txt
 
     If a target file exists, it will be deleted and replaced, if the `overwrite`
-    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
+    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the
     command will exit with an error.
 
     File format
@@ -2946,9 +2946,9 @@ def gather_behavior(
     files should have a single line of data. The first column of the group file
     will hold the session id.
 
-    In addition, if `report` is set to 'yes' (the default), the resulting file 
+    In addition, if `report` is set to 'yes' (the default), the resulting file
     will start with a comment line stating the date of creation, and at the end
-    additional comment lines will list the full report of missing files and 
+    additional comment lines will list the full report of missing files and
     errors encounterdd while gathering behavioral data from individual sessions.
 
     EXAMPLE USE
@@ -2958,7 +2958,7 @@ def gather_behavior(
 
         qunex gather_behavior sessions="AP*"
 
-    The command will compile behavioral data present in `behavior.txt` files 
+    The command will compile behavioral data present in `behavior.txt` files
     present in all `<session id>/behavior` folder that match the "AP*" glob
     pattern in the current folder.
 
@@ -2966,7 +2966,7 @@ def gather_behavior(
 
         <current folder>/inbox/behavior
 
-    If any of the identified sessions do not include data or if errors are 
+    If any of the identified sessions do not include data or if errors are
     encountered when processing the data, the command will exit with an error.
 
     ::
@@ -2976,35 +2976,35 @@ def gather_behavior(
                 check="warn" overwrite="yes" report="no"
 
     The command will find all the session folders within `/data/myStudy/sessions`
-    that have a `behavior` subfolder. It will then look for presence of any 
-    files that match "*test*" or "*results*" glob pattern. The compiled data 
+    that have a `behavior` subfolder. It will then look for presence of any
+    files that match "*test*" or "*results*" glob pattern. The compiled data
     will be saved in the default location. If a file already exists, it will be
-    overwritten. If any errors are encountered, the command will not throw an 
+    overwritten. If any errors are encountered, the command will not throw an
     error, however it also won't report a successful completion of the task.
-    The resulting file will not have information on file generation or 
+    The resulting file will not have information on file generation or
     processing report.
 
     ::
 
         qunex gather_behavior sessionsfolder="/data/myStudy/sessions" \\
-                sessions="/data/myStudy/processing/batch.txt" \\           
+                sessions="/data/myStudy/processing/batch.txt" \\
                 filter="group:controls|behavioral:yes" \\
                 sourcefiles="*test*|*results*" \\
                 targetfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
                 check="no" overwrite="yes"
 
-    The command will read the session information from the provided batch.txt 
+    The command will read the session information from the provided batch.txt
     file. It will then process only those sessions that have the following
     lines in their description::
 
         group: control
         behavioral: yes
 
-    For those sessions it will inspect '<session id>/behavior' folder for 
+    For those sessions it will inspect '<session id>/behavior' folder for
     presence of files that match either '*test*' or '*results*' glob pattern.
     The compiled data will be saved to the specified target file. If the target
-    file exists, it will be overwritten. The command will print a full report 
-    of the processing, however, it will exit with reported success even if 
+    file exists, it will be overwritten. The command will print a full report
+    of the processing, however, it will exit with reported success even if
     missing files or errors were encountered.
     """
 
@@ -3262,14 +3262,14 @@ def pull_sequence_names(
     ======
 
     --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
-                      the inbox and individual session folders are. If not 
-                      specified, the current working folder will be taken as 
+                      the inbox and individual session folders are. If not
+                      specified, the current working folder will be taken as
                       the location of the sessionsfolder. [.]
 
     --batchfile       A path to a `batch.txt` file.
 
-    --sessions        Either a string with pipe `|` or comma separated list of 
-                      sessions (sessions ids) to be processed (use of grep 
+    --sessions        Either a string with pipe `|` or comma separated list of
+                      sessions (sessions ids) to be processed (use of grep
                       patterns is possible), e.g. "AP128,OP139,ER*", or
                       `*list` file with a list of session ids. [*]
 
@@ -3282,7 +3282,7 @@ def pull_sequence_names(
                       the specified values will be included in the list.
 
     --sourcefiles     A file or comma or pipe `|` separated list of files or
-                      grep patterns that define, which session description 
+                      grep patterns that define, which session description
                       files to check. ['session.txt']
 
     --targetfile      The path to the target file, a file that will contain
@@ -3292,25 +3292,25 @@ def pull_sequence_names(
 
     --overwrite       Whether to overwrite an existing file or not. ['no']
 
-    --check           Check whether all the identified sessions have the 
+    --check           Check whether all the identified sessions have the
                       specified information files. The possible options:
                       are:
 
                       - yes  (check and report an error if no information
                         exists for a session)
-                      - warn (warn and list the sessions for which the 
+                      - warn (warn and list the sessions for which the
                         neuroimaging information was not found)
                       - no   (do not run a check, ignore sessions for which
                         no imaging data was found)
 
-    --report          Whether to include date when file was generated and the 
-                      final report in the compiled file ('yes') or not ('no'). 
+    --report          Whether to include date when file was generated and the
+                      final report in the compiled file ('yes') or not ('no').
                       ['yes']
 
     USE
     ===
 
-    The command will use the `sessionsfolders`, `sessions` and `filter` 
+    The command will use the `sessionsfolders`, `sessions` and `filter`
     parameters to create a list of sessions to process. For each session, the
     command will use the `sourcefiles` parameter to identify neuroimaging
     information files from which to generate the list from. If no file is found
@@ -3318,29 +3318,29 @@ def pull_sequence_names(
     exit with an error.
 
     Once the files for each session are identified, the command will inspect the
-    files for imaging data and create a list of sequence names across all 
-    sessions. The list will be saved to a file specified using `targetfile` 
+    files for imaging data and create a list of sequence names across all
+    sessions. The list will be saved to a file specified using `targetfile`
     parameter. If no path is specified, the default location will be used::
 
         <sessionsfolder>/inbox/MR/sequences.txt
 
     If a target file exists, it will be deleted and replaced, if the `overwrite`
-    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
+    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the
     command will exit with an error.
 
     File formats
     ------------
 
-    The command expects the neuroimaging data to be present in the standard 
-    'session.txt' files. Please see online documentation for details. 
+    The command expects the neuroimaging data to be present in the standard
+    'session.txt' files. Please see online documentation for details.
     Specifically, it will extract the first information following the sequence
     name.
 
     The resulting file will be a simple text file, with one sequence name per
-    line. In addition, if `report` is set to 'yes' (the default), the resulting 
-    file  will start with a comment line stating the date of creation, and at 
-    the end additional comment lines will list the full report of missing files 
-    and errors encountered while gathering behavioral data from individual 
+    line. In addition, if `report` is set to 'yes' (the default), the resulting
+    file  will start with a comment line stating the date of creation, and at
+    the end additional comment lines will list the full report of missing files
+    and errors encountered while gathering behavioral data from individual
     sessions.
 
     EXAMPLE USE
@@ -3350,15 +3350,15 @@ def pull_sequence_names(
 
         qunex pull_sequence_names sessions="AP*"
 
-    The command will compile sequence names present in `session.txt` files 
+    The command will compile sequence names present in `session.txt` files
     present in all `<session id>` folders that match the "AP*" glob
-    pattern in the current working directory. 
+    pattern in the current working directory.
 
     The resulting file will be save in the default location::
 
         <current folder>/inbox/MR/sequences.txt
 
-    If any of the identified sessions do not include data or if errors are 
+    If any of the identified sessions do not include data or if errors are
     encountered when processing the data, the command will exit with an error.
 
         qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
@@ -3367,22 +3367,22 @@ def pull_sequence_names(
 
     The command will find all the session folders within `/data/myStudy/sessions`
     It will then look for presence of either session.txt or subject.txt files.
-    The compiled data from the found files will be saved in the default 
-    location. If a file already exists, it will be overwritten. If any errors 
+    The compiled data from the found files will be saved in the default
+    location. If a file already exists, it will be overwritten. If any errors
     are encountered, the command will not throw an error, however it also won't
-    report a successful completion of the task. The resulting file will not have 
+    report a successful completion of the task. The resulting file will not have
     information on file generation or processing report.
 
     ::
 
         qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
-                sessions="/data/myStudy/processing/batch.txt" \\           
+                sessions="/data/myStudy/processing/batch.txt" \\
                 filter="group:controls|behavioral:yes" \\
                 sourcefiles="*.txt" \\
                 targetfile="/data/myStudy/sessions/specs/hcp_mapping.txt" \\
                 check="no" overwrite="yes"
 
-    The command will read the session information from the provided batch.txt 
+    The command will read the session information from the provided batch.txt
     file. It will then process only those sessions that have the following
     lines in their description::
 
@@ -3390,10 +3390,10 @@ def pull_sequence_names(
         behavioral: yes
 
     For those sessions it will find any files that end with `.txt` and process
-    them for presence of neuroimaging information. The compiled data will be 
-    saved to the specified target file. If the target file exists, it will be 
-    overwritten. The command will print a full report of the processing, 
-    however, it will exit with reported success even if missing files or errors 
+    them for presence of neuroimaging information. The compiled data will be
+    saved to the specified target file. If the target file exists, it will be
+    overwritten. The command will print a full report of the processing,
+    however, it will exit with reported success even if missing files or errors
     were encountered.
     """
 
@@ -3877,13 +3877,13 @@ def create_session_info(
 
         sfolders = []
         for session in sessions:
-            newSet = glob.glob(os.path.join(sessionsfolder, session["id"]))
-            if not newSet:
+            new_set = glob.glob(os.path.join(sessionsfolder, session["id"]))
+            if not new_set:
                 print(
                     "WARNING: No folders found that match %s. Please check your data!"
                     % (os.path.join(sessionsfolder, session["id"]))
                 )
-            sfolders += newSet
+            sfolders += new_set
 
         # -- check if we have any
         if not sfolders:
@@ -4434,6 +4434,7 @@ def _assign_remaining_image_type(tgt_session):
         if hcp_image_type is not None and hcp_image_type[0] in [
             "T1w",
             "T2w",
+            "DWI",
             "FM-GE",
             "ASL",
             "mbPCASLhr",
