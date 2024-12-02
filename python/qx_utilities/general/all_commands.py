@@ -413,6 +413,11 @@ all_qunex_commands = [
         "bash",
     ),
     (
+        "qx_utilities.bash.fc_compute_wrapper",
+        "Can be used for calculating Global Brain Connectivity (GBC) or functional connectivity (FC).",
+        "bash",
+    ),
+    (
         "qx_utilities.hcp.setup_hcp.setup_hcp",
         "Maps images from the sessions's nii folder to HCP minimal preprocessing structure.",
         "python",
@@ -458,3 +463,6 @@ all_qunex_commands = [
         "python",
     ),
 ]
+
+# commands that are not their own commands
+partial_commands = ["compute_bold_fc"]
