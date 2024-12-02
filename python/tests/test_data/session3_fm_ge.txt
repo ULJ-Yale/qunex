@@ -5,29 +5,29 @@ raw_data: /data/sessions/HCPA001/nii
 data: /data/sessions/HCPA001/4dfp
 hcp: /data/sessions/HCPA001/hcp
 
-51 : Test Phase      
-61  : Test Gradient Echo       
-71 : Test Magnitude   
-91  : rfMRI_REST_AP_SBRef       
-101 : rfMRI_REST_AP             
-121 : rfMRI_REST_PA_SBRef       
-131 : rfMRI_REST_PA             
-151 : T1w_setter                
-161 : Test Phase 
-191 : T1w_MPR_vNav_4e RMS       
-201 : T1w_MPR_vNav_4e RMS       
-211 : T2w_setter                
-231 : T2w_SPC_vNav              
-241 : T2w_SPC_vNav              
-251 : TSE_HiResHp               
-261 : TSE_HiResHp               
-271 : Test Phase       
-281 : Test Magnitude   
-291 : dMRI_dir98_AP_SBRef       
-301 : dMRI_dir98_AP             
-321 : dMRI_dir98_PA_SBRef       
-331 : dMRI_dir98_PA             
-351 : dMRI_dir99_AP_SBRef       
-361 : dMRI_dir99_AP             
-381 : dMRI_dir99_PA_SBRef       
+51 : Test Phase
+61 : Test Gradient Echo
+71 : Test Magnitude
+91  : rfMRI_REST_AP_SBRef
+101 : rfMRI_REST_AP
+121 : rfMRI_REST_PA_SBRef
+131 : rfMRI_REST_PA
+151 : T1w_setter
+161 : Test Phase
+191 : T1w_MPR_vNav_4e RMS
+201 : T1w_MPR_vNav_4e RMS
+211 : T2w_setter
+231 : T2w_SPC_vNav
+241 : T2w_SPC_vNav
+251 : TSE_HiResHp
+261 : TSE_HiResHp
+271 : Test Phase
+281 : Test Magnitude
+291 : dMRI_dir98_AP_SBRef
+301 : dMRI_dir98_AP
+321 : dMRI_dir98_PA_SBRef
+331 : dMRI_dir98_PA
+351 : dMRI_dir99_AP_SBRef
+361 : dMRI_dir99_AP
+381 : dMRI_dir99_PA_SBRef
 391 : dMRI_dir99_PA

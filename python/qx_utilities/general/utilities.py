@@ -4328,7 +4328,7 @@ def _find_field_maps(tgt_session, field_map_type):
         elif state == LOOKING_FOR_PAIR_STATE:
             if is_field_map:
                 if looking_for_dir == current_dir:
-                    # record the pair iff the 2 consecutive images are a matching pair
+                    # record the pair if 2 consecutive images are a matching pair
                     found_fm.append((inum, pending_image))
                     state = IDLE_STATE
                     pending_image = None

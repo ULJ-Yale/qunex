@@ -7,27 +7,27 @@ hcp: /data/sessions/HCPA001/hcp
 hcpready: true
 51  :                :Test Phase
 61  :FM-GE           :Test Gradient Echo: fm(1)
-71  :                :Test Magnitude
-91  :boldref1:rest   :rfMRI_REST_AP_SBRef: fm(1): phenc(AP)
-101 :bold1:rest      :rfMRI_REST_AP: fm(1): phenc(AP)
-121 :boldref2:rest   :rfMRI_REST_PA_SBRef: fm(1): phenc(PA)
-131 :bold2:rest      :rfMRI_REST_PA: fm(1): phenc(PA)
+71  :FM-Magnitude    :Test Magnitude: fm(2)
+91  :boldref1:rest   :rfMRI_REST_AP_SBRef: fm(2): phenc(AP)
+101 :bold1:rest      :rfMRI_REST_AP: fm(2): phenc(AP)
+121 :boldref2:rest   :rfMRI_REST_PA_SBRef: fm(2): phenc(PA)
+131 :bold2:rest      :rfMRI_REST_PA: fm(2): phenc(PA)
 151 :                :T1w_setter
-161 :                :Test Phase
-191 :T1w             :T1w_MPR_vNav_4e RMS: fm(1)
+161 :FM-Phase        :Test Phase: fm(2)
+191 :T1w             :T1w_MPR_vNav_4e RMS: fm(2)
 201 :                :T1w_MPR_vNav_4e RMS
 211 :                :T2w_setter
-231 :T2w             :T2w_SPC_vNav: fm(1)
+231 :T2w             :T2w_SPC_vNav: fm(2)
 241 :                :T2w_SPC_vNav
 251 :                :TSE_HiResHp
 261 :                :TSE_HiResHp
-271 :FM-Phase        :Test Phase: fm(2)
-281 :FM-Magnitude    :Test Magnitude: fm(2)
+271 :FM-Phase        :Test Phase: fm(3)
+281 :FM-Magnitude    :Test Magnitude: fm(3)
 291 :                :dMRI_dir98_AP_SBRef
-301 :DWI:dir98_AP    :dMRI_dir98_AP: fm(2)
+301 :DWI:dir98_AP    :dMRI_dir98_AP: fm(3)
 321 :                :dMRI_dir98_PA_SBRef
-331 :DWI:dir98_PA    :dMRI_dir98_PA: fm(2)
+331 :DWI:dir98_PA    :dMRI_dir98_PA: fm(3)
 351 :                :dMRI_dir99_AP_SBRef
-361 :DWI:dir99_AP    :dMRI_dir99_AP: fm(2)
+361 :DWI:dir99_AP    :dMRI_dir99_AP: fm(3)
 381 :                :dMRI_dir99_PA_SBRef
-391 :DWI:dir99_PA    :dMRI_dir99_PA: fm(2)
+391 :DWI:dir99_PA    :dMRI_dir99_PA: fm(3)
