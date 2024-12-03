@@ -3761,9 +3761,9 @@ def create_session_info(
             specified mappings will be given empty labels. When both sequence
             number and sequence name match, sequence number will have priority.
 
-            If multiple mappings are specified for FM magnitude images only the
-            last one will be used. To use two FM Magnitude images fm tags must
-            be explicitly specified in the mapping file, e.g::
+            If multiple mappings are specified for fieldmap magnitude images
+            only the last one will be used. To use two fieldmap magnitude images
+            fm tags must be explicitly specified in the mapping file, e.g::
 
                 fieldmap_magnitude1  => FM-Magnitude: fm(1)
                 fieldmap_magnitude2  => FM-Magnitude: fm(1)
