@@ -264,7 +264,27 @@ def _parse_mapping_file_lines(lines):
         else:
             rule_set[rule_key] = rule
 
+    _check_fieldmap_multiplicity(result)
+
     return result
+
+
+def _check_fieldmap_multiplicity(mapping_rules):
+    """
+    Check if there are multiple FM-Magnitude images and warn the user to correct
+    the mapping file.
+    """
+    name_dict = mapping_rules['group_rules']['name']
+
+    # Count occurrences of ('FM', 'Magnitude')
+    count = sum(
+        1 for item in name_dict.values() if item.get('hcp_image_type') == ('FM', 'Magnitude') and item.get('fm') is None
+    )
+
+    if count > 1:
+        print(f"""    ... there are {count} occurrences of 'FM-Magnitude' images
+        without explicit fieldmap tags in the mapping file. We recommend adding
+        the 'fm' tag to the mapping file. See the documentation for more information.""")
 
 
 def _parse_session_image_line(tokens, session_file_type):
