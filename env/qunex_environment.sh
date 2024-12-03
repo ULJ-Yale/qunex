@@ -99,7 +99,7 @@ if [[ -e /opt/.container ]]; then
         export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
         # --- This is an environmental variable that if set should hold a path to a bash script that contains the settings the user wants to make that are different from the defaults.
-        if [[ ! -z "$QUNEXCONTAINERENV" ]]; then    
+        if [[ ! -z "$QUNEXCONTAINERENV" ]]; then
             echo "---> QUNEXCONTAINERENV set: sourcing $QUNEXCONTAINERENV"
             . $QUNEXCONTAINERENV
         fi
@@ -352,8 +352,10 @@ FREESURFER_HOME=${FREESURFERDIR}
 FREESURFER_BIN=${FREESURFER_HOME}/bin
 FREESURFER_MNI=${FREESURFER_HOME}/mni/bin
 PATH=${FREESURFER_HOME}:${FREESURFER_BIN}:${FREESURFER_MNI}:${PATH}
-export FREESURFER_HOME PATH
+LD_LIBRARY_PATH=${FREESURFER_HOME}/freesurfer/lib/tktools:${FREESURFER_HOME}/freesurfer/lib/vtk:${LD_LIBRARY_PATH}
+export FREESURFER_HOME PATH LD_LIBRARY_PATH
 . ${FREESURFER_HOME}/SetUpFreeSurfer.sh > /dev/null 2>&1
+
 
 # -- FSL path
 # -- Note: Always run after FreeSurfer for correct environment specification
@@ -513,14 +515,14 @@ for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNE
 do
     # -- identify extensions and loop through them
     for extension in `ls -d $extensions_folder/qx_* 2> /dev/null`
-    do  
+    do
         # -- Notify processing
         if [ $extensions_notice_printed == 'FALSE' ]
         then
             echo "QuNex extensions identified"
             extensions_notice_printed=TRUE
         fi
-        
+
         # -- Process plugin
         extension_name=`basename $extension`
         echo "---> Registering extension $extension_name"
@@ -537,7 +539,7 @@ do
             echo "    ... setting ${extension_root}LIB to '$extensions_folder/$extension_name/lib'"
             export ${extension_root}LIB="$extensions_folder/$extension_name/lib"
         fi
-        
+
         # -- Add bin folder to PATH
         if [ -e "$extensions_folder/$extension_name/bin" ]
         then
@@ -583,7 +585,7 @@ export PATH MATLABPATH QUNEXEXTENSIONS QXEXTENSIONSPY
 # -- Setup HCP Pipeline paths
 # ------------------------------------------------------------------------------
 
-# -- Re-Set HCP Pipeline path to different version if needed 
+# -- Re-Set HCP Pipeline path to different version if needed
 if [ -e ~/.qxdevshare ] || [ -e ~/.qxdevind ]; then
     echo ""
     echo " ---> NOTE: You are in QuNex dev mode. Setting HCP debugging settings"
