@@ -3762,9 +3762,11 @@ def create_session_info(
             number and sequence name match, sequence number will have priority.
 
             If multiple mappings are specified for fieldmap magnitude images
-            only the last one will be used. To use two fieldmap magnitude images
-            fm tags must be explicitly specified in the mapping file, e.g::
+            only the last magnitude image will be used. To pair two fieldmap
+            magnitude images with the same fieldmap phase image, `fm` tags must
+            be explicitly specified in the mapping file, e.g::
 
+                fieldmap_phase       => FM-Phase: fm(1)
                 fieldmap_magnitude1  => FM-Magnitude: fm(1)
                 fieldmap_magnitude2  => FM-Magnitude: fm(1)
 
