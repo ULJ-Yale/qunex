@@ -3764,6 +3764,15 @@ def create_session_info(
             specified mappings will be given empty labels. When both sequence
             number and sequence name match, sequence number will have priority.
 
+            If multiple mappings are specified for fieldmap magnitude images
+            only the last magnitude image will be used. To pair two fieldmap
+            magnitude images with the same fieldmap phase image, `fm` tags must
+            be explicitly specified in the mapping file, e.g::
+
+                fieldmap_phase       => FM-Phase: fm(1)
+                fieldmap_magnitude1  => FM-Magnitude: fm(1)
+                fieldmap_magnitude2  => FM-Magnitude: fm(1)
+
         Example mapping file:
             ::
 
@@ -3801,13 +3810,17 @@ def create_session_info(
             Note, that the old sequence names are preserved.
 
     Examples:
-        Specify the session folder for a given study to automatically loop over the entire folder::
+        Specify the session folder for a given study to automatically loop over
+        the entire folder::
 
             qunex create_session_info \\
                 --sessions="*" \\
                 --sessionsfolder=<study_folder>/sessions
 
-        Define source and target session parameter files and mapping file. In this example the --sourcefile flag points to the original session information file, --targetfile points to the session information file to generate, and --mapping points to a generic mapping file::
+        Define source and target session parameter files and mapping file. In
+        this example the --sourcefile flag points to the original session
+        information file, --targetfile points to the session information file to
+        generate, and --mapping points to a generic mapping file::
 
             qunex create_session_info \\
                 --sessionsfolder=/<study_folder>/sessions \\
