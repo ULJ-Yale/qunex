@@ -6,6 +6,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.0.1 [QIO]
+
+* Fixed a bug when image loading was not working as it should in some commands of the analytics pipeline.
+* QuNex now supports scenarios where FM-Magnitude is composed of two acquisitions.
+* `run_recipe` will now error out if unknown commands are provided in the list.
+* Fixed a bug in `create_session_info` where the results were sometimes not what was expected.
+* Made a polish pass over the documentation.
+* Added a `run_recipe` tutorial to the QuNex quickstart (<https://qunex.readthedocs.io/en/latest/wiki/Overview/QuickStart.html>).
+* Auto setting of the template resolution for HCP Pipelines is now more robust.
+* QuNex will now printout an error if you want to rerun `hcp_freesurfer` after `hcp_post_freesurfer` was already completed on the same session. This scenario is not supported and can cause invalid data. You need to cleanup the data and rerun from `hcp_pre_freesurfer` if you want to do this.
+
 ## 1.0.0 [QIO]
 
 * Replacement of `run_turnkey` with `run_recipe`, a much more flexible and powerful engine for transparent and reproducible chaining of QuNex commands (<https://qunex.readthedocs.io/en/latest/wiki/UsageDocs/RunningQuNexRecipes.html>).
