@@ -218,14 +218,27 @@ def getHCPPaths(sinfo, options):
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude.nii.gz",
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
             )
         )
-        for imagepath in fmapmag:
-            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
+        if len(fmapmag) == 1:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmapmag[0])
             if fmnum:
                 fmnum = int(fmnum.group())
-                d["fieldmap"].update({fmnum: {"magnitude": imagepath}})
+                d["fieldmap"].update({fmnum: {"magnitude": fmapmag[0]}})
+        elif len(fmapmag) == 2:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmapmag[0])
+            if fmnum:
+                fmnum = int(fmnum.group())
+                d["fieldmap"].update({fmnum: {"magnitude": [fmapmag[1], fmapmag[0]]}})
+        elif len(fmapmag) > 2:
+            print(
+                "ERROR: Found more than two FM-Magnitude files!"
+            )
+            raise ge.CommandFailed(
+                options["command_ran"],
+                "Too many FM-Magnitude files found!",
+            )
 
         fmapphase = glob.glob(
             os.path.join(
@@ -1069,14 +1082,24 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 run = False
             else:
                 for i, v in hcp["fieldmap"].items():
-                    if os.path.exists(hcp["fieldmap"][i]["magnitude"]):
-                        r += "\n---> Magnitude Field Map %d file present." % (i)
+                    if isinstance(hcp["fieldmap"][i]["magnitude"], list):
+                        if all(os.path.exists(mag) for mag in hcp["fieldmap"][i]["magnitude"]):
+                            r += "\n---> Magnitude Field Map %d files present." % (i)
+                        else:
+                            r += (
+                                "\n---> ERROR: Could not find all Magnitude Field Map %d files for session %s.\n            Expected locations: %s"
+                                % (i, sinfo["id"], hcp["fieldmap"][i]["magnitude"])
+                            )
+                            run = False
                     else:
-                        r += (
-                            "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s"
-                            % (i, sinfo["id"], hcp["fmapmag"])
-                        )
-                        run = False
+                        if os.path.exists(hcp["fieldmap"][i]["magnitude"]):
+                            r += "\n---> Magnitude Field Map %d file present." % (i)
+                        else:
+                            r += (
+                                "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s"
+                                % (i, sinfo["id"], hcp["fieldmap"][i]["magnitude"])
+                            )
+                            run = False
                     if os.path.exists(hcp["fieldmap"][i]["phase"]):
                         r += "\n---> Phase Field Map %d file present." % (i)
                     else:
@@ -1087,6 +1110,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         run = False
 
                 fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                if isinstance(fmmag, list):
+                    fmmag = "@".join(fmmag)
                 fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
                 fmcombined = None
 
@@ -4853,15 +4878,37 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 else:
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
-                        r, fieldok = pc.checkForFile2(
-                            r,
-                            hcp["fieldmap"][i]["magnitude"],
-                            "\n     ... Siemens fieldmap magnitude image %d present "
-                            % (i),
-                            "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                            % (i),
-                            status=fieldok,
-                        )
+
+                        if isinstance(hcp["fieldmap"][i]["magnitude"], list):
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"][0],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"][1],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+                        else:
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["phase"],
@@ -4885,6 +4932,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         )
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                    if isinstance(fmmag, list):
+                        fmmag = "@".join(fmmag)
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
                     fmcombined = None
 

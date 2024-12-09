@@ -158,7 +158,7 @@ def setup_hcp(
             `T1w:all`).
 
         --slice_timing_info (str, default 'no')
-            Whether to prepare ('yes') a file for each bold image with the 
+            Whether to prepare ('yes') a file for each bold image with the
             slice timing information for fsl slicetimer or not ('no').
 
     Notes:
@@ -419,7 +419,10 @@ def setup_hcp(
     boldn = "99"
     mapped = False
 
+    ix = -1
     for k in i:
+        ix += 1
+
         boldfile = False
 
         v = inf[k]
@@ -498,11 +501,25 @@ def setup_hcp(
                 fmnum = boldn
             sfile = k + ".nii.gz"
 
+            suffix = ""
+
+            # if next image is also FM-Magnitude and has the same fm add "1" suffix
+            if ix + 1 < len(i):
+                next_inf = inf[i[ix + 1]]
+                if next_inf["name"] == "FM-Magnitude" and next_inf["fm"] == fmnum:
+                    suffix = "1"
+
+            # if the previous image is FM-Magnitude and has the same fm add "2" suffix
+            if ix > 0:
+                prev_inf = inf[i[ix - 1]]
+                if prev_inf["name"] == "FM-Magnitude" and prev_inf["fm"] == fmnum:
+                    suffix = "2"
+
             if filename and "filename" in v:
-                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfile = sid + "_" + v["filename"] + suffix + ".nii.gz"
                 tfold = v["filename"] + fmnum + fmtail
             else:
-                tfile = sid + "_FieldMap_Magnitude.nii.gz"
+                tfile = sid + f"_FieldMap_Magnitude{suffix}.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
         elif v["name"] == "FM-Phase":
@@ -625,10 +642,19 @@ def setup_hcp(
             tfile = tbase + ".nii.gz"
             tfold = "ASL"
 
-        elif v["name"] in ["TB1DAM", "TB1EPI", "TB1AFI",
-                           "TB1TFL-Magnitude", "TB1TFL-Phase",
-                           "TB1RFM", "TB1SRGE", "TB1map",
-                           "RB1COR-Head", "RB1COR-Body", "RB1map"]:
+        elif v["name"] in [
+            "TB1DAM",
+            "TB1EPI",
+            "TB1AFI",
+            "TB1TFL-Magnitude",
+            "TB1TFL-Phase",
+            "TB1RFM",
+            "TB1SRGE",
+            "TB1map",
+            "RB1COR-Head",
+            "RB1COR-Body",
+            "RB1map",
+        ]:
 
             sfile = k + ".nii.gz"
 
