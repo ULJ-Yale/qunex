@@ -555,7 +555,7 @@ def get_batchlogs_folder(sessionsfolder):
 
 def main(args=None):
     """
-    qunex_container is a self-standing command that can run QuNex commands 
+    qunex_container is a self-standing command that can run QuNex commands
     against a Singularity/Apptainer or a Docker QuNex container. To run an QuNex
     command  against a container the basic call is::
 
@@ -568,8 +568,8 @@ def main(args=None):
 
         qunex <qunex command> [parameters]
 
-    from within a container or on a self-standing QuNex installation. For list 
-    of commands and their parameters consult QuNex online or in-line 
+    from within a container or on a self-standing QuNex installation. For list
+    of commands and their parameters consult QuNex online or in-line
     documentation.
 
     Additionally qunex_container accepts the following parameters:
@@ -585,9 +585,9 @@ def main(args=None):
                     separated list to chain multiple commands. ['']
     --bash_post     Used if any additional commands have to be run inside the
                     QuNex container before executing the desired QuNex command.
-                    Use a semicolon separated list to chain multiple commands. 
+                    Use a semicolon separated list to chain multiple commands.
                     ['']
-    --bind          Used for binding external folders in order for the system in 
+    --bind          Used for binding external folders in order for the system in
                     the container to have access to relvant data. Maps to -B
                     parameter of Singularity/Apptainer and -v parmaeter of
                     Docker.
@@ -613,10 +613,10 @@ def main(args=None):
 
                         "-d -v /host/directory:/container/directory"
 
-    --scheduler     A string that specifies the details to use to submit the 
-                    container job to a scheduling system. 
-    --output        A string specifying where to redirect the standard output 
-                    and error when using the scheduler. See "Redirecting 
+    --scheduler     A string that specifies the details to use to submit the
+                    container job to a scheduling system.
+    --output        A string specifying where to redirect the standard output
+                    and error when using the scheduler. See "Redirecting
                     output" for details!
     --parjobs       Specify the maximum amount of jobs that will be created
                     and run in parallel. By default this equals the number
@@ -634,10 +634,10 @@ def main(args=None):
     RESULTS
     =======
 
-    `qunex_container` will compile a temporary file with the relevant commands to 
+    `qunex_container` will compile a temporary file with the relevant commands to
     submit to the container. The file will be created in the users home folder
-    and will be deleted as the last action completed by the container. In case 
-    of a Docker container, to give access to the compiled script, the user's 
+    and will be deleted as the last action completed by the container. In case
+    of a Docker container, to give access to the compiled script, the user's
     home folder will be mounted as `/root` in the container, which is the home
     folder within the container.
 
@@ -653,11 +653,11 @@ def main(args=None):
     Scheduling jobs
     ---------------
 
-    Container commands can be submitted to a scheduling system by specifying 
-    the `--scheduler` parameter with a settings string. The settings string 
-    should be a comma separated list of parameters. The first parameter has to 
-    be the scheduler name (PBS, SLURM), the rest of the parameters are 
-    key-value pairs that are to be passed as settings to the scheduler. 
+    Container commands can be submitted to a scheduling system by specifying
+    the `--scheduler` parameter with a settings string. The settings string
+    should be a comma separated list of parameters. The first parameter has to
+    be the scheduler name (PBS, SLURM), the rest of the parameters are
+    key-value pairs that are to be passed as settings to the scheduler.
 
     Example settings strings::
 
@@ -687,13 +687,13 @@ def main(args=None):
     provided by "<key>:<value>" pairs in a pipe separated string:
 
     stdout
-        specifies a path to a log file that should store standard output of the 
+        specifies a path to a log file that should store standard output of the
         submitted job
     stderr
-        specified a path to a log file that should store error output of the 
+        specified a path to a log file that should store error output of the
         submitted job
     both
-        specifies a path to a log file that should store joint standard and 
+        specifies a path to a log file that should store joint standard and
         error outputs of the submitted job
 
     Examples:
@@ -703,7 +703,7 @@ def main(args=None):
     - "both:processing.log"
 
     Do not specify error and standard outputs both using --output parameter and
-    scheduler specific options within settings string. It is best to provide 
+    scheduler specific options within settings string. It is best to provide
     full absolute paths to the desired log.
 
     EXAMPLE USE
@@ -763,62 +763,66 @@ def main(args=None):
     overwrite = None
 
     for arg in args:
-        if "env_status" in arg or "envstatus" in arg:
+        # clenup -- at start
+        if arg.startswith("--"):
+            arg = arg[2:]
+
+        if arg.startswith("env_status") or arg.startswith("envstatus"):
             env_status = True
-        if "scheduler=" in arg:
+        if arg.startswith("scheduler"):
             k, scheduler = arg.split("=", 1)
-        elif "container=" in arg:
+        elif arg.startswith("container"):
             k, container = arg.split("=", 1)
-        elif "containeropt=" in arg:
+        elif arg.startswith("containeropt"):
             k, containeropt = arg.split("=", 1)
-        elif "output=" in arg:
+        elif arg.startswith("output"):
             k, output = arg.split("=", 1)
-        elif "bash_pre=" in arg:
+        elif arg.startswith("bash_pre"):
             k, bash_pre = arg.split("=", 1)
-        elif "bash_post=" in arg:
+        elif arg.startswith("bash_post"):
             k, bash_post = arg.split("=", 1)
-        elif "bind=" in arg:
+        elif arg.startswith("bind"):
             k, bind = arg.split("=", 1)
-        elif arg == "--nocleanenv":
-            nocleanenv = True
-        elif arg == "--cuda":
-            cuda = True
-        elif arg == "--nv":
-            nv = True
-        elif "cuda_path=" in arg:
+        elif arg.startswith("cuda_path"):
             k, cuda_path = arg.split("=", 1)
-        elif "script=" in arg:
+        elif arg.startswith("script"):
             k, script = arg.split("=", 1)
-        elif "parjobs=" in arg:
+        elif arg.startswith("parjobs"):
             k, parjobs = arg.split("=", 1)
             parjobs = int(parjobs)
-        elif "parsessions=" in arg:
+        elif arg.startswith("parsessions"):
             k, parsessions = arg.split("=", 1)
             command += f'{k}="{parsessions}" '
             parsessions = int(parsessions)
-        elif "parelements=" in arg:
+        elif arg.startswith("parelements"):
             k, parelements = arg.split("=", 1)
             command += f'{k}="{parelements}" '
             parelements = int(parelements)
-        elif "sessionsfolder=" in arg:
+        elif arg.startswith("sessionsfolder"):
             k, sessionsfolder = arg.split("=", 1)
             command += f'{k}="{sessionsfolder}" '
-        elif "sessions=" in arg:
+        elif arg.startswith("sessions"):
             k, sessions = arg.split("=", 1)
-        elif "batchfile=" in arg:
+        elif arg.startswith("batchfile"):
             k, batchfile = arg.split("=", 1)
-        elif "filter=" in arg:
+        elif arg.startswith("filter"):
             k, batchfilter = arg.split("=", 1)
-        elif "sessionids=" in arg:
+        elif arg.startswith("sessionids"):
             k, sessionids = arg.split("=", 1)
-        elif "overwrite=" in arg:
+        elif arg.startswith("overwrite"):
             k, overwrite = arg.split("=", 1)
             command += f"{arg} "
+        elif arg == "nocleanenv":
+            nocleanenv = True
+        elif arg == "cuda":
+            cuda = True
+        elif arg == "nv":
+            nv = True
+        elif arg == "parinfo":
+            parinfo = True
         elif "=" in arg:
             k, v = arg.split("=", 1)
             command += f'{k}="{v}" '
-        elif arg.replace("-", "") == "parinfo":
-            parinfo = True
         else:
             command += f"{arg} "
 
