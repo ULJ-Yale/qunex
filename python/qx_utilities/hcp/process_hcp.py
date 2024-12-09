@@ -1794,6 +1794,16 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             fullTest = None
 
+        # check if post_fs was already completed
+        post_fs_tfile = os.path.join(
+            hcp["hcp_nonlin"],
+            sinfo["id"]
+            + options["hcp_suffix"]
+            + ".corrThickness.164k_fs_LR.dscalar.nii",
+        )
+        if os.path.exists(post_fs_tfile):
+            r += "\n---> ERROR: It seems like hcp_post_freesurfer was already executed for this session. Going back and forth between hcp_freesurfer and hcp_post_freesurfer will cause issues give invalid results. Best to manually cleanup the session and reprocess it from scratch."
+            run = False
         # -- Run
         if run:
             if options["run"] == "run":
