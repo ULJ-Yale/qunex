@@ -970,6 +970,12 @@ arglist = [
         "If specified, use the non-GPU-enabled version of eddy. Defaults to using the GPU-enabled version of eddy.",
     ],
     [
+        "hcp_high_myelin",
+        "",
+        isNone,
+        "The high myelin threshold for the FreeSurfer recon-all command..",
+    ],
+    [
         "hcp_dwi_selectbestb0",
         None,
         flag,

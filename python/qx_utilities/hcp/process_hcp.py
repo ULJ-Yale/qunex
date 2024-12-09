@@ -1550,6 +1550,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
 
+        --hcp_high_myelin (float):
+            The high myelin threshold for the FreeSurfer recon-all command.
+
         --hcp_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of FreeSurfer.
 
@@ -1724,6 +1727,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_expert_file"]:
             elements.append(("extra-reconall-arg", "-expert"))
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
+
+        # high myelin
+        if options["hcp_high_myelin"]:
+            elements.append(("high-myelin", options["hcp_high_myelin"]))
 
         # gpu mode or not
         # uncommment this for FS8
@@ -2754,7 +2761,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
 
         --hcp_start_stage (str, default "PREP-T"):
             One of:
-                - PREP-T (PostFSPrepLong build template, skip timepoint 
+                - PREP-T (PostFSPrepLong build template, skip timepoint
                          processing),
                 - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
                 - POSTFS-T (PostFreesurfer template),
@@ -2762,7 +2769,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
 
         --hcp_end_stage (str, default "POSTFS-TP2"):
             One of:
-                - PREP-T (PostFSPrepLong build template, skip timepoint 
+                - PREP-T (PostFSPrepLong build template, skip timepoint
                          processing),
                 - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
                 - POSTFS-T (PostFreesurfer template),
@@ -4374,7 +4381,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         Run using absolute paths with additional options and scheduler::
 
             qunex hcp_fmri_volume  \\
-                --batchfile="<path_to_study_folder>/processing/batch.txt" 
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
                 --sessionsfolder="<path_to_study_folder>/sessions"  \\
                 --parsessions="4"  \\
                 --parelements="2"  \\
@@ -10720,7 +10727,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         --hcp_raw_nopsn_t1w (str, default ''):
             The uncorrected version of the --raw-psn-t1w image.
-        
+
         --hcp_transmit_res (str, default ''):
             Resolution to use for transmit field, default equal to
             hcp_grayordinatesres.
@@ -10787,7 +10794,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             ``hcp_grayordinatesres``           ``grayordinates-res``
             ``hcp_matlab_mode``                ``matlab-run-mode``
             ================================== ============================
-        
+
     Examples:
         Example run::
 
