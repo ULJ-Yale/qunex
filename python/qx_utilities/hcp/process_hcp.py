@@ -580,7 +580,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             - `T2w_acpc_dc_restore_brain.nii.gz`
             - `T2w_acpc_dc_restore.nii.gz`.
 
-        --hcp_prefs_template_res (float, default set from image data):
+        --hcp_prefs_template_res (float, default set from imaging data):
             The resolution (in mm) of the structural images templates to use in
             the preFS step. Note: it should match the resolution of the
             acquired structural images. If no value is provided, QuNex will try
@@ -1179,37 +1179,26 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # -- Prepare templates
         # try to set hcp_prefs_template_res automatically if not set yet
-        if options["hcp_prefs_template_res"] is None:
+        if not options["hcp_prefs_template_res"]:
             r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
-            # read nii header of hcp["T1w"]
             t1w = hcp["T1w"].split("@")[0]
-            img = nib.load(t1w)
-            pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
-
-            # do they match
-            epsilon = 0.05
-            if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+            resolution, report = _set_hcp_prefs_template_res(t1w)
+            r += report
+            if resolution == 0:
                 run = False
-                r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+                r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
             else:
-                # upscale slightly and use the closest that matches
-                pixdim = pixdim1 * 1.05
+                options["hcp_prefs_template_res"] = resolution
 
-                if pixdim > 2:
-                    run = False
-                    r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                elif pixdim > 1:
-                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                    options["hcp_prefs_template_res"] = 1
-                elif pixdim > 0.8:
-                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
-                    options["hcp_prefs_template_res"] = 0.8
-                elif pixdim > 0.65:
-                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
-                    options["hcp_prefs_template_res"] = 0.7
-                else:
-                    run = False
-                    r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+        # if hcp_prefs_template_res cannot be converted to a number something went wrong
+        try:
+            float(options["hcp_prefs_template_res"])
+        except:
+            r += (
+                "\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
+                % (options["hcp_prefs_template_res"])
+            )
+            run = False
 
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:
@@ -1430,6 +1419,44 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo["id"], report, failed))
+
+
+def _set_hcp_prefs_template_res(image):
+    """
+    Set the template resolution based on the pixdim of the T1w image.
+
+    Parameters:
+        image: image to use for pixel setting.
+    """
+
+    img = nib.load(image)
+    pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+
+    # do they match
+    epsilon = 0.05
+    r = ""
+    if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+        r = f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+        return (0, r)
+    else:
+        # upscale slightly and use the closest that matches
+        pixdim = pixdim1 * 1.05
+
+        if pixdim > 2:
+            r = f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+            return (0, r)
+        elif pixdim > 1:
+            r = f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
+            return (1, r)
+        elif pixdim > 0.8:
+            r = f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
+            return (0.8, r)
+        elif pixdim > 0.65:
+            r = f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
+            return (0.7, r)
+        else:
+            r = f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+            return (0, r)
 
 
 def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
@@ -2668,7 +2695,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --hcp_longitudinal_template (str, default "base"):
             Name of the longitudinal template.
 
-        --hcp_prefs_template_res (float, default set from image data):
+        --hcp_prefs_template_res (float, default set from imaging data):
             The resolution (in mm) of the structural images templates to use in
             the preFS step. Note: it should match the resolution of the
             acquired structural images. If no value is provided, QuNex will try
@@ -2938,38 +2965,28 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     # subject id
     subject_id = subject["id"]
 
+    # -- Prepare templates
     # try to set hcp_prefs_template_res automatically if not set yet
-    if options["hcp_prefs_template_res"] is None:
-        r += f"\n---> Trying to set the hcp_prefs_template_res parameter automatically."
-        # read nii header of hcp["T1w"]
+    if not options["hcp_prefs_template_res"]:
+        r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
         t1w = hcp["T1w"].split("@")[0]
-        img = nib.load(t1w)
-        pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
-
-        # do they match
-        epsilon = 0.05
-        if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+        resolution, report = _set_hcp_prefs_template_res(t1w)
+        r += report
+        if resolution == 0:
             run = False
-            r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+            r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
         else:
-            # upscale slightly and use the closest that matches
-            pixdim = pixdim1 * 1.05
+            options["hcp_prefs_template_res"] = resolution
 
-            if pixdim > 2:
-                run = False
-                r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-            elif pixdim > 1:
-                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                options["hcp_prefs_template_res"] = 1
-            elif pixdim > 0.8:
-                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
-                options["hcp_prefs_template_res"] = 0.8
-            elif pixdim > 0.65:
-                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
-                options["hcp_prefs_template_res"] = 0.7
-            else:
-                run = False
-                r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+    # if hcp_prefs_template_res cannot be converted to a number something went wrong
+    try:
+        float(options["hcp_prefs_template_res"])
+    except:
+        r += (
+            "\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
+            % (options["hcp_prefs_template_res"])
+        )
+        run = False
 
     # hcp_prefs_t1template
     if options["hcp_prefs_t1template"] is None:
