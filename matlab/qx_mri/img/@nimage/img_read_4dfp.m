@@ -39,18 +39,17 @@ if FileType(file)
     img = nimage(file);
 
 else
-    root = strrep(file, '.img', '');
-    root = strrep(root, '.4dfp', '');
-    root = strrep(root, '.ifh', '');
+    fileinfo = general_check_image_file(file);
 
-    img.rootfilename = root;
-    img.rootfilenames = {root};
+    img.filenamepath  = file;
+    img.filenamepaths = {file};
+    img.filetype      = img.img_filetype();
 
+    root = img.img_basenamepath();
+    
     img.hdr4dfp = img.img_read_ifh([root '.4dfp.ifh']);
 
     img.imageformat = '4dfp';
-    img.filename = [root '.4dfp.img'];
-    img.filenames = {img.filename};
     img.TR = [];
 
     x = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [1]'}))));

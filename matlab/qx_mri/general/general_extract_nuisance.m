@@ -200,15 +200,8 @@ end
 %                                       save in an external file
 
 if ~strcmp(target, 'none')
-    [w fname] = fileparts(img.filename);
-
-    % --- get filename to save to
-
-    fname = strrep(fname, '.img', '');
-    fname = strrep(fname, '.ifh', '');
-    fname = strrep(fname, '.4dfp', '');
-    fname = strrep(fname, '.gz', '');
-    fname = strrep(fname, '.nii', '');
+    
+    fname = img.img_basename();
 
     % --- save stats
 
@@ -251,9 +244,7 @@ if ~strcmp(ntarget, 'none')
 
     % --- get filename to save to
 
-    [w fname] = fileparts(img.filename);
-    fname = strrep(fname, '.img', '_nuisance.img');
-    fname = strrep(fname, '.nii', '_nuisance.nii');
+    fname = [img.img_basename() '_nuisance'];
 
     nimg.img_saveimage(fullfile(ntarget, fname));
 
@@ -299,15 +290,8 @@ if ~strcmp(ntarget, 'none')
 
     % --- save png
 
-    [w fname] = fileparts(img.filename);
-    fname = strrep(fname, '.img', '');
-    fname = strrep(fname, '.ifh', '');
-    fname = strrep(fname, '.4dfp', '');
-    fname = strrep(fname, '.gz', '');
-    fname = strrep(fname, '.nii', '');
-
     try
-        imwrite(pic, fullfile(ntarget, [fname '_nuisance.png']), 'png');
+        imwrite(pic, fullfile(ntarget, [img.img_basename() '_nuisance.png']), 'png');
     catch
         fprintf('\n---> WARNING: Could not save mask PNG image! Check supported image formats!');
     end

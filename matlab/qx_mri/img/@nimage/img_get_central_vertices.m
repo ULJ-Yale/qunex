@@ -47,7 +47,7 @@ end
 if ~ismepty(fout)
     repf = fopen(fout, 'w');
     
-    fprintf(repf, '#source: %s', img.filename);
+    fprintf(repf, '#source: %s', obj.filenamepath);
     
     for fr=1:img.frames
         if img.frames > 1

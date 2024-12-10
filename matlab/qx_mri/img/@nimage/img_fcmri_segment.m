@@ -42,7 +42,7 @@ end
 
 % ---- Start
 
-if verbose, fprintf('\n\nStarting fcMRISegment on %s', obj.filename), end
+if verbose, fprintf('\n\nStarting fcMRISegment on %s', obj.filenamepath), end
 
 % ---- prepare target data
 

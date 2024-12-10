@@ -86,5 +86,5 @@ end
 
 % ---> Encode metadata
 
-img.roi.roifile2  = roi2.filename;
+img.roi.roifile2  = roi2.filenamepath;
 

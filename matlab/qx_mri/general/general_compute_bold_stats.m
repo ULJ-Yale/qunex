@@ -156,17 +156,11 @@ if target
         ext = false;
     end
 end
+if isempty(target)
+    target = img.img_path();
+end
 
-[w fname] = fileparts(img.filename);
-
-% --- get filename to save to
-
-fname = strrep(fname, '.img', '');
-fname = strrep(fname, '.ifh', '');
-fname = strrep(fname, '.4dfp', '');
-fname = strrep(fname, '.gz', '');
-fname = strrep(fname, '.nii', '');
-
+fname = img.img_basename();
 
 % --------------------------------------------------------------
 %                                                  prepare stats
@@ -201,7 +195,7 @@ end
 %     if strcmp(store, 'same')
 %         img.img_saveimage();
 %     else
-%         tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
+%         tname = [img.img_basenamepath() '_' store]);
 %         img.img_saveimage(tname);
 %     end
 % end

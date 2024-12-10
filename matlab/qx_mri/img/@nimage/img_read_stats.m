@@ -39,7 +39,6 @@ function [obj] = img_read_stats(obj, verbose)
 
 if nargin < 2, verbose = false; end
 
-filename = obj.filename;
 frames   = obj.frames;
 
 obj.use = true(1, obj.frames);
@@ -115,8 +114,8 @@ if (~emov) | (~ebstats) | (~esel)
 
     % ---> check if movement folder exists
 
-    filename = strtrim(obj.rootfilename);
-    [fpath, fname] = fileparts(filename);
+    fpath = obj.img_path();
+    fname = obj.img_basename();
     if isempty(fpath) || strcmp(fpath,'.') || strcmp(fpath, '~')
         fpath = pwd;
     end

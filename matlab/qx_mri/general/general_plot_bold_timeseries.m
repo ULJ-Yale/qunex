@@ -328,7 +328,7 @@ for n = 1:nelements
             end
 
             if img(elements(n).imageindex).voxels ~= mask(elements(n).maskindex).voxels
-                error('ERROR: Image and mask size does not match! [%d vs. %d]\n       image: %s\n       mask: %s', img(elements(n).imageindex).voxels, mask(elements(n).maskindex).voxels, img(elements(n).imageindex).filename, mask(elements(n).maskindex).filename);
+                error('ERROR: Image and mask size does not match! [%d vs. %d]\n       image: %s\n       mask: %s', img(elements(n).imageindex).voxels, mask(elements(n).maskindex).voxels, img(elements(n).imageindex).filenamepath, mask(elements(n).maskindex).filenamepath);
             end
 
             if isempty(elements(n).ROI)
@@ -364,7 +364,7 @@ for n = 1:nelements
 
             if strcmp(elements(n).stats(s).plotdata, 'fd')
                 if isempty(img(id).fstats_hdr) || ~ismember('fd', img(id).fstats_hdr)
-                    error('\nERROR: FD data not present! [%s]', img(id).filename);
+                    error('\nERROR: FD data not present! [%s]', img(id).filenamepath);
                 end
                 elements(n).stats(s).data = img(id).fstats(:, ismember(img(id).fstats_hdr, 'fd'));
             elseif ismember(elements(n).stats(s).plotdata, {'dvars', 'dvarsm', 'dvarsme'})
@@ -379,7 +379,7 @@ for n = 1:nelements
                 elements(n).stats(s).data = stats.mean;
             elseif strcmp(elements(n).stats(s).plotdata, 'scrub')
                 if isempty(img(id).use)
-                    error('\nERROR: Use data not present! [%s]', img(id).filename);
+                    error('\nERROR: Use data not present! [%s]', img(id).filenamepath);
                 end
             else
                 error('\nERROR: Unknown stats type! [%s]', elements(n).stats(s).plotdata);

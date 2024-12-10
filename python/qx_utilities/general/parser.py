@@ -146,6 +146,8 @@ def read_mapping_file(mapping_file_path):
         # remove comments
         lines = [l.split("#")[0] for l in lines]
         lines = [l.strip() for l in lines]
+        # remove empty lines
+        lines = [l for l in lines if l]
 
     # convert to a proper data structure
     try:
@@ -264,7 +266,27 @@ def _parse_mapping_file_lines(lines):
         else:
             rule_set[rule_key] = rule
 
+    _check_fieldmap_multiplicity(result)
+
     return result
+
+
+def _check_fieldmap_multiplicity(mapping_rules):
+    """
+    Check if there are multiple FM-Magnitude images and warn the user to correct
+    the mapping file.
+    """
+    name_dict = mapping_rules['group_rules']['name']
+
+    # Count occurrences of ('FM', 'Magnitude')
+    count = sum(
+        1 for item in name_dict.values() if item.get('hcp_image_type') == ('FM', 'Magnitude') and item.get('fm') is None
+    )
+
+    if count > 1:
+        print(f"""    ... there are {count} occurrences of 'FM-Magnitude' images
+        without explicit fieldmap tags in the mapping file. We recommend adding
+        the 'fm' tag to the mapping file. See the documentation for more information.""")
 
 
 def _parse_session_image_line(tokens, session_file_type):
@@ -325,7 +347,21 @@ def _parse_image_line_tags(tokens, line_type):
         if hcp_image_type == "":
             # image type not specified
             pass
-        elif hcp_image_type in ["T1w", "T2w", "FM-GE", "ASL", "mbPCASLhr", "PCASLhr", "TB1DAM", "TB1EPI", "TB1AFI", "TB1RFM", "TB1SRGE", "TB1map", "RB1map"]:
+        elif hcp_image_type in [
+            "T1w",
+            "T2w",
+            "FM-GE",
+            "ASL",
+            "mbPCASLhr",
+            "PCASLhr",
+            "TB1DAM",
+            "TB1EPI",
+            "TB1AFI",
+            "TB1RFM",
+            "TB1SRGE",
+            "TB1map",
+            "RB1map",
+        ]:
             img_info["hcp_image_type"] = (hcp_image_type,)
 
         elif RE_IMAGE_TYPE_RB1COR_PATTERN.match(hcp_image_type):

@@ -7,7 +7,7 @@ function [img] = img_read_glm(img, fname, dtype, verbose)
 %   INPUTS
 %   ======
 %
-%    img         mrimage object
+%   img         mrimage object
 %   fname       filename (a .glm file)
 %   dtype       number format to use ['single']
 %   verbose     whether to be talkative [false]
@@ -36,6 +36,8 @@ if isempty(dtype), dtype = 'single'; end
 % --- Open the file and read the header
 %
 
+fileinfo = general_check_image_file(fname);
+
 fin = fopen(fname, 'r', 'b');
 img.hdr4dfp = readHeader(fin);
 img.mformat = 'b';
@@ -50,8 +52,10 @@ if ismember('littleendian', img.hdr4dfp.value)
 end
 
 img = processHeader(img, fin);
-img.filename = fname;
-img.filenames = {fname};
+
+img.filenamepath = fname;
+img.filenamepaths = {fname};
+img.filetype = '4dfp';
 
 % [img.data, count] = fread(fin, img.voxels * img.frames, ['float32=>' dtype]);
 [img.data, count] = fread(fin, inf, ['float32=>' dtype]);

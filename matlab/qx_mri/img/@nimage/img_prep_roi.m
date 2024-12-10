@@ -465,7 +465,7 @@ if isempty(img)
     elseif any(strcmpi(roi.filetype, {'ptseries', 'pscalar'}))
         img = process_parcel(roi, options);
 
-    elseif any(strcmpi(roi.filetype, {'dscalar', 'dtseries', 'NIfTI'}))
+    elseif any(strcmpi(roi.filetype, {'dscalar', 'dtseries', 'nifti'}))
         img = process_mask(roi, options);
 
     else
@@ -621,9 +621,9 @@ function [img] = process_names(names_filename, mask, options, rcodes)
                 if ~any(roi.data == roicodes1{i}(j))
                     switch lower(options.check)
                         case 'warning'
-                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in primary roi file [%s]!\n', roicodes1{i}(j), roi.filename);
+                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in primary roi file [%s]!\n', roicodes1{i}(j), roi.filenamepath);
                         case 'error'
-                            error('\nERROR: img_prep_roi - code [%d] does not exist in primary roi file %s!\n', roicodes1{i}(j), roi.filename);
+                            error('\nERROR: img_prep_roi - code [%d] does not exist in primary roi file %s!\n', roicodes1{i}(j), roi.filenamepath);
                     end
                 end
             end
@@ -636,9 +636,9 @@ function [img] = process_names(names_filename, mask, options, rcodes)
                 if ~any(mask.data == roicodes2{i}(j))
                     switch lower(options.check)
                         case 'warning'
-                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in mask roi file [%s]!\n', roicodes2{i}(j), mask.filename);
+                            warning('\nWARNING: img_prep_roi – code [%d] does not exist in mask roi file [%s]!\n', roicodes2{i}(j), mask.filenamepath);
                         case 'error'
-                            error('\nERROR: img_prep_roi - code [%d] does not exist in mask roi file %s!\n', roicodes2{i}(j), mask.filename);
+                            error('\nERROR: img_prep_roi - code [%d] does not exist in mask roi file %s!\n', roicodes2{i}(j), mask.filenamepath);
                     end
                 end
             end
@@ -748,7 +748,7 @@ function [img] = process_parcel(roi, options)
         img.roi(p).roicode   = p;
         img.roi(p).roicodes1 = {p};
         img.roi(p).roicodes2 = {};
-        img.roi(p).map       = roi.rootfilename;
+        img.roi(p).map       = roi.img_basename();
         img.roi(p).indeces   = [];
         img.roi(p).weights   = [];
 
@@ -849,7 +849,7 @@ function [roi] = process_mask(roi, options)
             roi.roi(f).roicode   = f;
             roi.roi(f).roicodes1 = {f};
             roi.roi(f).roicodes2 = {};
-            roi.roi(f).map       = roi.rootfilename;
+            roi.roi(f).map       = roi.img_basename();
             roi.roi(f).indeces   = find(roi.data(:,f) ~= 0);
             if is_binary(f)                
                 roi.roi(f).weights = [];
@@ -897,7 +897,7 @@ function [roi] = process_mask(roi, options)
                 if strcmpi(roi.filetype, 'dscalar')
                     roi.roi(c).map = roi.cifti.maps{f};
                 else
-                    roi.roi(c).map = roi.rootfilename;
+                    roi.roi(c).map = roi.img_basename();
                     if roi.frames > 1
                         roi.roi(c).map = [roi.roi(c).map sprintf('-map_%d', f)];
                     end
@@ -936,7 +936,7 @@ function [roi] = process_mask(roi, options)
             if strcmpi(roi.filetype, 'dscalar')
                 roi.roi(c).map = roi.cifti.maps{1};
             else
-                roi.roi(c).map = roi.rootfilename;
+                roi.roi(c).map = roi.img_basename();
             end
 
             roi.roi(c).indeces = find(roi.data(:,1) == key);
@@ -944,7 +944,7 @@ function [roi] = process_mask(roi, options)
             roi.roi(c).nvox    = length(roi.roi(c).indeces);
         end
     else 
-        error('\nERROR: In img_prep_roi could not deduce how to process ROIs. Please review inline help! [%s]', roi.filename);
+        error('\nERROR: In img_prep_roi could not deduce how to process ROIs. Please review inline help! [%s]', roi.filenamepath);
     end
 
 
@@ -1053,7 +1053,7 @@ function [roi] = process_roi(roi, mask, options, rcodes)
             roi = nimage(fullfile(lpath, 'MNI152_T1_1mm_brain.nii.gz'));
         otherwise            
             roi = nimage(options.target);
-            if strcmp(roi.filetype, 'NIfTI')
+            if strcmp(roi.filetype, 'nifti')
                 image_type = 'volume';
             else
                 image_type = 'cifti';                

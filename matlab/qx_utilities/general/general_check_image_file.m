@@ -31,14 +31,14 @@ if nargin < 1, filename = ''; end
 
 file_info = struct('filename', filename, 'path', filepath, 'basename', [name ext], 'rootname', name, 'extension', ext, 'is_image', false, 'image_type', '', 'exists', exist(filename, 'file') == 2);
 
-image_type = regexp(filename, '(\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
+image_type = regexp([name ext], '(\.4dfp\.img|\.4dfp\.ifh|.4dfp\.hdr|\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
 if ~isempty(image_type)
     image_type = image_type{1}{1};
     file_info.is_image = true;
     file_info.extension = image_type;
     file_info.rootname = strrep(file_info.basename, image_type, '');
     if strcmp(image_type, '.nii') || strcmp(image_type, '.nii.gz')
-        file_info.image_type = 'NIfTI';
+        file_info.image_type = 'nifti';
     else
         image_type = strrep(image_type, '.nii', '');
         file_info.image_type = image_type(2:end);

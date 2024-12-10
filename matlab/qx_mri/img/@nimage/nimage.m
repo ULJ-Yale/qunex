@@ -67,12 +67,12 @@ classdef nimage
 %       Number of frames in the image
 %   runframes     
 %       A vector with the number of frames from each run in the order the images were concatenated
-%   filename      
-%       The original image filename
+%   filenamepath      
+%       Full filename including the path
+%   filenamepaths  
+%       A cell array of filenamepaths for all the constituent images
 %   filetype      
 %       The type of the CIFTI file: .dtseries | .ptseries | .pconn | .pscalar | .dscalar
-%   rootfilename  
-%       Filename without the file type extension
 %   mask          
 %       Boolean vector specifying the spatial voxel / grayordinate mask used to mask the data
 %   masked        
@@ -134,11 +134,9 @@ classdef nimage
         runframes       = [];        
         concname        = [];
         rootconcname    = [];
-        filename        = [];
-        filenames       = {};
+        filenamepath    = [];
+        filenamepaths   = {};
         filetype        = [];
-        rootfilename    = [];
-        rootfilenames   = {};
         mask            = [];
         masked          = false;
         empty           = true;
@@ -370,7 +368,8 @@ classdef nimage
                             'srow_z', [0;0;2;-72], 'intent_name', blanks(16), 'magic', cast([110 43 49 0], 'char'),...
                             'version', 1, 'unused_str', blanks(24));
                     elseif (obj.dim(1) == 91282)  % assuming it is a CIFTI dense file
-                        obj.filename = '';
+                        obj.filenamepath = '';
+                        obj.filenamepaths = {''};
                         obj.imageformat = 'CIFTI-2';
                         obj.dim = 91282;
                         obj.voxels = 91282;
@@ -447,7 +446,7 @@ classdef nimage
 
             mpath = fileparts(mfilename('fullpath'));
             xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
-            xml = strrep(xml,'{{ParentProvenance}}', img.filename);
+            xml = strrep(xml,'{{ParentProvenance}}', img.filenamepath);
             xml = strrep(xml,'{{ProgramProvenance}}', 'QuNex');
             xml = strrep(xml,'{{Provenance}}', 'QuNex');
             xml = strrep(xml,'{{WorkingDirectory}}', pwd);
@@ -463,7 +462,7 @@ classdef nimage
         %
             mpath = fileparts(mfilename('fullpath'));
             xml = fileread(fullfile(mpath, 'dscalar-32k.xml'));
-            xml = strrep(xml, '{{ParentProvenance}}', img.filename);
+            xml = strrep(xml, '{{ParentProvenance}}', img.filenamepath);
             xml = strrep(xml, '{{ProgramProvenance}}', 'QuNex');
             xml = strrep(xml, '{{Provenance}}', 'QuNex');
             xml = strrep(xml, '{{WorkingDirectory}}', pwd);
@@ -534,7 +533,7 @@ classdef nimage
             if nargin < 5 verbose = [];            end
             if nargin < 4 datatype = [];           end
             if nargin < 3 extra = [];              end
-            if nargin < 2 filename = obj.filename; end
+            if nargin < 2 filename = obj.filenamepath; end
 
             filename = strtrim(filename);
 
@@ -565,7 +564,7 @@ classdef nimage
         %
         %
             if nargin < 4, verbose = []; end
-            if nargin < 3, filename = obj.filename; end
+            if nargin < 3, filename = obj.filenamepath; end
 
             filename = strtrim(filename);
 
@@ -619,6 +618,101 @@ classdef nimage
         end
 
 
+        % ======================================================================
+        %                                               Filename related methods
+
+        function filename = img_filename(obj, filenamepath)
+        %
+        %   Returns the filename of the image.
+        %   /path/to/basename.nii.gz -> basename.nii.gz
+            if nargin < 2, filenamepath = obj.filenamepath; end
+            if isempty(filenamepath)
+                filetype = '';
+            else
+                [p, b, e] = fileparts(filenamepath);
+                filename = [b e];
+            end
+        end
+
+        function filenamepath = img_filenamepath(obj, filenamepath)
+        %
+        %   Returns the filename of the image.
+        %   /path/to/basename.nii.gz -> /path/to/basename.nii.gz
+            if nargin < 2, filenamepath = obj.filenamepath; end
+        end
+
+        function fileext = img_fileext(obj, filenamepath)
+        %
+        %   Returns the filetype of the image.
+        %   /path/to/basename.nii.gz -> .nii.gz
+        %
+            if nargin < 2, filenamepath = obj.filenamepath; end
+            if isempty(filenamepath)
+                fileext = '';
+            else
+                fileext = regexp(filenamepath, '(\.4dfp\.img|\.4dfp\.ifh|.4dfp\.hdr|\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
+                fileext = fileext{1}{1};
+            end
+        end
+
+        function filetype = img_filetype(obj, filenamepath)
+        %
+        %   Returns the filetype of the image.
+        %   /path/to/basename.nii.gz -> nifti
+        %   /path/to/basename.dtseries.nii -> dtseries
+            if nargin < 2, filenamepath = obj.filenamepath; end
+
+            file_extensions = {'.4dfp.img', '.4dfp.ifh', '.4dfp.hdr', '.dconn.nii', '.dtseries.nii', '.dscalar.nii', '.dlabel.nii', '.dpconn.nii', '.pconnseries.nii', '.pconnscalar.nii', '.pconn.nii', '.ptseries.nii', '.pscalar.nii', '.pdconn.nii', '.dfan.nii', '.fiberTemp.nii', '.nii.gz', '.nii'};
+            file_types      = {'4dfp',      '4dfp',      '4dfp',      'dconn',      'dtseries',      'dscalar',      'dlabel',      'dpconn',      'pconnseries',      'pconnscalar',      'pconn',      'ptseries',      'pscalar',      'pdconn',      'dfan',      'fiberTemp',      'nifti',   'nifti'};
+            fileext = obj.img_fileext(filenamepath);
+            filetype = file_types{strcmp(file_extensions, fileext)};
+        end
+
+        function basename = img_basename(obj, filenamepath)
+        % 
+        %   Returns the basename of the image.
+        %   /path/to/basename.nii.gz -> basename
+        %   
+            if nargin < 2, filenamepath = obj.filenamepath; end
+            if isempty(filenamepath)
+                basename = '';
+            else
+                [p, b, e] = fileparts(filenamepath);
+                basename = [b e];
+                basename = strrep(basename, obj.img_fileext(filenamepath), '');
+            end
+        end
+
+        function path = img_path(obj, filenamepath)
+        %
+        %   Returns the path of the image.
+        %   /path/to/basename.nii.gz -> /path/to
+        %
+            if nargin < 2, filenamepath = obj.filenamepath; end
+            if isempty(filenamepath)
+                path = '';
+            else
+                [p, b, e] = fileparts(filenamepath);
+                path = p;
+            end
+        end
+
+        function basenamepath = img_basenamepath(obj, filenamepath)
+        %
+        %   Returns the basename inlcuding the path to the image.
+        %   /path/to/basename.nii.gz -> /path/to/basename
+        %
+            if nargin < 2, filenamepath = obj.filenamepath; end
+            if isempty(filenamepath)
+                basenamepath = '';
+            else                
+                basenamepath = fullfile(obj.img_path(filenamepath), obj.img_basename(filenamepath));
+            end
+        end
+
+
+        % ======================================================================
+        %                                         Methods for image manipulation
 
         function image2D = image2D(obj)
         %
@@ -863,9 +957,8 @@ classdef nimage
             %     commented as the second dimension should not be used
             % if strcmp(obj.imageformat, 'CIFTI-2')
             %     obj.dim = size(obj.data);
-            % end
-            obj.filenames = [obj.filenames, add.filenames];
-            obj.rootfilenames = [obj.rootfilenames, add.rootfilenames];
+            % end            
+            obj.filenamepaths = [obj.filenamepaths, add.filenamepaths];
 
             % ---> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)
@@ -950,10 +1043,8 @@ classdef nimage
             obj.frames = frames;
             obj.runframes = frames;
             obj.use = true(1, frames);
-            obj.filename = '';
-            obj.filenames = {};
-            obj.rootfilename = '';
-            obj.rootfilenames = {};
+            obj.filenamepath= '';
+            obj.filenamepaths = {};
             obj.concname = '';
             obj.rootconcname = '';
 
@@ -1163,10 +1254,8 @@ classdef nimage
                 conc(n).data = obj.data(:, startframe:endframe);
 
                 % -- metadata
-                conc(n).filename = obj.filenames{n};
-                conc(n).filenames = obj.filenames(n);
-                conc(n).rootfilename = obj.rootfilenames{n};
-                conc(n).rootfilenames = obj.rootfilenames(n);
+                conc(n).filenamepath = obj.filenamepaths{n};
+                conc(n).filenamepaths = obj.filenamepaths(n);
 
                 conc(n).use = obj.use(startframe:endframe);
                 if strcmp(obj.imageformat, 'CIFTI-2')

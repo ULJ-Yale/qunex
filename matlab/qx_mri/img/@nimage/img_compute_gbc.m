@@ -189,7 +189,7 @@ end
 
 % ---- parse command
 
-if verbose, fprintf('\n\nStarting GBC on %s', obj.filename); stime = tic; end
+if verbose, fprintf('\n\nStarting GBC on %s', obj.filenamepath); stime = tic; end
 [commands, sortit] = parseCommand(command, nvox);
 ncommands = length(commands);
 nvolumes  = sum([commands.volumes]);

@@ -218,14 +218,27 @@ def getHCPPaths(sinfo, options):
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude.nii.gz",
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
             )
         )
-        for imagepath in fmapmag:
-            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
+        if len(fmapmag) == 1:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmapmag[0])
             if fmnum:
                 fmnum = int(fmnum.group())
-                d["fieldmap"].update({fmnum: {"magnitude": imagepath}})
+                d["fieldmap"].update({fmnum: {"magnitude": fmapmag[0]}})
+        elif len(fmapmag) == 2:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmapmag[0])
+            if fmnum:
+                fmnum = int(fmnum.group())
+                d["fieldmap"].update({fmnum: {"magnitude": [fmapmag[1], fmapmag[0]]}})
+        elif len(fmapmag) > 2:
+            print(
+                "ERROR: Found more than two FM-Magnitude files!"
+            )
+            raise ge.CommandFailed(
+                options["command_ran"],
+                "Too many FM-Magnitude files found!",
+            )
 
         fmapphase = glob.glob(
             os.path.join(
@@ -580,7 +593,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             - `T2w_acpc_dc_restore_brain.nii.gz`
             - `T2w_acpc_dc_restore.nii.gz`.
 
-        --hcp_prefs_template_res (float, default set from image data):
+        --hcp_prefs_template_res (float, default set from imaging data):
             The resolution (in mm) of the structural images templates to use in
             the preFS step. Note: it should match the resolution of the
             acquired structural images. If no value is provided, QuNex will try
@@ -1069,14 +1082,24 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 run = False
             else:
                 for i, v in hcp["fieldmap"].items():
-                    if os.path.exists(hcp["fieldmap"][i]["magnitude"]):
-                        r += "\n---> Magnitude Field Map %d file present." % (i)
+                    if isinstance(hcp["fieldmap"][i]["magnitude"], list):
+                        if all(os.path.exists(mag) for mag in hcp["fieldmap"][i]["magnitude"]):
+                            r += "\n---> Magnitude Field Map %d files present." % (i)
+                        else:
+                            r += (
+                                "\n---> ERROR: Could not find all Magnitude Field Map %d files for session %s.\n            Expected locations: %s"
+                                % (i, sinfo["id"], hcp["fieldmap"][i]["magnitude"])
+                            )
+                            run = False
                     else:
-                        r += (
-                            "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s"
-                            % (i, sinfo["id"], hcp["fmapmag"])
-                        )
-                        run = False
+                        if os.path.exists(hcp["fieldmap"][i]["magnitude"]):
+                            r += "\n---> Magnitude Field Map %d file present." % (i)
+                        else:
+                            r += (
+                                "\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s"
+                                % (i, sinfo["id"], hcp["fieldmap"][i]["magnitude"])
+                            )
+                            run = False
                     if os.path.exists(hcp["fieldmap"][i]["phase"]):
                         r += "\n---> Phase Field Map %d file present." % (i)
                     else:
@@ -1087,6 +1110,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         run = False
 
                 fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                if isinstance(fmmag, list):
+                    fmmag = "@".join(fmmag)
                 fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
                 fmcombined = None
 
@@ -1179,37 +1204,26 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # -- Prepare templates
         # try to set hcp_prefs_template_res automatically if not set yet
-        if options["hcp_prefs_template_res"] is None:
+        if not options["hcp_prefs_template_res"]:
             r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
-            # read nii header of hcp["T1w"]
             t1w = hcp["T1w"].split("@")[0]
-            img = nib.load(t1w)
-            pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
-
-            # do they match
-            epsilon = 0.05
-            if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+            resolution, report = _set_hcp_prefs_template_res(t1w)
+            r += report
+            if resolution == 0:
                 run = False
-                r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+                r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
             else:
-                # upscale slightly and use the closest that matches
-                pixdim = pixdim1 * 1.05
+                options["hcp_prefs_template_res"] = resolution
 
-                if pixdim > 2:
-                    run = False
-                    r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-                elif pixdim > 1:
-                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                    options["hcp_prefs_template_res"] = 1
-                elif pixdim > 0.8:
-                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
-                    options["hcp_prefs_template_res"] = 0.8
-                elif pixdim > 0.65:
-                    r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
-                    options["hcp_prefs_template_res"] = 0.7
-                else:
-                    run = False
-                    r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+        # if hcp_prefs_template_res cannot be converted to a number something went wrong
+        try:
+            float(options["hcp_prefs_template_res"])
+        except:
+            r += (
+                "\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
+                % (options["hcp_prefs_template_res"])
+            )
+            run = False
 
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:
@@ -1432,6 +1446,44 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+def _set_hcp_prefs_template_res(image):
+    """
+    Set the template resolution based on the pixdim of the T1w image.
+
+    Parameters:
+        image: image to use for pixel setting.
+    """
+
+    img = nib.load(image)
+    pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+
+    # do they match
+    epsilon = 0.05
+    r = ""
+    if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+        r = f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+        return (0, r)
+    else:
+        # upscale slightly and use the closest that matches
+        pixdim = pixdim1 * 1.05
+
+        if pixdim > 2:
+            r = f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+            return (0, r)
+        elif pixdim > 1:
+            r = f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
+            return (1, r)
+        elif pixdim > 0.8:
+            r = f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
+            return (0.8, r)
+        elif pixdim > 0.65:
+            r = f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
+            return (0.7, r)
+        else:
+            r = f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+            return (0, r)
+
+
 def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_freesurfer [... processing options]``
@@ -1549,6 +1601,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             compatiblity and hcp_freesurfer customization.
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
+
+        --hcp_high_myelin (float):
+            The high myelin threshold for the FreeSurfer recon-all command.
 
         --hcp_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of FreeSurfer.
@@ -1725,11 +1780,14 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("extra-reconall-arg", "-expert"))
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
 
+        # high myelin
+        if options["hcp_high_myelin"]:
+            elements.append(("high-myelin", options["hcp_high_myelin"]))
+
         # gpu mode or not
-        if options["hcp_nogpu"]:
-            elements.append(("gpu", "False"))
-        else:
-            elements.append(("gpu", "True"))
+        # uncommment this for FS8
+        # if not options["hcp_nogpu"]:
+        #    elements.append(("gpu", "True"))
 
         # ---> Pull all together
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
@@ -1761,6 +1819,16 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             fullTest = None
 
+        # check if post_fs was already completed
+        post_fs_tfile = os.path.join(
+            hcp["hcp_nonlin"],
+            sinfo["id"]
+            + options["hcp_suffix"]
+            + ".corrThickness.164k_fs_LR.dscalar.nii",
+        )
+        if os.path.exists(post_fs_tfile):
+            r += "\n---> ERROR: It seems like hcp_post_freesurfer was already executed for this session. Going back and forth between hcp_freesurfer and hcp_post_freesurfer will cause issues give invalid results. Best to manually cleanup the session and reprocess it from scratch."
+            run = False
         # -- Run
         if run:
             if options["run"] == "run":
@@ -2662,7 +2730,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --hcp_longitudinal_template (str, default "base"):
             Name of the longitudinal template.
 
-        --hcp_prefs_template_res (float, default set from image data):
+        --hcp_prefs_template_res (float, default set from imaging data):
             The resolution (in mm) of the structural images templates to use in
             the preFS step. Note: it should match the resolution of the
             acquired structural images. If no value is provided, QuNex will try
@@ -2755,7 +2823,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
 
         --hcp_start_stage (str, default "PREP-T"):
             One of:
-                - PREP-T (PostFSPrepLong build template, skip timepoint 
+                - PREP-T (PostFSPrepLong build template, skip timepoint
                          processing),
                 - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
                 - POSTFS-T (PostFreesurfer template),
@@ -2763,7 +2831,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
 
         --hcp_end_stage (str, default "POSTFS-TP2"):
             One of:
-                - PREP-T (PostFSPrepLong build template, skip timepoint 
+                - PREP-T (PostFSPrepLong build template, skip timepoint
                          processing),
                 - POSTFS-TP1 (PostFreeSurfer timepoint stage 1),
                 - POSTFS-T (PostFreesurfer template),
@@ -2932,38 +3000,28 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     # subject id
     subject_id = subject["id"]
 
+    # -- Prepare templates
     # try to set hcp_prefs_template_res automatically if not set yet
-    if options["hcp_prefs_template_res"] is None:
-        r += f"\n---> Trying to set the hcp_prefs_template_res parameter automatically."
-        # read nii header of hcp["T1w"]
+    if not options["hcp_prefs_template_res"]:
+        r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
         t1w = hcp["T1w"].split("@")[0]
-        img = nib.load(t1w)
-        pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
-
-        # do they match
-        epsilon = 0.05
-        if abs(pixdim1 - pixdim2) > epsilon or abs(pixdim1 - pixdim3) > epsilon:
+        resolution, report = _set_hcp_prefs_template_res(t1w)
+        r += report
+        if resolution == 0:
             run = False
-            r += f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_prefs_template_res manually!"
+            r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
         else:
-            # upscale slightly and use the closest that matches
-            pixdim = pixdim1 * 1.05
+            options["hcp_prefs_template_res"] = resolution
 
-            if pixdim > 2:
-                run = False
-                r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
-            elif pixdim > 1:
-                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 1.0!"
-                options["hcp_prefs_template_res"] = 1
-            elif pixdim > 0.8:
-                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to 0.8!"
-                options["hcp_prefs_template_res"] = 0.8
-            elif pixdim > 0.65:
-                r += f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_prefs_template_res parameter was set to to 0.7!"
-                options["hcp_prefs_template_res"] = 0.7
-            else:
-                run = False
-                r += f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
+    # if hcp_prefs_template_res cannot be converted to a number something went wrong
+    try:
+        float(options["hcp_prefs_template_res"])
+    except:
+        r += (
+            "\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
+            % (options["hcp_prefs_template_res"])
+        )
+        run = False
 
     # hcp_prefs_t1template
     if options["hcp_prefs_t1template"] is None:
@@ -4375,7 +4433,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         Run using absolute paths with additional options and scheduler::
 
             qunex hcp_fmri_volume  \\
-                --batchfile="<path_to_study_folder>/processing/batch.txt" 
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
                 --sessionsfolder="<path_to_study_folder>/sessions"  \\
                 --parsessions="4"  \\
                 --parelements="2"  \\
@@ -4820,15 +4878,37 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 else:
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
-                        r, fieldok = pc.checkForFile2(
-                            r,
-                            hcp["fieldmap"][i]["magnitude"],
-                            "\n     ... Siemens fieldmap magnitude image %d present "
-                            % (i),
-                            "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                            % (i),
-                            status=fieldok,
-                        )
+
+                        if isinstance(hcp["fieldmap"][i]["magnitude"], list):
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"][0],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"][1],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+                        else:
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["phase"],
@@ -4852,6 +4932,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         )
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                    if isinstance(fmmag, list):
+                        fmmag = "@".join(fmmag)
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
                     fmcombined = None
 
@@ -6334,8 +6416,13 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             HCPStyleData (default) or LegacyStyleData, controls whether
             --icadim-mode=fewtimepoints is allowed.
 
-        --hcp_icafix_fixonly (str, default 'FALSE'):
-            Whether to execute only the FIX step of the pipeline.
+        --hcp_reuse_existing_ica (str, default 'FALSE'):
+            Whether to execute only the FIX step of the pipeline and reuse the
+            previous ICA results.
+
+        --hcp_fix_backup (str, default ''):
+            If provided, the previous FIX solution is backed up to the specified
+            folder, in case hcp_reuse_existing_ica is used.
 
         --hcp_t1wtemplatebrain (str, default ''):
             Path to the T1w template brain used by pyfix. Not set by default,
@@ -6388,7 +6475,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
             ``hcp_config``                     ``config``
             ``hcp_icafix_processingmode``      ``processing-mode``
-            ``hcp_icafix_fixonly``             ``fix-only``
+            ``hcp_reuse_existing_ica``         ``reuse-existing-ica``
+            ``hcp_fix_backup``                 ``fix-backup``
             ``hcp_matlab_mode``                ``matlabrunmode``
             ``hcp_t1wtemplatebrain``           ``T1wTemplateBrain``
             ``hcp_ica_method``                 ``ica-method``
@@ -6917,8 +7005,14 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 % options["hcp_icafix_processingmode"]
             )
 
-        if options["hcp_icafix_fixonly"] is not None:
-            comm += '             --fix-only="%s"' % options["hcp_icafix_fixonly"]
+        if options["hcp_reuse_existing_ica"] is not None:
+            comm += (
+                '             --reuse-existing-ica="%s"'
+                % options["hcp_reuse_existing_ica"]
+            )
+
+        if options["hcp_fix_backup"] is not None:
+            comm += '             --fix-backup="%s"' % options["hcp_fix_backup"]
 
         if (
             not options["hcp_legacy_fix"]
@@ -10709,7 +10803,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         --hcp_raw_nopsn_t1w (str, default ''):
             The uncorrected version of the --raw-psn-t1w image.
-        
+
         --hcp_transmit_res (str, default ''):
             Resolution to use for transmit field, default equal to
             hcp_grayordinatesres.
@@ -10776,7 +10870,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             ``hcp_grayordinatesres``           ``grayordinates-res``
             ``hcp_matlab_mode``                ``matlab-run-mode``
             ================================== ============================
-        
+
     Examples:
         Example run::
 
