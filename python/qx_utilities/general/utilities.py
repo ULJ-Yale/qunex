@@ -2424,9 +2424,23 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             command_parameters = {}
 
         # executing a custom script
+        error = False
         if command_name == "script":
             if "path" in command_parameters:
                 script_path = command_parameters["path"]
+
+                labels = _find_enclosed_substrings(script_path)
+                for label in labels:
+                    cleaned_label = label.replace("{", "").replace("}", "")
+                    os_label = cleaned_label[1:]
+                    if cleaned_label[0] == "$" and os_label in os.environ:
+                        script_path = script_path.replace(label, os.environ[os_label])
+                    else:
+                        raise ge.CommandFailed(
+                            "run_recipe",
+                            f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
+                        )
+
                 del command_parameters["path"]
             else:
                 raise ge.CommandFailed(
@@ -2473,6 +2487,25 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
             # add parameters to the command
             for param, value in command_parameters.items():
+                # inject mustache marked values
+                if (
+                    isinstance(value, str)
+                    and len(value) > 0
+                    and "{{" in value
+                    and "}}" in value
+                ):
+                    labels = _find_enclosed_substrings(value)
+                    for label in labels:
+                        cleaned_label = label.replace("{", "").replace("}", "")
+                        os_label = cleaned_label[1:]
+                        if cleaned_label[0] == "$" and os_label in os.environ:
+                            value = value.replace(label, os.environ[os_label])
+                        else:
+                            raise ge.CommandFailed(
+                                "run_recipe",
+                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
+                            )
+
                 command.append(f"--{param}={value}")
 
             # create comlogfolder folder if needed
@@ -2492,6 +2525,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             exit_code = process.returncode
 
             if exit_code != 0:
+                error = True
                 summary += f"\n - script {script_path} ... FAILED"
                 error_log = log_path.replace("tmp_", "error_")
                 print(f"    ... failed [{script_path}], see [{error_log}]")
@@ -2524,9 +2558,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                         command_parameters[k] = eargs[k]
 
             # append global and recipe parameters
-            for parameter, value in parameters.items():
-                if parameter not in command_parameters:
-                    command_parameters[parameter] = value
+            if command_parameters:
+                for parameter, value in parameters.items():
+                    if parameter not in command_parameters:
+                        command_parameters[parameter] = value
 
             # remove parameters that are not allowed
             import general.commands as gcom
@@ -2617,7 +2652,6 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             )
 
             # Poll process for new output until finished
-            error = False
             logging = False
 
             for line in iter(process.stdout.readline, b""):

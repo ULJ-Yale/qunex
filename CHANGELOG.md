@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Fixed a bug when image loading was not working as it should in some commands of the analytics pipeline.
 * QuNex now supports scenarios where FM-Magnitude is composed of two acquisitions.
 * `run_recipe` will now error out if unknown commands are provided in the list.
+* Fixed some minor `run_recipe` bugs.
 * Fixed a bug in `create_session_info` where the results were sometimes not what was expected.
 * Made a polish pass over the documentation.
 * Added a `run_recipe` tutorial to the QuNex quickstart (<https://qunex.readthedocs.io/en/latest/wiki/Overview/QuickStart.html>).
