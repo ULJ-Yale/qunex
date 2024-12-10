@@ -2558,10 +2558,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                         command_parameters[k] = eargs[k]
 
             # append global and recipe parameters
-            if command_parameters:
-                for parameter, value in parameters.items():
-                    if parameter not in command_parameters:
-                        command_parameters[parameter] = value
+            for parameter, value in parameters.items():
+                if parameter not in command_parameters:
+                    command_parameters[parameter] = value
 
             # remove parameters that are not allowed
             import general.commands as gcom
