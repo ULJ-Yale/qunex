@@ -5,6 +5,11 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %   Computes GBC averages for each specified ROI for n bands defined as distance
 %   from ROI.
 %
+%   NOTE: Please, note that fc_compute_gbc3 function is being deprecated.
+%         The function will no longer be developed and will be removed in future
+%         releases of QuNex. The functionality may be included in fc_compute_gbc,
+%         which offers additional functionality, instead.
+%
 %   Parameters:
 %       --flist (str):
 %           A conc-like style list of session image files or conc files:
