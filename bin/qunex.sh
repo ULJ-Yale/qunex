@@ -70,25 +70,25 @@ cat << EOF
 
  General QuNex usage syntax
 ============================
- 
+
   qunex <command_name>
     --parameterA=<required-parameter-args>
     [--parameterB=<optional-parameter-args>]
 
   =>  --   Dashes or “flags” denote input parameters.
-  =>  []   Square brackets denote optional parameters. 
-        Note: Arguments is shown inside [] denote default behavior of optional parameters. 
+  =>  []   Square brackets denote optional parameters.
+        Note: Arguments is shown inside [] denote default behavior of optional parameters.
   =>  <>   Angle brackets denote user-specified arguments for a given parameter.
   => Command names, parameters and arguments are shown in small or “camel” case.
 
 
  Specific command usage
 =======================
-  
-  qunex <command_name> 
+
+  qunex <command_name>
 
 
- Display listing of all QuNex commands 
+ Display listing of all QuNex commands
 ======================================
 
   qunex -a
@@ -102,7 +102,7 @@ qunex_failed() {
     echo "QuNex FAILED!"
     echo ""
 }
- 
+
 qunex_done() {
     echo ""
     echo "QuNex DONE!"
@@ -160,7 +160,7 @@ bash_call_execute() {
     fi
 
     # -- Check if study folder is created
-    if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${QuNexMatlabCall} ]]; then 
+    if [[ ! -f ${StudyFolder}/.qunexstudy ]] && [[ -d ${StudyFolder} ]] && [[ -z ${QuNexMatlabCall} ]]; then
         echo ""
         echo "WARNING: QuNex study folder specification .qunexstudy in ${StudyFolder} not found."
         echo "         Check that ${StudyFolder} is a valid QuNex folder."
@@ -806,11 +806,11 @@ auto_ptx() {
     echo "WARNING: auto_ptx is deprecated, you should probably use dwi_xtract instead!"
 
     # -- Check inputs
-    if [[ -d ${BedPostXFolder} ]]; then 
+    if [[ -d ${BedPostXFolder} ]]; then
         echo "ERROR: Prior BedpostX run not found or incomplete for $CASE. Check work and re-run."
         exit 1
     fi
-    if [[ -z ${AutoPtxFolder} ]]; then 
+    if [[ -z ${AutoPtxFolder} ]]; then
         echo "ERROR: AutoPtxFolder environment variable not. Set it correctly and re-run."
         exit 1
     fi
@@ -1083,7 +1083,7 @@ fi
 # -- Map deprecated commands
 # ------------------------------------------------------------------------------
 
-# -- Use the check_deprecated_commands from niutilities to remap 
+# -- Use the check_deprecated_commands from niutilities to remap
 if [[ $1 != --* ]]; then
     # grep the command
     deprecation=`gmri check_deprecated_commands --command="$1"`
@@ -1135,7 +1135,7 @@ if [[ ${1} =~ .*-.* ]] && [[ -z ${2} ]]; then
     if [[ ${Usage} == "-a" ]] || [[ ${Usage} == "-all" ]] || [[ ${Usage} == "-allcommands" ]]; then
         show_all_qunex_commands
         exit 0
-    fi  
+    fi
 fi
 
 # -- Check if there is no command or parameters
@@ -1233,12 +1233,12 @@ if [[ ${setflag} =~ .*-.* ]]; then
         StudyFolder=`get_parameters "${setflag}path" $@`                         # local folder to work on
     fi
     StudyFolderPath="${StudyFolder}"
-    STUDY_PATH="${StudyFolder}"    
+    STUDY_PATH="${StudyFolder}"
 
     SessionsFolder=`get_parameters "${setflag}sessionsfolder" $@`                # sessions folder path to work on
     if [[ -z ${SessionsFolder} ]]; then
        SessionsFolder=`get_parameters "${setflag}sessionfolder"  $@`                # sessions folder path to work on
-    fi    
+    fi
     # -- backwards compatibility -- sessionsfolder used to be supported by --subjectsfolder or --subjectfolder
     if [[ -z ${SessionsFolder} ]]; then
         SubjectFolder=`get_parameters "${setflag}subjectsfolder" $@`
@@ -1297,7 +1297,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Check if SessionsFolderName and SessionsFolder match
     if [[ ! -z ${SessionsFolder} ]] && [[ ! -z ${SessionsFolderName} ]]; then
         SessionsFolderBase=`basename ${SessionsFolder}`
-        if [[ ${SessionsFolderBase} != ${SessionsFolderName} ]]; then 
+        if [[ ${SessionsFolderBase} != ${SessionsFolderName} ]]; then
             echo "WARNING: Sessions folder base is mismatching the --sessionsfoldername input."
             echo ""
             echo "    ---> Aligning variables to match ${SessionsFolder}"
@@ -1397,7 +1397,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
 
-    # -- Backwards comapatibility, session* used to be subject* 
+    # -- Backwards comapatibility, session* used to be subject*
     if [[ -z ${CASES} ]]; then
         # list of input cases; removing comma or pipes
         CASES=`get_parameters "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`;
@@ -1409,7 +1409,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
 
-    # -- Backwards compatibility, sessionids* used to be subjid* 
+    # -- Backwards compatibility, sessionids* used to be subjid*
     if [[ -z ${CASES} ]]; then
         if [[ -z ${SESSIONIDS} ]]; then
             SESSIONIDS=`get_parameters "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSIONIDS=`echo "$SESSIONIDS" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
@@ -1631,7 +1631,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     store_streamlines_length=`get_parameters "--storestreamlineslength" $@`
     ScriptsFolder=`get_parameters "${setflag}scriptsfolder" $@`
 
-    # -- Input flags for run_qc 
+    # -- Input flags for run_qc
     OutPath=`get_parameters "${setflag}outpath" $@`
     scenetemplatefolder=`get_parameters "${setflag}scenetemplatefolder" $@`
     UserSceneFile=`get_parameters "${setflag}userscenefile" $@`
@@ -1655,7 +1655,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Code block for BOLDs
     BOLDS=`get_parameters "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
-    
+
     if [[ -z ${BOLDS} ]]; then
         BOLDS=`get_parameters "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     fi
@@ -1719,7 +1719,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- Backwards compatibility settings for subjects vs. sessions folder 
+# -- Backwards compatibility settings for subjects vs. sessions folder
 # ------------------------------------------------------------------------------
 
 if [[ -z ${qxutil_command_to_run} ]]; then
@@ -1739,7 +1739,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
             fi
 
             echo "     To avoid the possibility of a backwards incompatible or duplicate "
-            echo "     QuNex runs please review the study directory structure and consider" 
+            echo "     QuNex runs please review the study directory structure and consider"
             echo "     resolving the conflict such that a consistent folder specification is used. "
             echo ""
             echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
@@ -1749,7 +1749,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
 
         if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
             SessionsFolderBase=`base $SessionsFolder`
-            if [[ ${SessionsFolderBase} == "subjects" ]]; then 
+            if [[ ${SessionsFolderBase} == "subjects" ]]; then
                 SessionsFolderName="${SessionsFolderBase}"
                 echo "WARNING: You are attempting to execute QuNex command using an outdated QuNex file hierarchy:"
                 echo ""
@@ -1771,7 +1771,7 @@ if [[ -z ${qxutil_command_to_run} ]]; then
                 echo "            ---> ${StudyFolder}/sessions"
                 echo ""
                 echo "     To avoid the possibility of a backwards incompatible or duplicate "
-                echo "     QuNex runs please review the study directory structure and consider" 
+                echo "     QuNex runs please review the study directory structure and consider"
                 echo "     resolving the conflict such that a consistent folder specification is used. "
                 echo ""
                 echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
@@ -1828,15 +1828,15 @@ if [[ ${CommandToRun} == "run_turnkey" ]]; then
     if [[ -z ${CASES} ]]; then echo "ERROR: List of sessions missing"; exit 1; fi
 
     # -- Check for WORKDIR and StudyFolder for an XNAT run
-    if [[ -z ${WORKDIR} ]]; then 
+    if [[ -z ${WORKDIR} ]]; then
         if [[ ! -z ${XNAT_PROJECT_ID} ]]; then
             WORKDIR="/output"; echo "NOTE: Working directory where study is located is missing. Setting defaults: ${WORKDIR}"; echo ''
         fi
     fi
 
     if [[ -z ${WORKDIR} ]]; then echo "ERROR: Working folder for $CommandToRun missing."; exit 1; fi
-    
-    if [[ -z ${StudyFolder} ]]; then 
+
+    if [[ -z ${StudyFolder} ]]; then
         if [[ ! -z ${XNAT_PROJECT_ID} ]]; then
             StudyFolder="${WORKDIR}/${XNAT_PROJECT_ID}"
         fi
@@ -1899,7 +1899,7 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
 
     # -- Perform some careful scene checks
     if [[ -z ${UserSceneFile} ]]; then
-        if [ ! -z "$UserScenePath" ]; then 
+        if [ ! -z "$UserScenePath" ]; then
             echo "---> Provided --userscenepath but --userscenefile not specified."; echo "";
             echo "     Check your inputs and re-run."; echo "";
             scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
@@ -1912,9 +1912,9 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
             echo "---> Using QuNex defaults: ${scenetemplatefolder}"; echo ""
         fi
 
-        if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
+        if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then
             echo "---> Scene files found in:"; echo "`ls ${scenetemplatefolder}/*${Modality}*.scene`"; echo ""
-        else 
+        else
             echo "---> Specified folder contains no scenes: ${scenetemplatefolder}"; echo ""
             scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
             echo "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
@@ -1926,19 +1926,19 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
             UserSceneFile=`echo ${UserSceneFile} | awk -F'/' '{print $2}'`
             scenetemplatefolder=${UserScenePath}
         else
-            if [ -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then 
+            if [ -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then
                 echo "---> ERROR: Path for user scene file not specified."
                 echo "     Specify --scenetemplatefolder or --userscenepath with correct path and re-run."; echo ""; exit 1
             fi
 
-            if [ ! -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then 
+            if [ ! -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then
                 scenetemplatefolder=${UserScenePath}
             fi
 
-            if ls ${scenetemplatefolder}/${UserSceneFile} 1> /dev/null 2>&1; then 
+            if ls ${scenetemplatefolder}/${UserSceneFile} 1> /dev/null 2>&1; then
                 echo "---> User specified scene files found in: ${scenetemplatefolder}/${UserSceneFile} "; echo ""
-            else 
-                echo "---> ERROR: User specified scene ${scenetemplatefolder}/${UserSceneFile} not found." 
+            else
+                echo "---> ERROR: User specified scene ${scenetemplatefolder}/${UserSceneFile} not found."
                 echo "     Check your inputs and re-run."; echo ""; exit 1
             fi
         fi
@@ -2380,9 +2380,9 @@ if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "fc_compute_
     if [ -z "$MaskFrames" ]; then MaskFrames=""; fi
     if [ -z "$Covariance" ]; then Covariance=""; fi
     if [ -z "$ExtractData" ]; then ExtractData="no"; fi
-    
-    if [[ ${Calculation} == "dense" ]]; then 
-        RunType="individual"; 
+
+    if [[ ${Calculation} == "dense" ]]; then
+        RunType="individual";
         if [ -z ${MemLimit} ]; then MemLimit="4"; echo "WARNING: MemLimit value missing. Setting to $MemLimit"; fi
     fi
 
@@ -2595,7 +2595,7 @@ if [ "$CommandToRun" == "extract_roi" ]; then
     echo "   Output name: ${outname}"
     echo ""
 
-    if [[ -z ${CASES} ]]; then;
+    if [[ -z ${CASES} ]]; then
         # -- Execute on a single session
         ${CommandToRun}
     else
