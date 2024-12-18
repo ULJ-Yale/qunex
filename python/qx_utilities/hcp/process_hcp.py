@@ -232,9 +232,7 @@ def getHCPPaths(sinfo, options):
                 fmnum = int(fmnum.group())
                 d["fieldmap"].update({fmnum: {"magnitude": [fmapmag[1], fmapmag[0]]}})
         elif len(fmapmag) > 2:
-            print(
-                "ERROR: Found more than two FM-Magnitude files!"
-            )
+            print("ERROR: Found more than two FM-Magnitude files!")
             raise ge.CommandFailed(
                 options["command_ran"],
                 "Too many FM-Magnitude files found!",
@@ -1083,7 +1081,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             else:
                 for i, v in hcp["fieldmap"].items():
                     if isinstance(hcp["fieldmap"][i]["magnitude"], list):
-                        if all(os.path.exists(mag) for mag in hcp["fieldmap"][i]["magnitude"]):
+                        if all(
+                            os.path.exists(mag)
+                            for mag in hcp["fieldmap"][i]["magnitude"]
+                        ):
                             r += "\n---> Magnitude Field Map %d files present." % (i)
                         else:
                             r += (
@@ -4700,6 +4701,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
         bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+        if len(bolds) == 0:
+            r += (
+                "\n---> ERROR: No BOLD images found for session %s! Check your data or the contents of the batch file."
+                % (sinfo["id"])
+            )
+            run = False
+
         if report["boldskipped"]:
             if options["hcp_filename"] == "userdefined":
                 report["skipped"] = [
@@ -5800,7 +5808,6 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-
         pc.doOptionsCheck(options, sinfo, "hcp_fmri_surface")
         doHCPOptionsCheck(options, "hcp_fmri_surface")
         hcp = getHCPPaths(sinfo, options)
@@ -5809,7 +5816,6 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         # btargets = options['bolds'].split("|")
 
         # --- run checks
-
         if "hcp" not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
                 sinfo["id"]
@@ -5830,8 +5836,14 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # --- Get sorted bold numbers
-
         bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+        if len(bolds) == 0:
+            r += (
+                "\n---> ERROR: No BOLD images found for session %s! Check your data or the contents of the batch file."
+                % (sinfo["id"])
+            )
+            run = False
+
         if report["boldskipped"]:
             if options["hcp_filename"] == "userdefined":
                 report["skipped"] = [
