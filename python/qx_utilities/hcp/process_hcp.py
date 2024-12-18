@@ -8585,9 +8585,13 @@ def parse_msmall_bolds(options, bolds, r):
                         hcp_msmall_bolds.append(hmb)
 
         for hmb in hcp_msmall_bolds:
-            if hmb not in hcp_bolds:
-                r += f"\n---> ERROR: bold {b} %s used in hcp_msmall_bolds but not found in hcp_icafix_bolds!"
+            if hmb not in hcp_bolds and hmb.replace("BOLD_", "") not in hcp_bolds:
+                r += f"\n---> ERROR: bold {hmb} %s used in hcp_msmall_bolds but not found in hcp_icafix_bolds!"
                 pars_ok = False
+
+        icafix_group["msmall_bolds"] = hcp_msmall_bolds
+    else:
+        icafix_group["msmall_bolds"] = icafix_group["bolds"]
 
     return (single_run, icafix_group, pars_ok, r)
 
@@ -8905,9 +8909,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         bolds = group["bolds"]
 
         # msmallBolds
-        msmallBolds = ""
-        if options["hcp_msmall_bolds"] is not None:
-            msmallBolds = options["hcp_msmall_bolds"].replace(",", "@")
+        msmallBolds = "@".join(group["msmall_bolds"])
 
         # outfmriname
         outfmriname = options["hcp_msmall_outfmriname"]
@@ -9232,9 +9234,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 boldok = False
 
         # fix names to use
-        fixnamestouse = boldtargets
-        if options["hcp_msmall_bolds"] is not None:
-            fixnamestouse = options["hcp_msmall_bolds"].replace(",", "@")
+        fixnamestouse = "@".join(group["msmall_bolds"])
 
         comm = (
             '%(script)s \
