@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Added some additional error messages for user friendliness.
 * Fixed a `qunex_container` bug that did not properly pass some parameters to the called QuNex command.
 * By default, QuNex will now leave the raw imaging data archives on import alone (`--archive="leave"`). Previously, the default behavior was to move the archive into the QuNex study's archive subolder (`--archive="move"`).
+* Fixed a bug where `hcp_echo_te` was not correctly prepared for HCP Pipelines.
 
 ## 1.0.1 [QIO]
 

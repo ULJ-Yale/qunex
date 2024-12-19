@@ -5475,7 +5475,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             elements.append(("wb-resample", "1"))
 
         if options["hcp_echo_te"]:
-            echo_te = ("echoTE", options["hcp_echo_te"].replace("@", ","))
+            echo_te = ("echoTE", options["hcp_echo_te"].replace(",", "@"))
             elements.append(echo_te)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
