@@ -2637,7 +2637,7 @@ def import_dicom(
     tool="auto",
     parelements=1,
     logfile=None,
-    archive="move",
+    archive="leave",
     add_image_type=0,
     add_json_info="all",
     unzip="yes",
@@ -2647,7 +2647,7 @@ def import_dicom(
     test=False,
 ):
     r"""
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=move] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
 
     Automatically processes packets with individual sessions' DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -2712,7 +2712,7 @@ def import_dicom(
             information>[|sessionid:<the column with sesion id
             information>]"``.
 
-        --archive (str, default 'move'):
+        --archive (str, default 'leave'):
             What to do with a processed package. Options are:
 
             - 'move'   ... move the package to the default archive folder

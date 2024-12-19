@@ -97,10 +97,10 @@ def import_nhp(
     sessions=None,
     action="link",
     overwrite="no",
-    archive="move",
+    archive="leave",
 ):
     """
-    ``import_nhp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/NHP] [sessions=""] [action=link] [overwrite=no] [archive=move]``
+    ``import_nhp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/NHP] [sessions=""] [action=link] [overwrite=no] [archive=leave]``
 
     Maps NHP data to the QuNex Suite file structure.
 

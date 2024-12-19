@@ -81,13 +81,13 @@ function [out] = general_extract_glm_volumes(flist, outf, effects, frames, saveo
 %
 % SPDX-License-Identifier: GPL-3.0-or-later
 
-if nargin < 8 || isempty(txtf),       txtf       = ''; end
-if nargin < 7, verbose   = false; end
+if nargin < 8 || isempty(txtf),       txtf       = '';    end
+if nargin < 7,                        verbose    = false; end
 if nargin < 6 || isempty(values),     values     = 'raw'; end
 if nargin < 5 || isempty(saveoption), saveoption = 'by_session'; end
-if nargin < 4, frames    = [];    end
-if nargin < 3, effects   = [];    end
-if nargin < 2, outf      = [];    end
+if nargin < 4,                        frames     = [];    end
+if nargin < 3,                        effects    = [];    end
+if nargin < 2,                        outf       = [];    end
 
 if nargin < 1, error('ERROR: No files to extract the volumes from provided!');  end
 
@@ -112,23 +112,6 @@ end
 %                                                  read filelist
 
 list = general_read_file_list(flist);
-
-% --------------------------------------------------------------
-%                             check that glm entries are present
-
-if verbose, fprintf('\n---> checking file list'); end
-allok = true;
-for s = 1:list.nsessions
-    if ~isfield(list.session(s), 'glm')
-        fprintf('\n     WARNING: Session id: %s has no glm file specified!', list.session(s).id);
-        allok = false;
-    end
-end
-if ~allok
-    fprintf('\n\nERROR: Some sessions do not have a glm file specified in the file list.\n       Please, check your list file!\n');
-    exit(1);
-end
-
 
 % --------------------------------------------------------------
 %                             check that glm entries are present
@@ -234,7 +217,7 @@ glm.filetype = [glm.filetype(1) 'scalar'];
 
 if ismember(saveoption, {'by_effect', 'by_session'})
     out = glm.zeroframes(pt);
-    out.data = data;    
+    out.data = data;
     out.cifti.maps = mapnames;
     out = setMeta(out, session, effect, frame, event, verbose);
     if nargout > 0
