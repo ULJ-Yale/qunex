@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Fixed a bug where bold tag (e.g., rest) was not properly converted into a list of bolds when specified as a parameter value.
 * Added some additional error messages for user friendliness.
 * Fixed a `qunex_container` bug that did not properly pass some parameters to the called QuNex command.
+* By default, QuNex will now leave the raw imaging data archives on import alone (`--archive="leave"`). Previously, the default behavior was to move the archive into the QuNex study's archive subolder (`--archive="move"`).
 
 ## 1.0.1 [QIO]
 

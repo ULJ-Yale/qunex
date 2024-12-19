@@ -39,7 +39,7 @@ import general.core as gc
 import general.exceptions as ge
 
 
-def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='move', parelements=1):
+def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='leave', parelements=1):
     """
     ``bruker_to_dicom [... processing options]``
 
@@ -64,7 +64,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='mov
             folder name. So 'S01' with match any folder that contains the string
             'S01'!
 
-        --archive (str, default 'move'):
+        --archive (str, default 'leave'):
             What to do with bruker data once it is converted. Options are:
 
             - move (move the package to the study's archive folder)

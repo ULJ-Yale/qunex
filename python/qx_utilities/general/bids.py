@@ -264,13 +264,13 @@ def import_bids(
     sessions=None,
     action="link",
     overwrite="no",
-    archive="move",
+    archive="leave",
     bidsname=None,
     fileinfo=None,
     add_json_info="all",
 ):
     """
-    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all']``
+    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=leave] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all']``
 
     Maps a BIDS dataset to the QuNex Suite file structure.
 
@@ -314,7 +314,7 @@ def import_bids(
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
 
-        --archive (str, default 'move'):
+        --archive (str, default 'leave'):
             What to do with the files after they were mapped.
             Options are:
 

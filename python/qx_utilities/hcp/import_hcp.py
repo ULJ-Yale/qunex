@@ -155,16 +155,16 @@ def import_hcp(
     sessions=None,
     action="link",
     overwrite="no",
-    archive="move",
+    archive="leave",
     hcplsname=None,
     nameformat=None,
     filesort=None,
     processed_data=None,
 ):
     """
-    ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>]``
+    ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=leave] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>]``
 
-    Maps HCPLS data to the QuNex Suite file structure. 
+    Maps HCPLS data to the QuNex Suite file structure.
 
     Parameters:
         --sessionsfolder (str, default '.'):
