@@ -6,6 +6,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.0.2 [QIO]
+
+* Fixed a bug in `import_bids` when importing SE pairs.
+* Fixed a bug where bold tag (e.g., rest) was not properly converted into a list of bolds when specified as a parameter value.
+* Added some additional error messages for user friendliness.
+* Fixed a `qunex_container` bug that did not properly pass some parameters to the called QuNex command.
+
 ## 1.0.1 [QIO]
 
 * Fixed a bug when image loading was not working as it should in some commands of the analytics pipeline.
