@@ -615,7 +615,7 @@ def main(args=None):
 
     --scheduler     A string that specifies the details to use to submit the
                     container job to a scheduling system.
-    --output        A string specifying where to redirect the standard output
+    --console_out   A string specifying where to redirect the standard output
                     and error when using the scheduler. See "Redirecting
                     output" for details!
     --parjobs       Specify the maximum amount of jobs that will be created
@@ -683,7 +683,7 @@ def main(args=None):
     By default, QuNex will try to put scheduler logs into the
     <study>/processing/logs/batchlogs folder. If not possible QuNex will put them
     in your home folder. You can also put them in a custom location by specifying
-    the `output` parameter. The parameter supports three different directives
+    the `console_out` parameter. The parameter supports three different directives
     provided by "<key>:<value>" pairs in a pipe separated string:
 
     stdout
@@ -702,8 +702,8 @@ def main(args=None):
     - "stdout:processing.output.log|stderr:processing.error.log"
     - "both:processing.log"
 
-    Do not specify error and standard outputs both using --output parameter and
-    scheduler specific options within settings string. It is best to provide
+    Do not specify error and standard outputs both using --console_out parameter
+    and scheduler specific options within settings string. It is best to provide
     full absolute paths to the desired log.
 
     EXAMPLE USE
@@ -775,7 +775,7 @@ def main(args=None):
                 k, container = arg.split("=", 1)
             elif arg.startswith("containeropt"):
                 k, containeropt = arg.split("=", 1)
-            elif arg.startswith("output"):
+            elif arg.startswith("console_out"):
                 k, output = arg.split("=", 1)
             elif arg.startswith("bash_pre"):
                 k, bash_pre = arg.split("=", 1)
