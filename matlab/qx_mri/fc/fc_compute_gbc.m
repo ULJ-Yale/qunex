@@ -2,23 +2,23 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 
 %``fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, targetf, options)``
 %
-%   Computes seed based functional connectivity maps for group and/or 
+%   Computes seed based functional connectivity maps for group and/or
 %   individual subjects / sessions.
 %
 %   Parameters:
 %       --flist (str):
 %           A .list file listing the subjects and their files for which to
-%           compute seedmaps. 
+%           compute seedmaps.
 %
 %           Alternatively, a string that specifies the list, session id(s)
 %           and files to be used for computing seedmaps. The string has to
 %           have the following form:
-%           
+%
 %               'listname:<name>|session id:<session id>|file:<path to bold file>|
 %                roi:<path to individual roi mask>'
 %
 %           Note:
-%           - 'roi' is optional, if individual roi masks are to be used, 
+%           - 'roi' is optional, if individual roi masks are to be used,
 %           - 'file' can be replaced by 'conc' if a conc file is provied.
 %
 %           Example:
@@ -34,7 +34,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           those that work on untransformed functional connectivity (Fc) values
 %           e.g. covariance, and those that work on functional connectivity
 %           estimates transformed to Fisher z (Fz) values. Note that the function
-%           does not check the validity of using untransformed values or the 
+%           does not check the validity of using untransformed values or the
 %           validity of their transform to Fz values.
 %
 %           The options that work on untransformed values are:
@@ -85,7 +85,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               computes proportion of voxels within n strength ranges of
 %               negative Fc.
 %
-%           The options that first transform functional connectivity estimates 
+%           The options that first transform functional connectivity estimates
 %           to Fisher z values are:
 %
 %           - mFz:t
@@ -116,12 +116,12 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               computes mean absolute Fz value across n strength ranges
 %
 %       --sroiinfo (str):
-%           A specification of the source voxels over which the GBC is to be 
+%           A specification of the source voxels over which the GBC is to be
 %           computed. This will be passed as the first parameter to the
 %           img_prep_roi method. If individual roi files are listed in the
 %           file list, they will be passed as the second parameter to the
-%           img_prep_roi method. If empty GBC will be computed over all 
-%           grayordinates or voxels. 
+%           img_prep_roi method. If empty GBC will be computed over all
+%           grayordinates or voxels.
 %
 %       --troiinfo (str):
 %           A specification of the target voxels for which the GBC is to be
@@ -154,13 +154,13 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               is a comma separated list of events for which data is to
 %               be extracted
 %           - extraction start
-%               is a frame number relative to event start or event end, that 
+%               is a frame number relative to event start or event end, that
 %               specifies the frame at which the extraction should start
 %           - extraction end
 %               is a frame number relative to event start or event end, that
 %               specifies the frame at which the extraction should end.
-%               
-%               the extraction start and end should be given as 
+%
+%               the extraction start and end should be given as
 %               '<s|e><frame number>'. E.g.:
 %
 %               - 's0'  ... the frame of the event onset
@@ -174,7 +174,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               'encoding:e-color,e-shape:s2:s4|delay:d-color,d-shape:s2:e0'
 %
 %       --targetf (str, '.'):
-%           The group level folder to save images in. 
+%           The group level folder to save images in.
 %
 %       --options (str, default 'sessions=all|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|savegroup=all|saveind=none|savesessionid=false|itargetf=gfolder|rsmooth=|rdilate=|verbose=false|debug=false'):
 %           A string specifying additional analysis options formated as pipe
@@ -258,7 +258,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %
 %               Defaults to 'r'.
 %
-%               Additional parameters for specific measures can be added using 
+%               Additional parameters for specific measures can be added using
 %               fcargs optional parameter (see below).
 %
 %           - fcargs
@@ -331,12 +331,12 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               ''.
 %
 %           - rdilate:
-%               in case of volume images an optional radius in voxels by 
-%               which to dilate the masks before use. No dillation will be 
+%               in case of volume images an optional radius in voxels by
+%               which to dilate the masks before use. No dillation will be
 %               performed if empty. Defaults to ''.
 %
 %           - step:
-%               how many voxels/grayordinates/parcels to process in a single 
+%               how many voxels/grayordinates/parcels to process in a single
 %               step. Defaults to 12000.
 %
 %           - rmax
@@ -402,7 +402,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %
 %       Definitions:
 %
-%       - `<targetf>' is the group target folder.
+%       - `<targetf>` is the group target folder.
 %       - `<listname>` is the listname name of the flist.
 %       - `<title>` is the title of the extraction event(s), if event string
 %         was specified.
@@ -431,18 +431,18 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %
 %   Notes:
 %       The method returns a structure array named gbcmaps with the fields listed
-%       above for each specified data extraction. 
+%       above for each specified data extraction.
 %
 %       Use:
-%           This function is a wrapper for  nimage.img_compute_gbc method. It 
-%           enables computing GBC for a list of sessions and saving group and/or 
-%           individual results for each specified GBC type. 
+%           This function is a wrapper for  nimage.img_compute_gbc method. It
+%           enables computing GBC for a list of sessions and saving group and/or
+%           individual results for each specified GBC type.
 %
 %           Event based GBC
-%           GBC can be computed either on the whole timeseries or across events 
-%           specified using the event string. If an event string is provided, it 
-%           has to start with a path to the .fidl file to be used to extract the 
-%           events, following  by a pipe separated list of event extraction 
+%           GBC can be computed either on the whole timeseries or across events
+%           specified using the event string. If an event string is provided, it
+%           has to start with a path to the .fidl file to be used to extract the
+%           events, following  by a pipe separated list of event extraction
 %           definitions::
 %
 %               <title>:<eventlist>:<frame offset1>:<frame offset2>
@@ -463,19 +463,19 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           Reduced or regional GBC
 %           GBC can be computed over the whole volume or cifti file, or limited
 %           to a specific source and target mask. Source mask specifies for which
-%           voxels, grayordinates or parcels to compute the GBC. Target mask 
-%           specifies across which voxels, grayordinates or parcels to compute 
+%           voxels, grayordinates or parcels to compute the GBC. Target mask
+%           specifies across which voxels, grayordinates or parcels to compute
 %           the GBC for each source voxel, grayordinate or parcel. If the image
-%           is a volume, masks can be optionally smoothed and or dilated. As 
-%           sessions' gray matter masks differ and do not overlap precisely, 
-%           rdilate will dilate the borders with the provided number of voxels. 
-%           Here it is important to note that values from the expanded mask will 
-%           not be used, rather the values from the valid mask will be smeared 
+%           is a volume, masks can be optionally smoothed and or dilated. As
+%           sessions' gray matter masks differ and do not overlap precisely,
+%           rdilate will dilate the borders with the provided number of voxels.
+%           Here it is important to note that values from the expanded mask will
+%           not be used, rather the values from the valid mask will be smeared
 %           into the dilated area.
-%   
+%
 %           Computing GBC
-%           A GBC map will be computed for each provided command. For details 
-%           regarding the commands, please, see help for the 
+%           A GBC map will be computed for each provided command. For details
+%           regarding the commands, please, see help for the
 %           nimage.img_compute_gbc method.
 %
 %           The results will be returned in a gbcmaps structure and, if so
@@ -600,7 +600,7 @@ options.saveind = strtrim(regexp(options.saveind, ',', 'split'));
 
 if ismember({'none'}, options.saveind)
     options.saveind = [];
-elseif ismember({'all'}, options.saveind)    
+elseif ismember({'all'}, options.saveind)
     options.saveind = {'fc', 'r', 'z', 'p'};
 end
 
@@ -652,15 +652,15 @@ for s = 1:list.nsessions
 
     % ---> check bold files
 
-    if isfield(list.session(s), 'conc') && ~isempty(list.session(s).conc) 
+    if isfield(list.session(s), 'conc') && ~isempty(list.session(s).conc)
         go = go & general_check_file(list.session(s).conc, 'conc file', 'error');
         bolds = general_read_concfile(list.session(s).conc);
-    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files) 
+    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files)
         bolds = list.session(s).files;
     else
         fprintf(' ... ERROR: %s missing bold or conc file specification!\n', list.session(s).id);
         go = false;
-    end    
+    end
 
     for bold = bolds
         go = go & general_check_file(bold{1}, 'bold file', 'error');
@@ -673,8 +673,8 @@ for s = 1:list.nsessions
     if isempty(frames)
         frames = 0;
     elseif isa(frames, 'char')
-        frames = str2num(frames);        
-        if isempty(frames) 
+        frames = str2num(frames);
+        if isempty(frames)
             if isfield(list.session(s), 'fidl')
                 go = go & general_check_file(list.session(s).fidl, [list.session(s).id ' fidl file'], 'error');
             else
@@ -748,13 +748,13 @@ for s = 1:list.nsessions
     for n = 1:nsets
 
         if verbose; fprintf('         ... set %s\n', exsets(n).title); end
-        
+
         % ---> get the extracted timeseries
 
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
 
         if verbose; fprintf('         ... extracted ts\n'); end
-        
+
         % --> generate gbc maps
 
         [gbc, commands] = ts.img_compute_gbc_fc(command, sroi, troi, options);
@@ -763,7 +763,7 @@ for s = 1:list.nsessions
         if verbose; fprintf('         ... computed gbc maps\n'); end
 
         % ---> Embedd results (if group data is requested)
-        
+
         if embed_data
             if first_subject
                 gbcmaps(n).title    = exsets(n).title;
@@ -773,7 +773,7 @@ for s = 1:list.nsessions
             gbcmaps(n).subjects{s}  = subjectid;
             gbcmaps(n).gbc(s) = gbc;
             gbcmaps(n).N(s) = ts.frames;
-                        
+
             if verbose; fprintf('         ... embedded\n'); end
         end
 
@@ -788,14 +788,14 @@ for s = 1:list.nsessions
                 subjectname = [subjectid, '_'];
             else
                 subjectname = '';
-            end            
+            end
 
             % set up extraction set title
             if exsets(n).title, settitle = ['_' exsets(n).title]; else settitle = ''; end
 
-            % set up base filename            
+            % set up base filename
             basefilename = sprintf('gbc_%s%s%s', subjectname, lname, settitle);
-            
+
             % save results of all commands
             sframe = 0;
             eframe = 0;
@@ -821,11 +821,11 @@ for s = 1:list.nsessions
                 if ismember('z', options.saveind)
                     % TODO -> compute and save z image
                 end
-                
-                if ismember('p', options.saveind) 
+
+                if ismember('p', options.saveind)
                     % TODO -> compute and save p image
                 end
-                
+
             end
 
             if verbose; fprintf(' done.\n'); end
@@ -849,20 +849,20 @@ if ~isempty(options.savegroup)
     for setid = 1:nsets
         if verbose; fprintf(' -> %s\n', gbcmaps(setid).title); end
         if gbcmaps(setid).title, settitle = ['_' gbcmaps(setid).title]; else settitle = ''; end
-        
+
         frame = 0;
         for cid = 1:ncomm
             comname = [commands(cid).command '_' regexprep(num2str(commands(cid).parameter), '\s+', 'x')];
-        
+
             if verbose; fprintf('    ... for command %s', comname); end
-            
+
             % -- prepare group gbc maps for the command
             for v = 1:commands(cid).volumes
 
                 % -- setup
-                frame = frame + 1;                
+                frame = frame + 1;
                 gbc = gbcmaps(setid).gbc(1).zeroframes(list.nsessions);
-            
+
                 % -- loop through subjects
                 for sid = 1:list.nsessions
                     gbc.data(:,sid) = gbcmaps(setid).gbc(sid).data(:, frame);
@@ -926,6 +926,6 @@ if ~isempty(options.savegroup)
             end
         end
     end
-end            
+end
 
 if verbose; fprintf('\n\nCompleted\n'); end
