@@ -221,22 +221,23 @@ def getHCPPaths(sinfo, options):
                 sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
             )
         )
-        if len(fmapmag) == 1:
-            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmapmag[0])
+        for fmap in fmapmag:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmap)
             if fmnum:
                 fmnum = int(fmnum.group())
-                d["fieldmap"].update({fmnum: {"magnitude": fmapmag[0]}})
-        elif len(fmapmag) == 2:
-            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmapmag[0])
-            if fmnum:
-                fmnum = int(fmnum.group())
-                d["fieldmap"].update({fmnum: {"magnitude": [fmapmag[1], fmapmag[0]]}})
-        elif len(fmapmag) > 2:
-            print("ERROR: Found more than two FM-Magnitude files!")
-            raise ge.CommandFailed(
-                options["command_ran"],
-                "Too many FM-Magnitude files found!",
-            )
+                if fmnum not in d["fieldmap"]:
+                    d["fieldmap"].update({fmnum: {"magnitude": fmap}})
+                else:
+                    existing = d["fieldmap"][fmnum]["magnitude"]
+                    d["fieldmap"].update({fmnum: {"magnitude": [fmap, existing]}})
+
+                    # check if too many magnitudes
+                    if len(d["fieldmap"][fmnum]["magnitude"]) > 2:
+                        print("ERROR: Found more than two FM-Magnitude files!")
+                        raise ge.CommandFailed(
+                            options["command_ran"],
+                            "Too many FM-Magnitude files found!",
+                        )
 
         fmapphase = glob.glob(
             os.path.join(
@@ -5356,7 +5357,6 @@ def executeMultipleHCPfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, r
 
 def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     # extract data
-    boldsource = b["boldsource"]
     boldtarget = b["boldtarget"]
     printbold = b["printbold"]
     gdcfile = b["gdcfile"]
