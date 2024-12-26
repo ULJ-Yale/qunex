@@ -8,112 +8,112 @@ classdef nimage
 %   METHODS
 %   =======
 %
-%   nimage             
+%   nimage
 %       constructor / loader
 %
-%   img_readimage      
+%   img_readimage
 %       reads an image file
 %
-%   img_saveimage      
+%   img_saveimage
 %       saves an image file
 %
-%   img_saveimageframe 
+%   img_saveimageframe
 %       saves only the specified frame(s) of an image file
 %
-%   image2D            
+%   image2D
 %       returns 2D (voxels by frames) representation of image data
 %
-%   image4D            
+%   image4D
 %       returns 4D (x by y by z by frames representation of image data)
 %
-%   maskimg            
+%   maskimg
 %       trims data from all nonzero voxels of the mask
 %
-%   unmaskimg          
+%   unmaskimg
 %       restores the full volume from masked image with zeros for missing voxels
 %
-%   standardize        
+%   standardize
 %       transforms values to z scores within each voxel's timeseries
 %
 %   correlize
-%       standardizes and divides by sqrt(N-1) to prepare for efficient 
+%       standardizes and divides by sqrt(N-1) to prepare for efficient
 %       correlation computation
-%   
+%
 %   img_compute_correlations
 %       computes correlations with the provided data matrix
-%   
+%
 %   PROPERTIES
 %   ==========
 %
-%   data          
+%   data
 %       [grayordinates, frames] or [x, y, z, frames] matrix of imaging data
-%   imageformat   
+%   imageformat
 %       The image format of the source file: 4dfp, NIfTI, CIFTI, CIFTI-1, CIFTI-2
-%   mformat       
+%   mformat
 %       The number format of the source file: l - littleendian, b - bigendian
-%   hdrnifti      
+%   hdrnifti
 %       The structure with the NIfTI header
-%   hdr4dfp       
+%   hdr4dfp
 %       The structure with the 4dfp header
-%   dim           
+%   dim
 %       The x, y, z dimensions or grayordinates dimensions of the original image
-%   voxels        
+%   voxels
 %       The number of voxels / grayordinates in a single frame
-%   vsizes        
+%   vsizes
 %       The size of voxels in x, y, z direction
-%   TR            
+%   TR
 %       TR of the image
-%   frames        
+%   frames
 %       Number of frames in the image
-%   runframes     
+%   runframes
 %       A vector with the number of frames from each run in the order the images were concatenated
-%   filenamepath      
+%   filenamepath
 %       Full filename including the path
-%   filenamepaths  
+%   filenamepaths
 %       A cell array of filenamepaths for all the constituent images
-%   filetype      
+%   filetype
 %       The type of the CIFTI file: .dtseries | .ptseries | .pconn | .pscalar | .dscalar
-%   mask          
+%   mask
 %       Boolean vector specifying the spatial voxel / grayordinate mask used to mask the data
-%   masked        
+%   masked
 %       Has the data been spatially masked: true | false
-%   empty         
+%   empty
 %       Is the image data empty: true | false
-%   standardized  
+%   standardized
 %       Has the timeseries been converted to z-scores: true / false
-%   correlized    
+%   correlized
 %       Has the standardized values been deleted by sqrt(obj.frames -1) to allow easy computation of correlations: true | false
-%   info          
+%   info
 %       Information on what operations were completed on the image
-%   roi           
+%   roi
 %       If the image is an ROI mask, a structure with the information about the ROI
-%   glm           
+%   glm
 %       If the image contains results of GLM, the structure with the GLM information
-%   meta          
+%   meta
 %       A structure that describes metadata
-%   list          
+%   list
 %       S structure with list information
-%   tevents        
+%   tevents
 %       A [2, frames] vector. The first row list index of the event from which the frame originates, the second row lists the frame number from the event.
-%   use           
+%   use
 %       A row vector specifying which frame of the timeseries to use (1) and which not (0)
-%   mov           
+%   mov
 %       A [frame, parameter] matrix of movement parameters
-%   mov_hdr       
+%   mov_hdr
 %       A cell array providing header information for mov matrix
-%   fstats        
+%   fstats
 %       A [frame, statistics] matrix of per frame statistics
-%   fstats_hdr    
+%   fstats_hdr
 %       A cell array providing header information for fstats matrix
-%   scrub         
+%   scrub
 %       A [frame, parameter] matrix of scrubbing parameters
-%   scrub_hdr     
+%   scrub_hdr
 %       A cell array providing header information for scrub matrix
-%   nuisance      
+%   nuisance
 %       A [frame, signal] matrix of nuisance signals
-%   nuisance_hdr  
+%   nuisance_hdr
 %       A cell array providing header information for nuisance matrix
-%   cifti         
+%   cifti
 %       A structure providing CIFTI information
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
@@ -123,7 +123,7 @@ classdef nimage
     properties
         data
         imageformat
-        mformat 
+        mformat
         hdrnifti        = [];
         hdr4dfp         = [];
         dim
@@ -131,7 +131,7 @@ classdef nimage
         vsizes
         TR
         frames
-        runframes       = [];        
+        runframes       = [];
         concname        = [];
         rootconcname    = [];
         filenamepath    = [];
@@ -312,13 +312,12 @@ classdef nimage
                                 end
                                 for imap = 1:obj.frames
                                     obj.cifti.metadata.diminfo{2}.maps(imap) = struct('name', obj.cifti.maps{imap}, 'metadata', struct('key', '', 'value', ''));
-                                end                            
+                                end
                         end
                         return
                     end
-                    
-                    % ---> otherwise we need to load
 
+                    % ---> otherwise we need to load
                     images = regexp(varone, ';', 'split');
                     for n = 1:length(images)
                         parts = regexp(images{n}, '\|', 'split');
@@ -392,7 +391,7 @@ classdef nimage
                                 obj.hdrnifti.intent_name = 'ConnDenseSeries ';
                                 obj.TR = 1;
                                 obj.cifti = cifti_templates.dtseries;
-                                obj.cifti.metadata.diminfo{2}.length = obj.frames;                                
+                                obj.cifti.metadata.diminfo{2}.length = obj.frames;
                             case 'dscalar'
                                 obj.filetype = 'dscalar';
                                 obj.hdrnifti.intent_code = 3006;
@@ -443,7 +442,6 @@ classdef nimage
         %
         %   Creates meta data for dtseries image
         %
-
             mpath = fileparts(mfilename('fullpath'));
             xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
             xml = strrep(xml,'{{ParentProvenance}}', img.filenamepath);
@@ -490,7 +488,6 @@ classdef nimage
         %
         %  Checks what type the image is and calls the appropriate function
         %
-
             if nargin < 5                     verbose = false;   end
             if nargin < 4                     frames = [];       end
             if nargin < 3 || isempty(dtype),  dtype = 'single';  end
@@ -582,7 +579,7 @@ classdef nimage
         function obj = img_name_maps(obj, maplist, filetype)
         %
         %   If CIFTI image, adds map information.
-        %   
+        %
         %   Parameters:
         %       --obj (nimage):
         %           The object to add map info to.
@@ -594,27 +591,27 @@ classdef nimage
         %   Returns:
         %       --obj with the added maps metadata
         %
-        %   TODO: Given that maps are added automatically upon save, this 
+        %   TODO: Given that maps are added automatically upon save, this
         %         method might not be needed.
 
             if ~ismember({obj.imageformat}, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
                 return;
             end
-            
+
             if length(maplist) ~= obj.frames
                 error("In img_name_maps the number of maps [%d] does not match the number of frames [%d]", length(maplist), obj.frames);
             end
 
             obj.filetype = [obj.cifti.metadata.diminfo{1}.type(1) filetype];
             obj.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(obj.frames, maplist);
-            
+
             if strcmp(filetype, 'label')
                 obj.cifti.metadata.diminfo{2}.type = 'labels';
 
                 for imap = 1:obj.frames
                     obj.cifti.metadata.diminfo{2}.maps(imap).table = obj.cifti.labels{imap};
                 end
-            end            
+            end
         end
 
 
@@ -669,10 +666,10 @@ classdef nimage
         end
 
         function basename = img_basename(obj, filenamepath)
-        % 
+        %
         %   Returns the basename of the image.
         %   /path/to/basename.nii.gz -> basename
-        %   
+        %
             if nargin < 2, filenamepath = obj.filenamepath; end
             if isempty(filenamepath)
                 basename = '';
@@ -705,7 +702,7 @@ classdef nimage
             if nargin < 2, filenamepath = obj.filenamepath; end
             if isempty(filenamepath)
                 basenamepath = '';
-            else                
+            else
                 basenamepath = fullfile(obj.img_path(filenamepath), obj.img_basename(filenamepath));
             end
         end
@@ -738,24 +735,24 @@ classdef nimage
 
         function obj = unmaskimg(obj)
         %function obj = unmaskimg(obj)
-        %  
+        %
         %   Alias for img_unmask
             obj = obj.img_unmask();
         end
 
         function obj = img_mask(obj, mask)
         %function [obj] = img_mask(obj, mask)
-        %  
+        %
         %   Applies a mask and returns a nimage object
         %
         %   Parameters:
-        %       --obj (nimage): 
+        %       --obj (nimage):
         %           An nimage object to be masked.
         %       --mask (nimage, array):
         %           A mask to be applied. It can be either a nimage in which
         %           all nonzero voxels of the first frame are used as a mask,
         %           a mask array or an array of indeces to be retained.
-        %   
+        %
         %   Output:
         %      obj (nimage):
         %           A copy of the original image in which all the rows
@@ -767,12 +764,12 @@ classdef nimage
         %   Notes:
         %       The method allows removing all irrelevant data so that any
         %       following operations are only performed on the relevant data.
-        %       To get back the original representation, use img_unmask method.  
+        %       To get back the original representation, use img_unmask method.
         %
         %       To be able to return the image back to original dimensions, the
-        %       obj.dim are not changed from the original, however, to allow 
-        %       other methods to work, obj.voxels are set to the number of 
-        %       voxels in the current representation.   
+        %       obj.dim are not changed from the original, however, to allow
+        %       other methods to work, obj.voxels are set to the number of
+        %       voxels in the current representation.
 
             % - unmask first if already masked!
 
@@ -790,7 +787,7 @@ classdef nimage
                 if mask.frames > 1
                     mask = mask.selectframes(1);
                     warning('WARNING: in img_mask, the provided mask has more than one frame. Only the first frame will be used!');
-                end                
+                end
                 mask = mask.data;
             end
 
@@ -828,7 +825,7 @@ classdef nimage
         %       changes.
 
             if obj.masked
-                unmasked = zeros([prod(obj.dim) obj.frames]);                
+                unmasked = zeros([prod(obj.dim) obj.frames]);
                 unmasked(obj.mask, :) = obj.data;
                 obj.data = unmasked;
                 obj.masked = false;
@@ -957,7 +954,7 @@ classdef nimage
             %     commented as the second dimension should not be used
             % if strcmp(obj.imageformat, 'CIFTI-2')
             %     obj.dim = size(obj.data);
-            % end            
+            % end
             obj.filenamepaths = [obj.filenamepaths, add.filenamepaths];
 
             % ---> combine movement data
@@ -1073,14 +1070,14 @@ classdef nimage
         %                                      selectframes
         %
         %   method for selecting the indicated frames from image
-        
+
         function obj = selectframes(obj, selectframes, options)
             % selectframes(selectframes, options)
             %
             %   Select the indicated frames from image.
-            %   
+            %
             %   Parameters:
-            %       -- selectframes (array of int): 
+            %       -- selectframes (array of int):
             %           The indices of frames to select or a mask of frames to
             %           retain.
             %       -- options (str)
@@ -1093,7 +1090,7 @@ classdef nimage
             if nargin < 3, options = []; end
             if nargin < 2, selectframes = []; end
             if isempty(selectframes), return; end
-            
+
             % --> we have indices
             if (length(selectframes) == length(unique(selectframes))) && (min(selectframes) > 0)
                 if strcmp(options, 'perrun') && length(obj.runframes > 1)
@@ -1110,7 +1107,7 @@ classdef nimage
                 end
 
             % --> we have a mask
-            else 
+            else
                 mask = zeros(1, obj.frames);
                 if strcmp(options, 'perrun') && length(obj.runframes > 1)
                     offset = 1;
@@ -1202,7 +1199,7 @@ classdef nimage
         %   - a scalar specifying how many frames to exclude from the start
         %   - a vector of indeces specifying which frames to keep
         %   - a boolean or 1/0 vector specifying which frames to keep
-        %        
+        %
         %   The function will call select frames to complete
 
         function obj = sliceframes(obj, fmask, options)
@@ -1227,8 +1224,8 @@ classdef nimage
                 else
                     mask(1:fmask) = 0;
                     obj = obj.selectframes(mask == 1);
-                end                  
-            else            
+                end
+            else
                 obj = obj.selectframes(fmask, options);
             end
 
@@ -1241,16 +1238,16 @@ classdef nimage
         %   method for splitting concatenated file back into
         %   constituent runs
         %
-        
+
         function conc = splitruns(obj)
             startframe = 1;
             endframe = 0;
             obj.data = obj.image2D;
-            for n = 1:length(obj.runframes)                
+            for n = 1:length(obj.runframes)
                 endframe = endframe + obj.runframes(n);
-               
+
                 % -- data
-                conc(n) = obj.zeroframes(obj.runframes(n));                
+                conc(n) = obj.zeroframes(obj.runframes(n));
                 conc(n).data = obj.data(:, startframe:endframe);
 
                 % -- metadata

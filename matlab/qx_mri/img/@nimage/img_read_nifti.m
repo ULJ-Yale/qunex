@@ -42,12 +42,13 @@ end
 % fmeta to str (remove starting chars before < as they are not UTF-8)
 idx = find(fmeta' == 60, 1);
 fmeta_str = char(fmeta(idx:end)');
+fmeta_bytes = uint8(fmeta_str);
+fmeta_str = fmeta_bytes(fmeta_bytes >= 32 & fmeta_bytes <= 127);
 
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;
 
 % --- process header
-
 switch numel(fhdr)
     case 348
         img.hdrnifti = readHeader_nifti1(fhdr, img.hdrnifti);
@@ -58,9 +59,7 @@ switch numel(fhdr)
 end
 
 % get datatype
-
 datatype = 'None';
-
 switch  img.hdrnifti.datatype
     case 1
         datatype = 'bitN';
@@ -91,9 +90,7 @@ end
 if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 % ------ Process header
-
 % --- file root
-
 fileinfo = general_check_image_file(filename);
 
 img.filenamepath = filename;
@@ -101,7 +98,6 @@ img.filenamepaths = {filename};
 img.filetype      = img.img_filetype();
 
 % --- format and size details
-
 if img.hdrnifti.dim(1) > 4
     img.imageformat = 'CIFTI';
 else
@@ -129,14 +125,12 @@ if strcmp(img.imageformat, 'NIfTI')
     img.runframes = img.frames;
 
     % ---- Map data and adjust datatype
-
     img.data = reshape(fdata, img.voxels, []);
     img.data = img.data(:,1:img.frames);
 
     img.hdrnifti.datatype = 16;
 
 elseif strcmp(img.imageformat, 'CIFTI')
-
     img.TR     = [];
 
     % we probably have a 2d cifti file
@@ -176,7 +170,6 @@ elseif strcmp(img.imageformat, 'CIFTI')
     % img.mformat = mformat;
 
     % ---- Reorganize and map data
-
     img.data = reshape(fdata, img.frames, img.voxels);
 
     if ~isempty(frames)
@@ -188,9 +181,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
     img.runframes = img.frames;
 
     % ---- Adjust datatype
-
-    img.hdrnifti.datatype = 16;    
-
+    img.hdrnifti.datatype = 16;
 end
 
 switch dtype
@@ -210,9 +201,7 @@ switch dtype
         end
 end
 
-
 % ---- Map metadata
-
 if img.hdrnifti.swap
     sw = @(x) swapbytes(x);
 else
@@ -243,9 +232,7 @@ catch
     mi = 0;
 end
 
-
 % ---- Process metadata
-
 if mi > 0
     keepmeta = true(1, mi);
     for m = 1:mi
@@ -309,7 +296,7 @@ if mi > 0
 
         % --- cifti metadata
         if img.meta(m).code == 32
-            
+
             % ---- set to be removed after processing
             keepmeta(m) = false;
 
@@ -373,14 +360,8 @@ if mi > 0
     img.meta = img.meta(keepmeta);
 end
 
-
-
-
 % ----- Read NIfTI-1 Header
-
-
 function [hdrnifti] = readHeader_nifti1(s, hdrnifti)
-
     if hdrnifti.swap
         sw = @(x) swapbytes(x);
     else
@@ -432,14 +413,10 @@ function [hdrnifti] = readHeader_nifti1(s, hdrnifti)
     hdrnifti.version         = 1;
 
     % --- add NIfTI-2 fields
-
     hdrnifti.unused_str      = char(ones(1,24)*32);
 
-
 % ----- Read NIfTI-2 Header
-
 function [hdrnifti] = readHeader_nifti2(s, hdrnifti)
-
     if hdrnifti.swap
         sw = @(x) swapbytes(x);
     else

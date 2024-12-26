@@ -9,6 +9,13 @@
 #include "qx_nifti.h"
 #include "znzlib.h"
 
+// function [hdr, data, meta, doswap] = img_read_nifti_mx(filename, verbose)
+//
+// To compile run:
+//   cp img_read_nifti_mx_octave.cpp img_read_nifti_mx.cpp
+//   mkoctfile --mex -lz img_read_nifti_mx.cpp qx_nifti.c znzlib.c
+//   rm img_read_nifti_mx.cpp
+
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   struct nii_info         ninfo;
@@ -28,9 +35,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   int                     i, ii, bsize, swap=0, verbose=0;
   size_t                  ir;
   int                     status=1;
-  
+
   // --- verbosity
-  
   if (nrhs > 1){
       if (mxIsLogicalScalarTrue(prhs[1])){
           verbose = 1;
@@ -39,12 +45,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   }
 
   // --- Open file
-
   filename = mxArrayToString(prhs[0]);
 
   if (verbose) mexPrintf("\n---> img_read_nifti_mx\n");
   if (verbose) mexPrintf("---> Reading %s \n", filename);
-
 
   filestream = znzopen(filename, "rb", nifti_is_gzfile(filename));
   if (znz_isnull(filestream)){
@@ -57,12 +61,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
 
   // --- Read and check size
-
   ii = (int) znzread(&hsizeof, 1, sizeof(int), filestream);
   ii = (int) znzseek(filestream, 0, SEEK_SET);
 
   // --- Read header and set up info
-
   switch(hsizeof){
       case F_NIFTI1:
           if (verbose) mexPrintf("---> Unpacking unswapped NIfTI1    ");
@@ -94,9 +96,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       return;
   }
 
-
   // --- Embed header
-
   hdr = mxCreateNumericMatrix(ninfo.hlen, 1, mxUINT8_CLASS, mxREAL);
   hdrdata = (char *) mxGetData(hdr);
   inpoint = (char *) ninfo.hdata;
@@ -116,9 +116,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   plhs[0] = hdr;
 
-
   // --- Embed data
-
   dinfo = nifti_datatype_to_ele(ninfo.dtype);
   // mexPrintf("data type: %d, nbyper: %d, swapsize: %d, name: %s\n", dinfo->type, dinfo->nbyper, dinfo->swapsize, dinfo->name);
   if (verbose) mexPrintf("\nDATA\ndata type: %d\nnbyper:    %d\nswapsize:  %d\nname:      %s\n\n", dinfo->type, dinfo->nbyper, dinfo->swapsize, dinfo->name);
@@ -186,10 +184,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   plhs[1] = data;
 
-
-
   // --- Embed raw metadata
-
   meta = mxCreateNumericMatrix(ninfo.mlen, 1, mxUINT8_CLASS, mxREAL);
   metadata = (char *) mxGetData(meta);
   ir = znzseek(filestream, (long) ninfo.mstart, SEEK_SET);
@@ -205,9 +200,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if (verbose) mexPrintf("---> Read metadata                 ");
   if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
 
-
   // --- Report swapping
-
   doswap = mxCreateNumericMatrix(1, 1, mxUINT8_CLASS, mxREAL);
   metadata = (char *) mxGetData(doswap);
   metadata[0] = (char) swap;
@@ -215,10 +208,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   plhs[3] = doswap;
 
   // --- Close the file
-
   znzclose(filestream);
 
   if (verbose) mexPrintf("---> Done                          ");
   if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
-    
 }

@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.0.3 [QIO]
+
+* Fixed a bug in `general_extract_glm_volumes` that did not detect the CIFTI version properly.
+* Fixed a bug in `hcp_fmri_volume` that sometimes loaded too many fieldmaps and then errored out.
+
 ## 1.0.2 [QIO]
 
 * Fixed a bug in `import_bids` when importing SE pairs.
