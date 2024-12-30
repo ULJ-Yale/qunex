@@ -1142,7 +1142,7 @@ def main(args=None):
                     container_command += "--cleanenv "
                     if slurm_array:
                         # the params we need are SLURM_ARRAY_TASK_ID and SLURM_ARRAY_TASK_MAX
-                        # we do not need SLURM_JOB_ID, SLURM_ARRAY_JOB_ID, SLURM_ARRAY_TASK_COUNT, SLURM_ARRAY_TASK_MAX for now
+                        # we do not need SLURM_JOB_ID, SLURM_ARRAY_JOB_ID, SLURM_ARRAY_TASK_COUNT, SLURM_ARRAY_TASK_MIN for now
                         slurm_array_params = [
                             "SLURM_ARRAY_TASK_ID",
                             "SLURM_ARRAY_TASK_MAX",
@@ -1150,7 +1150,7 @@ def main(args=None):
                         # pass variables into the Singularity/Apptainer container
                         container_command += "--env "
                         container_command += ",".join(
-                            [f"{p}=${{p}}" for p in slurm_array_params]
+                            [f"{p}=${p}" for p in slurm_array_params]
                         )
                         # add trailing space
                         container_command += " "
