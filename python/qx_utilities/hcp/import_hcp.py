@@ -860,24 +860,39 @@ def processHCPLS(sessionfolder, filesort):
         # --- Check files
         check = list(hcpls["folders"][folderLabel]["check"])
         rank = 0
-        for fcheck in check:
-            rank += 1
-            found = False
+        # diffusion
+        if folderLabel == "Diffusion":
+            # sort folderfiles by dir
+            folderFiles.sort(key=lambda x: (int(x["parts"][1].replace("dir", "")), x["parts"][2]))
             for file in folderFiles:
-                match = True
-                for citem in fcheck:
-                    if citem[0] == "-":
-                        if citem[1:] in file["parts"]:
-                            match = False
-                    else:
-                        if citem not in file["parts"]:
-                            match = False
+                match = False
+                for fcheck in check:
+                    if file["parts"][0] == fcheck[0] and file["parts"][1].startswith(fcheck[1]) and file["parts"][2] == fcheck[2]:
+                        match = True
+                        break
                 if match:
+                    rank += 1
                     file["rank"] = rank
-                    found = True
-                    break
-            if not found:
-                missingFiles.append([dfolder, fcheck])
+
+        else:
+            for fcheck in check:
+                found = False
+                for file in folderFiles:
+                    match = True
+                    for citem in fcheck:
+                        if citem[0] == "-":
+                            if citem[1:] in file["parts"]:
+                                match = False
+                        else:
+                            if citem not in file["parts"]:
+                                match = False
+                    if match:
+                        rank += 1
+                        file["rank"] = rank
+                        found = True
+                        break
+                if not found:
+                    missingFiles.append([dfolder, fcheck])
 
         # --- Order files
         folderFiles.sort(key=lambda x: x["rank"])
