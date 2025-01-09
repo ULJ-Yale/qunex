@@ -10,16 +10,15 @@
 #include "qx_nifti.h"
 #include "znzlib.h"
 
-// function [] = img_read_nifti_mx(filename, hdr, data, meta, doswap, verbose)
+// function [] = img_save_nifti_mx(filename, hdr, data, meta, doswap, verbose)
 //
-// To compile run: mex -lz img_save_nifti1.cpp qx_nifti.c znzlib.c
-//
-
-
+// To compile run:
+//   cp img_save_nifti_mx_matlab.cpp img_save_nifti_mx.cpp
+//   mex -lz img_save_nifti.cpp qx_nifti.c znzlib.c
+//   rm img_save_nifti_mx.cpp
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-
     const mxArray          *hdr, *data, *meta, *doswap, *fname;
     int                     swap=0, v=1, verbose=0;
 
@@ -33,9 +32,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     char                   *hdrdata, *metadata;
     void                   *datapt;
 
-
     // --- map variables
-
     if (nrhs > 5){
         if (mxIsLogicalScalarTrue(prhs[5])){
             verbose = 1;
@@ -62,7 +59,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     filename = mxArrayToString(fname);
 
     // --- Get sizes and deduce NIfTI version
-
     dlen = (size_t) mxGetNumberOfElements(data);
     mlen = (size_t) mxGetNumberOfElements(meta);
     hlen = (size_t) mxGetNumberOfElements(hdr);
@@ -75,7 +71,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (verbose) mexPrintf("---> Saving %s as NIfTI-%d image.\n", filename, v);
 
     // ---> are we swapping
-
     if (nrhs > 4){
         doswap = prhs[4];
         if (mxIsLogicalScalarTrue(doswap)){
@@ -85,7 +80,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     // --- Get Data Type
-
     dtype = mxGetClassID(data);
 
     switch (dtype) {
@@ -106,13 +100,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             break;
     }
 
-
     // --- do the swapping if needed
-
     if (swap){
-
         // --- header
-
         if (v == 1) {
             if (verbose) mexPrintf("---> Swapping NIfTI1 header        ");
             if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
@@ -124,16 +114,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
 
         // --- data
-
         if (verbose) mexPrintf("---> Swapping Data                 ");
         if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
         nifti_swap_Nbytes(dlen, bsize, datapt);
-
     }
 
-
     // --- Open file
-
     if (verbose) mexPrintf("---> Opening file                  ");
     if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
 
@@ -145,7 +131,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     // --- Dump contents
-
     if (verbose) mexPrintf("---> Saving header                 ");
     if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
 
@@ -171,7 +156,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (verbose) mexPrintf("---> Saving data                   ");
     if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
 
-
     ir = znzwrite(datapt, (size_t) bsize, dlen, filestream);
     if (ir != dlen){
         znzclose(filestream);
@@ -189,6 +173,4 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (verbose) mexCallMATLAB(0, NULL, 0, NULL, "toc");
 
     return;
-
 }
-

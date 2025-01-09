@@ -6,6 +6,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.0.3 [QIO]
+
+* Fixed a bug in `general_extract_glm_volumes` that did not detect the CIFTI version properly.
+* Fixed a bug in `hcp_fmri_volume` that sometimes loaded too many fieldmaps and then errored out.
+
+## 1.0.2 [QIO]
+
+* Fixed a bug in `import_bids` when importing SE pairs.
+* Fixed a bug where bold tag (e.g., rest) was not properly converted into a list of bolds when specified as a parameter value.
+* Added some additional error messages for user friendliness.
+* Fixed a `qunex_container` bug that did not properly pass some parameters to the called QuNex command.
+* By default, QuNex will now leave the raw imaging data archives on import alone (`--archive="leave"`). Previously, the default behavior was to move the archive into the QuNex study's archive subolder (`--archive="move"`).
+* Fixed a bug where `hcp_echo_te` was not correctly prepared for HCP Pipelines.
+* Fixed some MATLAB code so it is now Octave compliant.
+
 ## 1.0.1 [QIO]
 
 * Fixed a bug when image loading was not working as it should in some commands of the analytics pipeline.

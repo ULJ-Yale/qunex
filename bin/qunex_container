@@ -615,7 +615,7 @@ def main(args=None):
 
     --scheduler     A string that specifies the details to use to submit the
                     container job to a scheduling system.
-    --output        A string specifying where to redirect the standard output
+    --console_out   A string specifying where to redirect the standard output
                     and error when using the scheduler. See "Redirecting
                     output" for details!
     --parjobs       Specify the maximum amount of jobs that will be created
@@ -683,7 +683,7 @@ def main(args=None):
     By default, QuNex will try to put scheduler logs into the
     <study>/processing/logs/batchlogs folder. If not possible QuNex will put them
     in your home folder. You can also put them in a custom location by specifying
-    the `output` parameter. The parameter supports three different directives
+    the `console_out` parameter. The parameter supports three different directives
     provided by "<key>:<value>" pairs in a pipe separated string:
 
     stdout
@@ -702,8 +702,8 @@ def main(args=None):
     - "stdout:processing.output.log|stderr:processing.error.log"
     - "both:processing.log"
 
-    Do not specify error and standard outputs both using --output parameter and
-    scheduler specific options within settings string. It is best to provide
+    Do not specify error and standard outputs both using --console_out parameter
+    and scheduler specific options within settings string. It is best to provide
     full absolute paths to the desired log.
 
     EXAMPLE USE
@@ -763,66 +763,69 @@ def main(args=None):
     overwrite = None
 
     for arg in args:
-        # clenup -- at start
+        # cleanup -- at start
         if arg.startswith("--"):
             arg = arg[2:]
 
-        if arg.startswith("env_status") or arg.startswith("envstatus"):
-            env_status = True
-        if arg.startswith("scheduler"):
-            k, scheduler = arg.split("=", 1)
-        elif arg.startswith("container"):
-            k, container = arg.split("=", 1)
-        elif arg.startswith("containeropt"):
-            k, containeropt = arg.split("=", 1)
-        elif arg.startswith("output"):
-            k, output = arg.split("=", 1)
-        elif arg.startswith("bash_pre"):
-            k, bash_pre = arg.split("=", 1)
-        elif arg.startswith("bash_post"):
-            k, bash_post = arg.split("=", 1)
-        elif arg.startswith("bind"):
-            k, bind = arg.split("=", 1)
-        elif arg.startswith("cuda_path"):
-            k, cuda_path = arg.split("=", 1)
-        elif arg.startswith("script"):
-            k, script = arg.split("=", 1)
-        elif arg.startswith("parjobs"):
-            k, parjobs = arg.split("=", 1)
-            parjobs = int(parjobs)
-        elif arg.startswith("parsessions"):
-            k, parsessions = arg.split("=", 1)
-            command += f'{k}="{parsessions}" '
-            parsessions = int(parsessions)
-        elif arg.startswith("parelements"):
-            k, parelements = arg.split("=", 1)
-            command += f'{k}="{parelements}" '
-            parelements = int(parelements)
-        elif arg.startswith("sessionsfolder"):
-            k, sessionsfolder = arg.split("=", 1)
-            command += f'{k}="{sessionsfolder}" '
-        elif arg.startswith("sessions"):
-            k, sessions = arg.split("=", 1)
-        elif arg.startswith("batchfile"):
-            k, batchfile = arg.split("=", 1)
-        elif arg.startswith("filter"):
-            k, batchfilter = arg.split("=", 1)
-        elif arg.startswith("sessionids"):
-            k, sessionids = arg.split("=", 1)
-        elif arg.startswith("overwrite"):
-            k, overwrite = arg.split("=", 1)
-            command += f"{arg} "
-        elif arg == "nocleanenv":
-            nocleanenv = True
-        elif arg == "cuda":
-            cuda = True
-        elif arg == "nv":
-            nv = True
-        elif arg == "parinfo":
-            parinfo = True
-        elif "=" in arg:
-            k, v = arg.split("=", 1)
-            command += f'{k}="{v}" '
+            if arg.startswith("env_status") or arg.startswith("envstatus"):
+                env_status = True
+            if arg.startswith("scheduler"):
+                k, scheduler = arg.split("=", 1)
+            elif arg.startswith("container"):
+                k, container = arg.split("=", 1)
+            elif arg.startswith("containeropt"):
+                k, containeropt = arg.split("=", 1)
+            elif arg.startswith("console_out"):
+                k, output = arg.split("=", 1)
+            elif arg.startswith("bash_pre"):
+                k, bash_pre = arg.split("=", 1)
+            elif arg.startswith("bash_post"):
+                k, bash_post = arg.split("=", 1)
+            elif arg.startswith("bind"):
+                k, bind = arg.split("=", 1)
+            elif arg.startswith("cuda_path"):
+                k, cuda_path = arg.split("=", 1)
+            elif arg.startswith("script"):
+                k, script = arg.split("=", 1)
+            elif arg.startswith("parjobs"):
+                k, parjobs = arg.split("=", 1)
+                parjobs = int(parjobs)
+            elif arg.startswith("parsessions"):
+                k, parsessions = arg.split("=", 1)
+                command += f'--{k}="{parsessions}" '
+                parsessions = int(parsessions)
+            elif arg.startswith("parelements"):
+                k, parelements = arg.split("=", 1)
+                command += f'--{k}="{parelements}" '
+                parelements = int(parelements)
+            elif arg.startswith("sessionsfolder"):
+                k, sessionsfolder = arg.split("=", 1)
+                command += f'--{k}="{sessionsfolder}" '
+            elif arg.startswith("sessions"):
+                k, sessions = arg.split("=", 1)
+            elif arg.startswith("batchfile"):
+                k, batchfile = arg.split("=", 1)
+            elif arg.startswith("filter"):
+                k, batchfilter = arg.split("=", 1)
+            elif arg.startswith("sessionids"):
+                k, sessionids = arg.split("=", 1)
+            elif arg.startswith("overwrite"):
+                k, overwrite = arg.split("=", 1)
+                command += f"--{arg} "
+            elif arg == "nocleanenv":
+                nocleanenv = True
+            elif arg == "cuda":
+                cuda = True
+            elif arg == "nv":
+                nv = True
+            elif arg == "parinfo":
+                parinfo = True
+            elif "=" in arg:
+                k, v = arg.split("=", 1)
+                command += f'--{k}="{v}" '
+            else:
+                command += f"--{arg} "
+
         else:
             command += f"{arg} "
 
@@ -1139,7 +1142,7 @@ def main(args=None):
                     container_command += "--cleanenv "
                     if slurm_array:
                         # the params we need are SLURM_ARRAY_TASK_ID and SLURM_ARRAY_TASK_MAX
-                        # we do not need SLURM_JOB_ID, SLURM_ARRAY_JOB_ID, SLURM_ARRAY_TASK_COUNT, SLURM_ARRAY_TASK_MAX for now
+                        # we do not need SLURM_JOB_ID, SLURM_ARRAY_JOB_ID, SLURM_ARRAY_TASK_COUNT, SLURM_ARRAY_TASK_MIN for now
                         slurm_array_params = [
                             "SLURM_ARRAY_TASK_ID",
                             "SLURM_ARRAY_TASK_MAX",
@@ -1147,7 +1150,7 @@ def main(args=None):
                         # pass variables into the Singularity/Apptainer container
                         container_command += "--env "
                         container_command += ",".join(
-                            [f"{p}=${{p}}" for p in slurm_array_params]
+                            [f"{p}=${p}" for p in slurm_array_params]
                         )
                         # add trailing space
                         container_command += " "
