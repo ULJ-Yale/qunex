@@ -761,12 +761,12 @@ for s = 1:list.nsessions
         if verbose; fprintf('         ... computed gbc maps\n'); end
 
         % ---> Embedd results (if group data is requested)
-
         if embed_data
             if first_subject
                 gbcmaps(n).title    = exsets(n).title;
                 gbcmaps(n).commands = command;
                 gbcmaps(n).subjects = {};
+                gbcmaps(n).gbc      = struct();
             end
             gbcmaps(n).subjects{s}  = subjectid;
             gbcmaps(n).gbc(s) = gbc;
