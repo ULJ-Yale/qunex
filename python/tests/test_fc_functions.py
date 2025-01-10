@@ -4,6 +4,7 @@ import os
 import tempfile
 import nibabel as nib
 import numpy as np
+import pandas as pd
 
 from datetime import datetime
 from general import matlab as gm
@@ -40,15 +41,28 @@ def _run_fc_function(command, ref_dir, output_subdir, args):
             nii_output = nib.load(output_file)
 
             assert np.array_equal(nii_ref.get_fdata(), nii_output.get_fdata())
-        elif file.endswith('.tsv', '', '.txt'):
+
+        elif file.endswith('') or file.endswith('.txt'):
             with open(ref_file, 'r') as f:
                 ref_data = f.readlines()
             with open(output_file, 'r') as f:
                 output_data = f.readlines()
 
+            # remove first line, because it contains the date
+            if ref_data[0].startswith('# Created by'):
+                ref_data = ref_data[1:]
+                output_data = output_data[1:]
+
             assert ref_data == output_data
 
-        assert np.array_equal(nii_test.get_fdata(), nii_tmp.get_fdata())
+        elif file.endswith('.tsv'):
+            df_ref = pd.read_csv(ref_file, sep='\t')
+            df_output = pd.read_csv(output_file, sep='\t')
+
+            assert df_ref.equals(df_output)
+
+        # elif file.endswith('.mat'): #TODO: check mat files
+
 
 def test_fc_compute_seedmaps_1():
     ref_dir = f'{REF_DATA_DIR}fc_compute_seedmaps/1'
