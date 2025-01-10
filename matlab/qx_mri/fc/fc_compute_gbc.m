@@ -779,7 +779,7 @@ for s = 1:list.nsessions
 
         if ~isempty(options.saveind)
 
-            if verbose; fprintf('     ... saving gcb\n'); end
+            if verbose; fprintf('     ... saving gbc\n'); end
 
             % set subjectname
             if strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder')
@@ -817,11 +817,11 @@ for s = 1:list.nsessions
                 if printdebug; fprintf(['\n             -> ' tfilename]); end
 
                 if ismember('z', options.saveind)
-                    % TODO -> compute and save z image
+                    % TODO: -> compute and save z image
                 end
 
                 if ismember('p', options.saveind)
-                    % TODO -> compute and save p image
+                    % TODO: -> compute and save p image
                 end
 
             end
