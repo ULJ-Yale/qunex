@@ -570,7 +570,12 @@ for s = 1:list.nsessions
 
     if ismember({'mat'}, options.saveind)
         if verbose; fprintf('         ... saving mat file'); end
-        save(indbasefilename, 'tsmat', '-v7.3');
+        try
+            save(indbasefilename, 'tsmat', '-v7.3');
+        catch
+            if verbose; fprintf(' ... failed to save using -v7.3. Using default format instead.'); end
+            save(indbasefilename, 'tsmat');
+        end
         if verbose; fprintf(' ... done\n'); end
     end
 
@@ -685,7 +690,12 @@ if ~isempty(options.savegroup) && verbose, fprintf('\n--------------------------
 
 if ismember({'mat'}, options.savegroup)
     if verbose; fprintf('... saving group mat file'); end
-    save([groupbasefilename '.mat'], 'tsset', '-v7.3');
+    try
+        save(indbasefilename, 'tsset', '-v7.3');
+    catch
+        if verbose; fprintf(' ... failed to save using -v7.3. Using default format instead.'); end
+        save(indbasefilename, 'tsset');
+    end
     if verbose; fprintf(' ... done\n'); end
 end
 
