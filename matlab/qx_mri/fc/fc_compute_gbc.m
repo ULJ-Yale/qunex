@@ -612,8 +612,6 @@ if ~isempty(options.saveind)
     end
 end
 
-options.saveind
-
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
 
