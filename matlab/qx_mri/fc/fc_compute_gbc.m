@@ -766,7 +766,7 @@ for s = 1:list.nsessions
                 gbcmaps(n).title    = exsets(n).title;
                 gbcmaps(n).commands = command;
                 gbcmaps(n).subjects = {};
-                gbcmaps(n).gbc      = struct();
+                gbcmaps(n).gbc      = nimage();
             end
             gbcmaps(n).subjects{s}  = subjectid;
             gbcmaps(n).gbc(s) = gbc;
