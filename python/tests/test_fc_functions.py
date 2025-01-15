@@ -17,6 +17,8 @@ if "QUNEXMCOMMAND" not in os.environ:
 else:
     mcommand = os.environ['QUNEXMCOMMAND']
 
+TOLERANCE = None  # tolerance for numerical comparisons between nii files
+
 PREPARE_REF_DATA = False  # set to True to prepare reference data
 REF_DATA_DIR = '../../qx_library/matlab_tests/'
 if PREPARE_REF_DATA:
@@ -38,10 +40,15 @@ def _run_fc_function(command, ref_dir, output_subdir, args):
         output_file = f'{output_subdir}/{file}'
         print(f'... checking {file}')
         if file.endswith('.nii') or file.endswith('.nii.gz'):
-            nii_ref = nib.load(ref_file)
-            nii_output = nib.load(output_file)
+            nii_ref = nib.load(ref_file).get_fdata()
+            nii_output = nib.load(output_file).get_fdata()
 
-            assert np.array_equal(nii_ref.get_fdata(), nii_output.get_fdata())
+            r = np.corrcoef(nii_ref.flatten(), nii_output.flatten())
+            print(f'    ... correlation between reference and output nii file: {r[0, 1]}')
+            if TOLERANCE is not None:
+                assert np.allclose(nii_ref, nii_output, atol=TOLERANCE)
+            else:
+                assert np.array_equal(nii_ref, nii_output, equal_nan=True)
 
         elif file.endswith('') or file.endswith('.txt'):
             with open(ref_file, 'r') as f:
