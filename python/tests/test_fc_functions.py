@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from datetime import datetime
+from pymatreader import read_mat
 from general import matlab as gm
 
 
@@ -61,7 +62,11 @@ def _run_fc_function(command, ref_dir, output_subdir, args):
 
             assert df_ref.equals(df_output)
 
-        # elif file.endswith('.mat'): #TODO: check mat files
+        elif file.endswith('.mat'):
+            mat_ref = read_mat(ref_file)
+            mat_output = read_mat(output_file)
+
+            assert mat_ref == mat_output
 
 
 def test_fc_compute_seedmaps_1():
