@@ -86,6 +86,7 @@ def test_fc_compute_seedmaps_1():
             'options': 'ignore:use|fcmeasure:r|savegroup:none|saveind:all_joint|saveindname:yes|itargetf:gfolder|verbose:true|debug:true'}
     _run_fc_function('fc_compute_seedmaps', ref_dir, output_subdir, args)
 
+
 def test_fc_compute_seedmaps_2():
     ref_dir = f'{REF_DATA_DIR}fc_compute_seedmaps/2'
     output_subdir = f'{OUTPUT_DIR}fc_compute_seedmaps/2'
@@ -95,6 +96,7 @@ def test_fc_compute_seedmaps_2():
             'targetf': output_subdir,
             'options': 'ignore:use|fcmeasure:r|savegroup:all|saveind:none|saveindname:yes|itargetf:gfolder|verbose:true|debug:true'}
     _run_fc_function('fc_compute_seedmaps', ref_dir, output_subdir, args)
+
 
 def test_fc_compute_seedmaps_3():
     ref_dir = f'{REF_DATA_DIR}fc_compute_seedmaps/3'
@@ -106,6 +108,7 @@ def test_fc_compute_seedmaps_3():
             'options': 'ignore:use|fcmeasure:cv|savegroup:mean_r,group_z|saveind:none|saveindname:yes|itargetf:gfolder|verbose:true|debug:true'}
     _run_fc_function('fc_compute_seedmaps', ref_dir, output_subdir, args)
 
+
 def test_fc_compute_roifc_1():
     ref_dir = f'{REF_DATA_DIR}fc_compute_roifc/1'
     output_subdir = f'{OUTPUT_DIR}fc_compute_roifc/1'
@@ -115,6 +118,7 @@ def test_fc_compute_roifc_1():
             'targetf': output_subdir,
             'options': 'ignore:use|fcmeasure:r|savegroup:mat,all_long,all_wide_single,all_wide_separate|saveind:long,wide_single,wide_separate,mat|savesessionid:yes|itargetf:gfolder|verbose:true|debug:true'}
     _run_fc_function('fc_compute_roifc', ref_dir, output_subdir, args)
+
 
 def test_fc_compute_roifc_2():
     ref_dir = f'{REF_DATA_DIR}fc_compute_roifc/2'
@@ -126,6 +130,7 @@ def test_fc_compute_roifc_2():
             'options': 'ignore:use|fcmeasure:cv|savegroup:all_long|saveind:long|savesessionid:true|itargetf:sfolder|verbose:true|debug:true'}
     _run_fc_function('fc_compute_roifc', ref_dir, output_subdir, args)
 
+
 def test_fc_extract_roi_timeseries_1():
     ref_dir = f'{REF_DATA_DIR}fc_extract_roi_timeseries/1'
     output_subdir = f'{OUTPUT_DIR}fc_extract_roi_timeseries/1'
@@ -135,6 +140,7 @@ def test_fc_extract_roi_timeseries_1():
             'targetf': output_subdir,
             'options': 'ignore:use|savegroup:mat,long,wide|saveind:long,wide,mat|savesessionid:yes|itargetf:gfolder|verbose:true|debug:true'}
     _run_fc_function('fc_extract_roi_timeseries', ref_dir, output_subdir, args)
+
 
 def test_fc_extract_roi_timeseries_2():
     ref_dir = f'{REF_DATA_DIR}fc_extract_roi_timeseries/2'
@@ -146,6 +152,7 @@ def test_fc_extract_roi_timeseries_2():
             'options': 'ignore:use|savegroup:long|saveind:long|savesessionid:true|itargetf:sfolder|verbose:true|debug:true'}
     _run_fc_function('fc_extract_roi_timeseries', ref_dir, output_subdir, args)
 
+
 def test_fc_extract_roi_timeseries_3():
     ref_dir = f'{REF_DATA_DIR}fc_extract_roi_timeseries/2'
     output_subdir = f'{OUTPUT_DIR}fc_extract_roi_timeseries/2'
@@ -156,6 +163,7 @@ def test_fc_extract_roi_timeseries_3():
             'targetf': output_subdir,
             'options': 'ignore:use|savegroup:none|saveind:ptseries|itargetf:gfolder|verbose:true|debug:true'}
     _run_fc_function('fc_extract_roi_timeseries', ref_dir, output_subdir, args)
+
 
 def test_fc_compute_gbc_1():
     # basic commands with direct use of fc results
@@ -170,6 +178,7 @@ def test_fc_compute_gbc_1():
             'command': 'mFc:0.2|aFc:0.1|pFc:0.15|nFc:-0.2|aD:0.5|pD:0.7|nD:-.6'}
     _run_fc_function('fc_compute_gbc', ref_dir, output_subdir, args)
 
+
 def test_fc_compute_gbc_2():
     # basic commands with transformation to Fz values
     ref_dir = f'{REF_DATA_DIR}fc_compute_gbc/2'
@@ -182,6 +191,7 @@ def test_fc_compute_gbc_2():
             'options': 'ignore:use|fcmeasure:r|savegroup:all|saveind:none|saveindname:yes|itargetf:gfolder|verbose:true|debug:false|time=true|step=48000',
             'command': 'mFz:0.2|aFz:0.1|pFz:0.15|nFz:-0.2'}
     _run_fc_function('fc_compute_gbc', ref_dir, output_subdir, args)
+
 
 def test_fc_compute_gbc_3():
     # whole brain
@@ -196,6 +206,7 @@ def test_fc_compute_gbc_3():
             'command': 'mFz:0.2|aFz:0.1|pFz:0.15|nFz:-0.2'}
     _run_fc_function('fc_compute_gbc', ref_dir, output_subdir, args)
 
+
 def test_fc_compute_gbc_4():
     # strength ranges with raw Fc values
     ref_dir = f'{REF_DATA_DIR}fc_compute_gbc/4'
@@ -209,6 +220,7 @@ def test_fc_compute_gbc_4():
             'command': 'mFcp:3|aFcp:4|mFcs:2|pFcs:3|nFcs:2|aFcs:3'}
     _run_fc_function('fc_compute_gbc', ref_dir, output_subdir, args)
 
+
 def test_fc_compute_gbc_5():
     # strength ranges with initial transformation to Fz values
     ref_dir = f'{REF_DATA_DIR}fc_compute_gbc/5'
@@ -221,6 +233,7 @@ def test_fc_compute_gbc_5():
             'options': 'ignore:use|fcmeasure:r|savegroup:none|saveind:all|saveindname:yes|itargetf:gfolder|verbose:true|debug:true',
             'command': 'mFzp:3|aFzp:4|mFzs:2|pFzs:3|nFzs:2|aFzs:3'}
     _run_fc_function('fc_compute_gbc', ref_dir, output_subdir, args)
+
 
 def test_fc_compute_gbc_6():
     # proportion within strength ranges
