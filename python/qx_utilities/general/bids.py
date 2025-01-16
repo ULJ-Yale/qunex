@@ -384,7 +384,7 @@ def import_bids(
 
         The study-level BIDS files are in::
 
-            <study_folder>/<info>/bids/<bidsname>
+            <studyfolder>/<info>/bids/<bidsname>
 
     Notes:
         The import_bids command consists of two steps:
@@ -401,7 +401,7 @@ def import_bids(
             The BIDS files assigned to the study will be saved in the
             following location::
 
-                <study_folder>/info/bids/<bids_dataset_name>
+                <studyfolder>/info/bids/<bids_dataset_name>
 
             <bids_dataset_name> can be provided as a `bidsname` parameter to
             the command call. If `bidsname` is not provided, the name will
@@ -411,7 +411,7 @@ def import_bids(
             The files identified as belonging to a specific session will be
             mapped to folder::
 
-                <sessions_folder>/<subject>_<session>/bids
+                <sessionsfolder>/<subject>_<session>/bids
 
             The `<subject>_<session>` string will be used as the identifier
             for the session in all the following steps. If no session is
@@ -558,7 +558,7 @@ def import_bids(
         "append": [],
         "bids": False,
     }
-    allOk = True
+    all_ok = True
     errors = ""
 
     inbox = os.path.abspath(inbox)
@@ -858,7 +858,7 @@ def import_bids(
                     )
                     status, msg = feedback
 
-                allOk = allOk and status
+                all_ok = all_ok and status
                 if not status:
                     errors += msg
 
@@ -1032,7 +1032,7 @@ def import_bids(
                     minfo = info + " image mapping completed"
                 else:
                     minfo = info + " image mapping failed"
-                    allOk = False
+                    all_ok = False
 
                 if bmapping:
                     minfo += ", behavioral files: "
@@ -1044,11 +1044,11 @@ def import_bids(
 
                     if bmapping["invalid"]:
                         binfo.append("%d files invalid" % (len(bmapping["invalid"])))
-                        # allOk = False
+                        # all_ok = False
                     minfo += ", ".join(binfo)
                 else:
                     minfo += ", behavior file mapping failed"
-                    # allOk = False
+                    # all_ok = False
 
                 report.append(minfo)
 
@@ -1057,7 +1057,7 @@ def import_bids(
     for line in report:
         print(line)
 
-    if not allOk:
+    if not all_ok:
         raise ge.CommandFailed(
             "import_bids", "Some actions failed", "Please check report!"
         )
@@ -1491,7 +1491,6 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
         )
 
     # --- process bids folder
-
     bidsData = processBIDS(bfolder)
 
     if session not in bidsData:
@@ -1513,7 +1512,6 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
         )
 
     # --- check for presence of nifti files
-
     if os.path.exists(nfolder):
         nfiles = len(glob.glob(os.path.join(nfolder, "*.nii*")))
         if nfiles > 0:
@@ -1548,8 +1546,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
     )
 
     # --- map files
-
-    allOk = True
+    all_ok = True
 
     for image in bidsData["images"]["list"]:
 
@@ -1612,7 +1609,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
                 file=bout,
             )
         else:
-            allOk = False
+            all_ok = False
             print(
                 "---> ERROR: Linking failed: %d.nii.gz <-- %s"
                 % (imgn, bidsData["images"]["info"][image]["filename"])
@@ -1663,12 +1660,12 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
                         ),
                     )
                 )
-                allOk = False
+                all_ok = False
 
     sout.close()
     bout.close()
 
-    if not allOk:
+    if not all_ok:
         raise ge.CommandFailed(
             "map_bids2nii",
             "Not all actions completed successfully!",
