@@ -94,7 +94,7 @@ if nargin < 1, error('ERROR: No files to extract the values from provided!');  e
 
 parcels = {};
 if starts_with(roif, 'parcels:')
-    parcels = strtrim(regexp(roif(9:end), ',', 'split'));    
+    parcels = strtrim(regexp(roif(9:end), ',', 'split'));
 end
 
 % --------------------------------------------------------------
@@ -123,7 +123,7 @@ elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
     parcels = t.cifti.parcels;
     for r = 1:length(parcels)
         roi.roi(r).roiname = parcels{r};
-        [~, roi.roi(r).roicode] = ismember(parcels{r}, y.cifti.parcels);
+        [~, roi.roi(r).roicode] = ismember(parcels{r}, t.cifti.parcels);
     end
 end
 nroi = length(roi.roi);
@@ -197,8 +197,8 @@ for s = 1:list.nsessions
                 stats(p).mean    = glm.data(parcel_index(p),:);
                 stats(p).N       = 1;
                 stats(p).sd      = zeros(1, glm.frames);
-                stats(p).se      = zeros(1, glm.frames);  
-            end          
+                stats(p).se      = zeros(1, glm.frames);
+            end
         else
             fprintf('WARNING: The glm file [%s] lacks some parcels (%s)! Skipping session [%s]', list.session(s).glm, strjoin(parcels(~ismember(parcels, glm.cifti.parcels)), ', '), list.session(s).id);
             continue
@@ -220,8 +220,8 @@ for s = 1:list.nsessions
     end
     if wtext
         for f = 1:nframes
-            % fprintf(wtext, '\n%s\t%s\t%s', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f));            
-            fprintf(wtext, '\n%s\t%s\t%d', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.frame(f));            
+            % fprintf(wtext, '\n%s\t%s\t%s', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f));
+            fprintf(wtext, '\n%s\t%s\t%d', list.session(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.frame(f));
             for r = 1:nroi
                 fprintf(wtext, '\t%.3f', stats(r).mean(f));
             end
