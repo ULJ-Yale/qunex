@@ -15,7 +15,7 @@ function [res] = img_save_nifti(img, filename, datatype, verbose)
 %
 %   OUTPUT
 %   ======
-%   
+%
 %   res
 %
 
@@ -87,13 +87,13 @@ switch img.imageformat
         if any(ismember(cifti_filetypes, strsplit(filename, '.')))
             img.filetype = cifti_filetypes{find(ismember(cifti_filetypes, strsplit(filename, '.')))};
         end
-            
+
         % --- if series create series information
-        if strfind(img.filetype, 'tseries') 
+        if strfind(img.filetype, 'tseries')
             try series_unit = img.cifti.metadata.diminfo{2}.seriesUnit; catch series_unit = 'SECOND'; end
             try series_start = img.cifti.metadata.diminfo{2}.seriesStart; catch series_start = 0; end
             img.cifti.metadata.diminfo{2} = cifti_diminfo_make_series(img.frames, series_start, img.TR, series_unit);
-            
+
         % --- if scalar or label create scalar information
         elseif any(strfind(img.filetype, 'scalar')) || any(strfind(img.filetype, 'label'))
             if length(img.cifti.maps) == img.frames
@@ -104,10 +104,10 @@ switch img.imageformat
                     map_names{imap} = sprintf('Map %d', imap);
                 end
                 img.cifti.metadata.diminfo{2} = cifti_diminfo_make_scalars(img.frames, map_names);
-            end        
+            end
         end
 
-        if strfind(img.filetype, 'label') 
+        if strfind(img.filetype, 'label')
             img.cifti.metadata.diminfo{2}.type = 'labels';
             for imap = 1:img.frames
                 img.cifti.metadata.diminfo{2}.maps(imap).table = img.cifti.labels{imap};
@@ -138,15 +138,17 @@ switch img.imageformat
 
         % -> add xml to metadata
 
-        cmeta = length(img.meta) + 1;
         if length(img.meta) > 0
             cmeta = find([img.meta.code] == 32);
-        end
-        if cmeta > 1
-            img.meta(cmeta) = string2meta(metaxml, 32);
+            if cmeta
+                img.meta(cmeta) = string2meta(metaxml, 32);
+            else
+                img.meta(end+1) = string2meta(metaxml, 32);
+            end
         else
             img.meta = string2meta(metaxml, 32);
         end
+
         % img.hdrnifti = hdrnifti; -> leave as is for the time (need to update rather than replace)
 
     otherwise
@@ -278,7 +280,6 @@ end
 
 
 % ---> save it
-
 nimage.img_save_nifti_mx(file, fhdr, img.data, metadata, img.hdrnifti.swapped == 1, verbose);
 
 
