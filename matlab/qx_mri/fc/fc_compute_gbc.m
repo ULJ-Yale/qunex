@@ -612,8 +612,6 @@ if ~isempty(options.saveind)
     end
 end
 
-options.saveind
-
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
 
@@ -763,12 +761,12 @@ for s = 1:list.nsessions
         if verbose; fprintf('         ... computed gbc maps\n'); end
 
         % ---> Embedd results (if group data is requested)
-
         if embed_data
             if first_subject
                 gbcmaps(n).title    = exsets(n).title;
                 gbcmaps(n).commands = command;
                 gbcmaps(n).subjects = {};
+                gbcmaps(n).gbc      = nimage();
             end
             gbcmaps(n).subjects{s}  = subjectid;
             gbcmaps(n).gbc(s) = gbc;
@@ -781,7 +779,7 @@ for s = 1:list.nsessions
 
         if ~isempty(options.saveind)
 
-            if verbose; fprintf('     ... saving gcb\n'); end
+            if verbose; fprintf('     ... saving gbc\n'); end
 
             % set subjectname
             if strcmp(options.savesessionid, 'true') || strcmp(options.savesessionid, 'yes') || strcmp(options.itargetf, 'gfolder')
@@ -819,11 +817,11 @@ for s = 1:list.nsessions
                 if printdebug; fprintf(['\n             -> ' tfilename]); end
 
                 if ismember('z', options.saveind)
-                    % TODO -> compute and save z image
+                    % TODO: -> compute and save z image
                 end
 
                 if ismember('p', options.saveind)
-                    % TODO -> compute and save p image
+                    % TODO: -> compute and save p image
                 end
 
             end

@@ -43,7 +43,7 @@ end
 idx = find(fmeta' == 60, 1);
 fmeta_str = char(fmeta(idx:end)');
 fmeta_bytes = uint8(fmeta_str);
-fmeta_str = fmeta_bytes(fmeta_bytes >= 32 & fmeta_bytes <= 127);
+fmeta_str = char(fmeta_bytes(fmeta_bytes >= 32 & fmeta_bytes <= 127));
 
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;

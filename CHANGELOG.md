@@ -6,6 +6,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.0.4 [QIO]
+
+* Added additional tests for MATLAB functions to reduce the probability of bugs on release.
+* Fixed a bug where QuNex metadata (glm and lists information) were not written when saving images.
+* Fixed a bug where `hcp_bold_dcmethod` set to `SiemensFieldMap` did not work.
+* `import_hcp` is now more flexible when it comes to Diffusion data.
+* Fixed a bug in `qunex_container` when using the SLURM job array.
+
 ## 1.0.3 [QIO]
 
 * Fixed a bug in `general_extract_glm_volumes` that did not detect the CIFTI version properly.
