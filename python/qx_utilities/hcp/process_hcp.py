@@ -213,7 +213,7 @@ def getHCPPaths(sinfo, options):
         "SiemensFieldMap",
         "PhilipsFieldMap",
         "GEHealthCareFieldMap",
-    ] or options["hcp_bold_dcmethod"] in ["SiemensFieldMap", "PhilipsFieldMap"]:
+    ] or options["hcp_bold_dcmethod"] in ["FIELDMAP", "SiemensFieldMap", "PhilipsFieldMap"]:
         fmapmag = glob.glob(
             os.path.join(
                 d["source"],
@@ -4562,7 +4562,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         if options["hcp_bold_dcmethod"] not in [
             "TOPUP",
             "FIELDMAP",
-            "SiemensFieldmap",
+            "SiemensFieldMap",
             "PhilipsFieldMap",
             "GEHealthCareFieldMap",
             "GEHealthCareLegacyFieldMap",
@@ -4686,7 +4686,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         if options["hcp_bold_dcmethod"] in [
             "TOPUP",
             "FIELDMAP",
-            "SiemensFieldmap",
+            "SiemensFieldMap",
             "PhilipsFieldMap",
             "GEHealthCareFieldMap",
             "GEHealthCareLegacyFieldMap",
@@ -4749,7 +4749,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             dcset = options["hcp_bold_dcmethod"] in [
                 "TOPUP",
                 "FIELDMAP",
-                "SiemensFieldmap",
+                "SiemensFieldMap",
                 "PhilipsFieldMap",
                 "GEHealthCareFieldMap",
                 "GEHealthCareLegacyFieldMap",
