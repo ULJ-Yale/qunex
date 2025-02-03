@@ -112,9 +112,9 @@ def root4dfp(filename):
     return filename
 
 
-def useOrSkipBOLD(sinfo, options, r=""):
+def use_or_skip_bold(sinfo, options, r=""):
     """
-    ``useOrSkipBOLD(sinfo, options, r="")``
+    ``use_or_skip_bold(sinfo, options, r="")``
 
     Internal function to determine which bolds to use and which to skip.
 
@@ -126,21 +126,21 @@ def useOrSkipBOLD(sinfo, options, r=""):
     --nskip  Number of bolds to skip.
     --r      Report.
 
-    Lists contain tuples with the following elements:
+    The two lists contain dictionaries with the original information and additional fields:
 
-    - the bold number as integer
-    - the numbered bold name (bold[N])
-    - the task tag (e.g. 'rest')
-    - the dictionary with all the info
+    - 'bold_number'  - the bold number as integer
+    - 'sequence_number'  - the sequence number as integer
     """
 
     bsearch = re.compile(r"bold([0-9]+)")
     btargets = [e.strip() for e in re.split(r" +|\||, *", options["bolds"])]
-    bolds = [
-        (int(bsearch.match(v["name"]).group(1)), v["name"], v["task"], v, k)
-        for (k, v) in sinfo.items()
-        if k.isdigit() and bsearch.match(v["name"])
-    ]
+
+    bolds = []
+    for k, v in sinfo.items():
+        if k.isdigit() and bsearch.match(v["name"]):
+            v['bold_number'] = int(bsearch.match(v["name"]).group(1))
+            v['sequence_number'] = k
+            bolds.append(v)
     bskip = []
     nbolds = len(bolds)
 
@@ -148,33 +148,19 @@ def useOrSkipBOLD(sinfo, options, r=""):
         keep = []
 
         # check bold number
-        keep += [n for n in range(nbolds) if str(bolds[n][0]) in btargets]
+        keep += [n for n in range(nbolds) if str(bolds[n]['bold_number']) in btargets]
 
-        # check bold 'bold[n]'
-        keep += [n for n in range(nbolds) if bolds[n][1] in btargets]
+        # check the listed fields if they exist and have values listed in btargets
+        for field in ["name", "task", "filename", "boldname", "ext", "ima"]:
+            keep += [n for n in range(nbolds) if bolds[n].get(field) in btargets]
 
-        # check bold tags
-        keep += [n for n in range(nbolds) if bolds[n][2] in btargets]
-
-        # check bold names if present
-        keep += [n for n in range(nbolds) if bolds[n][3].get("filename") in btargets]
-
-        # check bold names if present
-        keep += [n for n in range(nbolds) if bolds[n][3].get("boldname") in btargets]
-
-        # check sequence names
-        keep += [n for n in range(nbolds) if bolds[n][3].get("ext") in btargets]
-
-        # check sequence number
-        keep += [n for n in range(nbolds) if bolds[n][4] in btargets]
+        # check sequence number -> skipping this, as it can overlap with bold number
+        # keep += [n for n in range(nbolds) if bolds[n][4] in btargets]
 
         # determine keep and skip
         allb = set(range(nbolds))
         keep = set(keep)
         skip = allb.difference(keep)
-
-        # take out sequence number
-        bolds = [e[:4] for e in bolds]
 
         # set bolds and skips
 
@@ -182,57 +168,26 @@ def useOrSkipBOLD(sinfo, options, r=""):
         bolds = [bolds[i] for i in keep]
 
         # sort and report
-        bskip.sort()
+        bskip.sort(key=lambda x: x['bold_number'])
         if len(bskip) > 0:
             r += "\n\nSkipping the following BOLD images:"
-            for n, b, t, v in bskip:
-                if "filename" in v and options.get("hcp_filename", "") == "userdefined":
-                    r += "\n...  %-20s [%-6s %s]" % (v["filename"], b, t)
-                elif (
-                    "boldname" in v and options.get("hcp_filename", "") == "userdefined"
-                ):
-                    r += "\n...  %-20s [%-6s %s]" % (v["boldname"], b, t)
+            for binfo in bskip:
+                if "filename" in binfo and options.get("hcp_filename", "") == "userdefined":
+                    r += "\n...  {filename:<20} [{name:<6} {task}]".format(**binfo)
+                elif ("boldname" in binfo and options.get("hcp_filename", "") == "userdefined"):
+                    r += "\n...  {boldname:<20} [{name:<6} {task}]".format(**binfo)
                 else:
-                    r += "\n...  %-6s [%s]" % (b, t)
+                    r += "\n...  {name:<6} [{task}]".format(**binfo)
             r += "\n"
-    else:
-        # take out sequence number
-        bolds = [e[:4] for e in bolds]
 
-    bolds.sort()
+    bolds.sort(key=lambda x: x['bold_number'])
 
     # if bolds have boldname (legacy) and not filename, copy boldname to filename
-    for b in bolds:
-        if "filename" not in b[3] and "boldname" in b[3]:
-            b[3]["filename"] = b[3]["boldname"]
+    for b in range(len(bolds)):
+        if "filename" not in bolds[b] and "boldname" in bolds[b]:
+            bolds[b]["filename"] = bolds[b]["boldname"]
 
     return bolds, bskip, len(bskip), r
-
-
-def _filter_bolds(bolds, bolds_filter):
-    """
-    An internal function for filtering a list of bolds.
-
-    A list of bolds is filter according to the filter parameter.
-    """
-
-    # prepare filter
-    filters = [e.strip() for e in re.split(r" +|\||, *", bolds_filter)]
-
-    # used bolds storage
-    used_bolds = []
-
-    for b in bolds:
-        # extract bold info
-        _, _, _, boldinfo = b
-
-        # check filters
-        for f in filters:
-            if f == boldinfo["ima"] or f == boldinfo["name"] or f == boldinfo["task"]:
-                used_bolds.append(b)
-                break
-
-    return used_bolds
 
 
 def doOptionsCheck(options, sinfo, command):

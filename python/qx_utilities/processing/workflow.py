@@ -307,7 +307,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         % (ostatus)
     )
 
-    bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+    bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
 
     parelements = options["parelements"]
     r += "\nProcessing %d BOLDs in parallel" % (parelements)
@@ -354,21 +354,18 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], rstatus, report["boldmissing"] + report["boldfail"]))
 
 
-def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
-    # extract data
-    boldnum = boldData[0]
-    boldname = boldData[1]
+def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
 
     # prepare return variables
     r = ""
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    r += "\n\nWorking on: " + boldname
+    r += "\n\nWorking on: " + boldinfo['name']
 
     try:
         # --- filenames
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
 
         # template file
         templatefile = f["bold_template"]
@@ -427,9 +424,9 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
                 overwrite=overwrite,
                 remove=options["log"] == "remove",
                 thread=sinfo["id"],
-                task="FlipFormat" % (boldnum),
+                task="FlipFormat" % (boldinfo['bold_number']),
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
                 r=r,
                 verbose=False,
             )
@@ -447,7 +444,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
                 remove=options["log"] == "remove",
                 thread=sinfo["id"],
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
                 r=r,
                 verbose=False,
             )
@@ -471,7 +468,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
                 thread=sinfo["id"],
                 task="bet",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
                 r=r,
                 verbose=False,
             )
@@ -492,7 +489,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
                 thread=sinfo["id"],
                 task="gunzip",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
                 r=r,
                 verbose=False,
             )
@@ -510,7 +507,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
                 thread=sinfo["id"],
                 task="gunzip",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
                 r=r,
                 verbose=False,
             )
@@ -529,7 +526,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
                 thread=sinfo["id"],
                 task="FlipFormat",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
                 r=r,
                 verbose=False,
             )
@@ -548,7 +545,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
                 thread=sinfo["id"],
                 task="FlipFormat",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
                 r=r,
                 verbose=False,
             )
@@ -625,7 +622,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = "%s_create_bold_brain_masks_B%s_%s_%s.log" % (
         log_prefix,
-        boldnum,
+        boldinfo['bold_number'],
         sinfo["id"],
         logstamp,
     )
@@ -892,7 +889,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         % (ostatus)
     )
 
-    bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+    bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
 
     parelements = options["parelements"]
     r += "\nProcessing %d BOLDs in parallel" % (parelements)
@@ -940,22 +937,19 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], rstatus, report["boldmissing"] + report["boldfail"]))
 
 
-def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
-    # extract data
-    boldnum = boldData[0]
-    boldname = boldData[1]
+def executeComputeBOLDStats(sinfo, options, overwrite, boldinfo):
 
     # prepare return variables
     r = ""
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    r += "\n\nWorking on: " + boldname + " ..."
+    r += "\n\nWorking on: " + boldinfo['name'] + " ..."
 
     try:
         # --- filenames
 
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
         d = pc.getSessionFolders(sinfo, options)
 
         # --- check for data availability
@@ -1020,7 +1014,7 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
             remove=options["log"] == "remove",
             task=options["command_ran"],
             logfolder=options["comlogs"],
-            logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+            logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
             r=r,
             shell=True,
         )
@@ -1350,15 +1344,15 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
         r += "\n\nChecking for data in %s." % (d["s_bold_mov"])
 
-        bolds, bskip, preport["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, preport["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
 
-        for boldnum, boldname, boldtask, boldinfo in bolds:
-            r += "\n\nWorking on: " + boldname + " ..."
+        for boldinfo in bolds:
+            r += "\n\nWorking on: " + boldinfo['name'] + " ..."
 
             try:
                 # --- filenames
                 f = pc.getFileNames(sinfo, options)
-                f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+                f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
 
                 # --- check for data availability
 
@@ -1399,7 +1393,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
                 # --- check
                 if status:
-                    procbolds.append(boldnum)
+                    procbolds.append(boldinfo['bold_number'])
                     preport["boldok"] += 1
                 else:
                     r += "\n---> ERROR: Files missing, skipping this bold run!"
@@ -1788,7 +1782,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         % (ostatus)
     )
 
-    bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+    bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
 
     parelements = options["parelements"]
     r += "\nProcessing %d BOLDs in parallel" % (parelements)
@@ -1836,21 +1830,18 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], rstatus, report["boldmissing"] + report["boldfail"]))
 
 
-def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
-    # extract data
-    boldnum = boldData[0]
-    boldname = boldData[1]
+def executeExtractNuisanceSignal(sinfo, options, overwrite, boldinfo):
 
     # prepare return variables
     r = ""
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    r += "\n\nWorking on: " + boldname + " ..."
+    r += "\n\nWorking on: " + boldinfo['name'] + " ..."
 
     try:
         # --- filenames
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
         d = pc.getSessionFolders(sinfo, options)
 
         # --- check for data availability
@@ -1939,7 +1930,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
             remove=options["log"] == "remove",
             task=options["command_ran"],
             logfolder=options["comlogs"],
-            logtags=[options["bold_variant"], options["logtag"], "B%d" % boldnum],
+            logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
             r=r,
             shell=True,
         )
@@ -1998,7 +1989,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         <sessionsfolder>/inbox/events folder. In that case the "<session id>_"
         is not optional but required.
 
-        The --bold_actions parameter specifies the actions, denoted by a single 
+        The --bold_actions parameter specifies the actions, denoted by a single
         letter, that will be executed in the sequence listed:
 
         --m
@@ -2210,21 +2201,21 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             and TR.
 
             Filtering of nuisance signal, movement, task, and events
-            Besides data, nuisance signal, motion parameters, and event 
+            Besides data, nuisance signal, motion parameters, and event
             regressors can be filtered as well. What to filter beside data can
-            be specified by a comma separated list using the following 
+            be specified by a comma separated list using the following
             parameters:
-            
+
             --hipass_do (str, default 'nuisance')
-                What to high-pass filter besides data – options are: nuisance, 
+                What to high-pass filter besides data – options are: nuisance,
                 movement, events, task. Default is 'nuisance'.
- 
+
             --lopass_do (str, default 'nuisance,movement,task,events')
-                What to lo-pass filter besides data – options are: nuisance, 
-                movement, events, task. Default is 'nuisance, movement, task, 
+                What to lo-pass filter besides data – options are: nuisance,
+                movement, events, task. Default is 'nuisance, movement, task,
                 events'.
-            
-            Note that 'events' refers to regressors created based on events 
+
+            Note that 'events' refers to regressors created based on events
             as specified in the fidl file, whereas 'task' refers to a task
             matrix that is passed directy in the matlab function call.
 
@@ -2449,8 +2440,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         "skipped": [],
     }
 
-    bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
-    report["skipped"] = [str(n) for n, b, t, v in bskip]
+    bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+    report["skipped"] = [str(binfo['bold_number']) for binfo in bskip]
 
     parelements = options["parelements"]
     r += "\nProcessing %d BOLDs in parallel" % (parelements)
@@ -2528,18 +2519,15 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], rstatus, len(report["not ready"]) + len(report["failed"])))
 
 
-def executePreprocessBold(sinfo, options, overwrite, boldData):
-    # extract data
-    boldnum = boldData[0]
-    boldname = boldData[1]
+def executePreprocessBold(sinfo, options, overwrite, boldinfo):
 
     # prepare return variables
     r = ""
     report = {"done": [], "processed": [], "failed": [], "ready": [], "not ready": []}
 
-    boldnum = str(boldnum)
+    boldnum = str(boldinfo['bold_number'])
 
-    r += "\n\nWorking on: " + boldname + " ..."
+    r += "\n\nWorking on: " + boldinfo['name'] + " ..."
 
     try:
         # --- define the tail
@@ -2551,7 +2539,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
         # --- filenames and folders
 
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
         d = pc.getSessionFolders(sinfo, options)
 
         # --- check for data availability
@@ -2869,7 +2857,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
         `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_"
         in the \*.fidl and \*.conc file name is not optional but required.
 
-        The --bold_actions parameter specifies the actions, denoted by a single 
+        The --bold_actions parameter specifies the actions, denoted by a single
         letter, that will be executed in the sequence listed:
 
         --m     Motion scrubbing.
@@ -3086,21 +3074,21 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             and TR.
 
             Filtering of nuisance signal, movement, task, and events
-            Besides data, nuisance signal, motion parameters, and event 
+            Besides data, nuisance signal, motion parameters, and event
             regressors can be filtered as well. What to filter beside data can
-            be specified by a comma separated list using the following 
+            be specified by a comma separated list using the following
             parameters:
-            
+
             --hipass_do (str, default 'nuisance')
-                What to high-pass filter besides data – options are: nuisance, 
+                What to high-pass filter besides data – options are: nuisance,
                 movement, events, task. Default is 'nuisance'.
- 
+
             --lopass_do (str, default 'nuisance,movement,task,events')
-                What to lo-pass filter besides data – options are: nuisance, 
-                movement, events, task. Default is 'nuisance, movement, task, 
+                What to lo-pass filter besides data – options are: nuisance,
+                movement, events, task. Default is 'nuisance, movement, task,
                 events'.
-            
-            Note that 'events' refers to regressors created based on events 
+
+            Note that 'events' refers to regressors created based on events
             as specified in the fidl file, whereas 'task' refers to a task
             matrix that is passed directy in the matlab function call.
 

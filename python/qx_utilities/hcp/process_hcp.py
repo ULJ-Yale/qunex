@@ -89,6 +89,37 @@ PEDirMap = {
 }
 SEDirMap = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
 
+# ------------------------------------------------------------------------------
+#                                                              Support functions
+
+def _build_skipped_report(report, skipped, options):
+    """
+    Function builds the skipped report based on the skipped list and the
+    hcp_filename option setting.
+    """
+    if report["boldskipped"]:
+        if options["hcp_filename"] == "userdefined":
+            report["skipped"] = [
+                binfo.get("filename", str(binfo['bold_number'])) for binfo in skipped
+            ]
+        else:
+            report["skipped"] = [str(binfo['bold_number']) for binfo in skipped]
+
+
+def _get_bold_names(boldinfo, options):
+
+    if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
+        printbold = boldinfo["filename"]
+        boldtarget = boldinfo["filename"]
+        boldsource = boldinfo["filename"]
+    else:
+        printbold = str(boldinfo["bold_number"])
+        boldsource = "BOLD_%d" % (boldinfo["bold_number"])
+        boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+
+    return printbold, boldtarget, boldsource
+
+
 # -------------------------------------------------------------------
 #
 #                       HCP Pipeline Scripts
@@ -4701,7 +4732,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             unwarpdirs = {"default": ""}
 
         # --- Get sorted bold numbers
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
         if len(bolds) == 0:
             r += (
                 "\n---> ERROR: No BOLD images found for session %s! Check your data or the contents of the batch file."
@@ -4709,29 +4740,16 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        _build_skipped_report(report, bskip, options)
 
         # --- Preprocess
         boldsData = []
 
         if bolds:
-            firstSE = bolds[0][3].get("se", None)
+            firstSE = bolds[0].get("se", None)
 
-        for bold, boldname, boldtask, boldinfo in bolds:
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                printbold = boldinfo["filename"]
-                boldsource = boldinfo["filename"]
-                boldtarget = boldinfo["filename"]
-            else:
-                printbold = str(bold)
-                boldsource = "BOLD_%d" % (bold)
-                boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+        for boldinfo in bolds:
+            printbold, boldtarget, boldsource = _get_bold_names(boldinfo, options)
 
             r += "\n\n---> %s BOLD %s" % (
                 pc.action(
@@ -4852,7 +4870,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         spinN = int(boldinfo["se"])
                     else:
                         for sen in sepresent:
-                            if sen <= bold:
+                            if sen <= boldinfo["bold_number"]:
                                 spinN = sen
                             elif not spinN:
                                 spinN = sen
@@ -5836,7 +5854,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # --- Get sorted bold numbers
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
         if len(bolds) == 0:
             r += (
                 "\n---> ERROR: No BOLD images found for session %s! Check your data or the contents of the batch file."
@@ -5844,13 +5862,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        _build_skipped_report(report, bskip, options)
 
         parelements = max(1, min(options["parelements"], len(bolds)))
         r += "\n%s %d BOLD images in parallel" % (
@@ -5926,18 +5938,9 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
-    # extract data
-    bold, boldname, task, boldinfo = boldData
+def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
 
-    if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-        printbold = boldinfo["filename"]
-        _ = boldinfo["filename"]
-        boldtarget = boldinfo["filename"]
-    else:
-        printbold = str(bold)
-        _ = "BOLD_%d" % (bold)
-        boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -6101,17 +6104,10 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
     boldtargets = []
     boldtags = []
 
-    for b in bolds:
-        # extract data
-        printbold, _, _, boldinfo = b
+    for boldinfo in bolds:
 
-        if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-            boldtarget = boldinfo["filename"]
-            boldtag = boldinfo["task"]
-        else:
-            printbold = str(printbold)
-            boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
-            boldtag = boldinfo["task"]
+        _, boldtarget, _ = _get_bold_names(boldinfo, options)
+        boldtag = boldinfo["task"]
 
         boldtargets.append(boldtarget)
         boldtags.append(boldtag)
@@ -6537,14 +6533,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+        _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, pars_ok, r = parse_icafix_bolds(
@@ -6700,16 +6690,9 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
-    # extract data
-    printbold, _, _, boldinfo = bold
+def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
 
-    if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-        printbold = boldinfo["filename"]
-        boldtarget = boldinfo["filename"]
-    else:
-        printbold = str(printbold)
-        boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -6832,7 +6815,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                         and report["not ready"] == []
                     ):
                         result = executeHCPPostFix(
-                            sinfo, options, overwrite, hcp, run, True, bold
+                            sinfo, options, overwrite, hcp, run, True, boldinfo
                         )
                         r += result["r"]
                         report = result["report"]
@@ -6898,19 +6881,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         boldimgs = ""
 
         # check if files for all bolds exist
-        for b in bolds:
+        for boldinfo in bolds:
             # set ok to true for now
             boldok = True
 
-            # extract data
-            printbold, _, _, boldinfo = b
-
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                printbold = boldinfo["filename"]
-                boldtarget = boldinfo["filename"]
-            else:
-                printbold = str(printbold)
-                boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+            _, boldtarget, _ = _get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
@@ -7335,14 +7310,8 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+        _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, pars_ok, r = parse_icafix_bolds(
@@ -7450,7 +7419,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
+def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
     # prepare return variables
     r = ""
     report = {
@@ -7473,14 +7442,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             else options["hcp_icafix_highpass"]
         )
 
-        printbold, _, _, boldinfo = bold
-
-        if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-            printbold = boldinfo["filename"]
-            boldtarget = boldinfo["filename"]
-        else:
-            printbold = str(printbold)
-            boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+        printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
@@ -7497,8 +7459,8 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             else options["hcp_icafix_highpass"]
         )
 
-        printbold = bold
-        boldtarget = bold
+        printbold = boldinfo
+        boldtarget = boldinfo
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
@@ -7827,14 +7789,8 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+        _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, pars_ok, r = parse_icafix_bolds(
@@ -7969,16 +7925,9 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPSingleReApplyFix(sinfo, options, hcp, run, bold):
-    # extract data
-    printbold, _, _, boldinfo = bold
+def executeHCPSingleReApplyFix(sinfo, options, hcp, run, boldinfo):
 
-    if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-        printbold = boldinfo["filename"]
-        boldtarget = boldinfo["filename"]
-    else:
-        printbold = str(printbold)
-        boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -8188,19 +8137,11 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
         boldtargets = ""
 
         # check if files for all bolds exist
-        for b in bolds:
+        for boldinfo in bolds:
             # boldok
             boldok = True
 
-            # extract data
-            printbold, _, _, boldinfo = b
-
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                printbold = boldinfo["filename"]
-                boldtarget = boldinfo["filename"]
-            else:
-                printbold = str(printbold)
-                boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+            printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
@@ -8794,14 +8735,8 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+        _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
         singleRun, msmallGroup, pars_ok, r = parse_msmall_bolds(options, bolds, r)
@@ -8935,19 +8870,11 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             fmriprocstring = options["hcp_msmall_procstring"]
 
         # check if files for all bolds exist
-        for b in bolds:
+        for boldinfo in bolds:
             # set ok to true for now
             boldok = True
 
-            # extract data
-            printbold, _, _, boldinfo = b
-
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                printbold = boldinfo["filename"]
-                boldtarget = boldinfo["filename"]
-            else:
-                printbold = str(printbold)
-                boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+            printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -9149,19 +9076,11 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             fmriprocstring = options["hcp_msmall_procstring"]
 
         # check if files for all bolds exist
-        for b in bolds:
+        for boldinfo in bolds:
             # set ok to true for now
             boldok = True
 
-            # extract data
-            printbold, _, _, boldinfo = b
-
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                printbold = boldinfo["filename"]
-                boldtarget = boldinfo["filename"]
-            else:
-                printbold = str(printbold)
-                boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+            _, boldtarget, _ = _get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -9548,14 +9467,8 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+        _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
         singleRun, icafixBolds, dedriftGroups, pars_ok, r = parse_icafix_bolds(
@@ -9665,19 +9578,11 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
         )
 
         # check if files for all bolds exist
-        for b in bolds:
+        for boldinfo in bolds:
             # set ok to true for now
             boldok = True
 
-            # extract data
-            printbold, _, _, boldinfo = b
-
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                printbold = boldinfo["filename"]
-                boldtarget = boldinfo["filename"]
-            else:
-                printbold = str(printbold)
-                boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+            _, boldtarget, _ = _get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -9925,16 +9830,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             # for storing bolds
             groupbolds = ""
 
-            for b in bolds:
-                # extract data
-                printbold, _, _, boldinfo = b
+            for boldinfo in bolds:
 
-                if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                    printbold = boldinfo["filename"]
-                    boldtarget = boldinfo["filename"]
-                else:
-                    printbold = str(printbold)
-                    boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+                _, boldtarget, _ = _get_bold_names(boldinfo, options)
 
                 # input file check
                 boldimg = os.path.join(
@@ -11026,10 +10924,9 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 else:
                     r += "\n---> Setting hcp_pt_fmri_names automatically"
                     # --- Get sorted bold numbers and bold data
-                    bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
+                    bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
                     pt_fmri_names = []
-                    for bold in bolds:
-                        printbold, _, _, boldinfo = bold
+                    for boldinfo in bolds:
                         if (
                             "filename" in boldinfo
                             and options["hcp_filename"] == "userdefined"
@@ -11037,7 +10934,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                             pt_fmri_names.append(boldinfo["filename"])
                         else:
                             pt_fmri_names.append(
-                                f"{options['hcp_bold_prefix']}{printbold}"
+                                f"{options['hcp_bold_prefix']}{boldinfo['bold_number']}"
                             )
 
                     if len(pt_fmri_names) == 0:
@@ -11600,7 +11497,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         sinfo = sessions[0]
 
         # get sorted bold numbers and bold data
-        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
+        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
 
         # mandatory parameters
         # hcp_tica_bolds
@@ -12440,14 +12337,8 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
-        if report["boldskipped"]:
-            if options["hcp_filename"] == "userdefined":
-                report["skipped"] = [
-                    bi.get("filename", str(bn)) for bn, bnm, bt, bi in bskip
-                ]
-            else:
-                report["skipped"] = [str(bn) for bn, bnm, bt, bi in bskip]
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+        _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
         single_fix, icafix_bolds, icafix_groups, pars_ok, r = parse_icafix_bolds(
@@ -12599,19 +12490,11 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
         boldimgs = ""
 
         # check if files for all bolds exist
-        for b in bolds:
+        for boldinfo in bolds:
             # set ok to true for now
             boldok = True
 
-            # extract data
-            printbold, _, _, boldinfo = b
-
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                printbold = boldinfo["filename"]
-                boldtarget = boldinfo["filename"]
-            else:
-                printbold = str(printbold)
-                boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+            _, boldtarget, _ = _get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
@@ -13386,7 +13269,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     report["boldfail"] = 0
     report["boldskipped"] = 0
 
-    bolds, skipped, report["boldskipped"], r = pc.useOrSkipBOLD(sinfo, options, r)
+    bolds, skipped, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
 
     # add additional BOLDS
     if options["additional_bolds"] is not None:
@@ -13394,27 +13277,27 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         additional_bolds = options["additional_bolds"].split(",")
         boldnum = len(bolds) + 1
         for ab in additional_bolds:
-            bolds.append((boldnum, ab, "additional_bold", {"bold": ab, "filename": ab}))
+            bolds.append({"bold": ab, "filename": ab, 'bold_number': boldnum, 'name': ab, 'task': 'additional_bold'})
             boldnum += 1
 
-    for boldnum, boldname, boldtask, boldinfo in bolds:
-        r += "\n ... " + boldname
+    for boldinfo in bolds:
+        r += "\n ... " + boldinfo['name']
 
         # --- filenames
-        if boldtask != "additional_bold":
-            f.update(pc.getBOLDFileNames(sinfo, boldname, options))
+        if boldinfo['task'] != "additional_bold":
+            f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
         else:
             d = pc.getSessionFolders(sinfo, options)
 
             f["bold_qx_vol"] = os.path.join(
                 d["s_bold"],
-                boldname + options["qx_nifti_tail"] + ".nii.gz",
+                boldinfo['name'] + options["qx_nifti_tail"] + ".nii.gz",
             )
             f["bold_qx_dts"] = os.path.join(
                 d["s_bold"],
-                boldname + options["qx_cifti_tail"] + ".dtseries.nii",
+                boldinfo['name'] + options["qx_cifti_tail"] + ".dtseries.nii",
             )
-            f["bold_mov"] = os.path.join(d["s_bold_mov"], boldname + "_mov.dat")
+            f["bold_mov"] = os.path.join(d["s_bold_mov"], boldinfo['name'] + "_mov.dat")
 
         status = True
         hcp_bold_name = ""
@@ -13426,7 +13309,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             elif "bold" in boldinfo:
                 hcp_bold_name = boldinfo["bold"]
             else:
-                hcp_bold_name = "%s%d" % (options["hcp_bold_prefix"], boldnum)
+                hcp_bold_name = "%s%d" % (options["hcp_bold_prefix"], boldinfo["bold_number"])
 
             # -- check if present and map
             hcp_bold_path = os.path.join(
@@ -13445,7 +13328,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             else:
                 if os.path.exists(f["bold_qx_vol"]) and not overwrite:
                     r += "\n     ... volume image ready"
-                elif boldtask == "additional_bold" and not os.path.exists(
+                elif boldinfo['task'] == "additional_bold" and not os.path.exists(
                     hcp_bold_path
                 ):
                     r += f"\n     ... WARNING: additional bold source does not exist: {f['bold_vol']}"
@@ -13503,7 +13386,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 print(mline.replace(" -", "-"), file=mfile)
                         mfile.close()
                         r += "\n     ... movement data prepared"
-                    elif boldtask == "additional_bold":
+                    elif boldinfo['task'] == "additional_bold":
                         r += (
                             "\n     ... WARNING: could not prepare movement data for the additional bold, source does not exist: %s"
                             % os.path.join(hcp_bold_path, movement_regressors)
@@ -13541,11 +13424,11 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             "\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n"
             % (options["bolds"])
         )
-        for boldnum, boldname, boldtask, boldinfo in skipped:
+        for boldinfo in skipped:
             if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                r += "\n ... %s [task: '%s']" % (boldinfo["filename"], boldtask)
+                r += "\n ... %s [task: '%s']" % (boldinfo["filename"], boldinfo['task'])
             else:
-                r += "\n ... %s [task: '%s']" % (boldname, boldtask)
+                r += "\n ... %s [task: '%s']" % (boldinfo['name'], boldinfo['task'])
 
     r += (
         "\n\nHCP data mapping completed on %s\n------------------------------------------------------------\n"
