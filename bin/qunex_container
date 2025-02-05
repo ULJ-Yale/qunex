@@ -810,8 +810,13 @@ def main(args=None):
             elif arg.startswith("sessionids"):
                 k, sessionids = arg.split("=", 1)
             elif arg.startswith("overwrite"):
-                k, overwrite = arg.split("=", 1)
-                command += f"--{arg} "
+                overwrite = arg.split("=", 1)
+                if len(overwrite) == 1:
+                    overwrite = "yes"
+                    command += "--overwrite "
+                else:
+                    overwrite = overwrite[1]
+                    command += f"--overwrite={overwrite} "
             elif arg == "nocleanenv":
                 nocleanenv = True
             elif arg == "cuda":
@@ -857,7 +862,7 @@ def main(args=None):
         and qx_command in commands_blacklist
     ):
         print(
-            "ERROR: Parallel execution of this command is not supported when overwrite is set to yes!"
+            "ERROR: Parallel execution of this command is not supported when overwrite is set!"
         )
         exit(1)
 
