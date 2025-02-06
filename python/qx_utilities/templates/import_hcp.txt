@@ -1,6 +1,6 @@
 {
     "files": {
-        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap", "mbPCASLhr", "ASL", "B1"],
+        "label": ["T1w", "T2w", "rfMRI", "tfMRI", "dMRI", "DWI", "SpinEchoFieldMap", "DistortionMap", "mbPCASLhr", "ASL", "B1"],
         "T1w": {
             "info":  [],
         },
@@ -22,6 +22,9 @@
         "SpinEchoFieldMap": {
             "info":  ["phenc"]
         },
+        "DistortionMap": {
+            "info":  ["phenc"]
+        },
         "mbPCASLhr": {
             "info":  []
         },
@@ -39,6 +42,10 @@
                         ["SpinEchoFieldMap", "PA"],
                         ["SpinEchoFieldMap", "LR"],
                         ["SpinEchoFieldMap", "RL"],
+                        ["DistortionMap", "AP"],
+                        ["DistortionMap", "PA"],
+                        ["DistortionMap", "LR"],
+                        ["DistortionMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
                         ["T1w"],
@@ -54,6 +61,10 @@
                         ["SpinEchoFieldMap", "PA"],
                         ["SpinEchoFieldMap", "LR"],
                         ["SpinEchoFieldMap", "RL"],
+                        ["DistortionMap", "AP"],
+                        ["DistortionMap", "PA"],
+                        ["DistortionMap", "LR"],
+                        ["DistortionMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
                         ["T2w"]
@@ -66,6 +77,10 @@
                         ["SpinEchoFieldMap", "PA"],
                         ["SpinEchoFieldMap", "LR"],
                         ["SpinEchoFieldMap", "RL"],
+                        ["DistortionMap", "AP"],
+                        ["DistortionMap", "PA"],
+                        ["DistortionMap", "LR"],
+                        ["DistortionMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
                         ["rfMRI", "SBRef"],
@@ -79,6 +94,10 @@
                         ["SpinEchoFieldMap", "PA"],
                         ["SpinEchoFieldMap", "LR"],
                         ["SpinEchoFieldMap", "RL"],
+                        ["DistortionMap", "AP"],
+                        ["DistortionMap", "PA"],
+                        ["DistortionMap", "LR"],
+                        ["DistortionMap", "RL"],
                         ["FieldMap", "Magnitude"],
                         ["FieldMap", "Phase"],
                         ["tfMRI", "SBRef"],
@@ -104,6 +123,22 @@
                         ["DWI",  "dir", "LR", "-SBRef"],
                         ["DWI",  "dir", "RL", "SBRef"],
                         ["DWI",  "dir", "RL", "-SBRef"],
+                        ["dMRI", "b0", "AP", "SBRef"],
+                        ["dMRI", "b0", "AP", "-SBRef"],
+                        ["dMRI", "b0", "PA", "SBRef"],
+                        ["dMRI", "b0", "PA", "-SBRef"],
+                        ["dMRI", "b0", "LR", "SBRef"],
+                        ["dMRI", "b0", "LR", "-SBRef"],
+                        ["dMRI", "b0", "RL", "SBRef"],
+                        ["dMRI", "b0", "RL", "-SBRef"],
+                        ["DWI",  "b0", "AP", "SBRef"],
+                        ["DWI",  "b0", "AP", "-SBRef"],
+                        ["DWI",  "b0", "PA", "SBRef"],
+                        ["DWI",  "b0", "PA", "-SBRef"],
+                        ["DWI",  "b0", "LR", "SBRef"],
+                        ["DWI",  "b0", "LR", "-SBRef"],
+                        ["DWI",  "b0", "RL", "SBRef"],
+                        ["DWI",  "b0", "RL", "-SBRef"],
                     ]
         },
         "mbPCASLhr": {
@@ -111,6 +146,12 @@
             "check": [
                         ["SpinEchoFieldMap", "AP"],
                         ["SpinEchoFieldMap", "PA"],
+                        ["SpinEchoFieldMap", "LR"],
+                        ["SpinEchoFieldMap", "RL"],
+                        ["DistortionMap", "AP"],
+                        ["DistortionMap", "PA"],
+                        ["DistortionMap", "LR"],
+                        ["DistortionMap", "RL"],
                         ["mbPCASLhr"]
                       ]
         },
@@ -119,6 +160,12 @@
             "check": [
                         ["SpinEchoFieldMap", "AP"],
                         ["SpinEchoFieldMap", "PA"],
+                        ["SpinEchoFieldMap", "LR"],
+                        ["SpinEchoFieldMap", "RL"],
+                        ["DistortionMap", "AP"],
+                        ["DistortionMap", "PA"],
+                        ["DistortionMap", "LR"],
+                        ["DistortionMap", "RL"],
                         ["ASL"]
                       ]
         },

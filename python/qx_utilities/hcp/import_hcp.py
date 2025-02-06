@@ -816,11 +816,11 @@ def processHCPLS(sessionfolder, filesort):
             files = [e for e in files if exclude not in e]
 
         # --- Proces spin echo files
-        sefile = [e for e in files if "SpinEchoFieldMap" in e]
+        sefile = [e for e in files if ("SpinEchoFieldMap" in e or "DistortionMap" in e)]
         if sefile:
-            senum = [e for e in sefile[0].split("_") if "SpinEchoFieldMap" in e][
+            senum = [e for e in sefile[0].split("_") if ("SpinEchoFieldMap" in e or "DistortionMap" in e)][
                 0
-            ].replace("SpinEchoFieldMap", "")
+            ].replace("SpinEchoFieldMap", "").replace("DistortionMap", "")
             if senum:
                 senum = int(senum)
             else:
@@ -845,7 +845,7 @@ def processHCPLS(sessionfolder, filesort):
                 fileName.replace(session + "_", "").replace(".nii.gz", "").split("_")
             )
             fileParts = [
-                "SpinEchoFieldMap" if "SpinEchoFieldMap" in e else e for e in fileParts
+                "SpinEchoFieldMap" if "SpinEchoFieldMap" in e else "DistortionMap" if "DistortionMap" in e else e for e in fileParts
             ]
             folderFiles.append(
                 {
@@ -863,13 +863,18 @@ def processHCPLS(sessionfolder, filesort):
         # diffusion
         if folderLabel == "Diffusion":
             # sort folderfiles by dir
-            folderFiles.sort(key=lambda x: (int(x["parts"][1].replace("dir", "")), x["parts"][2]))
+            folderFiles.sort(key=lambda x: (int(x["parts"][1].replace("dir", "")) if "dir" in x["parts"][1] else float('inf'), x["parts"][2]))
             for file in folderFiles:
                 match = False
                 for fcheck in check:
-                    if file["parts"][0] == fcheck[0] and file["parts"][1].startswith(fcheck[1]) and file["parts"][2] == fcheck[2]:
-                        match = True
-                        break
+                    if "dir" in file["parts"][1] or ("b0" in file["parts"] and len(file["parts"]) == 3):
+                        if file["parts"][0] == fcheck[0] and file["parts"][1].startswith(fcheck[1]) and file["parts"][2] == fcheck[2]:
+                            match = True
+                            break
+                    elif "b0" in file["parts"]:
+                        if file["parts"][0] == fcheck[0] and file["parts"][1].startswith(fcheck[1]) and file["parts"][3] == fcheck[2]:
+                            match = True
+                            break
                 if match:
                     rank += 1
                     file["rank"] = rank
@@ -1249,7 +1254,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                 print("---> linked %02d.nii.gz <-- %s" % (imgn, fileInfo["name"]))
 
                 # -- Institution and device information
-
                 if firstImage:
                     deviceInfo = "%s|%s|%s" % (
                         fileInfo["json"].get("Manufacturer", "NA"),
@@ -1399,7 +1403,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                     )
 
                 # -- SE
-                elif fileInfo["parts"][0] == "SpinEchoFieldMap":
+                elif fileInfo["parts"][0] in ["SpinEchoFieldMap", "DistortionMap"]:
                     phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
                     if phenc:
                         phenc = PEDirMap.get(phenc, "NA")
@@ -1505,12 +1509,21 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                         phencstr = ": phenc(%s)" % (phenc)
 
                     if "SBRef" in fileInfo["parts"]:
-                        out = "%02d: %-20s: %-30s%s" % (
-                            imgn,
-                            "DWIref:%s_%s" % (fileInfo["parts"][1], phenc),
-                            "_".join(fileInfo["parts"]),
-                            phencstr,
-                        )
+                        if len(fileInfo["parts"]) == 4:
+                            out = "%02d: %-20s: %-30s%s" % (
+                                imgn,
+                                "DWIref:%s_%s" % (fileInfo["parts"][1], phenc),
+                                "_".join(fileInfo["parts"]),
+                                phencstr,
+                            )
+                        elif len(fileInfo["parts"]) == 5:
+                            out = "%02d: %-20s: %-30s: phenc(%s)" % (
+                                imgn,
+                                "DWIref:%s_%s_%s" % (fileInfo["parts"][1], fileInfo["parts"][2], phenc),
+                                "_".join(fileInfo["parts"]),
+                                phenc,
+                            )
+
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
                         if fileInfo["json"].get("EffectiveEchoSpacing", None):
@@ -1532,12 +1545,20 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                             )
 
                     else:
-                        out = "%02d: %-20s: %-30s: phenc(%s)" % (
-                            imgn,
-                            "DWI:%s_%s" % (fileInfo["parts"][1], phenc),
-                            "_".join(fileInfo["parts"]),
-                            phenc,
-                        )
+                        if len(fileInfo["parts"]) == 3:
+                            out = "%02d: %-20s: %-30s: phenc(%s)" % (
+                                imgn,
+                                "DWI:%s_%s" % (fileInfo["parts"][1], phenc),
+                                "_".join(fileInfo["parts"]),
+                                phenc,
+                            )
+                        elif len(fileInfo["parts"]) == 4:
+                            out = "%02d: %-20s: %-30s: phenc(%s)" % (
+                                imgn,
+                                "DWI:%s_%s_%s" % (fileInfo["parts"][1], fileInfo["parts"][2], phenc),
+                                "_".join(fileInfo["parts"]),
+                                phenc,
+                            )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
                         if fileInfo["json"].get("EffectiveEchoSpacing", None):
@@ -1577,7 +1598,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                     else:
                         phenc = fileInfo["parts"][2]
 
-                    if fileInfo["parts"][1] == "SpinEchoFieldMap":
+                    if fileInfo["parts"][1] in ["SpinEchoFieldMap", "DistortionMap"]:
                         phenc = "SE-FM-" + phenc
 
                     out = "%02d: %-20s: %-30s: phenc(%s)" % (
