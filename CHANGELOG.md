@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.1.0 [QIO]
+
+* Fixed a bug where some optional parameters were not properly passed to the HCP ReapplyFix pipeline.
+
 ## 1.0.4 [QIO]
 
 * Added additional tests for MATLAB functions to reduce the probability of bugs on release.

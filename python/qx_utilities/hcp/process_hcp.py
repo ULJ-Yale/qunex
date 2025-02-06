@@ -8294,25 +8294,25 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
 
             if options["hcp_icafix_domotionreg"] is not None:
                 comm += (
-                    '             --motionregression"%s"'
+                    '             --motionregression="%s"'
                     % options["hcp_icafix_domotionreg"]
                 )
 
             if options["hcp_icafix_deleteintermediates"] is not None:
                 comm += (
-                    '             --deleteintermediates"%s"'
+                    '             --deleteintermediates="%s"'
                     % options["hcp_icafix_deleteintermediates"]
                 )
 
             if options["hcp_icafix_processingmode"] is not None:
                 comm += (
-                    '             --processing-mode`"%s"'
+                    '             --processing-mode="%s"'
                     % options["hcp_icafix_processingmode"]
                 )
 
             if options["hcp_clean_substring"] is not None:
                 comm += (
-                    '             --clean-substring`"%s"'
+                    '             --clean-substring="%s"'
                     % options["hcp_clean_substring"]
                 )
 
