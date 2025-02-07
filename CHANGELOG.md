@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## 1.1.0 [QIO]
 
 * Fixed a bug where some optional parameters were not properly passed to the HCP ReapplyFix pipeline.
-* Fixed a bug where hcp_msmall did not parse bolds correctly.
+* Fixed a bug where hcp_msmall crashed as it did not parse bolds correctly.
 * Set the default `hcp_matlab_mode` for single-run HCP ICAFix to `octave` as that is the option that works in the container.
 
 ## 1.0.4 [QIO]
