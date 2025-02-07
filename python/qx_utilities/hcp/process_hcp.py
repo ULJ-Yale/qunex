@@ -8591,7 +8591,14 @@ def parse_msmall_bolds(options, bolds, r):
 
         icafix_group["msmall_bolds"] = hcp_msmall_bolds
     else:
-        icafix_group["msmall_bolds"] = icafix_group["bolds"]
+        msmall_bolds = []
+        for bold in icafix_group["bolds"]:
+            if "filename" in bold[3]:
+                msmall_bolds.append(bold[3]["filename"])
+            else:
+                msmall_bolds.append(bold[0])
+
+        icafix_group["msmall_bolds"] = msmall_bolds
 
     return (single_run, icafix_group, pars_ok, r)
 
