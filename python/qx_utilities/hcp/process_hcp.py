@@ -6389,7 +6389,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
-            'interpreted' is the default.
+            'interpreted' is the default. For single-run HCP ICAFix the default
+            is 'octave'.
 
         --hcp_icafix_domotionreg (str, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
@@ -6762,6 +6763,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         delete_intermediates = "FALSE"
         if options["hcp_icafix_deleteintermediates"] is not None:
             delete_intermediates = options["hcp_icafix_deleteintermediates"]
+
+        # the default for single fix is octave
+        if options["hcp_matlab_mode"] is None:
+            os.environ["FSL_FIX_MATLAB_MODE"] = "2"
 
         comm = (
             '%(script)s \
