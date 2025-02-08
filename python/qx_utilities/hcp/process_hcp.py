@@ -6389,7 +6389,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
-            'interpreted' is the default.
+            'interpreted' is the default. For single-run HCP ICAFix the default
+            is 'octave'.
 
         --hcp_icafix_domotionreg (str, default detailed below):
             Whether to regress motion parameters as part of the cleaning. The
@@ -6762,6 +6763,10 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         delete_intermediates = "FALSE"
         if options["hcp_icafix_deleteintermediates"] is not None:
             delete_intermediates = options["hcp_icafix_deleteintermediates"]
+
+        # the default for single fix is octave
+        if options["hcp_matlab_mode"] is None:
+            os.environ["FSL_FIX_MATLAB_MODE"] = "2"
 
         comm = (
             '%(script)s \
@@ -8591,7 +8596,14 @@ def parse_msmall_bolds(options, bolds, r):
 
         icafix_group["msmall_bolds"] = hcp_msmall_bolds
     else:
-        icafix_group["msmall_bolds"] = icafix_group["bolds"]
+        msmall_bolds = []
+        for bold in icafix_group["bolds"]:
+            if "filename" in bold[3]:
+                msmall_bolds.append(bold[3]["filename"])
+            else:
+                msmall_bolds.append(bold[0])
+
+        icafix_group["msmall_bolds"] = msmall_bolds
 
     return (single_run, icafix_group, pars_ok, r)
 
