@@ -212,11 +212,11 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
     work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'mice')
 
     # --- check for bold image
-    boldimg = os.path.join(work_dir, f'{boldinfo['name']}_DS.nii.gz')
+    boldimg = os.path.join(work_dir, f'{boldinfo["name"]}_DS.nii.gz')
     r, boldok = pc.checkForFile2(r, boldimg, '\n     ... preprocess_mice bold image present', '\n     ... ERROR: preprocess_mice bold image missing!')
 
     # overwrite and file exists
-    test_file = os.path.join(work_dir, f'{boldinfo['name']}_filtered_func_data_clean_BP_ABI.nii.gz')
+    test_file = os.path.join(work_dir, f'{boldinfo["name"]}_filtered_func_data_clean_BP_ABI.nii.gz')
     if (not overwrite and os.path.exists(test_file)):
         r += f' ... overwrite is disable and output [{test_file}] already exists, skipping this bold.\n'
         report['done'].append(boldinfo['name'])

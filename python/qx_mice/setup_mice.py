@@ -204,11 +204,11 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
 
 
     # --- check for bold image
-    source_bold = os.path.join(nifti_dir, f'{boldinfo['ima']}.nii.gz')
+    source_bold = os.path.join(nifti_dir, f'{boldinfo["ima"]}.nii.gz')
     r, boldok = pc.checkForFile2(r, source_bold, '\n     ... setup_mice bold image present', '\n     ... ERROR: setup_mice bold image missing!')
 
     # map the image
-    target_bold = os.path.join(work_dir, f'{boldinfo['name']}.nii.gz')
+    target_bold = os.path.join(work_dir, f'{boldinfo["name"]}.nii.gz')
     r += f'\n---> mapping the bold image to session\'s mice pipelines (mice) folder\n'
 
     # overwrite and file exists
@@ -246,7 +246,7 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
 
             # run
             if options['run'] == 'run':
-                test_file = os.path.join(work_dir, f'{boldinfo['name']}_DS.nii.gz')
+                test_file = os.path.join(work_dir, f'{boldinfo["name"]}_DS.nii.gz')
                 if overwrite and os.path.exists(test_file):
                     os.remove(test_file)
 
