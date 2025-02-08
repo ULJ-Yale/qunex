@@ -2842,17 +2842,17 @@ def batch_tag2namekey(
     session = sessions[0]
     options["bolds"] = bolds
 
-    bolds, _, _, _ = gpc.useOrSkipBOLD(session, options)
+    bolds, _, _, _ = gpc.use_or_skip_bold(session, options)
 
     boldlist = []
-    for boldnumber, boldname, boldtask, boldinfo in bolds:
+    for boldinfo in bolds:
         if output == "name":
             if "filename" in boldinfo:
                 boldlist.append(boldinfo["filename"])
             else:
-                boldlist.append("%s%d" % (prefix, boldnumber))
+                boldlist.append("%s%d" % (prefix, boldinfo['bold_number']))
         else:
-            boldlist.append(str(boldnumber))
+            boldlist.append(str(boldinfo['bold_number']))
 
     print("BOLDS:%s" % (",".join(boldlist)))
 

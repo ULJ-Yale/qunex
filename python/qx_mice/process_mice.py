@@ -136,18 +136,14 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     r += f'\nSession id: {sinfo["id"]} \n[started on {datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")}]'
     r += f'\n{pc.action("Running", options["run"])} preprocess_mice {session} ...'
 
-    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}  
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
 
     try:
         # check base settings
         pc.doOptionsCheck(options, sinfo, 'preprocess_mice')
-        
-        # get bolds
-        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
 
-        # filter bolds
-        if (options['bolds'] != 'all'):
-            bolds = pc._filter_bolds(bolds, options['bolds'])
+        # get bolds
+        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
 
         # report
         parelements = max(1, min(options['parelements'], len(bolds)))
@@ -203,7 +199,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
+def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
     # prepare return variables
     r = ""
     report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
@@ -215,19 +211,15 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
     # work dir
     work_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'mice')
 
-    # extract bold filename
-    _, _, _, boldinfo = bold_data
-    boldname  = boldinfo['name']
-
     # --- check for bold image
-    boldimg = os.path.join(work_dir, f'{boldname}_DS.nii.gz')
+    boldimg = os.path.join(work_dir, f'{boldinfo['name']}_DS.nii.gz')
     r, boldok = pc.checkForFile2(r, boldimg, '\n     ... preprocess_mice bold image present', '\n     ... ERROR: preprocess_mice bold image missing!')
 
     # overwrite and file exists
-    test_file = os.path.join(work_dir, f'{boldname}_filtered_func_data_clean_BP_ABI.nii.gz')
+    test_file = os.path.join(work_dir, f'{boldinfo['name']}_filtered_func_data_clean_BP_ABI.nii.gz')
     if (not overwrite and os.path.exists(test_file)):
         r += f' ... overwrite is disable and output [{test_file}] already exists, skipping this bold.\n'
-        report['done'].append(boldname)
+        report['done'].append(boldinfo['name'])
     else:
         if boldok:
             # set up the command
@@ -241,7 +233,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
                     --mice_volumes="%(mice_volumes)s"' % {
                     "script"                : preprocess_mice_script,
                     "work_dir"              : work_dir,
-                    "bold"                  : boldname,
+                    "bold"                  : boldinfo['name'],
                     "bias_field_correction" : options["bias_field_correction"],
                     "fix_threshold"         : options["fix_threshold"],
                     "mice_highpass"         : options["mice_highpass"],
@@ -251,7 +243,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
             # optional parameters
             if options["melodic_anatfile"]:
                 comm += "                --melodic_anatfile=" + options["melodic_anatfile"]
-            
+
             if options["fix_rdata"]:
                 comm += "                --fix_rdata=" + options["fix_rdata"]
 
@@ -263,7 +255,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
 
             if options['fix_aggressive_cleanup']:
                 comm += "                --fix_aggressive_cleanup"
-            
+
             # report command
             r += '\n\n------------------------------------------------------------\n'
             r += 'Running preprocess_mice bash script through QuNex:\n\n'
@@ -279,25 +271,25 @@ def _execute_preprocess_mice(sinfo, options, overwrite, bold_data):
                 r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running preprocess_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
 
                 if failed:
-                    r += f'\n---> preprocess_mice processing for BOLD {boldname} failed'
-                    report['failed'].append(boldname)
+                    r += f'\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed'
+                    report['failed'].append(boldinfo['name'])
                 else:
-                    r += f'\n---> preprocess_mice processing for BOLD {boldname} completed'
-                    report['done'].append(boldname)
+                    r += f'\n---> preprocess_mice processing for BOLD {boldinfo['name']} completed'
+                    report['done'].append(boldinfo['name'])
 
             else:
-                r += f'\n---> BOLD {boldname} is ready for preprocess_mice command'
-                report['ready'].append(boldname)
+                r += f'\n---> BOLD {boldinfo['name']} is ready for preprocess_mice command'
+                report['ready'].append(boldinfo['name'])
 
         else:
             # run
             if options['run'] == 'run':
-                r += f'\n---> preprocess_mice processing for BOLD {boldname} failed'
-                report['failed'].append(boldname)
+                r += f'\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed'
+                report['failed'].append(boldinfo['name'])
             # just checking
             else:
-                r += f'\n---> BOLD {boldname} is not ready for preprocess_mice command'
-                report['not ready'].append(boldname)
+                r += f'\n---> BOLD {boldinfo['name']} is not ready for preprocess_mice command'
+                report['not ready'].append(boldinfo['name'])
 
         return {'r': r, 'report': report}
 
@@ -370,13 +362,9 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
     try:
         # check base settings
         pc.doOptionsCheck(options, sinfo, 'map_mice_data')
-        
-        # get bolds
-        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
 
-        # filter bolds
-        if (options['bolds'] != 'all'):
-            bolds = pc._filter_bolds(bolds, options['bolds'])
+        # get bolds
+        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
 
         # dirs
         source_dir = os.path.join(options['sessionsfolder'], sinfo['id'], 'mice')
@@ -384,26 +372,24 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         if not os.path.exists(func_dir):
             os.makedirs(func_dir)
 
-        for b in bolds:
-            # extract boldname
-            _, _, _, boldinfo = b
-            boldname = boldinfo['name']
+        for boldinfo in bolds:
 
-            r += f'\n---> Mapping {boldname}'
+
+            r += f'\n---> Mapping {boldinfo['name']}'
 
             # files
             # original
-            bold_original = boldname + '.nii.gz'
+            bold_original = boldinfo['name'] + '.nii.gz'
             source_original = os.path.join(source_dir, bold_original)
             target_original = os.path.join(func_dir, bold_original)
 
             # EPI
-            bold_epi = boldname + '_filtered_func_data_clean_BP_EPI.nii.gz'
+            bold_epi = boldinfo['name'] + '_filtered_func_data_clean_BP_EPI.nii.gz'
             source_epi = os.path.join(source_dir, bold_epi)
             target_epi = os.path.join(func_dir, bold_epi)
 
             # ABI
-            bold_abi = boldname + '_filtered_func_data_clean_BP_ABI.nii.gz'
+            bold_abi = boldinfo['name'] + '_filtered_func_data_clean_BP_ABI.nii.gz'
             source_abi = os.path.join(source_dir, bold_abi)
             target_abi = os.path.join(func_dir, bold_abi)
 

@@ -122,18 +122,14 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
     r += f'\nSession id: {sinfo["id"]} \n[started on {datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")}]'
     r += f'\n{pc.action("Running", options["run"])} setup_mice {session} ...'
 
-    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}  
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
 
     try:
         # check base settings
         pc.doOptionsCheck(options, sinfo, 'setup_mice')
-        
-        # get bolds
-        bolds, _, _, r = pc.useOrSkipBOLD(sinfo, options, r)
 
-        # filter bolds
-        if (options['bolds'] != 'all'):
-            bolds = pc._filter_bolds(bolds, options['bolds'])
+        # get bolds
+        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
 
         # report
         parelements = max(1, min(options['parelements'], len(bolds)))
@@ -189,7 +185,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def _execute_setup_mice(sinfo, options, overwrite, bold_data):
+def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
     # prepare return variables
     r = ''
     report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
@@ -206,23 +202,19 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
 
-    # extract bold filename
-    _, _, _, boldinfo = bold_data
-    boldima  = boldinfo['ima']
-    boldname = boldinfo['name']
 
     # --- check for bold image
-    source_bold = os.path.join(nifti_dir, f'{boldima}.nii.gz')
+    source_bold = os.path.join(nifti_dir, f'{boldinfo['ima']}.nii.gz')
     r, boldok = pc.checkForFile2(r, source_bold, '\n     ... setup_mice bold image present', '\n     ... ERROR: setup_mice bold image missing!')
 
     # map the image
-    target_bold = os.path.join(work_dir, f'{boldname}.nii.gz')
+    target_bold = os.path.join(work_dir, f'{boldinfo['name']}.nii.gz')
     r += f'\n---> mapping the bold image to session\'s mice pipelines (mice) folder\n'
 
     # overwrite and file exists
     if (not overwrite and os.path.exists(target_bold)):
         r += f' ... overwrite is disable and target bold [{target_bold}] already exists, skipping this bold.\n'
-        report['done'].append(boldname)
+        report['done'].append(boldinfo['name'])
     else:
         # map
         r += f' ... mapping {source_bold} => {target_bold}.\n'
@@ -237,7 +229,7 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
                     --orientation="%(orientation)s"' % {
                     "script"     : setup_mice_script,
                     "work_dir"   : work_dir,
-                    "bold"       : boldname,
+                    "bold"       : boldinfo['name'],
                     "tr"         : options["tr"],
                     "orientation": options["orientation"].replace(" ", "|")}
 
@@ -254,7 +246,7 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
 
             # run
             if options['run'] == 'run':
-                test_file = os.path.join(work_dir, f'{boldname}_DS.nii.gz')
+                test_file = os.path.join(work_dir, f'{boldinfo['name']}_DS.nii.gz')
                 if overwrite and os.path.exists(test_file):
                     os.remove(test_file)
 
@@ -262,24 +254,24 @@ def _execute_setup_mice(sinfo, options, overwrite, bold_data):
                 r, endlog, _, failed = pc.runExternalForFile(test_file, comm, 'Running setup_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
 
                 if failed:
-                    r += f'\n---> setup_mice processing for BOLD {boldname} failed'
-                    report['failed'].append(boldname)
+                    r += f'\n---> setup_mice processing for BOLD {boldinfo['name']} failed'
+                    report['failed'].append(boldinfo['name'])
                 else:
-                    r += f'\n---> setup_mice processing for BOLD {boldname} completed'
-                    report['done'].append(boldname)
+                    r += f'\n---> setup_mice processing for BOLD {boldinfo['name']} completed'
+                    report['done'].append(boldinfo['name'])
 
             else:
-                r += f'\n---> BOLD {boldname} is ready for setup_mice command'
-                report['ready'].append(boldname)
+                r += f'\n---> BOLD {boldinfo['name']} is ready for setup_mice command'
+                report['ready'].append(boldinfo['name'])
 
         else:
             # run
             if options['run'] == 'run':
-                r += f'\n---> setup_mice processing for BOLD {boldname} failed'
-                report['failed'].append(boldname)
+                r += f'\n---> setup_mice processing for BOLD {boldinfo['name']} failed'
+                report['failed'].append(boldinfo['name'])
             # just checking
             else:
-                r += f'\n---> BOLD {boldname} is not ready for setup_mice command'
-                report['not ready'].append(boldname)
+                r += f'\n---> BOLD {boldinfo['name']} is not ready for setup_mice command'
+                report['not ready'].append(boldinfo['name'])
 
     return {'r': r, 'report': report}
