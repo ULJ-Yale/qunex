@@ -10,7 +10,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * Fixed a bug where some optional parameters were not properly passed to the HCP ReapplyFix pipeline.
 * Fixed a bug where hcp_msmall crashed as it did not parse bolds correctly.
+* `import_hcp` now also imports DistortionMaps as alternatively named SpinEchoFieldMaps.
+* `import_hcp` now properly onboards diffusion scans with just b=0 volumes (so called b0 scans) named as `<DWI/dMRI>_b0_<tag>_<PEdir>`.
 * Set the default `hcp_matlab_mode` for single-run HCP ICAFix to `octave` as that is the option that works in the container.
+* Optimized some portions of the code for the sake of efficiency and robustness.
 
 ## 1.0.4 [QIO]
 
