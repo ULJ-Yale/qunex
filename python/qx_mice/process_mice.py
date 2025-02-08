@@ -271,25 +271,25 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                 r, endlog, _, failed = pc.runExternalForFile(None, comm, 'Running preprocess_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
 
                 if failed:
-                    r += f'\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed'
+                    r += f'\n---> preprocess_mice processing for BOLD {boldinfo["name"]} failed'
                     report['failed'].append(boldinfo['name'])
                 else:
-                    r += f'\n---> preprocess_mice processing for BOLD {boldinfo['name']} completed'
+                    r += f'\n---> preprocess_mice processing for BOLD {boldinfo["name"]} completed'
                     report['done'].append(boldinfo['name'])
 
             else:
-                r += f'\n---> BOLD {boldinfo['name']} is ready for preprocess_mice command'
+                r += f'\n---> BOLD {boldinfo["name"]} is ready for preprocess_mice command'
                 report['ready'].append(boldinfo['name'])
 
         else:
             # run
             if options['run'] == 'run':
-                r += f'\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed'
+                r += f'\n---> preprocess_mice processing for BOLD {boldinfo["name"]} failed'
                 report['failed'].append(boldinfo['name'])
             # just checking
             else:
-                r += f'\n---> BOLD {boldinfo['name']} is not ready for preprocess_mice command'
-                report['not ready'].append(boldinfo['name'])
+                r += f'\n---> BOLD {boldinfo["name"]} is not ready for preprocess_mice command'
+                report['not ready'].append(boldinfo["name"])
 
         return {'r': r, 'report': report}
 
@@ -373,9 +373,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             os.makedirs(func_dir)
 
         for boldinfo in bolds:
-
-
-            r += f'\n---> Mapping {boldinfo['name']}'
+            r += f'\n---> Mapping {boldinfo["name"]}'
 
             # files
             # original

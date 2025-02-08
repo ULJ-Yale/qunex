@@ -254,24 +254,24 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                 r, endlog, _, failed = pc.runExternalForFile(test_file, comm, 'Running setup_mice', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag']], fullTest=None, shell=True, r=r)
 
                 if failed:
-                    r += f'\n---> setup_mice processing for BOLD {boldinfo['name']} failed'
+                    r += f'\n---> setup_mice processing for BOLD {boldinfo["name"]} failed'
                     report['failed'].append(boldinfo['name'])
                 else:
-                    r += f'\n---> setup_mice processing for BOLD {boldinfo['name']} completed'
+                    r += f'\n---> setup_mice processing for BOLD {boldinfo["name"]} completed'
                     report['done'].append(boldinfo['name'])
 
             else:
-                r += f'\n---> BOLD {boldinfo['name']} is ready for setup_mice command'
+                r += f'\n---> BOLD {boldinfo["name"]} is ready for setup_mice command'
                 report['ready'].append(boldinfo['name'])
 
         else:
             # run
             if options['run'] == 'run':
-                r += f'\n---> setup_mice processing for BOLD {boldinfo['name']} failed'
+                r += f'\n---> setup_mice processing for BOLD {boldinfo["name"]} failed'
                 report['failed'].append(boldinfo['name'])
             # just checking
             else:
-                r += f'\n---> BOLD {boldinfo['name']} is not ready for setup_mice command'
+                r += f'\n---> BOLD {boldinfo["name"]} is not ready for setup_mice command'
                 report['not ready'].append(boldinfo['name'])
 
     return {'r': r, 'report': report}
