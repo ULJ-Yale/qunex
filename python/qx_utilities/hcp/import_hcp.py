@@ -1209,7 +1209,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     print("hcpready: true", file=sout_hcp)
 
     # --- open hcpfs2nii log file
-
     if overwrite == "yes" or overwrite is True:
         mode = "w"
     else:
@@ -1223,7 +1222,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     )
 
     # --- map files
-
     allOk = True
 
     # hcplsData   = [{'senum':senum, 'label': folderLabel, 'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles}]
@@ -1331,7 +1329,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
 
                 # -- BOLDS
                 elif fileInfo["parts"][0] in ["tfMRI", "rfMRI"]:
-
                     phenc = fileInfo["json"].get("PhaseEncodingDirection", None)
                     if phenc:
                         phenc = PEDirMap.get(phenc, "NA")

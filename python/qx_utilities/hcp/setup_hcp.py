@@ -623,7 +623,7 @@ def setup_hcp(
             sfile = [k + e for e in [".nii.gz", ".bval", ".bvec"]]
 
             if filename and "filename" in v:
-                tbase = "_".join([sid, v["filename"], v["task"]])
+                tbase = "_".join([sid, v["filename"]])
             else:
                 tbase = "_".join([sid, "DWI", v["task"]])
 
