@@ -8545,10 +8545,10 @@ def parse_msmall_bolds(options, bolds, r):
     else:
         msmall_bolds = []
         for bold in icafix_group["bolds"]:
-            if "filename" in bold[3]:
-                msmall_bolds.append(bold[3]["filename"])
+            if "filename" in bold:
+                msmall_bolds.append(bold["filename"])
             else:
-                msmall_bolds.append(bold[0])
+                msmall_bolds.append(bold["bold_number"])
 
         icafix_group["msmall_bolds"] = msmall_bolds
 
