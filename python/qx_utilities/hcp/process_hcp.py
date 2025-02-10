@@ -2629,7 +2629,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
         # -- Optional parameters
         if options["hcp_no_t2w"]:
-            comm += f"                --use-T2w=0"
+            comm += "                --use-T2w=0"
 
         if options["hcp_seed"]:
             comm += f"                --seed={options['hcp_seed']}"
@@ -2699,6 +2699,9 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                         print(f"Contents of {filename}:", file=log_file)
                         print("----------------------------------------", file=log_file)
                         print(content, file=log_file)
+
+                # print succesful completion
+                print("\n\n---> Successful completion of task\n", file=log_file)
 
             # remove the directory and its contents
             shutil.rmtree(logdir)
