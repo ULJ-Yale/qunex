@@ -2487,11 +2487,10 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
                 result = _execute_hcp_long_freesurfer(
                     options, overwrite, run, hcp["hcp_base"], subject
                 )
-                log = result["log"]
                 run_report = result["report"]
 
                 # merge
-                r += log
+                r += result["r"]
                 if run_report["done"]:
                     report["done"].append(run_report["done"])
                 if run_report["failed"]:
@@ -2971,11 +2970,10 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 result = _execute_hcp_long_post_freesurfer(
                     options, overwrite, run, hcp, subject
                 )
-                log = result["log"]
                 run_report = result["report"]
 
                 # merge
-                r += log
+                r += result["r"]
                 if run_report["done"]:
                     report["done"].append(run_report["done"])
                 if run_report["failed"]:
