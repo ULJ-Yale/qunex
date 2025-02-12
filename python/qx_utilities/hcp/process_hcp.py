@@ -2700,7 +2700,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                         print(content, file=log_file)
 
                 # print succesful completion
-                print("\n\n---> Successful completion of task\n", file=log_file)
+                print("\n---> Successful completion of task", file=log_file)
 
             # remove the directory and its contents
             shutil.rmtree(logdir)
@@ -3302,7 +3302,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                         print(content, file=log_file)
 
                 # print succesful completion
-                print("\n\n---> Successful completion of task\n", file=log_file)
+                print("\n---> Successful completion of task", file=log_file)
 
             # remove the directory and its contents
             shutil.rmtree(logdir)
