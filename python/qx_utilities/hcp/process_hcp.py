@@ -1240,8 +1240,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         if not options["hcp_prefs_template_res"]:
             r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
             t1w = hcp["T1w"].split("@")[0]
-            resolution, report = _set_hcp_prefs_template_res(t1w)
-            r += report
+            resolution, res_report = _set_hcp_prefs_template_res(t1w)
+            r += res_report
             if resolution == 0:
                 run = False
                 r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
@@ -3039,8 +3039,8 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     if not options["hcp_prefs_template_res"]:
         r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
         t1w = hcp["T1w"].split("@")[0]
-        resolution, report = _set_hcp_prefs_template_res(t1w)
-        r += report
+        resolution, res_report = _set_hcp_prefs_template_res(t1w)
+        r += res_report
         if resolution == 0:
             run = False
             r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
