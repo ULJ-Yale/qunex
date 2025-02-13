@@ -781,7 +781,7 @@ def checkRun(
             lines = log.readlines()
 
             for line in lines:
-                if "Error" in line or "ERROR" in line:
+                if any(err in line for err in ["Error ", "Error:", "ERROR ", "ERROR:"]):
                     report = "%s not finished" % (command)
                     passed = None
                     failed = 1
@@ -939,6 +939,7 @@ def runExternalForFile(
                 raise ExternalFailed(r)
 
         tmplogfile = os.path.join(logfolder, "tmp_%s.log" % (logname))
+
         # --- report
         print("You can follow command's progress in:")
         print(tmplogfile)
