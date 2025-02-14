@@ -67,6 +67,11 @@ Parameters:
     --storestreamlineslength (str, default 'no'):
         Store average length of the streamlines.
 
+    --forcematrix1 (str, default 'no'):
+        Whether to force matrix1 model calculation when storestreamlineslength
+        is set to yes. This is not advice, as it can lead to erroneous path
+        length calculations.
+
     --scriptsfolder (str):
         Location of the probtrackX GPU scripts.
 
@@ -209,6 +214,7 @@ get_options() {
     unset minimumfilesize
     unset distance_correction
     unset store_streamlines_length
+    unset force_matrix1
     unset nogpu
 
     # -- Parse arguments
@@ -222,6 +228,7 @@ get_options() {
     NSamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
     distance_correction=`opts_GetOpt "--distancecorrection" $@`
     store_streamlines_length=`opts_GetOpt "--storestreamlineslength" $@`
+    force_matrix1=`opts_GetOpt "--forcematrix1" $@`
     nogpu=`opts_GetOpt "--nogpu" $@`
 
     if [[ -z ${SessionsFolder} ]]; then
@@ -277,6 +284,25 @@ get_options() {
         store_streamlines_length="no"
     fi
 
+    # -- force matrix1 flag
+    if [ "$force_matrix1" == "yes" ] || [ "$force_matrix1" == "YES" ]; then
+        force_matrix1="yes"
+    else
+        force_matrix1="no"
+    fi
+
+    # if store_streamlines_length is set to yes and MatrixOne is set to yes error out unless force_matrix1 is set to yes
+    if [[ "$store_streamlines_length" == "yes" ]] && [[ "$MatrixOne" == "yes" ]] && [[ "$force_matrix1" == "no" ]]; then
+        echo ""
+        echo "ERROR: storestreamlineslength is set to yes and matrix1 model is enabled."
+        echo "ERROR: Matrix1 symmetrisation step can lead to bimodal distributions in path lengths (in cases where tractography can track from A->B, but not from B->A), which after averaging can lead to small path length values between cortical regions (i.e. smaller than the respective Euclidean distance). It is advised to use the matrix3 model for calculating path lenghts. If you want to run this nevertheless, you need to set the forcematrix1 parameter to yes."
+        exit 1
+    elif [[ "$store_streamlines_length" == "yes" ]] && [[ "$MatrixOne" == "yes" ]] && [[ "$force_matrix1" == "yes" ]]; then
+        echo ""
+        echo "WARNING: storestreamlineslength is set to yes, matrix1 model is enabled and forcematrix1 is set to yes."
+        echo "WARNING: Matrix1 symmetrisation step can lead to bimodal distributions in path lengths (in cases where tractography can track from A->B, but not from B->A), which after averaging can lead to small path length values between cortical regions (i.e. smaller than the respective Euclidean distance). It is advised to use the matrix3 model for calculating path lenghts. Be carefule when using path lenghts obtained by the matrix1 model here!"
+    fi
+
     scriptName=$(basename ${0})
     # -- Report options
     echo ""
@@ -292,6 +318,7 @@ get_options() {
     echo "   Number of samples for Matrix3: ${NSamplesMatrixThree}"
     echo "   Distance correction: ${distance_correction}"
     echo "   Store streamlines length: ${store_streamlines_length}"
+    echo "   Force Matrix1: ${force_matrix1}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "   No GPU: ${nogpu}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
@@ -322,7 +349,7 @@ main() {
     echo ""
     echo "   --- probtrackX GPU for session $CASE..."
     echo ""
-    
+
     for MNum in $MNumber; do
         if [[ "$MNum" == "1" ]]; then NSamples="${NSamplesMatrixOne}"; fi
         if [[ "$MNum" == "3" ]]; then NSamples="${NSamplesMatrixThree}"; fi
@@ -384,7 +411,7 @@ main() {
         else
             # print success for this case
             echo "dwi_probtracx_dense_gpu for $CASE completed successfully!"
-            
+
             # set as success
             COMPLETIONCHECK=1
         fi

@@ -868,6 +868,7 @@ dwi_probtrackx_dense_gpu() {
     --nsamplesmatrix3='${NsamplesMatrixThree}' \
     --distancecorrection='${distance_correction}' \
     --storestreamlineslength='${store_streamlines_length}' \
+    --forcematrix1='${force_matrix1}' \
     --overwrite='${Overwrite}' \
     --nogpu='${nogpu}'"
     # -- QuNex bash execute function
@@ -1629,6 +1630,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     NsamplesMatrixThree=`get_parameters "${setflag}nsamplesmatrix3" $@`
     distance_correction=`get_parameters "--distancecorrection" $@`
     store_streamlines_length=`get_parameters "--storestreamlineslength" $@`
+    force_matrix1=`get_parameters "--forcematrix1" $@`
     ScriptsFolder=`get_parameters "${setflag}scriptsfolder" $@`
 
     # -- Input flags for run_qc
@@ -1718,90 +1720,8 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Species=`get_parameters "${setflag}species" $@`
 fi
 
-# ------------------------------------------------------------------------------
-# -- Backwards compatibility settings for subjects vs. sessions folder
-# ------------------------------------------------------------------------------
-
-if [[ -z ${qxutil_command_to_run} ]]; then
-    if [[ ${SessionsFolderName} != "subjects" ]]; then
-        if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-            echo "WARNING: You are attempting to execute a QuNex command using a conflicting QuNex file hierarchy:"
-            echo ""
-            echo "     Found: ---> ${StudyFolder}/subjects"
-            echo "     Found: ---> ${StudyFolder}/${SessionsFolderName}"
-            echo ""
-
-            if [[ ${SessionsFolderName} != "sessions" ]]; then
-                echo ""
-                echo "     Note: Current version of QuNex supports the following default specification: "
-                echo "            ---> ${StudyFolder}/sessions"
-                echo ""
-            fi
-
-            echo "     To avoid the possibility of a backwards incompatible or duplicate "
-            echo "     QuNex runs please review the study directory structure and consider"
-            echo "     resolving the conflict such that a consistent folder specification is used. "
-            echo ""
-            echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-            echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
-            echo ""
-        fi
-
-        if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-            SessionsFolderBase=`base $SessionsFolder`
-            if [[ ${SessionsFolderBase} == "subjects" ]]; then
-                SessionsFolderName="${SessionsFolderBase}"
-                echo "WARNING: You are attempting to execute QuNex command using an outdated QuNex file hierarchy:"
-                echo ""
-                echo "     Found: ---> ${StudyFolder}/${SessionsFolderName}"
-                echo ""
-                echo "     Note: Current version of QuNex supports the following default specification: "
-                echo "            ---> ${StudyFolder}/sessions"
-                echo ""
-                echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
-                echo ""
-            else
-                echo "WARNING: You are attempting to execute QuNex command using a conflicting QuNex file hierarchy:"
-                echo ""
-                echo "     Found: ---> ${StudyFolder}/subjects"
-                echo "     Found: ---> ${StudyFolder}/${SessionsFolderBase}"
-                echo ""
-                echo "     Note: Current version of QuNex supports the following default specification: "
-                echo "            ---> ${StudyFolder}/sessions"
-                echo ""
-                echo "     To avoid the possibility of a backwards incompatible or duplicate "
-                echo "     QuNex runs please review the study directory structure and consider"
-                echo "     resolving the conflict such that a consistent folder specification is used. "
-                echo ""
-                echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-                echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
-                echo ""
-            fi
-        fi
-    fi
-
-    # -- Check for outdated folder hierarchy
-    if [[ ${SessionsFolderName} == "subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-        echo "WARNING: You are attempting to execute QuNex command using an outdated QuNex file hierarchy:"
-        echo ""
-        echo "       Found: ---> ${StudyFolder}/${SessionsFolderName}"
-        echo ""
-        echo "     Note: Current version of QuNex supports the following default specification: "
-        echo "       ---> ${StudyFolder}/sessions"
-        echo ""
-        echo "       QuNex will proceed but please consider renaming your directories per latest specs:"
-        echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
-        echo ""
-    fi
-fi
-
-# -- Set sessions variable
-if [[ -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
-    QuNexSessionsFolder="${StudyFolder}/sessions"
-    SessionsFolderName="sessions"
-fi
-if [[ ! -d "${StudyFolder}/sessions" ]] && [[ ! -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
+# -- Set sessions folder variable
+if [[ -z "${QuNexSessionsFolder}" ]] && [[ -n "${StudyFolder}" ]]; then
     QuNexSessionsFolder="${StudyFolder}/sessions"
     SessionsFolderName="sessions"
 fi
@@ -2758,6 +2678,13 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
         store_streamlines_length="no"
     fi
 
+    # -- force matrix1 flag
+    if [ "$force_matrix1" == "yes" ] || [ "$force_matrix1" == "YES" ]; then
+        force_matrix1="yes"
+    else
+        force_matrix1="no"
+    fi
+
     # -- Report parameters
     echo ""
     echo "Running $CommandToRun with the following parameters:"
@@ -2774,6 +2701,7 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Number of samples for Matrix3: ${NsamplesMatrixThree}"
     echo "   Distance correction: ${distance_correction}"
     echo "   Store streamlines length: ${store_streamlines_length}"
+    echo "   Force Matrix1: ${force_matrix1}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "   No GPU: ${nogpu}"
     echo ""
