@@ -2064,7 +2064,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     --recipe_file   path to a YAML file that contains recipe definitions.
     --recipe        Name of the recipe in the recipe_file to run.
     --steps         A comma separated list of steps (QuNex commands) to run.
-                    This is an alternative to specifying the recipe file and
+                    This can be used to run only a subset of commands from the
+                    list or as an alternative to specifying the recipe file and
                     a recipe name.
     --logfolder     The folder within which to save the log.
 
@@ -2229,6 +2230,14 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
     ::
 
+        export MATLAB_MODE="interpreted"
+        qunex run_recipe \\
+          --recipe_file="/data/settings/recipe.yaml" \\
+          --recipe="hcp_denoise" \\
+          --steps="hcp_icafix"
+
+    ::
+
         qunex run_recipe \\
           --sessionsfolder="/data/qx_study/sessions" \\
           --batchfile="/data/qx_study/processing/batch.txt" \\
@@ -2247,19 +2256,14 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     in the recipe file. Note that the labels need to be provided in the form of
     a string, so they need to be encapsulated with double quotes.
 
-    The forth example shows how to use the steps parameter to run a set of
+    The fourth call is the same as the third call, except that only hcp_icafix
+    will be executed from the hcp_denoise list.
+
+    The fifth example shows how to use the steps parameter to run a set of
     commands sequentially.
     """
 
     flags = ["test"]
-
-    if recipe_file is not None and steps is not None:
-        raise ge.CommandError(
-            "run_recipe",
-            "both recipe_file and steps are specified",
-            "BOth recipe file and steps specified",
-            "Please set only one parameter!",
-        )
 
     if recipe_file is None and steps is None:
         raise ge.CommandError(
@@ -2290,7 +2294,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     commands = []
 
     # open the recipe file
-    if not steps:
+    if recipe_file:
         with open(recipe_file, "r", encoding="UTF-8") as file:
             try:
                 recipe_data = yaml.load(file, Loader=yaml.FullLoader)
@@ -2391,6 +2395,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     print(f"---> Running commands from recipe: {recipe}")
     print(f"---> Running commands from recipe: {recipe}\n", file=log)
 
+    if steps:
+        print(f"---> Steps: {steps}")
+        print(f"---> Steps: {steps}\n", file=log)
+
     # commands
     if "commands" not in recipe_dict:
         raise ge.CommandFailed(
@@ -2398,6 +2406,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         )
 
     commands = recipe_dict["commands"]
+
+    # subset commands when using both the recipe and steps
+    if steps and recipe_file:
+        commands = [com for com in commands if com in steps.split(",")]
 
     # XNAT initial setup
     # If running on XNAT, try and load checkpoint if supplied
