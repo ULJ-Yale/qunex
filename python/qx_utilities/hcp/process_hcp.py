@@ -239,12 +239,16 @@ def getHCPPaths(sinfo, options):
 
     # --- Fieldmap related paths
     d["fieldmap"] = {}
-    if options["hcp_avgrdcmethod"] in [
-        "FIELDMAP",
-        "SiemensFieldMap",
-        "PhilipsFieldMap",
-        "GEHealthCareFieldMap",
-    ] or options["hcp_bold_dcmethod"] in ["FIELDMAP", "SiemensFieldMap", "PhilipsFieldMap"]:
+    if options["hcp_avgrdcmethod"].lower() in [
+        "fieldmap",
+        "siemensfieldmap",
+        "philipsfieldmap",
+        "gehealthcarefieldmap",
+    ] or options["hcp_bold_dcmethod"].lower() in [
+        "fieldmap",
+        "siemensfieldmap",
+        "philipsfieldmap",
+    ]:
         fmapmag = glob.glob(
             os.path.join(
                 d["source"],
@@ -284,8 +288,8 @@ def getHCPPaths(sinfo, options):
                 if fmnum in d["fieldmap"]:
                     d["fieldmap"][fmnum].update({"phase": imagepath})
     elif (
-        options["hcp_avgrdcmethod"] == "GEHealthCareLegacyFieldMap"
-        or options["hcp_bold_dcmethod"] == "GEHealthCareLegacyFieldMap"
+        options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap"
+        or options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"
     ):
         fmapge = glob.glob(
             os.path.join(
@@ -906,7 +910,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmphase = ""
         fmcombined = ""
 
-        if options["hcp_avgrdcmethod"] == "TOPUP":
+        if options["hcp_avgrdcmethod"].lower() == "topup":
             try:
                 # -- spin echo settings
                 T1w = [
@@ -1078,7 +1082,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     run = False
                     raise
 
-        elif options["hcp_avgrdcmethod"] == "GEHealthCareLegacyFieldMap":
+        elif options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap":
             fmnum = T1w.get("fm", None)
 
             if fmnum is None:
@@ -1099,11 +1103,11 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 fmphase = None
                 fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
 
-        elif options["hcp_avgrdcmethod"] in [
-            "FIELDMAP",
-            "SiemensFieldMap",
-            "PhilipsFieldMap",
-            "GEHealthCareFieldMap",
+        elif options["hcp_avgrdcmethod"].lower() in [
+            "fieldmap",
+            "siemensfieldmap",
+            "philipsfieldmap",
+            "gehealthcarefieldmap",
         ]:
             fmnum = T1w.get("fm", None)
 
@@ -4594,14 +4598,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         sesettings = False
 
         # check parameters values
-        if options["hcp_bold_dcmethod"] not in [
-            "TOPUP",
-            "FIELDMAP",
-            "SiemensFieldMap",
-            "PhilipsFieldMap",
-            "GEHealthCareFieldMap",
-            "GEHealthCareLegacyFieldMap",
-            "NONE",
+        if options["hcp_bold_dcmethod"].lower() not in [
+            "topup",
+            "fieldmap",
+            "siemensfieldmap",
+            "philipsfieldmap",
+            "gehealthcarefieldmap",
+            "gehealthcarelegacyfieldmap",
+            "none",
         ]:
             r += f"\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter {options['hcp_bold_dcmethod']}!"
             run = False
@@ -4610,7 +4614,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             r += f"\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter {options['hcp_bold_biascorrection']}!"
             run = False
 
-        if options["hcp_bold_dcmethod"] == "TOPUP":
+        if options["hcp_bold_dcmethod"].lower() == "topup":
             # -- spin echo settings
             sesettings = True
             for p in [
@@ -4718,13 +4722,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 topupconfig = ""
 
         # --- Process unwarp direction
-        if options["hcp_bold_dcmethod"] in [
-            "TOPUP",
-            "FIELDMAP",
-            "SiemensFieldMap",
-            "PhilipsFieldMap",
-            "GEHealthCareFieldMap",
-            "GEHealthCareLegacyFieldMap",
+        if options["hcp_bold_dcmethod"].lower() in [
+            "topup",
+            "fieldmap",
+            "siemensfieldmap",
+            "philipsfieldmap",
+            "gehealthcarefieldmap",
+            "gehealthcarelegacyfieldmap",
         ]:
             unwarpdirs = [
                 [f.strip() for f in e.strip().split("=")]
@@ -4768,13 +4772,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             echospacing = ""
             unwarpdir = ""
 
-            dcset = options["hcp_bold_dcmethod"] in [
-                "TOPUP",
-                "FIELDMAP",
-                "SiemensFieldMap",
-                "PhilipsFieldMap",
-                "GEHealthCareFieldMap",
-                "GEHealthCareLegacyFieldMap",
+            dcset = options["hcp_bold_dcmethod"].lower() in [
+                "topup",
+                "fieldmap",
+                "siemensfieldmap",
+                "philipsfieldmap",
+                "gehealthcarefieldmap",
+                "gehealthcarelegacyfieldmap",
             ]
 
             # --- set unwarpdir and orient
@@ -4847,7 +4851,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = False
 
             # --- check for spin-echo-fieldmap image
-            if options["hcp_bold_dcmethod"] == "TOPUP" and sesettings:
+            if options["hcp_bold_dcmethod"].lower() == "topup" and sesettings:
                 if not sepresent:
                     r += "\n     ... ERROR: No spin echo fieldmap set images present!"
                     boldok = False
@@ -4894,11 +4898,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     futureref = "NONE"
 
             # --- check for Siemens double TE-fieldmap image
-            elif options["hcp_bold_biascorrection"] != "SEBASED" and options[
-                "hcp_bold_dcmethod"
-            ] in [
-                "FIELDMAP",
-                "SiemensFieldMap",
+            elif options["hcp_bold_biascorrection"].lower() != "sebased" and options["hcp_bold_dcmethod"].lower() in [
+                "fieldmap",
+                "siemensfieldmap",
             ]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
@@ -4970,8 +4972,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for GE legacy fieldmap image
             elif (
-                options["hcp_bold_biascorrection"] != "SEBASED"
-                and options["hcp_bold_dcmethod"] == "GEHealthCareLegacyFieldMap"
+                options["hcp_bold_biascorrection"].lower() != "sebased"
+                and options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
@@ -4998,8 +5000,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for GE double TE-fieldmap image
             elif (
-                options["hcp_bold_biascorrection"] != "SEBASED"
-                and options["hcp_bold_dcmethod"] == "GEHealthCareFieldMap"
+                options["hcp_bold_biascorrection"].lower() != "sebased"
+                and options["hcp_bold_dcmethod"].lower() == "gehealthcarefieldmap"
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
@@ -5040,8 +5042,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for Philips double TE-fieldmap image
             elif (
-                options["hcp_bold_biascorrection"] != "SEBASED"
-                and options["hcp_bold_dcmethod"] == "PhilipsFieldMap"
+                options["hcp_bold_biascorrection"].lower() != "sebased"
+                and options["hcp_bold_dcmethod"].lower() == "philipsfieldmap"
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
@@ -5082,16 +5084,16 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmcombined = None
 
             # --- NO DC used
-            elif options["hcp_bold_dcmethod"] == "NONE":
+            elif options["hcp_bold_dcmethod"].lower() == "none":
                 r += "\n     ... No distortion correction used "
                 if options["hcp_processing_mode"] == "HCPStyleData":
                     r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no distortion correction method was specified!\n            Consider using LegacyStyleData processing mode."
                     run = False
 
             # --- SEBASED
-            elif options["hcp_bold_biascorrection"] == "SEBASED":
+            elif options["hcp_bold_biascorrection"].lower() == "sebased":
                 r += "\n     ... SEBASED bias correction used"
-                if options["hcp_bold_dcmethod"] != "TOPUP":
+                if options["hcp_bold_dcmethod"].lower() != "topup":
                     r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP!"
                     run = False
 
@@ -5540,7 +5542,6 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             fullTest = None
 
         # -- Run
-
         if run and boldok:
             if options["run"] == "run":
                 if overwrite or not os.path.exists(tfile):
