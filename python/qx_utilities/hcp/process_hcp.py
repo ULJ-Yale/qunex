@@ -849,7 +849,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             sidecar_data = json.load(file)
                             if "DwellTime" in sidecar_data:
                                 options["hcp_t1samplespacing"] = (
-                                    f"{sidecar_data['DwellTime']:.15f}"
+                                    f"{sidecar_data['DwellTime']:.10f}"
                                 )
                                 r += f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}"
 
@@ -892,7 +892,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 sidecar_data = json.load(file)
                                 if "DwellTime" in sidecar_data:
                                     options["hcp_t2samplespacing"] = (
-                                        f"{sidecar_data['DwellTime']:.15f}"
+                                        f"{sidecar_data['DwellTime']:.10f}"
                                     )
                                     r += f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}"
 
@@ -978,7 +978,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         sidecar_data = json.load(file)
                         if "EffectiveEchoSpacing" in sidecar_data:
                             options["hcp_seechospacing"] = (
-                                f"{sidecar_data['EffectiveEchoSpacing']:.15f}"
+                                f"{sidecar_data['EffectiveEchoSpacing']:.10f}"
                             )
                             r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
 
@@ -1176,7 +1176,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 )
                                 # from s to ms
                                 echodiff = echodiff * 1000
-                                options["hcp_echodiff"] = f"{echodiff:.15f}"
+                                options["hcp_echodiff"] = f"{echodiff:.10f}"
                                 r += f"\n       - hcp_echodiff set to {options['hcp_echodiff']}"
                     else:
                         r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
@@ -4092,7 +4092,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             The prefix to use when generating BOLD names (see --hcp_filename)
             for BOLD working folders and results.
 
-        --hcp_bold_echospacing (float, default 0.00035):
+        --hcp_bold_echospacing (float):
             Echo Spacing or Dwelltime of BOLD images.
 
         --hcp_bold_sbref (str, default 'NONE'):
@@ -4831,6 +4831,21 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             if dcset:
                 r += "\n     ... unwarp direction: %s" % (unwarpdir)
 
+            # --- check for bold image
+            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
+                boldroot = boldinfo["filename"]
+            else:
+                boldroot = boldsource + orient
+
+            boldimgs = []
+            boldimgs.append(
+                os.path.join(
+                    hcp["source"],
+                    "%s%s" % (boldroot, options["fctail"]),
+                    "%s_%s.nii.gz" % (sinfo["id"], boldroot),
+                )
+            )
+
             # -- set echospacing
             if dcset:
                 if "EchoSpacing" in boldinfo and checkInlineParameterUse(
@@ -4846,9 +4861,20 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         echospacing
                     )
                 else:
-                    echospacing = ""
-                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
-                    boldok = False
+                    # try to set from the JSON sidecar
+                    json_sidecar = boldimgs[0].replace(".nii.gz", ".json")
+                    if os.path.exists(json_sidecar):
+                        r += "\n     ... trying to set hcp_bold_echospacing from the JSON sidecar"
+                        with open(json_sidecar, "r") as file:
+                            sidecar_data = json.load(file)
+                            if "EffectiveEchoSpacing" in sidecar_data:
+                                echospacing = sidecar_data["EffectiveEchoSpacing"]
+                                r += f"\n     ... hcp_bold_echospacing set to {echospacing}"
+
+                    if not options["hcp_bold_echospacing"]:
+                        echospacing = ""
+                        r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
+                        boldok = False
 
             # --- check for spin-echo-fieldmap image
             if options["hcp_bold_dcmethod"].lower() == "topup" and sesettings:
@@ -4951,12 +4977,43 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
-                    if not pc.is_number(options["hcp_bold_echospacing"]):
+                    if not pc.is_number(echospacing):
                         fieldok = False
                         r += (
                             '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
                             % (options["hcp_bold_echospacing"])
                         )
+
+                    # try to set hcp_bold_echodiff from the JSON sidecar if not yet set
+                    if not options["hcp_bold_echodiff"]:
+                        fmfolder = os.path.join(
+                            hcp["source"],
+                            "FieldMap%s%s" % (fmnum, options["fctail"]),
+                        )
+
+                        fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
+                        json_sidecar = os.path.join(fmfolder, fmap_json)
+
+                        if os.path.exists(json_sidecar):
+                            r += "\n     ... Trying to set hcp_echodiff from the JSON sidecar."
+                            with open(json_sidecar, "r") as file:
+                                sidecar_data = json.load(file)
+                                if (
+                                    "EchoTime1" in sidecar_data
+                                    and "EchoTime2" in sidecar_data
+                                ):
+                                    echodiff = (
+                                        sidecar_data["EchoTime2"]
+                                        - sidecar_data["EchoTime1"]
+                                    )
+                                    # from s to ms
+                                    echodiff = echodiff * 1000
+                                    options["hcp_bold_echodiff"] = f"{echodiff:.10f}"
+                                    r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
+                        else:
+                            r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
+                            options["hcp_bold_echodiff"] = None
+
                     if not pc.is_number(options["hcp_bold_echodiff"]):
                         fieldok = False
                         r += (
@@ -5029,7 +5086,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
-                    if not pc.is_number(options["hcp_bold_echospacing"]):
+                    if not pc.is_number(echospacing):
                         fieldok = False
                         r += (
                             '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
@@ -5072,7 +5129,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
-                    if not pc.is_number(options["hcp_bold_echospacing"]):
+                    if not pc.is_number(echospacing):
                         fieldok = False
                         r += (
                             '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
@@ -5099,32 +5156,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- ERROR
             else:
-                r += (
-                    "\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!"
-                    % (options["hcp_bold_dcmethod"])
-                )
+                r += ("\n     ... ERROR: Issues detected with distortion correction setup! Please check related parameters!")
                 boldok = False
 
             # --- set reference
             #
             # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
             # - have to keep track of whether an old topup in the same direction exists
-            #
-
-            # --- check for bold image
-            if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                boldroot = boldinfo["filename"]
-            else:
-                boldroot = boldsource + orient
-
-            boldimgs = []
-            boldimgs.append(
-                os.path.join(
-                    hcp["source"],
-                    "%s%s" % (boldroot, options["fctail"]),
-                    "%s_%s.nii.gz" % (sinfo["id"], boldroot),
-                )
-            )
             if options["hcp_folderstructure"] == "hcpya":
                 boldimgs.append(
                     os.path.join(

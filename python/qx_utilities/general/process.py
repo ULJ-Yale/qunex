@@ -794,7 +794,7 @@ arglist = [
     [
         "hcp_bold_echospacing",
         "",
-        str,
+        isNone,
         "Echo Spacing or Dwelltime of fMRI image in seconds.",
     ],
     [
@@ -811,8 +811,8 @@ arglist = [
     ],
     [
         "hcp_bold_echodiff",
-        "NONE",
-        str,
+        "",
+        isNone,
         "Delta TE in ms for BOLD fieldmap images or NONE if not used.",
     ],
     [
