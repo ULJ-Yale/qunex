@@ -5041,7 +5041,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                 # --- check for GE legacy fieldmap image
                 elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased"
+                    options["hcp_bold_biascorrection"].lower() != "sebased" and
                     options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"
                 ):
                     fmnum = boldinfo.get("fm", None)
@@ -5069,7 +5069,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                 # --- check for GE double TE-fieldmap image
                 elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased"
+                    options["hcp_bold_biascorrection"].lower() != "sebased" and
                     options["hcp_bold_dcmethod"].lower() == "gehealthcarefieldmap"
                 ):
                     fmnum = boldinfo.get("fm", None)
@@ -5111,8 +5111,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                 # --- check for Philips double TE-fieldmap image
                 elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased"
-                    and options["hcp_bold_dcmethod"].lower() == "philipsfieldmap"
+                    options["hcp_bold_biascorrection"].lower() != "sebased" and
+                    options["hcp_bold_dcmethod"].lower() == "philipsfieldmap"
                 ):
                     fmnum = boldinfo.get("fm", None)
                     if fmnum is None:
