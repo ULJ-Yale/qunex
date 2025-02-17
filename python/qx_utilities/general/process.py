@@ -629,8 +629,8 @@ arglist = [
     ["hcp_bfsigma", "", str, "Bias Field Smoothing Sigma (optional)."],
     [
         "hcp_avgrdcmethod",
-        "NONE",
-        str,
+        "",
+        isNone,
         "Averaging and readout distortion correction methods: 'NONE' = average any repeats with no readout correction 'FIELDMAP' or 'SiemensFieldMap' or 'GeneralElectricFieldMap' = average any repeats and use field map for readout correction 'TOPUP' = average and distortion correct at the same time with topup/applytopup only works for 2 images currently.",
     ],
     [
@@ -805,8 +805,8 @@ arglist = [
     ],
     [
         "hcp_bold_dcmethod",
-        "TOPUP",
-        str,
+        "",
+        isNone,
         "BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE.",
     ],
     [
