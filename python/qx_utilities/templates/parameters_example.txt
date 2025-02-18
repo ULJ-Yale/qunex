@@ -11,7 +11,7 @@
 # This file is used to specify the default parameters used by various qunex commands for
 # HCP minimal preprocessing pipeline, additional bold preprocessing commands,
 # and other analytic functions. The content of this file should be prepended to the list
-# that contains all the sessions that is passed to the commands. It can added manually or 
+# that contains all the sessions that is passed to the commands. It can added manually or
 # automatically when making use of the compileLists qunex command.
 #
 # This template file should be edited to include the parameters relevant for
@@ -19,20 +19,20 @@
 # parameters and their valid values, please consult the qunex documentation
 * (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
 # preprocessing) and online help for the relevant qunex commands.
-# 
-# Please note that if a parameter is specified in the batch file qunex will set it to the value specified. 
-# This is also the case for parameters that are left '' empty (e.g. `_event_file         :`). 
-# This case the `_event_file` parameter is actually being set to an empty string and is being read as such by qunex. 
-# The situation where this would be a misspecification would be, for instance: `_nprocess           :`. 
-# In this case the `_nprocess` parameter checks how many concurrent jobs to run. If it set to an empty string then 
-# the qunex engine cannot set the process number. This behavior is important so that the qunex engine can interpret 
-# all specified parameters based on actual values provided (empty or some value) as opposed to making an assumptions 
+#
+# Please note that if a parameter is specified in the batch file qunex will set it to the value specified.
+# This is also the case for parameters that are left '' empty (e.g. `_event_file         :`).
+# This case the `_event_file` parameter is actually being set to an empty string and is being read as such by qunex.
+# The situation where this would be a misspecification would be, for instance: `_nprocess           :`.
+# In this case the `_nprocess` parameter checks how many concurrent jobs to run. If it set to an empty string then
+# the qunex engine cannot set the process number. This behavior is important so that the qunex engine can interpret
+# all specified parameters based on actual values provided (empty or some value) as opposed to making an assumptions
 # that the parameter is absent when in fact it is present with an empty string.
 #
 # File format
 # -----------
 #
-# Each parameter is specified in a separate line as a 
+# Each parameter is specified in a separate line as a
 # "_<parameter_key>: <parameter_value>" pair. For example:
 #
 # _hcp_brainsize:  170
@@ -46,11 +46,11 @@
 # The following is a list of parameters organized by the commands they relate
 # to. To specify parameters, uncomment the line (it should start with the
 # underscore before the parameter name) and provide the desired value. In some
-# cases default values are provided. Do take care to remove the descriptors 
+# cases default values are provided. Do take care to remove the descriptors
 # (... <description>) after the values for the parameters to be used.
 #
 # # ---- Basic settings
-# 
+#
 # _batchfile                 The file with sessions information. [batch.txt]
 # _sessionsfolder            The path to study sessions folder. []
 # _logfolder                 The path to log folder. []
@@ -63,9 +63,9 @@
 # _printoptions              Whether to print options. [False]
 # _filter                    Filtering information. []
 # _script                    The script to be executed. [None]
-# 
+#
 # # ---- Preprocessing options
-# 
+#
 # _bet                       Options to be passed to BET in brain extraction [-f 0.5]
 # _fast                      Options to be passed to FAST in brain segmentation [-t 1 -n 3 --nopve]
 # _betboldmask               Options to be passed to BET when creating bold brain masks [-R -m]
@@ -91,17 +91,17 @@
 # _image_target              What is the target file format (4dfp, nifti, dtseries, ptseries) [nifti]
 # _image_atlas               What is the target atlas (711, cifti) [cifti]
 # _conc_use                  How the paths in the .conc file will be used (relative, absolute) [relative]
-# 
-# 
+#
+#
 # # ---- GLM related options
-# 
+#
 # _glm_matrix                Whether to save GLM regressor matrix in text (text), image (image) or both (both) formats, or not (none). [none]
 # _glm_residuals             Whether to save GLM residuals (save) or not (none). [save]
 # _glm_name                  Additional name to the residuals and coefficient file to distinguish between different posible models. []
-# 
-# 
+#
+#
 # # ---- Movement thresholding and report options
-# 
+#
 # _mov_dvars                 The dvars threshold to use for identifying bad frames [3.0]
 # _mov_dvarsme               The dvarsme threshold to use for identifying bad frames [1.5]
 # _mov_fd                    Frame displacement threshold to use for identifying bad frames [0.5]
@@ -118,10 +118,10 @@
 # _mov_sreport               The name of the scrubbing report file [movement_scrubbing_report.txt]
 # _mov_pdf                   The name of the folder that holds movement stats plots [movement_plots]
 # _mov_pref                  The prefix for the movement report files []
-# 
-# 
+#
+#
 # # ---- CIFTI related options
-# 
+#
 # _surface_smooth            Sigma for cifti surface smoothing [2.0]
 # _volume_smooth             Sigma for cifti volume smoothing [2.0]
 # _voxel_smooth              Extent of volume smoothing in voxels [1]
@@ -133,16 +133,16 @@
 # _framework_path            The path to framework libraries on mac system []
 # _wb_command_path           The path to wb_command []
 # _print_command             Whether to print the command run within the preprocessing steps [no]
-# 
-# 
+#
+#
 # # ---- scheduler options
-# 
+#
 # _scheduler                 The scheduler to use (local|PBS|SLURM) and any additional settings [local]
 # _scheduler_environment     The path to the script setting up the environment to run the commands in [None]
 # _scheduler_workdir         The path to working directory from which to run jobs on the cluster [None]
 # _scheduler_sleep           Time in seconds between submission of individual scheduler jobs [1]
-# 
-# 
+#
+#
 # # --- general HCP options
 #
 # _hcp_processing_mode       Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData) ['HCPStyleData']
@@ -159,7 +159,6 @@
 # _hcp_bold_res              Target image resolution 2mm recommended [2]
 # _hcp_grayordinatesres      Usually 2mm [2]
 # _hcp_regname               What registration is used FS, or MSMSulc (default). [MSMSulc]
-# _hcp_fs_longitudinal       Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO]
 # _hcp_cifti_tail            The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder. []
 # _hcp_bold_variant          The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default []
 #
@@ -186,11 +185,11 @@
 # _hcp_fs_extra_reconall     A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: "-norm3diters|3" []. HCP Pipelines specific! []
 # _hcp_expert_file           Name of the read-in expert options file for FreeSurfer []
 # _hcp_fs_no_conf2hires      Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]
-# 
+#
 # # --- hcp_post_freesurfer options
 # _hcp_mcsigma               Correction sigma used for metric smoothing (default sqrt(200)). []
 # _hcp_inflatescale          Inflate extra scale parameter (default 1). []
-# 
+#
 # # --- hcp_fmri_volume options
 # _hcp_bold_biascorrection   Whether to perform bias correction for BOLD images. NONE or Legacy. HCP Pipelines only! [NONE]
 # _hcp_bold_usejacobian      Whether to apply the jacobian of the distortion correction to fMRI data. HCP Pipelines only! [FALSE]

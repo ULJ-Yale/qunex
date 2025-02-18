@@ -571,12 +571,6 @@ arglist = [
         "What registration is used FS or MSMSulc [MSMSulc].",
     ],
     [
-        "hcp_fs_longitudinal",
-        "",
-        str,
-        "Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO].",
-    ],
-    [
         "hcp_cifti_tail",
         "_Atlas",
         str,
@@ -929,6 +923,7 @@ arglist = [
         isNone,
         "Comma delimited list of numbers which represent TE for each echo (unused for single echo).",
     ],
+    ["longitudinal", None, flag, "Whether we are running the longitudinal variant of the command."],
     ["# --- hcp_diffusion options"],
     ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],
@@ -1889,6 +1884,12 @@ flaglist = [
         "fix_aggressive_cleanup",
         False,
         "Provide this to enable agressive cleanup.",
+    ],
+    [
+        "longitudinal",
+        "longitudinal",
+        True,
+        "Whether we are running the longitudinal variant of the command.",
     ],
 ]
 

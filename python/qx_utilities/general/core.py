@@ -388,6 +388,8 @@ def deduceFolders(args):
     reference = args.get("reference")
     logfolder = args.get("logfolder")
     basefolder = args.get("basefolder")
+    if not basefolder:
+        basefolder = args.get("studyfolder")
     sessionsfolder = args.get("sessionsfolder")
     sourcefolder = args.get("sourcefolder")
     folder = args.get("folder")

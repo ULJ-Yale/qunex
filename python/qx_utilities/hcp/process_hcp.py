@@ -4227,6 +4227,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of
+            hcp_fmri_volume.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder::
@@ -5172,7 +5179,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     boldok = False
 
             # --- set reference
-            #
             # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
             # - have to keep track of whether an old topup in the same direction exists
             if options["hcp_folderstructure"] == "hcpya":
@@ -5240,8 +5246,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     run = False
 
             # --- Check for slice timing file
-
-            # --- check for ref image
             if options["hcp_bold_doslicetime"] and options["hcp_bold_slicetimingfile"]:
                 stfile = os.path.join(
                     hcp["source"],
@@ -5310,7 +5314,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         else:  # parallel execution
             # if moveref equals first and seimage equals independent (complex scenario)
-            if (options["hcp_bold_movref"] == "first") and (
+            if (
+                not options["longitudinal"] and
+                options["hcp_bold_movref"] == "first" and
                 options["hcp_bold_seimg"] == "independent"
             ):
                 # loop over bolds to prepare processing pools
@@ -5337,7 +5343,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             else:
                 # if moveref equals first then process first one in serial
-                if options["hcp_bold_movref"] == "first":
+                if (
+                    not options["longitudinal"] and
+                    options["hcp_bold_movref"] == "first"
+                ):
                     # process first one
                     b = boldsData[0]
                     r, report = executeSingleHCPfMRIVolume(
@@ -5514,7 +5523,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         )
         elements = [
             ("path", sinfo["hcp"]),
-            ("subject", sinfo["id"] + options["hcp_suffix"]),
+            ("session", sinfo["id"] + options["hcp_suffix"]),
             ("fmriname", boldtarget),
             ("fmritcs", boldimg),
             ("fmriscout", refimg),
@@ -5563,6 +5572,17 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             else:
                 r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 run = False
+
+        # longitudinal mode
+        if options["longitudinal"]:
+            studyfolder = gc.deduceFolders(options)["basefolder"]
+            if not studyfolder:
+                r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                run = False
+            # replace path (elements[0])
+            elements[0] = ("path", os.path.join(studyfolder, "subjects", sinfo["subject"]))
+            elements.append(("is-longitudinal", "1"))
+            elements.append(("longitudinal-session", f"{sinfo['id']}{options['hcp_suffix']}_{options['hcp_longitudinal_template']}"))
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
