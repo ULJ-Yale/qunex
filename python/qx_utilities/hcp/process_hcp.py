@@ -5594,22 +5594,23 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-        tfile = os.path.join(
-            hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
-        )
+        tfile = None
+        fullTest = None
+        if not options["longitudinal"]:
+            tfile = os.path.join(
+                hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
+            )
 
-        if hcp["hcp_bold_vol_check"]:
-            fullTest = {
-                "tfolder": hcp["base"],
-                "tfile": hcp["hcp_bold_vol_check"],
-                "fields": [
-                    ("sessionid", sinfo["id"] + options["hcp_suffix"]),
-                    ("scan", boldtarget),
-                ],
-                "specfolder": options["specfolder"],
-            }
-        else:
-            fullTest = None
+            if hcp["hcp_bold_vol_check"]:
+                fullTest = {
+                    "tfolder": hcp["base"],
+                    "tfile": hcp["hcp_bold_vol_check"],
+                    "fields": [
+                        ("sessionid", sinfo["id"] + options["hcp_suffix"]),
+                        ("scan", boldtarget),
+                    ],
+                    "specfolder": options["specfolder"],
+                }
 
         # -- Run
         if run and boldok:
