@@ -5815,6 +5815,13 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         --hcp_regname (str, default 'MSMSulc'):
             The name of the registration used.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of
+            hcp_fmri_volume.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder::
@@ -6059,9 +6066,22 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             + " "
         )
 
+        path = sinfo["hcp"]
+        session = sinfo["id"] + options["hcp_suffix"]
+
+        # longitudinal
+        if options["longitudinal"]:
+            studyfolder = gc.deduceFolders(options)["basefolder"]
+            if not studyfolder:
+                r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                run = False
+            # replace path (elements[0])
+            path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+            session = f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+
         elements = [
-            ("path", sinfo["hcp"]),
-            ("subject", sinfo["id"] + options["hcp_suffix"]),
+            ("path", path),
+            ("session", session),
             ("fmriname", boldtarget),
             ("lowresmesh", options["hcp_lowresmesh"]),
             ("fmrires", options["hcp_bold_res"]),
@@ -6081,33 +6101,34 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-        tfile = os.path.join(
-            hcp["hcp_nonlin"],
-            "Results",
-            boldtarget,
-            "%s%s.dtseries.nii" % (boldtarget, options["hcp_cifti_tail"]),
-        )
+        tfile = None
+        fullTest = None
+        if not options["longitudinal"]:
+            tfile = os.path.join(
+                hcp["hcp_nonlin"],
+                "Results",
+                boldtarget,
+                "%s%s.dtseries.nii" % (boldtarget, options["hcp_cifti_tail"]),
+            )
 
-        if hcp["hcp_bold_surf_check"]:
-            fullTest = {
-                "tfolder": hcp["base"],
-                "tfile": hcp["hcp_bold_surf_check"],
-                "fields": [
-                    ("sessionid", sinfo["id"] + options["hcp_suffix"]),
-                    ("scan", boldtarget),
-                ],
-                "specfolder": options["specfolder"],
-            }
-        else:
-            fullTest = None
+            if hcp["hcp_bold_surf_check"]:
+                fullTest = {
+                    "tfolder": hcp["base"],
+                    "tfile": hcp["hcp_bold_surf_check"],
+                    "fields": [
+                        ("sessionid", sinfo["id"] + options["hcp_suffix"]),
+                        ("scan", boldtarget),
+                    ],
+                    "specfolder": options["specfolder"],
+                }
 
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
+                if not options["longitudinal"] and (overwrite and os.path.exists(tfile)):
                     os.remove(tfile)
 
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running HCP fMRISurface",
