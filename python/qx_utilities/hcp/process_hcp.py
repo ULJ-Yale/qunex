@@ -5582,7 +5582,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             # replace path (elements[0])
             elements[0] = ("path", os.path.join(studyfolder, "subjects", sinfo["subject"]))
             elements.append(("is-longitudinal", "1"))
-            elements.append(("longitudinal-session", f"{sinfo['id']}{options['hcp_suffix']}_{options['hcp_longitudinal_template']}"))
+            elements.append(("longitudinal-session", f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"))
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
@@ -5614,7 +5614,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if overwrite or not os.path.exists(tfile):
+                if not options["longitudinal"] and (overwrite or not os.path.exists(tfile)):
                     # ---> Clean up existing data
                     # -> bold working folder
                     bold_folder = os.path.join(hcp["base"], boldtarget)
