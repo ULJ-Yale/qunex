@@ -5674,6 +5674,10 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                         )
                         os.remove(xfms_file)
 
+                logtags = [options["logtag"], boldtarget]
+                if options["longitudinal"]:
+                    logtags.append("long")
+
                 r, endlog, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
@@ -5683,7 +5687,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=[options["logtag"], boldtarget],
+                    logtags=logtags,
                     fullTest=fullTest,
                     shell=True,
                     r=r,
@@ -6128,6 +6132,10 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
                 if not options["longitudinal"] and (overwrite and os.path.exists(tfile)):
                     os.remove(tfile)
 
+                logtags = [options["logtag"], boldtarget]
+                if options["longitudinal"]:
+                    logtags.append("long")
+
                 r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
@@ -6137,7 +6145,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=[options["logtag"], boldtarget],
+                    logtags=logtags,
                     fullTest=fullTest,
                     shell=True,
                     r=r,

@@ -2306,7 +2306,11 @@ def run(command, args):
         if not os.path.exists(cfolder):
             os.makedirs(cfolder)
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = os.path.join(runlogfolder, "Log-%s-%s.log") % (command, logstamp)
+
+    if not options["longitudinal"]:
+        logname = os.path.join(runlogfolder, "Log-%s-%s.log") % (command, logstamp)
+    else:
+        logname = os.path.join(runlogfolder, "Log-%s-long-%s.log") % (command, logstamp)
 
     log = []
     stati = []
