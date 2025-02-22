@@ -3470,6 +3470,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             exist. Mainly useful when using distortion maps as part of the
             input data.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of
+            hcp_fmri_volume.
+
     Output files:
         The results of this command will be present in the Diffusion folder
         in the sessions's root hcp folder.
@@ -3786,6 +3793,16 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: QuNex was unable to acquire echospacing from the data and the parameter is not set!"
                 run = False
 
+        # longitudinal mode
+        path = sinfo["hcp"]
+        if options["longitudinal"]:
+            studyfolder = gc.deduceFolders(options)["basefolder"]
+            if not studyfolder:
+                r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                run = False
+            # replace path (elements[0])
+            path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+
         # --- build the command
         if run:
             comm = (
@@ -3807,7 +3824,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     ),
                     "pos_data": pos_data,
                     "neg_data": neg_data,
-                    "path": sinfo["hcp"],
+                    "path": path,
                     "subject": sinfo["id"] + options["hcp_suffix"],
                     "echospacing": echospacing,
                     "pe_dir": pe_dir,
@@ -3816,6 +3833,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     "printcom": options["hcp_printcom"],
                 }
             )
+
+            # -- Longitudinal parameters
+            if options["longitudinal"]:
+                comm += "                --is-longitudinal=1"
+                comm += "                --longitudinal-session=" + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
 
             # -- Optional parameters
             if options["hcp_dwi_b0maxbval"] is not None:

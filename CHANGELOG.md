@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 1.1.0 [QIO]
 
+* Longitudinal support for HCP volume, surface and diffusion processing.
 * Fixed a bug where some optional parameters were not properly passed to the HCP ReapplyFix pipeline.
 * Fixed a bug where hcp_msmall crashed as it did not parse bolds correctly.
 * `motionregression` parameter is now passed properly in `reaply_fix`.

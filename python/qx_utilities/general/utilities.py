@@ -2188,7 +2188,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     - setup_hcp
 
             hcp_preprocess:
-                parsessions: 2
+                parameters:
+                    parsessions: 2
 
                 commands:
                     - hcp_pre_freesurfer
@@ -2285,7 +2286,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         raise ge.CommandFailed(
             "run_recipe",
             "recipe file file does not exist",
-            "Recipe file file not found [%s]" % (recipe_file),
+            f"Recipe file file not found [{recipe_file}]",
             "Please check your paths!",
         )
 
