@@ -3920,22 +3920,23 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 r += "\n------------------------------------------------------------\n"
 
             # -- Test files
-            tfile = os.path.join(hcp["T1w_folder"], "Diffusion", "data.nii.gz")
+            tfile = None
+            full_test = None
+            if not options["longitudinal"]:
+                tfile = os.path.join(hcp["T1w_folder"], "Diffusion", "data.nii.gz")
 
-            if hcp["hcp_dwi_check"]:
-                full_test = {
-                    "tfolder": hcp["base"],
-                    "tfile": hcp["hcp_dwi_check"],
-                    "fields": [("sessionid", sinfo["id"])],
-                    "specfolder": options["specfolder"],
-                }
-            else:
-                full_test = None
+                if hcp["hcp_dwi_check"]:
+                    full_test = {
+                        "tfolder": hcp["base"],
+                        "tfile": hcp["hcp_dwi_check"],
+                        "fields": [("sessionid", sinfo["id"])],
+                        "specfolder": options["specfolder"],
+                    }
 
         # -- Run
         if run:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
+                if not options["longitudinal"] and overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
                 r, endlog, report, failed = pc.runExternalForFile(
