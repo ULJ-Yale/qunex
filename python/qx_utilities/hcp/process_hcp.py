@@ -3808,7 +3808,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             comm = (
                 '%(script)s \
                 --path="%(path)s" \
-                --subject="%(subject)s" \
+                --session="%(session)s" \
                 --PEdir=%(pe_dir)s \
                 --posData="%(pos_data)s" \
                 --negData="%(neg_data)s" \
@@ -3825,7 +3825,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     "pos_data": pos_data,
                     "neg_data": neg_data,
                     "path": path,
-                    "subject": sinfo["id"] + options["hcp_suffix"],
+                    "session": sinfo["id"] + options["hcp_suffix"],
                     "echospacing": echospacing,
                     "pe_dir": pe_dir,
                     "gdcoeffs": gdcfile,
@@ -3939,6 +3939,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if not options["longitudinal"] and overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
+                logtags = [options["logtag"]]
+                if options["longitudinal"]:
+                    logtags.append("long")
+
                 r, endlog, report, failed = pc.runExternalForFile(
                     tfile,
                     comm,
@@ -3948,7 +3952,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=options["logtag"],
+                    logtags=logtags,
                     fullTest=full_test,
                     shell=True,
                     r=r,
