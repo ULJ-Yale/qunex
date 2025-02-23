@@ -2053,215 +2053,210 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     """
     ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [<extra arguments>]``
 
-    Executes the commands defined in each recipe.
+    A command for chaining multiple commands through recipe files and recipes.
 
-    INPUTS
-    ======
+    Parameters:
+        --recipe_file (str):
+            Path to a YAML file that contains recipe definitions.
 
-    General parameters
-    ------------------
+        --recipe (str):
+            Name of the recipe in the recipe_file to run.
 
-    --recipe_file   path to a YAML file that contains recipe definitions.
-    --recipe        Name of the recipe in the recipe_file to run.
-    --steps         A comma separated list of steps (QuNex commands) to run.
-                    This can be used to run only a subset of commands from the
-                    list or as an alternative to specifying the recipe file and
-                    a recipe name.
-    --logfolder     The folder within which to save the log.
+        --steps (str, default ''):
+            A comma separated list of steps (QuNex commands) to run. This can
+            be used to run only a subset of commands from the list or as an
+            alternative to specifying the recipe file and a recipe name.
 
-    Multiple run_recipe invocations
-    ----------------------------
+        --logfolder (str, default ''):
+            The folder within which to save the log.
 
-    These parameters allow spreading processing of multiple sessions across
-    multiple run_recipe invocations:
+    Notes:
 
-    --batchfile             A path to a batch.txt file.
-    --sessions              Either a string with comma separated list of
+        Parallelism
+        ===========
+
+        These parameters allow spreading processing of multiple sessions across
+        multiple run_recipe invocations:
+
+        --batchfile         A path to a batch.txt file.
+
+        --sessions          Either a string with comma separated list of
                             sessions (sessions ids) to be processed (use of grep
                             patterns is possible), e.g.  `"OP128,OP139,ER*"` or
                             `*list` file with a list of session ids.
-    --scheduler             An optional scheduler settings description string.
+
+        --scheduler         An optional scheduler settings description string.
                             If provided, each run_recipe invocation will be
-                            scheduled to run on a separate cluster node. For
-                            details about the settings string specification see
-                            the inline help for the `schedule` command.
+                            scheduled to run on a separate cluster node.
 
-    Please take note that if `run_recipe` command is ran using a scheduler, any
-    scheduler specification within the `recipe_file` will be ignored to avoid
-    the attempts to spawn new cluster jobs when `run_recipe` instance is
-    already running on a cluster node.
+        Please take note that if `run_recipe` command is ran using a scheduler,
+        any scheduler specification within the `recipe_file` will be ignored to
+        avoid the attempts to spawn new cluster jobs when `run_recipe` instance
+        is already running on a cluster node.
 
-    Importantly, if `scheduler` is specified in the `run_recipe` file, do bear
-    in mind, that all the commands in the recipe will be scheduled at the same
-    time, and not in a succession, as `run_recipe` can not track execution of
-    jobs on individual cluster nodes.
+        Importantly, if `scheduler` is specified in the `run_recipe` file, do
+        bear in mind, that all the commands in the recipe will be scheduled at
+        the same time, and not in a succession, as `run_recipe` can not track
+        execution of jobs on individual cluster nodes.
 
-    Parallel processing
-    -------------------
+        To setup run_recipe parallelism, you can use the traditional parsessions
+        and parelements parameters.
 
-    To setup run_recipe parallelism, you can use the traditional parsessions and
-    parelements parameters.
+        --parsessions   An optional parameter specifying how many sessions to
+                        run in parallel.
 
-    --parsessions    An optional parameter specifying how many sessions to run
-                     in parallel.
-    --parelements    An optional parameter specifying how many elements to run
-                     in parallel within each of the jobs (e.g. how many bolds
-                     when bold processing).
+        --parelements   An optional parameter specifying how many elements to
+                        run in parallel within each of the jobs (e.g. how many
+                        bolds).
 
-    The parsessions parameter defines the number of sessions that will be ran in
-    parallel within a single run_recipe invocation. The default is 1, which
-    means that each session will be ran in parallel within a separate job. If
-    parsessions is set to the number of sessions, then all the sessions will
-    be executed in sequence within a single run_recipe invocation.
+        The parsessions parameter defines the number of sessions that will be
+        ran in parallel within a single run_recipe invocation. The default is 1,
+        which means that each session will be ran in parallel within a separate
+        job. If parsessions is set to the number of sessions, then all the
+        sessions will  be executed in sequence within a single run_recipe
+        invocation.
 
-    USE
-    ===
+        Recipe file and recipes
+        =======================
 
-    run_recipe takes a `recipe_file` and a `recipe` name and executes
-    the commands defined in the recipe. The `recipe_file` contains commands that
-    should be run and parameters that it should use. Alternatively, you can
-    provide a comma separated list of commands with the `steps` parameter.
+        run_recipe takes a `recipe_file` and a `recipe` name and executes
+        the commands defined in the recipe. The `recipe_file` contains commands
+        that should be run and parameters that it should use. Alternatively, you
+        can provide a comma separated list of commands with the `steps`
+        parameter.
 
-    LOGS AND FAILURES
-    =================
+        The log of the commands ran will be by default stored in
+        `<study>/processing/logs/runlogs` stamped with date and time that the
+        log was started. If a study folder is not yet created, please provide a
+        valid folder to save the logs to. If the log can not be created the
+        `run_recipe` command will exit with a failure.
 
-    The log of the commands ran will be by default stored in
-    `<study>/processing/logs/runlogs` stamped with date and time that the
-    log was started. If a study folder is not yet created, please provide a
-    valid folder to save the logs to. If the log can not be created the
-    `run_recipe` command will exit with a failure.
+        `run_recipe` is checking for a successful completion of commands that it
+        runs. If any of the commands fail to complete successfully, the
+        execution of the commands will stop and the failure will be reported
+        both in stdout as well as the log.
 
-    `run_recipe` is checking for a successful completion of commands that it runs.
-    If any of the commands fail to complete successfully, the execution of the
-    commands will stop and the failure will be reported both in stdout as well
-    as the log.
+        Individual commands that are run can generate their own logs,
+        the presence and location of those logs depend on the specific command
+        and settings specified in the recipe file.
 
-    Individual commands that are run can generate their own logs, the presence
-    and location of those logs depend on the specific command and settings
-    specified in the recipe file.
+        Recipe files use YAML markup language. At the top of the recipe file is
+        the global_parameters section, where the global settings are defined in
+        the form of `<parameter>: <value>` pairs. These are the settings that
+        will be used as defaults throughout all recipes and individual commands
+        defined in the rest of the recipe file.
 
-    THE RECIPE FILE
-    ===============
+        Recpies are defined in the recipes portion of the file where each recipe
+        is defined by its unique name. Each recipe has two sections, the
+        parameters and the commands. The parameters section defines the
+        parameters and the values that are specific to that recipe. The commands
+        section defines the commands that are specific to that recipe along with
+        command specific parameters. All parameters are provided in the form of
+        <parameter>:<value> pairs. Recipe level parameters have a higher
+        priority than global parameters, while command level parameters have a
+        higher priority than recipe level parameters. Parameters provided
+        through the command line interface call have the highest priority,
+        meaning that their valus will override any values in recipe files.
 
-    Recipe files use YAML markup language. At the top of the recipe file is the
-    global_parameters section, where the global settings are defined in the form
-    of `<parameter>: <value>` pairs. These are the settings that will be used as
-    defaults throughout all recipes and individual commands defined in the rest
-    of the recipe file.
+        Example recipe file
+        -------------------
 
-    Recpies are defined in the recipes portion of the file where each recipe is
-    defined by its unique name. Each recipe has two sections, the parameters and
-    the commands. The parameters section defines the parameters and the values
-    that are specific to that recipe. The commands section defines the commands
-    that are specific to that recipe along with command specific parameters. All
-    parameters are provided in the form of <parameter>:<value> pairs. Recipe
-    level parameters have a higher priority than global parameters, while
-    command level parameters have a higher priority than recipe level
-    parameters. Parameters provided through the command line interface call have
-    the highest priority, meaning that their valus will override any values in
-    recipe files.
+        ::
 
-    Example recipe file
-    -------------------
+            global_parameters:
+                sessionsfolder    : /data/qx_study/sessions
+                sessions          : OP101,OP102
+                overwrite         : "yes"
+                batchfile         : /data/qx_study/processing/batch.txt
 
-    ::
+            recipes:
+                onboard_dicom:
+                    commands:
+                        - create_study:
+                            studyfolder: /data/qx_study
+                        - import_dicom:
+                            masterinbox: /data/qx_data
+                            archive: leave
+                        - create_session_info
+                            mapping: /data/qx_specs/hcp_mapping.txt
+                        - create_batch:
+                            targetfile: /data/qx_study/processing/batch.txt
+                            paramfile : /data/qx_specs/hcp_parameters.txt
+                        - setup_hcp
 
-        global_parameters:
-            sessionsfolder    : /data/qx_study/sessions
-            sessions          : OP101,OP102
-            overwrite         : "yes"
-            batchfile         : /data/qx_study/processing/batch.txt
+                hcp_preprocess:
+                    parameters:
+                        parsessions: 2
 
-        recipes:
-            onboard_dicom:
-                commands:
-                    - create_study:
-                        studyfolder: /data/qx_study
-                    - import_dicom:
-                        masterinbox: /data/qx_data
-                        archive: leave
-                    - create_session_info
-                        mapping: /data/qx_specs/hcp_mapping.txt
-                    - create_batch:
-                        targetfile: /data/qx_study/processing/batch.txt
-                        paramfile : /data/qx_specs/hcp_parameters.txt
-                    - setup_hcp
+                    commands:
+                        - hcp_pre_freesurfer
+                        - hcp_freesurfer
+                        - hcp_post_freesurfer
+                        - hcp_fmri_volume
+                        - hcp_fmri_surface
 
-            hcp_preprocess:
-                parameters:
-                    parsessions: 2
+                hcp_denoise:
+                    commands:
+                        - hcp_icafix:
+                            hcp_matlab_mode: "{{$MATLAB_MODE}}"
+                        - hcp_msmall
+                            hcp_matlab_mode: "{{$MATLAB_MODE}}"
 
-                commands:
-                    - hcp_pre_freesurfer
-                    - hcp_freesurfer
-                    - hcp_post_freesurfer
-                    - hcp_fmri_volume
-                    - hcp_fmri_surface
+    Examples:
+        ::
 
-            hcp_denoise:
-                commands:
-                    - hcp_icafix:
-                        hcp_matlab_mode: "{{$MATLAB_MODE}}"
-                    - hcp_msmall
-                        hcp_matlab_mode: "{{$MATLAB_MODE}}"
+            qunex run_recipe \\
+            --recipe_file="/data/settings/recipe.yaml" \\
+            --recipe="onboard_dicom"
 
-    EXAMPLE USE
-    ===========
+        ::
 
-    ::
+            qunex run_recipe \\
+            --recipe_file="/data/settings/recipe.yaml" \\
+            --recipe="hcp_preprocess" \\
+            --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
+            --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=week"
 
-        qunex run_recipe \\
-          --recipe_file="/data/settings/recipe.yaml" \\
-          --recipe="onboard_dicom"
+        ::
 
-    ::
+            export MATLAB_MODE="interpreted"
+            qunex run_recipe \\
+            --recipe_file="/data/settings/recipe.yaml" \\
+            --recipe="hcp_denoise"
 
-        qunex run_recipe \\
-          --recipe_file="/data/settings/recipe.yaml" \\
-          --recipe="hcp_preprocess" \\
-          --batchfile="/data/testStudy/processing/batch_baseline.txt" \\
-          --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,cpus-per-task=2,mem-per-cpu=40000,partition=week"
+        ::
 
-    ::
+            export MATLAB_MODE="interpreted"
+            qunex run_recipe \\
+            --recipe_file="/data/settings/recipe.yaml" \\
+            --recipe="hcp_denoise" \\
+            --steps="hcp_icafix"
 
-        export MATLAB_MODE="interpreted"
-        qunex run_recipe \\
-          --recipe_file="/data/settings/recipe.yaml" \\
-          --recipe="hcp_denoise"
+        ::
 
-    ::
+            qunex run_recipe \\
+            --sessionsfolder="/data/qx_study/sessions" \\
+            --batchfile="/data/qx_study/processing/batch.txt" \\
+            --steps="hcp_pre_freesurfer,hcp_freesurfer,hcp_post_freesurfer"
 
-        export MATLAB_MODE="interpreted"
-        qunex run_recipe \\
-          --recipe_file="/data/settings/recipe.yaml" \\
-          --recipe="hcp_denoise" \\
-          --steps="hcp_icafix"
+        The first call will execute all the commands in recipe `onboard_dicom`.
 
-    ::
+        The second call will execute all the steps of the HCP preprocessing pipeline
+        via a scheduler. It will execute two sessions in parallel within the run.
+        in sequence.
 
-        qunex run_recipe \\
-          --sessionsfolder="/data/qx_study/sessions" \\
-          --batchfile="/data/qx_study/processing/batch.txt" \\
-          --steps="hcp_pre_freesurfer,hcp_freesurfer,hcp_post_freesurfer"
+        The third call will execute the hcp_denoise list where the  hcp_matlab_mode
+        parameter will be set to "interpreted" this value will be read from the
+        system environment variable $MATLAB_MODE. This is an example of how you can
+        inject custom values into specially marked slots (marked with "{{<label>}}")
+        in the recipe file. Note that the labels need to be provided in the form of
+        a string, so they need to be encapsulated with double quotes.
 
-    The first call will execute all the commands in recipe `onboard_dicom`.
+        The fourth call is the same as the third call, except that only hcp_icafix
+        will be executed from the hcp_denoise list.
 
-    The second call will execute all the steps of the HCP preprocessing pipeline
-    via a scheduler. It will execute two sessions in parallel within the run.
-    in sequence.
-
-    The third call will execute the hcp_denoise list where the  hcp_matlab_mode
-    parameter will be set to "interpreted" this value will be read from the
-    system environment variable $MATLAB_MODE. This is an example of how you can
-    inject custom values into specially marked slots (marked with "{{<label>}}")
-    in the recipe file. Note that the labels need to be provided in the form of
-    a string, so they need to be encapsulated with double quotes.
-
-    The fourth call is the same as the third call, except that only hcp_icafix
-    will be executed from the hcp_denoise list.
-
-    The fifth example shows how to use the steps parameter to run a set of
-    commands sequentially.
+        The fifth example shows how to use the steps parameter to run a set of
+        commands sequentially.
     """
 
     flags = ["test"]
