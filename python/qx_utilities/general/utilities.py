@@ -2407,10 +2407,26 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         )
 
     commands = recipe_dict["commands"]
-
     # subset commands when using both the recipe and steps
     if steps and recipe_file:
-        commands = [com for com in commands if com in steps.split(",")]
+        commands_subset = []
+        steps = steps.split(",")
+        for com in commands:
+            if isinstance(com, dict):
+                key = list(com.keys())[0]
+                if key in steps:
+                    commands_subset.append(com)
+                elif key == "script":
+                    for step in steps:
+                        if com["script"]["path"].endswith(step):
+                            commands_subset.append(com)
+            elif com in steps:
+                commands_subset.append(com)
+
+        commands = commands_subset
+
+    print(commands)
+    os._exit(1)
 
     # XNAT initial setup
     # If running on XNAT, try and load checkpoint if supplied
