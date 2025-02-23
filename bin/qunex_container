@@ -316,11 +316,13 @@ def schedule(
         for key, value in scheduler_params.items():
             if key in ("J", "job-name") and jobname == "qunex_job":
                 jobname = value
-            elif value == "QX_FLAG":
+            elif not value:
                 s_command += f"#SBATCH --{key.replace('--', '')}\n"
-
             else:
                 s_command += f"#SBATCH --{key.replace('--', '')}={value}\n"
+
+        print(s_command)
+        os._exit(1)
 
         # set default cpus-per-task
         if (
@@ -978,7 +980,7 @@ def main(args=None):
                     else:
                         scheduler_params["array"] = f"0-{n_jobs}%%{parjobs}"
                 else:
-                    scheduler_params[s.strip()] = "QX_FLAG"
+                    scheduler_params[s.strip()] = None
 
         # if job array we have a single job
         if slurm_array:

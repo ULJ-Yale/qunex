@@ -145,7 +145,7 @@ def schedule(
         "stdout:processing.output.log|stderr:processing.error.log"
 
     ::
-    
+
         "both:processing.log|return:true"
 
     Do not specify error and standard outputs both using --output parameter and
@@ -213,7 +213,7 @@ def schedule(
 
     EXAMPLE USE
     ===========
-    
+
     ::
 
         qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
@@ -374,7 +374,7 @@ def schedule(
         for key, value in setDict.items():
             if key in ("J", "job-name") and jobname == "qx_schedule":
                 jobname = v
-            elif value == "QX_FLAG":
+            elif not value:
                 sCommand += "#SBATCH --%s\n" % (key.replace("--", ""))
             else:
                 sCommand += "#SBATCH --%s=%s\n" % (key.replace("--", ""), value)
@@ -570,7 +570,7 @@ def runThroughScheduler(
                     else:
                         settings["array"] = "0-%s%%%s" % (len(sessions) - 1, parjobs)
                 else:
-                    settings[s.strip()] = "QX_FLAG"
+                    settings[s.strip()] = None
 
         # only allow HCP MPP commands with job array
         if slurm_array:

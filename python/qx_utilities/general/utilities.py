@@ -2425,9 +2425,6 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
         commands = commands_subset
 
-    print(commands)
-    os._exit(1)
-
     # XNAT initial setup
     # If running on XNAT, try and load checkpoint if supplied
     if os.environ.get("XNAT", "") == "yes":
