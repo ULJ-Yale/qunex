@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Version 0.100.0 [QX IO]
+# Version 1.1.1 [QX IO]
 
 from __future__ import print_function, division
 import subprocess
@@ -69,8 +69,8 @@ def schedule(
     USE
     ===
 
-    Schedules the provided command to be run by the specified scheduler (PBS and
-    SLURM are currently supported).
+    Schedules the provided command to be run by the specified scheduler (PBS,
+    SLURM and GridEngine are currently supported).
 
     INPUTS
     ======
@@ -164,6 +164,22 @@ def schedule(
     - mem-per-cpu      ... Memory requested per CPU in MB
     - mail-user        ... Email address to send notifications to
     - mail-type        ... On what events to send emails
+
+    GridEngine settings
+    -------------------
+
+    For GridEngine the comma separated list of settings will be unwrapped and
+    each setting will be passed to the scheduler "as is". For example:
+
+        --scheduler="GridEngine,jobname=example_job,l h_rt=24:00:00,pe smp 1,lmem_free=32G"
+
+    Will be converted to the following GridEngine header:
+
+        #$ -N example_job
+        #$ -l h_rt=24:00:00
+        #$ -pe smp 1
+        #$ -l mem_free=32G
+
     """
 
     # check inputs
@@ -307,8 +323,7 @@ def schedule(
             s_command += f"#PBS -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
             s_command += f"#PBS -e {outputs['stderr']}\n"
-        if outputs["both"]:
-            s_command += "#PBS -j oe\n"
+
         com = "qsub"
 
     elif scheduler_name == "SLURM":
@@ -338,7 +353,35 @@ def schedule(
             s_command += f"#SBATCH -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
             s_command += f"#SBATCH -e {outputs['stderr']}\n"
+
         com = "sbatch"
+
+    elif scheduler_name == "GridEngine":
+        s_command += "#!/bin/bash\n"
+
+        for k, v in scheduler_params.items():
+            # if v is a list add an entry for each value
+            if isinstance(v, list):
+                for i in v:
+                    s_command += f"#$ -{k} {i}\n"
+            else:
+                s_command += f"#$ -{k} {v}\n"
+
+        if outputs["stdout"] is not None:
+            s_command += f"#$ -o {outputs['stdout']}\n"
+        if outputs["stderr"] is not None:
+            s_command += f"#$ -e {outputs['stderr']}\n"
+
+        com = "qsub"
+
+    else:
+        raise CommandError(
+            "schedule",
+            "Misspecified parameter",
+            "First value in the settings string has to specify one of PBS, SLURM or GridEngine!",
+            "The settings string submitted was:",
+            scheduler_name,
+        )
 
     # run the scheduler
     print("\nSubmitting:\n------------------------------")
@@ -658,8 +701,8 @@ def main(args=None):
     Container commands can be submitted to a scheduling system by specifying
     the `--scheduler` parameter with a settings string. The settings string
     should be a comma separated list of parameters. The first parameter has to
-    be the scheduler name (PBS, SLURM), the rest of the parameters are
-    key-value pairs that are to be passed as settings to the scheduler.
+    be the scheduler name (PBS, SLURM or GridEngine), the rest of the parameters
+    are key-value pairs that are to be passed as settings to the scheduler.
 
     Example settings strings::
 
@@ -946,41 +989,58 @@ def main(args=None):
         scheduler_name = scheduler_params_list.pop(0)
 
         # check scheduler
-        if scheduler_name not in ["PBS", "SLURM"]:
+        if scheduler_name not in ["PBS", "SLURM", "GridEngine"]:
             raise CommandError(
                 "schedule",
                 "Misspecified parameter",
-                "First value in the settings string has to specify one of PBS or SLURM!",
+                "First value in the settings string has to specify one of PBS, SLURM or GridEngine!",
                 "The settings string submitted was:",
                 scheduler_name,
             )
 
         # parse scheduler parameters
         scheduler_params = {}
-        for s in scheduler_params_list:
-            # parameters with values
-            if "=" in s:
-                str_split = s.split("=", 1)
-
-                # SLURM job array?
-                if scheduler_name == "SLURM" and str_split[0].strip() == "array":
-                    slurm_array = True
-
-                scheduler_params[str_split[0].strip()] = str_split[1].strip()
-            # flags
-            else:
-                # SLURM job array?
-                if scheduler_name == "SLURM" and s.strip() == "array":
-                    n_jobs = 1
-                    if n_sessions is not None:
-                        n_jobs = n_sessions - 1
-                    slurm_array = True
-                    if parjobs is None:
-                        scheduler_params["array"] = f"0-{n_jobs}"
-                    else:
-                        scheduler_params["array"] = f"0-{n_jobs}%%{parjobs}"
+        # pass params as is for GridEngine
+        if scheduler_name == "GridEngine":
+            for s in scheduler_params_list:
+                if s.startswith("jobname"):
+                    str_split = s.split("=")
+                    scheduler_params["N"] = str_split[1].strip()
                 else:
-                    scheduler_params[s.strip()] = None
+                    str_split = s.split()
+                    setting = str_split[0].strip()
+                    value = " ".join(str_split[1:]).strip()
+                    if setting in scheduler_params:
+                        scheduler_params[setting] = [scheduler_params[setting], value]
+                    else:
+                        scheduler_params[str_split[0].strip()] = " ".join(
+                            str_split[1:]
+                        ).strip()
+        else:
+            for s in scheduler_params_list:
+                # parameters with values
+                if "=" in s:
+                    str_split = s.split("=", 1)
+
+                    # SLURM job array?
+                    if scheduler_name == "SLURM" and str_split[0].strip() == "array":
+                        slurm_array = True
+
+                    scheduler_params[str_split[0].strip()] = str_split[1].strip()
+                # flags
+                else:
+                    # SLURM job array?
+                    if scheduler_name == "SLURM" and s.strip() == "array":
+                        n_jobs = 1
+                        if n_sessions is not None:
+                            n_jobs = n_sessions - 1
+                        slurm_array = True
+                        if parjobs is None:
+                            scheduler_params["array"] = f"0-{n_jobs}"
+                        else:
+                            scheduler_params["array"] = f"0-{n_jobs}%%{parjobs}"
+                    else:
+                        scheduler_params[s.strip()] = None
 
         # if job array we have a single job
         if slurm_array:

@@ -9,8 +9,8 @@
 ``scheduler.py``
 
 This file holds the functions for running jobs through job schedulers on a
-computer cluster. It supports PBS  and SLURM. The functions are accessible and
-used both as terminal commands as well as internal use functions.
+computer cluster. It supports PBS, SLURM and GridEngine. The functions are
+accessible and used both as terminal commands as well as internal use functions.
 """
 
 import subprocess
@@ -69,14 +69,9 @@ def schedule(
                 settings for it.
 
     Settings string should be a comma separated list of parameters. The first
-    parameter has to be the scheduler name (PBS, SLURM), the rest of the
-    parameters are key-value pairs that are to be passed as settings to the
-    scheduler. Additional parameters common to all the schedulers can be
-    specified:
-
-    - jobname (the name of the job to run)
-    - comname (the name of the command the job runs)
-    - jobnum  (the number of the job being run)
+    parameter has to be the scheduler name (PBS, SLURM or GridEngine), the rest
+    of the parameters are key-value pairs that are to be passed as settings to
+    the scheduler.
 
     Example settings strings::
 
@@ -106,7 +101,7 @@ def schedule(
 
     If replace parameter is set, all instances of {{key}} in the command or
     script will be replaced with the provided value. The key/value pairs need
-    to be separated by pipe characted, whereas key and value need to be
+    to be separated by the pipe character, whereas key and value need to be
     separated by a colon. An example replacement string::
 
         "session:AP23791|folder:/studies/WM/sessions/AP23791"
@@ -205,11 +200,26 @@ def schedule(
     - mail-user        (Email address to send notifications to.)
     - mail-type        (On what events to send emails.)
 
+    GridEngine settings
+    ~~~~~~~~~~~~~~~~~~~
+
+    For GridEngine the comma separated list of settings will be unwrapped and
+    each setting will be passed to the scheduler "as is". For example:
+
+        ---scheduler="GridEngine,N example_job,l h_rt=24:00:00,pe smp 1,l mem_free=32G"
+
+    Will be converted to the following GridEngine header:
+
+        #$ -N example_job
+        #$ -l h_rt=24:00:00
+        #$ -pe smp 1
+        #$ -l mem_free=32G
+
     USE
     ===
 
     Schedules the provided command the referenced script to be run by the
-    specified scheduler (PBS and SLURM are currently supported).
+    specified scheduler (PBS, SLURM and GridEngine are currently supported).
 
     EXAMPLE USE
     ===========
@@ -251,12 +261,33 @@ def schedule(
 
     # --- parse settings
     try:
-        setList = [e.strip() for e in settings.split(",")]
-        scheduler = setList.pop(0)
-        setDict = dict([e.strip().split("=", 1) for e in setList])
-        jobname = setDict.pop("jobname", "qx_schedule")
-        comname = setDict.pop("comname", "")
-        jobnum = setDict.pop("jobnum", "")
+        settings_list = [e.strip() for e in settings.split(",")]
+        scheduler = settings_list.pop(0)
+        # pass parameters as is for GridEngine
+        if scheduler != "GridEngine":
+            settings_dict = dict([e.strip().split("=", 1) for e in settings_list])
+            jobname = settings_dict.pop("jobname", "qx_schedule")
+        else:
+            settings_dict = {}
+
+            for s in settings_list:
+                if s.startswith("jobname"):
+                    if "N" not in settings_dict:
+                        str_split = s.split("=")
+                        settings_dict["N"] = str_split[1].strip()
+                else:
+                    str_split = s.split()
+                    setting = str_split[0].strip()
+                    value = " ".join(str_split[1:]).strip()
+                    if setting in settings_dict:
+                        settings_dict[setting] = [settings_dict[setting], value]
+                    else:
+                        settings_dict[str_split[0].strip()] = " ".join(
+                            str_split[1:]
+                        ).strip()
+
+        comname = settings_dict.pop("comname", "")
+        jobnum = settings_dict.pop("jobnum", "")
     except:
         raise ge.CommandError(
             "schedule",
@@ -321,10 +352,10 @@ def schedule(
         outputs["stdout"] = outputs["both"]
 
     # --- build scheduler commands
-    sCommand = ""
+    s_command = ""
 
     if scheduler == "PBS":
-        for k, v in setDict.items():
+        for k, v in settings_dict.items():
             if k in (
                 "mem",
                 "walltime",
@@ -338,72 +369,93 @@ def schedule(
                 "epilogue",
                 "prologue",
             ):
-                sCommand += "#PBS -l %s=%s\n" % (k, v)
+                s_command += "#PBS -l %s=%s\n" % (k, v)
             elif k in ("j", "m", "o", "S", "a", "A", "M", "q", "t", "e", "l"):
-                sCommand += "#PBS -%s %s\n" % (k, v)
+                s_command += "#PBS -%s %s\n" % (k, v)
             elif k == "depend":
-                sCommand += "#PBS -W depend=%s\n" % (v)
+                s_command += "#PBS -W depend=%s\n" % (v)
             elif k == "umask":
-                sCommand += "#PBS -W umask=%s\n" % (v)
+                s_command += "#PBS -W umask=%s\n" % (v)
             elif k == "N" and jobname == "qx_schedule":
                 jobname = v
             elif k == "nodes":
-                sCommand += "#PBS -l nodes=%s\n" % v
+                s_command += "#PBS -l nodes=%s\n" % v
 
         # set default nodes
-        if "nodes" not in setDict.keys():
-            sCommand += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
+        if "nodes" not in settings_dict.keys():
+            s_command += "#PBS -l nodes=1:ppn=%s\n" % (parsessions * parelements)
 
         # job name
         if comname != "":
             jobname = "%s-%s" % (jobname, comname)
         if jobnum != "":
             jobname = "%s_%s" % (jobname, jobnum)
-        sCommand += "#PBS -N %s\n" % jobname
+        s_command += "#PBS -N %s\n" % jobname
 
         if outputs["stdout"] is not None:
-            sCommand += "#PBS -o %s\n" % (outputs["stdout"])
+            s_command += "#PBS -o %s\n" % (outputs["stdout"])
         if outputs["stderr"] is not None:
-            sCommand += "#PBS -e %s\n" % (outputs["stderr"])
+            s_command += "#PBS -e %s\n" % (outputs["stderr"])
         if outputs["both"]:
-            sCommand += "#PBS -j oe\n"
+            s_command += "#PBS -j oe\n"
         com = "qsub"
 
     elif scheduler == "SLURM":
-        sCommand += "#!/bin/bash\n"
-        for key, value in setDict.items():
+        s_command += "#!/bin/bash\n"
+        for key, value in settings_dict.items():
             if key in ("J", "job-name") and jobname == "qx_schedule":
                 jobname = v
             elif not value:
-                sCommand += "#SBATCH --%s\n" % (key.replace("--", ""))
+                s_command += "#SBATCH --%s\n" % (key.replace("--", ""))
             else:
-                sCommand += "#SBATCH --%s=%s\n" % (key.replace("--", ""), value)
+                s_command += "#SBATCH --%s=%s\n" % (key.replace("--", ""), value)
 
         # set default cpus-per-task
-        if "cpus-per-task" not in setDict.keys() and "c" not in setDict.keys():
-            sCommand += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
+        if (
+            "cpus-per-task" not in settings_dict.keys()
+            and "c" not in settings_dict.keys()
+        ):
+            s_command += "#SBATCH --cpus-per-task=%s\n" % (parsessions * parelements)
 
         # jobname
         if comname != "":
             jobname = "%s-%s" % (jobname, comname)
         if jobnum != "":
             jobname = "%s_%s" % (jobname, jobnum)
-        sCommand += "#SBATCH --job-name=%s\n" % jobname
+        s_command += "#SBATCH --job-name=%s\n" % jobname
 
         if outputs["stdout"] is not None:
-            sCommand += "#SBATCH -o %s\n" % (outputs["stdout"])
+            s_command += "#SBATCH -o %s\n" % (outputs["stdout"])
         if outputs["stderr"] is not None:
-            sCommand += "#SBATCH -e %s\n" % (outputs["stderr"])
+            s_command += "#SBATCH -e %s\n" % (outputs["stderr"])
         com = "sbatch"
+
+    elif scheduler == "GridEngine":
+        s_command += "#!/bin/bash\n"
+
+        for k, v in settings_dict.items():
+            # if v is a list add an entry for each value
+            if isinstance(v, list):
+                for i in v:
+                    s_command += f"#$ -{k} {i}\n"
+            else:
+                s_command += f"#$ -{k} {v}\n"
+
+        if outputs["stdout"] is not None:
+            s_command += f"#$ -o {outputs['stdout']}\n"
+        if outputs["stderr"] is not None:
+            s_command += f"#$ -e {outputs['stderr']}\n"
+
+        com = "qsub"
 
     # --- run scheduler
     # add bash commands before the qunex command if specified
     if bash:
-        sCommand += "\n" + bash + "\n"
+        s_command += "\n" + bash + "\n"
 
     # --- report
     print("\nSubmitting:\n------------------------------")
-    print(sCommand)
+    print(s_command)
     print(command + "\n")
 
     if outputs["return"] is None:
@@ -423,7 +475,7 @@ def schedule(
         com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True
     )
 
-    run.stdin.write((sCommand + command).encode("utf-8"))
+    run.stdin.write((s_command + command).encode("utf-8"))
     run.stdin.close()
 
     # --- getting results
@@ -494,11 +546,11 @@ def runThroughScheduler(
     test = args.get("run", "run")
 
     # check scheduler
-    if scheduler not in ["PBS", "SLURM"]:
+    if scheduler not in ["PBS", "SLURM", "GridEngine"]:
         raise ge.CommandError(
             "schedule",
             "Misspecified parameter",
-            "First value in the settings string has to specify one of PBS, SLURM!",
+            "First value in the settings string has to specify one of PBS, SLURM or GridEngine!",
             "The settings string submitted was:",
             settings,
         )
@@ -671,11 +723,20 @@ def runThroughScheduler(
                 # ---- set sheduler settings
                 if parjobs > 1:
                     settings["jobnum"] = str(i)
-                sString = (
-                    scheduler
-                    + ","
-                    + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
-                )
+                if scheduler != "GridEngine":
+                    sString = (
+                        scheduler
+                        + ","
+                        + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
+                    )
+                else:
+                    sString = scheduler
+                    for k, v in settings.items():
+                        if v:
+                            sString = "%s,%s" % (sString, k + "=" + v)
+                        else:
+                            sString = "%s,%s" % (sString, k)
+
                 exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
                 # set different output format for slurm_array
