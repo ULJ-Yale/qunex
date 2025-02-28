@@ -26,7 +26,7 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 
  General QuNex usage syntax
 ============================
- 
+
  qunex <command_name>
   --parameterA=<required-parameter-args>
   [--parameterB=<optional-parameter-args>]
@@ -43,7 +43,7 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
   qunex <command_name> --h
 
 
- Display a list of all QuNex commands 
+ Display a list of all QuNex commands
 ======================================
 
   qunex --a
@@ -286,11 +286,11 @@ def runCommand(command, args):
             if not folders["logfolder"]:
                 folders["logfolder"] = "."
 
-            # createstudy exception
-            if command == "create_study" and "studyfolder" in args:
-                folders["logfolder"] = args["studyfolder"] + "/processing/logs"
-            elif command == "create_study":
-                folders["logfolder"] = "./processing/logs"
+                # createstudy exception
+                if command == "create_study" and "studyfolder" in args:
+                    folders["logfolder"] = args["studyfolder"] + "/processing/logs"
+                elif command == "create_study":
+                    folders["logfolder"] = "./processing/logs"
 
             sufix = ""
             if "sessionids" in args:

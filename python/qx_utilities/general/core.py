@@ -13,6 +13,7 @@ preprocessing and analysis. The functions are for internal use
 and can not be called externally.
 """
 
+import inspect
 import re
 import os.path
 import os
@@ -25,7 +26,6 @@ import sys
 import types
 import traceback
 import gzip
-import math
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 
@@ -145,11 +145,11 @@ def read_session_data(filename, verbose=False):
 
                     ni = len(line)
                     if ni > 1:
-                        image['name'] = line[1]
-                    if ni > 2 and ("bold" in image['name']) or ("DWI" in image['name']):
-                        image['task'] = line[2]
+                        image["name"] = line[1]
+                    if ni > 2 and ("bold" in image["name"]) or ("DWI" in image["name"]):
+                        image["task"] = line[2]
                     if ni > 3:
-                        image['ext'] = line[3]
+                        image["ext"] = line[3]
 
                     dic[line[0]] = image
 
@@ -726,6 +726,12 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         )
 
     try:
+        # remove logfolder from args if it is not in function's footprint
+        if (
+            "logfolder" in args
+            and "logfolder" not in inspect.signature(function).parameters
+        ):
+            del args["logfolder"]
         result = function(**args)
     except ge.CommandNull as e:
         with lock:

@@ -92,6 +92,7 @@ SEDirMap = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
 # ------------------------------------------------------------------------------
 #                                                              Support functions
 
+
 def _build_skipped_report(report, skipped, options):
     """
     Function builds the skipped report based on the skipped list and the
@@ -100,10 +101,10 @@ def _build_skipped_report(report, skipped, options):
     if report["boldskipped"]:
         if options["hcp_filename"] == "userdefined":
             report["skipped"] = [
-                binfo.get("filename", str(binfo['bold_number'])) for binfo in skipped
+                binfo.get("filename", str(binfo["bold_number"])) for binfo in skipped
             ]
         else:
-            report["skipped"] = [str(binfo['bold_number']) for binfo in skipped]
+            report["skipped"] = [str(binfo["bold_number"]) for binfo in skipped]
 
 
 def _get_bold_names(boldinfo, options):
@@ -3837,7 +3838,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             # -- Longitudinal parameters
             if options["longitudinal"]:
                 comm += "                --is-longitudinal=1"
-                comm += "                --longitudinal-session=" + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                comm += (
+                    "                --longitudinal-session="
+                    + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                )
 
             # -- Optional parameters
             if options["hcp_dwi_b0maxbval"] is not None:
@@ -4655,7 +4659,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             r += f"\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter {options['hcp_bold_dcmethod']}!"
             run = False
 
-        if options["hcp_bold_dcmethod"] and options["hcp_bold_dcmethod"].lower() == "topup":
+        if (
+            options["hcp_bold_dcmethod"]
+            and options["hcp_bold_dcmethod"].lower() == "topup"
+        ):
             # -- spin echo settings
             sesettings = True
             for p in [
@@ -4669,7 +4676,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         % (p)
                     )
                     if p in ["hcp_bold_sephaseneg", "hcp_bold_sephasepos"]:
-                         r += f"\nERRPR: Note that {p} needs to be set manually as QuNex cannot infer it from the data in a robust manner."
+                        r += f"\nERRPR: Note that {p} needs to be set manually as QuNex cannot infer it from the data in a robust manner."
                     boldok = False
                     sesettings = False
                     run = False
@@ -4970,15 +4977,15 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         futureref = "NONE"
 
                 # --- check for Siemens double TE-fieldmap image
-                elif options["hcp_bold_biascorrection"].lower() != "sebased" and options["hcp_bold_dcmethod"].lower() in [
+                elif options[
+                    "hcp_bold_biascorrection"
+                ].lower() != "sebased" and options["hcp_bold_dcmethod"].lower() in [
                     "fieldmap",
                     "siemensfieldmap",
                 ]:
                     fmnum = boldinfo.get("fm", None)
                     if fmnum is None:
-                        r += (
-                            "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        )
+                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
                         run = False
                     else:
                         fieldok = True
@@ -5017,7 +5024,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             r, fieldok = pc.checkForFile2(
                                 r,
                                 hcp["fieldmap"][i]["phase"],
-                                "\n     ... Siemens fieldmap phase image %d present " % (i),
+                                "\n     ... Siemens fieldmap phase image %d present "
+                                % (i),
                                 "\n     ... ERROR: Siemens fieldmap phase image %d missing!"
                                 % (i),
                                 status=fieldok,
@@ -5037,7 +5045,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                 "FieldMap%s%s" % (fmnum, options["fctail"]),
                             )
 
-                            fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
+                            fmap_json = glob.glob(
+                                os.path.join(fmfolder, "*Phase.json")
+                            )[0]
                             json_sidecar = os.path.join(fmfolder, fmap_json)
 
                             if os.path.exists(json_sidecar):
@@ -5054,7 +5064,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                         )
                                         # from s to ms
                                         echodiff = echodiff * 1000
-                                        options["hcp_bold_echodiff"] = f"{echodiff:.10f}"
+                                        options["hcp_bold_echodiff"] = (
+                                            f"{echodiff:.10f}"
+                                        )
                                         r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
                             else:
                                 r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
@@ -5075,14 +5087,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                 # --- check for GE legacy fieldmap image
                 elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased" and
-                    options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"
+                    options["hcp_bold_biascorrection"].lower() != "sebased"
+                    and options["hcp_bold_dcmethod"].lower()
+                    == "gehealthcarelegacyfieldmap"
                 ):
                     fmnum = boldinfo.get("fm", None)
                     if fmnum is None:
-                        r += (
-                            "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        )
+                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
                         run = False
                     else:
                         fieldok = True
@@ -5103,14 +5114,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                 # --- check for GE double TE-fieldmap image
                 elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased" and
-                    options["hcp_bold_dcmethod"].lower() == "gehealthcarefieldmap"
+                    options["hcp_bold_biascorrection"].lower() != "sebased"
+                    and options["hcp_bold_dcmethod"].lower() == "gehealthcarefieldmap"
                 ):
                     fmnum = boldinfo.get("fm", None)
                     if fmnum is None:
-                        r += (
-                            "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        )
+                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
                         run = False
                     else:
                         fieldok = True
@@ -5118,7 +5127,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             r, fieldok = pc.checkForFile2(
                                 r,
                                 hcp["fieldmap"][i]["magnitude"],
-                                "\n     ... GE fieldmap magnitude image %d present " % (i),
+                                "\n     ... GE fieldmap magnitude image %d present "
+                                % (i),
                                 "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
                                 % (i),
                                 status=fieldok,
@@ -5145,14 +5155,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                 # --- check for Philips double TE-fieldmap image
                 elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased" and
-                    options["hcp_bold_dcmethod"].lower() == "philipsfieldmap"
+                    options["hcp_bold_biascorrection"].lower() != "sebased"
+                    and options["hcp_bold_dcmethod"].lower() == "philipsfieldmap"
                 ):
                     fmnum = boldinfo.get("fm", None)
                     if fmnum is None:
-                        r += (
-                            "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        )
+                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
                         run = False
                     else:
                         fieldok = True
@@ -5169,7 +5177,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             r, fieldok = pc.checkForFile2(
                                 r,
                                 hcp["fieldmap"][i]["phase"],
-                                "\n     ... Philips fieldmap phase image %d present " % (i),
+                                "\n     ... Philips fieldmap phase image %d present "
+                                % (i),
                                 "\n     ... ERROR: Philips fieldmap phase image %d missing!"
                                 % (i),
                                 status=fieldok,
@@ -5202,7 +5211,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                 # --- ERROR
                 else:
-                    r += ("\n     ... ERROR: Issues detected with distortion correction setup! Please check related parameters!")
+                    r += "\n     ... ERROR: Issues detected with distortion correction setup! Please check related parameters!"
                     boldok = False
 
             # --- set reference
@@ -5342,9 +5351,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         else:  # parallel execution
             # if moveref equals first and seimage equals independent (complex scenario)
             if (
-                not options["longitudinal"] and
-                options["hcp_bold_movref"] == "first" and
-                options["hcp_bold_seimg"] == "independent"
+                not options["longitudinal"]
+                and options["hcp_bold_movref"] == "first"
+                and options["hcp_bold_seimg"] == "independent"
             ):
                 # loop over bolds to prepare processing pools
                 boldsPool = []
@@ -5371,8 +5380,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             else:
                 # if moveref equals first then process first one in serial
                 if (
-                    not options["longitudinal"] and
-                    options["hcp_bold_movref"] == "first"
+                    not options["longitudinal"]
+                    and options["hcp_bold_movref"] == "first"
                 ):
                     # process first one
                     b = boldsData[0]
@@ -5607,9 +5616,17 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 run = False
             # replace path (elements[0])
-            elements[0] = ("path", os.path.join(studyfolder, "subjects", sinfo["subject"]))
+            elements[0] = (
+                "path",
+                os.path.join(studyfolder, "subjects", sinfo["subject"]),
+            )
             elements.append(("is-longitudinal", "1"))
-            elements.append(("longitudinal-session", f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"))
+            elements.append(
+                (
+                    "longitudinal-session",
+                    f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}",
+                )
+            )
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
@@ -5642,7 +5659,9 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if not options["longitudinal"] and (overwrite or not os.path.exists(tfile)):
+                if not options["longitudinal"] and (
+                    overwrite or not os.path.exists(tfile)
+                ):
                     # ---> Clean up existing data
                     # -> bold working folder
                     bold_folder = os.path.join(hcp["base"], boldtarget)
@@ -6156,7 +6175,9 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if not options["longitudinal"] and (overwrite and os.path.exists(tfile)):
+                if not options["longitudinal"] and (
+                    overwrite and os.path.exists(tfile)
+                ):
                     os.remove(tfile)
 
                 logtags = [options["logtag"], boldtarget]
@@ -13421,27 +13442,35 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         additional_bolds = options["additional_bolds"].split(",")
         boldnum = len(bolds) + 1
         for ab in additional_bolds:
-            bolds.append({"bold": ab, "filename": ab, 'bold_number': boldnum, 'name': ab, 'task': 'additional_bold'})
+            bolds.append(
+                {
+                    "bold": ab,
+                    "filename": ab,
+                    "bold_number": boldnum,
+                    "name": ab,
+                    "task": "additional_bold",
+                }
+            )
             boldnum += 1
 
     for boldinfo in bolds:
-        r += "\n ... " + boldinfo['name']
+        r += "\n ... " + boldinfo["name"]
 
         # --- filenames
-        if boldinfo['task'] != "additional_bold":
-            f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
+        if boldinfo["task"] != "additional_bold":
+            f.update(pc.getBOLDFileNames(sinfo, boldinfo["name"], options))
         else:
             d = pc.getSessionFolders(sinfo, options)
 
             f["bold_qx_vol"] = os.path.join(
                 d["s_bold"],
-                boldinfo['name'] + options["qx_nifti_tail"] + ".nii.gz",
+                boldinfo["name"] + options["qx_nifti_tail"] + ".nii.gz",
             )
             f["bold_qx_dts"] = os.path.join(
                 d["s_bold"],
-                boldinfo['name'] + options["qx_cifti_tail"] + ".dtseries.nii",
+                boldinfo["name"] + options["qx_cifti_tail"] + ".dtseries.nii",
             )
-            f["bold_mov"] = os.path.join(d["s_bold_mov"], boldinfo['name'] + "_mov.dat")
+            f["bold_mov"] = os.path.join(d["s_bold_mov"], boldinfo["name"] + "_mov.dat")
 
         status = True
         hcp_bold_name = ""
@@ -13453,7 +13482,10 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             elif "bold" in boldinfo:
                 hcp_bold_name = boldinfo["bold"]
             else:
-                hcp_bold_name = "%s%d" % (options["hcp_bold_prefix"], boldinfo["bold_number"])
+                hcp_bold_name = "%s%d" % (
+                    options["hcp_bold_prefix"],
+                    boldinfo["bold_number"],
+                )
 
             # -- check if present and map
             hcp_bold_path = os.path.join(
@@ -13472,7 +13504,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             else:
                 if os.path.exists(f["bold_qx_vol"]) and not overwrite:
                     r += "\n     ... volume image ready"
-                elif boldinfo['task'] == "additional_bold" and not os.path.exists(
+                elif boldinfo["task"] == "additional_bold" and not os.path.exists(
                     hcp_bold_path
                 ):
                     r += f"\n     ... WARNING: additional bold source does not exist: {f['bold_vol']}"
@@ -13530,7 +13562,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 print(mline.replace(" -", "-"), file=mfile)
                         mfile.close()
                         r += "\n     ... movement data prepared"
-                    elif boldinfo['task'] == "additional_bold":
+                    elif boldinfo["task"] == "additional_bold":
                         r += (
                             "\n     ... WARNING: could not prepare movement data for the additional bold, source does not exist: %s"
                             % os.path.join(hcp_bold_path, movement_regressors)
@@ -13570,9 +13602,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         )
         for boldinfo in skipped:
             if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                r += "\n ... %s [task: '%s']" % (boldinfo["filename"], boldinfo['task'])
+                r += "\n ... %s [task: '%s']" % (boldinfo["filename"], boldinfo["task"])
             else:
-                r += "\n ... %s [task: '%s']" % (boldinfo['name'], boldinfo['task'])
+                r += "\n ... %s [task: '%s']" % (boldinfo["name"], boldinfo["task"])
 
     r += (
         "\n\nHCP data mapping completed on %s\n------------------------------------------------------------\n"

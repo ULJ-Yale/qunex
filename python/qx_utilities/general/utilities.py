@@ -2324,7 +2324,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         recipe_dict["commands"] = steps.split(",")
 
     # log location
-    if logfolder is None:
+    if "logfolder" in parameters:
+        logfolder = parameters["logfolder"]
+    elif logfolder is None:
         if "studyfolder" in parameters:
             logfolder = os.path.join(parameters["studyfolder"], "processing", "logs")
         elif "studyfolder" in eargs:
@@ -2583,7 +2585,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             import general.commands as gcom
 
             if command_name in gcom.commands:
-                allowed_parameters = list(gcom.commands.get(command_name)["args"])
+                allowed_parameters = list(gcom.commands.get(command_name)["args"]) + [
+                    "logfolder"
+                ]
                 if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
                     allowed_parameters += gcs.extra_parameters
 
@@ -2867,9 +2871,9 @@ def batch_tag2namekey(
             if "filename" in boldinfo:
                 boldlist.append(boldinfo["filename"])
             else:
-                boldlist.append("%s%d" % (prefix, boldinfo['bold_number']))
+                boldlist.append("%s%d" % (prefix, boldinfo["bold_number"]))
         else:
-            boldlist.append(str(boldinfo['bold_number']))
+            boldlist.append(str(boldinfo["bold_number"]))
 
     print("BOLDS:%s" % (",".join(boldlist)))
 
