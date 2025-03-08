@@ -15,16 +15,16 @@ datatypes:
           normalized: [True]
         nifti: #data found in .nii file header, mix of extracted and explicit keys OPTIONAL
           data_shape: [[208, 300, 320]]
-          pixdim: [[1., 0.79999995, 0.8, 0.8, 2.4, 0., 0., 0.]]
+          pixdim: [[1., 0.79999995, 0.8, 0.8, 2.4, 0., 0., 0.]]    
 
     - scan:
         series_description: T2w_SPC 
         session:
           image_count: 2
         json: 
-          normalized: False
+          normalized: [False,True]
         nifti:
-          data_shape: [208, 300, 320]
+          data_shape: [[207, 300, 320],[206, 300, 320]]
 
     - scan:
         series_description: SpinEchoFieldMap_AP
@@ -78,6 +78,14 @@ datatypes:
     - scan:
         series_description: dMRI_dir99_PA
         required: False
+
+    - other:
+        file_name: "behavior/test.csv"
+        data_column: test3
+        required: True
+        params:
+          1: "bar" 
+          2: "foo"
 
   config:
     data_import: dicom

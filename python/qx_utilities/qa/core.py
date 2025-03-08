@@ -20,6 +20,8 @@ import glob
 import numpy as np
 import nibabel as nib
 import json
+import yaml
+import pandas as pd
 import general.core as gc
 import general.parser as parser
 import general.exceptions as ge
@@ -384,6 +386,7 @@ class QA:
                 s['QA_image'][image_id]['fail'] = []
                 s['QA_image'][image_id]['pass'] = []
                 s['QA_image'][image_id]['fail_keys'] = []
+                s['QA_image'][image_id]['remaining'] = []
                 for i in range(image['n_items']):
                     #validation array, compares found and expected values
                     v_arr = (scan_arr == im_arr[:,i].reshape(-1,1))
@@ -392,8 +395,6 @@ class QA:
                         s['QA_image_fail'][image_id] = "mismatch"
                         im_arr[0,i] = 0
                         s['QA_image'][image_id]['fail'].append(im_arr[:,i].reshape(-1,1)) #Fail
-                        #Assume scan with most correct keys is intended scan, used only for report. Get the keys that do not match this scan
-                        s['QA_image'][image_id]['fail_keys'].append(v_arr[:,np.argmax(np.sum(v_arr, axis=0))].reshape(-1,1))
                     else:
                         #set first valid index to unavailable
                         scan_arr[0][v_indices[0]] = False
@@ -401,10 +402,105 @@ class QA:
                         im_arr[0,i] = len(v_indices)
                         s['QA_image'][image_id]['pass'].append(im_arr[:,i].reshape(-1,1)) #Found
 
-                remaining_scans = scan_arr[:,np.where(scan_arr[0]=='True')[0]]
-                remaining_scans[0] = " "
-                s['QA_image'][image_id]['remaining'] = remaining_scans
+                #remaining scans with no config
+                for i in np.where(scan_arr[0]=='True')[0]:
+                    s['QA_image'][image_id]['remaining'].append(scan_arr[:,i])
+                    s['QA_image'][image_id]['remaining'][-1][0] = " "
+
                 s['QA_image'][image_id]['keys'] = key_arr
+                s['QA_image'][image_id]['fail_keys'] = v_arr
+
+            #Other session-level file QA
+            if 'other' in self.config['raw_data'].keys():
+                #other_id (key) is the filepath, other (value) is the actual dict
+                for other_id, other in self.config['raw_data']['other'].items():
+                    i_log += f"\n   {other_id} validation..."
+                    s['QA_image'][other_id] = {}
+                    file_path = os.path.join(s['QA_sessionfolder'], other_id)
+
+                    if not os.path.exists(file_path):
+                        if other['required']:
+                            s['QA_image_fail'][other_id] = 'missing'
+                        continue
+                    
+                    #If values unspecified, will only check if file exists
+                    if 'values' not in other.keys():
+                        i_log += f"\n      No values specified to QA, continuing..."
+                        continue
+
+                    #Parse file into a friendly format
+
+                    if other['file_type'] is not None:
+                        extension = other['file_type']
+                    else:
+                        try:
+                            extension = os.path.splitext(other_id)[1]
+                        #if no extension, parse as .txt and warn user
+                        except:
+                            i_log += f"\n        WARNING: No file-extension found! Parsing as '.txt'"
+                            extension = '.txt'
+                    
+                    #Check if data is deliminated
+                    if other['deliminator']:
+                        delim = other['deliminator']
+                    elif extension == ".csv":
+                        delim = ','
+                    elif extension == ".tsv":
+                        delim = '\t'
+                    else:
+                        delim = None
+
+                    #load data
+                    if delim:
+                        #comparison requires data be string
+                        other_data = pd.read_csv(file_path, sep=delim, dtype=str)
+
+                        if other['index_column']:
+                            other_data = other_data.set_index(other['index_column'])
+                        
+                        if other['data_column']:
+                            other_data = other_data[other['data_column']]
+                    
+                       
+                    else:
+                        with open(file_path, 'r') as f:
+                            #Dict
+                            if extension == ".json":
+                                other_data = json.load(f)
+                            elif extension in [".yaml", ".yml"]:
+                                other_data = yaml.safe_load(f)
+                            #List
+                            else:
+                                other_data = f.read().split('\n')
+
+                    #Validation
+                    s['QA_image'][other_id]['scan_list'] = []
+                    s['QA_image'][other_id]['im_list'] = []
+                    s['QA_image'][other_id]['key_list'] = []
+                    s['QA_image'][other_id]['fail_keys'] = []
+                    for key, val in other['values'].items():
+                        if delim:
+                            #delim data imported as string, so index must match if not line number
+                            if other['index_column']:
+                                key = str(key)
+                            s['QA_image'][other_id]['scan_list'].append(other_data.loc[key].to_list())
+                            if isinstance(val, dict):
+                                raise ge.CommandError("run_qa",f"dict type not compatible with deliminated data")
+                            val_str = [str(v) for v in val]
+                            s['QA_image'][other_id]['im_list'].append(val_str)
+                        else:
+                            if not isinstance(other_data[key], list):
+                                s['QA_image'][other_id]['scan_list'].append([other_data[key]])
+                            else:
+                                s['QA_image'][other_id]['scan_list'].append(other_data[key])
+                            s['QA_image'][other_id]['im_list'].append(val)
+
+                        s['QA_image'][other_id]['key_list'].append(key)
+                        #Actual check
+                        s['QA_image'][other_id]['fail_keys'].append(s['QA_image'][other_id]['scan_list'][-1] != s['QA_image'][other_id]['im_list'][-1])
+                    
+                    if True in s['QA_image'][other_id]['fail_keys']:
+                        s['QA_image_fail'][other_id] = 'other_mismatch'
 
             #Image QA Report
             if len(s['QA_image_fail'].keys()) > 0:
@@ -427,7 +523,7 @@ class QA:
             slist dict
 
         --scans (list)
-            session ids to check
+            scans to check
 
         --config (dict)
             config to check scans against
@@ -493,7 +589,7 @@ class QA:
             slist dict
 
         --scans (list)
-            session ids to check
+            scans to check
 
         --config (dict)
             config to check scans against
@@ -594,59 +690,116 @@ class QA:
                 image_count = self.config['raw_data']['scan'][image_id]['session']['image_count']
                 found_count = s['QA_image'][image_id]['n_scans']
                 self.report+= f"\n      Incorrect number of scans specified! image_count: {image_count} specified in config, but {found_count} found. If as expected, change or remove image_count in config"
-            elif fail == 'mismatch':
+            elif fail in ['mismatch', 'other_mismatch']:
                 self.report+= "\n      Config Key mismatch with scan! Suspected incorrect parameters are emphasized with *"
-            self.report+=f"\n      Attempted to match {s['QA_image'][image_id]['n_configs']} config(s) to {s['QA_image'][image_id]['n_scans']} scan(s)"
+            
+            if fail in ['mismatch', 'image_count']:
+                self.report+=f"\n      Attempted to match {s['QA_image'][image_id]['n_configs']} config(s) to {s['QA_image'][image_id]['n_scans']} scan(s)"
+                #Set up columns
+                k_list = ['Config Key']
+                k_len = len(k_list[0])
+                v_list = ['Config Values']
+                v_len = len(v_list[0])
+                f_list = ['Failed Scans']
+                f_len = len(f_list[0])
+                r_list = ['Valid Scans']
+                r_len = len(r_list[0])
 
-            #Set up columns
-            k_list = ['Config Key']
-            k_len = len(k_list[0])
-            v_list = ['Valid Configs']
-            v_len = len(v_list[0])
-            f_list = ['Failed Configs']
-            f_len = len(f_list[0])
-            r_list = ['Remaining Scans']
-            r_len = len(r_list[0])
-            sig_list = [" "*s['QA_image'][image_id]['n_configs']]
+                #Highlight failed keys with *
+                sig_list = [" "*s['QA_image'][image_id]['n_configs']]
 
-            internal_keys = ['available']
+                #internal keys that shouldn't be displayed to the user
+                internal_keys = ['available']
 
-            #whitespace padding
-            f_padding = []
-            for f in s['QA_image'][image_id]['fail']:
-                f_padding.append(np.max(np.vectorize(len)(f), axis=0))
+                #whitespace padding
+                f_padding = []
+                for f in s['QA_image'][image_id]['remaining']:
+                    f_padding.append(np.max(np.vectorize(len)(f), axis=0))
 
-            for i in range(len(s['QA_image'][image_id]['keys'])):
-                key = s['QA_image'][image_id]['keys'][i][0]
-                if key in internal_keys:
-                    continue
-                k_list.append(key)
-                k_len = max(k_len, len(k_list[-1]))
-                v_str = ""
-                for c in s['QA_image'][image_id]['pass']:
-                    v_str += np.array2string(c[i]).strip("[]").replace("'"," ") + " "
-                v_list.append(v_str)
-                v_len = max(v_len, len(v_list[-1]))
-                f_str = ""
-                sig_str = " " * (s['QA_image'][image_id]['n_configs'] - len(s['QA_image'][image_id]['fail']))
-                for c, ck, cp in zip(s['QA_image'][image_id]['fail'],s['QA_image'][image_id]['fail_keys'],f_padding):
-                    if not ck[i]:
-                        f = np.array2string(c[i]).strip("[]").replace("'","*")
-                        sig_str+="*"
+                for i in range(len(s['QA_image'][image_id]['keys'])):
+                    #key column
+                    key = s['QA_image'][image_id]['keys'][i][0]
+                    if key in internal_keys:
+                        continue
+                    k_list.append(key)
+                    k_len = max(k_len, len(k_list[-1]))
+                    #Values column, contains config(s) for scan that failed
+                    v_str = ""
+                    for c in s['QA_image'][image_id]['fail']:
+                        v_str += np.array2string(c[i]).strip("[]").replace("'"," ") + " "
+                    v_list.append(v_str)
+                    v_len = max(v_len, len(v_list[-1]))
+                    #Failed, remaining scans with no valid config
+                    f_str = ""
+                    sig_str = " " * (s['QA_image'][image_id]['n_configs'] - len(s['QA_image'][image_id]['remaining']))
+                    for c, ck, cp in zip(s['QA_image'][image_id]['remaining'],s['QA_image'][image_id]['fail_keys'][i],f_padding):
+                        if not ck:
+                            f = np.array2string(c[i]).strip("[]").replace("'","*")
+                            sig_str+="*"
+                        else:
+                            f = np.array2string(c[i]).strip("[]").replace("'"," ")
+                            sig_str+=" "
+                        f_str += f + (cp+3 - len(f))*' '
+                    f_list.append(f_str)
+                    sig_list.append(sig_str)
+                    f_len = max(f_len, len(f_list[-1]))
+                    #Valid scans
+                    r_str = ""
+                    for c in s['QA_image'][image_id]['pass']:
+                        r_str += np.array2string(c[i]).strip("[]").replace("'"," ") + " "
+                    r_list.append(r_str)
+                    r_len = max(r_len, len(r_list[-1]))
+
+                for i in range(len(k_list)):
+                    self.report+=f"\n       {sig_list[i]} {k_list[i] + (k_len - len(k_list[i]))*' '}"
+                    self.report+=f" | {v_list[i] + (v_len - len(v_list[i]))*' '}"
+                    self.report+=f" | {f_list[i] + (f_len - len(f_list[i]))*' '}"
+                    self.report+=f" | {r_list[i] + (r_len - len(r_list[i]))*' '}"
+
+            #Other QA type is more flexible in accepted data, so needs different report handling
+            elif fail == "other_mismatch":
+                #Set up columns
+                k_list = ['Config Key']
+                k_len = len(k_list[0])
+                v_list = ['Config Values']
+                v_len = len(v_list[0])
+                f_list = ['Found Values']
+                f_len = len(f_list[0])
+
+                i = 0
+                for key, val, c_val in zip(s['QA_image'][image_id]['key_list'], s['QA_image'][image_id]['scan_list'], s['QA_image'][image_id]['im_list']):
+                    k_list.append(str(key))
+                    k_len = max(k_len, len(k_list[-1]))
+                    v_str = ""
+                    f_str = ""
+
+                    v_str +=" " + str(c_val).strip("[]").replace("'","") + "  "
+                    v_list.append(v_str)
+                    v_len = max(v_len, len(v_list[-1]))
+
+                    if s['QA_image'][image_id]['fail_keys'][i]:
+                        f_str += "*" + str(val).strip("[]").replace("'","") + "* "
                     else:
-                        f = np.array2string(c[i]).strip("[]").replace("'"," ")
-                        sig_str+=" "
-                    f_str += f + (cp[0]+3 - len(f))*' '
-                f_list.append(f_str)
-                sig_list.append(sig_str)
-                f_len = max(f_len, len(f_list[-1]))
-                r_list.append(np.array2string(s['QA_image'][image_id]['remaining'][i], separator="\t").strip("[]").replace("'"," "))
-                r_len = max(r_len, len(r_list[-1]))
+                        f_str += " " + str(val).strip("[]").replace("'","") + "  "
 
-            for i in range(len(k_list)):
-                self.report+=f"\n       {sig_list[i]} {k_list[i] + (k_len - len(k_list[i]))*' '}"
-                self.report+=f" | {v_list[i] + (v_len - len(v_list[i]))*' '}"
-                self.report+=f" | {f_list[i] + (f_len - len(f_list[i]))*' '}"
-                self.report+=f" | {r_list[i] + (r_len - len(r_list[i]))*' '}"
+                    f_list.append(f_str)
+                    f_len = max(f_len, len(f_list[-1]))
+
+                    i+=1
+
+                #print table line by line
+                for i in range(len(k_list)):
+                    #First row is the header, so skip fail check
+                    if i == 0:
+                        sig = " "
+                    else:
+                        if s['QA_image'][image_id]['fail_keys'][i-1]:
+                            sig = "*"
+                        else:
+                            sig = " "
+                    self.report+=f"\n       {sig} {k_list[i] + (k_len - len(k_list[i]))*' '}"
+                    self.report+=f" | {v_list[i] + (v_len - len(v_list[i]))*' '}"
+                    self.report+=f" | {f_list[i] + (f_len - len(f_list[i]))*' '}"
+
         self.report+="\n"
         return

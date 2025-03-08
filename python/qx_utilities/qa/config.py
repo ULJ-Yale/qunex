@@ -16,7 +16,6 @@ Created by Samuel Brege on 2024-04-19.
 """
 import yaml
 import general.exceptions as ge
-import numpy as np
 
 #Valid datatypes for run_qa
 valid_datatypes = ['raw_data', 'check_config']
@@ -100,11 +99,30 @@ config_template = {"datatypes": {"default":None, "accept_list":False, "only_vali
                             }
                         },
                         "description":"Scan related parameters, used for mapping and validation. Requires the key series_description"},
-                        "config":{"default":None, "accept_list":False, "only_valid":False, "type":[dict], "required":False,
+
+                        "other":{"default":None, "accept_list":False, "only_valid":True, "type":[dict], "required":False, "ID":"file_name",
                         "parameters":{
+                            "file_name":{"default":None, "accept_list":False, "type":[str], "required":True,
+                            "description":"Path to the file for validation from the session's folder."},
+                            "file_type":{"default":None, "accept_list":False, "type":[str], "required":False,
+                            "description":"How to parse the file, default assumed from file extension. Useful if file has unusual extension (eg. QuNex movement files)."},
+                            "deliminator":{"default":None, "accept_list":False, "type":[str], "required":False,
+                            "description":"If using deliminated data (eg. .csv), default assumed from file extension. Useful for unusual files."},
+                            "data_column":{"default":None, "accept_list":True, "type":[str], "required":False,
+                            "description":"If using deliminated data (eg. .csv), you can define specific column(s) to validate. Otherwise will use all columns."},
+                            "index_column":{"default":None, "accept_list":False, "type":[str], "required":False,
+                            "description":"If using deliminated data (eg. .csv), define a column to use as the index, default is the line index."},
+                            "required":{"default":True, "accept_list":False, "type":[bool], "required":False,
+                            "description":"Whether this file is required to be present for it to pass"},
+                            "values":{"default":None, "accept_list":False, "only_valid":False, "type":[dict], "required":False,
+                            "parameters":{
+                            },
+                            "description":"Actual parameters to check in data, using rules defined under '- other'"
+                            }
+                            
 
                         },
-                        "description":"Misc config options for all scans, also allows for parsing of run_qa flags for this datatype (eg. sessions)"
+                        "description":"Parameters for validation of user-defined files, highly customizable."
                         }  
                     },
                     "description":"run after import_datatype, it allows for QA and mapping validation"},
