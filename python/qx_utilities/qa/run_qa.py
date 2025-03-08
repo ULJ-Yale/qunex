@@ -179,6 +179,33 @@ def run_qa(
                                 EchoTime: 0.035
                                 PhaseEncodingDirection: [j-, j, j-, j]
 
+            Users can also specify other, non-scan files:
+
+            ::
+
+                        - other:
+                            file_name: behavior/tasks.csv
+                            data_column: pass
+                            index_column: event_QC
+                            required: True
+                            values:
+                                MID: 1
+                                NBACK: 1
+
+            This QA is compatible with most common file types (eg. csv, tsv, json, yml), and parsing can be customized to acept many non-standard
+            files (eg. QuNex .bstats files). The main distinction in parsing is deliminated (.csv) vs. non-deliminated (.yml).
+            Parsing parameters are assumed from the file extension when possible, but it is all user customizable. The only requirement is that
+            files be located in each session's directory
+
+            ::
+                        
+                        - other:
+                            file_name: "test.yml"
+                            values:
+                                foo: bar
+                                snafu:  #with certain file-types, even dicts can be accepted!
+                                    apple: [3,66,7] 
+                                
             Here is a list of all possible parameters:
 
             ::
@@ -197,6 +224,16 @@ def run_qa(
                                 normalized: #Whether or not the scan should be normalized.
                             nifti: #Compares keys to the nifti file headers. Similar to .json, any key can be defined so long as it is in the .nii file.
                                 data_shape: Expected shape of the data, potential alternative to ``dicoms`` but more complex.
+                        - other: #Multiple can be specified, so long as the file_name is different.
+                            file_name: #Required. Name of file to open, located in each session's folder
+                            file_extension: #Optional, controls how data is parsed (either as .json,.yaml,.tsv,.csv,.txt etc.)
+                            deliminator: #Optional, only for deliminated data. What deliminator to use (otherwise, assumed from extension)
+                            header: #Optional, only for deliminated data. Whether data has a header on the first line (True/False, default True)
+                            data_column: #Optional, only for deliminated data. Whether to check data in a specific column (If blank, will use all columns)
+                            index_column: #Optional, only for deliminated data. Whether to use a specific column as the index (If blank, will use line index)
+                            required: #Whether it's required for QA to pass
+                            values: #Required, what values to check for in the data
+                                key: value 
                     config: #Misc config options for raw_data.
                         data_type: #Currently, only dicom is accepted, used for ``dicoms`` parameter.
 
