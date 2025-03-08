@@ -6,6 +6,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.1.1
+
+* Fixed a bug where `logfolder` did not work for some commands.
+* Improved flexibility of `run_qa`.
+* GridEngine scheduler support.
+
 ## 1.1.0 [QIO]
 
 * Longitudinal support for HCP volume, surface and diffusion processing.
