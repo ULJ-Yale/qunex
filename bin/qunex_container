@@ -1194,8 +1194,17 @@ def main(args=None):
             if apptainer:
                 container_command += "singularity exec "
 
-                # bind home
-                container_command += f"--bind {homedir}:{homedir} "
+                # binds
+                if bind is None:
+                    bind = f"{homedir}"
+                else:
+                    bind = f"{homedir},{bind}"
+
+                # bind cuda path if provided
+                if cuda_path:
+                    bind = f"{bind},{cuda_path}:/usr/local/cuda/"
+
+                container_command += f"--bind {bind} "
 
                 # containeropt
                 if containeropt:
@@ -1227,20 +1236,23 @@ def main(args=None):
                 if nv:
                     container_command += "--nv "
 
-                # bind
-                if bind:
-                    container_command += f"--bind {bind} "
-
-                # bind cuda path if provided
-                if cuda_path:
-                    container_command += f"--bind {cuda_path}:/usr/local/cuda/ "
-
                 container_command += f"{container.strip()} bash {script_path.strip()}"
             else:
                 container_command += "docker run "
 
-                # bind home
-                container_command += f"-v {homedir}:{homedir} "
+                # binds
+                if bind is None:
+                    bind = f"{homedir}:{homedir}"
+                else:
+                    bind = f"{homedir}:{homedir},{bind}"
+
+                # bind cuda path if provided
+                if cuda_path:
+                    bind += f"{bind},{cuda_path}:/usr/local/cuda"
+
+                bind_list = bind.split(",")
+                for b in bind_list:
+                    container_command += f"-v {b} "
 
                 # containeropt
                 if containeropt:
@@ -1250,17 +1262,8 @@ def main(args=None):
                 if cuda:
                     container_command += "--gpus all "
 
-                # bind cuda path if provided
-                if cuda_path:
-                    container_command += f"-v {cuda_path}:/usr/local/cuda "
-
-                # bind
-                if bind:
-                    bind_list = bind.split(",")
-                    for b in bind_list:
-                        container_command += f"-v {b} "
-
                 container_command += f"{container.strip()} bash {script_path.strip()}"
+
             if scheduler:
                 schedule(
                     command=container_command,
