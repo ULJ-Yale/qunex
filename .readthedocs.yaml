@@ -3,11 +3,9 @@
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
 # Environment variables:
-# 
-# GITLAB_QUNEX_TOKEN: A group access token with `read_repository` git clone permission for qunex, qunex.wiki, and library
-# QUNEXMCOMMAND: ?
 #
-# Note: GitLab tokens can only have a maximum lifetime of 365 days. 
+# QUNEXMCOMMAND: ?
+
 
 
 # Required
