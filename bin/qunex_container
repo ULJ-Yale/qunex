@@ -336,9 +336,6 @@ def schedule(
             else:
                 s_command += f"#SBATCH --{key.replace('--', '')}={value}\n"
 
-        print(s_command)
-        os._exit(1)
-
         # set default cpus-per-task
         if (
             "cpus-per-task" not in scheduler_params.keys()
