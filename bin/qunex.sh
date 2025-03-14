@@ -1398,18 +1398,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
 
-    # -- Backwards comapatibility, session* used to be subject*
-    if [[ -z ${CASES} ]]; then
-        # list of input cases; removing comma or pipes
-        CASES=`get_parameters "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`;
-        CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
-        SESSIONS="$CASES"
-        SESSIONIDS="$CASES"
-        if [[ ! -z ${CASES} ]]; then
-            echo "WARNING: The --subjects parameter is now renamed to --sessions"
-        fi
-    fi
-
     # -- Backwards compatibility, sessionids* used to be subjid*
     if [[ -z ${CASES} ]]; then
         if [[ -z ${SESSIONIDS} ]]; then

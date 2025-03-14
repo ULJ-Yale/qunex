@@ -216,7 +216,6 @@ deprecated_parameters = {
     "eventstring": "event_string",
     "eventfile": "event_file",
     "basefolder": "sessionsfolder",
-    "subjects": "sessions",
     "bold_preprocess": "bolds",
     "hcp_prefs_brainmask": "hcp_prefs_custombrain",
     "hcp_mppversion": "hcp_processing_mode",
@@ -453,7 +452,27 @@ def impute_parameters(options, command):
 #                                                               EXTRA PARAMETERS
 #
 
-extra_parameters = ['batchfile', 'sessions', 'sessionids', 'filter', 'sessionid', 'scheduler', 'parelements', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'sessionsfolder', 'sperlist', 'runinpar', 'ignore', 'bash', 'existing_study']
+extra_parameters = [
+    "batchfile",
+    "sessions",
+    "sessionids",
+    "filter",
+    "sessionid",
+    "scheduler",
+    "parelements",
+    "scheduler_environment",
+    "scheduler_workdir",
+    "scheduler_sleep",
+    "nprocess",
+    "logfolder",
+    "basefolder",
+    "sessionsfolder",
+    "sperlist",
+    "runinpar",
+    "ignore",
+    "bash",
+    "existing_study",
+]
 
 
 # ==============================================================================
