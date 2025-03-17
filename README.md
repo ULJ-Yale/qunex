@@ -25,8 +25,8 @@ Past contributors to the QuNex code:
 * [Website](http://qunex.yale.edu)
 * [Get QuNex](https://qunex.yale.edu/registration)
 * [QuNex Documentation](https://qunex.readthedocs.io)
-* [QuNex quick start](https://qunex.readthedocs.io/en/latest/wiki/Overview/QuickStart.html)
-* [QuNex container deployment](https://qunex.readthedocs.io/en/latest/wiki/Overview/QuNexContainerUsage.html)
+* [QuNex quick start](https://qunex.readthedocs.io/en/latest/wiki/Overview-QuickStart.html)
+* [QuNex container deployment](https://qunex.readthedocs.io/en/latest/wiki/Overview-QuNexContainerUsage.html)
 
 ## Version
 

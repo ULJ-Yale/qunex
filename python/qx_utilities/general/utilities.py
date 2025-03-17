@@ -871,13 +871,14 @@ def create_batch(
 
             Header section of the study batch file:
                 To run most of the processing steps, a batch file needs to be
-                provided (see `batch file specification
-                <../../wiki/Overview/file_batch_txt.html>`__). Batch file consists of a
-                header section and a list of imaging sessions. The header
-                section provides the possibility to specify the default
-                parameter values that are to be used throughout the study.
-                Specifically, the parameters are provided as ``_<parameter
-                name>: <parameter value>`` pairs. An example might be:
+                provided, for details see:
+                https://qunex.readthedocs.io/en/latest/wiki/Overview-FileBatch.html.
+                Batch file consists of a header section and a list of imaging
+                sessions. The header section provides the possibility to specify
+                the default parameter values that are to be used throughout the
+                study. Specifically, the parameters are provided as
+                ``_<parameter name>: <parameter value>`` pairs. An example might
+                be:
 
                 ::
 
@@ -896,10 +897,10 @@ def create_batch(
                 be passed to the command as command line parameters. For
                 details on the ``run_recipe`` command itself and how to specify
                 parameters at different levels within the recipe.yaml file,
-                please see `Running a list of QuNex commands
-                <../../wiki/UsageDocs/RunningListsOfCommands.html>`__. These
-                parameters will take priority over the parameters specified in
-                the header section of the study batch file.
+                please see:
+                https://qunex.readthedocs.io/en/latest/wiki/UsageDocs-RunningListsOfCommands.html.
+                These parameters will take priority over the parameters
+                specified in the header section of the study batch file.
 
             Command line parameters:
                 Parameters can be specified when running the command on the

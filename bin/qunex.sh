@@ -127,7 +127,7 @@ show_all_qunex_commands() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-# -- Master Execution and Logging -- https://qunex.readthedocs.io/en/latest/wiki/Overview/Logging.html
+# -- Master Execution and Logging -- https://qunex.readthedocs.io/en/latest/wiki/Overview-Logging.html
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {

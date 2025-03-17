@@ -892,9 +892,6 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ -d "${StudyFolder}/${SessionsFolderN
     echo "     QuNex runs please review the study directory structure and consider"
     echo "     resolving the conflict such that a consistent folder specification is used. "
     echo ""
-    echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-    echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
-    echo ""
 fi
 
 if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolderName}" ]]; then
@@ -909,9 +906,6 @@ if [[ -d "${StudyFolder}/subjects" ]] && [[ ! -d "${StudyFolder}/${SessionsFolde
     echo "     To avoid the possibility of a backwards incompatible or duplicate "
     echo "     QuNex runs please review the study directory structure and consider"
     echo "     resolving the conflict such that a consistent folder specification is used. "
-    echo ""
-    echo "     QuNex will proceed but please consider renaming your directories per latest specs:"
-    echo "          https://qunex.readthedocs.io/en/latest/wiki/Overview/DataHierarchy"
     echo ""
     SessionsFolder="${STUDY_PATH}/subjects"
     SessionsFolderName="subjects"
