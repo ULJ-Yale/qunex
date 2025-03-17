@@ -4160,7 +4160,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
             GEHealthCareLegacyFieldMap, PhilipsFieldMap or NONE.
 
-        --hcp_bold_echodiff (str, default 'NONE'):
+        --hcp_bold_echodiff (str):
             Delta TE for BOLD fieldmap images or NONE if not used.
 
         --hcp_bold_sephasepos (str, default ''):
@@ -5039,7 +5039,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             )
 
                         # try to set hcp_bold_echodiff from the JSON sidecar if not yet set
-                        if not options["hcp_bold_echodiff"]:
+                        if (
+                            not options["hcp_bold_echodiff"]
+                            or options["hcp_bold_echodiff"] == "NONE"
+                        ):
                             fmfolder = os.path.join(
                                 hcp["source"],
                                 "FieldMap%s%s" % (fmnum, options["fctail"]),
