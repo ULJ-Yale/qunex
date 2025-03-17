@@ -594,7 +594,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             Readout direction of the T1w and T2w images (x, y, z or NONE); used
             with either a regular field map or a spin echo field map.
 
-        --hcp_echodiff (str, default 'NONE'):
+        --hcp_echodiff (str):
             Difference in TE times if a fieldmap image is used, set to NONE if
             not used.
 
@@ -638,45 +638,45 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             this piece of information and manually overwrite the default if
             something is off.
 
-        --hcp_prefs_t1template (str, default ""):
+        --hcp_prefs_t1template (str):
             Path to the T1 template to be used by PreFreeSurfer. By default the
             used template is determined through the resolution provided by the
             hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t1templatebrain (str, default ""):
+        --hcp_prefs_t1templatebrain (str):
             Path to the T1 brain template to be used by PreFreeSurfer. By
             default the used template is determined through the resolution
             provided by the hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t1template2mm (str, default ""):
+        --hcp_prefs_t1template2mm (str):
             Path to the T1 2mm template to be used by PreFreeSurfer. By default
             the used template is HCP's MNI152_T1_2mm.nii.gz.
 
-        --hcp_prefs_t2template (str, default ""):
+        --hcp_prefs_t2template (str):
             Path to the T2 template to be used by PreFreeSurfer. By default the
             used template is determined through the resolution provided by the
             hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t2templatebrain (str, default ""):
+        --hcp_prefs_t2templatebrain (str):
             Path to the T2 brain template to be used by PreFreeSurfer. By
             default the used template is determined through the resolution
             provided by the hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t2template2mm (str, default ""):
+        --hcp_prefs_t2template2mm (str):
             Path to the T2 2mm template to be used by PreFreeSurfer. By default
             the used template is HCP's MNI152_T2_2mm.nii.gz.
 
-        --hcp_prefs_templatemask (str, default ""):
+        --hcp_prefs_templatemask (str):
             Path to the template mask to be used by PreFreeSurfer. By default
             the used template mask is determined through the resolution provided
             by the hcp_prefs_template_res parameter.
 
-        --hcp_prefs_template2mmmask (str, default ""):
+        --hcp_prefs_template2mmmask (str):
             Path to the template mask to be used by PreFreeSurfer. By default
             the used 2mm template mask is HCP's
             MNI152_T1_2mm_brain_mask_dil.nii.gz.
 
-        --hcp_prefs_fnirtconfig (str, default ""):
+        --hcp_prefs_fnirtconfig (str):
             Path to the used FNIRT config. Set to the HCP's T1_2_MNI152_2mm.cnf
             by default.
 

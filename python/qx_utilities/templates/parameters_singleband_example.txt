@@ -40,7 +40,7 @@ _hcp_lowresmesh         : 32
 _hcp_dwi_echospacing    : NONE
 
 # ---> fMRI Volume
-_hcp_bold_echospacing   : NONE
+_hcp_bold_echospacing   :
 _hcp_bold_dcmethod      : NONE
 _hcp_bold_topupconfig   :
 _hcp_bold_sephaseneg    :
