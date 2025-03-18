@@ -3475,8 +3475,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Name of the longitudinal template.
 
         --longitudinal:
-            Set this flag if you are running the longitudinal variant of
-            hcp_fmri_volume.
+            Set this flag if you are running the longitudinal variant of this
+            command.
 
     Output files:
         The results of this command will be present in the Diffusion folder
@@ -4262,8 +4262,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Name of the longitudinal template.
 
         --longitudinal:
-            Set this flag if you are running the longitudinal variant of
-            hcp_fmri_volume.
+            Set this flag if you are running the longitudinal variant of this
+            command.
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
@@ -5872,8 +5872,8 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             Name of the longitudinal template.
 
         --longitudinal:
-            Set this flag if you are running the longitudinal variant of
-            hcp_fmri_volume.
+            Set this flag if you are running the longitudinal variant of this
+            command.
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
@@ -6601,6 +6601,13 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_legacy_fix (flag, not set by default):
             Whether to use the legacy MATLAB fix instead of the new pyfix.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of this
+            command.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -7228,6 +7235,14 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if not options["hcp_legacy_fix"]:
             comm += '             --enable-legacy-fix="FALSE"'
+
+        # -- Longitudinal parameters
+        if options["longitudinal"]:
+            comm += "                --is-longitudinal=1"
+            comm += (
+                "                --longitudinal-session="
+                + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+            )
 
         # -- Report command
         if groupok:
