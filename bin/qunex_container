@@ -516,7 +516,7 @@ def get_sessionids(batchfile, sessions, batchfilter=None):
                 sessionids = get_sessionids_from_list(sessions)
             else:
                 raise ValueError(
-                    f"ERROR: The specified file is not found! [{batchfile}]!"
+                    f"ERROR: The specified file is not found! [{sessions}]!"
                 )
         else:
             sessionids = [
@@ -1196,15 +1196,15 @@ def main(args=None):
 
                 # binds
                 if bind is None:
-                    bind = f"{homedir}"
+                    container_bind = f"{homedir}"
                 else:
-                    bind = f"{homedir},{bind}"
+                    container_bind = f"{homedir},{bind}"
 
                 # bind cuda path if provided
                 if cuda_path:
-                    bind = f"{bind},{cuda_path}:/usr/local/cuda/"
+                    container_bind = f"{container_bind},{cuda_path}:/usr/local/cuda/"
 
-                container_command += f"--bind {bind} "
+                container_command += f"--bind {container_bind} "
 
                 # containeropt
                 if containeropt:
@@ -1242,15 +1242,15 @@ def main(args=None):
 
                 # binds
                 if bind is None:
-                    bind = f"{homedir}:{homedir}"
+                    container_bind = f"{homedir}:{homedir}"
                 else:
-                    bind = f"{homedir}:{homedir},{bind}"
+                    container_bind = f"{homedir}:{homedir},{bind}"
 
                 # bind cuda path if provided
                 if cuda_path:
-                    bind += f"{bind},{cuda_path}:/usr/local/cuda"
+                    container_bind += f"{container_bind},{cuda_path}:/usr/local/cuda"
 
-                bind_list = bind.split(",")
+                bind_list = container_bind.split(",")
                 for b in bind_list:
                     container_command += f"-v {b} "
 
