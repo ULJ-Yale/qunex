@@ -8333,17 +8333,21 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 # add latest image
                 boldtargets = boldtargets + boldtarget
 
-        # run HCP hand reclassification
-        r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
-        result = executeHCPHandReclassification(
-            sinfo, options, hcp, run, False, groupname, groupname
-        )
+        # run HCP hand reclassification if not longitudinal
+        if not options["longitudinal"]:
+            r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
+            result = executeHCPHandReclassification(
+                sinfo, options, hcp, run, False, groupname, groupname
+            )
 
-        # merge r
-        r += result["r"]
+            # merge r
+            r += result["r"]
 
-        # check if hand reclassification was OK
-        rcReport = result["report"]
+            # check if hand reclassification was OK
+            rcReport = result["report"]
+        else:
+            rcReport = report
+
         if (
             rcReport["incomplete"] == []
             and rcReport["failed"] == []
@@ -8376,10 +8380,22 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 else options["hcp_icafix_highpass"]
             )
 
+            # path and session
+            path = sinfo["hcp"]
+
+            # longitudinal
+            if options["longitudinal"]:
+                studyfolder = gc.deduceFolders(options)["basefolder"]
+                if not studyfolder:
+                    r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                    run = False
+                # replace path (elements[0])
+                path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+
             comm = (
                 '%(script)s \
                 --path="%(path)s" \
-                --subject="%(subject)s" \
+                --session="%(session)s" \
                 --fmri-names="%(boldtargets)s" \
                 --concat-fmri-name="%(groupname)s" \
                 --high-pass="%(highpass)s" \
@@ -8390,8 +8406,8 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     "script": os.path.join(
                         hcp["hcp_base"], "ICAFIX", "ReApplyFixMultiRunPipeline.sh"
                     ),
-                    "path": sinfo["hcp"],
-                    "subject": sinfo["id"] + options["hcp_suffix"],
+                    "path": path,
+                    "session": sinfo["id"] + options["hcp_suffix"],
                     "boldtargets": boldtargets,
                     "groupname": groupname,
                     "highpass": highpass,
@@ -8467,6 +8483,11 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options["run"] == "run":
+
+                    logtags = [options["logtag"], groupname]
+                    if options["longitudinal"]:
+                        logtags.append("long")
+
                     r, endlog, _, failed = pc.runExternalForFile(
                         tfile,
                         comm,
@@ -8476,7 +8497,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                         remove=options["log"] == "remove",
                         task=options["command_ran"],
                         logfolder=options["comlogs"],
-                        logtags=[options["logtag"], groupname],
+                        logtags=logtags,
                         fullTest=fullTest,
                         shell=True,
                         r=r,
