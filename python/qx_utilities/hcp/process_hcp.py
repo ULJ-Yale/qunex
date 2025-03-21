@@ -6601,13 +6601,6 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_legacy_fix (flag, not set by default):
             Whether to use the legacy MATLAB fix instead of the new pyfix.
 
-        --hcp_longitudinal_template (str, default 'base'):
-            Name of the longitudinal template.
-
-        --longitudinal:
-            Set this flag if you are running the longitudinal variant of this
-            command.
-
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -7235,14 +7228,6 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if not options["hcp_legacy_fix"]:
             comm += '             --enable-legacy-fix="FALSE"'
-
-        # -- Longitudinal parameters
-        if options["longitudinal"]:
-            comm += "                --is-longitudinal=1"
-            comm += (
-                "                --longitudinal-session="
-                + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
-            )
 
         # -- Report command
         if groupok:
@@ -7879,6 +7864,13 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         --hcp_lowresmesh (int, default 32):
             Specifies the low res mesh number.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of this
+            command.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -8435,6 +8427,14 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
 
             if options["hcp_config"] is not None:
                 comm += '             --config="%s"' % options["hcp_config"]
+
+            # -- Longitudinal parameters
+            if options["longitudinal"]:
+                comm += "                --is-longitudinal=1"
+                comm += (
+                    "                --longitudinal-session="
+                    + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                )
 
             # -- Report command
             if groupok:
