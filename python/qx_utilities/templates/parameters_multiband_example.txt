@@ -11,7 +11,6 @@
 # ==========================================================================
 
 # ---> PreFreeSurfer
- 
 _hcp_suffix             :
 _hcp_brainsize          : 150
 _hcp_t2                 : t2
@@ -28,20 +27,16 @@ _hcp_seechospacing      : 0.000580008723331
 _hcp_seunwarpdir        : y
 
 # ---> PostFreeSurfer
-
 _hcp_regname            : MSMSulc
 _hcp_grayordinatesres   : 2
 _hcp_hiresmesh          : 164
 _hcp_lowresmesh         : 32
- 
+
 # ---> Diffusion preprocessing (qunex hcpd)
- 
 _hcp_dwi_echospacing    : 0.689997792007
-  
+
 # ---> fMRI Volume
- 
 _hcp_bold_echospacing   : 0.000580008723331
-_hcp_bold_echodiff      : NONE
 _hcp_bold_dcmethod      : TOPUP
 _hcp_bold_sephaseneg    : AP
 _hcp_bold_sephasepos    : PA
@@ -51,16 +46,13 @@ _hcp_bold_unwarpdir     : -y
 _hcp_bold_res           : 2
 _hcp_bold_gdcoeffs      : NONE
 _hcp_bold_doslicetime   : FALSE
-_hcp_bold_slicetimerparams : 
+_hcp_bold_slicetimerparams :
 _hcp_bold_seimg         : independent
 _hcp_bold_movref        : independent
 _hcp_bold_prefix        :
- 
+
 # ---> fMRI Surface
- 
 _hcp_bold_smoothFWHM    : 2
-
-
 
 # ===================================================
 # == Settings for further preprocessing & analyses ==
@@ -77,12 +69,9 @@ _hcp_bold_smoothFWHM    : 2
 # ===================================================
 
 # ---> CIFTI mapping naming variable (qunex map_hcp_data & qunex create_bold_brain_masks)
-
 _hcp_cifti_tail     : _Atlas
 
-
 # ---> Movement scrubbing settings (qunex compute_bold_stats & qunex create_stats_report)
-
 _mov_dvars          : 3.0
 _mov_dvarsme        : 1.6
 _mov_fd             : 0.5
@@ -98,25 +87,19 @@ _mov_mreport        : movement_report.txt
 _mov_preport        : movement_report_post.txt
 _mov_sreport        : movement_scrubbing_report.txt
 _mov_pdf            : movement_plots
-_mov_pref           : 
-
+_mov_pref           :
 
 # ---> Nuisance signal (qunex extract_nuisance_signal)
-
 _shrinknsroi        : true
 
-
 # ---> Smoothing parameters
-
 _surface_smooth     : 2
 _volume_smooth      : 2
 _voxel_smooth       : 1
 _smooth_mask        : nonzero
 _dilate_mask        : ${TemplateFolder}/atlases/mni_templates/MNI152_T1_2mm_brain_mask.nii.gz
 
-
 # ---> BOLD processing (qunex preprocess_bold & preprocessConc)
-
 _image_source       : hcp
 _image_target       : cifti
 _bold_preprocess    : all
@@ -126,6 +109,3 @@ _pignore            : hipass=keep|regress=keep|lopass=keep
 _log                : keep
 _glm_matrix         : both
 _glm_residuals      : forget
-
-
-

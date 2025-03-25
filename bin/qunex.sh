@@ -127,7 +127,7 @@ show_all_qunex_commands() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-# -- Master Execution and Logging -- https://qunex.readthedocs.io/en/latest/wiki/Overview/Logging.html
+# -- Master Execution and Logging -- https://qunex.readthedocs.io/en/latest/wiki/Overview-Logging.html
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
@@ -1395,18 +1395,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
         if [[ ! -z ${SESSIONIDS} ]]; then
             CASES="$SESSIONIDS"
             SESSIONS="$SESSIONIDS"
-        fi
-    fi
-
-    # -- Backwards comapatibility, session* used to be subject*
-    if [[ -z ${CASES} ]]; then
-        # list of input cases; removing comma or pipes
-        CASES=`get_parameters "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`;
-        CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
-        SESSIONS="$CASES"
-        SESSIONIDS="$CASES"
-        if [[ ! -z ${CASES} ]]; then
-            echo "WARNING: The --subjects parameter is now renamed to --sessions"
         fi
     fi
 

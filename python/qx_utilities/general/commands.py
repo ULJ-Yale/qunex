@@ -199,10 +199,11 @@ commands = {
         "com": utilities.copy_study,
         "args": (
             "studyfolder",
-            "sourcefolder",
+            "existing_study",
             "sessions",
-            "filter",
+            "subjects",
             "batchfile",
+            "filter",
         ),
     },
     "create_list": {

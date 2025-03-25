@@ -241,16 +241,16 @@ def getHCPPaths(sinfo, options):
     # --- Fieldmap related paths
     d["fieldmap"] = {}
     if options["hcp_avgrdcmethod"] or options["hcp_bold_dcmethod"]:
-        if options["hcp_avgrdcmethod"].lower() in [
+        if (options["hcp_avgrdcmethod"] and (options["hcp_avgrdcmethod"].lower() in [
             "fieldmap",
             "siemensfieldmap",
             "philipsfieldmap",
             "gehealthcarefieldmap",
-        ] or options["hcp_bold_dcmethod"].lower() in [
+        ])) or (options["hcp_bold_dcmethod"] and (options["hcp_bold_dcmethod"].lower() in [
             "fieldmap",
             "siemensfieldmap",
             "philipsfieldmap",
-        ]:
+        ])):
             fmapmag = glob.glob(
                 os.path.join(
                     d["source"],
@@ -290,8 +290,8 @@ def getHCPPaths(sinfo, options):
                     if fmnum in d["fieldmap"]:
                         d["fieldmap"][fmnum].update({"phase": imagepath})
         elif (
-            options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap"
-            or options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"
+            (options["hcp_avgrdcmethod"] and (options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap"))
+            or (options["hcp_bold_dcmethod"].lower() and (options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"))
         ):
             fmapge = glob.glob(
                 os.path.join(
@@ -594,7 +594,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             Readout direction of the T1w and T2w images (x, y, z or NONE); used
             with either a regular field map or a spin echo field map.
 
-        --hcp_echodiff (str, default 'NONE'):
+        --hcp_echodiff (str):
             Difference in TE times if a fieldmap image is used, set to NONE if
             not used.
 
@@ -638,45 +638,45 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             this piece of information and manually overwrite the default if
             something is off.
 
-        --hcp_prefs_t1template (str, default ""):
+        --hcp_prefs_t1template (str):
             Path to the T1 template to be used by PreFreeSurfer. By default the
             used template is determined through the resolution provided by the
             hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t1templatebrain (str, default ""):
+        --hcp_prefs_t1templatebrain (str):
             Path to the T1 brain template to be used by PreFreeSurfer. By
             default the used template is determined through the resolution
             provided by the hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t1template2mm (str, default ""):
+        --hcp_prefs_t1template2mm (str):
             Path to the T1 2mm template to be used by PreFreeSurfer. By default
             the used template is HCP's MNI152_T1_2mm.nii.gz.
 
-        --hcp_prefs_t2template (str, default ""):
+        --hcp_prefs_t2template (str):
             Path to the T2 template to be used by PreFreeSurfer. By default the
             used template is determined through the resolution provided by the
             hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t2templatebrain (str, default ""):
+        --hcp_prefs_t2templatebrain (str):
             Path to the T2 brain template to be used by PreFreeSurfer. By
             default the used template is determined through the resolution
             provided by the hcp_prefs_template_res parameter.
 
-        --hcp_prefs_t2template2mm (str, default ""):
+        --hcp_prefs_t2template2mm (str):
             Path to the T2 2mm template to be used by PreFreeSurfer. By default
             the used template is HCP's MNI152_T2_2mm.nii.gz.
 
-        --hcp_prefs_templatemask (str, default ""):
+        --hcp_prefs_templatemask (str):
             Path to the template mask to be used by PreFreeSurfer. By default
             the used template mask is determined through the resolution provided
             by the hcp_prefs_template_res parameter.
 
-        --hcp_prefs_template2mmmask (str, default ""):
+        --hcp_prefs_template2mmmask (str):
             Path to the template mask to be used by PreFreeSurfer. By default
             the used 2mm template mask is HCP's
             MNI152_T1_2mm_brain_mask_dil.nii.gz.
 
-        --hcp_prefs_fnirtconfig (str, default ""):
+        --hcp_prefs_fnirtconfig (str):
             Path to the used FNIRT config. Set to the HCP's T1_2_MNI152_2mm.cnf
             by default.
 
@@ -3475,8 +3475,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Name of the longitudinal template.
 
         --longitudinal:
-            Set this flag if you are running the longitudinal variant of
-            hcp_fmri_volume.
+            Set this flag if you are running the longitudinal variant of this
+            command.
 
     Output files:
         The results of this command will be present in the Diffusion folder
@@ -4160,7 +4160,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
             GEHealthCareLegacyFieldMap, PhilipsFieldMap or NONE.
 
-        --hcp_bold_echodiff (str, default 'NONE'):
+        --hcp_bold_echodiff (str):
             Delta TE for BOLD fieldmap images or NONE if not used.
 
         --hcp_bold_sephasepos (str, default ''):
@@ -4262,8 +4262,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Name of the longitudinal template.
 
         --longitudinal:
-            Set this flag if you are running the longitudinal variant of
-            hcp_fmri_volume.
+            Set this flag if you are running the longitudinal variant of this
+            command.
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
@@ -4659,10 +4659,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             r += f"\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter {options['hcp_bold_dcmethod']}!"
             run = False
 
-        if (
-            options["hcp_bold_dcmethod"]
-            and options["hcp_bold_dcmethod"].lower() == "topup"
-        ):
+        if options["hcp_bold_dcmethod"].lower() == "topup":
             # -- spin echo settings
             sesettings = True
             for p in [
@@ -4772,7 +4769,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 topupconfig = ""
 
         # --- Process unwarp direction
-        if options["hcp_bold_dcmethod"] and options["hcp_bold_dcmethod"].lower() in [
+        if options["hcp_bold_dcmethod"].lower() in [
             "topup",
             "fieldmap",
             "siemensfieldmap",
@@ -4822,16 +4819,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             echospacing = ""
             unwarpdir = ""
 
-            dcset = False
-            if options["hcp_bold_dcmethod"]:
-                dcset = options["hcp_bold_dcmethod"].lower() in [
-                    "topup",
-                    "fieldmap",
-                    "siemensfieldmap",
-                    "philipsfieldmap",
-                    "gehealthcarefieldmap",
-                    "gehealthcarelegacyfieldmap",
-                ]
+            dcset = options["hcp_bold_dcmethod"].lower() in [
+                "topup",
+                "fieldmap",
+                "siemensfieldmap",
+                "philipsfieldmap",
+                "gehealthcarefieldmap",
+                "gehealthcarelegacyfieldmap",
+            ]
 
             # --- set unwarpdir and orient
             if "o" in boldinfo:
@@ -4929,290 +4924,292 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         boldok = False
 
             # --- check for spin-echo-fieldmap image
-            if options["hcp_bold_dcmethod"]:
-                if options["hcp_bold_dcmethod"].lower() == "topup" and sesettings:
-                    if not sepresent:
-                        r += "\n     ... ERROR: No spin echo fieldmap set images present!"
-                        boldok = False
-
-                    elif options["hcp_bold_seimg"] == "first":
-                        if firstSE is None:
-                            spinN = int(sepresent[0])
-                            r += (
-                                "\n     ... using the first recorded spin echo fieldmap set %d"
-                                % (spinN)
-                            )
-                        else:
-                            spinN = int(firstSE)
-                            r += (
-                                "\n     ... using the spin echo fieldmap set for the first bold run, %d"
-                                % (spinN)
-                            )
-                        spinNeg = sepairs[spinN]["spinNeg"]
-                        spinPos = sepairs[spinN]["spinPos"]
-
-                    else:
-                        spinN = False
-                        if "se" in boldinfo:
-                            spinN = int(boldinfo["se"])
-                        else:
-                            for sen in sepresent:
-                                if sen <= boldinfo["bold_number"]:
-                                    spinN = sen
-                                elif not spinN:
-                                    spinN = sen
-                        spinNeg = sepairs[spinN]["spinNeg"]
-                        spinPos = sepairs[spinN]["spinPos"]
-                        r += "\n     ... using spin echo fieldmap set %d" % (spinN)
-                        r += "\n         -> SE Positive image : %s" % (
-                            os.path.basename(spinPos)
-                        )
-                        r += "\n         -> SE Negative image : %s" % (
-                            os.path.basename(spinNeg)
-                        )
-
-                    # -- are we using a new SE image?
-                    if spinN != spinP:
-                        spinP = spinN
-                        futureref = "NONE"
-
-                # --- check for Siemens double TE-fieldmap image
-                elif options[
-                    "hcp_bold_biascorrection"
-                ].lower() != "sebased" and options["hcp_bold_dcmethod"].lower() in [
-                    "fieldmap",
-                    "siemensfieldmap",
-                ]:
-                    fmnum = boldinfo.get("fm", None)
-                    if fmnum is None:
-                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        run = False
-                    else:
-                        fieldok = True
-                        for i, v in hcp["fieldmap"].items():
-
-                            if isinstance(hcp["fieldmap"][i]["magnitude"], list):
-                                r, fieldok = pc.checkForFile2(
-                                    r,
-                                    hcp["fieldmap"][i]["magnitude"][0],
-                                    "\n     ... Siemens fieldmap magnitude image %d present "
-                                    % (i),
-                                    "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                                    % (i),
-                                    status=fieldok,
-                                )
-                                r, fieldok = pc.checkForFile2(
-                                    r,
-                                    hcp["fieldmap"][i]["magnitude"][1],
-                                    "\n     ... Siemens fieldmap magnitude image %d present "
-                                    % (i),
-                                    "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                                    % (i),
-                                    status=fieldok,
-                                )
-                            else:
-                                r, fieldok = pc.checkForFile2(
-                                    r,
-                                    hcp["fieldmap"][i]["magnitude"],
-                                    "\n     ... Siemens fieldmap magnitude image %d present "
-                                    % (i),
-                                    "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                                    % (i),
-                                    status=fieldok,
-                                )
-
-                            r, fieldok = pc.checkForFile2(
-                                r,
-                                hcp["fieldmap"][i]["phase"],
-                                "\n     ... Siemens fieldmap phase image %d present "
-                                % (i),
-                                "\n     ... ERROR: Siemens fieldmap phase image %d missing!"
-                                % (i),
-                                status=fieldok,
-                            )
-                            boldok = boldok and fieldok
-                        if not pc.is_number(echospacing):
-                            fieldok = False
-                            r += (
-                                '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
-                                % (options["hcp_bold_echospacing"])
-                            )
-
-                        # try to set hcp_bold_echodiff from the JSON sidecar if not yet set
-                        if not options["hcp_bold_echodiff"]:
-                            fmfolder = os.path.join(
-                                hcp["source"],
-                                "FieldMap%s%s" % (fmnum, options["fctail"]),
-                            )
-
-                            fmap_json = glob.glob(
-                                os.path.join(fmfolder, "*Phase.json")
-                            )[0]
-                            json_sidecar = os.path.join(fmfolder, fmap_json)
-
-                            if os.path.exists(json_sidecar):
-                                r += "\n     ... Trying to set hcp_echodiff from the JSON sidecar."
-                                with open(json_sidecar, "r") as file:
-                                    sidecar_data = json.load(file)
-                                    if (
-                                        "EchoTime1" in sidecar_data
-                                        and "EchoTime2" in sidecar_data
-                                    ):
-                                        echodiff = (
-                                            sidecar_data["EchoTime2"]
-                                            - sidecar_data["EchoTime1"]
-                                        )
-                                        # from s to ms
-                                        echodiff = echodiff * 1000
-                                        options["hcp_bold_echodiff"] = (
-                                            f"{echodiff:.10f}"
-                                        )
-                                        r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
-                            else:
-                                r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
-                                options["hcp_bold_echodiff"] = None
-
-                        if not pc.is_number(options["hcp_bold_echodiff"]):
-                            fieldok = False
-                            r += (
-                                '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!'
-                                % (options["hcp_bold_echodiff"])
-                            )
-                        boldok = boldok and fieldok
-                        fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
-                        if isinstance(fmmag, list):
-                            fmmag = "@".join(fmmag)
-                        fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                        fmcombined = None
-
-                # --- check for GE legacy fieldmap image
-                elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased"
-                    and options["hcp_bold_dcmethod"].lower()
-                    == "gehealthcarelegacyfieldmap"
-                ):
-                    fmnum = boldinfo.get("fm", None)
-                    if fmnum is None:
-                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        run = False
-                    else:
-                        fieldok = True
-                        for i, v in hcp["fieldmap"].items():
-                            r, fieldok = pc.checkForFile2(
-                                r,
-                                hcp["fieldmap"][i]["GE"],
-                                "\n     ... GeneralElectric legacy fieldmap image %d present "
-                                % (i),
-                                "\n     ... ERROR: GeneralElectric legacy fieldmap image %d missing!"
-                                % (i),
-                                status=fieldok,
-                            )
-                            boldok = boldok and fieldok
-                        fmmag = None
-                        fmphase = None
-                        fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
-
-                # --- check for GE double TE-fieldmap image
-                elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased"
-                    and options["hcp_bold_dcmethod"].lower() == "gehealthcarefieldmap"
-                ):
-                    fmnum = boldinfo.get("fm", None)
-                    if fmnum is None:
-                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        run = False
-                    else:
-                        fieldok = True
-                        for i, v in hcp["fieldmap"].items():
-                            r, fieldok = pc.checkForFile2(
-                                r,
-                                hcp["fieldmap"][i]["magnitude"],
-                                "\n     ... GE fieldmap magnitude image %d present "
-                                % (i),
-                                "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
-                                % (i),
-                                status=fieldok,
-                            )
-                            r, fieldok = pc.checkForFile2(
-                                r,
-                                hcp["fieldmap"][i]["phase"],
-                                "\n     ... GE fieldmap phase image %d present " % (i),
-                                "\n     ... ERROR: GE fieldmap phase image %d missing!"
-                                % (i),
-                                status=fieldok,
-                            )
-                            boldok = boldok and fieldok
-                        if not pc.is_number(echospacing):
-                            fieldok = False
-                            r += (
-                                '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
-                                % (options["hcp_bold_echospacing"])
-                            )
-                        boldok = boldok and fieldok
-                        fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
-                        fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                        fmcombined = None
-
-                # --- check for Philips double TE-fieldmap image
-                elif (
-                    options["hcp_bold_biascorrection"].lower() != "sebased"
-                    and options["hcp_bold_dcmethod"].lower() == "philipsfieldmap"
-                ):
-                    fmnum = boldinfo.get("fm", None)
-                    if fmnum is None:
-                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                        run = False
-                    else:
-                        fieldok = True
-                        for i, v in hcp["fieldmap"].items():
-                            r, fieldok = pc.checkForFile2(
-                                r,
-                                hcp["fieldmap"][i]["magnitude"],
-                                "\n     ... Philips fieldmap magnitude image %d present "
-                                % (i),
-                                "\n     ... ERROR: Philips fieldmap magnitude image %d missing!"
-                                % (i),
-                                status=fieldok,
-                            )
-                            r, fieldok = pc.checkForFile2(
-                                r,
-                                hcp["fieldmap"][i]["phase"],
-                                "\n     ... Philips fieldmap phase image %d present "
-                                % (i),
-                                "\n     ... ERROR: Philips fieldmap phase image %d missing!"
-                                % (i),
-                                status=fieldok,
-                            )
-                            boldok = boldok and fieldok
-                        if not pc.is_number(echospacing):
-                            fieldok = False
-                            r += (
-                                '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
-                                % (options["hcp_bold_echospacing"])
-                            )
-                        boldok = boldok and fieldok
-                        fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
-                        fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
-                        fmcombined = None
-
-                # --- NO DC used
-                elif options["hcp_bold_dcmethod"].lower() == "none":
-                    r += "\n     ... No distortion correction used "
-                    if options["hcp_processing_mode"] == "HCPStyleData":
-                        r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no distortion correction method was specified!\n            Consider using LegacyStyleData processing mode."
-                        run = False
-
-                # --- SEBASED
-                elif options["hcp_bold_biascorrection"].lower() == "sebased":
-                    r += "\n     ... SEBASED bias correction used"
-                    if options["hcp_bold_dcmethod"].lower() != "topup":
-                        r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP!"
-                        run = False
-
-                # --- ERROR
-                else:
-                    r += "\n     ... ERROR: Issues detected with distortion correction setup! Please check related parameters!"
+            if options["hcp_bold_dcmethod"].lower() == "topup" and sesettings:
+                if not sepresent:
+                    r += "\n     ... ERROR: No spin echo fieldmap set images present!"
                     boldok = False
+
+                elif options["hcp_bold_seimg"] == "first":
+                    if firstSE is None:
+                        spinN = int(sepresent[0])
+                        r += (
+                            "\n     ... using the first recorded spin echo fieldmap set %d"
+                            % (spinN)
+                        )
+                    else:
+                        spinN = int(firstSE)
+                        r += (
+                            "\n     ... using the spin echo fieldmap set for the first bold run, %d"
+                            % (spinN)
+                        )
+                    spinNeg = sepairs[spinN]["spinNeg"]
+                    spinPos = sepairs[spinN]["spinPos"]
+
+                else:
+                    spinN = False
+                    if "se" in boldinfo:
+                        spinN = int(boldinfo["se"])
+                    else:
+                        for sen in sepresent:
+                            if sen <= boldinfo["bold_number"]:
+                                spinN = sen
+                            elif not spinN:
+                                spinN = sen
+                    spinNeg = sepairs[spinN]["spinNeg"]
+                    spinPos = sepairs[spinN]["spinPos"]
+                    r += "\n     ... using spin echo fieldmap set %d" % (spinN)
+                    r += "\n         -> SE Positive image : %s" % (
+                        os.path.basename(spinPos)
+                    )
+                    r += "\n         -> SE Negative image : %s" % (
+                        os.path.basename(spinNeg)
+                    )
+
+                # -- are we using a new SE image?
+                if spinN != spinP:
+                    spinP = spinN
+                    futureref = "NONE"
+
+            # --- check for Siemens double TE-fieldmap image
+            elif options[
+                "hcp_bold_biascorrection"
+            ].lower() != "sebased" and options["hcp_bold_dcmethod"].lower() in [
+                "fieldmap",
+                "siemensfieldmap",
+            ]:
+                fmnum = boldinfo.get("fm", None)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp["fieldmap"].items():
+
+                        if isinstance(hcp["fieldmap"][i]["magnitude"], list):
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"][0],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"][1],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+                        else:
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["magnitude"],
+                                "\n     ... Siemens fieldmap magnitude image %d present "
+                                % (i),
+                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["phase"],
+                            "\n     ... Siemens fieldmap phase image %d present "
+                            % (i),
+                            "\n     ... ERROR: Siemens fieldmap phase image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        boldok = boldok and fieldok
+                    if not pc.is_number(echospacing):
+                        fieldok = False
+                        r += (
+                            '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
+                            % (options["hcp_bold_echospacing"])
+                        )
+
+                    # try to set hcp_bold_echodiff from the JSON sidecar if not yet set
+                    if (
+                        not options["hcp_bold_echodiff"]
+                        or options["hcp_bold_echodiff"] == "NONE"
+                    ):
+                        fmfolder = os.path.join(
+                            hcp["source"],
+                            "FieldMap%s%s" % (fmnum, options["fctail"]),
+                        )
+
+                        fmap_json = glob.glob(
+                            os.path.join(fmfolder, "*Phase.json")
+                        )[0]
+                        json_sidecar = os.path.join(fmfolder, fmap_json)
+
+                        if os.path.exists(json_sidecar):
+                            r += "\n     ... Trying to set hcp_echodiff from the JSON sidecar."
+                            with open(json_sidecar, "r") as file:
+                                sidecar_data = json.load(file)
+                                if (
+                                    "EchoTime1" in sidecar_data
+                                    and "EchoTime2" in sidecar_data
+                                ):
+                                    echodiff = (
+                                        sidecar_data["EchoTime2"]
+                                        - sidecar_data["EchoTime1"]
+                                    )
+                                    # from s to ms
+                                    echodiff = echodiff * 1000
+                                    options["hcp_bold_echodiff"] = (
+                                        f"{echodiff:.10f}"
+                                    )
+                                    r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
+                        else:
+                            r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
+                            options["hcp_bold_echodiff"] = None
+
+                    if not pc.is_number(options["hcp_bold_echodiff"]):
+                        fieldok = False
+                        r += (
+                            '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!'
+                            % (options["hcp_bold_echodiff"])
+                        )
+                    boldok = boldok and fieldok
+                    fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                    if isinstance(fmmag, list):
+                        fmmag = "@".join(fmmag)
+                    fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
+                    fmcombined = None
+
+            # --- check for GE legacy fieldmap image
+            elif (
+                options["hcp_bold_biascorrection"].lower() != "sebased"
+                and options["hcp_bold_dcmethod"].lower()
+                == "gehealthcarelegacyfieldmap"
+            ):
+                fmnum = boldinfo.get("fm", None)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp["fieldmap"].items():
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["GE"],
+                            "\n     ... GeneralElectric legacy fieldmap image %d present "
+                            % (i),
+                            "\n     ... ERROR: GeneralElectric legacy fieldmap image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        boldok = boldok and fieldok
+                    fmmag = None
+                    fmphase = None
+                    fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
+
+            # --- check for GE double TE-fieldmap image
+            elif (
+                options["hcp_bold_biascorrection"].lower() != "sebased"
+                and options["hcp_bold_dcmethod"].lower() == "gehealthcarefieldmap"
+            ):
+                fmnum = boldinfo.get("fm", None)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp["fieldmap"].items():
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["magnitude"],
+                            "\n     ... GE fieldmap magnitude image %d present "
+                            % (i),
+                            "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["phase"],
+                            "\n     ... GE fieldmap phase image %d present " % (i),
+                            "\n     ... ERROR: GE fieldmap phase image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        boldok = boldok and fieldok
+                    if not pc.is_number(echospacing):
+                        fieldok = False
+                        r += (
+                            '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
+                            % (options["hcp_bold_echospacing"])
+                        )
+                    boldok = boldok and fieldok
+                    fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                    fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
+                    fmcombined = None
+
+            # --- check for Philips double TE-fieldmap image
+            elif (
+                options["hcp_bold_biascorrection"].lower() != "sebased"
+                and options["hcp_bold_dcmethod"].lower() == "philipsfieldmap"
+            ):
+                fmnum = boldinfo.get("fm", None)
+                if fmnum is None:
+                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    run = False
+                else:
+                    fieldok = True
+                    for i, v in hcp["fieldmap"].items():
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["magnitude"],
+                            "\n     ... Philips fieldmap magnitude image %d present "
+                            % (i),
+                            "\n     ... ERROR: Philips fieldmap magnitude image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        r, fieldok = pc.checkForFile2(
+                            r,
+                            hcp["fieldmap"][i]["phase"],
+                            "\n     ... Philips fieldmap phase image %d present "
+                            % (i),
+                            "\n     ... ERROR: Philips fieldmap phase image %d missing!"
+                            % (i),
+                            status=fieldok,
+                        )
+                        boldok = boldok and fieldok
+                    if not pc.is_number(echospacing):
+                        fieldok = False
+                        r += (
+                            '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
+                            % (options["hcp_bold_echospacing"])
+                        )
+                    boldok = boldok and fieldok
+                    fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
+                    fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
+                    fmcombined = None
+
+            # --- NO DC used
+            elif options["hcp_bold_dcmethod"].lower() == "none":
+                r += "\n     ... No distortion correction used "
+                if options["hcp_processing_mode"] == "HCPStyleData":
+                    r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no distortion correction method was specified!\n            Consider using LegacyStyleData processing mode."
+                    run = False
+
+            # --- SEBASED
+            elif options["hcp_bold_biascorrection"].lower() == "sebased":
+                r += "\n     ... SEBASED bias correction used"
+                if options["hcp_bold_dcmethod"].lower() != "topup":
+                    r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP!"
+                    run = False
+
+            # --- ERROR
+            else:
+                r += "\n     ... ERROR: Issues detected with distortion correction setup! Please check related parameters!"
+                boldok = False
 
             # --- set reference
             # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
@@ -5869,8 +5866,8 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             Name of the longitudinal template.
 
         --longitudinal:
-            Set this flag if you are running the longitudinal variant of
-            hcp_fmri_volume.
+            Set this flag if you are running the longitudinal variant of this
+            command.
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
@@ -7861,6 +7858,13 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
         --hcp_lowresmesh (int, default 32):
             Specifies the low res mesh number.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of this
+            command.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -8323,17 +8327,21 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 # add latest image
                 boldtargets = boldtargets + boldtarget
 
-        # run HCP hand reclassification
-        r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
-        result = executeHCPHandReclassification(
-            sinfo, options, hcp, run, False, groupname, groupname
-        )
+        # run HCP hand reclassification if not longitudinal
+        if not options["longitudinal"]:
+            r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
+            result = executeHCPHandReclassification(
+                sinfo, options, hcp, run, False, groupname, groupname
+            )
 
-        # merge r
-        r += result["r"]
+            # merge r
+            r += result["r"]
 
-        # check if hand reclassification was OK
-        rcReport = result["report"]
+            # check if hand reclassification was OK
+            rcReport = result["report"]
+        else:
+            rcReport = report
+
         if (
             rcReport["incomplete"] == []
             and rcReport["failed"] == []
@@ -8366,10 +8374,22 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 else options["hcp_icafix_highpass"]
             )
 
+            # path and session
+            path = sinfo["hcp"]
+
+            # longitudinal
+            if options["longitudinal"]:
+                studyfolder = gc.deduceFolders(options)["basefolder"]
+                if not studyfolder:
+                    r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                    run = False
+                # replace path (elements[0])
+                path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+
             comm = (
                 '%(script)s \
                 --path="%(path)s" \
-                --subject="%(subject)s" \
+                --session="%(session)s" \
                 --fmri-names="%(boldtargets)s" \
                 --concat-fmri-name="%(groupname)s" \
                 --high-pass="%(highpass)s" \
@@ -8380,8 +8400,8 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     "script": os.path.join(
                         hcp["hcp_base"], "ICAFIX", "ReApplyFixMultiRunPipeline.sh"
                     ),
-                    "path": sinfo["hcp"],
-                    "subject": sinfo["id"] + options["hcp_suffix"],
+                    "path": path,
+                    "session": sinfo["id"] + options["hcp_suffix"],
                     "boldtargets": boldtargets,
                     "groupname": groupname,
                     "highpass": highpass,
@@ -8418,6 +8438,14 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             if options["hcp_config"] is not None:
                 comm += '             --config="%s"' % options["hcp_config"]
 
+            # -- Longitudinal parameters
+            if options["longitudinal"]:
+                comm += "                --is-longitudinal=1"
+                comm += (
+                    "                --longitudinal-session="
+                    + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                )
+
             # -- Report command
             if groupok:
                 r += "\n------------------------------------------------------------\n"
@@ -8449,6 +8477,11 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options["run"] == "run":
+
+                    logtags = [options["logtag"], groupname]
+                    if options["longitudinal"]:
+                        logtags.append("long")
+
                     r, endlog, _, failed = pc.runExternalForFile(
                         tfile,
                         comm,
@@ -8458,7 +8491,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                         remove=options["log"] == "remove",
                         task=options["command_ran"],
                         logfolder=options["comlogs"],
-                        logtags=[options["logtag"], groupname],
+                        logtags=logtags,
                         fullTest=fullTest,
                         shell=True,
                         r=r,

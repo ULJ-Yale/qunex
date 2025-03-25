@@ -292,12 +292,12 @@ def runCommand(command, args):
                 elif command == "create_study":
                     folders["logfolder"] = "./processing/logs"
 
-            sufix = ""
+            suffix = ""
             if "sessionids" in args:
-                sufix = "_" + args["sessionids"]
+                suffix = "_" + args["sessionids"]
 
             logfile = os.path.join(
-                folders["logfolder"], "comlogs", "%s%s.log" % (command, sufix)
+                folders["logfolder"], "comlogs", "%s%s.log" % (command, suffix)
             )
             # run without log for exceptions
             # remove logs for exceptions

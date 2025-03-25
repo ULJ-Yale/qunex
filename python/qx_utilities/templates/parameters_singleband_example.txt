@@ -11,11 +11,9 @@
 # ===============================================================================
 
 # ---> General HCP settings
-
 _hcp_processing_mode    : LegacyStyleData # For HCP compliant data set to ---> HCPStyleData
 
 # ---> Pre FreeSurfer
-
 _hcp_suffix             :
 _hcp_brainsize          : 150
 _hcp_t2                 : NONE
@@ -25,7 +23,7 @@ _hcp_unwarpdir          : NONE
 _hcp_gdcoeffs           : NONE
 _hcp_avgrdcmethod       : NONE
 _hcp_topupconfig        : NONE
-_hcp_printcom           : 
+_hcp_printcom           :
 _hcp_sephaseneg         : NONE
 _hcp_sephasepos         : NONE
 _hcp_seechospacing      : NONE
@@ -33,37 +31,31 @@ _hcp_seunwarpdir        : NONE
 _hcp_biascorrect_t1w    : YES
 
 # ---> Post FreeSurfer
-
 _hcp_regname            : MSMSulc
 _hcp_grayordinatesres   : 2
 _hcp_hiresmesh          : 164
 _hcp_lowresmesh         : 32
- 
-# ---> Diffusion preprocessing (qunex hcpd)
 
+# ---> Diffusion preprocessing (qunex hcpd)
 _hcp_dwi_echospacing    : NONE
 
-  
 # ---> fMRI Volume
-
-_hcp_bold_echospacing   : NONE
+_hcp_bold_echospacing   :
 _hcp_bold_dcmethod      : NONE
-_hcp_bold_topupconfig   : 
+_hcp_bold_topupconfig   :
 _hcp_bold_sephaseneg    :
 _hcp_bold_sephasepos    :
 _hcp_bold_sbref         : NONE
-_hcp_bold_echodiff      : NONE
+_hcp_bold_echodiff      :
 _hcp_bold_unwarpdir     : NONE
 _hcp_bold_res           : 2
 _hcp_bold_gdcoeffs      : NONE
 _hcp_bold_doslicetime   : TRUE
 _hcp_bold_slicetimerparams : --odd
- 
+
 # ---> fMRI Surface
- 
+
 _hcp_bold_smoothFWHM    : 2
-
-
 
 # ===================================================
 # == Settings for further preprocessing & analyses ==
@@ -80,12 +72,9 @@ _hcp_bold_smoothFWHM    : 2
 # ===================================================
 
 # ---> CIFTI mapping naming variable (qunex map_hcp_data & qunex create_bold_brain_masks)
-
 _hcp_cifti_tail     : _Atlas
 
-
 # ---> Movement scrubbing settings (qunex compute_bold_stats & qunex create_stats_report)
-
 _mov_dvars          : 3.0
 _mov_dvarsme        : 1.6
 _mov_fd             : 0.5
@@ -101,25 +90,19 @@ _mov_mreport        : movement_report.txt
 _mov_preport        : movement_report_post.txt
 _mov_sreport        : movement_scrubbing_report.txt
 _mov_pdf            : movement_plots
-_mov_pref           : 
-
+_mov_pref           :
 
 # ---> Nuisance signal (qunex extract_nuisance_signal)
-
 _shrinknsroi        : true
 
-
 # ---> Smoothing parameters
-
 _surface_smooth     : 2
 _volume_smooth      : 2
 _voxel_smooth       : 1
 _smooth_mask        : nonzero
 _dilate_mask        : ${TemplateFolder}/atlases/mni_templates/MNI152_T1_2mm_brain_mask.nii.gz
 
-
 # ---> BOLD processing (qunex preprocess_bold & preprocess_conc)
-
 _image_source       : hcp
 _image_target       : cifti
 _bold_preprocess    : all
@@ -129,4 +112,3 @@ _pignore            : hipass=keep|regress=keep|lopass=keep
 _log                : keep
 _glm_matrix         : both
 _glm_residuals      : forget
-

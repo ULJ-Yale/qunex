@@ -120,7 +120,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
 
     if create:
         if verbose:
-            print("\nCreating study folder structure:")
+            print("\n---> Creating study folder structure:")
 
     for folder in folders:
         tfolder = os.path.join(*[studyfolder] + folder)
@@ -154,7 +154,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
 
     if create:
         if verbose:
-            print("\nPreparing template files:")
+            print("\n---> Preparing template files:")
 
         # ---> parameter template
         paramFile = os.path.join(
@@ -437,10 +437,15 @@ def create_study(studyfolder=None, folders=None):
 
 
 def copy_study(
-    studyfolder, existing_study, step=None, sessions=None, batchfile=None, filter=None
+    studyfolder,
+    existing_study,
+    sessions=None,
+    subjects=None,
+    batchfile=None,
+    filter=None,
 ):
     """
-    ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [step=None] [sessions=None] [batchfile=None] [filter=None]``
+    ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [sessions=None] [subjects=None] [batchfile=None] [filter=None]``
 
     Copies an existing QuNex study onto a new location.
 
@@ -451,18 +456,19 @@ def copy_study(
         --existing_study (str):
             The path of an existing QuNex study that will be copied.
 
-        --step (str, default None):
-            The step which will be executed next, if provided only a subset of
-            data will be copied in some cases.
-
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
             will be processed. They are to be specified as a comma separated
             list.
 
+        --subjects (str, default None):
+            If provided, only the specified subjects from the subjects folder
+            will be processed along with their sessions. They are to be
+            specified as a comma separated list.
+
         --batchfile (str, default None):
-            If provided, only the sessions specified in the batch file will be
-            processed.
+            If provided, only the sessions and subjects specified in the batch
+            file will be processed.
 
         --filter (str, default None):
             An optional parameter given as "key:value|key:value" string. Can be
@@ -471,10 +477,11 @@ def copy_study(
     Notes:
         Can be used for backing up existing studies or when copying previous
         study to continue with the processing or an analysis in a new study
-        folder. If sessions parameter is provided only a subset of sessions will
-        be copied over. If batchfile is provided, only the sessions specified
-        in the batch file will be copied. If filter is provided, it will be
-        applied to the provided batchfile before copying the study.
+        folder. If sessions or subjects parameter is provided only a subset of
+        sessions/subjects will be copied over. If batchfile is provided, only
+        the sessions specified in the batch file will be copied. If filter is
+        provided, it will be applied to the provided batchfile before copying
+        the study.
 
     Examples:
         ::
@@ -487,7 +494,6 @@ def copy_study(
     print("Running copy_study\n==================\n")
 
     # check if mandatory parameters are provided
-    print()
     print("---> Checking input parameters")
     if studyfolder is None:
         raise ge.CommandError(
@@ -521,77 +527,119 @@ def copy_study(
             "Please provide the path to the batch file using the batchfile parameter.",
         )
 
+    # sessions and subjects should not be provided at the same time
+    if sessions is not None and subjects is not None:
+        raise ge.CommandError(
+            "copy_study",
+            "sessions and subjects provided at the same time",
+            "Please provide either sessions or subjects, not both.",
+        )
+
     # other parameters
-    print(f" ... step: {step}")
     print(f" ... sessions: {sessions}")
+    print(f" ... subjects: {subjects}")
     print(f" ... batchfile: {batchfile}")
     print(f" ... filter: {filter}")
 
     # create a new study at the specified location
+    print()
     create_study(studyfolder=studyfolder)
 
-    # copy analysis, processing, info folders as they are
+    # rsync the whole study
     print()
-    print("Copying top-level folders")
-    for folder in ["analysis", "processing", "info"]:
-        src = os.path.join(existing_study, folder)
-        dst = os.path.join(studyfolder, folder)
-        print(f" ... copying {src}")
-        shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+    print("---> Copying existing study to a new location")
+    print(f" ... from: {existing_study}")
+    print(f" ... to: {studyfolder}")
+    print(
+        " ... executing rsync (this might take a very long time if your study is large)"
+    )
+    command = ["rsync", "-aH", existing_study + "/", studyfolder]
+    try:
+        subprocess.run(command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: failed when copying {existing_study} to {studyfolder}!")
+        raise e
 
-    # copy inbox, archive, specs and QC folders inside sessions
-    session_supplementary = ["inbox", "archive", "specs", "QC"]
-    for folder in session_supplementary:
-        src = os.path.join(existing_study, "sessions", folder)
-        dst = os.path.join(studyfolder, "sessions", folder)
-        print(f" ... copying {src}")
-        shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
-
-    # get sessions
+    # get sessions and subjects
     if batchfile is not None:
         sessions, _ = gc.get_sessions_list(
             batchfile, filter=filter, sessionids=sessions
         )
+        subjects = []
+        for session in sessions:
+            if "subject" not in session:
+                print(
+                    f"WARNING: session {session} does not have a subject field, if this is a longitudinal study subjects will not be copied correctly!"
+                )
+            if session["subject"] not in subjects:
+                subjects.append(session["subject"])
     elif sessions is not None:
         sessions = sessions.split(",")
+    elif subjects is not None:
+        subjects = subjects.split(",")
 
-    # copy sessions
-    if sessions is None:
-        sessions = os.listdir(os.path.join(existing_study, "sessions"))
-        # remove archive, inbox, QC, specs
-        sessions = [
-            session for session in sessions if session not in session_supplementary
-        ]
+    # remove all folders in existing_study/sessions that are not in keep_sessions
+    if sessions is not None:
+        keep_sessions = sessions + ["archive", "inbox", "QC", "specs"]
+        print()
+        print("---> Removing unused sessions")
+        sessions_path = os.path.join(studyfolder, "sessions")
+        try:
+            dirs = [
+                d
+                for d in os.listdir(sessions_path)
+                if os.path.isdir(os.path.join(sessions_path, d))
+            ]
+            for d in dirs:
+                if d not in keep_sessions:
+                    _remove_folder(os.path.join(sessions_path, d))
+        except OSError as e:
+            print(f"Error accessing sessions directory: {e}")
+            raise e
 
-    print()
-    print("Copying sessions")
-    for session in sessions:
-        src = os.path.join(existing_study, "sessions", session)
-        dst = os.path.join(studyfolder, "sessions", session)
-        print(f" ... copying {session}")
+    # remove all folders in existing_study/subjects that are not in subjects
+    if subjects is not None:
+        print()
+        print("---> Removing unused subjects")
+        subjects_path = os.path.join(studyfolder, "subjects")
+        try:
+            dirs = [
+                d
+                for d in os.listdir(subjects_path)
+                if os.path.isdir(os.path.join(subjects_path, d))
+            ]
+            for d in dirs:
+                if d not in subjects:
+                    _remove_folder(os.path.join(subjects_path, d))
+        except OSError as e:
+            print(f"Error accessing sessions directory: {e}")
+            raise e
 
-        # copy all files and folder from src to dst, with the exception of the hcp folder
-        for item in os.listdir(src):
-            if os.path.isfile(os.path.join(src, item)):
-                os.makedirs(dst, exist_ok=True)
-                shutil.copy2(os.path.join(src, item), os.path.join(dst, item))
-            elif item != "hcp":
-                shutil.copytree(
-                    os.path.join(src, item),
-                    os.path.join(dst, item),
-                    dirs_exist_ok=True,
-                    ignore_dangling_symlinks=True,
-                )
+        keep_sessions = subjects + ["archive", "inbox", "QC", "specs"]
+        sessions_path = os.path.join(studyfolder, "sessions")
+        try:
+            dirs = [
+                d
+                for d in os.listdir(sessions_path)
+                if os.path.isdir(os.path.join(sessions_path, d))
+            ]
+            for d in dirs:
+                keep_folder = False
+                for ks in keep_sessions:
+                    # if ks is a substring of d then keep, else delete
+                    if ks in d:
+                        keep_folder = True
+                        break
 
-        # only copy hcp folder if "hcp_" in steps but not if steps is hcp_pre_freesurfer
-        if step is None or ("hcp_" in step and step != "hcp_pre_freesurfer"):
-            src = os.path.join(existing_study, "sessions", session, "hcp")
-            dst = os.path.join(studyfolder, "sessions", session)
-            shutil.copytree(src, dst, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+                if not keep_folder:
+                    _remove_folder(os.path.join(sessions_path, d))
+        except OSError as e:
+            print(f"Error accessing sessions directory: {e}")
+            raise e
 
     # fix paths in txt, conc and list files
     print()
-    print("Fixing paths in relevant files")
+    print("---> Fixing paths in relevant files")
     for root, _, files in os.walk(studyfolder):
         for file in files:
             if (
@@ -605,20 +653,34 @@ def copy_study(
                     for line in lines:
                         f.write(line.replace(existing_study, studyfolder))
 
-    # remove unused sessions from batch files
+    # remove unused sessions or subjects from batch files
     # assume batch files are .txt files in the processing subfolder
-    if sessions:
+    if sessions or subjects:
         print()
-        print("Removing unused sessions from batch files in the processing subfolder")
+        print(
+            "---> Removing unused sessions from batch files in the processing subfolder"
+        )
         processing_folder = os.path.join(studyfolder, "processing")
         for item in os.listdir(processing_folder):
             if item.endswith(".txt"):
                 batchfile = os.path.join(processing_folder, item)
                 print(f" ... processing {batchfile}")
-                filter_batch(batchfile, sessions)
+                filter_batch(batchfile, sessions, subjects)
 
 
-def filter_batch(batchfile, sessions=None):
+def _remove_folder(folder):
+    """
+    A helper function that removes a folder and all its content.
+    """
+    if len(os.listdir(folder)) == 0:
+        print(f" ... removing folder {folder}")
+        os.rmdir(folder)
+    else:
+        print(f" ... removing folder {folder}")
+        shutil.rmtree(folder)
+
+
+def filter_batch(batchfile, sessions=None, subjects=None):
     """
     A helper function that removes all unused sessions from a batch file.
     """
@@ -636,9 +698,21 @@ def filter_batch(batchfile, sessions=None):
 
     # iterate over other items
     for item in batch_list[1:]:
-        for session in sessions:
-            if session in item:
-                new_batch += "\n---\n" + item
+        keep = False
+        if sessions:
+            for session in sessions:
+                if session in item:
+                    keep = True
+                    break
+
+        if not keep and subjects:
+            for subject in subjects:
+                if f"subject: {subject}" in item:
+                    keep = True
+                    break
+
+        if keep:
+            new_batch += "\n---\n" + item
 
     # write back
     with open(batchfile, "w") as f:
@@ -797,13 +871,14 @@ def create_batch(
 
             Header section of the study batch file:
                 To run most of the processing steps, a batch file needs to be
-                provided (see `batch file specification
-                <../../wiki/Overview/file_batch_txt.html>`__). Batch file consists of a
-                header section and a list of imaging sessions. The header
-                section provides the possibility to specify the default
-                parameter values that are to be used throughout the study.
-                Specifically, the parameters are provided as ``_<parameter
-                name>: <parameter value>`` pairs. An example might be:
+                provided, for details see:
+                https://qunex.readthedocs.io/en/latest/wiki/Overview-FileBatch.html.
+                Batch file consists of a header section and a list of imaging
+                sessions. The header section provides the possibility to specify
+                the default parameter values that are to be used throughout the
+                study. Specifically, the parameters are provided as
+                ``_<parameter name>: <parameter value>`` pairs. An example might
+                be:
 
                 ::
 
@@ -822,10 +897,10 @@ def create_batch(
                 be passed to the command as command line parameters. For
                 details on the ``run_recipe`` command itself and how to specify
                 parameters at different levels within the recipe.yaml file,
-                please see `Running a list of QuNex commands
-                <../../wiki/UsageDocs/RunningListsOfCommands.html>`__. These
-                parameters will take priority over the parameters specified in
-                the header section of the study batch file.
+                please see:
+                https://qunex.readthedocs.io/en/latest/wiki/UsageDocs-RunningListsOfCommands.html.
+                These parameters will take priority over the parameters
+                specified in the header section of the study batch file.
 
             Command line parameters:
                 Parameters can be specified when running the command on the
