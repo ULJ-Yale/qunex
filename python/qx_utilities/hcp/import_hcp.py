@@ -863,7 +863,12 @@ def processHCPLS(sessionfolder, filesort):
         # diffusion
         if folderLabel == "Diffusion":
             # sort folderfiles by dir
-            folderFiles.sort(key=lambda x: (int(x["parts"][1].replace("dir", "")) if "dir" in x["parts"][1] else float('inf'), x["parts"][2]))
+            folderFiles.sort(
+                key=lambda x: (
+                    int(x["parts"][1].replace("dir", "")) if "dir" in x["parts"][1] else float('inf'),
+                    x["parts"][2] if len(x["parts"]) > 2 else "z"
+                )
+            )
             for file in folderFiles:
                 match = False
                 for fcheck in check:
