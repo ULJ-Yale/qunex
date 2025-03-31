@@ -4190,6 +4190,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_bold_slicetimingfile (str, default 'FALSE'):
             Whether to use custom slice timing file 'TRUE' or 'FALSE'.
+            You can prepare these files manually or you can use the
+            functinality witin the setup_hcp command. The file will be then used
+            for the --tcustom parameter of FSL slicetimer. The file should be
+            located in the BOLD folder, using the same name, but with the
+            `_slicetimer.txt` suffix.
 
         --hcp_bold_slicetimerparams (str, default ''):
             A comma or pipe separated string of parameters for FSL slicetimer.
