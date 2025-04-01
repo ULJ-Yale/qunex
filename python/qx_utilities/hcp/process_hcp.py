@@ -241,16 +241,28 @@ def getHCPPaths(sinfo, options):
     # --- Fieldmap related paths
     d["fieldmap"] = {}
     if options["hcp_avgrdcmethod"] or options["hcp_bold_dcmethod"]:
-        if (options["hcp_avgrdcmethod"] and (options["hcp_avgrdcmethod"].lower() in [
-            "fieldmap",
-            "siemensfieldmap",
-            "philipsfieldmap",
-            "gehealthcarefieldmap",
-        ])) or (options["hcp_bold_dcmethod"] and (options["hcp_bold_dcmethod"].lower() in [
-            "fieldmap",
-            "siemensfieldmap",
-            "philipsfieldmap",
-        ])):
+        if (
+            options["hcp_avgrdcmethod"]
+            and (
+                options["hcp_avgrdcmethod"].lower()
+                in [
+                    "fieldmap",
+                    "siemensfieldmap",
+                    "philipsfieldmap",
+                    "gehealthcarefieldmap",
+                ]
+            )
+        ) or (
+            options["hcp_bold_dcmethod"]
+            and (
+                options["hcp_bold_dcmethod"].lower()
+                in [
+                    "fieldmap",
+                    "siemensfieldmap",
+                    "philipsfieldmap",
+                ]
+            )
+        ):
             fmapmag = glob.glob(
                 os.path.join(
                     d["source"],
@@ -290,8 +302,11 @@ def getHCPPaths(sinfo, options):
                     if fmnum in d["fieldmap"]:
                         d["fieldmap"][fmnum].update({"phase": imagepath})
         elif (
-            (options["hcp_avgrdcmethod"] and (options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap"))
-            or (options["hcp_bold_dcmethod"].lower() and (options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"))
+            options["hcp_avgrdcmethod"]
+            and (options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap")
+        ) or (
+            options["hcp_bold_dcmethod"].lower()
+            and (options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap")
         ):
             fmapge = glob.glob(
                 os.path.join(
@@ -4976,15 +4991,17 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     futureref = "NONE"
 
             # --- check for Siemens double TE-fieldmap image
-            elif options[
-                "hcp_bold_biascorrection"
-            ].lower() != "sebased" and options["hcp_bold_dcmethod"].lower() in [
+            elif options["hcp_bold_biascorrection"].lower() != "sebased" and options[
+                "hcp_bold_dcmethod"
+            ].lower() in [
                 "fieldmap",
                 "siemensfieldmap",
             ]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5023,8 +5040,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["phase"],
-                            "\n     ... Siemens fieldmap phase image %d present "
-                            % (i),
+                            "\n     ... Siemens fieldmap phase image %d present " % (i),
                             "\n     ... ERROR: Siemens fieldmap phase image %d missing!"
                             % (i),
                             status=fieldok,
@@ -5047,9 +5063,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             "FieldMap%s%s" % (fmnum, options["fctail"]),
                         )
 
-                        fmap_json = glob.glob(
-                            os.path.join(fmfolder, "*Phase.json")
-                        )[0]
+                        fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
                         json_sidecar = os.path.join(fmfolder, fmap_json)
 
                         if os.path.exists(json_sidecar):
@@ -5066,9 +5080,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                     )
                                     # from s to ms
                                     echodiff = echodiff * 1000
-                                    options["hcp_bold_echodiff"] = (
-                                        f"{echodiff:.10f}"
-                                    )
+                                    options["hcp_bold_echodiff"] = f"{echodiff:.10f}"
                                     r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
                         else:
                             r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
@@ -5090,12 +5102,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- check for GE legacy fieldmap image
             elif (
                 options["hcp_bold_biascorrection"].lower() != "sebased"
-                and options["hcp_bold_dcmethod"].lower()
-                == "gehealthcarelegacyfieldmap"
+                and options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5121,7 +5134,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5129,8 +5144,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["magnitude"],
-                            "\n     ... GE fieldmap magnitude image %d present "
-                            % (i),
+                            "\n     ... GE fieldmap magnitude image %d present " % (i),
                             "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
                             % (i),
                             status=fieldok,
@@ -5162,7 +5176,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5179,8 +5195,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["phase"],
-                            "\n     ... Philips fieldmap phase image %d present "
-                            % (i),
+                            "\n     ... Philips fieldmap phase image %d present " % (i),
                             "\n     ... ERROR: Philips fieldmap phase image %d missing!"
                             % (i),
                             status=fieldok,
@@ -8334,7 +8349,9 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
 
         # run HCP hand reclassification if not longitudinal
         if not options["longitudinal"]:
-            r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
+            r += (
+                "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
+            )
             result = executeHCPHandReclassification(
                 sinfo, options, hcp, run, False, groupname, groupname
             )

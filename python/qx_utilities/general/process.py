@@ -149,8 +149,11 @@ def update_options(session, options):
     """
     soptions = dict(options)
     for key, value in session.items():
-        if key.startswith("_") or key.startswith("--"):
+        if key.startswith("_"):
             soptions[key[1:]] = value
+        elif key.startswith("--"):
+            soptions[key[2:]] = value
+
     return soptions
 
 
@@ -923,7 +926,12 @@ arglist = [
         isNone,
         "Comma delimited list of numbers which represent TE for each echo (unused for single echo).",
     ],
-    ["longitudinal", None, flag, "Whether we are running the longitudinal variant of the command."],
+    [
+        "longitudinal",
+        None,
+        flag,
+        "Whether we are running the longitudinal variant of the command.",
+    ],
     ["# --- hcp_diffusion options"],
     ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],
@@ -2245,6 +2253,7 @@ def run(command, args):
 
     # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, command)
+
     for k, v in batch_args.items():
         options[k] = v
 
@@ -2464,7 +2473,7 @@ def run(command, args):
                 print(r)
                 stati.append(status)
 
-            # longitudinalo commands
+            # longitudinal commands
             elif command in lactions:
                 pending_actions = lactions[command]
 
