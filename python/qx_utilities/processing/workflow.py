@@ -1963,7 +1963,117 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     """
     ``preprocess_bold [... processing options]``
 
-    Prepares BOLD files for further functional connectivity analysis.
+    Prepares BOLD files for further analysis. It performs spatial smoothing, 
+    temporal filtering, removal of nuisance signals and complex modeling of 
+    events. It is to be used when processing individual bold files. When
+    processing multiple bold files from a session for task-related analysis,
+    please use the ``preprocess_conc`` command instead.
+
+    preprocess_bold is a complex general purpose command implementing spatial
+    and temporal filtering, and multiple regression (GLM) to enable both
+    preprocessing and denoising of BOLD files for further analysis, as well as
+    complex activation modeling that creates GLM files for second-level
+    analyses. The function enables the following actions:
+
+    - spatial smoothing (3D or 2D for cifti files)
+    - temporal filtering (high-pass, low-pass)
+    - removal of nuisance signal
+    - complex modeling of events.
+
+    The function makes use of a number of files and accepts a long list of
+    arguments that make it very powerful and flexible but also require care in
+    its use. What follows is a detailed documentation of its actions and
+    parameters organized by actions in the order they would be most commonly
+    done. Use and parameter description will be intertwined.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging  data is
+            supposed to go.
+
+        --parsessions (str, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
+
+        --boldname (str, default 'bold'):
+            The default name of the bold files in the images folder.
+
+        --image_target (str, default 'nifti'):
+            The target format to work with, one of '4dfp', 'nifti', 'dtseries'
+            or 'ptseries'.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --log (str, default 'study'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs
+            once jobs are completed. When a comma or pipe ('|') separated list
+            is given, the log will be created at the first provided location
+            and then linked or copied to other locations. The valid locations
+            are:
+
+            - 'study'   (for the default:
+              ``<study>/processing/logs/comlogs`` location)
+            - 'session' (for ``<sessionid>/logs/comlogs``)
+            - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
+            - <path>  (for an arbitrary directory).
+
+        --bolds (str, default 'all'):
+            A pipe ('|') separated list of bold names to process.
+
+        --event_file (str, default ''):
+            A pipe ('|') separated list of fidl names to use, that
+            matches the bold list.
+
+        --bold_actions (str, default 's,h,r,c,l'):
+            A string specifying which actions, and in what sequence
+            to perform.
+
+        --nifti_tail (str, default ''):
+            The tail of NIfTI volume images to use.
+
+        --cifti_tail (str, default ''):
+            The tail of CIFTI images to use.
+
+        --bold_prefix (str, default ''):
+            An optional prefix to place in front of processing name extensions
+            in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
+
+        --bold_variant (str, default detailed below):
+            Optional variant of HCP BOLD preprocessing. If specified, the BOLD
+            images in `images/functional<bold_variant>` will be processed.
+
+        --img_suffix (str, default ''):
+            Specifies a suffix for 'images' folder to enable support for
+            multiple parallel workflows. Empty if not used.
+
+    Output files:
+        This step results in the following files (if requested):
+
+        - residual image::
+
+            <root>_res-<regressors><glm name>.<ext>
+
+        - GLM image::
+
+            <bold name><bold tail>_<event root>_res-<regressors><glm name>_Bcoeff.<ext>
+
+        - text GLM regressor matrix::
+
+            glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt
+
+        - image of a regressor matrix::
+
+            ``glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.png``
+
 
     Notes:
         List of bold files specify, which types of bold files are to be
