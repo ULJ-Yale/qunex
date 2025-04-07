@@ -1032,6 +1032,65 @@ echo ""
 echo ".......................... Running QuNex v${QuNexVer} .........................."
 echo ""
 
+
+# ------------------------------------------------------------------------------
+# -- Args flag setup
+# ------------------------------------------------------------------------------
+unset setflag
+
+# -- Check if first parameter is missing flags and parse it as CommandToRun
+if [ -z `echo "$1" | grep '-'` ]; then
+    CommandToRun="$1"
+    # -- Check if single or double flags are set
+    doubleflagparameter=`echo $2 | cut -c1-2`
+    singleflagparameter=`echo $2 | cut -c1`
+    if [[ ${doubleflagparameter} == "--" ]]; then
+        setflag="$doubleflagparameter"
+    else
+        if [[ ${singleflagparameter} == "-" ]]; then
+            setflag="$singleflagparameter"
+        fi
+    fi
+else
+    # -- Check if single or double flags are set
+    doubleflag=`echo $1 | cut -c1-2`
+    singleflag=`echo $1 | cut -c1`
+    if [[ ${doubleflag} == "--" ]]; then
+        setflag="$doubleflag"
+    else
+        if [[ ${singleflag} == "-" ]]; then
+            setflag="$singleflag"
+        fi
+    fi
+fi
+
+# ------------------------------------------------------------------------------
+# -- set OMP_NUM_THREADS
+# ------------------------------------------------------------------------------
+
+# omp threads
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+omp_threads=`get_parameters "${setflag}omp_threads" $@`
+echo "omp_threads set to ${omp_threads}"
+if [[ -n ${omp_threads} ]]; then
+    echo "route 1"
+    export OMP_NUM_THREADS=${omp_threads}
+elif [[ -z $OMP_NUM_THREADS ]]; then
+    echo "route 2"
+    PARSESSIONS=`get_parameters "${setflag}parsessions" $@`
+    if [[ -z ${PARSESSIONS} ]]; then
+        PARSESSIONS=1;
+    fi
+    PARELEMENTS=`get_parameters "${setflag}parelements" $@`
+    if [[ -z ${PARELEMENTS} ]]; then
+        PARELEMENTS=1;
+    fi
+    OMP_NUM_THREADS=$(( $(nproc) / ( ${PARSESSIONS} * ${PARELEMENTS} ) ))
+    if [[ ${OMP_NUM_THREADS} -lt 1 ]]; then
+        OMP_NUM_THREADS=1
+    fi
+fi
+
 # ------------------------------------------------------------------------------
 # -- gmri outside local commands to bypass checking
 # ------------------------------------------------------------------------------
@@ -1164,7 +1223,7 @@ done
 is_qunex_command ${1}
 
 # ------------------------------------------------------------------------------
-# -- Check if running script interactively or using flag arguments
+# -- Additional checks
 # ------------------------------------------------------------------------------
 
 # -- Clear variables for new run
@@ -1175,38 +1234,11 @@ unset CASES
 unset Overwrite
 unset Scheduler
 unset ClusterName
-unset setflag
 unset doubleflag
 unset singleflag
 unset SESSIONIDS
 unset SESSIONS
 unset SESSION_LABELS
-
-# -- Check if first parameter is missing flags and parse it as CommandToRun
-if [ -z `echo "$1" | grep '-'` ]; then
-    CommandToRun="$1"
-    # -- Check if single or double flags are set
-    doubleflagparameter=`echo $2 | cut -c1-2`
-    singleflagparameter=`echo $2 | cut -c1`
-    if [[ ${doubleflagparameter} == "--" ]]; then
-        setflag="$doubleflagparameter"
-    else
-        if [[ ${singleflagparameter} == "-" ]]; then
-            setflag="$singleflagparameter"
-        fi
-    fi
-else
-    # -- Check if single or double flags are set
-    doubleflag=`echo $1 | cut -c1-2`
-    singleflag=`echo $1 | cut -c1`
-    if [[ ${doubleflag} == "--" ]]; then
-        setflag="$doubleflag"
-    else
-        if [[ ${singleflag} == "-" ]]; then
-            setflag="$singleflag"
-        fi
-    fi
-fi
 
 # -- Check if command is run_turnkey and set arguments
 if [[ ${CommandToRun} == "run_turnkey" ]]; then
@@ -1469,12 +1501,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- If log flag set to no then remove it
     if [[ ${LogSave} == "no" ]]; then
         LogSave="remove"
-    fi
-
-    # omp threads
-    omp_threads=`get_parameters "${setflag}omp_threads" $@`
-    if [[ -n ${omp_threads} ]]; then
-        export OMP_NUM_THREADS=${omp_threads}
     fi
 
     # -- If scheduler flag set then set RunMethod variable

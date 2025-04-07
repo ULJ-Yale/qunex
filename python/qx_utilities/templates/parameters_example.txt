@@ -129,7 +129,7 @@
 # _dilate_mask               Whether to use dilation after smoothing and what mask to use [false]
 # _hipass_filter             Highpass filter to use [0.008]
 # _lopass_filter             Lopass filter to use [0.09]
-# _omp_threads               Number of cores to be used in wb_command (0 - don't change system settings) [0]
+# _omp_threads               Number of cores to be used in wb_command [0]
 # _framework_path            The path to framework libraries on mac system []
 # _wb_command_path           The path to wb_command []
 # _print_command             Whether to print the command run within the preprocessing steps [no]

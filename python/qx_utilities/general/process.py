@@ -476,9 +476,9 @@ arglist = [
     ],
     [
         "omp_threads",
-        "0",
-        int,
-        "number of cores to be used in wb_command (0 - don't change system settings)",
+        "",
+        isNone,
+        "number of cores to be used in wb_command, by default OMP will set this automatically",
     ],
     ["framework_path", "", str, "the path to framework libraries on mac system"],
     ["wb_command_path", "", str, "the path to wb_command"],

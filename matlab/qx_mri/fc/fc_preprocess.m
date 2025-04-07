@@ -2,7 +2,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 
 %``fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, eventstring, variant, overwrite, tail, scrub, ignores, options)``
 %
-%   A command for running single BOLD file based functional connectivity 
+%   A command for running single BOLD file based functional connectivity
 %   preprocessing.
 %
 %   Parameters:
@@ -642,7 +642,7 @@ fprintf('\n        ignores: %s', ignores);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'fc_preprocess options used');
@@ -765,7 +765,7 @@ if any(ismember(rgss, {'m', 'm1d', 'mSq', 'm1sSq'})) || ~isempty(strfind(doIt, '
     nuisance.nmov    = size(nuisance.mov,2);
 
     mov_data_present = true;
-else        
+else
     nframes = general_get_image_length([froot tail]);
     nuisance.nframes = nframes;
     nuisance.mov     = zeros(nframes, 6);
@@ -1141,7 +1141,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
             eindex(end+1)   = 1;
         end
     end
-    
+
     if movementDer
         if omit
             X = [X diff(nuisance.mov(omit:end,:))];
@@ -1158,7 +1158,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
             eindex(end+1)  = 1;
         end
     end
-    
+
     if movementSQ
         X = [X nuisance.mov(omit+1:end,:).^2];
         for mi = 1:nuisance.nmov
@@ -1171,7 +1171,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
             eindex(end+1)   = 1;
         end
     end
-    
+
     if movementDerSQ
          if omit
             X = [X diff(nuisance.mov(omit:end,:)).^2];
@@ -1347,7 +1347,7 @@ function [img] = prepare_nuisance(nuisance, dofilter)
     filtering = {};
 
     fprintf('\n     ---> filtering also: ');
-    for f = dofilter 
+    for f = dofilter
         switch f{1}
             case 'nuisance'
                 filtering{end+1} = 'nuisance signal';
