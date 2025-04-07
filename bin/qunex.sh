@@ -1069,7 +1069,6 @@ fi
 # ------------------------------------------------------------------------------
 
 # omp threads
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 omp_threads=`get_parameters "${setflag}omp_threads" $@`
 echo "omp_threads set to ${omp_threads}"
 if [[ -n ${omp_threads} ]]; then
