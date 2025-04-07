@@ -962,10 +962,10 @@ def runExternalForFile(
             nf.flush()
 
             if shell:
-                ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
+                process = subprocess.Popen(run, shell=True, stdout=nf, stderr=nf)
             else:
-                ret = subprocess.call(run.split(), stdout=nf, stderr=nf)
-
+                ret = subprocess.Popen(run.split(), stdout=nf, stderr=nf)
+            ret = process.wait()
         except:
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
             r += comm
@@ -1071,7 +1071,8 @@ def runScriptThroughShell(
         file=nf,
     )
 
-    ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
+    process = subprocess.Popen(run, shell=True, stdout=nf, stderr=nf)
+    ret = process.wait()
     if ret:
         r += "\n\nERROR: Failed with error %s\n" % (ret)
         nf.close()
