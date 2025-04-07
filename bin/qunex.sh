@@ -1070,12 +1070,9 @@ fi
 
 # omp threads
 omp_threads=`get_parameters "${setflag}omp_threads" $@`
-echo "omp_threads set to ${omp_threads}"
 if [[ -n ${omp_threads} ]]; then
-    echo "route 1"
     export OMP_NUM_THREADS=${omp_threads}
 elif [[ -z $OMP_NUM_THREADS ]]; then
-    echo "route 2"
     PARSESSIONS=`get_parameters "${setflag}parsessions" $@`
     if [[ -z ${PARSESSIONS} ]]; then
         PARSESSIONS=1;

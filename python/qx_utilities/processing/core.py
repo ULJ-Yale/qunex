@@ -962,10 +962,9 @@ def runExternalForFile(
             nf.flush()
 
             if shell:
-                process = subprocess.Popen(run, shell=True, stdout=nf, stderr=nf)
+                ret = subprocess.run(run, shell=True, stdout=nf, stderr=nf)
             else:
-                ret = subprocess.Popen(run.split(), stdout=nf, stderr=nf)
-            ret = process.wait()
+                ret = subprocess.run(run, stdout=nf, stderr=nf)
         except:
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
             r += comm

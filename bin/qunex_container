@@ -933,7 +933,7 @@ def main(args=None):
             env_command = f'docker run {container} bash -c "/opt/qunex/env/qunex_container_env_status.sh"'
 
         # run
-        subprocess.Popen(env_command, shell=True)
+        subprocess.run(env_command, shell=True)
         exit(0)
 
     if command.startswith("?scheduler"):
@@ -1276,7 +1276,7 @@ def main(args=None):
                     slurm_array=slurm_array,
                 )
             else:
-                subprocess.Popen(container_command, shell=True)
+                subprocess.run(container_command, shell=True)
 
 
 if __name__ == "__main__":
