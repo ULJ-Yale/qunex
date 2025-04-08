@@ -138,8 +138,8 @@ def use_or_skip_bold(sinfo, options, r=""):
     bolds = []
     for k, v in sinfo.items():
         if k.isdigit() and bsearch.match(v["name"]):
-            v['bold_number'] = int(bsearch.match(v["name"]).group(1))
-            v['sequence_number'] = k
+            v["bold_number"] = int(bsearch.match(v["name"]).group(1))
+            v["sequence_number"] = k
             bolds.append(v)
     bskip = []
     nbolds = len(bolds)
@@ -148,7 +148,7 @@ def use_or_skip_bold(sinfo, options, r=""):
         keep = []
 
         # check bold number
-        keep += [n for n in range(nbolds) if str(bolds[n]['bold_number']) in btargets]
+        keep += [n for n in range(nbolds) if str(bolds[n]["bold_number"]) in btargets]
 
         # check the listed fields if they exist and have values listed in btargets
         for field in ["name", "task", "filename", "boldname", "ext", "ima"]:
@@ -168,19 +168,25 @@ def use_or_skip_bold(sinfo, options, r=""):
         bolds = [bolds[i] for i in keep]
 
         # sort and report
-        bskip.sort(key=lambda x: x['bold_number'])
+        bskip.sort(key=lambda x: x["bold_number"])
         if len(bskip) > 0:
             r += "\n\nSkipping the following BOLD images:"
             for binfo in bskip:
-                if "filename" in binfo and options.get("hcp_filename", "") == "userdefined":
+                if (
+                    "filename" in binfo
+                    and options.get("hcp_filename", "") == "userdefined"
+                ):
                     r += "\n...  {filename:<20} [{name:<6} {task}]".format(**binfo)
-                elif ("boldname" in binfo and options.get("hcp_filename", "") == "userdefined"):
+                elif (
+                    "boldname" in binfo
+                    and options.get("hcp_filename", "") == "userdefined"
+                ):
                     r += "\n...  {boldname:<20} [{name:<6} {task}]".format(**binfo)
                 else:
                     r += "\n...  {name:<6} [{task}]".format(**binfo)
             r += "\n"
 
-    bolds.sort(key=lambda x: x['bold_number'])
+    bolds.sort(key=lambda x: x["bold_number"])
 
     # if bolds have boldname (legacy) and not filename, copy boldname to filename
     for b in range(len(bolds)):
@@ -962,9 +968,11 @@ def runExternalForFile(
             nf.flush()
 
             if shell:
-                ret = subprocess.run(run, shell=True, stdout=nf, stderr=nf)
+                process = subprocess.run(
+                    run, shell=True, stdout=nf, stderr=nf, check=False
+                )
             else:
-                ret = subprocess.run(run, stdout=nf, stderr=nf)
+                process = subprocess.run(run, stdout=nf, stderr=nf, check=False)
         except:
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
             r += comm
@@ -972,7 +980,7 @@ def runExternalForFile(
             raise ExternalFailed(r)
 
         # --- check results
-        if ret:
+        if process.returncode != 0:
             r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (
                 description,
                 ret,
