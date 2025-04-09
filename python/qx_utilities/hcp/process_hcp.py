@@ -5823,7 +5823,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --parelements (int, default 1):
-            How many elements (e.g.bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
 
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
@@ -7829,7 +7829,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --parelements (int, default 1):
-            How many elements (e.g.bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -8708,53 +8708,60 @@ def executeHCPHandReclassification(
 
 def parse_msmall_bolds(options, bolds, r):
     # parse the same way as with icafix first
-    single_run, hcp_bolds, icafix_groups, pars_ok, r = parse_icafix_bolds(
+    single_run, _, icafix_groups, pars_ok, r = parse_icafix_bolds(
         options, bolds, r, True
     )
 
-    # extract the first one
-    icafix_group = icafix_groups[0]
+    msmall_groups = []
 
-    # if more than one group print a WARNING
-    if len(icafix_groups) > 1:
-        # extract the first group
-        r += f"\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [{icafix_group['name']}]!"
+    for icafix_group in icafix_groups:
+        # validate that msmall bolds is a subset of icafixGroups
+        if options["hcp_msmall_bolds"] is not None:
+            msmall_bolds = options["hcp_msmall_bolds"].split(",")
+            hcp_msmall_bolds = []
 
-    # validate that msmall bolds is a subset of icafixGroups
-    if options["hcp_msmall_bolds"] is not None:
-        msmall_bolds = options["hcp_msmall_bolds"].split(",")
-        hcp_msmall_bolds = []
-        for mb in msmall_bolds:
-            hmb = mb
-            # if we are not providing filenames as bolds
-            for b in bolds:
-                # are we providing names from batch file or a tag
-                if mb == b[1] or mb == b[2]:
-                    if "filename" in b[3]:
-                        hmb = b[3]["filename"]
-                    else:
-                        hmb = f"BOLD_{b[0]}"
+            for mb in msmall_bolds:
+                hmb = None
+                for b in bolds:
+                    # does the name match?
+                    if "filename" in b and mb == b["filename"]:
+                        hmb = b["filename"]
+                        break
+                    # does the number match?
+                    if "bold_number" in b and mb == b["bold_number"]:
+                        hmb = f"BOLD_{b}"
+                        break
+                    # does the tag match?
+                    if "task" in b and mb == b["task"]:
+                        if "filename" in b:
+                            hmb = b["filename"]
+                            break
+                        else:
+                            hmb = f"BOLD_{b[0]}"
+                            break
 
+                if hmb is None:
+                    r += f"\n---> ERROR: bold {mb} used in hcp_msmall_bolds but not found in hcp_icafix_bolds!"
+                    pars_ok = False
+                    break
+                else:
                     if hmb not in hcp_msmall_bolds:
                         hcp_msmall_bolds.append(hmb)
 
-        for hmb in hcp_msmall_bolds:
-            if hmb not in hcp_bolds and hmb.replace("BOLD_", "") not in hcp_bolds:
-                r += f"\n---> ERROR: bold {hmb} %s used in hcp_msmall_bolds but not found in hcp_icafix_bolds!"
-                pars_ok = False
+            icafix_group["msmall_bolds"] = hcp_msmall_bolds
+        else:
+            msmall_bolds = []
+            for bold in icafix_group["bolds"]:
+                if "filename" in bold:
+                    msmall_bolds.append(bold["filename"])
+                else:
+                    msmall_bolds.append(f"{bold['bold_number']}")
 
-        icafix_group["msmall_bolds"] = hcp_msmall_bolds
-    else:
-        msmall_bolds = []
-        for bold in icafix_group["bolds"]:
-            if "filename" in bold:
-                msmall_bolds.append(bold["filename"])
-            else:
-                msmall_bolds.append(f"{bold['bold_number']}")
+            icafix_group["msmall_bolds"] = msmall_bolds
 
-        icafix_group["msmall_bolds"] = msmall_bolds
+        msmall_groups.append(icafix_group)
 
-    return (single_run, icafix_group, pars_ok, r)
+    return (msmall_groups, single_run, pars_ok, r)
 
 
 def hcp_msmall(sinfo, options, overwrite=True, thread=0):
@@ -8784,6 +8791,9 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
+        --parelements (int, default 1):
+            How many elements (e.g. msmall groups) to run in parallel.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -8959,33 +8969,45 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        singleRun, msmallGroup, pars_ok, r = parse_msmall_bolds(options, bolds, r)
+        msmall_groups, single_run, pars_ok, r = parse_msmall_bolds(options, bolds, r)
+
         if not pars_ok:
             raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")
 
+        # execute in parallel use parelements
+        parelements = max(1, min(options["parelements"], len(msmall_groups)))
+
+        if parelements > 1:
+            r += "\n\n%s %d ICAFix groups in parallel" % (
+                pc.action("Processing", options["run"]),
+                parelements,
+            )
+
+        # --- Execute
+        # create a multiprocessing Pool
+        ppe = ProcessPoolExecutor(parelements)
+
         # --- Execute
         # single-run
-        if singleRun:
-            # process
-            result = executeHCPSingleMSMAll(sinfo, options, hcp, run, msmallGroup)
+        if single_run:
+            f = partial(executeHCPSingleMSMAll, sinfo, options, hcp, run)
         # multi-run
         else:
-            # process
-            result = executeHCPMultiMSMAll(sinfo, options, hcp, run, msmallGroup)
+            f = partial(executeHCPMultiMSMAll, sinfo, options, hcp, run)
+        results = ppe.map(f, msmall_groups)
 
-        # merge r
-        r += result["r"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            temp_report = result["report"]
+            report["done"] += temp_report["done"]
+            report["failed"] += temp_report["failed"]
+            report["incomplete"] += temp_report["incomplete"]
+            report["ready"] += temp_report["ready"]
+            report["not ready"] += temp_report["not ready"]
+            report["skipped"] += temp_report["skipped"]
 
-        # merge report
-        tempReport = result["report"]
-        report["done"] += tempReport["done"]
-        report["incomplete"] += tempReport["incomplete"]
-        report["failed"] += tempReport["failed"]
-        report["ready"] += tempReport["ready"]
-        report["not ready"] += tempReport["not ready"]
-        report["skipped"] += tempReport["skipped"]
-
-        # if all ok execute DeDrifAndResample if enabled
+        # if all ok execute DeDriftAndResample if enabled
         if options["hcp_msmall_resample"]:
             if (
                 report["incomplete"] == []
@@ -8993,18 +9015,23 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
                 and report["not ready"] == []
             ):
                 # single-run
-                if singleRun:
-                    result = executeHCPSingleDeDriftAndResample(
-                        sinfo, options, hcp, run, msmallGroup
-                    )
+                if single_run:
+                    f = partial(executeHCPSingleDeDriftAndResample, sinfo, options, hcp, run)
                 # multi-run
                 else:
-                    result = executeHCPMultiDeDriftAndResample(
-                        sinfo, options, hcp, run, [msmallGroup]
-                    )
+                    f = partial(executeHCPMultiDeDriftAndResample, sinfo, options, hcp, run)
+                results = ppe.map(f, msmall_groups)
 
-                r += result["r"]
-                report = result["report"]
+                # merge r and report
+                for result in results:
+                    r += result["r"]
+                    temp_report = result["report"]
+                    report["done"] += temp_report["done"]
+                    report["failed"] += temp_report["failed"]
+                    report["incomplete"] += temp_report["incomplete"]
+                    report["ready"] += temp_report["ready"]
+                    report["not ready"] += temp_report["not ready"]
+                    report["skipped"] += temp_report["skipped"]
 
         # report
         rep = []
@@ -9024,7 +9051,6 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             "\n     ".join(e.report),
         )
         report = (sinfo["id"], "HCP MSMAll failed")
-        failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo["id"], "HCP MSMAll failed")
@@ -12434,7 +12460,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --parelements (int, default 1):
-            How many elements (e.g.bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
