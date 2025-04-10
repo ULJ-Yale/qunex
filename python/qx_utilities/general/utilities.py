@@ -2567,10 +2567,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             )
 
             # prep command
-            if script_path.endswith(".sh"):
+            if script_path.endswith(".sh") or "." not in script_path:
                 command = ["bash", script_path]
             elif script_path.endswith(".py"):
                 command = ["python", script_path]
+            elif script_path.endswith(".R"):
+                command = ["Rscript", script_path]
             else:
                 raise ge.CommandFailed(
                     "run_recipe",
