@@ -983,7 +983,7 @@ def runExternalForFile(
         if process.returncode != 0:
             r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (
                 description,
-                ret,
+                process.stderr.decode() if process.stderr else "Unknown error",
             )
             r += comm
             endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
