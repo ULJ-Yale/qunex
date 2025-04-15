@@ -770,10 +770,10 @@ def import_bids(
 
             try:
                 z = zipfile.ZipFile(file, "r")
-                for sf in z.infolist():
-                    if sf.filename[-1] != "/":
-                        tfile, lock = mapToQUNEXBids(
-                            sf.filename,
+                for source_file in z.infolist():
+                    if source_file.filename[-1] != "/":
+                        target_file, lock = mapToQUNEXBids(
+                            source_file.filename,
                             sessionsfolder,
                             bidsinfo,
                             sessionsList,
@@ -781,19 +781,19 @@ def import_bids(
                             "        ",
                             select,
                         )
-                        if tfile:
+                        if target_file:
                             if lock:
-                                fl.lock(tfile)
-                            fdata = z.read(sf)
-                            if tfile.endswith(".nii"):
-                                tfile += ".gz"
-                                fout = gzip.open(tfile, "wb")
+                                fl.lock(target_file)
+                            fdata = z.read(source_file)
+                            if target_file.endswith(".nii"):
+                                target_file += ".gz"
+                                fout = gzip.open(target_file, "wb")
                             else:
-                                fout = open(tfile, "wb")
+                                fout = open(target_file, "wb")
                             fout.write(fdata)
                             fout.close()
                             if lock:
-                                fl.unlock(tfile)
+                                fl.unlock(target_file)
                 z.close()
                 print("        -> done!")
             except:
@@ -810,7 +810,7 @@ def import_bids(
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile, lock = mapToQUNEXBids(
+                        target_file, lock = mapToQUNEXBids(
                             member.name,
                             sessionsfolder,
                             bidsinfo,
@@ -819,21 +819,21 @@ def import_bids(
                             "        ",
                             select,
                         )
-                        if tfile:
+                        if target_file:
                             if lock:
-                                fl.lock(tfile)
+                                fl.lock(target_file)
                             fobj = tar.extractfile(member)
                             fdata = fobj.read()
                             fobj.close()
-                            if tfile.endswith(".nii"):
-                                tfile += ".gz"
-                                fout = gzip.open(tfile, "wb")
+                            if target_file.endswith(".nii"):
+                                target_file += ".gz"
+                                fout = gzip.open(target_file, "wb")
                             else:
-                                fout = open(tfile, "wb")
+                                fout = open(target_file, "wb")
                             fout.write(fdata)
                             fout.close()
                             if lock:
-                                fl.unlock(tfile)
+                                fl.unlock(target_file)
                 tar.close()
                 print("        -> done!")
             except:
@@ -843,18 +843,18 @@ def import_bids(
                 errors += "\n    .. Processing of package %s failed!" % (file)
 
         else:
-            tfile, lock = mapToQUNEXBids(
+            target_file, lock = mapToQUNEXBids(
                 file, sessionsfolder, bidsinfo, sessionsList, overwrite, "    "
             )
-            if tfile:
-                if tfile.endswith(".nii"):
-                    tfile += ".gz"
+            if target_file:
+                if target_file.endswith(".nii"):
+                    target_file += ".gz"
                     status, msg = gc.moveLinkOrCopy(
-                        file, tfile, "gzip", r="", prefix="    .. ", lock=lock
+                        file, target_file, "gzip", r="", prefix="    .. ", lock=lock
                     )
                 else:
                     feedback = gc.moveLinkOrCopy(
-                        file, tfile, action, r="", prefix="    .. ", lock=lock
+                        file, target_file, action, r="", prefix="    .. ", lock=lock
                     )
                     status, msg = feedback
 
