@@ -988,8 +988,21 @@ def import_bids(
 
     # ---> get a list of behavioral data:
     behavior = []
-    behavior += glob.glob(os.path.join(bidsinfo, "participants.tsv"))
-    behavior += glob.glob(os.path.join(bidsinfo, "phenotype/*.tsv"))
+    if inbox.endswith(".zip"):
+        with zipfile.ZipFile(inbox, 'r') as zip_ref:
+            for member in zip_ref.namelist():
+                if member.startswith('phenotype/'):
+                    zip_ref.extract(member, path=bidsinfo)
+    elif inbox.endswith((".tar", ".tgz", ".tar.gz")):
+        with tarfile.open(inbox, 'r:*') as tar:
+            members = [m for m in tar.getmembers() if m.name.startswith('phenotype/')]
+            tar.extractall(path=bidsinfo, members=members)
+    if inbox.endswith((".zip", ".tar", ".tgz", ".tar.gz")):
+        behavior += glob.glob(os.path.join(bidsinfo, "participants.tsv"))
+        behavior += glob.glob(os.path.join(bidsinfo, "phenotype/*.tsv"))
+    else:
+        behavior += glob.glob(os.path.join(inbox, "participants.tsv"))
+        behavior += glob.glob(os.path.join(inbox, "phenotype/*.tsv"))
 
     # ---> run the mapping
     report = []
