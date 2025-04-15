@@ -841,7 +841,6 @@ def import_bids(
                     "        => Error: Processing of tar package failed. Please check the package!"
                 )
                 errors += "\n    .. Processing of package %s failed!" % (file)
-
         else:
             target_file, lock = mapToQUNEXBids(
                 file, sessionsfolder, bidsinfo, sessionsList, overwrite, "    "
@@ -1015,8 +1014,6 @@ def import_bids(
                 info = "subject " + subject
                 if sessionid:
                     info += ", session " + sessionid
-
-                print
 
                 # -- do image mapping
                 try:
@@ -2174,7 +2171,6 @@ def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
     if sessionid:
         info += ", session " + sessionid
 
-    print
     splash = "Running mapBIDS2behavior for %s" % (info)
     print(splash)
     print("".join(["=" for e in range(len(splash))]))
