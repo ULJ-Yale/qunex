@@ -681,8 +681,8 @@ def import_bids(
                 "README",
                 "CHANGES",
                 "participants.*",
+                "phenotype/*"
             ]
-            metadata += ["%s/*" % (e) for e in bids["optional"]]
 
             if folderType in studyat:
                 metadataPath = os.path.join(
