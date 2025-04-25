@@ -3189,7 +3189,6 @@ def import_dicom(
                 )
 
         # -- close and return with latest numbers
-
         print("     -> done!")
         z.close()
         return (fnum, dnum)
@@ -3219,7 +3218,6 @@ def import_dicom(
                 )
 
         # -- close and return with latest numbers
-
         print("     -> done!")
         tar.close()
         return (fnum, dnum)
@@ -3702,7 +3700,6 @@ def import_dicom(
         packets["ok"] += packets["exist"]
 
     # ---> process packets
-
     print("---> Starting to process %d packets ..." % (len(packets["ok"])))
 
     for afile, session in packets["ok"]:
@@ -3713,7 +3710,6 @@ def import_dicom(
             dfolder = os.path.join(sfolder, "dicom")
 
             # --- Big info
-
             print("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
 
             if masterinbox and not os.path.exists(ifolder):
@@ -3730,7 +3726,6 @@ def import_dicom(
 
             for p in files:
                 # --- unzip or copy the package
-
                 if iszip.match(p):
                     ptype = "zip"
                     fnum, dnum = _extract_zip(
@@ -3754,12 +3749,10 @@ def import_dicom(
                         # shutil.copytree(p, ifolder)
 
             # ---> run sort dicom
-
             print
             sort_dicom(folder=sfolder)
 
             # ---> run dicom to nii
-
             print
             dicom2niix(
                 folder=sfolder,
@@ -3775,7 +3768,6 @@ def import_dicom(
             )
 
             # ---> archive
-
             if archive != "leave":
                 s = "Processing packages: " + archive
                 print
