@@ -815,6 +815,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
+        # mandatory check
+        if not options["hcp_avgrdcmethod"]:
+            raise ge.CommandFailed("hcp_pre_freesurfer", "... the hcp_avgrdcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.")
+
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, "hcp_pre_freesurfer")
         doHCPOptionsCheck(options, "hcp_pre_freesurfer")
@@ -927,10 +931,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmphase = ""
         fmcombined = ""
 
-        if not options["hcp_avgrdcmethod"]:
-            r += "\n---> ERROR: The hcp_avgrdcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself."
-            run = False
-        elif options["hcp_avgrdcmethod"].lower() == "topup":
+        if options["hcp_avgrdcmethod"].lower() == "topup":
             try:
                 # -- spin echo settings
                 T1w = [
@@ -4590,6 +4591,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     }
 
     try:
+        # mandatory check
+        if not options["hcp_bold_dcmethod"]:
+            raise ge.CommandFailed("hcp_fmri_volume", "... the hcp_bold_dcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.")
+
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, "hcp_fmri_volume")
         doHCPOptionsCheck(options, "hcp_fmri_volume")
@@ -4664,10 +4669,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             r += f"\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter {options['hcp_bold_biascorrection']}!"
             run = False
 
-        if not options["hcp_bold_dcmethod"]:
-            r += "\n---> ERROR: The hcp_bold_dcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself."
-            run = False
-        elif options["hcp_bold_dcmethod"].lower() not in [
+        if options["hcp_bold_dcmethod"].lower() not in [
             "topup",
             "fieldmap",
             "siemensfieldmap",
