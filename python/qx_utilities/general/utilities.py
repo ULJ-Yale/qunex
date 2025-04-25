@@ -2478,7 +2478,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     # subset commands when using both the recipe and steps
     if steps and recipe_file:
         commands_subset = []
-        steps = steps.split(",")
+        steps = [s.strip() for s in steps.split(",")]
         for com in commands:
             if isinstance(com, dict):
                 key = list(com.keys())[0]

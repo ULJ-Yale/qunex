@@ -7800,7 +7800,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
     return {"r": r, "report": report}
 
 
-def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
+def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_reapply_fix [... processing options]``
 
