@@ -240,86 +240,81 @@ def getHCPPaths(sinfo, options):
 
     # --- Fieldmap related paths
     d["fieldmap"] = {}
-    if options["hcp_avgrdcmethod"] or options["hcp_bold_dcmethod"]:
-        if (
-            options["hcp_avgrdcmethod"]
-            and (
-                options["hcp_avgrdcmethod"].lower()
-                in [
-                    "fieldmap",
-                    "siemensfieldmap",
-                    "philipsfieldmap",
-                    "gehealthcarefieldmap",
-                ]
-            )
-        ) or (
-            options["hcp_bold_dcmethod"]
-            and (
-                options["hcp_bold_dcmethod"].lower()
-                in [
-                    "fieldmap",
-                    "siemensfieldmap",
-                    "philipsfieldmap",
-                ]
-            )
-        ):
-            fmapmag = glob.glob(
-                os.path.join(
-                    d["source"],
-                    "FieldMap*" + options["fmtail"],
-                    sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
-                )
-            )
-            for fmap in fmapmag:
-                fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmap)
-                if fmnum:
-                    fmnum = int(fmnum.group())
-                    if fmnum not in d["fieldmap"]:
-                        d["fieldmap"].update({fmnum: {"magnitude": fmap}})
-                    else:
-                        existing = d["fieldmap"][fmnum]["magnitude"]
-                        d["fieldmap"].update({fmnum: {"magnitude": [fmap, existing]}})
+    dc = False
+    legacy_dc = False
+    if options["hcp_avgrdcmethod"] is not None:
+        if options["hcp_avgrdcmethod"].lower() in [
+            "fieldmap",
+            "siemensfieldmap",
+            "philipsfieldmap",
+            "gehealthcarefieldmap",
+        ]:
+            dc = True
+        elif options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap":
+            legacy_dc = True
+    if options["hcp_bold_dcmethod"] is not None:
+        if options["hcp_bold_dcmethod"].lower() in [
+            "fieldmap",
+            "siemensfieldmap",
+            "philipsfieldmap",
+        ]:
+            dc = True
+        elif options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap":
+            legacy_dc = True
 
-                        # check if too many magnitudes
-                        if len(d["fieldmap"][fmnum]["magnitude"]) > 2:
-                            print("ERROR: Found more than two FM-Magnitude files!")
-                            raise ge.CommandFailed(
-                                options["command_ran"],
-                                "Too many FM-Magnitude files found!",
-                            )
+    if dc:
+        fmapmag = glob.glob(
+            os.path.join(
+                d["source"],
+                "FieldMap*" + options["fmtail"],
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
+            )
+        )
+        for fmap in fmapmag:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmap)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                if fmnum not in d["fieldmap"]:
+                    d["fieldmap"].update({fmnum: {"magnitude": fmap}})
+                else:
+                    existing = d["fieldmap"][fmnum]["magnitude"]
+                    d["fieldmap"].update({fmnum: {"magnitude": [fmap, existing]}})
 
-            fmapphase = glob.glob(
-                os.path.join(
-                    d["source"],
-                    "FieldMap*" + options["fmtail"],
-                    sinfo["id"] + options["fmtail"] + "*_FieldMap_Phase.nii.gz",
-                )
+                    # check if too many magnitudes
+                    if len(d["fieldmap"][fmnum]["magnitude"]) > 2:
+                        print("ERROR: Found more than two FM-Magnitude files!")
+                        raise ge.CommandFailed(
+                            options["command_ran"],
+                            "Too many FM-Magnitude files found!",
+                        )
+
+        fmapphase = glob.glob(
+            os.path.join(
+                d["source"],
+                "FieldMap*" + options["fmtail"],
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Phase.nii.gz",
             )
-            for imagepath in fmapphase:
-                fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
-                if fmnum:
-                    fmnum = int(fmnum.group())
-                    if fmnum in d["fieldmap"]:
-                        d["fieldmap"][fmnum].update({"phase": imagepath})
-        elif (
-            options["hcp_avgrdcmethod"]
-            and (options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap")
-        ) or (
-            options["hcp_bold_dcmethod"].lower()
-            and (options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap")
-        ):
-            fmapge = glob.glob(
-                os.path.join(
-                    d["source"],
-                    "FieldMap*" + options["fmtail"],
-                    sinfo["id"] + options["fmtail"] + "*_FieldMap_GE.nii.gz",
-                )
+        )
+        for imagepath in fmapphase:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                if fmnum in d["fieldmap"]:
+                    d["fieldmap"][fmnum].update({"phase": imagepath})
+
+    elif legacy_dc:
+        fmapge = glob.glob(
+            os.path.join(
+                d["source"],
+                "FieldMap*" + options["fmtail"],
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_GE.nii.gz",
             )
-            for imagepath in fmapge:
-                fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
-                if fmnum:
-                    fmnum = int(fmnum.group())
-                    d["fieldmap"].update({fmnum: {"GE": imagepath}})
+        )
+        for imagepath in fmapge:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                d["fieldmap"].update({fmnum: {"GE": imagepath}})
 
     # B1tx/TB1TFL phase and mag
     tb1tlf_magnitude = glob.glob(
