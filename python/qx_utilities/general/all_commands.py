@@ -82,6 +82,8 @@ all_qunex_commands = [
     ("qx_utilities.hcp.process_hcp.hcp_temporal_ica",               "Runs HCP temporal ICA pipeline.",                                                          "python"),
     ("qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean",         "Runs HCP apply auto reclean pipeline.",                                                    "python"),
     ("qx_utilities.hcp.process_hcp.hcp_transmit_bias_individual",   "Run HCP Transmit Bias Individual Only pipeline.",                                          "python"),
+    ("qx_utilities.hcp.process_hcp.hcp_hippunfold",                 "Run HCP HippUnfold pipeline.",                                                             "python"),
+    ("qx_utilities.hcp.process_hcp.hcp_post_hippunfold",            "Run HCP Post HippUnfold pipeline.",                                                        "python"),
     ("qx_utilities.general.bids.import_bids",                       "Maps a BIDS dataset to the QuNex Suite file structure.",                                   "python"),
     ("qx_utilities.general.dicom.import_dicom",                     "Processes sessions's DICOM or PAR/REC files and generates NIfTI files.",                   "python"),
     ("qx_utilities.hcp.import_hcp.import_hcp",                      "Maps HCPLS data to the QuNex Suite file structure.",                                       "python"),

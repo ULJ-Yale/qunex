@@ -30,6 +30,8 @@ consists of functions:
 --hcp_apply_auto_reclean        Runs HCP apply auto reclean pipeline.
 --hcp_make_average_dataset      Runs HCP make average dataset pipeline.
 --hcp_task_fmri_analysis        Runs HCP TaskfMRIanalysis.
+--hcp_hippunfold                Runs HCP HippUnfold pipeline.
+--hcp_post_hippunfold           Runs HCP PostHippUnfold pipeline.
 --map_hcp_data                  Maps results of HCP preprocessing into `images` folder.
 
 All the functions are part of the processing suite. They should be called
@@ -13466,7 +13468,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_task_fmri_analysis [... processing options]``
 
-    Runs the Diffusion step of HCP Pipeline (TaskfMRIAnalysis.sh).
+    Runs the task fMRI analysis step of the HCP Pipelines (TaskfMRIAnalysis.sh).
 
     Warning:
         The requirement for this command is a successful completion of the
@@ -13846,6 +13848,327 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
     r += (
         "\n\nHCP fMRI task analysis Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
+
+
+def hcp_hippunfold(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_hippunfold [... processing options]``
+
+    Runs the HCP HippUnfold Pipeline.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_hippunfold_dir (str, default '<T1wFolder>/HippUnfold'):
+            Location of hcp_hippunfold outputs.
+
+    Notes:
+        hcp_hippunfold parameter mapping:
+
+            ================================== ============================
+            QuNex parameter                    HCPpipelines parameter
+            ================================== ============================
+            ``hcp_hippunfold_dir``             ``hippunfold-dir``
+            ================================== ============================
+
+    Examples:
+        Example run::
+
+            qunex hcp_hippunfold \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP HippUnfold Pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, "hcp_hippunfold")
+        doHCPOptionsCheck(options, "hcp_hippunfold")
+        hcp = getHCPPaths(sinfo, options)
+
+        if "hcp" not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
+                sinfo["id"]
+            )
+            run = False
+
+        # build the command
+        if run:
+            comm = (
+                '%(script)s \
+                --study-folder="%(studyfolder)s" \
+                --subject="%(subject)s"'
+                % {
+                    "script": os.path.join(
+                        hcp["hcp_base"],
+                        "HippUnfoldHCP",
+                        "HippUnfoldHCP.sh",
+                    ),
+                    "studyfolder": sinfo["hcp"],
+                    "subject": sinfo["id"] + options["hcp_suffix"],
+                }
+            )
+
+            # optional parameters
+            if options["hcp_hippunfold_dir"]:
+                comm += f"                --hippunfold-dir={options['hcp_hippunfold_dir']}"
+
+            # -- Report command
+            if run:
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                r, endlog, report, failed = pc.runExternalForFile(
+                    None,
+                    comm,
+                    "Running HCP HippUnfold",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=options["logtag"],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    None,
+                    None,
+                    "HCP HippUnfold",
+                    r,
+                    overwrite=overwrite,
+                )
+                if passed is None:
+                    r += "\n---> HCP HippUnfold can be run"
+                    report = "HCP HippUnfold can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session cannot be processed."
+            report = "HCP HippUnfold cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except Exception as e:
+        r += f"\nERROR: {e}"
+        r += f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
+        failed = 1
+
+    r += (
+        "\n\nHCP HippUnfold Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
+
+
+def hcp_post_hippunfold(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_post_hippunfold [... processing options]``
+
+    Runs the HCP PostHippUnfold Pipeline.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_hippunfold_dir (str, default '<T1wFolder>/HippUnfold'):
+            Location of hcp_hippunfold outputs.
+
+        --hcp_atlas_hippunfold_dir (str, default '<MNINonLinear>/HippUnfold'):
+            Location of atlas hcp_hippunfold outputs.
+
+    Notes:
+        hcp_post_hippunfold parameter mapping:
+
+            ================================== ============================
+            QuNex parameter                    HCPpipelines parameter
+            ================================== ============================
+            ``hcp_hippunfold_dir``             ``hippunfold-dir``
+            ``hcp_atlas_hippunfold_dir``       ``atlas-hippunfold-dir``
+            ================================== ============================
+
+    Examples:
+        Example run::
+
+            qunex hcp_post_hippunfold \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP PostHippUnfold Pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, "hcp_post_hippunfold")
+        doHCPOptionsCheck(options, "hcp_post_hippunfold")
+        hcp = getHCPPaths(sinfo, options)
+
+        if "hcp" not in sinfo:
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
+                sinfo["id"]
+            )
+            run = False
+
+        # build the command
+        if run:
+            comm = (
+                '%(script)s \
+                --study-folder="%(studyfolder)s" \
+                --subject="%(subject)s"'
+                % {
+                    "script": os.path.join(
+                        hcp["hcp_base"],
+                        "HippUnfoldHCP",
+                        "PostHippUnfoldHCP.sh",
+                    ),
+                    "studyfolder": sinfo["hcp"],
+                    "subject": sinfo["id"] + options["hcp_suffix"],
+                }
+            )
+
+            # optional parameters
+            if options["hcp_hippunfold_dir"]:
+                comm += f"                --hippunfold-dir={options['hcp_hippunfold_dir']}"
+
+            if options["hcp_atlas_hippunfold_dir"]:
+                comm += f"                --atlas-hippunfold-dir={options['hcp_atlas_hippunfold_dir']}"
+
+            # -- Report command
+            if run:
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                r, endlog, report, failed = pc.runExternalForFile(
+                    None,
+                    comm,
+                    "Running HCP PostHippUnfold",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=options["logtag"],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    None,
+                    None,
+                    "HCP PostHippUnfold",
+                    r,
+                    overwrite=overwrite,
+                )
+                if passed is None:
+                    r += "\n---> HCP PostHippUnfold can be run"
+                    report = "HCP PostHippUnfold can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session cannot be processed."
+            report = "HCP PostHippUnfold cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except Exception as e:
+        r += f"\nERROR: {e}"
+        r += f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
+        failed = 1
+
+    r += (
+        "\n\nHCP PostHippUnfold Preprocessing %s on %s\n------------------------------------------------------------"
         % (
             pc.action("completed", options["run"]),
             datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),

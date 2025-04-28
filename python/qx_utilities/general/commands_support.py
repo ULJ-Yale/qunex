@@ -159,8 +159,6 @@ deprecated_commands = {
     "hcp_msmall": ["hcp_MSMAll"],
     "hcp_dedrift_and_resample": ["hcp_DeDriftAndResample"],
     "hcp_diffusion": ["hcp_Diffusion", "hcpd"],
-    "hcp_dtifit": ["hcp_DTIFit"],
-    "hcp_bedpostx": ["hcp_Bedpostx"],
     "run_shell_script": ["runShellScript"],
     "create_bold_list": ["createBoldList"],
     "create_conc_list": ["createConcList"],
