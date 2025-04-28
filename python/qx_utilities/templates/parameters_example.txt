@@ -234,7 +234,7 @@
 # _hcp_icafix_deleteintermediates If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]
 #
 # # --- hcp_icafix options
-# _hcp_icafix_traindata      Which file to use for training data. [] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix
+# _hcp_icafix_model          Which file to use for training data. [] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix
 # _hcp_icafix_threshold      ICAFix threshold that controls the sensitivity/specificity tradeoff [10]
 # _hcp_icafix_postfix        Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully [TRUE].
 #

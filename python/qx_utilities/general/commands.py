@@ -85,6 +85,7 @@ commands = {
             "verbose",
             "overwrite",
             "test",
+            "existing_structure",
         ),
     },
     "get_dicom_info": {"com": dicom.get_dicom_info, "args": ("dicomfile", "scanner")},
