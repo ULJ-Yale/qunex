@@ -6560,12 +6560,14 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             default value for single-run HCP ICAFix is [TRUE], while the
             default for multi-run HCP ICAFix is [FALSE].
 
-        --hcp_icafix_traindata (str, default detailed below):
-            Which file to use for training data. You can provide a full path to
-            a file or just a filename if the file is in the
-            ${FSL_FIXDIR}/training_files folder. [HCP_hp<high-pass>.RData] for
-            single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData]
-            for multi-run HCP ICAFix.
+        --hcp_icafix_model (str, default detailed below):
+            Which model to use for classification. Can be one of the pre-trained
+            models shpipped with FSL or a custom model as `somefile.RData`,
+            `somefile.pyfix_model`, or a pyfix built-in model without extension.
+            You can provide a full path to a file or just a filename if the file
+            is in the ${FSL_FIXDIR}/training_files folder.
+            [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and
+            [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.
 
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.
@@ -6645,7 +6647,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ================================== =======================
             ``hcp_icafix_highpass``            ``high-pass``
             ``hcp_icafix_domotionreg``         ``motion-regression``
-            ``hcp_icafix_traindata``           ``training-file``
+            ``hcp_icafix_model``               ``training-file``
             ``hcp_icafix_threshold``           ``fix-threshold``
             ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
@@ -6937,8 +6939,8 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
                 ),
                 "trainingdata": (
                     f"HCP_hp{bandpass}.RData"
-                    if options["hcp_icafix_traindata"] is None
-                    else options["hcp_icafix_traindata"]
+                    if options["hcp_icafix_model"] is None
+                    else options["hcp_icafix_model"]
                 ),
                 "fixthreshold": icafix_threshold,
                 "deleteintermediates": delete_intermediates,
@@ -7133,9 +7135,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 % options["hcp_icafix_domotionreg"]
             )
 
-        if options["hcp_icafix_traindata"] is not None:
+        if options["hcp_icafix_model"] is not None:
             comm += (
-                '             --training-file="%s"' % options["hcp_icafix_traindata"]
+                '             --training-file="%s"' % options["hcp_icafix_model"]
             )
 
         if options["hcp_icafix_threshold"] is not None:
@@ -13197,6 +13199,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_variant (str, default ''):
             Optional variant of HCP BOLD preprocessing. If specified, the
             results will be copied/linked from `Results<hcp_bold_variant>`.
+
+        --hcp_nifti_tail (str, default ''):
+            The tail to use for the volume files to map from the HCP file
+            structure.
+
+        --hcp_cifti_tail (str, default ''):
+            The tail to use for the surface files to map from the HCP file
+            structure.
 
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to

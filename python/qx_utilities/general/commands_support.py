@@ -259,6 +259,7 @@ deprecated_parameters = {
     "TR": "tr",
     "PEdir": "pedir",
     "sequenceinfo": "add_json_info",
+    "hcp_icafix_traindata": "hcp_icafix_model",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

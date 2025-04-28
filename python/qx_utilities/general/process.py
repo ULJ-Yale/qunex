@@ -1061,10 +1061,10 @@ arglist = [
     ],
     ["# --- hcp_icafix options"],
     [
-        "hcp_icafix_traindata",
+        "hcp_icafix_model",
         "",
         isNone,
-        "Which file to use for training data. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.",
+        "Which model to use for classification. Can be one of the pre-trained models shpipped with FSL or a custom model as `somefile.RData`, `somefile.pyfix_model`, or a pyfix built-in model without extension. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.",
     ],
     [
         "hcp_icafix_threshold",
