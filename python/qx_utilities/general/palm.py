@@ -350,7 +350,7 @@ def run_palm(
         if overwrite == "yes":
             print(" ---> cleaning up preexisting image files")
             for file in files:
-                print(" ... removing %s" % file)
+                print("     ... removing %s" % file)
                 os.remove(file)
         else:
             raise ge.CommandFailed(
@@ -391,7 +391,7 @@ def run_palm(
 
     rfolder = os.path.dirname(root)
     if (rfolder != "") and (not os.path.exists(rfolder)):
-        print(" ... creating target folder [%s]" % (rfolder))
+        print("    ... creating target folder [%s]" % (rfolder))
         os.makedirs(rfolder)
 
     # missing = []
@@ -512,10 +512,10 @@ def run_palm(
                 tfile = "%s_%s.csv" % (doptions["name"], doptions[f])
                 if os.path.exists(tfile):
                     dargs += ["-" + f, tfile]
-                    print(" ... %s file set to %s" % (f, tfile))
+                    print("     ... %s file set to %s" % (f, tfile))
                 else:
                     print(
-                        " ... %s file not found and won't be used [%s]"
+                        "     ... %s file not found and won't be used [%s]"
                         % (f, os.path.abspath(tfile))
                     )
 
@@ -732,7 +732,7 @@ def run_palm(
             calls = []
 
             if not surface:
-                print(" ... Volume")
+                print("     ... Volume")
                 infiles = setInFiles(root, "volume.nii", nimages)
                 inargs = ["-m", mask_volume]
                 command = (
@@ -753,7 +753,7 @@ def run_palm(
                 if "-T" in command and t3set is not None:
                     command += [t3set]
 
-            print(" ... Left Surface")
+            print("     ... Left Surface")
             infiles = setInFiles(root, "left.func.gii", nimages)
             inargs = [
                 "-m",
@@ -774,7 +774,7 @@ def run_palm(
                 }
             )
 
-            print(" ... Right Surface")
+            print("     ... Right Surface")
             infiles = setInFiles(root, "right.func.gii", nimages)
             inargs = [
                 "-m",
@@ -881,7 +881,7 @@ def run_palm(
                         rrightsurfaces = glob.glob(
                             "%s_R_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval)
                         )
-                        # print(" ... testing for: ", "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval), "found:", len(rvolumes))
+                        # print("     ... testing for: ", "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval), "found:", len(rvolumes))
 
                         rvolumes.sort()
                         rleftsurfaces.sort()
@@ -891,7 +891,7 @@ def run_palm(
                             if rleftsurfaces:
                                 if len(rleftsurfaces) != len(rrightsurfaces):
                                     print(
-                                        " ... WARNING: Nonmatching number of resulting surface files, please check PALM log for errors!"
+                                        "     ... WARNING: Nonmatching number of resulting surface files, please check PALM log for errors!"
                                     )
                                     continue
                         else:
@@ -900,7 +900,7 @@ def run_palm(
                                     rvolumes
                                 ) != len(rrightsurfaces):
                                     print(
-                                        " ... WARNING: Nonmatching number of resulting volume and surface files, please check PALM log for errors!"
+                                        "     ... WARNING: Nonmatching number of resulting volume and surface files, please check PALM log for errors!"
                                     )
                                     continue
 
@@ -934,7 +934,7 @@ def run_palm(
                                 C,
                             )
                             print(
-                                " ... creating",
+                                "     ... creating",
                                 targetfile,
                             )
 
@@ -1077,7 +1077,7 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
 
     - If only minv is given, images will be masked with: ``mask >= minv``.
     - If only maxv is given, images will be masked with: ``mask <= maxv``.
-    - If both are given, images will be masked with:     
+    - If both are given, images will be masked with:
       ``minv <= mask <= maxv``.
 
     If there is just one minv or maxv value, all the masks will be thresholded
@@ -1094,7 +1094,7 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
 
     EXAMPLE USE
     ===========
-    
+
     ::
 
         qunex mask_map image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
@@ -1223,7 +1223,7 @@ def join_maps(images=None, output=None, names=None, originals=None):
 
     EXAMPLE USE
     ===========
-    
+
     ::
 
         qunex join_maps images="sustained_AvsB_p.017.dscalar.nii, \\

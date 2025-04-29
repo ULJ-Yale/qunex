@@ -763,6 +763,7 @@ def main(args=None):
     output = None
     parinfo = None
     overwrite = None
+    debug = False
 
     for arg in args:
         # cleanup -- at start
@@ -827,6 +828,8 @@ def main(args=None):
                 nv = True
             elif arg == "parinfo":
                 parinfo = True
+            elif arg == "debug":
+                debug = True
             elif "=" in arg:
                 k, v = arg.split("=", 1)
                 command += f'--{k}="{v}" '
@@ -1238,6 +1241,9 @@ def main(args=None):
             else:
                 subprocess.run(container_command, shell=True)
 
+            # remove the runner script if done
+            if not debug and script_path and os.path.exists(script_path):
+                os.remove(script_path)
 
 if __name__ == "__main__":
     main()
