@@ -646,7 +646,7 @@ arglist = [
         "hcp_seechospacing",
         "NONE",
         str,
-        "Echo Spacing or Dwelltime of Spin Echo Field Map or '' if not used.",
+        "Echo Spacing of Spin Echo Field Map in seconds or '' if not used.",
     ],
     [
         "hcp_seunwarpdir",
@@ -792,7 +792,7 @@ arglist = [
         "hcp_bold_echospacing",
         "",
         isNone,
-        "Echo Spacing or Dwelltime of fMRI image in seconds.",
+        "Echo Spacing of fMRI image in seconds.",
     ],
     [
         "hcp_bold_sbref",
@@ -933,7 +933,7 @@ arglist = [
         "Whether we are running the longitudinal variant of the command.",
     ],
     ["# --- hcp_diffusion options"],
-    ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
+    ["hcp_dwi_echospacing", "", str, "Echo Spacing of DWI images."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],
     [
         "hcp_dwi_gdcoeffs",

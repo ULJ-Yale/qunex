@@ -3800,7 +3800,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 r += message
 
             # -- check echospacing
-            echospacing_mili = float(echospacing) * 1000
             if not echospacing:
                 r += "\n---> ERROR: QuNex was unable to acquire echospacing from the data and the parameter is not set!"
                 run = False
