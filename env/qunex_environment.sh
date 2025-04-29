@@ -90,9 +90,7 @@ export ENVVARIABLES
 if [[ -e /opt/.container ]]; then
     # -- Perform initial reset for the environment in the container
     if [[ "$FIRSTRUNDONE" != "TRUE" ]]; then
-
         # -- First unset all conflicting variables in the environment
-        echo "---> unsetting the following environment variables: $ENVVARIABLES"
         unset $ENVVARIABLES
 
         # -- Set PATH
@@ -226,6 +224,14 @@ if [ ! -f /opt/.container ]; then
 fi
 
 # ------------------------------------------------------------------------------
+# -- QuNex bin paths
+# ------------------------------------------------------------------------------
+PATH=$QUNEXPATH/bin:$PATH
+# -- Make sure gmri is executable and accessible
+chmod ugo+x $QUNEXPATH/python/qx_utilities/gmri &> /dev/null
+PATH=$QUNEXPATH/python/qx_utilities:$PATH
+
+# ------------------------------------------------------------------------------
 # -- License and version disclaimer
 # ------------------------------------------------------------------------------
 
@@ -272,14 +278,8 @@ export LD_LIBRARY_PATH
 PKG_CONFIG_PATH=$TOOLS/lib/lib/pkgconfig:$PKG_CONFIG_PATH
 export PKG_CONFIG_PATH
 
-# -- Make sure gmri is executable and accessible
-chmod ugo+x $QUNEXPATH/python/qx_utilities/gmri &> /dev/null
-PATH=$QUNEXPATH/python/qx_utilities:$PATH
-
 PATH=$TOOLS/olib:$PATH
 PATH=$TOOLS/bin:$TOOLS/lib/bin:$TOOLS/lib/lib/:$PATH
-PATH=$QUNEXPATH/bin:$PATH
-PATH=$QUNEXPATH/lib:$PATH
 PATH=$PATH:/usr/local/bin
 PATH=$PATH:/bin
 export PATH
