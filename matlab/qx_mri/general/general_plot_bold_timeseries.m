@@ -485,8 +485,13 @@ for n = 1:nelements
         data = img(elements(n).imageindex).data(elements(n).maskindex,:);
         mimg = mean(data(:, tmask), 2);
         data = bsxfun(@minus, data, mimg);
-        elements(n).imax = max(max(data(:, tmask)));
-        elements(n).imin = min(min(data(:, tmask)));
+        % elements(n).imax = max(max(data(:, tmask)));
+        % elements(n).imin = min(min(data(:, tmask)));
+        elements(n).imean = mean(data(:, tmask), 'all');
+        elements(n).isd   = std(data(:, tmask), 0, 'all');
+        elements(n).imin  = elements(n).imean - 3 * elements(n).isd;
+        elements(n).imax  = elements(n).imean + 3 * elements(n).isd;
+        
         data(:, ~tmask) = 0.5;
         data(1:floor(size(data,1)/16), ~tmask) = elements(n).imin;
 
