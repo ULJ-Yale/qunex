@@ -609,7 +609,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             not used.
 
         --hcp_seechospacing (str, default 'NONE'):
-            Echo Spacing or Dwelltime of Spin Echo Field Map or "NONE" if not
+            Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not
             used.
 
         --hcp_sephasepos (str, default ''):
@@ -3374,8 +3374,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_dwi_echospacing (str, default detailed below):
-            Echo Spacing or Dwelltime of DWI images in s. Default is image
-            specific.
+            Echo Spacing of DWI images in s. By default, QuNex will try to get
+            this value from the imaging data.
 
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence
@@ -4138,7 +4138,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             for BOLD working folders and results.
 
         --hcp_bold_echospacing (float):
-            Echo Spacing or Dwelltime of BOLD images.
+            Echo Spacing of BOLD images in seconds.
 
         --hcp_bold_sbref (str, default 'NONE'):
             Whether BOLD Reference images should be used - NONE or USE.
