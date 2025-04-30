@@ -321,12 +321,10 @@ def run_palm(
     atlas = os.path.join(os.environ["QUNEXPATH"], "qx_library", "data", "atlases")
 
     # --- check for number of input files
-
     images = [e.strip() for e in image.split("|")]
     nimages = len(images)
 
     # --- parse design options
-
     print(" ---> parsing design options")
 
     doptions = {"name": "palm", "d": "d", "t": "t", "f": "f", "eb": "eb"}
@@ -340,7 +338,6 @@ def run_palm(
         root = doptions["name"]
 
     # --- check for preexisting files
-
     files = (
         glob.glob(root + "*.nii")
         + glob.glob(root + "*.nii.gz")
@@ -361,7 +358,6 @@ def run_palm(
             )
 
     # --- parse argument options
-
     print(" ---> parsing arguments")
 
     arguments = {"n": ["100"], "zstat": None}
@@ -410,15 +406,12 @@ def run_palm(
         raise ge.CommandError("run_palm", "Unknown surface option [%s]", surface)
 
     # --- setup and run
-
     toclean = []
     cnum = re.compile(r".*_c([0-9]+).gii")
     mnum = re.compile(r".*_m([0-9]+)_")
 
     try:
-
         # --- prepare input files and arguments
-
         c = 0
         for image in images:
             c += 1
@@ -500,11 +493,9 @@ def run_palm(
                 )
 
         # --- compile PALM command
-
         print(" ---> compiling PALM commands")
 
         # --- put together design related arguments
-
         dargs = []
 
         for f in ["d", "t", "f", "eb"]:
@@ -520,9 +511,7 @@ def run_palm(
                     )
 
         # --- prepare (custom) mask(s)
-
         # ---> set the default CIFTI maps
-
         mask_volume = os.path.join(atlas, "hcp", "masks", "volume.cifti.mask.nii")
         mask_left = os.path.join(
             atlas, "hcp", "masks", "surface.cifti.L.mask.32k_fs_LR.func.gii"
@@ -533,11 +522,8 @@ def run_palm(
         mask_parcelated = None
 
         # ---> replace the default masks with custom masks if provided
-
         if mask is not None:
-
             # --- does mask exist
-
             if not os.path.exists(mask):
                 raise ge.CommandFailed(
                     "run_palm",
@@ -547,7 +533,6 @@ def run_palm(
                 )
 
             # --- check for match with images and decompose if needed
-
             if iformat == "nifti":
                 if mask.endswith(".nii.gz"):
                     mask_volume = troot + "_volume_mask.nii"
@@ -669,9 +654,7 @@ def run_palm(
                 )
 
         # --- check for additional parameters
-
         # -- custom 2D TFCE settings
-
         if "T2DHEC" in arguments:
             t2hec = arguments.pop("T2DHEC")
             t2set = "-tfce_H %s -tfce_E %s -tfce_C %s" % (t2hec[0], t2hec[1], t2hec[2])
@@ -679,7 +662,6 @@ def run_palm(
             t2set = "-tfce2D"
 
         # -- custom 3D TFCE settings
-
         if "T3DHEC" in arguments:
             t3hec = arguments.pop("T3DHEC")
             t3set = "-tfce_H %s -tfce_E %s -tfce_C %s" % (t3hec[0], t3hec[1], t3hec[2])
@@ -687,7 +669,6 @@ def run_palm(
             t3set = None
 
         # --- put together statistics and other related arguments
-
         sargs = []
         for k, v in arguments.items():
             sargs += ["-" + k]
@@ -695,7 +676,6 @@ def run_palm(
                 sargs += v
 
         # --- run PALM
-
         if iformat == "nifti":
             print(" ---> running PALM for NIfTI input")
             infiles = setInFiles(root, "volume.nii", nimages)
@@ -816,7 +796,6 @@ def run_palm(
                 raise ge.CommandFailed("run_palm", *report)
 
         # --- process output
-
         if iformat in ["nifti", "ptseries"]:
             pass
         else:
@@ -1030,7 +1009,6 @@ def run_palm(
         raise
 
     # ---- cleanup
-
     if cleanup == "yes":
         for f in toclean:
             if os.path.exists(f):
@@ -1105,7 +1083,6 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
     print("Running mask_map\n===============")
 
     # --- process the arguments
-
     if image is None:
         raise ge.CommandError(
             "mask_map",
@@ -1172,7 +1149,6 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
             )
 
     # --- build the expression
-
     ex = []
 
     for n in range(nmasks):
@@ -1238,7 +1214,6 @@ def join_maps(images=None, output=None, names=None, originals=None):
     print("Running join_maps\n================")
 
     # --- process the arguments
-
     if images is None:
         raise ge.CommandError(
             "join_maps",
@@ -1274,7 +1249,6 @@ def join_maps(images=None, output=None, names=None, originals=None):
             )
 
     # --- build the expression and merge files
-
     command = ["wb_command", "-cifti-merge", output]
 
     for image in images:
@@ -1290,7 +1264,6 @@ def join_maps(images=None, output=None, names=None, originals=None):
         )
 
     # --- build the expression and name maps
-
     if names is not None:
         command = ["wb_command", "-set-map-names", output]
         m = 0
@@ -1308,7 +1281,6 @@ def join_maps(images=None, output=None, names=None, originals=None):
             )
 
     # --- remove originals
-
     if (originals is not None) and (originals == "remove"):
         print(" ---> Removing originals")
         for image in images:
@@ -1418,7 +1390,6 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
     # -------------------------------------------------------------
     #                                            create design file
-
     df = open(root + "_d.csv", "w")
 
     for s in range(nsubjects):
@@ -1426,14 +1397,12 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
         sline[s] = 1
 
         # ---- 1 factor within design
-
         if nfactors == 1:
             for f1l in blocks[0]:
                 line = f1l + sline
                 print(",".join([str(e) for e in line]), file=df)
 
         # ---- 2 factor within design
-
         if nfactors == 2:
             for f1l in blocks[0]:
                 for f2l in blocks[1]:
@@ -1453,9 +1422,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
                     print(",".join([str(e) for e in line]), file=df)
 
         # ---- 3 factor within design
-
         elif nfactors == 3:
-
             for f1l in blocks[0]:
                 for f2l in blocks[1]:
                     for f3l in blocks[2]:
@@ -1480,9 +1447,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
                         print(",".join([str(e) for e in line]), file=df)
 
         # ---- 4 factor within design
-
         elif nfactors == 4:
-
             for f1l in blocks[0]:
                 for f2l in blocks[1]:
                     for f3l in blocks[2]:
@@ -1580,7 +1545,6 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     ndvars = sum(tlen)
 
     # --- open and save t-contralst file
-
     tf = open(root + "_t.csv", "w")
 
     for l in range(ndvars):
@@ -1591,7 +1555,6 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
     # -------------------------------------------------------------
     #                                       create f-contrasts file
-
     fperd = {1: 1, 2: 3, 3: 7, 4: 14}
     nfac = fperd[nfactors]
     code = {True: 1, False: 0}

@@ -50,8 +50,7 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-
-# ---- some definitions
+import concurrent.futures
 import os
 import re
 import os.path
@@ -9529,9 +9528,6 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
         --parsessions (int, default 1):
             How many sessions to run in parallel.
 
-        --parelements (int, default 1):
-            How many elements (e.g. msmall groups) to run in parallel.
-
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
@@ -9958,40 +9954,51 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                 # -- Run
                 if run and boldok:
                     if options["run"] == "run":
-                        r, _, _, failed = pc.runExternalForFile(
-                            None,
-                            comm,
-                            "Running HCP MSMAll",
-                            overwrite=True,
-                            thread=sinfo["id"],
-                            remove=options["log"] == "remove",
-                            task=options["command_ran"],
-                            logfolder=options["comlogs"],
-                            logtags=[options["logtag"], groupname],
-                            fullTest=None,
-                            shell=True,
-                            r=r,
-                        )
+                        # r, _, _, failed = pc.runExternalForFile(
+                        #     None,
+                        #     comm,
+                        #     "Running HCP MSMAll",
+                        #     overwrite=True,
+                        #     thread=sinfo["id"],
+                        #     remove=options["log"] == "remove",
+                        #     task=options["command_ran"],
+                        #     logfolder=options["comlogs"],
+                        #     logtags=[options["logtag"], groupname],
+                        #     fullTest=None,
+                        #     shell=True,
+                        #     r=r,
+                        # )
+                        failed = False
 
                         if failed:
                             report["failed"].append(f"{subject_id}_{groupname}")
                         else:
                             # run dedrift and resample across long timepoints
-                            for sl in sessions_long:
-                                sinfo_long = sinfo.copy()
-                                # fix path
-                                sinfo_long["hcp"] = path
-                                # fix id
-                                sinfo_long["id"] = sl
-                                result = executeHCPMultiDeDriftAndResample(sinfo_long, options, hcp, run, group)
-                                r += result["r"]
-                                report_dedrift = result["report"]
-                                if report_dedrift["failed"]:
-                                    report["failed"].append(report_dedrift["failed"])
-                                if report_dedrift["ready"]:
-                                    report["ready"].append(report_dedrift["ready"])
-                                if report_dedrift["not ready"]:
-                                    report["not ready"].append(report_dedrift["not ready"])
+                            sinfo_long = sinfo.copy()
+                            with ProcessPoolExecutor(options["parsessions"]) as executor:
+                                futures = []
+                                for sl in sessions_long:
+                                    sinfo_long_i = sinfo_long.copy()
+                                    # fix path
+                                    sinfo_long_i["hcp"] = path
+                                    # fix id
+                                    sinfo_long_i["id"] = sl
+                                    futures.append(
+                                        executor.submit(
+                                            executeHCPMultiDeDriftAndResample,
+                                            sinfo_long_i, options, hcp, run, [group]
+                                        )
+                                    )
+                                for future in concurrent.futures.as_completed(futures):
+                                    result = future.result()
+                                    r += result["r"]
+                                    report_dedrift = result["report"]
+                                    if report_dedrift["failed"]:
+                                        report["failed"].append(report_dedrift["failed"])
+                                    if report_dedrift["ready"]:
+                                        report["ready"].append(report_dedrift["ready"])
+                                    if report_dedrift["not ready"]:
+                                        report["not ready"].append(report_dedrift["not ready"])
 
                             # run dedrift and resample on the template
                             sinfo_template = sinfo.copy()
@@ -9999,7 +10006,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             sinfo_template["hcp"] = path
                             # fix id
                             sinfo_template["id"] = f"{subject_id}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
-                            result = executeHCPMultiDeDriftAndResample(sinfo_template, options, hcp, run, group)
+                            result = executeHCPMultiDeDriftAndResample(sinfo_template, options, hcp, run, [group])
                             r += result["r"]
                             report_dedrift = result["report"]
                             if report_dedrift["failed"]:
