@@ -9636,9 +9636,9 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
 
         hcp_msmall parameter mapping:
 
-            ============================  ============================
+            ============================= ============================
             QuNex parameter               HCPpipelines parameter
-            ============================  ============================
+            ============================= ============================
             ``hcp_msmall_outfmriname``    ``output-fmri-name``
             ``hcp_icafix_highpass``       ``high-pass``
             ``hcp_msmall_templates``      ``msm-all-templates``
