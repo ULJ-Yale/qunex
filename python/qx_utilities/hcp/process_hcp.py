@@ -2356,6 +2356,39 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+def _get_subjects_from_batch(sinfo, hcp, run):
+    """
+    Get a list of subjects and their sessions from the batch file.
+    """
+    subjects_dict = {}
+    for session in sinfo:
+        if "hcp" not in session:
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (session["id"])
+            )
+            run = False
+
+        if hcp["T1w"] != "NONE":
+            subject = session["subject"]
+            if subject not in subjects_dict:
+                subject_info = {}
+                subject_info["id"] = subject
+                subject_info["hcp"] = [session["hcp"]]
+                subject_info["sessions"] = [session["id"]]
+                subjects_dict[subject] = subject_info
+            else:
+                subjects_dict[subject]["sessions"].append(session["id"])
+                subjects_dict[subject]["hcp"].append(session["hcp"])
+
+    # dict to list
+    subjects_list = []
+    for subject in subjects_dict:
+        subjects_list.append(subjects_dict[subject])
+
+    return run, subjects_list
+
+
 def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_freesurfer [... processing options]``
@@ -2473,31 +2506,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo[1], options)
 
         # get subjects and their sesssions from the batch file
-        subjects_dict = {}
-        for session in sinfo:
-            if "hcp" not in session:
-                r += (
-                    "\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                    % (session["id"])
-                )
-                run = False
-
-            if hcp["T1w"] != "NONE":
-                subject = session["subject"]
-                if subject not in subjects_dict:
-                    subject_info = {}
-                    subject_info["id"] = subject
-                    subject_info["hcp"] = [session["hcp"]]
-                    subject_info["sessions"] = [session["id"]]
-                    subjects_dict[subject] = subject_info
-                else:
-                    subjects_dict[subject]["sessions"].append(session["id"])
-                    subjects_dict[subject]["hcp"].append(session["hcp"])
-
-        # dict to list
-        subjects_list = []
-        for subject in subjects_dict:
-            subjects_list.append(subjects_dict[subject])
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
 
         # launch
         parsubjects = options["parsubjects"]
@@ -2957,31 +2966,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         hcp = getHCPPaths(sinfo[1], options)
 
         # get subjects and their sesssions from the batch file
-        subjects_dict = {}
-        for session in sinfo:
-            if "hcp" not in session:
-                r += (
-                    "\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                    % (session["id"])
-                )
-                run = False
-
-            if hcp["T1w"] != "NONE":
-                subject = session["subject"]
-                if subject not in subjects_dict:
-                    subject_info = {}
-                    subject_info["id"] = subject
-                    subject_info["hcp"] = [session["hcp"]]
-                    subject_info["sessions"] = [session["id"]]
-                    subjects_dict[subject] = subject_info
-                else:
-                    subjects_dict[subject]["sessions"].append(session["id"])
-                    subjects_dict[subject]["hcp"].append(session["hcp"])
-
-        # dict to list
-        subjects_list = []
-        for subject in subjects_dict:
-            subjects_list.append(subjects_dict[subject])
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
 
         # launch
         parsubjects = options["parsubjects"]
@@ -3804,14 +3789,16 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: QuNex was unable to acquire echospacing from the data and the parameter is not set!"
                 run = False
 
-        # longitudinal mode
+        # path
         path = sinfo["hcp"]
+
+        # longitudinal mode
         if options["longitudinal"]:
             studyfolder = gc.deduceFolders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 run = False
-            # replace path (elements[0])
+            # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])
 
         # --- build the command
@@ -3957,7 +3944,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                r, endlog, report, failed = pc.runExternalForFile(
+                r, _, report, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running HCP Diffusion Preprocessing",
@@ -5737,7 +5724,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running HCP fMRIVolume",
@@ -6129,6 +6116,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             + " "
         )
 
+        # path and session
         path = sinfo["hcp"]
         session = sinfo["id"] + options["hcp_suffix"]
 
@@ -6137,8 +6125,8 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             studyfolder = gc.deduceFolders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
-                run = False
-            # replace path (elements[0])
+                boldok = False
+            # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])
             session = f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
 
@@ -6860,7 +6848,6 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
 
 def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
-
     printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
     # prepare return variables
@@ -8394,7 +8381,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 else options["hcp_icafix_highpass"]
             )
 
-            # path and session
+            # path
             path = sinfo["hcp"]
 
             # longitudinal
@@ -8402,8 +8389,8 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 studyfolder = gc.deduceFolders(options)["basefolder"]
                 if not studyfolder:
                     r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
-                    run = False
-                # replace path (elements[0])
+                    groupok = False
+                # replace path
                 path = os.path.join(studyfolder, "subjects", sinfo["subject"])
 
             comm = (
@@ -8502,7 +8489,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     if options["longitudinal"]:
                         logtags.append("long")
 
-                    r, endlog, _, failed = pc.runExternalForFile(
+                    r, _, _, failed = pc.runExternalForFile(
                         tfile,
                         comm,
                         "Running multi-run HCP ReApplyFix",
@@ -9166,7 +9153,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                boldsok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -9183,7 +9170,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         comm = (
             '%(script)s \
             --path="%(path)s" \
-            --subject="%(subject)s" \
+            --session="%(session)s" \
             --fmri-names-list="%(msmallBolds)s" \
             --multirun-fix-names="" \
             --multirun-fix-concat-name="" \
@@ -9201,7 +9188,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "subject": sinfo["id"] + options["hcp_suffix"],
+                "session": session,
                 "msmallBolds": msmallBolds,
                 "outfmriname": outfmriname,
                 "highpass": highpass,
@@ -9382,7 +9369,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                boldok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -9402,7 +9389,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         comm = (
             '%(script)s \
             --path="%(path)s" \
-            --subject="%(subject)s" \
+            --session="%(session)s" \
             --fmri-names-list="" \
             --multirun-fix-names="%(fixnames)s" \
             --multirun-fix-concat-name="%(concatname)s" \
@@ -9420,7 +9407,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "subject": sinfo["id"] + options["hcp_suffix"],
+                "session": sinfo["id"] + options["hcp_suffix"],
                 "fixnames": boldtargets,
                 "concatname": groupname,
                 "fixnamestouse": fixnamestouse,
@@ -9435,7 +9422,6 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 "myelintarget": myelintarget,
                 "matlabrunmode": matlabrunmode,
             }
-        )
 
         # -- Report command
         if boldok:
@@ -9447,7 +9433,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP MSMAll",
@@ -9715,7 +9701,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        singleRun, icafixBolds, dedriftGroups, pars_ok, r = parse_icafix_bolds(
+        singleRun, _, dedriftGroups, pars_ok, r = parse_icafix_bolds(
             options, bolds, r, True
         )
 
