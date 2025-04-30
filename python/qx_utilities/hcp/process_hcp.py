@@ -9767,7 +9767,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
     sessions_list = subject["sessions"]
     sessions_long = []
     for session in sessions_list:
-        sessions_long.append(f"{session}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}")
+        sessions_long.append(f"{session}{options['hcp_suffix']}")
 
     # --- Get sorted bold numbers and bold data
     sinfo = None
@@ -9974,23 +9974,56 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                         )
 
                         if failed:
-                            report["failed"].append(f"{subject}_{groupname}")
+                            report["failed"].append(f"{subject_id}_{groupname}")
                         else:
-                            report["done"].append(f"{subject}_{groupname}")
+                            # run dedrift and resample across long timepoints
+                            for sl in sessions_long:
+                                sinfo_long = sinfo.copy()
+                                # fix path
+                                sinfo_long["hcp"] = path
+                                # fix id
+                                sinfo_long["id"] = sl
+                                result = executeHCPMultiDeDriftAndResample(sinfo_long, options, hcp, run, group)
+                                r += result["r"]
+                                report_dedrift = result["report"]
+                                if report_dedrift["failed"]:
+                                    report["failed"].append(report_dedrift["failed"])
+                                if report_dedrift["ready"]:
+                                    report["ready"].append(report_dedrift["ready"])
+                                if report_dedrift["not ready"]:
+                                    report["not ready"].append(report_dedrift["not ready"])
+
+                            # run dedrift and resample on the template
+                            sinfo_template = sinfo.copy()
+                            # fix path
+                            sinfo_template["hcp"] = path
+                            # fix id
+                            sinfo_template["id"] = f"{subject_id}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                            result = executeHCPMultiDeDriftAndResample(sinfo_template, options, hcp, run, group)
+                            r += result["r"]
+                            report_dedrift = result["report"]
+                            if report_dedrift["failed"]:
+                                report["failed"].append(report_dedrift["failed"])
+                            if report_dedrift["ready"]:
+                                report["ready"].append(report_dedrift["ready"])
+                            if report_dedrift["not ready"]:
+                                report["not ready"].append(report_dedrift["not ready"])
+
+                            report["done"].append(f"{subject_id}_{groupname}")
 
                     # -- just checking
                     else:
                         passed, _, r, failed = pc.checkRun(
-                            None, None, "HCP MSMAll " + f"{subject}_{groupname}", r, overwrite=True
+                            None, None, "HCP MSMAll " + f"{subject_id}_{groupname}", r, overwrite=True
                         )
                         if passed is None:
                             r += "\n---> HCP MSMAll can be run"
-                            report["ready"].append(f"{subject}_{groupname}")
+                            report["ready"].append(f"{subject_id}_{groupname}")
                         else:
-                            report["skipped"].append(f"{subject}_{groupname}")
+                            report["skipped"].append(f"{subject_id}_{groupname}")
 
                 else:
-                    report["not ready"].append(f"{subject}_{groupname}")
+                    report["not ready"].append(f"{subject_id}_{groupname}")
                     if options["run"] == "run":
                         r += "\n---> ERROR: something missing, skipping this group!"
                     else:
@@ -9998,16 +10031,16 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
 
             except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
                 r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
-                    f"{subject}_{groupname}"
+                    f"{subject_id}_{groupname}"
                 )
                 r += str(errormessage)
-                report["failed"].append(f"{subject}_{groupname}")
+                report["failed"].append(f"{subject_id}_{groupname}")
             except:
                 r += "\n --- Failed during processing of group %s with error:\n %s\n" % (
-                    f"{subject}_{groupname}",
+                    f"{subject_id}_{groupname}",
                     traceback.format_exc(),
                 )
-                report["failed"].append(f"{subject}_{groupname}")
+                report["failed"].append(f"{subject_id}_{groupname}")
     else:
         r += "\n---> Subject cannot be processed."
         report["not ready"] = subject_id
@@ -10675,7 +10708,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                runok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
