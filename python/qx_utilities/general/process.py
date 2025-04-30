@@ -2117,6 +2117,12 @@ lalist = [
         process_hcp.hcp_long_post_freesurfer,
         "Runs longitudinal Post FreeSurfer.",
     ],
+    [
+        "hcp_lmsm",
+        "hcp_long_msmall",
+        process_hcp.hcp_long_msmall,
+        "Runs longitudinal MSMAll.",
+    ],
     ["fslm", "fsl_melodic", fsl.fsl_melodic, "Runs FSL melodic"],
 ]
 
