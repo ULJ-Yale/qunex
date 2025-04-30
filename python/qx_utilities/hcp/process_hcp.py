@@ -2521,13 +2521,13 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
                 # merge
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
 
         else:  # parallel execution
             # create a multiprocessing Pool
@@ -2546,13 +2546,13 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             for result in results:
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -2980,13 +2980,13 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 # merge
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
         else:  # parallel execution
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(parsubjects)
@@ -2999,13 +2999,13 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 r += result["r"]
                 run_report = result["report"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -9683,52 +9683,31 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
         # launch
         parsubjects = options["parsubjects"]
 
-        if parsubjects == 1:  # serial execution
-            for subject in subjects_list:
-                result = _execute_hcp_long_msmall(
-                    sinfo,
-                    options,
-                    run,
-                    hcp,
-                    subject
-                )
-                run_report = result["report"]
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(
+            _execute_hcp_long_msmall,
+            sinfo,
+            options,
+            run,
+            hcp,
+        )
+        results = processPoolExecutor.map(f, subjects_list)
 
-                # merge
-                r += result["r"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parsubjects)
-            # process
-            f = partial(
-                _execute_hcp_long_msmall,
-                sinfo,
-                options,
-                run,
-                hcp,
-            )
-            results = processPoolExecutor.map(f, subjects_list)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].extend(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].extend(run_report["failed"])
+                failed = 1
+            if run_report["ready"]:
+                report["ready"].extend(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].extend(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -9970,34 +9949,34 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                         )
 
                         if failed:
-                            report["failed"].append(f"{subject_id}_{groupname}")
+                            report["failed"].append(f"msmall_{subject_id}_{groupname}")
                         else:
                             # run dedrift and resample across long timepoints
                             sinfo_long = sinfo.copy()
                             with ProcessPoolExecutor(options["parsessions"]) as executor:
-                                futures = []
+                                futures = {}
                                 for sl in sessions_long:
                                     sinfo_long_i = sinfo_long.copy()
                                     # fix path
                                     sinfo_long_i["hcp"] = path
                                     # fix id
                                     sinfo_long_i["id"] = sl
-                                    futures.append(
-                                        executor.submit(
-                                            executeHCPMultiDeDriftAndResample,
-                                            sinfo_long_i, options, hcp, run, [group]
-                                        )
+                                    future = executor.submit(
+                                        executeHCPMultiDeDriftAndResample,
+                                        sinfo_long_i, options, hcp, run, [group]
                                     )
+                                    futures[future] = sl  # map future to sl
                                 for future in concurrent.futures.as_completed(futures):
+                                    sl = futures[future]  # get the correct sl for this future
                                     result = future.result()
                                     r += result["r"]
                                     report_dedrift = result["report"]
                                     if report_dedrift["failed"]:
-                                        report["failed"].append(report_dedrift["failed"])
+                                        report["failed"].append(f"dedrift_{sl}_{report_dedrift['failed'][0]}")
                                     if report_dedrift["ready"]:
-                                        report["ready"].append(report_dedrift["ready"])
+                                        report["ready"].append(f"dedrift_{sl}_{report_dedrift['ready'][0]}")
                                     if report_dedrift["not ready"]:
-                                        report["not ready"].append(report_dedrift["not ready"])
+                                        report["not ready"].append(f"dedrift_{sl}_{report_dedrift['not ready'][0]}")
 
                             # run dedrift and resample on the template
                             sinfo_template = sinfo.copy()
@@ -10008,14 +9987,16 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             result = executeHCPMultiDeDriftAndResample(sinfo_template, options, hcp, run, [group])
                             r += result["r"]
                             report_dedrift = result["report"]
-                            if report_dedrift["failed"]:
-                                report["failed"].append(report_dedrift["failed"])
-                            if report_dedrift["ready"]:
-                                report["ready"].append(report_dedrift["ready"])
-                            if report_dedrift["not ready"]:
-                                report["not ready"].append(report_dedrift["not ready"])
 
-                            report["done"].append(f"{subject_id}_{groupname}")
+                            if report_dedrift["failed"]:
+                                report["failed"].append(f"dedrift_long.{report_dedrift['failed'][0]}")
+                            if report_dedrift["ready"]:
+                                report["ready"].append(f"dedrift_long.{report_dedrift['ready'][0]}")
+                            if report_dedrift["not ready"]:
+                                report["not ready"].append(f"dedrift_long.{report_dedrift['not ready'][0]}")
+
+                            if len(report["failed"]) == 0:
+                                report["done"].append(f"msmall_{subject_id}_{groupname}")
 
                     # -- just checking
                     else:
@@ -10882,7 +10863,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         # -- Run
         if run and runok:
             if options["run"] == "run":
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP DeDriftAndResample",
