@@ -9954,21 +9954,20 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                 # -- Run
                 if run and boldok:
                     if options["run"] == "run":
-                        # r, _, _, failed = pc.runExternalForFile(
-                        #     None,
-                        #     comm,
-                        #     "Running HCP MSMAll",
-                        #     overwrite=True,
-                        #     thread=sinfo["id"],
-                        #     remove=options["log"] == "remove",
-                        #     task=options["command_ran"],
-                        #     logfolder=options["comlogs"],
-                        #     logtags=[options["logtag"], groupname],
-                        #     fullTest=None,
-                        #     shell=True,
-                        #     r=r,
-                        # )
-                        failed = False
+                        r, _, _, failed = pc.runExternalForFile(
+                            None,
+                            comm,
+                            "Running HCP MSMAll",
+                            overwrite=True,
+                            thread=sinfo["id"],
+                            remove=options["log"] == "remove",
+                            task=options["command_ran"],
+                            logfolder=options["comlogs"],
+                            logtags=[options["logtag"], groupname],
+                            fullTest=None,
+                            shell=True,
+                            r=r,
+                        )
 
                         if failed:
                             report["failed"].append(f"{subject_id}_{groupname}")
