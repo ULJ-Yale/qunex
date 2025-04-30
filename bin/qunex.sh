@@ -23,12 +23,9 @@ qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcella
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 
 # ------------------------------------------------------------------------------
-# -- Splash call
+# -- Splash
 # ------------------------------------------------------------------------------
-
-show_splash() {
-    qunex_splash
-}
+qunex_splash
 
 # ------------------------------------------------------------------------------
 # -- General help usage
@@ -192,8 +189,6 @@ bash_call_execute() {
         echo "qunex ${gmriinput}"
         echo ""
         echo "---------------------------------------------------------"
-        echo ""
-        echo ""
         eval "gmri ${gmriinput}"
     else
         # log tag
@@ -966,21 +961,12 @@ if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] ||
     exit 0
 fi
 
-# -- Check if splash was requested
-if [ "$1" == "-splash" ] || [ "$1" == "splash" ] || [ "$1" == "--splash" ] || [ "$1" == "--s" ] || [ "$1" == "-s" ]; then
-    show_splash
-    echo ""
-    exit 0
-fi
-
 if [[ -z ${1} ]]; then
-    show_splash
     show_usage
     exit 0
 fi
 
 if [ ${1} == "--help" ] || [ "$1" == "-h" ]; then
-    show_splash
     show_usage
     exit 0
 fi
@@ -996,10 +982,6 @@ fi
 
 # -- Set and report version
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
-echo ""
-echo ".......................... Running QuNex v${QuNexVer} .........................."
-echo ""
-
 
 # ------------------------------------------------------------------------------
 # -- Args flag setup
@@ -1164,11 +1146,8 @@ fi
 
 # -- Check if there is no command or parameters
 if [[ "$#" -lt 2 ]]; then
-    echo "--------------------------------- QuNex failed ---------------------------------"
-    echo ""
-    echo "ERROR: No input parameters found! You can use the --help flag to request help for a specific command."
-    echo ""
-    exit 1
+    show_usage_"${1}"
+    exit 0
 fi
 
 # -- Check if one of the flags is h, H or help
@@ -1176,8 +1155,6 @@ for fn in "$@" ; do
     if [[ ${fn} == "-h" ]] || [[ ${fn} == "--h" ]] || [[ ${fn} == "-H" ]] || [[ ${fn} == "--H" ]] || [[ ${fn} == "--help" ]] || [[ ${fn} == "-help" ]]; then
         # -- Check if input part of function list
         is_qunex_command ${1}
-        show_version
-        echo ""
         show_usage_"${1}"
         exit 0
     fi
