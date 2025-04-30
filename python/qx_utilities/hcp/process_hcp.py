@@ -9422,6 +9422,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 "myelintarget": myelintarget,
                 "matlabrunmode": matlabrunmode,
             }
+        )
 
         # -- Report command
         if boldok:
