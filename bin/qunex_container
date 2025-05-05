@@ -1205,6 +1205,12 @@ def main(args=None):
             else:
                 container_command += "docker run "
 
+                # env vars
+                container_command += "-e USERNAME=$(whoami) "
+                container_command += "-e USER_ID=$(id -u) "
+                container_command += "-e GROUPNAME=$(id -gn) "
+                container_command += "-e GROUP_ID=$(id -g) "
+
                 # binds
                 if bind is None:
                     container_bind = f"{homedir}:{homedir}"

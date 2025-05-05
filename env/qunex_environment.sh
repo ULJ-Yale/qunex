@@ -80,6 +80,27 @@ if [ "$1" == "--help" ] || [ "$1" == "-help" ] || [ "$1" == "help" ] || [ "$1" =
 fi
 
 # ------------------------------------------------------------------------------
+#  Docker container user swap
+# ------------------------------------------------------------------------------
+
+# TODO UNCOMMENT THIS WHEN NEW CONTAINER IS READY
+# if [[ -f /.dockerenv ]]; then
+#     CURRENT_USER=$(whoami)
+#     if [[ "$CURRENT_USER" != "$USERNAME" && -n "$USER_ID" && -n "$GROUP_ID" && -n "$USERNAME" && -n "$GROUPNAME" ]]; then
+#         # Create group and user if they don't exist
+#         if ! getent group "$GROUP_ID" >/dev/null; then
+#             groupadd -g "$GROUP_ID" "$GROUPNAME"
+#         fi
+#         if ! id -u "$USERNAME" >/dev/null 2>&1; then
+#             useradd -m -u "$USER_ID" -g "$GROUP_ID" "$USERNAME"
+#         fi
+
+#         # Re-exec the script as the new user in a login shell
+#         exec gosu "$USERNAME" bash -l
+#     fi
+# fi
+
+# ------------------------------------------------------------------------------
 #  Environment clear and check functions
 # ------------------------------------------------------------------------------
 
