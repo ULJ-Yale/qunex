@@ -214,9 +214,6 @@ if [[ -z ${MSMBINDIR} ]]; then MSMBINDIR="$TOOLS/MSM_HOCR_v3"; export MSMBINDIR;
 if [[ -z ${HCPPIPEDIR} ]]; then HCPPIPEDIR="${TOOLS}/HCP/HCPpipelines"; export HCPPIPEDIR; fi
 if [[ -z ${MSMCONFIGDIR} ]]; then MSMCONFIGDIR=${HCPPIPEDIR}/MSMConfig; export MSMCONFIGDIR; fi
 if [[ -z ${ASLDIR} ]]; then ASLDIR="${TOOLS}/HCP/hcp-asl"; export ASLDIR; fi
-if [[ -z ${ITKSNAPDIR} ]]; then ITKSNAPDIR="${TOOLS}/itksnap/bin"; export ITKSNAPDIR; fi
-if [[ -z ${NIFTYREGDIR} ]]; then NIFTYREGDIR="${TOOLS}/niftyreg/bin"; export NIFTYREGDIR; fi
-
 
 
 # only outside of the container
@@ -411,14 +408,6 @@ export MATLABBINDIR PATH
 # -- R path
 PATH=${RDIR}:${PATH}
 export RDIR PATH
-
-# -- itk-snap path
-PATH=${ITKSNAPDIR}:${PATH}
-export ITKSNAPDIR PATH
-
-# -- niftyreg path
-PATH=${NIFTYREGDIR}:${PATH}
-export NIFTYREGDIR PATH
 
 # QX matlablib packages
 MATLABPATH=$TOOLS/matlablib/cifti-matlab.qx:$MATLABPATH
