@@ -681,7 +681,7 @@ for s = 1:list.nsessions
         switch save_format{1}
             case 'mat'
                 if verbose; fprintf('         ... saving mat file'); end
-                save(basefilename, 'fcmat');
+                save('-mat', [basefilename '.mat'], 'fcmat');
                 if verbose; fprintf(' ... done\n'); end
             case 'long'
                 save_long(fcmat, fcmeasure, lname, basefilename, verbose, printdebug);
@@ -712,7 +712,7 @@ for save_format = options.savegroup
         case 'mat'
             if verbose; fprintf('         ... saving mat file'); end
             fcmat = fcmats;
-            save(basefilename, 'fcmat');
+            save('-mat', [basefilename '.mat'], 'fcmat');
             if verbose; fprintf(' ... done\n'); end
         case 'all_long'
             save_long(fcmats, fcmeasure, lname, basefilename, verbose, printdebug);
