@@ -52,6 +52,7 @@ function [exsets] = img_get_extraction_matrices(obj, frames, options)
 %                                -> use      ... ignore frames as marked in the use field of the bold file
 %                                -> fidl     ... ignore frames as marked in .fidl file (only available with event extraction)
 %                                -> <column> ... the column name in *_scrub.txt file that matches bold file to be used for ignore mask
+%                                -> none     ... do not ignore any frames
 %                                ['use, fidl']
 %               -> badevents ... what to do with events that have frames marked as bad, options are:
 %                                -> use      ... use any frames that are not marked as bad
@@ -91,22 +92,28 @@ if printdebug
 end
 
 % ---> creating use mask
+if isempty(options.ignore)
+    toignore = {'use', 'fidl'};
+else
+    toignore  = strtrim(regexp(options.ignore, ',', 'split'));
+end
 
-toignore  = strtrim(regexp(options.ignore, ',', 'split'));
 useframes = ones(1, length(obj.use));
 fignore   = false;
 
-for ti = toignore
-    if ismember('use', ti)
-        useframes = obj.use & useframes;
-    elseif ismember('fidl', ti)
-        fignore = true;
-    else 
-        useScrub = find(ismember(obj.scrub_hdr, ti));
-        if isempty(useScrub)
-            error('ERROR: The specified ignore field (%s) is not valid!', ti{1});
+if ~any(strcmp(toignore, 'none'))
+    for ti = toignore
+        if ismember('use', ti)
+            useframes = obj.use & useframes;
+        elseif ismember('fidl', ti)
+            fignore = true;
+        else 
+            useScrub = find(ismember(obj.scrub_hdr, ti));
+            if isempty(useScrub)
+                error('ERROR: The specified ignore field (%s) is not valid!', ti{1});
+            end
+            useframes = useframes & obj.scrub(:, useScrub)' == 0;
         end
-        useframes = useframes & obj.scrub(:, useScrub)' == 0;
     end
 end
 
