@@ -714,7 +714,18 @@ for save_format = options.savegroup
         case 'mat'
             if verbose; fprintf('         ... saving mat file'); end
             fcmat = fcmats;
+<<<<<<< HEAD
             save([basefilename, '.mat'], 'fcmat');
+||||||| parent of a739046c (fix: default to saving in v7.3)
+            save('-mat', [basefilename '.mat'], 'fcmat');
+=======
+            try
+                save('-mat', [basefilename '.mat'], 'fcmat', '-v7.3');
+            catch
+                if verbose; fprintf(' ... failed to save using -v7.3. Using default format instead.'); end
+                save('-mat', [basefilename '.mat'], 'fcmat');
+            end
+>>>>>>> a739046c (fix: default to saving in v7.3)
             if verbose; fprintf(' ... done\n'); end
         case 'all_long'
             save_long(fcmats, fcmeasure, lname, basefilename, verbose, printdebug);
