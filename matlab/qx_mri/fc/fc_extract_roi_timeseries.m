@@ -132,6 +132,8 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %               - <column>
 %                   the column name in ∗_scrub.txt file that matches bold file
 %                   to be used for ignore mask.
+%               - none
+%                   do not ignore any frames.
 %
 %               Defaults to 'use,fidl'.
 %

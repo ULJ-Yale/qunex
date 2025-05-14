@@ -132,7 +132,9 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %                   with event extraction)
 %               - <column>
 %                   the column name in ∗_scrub.txt file that matches bold file
-%                   to be used for ignore mask.
+%                   to be used for ignore mask
+%               - none
+%                   do not ignore any frames.
 %
 %               Defaults to 'use,fidl'.
 %
