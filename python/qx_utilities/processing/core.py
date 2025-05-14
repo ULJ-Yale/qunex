@@ -907,9 +907,13 @@ def runExternalForFile(
 
     comm = run + "\n"
 
+    # reformat comm
+    comm = re.sub(r' {4,}', r' \\\n  ', comm)
+
     printComm += comm
     if checkfile is not None and checkfile != "":
         printComm += "\nTest file: \n%s\n" % checkfile
+    printComm += "\n"
     printComm += "------------------------------------------------------------"
 
     # report for local runs
