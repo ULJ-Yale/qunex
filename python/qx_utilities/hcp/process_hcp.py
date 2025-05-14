@@ -9961,6 +9961,8 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                     sinfo_long_i["hcp"] = path
                                     # fix id
                                     sinfo_long_i["id"] = sl
+                                    # add step info
+                                    sinfo_long_i["long"] = 1
                                     future = executor.submit(
                                         executeHCPMultiDeDriftAndResample,
                                         sinfo_long_i, options, hcp, run, [group]
@@ -9984,6 +9986,8 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             sinfo_template["hcp"] = path
                             # fix id
                             sinfo_template["id"] = f"{subject_id}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                            # add step info
+                            sinfo_template["long"] = 2
                             result = executeHCPMultiDeDriftAndResample(sinfo_template, options, hcp, run, [group])
                             r += result["r"]
                             report_dedrift = result["report"]
@@ -10713,8 +10717,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
-            --multirun-fix-names="%(mrfixnames)s" \
-            --multirun-fix-concat-names="%(mrfixconcatnames)s" \
             --high-res-mesh="%(highresmesh)s" \
             --low-res-meshes="%(lowresmeshes)s" \
             --registration-name="%(regname)s" \
@@ -10735,8 +10737,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 ),
                 "path": sinfo["hcp"],
                 "subject": sinfo["id"] + options["hcp_suffix"],
-                "mrfixnames": boldtargets,
-                "mrfixconcatnames": grouptargets,
                 "highresmesh": options["hcp_hiresmesh"],
                 "lowresmeshes": options["hcp_lowresmeshes"].replace(",", "@"),
                 "regname": regname,
@@ -10755,6 +10755,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 "matlabrunmode": matlabrunmode,
             }
         )
+
+        # do not set --multirun-fix-names and --multirun-fix-concat-names for the second step of longitudinal processing
+        if "long" not in sinfo or sinfo["long"] == 1:
+            comm += "                --multirun-fix-names=" + boldtargets
+            comm += "                --multirun-fix-concat-names=" + grouptargets
 
         # optional parameters
         if options["hcp_resample_dontfixnames"] is not None:
