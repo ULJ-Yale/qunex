@@ -9938,7 +9938,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             comm,
                             "Running HCP MSMAll",
                             overwrite=True,
-                            thread=sinfo["id"],
+                            thread=subject_id,
                             remove=options["log"] == "remove",
                             task=options["command_ran"],
                             logfolder=options["comlogs"],
