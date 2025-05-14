@@ -218,6 +218,8 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               - <column>
 %                   the column name in ∗_scrub.txt file that matches bold file
 %                   to be used for ignore mask.
+%               - none
+%                   do not ignore any frames.
 %
 %               Defaults to 'use,fidl'.
 %
