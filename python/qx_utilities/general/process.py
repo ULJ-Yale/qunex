@@ -2342,7 +2342,7 @@ def run(command, args):
     # no parsessions for longitudinal and multi-session commands
     if (command in lactions) or (command in mactions):
         if parsessions > 1:
-            sout += f "\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a longitudinal or a multi-session command!\n"
+            sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a longitudinal or a multi-session command!\n"
             parsessions = 1
 
     # check if there are no sessions
