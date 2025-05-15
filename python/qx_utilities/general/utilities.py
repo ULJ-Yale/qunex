@@ -1255,8 +1255,8 @@ def remove_session_block(file_path, session_id):
 
 def create_list(
     sessionsfolder=".",
+    batchfile=None,
     sessions=None,
-    sessionids=None,
     filter=None,
     listfile=None,
     bolds=None,
@@ -1272,7 +1272,7 @@ def create_list(
     check="yes",
 ):
     """
-    ``create_list [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
+    ``create_list [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Creates a .list formatted file that can be used as input to a number of
     processing and analysis functions. The function is fairly flexible, its
@@ -1557,7 +1557,6 @@ def create_list(
         return True
 
     # --- check sessions
-
     sessionsfolder = os.path.abspath(sessionsfolder)
 
     if sessions and sessions.lower() == "none":
@@ -1567,7 +1566,6 @@ def create_list(
         filter = None
 
     # --- prepare parameters
-
     boldtags, boldnums = None, None
 
     if bolds:
@@ -1575,13 +1573,20 @@ def create_list(
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
 
+    if boldtags and not batchfile:
+        raise ge.CommandFailed(
+            "create_list",
+            "Parameter error",
+            "To filter bolds using tags, you need to provide the batchfile parameter!",
+            "Please check your input parameters!",
+        )
+
     bsearch = re.compile(r"bold([0-9]+)")
 
     images_folder = "images" + img_suffix
     functional_folder = "functional" + bold_variant
 
     # --- prepare target file name and folder
-
     if listfile is None:
         listfile = os.path.join(
             os.path.dirname(sessionsfolder), "processing", "lists", "sessions.list"
@@ -1615,20 +1620,30 @@ def create_list(
         os.makedirs(targetFolder)
 
     # --- check sessions
+    sessions_list = []
+    if not batchfile:
+        sessions_list = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
+        sessions_list = [os.path.basename(os.path.dirname(e)) for e in sessions_list]
+        sessions_list = "|".join(sessions_list)
 
-    if sessions is None:
-        print(
-            "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
+        sessions_list, _ = gc.get_sessions_list(
+            sessions_list,
+            sessionids=sessions,
+            filter=filter,
+            verbose=False,
+            sessionsfolder=sessionsfolder,
         )
-        sessions = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
-        sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
-        sessions = "|".join(sessions)
+    # filter
+    else:
+        sessions_list, _ = gc.get_sessions_list(
+            batchfile,
+            sessionids=sessions,
+            filter=filter,
+            verbose=False,
+            sessionsfolder=sessionsfolder,
+        )
 
-    sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
-    )
-
-    if not sessions:
+    if not sessions_list:
         raise ge.CommandFailed(
             "create_list",
             "No session found",
@@ -1637,10 +1652,9 @@ def create_list(
         )
 
     # --- generate list entries
-
     lines = []
 
-    for session in sessions:
+    for session in sessions_list:
         lines.append("session id: %s" % (session["id"]))
 
         if boldnums:
@@ -1723,7 +1737,6 @@ def create_list(
                 lines.append("    fidl:" + tfile)
 
     # --- write to target file
-
     if overwrite == "yes" or overwrite is True:
         print("---> Creating file %s" % (os.path.basename(listfile)))
         lfile = open(listfile, "w")

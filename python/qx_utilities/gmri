@@ -265,6 +265,9 @@ def runCommand(command, args):
                 elif "session" in session:
                     sessions_list.append(session["session"])
 
+            # store the batchfile
+            if ".txt" in args["sessions"]:
+                args["batchfile"] = args["sessions"]
             args["sessions"] = ",".join(sessions_list)
 
             del args["sessionids"]
