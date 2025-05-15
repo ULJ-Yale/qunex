@@ -6,6 +6,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.2.0
+
+* Support for longitudinal processing in hcp_icafix.
+* Support for longitudinal processing in hcp_msmall.
+* Improved documentation at several locations.
+* Fixed the copy_study command so it does not crash when some folders do not exist and added support for copying longitudinal studies.
+* Fixed a bug where some parameters where not parsed correctly when set to NONE.
+* Fixed a bug with folder binds in qunex_container.
+* Fixed a bug where import_hcp did not work in some cases with Diffusion data.
+* Fixed a bug where sessions level parameters were not properly parsed from the batch file if prefixed with --.
+* Fixed a bug where missing or wrongly set hcp_avgrdcmethod and hcp_bold_dcmethod did not result in a descriptive error.
+* More robuts import_bids, previously it did not work on some BIDS compliant folder setups.
+* More robuts import_dicom, if images are already sorted in subfolder, you can use the --existing_structure flag to detect images in a optimized way.
+* More robust steps parsing in run_recipe, it will not work even if your comma separated list of steps has spaces in it.
+
 ## 1.1.1
 
 * Fixed a bug where `logfolder` did not work for some commands.
