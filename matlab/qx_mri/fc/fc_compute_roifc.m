@@ -657,7 +657,13 @@ for s = 1:list.nsessions
             end
         end
     end
+<<<<<<< HEAD
 
+||||||| parent of ffa9b41f (fix: fix saving of subject ids in mat structure)
+    
+=======
+    
+>>>>>>> ffa9b41f (fix: fix saving of subject ids in mat structure)
     first_subject = false;
 
     % ===================================================================================================
