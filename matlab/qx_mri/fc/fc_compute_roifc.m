@@ -659,6 +659,8 @@ for s = 1:list.nsessions
         end 
     end
     
+    first_subject = false;
+
     % ===================================================================================================
     %                                                                             save individual results
 
@@ -694,7 +696,6 @@ for s = 1:list.nsessions
         end
     end        
 
-    first_subject = false;
 end
 
 
