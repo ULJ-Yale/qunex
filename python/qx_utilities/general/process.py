@@ -149,8 +149,11 @@ def update_options(session, options):
     """
     soptions = dict(options)
     for key, value in session.items():
-        if key.startswith("_") or key.startswith("--"):
+        if key.startswith("_"):
             soptions[key[1:]] = value
+        elif key.startswith("--"):
+            soptions[key[2:]] = value
+
     return soptions
 
 
@@ -473,9 +476,9 @@ arglist = [
     ],
     [
         "omp_threads",
-        "0",
-        int,
-        "number of cores to be used in wb_command (0 - don't change system settings)",
+        "",
+        isNone,
+        "number of cores to be used in wb_command, by default OMP will set this automatically",
     ],
     ["framework_path", "", str, "the path to framework libraries on mac system"],
     ["wb_command_path", "", str, "the path to wb_command"],
@@ -643,7 +646,7 @@ arglist = [
         "hcp_seechospacing",
         "NONE",
         str,
-        "Echo Spacing or Dwelltime of Spin Echo Field Map or '' if not used.",
+        "Echo Spacing of Spin Echo Field Map in seconds or NONE if not used.",
     ],
     [
         "hcp_seunwarpdir",
@@ -789,7 +792,7 @@ arglist = [
         "hcp_bold_echospacing",
         "",
         isNone,
-        "Echo Spacing or Dwelltime of fMRI image in seconds.",
+        "Echo Spacing of fMRI images in seconds.",
     ],
     [
         "hcp_bold_sbref",
@@ -923,9 +926,14 @@ arglist = [
         isNone,
         "Comma delimited list of numbers which represent TE for each echo (unused for single echo).",
     ],
-    ["longitudinal", None, flag, "Whether we are running the longitudinal variant of the command."],
+    [
+        "longitudinal",
+        None,
+        flag,
+        "Whether we are running the longitudinal variant of the command.",
+    ],
     ["# --- hcp_diffusion options"],
-    ["hcp_dwi_echospacing", "", str, "Echo spacing in ms."],
+    ["hcp_dwi_echospacing", "", str, "Echo Spacing of DWI images in seconds."],
     ["hcp_dwi_phasepos", "PA", str, "The direction of unwarping for positive phase."],
     [
         "hcp_dwi_gdcoeffs",
@@ -1053,10 +1061,10 @@ arglist = [
     ],
     ["# --- hcp_icafix options"],
     [
-        "hcp_icafix_traindata",
+        "hcp_icafix_model",
         "",
         isNone,
-        "Which file to use for training data. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.",
+        "Which model to use for classification. Can be one of the pre-trained models shpipped with FSL or a custom model as `somefile.RData`, `somefile.pyfix_model`, or a pyfix built-in model without extension. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.",
     ],
     [
         "hcp_icafix_threshold",
@@ -2109,6 +2117,12 @@ lalist = [
         process_hcp.hcp_long_post_freesurfer,
         "Runs longitudinal Post FreeSurfer.",
     ],
+    [
+        "hcp_lmsm",
+        "hcp_long_msmall",
+        process_hcp.hcp_long_msmall,
+        "Runs longitudinal MSMAll.",
+    ],
     ["fslm", "fsl_melodic", fsl.fsl_melodic, "Runs FSL melodic"],
 ]
 
@@ -2245,6 +2259,7 @@ def run(command, args):
 
     # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, command)
+
     for k, v in batch_args.items():
         options[k] = v
 
@@ -2327,8 +2342,8 @@ def run(command, args):
     # no parsessions for longitudinal and multi-session commands
     if (command in lactions) or (command in mactions):
         if parsessions > 1:
+            sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a longitudinal or a multi-session command!\n"
             parsessions = 1
-            sout += "\nWARNING: parsessions will be set to 1 because you are running a longitudinal or a multi-session command!\n"
 
     # check if there are no sessions
     if not sessions:
@@ -2464,7 +2479,7 @@ def run(command, args):
                 print(r)
                 stati.append(status)
 
-            # longitudinalo commands
+            # longitudinal commands
             elif command in lactions:
                 pending_actions = lactions[command]
 

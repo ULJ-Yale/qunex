@@ -427,21 +427,21 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           and TR.
 %
 %           Filtering of nuisance signal, movement, task, and events
-%           Besides data, nuisance signal, motion parameters, and event 
+%           Besides data, nuisance signal, motion parameters, and event
 %           regressors can be filtered as well. What to filter beside data can
-%           be specified by a comma separated list using the following 
+%           be specified by a comma separated list using the following
 %           parameters:
-%           
+%
 %           - hipass_do
-%               What to high-pass filter besides data – options are: nuisance, 
+%               What to high-pass filter besides data – options are: nuisance,
 %               movement, events, task. Default is 'nuisance'.
 %
 %           - lopass_do
-%               What to lo-pass filter besides data – options are: nuisance, 
-%               movement, events, task. Default is 'nuisance, movement, task, 
+%               What to lo-pass filter besides data – options are: nuisance,
+%               movement, events, task. Default is 'nuisance, movement, task,
 %               events'.
 %
-%           Note that 'events' refers to regressors created based on events 
+%           Note that 'events' refers to regressors created based on events
 %           as specified in the fidl file, whereas 'task' refers to a task
 %           matrix that is passed directy in the matlab function call.
 %
@@ -557,7 +557,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %                   default. The default behavior has changed with QuNex version
 %                   0.93.4, which can result in different assumed HRF regressor
 %                   scaling and the resulting GLM beta estimates.
-%   
+%
 %                   Parameter <length> is also optional in case of 'SPM' and
 %                   'boynton' assumed HRF modelling, and it overrides the event
 %                   duration information provided in the fidl file. For 'u' the
@@ -703,7 +703,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'fc_preprocess_conc options used');
@@ -849,7 +849,7 @@ allframes = 0;
 frames    = zeros(1, nbolds);
 
 for b = 1:nbolds
-    
+
     %   ---> read data
 
     if doscrubbing
@@ -862,7 +862,7 @@ for b = 1:nbolds
         nuisance(b).nframes = size(nuisance(b).mov,1);
         frames(b) = nuisance(b).nframes;
         allframes = allframes + nuisance(b).nframes;
-    
+
 
         %   ---> exclude extra data from mov
 
@@ -1053,13 +1053,13 @@ if overwrite
             if isempty(ext)
                 ext = variant;
             end
-            
+
             ext   = [ext exts{c}];
             for b = 1:nbolds
-                file(b).tfile = [file(b).froot ext tail];                
+                file(b).tfile = [file(b).froot ext tail];
             end
             file_tconc = [file_cfroot ext '.conc'];
-    
+
             if exist(file(b).tfile, 'file')
                 if first
                     fprintf('\n---> removing old files:');
@@ -1109,7 +1109,7 @@ for current = char(doIt)
     end
     ext   = [ext exts{c}];
     for b = 1:nbolds
-        file(b).tfile = [file(b).froot ext tail];        
+        file(b).tfile = [file(b).froot ext tail];
     end
     file_tconc = [file_cfroot ext '.conc'];
 
@@ -1223,7 +1223,7 @@ for current = char(doIt)
     if current == 'r'
 
         for b = 1:nbolds
-            file(b).tfile = [file(b).froot ext tail];            
+            file(b).tfile = [file(b).froot ext tail];
         end
         file_tconc = [file_cfroot ext '.conc'];
 
@@ -1480,9 +1480,9 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
             end
         end
     end
-    
+
     %------ Squared motion parameters
-    
+
     if movementSQ
         for mi = 1:nMS
             effects{end+1}  = sprintf('mov_%s_Sq', nuisance(1).mov_hdr{mi});
@@ -1515,9 +1515,9 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
             end
         end
     end
-    
+
     % ------ Squared motion derivatives
-    
+
     for mi = 1:nMdS
         effects{end+1}  = sprintf('mov_%s_1dSq', nuisance(1).mov_hdr{mi});
     end
@@ -1551,7 +1551,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
         end
     end
 
-    
+
     %   ---> signal
 
     for mi = 1:nS
@@ -1820,7 +1820,7 @@ function [img] = prepare_nuisance(nuisance, bold, dofilter)
     filtering = {};
 
     fprintf('\n     ---> filtering also: ');
-    for f = dofilter 
+    for f = dofilter
         switch f{1}
             case 'nuisance'
                 filtering{end+1} = 'nuisance signal';

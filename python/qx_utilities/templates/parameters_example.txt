@@ -129,7 +129,7 @@
 # _dilate_mask               Whether to use dilation after smoothing and what mask to use [false]
 # _hipass_filter             Highpass filter to use [0.008]
 # _lopass_filter             Lopass filter to use [0.09]
-# _omp_threads               Number of cores to be used in wb_command (0 - don't change system settings) [0]
+# _omp_threads               Number of cores to be used in wb_command [0]
 # _framework_path            The path to framework libraries on mac system []
 # _wb_command_path           The path to wb_command []
 # _print_command             Whether to print the command run within the preprocessing steps [no]
@@ -216,7 +216,7 @@
 # _hcp_bold_smoothFWHM       The size of the smoothing kernel (in mm) [2]
 #
 # # --- hcp_diffusion options
-# _hcp_dwi_echospacing       Echo Spacing or Dwelltime of DWI images [image specific]
+# _hcp_dwi_echospacing       Echo Spacing or Dwelltime of DWI images in seconds [image specific]
 # _use_sequence_info         A pipe, comma or space separated list of inline sequence information to use in preprocessing of specific image modalities.
 # _hcp_dwi_phasepos          The direction of unwarping for positive phase [PA]
 # _hcp_dwi_gdcoeffs          DWI specific gradient distortion coefficients file or NONE [NONE]
@@ -234,7 +234,7 @@
 # _hcp_icafix_deleteintermediates If TRUE, deletes both the concatenated high-pass filtered and non-filtered timeseries files that are prerequisites to FIX cleaning [FALSE]
 #
 # # --- hcp_icafix options
-# _hcp_icafix_traindata      Which file to use for training data. [] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix
+# _hcp_icafix_model          Which file to use for training data. [] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix
 # _hcp_icafix_threshold      ICAFix threshold that controls the sensitivity/specificity tradeoff [10]
 # _hcp_icafix_postfix        Whether to automatically run HCP PostFix if HCP ICAFix finishes successfully [TRUE].
 #

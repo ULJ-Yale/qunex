@@ -41,6 +41,7 @@ import tarfile
 import gzip as gz
 import csv
 import json
+import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import general.core as gc
 import general.img as gi
@@ -2644,10 +2645,11 @@ def import_dicom(
     gzip="folder",
     verbose="yes",
     overwrite="no",
+    existing_structure=False,
     test=False,
 ):
     r"""
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False]``
 
     Automatically processes packets with individual sessions' DICOM or PAR/REC
     files all the way to, and including, generation of NIfTI files.
@@ -2753,6 +2755,10 @@ def import_dicom(
             Whether to overwrite existing data (yes) or not (no). Note that
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
+
+        --existing_structure (bool, default False):
+            If the images are preorganized in folders, set this to True so QuNex
+            will not try to reorganize them.
 
     Notes:
         The command is used to automatically process packets with individual
@@ -3189,7 +3195,6 @@ def import_dicom(
                 )
 
         # -- close and return with latest numbers
-
         print("     -> done!")
         z.close()
         return (fnum, dnum)
@@ -3219,7 +3224,6 @@ def import_dicom(
                 )
 
         # -- close and return with latest numbers
-
         print("     -> done!")
         tar.close()
         return (fnum, dnum)
@@ -3247,7 +3251,7 @@ def import_dicom(
 
     verbose = verbose.lower() == "yes"
 
-    overwrite = overwrite.lower() == "yes"
+    overwrite = overwrite if isinstance(overwrite, bool) else overwrite.lower() == "yes"
 
     if sessionsfolder is None:
         sessionsfolder = "."
@@ -3624,13 +3628,10 @@ def import_dicom(
                     )
 
             if tag == "exist":
-                # if overwrite:
-                #    print(" ... The folders will be cleaned and replaced with new data")
-                # else:
-                #    print(" ... To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
-                print(
-                    "     ... To process them, remove or rename the existing session folders"
-                )
+                if overwrite:
+                   print(" ... Since overwrite is set the folders will be removed and replaced")
+                else:
+                   print(" ... To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
 
     nToProcess = len(packets["ok"])
     if overwrite:
@@ -3702,7 +3703,6 @@ def import_dicom(
         packets["ok"] += packets["exist"]
 
     # ---> process packets
-
     print("---> Starting to process %d packets ..." % (len(packets["ok"])))
 
     for afile, session in packets["ok"]:
@@ -3713,7 +3713,6 @@ def import_dicom(
             dfolder = os.path.join(sfolder, "dicom")
 
             # --- Big info
-
             print("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
 
             if masterinbox and not os.path.exists(ifolder):
@@ -3725,42 +3724,77 @@ def import_dicom(
                 else:
                     files = [ifolder]
 
-            dnum = 0
-            fnum = 0
+            if not existing_structure:
+                dnum = 0
+                fnum = 0
 
-            for p in files:
-                # --- unzip or copy the package
+                for p in files:
+                    # --- unzip or copy the package
+                    if iszip.match(p):
+                        ptype = "zip"
+                        fnum, dnum = _extract_zip(
+                            p, os.path.basename(p), fnum, dnum, ifolder
+                        )
 
-                if iszip.match(p):
-                    ptype = "zip"
-                    fnum, dnum = _extract_zip(
-                        p, os.path.basename(p), fnum, dnum, ifolder
-                    )
+                    elif istar.match(p):
+                        ptype = "tar"
+                        fnum, dnum = _extract_tar(
+                            p, os.path.basename(p), fnum, dnum, ifolder
+                        )
 
-                elif istar.match(p):
-                    ptype = "tar"
-                    fnum, dnum = _extract_tar(
-                        p, os.path.basename(p), fnum, dnum, ifolder
-                    )
+                    else:
+                        ptype = "folder"
+                        if masterinbox and ifolder != p:
+                            fnum, dnum = _process_folder(p, fnum, dnum, ifolder)
 
-                else:
-                    ptype = "folder"
-                    if masterinbox and ifolder != p:
-                        fnum, dnum = _process_folder(p, fnum, dnum, ifolder)
+                            # if os.path.exists(ifolder):
+                            #     shutil.rmtree(ifolder)
+                            # print("...  copying %s dicom files" % (os.path.basename(p)))
+                            # shutil.copytree(p, ifolder)
+            else:
+                source_folder = afile
+                # --- unpack zip first
+                if iszip.match(afile):
+                    print(f"---> found a zip archive at {afile}")
+                    temp_dir = tempfile.mkdtemp(prefix="import_dicom_")
+                    with zipfile.ZipFile(afile, "r") as z:
+                        z.extractall(temp_dir)
+                    source_folder = temp_dir
 
-                        # if os.path.exists(ifolder):
-                        #     shutil.rmtree(ifolder)
-                        # print("...  copying %s dicom files" % (os.path.basename(p)))
-                        # shutil.copytree(p, ifolder)
+                elif istar.match(afile):
+                    temp_dir = tempfile.mkdtemp(prefix="import_dicom_")
+                    print(f"---> found a tar archive at {afile}")
+                    with tarfile.open(afile, "r:*") as t:
+                        t.extractall(temp_dir)
+                    source_folder = temp_dir
+
+                # first‐level subfolders only
+                fnum = 0
+                for root, dirs, files in os.walk(source_folder):
+                    for sub in dirs:
+                        subpath = os.path.join(root, sub)
+                        if not os.path.isdir(subpath):
+                            continue
+                        # find any .dcm files
+                        dcms = glob.glob(os.path.join(subpath, "*.dcm"))
+                        if not dcms:
+                            continue
+                        # one group found → bump fnum, make dest, copy & rename
+                        fnum += 1
+                        dest = os.path.join(ifolder, str(fnum))
+                        os.makedirs(dest, exist_ok=True)
+                        print(f"---> found {len(dcms)} dicom files in {subpath}")
+                        print(f"     ... copying to {dest}")
+                        for dcm in dcms:
+                            name = os.path.basename(dcm)
+                            shutil.copy2(dcm, os.path.join(dest, f"{fnum}-{name}"))
 
             # ---> run sort dicom
-
-            print
+            print()
             sort_dicom(folder=sfolder)
 
             # ---> run dicom to nii
-
-            print
+            print()
             dicom2niix(
                 folder=sfolder,
                 clean="no",
@@ -3775,10 +3809,9 @@ def import_dicom(
             )
 
             # ---> archive
-
             if archive != "leave":
                 s = "Processing packages: " + archive
-                print
+                print()
                 print(s)
                 print("".join(["=" for e in range(len(s))]))
 

@@ -18,7 +18,7 @@ else:
     mcommand = os.environ['QUNEXMCOMMAND']
 
 PREPARE_REF_DATA = False  # set to True to prepare reference data
-REF_DATA_DIR = os.path.join(f'{os.environ.get("QUNEXPATH", "")}', 'qx_library', 'matlab_tests')
+REF_DATA_DIR = os.path.join(f'{os.environ.get("QUNEXLIBRARY", "")}', 'matlab_tests')
 if PREPARE_REF_DATA:
     OUTPUT_DIR = REF_DATA_DIR
 else:
@@ -58,7 +58,6 @@ def _run_fc_function(command, ref_dir, output_subdir, args, tolerance=0):
                 max_diff = np.max(np.abs(nii_ref - nii_output))
                 print(f'    ... max difference between reference and output nii file: {max_diff}')
                 assert np.allclose(nii_ref, nii_output, atol=tolerance)
-
 
         elif file.endswith('') or file.endswith('.txt'):
             with open(ref_file, 'r') as f:

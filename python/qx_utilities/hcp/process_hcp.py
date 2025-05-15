@@ -16,6 +16,7 @@ consists of functions:
 --hcp_post_freesurfer           Runs HCP PostFS preprocessing.
 --hcp_long_freesurfer           Runs HCP Longitudinal FS preprocessing.
 --hcp_long_post_freesurfer      Runs HCP Longitudinal Post FS preprocessing.
+--hcp_long_msmall               Runs HCP Longitudinal MSMAll preprocessing.
 --hcp_diffusion                 Runs HCP Diffusion weighted image preprocessing.
 --hcp_fmri_volume               Runs HCP BOLD Volume preprocessing.
 --hcp_fmri_surface              Runs HCP BOLD Surface preprocessing.
@@ -49,8 +50,7 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-
-# ---- some definitions
+import concurrent.futures
 import os
 import re
 import os.path
@@ -240,71 +240,81 @@ def getHCPPaths(sinfo, options):
 
     # --- Fieldmap related paths
     d["fieldmap"] = {}
-    if options["hcp_avgrdcmethod"] or options["hcp_bold_dcmethod"]:
-        if (options["hcp_avgrdcmethod"] and (options["hcp_avgrdcmethod"].lower() in [
+    dc = False
+    legacy_dc = False
+    if options["hcp_avgrdcmethod"] is not None:
+        if options["hcp_avgrdcmethod"].lower() in [
             "fieldmap",
             "siemensfieldmap",
             "philipsfieldmap",
             "gehealthcarefieldmap",
-        ])) or (options["hcp_bold_dcmethod"] and (options["hcp_bold_dcmethod"].lower() in [
+        ]:
+            dc = True
+        elif options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap":
+            legacy_dc = True
+    if options["hcp_bold_dcmethod"] is not None:
+        if options["hcp_bold_dcmethod"].lower() in [
             "fieldmap",
             "siemensfieldmap",
             "philipsfieldmap",
-        ])):
-            fmapmag = glob.glob(
-                os.path.join(
-                    d["source"],
-                    "FieldMap*" + options["fmtail"],
-                    sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
-                )
-            )
-            for fmap in fmapmag:
-                fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmap)
-                if fmnum:
-                    fmnum = int(fmnum.group())
-                    if fmnum not in d["fieldmap"]:
-                        d["fieldmap"].update({fmnum: {"magnitude": fmap}})
-                    else:
-                        existing = d["fieldmap"][fmnum]["magnitude"]
-                        d["fieldmap"].update({fmnum: {"magnitude": [fmap, existing]}})
+        ]:
+            dc = True
+        elif options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap":
+            legacy_dc = True
 
-                        # check if too many magnitudes
-                        if len(d["fieldmap"][fmnum]["magnitude"]) > 2:
-                            print("ERROR: Found more than two FM-Magnitude files!")
-                            raise ge.CommandFailed(
-                                options["command_ran"],
-                                "Too many FM-Magnitude files found!",
-                            )
+    if dc:
+        fmapmag = glob.glob(
+            os.path.join(
+                d["source"],
+                "FieldMap*" + options["fmtail"],
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
+            )
+        )
+        for fmap in fmapmag:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", fmap)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                if fmnum not in d["fieldmap"]:
+                    d["fieldmap"].update({fmnum: {"magnitude": fmap}})
+                else:
+                    existing = d["fieldmap"][fmnum]["magnitude"]
+                    d["fieldmap"].update({fmnum: {"magnitude": [fmap, existing]}})
 
-            fmapphase = glob.glob(
-                os.path.join(
-                    d["source"],
-                    "FieldMap*" + options["fmtail"],
-                    sinfo["id"] + options["fmtail"] + "*_FieldMap_Phase.nii.gz",
-                )
+                    # check if too many magnitudes
+                    if len(d["fieldmap"][fmnum]["magnitude"]) > 2:
+                        print("ERROR: Found more than two FM-Magnitude files!")
+                        raise ge.CommandFailed(
+                            options["command_ran"],
+                            "Too many FM-Magnitude files found!",
+                        )
+
+        fmapphase = glob.glob(
+            os.path.join(
+                d["source"],
+                "FieldMap*" + options["fmtail"],
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Phase.nii.gz",
             )
-            for imagepath in fmapphase:
-                fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
-                if fmnum:
-                    fmnum = int(fmnum.group())
-                    if fmnum in d["fieldmap"]:
-                        d["fieldmap"][fmnum].update({"phase": imagepath})
-        elif (
-            (options["hcp_avgrdcmethod"] and (options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap"))
-            or (options["hcp_bold_dcmethod"].lower() and (options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"))
-        ):
-            fmapge = glob.glob(
-                os.path.join(
-                    d["source"],
-                    "FieldMap*" + options["fmtail"],
-                    sinfo["id"] + options["fmtail"] + "*_FieldMap_GE.nii.gz",
-                )
+        )
+        for imagepath in fmapphase:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                if fmnum in d["fieldmap"]:
+                    d["fieldmap"][fmnum].update({"phase": imagepath})
+
+    elif legacy_dc:
+        fmapge = glob.glob(
+            os.path.join(
+                d["source"],
+                "FieldMap*" + options["fmtail"],
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_GE.nii.gz",
             )
-            for imagepath in fmapge:
-                fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
-                if fmnum:
-                    fmnum = int(fmnum.group())
-                    d["fieldmap"].update({fmnum: {"GE": imagepath}})
+        )
+        for imagepath in fmapge:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                d["fieldmap"].update({fmnum: {"GE": imagepath}})
 
     # B1tx/TB1TFL phase and mag
     tb1tlf_magnitude = glob.glob(
@@ -599,7 +609,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             not used.
 
         --hcp_seechospacing (str, default 'NONE'):
-            Echo Spacing or Dwelltime of Spin Echo Field Map or "NONE" if not
+            Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not
             used.
 
         --hcp_sephasepos (str, default ''):
@@ -800,6 +810,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
+        # mandatory check
+        if not options["hcp_avgrdcmethod"]:
+            raise ge.CommandFailed("hcp_pre_freesurfer", "... the hcp_avgrdcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.")
+
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, "hcp_pre_freesurfer")
         doHCPOptionsCheck(options, "hcp_pre_freesurfer")
@@ -912,10 +926,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmphase = ""
         fmcombined = ""
 
-        if not options["hcp_avgrdcmethod"]:
-            r += "\n---> ERROR: The hcp_avgrdcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself."
-            run = False
-        elif options["hcp_avgrdcmethod"].lower() == "topup":
+        if options["hcp_avgrdcmethod"].lower() == "topup":
             try:
                 # -- spin echo settings
                 T1w = [
@@ -2345,6 +2356,39 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+def _get_subjects_from_batch(sinfo, hcp, run):
+    """
+    Get a list of subjects and their sessions from the batch file.
+    """
+    subjects_dict = {}
+    for session in sinfo:
+        if "hcp" not in session:
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (session["id"])
+            )
+            run = False
+
+        if hcp["T1w"] != "NONE":
+            subject = session["subject"]
+            if subject not in subjects_dict:
+                subject_info = {}
+                subject_info["id"] = subject
+                subject_info["hcp"] = [session["hcp"]]
+                subject_info["sessions"] = [session["id"]]
+                subjects_dict[subject] = subject_info
+            else:
+                subjects_dict[subject]["sessions"].append(session["id"])
+                subjects_dict[subject]["hcp"].append(session["hcp"])
+
+    # dict to list
+    subjects_list = []
+    for subject in subjects_dict:
+        subjects_list.append(subjects_dict[subject])
+
+    return run, subjects_list
+
+
 def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_freesurfer [... processing options]``
@@ -2442,7 +2486,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
 
     r = "\n------------------------------------------------------------"
-    r += "\nSessions: %s \n[started on %s]" % (
+    r += "\nSubjects: %s \n[started on %s]" % (
         subjectids,
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     )
@@ -2462,31 +2506,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo[1], options)
 
         # get subjects and their sesssions from the batch file
-        subjects_dict = {}
-        for session in sinfo:
-            if "hcp" not in session:
-                r += (
-                    "\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                    % (session["id"])
-                )
-                run = False
-
-            if hcp["T1w"] != "NONE":
-                subject = session["subject"]
-                if subject not in subjects_dict:
-                    subject_info = {}
-                    subject_info["id"] = subject
-                    subject_info["hcp"] = [session["hcp"]]
-                    subject_info["sessions"] = [session["id"]]
-                    subjects_dict[subject] = subject_info
-                else:
-                    subjects_dict[subject]["sessions"].append(session["id"])
-                    subjects_dict[subject]["hcp"].append(session["hcp"])
-
-        # dict to list
-        subjects_list = []
-        for subject in subjects_dict:
-            subjects_list.append(subjects_dict[subject])
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
 
         # launch
         parsubjects = options["parsubjects"]
@@ -2501,13 +2521,13 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
                 # merge
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
 
         else:  # parallel execution
             # create a multiprocessing Pool
@@ -2526,13 +2546,13 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             for result in results:
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -2926,7 +2946,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
     """
 
     r = "\n------------------------------------------------------------"
-    r += "\nSessions: %s \n[started on %s]" % (
+    r += "\nSubjects: %s \n[started on %s]" % (
         subjectids,
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     )
@@ -2946,31 +2966,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         hcp = getHCPPaths(sinfo[1], options)
 
         # get subjects and their sesssions from the batch file
-        subjects_dict = {}
-        for session in sinfo:
-            if "hcp" not in session:
-                r += (
-                    "\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                    % (session["id"])
-                )
-                run = False
-
-            if hcp["T1w"] != "NONE":
-                subject = session["subject"]
-                if subject not in subjects_dict:
-                    subject_info = {}
-                    subject_info["id"] = subject
-                    subject_info["hcp"] = [session["hcp"]]
-                    subject_info["sessions"] = [session["id"]]
-                    subjects_dict[subject] = subject_info
-                else:
-                    subjects_dict[subject]["sessions"].append(session["id"])
-                    subjects_dict[subject]["hcp"].append(session["hcp"])
-
-        # dict to list
-        subjects_list = []
-        for subject in subjects_dict:
-            subjects_list.append(subjects_dict[subject])
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
 
         # launch
         parsubjects = options["parsubjects"]
@@ -2984,13 +2980,13 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 # merge
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
         else:  # parallel execution
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(parsubjects)
@@ -3003,13 +2999,13 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 r += result["r"]
                 run_report = result["report"]
                 if run_report["done"]:
-                    report["done"].append(run_report["done"])
+                    report["done"].extend(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
+                    report["failed"].extend(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
+                    report["ready"].extend(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+                    report["not ready"].extend(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -3363,8 +3359,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_dwi_echospacing (str, default detailed below):
-            Echo Spacing or Dwelltime of DWI images in s. Default is image
-            specific.
+            Echo Spacing of DWI images in s. By default, QuNex will try to get
+            this value from the imaging data.
 
         --use_sequence_info (str, default 'all'):
             A pipe, comma or space separated list of inline sequence
@@ -3518,25 +3514,27 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Below is a detailed specification about how QuNex parameters are
             mapped onto the HCP Pipelines parameters.
 
-            ======================== ======================================
-            QuNex parameter          HCPpipelines parameter
-            ======================== ======================================
-            ``hcp_dwi_phasepos``     ``posData``, ``negData`` and ``PEdir``
-            ``hcp_dwi_echospacing``  ``echospacing``
-            ``hcp_dwi_gdcoeffs``     ``gdcoeffs``
-            ``hcp_dwi_dof``          ``dof``
-            ``hcp_dwi_b0maxbval``    ``b0maxbval``
-            ``hcp_dwi_combinedata``  ``combinedataflag``
-            ``hcp_printcom``         ``printcom``
-            ``hcp_dwi_extraeddyarg`` ``extra-eddy-arg``
-            ``hcp_dwi_name``         ``dwiname``
-            ``hcp_dwi_selectbestb0`` ``select-best-b0``
-            ``hcp_dwi_topupconfig``  ``topup-config-file``
-            ``hcp_dwi_even_slices``  ``ensure-even-slices``
-            ``hcp_dwi_posdata``      ``posData``
-            ``hcp_dwi_negdata``      ``negData``
-            ``hcp_nogpu``            ``gpu``
-            ======================== ======================================
+            ============================= ======================================
+            QuNex parameter               HCPpipelines parameter
+            ============================= ======================================
+            ``hcp_dwi_phasepos``          ``posData``, ``negData`` and ``PEdir``
+            ``hcp_dwi_echospacing``       ``echospacing``
+            ``hcp_dwi_gdcoeffs``          ``gdcoeffs``
+            ``hcp_dwi_dof``               ``dof``
+            ``hcp_dwi_b0maxbval``         ``b0maxbval``
+            ``hcp_dwi_combinedata``       ``combinedataflag``
+            ``hcp_printcom``              ``printcom``
+            ``hcp_dwi_extraeddyarg``      ``extra-eddy-arg``
+            ``hcp_dwi_name``              ``dwiname``
+            ``hcp_dwi_selectbestb0``      ``select-best-b0``
+            ``hcp_dwi_topupconfig``       ``topup-config-file``
+            ``hcp_dwi_even_slices``       ``ensure-even-slices``
+            ``hcp_dwi_posdata``           ``posData``
+            ``hcp_dwi_negdata``           ``negData``
+            ``hcp_nogpu``                 ``gpu``
+            ``hcp_longitudinal_template`` ``longitudinal-template``
+            ``longitudinal``              ``is-longitudinal``
+            ============================= ======================================
 
         Use:
             Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion
@@ -3789,19 +3787,20 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 r += message
 
             # -- check echospacing
-            echospacing_mili = float(echospacing) * 1000
             if not echospacing:
                 r += "\n---> ERROR: QuNex was unable to acquire echospacing from the data and the parameter is not set!"
                 run = False
 
-        # longitudinal mode
+        # path
         path = sinfo["hcp"]
+
+        # longitudinal mode
         if options["longitudinal"]:
             studyfolder = gc.deduceFolders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 run = False
-            # replace path (elements[0])
+            # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])
 
         # --- build the command
@@ -3947,7 +3946,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                r, endlog, report, failed = pc.runExternalForFile(
+                r, _, report, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running HCP Diffusion Preprocessing",
@@ -4128,7 +4127,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             for BOLD working folders and results.
 
         --hcp_bold_echospacing (float):
-            Echo Spacing or Dwelltime of BOLD images.
+            Echo Spacing of BOLD images in seconds.
 
         --hcp_bold_sbref (str, default 'NONE'):
             Whether BOLD Reference images should be used - NONE or USE.
@@ -4190,6 +4189,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_bold_slicetimingfile (str, default 'FALSE'):
             Whether to use custom slice timing file 'TRUE' or 'FALSE'.
+            You can prepare these files manually or you can use the
+            functinality witin the setup_hcp command. The file will be then used
+            for the --tcustom parameter of FSL slicetimer. The file should be
+            located in the BOLD folder, using the same name, but with the
+            `_slicetimer.txt` suffix.
 
         --hcp_bold_slicetimerparams (str, default ''):
             A comma or pipe separated string of parameters for FSL slicetimer.
@@ -4500,6 +4504,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``wb-resample``               ``hcp_wb_resample``
             ``echoTE``                    ``hcp_echo_te``
             ``matlab-run-mode``           ``hcp_matlab_mode``
+            ``hcp_longitudinal_template`` ``longitudinal-template``
+            ``longitudinal``              ``is-longitudinal``
             ============================= =======================
 
     Examples:
@@ -4570,6 +4576,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     }
 
     try:
+        # mandatory check
+        if not options["hcp_bold_dcmethod"]:
+            raise ge.CommandFailed("hcp_fmri_volume", "... the hcp_bold_dcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.")
+
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, "hcp_fmri_volume")
         doHCPOptionsCheck(options, "hcp_fmri_volume")
@@ -4644,10 +4654,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             r += f"\n---> ERROR: invalid value for the hcp_bold_biascorrection parameter {options['hcp_bold_biascorrection']}!"
             run = False
 
-        if not options["hcp_bold_dcmethod"]:
-            r += "\n---> ERROR: The hcp_bold_dcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself."
-            run = False
-        elif options["hcp_bold_dcmethod"].lower() not in [
+        if options["hcp_bold_dcmethod"].lower() not in [
             "topup",
             "fieldmap",
             "siemensfieldmap",
@@ -4971,15 +4978,17 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     futureref = "NONE"
 
             # --- check for Siemens double TE-fieldmap image
-            elif options[
-                "hcp_bold_biascorrection"
-            ].lower() != "sebased" and options["hcp_bold_dcmethod"].lower() in [
+            elif options["hcp_bold_biascorrection"].lower() != "sebased" and options[
+                "hcp_bold_dcmethod"
+            ].lower() in [
                 "fieldmap",
                 "siemensfieldmap",
             ]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5018,8 +5027,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["phase"],
-                            "\n     ... Siemens fieldmap phase image %d present "
-                            % (i),
+                            "\n     ... Siemens fieldmap phase image %d present " % (i),
                             "\n     ... ERROR: Siemens fieldmap phase image %d missing!"
                             % (i),
                             status=fieldok,
@@ -5042,9 +5050,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             "FieldMap%s%s" % (fmnum, options["fctail"]),
                         )
 
-                        fmap_json = glob.glob(
-                            os.path.join(fmfolder, "*Phase.json")
-                        )[0]
+                        fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
                         json_sidecar = os.path.join(fmfolder, fmap_json)
 
                         if os.path.exists(json_sidecar):
@@ -5061,9 +5067,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                     )
                                     # from s to ms
                                     echodiff = echodiff * 1000
-                                    options["hcp_bold_echodiff"] = (
-                                        f"{echodiff:.10f}"
-                                    )
+                                    options["hcp_bold_echodiff"] = f"{echodiff:.10f}"
                                     r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
                         else:
                             r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
@@ -5085,12 +5089,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- check for GE legacy fieldmap image
             elif (
                 options["hcp_bold_biascorrection"].lower() != "sebased"
-                and options["hcp_bold_dcmethod"].lower()
-                == "gehealthcarelegacyfieldmap"
+                and options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap"
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5116,7 +5121,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5124,8 +5131,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["magnitude"],
-                            "\n     ... GE fieldmap magnitude image %d present "
-                            % (i),
+                            "\n     ... GE fieldmap magnitude image %d present " % (i),
                             "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
                             % (i),
                             status=fieldok,
@@ -5157,7 +5163,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    r += (
+                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                    )
                     run = False
                 else:
                     fieldok = True
@@ -5174,8 +5182,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         r, fieldok = pc.checkForFile2(
                             r,
                             hcp["fieldmap"][i]["phase"],
-                            "\n     ... Philips fieldmap phase image %d present "
-                            % (i),
+                            "\n     ... Philips fieldmap phase image %d present " % (i),
                             "\n     ... ERROR: Philips fieldmap phase image %d missing!"
                             % (i),
                             status=fieldok,
@@ -5721,7 +5728,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     tfile,
                     comm,
                     "Running HCP fMRIVolume",
@@ -5803,7 +5810,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --parelements (int, default 1):
-            How many elements (e.g.bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
 
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
@@ -5890,16 +5897,18 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         hcp_fmri_surface parameter mapping:
 
-            ======================== =======================
-            QuNex parameter          HCPpipelines parameter
-            ======================== =======================
-            ``hcp_lowresmesh``       ``lowresmesh``
-            ``hcp_bold_res``         ``fmrires``
-            ``hcp_bold_smoothFWHM``  ``smoothingFWHM``
-            ``hcp_grayordinatesres`` ``grayordinatesres``
-            ``hcp_regname``          ``regname``
-            ``hcp_printcom``         ``printcom``
-            ======================== =======================
+            ============================= =======================
+            QuNex parameter               HCPpipelines parameter
+            ============================= =======================
+            ``hcp_lowresmesh``            ``lowresmesh``
+            ``hcp_bold_res``              ``fmrires``
+            ``hcp_bold_smoothFWHM``       ``smoothingFWHM``
+            ``hcp_grayordinatesres``      ``grayordinatesres``
+            ``hcp_regname``               ``regname``
+            ``hcp_printcom``              ``printcom``
+            ``hcp_longitudinal_template`` ``longitudinal-template``
+            ``longitudinal``              ``is-longitudinal``
+            ============================= =======================
 
     Examples:
         Example run from the base study folder with ``--test`` flag. Here
@@ -6113,6 +6122,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             + " "
         )
 
+        # path and session
         path = sinfo["hcp"]
         session = sinfo["id"] + options["hcp_suffix"]
 
@@ -6121,8 +6131,8 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             studyfolder = gc.deduceFolders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
-                run = False
-            # replace path (elements[0])
+                boldok = False
+            # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])
             session = f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
 
@@ -6543,12 +6553,14 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             default value for single-run HCP ICAFix is [TRUE], while the
             default for multi-run HCP ICAFix is [FALSE].
 
-        --hcp_icafix_traindata (str, default detailed below):
-            Which file to use for training data. You can provide a full path to
-            a file or just a filename if the file is in the
-            ${FSL_FIXDIR}/training_files folder. [HCP_hp<high-pass>.RData] for
-            single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData]
-            for multi-run HCP ICAFix.
+        --hcp_icafix_model (str, default detailed below):
+            Which model to use for classification. Can be one of the pre-trained
+            models shpipped with FSL or a custom model as `somefile.RData`,
+            `somefile.pyfix_model`, or a pyfix built-in model without extension.
+            You can provide a full path to a file or just a filename if the file
+            is in the ${FSL_FIXDIR}/training_files folder.
+            [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and
+            [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.
 
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.
@@ -6628,7 +6640,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ================================== =======================
             ``hcp_icafix_highpass``            ``high-pass``
             ``hcp_icafix_domotionreg``         ``motion-regression``
-            ``hcp_icafix_traindata``           ``training-file``
+            ``hcp_icafix_model``               ``training-file``
             ``hcp_icafix_threshold``           ``fix-threshold``
             ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
@@ -6842,7 +6854,6 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
 
 def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
-
     printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
 
     # prepare return variables
@@ -6920,8 +6931,8 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
                 ),
                 "trainingdata": (
                     f"HCP_hp{bandpass}.RData"
-                    if options["hcp_icafix_traindata"] is None
-                    else options["hcp_icafix_traindata"]
+                    if options["hcp_icafix_model"] is None
+                    else options["hcp_icafix_model"]
                 ),
                 "fixthreshold": icafix_threshold,
                 "deleteintermediates": delete_intermediates,
@@ -7116,9 +7127,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 % options["hcp_icafix_domotionreg"]
             )
 
-        if options["hcp_icafix_traindata"] is not None:
+        if options["hcp_icafix_model"] is not None:
             comm += (
-                '             --training-file="%s"' % options["hcp_icafix_traindata"]
+                '             --training-file="%s"' % options["hcp_icafix_model"]
             )
 
         if options["hcp_icafix_threshold"] is not None:
@@ -7780,7 +7791,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
     return {"r": r, "report": report}
 
 
-def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
+def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_reapply_fix [... processing options]``
 
@@ -7809,7 +7820,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --parelements (int, default 1):
-            How many elements (e.g.bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -7905,6 +7916,8 @@ def hcp_reapply_fix(sinfo, options, overwrite=False, thread=0):
             ``hcp_clean_substring``            ``clean-substring``
             ``hcp_config``                     ``config``
             ``hcp_icafix_processingmode``      ``processing-mode``
+            ``hcp_longitudinal_template``      ``longitudinal-template``
+            ``longitudinal``                   ``is-longitudinal``
             ================================== =======================
 
     Examples:
@@ -8329,7 +8342,9 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
 
         # run HCP hand reclassification if not longitudinal
         if not options["longitudinal"]:
-            r += "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
+            r += (
+                "\n---> Executing HCP Hand reclassification for group: %s\n" % groupname
+            )
             result = executeHCPHandReclassification(
                 sinfo, options, hcp, run, False, groupname, groupname
             )
@@ -8374,7 +8389,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 else options["hcp_icafix_highpass"]
             )
 
-            # path and session
+            # path
             path = sinfo["hcp"]
 
             # longitudinal
@@ -8382,8 +8397,8 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 studyfolder = gc.deduceFolders(options)["basefolder"]
                 if not studyfolder:
                     r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
-                    run = False
-                # replace path (elements[0])
+                    groupok = False
+                # replace path
                 path = os.path.join(studyfolder, "subjects", sinfo["subject"])
 
             comm = (
@@ -8482,7 +8497,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                     if options["longitudinal"]:
                         logtags.append("long")
 
-                    r, endlog, _, failed = pc.runExternalForFile(
+                    r, _, _, failed = pc.runExternalForFile(
                         tfile,
                         comm,
                         "Running multi-run HCP ReApplyFix",
@@ -8686,53 +8701,60 @@ def executeHCPHandReclassification(
 
 def parse_msmall_bolds(options, bolds, r):
     # parse the same way as with icafix first
-    single_run, hcp_bolds, icafix_groups, pars_ok, r = parse_icafix_bolds(
+    single_run, _, icafix_groups, pars_ok, r = parse_icafix_bolds(
         options, bolds, r, True
     )
 
-    # extract the first one
-    icafix_group = icafix_groups[0]
+    msmall_groups = []
 
-    # if more than one group print a WARNING
-    if len(icafix_groups) > 1:
-        # extract the first group
-        r += f"\n---> WARNING: multiple groups provided in hcp_icafix_bolds, running MSMAll by using only the first one [{icafix_group['name']}]!"
+    for icafix_group in icafix_groups:
+        # validate that msmall bolds is a subset of icafixGroups
+        if options["hcp_msmall_bolds"] is not None:
+            msmall_bolds = options["hcp_msmall_bolds"].split(",")
+            hcp_msmall_bolds = []
 
-    # validate that msmall bolds is a subset of icafixGroups
-    if options["hcp_msmall_bolds"] is not None:
-        msmall_bolds = options["hcp_msmall_bolds"].split(",")
-        hcp_msmall_bolds = []
-        for mb in msmall_bolds:
-            hmb = mb
-            # if we are not providing filenames as bolds
-            for b in bolds:
-                # are we providing names from batch file or a tag
-                if mb == b[1] or mb == b[2]:
-                    if "filename" in b[3]:
-                        hmb = b[3]["filename"]
-                    else:
-                        hmb = f"BOLD_{b[0]}"
+            for mb in msmall_bolds:
+                hmb = None
+                for b in bolds:
+                    # does the name match?
+                    if "filename" in b and mb == b["filename"]:
+                        hmb = b["filename"]
+                        break
+                    # does the number match?
+                    if "bold_number" in b and mb == b["bold_number"]:
+                        hmb = f"BOLD_{b}"
+                        break
+                    # does the tag match?
+                    if "task" in b and mb == b["task"]:
+                        if "filename" in b:
+                            hmb = b["filename"]
+                            break
+                        else:
+                            hmb = f"BOLD_{b[0]}"
+                            break
 
+                if hmb is None:
+                    r += f"\n---> ERROR: bold {mb} used in hcp_msmall_bolds but not found in hcp_icafix_bolds!"
+                    pars_ok = False
+                    break
+                else:
                     if hmb not in hcp_msmall_bolds:
                         hcp_msmall_bolds.append(hmb)
 
-        for hmb in hcp_msmall_bolds:
-            if hmb not in hcp_bolds and hmb.replace("BOLD_", "") not in hcp_bolds:
-                r += f"\n---> ERROR: bold {hmb} %s used in hcp_msmall_bolds but not found in hcp_icafix_bolds!"
-                pars_ok = False
+            icafix_group["msmall_bolds"] = hcp_msmall_bolds
+        else:
+            msmall_bolds = []
+            for bold in icafix_group["bolds"]:
+                if "filename" in bold:
+                    msmall_bolds.append(bold["filename"])
+                else:
+                    msmall_bolds.append(f"{bold['bold_number']}")
 
-        icafix_group["msmall_bolds"] = hcp_msmall_bolds
-    else:
-        msmall_bolds = []
-        for bold in icafix_group["bolds"]:
-            if "filename" in bold:
-                msmall_bolds.append(bold["filename"])
-            else:
-                msmall_bolds.append(f"{bold['bold_number']}")
+            icafix_group["msmall_bolds"] = msmall_bolds
 
-        icafix_group["msmall_bolds"] = msmall_bolds
+        msmall_groups.append(icafix_group)
 
-    return (single_run, icafix_group, pars_ok, r)
+    return (msmall_groups, single_run, pars_ok, r)
 
 
 def hcp_msmall(sinfo, options, overwrite=True, thread=0):
@@ -8762,6 +8784,9 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
+        --parelements (int, default 1):
+            How many elements (e.g. msmall groups) to run in parallel.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -8872,19 +8897,20 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
         hcp_msmall parameter mapping:
 
-            =========================== =======================
-            QuNex parameter             HCPpipelines parameter
-            =========================== =======================
-            ``hcp_msmall_outfmriname``  ``output-fmri-name``
-            ``hcp_icafix_highpass``     ``high-pass``
-            ``hcp_msmall_templates``    ``msm-all-templates``
-            ``hcp_msmall_outregname``   ``output-registration-name``
-            ``hcp_hiresmesh``           ``high-res-mesh``
-            ``hcp_lowresmesh``          ``low-res-mesh``
-            ``hcp_regname``             ``input-registration-name``
-            ``hcp_matlab_mode``         ``matlab-run-mode``
-            ``hcp_msmall_procstring``   ``fmri-proc-string``
-            =========================== =======================
+            ============================ ============================
+            QuNex parameter              HCPpipelines parameter
+            ============================ ============================
+            ``hcp_msmall_outfmriname``   ``output-fmri-name``
+            ``hcp_icafix_highpass``      ``high-pass``
+            ``hcp_msmall_templates``     ``msm-all-templates``
+            ``hcp_msmall_outregname``    ``output-registration-name``
+            ``hcp_hiresmesh``            ``high-res-mesh``
+            ``hcp_lowresmesh``           ``low-res-mesh``
+            ``hcp_regname``              ``input-registration-name``
+            ``hcp_matlab_mode``          ``matlab-run-mode``
+            ``hcp_msmall_procstring``    ``fmri-proc-string``
+            ``hcp_msmall_myelin_target`` ``myelin-target-file``
+            ============================ ============================
 
     Examples:
         HCP MSMAll after application of single-run ICAFix::
@@ -8937,33 +8963,45 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        singleRun, msmallGroup, pars_ok, r = parse_msmall_bolds(options, bolds, r)
+        msmall_groups, single_run, pars_ok, r = parse_msmall_bolds(options, bolds, r)
+
         if not pars_ok:
             raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")
 
+        # execute in parallel use parelements
+        parelements = max(1, min(options["parelements"], len(msmall_groups)))
+
+        if parelements > 1:
+            r += "\n\n%s %d ICAFix groups in parallel" % (
+                pc.action("Processing", options["run"]),
+                parelements,
+            )
+
+        # --- Execute
+        # create a multiprocessing Pool
+        ppe = ProcessPoolExecutor(parelements)
+
         # --- Execute
         # single-run
-        if singleRun:
-            # process
-            result = executeHCPSingleMSMAll(sinfo, options, hcp, run, msmallGroup)
+        if single_run:
+            f = partial(executeHCPSingleMSMAll, sinfo, options, hcp, run)
         # multi-run
         else:
-            # process
-            result = executeHCPMultiMSMAll(sinfo, options, hcp, run, msmallGroup)
+            f = partial(executeHCPMultiMSMAll, sinfo, options, hcp, run)
+        results = ppe.map(f, msmall_groups)
 
-        # merge r
-        r += result["r"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            temp_report = result["report"]
+            report["done"] += temp_report["done"]
+            report["failed"] += temp_report["failed"]
+            report["incomplete"] += temp_report["incomplete"]
+            report["ready"] += temp_report["ready"]
+            report["not ready"] += temp_report["not ready"]
+            report["skipped"] += temp_report["skipped"]
 
-        # merge report
-        tempReport = result["report"]
-        report["done"] += tempReport["done"]
-        report["incomplete"] += tempReport["incomplete"]
-        report["failed"] += tempReport["failed"]
-        report["ready"] += tempReport["ready"]
-        report["not ready"] += tempReport["not ready"]
-        report["skipped"] += tempReport["skipped"]
-
-        # if all ok execute DeDrifAndResample if enabled
+        # if all ok execute DeDriftAndResample if enabled
         if options["hcp_msmall_resample"]:
             if (
                 report["incomplete"] == []
@@ -8971,18 +9009,23 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
                 and report["not ready"] == []
             ):
                 # single-run
-                if singleRun:
-                    result = executeHCPSingleDeDriftAndResample(
-                        sinfo, options, hcp, run, msmallGroup
-                    )
+                if single_run:
+                    f = partial(executeHCPSingleDeDriftAndResample, sinfo, options, hcp, run)
                 # multi-run
                 else:
-                    result = executeHCPMultiDeDriftAndResample(
-                        sinfo, options, hcp, run, [msmallGroup]
-                    )
+                    f = partial(executeHCPMultiDeDriftAndResample, sinfo, options, hcp, run)
+                results = ppe.map(f, msmall_groups)
 
-                r += result["r"]
-                report = result["report"]
+                # merge r and report
+                for result in results:
+                    r += result["r"]
+                    temp_report = result["report"]
+                    report["done"] += temp_report["done"]
+                    report["failed"] += temp_report["failed"]
+                    report["incomplete"] += temp_report["incomplete"]
+                    report["ready"] += temp_report["ready"]
+                    report["not ready"] += temp_report["not ready"]
+                    report["skipped"] += temp_report["skipped"]
 
         # report
         rep = []
@@ -9002,7 +9045,6 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             "\n     ".join(e.report),
         )
         report = (sinfo["id"], "HCP MSMAll failed")
-        failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo["id"], "HCP MSMAll failed")
@@ -9120,7 +9162,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                boldsok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -9137,7 +9179,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         comm = (
             '%(script)s \
             --path="%(path)s" \
-            --subject="%(subject)s" \
+            --session="%(session)s" \
             --fmri-names-list="%(msmallBolds)s" \
             --multirun-fix-names="" \
             --multirun-fix-concat-name="" \
@@ -9155,7 +9197,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "subject": sinfo["id"] + options["hcp_suffix"],
+                "session": session,
                 "msmallBolds": msmallBolds,
                 "outfmriname": outfmriname,
                 "highpass": highpass,
@@ -9336,7 +9378,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                boldok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -9356,7 +9398,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         comm = (
             '%(script)s \
             --path="%(path)s" \
-            --subject="%(subject)s" \
+            --session="%(session)s" \
             --fmri-names-list="" \
             --multirun-fix-names="%(fixnames)s" \
             --multirun-fix-concat-name="%(concatname)s" \
@@ -9374,7 +9416,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "subject": sinfo["id"] + options["hcp_suffix"],
+                "session": sinfo["id"] + options["hcp_suffix"],
                 "fixnames": boldtargets,
                 "concatname": groupname,
                 "fixnamestouse": fixnamestouse,
@@ -9401,7 +9443,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP MSMAll",
@@ -9451,6 +9493,548 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             traceback.format_exc(),
         )
         report["failed"].append(groupname)
+
+    return {"r": r, "report": report}
+
+
+def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
+    """
+    ``hcp_long_msmall [... processing options]``
+
+    ``hcp_lmsm [... processing options]``
+
+    Runs the HCP Longitudinal MSMAll Pipeline
+    (MSMAllPipeline.sh with the longitudinal setup).
+
+    Warning:
+        The code expects the input images to be named and present in the QuNex
+        folder structure. The function will look into folder::
+
+            <session id>/hcp/<session id>
+
+        for files::
+
+            MNINonLinear/Results/<boldname>/
+            <boldname>_<hcp_cifti_tail>_hp<hcp_highpass>_clean.dtseries.nii
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_icafix_bolds (str, default ''):
+            List of bolds on which ICAFix was applied, with the same format
+            as for ICAFix. Typically, this should be identical to the list
+            used in the ICAFix run. If multi-run ICAFix was run with two or
+            more groups then HCP MSMAll will be executed over the first
+            specified group (and the scans listed for hcp_msmall_bolds must
+            be limited to scans in the first concatenation group as well).
+            If not provided MSMAll will assume multi-run ICAFix was executed
+            with all bolds bundled together in a single concatenation called
+            fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
+
+        --hcp_msmall_bolds (str, default detailed below):
+            A comma separated list that defines the bolds that will be used
+            in the computation of the MSMAll registration. Typically, this
+            should be limited to resting-state scans. Specified bolds have
+            to be a subset of bolds used from the hcp_icafix_bolds parameter
+            [if not specified all bolds specified in hcp_icafix_bolds will
+            be used, which is probably NOT what you want to do if
+            hcp_icafix_bolds includes non-resting-state scans].
+
+        --hcp_icafix_highpass (int, default detailed below):
+            Value for the highpass filter, [0] for multi-run HCP ICAFix and
+            [2000] for single-run HCP ICAFix. Should be identical to the value
+            used for ICAFix.
+
+        --hcp_msmall_outfmriname (str, default 'rfMRI_REST'):
+            The name which will be given to the concatenation of scans specified
+            by the hcp_msmall_bold parameter.
+
+        --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):
+            Path to directory containing MSMAll template files.
+
+        --hcp_msmall_outregname (str, default 'MSMAll_InitialReg'):
+            Output registration name.
+
+        --hcp_hiresmesh (int, default 164):
+            High resolution mesh node count.
+
+        --hcp_lowresmesh (int, default 32):
+            Low resolution mesh node count.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            Input registration name.
+
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'compiled' will be used, outside
+            'interpreted' is the default.
+
+        --hcp_msmall_procstring (str, default <hcp_cifti_tail>_hp<hcp_highpass>_clean):
+            Identification for FIX cleaned dtseries to use.
+
+        --hcp_msmall_myelin_target (str, default 'Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii'):
+            Myelin map target, will use
+            Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii
+            by default.
+
+    Output files:
+        The results of this step will be generated and populated in the
+        MNINonLinear folder inside the same sessions's root hcp folder.
+
+    Notes:
+        Runs the longitudinal MSMAll step of the HCP Pipeline. This function
+        executes two steps, it first runs longitudinal MSMAll and if it
+        completes successfully it then executes the DeDriftAndResample step.
+
+        The MSMAll step computes the MSMAll registration based on
+        resting-state connectivity, resting-state topography, and myelin-map
+        architecture. The DeDriftAndResample step applies the MSMAll
+        registration to a specified set of maps and fMRI runs.
+
+        MSMAll is intended for use with fMRI runs cleaned with hcp_icafix.
+        Except for specialized/expert-user situations, the hcp_icafix_bolds
+        parameter should be identical to what was used in hcp_icafix. If
+        hcp_icafix_bolds is not provided MSMAll/DeDriftAndResample will
+        assume multi-run ICAFix was executed with all bolds bundled
+        together in a single concatenation called fMRI_CONCAT_ALL. (This is
+        the default behavior if hcp_icafix_bolds parameter is not provided
+        in the case of hcp_icafix).
+
+        A key parameter in hcp_msmall is `hcp_msmall_bolds`, which controls
+        the fMRI runs that enter into the computation of the MSMAll
+        registration. Since MSMAll registration was designed to be computed
+        from resting-state scans, this should be a list of the resting-state
+        fMRI scans that you want to contribute to the computation of the
+        MSMAll registration.
+
+        However, it is perfectly fine to apply the MSMAll registration to
+        task fMRI scans in the DeDriftAndResample step. The fMRI scans to
+        which the MSMAll registration is applied are controlled by the
+        `hcp_icafix_bolds` parameter, since typically one wants to apply the
+        MSMAll registration to the same full set of fMRI scans that were
+        cleaned using hcp_icafix.
+
+        hcp_msmall parameter mapping:
+
+            ============================= ============================
+            QuNex parameter               HCPpipelines parameter
+            ============================= ============================
+            ``hcp_msmall_outfmriname``    ``output-fmri-name``
+            ``hcp_icafix_highpass``       ``high-pass``
+            ``hcp_msmall_templates``      ``msm-all-templates``
+            ``hcp_msmall_outregname``     ``output-registration-name``
+            ``hcp_hiresmesh``             ``high-res-mesh``
+            ``hcp_lowresmesh``            ``low-res-mesh``
+            ``hcp_regname``               ``input-registration-name``
+            ``hcp_matlab_mode``           ``matlab-run-mode``
+            ``hcp_msmall_procstring``     ``fmri-proc-string``
+            ``hcp_longitudinal_template`` ``longitudinal-template``
+            ``hcp_msmall_myelin_target``  ``myelin-target-file``
+            ============================= ============================
+
+    Examples:
+            qunex hcp_long_msmall \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
+                --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
+                --hcp_msmall_bolds="REST_1,REST_2" \\
+                --hcp_longitudinal_template="<template_id>"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSubjects: %s \n[started on %s]" % (
+        subjectids,
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP Longitudnal MSMAll Pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    failed = 0
+
+    try:
+        # checks
+        pc.doOptionsCheck(options, sinfo[1], "hcp_long_msmall")
+        doHCPOptionsCheck(options, "hcp_long_msmall")
+        hcp = getHCPPaths(sinfo[1], options)
+
+        # get subjects and their sesssions from the batch file
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
+
+        # launch
+        parsubjects = options["parsubjects"]
+
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(
+            _execute_hcp_long_msmall,
+            sinfo,
+            options,
+            run,
+            hcp,
+        )
+        results = processPoolExecutor.map(f, subjects_list)
+
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].extend(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].extend(run_report["failed"])
+                failed = 1
+            if run_report["ready"]:
+                report["ready"].extend(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].extend(run_report["not ready"])
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        report = "Error"
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        report = "Error"
+        failed = 1
+
+    r += (
+        "\n\nHCP Longitudinal MSMAll Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (subjectids, report, failed))
+
+def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
+    # prepare return variables
+    r = ""
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+
+    # get subject data
+    subject_id = subject["id"]
+    sessions_list = subject["sessions"]
+    sessions_long = []
+    for session in sessions_list:
+        sessions_long.append(f"{session}{options['hcp_suffix']}")
+
+    # --- Get sorted bold numbers and bold data
+    sinfo = None
+    for si in sinfos:
+        if si["subject"] == subject_id:
+            sinfo = si
+            break
+    if not sinfo:
+        raise ge.CommandFailed("hcp_long_msmall", f"Subject {subject} not found in the batch file!")
+    bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+    _build_skipped_report(report, bskip, options)
+
+    # --- Parse msmall_bolds
+    msmall_groups, _, pars_ok, r = parse_msmall_bolds(options, bolds, r)
+
+    if not pars_ok:
+        raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")
+
+    if run:
+        for group in msmall_groups:
+            try:
+                # get group data
+                groupname = group["name"]
+                bolds = group["bolds"]
+
+                # outfmriname
+                outfmriname = options["hcp_msmall_outfmriname"]
+
+                r += "\n\n------------------------------------------------------------"
+                r += "\n---> %s MSMAll %s" % (
+                    pc.action("Processing", options["run"]),
+                    outfmriname,
+                )
+
+                # --- check for bold images and prepare targets parameter
+                boldtargets = ""
+
+                # highpass
+                highpass = (
+                    0
+                    if options["hcp_icafix_highpass"] is None
+                    else options["hcp_icafix_highpass"]
+                )
+
+                # fmriprocstring
+                fmriprocstring = "%s_hp%s_clean" % (options["hcp_cifti_tail"], str(highpass))
+                if options["hcp_msmall_procstring"] is not None:
+                    fmriprocstring = options["hcp_msmall_procstring"]
+
+                # check if files for all bolds exist
+                for boldinfo in bolds:
+                    # set ok to true for now
+                    boldok = True
+
+                    _, boldtarget, _ = _get_bold_names(boldinfo, options)
+
+                    # input file check
+                    boldimg = os.path.join(
+                        hcp["hcp_nonlin"],
+                        "Results",
+                        boldtarget,
+                        "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
+                    )
+                    r, boldok = pc.checkForFile2(
+                        r,
+                        boldimg,
+                        "\n     ... bold image %s present" % boldtarget,
+                        "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                        status=boldok,
+                    )
+
+                    if not boldok:
+                        break
+                    else:
+                        # add @ separator
+                        if boldtargets != "":
+                            boldtargets = boldtargets + "@"
+
+                        # add latest image
+                        boldtargets = boldtargets + boldtarget
+
+                if boldok:
+                    # check if group file exists
+                    groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+                    groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
+                    r, boldok = pc.checkForFile2(
+                        r,
+                        groupimg,
+                        "\n     ... ICA %s present" % groupname,
+                        "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+                        status=boldok,
+                    )
+
+                if options["hcp_msmall_templates"] is None:
+                    msmalltemplates = os.path.join(
+                        hcp["hcp_base"], "global", "templates", "MSMAll"
+                    )
+                else:
+                    msmalltemplates = options["hcp_msmall_templates"]
+
+                if options["hcp_msmall_myelin_target"] is None:
+                    myelintarget = os.path.join(
+                        msmalltemplates,
+                        "Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii",
+                    )
+                else:
+                    myelintarget = options["hcp_msmall_myelin_target"]
+
+                # matlab run mode, compiled=0, interpreted=1, octave=2
+                if options["hcp_matlab_mode"] is None:
+                    if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                        r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                        boldok = False
+                    else:
+                        matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
+                else:
+                    if options["hcp_matlab_mode"] == "compiled":
+                        matlabrunmode = "0"
+                    elif options["hcp_matlab_mode"] == "interpreted":
+                        matlabrunmode = "1"
+                    elif options["hcp_matlab_mode"] == "octave":
+                        matlabrunmode = "2"
+                    else:
+                        r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                        boldok = False
+
+                # fix names to use
+                fixnamestouse = "@".join(group["msmall_bolds"])
+
+                studyfolder = gc.deduceFolders(options)["basefolder"]
+                if not studyfolder:
+                    r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                    boldok = False
+                # replace path
+                path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+
+                comm = (
+                    '%(script)s \
+                    --path="%(path)s" \
+                    --session="%(subject)s" \
+                    --fmri-names-list="" \
+                    --multirun-fix-names="%(fixnames)s" \
+                    --multirun-fix-concat-name="%(concatname)s" \
+                    --multirun-fix-names-to-use="%(fixnamestouse)s" \
+                    --output-fmri-name="%(outfmriname)s" \
+                    --high-pass="%(highpass)s" \
+                    --fmri-proc-string="%(fmriprocstring)s" \
+                    --msm-all-templates="%(msmalltemplates)s" \
+                    --output-registration-name="%(outregname)s" \
+                    --high-res-mesh="%(highresmesh)s" \
+                    --low-res-mesh="%(lowresmesh)s" \
+                    --input-registration-name="%(inregname)s" \
+                    --myelin-target-file="%(myelintarget)s" \
+                    --matlab-run-mode="%(matlabrunmode)s" \
+                    --subject-long="%(subject)s" \
+                    --sessions-long="%(sessionslong)s" \
+                    --template-long="%(templatelong)s" \
+                    --is-longitudinal="TRUE"'
+                    % {
+                        "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
+                        "path": path,
+                        "subject": subject_id,
+                        "fixnames": boldtargets,
+                        "concatname": groupname,
+                        "fixnamestouse": fixnamestouse,
+                        "outfmriname": outfmriname,
+                        "highpass": highpass,
+                        "fmriprocstring": fmriprocstring,
+                        "msmalltemplates": msmalltemplates,
+                        "outregname": options["hcp_msmall_outregname"],
+                        "highresmesh": options["hcp_hiresmesh"],
+                        "lowresmesh": options["hcp_lowresmesh"],
+                        "inregname": options["hcp_regname"],
+                        "myelintarget": myelintarget,
+                        "matlabrunmode": matlabrunmode,
+                        "sessionslong": "@".join(sessions_long),
+                        "templatelong": options['hcp_longitudinal_template'],
+                    }
+                )
+
+                # -- Report command
+                if boldok:
+                    r += "\n\n------------------------------------------------------------\n"
+                    r += "Running HCP Pipelines command via QuNex:\n\n"
+                    r += comm.replace("--", "\n    --").replace("             ", "")
+                    r += "\n------------------------------------------------------------\n"
+
+                # -- Run
+                if run and boldok:
+                    if options["run"] == "run":
+                        r, _, _, failed = pc.runExternalForFile(
+                            None,
+                            comm,
+                            "Running HCP MSMAll",
+                            overwrite=True,
+                            thread=subject_id,
+                            remove=options["log"] == "remove",
+                            task=options["command_ran"],
+                            logfolder=options["comlogs"],
+                            logtags=[options["logtag"], groupname],
+                            fullTest=None,
+                            shell=True,
+                            r=r,
+                        )
+
+                        if failed:
+                            report["failed"].append(f"msmall_{subject_id}_{groupname}")
+                        else:
+                            # run dedrift and resample across long timepoints
+                            sinfo_long = sinfo.copy()
+                            with ProcessPoolExecutor(options["parsessions"]) as executor:
+                                futures = {}
+                                for sl in sessions_long:
+                                    sinfo_long_i = sinfo_long.copy()
+                                    # fix path
+                                    sinfo_long_i["hcp"] = path
+                                    # fix id
+                                    sinfo_long_i["id"] = sl
+                                    # add step info
+                                    sinfo_long_i["long"] = 1
+                                    future = executor.submit(
+                                        executeHCPMultiDeDriftAndResample,
+                                        sinfo_long_i, options, hcp, run, [group]
+                                    )
+                                    futures[future] = sl  # map future to sl
+                                for future in concurrent.futures.as_completed(futures):
+                                    sl = futures[future]  # get the correct sl for this future
+                                    result = future.result()
+                                    r += result["r"]
+                                    report_dedrift = result["report"]
+                                    if report_dedrift["failed"]:
+                                        report["failed"].append(f"dedrift_{sl}_{report_dedrift['failed'][0]}")
+                                    if report_dedrift["ready"]:
+                                        report["ready"].append(f"dedrift_{sl}_{report_dedrift['ready'][0]}")
+                                    if report_dedrift["not ready"]:
+                                        report["not ready"].append(f"dedrift_{sl}_{report_dedrift['not ready'][0]}")
+
+                            # run dedrift and resample on the template
+                            sinfo_template = sinfo.copy()
+                            # fix path
+                            sinfo_template["hcp"] = path
+                            # fix id
+                            sinfo_template["id"] = f"{subject_id}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                            # add step info
+                            sinfo_template["long"] = 2
+                            result = executeHCPMultiDeDriftAndResample(sinfo_template, options, hcp, run, [group])
+                            r += result["r"]
+                            report_dedrift = result["report"]
+
+                            if report_dedrift["failed"]:
+                                report["failed"].append(f"dedrift_long.{report_dedrift['failed'][0]}")
+                            if report_dedrift["ready"]:
+                                report["ready"].append(f"dedrift_long.{report_dedrift['ready'][0]}")
+                            if report_dedrift["not ready"]:
+                                report["not ready"].append(f"dedrift_long.{report_dedrift['not ready'][0]}")
+
+                            if len(report["failed"]) == 0:
+                                report["done"].append(f"msmall_{subject_id}_{groupname}")
+
+                    # -- just checking
+                    else:
+                        passed, _, r, failed = pc.checkRun(
+                            None, None, "HCP MSMAll " + f"{subject_id}_{groupname}", r, overwrite=True
+                        )
+                        if passed is None:
+                            r += "\n---> HCP MSMAll can be run"
+                            report["ready"].append(f"{subject_id}_{groupname}")
+                        else:
+                            report["skipped"].append(f"{subject_id}_{groupname}")
+
+                else:
+                    report["not ready"].append(f"{subject_id}_{groupname}")
+                    if options["run"] == "run":
+                        r += "\n---> ERROR: something missing, skipping this group!"
+                    else:
+                        r += "\n---> ERROR: something missing, this group would be skipped!"
+
+            except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+                r = "\n\n\n --- Failed during processing of group %s with error:\n" % (
+                    f"{subject_id}_{groupname}"
+                )
+                r += str(errormessage)
+                report["failed"].append(f"{subject_id}_{groupname}")
+            except:
+                r += "\n --- Failed during processing of group %s with error:\n %s\n" % (
+                    f"{subject_id}_{groupname}",
+                    traceback.format_exc(),
+                )
+                report["failed"].append(f"{subject_id}_{groupname}")
+    else:
+        r += "\n---> Subject cannot be processed."
+        report["not ready"] = subject_id
 
     return {"r": r, "report": report}
 
@@ -9610,7 +10194,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             ``hcp_bold_smoothFWHM``               ``smoothing-fwhm``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
             ``hcp_icafix_domotionreg``            ``motion-regression``
-            ``hcp_msmall_myelin_target``           ``myelin-target-file``
+            ``hcp_msmall_myelin_target``          ``myelin-target-file``
             ``hcp_resample_dontfixnames``         ``dont-fix-names``
             ``hcp_resample_inregname``            ``input-reg-name``
             ``hcp_resample_extractnames``         ``multirun-fix-extract-names``
@@ -9669,7 +10253,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        singleRun, icafixBolds, dedriftGroups, pars_ok, r = parse_icafix_bolds(
+        singleRun, _, dedriftGroups, pars_ok, r = parse_icafix_bolds(
             options, bolds, r, True
         )
 
@@ -10115,7 +10699,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                runok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -10133,8 +10717,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
             '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
-            --multirun-fix-names="%(mrfixnames)s" \
-            --multirun-fix-concat-names="%(mrfixconcatnames)s" \
             --high-res-mesh="%(highresmesh)s" \
             --low-res-meshes="%(lowresmeshes)s" \
             --registration-name="%(regname)s" \
@@ -10155,8 +10737,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 ),
                 "path": sinfo["hcp"],
                 "subject": sinfo["id"] + options["hcp_suffix"],
-                "mrfixnames": boldtargets,
-                "mrfixconcatnames": grouptargets,
                 "highresmesh": options["hcp_hiresmesh"],
                 "lowresmeshes": options["hcp_lowresmeshes"].replace(",", "@"),
                 "regname": regname,
@@ -10175,6 +10755,11 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
                 "matlabrunmode": matlabrunmode,
             }
         )
+
+        # do not set --multirun-fix-names and --multirun-fix-concat-names for the second step of longitudinal processing
+        if "long" not in sinfo or sinfo["long"] == 1:
+            comm += "                --multirun-fix-names=" + boldtargets
+            comm += "                --multirun-fix-concat-names=" + grouptargets
 
         # optional parameters
         if options["hcp_resample_dontfixnames"] is not None:
@@ -10283,7 +10868,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         # -- Run
         if run and runok:
             if options["run"] == "run":
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP DeDriftAndResample",
@@ -12412,7 +12997,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --parelements (int, default 1):
-            How many elements (e.g.bolds) to run in parallel.
+            How many elements (e.g. bolds) to run in parallel.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -13152,6 +13737,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_variant (str, default ''):
             Optional variant of HCP BOLD preprocessing. If specified, the
             results will be copied/linked from `Results<hcp_bold_variant>`.
+
+        --hcp_nifti_tail (str, default ''):
+            The tail to use for the volume files to map from the HCP file
+            structure.
+
+        --hcp_cifti_tail (str, default ''):
+            The tail to use for the surface files to map from the HCP file
+            structure.
 
         --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to

@@ -77,6 +77,7 @@ all_qunex_commands = [
     ("qx_utilities.hcp.process_hcp.hcp_pre_freesurfer",             "Runs HCP PreFreeSurfer pipeline.",                                                         "python"),
     ("qx_utilities.hcp.process_hcp.hcp_long_freesurfer",            "Runs the longitudinal HCP FreeSurfer pipeline.",                                           "python"),
     ("qx_utilities.hcp.process_hcp.hcp_long_post_freesurfer",       "Runs the longitudinal HCP Post FreeSurfer pipeline.",                                      "python"),
+    ("qx_utilities.hcp.process_hcp.hcp_long_msmall",                "Runs the longitudinal HCP MSMAll pipeline.",                                               "python"),
     ("qx_utilities.hcp.process_hcp.hcp_reapply_fix",                "Runs HCP ReApplyFix pipeline.",                                                            "python"),
     ("qx_utilities.hcp.process_hcp.hcp_task_fmri_analysis",         "Runs HCP fMRI task analysis pipeline.",                                                    "python"),
     ("qx_utilities.hcp.process_hcp.hcp_temporal_ica",               "Runs HCP temporal ICA pipeline.",                                                          "python"),

@@ -259,6 +259,7 @@ deprecated_parameters = {
     "TR": "tr",
     "PEdir": "pedir",
     "sequenceinfo": "add_json_info",
+    "hcp_icafix_traindata": "hcp_icafix_model",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
@@ -374,7 +375,7 @@ def check_deprecated_parameters(options, command):
         # if sessions and batchfile both provide a file
         if sessions is not None and ".txt" in sessions:
             print(
-                "ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!"
+                "ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters or you are passing it both at the command level and at the global level of the recipe file!"
             )
             exit(1)
         elif sessions is not None:
