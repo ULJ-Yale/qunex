@@ -8722,7 +8722,7 @@ def parse_msmall_bolds(options, bolds, r):
                         break
                     # does the number match?
                     if "bold_number" in b and mb == b["bold_number"]:
-                        hmb = f"BOLD_{b}"
+                        hmb = f"{options['hcp_bold_prefix']}{b}"
                         break
                     # does the tag match?
                     if "task" in b and mb == b["task"]:
@@ -8730,7 +8730,7 @@ def parse_msmall_bolds(options, bolds, r):
                             hmb = b["filename"]
                             break
                         else:
-                            hmb = f"BOLD_{b[0]}"
+                            hmb = f"{options['hcp_bold_prefix']}{b[0]}"
                             break
 
                 if hmb is None:
