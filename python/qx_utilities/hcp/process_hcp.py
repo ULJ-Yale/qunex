@@ -812,7 +812,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     try:
         # mandatory check
         if not options["hcp_avgrdcmethod"]:
-            raise ge.CommandFailed("hcp_pre_freesurfer", "... the hcp_avgrdcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.")
+            raise ge.CommandFailed(
+                "hcp_pre_freesurfer",
+                "... the hcp_avgrdcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.",
+            )
 
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, "hcp_pre_freesurfer")
@@ -2363,9 +2366,8 @@ def _get_subjects_from_batch(sinfo, hcp, run):
     subjects_dict = {}
     for session in sinfo:
         if "hcp" not in session:
-            r += (
-                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (session["id"])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
+                session["id"]
             )
             run = False
 
@@ -4578,7 +4580,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     try:
         # mandatory check
         if not options["hcp_bold_dcmethod"]:
-            raise ge.CommandFailed("hcp_fmri_volume", "... the hcp_bold_dcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.")
+            raise ge.CommandFailed(
+                "hcp_fmri_volume",
+                "... the hcp_bold_dcmethod parameter needs to be set manually! Since QuNex cannot robustly extract the information needed to set this from the data, you need to set this parameter by yourself.",
+            )
 
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, "hcp_fmri_volume")
@@ -7128,9 +7133,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             )
 
         if options["hcp_icafix_model"] is not None:
-            comm += (
-                '             --training-file="%s"' % options["hcp_icafix_model"]
-            )
+            comm += '             --training-file="%s"' % options["hcp_icafix_model"]
 
         if options["hcp_icafix_threshold"] is not None:
             comm += (
@@ -8748,7 +8751,9 @@ def parse_msmall_bolds(options, bolds, r):
                 if "filename" in bold:
                     msmall_bolds.append(bold["filename"])
                 else:
-                    msmall_bolds.append(f"{options['hcp_bold_prefix']}{bold['bold_number']}")
+                    msmall_bolds.append(
+                        f"{options['hcp_bold_prefix']}{bold['bold_number']}"
+                    )
 
             icafix_group["msmall_bolds"] = msmall_bolds
 
@@ -9010,10 +9015,14 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             ):
                 # single-run
                 if single_run:
-                    f = partial(executeHCPSingleDeDriftAndResample, sinfo, options, hcp, run)
+                    f = partial(
+                        executeHCPSingleDeDriftAndResample, sinfo, options, hcp, run
+                    )
                 # multi-run
                 else:
-                    f = partial(executeHCPMultiDeDriftAndResample, sinfo, options, hcp, run)
+                    f = partial(
+                        executeHCPMultiDeDriftAndResample, sinfo, options, hcp, run
+                    )
                 results = ppe.map(f, msmall_groups)
 
                 # merge r and report
@@ -9732,6 +9741,7 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
     # print r
     return (r, (subjectids, report, failed))
 
+
 def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
     # prepare return variables
     r = ""
@@ -9751,7 +9761,9 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
             sinfo = si
             break
     if not sinfo:
-        raise ge.CommandFailed("hcp_long_msmall", f"Subject {subject} not found in the batch file!")
+        raise ge.CommandFailed(
+            "hcp_long_msmall", f"Subject {subject} not found in the batch file!"
+        )
     bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
     _build_skipped_report(report, bskip, options)
 
@@ -9788,7 +9800,10 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                 )
 
                 # fmriprocstring
-                fmriprocstring = "%s_hp%s_clean" % (options["hcp_cifti_tail"], str(highpass))
+                fmriprocstring = "%s_hp%s_clean" % (
+                    options["hcp_cifti_tail"],
+                    str(highpass),
+                )
                 if options["hcp_msmall_procstring"] is not None:
                     fmriprocstring = options["hcp_msmall_procstring"]
 
@@ -9827,7 +9842,9 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                 if boldok:
                     # check if group file exists
                     groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
-                    groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
+                    groupimg = os.path.join(
+                        hcp["hcp_nonlin"], "Results", groupname, groupica
+                    )
                     r, boldok = pc.checkForFile2(
                         r,
                         groupimg,
@@ -9902,7 +9919,9 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                     --template-long="%(templatelong)s" \
                     --is-longitudinal="TRUE"'
                     % {
-                        "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
+                        "script": os.path.join(
+                            hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"
+                        ),
                         "path": path,
                         "subject": subject_id,
                         "fixnames": boldtargets,
@@ -9919,7 +9938,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                         "myelintarget": myelintarget,
                         "matlabrunmode": matlabrunmode,
                         "sessionslong": "@".join(sessions_long),
-                        "templatelong": options['hcp_longitudinal_template'],
+                        "templatelong": options["hcp_longitudinal_template"],
                     }
                 )
 
@@ -9953,7 +9972,9 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                         else:
                             # run dedrift and resample across long timepoints
                             sinfo_long = sinfo.copy()
-                            with ProcessPoolExecutor(options["parsessions"]) as executor:
+                            with ProcessPoolExecutor(
+                                options["parsessions"]
+                            ) as executor:
                                 futures = {}
                                 for sl in sessions_long:
                                     sinfo_long_i = sinfo_long.copy()
@@ -9965,47 +9986,75 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                     sinfo_long_i["long"] = 1
                                     future = executor.submit(
                                         executeHCPMultiDeDriftAndResample,
-                                        sinfo_long_i, options, hcp, run, [group]
+                                        sinfo_long_i,
+                                        options,
+                                        hcp,
+                                        run,
+                                        [group],
                                     )
                                     futures[future] = sl  # map future to sl
                                 for future in concurrent.futures.as_completed(futures):
-                                    sl = futures[future]  # get the correct sl for this future
+                                    sl = futures[
+                                        future
+                                    ]  # get the correct sl for this future
                                     result = future.result()
                                     r += result["r"]
                                     report_dedrift = result["report"]
                                     if report_dedrift["failed"]:
-                                        report["failed"].append(f"dedrift_{sl}_{report_dedrift['failed'][0]}")
+                                        report["failed"].append(
+                                            f"dedrift_{sl}_{report_dedrift['failed'][0]}"
+                                        )
                                     if report_dedrift["ready"]:
-                                        report["ready"].append(f"dedrift_{sl}_{report_dedrift['ready'][0]}")
+                                        report["ready"].append(
+                                            f"dedrift_{sl}_{report_dedrift['ready'][0]}"
+                                        )
                                     if report_dedrift["not ready"]:
-                                        report["not ready"].append(f"dedrift_{sl}_{report_dedrift['not ready'][0]}")
+                                        report["not ready"].append(
+                                            f"dedrift_{sl}_{report_dedrift['not ready'][0]}"
+                                        )
 
                             # run dedrift and resample on the template
                             sinfo_template = sinfo.copy()
                             # fix path
                             sinfo_template["hcp"] = path
                             # fix id
-                            sinfo_template["id"] = f"{subject_id}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                            sinfo_template["id"] = (
+                                f"{subject_id}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
+                            )
                             # add step info
                             sinfo_template["long"] = 2
-                            result = executeHCPMultiDeDriftAndResample(sinfo_template, options, hcp, run, [group])
+                            result = executeHCPMultiDeDriftAndResample(
+                                sinfo_template, options, hcp, run, [group]
+                            )
                             r += result["r"]
                             report_dedrift = result["report"]
 
                             if report_dedrift["failed"]:
-                                report["failed"].append(f"dedrift_long.{report_dedrift['failed'][0]}")
+                                report["failed"].append(
+                                    f"dedrift_long.{report_dedrift['failed'][0]}"
+                                )
                             if report_dedrift["ready"]:
-                                report["ready"].append(f"dedrift_long.{report_dedrift['ready'][0]}")
+                                report["ready"].append(
+                                    f"dedrift_long.{report_dedrift['ready'][0]}"
+                                )
                             if report_dedrift["not ready"]:
-                                report["not ready"].append(f"dedrift_long.{report_dedrift['not ready'][0]}")
+                                report["not ready"].append(
+                                    f"dedrift_long.{report_dedrift['not ready'][0]}"
+                                )
 
                             if len(report["failed"]) == 0:
-                                report["done"].append(f"msmall_{subject_id}_{groupname}")
+                                report["done"].append(
+                                    f"msmall_{subject_id}_{groupname}"
+                                )
 
                     # -- just checking
                     else:
                         passed, _, r, failed = pc.checkRun(
-                            None, None, "HCP MSMAll " + f"{subject_id}_{groupname}", r, overwrite=True
+                            None,
+                            None,
+                            "HCP MSMAll " + f"{subject_id}_{groupname}",
+                            r,
+                            overwrite=True,
                         )
                         if passed is None:
                             r += "\n---> HCP MSMAll can be run"
@@ -10027,9 +10076,12 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                 r += str(errormessage)
                 report["failed"].append(f"{subject_id}_{groupname}")
             except:
-                r += "\n --- Failed during processing of group %s with error:\n %s\n" % (
-                    f"{subject_id}_{groupname}",
-                    traceback.format_exc(),
+                r += (
+                    "\n --- Failed during processing of group %s with error:\n %s\n"
+                    % (
+                        f"{subject_id}_{groupname}",
+                        traceback.format_exc(),
+                    )
                 )
                 report["failed"].append(f"{subject_id}_{groupname}")
     else:
@@ -10253,7 +10305,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        singleRun, _, dedriftGroups, pars_ok, r = parse_icafix_bolds(
+        single_run, _, dedrift_groups, pars_ok, r = parse_icafix_bolds(
             options, bolds, r, True
         )
 
@@ -10263,30 +10315,30 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             )
 
         # --- Execute
+        parelements = max(1, min(options["parelements"], len(dedrift_groups)))
+        ppe = ProcessPoolExecutor(parelements)
         # single-run
-        if singleRun:
-            # process
-            result = executeHCPSingleDeDriftAndResample(
-                sinfo, options, hcp, run, dedriftGroups[0]
+        if single_run:
+            f = partial(
+                executeHCPSingleDeDriftAndResample, sinfo, options, hcp, run
             )
         # multi-run
         else:
-            # process
-            result = executeHCPMultiDeDriftAndResample(
-                sinfo, options, hcp, run, dedriftGroups
+            f = partial(
+                executeHCPMultiDeDriftAndResample, sinfo, options, hcp, run
             )
+        results = ppe.map(f, dedrift_groups)
 
-        # merge r
-        r += result["r"]
-
-        # merge report
-        tempReport = result["report"]
-        report["done"] += tempReport["done"]
-        report["incomplete"] += tempReport["incomplete"]
-        report["failed"] += tempReport["failed"]
-        report["ready"] += tempReport["ready"]
-        report["not ready"] += tempReport["not ready"]
-        report["skipped"] += tempReport["skipped"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            temp_report = result["report"]
+            report["done"] += temp_report["done"]
+            report["failed"] += temp_report["failed"]
+            report["incomplete"] += temp_report["incomplete"]
+            report["ready"] += temp_report["ready"]
+            report["not ready"] += temp_report["not ready"]
+            report["skipped"] += temp_report["skipped"]
 
         # report
         rep = []
@@ -10306,7 +10358,6 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             "\n     ".join(e.report),
         )
         report = (sinfo["id"], "HCP DeDriftAndResample failed")
-        failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
         report = (sinfo["id"], "HCP DeDriftAndResample failed")
@@ -10571,7 +10622,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
     return {"r": r, "report": report}
 
 
-def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
+def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
     # prepare return variables
     r = ""
     report = {
@@ -10603,66 +10654,66 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, groups):
         # runok
         runok = True
 
+
         # check if files for all bolds exist
-        for g in groups:
-            # get group data
-            groupname = g["name"]
-            bolds = g["bolds"]
+        # get group data
+        groupname = group["name"]
+        bolds = group["bolds"]
 
-            # for storing bolds
-            groupbolds = ""
+        # for storing bolds
+        groupbolds = ""
 
-            for boldinfo in bolds:
+        for boldinfo in bolds:
 
-                _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = _get_bold_names(boldinfo, options)
 
-                # input file check
-                boldimg = os.path.join(
-                    hcp["hcp_nonlin"],
-                    "Results",
-                    boldtarget,
-                    "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
-                )
-                r, boldok = pc.checkForFile2(
-                    r,
-                    boldimg,
-                    "\n     ... bold image %s present" % boldtarget,
-                    "\n     ... ERROR: bold image [%s] missing!" % boldimg,
-                )
-
-                if not boldok:
-                    runok = False
-
-                # add @ separator
-                if groupbolds != "":
-                    groupbolds = groupbolds + "@"
-
-                # add latest image
-                boldList.append(boldtarget)
-                groupbolds = groupbolds + boldtarget
-
-            # check if group file exists
-            groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
-            groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
-            r, groupok = pc.checkForFile2(
+            # input file check
+            boldimg = os.path.join(
+                hcp["hcp_nonlin"],
+                "Results",
+                boldtarget,
+                "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
+            )
+            r, boldok = pc.checkForFile2(
                 r,
-                groupimg,
-                "\n     ... ICA %s present" % groupname,
-                "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+                boldimg,
+                "\n     ... bold image %s present" % boldtarget,
+                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
             )
 
-            if not groupok:
+            if not boldok:
                 runok = False
 
-            # add @ or % separator
-            if grouptargets != "":
-                grouptargets = grouptargets + "@"
-                boldtargets = boldtargets + "%"
+            # add @ separator
+            if groupbolds != "":
+                groupbolds = groupbolds + "@"
 
-            # add latest group
-            groupList.append(groupname)
-            grouptargets = grouptargets + groupname
-            boldtargets = boldtargets + groupbolds
+            # add latest image
+            boldList.append(boldtarget)
+            groupbolds = groupbolds + boldtarget
+
+        # check if group file exists
+        groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
+        groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
+        r, groupok = pc.checkForFile2(
+            r,
+            groupimg,
+            "\n     ... ICA %s present" % groupname,
+            "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+        )
+
+        if not groupok:
+            runok = False
+
+        # add @ or % separator
+        if grouptargets != "":
+            grouptargets = grouptargets + "@"
+            boldtargets = boldtargets + "%"
+
+        # add latest group
+        groupList.append(groupname)
+        grouptargets = grouptargets + groupname
+        boldtargets = boldtargets + groupbolds
 
         # regname
         regname = "%s_2_d40_WRN" % options["hcp_msmall_outregname"]
