@@ -132,7 +132,7 @@ Examples:
 
         qunex dwi_dtifit \\
             --sessionsfolder='<path_to_study_sessionsfolder>' \\
-            --session='<session_id>' \\
+            --sessions='<session_id>' \\
             --scheduler='<name_of_scheduler_and_options>' \\
             --overwrite='yes'
 
@@ -440,7 +440,7 @@ main() {
         exit 0
     else
         echo ""
-        echo " -- dtifit run not found or incomplete for $session. Something went wrong." 
+        echo " -- dtifit run not found or incomplete for $session. Something went wrong."
         echo "    Check output: ${diffusion_folder}"
         echo ""
         echo "ERROR: dtifit run did not complete successfully"

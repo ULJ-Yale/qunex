@@ -845,7 +845,7 @@ def runExternalForFile(
     logfolder="",
     logtags="",
     fullTest=None,
-    shell=False,
+    shell=True,
     r="",
     verbose=True,
 ):
