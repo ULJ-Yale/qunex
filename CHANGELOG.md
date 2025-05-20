@@ -6,6 +6,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.2.1
+
+* Fixed a bug when filtering bolds and sessions in combination with the batch file sometimes did not work correctly.
+* Some additional commands now run in parallel over multiple sessions/images by default.
+* Fixed a bug where QuNex did not properly triger some external commands.
+
 ## 1.2.0
 
 * Support for longitudinal processing in hcp_icafix.
