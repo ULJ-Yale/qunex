@@ -91,7 +91,6 @@ show_all_qunex_commands() {
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
-
     # -- Set platform info
     Platform="Platform Information: `uname -a`"
     # -- Set the time stamp for given job
@@ -979,9 +978,21 @@ fi
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 
 # ------------------------------------------------------------------------------
-# -- Args flag setup
+# -- Args setup
 # ------------------------------------------------------------------------------
 unset setflag
+unset CommandToRun
+unset sessions
+unset StudyFolder
+unset CASES
+unset Overwrite
+unset Scheduler
+unset ClusterName
+unset doubleflag
+unset singleflag
+unset SESSIONIDS
+unset SESSIONS
+unset SESSION_LABELS
 
 # -- Check if first parameter is missing flags and parse it as CommandToRun
 if [ -z `echo "$1" | grep '-'` ]; then
@@ -1161,20 +1172,6 @@ is_qunex_command ${1}
 # ------------------------------------------------------------------------------
 # -- Additional checks
 # ------------------------------------------------------------------------------
-
-# -- Clear variables for new run
-unset CommandToRun
-unset sessions
-unset StudyFolder
-unset CASES
-unset Overwrite
-unset Scheduler
-unset ClusterName
-unset doubleflag
-unset singleflag
-unset SESSIONIDS
-unset SESSIONS
-unset SESSION_LABELS
 
 # -- Check if command is run_turnkey and set arguments
 if [[ ${CommandToRun} == "run_turnkey" ]]; then

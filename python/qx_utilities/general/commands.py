@@ -211,8 +211,8 @@ commands = {
         "com": utilities.create_list,
         "args": (
             "sessionsfolder",
+            "batchfile",
             "sessions",
-            "sessionids",
             "filter",
             "listfile",
             "bolds",
