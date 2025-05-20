@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * Fixed a bug when filtering bolds and sessions in combination with the batch file sometimes did not work correctly.
 * Some additional commands now run in parallel over multiple sessions/images by default.
-* Fixed a bug where QuNex did not properly triger some external commands.
+* Fixed a bug where QuNex did not properly trigger some external commands.
 
 ## 1.2.0
 
