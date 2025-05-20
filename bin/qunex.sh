@@ -186,10 +186,10 @@ bash_call_execute() {
         eval "gmri ${gmriinput}"
     else
         # log tag
-        if [[ ${CommandToRun} != "run_qc" ]]; then
+        if [[ ${CommandToRun} == "compute_bold_fc" ]]; then
+            logtag="${CommandToRun}_${Calculation}_${CASE}_${TimeStamp}"
+        elif [[ ${CommandToRun} != "run_qc" ]]; then
             logtag="${CommandToRun}_${CASE}_${TimeStamp}"
-        elif [[ ${CommandToRun} != "compute_bold_fc" ]]; then
-            logtag="${CommandToRun}_${CASE}_${Calculation}_${TimeStamp}"
         else
             if [[ -z ${Modality} ]]; then
                 logtag="${CommandToRun}_${CASE}_${TimeStamp}"
