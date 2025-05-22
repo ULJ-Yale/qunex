@@ -7,7 +7,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 %
 %   Parameters:
 %       --sessionf (str):
-%           The session’s folder with images and data.
+%           The session's folder with images and data.
 %
 %       --bold (int):
 %           The number of the bold file to process.
@@ -148,7 +148,7 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 %           relevant parameters are:
 %
 %           - sessionf
-%               Specifies the sessions’s base folder in which the function will
+%               Specifies the sessions's base folder in which the function will
 %               look for all the other relevant files.
 %
 %           - bold

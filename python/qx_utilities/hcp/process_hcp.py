@@ -6590,7 +6590,21 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
         --hcp_icafix_processingmode (str, default ''):
             HCPStyleData (default) or LegacyStyleData, controls whether
-            --icadim-mode=fewtimepoints is allowed.
+            --hcp_icadim_mode=fewtimepoints is allowed.
+
+        --hcp_icafix_icadim_mode (str, default 'default'):
+            Choose how to run icaDim: "default" - start with a VN dimensionality
+            of 1 and rerun until convergence "fewtimepoints" - start with a VN
+            dimensionality of half the timepoints, do not iterate.
+
+        --hcp_icafix_parallel_limit (int, default -1):
+            How many melodic commands to run in parallel (local, not
+            cluster-distributed) during individual projection and cleanup,
+            defaults to all detected physical cores.
+
+        --hcp_icafix_concatenate_only (flag, not set by default):
+            When set, the script stops after the concatination step,
+            e.g., for use in experimental alternative multi-run denoising.
 
         --hcp_reuse_existing_ica (str, default 'FALSE'):
             Whether to execute only the FIX step of the pipeline and reuse the
@@ -6649,14 +6663,17 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_threshold``           ``fix-threshold``
             ``hcp_icafix_deleteintermediates`` ``delete-intermediates``
             ``hcp_icafix_fallbackthreshold``   ``fallback-threshold``
+            ``hcp_icafix_parallel_limit``      ``parallel-limit``
             ``hcp_config``                     ``config``
             ``hcp_icafix_processingmode``      ``processing-mode``
+            ``hcp_icafix_icadim_mode``         ``icadim-mode``
             ``hcp_reuse_existing_ica``         ``reuse-existing-ica``
             ``hcp_fix_backup``                 ``fix-backup``
             ``hcp_matlab_mode``                ``matlabrunmode``
             ``hcp_t1wtemplatebrain``           ``T1wTemplateBrain``
             ``hcp_ica_method``                 ``ica-method``
             ``hcp_legacy_fix``                 ``enable-legacy-fix``
+            ``hcp_icafix_concatenate_only``    ``concatenate-only``
             ================================== =======================
 
     Examples:
@@ -7152,6 +7169,12 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 % options["hcp_icafix_fallbackthreshold"]
             )
 
+        if options["hcp_icafix_parallel_limit"] is not None:
+            comm += (
+                '             --parallel-limit="%s"'
+                % options["hcp_icafix_parallel_limit"]
+            )
+
         if options["hcp_config"] is not None:
             comm += '             --config="%s"' % options["hcp_config"]
 
@@ -7159,6 +7182,12 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             comm += (
                 '             --processing-mode="%s"'
                 % options["hcp_icafix_processingmode"]
+            )
+
+        if options["hcp_icafix_icadim_mode"] is not None:
+            comm += (
+                '             --icadim-mode="%s"'
+                % options["hcp_icafix_icadim_mode"]
             )
 
         if options["hcp_reuse_existing_ica"] is not None:
@@ -7236,6 +7265,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if not options["hcp_legacy_fix"]:
             comm += '             --enable-legacy-fix="FALSE"'
+
+        if options["hcp_icafix_concatenate_only"]:
+            comm += '             --concatenate-only="TRUE"'
 
         # -- Report command
         if groupok:
@@ -7919,6 +7951,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
             ``hcp_clean_substring``            ``clean-substring``
             ``hcp_config``                     ``config``
             ``hcp_icafix_processingmode``      ``processing-mode``
+            ``hcp_icafix_icadim_mode``         ``icadim-mode``
             ``hcp_longitudinal_template``      ``longitudinal-template``
             ``longitudinal``                   ``is-longitudinal``
             ================================== =======================
@@ -8445,6 +8478,12 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
                 comm += (
                     '             --processing-mode="%s"'
                     % options["hcp_icafix_processingmode"]
+                )
+
+            if options["hcp_icafix_icadim_mode"] is not None:
+                comm += (
+                    '             --icadim-mode="%s"'
+                    % options["hcp_icafix_icadim_mode"]
                 )
 
             if options["hcp_clean_substring"] is not None:
@@ -11035,11 +11074,11 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
         --hcp_asl_interpolation (int, default 1):
             Interpolation order for registrations corresponding to
-            scipy’s map_coordinates function.
+            scipy's map_coordinates function.
 
         --hcp_asl_nobandingcorr (flag, optional):
             If this option is provided, MT and ST banding corrections
-            won’t be applied. The flag is not set by default.
+            won't be applied. The flag is not set by default.
 
         --hcp_asl_stages (str)
             A comma separated list of stages (zero-indexed) to run.
