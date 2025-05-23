@@ -278,8 +278,11 @@ def schedule(
             outputs["stderr"] = batchlogsfolder + logname
         else:
             homedir = os.path.expanduser("~")
-            outputs["stdout"] = homedir + logname
-            outputs["stderr"] = homedir + logname
+            qunexdir = os.path.join(homedir, "qunex")
+            if not os.path.exists(qunexdir):
+                os.makedirs(qunexdir)
+            outputs["stdout"] = qunexdir + logname
+            outputs["stderr"] = qunexdir + logname
 
     if outputs["both"] is not None:
         outputs["stderr"] = outputs["both"]
@@ -1096,6 +1099,9 @@ def main(args=None):
 
     # execute
     homedir = os.path.expanduser("~")
+    qunexdir = os.path.join(homedir, "qunex")
+    if not os.path.exists(qunexdir):
+        os.makedirs(qunexdir)
     if parinfo is None:
         for i in range(0, parjobs):
             qx_command = command
@@ -1129,7 +1135,7 @@ def main(args=None):
                 )
             else:
                 script_path = os.path.join(
-                    homedir, f"qunex_container_command_{timestamp}.sh"
+                    qunexdir, f"qunex_container_command_{timestamp}.sh"
                 )
 
             f = open(script_path, "w", encoding="UTF-8")
@@ -1241,11 +1247,8 @@ def main(args=None):
                     slurm_array=slurm_array,
                 )
             else:
-                subprocess.run(container_command, shell=True)
+                subprocess.run(container_command, shell=True, check=False)
 
-            # remove the runner script if done
-            if not debug and script_path and os.path.exists(script_path):
-                os.remove(script_path)
 
 if __name__ == "__main__":
     main()
