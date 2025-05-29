@@ -14004,6 +14004,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters!")
         failed = 1
         return (r, (sinfo["id"], rstatus, failed))
+
     session_path = os.path.join(options["sessionsfolder"], sinfo["id"])
     if not os.path.exists(session_path):
         r += f"\nERROR: session {sinfo['id']} does not exists at {session_path}!"
@@ -14026,6 +14027,12 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         r += "\n\ndirectory structure:\n"
         r += pprint.pformat(d)
 
+        return (r, (sinfo["session"], rstatus, failed))
+
+    if not os.path.exists(d["hcp"]):
+        r += f"\nERROR: HCP folder for session {sinfo['id']} does not exists at {d['hcp']}!"
+        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!")
+        failed = 1
         return (r, (sinfo["session"], rstatus, failed))
 
     #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
