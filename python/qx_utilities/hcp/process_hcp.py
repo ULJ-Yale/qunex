@@ -64,6 +64,7 @@ import processing.core as pc
 import general.img as gi
 import general.exceptions as ge
 import nibabel as nib
+import pprint
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -13997,10 +13998,35 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         )
     r += "\n\n........................................................"
 
-    # --- file/dir structure
+    # --- sanity checks
+    if "sessionsfolder" not in options:
+        r += "\nERROR: sessionsfolder not specified in options, cannot map HCP data!"
+        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters!")
+        failed = 1
+        return (r, (sinfo["id"], rstatus, failed))
+    session_path = os.path.join(options["sessionsfolder"], sinfo["id"])
+    if not os.path.exists(session_path):
+        r += f"\nERROR: session {sinfo['id']} does not exists at {session_path}!"
+        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!")
+        failed = 1
+        return (r, (sinfo["session"], rstatus, failed))
 
+    # --- file/dir structure
     f = pc.getFileNames(sinfo, options)
     d = pc.getSessionFolders(sinfo, options)
+
+    if "hcp" not in d:
+        r += f"\nERROR: something went wrong, mapping was unable to get the HCP folder for session {sinfo['id']}!"
+        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters and data!")
+        failed = 1
+
+        r += "\n\nsession information:\n"
+        r += pprint.pformat(sinfo)
+
+        r += "\n\ndirectory structure:\n"
+        r += pprint.pformat(d)
+
+        return (r, (sinfo["session"], rstatus, failed))
 
     #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
     #    MNINonLinear/Results/<boldname>/<boldname>_Atlas.dtseries.nii -- cifti
@@ -14010,7 +14036,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     # ------------------------------------------------------------------------------------------------------------
     #                                                                                      map T1 and segmentation
-
     report = {}
     failed = 0
 
@@ -14141,7 +14166,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
         # ------------------------------------------------------------------------------------------------------------
         #                                                                                          map functional data
-
         r += (
             "\n\nFunctional data: \n ... mapping %s BOLD files\n ... mapping '%s' hcp nifti tail to '%s' qx nifti tail\n ... mapping '%s' hcp cifti tail to '%s' qx cifti tail\n"
             % (
