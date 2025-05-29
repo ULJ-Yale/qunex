@@ -2963,10 +2963,11 @@ def batch_tag2namekey(
     print("BOLDS:%s" % (",".join(boldlist)))
 
 
-def get_sessions_for_slurm_array(sessions, sessionids):
+def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None):
     """
     get_sessions_for_slurm_array \\
-      --sessions=<a list of sessions, or path to the batch file)
+        --sessions=<a list of sessions, or path to the batch file) \\
+        --sessionids=<a list of session ids to filter out>
 
     Returns the subset of sessions that will be processed
 
@@ -2978,7 +2979,11 @@ def get_sessions_for_slurm_array(sessions, sessionids):
     """
 
     # get sessions
-    slist, _ = gc.get_sessions_list(sessions, sessionids=sessionids)
+    slist = []
+    if batchfile is not None:
+        slist, _ = gc.get_sessions_list(batchfile, sessionids=sessions)
+    else:
+        slist, _ = gc.get_sessions_list(sessions, sessionids=sessionids)
 
     # print
     sarray = []

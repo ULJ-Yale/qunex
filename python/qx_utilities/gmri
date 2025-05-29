@@ -161,11 +161,12 @@ def runCommand(command, args):
 
             else:
                 c = 0
+                untouched_all_sessions = copy.deepcopy(all_sessions)
                 while all_sessions:
                     c += 1
                     recipe_args = args.copy()
 
-                    # -- set up a list of sessions to run in each run_recipe
+                    # set up a list of sessions to run in each run_recipe
                     slist = [
                         all_sessions.pop(0) for e in range(parsessions) if all_sessions
                     ]
@@ -173,7 +174,7 @@ def runCommand(command, args):
 
                     # pass all sessions if in slurm array
                     if "SLURM_ARRAY_TASK_ID" in os.environ:
-                        recipe_args["sessionids"] = (",").join(all_sessions)
+                        recipe_args["sessionids"] = (",").join(untouched_all_sessions)
 
                     # copy recipe args to eargs
                     run_recipe_kwargs = [
@@ -305,6 +306,9 @@ def runCommand(command, args):
             # run without log for exceptions
             # remove logs for exceptions
             if command in gcs.logskip_commands:
+                # remove non-command args
+                args = {k: v for k, v in args.items() if k in gcom.commands[command]["args"]}
+                # execute
                 gcom.commands[command]["com"](**args)
             # run with log
             else:
@@ -357,7 +361,10 @@ def runCommand(command, args):
                 ok = False
             else:
                 result = "completed"
-            print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
+            if targetLog:
+                print("%s %s %s" % (prepend, name, result))
+            else:
+                print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
         if ok:
             print("\n---> Successful completion of task")
 
