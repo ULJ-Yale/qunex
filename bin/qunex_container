@@ -1043,10 +1043,10 @@ def main(args=None):
             ]
             if qx_command not in array_commands:
                 print(
-                    "ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines!"
+                    "ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines commands and run_recipe!"
                 )
                 print(
-                    "         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface."
+                    "         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume, hcp_fmri_surface, run_recipe"
                 )
                 exit(1)
 
