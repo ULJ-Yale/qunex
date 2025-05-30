@@ -77,6 +77,8 @@ class QA:
             sessionsfolder = os.path.join(os.getcwd(),sessionsfolder)
         self.sessionsfolder = sessionsfolder
 
+        self.report_empty = True
+
         self.report = "=========================================="
         self.report += "\n              QA report"
         self.report += "\n=========================================="
@@ -512,6 +514,9 @@ class QA:
                 self.update_report(s)
             else:
                 print(f"{s['id']} has passed QA!")
+
+        if self.report_empty:
+            self.report += "\n\nAll session(s) passed QA!"
         return
     
     def nifti_qa(self, s, image_id, scans, config):
@@ -679,6 +684,8 @@ class QA:
         --s (dict)
             slist dict that has failed QA
         """
+
+        self.report_empty = False
         
         for image_id, fail in s['QA_image_fail'].items():
             self.report+= f"\n   - {image_id}"
