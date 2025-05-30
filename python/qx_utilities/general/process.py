@@ -2356,10 +2356,10 @@ def run(command, args):
     sout = gc.print_qunex_header()
     sout += "#\n"
     sout += "=================================================================\n"
-    sout += "qunex " + command + " \\\n"
+    sout += "qunex " + command + " \\"
 
     for k, v in args.items():
-        sout += '  --%s="%s" \\\n' % (k, v)
+        sout += '  --%s="%s" \\' % (k, v)
 
     sout += "=================================================================\n"
 
