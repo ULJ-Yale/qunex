@@ -6,11 +6,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.2.2
+
+* Some commands now add additional tags to the log name to make it easier to comprehend.
+* Exposed additional hcp_icafix parameters that allow processing of legacy datasets.
+* Improved the efficiency of the copy_study command.
+* Improved error reporting and robustness of several commands.
+* The map_hcp_data is now more robust and prints errors that are more user friendly in case of issues.
+* Fixed a bug in run_recipe where sessions were not properly propagated into the recipe commands.
+* Fixed a bug with run_recipe when the SLURM job array was used.
+* Fixed a bug in run_qa where the config file was not parsed properly, added some additional output messages for user friendliness.
+
 ## 1.2.1
 
 * Fixed a bug when filtering bolds and sessions in combination with the batch file sometimes did not work correctly.
 * Some additional commands now run in parallel over multiple sessions/images by default.
-* Fixed a bug where QuNex did not properly triger some external commands.
+* Fixed a bug where QuNex did not properly trigger some external commands.
 
 ## 1.2.0
 

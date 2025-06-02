@@ -186,7 +186,9 @@ bash_call_execute() {
         eval "gmri ${gmriinput}"
     else
         # log tag
-        if [[ ${CommandToRun} != "run_qc" ]]; then
+        if [[ ${CommandToRun} == "compute_bold_fc" ]]; then
+            logtag="${CommandToRun}_${Calculation}_${CASE}_${TimeStamp}"
+        elif [[ ${CommandToRun} != "run_qc" ]]; then
             logtag="${CommandToRun}_${CASE}_${TimeStamp}"
         else
             if [[ -z ${Modality} ]]; then
@@ -1630,8 +1632,11 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
+        if [[ -z ${BATCH_FILE} ]]; then
+            BATCH_FILE="${CASES}"
+        fi
         echo ""
-        echo "Using $BATCH_FILE for input."
+        echo "Using $CASES for input."
         echo ""
         CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
         if [[ -z $CASES ]]; then
@@ -1642,7 +1647,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     fi
 
     # -- Filter sessions with sessions and sessionids
-    if [[ ! -z ${SESSIONS} ]]; then
+    if [[ ! -z ${SESSIONS} ]] && [[ ${SESSIONS} != *.txt ]]; then
         # loop over cases if case is in sessions keep it
         NEW_CASES=""
         for CASE in ${CASES}; do
@@ -1652,6 +1657,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         done
         CASES=$(echo "${NEW_CASES}" | xargs)
     fi
+
     if [[ ! -z ${SESSIONIDS} ]]; then
         # loop over cases if case is in sessionids keep it
         NEW_CASES=""

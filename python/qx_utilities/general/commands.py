@@ -394,7 +394,7 @@ commands = {
     },
     "get_sessions_for_slurm_array": {
         "com": utilities.get_sessions_for_slurm_array,
-        "args": ("sessions", "sessionids"),
+        "args": ("batchfile", "sessions", "sessionids"),
     },
     "run_qa": {
         "com": run_qa.run_qa,

@@ -251,6 +251,14 @@ def schedule(
         for key, value in replace:
             command.replace("{{%s}}" % (key), value)
 
+    # logsfolder
+    if batchlogsfolder is not None:
+        logsfolder = batchlogsfolder
+    else:
+        logsfolder = os.path.join(os.path.expanduser("~"), "qunex")
+        if not os.path.exists(logsfolder):
+            os.makedirs(logsfolder)
+
     # parse output
     outputs = {"stdout": None, "stderr": None, "both": None, "return": None}
     if output is not None:
@@ -272,14 +280,8 @@ def schedule(
         else:
             logname = f"/qunex_container_job%a_{timestamp}.txt"
 
-        # put in batchfolder
-        if batchlogsfolder is not None:
-            outputs["stdout"] = batchlogsfolder + logname
-            outputs["stderr"] = batchlogsfolder + logname
-        else:
-            homedir = os.path.expanduser("~")
-            outputs["stdout"] = homedir + logname
-            outputs["stderr"] = homedir + logname
+        outputs["stdout"] = logsfolder + logname
+        outputs["stderr"] = logsfolder + logname
 
     if outputs["both"] is not None:
         outputs["stderr"] = outputs["both"]
@@ -385,18 +387,27 @@ def schedule(
     print(s_command)
     print(command + "\n")
 
+    serr = subprocess.STDOUT
+    sout = subprocess.PIPE
     if outputs["return"] is None:
         serr = None
         sout = None
-    elif outputs["return"] == "both":
-        serr = subprocess.STDOUT
-        sout = subprocess.PIPE
     elif outputs["return"] == "stderr":
         serr = subprocess.PIPE
         sout = None
     elif outputs["return"] == "stdout":
         serr = None
         sout = subprocess.PIPE
+
+    # store command
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+    script_path = os.path.join(
+        batchlogsfolder, f"qunex_{com}_{scheduler_name}_{timestamp}.sh"
+    )
+    with open(script_path, "w", encoding="UTF-8") as f:
+        f.write(s_command)
+        f.write("\n")
+        f.write(command)
 
     run = subprocess.Popen(
         com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True
@@ -562,7 +573,7 @@ def get_sessionids_from_list(filename):
     return sessionids
 
 
-def get_batchlogs_folder(sessionsfolder):
+def get_batchlogs_folder(rootfolder):
     """
     ``get_batchlogs_folder(args)``
 
@@ -571,24 +582,29 @@ def get_batchlogs_folder(sessionsfolder):
     """
 
     # extract folder
-    f = os.path.abspath(sessionsfolder)
+    f = os.path.abspath(rootfolder)
 
     # basefolder
     basefolder = None
 
+    # is this the root already
+    if os.path.exists(os.path.join(f, ".qunexstudy")):
+        basefolder = f
+    elif os.path.exists(os.path.join(f, ".mnapstudy")):
+        basefolder = f
     # try to find the root
-    while os.path.dirname(f) and os.path.dirname(f) != "/":
-        f = os.path.dirname(f)
-        if os.path.exists(os.path.join(f, ".qunexstudy")):
-            basefolder = f
-            break
-        elif os.path.exists(os.path.join(f, ".mnapstudy")):
-            basefolder = f
-            break
+    else:
+        while os.path.dirname(f) and os.path.dirname(f) != "/":
+            f = os.path.dirname(f)
+            if os.path.exists(os.path.join(f, ".qunexstudy")):
+                basefolder = f
+                break
+            elif os.path.exists(os.path.join(f, ".mnapstudy")):
+                basefolder = f
+                break
 
     # log folder
     batchlogsfolder = None
-
     if basefolder is not None:
         batchlogsfolder = os.path.join(basefolder, "processing", "logs", "batchlogs")
 
@@ -758,12 +774,12 @@ def main(args=None):
     batchfilter = None
     sessions = None
     sessionsfolder = None
+    studyfolder = None
     sessionids = None
     containeropt = ""
     output = None
     parinfo = None
     overwrite = None
-    debug = False
 
     for arg in args:
         # cleanup -- at start
@@ -804,6 +820,9 @@ def main(args=None):
             elif arg.startswith("sessionsfolder"):
                 k, sessionsfolder = arg.split("=", 1)
                 command += f'--{k}="{sessionsfolder}" '
+            elif arg.startswith("studyfolder"):
+                k, studyfolder = arg.split("=", 1)
+                command += f'--{k}="{studyfolder}" '
             elif arg.startswith("sessions"):
                 k, sessions = arg.split("=", 1)
             elif arg.startswith("batchfile"):
@@ -828,8 +847,6 @@ def main(args=None):
                 nv = True
             elif arg == "parinfo":
                 parinfo = True
-            elif arg == "debug":
-                debug = True
             elif "=" in arg:
                 k, v = arg.split("=", 1)
                 command += f'--{k}="{v}" '
@@ -871,10 +888,17 @@ def main(args=None):
         )
         exit(1)
 
-    # batchlogs folder
-    batchlogsfolder = None
+    # logsfolder folder
+    homedir = os.path.expanduser("~")
+    logsfolder = None
     if sessionsfolder is not None:
-        batchlogsfolder = get_batchlogs_folder(sessionsfolder)
+        logsfolder = get_batchlogs_folder(sessionsfolder)
+    elif studyfolder is not None:
+        logsfolder = get_batchlogs_folder(studyfolder)
+    if not logsfolder:
+        logsfolder = os.path.join(homedir, "qunex")
+        if not os.path.exists(logsfolder):
+            os.makedirs(logsfolder)
 
     if container is None:
         print(
@@ -896,7 +920,7 @@ def main(args=None):
             env_command = f'docker run {container} bash -c "/opt/qunex/env/qunex_container_env_status.sh"'
 
         # run
-        subprocess.run(env_command, shell=True)
+        subprocess.run(env_command, shell=True, check=False)
         exit(0)
 
     if command.startswith("?scheduler"):
@@ -1019,10 +1043,10 @@ def main(args=None):
             ]
             if qx_command not in array_commands:
                 print(
-                    "ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines!"
+                    "ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines commands and run_recipe!"
                 )
                 print(
-                    "         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface."
+                    "         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume, hcp_fmri_surface, run_recipe"
                 )
                 exit(1)
 
@@ -1095,7 +1119,6 @@ def main(args=None):
                 print(f"    Job #{i + 1} will run sessions: {sessionids_array[i]}")
 
     # execute
-    homedir = os.path.expanduser("~")
     if parinfo is None:
         for i in range(0, parjobs):
             qx_command = command
@@ -1123,14 +1146,9 @@ def main(args=None):
             # setup script
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             # prepare the schedule file
-            if batchlogsfolder is not None:
-                script_path = os.path.join(
-                    batchlogsfolder, f"qunex_container_command_{timestamp}.sh"
-                )
-            else:
-                script_path = os.path.join(
-                    homedir, f"qunex_container_command_{timestamp}.sh"
-                )
+            script_path = os.path.join(
+                logsfolder, f"qunex_container_command_{timestamp}.sh"
+            )
 
             f = open(script_path, "w", encoding="UTF-8")
 
@@ -1237,15 +1255,12 @@ def main(args=None):
                     output=output,
                     parsessions=parsessions,
                     parelements=parelements,
-                    batchlogsfolder=batchlogsfolder,
+                    batchlogsfolder=logsfolder,
                     slurm_array=slurm_array,
                 )
             else:
-                subprocess.run(container_command, shell=True)
+                subprocess.run(container_command, shell=True, check=False)
 
-            # remove the runner script if done
-            if not debug and script_path and os.path.exists(script_path):
-                os.remove(script_path)
 
 if __name__ == "__main__":
     main()

@@ -354,8 +354,8 @@ def import_hcp(
               --overwrite=yes
 
         The above command would map the entire HCP dataset located at the
-        specified location into the relevant sessions’ folders—creating them
-        when needed—, organize the MR image files in the sessions’ ``nii``
+        specified location into the relevant sessions' folders—creating them
+        when needed—, organize the MR image files in the sessions' ``nii``
         folder and prepare ``session_hcp.txt`` file for further processing. Any
         preexisting data for the sessions present in the HCP dataset would be
         removed and replaced. By default the HCP files would be hard-linked to
@@ -372,7 +372,7 @@ def import_hcp(
 
         The above command would map the entire HCP dataset located at the
         specified location into the relevant session folders—creating them when
-        needed—, organize the MR image files in the sessions’ ``nii`` folder and
+        needed—, organize the MR image files in the sessions' ``nii`` folder and
         prepare ``session_hcp.txt`` file for further processing. If for any of
         the sessions HCP mapped data already exist, that session will be skipped
         when processing. The files would be mapped to their destinations by
@@ -389,8 +389,8 @@ def import_hcp(
               --overwrite=no
 
         The above example additionally specifies, that only sessions
-        ‘HCA6086369_V1_MR’ and ‘HCA6166973_V1_MR’, and any session that starts
-        with ‘HCD00’ should be imported.
+        ‘HCA6086369_V1_MR' and ‘HCA6166973_V1_MR', and any session that starts
+        with ‘HCD00' should be imported.
 
         ::
 

@@ -309,6 +309,11 @@ def recursive_parse(name, template, config):
     #keys in template that haven't been parsed
     remaining_keys = set(template['parameters'].keys()).difference(set(p_config.keys()))
     for r_key in remaining_keys:
+
+        #Parameters with an ID (eg. scan`,other) only want to be parsed if specified in the config
+        if 'ID' in template['parameters'][r_key].keys():
+            continue
+
         if template['parameters'][r_key]['required']:
             raise ge.CommandError(
                 "run_qa",

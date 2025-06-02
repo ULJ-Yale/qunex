@@ -1054,6 +1054,12 @@ arglist = [
         "If greater than zero, reruns icadim on any run with a VN mean more than this amount greater than the minimum VN mean [0].",
     ],
     [
+        "hcp_icafix_parallel_limit",
+        "",
+        isNone,
+        "How many melodic commands to run in parallel (local, not cluster-distributed) during individual projection and cleanup, defaults to all detected physical cores [-1].",
+    ],
+    [
         "hcp_clean_substring",
         "",
         isNone,
@@ -1085,6 +1091,12 @@ arglist = [
         "HCPStyleData (default) or LegacyStyleData, controls whether --icadim-mode=fewtimepoints is allowed.",
     ],
     [
+        "hcp_icafix_icadim_mode",
+        "",
+        isNone,
+        "Choose how to run icaDim: 'default' - start with a VN dimensionality of 1 and rerun until convergence 'fewtimepoints' - start with a VN dimensionality of half the timepoints, do not iterate.",
+    ],
+    [
         "hcp_reuse_existing_ica",
         "",
         isNone,
@@ -1113,6 +1125,12 @@ arglist = [
         "",
         flag,
         "Whether to use the legacy MATLAB fix instead of the new pyfix.",
+    ],
+    [
+        "hcp_icafix_concatenate_only",
+        "",
+        flag,
+        "When set, the script stops after the concatination step, e.g., for use in experimental alternative multi-run denoising.",
     ],
     ["# --- hcp_post_fix options"],
     [
@@ -1328,7 +1346,7 @@ arglist = [
         "hcp_asl_interpolation",
         "",
         isNone,
-        "Interpolation order for registrations corresponding to scipy’s map_coordinates function.",
+        "Interpolation order for registrations corresponding to scipy's map_coordinates function.",
     ],
     [
         "hcp_asl_use_t1",
@@ -1340,7 +1358,7 @@ arglist = [
         "hcp_asl_nobandingcorr",
         None,
         flag,
-        "If this option is provided, MT and ST banding corrections won’t be applied.",
+        "If this option is provided, MT and ST banding corrections won't be applied.",
     ],
     [
         "hcp_asl_stages",
@@ -1899,6 +1917,12 @@ flaglist = [
         True,
         "Whether we are running the longitudinal variant of the command.",
     ],
+    [
+        "hcp_icafix_concatenate_only",
+        "hcp_icafix_concatenate_only",
+        True,
+        "When set, the script stops after the concatination step, e.g., for use in experimental alternative multi-run denoising.",
+    ],
 ]
 
 # Add flags used in extensions
@@ -2332,10 +2356,10 @@ def run(command, args):
     sout = gc.print_qunex_header()
     sout += "#\n"
     sout += "=================================================================\n"
-    sout += "qunex " + command + " \\\n"
+    sout += "qunex " + command + " \\"
 
     for k, v in args.items():
-        sout += '  --%s="%s" \\\n' % (k, v)
+        sout += '  --%s="%s" \\' % (k, v)
 
     sout += "=================================================================\n"
 

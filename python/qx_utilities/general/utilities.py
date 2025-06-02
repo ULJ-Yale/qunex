@@ -550,15 +550,27 @@ def copy_study(
     print("---> Copying existing study to a new location")
     print(f" ... from: {existing_study}")
     print(f" ... to: {studyfolder}")
-    print(
-        " ... executing rsync (this might take a very long time if your study is large)"
-    )
-    command = ["rsync", "-aH", existing_study + "/", studyfolder]
-    try:
-        subprocess.run(command, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"ERROR: failed when copying {existing_study} to {studyfolder}!")
-        raise e
+
+    # Folders to skip at top level
+    if subjects is None and sessions is None and filter is None:
+        skip_top = []
+    else:
+        skip_top = ["subjects", "sessions"]
+
+    for entry in os.listdir(existing_study):
+        src_path = os.path.join(existing_study, entry)
+        if not os.path.isdir(src_path):
+            continue
+        if entry in skip_top:
+            continue
+        dest_path = os.path.join(studyfolder, entry)
+        print(f" ... rsyncing {entry}: {src_path} -> {dest_path}")
+        cmd = ["rsync", "-aH", f"{src_path}/", dest_path]
+        try:
+            subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError:
+            print(f"ERROR: Failed to rsync {src_path}!")
+            raise
 
     # get sessions and subjects
     if batchfile is not None:
@@ -582,17 +594,19 @@ def copy_study(
     if sessions is not None:
         keep_sessions = sessions + ["archive", "inbox", "QC", "specs"]
         print()
-        print("---> Removing unused sessions")
-        sessions_path = os.path.join(studyfolder, "sessions")
+        print("---> Copying sessions")
+        sessions_path = os.path.join(existing_study, "sessions")
         try:
-            dirs = [
-                d
-                for d in os.listdir(sessions_path)
-                if os.path.isdir(os.path.join(sessions_path, d))
-            ]
-            for d in dirs:
-                if d not in keep_sessions:
-                    _remove_folder(os.path.join(sessions_path, d))
+            for entry in os.listdir(sessions_path):
+                src_path = os.path.join(sessions_path, entry)
+                if not os.path.isdir(src_path) or entry in keep_sessions:
+                    dest_path = os.path.join(studyfolder, "sessions", entry)
+                    print(f" ... rsyncing {entry}: {src_path} -> {dest_path}")
+                    cmd = ["rsync", "-aH", f"{src_path}/", dest_path]
+                    subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError:
+            print(f"ERROR: Failed to rsync {src_path}!")
+            raise
         except OSError as e:
             print(f"Error accessing sessions directory: {e}")
             raise e
@@ -600,39 +614,20 @@ def copy_study(
     # remove all folders in existing_study/subjects that are not in subjects
     if subjects is not None:
         print()
-        print("---> Removing unused subjects")
-        subjects_path = os.path.join(studyfolder, "subjects")
+        print("---> Copying subjects")
+        subjects_path = os.path.join(existing_study, "subjects")
         try:
-            dirs = [
-                d
-                for d in os.listdir(subjects_path)
-                if os.path.isdir(os.path.join(subjects_path, d))
-            ]
-            for d in dirs:
-                if d not in subjects:
-                    _remove_folder(os.path.join(subjects_path, d))
-        except OSError as e:
-            print(f"Error accessing sessions directory: {e}")
-            raise e
-
-        keep_sessions = subjects + ["archive", "inbox", "QC", "specs"]
-        sessions_path = os.path.join(studyfolder, "sessions")
-        try:
-            dirs = [
-                d
-                for d in os.listdir(sessions_path)
-                if os.path.isdir(os.path.join(sessions_path, d))
-            ]
-            for d in dirs:
-                keep_folder = False
-                for ks in keep_sessions:
-                    # if ks is a substring of d then keep, else delete
-                    if ks in d:
-                        keep_folder = True
-                        break
-
-                if not keep_folder:
-                    _remove_folder(os.path.join(sessions_path, d))
+            for entry in os.listdir(subjects_path):
+                src_path = os.path.join(subjects_path, entry)
+                folder_name = os.path.basename(src_path)
+                if not os.path.isdir(src_path) or folder_name in subjects:
+                        dest_path = os.path.join(studyfolder, "subjects", entry)
+                        print(f" ... rsyncing {entry}: {src_path} -> {dest_path}")
+                        cmd = ["rsync", "-aH", f"{src_path}/", dest_path]
+                        subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError:
+            print(f"ERROR: Failed to rsync {src_path}!")
+            raise
         except OSError as e:
             print(f"Error accessing sessions directory: {e}")
             raise e
@@ -2968,10 +2963,11 @@ def batch_tag2namekey(
     print("BOLDS:%s" % (",".join(boldlist)))
 
 
-def get_sessions_for_slurm_array(sessions, sessionids):
+def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None):
     """
     get_sessions_for_slurm_array \\
-      --sessions=<a list of sessions, or path to the batch file)
+        --sessions=<a list of sessions, or path to the batch file) \\
+        --sessionids=<a list of session ids to filter out>
 
     Returns the subset of sessions that will be processed
 
@@ -2983,7 +2979,11 @@ def get_sessions_for_slurm_array(sessions, sessionids):
     """
 
     # get sessions
-    slist, _ = gc.get_sessions_list(sessions, sessionids=sessionids)
+    slist = []
+    if batchfile is not None:
+        slist, _ = gc.get_sessions_list(batchfile, sessionids=sessions)
+    else:
+        slist, _ = gc.get_sessions_list(sessions, sessionids=sessionids)
 
     # print
     sarray = []
