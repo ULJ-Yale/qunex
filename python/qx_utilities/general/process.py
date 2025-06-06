@@ -1121,6 +1121,24 @@ arglist = [
         "MELODIC or ICASSO. Use single-pass MELODIC (default) or multi-pass ICASSO consensus method for ICA.",
     ],
     [
+        "hcp_vol_wisharts",
+        "",
+        isNone,
+        "Number of wisharts to fit to volume data in icaDim.",
+    ],
+    [
+        "hcp_cifti_wisharts",
+        "",
+        isNone,
+        "Number of wisharts to fit to CIFTI data in icaDim.",
+    ],
+    [
+        "hcp_icadim_mode",
+        "",
+        isNone,
+        "Choose how to run icaDim: default - start with a VN dimensionality of 1 and rerun until convergence, fewtimepoints - start with a VN dimensionality of half the timepoints, do not iterate.",
+    ],
+    [
         "hcp_legacy_fix",
         "",
         flag,

@@ -6627,6 +6627,17 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_legacy_fix (flag, not set by default):
             Whether to use the legacy MATLAB fix instead of the new pyfix.
 
+        --hcp_vol_wisharts (int, default '2'):
+            Number of wisharts to fit to volume data in icaDim.
+
+        --hcp_cifti_wisharts (int, default '3'):
+            Number of wisharts to fit to CIFTI data in icaDim.
+
+        --hcp_icadim_mode (str, default 'default'):
+            Choose how to run icaDim: "default" - start with a VN dimensionality
+            of 1 and rerun until convergence "fewtimepoints" - start with a VN
+            dimensionality of half the timepoints, do not iterate.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -6675,6 +6686,9 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_ica_method``                 ``ica-method``
             ``hcp_legacy_fix``                 ``enable-legacy-fix``
             ``hcp_icafix_concatenate_only``    ``concatenate-only``
+            ``hcp_vol_wisharts``               ``vol-wisharts``
+            ``hcp_cifti_wisharts``             ``cifti-wisharts``
+            ``hcp_icadim_mode``                ``icadim-mode``
             ================================== =======================
 
     Examples:
@@ -7263,6 +7277,15 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if options["hcp_ica_method"] is not None:
             comm += '             --ica-method="%s"' % options["hcp_ica_method"]
+
+        if options["hcp_vol_wisharts"] is not None:
+            comm += '             --vol-wisharts="%s"' % options["hcp_vol_wisharts"]
+
+        if options["hcp_cifti_wisharts"] is not None:
+            comm += '             --cifti-wisharts="%s"' % options["hcp_cifti_wisharts"]
+
+        if options["hcp_icadim_mode"] is not None:
+            comm += '             --icadim-mode="%s"' % options["hcp_icadim_mode"]
 
         if not options["hcp_legacy_fix"]:
             comm += '             --enable-legacy-fix="FALSE"'
