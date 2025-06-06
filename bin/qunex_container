@@ -371,7 +371,7 @@ def schedule(
         if outputs["stderr"] is not None:
             s_command += f"#$ -e {outputs['stderr']}\n"
 
-        com = "qsub"
+        com = "qsub -S /bin/bash"
 
     else:
         raise CommandError(
@@ -402,7 +402,7 @@ def schedule(
     # store command
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     script_path = os.path.join(
-        batchlogsfolder, f"qunex_{com}_{scheduler_name}_{timestamp}.sh"
+        batchlogsfolder, f"qunex_{scheduler_name}_{timestamp}.sh"
     )
     with open(script_path, "w", encoding="UTF-8") as f:
         f.write(s_command)
