@@ -2400,7 +2400,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 parameters[parameter] = value
     else:
         # define recipe name
-        recipe = "steps parameter"
+        recipe = "steps"
 
         # create the commands dict
         recipe_dict = {}
@@ -2500,6 +2500,18 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 commands_subset.append(com)
 
         commands = commands_subset
+
+    # print commands
+    print(f"---> Commands to run: {commands}")
+    print(f"---> Commands to run: {commands}", file=log)
+    for com in commands:
+        if isinstance(com, dict):
+            command_name = list(com.keys())[0]
+        else:
+            command_name = com
+
+        print(f"    - {command_name}", file=log)
+        print(f"    - {command_name}", file=log)
 
     # XNAT initial setup
     # If running on XNAT, try and load checkpoint if supplied
