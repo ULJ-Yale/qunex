@@ -12332,7 +12332,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_matlab_mode``                   ``matlab-run-mode``
             ``longitudinal``                      ``is-longitudinal``
             ``hcp_longitudinal_template``         ``longitudinal-template``
-            ``hcp_longitudinal_extract_all``      ``longitudinal-extract-all``
+            ``hcp_tica_longitudinal_extract_all`` ``longitudinal-extract-all``
             ===================================== ===============================
 
 
@@ -12755,7 +12755,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 comm += '                --is-longitudinal="TRUE"'
                 comm += '                --longitudinal-template="' + options["hcp_longitudinal_template"] + '"'
                 comm += '                --longitudinal-subject="' + options["hcp_longitudinal_subject"] + '"'
-                if options["hcp_longitudinal_extract_all"]:
+                if options["hcp_tica_longitudinal_extract_all"]:
                     comm += '                --longitudinal-extract-all="TRUE"'
 
                 if not options["hcp_tica_icamode"]:

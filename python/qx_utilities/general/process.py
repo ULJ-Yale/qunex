@@ -1546,7 +1546,7 @@ arglist = [
         "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning.",
     ],
     [
-        "hcp_longitudinal_extract_all",
+        "hcp_tica_longitudinal_extract_all",
         None,
         flag,
         "Extract all runs specified in hcp_tica_bolds, with output name matching the one from hcp_tica_mrfix_concat_name.",
@@ -1954,8 +1954,8 @@ flaglist = [
         "Whether we are running the longitudinal variant of the command.",
     ],
     [
-        "hcp_longitudinal_extract_all",
-        "hcp_longitudinal_extract_all",
+        "hcp_tica_longitudinal_extract_all",
+        "hcp_tica_longitudinal_extract_all",
         False,
         "Extract all runs specified in hcp_tica_bolds, with output name matching the one from hcp_tica_mrfix_concat_name.",
     ],
