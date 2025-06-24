@@ -1956,7 +1956,7 @@ flaglist = [
     [
         "hcp_tica_longitudinal_extract_all",
         "hcp_tica_longitudinal_extract_all",
-        False,
+        True,
         "Extract all runs specified in hcp_tica_bolds, with output name matching the one from hcp_tica_mrfix_concat_name.",
     ],
     [
