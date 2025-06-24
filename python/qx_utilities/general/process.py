@@ -1545,6 +1545,24 @@ arglist = [
         flag,
         "Generate config file for rerunning with similar settings, or for reusing these results for future cleaning.",
     ],
+    [
+        "hcp_longitudinal_extract_all",
+        None,
+        flag,
+        "Extract all runs specified in hcp_tica_bolds, with output name matching the one from hcp_tica_mrfix_concat_name.",
+    ],
+    [
+        "hcp_longitudinal_subject",
+        None,
+        isNone,
+        "The subject id of the longitudinal subject. Mandatory for longitudinal processing.",
+    ],
+    [
+        "hcp_longitudinal_sessions",
+        None,
+        isNone,
+        "A comma separated list of sessions for a given subject. Mandatory for longitudinal processing.",
+    ],
     ["# --- hcp_apply_auto_reclean options"],
     [
         "hcp_autoreclean_timepoints",
@@ -1934,6 +1952,12 @@ flaglist = [
         "longitudinal",
         True,
         "Whether we are running the longitudinal variant of the command.",
+    ],
+    [
+        "hcp_longitudinal_extract_all",
+        "hcp_longitudinal_extract_all",
+        False,
+        "Extract all runs specified in hcp_tica_bolds, with output name matching the one from hcp_tica_mrfix_concat_name.",
     ],
     [
         "hcp_icafix_concatenate_only",

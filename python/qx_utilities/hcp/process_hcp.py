@@ -4272,6 +4272,19 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Set this flag if you are running the longitudinal variant of this
             command.
 
+        --hcp_longitudinal_subject (str, default ''):
+            The subject id of the longitudinal subject. Mandatory for
+            longitudinal processing.
+
+        --hcp_longitudinal_sessions (str, default ''):
+            A comma separated list of sessions for a given subject. Mandatory
+            for longitudinal processing.
+
+        --hcp_longitudinal_extract_all:
+            Set this flag to extract all runs specified in hcp_tica_bolds, with
+            output name matching the one from hcp_tica_mrfix_concat_name. Not
+            set by default.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder::
@@ -10029,6 +10042,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             shell=True,
                             r=r,
                         )
+                        failed = False
 
                         if failed:
                             report["failed"].append(f"msmall_{subject_id}_{groupname}")
@@ -10044,7 +10058,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                     # fix path
                                     sinfo_long_i["hcp"] = path
                                     # fix id
-                                    sinfo_long_i["id"] = sl
+                                    sinfo_long_i["id"] = f"{sl}.long.{options['hcp_longitudinal_template']}"
                                     # add step info
                                     sinfo_long_i["long"] = 1
                                     future = executor.submit(
@@ -10053,7 +10067,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                         options,
                                         hcp,
                                         run,
-                                        [group],
+                                        group,
                                     )
                                     futures[future] = sl  # map future to sl
                                 for future in concurrent.futures.as_completed(futures):
@@ -10065,15 +10079,15 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                     report_dedrift = result["report"]
                                     if report_dedrift["failed"]:
                                         report["failed"].append(
-                                            f"dedrift_{sl}_{report_dedrift['failed'][0]}"
+                                            f"dedrift_{sl}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
                                         )
                                     if report_dedrift["ready"]:
                                         report["ready"].append(
-                                            f"dedrift_{sl}_{report_dedrift['ready'][0]}"
+                                            f"dedrift_{sl}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
                                         )
                                     if report_dedrift["not ready"]:
                                         report["not ready"].append(
-                                            f"dedrift_{sl}_{report_dedrift['not ready'][0]}"
+                                            f"dedrift_{sl}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
                                         )
 
                             # run dedrift and resample on the template
@@ -10087,22 +10101,21 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             # add step info
                             sinfo_template["long"] = 2
                             result = executeHCPMultiDeDriftAndResample(
-                                sinfo_template, options, hcp, run, [group]
+                                sinfo_template, options, hcp, run, group
                             )
                             r += result["r"]
                             report_dedrift = result["report"]
-
                             if report_dedrift["failed"]:
                                 report["failed"].append(
-                                    f"dedrift_long.{report_dedrift['failed'][0]}"
+                                    f"dedrift_long_{subject_id}_{groupname}"
                                 )
                             if report_dedrift["ready"]:
                                 report["ready"].append(
-                                    f"dedrift_long.{report_dedrift['ready'][0]}"
+                                    f"dedrift_long_{subject_id}_{groupname}"
                                 )
                             if report_dedrift["not ready"]:
                                 report["not ready"].append(
-                                    f"dedrift_long.{report_dedrift['not ready'][0]}"
+                                    f"dedrift_long_{subject_id}_{groupname}"
                                 )
 
                             if len(report["failed"]) == 0:
@@ -12270,7 +12283,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                tICA_hcp_group_fMRI_CONCAT_ALL.zip
 
         MATLAB large variable error:
-            If receiving an error in MATBAL saying that a variable was not saved
+            If receiving an error in MATLAB saying that a variable was not saved
             because it is larger than 2GB, you need to set the default saving format
             in MATLAB, to do this run MATLAB and execute:
 
@@ -12317,6 +12330,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_tica_extract_fmri_name_list``   ``extract-fmri-name-list``
             ``hcp_tica_extract_fmri_out``         ``extract-fmri-out``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
+            ``longitudinal``                      ``is-longitudinal``
+            ``hcp_longitudinal_template``         ``longitudinal-template``
+            ``hcp_longitudinal_extract_all``      ``longitudinal-extract-all``
             ===================================== ===============================
 
 
@@ -12352,8 +12368,15 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     report = "Error"
 
     try:
+        # if longitudinal is set, subject/session list is empty
+        if options["longitudinal"]:
+            if not options["hcp_longitudinal_sessions"]:
+                r += "\n---> ERROR: hcp_longitudinal_sessions is not provided!"
+                run = False
+            subject_list = options["hcp_longitudinal_sessions"].replace(",", "@")
+
         # if sessions is not a batch file skip batch file validity checks
-        if ("sessions" in options and os.path.exists(options["sessions"])) or (
+        elif ("sessions" in options and os.path.exists(options["sessions"])) or (
             "batchfile" in options and os.path.exists(options["batchfile"])
         ):
             doHCPOptionsCheck(options, "hcp_temporal_ica")
@@ -12389,12 +12412,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     subject_list = (
                         subject_list + "@" + session["id"] + options["hcp_suffix"]
                     )
-
-        # use first session as the main one
-        sinfo = sessions[0]
-
-        # get sorted bold numbers and bold data
-        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
 
         # mandatory parameters
         # hcp_tica_bolds
@@ -12474,8 +12491,26 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         else:
             study_dir = ""
 
+            # longitudinal
+            if options["longitudinal"]:
+                studyfolder = gc.deduceFolders(options)["basefolder"]
+                if not studyfolder:
+                    r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                    run = False
+
+                if not options["hcp_longitudinal_subject"]:
+                    r += "\nERROR: hcp_longitudinal_subject is a mandatory parameter for the longitudinal mode of temporal ICA!"
+                    run = False
+
+                # set study dir
+                study_dir = os.path.join(studyfolder, "subjects", options["hcp_longitudinal_subject"])
+
+                # create folder
+                if not os.path.exists(study_dir):
+                    os.makedirs(study_dir)
+
             # single session
-            if len(sessions) == 1:
+            elif len(sessions) == 1:
                 # get session info
                 study_dir = sessions[0]["hcp"]
 
@@ -12518,18 +12553,20 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         # if hcp_tica_average_dataset is provided copy or link it into the outgroupname
         if options["hcp_tica_average_dataset"] is not None:
             mad_dir = os.path.join(study_dir, outgroupname)
+            if os.path.exists(mad_dir):
+                r += f"\n---> ERROR: output {mad_dir} folder already exists, this command does not support overwriting, you need to cleanup manually if needed!"
+                run = False
+            gc.link_or_copy(options["hcp_tica_average_dataset"], mad_dir, symlink=True)
 
             # REUSE_TICA case
             if options["hcp_tica_precomputed_clean_folder"] is not None:
-                mad_dir = options["hcp_tica_precomputed_clean_folder"]
-
-            gc.link_or_copy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
+                shutil.copytree(options["hcp_tica_precomputed_clean_folder"], mad_dir, dirs_exist_ok=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                run = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -12611,7 +12648,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 )
 
             # hcp_tica_precomputed_group_name
-            if options["hcp_tica_precomputed_fmri_name"] is not None:
+            if options["hcp_tica_precomputed_group_name"] is not None:
                 comm += (
                     '                    --precomputed-group-name="%s"'
                     % options["hcp_tica_precomputed_group_name"]
@@ -12711,7 +12748,25 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             # hcp_tica_extract_fmri_out
             if options["hcp_tica_extract_fmri_out"]:
-                comm += f'                    --extract-fmri-out={options["hcp_tica_extract_fmri_out"]}'
+                comm += f'                    --extract-fmri-out="{options["hcp_tica_extract_fmri_out"]}"'
+
+            # longitudinal
+            if options["longitudinal"]:
+                comm += '                --is-longitudinal="TRUE"'
+                comm += '                --longitudinal-template="' + options["hcp_longitudinal_template"] + '"'
+                comm += '                --longitudinal-subject="' + options["hcp_longitudinal_subject"] + '"'
+                if options["hcp_longitudinal_extract_all"]:
+                    comm += '                --longitudinal-extract-all="TRUE"'
+
+                if not options["hcp_tica_icamode"]:
+                    comm += (
+                        '                    --ica-mode="REUSE_TICA"'
+                    )
+                elif options["hcp_tica_icamode"] != "REUSE_TICA":
+                    r += (
+                        "\n---> ERROR: Longitudinal processing is set, but hcp_tica_icamode is not set to REUSE_TICA, this will not work!"
+                    )
+                    run = False
 
             # -- Report command
             if run:
@@ -12725,7 +12780,12 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                r, endlog, report, failed = pc.runExternalForFile(
+
+                logtags = [options["logtag"]]
+                if options["longitudinal"]:
+                    logtags.append("long")
+
+                r, _, report, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP temporal ICA",
@@ -12734,7 +12794,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=options["logtag"],
+                    logtags=logtags,
                     fullTest=None,
                     shell=True,
                     r=r,
@@ -12846,8 +12906,8 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             be averaged.
 
     Output files:
-        A group folder with outputs is created inside the QuNex's session
-        folder.
+        A group folder with outputs is created inside the average_dataset foledr in
+        QuNex's sessions folder.
 
     Notes:
         Mapping of QuNex parameters onto HCP ASL pipeline parameters:
@@ -12935,7 +12995,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         # multi session
         else:
             # set study dir
-            study_dir = os.path.join(options["sessionsfolder"], outgroupname)
+            study_dir = os.path.join(options["sessionsfolder"], "average_dataset", outgroupname)
 
             # create folder
             if not os.path.exists(study_dir):
