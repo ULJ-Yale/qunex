@@ -12305,7 +12305,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_tica_procstring``               ``proc-string``
             ``hcp_outgroupname``                  ``out-group-name``
             ``hcp_bold_res``                      ``fmri-resolution``
-            ``hcp_tica_timepoints``               ``subject-expected-timepoints``
+            ``hcp_tica_timepoints``               ``session-expected-timepoints``
             ``hcp_tica_num_wishart``              ``num-wishart``
             ``hcp_lowresmesh``                    ``low-res``
             ``hcp_tica_mrfix_concat_name``        ``mrfix-concat-name``
@@ -12368,12 +12368,12 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     report = "Error"
 
     try:
-        # if longitudinal is set, subject/session list is empty
+        # if longitudinal is set, session list needs to be provided
         if options["longitudinal"]:
             if not options["hcp_longitudinal_sessions"]:
                 r += "\n---> ERROR: hcp_longitudinal_sessions is not provided!"
                 run = False
-            subject_list = options["hcp_longitudinal_sessions"].replace(",", "@")
+            session_list = options["hcp_longitudinal_sessions"].replace(",", "@")
 
         # if sessions is not a batch file skip batch file validity checks
         elif ("sessions" in options and os.path.exists(options["sessions"])) or (
@@ -12381,8 +12381,8 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         ):
             doHCPOptionsCheck(options, "hcp_temporal_ica")
 
-            # subject_list
-            subject_list = ""
+            # session_list
+            session_list = ""
 
             # check sessions
             for session in sessions:
@@ -12393,24 +12393,24 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     )
                     run = False
 
-                # subject_list
-                if subject_list == "":
-                    subject_list = session["id"] + options["hcp_suffix"]
+                # session_list
+                if session_list == "":
+                    session_list = session["id"] + options["hcp_suffix"]
                 else:
-                    subject_list = (
-                        subject_list + "@" + session["id"] + options["hcp_suffix"]
+                    session_list = (
+                        session_list + "@" + session["id"] + options["hcp_suffix"]
                     )
         else:
-            # subject_list
-            subject_list = ""
+            # session_list
+            session_list = ""
 
             for session in sessions:
-                # subject_list
-                if subject_list == "":
-                    subject_list = session["id"] + options["hcp_suffix"]
+                # session_list
+                if session_list == "":
+                    session_list = session["id"] + options["hcp_suffix"]
                 else:
-                    subject_list = (
-                        subject_list + "@" + session["id"] + options["hcp_suffix"]
+                    session_list = (
+                        session_list + "@" + session["id"] + options["hcp_suffix"]
                     )
 
         # mandatory parameters
@@ -12551,16 +12551,18 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     os.makedirs(out_dir)
 
         # if hcp_tica_average_dataset is provided copy or link it into the outgroupname
+        mad_dir = os.path.join(study_dir, outgroupname)
         if options["hcp_tica_average_dataset"] is not None:
-            mad_dir = os.path.join(study_dir, outgroupname)
-            if os.path.exists(mad_dir):
-                r += f"\n---> ERROR: output {mad_dir} folder already exists, this command does not support overwriting, you need to cleanup manually if needed!"
-                run = False
             gc.link_or_copy(options["hcp_tica_average_dataset"], mad_dir, symlink=True)
-
-            # REUSE_TICA case
-            if options["hcp_tica_precomputed_clean_folder"] is not None:
-                shutil.copytree(options["hcp_tica_precomputed_clean_folder"], mad_dir, dirs_exist_ok=True)
+        elif options["longitudinal"]:
+            # if longitudinal, check if we have to copy from sessions to subjects
+            studyfolder = gc.deduceFolders(options)["basefolder"]
+            if not studyfolder:
+                r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                run = False
+            sessions_mad_dir = os.path.join(studyfolder, "sessions", "average_dataset", outgroupname)
+            if os.path.exists(sessions_mad_dir):
+                gc.link_or_copy(sessions_mad_dir, mad_dir, symlink=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
@@ -12585,7 +12587,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             comm = (
                 '%(script)s \
                 --study-folder="%(study_dir)s" \
-                --subject-list="%(subject_list)s" \
+                --session-list="%(session_list)s" \
                 --fmri-names="%(fmri_names)s" \
                 --output-fmri-name="%(output_fmri_name)s" \
                 --surf-reg-name="%(surf_reg_name)s" \
@@ -12593,7 +12595,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 --proc-string="%(proc_string)s" \
                 --out-group-name="%(outgroupname)s" \
                 --fmri-resolution="%(fmri_resolution)s" \
-                --subject-expected-timepoints="%(timepoints)s" \
+                --session-expected-timepoints="%(timepoints)s" \
                 --num-wishart="%(num_wishart)s" \
                 --low-res="%(low_res)s" \
                 --matlab-run-mode="%(matlabrunmode)s" \
@@ -12603,7 +12605,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                         os.environ["HCPPIPEDIR"], "tICA", "tICAPipeline.sh"
                     ),
                     "study_dir": study_dir,
-                    "subject_list": subject_list,
+                    "session_list": session_list,
                     "fmri_names": fmri_names,
                     "output_fmri_name": out_fmri_name,
                     "surf_reg_name": surfregname,
