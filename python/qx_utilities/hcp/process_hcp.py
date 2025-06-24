@@ -12535,13 +12535,15 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
                 # check for make average dataset outputs
                 mad_file = os.path.join(
-                    study_dir,
+                    options["sessionsfolder"],
+                    "average_dataset",
                     outgroupname,
                     "MNINonLinear",
                     "fsaverage_LR32k",
                     outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii",
                 )
                 if not os.path.exists(mad_file):
+                    r += "\n---> ERROR: %s does not exist!" % mad_file
                     r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
                     run = False
 
