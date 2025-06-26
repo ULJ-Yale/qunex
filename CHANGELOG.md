@@ -399,7 +399,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.92.2
 
-* Fixed a bug in the `fsl_xtract` command that prevented users from running it.
+* Fixed a bug in the `dwi_xtract` command that prevented users from running it.
 * Corrected some typos in inline documentation.
 
 ## 0.92.1
