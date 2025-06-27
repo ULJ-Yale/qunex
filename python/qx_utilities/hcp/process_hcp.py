@@ -108,18 +108,7 @@ def _build_skipped_report(report, skipped, options):
             report["skipped"] = [str(binfo["bold_number"]) for binfo in skipped]
 
 
-def _get_bold_names(boldinfo, options):
 
-    if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-        printbold = boldinfo["filename"]
-        boldtarget = boldinfo["filename"]
-        boldsource = boldinfo["filename"]
-    else:
-        printbold = str(boldinfo["bold_number"])
-        boldsource = "BOLD_%d" % (boldinfo["bold_number"])
-        boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
-
-    return printbold, boldtarget, boldsource
 
 
 # -------------------------------------------------------------------
@@ -4830,7 +4819,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             firstSE = bolds[0].get("se", None)
 
         for boldinfo in bolds:
-            printbold, boldtarget, boldsource = _get_bold_names(boldinfo, options)
+            printbold, boldtarget, boldsource = pc.get_bold_names(boldinfo, options)
 
             r += "\n\n---> %s BOLD %s" % (
                 pc.action(
@@ -6098,7 +6087,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
 def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
 
-    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -6285,7 +6274,7 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
 
     for boldinfo in bolds:
 
-        _, boldtarget, _ = _get_bold_names(boldinfo, options)
+        _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
         boldtag = boldinfo["task"]
 
         boldtargets.append(boldtarget)
@@ -6904,7 +6893,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
 
 def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
-    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -7101,7 +7090,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
@@ -7680,7 +7669,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
             else options["hcp_icafix_highpass"]
         )
 
-        printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+        printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
@@ -8175,7 +8164,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
 
 def executeHCPSingleReApplyFix(sinfo, options, hcp, run, boldinfo):
 
-    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -8389,7 +8378,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # boldok
             boldok = True
 
-            printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+            printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
@@ -9199,7 +9188,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+            printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -9282,7 +9271,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "session": session,
+                "session": sinfo["id"],
                 "msmallBolds": msmallBolds,
                 "outfmriname": outfmriname,
                 "highpass": highpass,
@@ -9405,7 +9394,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -9888,7 +9877,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                     # set ok to true for now
                     boldok = True
 
-                    _, boldtarget, _ = _get_bold_names(boldinfo, options)
+                    _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
                     # input file check
                     boldimg = os.path.join(
@@ -10491,7 +10480,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -10741,7 +10730,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
 
         for boldinfo in bolds:
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -13455,7 +13444,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)

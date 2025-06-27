@@ -28,6 +28,7 @@ all_qunex_commands = [
     ("qx_utilities.processing.fsl.fsl_feat",                        "Runs FSL feat command.",                                                                   "python"),
     ("qx_utilities.processing.fsl.fsl_melodic",                     "Runs FSL melodic command.",                                                                "python"),
     ("qx_utilities.processing.dwi.dwi_f99",                         "Runs FSL F99 command.",                                                                    "python"),
+    ("qx_utilities.processing.rapidtide.rapidtide",                 "Runs rapidtide feat command.",                                                             "python"),
     ("qx_utilities.bash.dwi_legacy_gpu",                            "Diffusion image processing for data with or without standard fieldmaps.",                  "bash"),
     ("qx_utilities.bash.dwi_parcellate",                            "Parcellates dense tractography data.",                                                     "bash"),
     ("qx_utilities.bash.dwi_pre_tractography",                      "Generates space for dense whole-brain connectomes.",                                       "bash"),
