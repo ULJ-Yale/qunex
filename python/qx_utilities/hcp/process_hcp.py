@@ -9271,7 +9271,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "session": session,
+                "session": sinfo["id"],
                 "msmallBolds": msmallBolds,
                 "outfmriname": outfmriname,
                 "highpass": highpass,

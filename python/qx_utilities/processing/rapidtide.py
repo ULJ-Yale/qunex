@@ -30,7 +30,8 @@ import traceback
 import processing.core as pc
 import hcp.process_hcp as hcp
 from datetime import datetime
-
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 
 def rapidtide(sinfo, options, overwrite=False, thread=0):
     """
@@ -229,223 +230,34 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             "skipped": [],
             "ready": [],
         }
-        for boldtarget in boldtargets:
-            r += f"\n\n\n---> Working on bold {boldtarget}"
-            # main outputs folder
-            rapidtide_out = os.path.join(rapidtide_folder, boldtarget)
-            if os.path.exists(rapidtide_out):
-                if not overwrite:
-                    r += f"\n---> Skipping rapidtide for {boldtarget}, output folder already exists, and overwrite is not set: {rapidtide_out}"
-                    report["skipped"].append(boldtarget)
-                    continue
-                else:
-                    r += f"\n---> Removing existing results in {rapidtide_out}"
-                    shutil.rmtree(rapidtide_out, ignore_errors=True)
-            os.makedirs(rapidtide_out)
 
-            # flirt ------------------------------------------------------------
-            # run flirt to create masks if parameters are not provided
-            if options["graymattermask"] is None and options["whitemattermask"] is None:
-                r += f"\n\n---> Running FSL flirt to create gray or white matter masks for {boldtarget}"
-                # in
-                in_path = os.path.join(hcp_folders["hcp_nonlin"], "aparc+aseg.nii.gz")
-                if not os.path.exists(in_path):
-                    r += f"\n---> ERROR: Cannot find aparc+aseg.nii.gz at {in_path}"
+        # run in parallel
+        parelements = max(1, min(options["parelements"], len(boldtargets)))
+        ppe = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(
+            _execute_rapidtide,
+            options,
+            sinfo,
+            overwrite,
+            run,
+            hcp_folders,
+            rapidtide_folder,
+        )
+        results = ppe.map(f, boldtargets)
 
-                # ref
-                ref_path = os.path.join(hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz")
-                if not os.path.exists(ref_path):
-                    r += f"\n---> ERROR: Cannot find brainmask_fs.2.nii.gz at {ref_path}"
-                    run = False
-
-                # init
-                init_path = os.path.join(os.environ["FSLDIR"], "data", "atlases", "bin", "eye.mat")
-
-                # out
-                out_path = os.path.join(rapidtide_out, "aparc+aseg_res-2.nii.gz")
-
-                flirt_comm = (
-                    'flirt \
-                    -in %(in)s \
-                    -ref %(ref)s \
-                    -applyxfm \
-                    -init %(init)s \
-                    -interp nearestneighbour \
-                    -out %(out)s'
-                    % {
-                        "in": in_path,
-                        "ref": ref_path,
-                        "init": init_path,
-                        "out": out_path,
-                    }
-                )
-
-                # report command
-                r += "\n\n------------------------------------------------------------\n"
-                r += "Running FSL flirt command via QuNex:\n\n"
-                r += flirt_comm.replace("                ", "")
-                r += "\n------------------------------------------------------------\n"
-
-                # run
-                if run:
-                    # run
-                    if options["run"] == "run":
-                        # execute
-                        r, _, _, failed = pc.runExternalForFile(
-                            out_path,
-                            flirt_comm,
-                            "Running FSL flirt",
-                            overwrite=overwrite,
-                            thread=f"{sinfo['id']}_{boldtarget}",
-                            remove=options["log"] == "remove",
-                            task="rapidtide_flirt",
-                            logfolder=options["comlogs"],
-                            logtags=[options["logtag"]],
-                            fullTest=None,
-                            shell=True,
-                            r=r,
-                        )
-                        if failed:
-                            r += f"\n---> FSL flirt processing for session {session} failed"
-                            report["failed"].append(boldtarget)
-                        else:
-                            r += f"\n---> FSL flirt processing for session {session} completed"
-                            report["done"].append(boldtarget)
-
-                    # just checking
-                    else:
-                        passed, _, r, failed = pc.checkRun(
-                            out_path, None, "FSL flirt " + session, r, overwrite=overwrite
-                        )
-
-                        if passed is None:
-                            r += "\n---> FSL flirt can be run"
-                            report["ready"].append(boldtarget)
-                        else:
-                            r += (
-                                f"\n---> FSL flirt processing for bold {boldtarget} would be skipped"
-                            )
-                            report["skipped"].append(boldtarget)
-
-            # rapidtide --------------------------------------------------------
-            r += f"\n\n---> Running rapidtide for {boldtarget}"
-            boldname = f"{boldtarget}{options['nifti_tail']}.nii.gz"
-            bold = os.path.join(hcp_folders["hcp_nonlin"], "Results", boldtarget, boldname)
-            rapidtide_comm = (
-                'rapidtide \
-                %(bold)s \
-                %(out)s \
-                --noprogressbar'
-                % {
-                    "bold": bold,
-                    "out": f"{rapidtide_out}/{boldtarget}{options['nifti_tail']}",
-                }
-            )
-
-            # optional parameters
-            if options["despecklepasses"] is not None:
-                rapidtide_comm += f"                --despecklepasses {options['despecklepasses']}"
-            if options["filterband"] is not None:
-                rapidtide_comm += f"                --filterband {options['filterband']}"
-            if options["searchrange"] is not None:
-                rapidtide_comm += f"                --searchrange {options['searchrange']}"
-            if options["nprocs"] is not None:
-                rapidtide_comm += f"                --nprocs {options['nprocs']}"
-            if options["nofitfilt"]:
-                rapidtide_comm += "                --nofitfilt"
-            if options["similaritymetric"] is not None:
-                rapidtide_comm += f"                --similaritymetric {options['similaritymetric']}"
-            if options["ampthresh"] is not None:
-                rapidtide_comm += f"                --ampthresh {options['ampthresh']}"
-            if options["outputlevel"] is not None:
-                rapidtide_comm += f"                --outputlevel {options['outputlevel']}"
-            if options["spatialfilt"] is not None:
-                rapidtide_comm += f"                --spatialfilt {options['spatialfilt']}"
-            if options["searchrange"] is not None:
-                rapidtide_comm += f"                --searchrange {options['searchrange']}"
-            if options["rapidtide_extra_args"] is not None:
-                rapidtide_comm += f" {options['rapidtide_extra_args']}"
-
-            # run
-            if run:
-                # run
-                if options["run"] == "run":
-                    # do more complex parameter setup here
-                    if options["brainmask"] is not None and options["brainmask"] != "None":
-                        rapidtide_comm += f"                --brainmask {options['brainmask']}"
-                    elif options["brainmask"] is None:
-                        brainmask = os.path.join(
-                            hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz"
-                        )
-                        if not os.path.exists(brainmask):
-                            r += f"\n---> ERROR: Cannot find the default --brainmask: brainmask_fs.2.nii.gz at {brainmask}"
-                            run = False
-                        else:
-                            rapidtide_comm += f"                --brainmask {brainmask}"
-
-                    default_mask = os.path.join(rapidtide_out, "aparc+aseg_res-2.nii.gz")
-                    if options["graymattermask"] is not None and options["graymattermask"] != "None":
-                        rapidtide_comm += f"                --graymattermask {options['graymattermask']}"
-                    elif options["graymattermask"] is None:
-                        if not os.path.exists(default_mask):
-                            r += "\n---> ERROR: Cannot find the default --graymattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
-                            run = False
-                        else:
-                            rapidtide_comm += f"                --graymattermask {default_mask}:APARC_GRAY"
-
-                    if options["whitemattermask"] is not None and options["whitemattermask"] != "None":
-                        rapidtide_comm += f"                --whitemattermask {options['whitemattermask']}"
-                    elif options["whitemattermask"] is None:
-                        if not os.path.exists(default_mask):
-                            r += "\n---> ERROR: Cannot find the default --whitemattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
-                            run = False
-                        else:
-                            rapidtide_comm += f"                --whitemattermask {default_mask}:APARC_WHITE"
-
-                    if options["refineexclude"] is not None and options["refineexclude"] != "None":
-                        rapidtide_comm += f"                --refineexclude {options['refineexclude']}"
-                    elif options["refineexclude"] is None:
-                        refineexclude = os.path.join(
-                            hcp_folders["hcp_nonlin"], "Results", boldtarget, f"{boldtarget}_dropouts.nii.gz"
-                        )
-                        if not os.path.exists(refineexclude):
-                            r += f"\n---> ERROR: Cannot find the default --refineexclude: {refineexclude}"
-                            run = False
-                        else:
-                            rapidtide_comm += f"                --refineexclude {refineexclude}"
-
-                    # execute
-                    r, _, _, failed = pc.runExternalForFile(
-                        None,
-                        rapidtide_comm,
-                        "Running rapidtide",
-                        overwrite=overwrite,
-                        thread=f"{sinfo['id']}_{boldtarget}",
-                        remove=options["log"] == "remove",
-                        task="rapidtide",
-                        logfolder=options["comlogs"],
-                        logtags=[options["logtag"]],
-                        fullTest=None,
-                        shell=True,
-                        r=r,
-                    )
-                    if failed:
-                        r += f"\n---> rapidtide processing for bold {boldtarget} failed"
-                        report["failed"].append(boldtarget)
-                    else:
-                        r += f"\n---> rapidtide processing for session {boldtarget} completed"
-
-                # just checking
-                else:
-                    passed, _, r, failed = pc.checkRun(
-                        None, None, "rapidtide " + session, r, overwrite=overwrite
-                    )
-                    if passed is "done":
-                        r += "\n---> rapidtide can be run"
-                        report["ready"].append(boldtarget)
-                    else:
-                        r += f"\n---> rapidtide processing for bold {boldtarget} would be skipped"
-                        report["skipped"].append(boldtarget)
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].extend(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].extend(run_report["failed"])
+            if run_report["skipped"]:
+                report["ready"].extend(run_report["ready"])
+            if run_report["ready"]:
+                report["ready"].extend(run_report["not ready"])
 
         # parse report
         if report["failed"]:
@@ -480,3 +292,234 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "rapidtide failed", 1)
 
     return (r, report)
+
+def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_folder, boldtarget):
+    # prepare return variables
+    r = f"\n\n\n---> Working on bold {boldtarget}"
+    report = {
+        "done": [],
+        "failed": [],
+        "skipped": [],
+        "ready": [],
+    }
+
+    # get session id
+    session = sinfo["id"]
+
+    # main outputs folder
+    rapidtide_out = os.path.join(rapidtide_folder, boldtarget)
+    if os.path.exists(rapidtide_out):
+        if not overwrite:
+            r += f"\n---> Skipping rapidtide for {boldtarget}, output folder already exists, and overwrite is not set: {rapidtide_out}"
+            report["skipped"].append(boldtarget)
+            return {"r": r, "report": report}
+        else:
+            r += f"\n---> Removing existing results in {rapidtide_out}"
+            shutil.rmtree(rapidtide_out, ignore_errors=True)
+    os.makedirs(rapidtide_out)
+
+    # flirt ------------------------------------------------------------
+    # run flirt to create masks if parameters are not provided
+    if options["graymattermask"] is None and options["whitemattermask"] is None:
+        r += f"\n\n---> Running FSL flirt to create gray or white matter masks for {boldtarget}"
+        # in
+        in_path = os.path.join(hcp_folders["hcp_nonlin"], "aparc+aseg.nii.gz")
+        if not os.path.exists(in_path):
+            r += f"\n---> ERROR: Cannot find aparc+aseg.nii.gz at {in_path}"
+
+        # ref
+        ref_path = os.path.join(hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz")
+        if not os.path.exists(ref_path):
+            r += f"\n---> ERROR: Cannot find brainmask_fs.2.nii.gz at {ref_path}"
+            run = False
+
+        # init
+        init_path = os.path.join(os.environ["FSLDIR"], "data", "atlases", "bin", "eye.mat")
+
+        # out
+        out_path = os.path.join(rapidtide_out, "aparc+aseg_res-2.nii.gz")
+
+        flirt_comm = (
+            'flirt \
+            -in %(in)s \
+            -ref %(ref)s \
+            -applyxfm \
+            -init %(init)s \
+            -interp nearestneighbour \
+            -out %(out)s'
+            % {
+                "in": in_path,
+                "ref": ref_path,
+                "init": init_path,
+                "out": out_path,
+            }
+        )
+
+        # report command
+        r += "\n\n------------------------------------------------------------\n"
+        r += "Running FSL flirt command via QuNex:\n\n"
+        r += flirt_comm.replace("                ", "")
+        r += "\n------------------------------------------------------------\n"
+
+        # run
+        if run:
+            # run
+            if options["run"] == "run":
+                # execute
+                r, _, _, failed = pc.runExternalForFile(
+                    out_path,
+                    flirt_comm,
+                    "Running FSL flirt",
+                    overwrite=overwrite,
+                    thread=f"{sinfo['id']}_{boldtarget}",
+                    remove=options["log"] == "remove",
+                    task="rapidtide_flirt",
+                    logfolder=options["comlogs"],
+                    logtags=[options["logtag"]],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+                if failed:
+                    r += f"\n---> FSL flirt processing for session {session} failed"
+                    report["failed"].append(boldtarget)
+                else:
+                    r += f"\n---> FSL flirt processing for session {session} completed"
+                    report["done"].append(boldtarget)
+
+            # just checking
+            else:
+                passed, _, r, failed = pc.checkRun(
+                    out_path, None, "FSL flirt " + session, r, overwrite=overwrite
+                )
+
+                if passed is None:
+                    r += "\n---> FSL flirt can be run"
+                    report["ready"].append(boldtarget)
+                else:
+                    r += (
+                        f"\n---> FSL flirt processing for bold {boldtarget} would be skipped"
+                    )
+                    report["skipped"].append(boldtarget)
+
+    # rapidtide --------------------------------------------------------
+    r += f"\n\n---> Running rapidtide for {boldtarget}"
+    boldname = f"{boldtarget}{options['nifti_tail']}.nii.gz"
+    bold = os.path.join(hcp_folders["hcp_nonlin"], "Results", boldtarget, boldname)
+    rapidtide_comm = (
+        'rapidtide \
+        %(bold)s \
+        %(out)s \
+        --noprogressbar'
+        % {
+            "bold": bold,
+            "out": f"{rapidtide_out}/{boldtarget}{options['nifti_tail']}",
+        }
+    )
+
+    # optional parameters
+    if options["despecklepasses"] is not None:
+        rapidtide_comm += f"                --despecklepasses {options['despecklepasses']}"
+    if options["filterband"] is not None:
+        rapidtide_comm += f"                --filterband {options['filterband']}"
+    if options["searchrange"] is not None:
+        rapidtide_comm += f"                --searchrange {options['searchrange']}"
+    if options["nprocs"] is not None:
+        rapidtide_comm += f"                --nprocs {options['nprocs']}"
+    if options["nofitfilt"]:
+        rapidtide_comm += "                --nofitfilt"
+    if options["similaritymetric"] is not None:
+        rapidtide_comm += f"                --similaritymetric {options['similaritymetric']}"
+    if options["ampthresh"] is not None:
+        rapidtide_comm += f"                --ampthresh {options['ampthresh']}"
+    if options["outputlevel"] is not None:
+        rapidtide_comm += f"                --outputlevel {options['outputlevel']}"
+    if options["spatialfilt"] is not None:
+        rapidtide_comm += f"                --spatialfilt {options['spatialfilt']}"
+    if options["searchrange"] is not None:
+        rapidtide_comm += f"                --searchrange {options['searchrange']}"
+    if options["rapidtide_extra_args"] is not None:
+        rapidtide_comm += f" {options['rapidtide_extra_args']}"
+
+    # run
+    if run:
+        # run
+        if options["run"] == "run":
+            # do more complex parameter setup here
+            if options["brainmask"] is not None and options["brainmask"] != "None":
+                rapidtide_comm += f"                --brainmask {options['brainmask']}"
+            elif options["brainmask"] is None:
+                brainmask = os.path.join(
+                    hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz"
+                )
+                if not os.path.exists(brainmask):
+                    r += f"\n---> ERROR: Cannot find the default --brainmask: brainmask_fs.2.nii.gz at {brainmask}"
+                    run = False
+                else:
+                    rapidtide_comm += f"                --brainmask {brainmask}"
+
+            default_mask = os.path.join(rapidtide_out, "aparc+aseg_res-2.nii.gz")
+            if options["graymattermask"] is not None and options["graymattermask"] != "None":
+                rapidtide_comm += f"                --graymattermask {options['graymattermask']}"
+            elif options["graymattermask"] is None:
+                if not os.path.exists(default_mask):
+                    r += "\n---> ERROR: Cannot find the default --graymattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
+                    run = False
+                else:
+                    rapidtide_comm += f"                --graymattermask {default_mask}:APARC_GRAY"
+
+            if options["whitemattermask"] is not None and options["whitemattermask"] != "None":
+                rapidtide_comm += f"                --whitemattermask {options['whitemattermask']}"
+            elif options["whitemattermask"] is None:
+                if not os.path.exists(default_mask):
+                    r += "\n---> ERROR: Cannot find the default --whitemattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
+                    run = False
+                else:
+                    rapidtide_comm += f"                --whitemattermask {default_mask}:APARC_WHITE"
+
+            if options["refineexclude"] is not None and options["refineexclude"] != "None":
+                rapidtide_comm += f"                --refineexclude {options['refineexclude']}"
+            elif options["refineexclude"] is None:
+                refineexclude = os.path.join(
+                    hcp_folders["hcp_nonlin"], "Results", boldtarget, f"{boldtarget}_dropouts.nii.gz"
+                )
+                if not os.path.exists(refineexclude):
+                    r += f"\n---> ERROR: Cannot find the default --refineexclude: {refineexclude}"
+                    run = False
+                else:
+                    rapidtide_comm += f"                --refineexclude {refineexclude}"
+
+            # execute
+            r, _, _, failed = pc.runExternalForFile(
+                None,
+                rapidtide_comm,
+                "Running rapidtide",
+                overwrite=overwrite,
+                thread=f"{sinfo['id']}_{boldtarget}",
+                remove=options["log"] == "remove",
+                task="rapidtide",
+                logfolder=options["comlogs"],
+                logtags=[options["logtag"]],
+                fullTest=None,
+                shell=True,
+                r=r,
+            )
+            if failed:
+                r += f"\n---> rapidtide processing for bold {boldtarget} failed"
+                report["failed"].append(boldtarget)
+            else:
+                r += f"\n---> rapidtide processing for session {boldtarget} completed"
+
+        # just checking
+        else:
+            passed, _, r, failed = pc.checkRun(
+                None, None, "rapidtide " + session, r, overwrite=overwrite
+            )
+            if passed == "done":
+                r += "\n---> rapidtide can be run"
+                report["ready"].append(boldtarget)
+            else:
+                r += f"\n---> rapidtide processing for bold {boldtarget} would be skipped"
+                report["skipped"].append(boldtarget)
+
+    return {"r": r, "report": report}
