@@ -130,8 +130,8 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             mm. Set negative to have rapidtide set it to half the mean voxel
             dimension (a rule of thumb for a good value). Set to 0 to disable.
 
-        --searchrange (str, '-1 -1'):
-            2 space space separated values that limit correlation calculation to
+        --simcalcrange (str, '-1 -1'):
+            2 space separated values that limit correlation calculation to
             data between them in the fmri file. If the end value is set to -1,
             analysis will go to the last time-point. Negative start values wil
             be set to 0. Default is to use all time-points.
@@ -166,6 +166,23 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="/data/qunex_study/sessions" \\
                 --batchfile="/data/qunex_study/processing/batch.txt"
 
+            qunex rapidtide \
+                --sessionsfolder="/data/jdemsar/studies/hca_alzheimer/sessions" \
+                --bolds="rfMRI_REST1_AP,rfMRI_REST1_PA,rfMRI_REST2_AP,rfMRI_REST2_PA" \
+                --despecklepasses="4" \
+                --filterband="lfo" \
+                --searchrange="-7.5 15.0" \
+                --nprocs="4" \
+                --nofitfilt \
+                --similaritymetric="hybrid" \
+                --ampthresh="0.15" \
+                --outputlevel="normal" \
+                --spatialfilt="3" \
+                --simcalcrange="100 -1"
+
+        The first command uses rapidtide defaults across all sessions and their
+        rest bolds in the batch file. The second one uses a sensible setup for
+        HCP style acquisition data.
     """
 
     # get session id
@@ -436,8 +453,8 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
         rapidtide_comm += f"                --outputlevel {options['outputlevel']}"
     if options["spatialfilt"] is not None:
         rapidtide_comm += f"                --spatialfilt {options['spatialfilt']}"
-    if options["searchrange"] is not None:
-        rapidtide_comm += f"                --searchrange {options['searchrange']}"
+    if options["simcalcrange"] is not None:
+        rapidtide_comm += f"                --simcalcrange {options['simcalcrange']}"
     if options["rapidtide_extra_args"] is not None:
         rapidtide_comm += f" {options['rapidtide_extra_args']}"
 

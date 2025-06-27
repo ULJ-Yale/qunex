@@ -922,14 +922,18 @@ def runExternalForFile(
     printComm += "Running external command via QuNex:\n\n"
 
     comm = run + "\n"
+    comm = re.sub(r"(  +--)", r" \\\n  --", comm)
+    comm = re.sub(r"(  +-)(?!-)", r" \\\n  -", comm)
+    comm = re.sub(r"(  +)(?!-)", r" \\\n  ", comm)
 
     printComm += comm
+
     if checkfile is not None and checkfile != "":
         printComm += "\nTest file: \n%s\n" % checkfile
     printComm += "------------------------------------------------------------"
 
     # report for local runs
-    print("Running external command: %s" % comm)
+    print("Running external command: %s" % printComm)
 
     # add an empty line for log purposes
     printComm += "\n"
