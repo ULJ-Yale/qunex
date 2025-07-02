@@ -584,6 +584,7 @@ arglist = [
     ["graymattermask", "", isNone,],
     ["whitemattermask", "", isNone,],
     ["refineexclude", "", isNone,],
+    ["nodenoise", "", flag,],
     ["rapidtide_extra_args", "", isNone],
 ]
 
@@ -616,6 +617,7 @@ flaglist = [
     ["hcp_icafix_concatenate_only", True,],
     ["hcp_old_myelin_mapping", True,],
     ["nofitfilt", True,],
+    ["nodenoise", True,],
 ]
 
 # Add flags used in extensions

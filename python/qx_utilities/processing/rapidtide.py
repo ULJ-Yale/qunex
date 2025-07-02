@@ -159,6 +159,17 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             default BOLD's dropouts from HCP pipelines will be used if they
             exist. Set to "None" to disable refinement exclusion.
 
+        --nodenoise (flag):
+            Turn off regression filtering to remove delayed regressor from each
+            voxel (disables output of fitNorm). Does not perform denoising, only
+            calculates the maps.
+
+        --rapidtide_extra_args (str, ''):
+            Additional arguments to pass to rapidtide. This is useful for
+            passing any additional arguments that are not yet exposed through
+            QuNex command line options. The string will be passed to rapidtide
+            as is.
+
     Examples:
         ::
 
@@ -455,6 +466,8 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
         rapidtide_comm += f"                --spatialfilt {options['spatialfilt']}"
     if options["simcalcrange"] is not None:
         rapidtide_comm += f"                --simcalcrange {options['simcalcrange']}"
+    if options["nodenoise"]:
+        rapidtide_comm += "                --nodenoise"
     if options["rapidtide_extra_args"] is not None:
         rapidtide_comm += f" {options['rapidtide_extra_args']}"
 
