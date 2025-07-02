@@ -9158,7 +9158,9 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         bolds = group["bolds"]
 
         # msmallBolds
-        msmallBolds = "@".join(group["msmall_bolds"])
+        msmallBolds = None
+        if group["msmall_bolds"]:
+            msmallBolds = "@".join(group["msmall_bolds"])
 
         # outfmriname
         outfmriname = options["hcp_msmall_outfmriname"]
@@ -9209,7 +9211,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 boldsok = False
 
             # if msmallBolds is not defined add all icafix bolds
-            if options["hcp_msmall_bolds"] is None:
+            if msmallBolds is None:
                 # add @ separator
                 if msmallBolds != "":
                     msmallBolds = msmallBolds + "@"
