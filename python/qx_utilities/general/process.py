@@ -292,7 +292,7 @@ arglist = [
     ["hcp_surfatlasdir", "", isNone,],
     ["hcp_grayordinatesdir", "", isNone,],
     ["hcp_subcortgraylabels", "", isNone,],
-    ["hcp_refmyelinmaps", "", isNone, "Group myelin map to use for bias correction."],
+    ["hcp_refmyelinmaps", "", isNone,],
     ["hcp_regname", "MSMSulc", str,],
     ["hcp_cifti_tail", "_Atlas", str,],
     ["hcp_bold_variant", "", str,],
@@ -889,10 +889,14 @@ def run(command, args):
     sout += "=================================================================\n"
     sout += "qunex " + command + " \\"
 
-    for k, v in args.items():
-        sout += '  --%s="%s" \\' % (k, v)
+    arg_items = list(args.items())
+    for i, (k, v) in enumerate(arg_items):
+        if i < len(arg_items) - 1:
+            sout += '\n  --%s="%s" \\' % (k, v)
+        else:
+            sout += '\n  --%s="%s"' % (k, v)
 
-    sout += "=================================================================\n"
+    sout += "\n=================================================================\n"
 
     # no parsessions for longitudinal and multi-session commands
     if (command in lactions) or (command in mactions):

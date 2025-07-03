@@ -922,8 +922,8 @@ def runExternalForFile(
     printComm += "Running external command via QuNex:\n\n"
 
     comm = run + "\n"
-    comm = re.sub(r"(  +--)", r" \\\n  --", comm)
-    comm = re.sub(r"(  +-)(?!-)", r" \\\n  -", comm)
+    comm = re.sub(r"( +--)", r" \\\n  --", comm)
+    comm = re.sub(r"( +-)(?!-)", r" \\\n  -", comm)
     comm = re.sub(r"(  +)(?!-)", r" \\\n  ", comm)
 
     printComm += comm
