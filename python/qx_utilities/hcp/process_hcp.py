@@ -11727,6 +11727,10 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
+        if options["hcp_gmwm_template"] is None:
+            r += "\n---> ERROR: the hcp_gmwm_template parameter is mandatory!"
+            run = False
+
         # build the command
         if run:
             comm = (

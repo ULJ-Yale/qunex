@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `run_recipe` now prints out a list of all steps that will be executed at the beginning.
 * Updated Connectome Workbench in the container to the latest version.
 * Fixed two bugs in Single Run ICA fix, the first one made it crash under some conditions, the second one sometimes added BOLDs * twice to relevant parameters.
+* Added some additional checks for some mandatory parameter. This way QuNex will quite immediately and not halfway into the processing when the parameter will be used.
 
 ## 1.2.2
 
