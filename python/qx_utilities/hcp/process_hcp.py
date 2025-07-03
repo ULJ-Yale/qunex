@@ -1400,7 +1400,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-
         tfile = os.path.join(hcp["hcp_nonlin"], "T1w_restore_brain.nii.gz")
         if hcp["hcp_prefs_check"]:
             fullTest = {
@@ -1413,7 +1412,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             fullTest = None
 
         # -- Run
-
         if run:
             if options["run"] == "run":
                 if overwrite:
