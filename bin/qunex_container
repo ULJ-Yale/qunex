@@ -786,59 +786,58 @@ def main(args=None):
         if arg.startswith("--"):
             arg = arg[2:]
 
-            if arg.startswith("env_status") or arg.startswith("envstatus"):
+            if arg == "env_status" or arg == "envstatus":
                 env_status = True
-            if arg.startswith("scheduler"):
+            if arg.startswith("scheduler="):
                 k, scheduler = arg.split("=", 1)
-            elif arg.startswith("container"):
+            elif arg.startswith("container="):
                 k, container = arg.split("=", 1)
-            elif arg.startswith("containeropt"):
+            elif arg.startswith("containeropt="):
                 k, containeropt = arg.split("=", 1)
-            elif arg.startswith("console_out"):
+            elif arg.startswith("console_out="):
                 k, output = arg.split("=", 1)
-            elif arg.startswith("bash_pre"):
+            elif arg.startswith("bash_pre="):
                 k, bash_pre = arg.split("=", 1)
-            elif arg.startswith("bash_post"):
+            elif arg.startswith("bash_post="):
                 k, bash_post = arg.split("=", 1)
-            elif arg.startswith("bind"):
+            elif arg.startswith("bind="):
                 k, bind = arg.split("=", 1)
-            elif arg.startswith("cuda_path"):
+            elif arg.startswith("cuda_path="):
                 k, cuda_path = arg.split("=", 1)
-            elif arg.startswith("script"):
+            elif arg.startswith("script="):
                 k, script = arg.split("=", 1)
-            elif arg.startswith("parjobs"):
+            elif arg.startswith("parjobs="):
                 k, parjobs = arg.split("=", 1)
                 parjobs = int(parjobs)
-            elif arg.startswith("parsessions"):
+            elif arg.startswith("parsessions="):
                 k, parsessions = arg.split("=", 1)
                 command += f'--{k}="{parsessions}" '
                 parsessions = int(parsessions)
-            elif arg.startswith("parelements"):
+            elif arg.startswith("parelements="):
                 k, parelements = arg.split("=", 1)
                 command += f'--{k}="{parelements}" '
                 parelements = int(parelements)
-            elif arg.startswith("sessionsfolder"):
+            elif arg.startswith("sessionsfolder="):
                 k, sessionsfolder = arg.split("=", 1)
                 command += f'--{k}="{sessionsfolder}" '
-            elif arg.startswith("studyfolder"):
+            elif arg.startswith("studyfolder="):
                 k, studyfolder = arg.split("=", 1)
                 command += f'--{k}="{studyfolder}" '
-            elif arg.startswith("sessions"):
+            elif arg.startswith("sessions="):
                 k, sessions = arg.split("=", 1)
-            elif arg.startswith("batchfile"):
+            elif arg.startswith("batchfile="):
                 k, batchfile = arg.split("=", 1)
-            elif arg.startswith("filter"):
+            elif arg.startswith("filter="):
                 k, batchfilter = arg.split("=", 1)
-            elif arg.startswith("sessionids"):
+            elif arg.startswith("sessionids="):
                 k, sessionids = arg.split("=", 1)
-            elif arg.startswith("overwrite"):
+            elif arg.startswith("overwrite="):
                 overwrite = arg.split("=", 1)
-                if len(overwrite) == 1:
-                    overwrite = "yes"
-                    command += "--overwrite "
-                else:
-                    overwrite = overwrite[1]
-                    command += f"--overwrite={overwrite} "
+                overwrite = overwrite[1]
+                command += f"--overwrite={overwrite} "
+            elif arg == "overwrite":
+                overwrite = "yes"
+                command += "--overwrite "
             elif arg == "nocleanenv":
                 nocleanenv = True
             elif arg == "cuda":
