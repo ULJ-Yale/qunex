@@ -2472,10 +2472,6 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     print(f"---> Running commands from recipe: {recipe}")
     print(f"---> Running commands from recipe: {recipe}\n", file=log)
 
-    if steps:
-        print(f"---> Steps: {steps}")
-        print(f"---> Steps: {steps}\n", file=log)
-
     # commands
     if "commands" not in recipe_dict:
         raise ge.CommandFailed(
@@ -2502,16 +2498,18 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         commands = commands_subset
 
     # print commands
-    print(f"---> Commands to run: {commands}")
-    print(f"---> Commands to run: {commands}", file=log)
+    print("---> Commands:")
+    print("---> Commands:", file=log)
+    commands_set = []
     for com in commands:
         if isinstance(com, dict):
             command_name = list(com.keys())[0]
         else:
             command_name = com
-
-        print(f"    - {command_name}", file=log)
-        print(f"    - {command_name}", file=log)
+        if command_name not in commands_set:
+            commands_set.append(command_name)
+            print(f"    - {command_name}")
+            print(f"    - {command_name}", file=log)
 
     # XNAT initial setup
     # If running on XNAT, try and load checkpoint if supplied
