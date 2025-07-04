@@ -400,30 +400,6 @@ def print_help(com):
         available_commands.sort()
         print(" ".join(available_commands))
 
-    # --- print list of processing options and flags
-    # elif com in ['o']:
-    #     print "================================================================="
-    #     print ""
-    #     print " QuNex python utilities for processing and analysis"
-    #     print "\nuse: qunex <command> [option=value] [option=value] ..."
-    #     print "\nList of processing options"
-    #     for line in gp.arglist:
-    #         if len(line) == 4:
-    #             print "  --%-24s %s [%s]" % (line[0], line[3], line[1])
-    #         elif len(line) > 0:
-    #             print "\n\n" + line[0] + '\n'
-    #         else:
-    #             print
-    #     print "\nList of processing flags"
-    #     for line in gp.flaglist:
-    #         if len(line) == 4:
-    #             print "  --%-24s %s" % (line[0], line[3])
-    #         elif len(line) > 0:
-    #             print "\n\n" + line[0] + '\n'
-    #         else:
-    #             print
-    #     print
-
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
         for full_name, description, _ in gac.all_qunex_commands:

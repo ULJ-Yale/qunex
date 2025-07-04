@@ -2288,7 +2288,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             fullTest = None
 
         # -- run
-
         if run:
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
@@ -13683,11 +13682,9 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-
         tfile = os.path.join(hcp["T1w_folder"], "Diffusion", "dti_FA.nii.gz")
 
         # -- Run
-
         if run:
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
@@ -13805,13 +13802,11 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
             r += "\n------------------------------------------------------------\n"
 
         # -- test files
-
         tfile = os.path.join(
             hcp["T1w_folder"], "Diffusion.bedpostX", "mean_fsumsamples.nii.gz"
         )
 
         # -- run
-
         if run:
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
