@@ -379,19 +379,19 @@ def print_help(com):
         # -> processing commands
         for l in gp.calist:
             if len(l):
-                available_commands.append(l[1])
+                available_commands.append(l[0])
         # -> longitudinal processing commands
         for l in gp.lalist:
             if len(l):
-                available_commands.append(l[1])
+                available_commands.append(l[0])
         # -> multi-sesssion processing commands
         for l in gp.malist:
             if len(l):
-                available_commands.append(l[1])
+                available_commands.append(l[0])
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
-                available_commands.append(l[1])
+                available_commands.append(l[0])
         # -> matlab wrapped commands
         for l in gm.functions.keys():
             available_commands.append(l)
@@ -399,30 +399,6 @@ def print_help(com):
         # print the commands
         available_commands.sort()
         print(" ".join(available_commands))
-
-    # --- print list of processing options and flags
-    # elif com in ['o']:
-    #     print "================================================================="
-    #     print ""
-    #     print " QuNex python utilities for processing and analysis"
-    #     print "\nuse: qunex <command> [option=value] [option=value] ..."
-    #     print "\nList of processing options"
-    #     for line in gp.arglist:
-    #         if len(line) == 4:
-    #             print "  --%-24s %s [%s]" % (line[0], line[3], line[1])
-    #         elif len(line) > 0:
-    #             print "\n\n" + line[0] + '\n'
-    #         else:
-    #             print
-    #     print "\nList of processing flags"
-    #     for line in gp.flaglist:
-    #         if len(line) == 4:
-    #             print "  --%-24s %s" % (line[0], line[3])
-    #         elif len(line) > 0:
-    #             print "\n\n" + line[0] + '\n'
-    #         else:
-    #             print
-    #     print
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:

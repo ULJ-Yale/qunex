@@ -6,6 +6,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.3.0
+
+* Added support for longitudinal temporal ICA.
+* Added a QuNex a `rapidtide` command (<https://rapidtide.readthedocs.io/en/latest/usage_rapidtide.html>).
+* Added support for `hcp_vol_wisharts`, `hcp_cifti_wisharts`, `hcp_icadim_mode` parameters to `hcp_icafix`, previously these could be only configured through the config file.
+* `run_recipe` now prints out a list of all steps that will be executed at the beginning.
+* Updated Connectome Workbench in the container to the latest version.
+* Fixed two bugs in Single Run ICA fix, the first one made it crash under some conditions, the second one sometimes added BOLDs * twice to relevant parameters.
+* Added some additional checks for some mandatory parameter. This way QuNex will quite immediately and not halfway into the processing when the parameter will be used.
+
 ## 1.2.2
 
 * Some commands now add additional tags to the log name to make it easier to comprehend.
@@ -399,7 +409,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.92.2
 
-* Fixed a bug in the `fsl_xtract` command that prevented users from running it.
+* Fixed a bug in the `dwi_xtract` command that prevented users from running it.
 * Corrected some typos in inline documentation.
 
 ## 0.92.1

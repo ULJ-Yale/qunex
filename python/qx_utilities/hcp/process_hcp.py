@@ -108,18 +108,7 @@ def _build_skipped_report(report, skipped, options):
             report["skipped"] = [str(binfo["bold_number"]) for binfo in skipped]
 
 
-def _get_bold_names(boldinfo, options):
 
-    if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-        printbold = boldinfo["filename"]
-        boldtarget = boldinfo["filename"]
-        boldsource = boldinfo["filename"]
-    else:
-        printbold = str(boldinfo["bold_number"])
-        boldsource = "BOLD_%d" % (boldinfo["bold_number"])
-        boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
-
-    return printbold, boldtarget, boldsource
 
 
 # -------------------------------------------------------------------
@@ -1307,7 +1296,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             t1template2mm = options["hcp_prefs_t1template2mm"]
 
         # hcp_prefs_t2template
-        if options["hcp_prefs_t2template"] is None:
+        if options["hcp_t2"] == "NONE":
+            t2template = ""
+        elif options["hcp_prefs_t2template"] is None:
             t2template = os.path.join(
                 hcp["hcp_Templates"],
                 "MNI152_T2_%smm.nii.gz" % (options["hcp_prefs_template_res"]),
@@ -1316,7 +1307,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             t2template = options["hcp_prefs_t2template"]
 
         # hcp_prefs_t2templatebrain
-        if options["hcp_prefs_t2templatebrain"] is None:
+        if options["hcp_t2"] == "NONE":
+            t2templatebrain = ""
+        elif options["hcp_prefs_t2templatebrain"] is None:
             t2templatebrain = os.path.join(
                 hcp["hcp_Templates"],
                 "MNI152_T2_%smm_brain.nii.gz" % (options["hcp_prefs_template_res"]),
@@ -1325,7 +1318,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             t2templatebrain = options["hcp_prefs_t2templatebrain"]
 
         # hcp_prefs_t2template2mm
-        if options["hcp_prefs_t2template2mm"] is None:
+        if options["hcp_t2"] == "NONE":
+            t2template2mm = ""
+        elif options["hcp_prefs_t2template2mm"] is None:
             t2template2mm = os.path.join(hcp["hcp_Templates"], "MNI152_T2_2mm.nii.gz")
         else:
             t2template2mm = options["hcp_prefs_t2template2mm"]
@@ -1405,7 +1400,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-
         tfile = os.path.join(hcp["hcp_nonlin"], "T1w_restore_brain.nii.gz")
         if hcp["hcp_prefs_check"]:
             fullTest = {
@@ -1418,7 +1412,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             fullTest = None
 
         # -- Run
-
         if run:
             if options["run"] == "run":
                 if overwrite:
@@ -2295,7 +2288,6 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             fullTest = None
 
         # -- run
-
         if run:
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
@@ -3090,7 +3082,9 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         t1template2mm = options["hcp_prefs_t1template2mm"]
 
     # hcp_prefs_t2template
-    if options["hcp_prefs_t2template"] is None:
+    if options["hcp_t2"] == "NONE":
+        t2template = ""
+    elif options["hcp_prefs_t2template"] is None:
         t2template = os.path.join(
             hcp["hcp_Templates"],
             "MNI152_T2_%smm.nii.gz" % (options["hcp_prefs_template_res"]),
@@ -3099,7 +3093,9 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         t2template = options["hcp_prefs_t2template"]
 
     # hcp_prefs_t2templatebrain
-    if options["hcp_prefs_t2templatebrain"] is None:
+    if options["hcp_t2"] == "NONE":
+        t2templatebrain = ""
+    elif options["hcp_prefs_t2templatebrain"] is None:
         t2templatebrain = os.path.join(
             hcp["hcp_Templates"],
             "MNI152_T2_%smm_brain.nii.gz" % (options["hcp_prefs_template_res"]),
@@ -3108,7 +3104,9 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
         t2templatebrain = options["hcp_prefs_t2templatebrain"]
 
     # hcp_prefs_t2template2mm
-    if options["hcp_prefs_t2template2mm"] is None:
+    if options["hcp_t2"] == "NONE":
+        t2template2mm = ""
+    elif options["hcp_prefs_t2template2mm"] is None:
         t2template2mm = os.path.join(hcp["hcp_Templates"], "MNI152_T2_2mm.nii.gz")
     else:
         t2template2mm = options["hcp_prefs_t2template2mm"]
@@ -4272,6 +4270,19 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Set this flag if you are running the longitudinal variant of this
             command.
 
+        --hcp_longitudinal_subject (str, default ''):
+            The subject id of the longitudinal subject. Mandatory for
+            longitudinal processing.
+
+        --hcp_longitudinal_sessions (str, default ''):
+            A comma separated list of sessions for a given subject. Mandatory
+            for longitudinal processing.
+
+        --hcp_longitudinal_extract_all:
+            Set this flag to extract all runs specified in hcp_tica_bolds, with
+            output name matching the one from hcp_tica_mrfix_concat_name. Not
+            set by default.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder::
@@ -4817,7 +4828,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             firstSE = bolds[0].get("se", None)
 
         for boldinfo in bolds:
-            printbold, boldtarget, boldsource = _get_bold_names(boldinfo, options)
+            printbold, boldtarget, boldsource = pc.get_bold_names(boldinfo, options)
 
             r += "\n\n---> %s BOLD %s" % (
                 pc.action(
@@ -6085,7 +6096,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
 def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
 
-    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -6272,7 +6283,7 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
 
     for boldinfo in bolds:
 
-        _, boldtarget, _ = _get_bold_names(boldinfo, options)
+        _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
         boldtag = boldinfo["task"]
 
         boldtargets.append(boldtarget)
@@ -6627,6 +6638,17 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         --hcp_legacy_fix (flag, not set by default):
             Whether to use the legacy MATLAB fix instead of the new pyfix.
 
+        --hcp_vol_wisharts (int, default '2'):
+            Number of wisharts to fit to volume data in icaDim.
+
+        --hcp_cifti_wisharts (int, default '3'):
+            Number of wisharts to fit to CIFTI data in icaDim.
+
+        --hcp_icadim_mode (str, default 'default'):
+            Choose how to run icaDim: "default" - start with a VN dimensionality
+            of 1 and rerun until convergence "fewtimepoints" - start with a VN
+            dimensionality of half the timepoints, do not iterate.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -6675,6 +6697,9 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             ``hcp_ica_method``                 ``ica-method``
             ``hcp_legacy_fix``                 ``enable-legacy-fix``
             ``hcp_icafix_concatenate_only``    ``concatenate-only``
+            ``hcp_vol_wisharts``               ``vol-wisharts``
+            ``hcp_cifti_wisharts``             ``cifti-wisharts``
+            ``hcp_icadim_mode``                ``icadim-mode``
             ================================== =======================
 
     Examples:
@@ -6877,7 +6902,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
 
 def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
-    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -7074,7 +7099,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
@@ -7263,6 +7288,15 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if options["hcp_ica_method"] is not None:
             comm += '             --ica-method="%s"' % options["hcp_ica_method"]
+
+        if options["hcp_vol_wisharts"] is not None:
+            comm += '             --vol-wisharts="%s"' % options["hcp_vol_wisharts"]
+
+        if options["hcp_cifti_wisharts"] is not None:
+            comm += '             --cifti-wisharts="%s"' % options["hcp_cifti_wisharts"]
+
+        if options["hcp_icadim_mode"] is not None:
+            comm += '             --icadim-mode="%s"' % options["hcp_icadim_mode"]
 
         if not options["hcp_legacy_fix"]:
             comm += '             --enable-legacy-fix="FALSE"'
@@ -7644,7 +7678,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
             else options["hcp_icafix_highpass"]
         )
 
-        printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+        printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
@@ -8139,7 +8173,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
 
 def executeHCPSingleReApplyFix(sinfo, options, hcp, run, boldinfo):
 
-    printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
     # prepare return variables
     r = ""
@@ -8353,7 +8387,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # boldok
             boldok = True
 
-            printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+            printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
@@ -9133,7 +9167,9 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         bolds = group["bolds"]
 
         # msmallBolds
-        msmallBolds = "@".join(group["msmall_bolds"])
+        msmallBolds = None
+        if group["msmall_bolds"]:
+            msmallBolds = "@".join(group["msmall_bolds"])
 
         # outfmriname
         outfmriname = options["hcp_msmall_outfmriname"]
@@ -9163,7 +9199,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            printbold, boldtarget, _ = _get_bold_names(boldinfo, options)
+            printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -9184,7 +9220,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
                 boldsok = False
 
             # if msmallBolds is not defined add all icafix bolds
-            if options["hcp_msmall_bolds"] is None:
+            if msmallBolds is None:
                 # add @ separator
                 if msmallBolds != "":
                     msmallBolds = msmallBolds + "@"
@@ -9246,7 +9282,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "session": session,
+                "session": sinfo["id"],
                 "msmallBolds": msmallBolds,
                 "outfmriname": outfmriname,
                 "highpass": highpass,
@@ -9369,7 +9405,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -9852,7 +9888,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                     # set ok to true for now
                     boldok = True
 
-                    _, boldtarget, _ = _get_bold_names(boldinfo, options)
+                    _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
                     # input file check
                     boldimg = os.path.join(
@@ -10006,6 +10042,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             shell=True,
                             r=r,
                         )
+                        failed = False
 
                         if failed:
                             report["failed"].append(f"msmall_{subject_id}_{groupname}")
@@ -10021,7 +10058,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                     # fix path
                                     sinfo_long_i["hcp"] = path
                                     # fix id
-                                    sinfo_long_i["id"] = sl
+                                    sinfo_long_i["id"] = f"{sl}.long.{options['hcp_longitudinal_template']}"
                                     # add step info
                                     sinfo_long_i["long"] = 1
                                     future = executor.submit(
@@ -10030,7 +10067,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                         options,
                                         hcp,
                                         run,
-                                        [group],
+                                        group,
                                     )
                                     futures[future] = sl  # map future to sl
                                 for future in concurrent.futures.as_completed(futures):
@@ -10042,15 +10079,15 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                     report_dedrift = result["report"]
                                     if report_dedrift["failed"]:
                                         report["failed"].append(
-                                            f"dedrift_{sl}_{report_dedrift['failed'][0]}"
+                                            f"dedrift_{sl}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
                                         )
                                     if report_dedrift["ready"]:
                                         report["ready"].append(
-                                            f"dedrift_{sl}_{report_dedrift['ready'][0]}"
+                                            f"dedrift_{sl}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
                                         )
                                     if report_dedrift["not ready"]:
                                         report["not ready"].append(
-                                            f"dedrift_{sl}_{report_dedrift['not ready'][0]}"
+                                            f"dedrift_{sl}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
                                         )
 
                             # run dedrift and resample on the template
@@ -10064,22 +10101,21 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                             # add step info
                             sinfo_template["long"] = 2
                             result = executeHCPMultiDeDriftAndResample(
-                                sinfo_template, options, hcp, run, [group]
+                                sinfo_template, options, hcp, run, group
                             )
                             r += result["r"]
                             report_dedrift = result["report"]
-
                             if report_dedrift["failed"]:
                                 report["failed"].append(
-                                    f"dedrift_long.{report_dedrift['failed'][0]}"
+                                    f"dedrift_long_{subject_id}_{groupname}"
                                 )
                             if report_dedrift["ready"]:
                                 report["ready"].append(
-                                    f"dedrift_long.{report_dedrift['ready'][0]}"
+                                    f"dedrift_long_{subject_id}_{groupname}"
                                 )
                             if report_dedrift["not ready"]:
                                 report["not ready"].append(
-                                    f"dedrift_long.{report_dedrift['not ready'][0]}"
+                                    f"dedrift_long_{subject_id}_{groupname}"
                                 )
 
                             if len(report["failed"]) == 0:
@@ -10455,7 +10491,7 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -10705,7 +10741,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
 
         for boldinfo in bolds:
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -11688,6 +11724,10 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
+        if options["hcp_gmwm_template"] is None:
+            r += "\n---> ERROR: the hcp_gmwm_template parameter is mandatory!"
+            run = False
+
         # build the command
         if run:
             comm = (
@@ -12247,7 +12287,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                tICA_hcp_group_fMRI_CONCAT_ALL.zip
 
         MATLAB large variable error:
-            If receiving an error in MATBAL saying that a variable was not saved
+            If receiving an error in MATLAB saying that a variable was not saved
             because it is larger than 2GB, you need to set the default saving format
             in MATLAB, to do this run MATLAB and execute:
 
@@ -12269,7 +12309,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_tica_procstring``               ``proc-string``
             ``hcp_outgroupname``                  ``out-group-name``
             ``hcp_bold_res``                      ``fmri-resolution``
-            ``hcp_tica_timepoints``               ``subject-expected-timepoints``
+            ``hcp_tica_timepoints``               ``session-expected-timepoints``
             ``hcp_tica_num_wishart``              ``num-wishart``
             ``hcp_lowresmesh``                    ``low-res``
             ``hcp_tica_mrfix_concat_name``        ``mrfix-concat-name``
@@ -12294,6 +12334,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             ``hcp_tica_extract_fmri_name_list``   ``extract-fmri-name-list``
             ``hcp_tica_extract_fmri_out``         ``extract-fmri-out``
             ``hcp_matlab_mode``                   ``matlab-run-mode``
+            ``longitudinal``                      ``is-longitudinal``
+            ``hcp_longitudinal_template``         ``longitudinal-template``
+            ``hcp_tica_longitudinal_extract_all`` ``longitudinal-extract-all``
             ===================================== ===============================
 
 
@@ -12329,14 +12372,21 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     report = "Error"
 
     try:
+        # if longitudinal is set, session list needs to be provided
+        if options["longitudinal"]:
+            if not options["hcp_longitudinal_sessions"]:
+                r += "\n---> ERROR: hcp_longitudinal_sessions is not provided!"
+                run = False
+            session_list = options["hcp_longitudinal_sessions"].replace(",", "@")
+
         # if sessions is not a batch file skip batch file validity checks
-        if ("sessions" in options and os.path.exists(options["sessions"])) or (
+        elif ("sessions" in options and os.path.exists(options["sessions"])) or (
             "batchfile" in options and os.path.exists(options["batchfile"])
         ):
             doHCPOptionsCheck(options, "hcp_temporal_ica")
 
-            # subject_list
-            subject_list = ""
+            # session_list
+            session_list = ""
 
             # check sessions
             for session in sessions:
@@ -12347,31 +12397,25 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     )
                     run = False
 
-                # subject_list
-                if subject_list == "":
-                    subject_list = session["id"] + options["hcp_suffix"]
+                # session_list
+                if session_list == "":
+                    session_list = session["id"] + options["hcp_suffix"]
                 else:
-                    subject_list = (
-                        subject_list + "@" + session["id"] + options["hcp_suffix"]
+                    session_list = (
+                        session_list + "@" + session["id"] + options["hcp_suffix"]
                     )
         else:
-            # subject_list
-            subject_list = ""
+            # session_list
+            session_list = ""
 
             for session in sessions:
-                # subject_list
-                if subject_list == "":
-                    subject_list = session["id"] + options["hcp_suffix"]
+                # session_list
+                if session_list == "":
+                    session_list = session["id"] + options["hcp_suffix"]
                 else:
-                    subject_list = (
-                        subject_list + "@" + session["id"] + options["hcp_suffix"]
+                    session_list = (
+                        session_list + "@" + session["id"] + options["hcp_suffix"]
                     )
-
-        # use first session as the main one
-        sinfo = sessions[0]
-
-        # get sorted bold numbers and bold data
-        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
 
         # mandatory parameters
         # hcp_tica_bolds
@@ -12451,8 +12495,26 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         else:
             study_dir = ""
 
+            # longitudinal
+            if options["longitudinal"]:
+                studyfolder = gc.deduceFolders(options)["basefolder"]
+                if not studyfolder:
+                    r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                    run = False
+
+                if not options["hcp_longitudinal_subject"]:
+                    r += "\nERROR: hcp_longitudinal_subject is a mandatory parameter for the longitudinal mode of temporal ICA!"
+                    run = False
+
+                # set study dir
+                study_dir = os.path.join(studyfolder, "subjects", options["hcp_longitudinal_subject"])
+
+                # create folder
+                if not os.path.exists(study_dir):
+                    os.makedirs(study_dir)
+
             # single session
-            if len(sessions) == 1:
+            elif len(sessions) == 1:
                 # get session info
                 study_dir = sessions[0]["hcp"]
 
@@ -12477,13 +12539,15 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
                 # check for make average dataset outputs
                 mad_file = os.path.join(
-                    study_dir,
+                    options["sessionsfolder"],
+                    "average_dataset",
                     outgroupname,
                     "MNINonLinear",
                     "fsaverage_LR32k",
                     outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii",
                 )
                 if not os.path.exists(mad_file):
+                    r += "\n---> ERROR: %s does not exist!" % mad_file
                     r += "\n---> ERROR: You need to run hcp_make_average_dataset before running hcp_temporal_ica!"
                     run = False
 
@@ -12493,20 +12557,24 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     os.makedirs(out_dir)
 
         # if hcp_tica_average_dataset is provided copy or link it into the outgroupname
+        mad_dir = os.path.join(study_dir, outgroupname)
         if options["hcp_tica_average_dataset"] is not None:
-            mad_dir = os.path.join(study_dir, outgroupname)
-
-            # REUSE_TICA case
-            if options["hcp_tica_precomputed_clean_folder"] is not None:
-                mad_dir = options["hcp_tica_precomputed_clean_folder"]
-
-            gc.link_or_copy(mad_dir, options["hcp_tica_average_dataset"], symlink=True)
+            gc.link_or_copy(options["hcp_tica_average_dataset"], mad_dir, symlink=True)
+        elif options["longitudinal"]:
+            # if longitudinal, check if we have to copy from sessions to subjects
+            studyfolder = gc.deduceFolders(options)["basefolder"]
+            if not studyfolder:
+                r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                run = False
+            sessions_mad_dir = os.path.join(studyfolder, "sessions", "average_dataset", outgroupname)
+            if os.path.exists(sessions_mad_dir):
+                gc.link_or_copy(sessions_mad_dir, mad_dir, symlink=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
+                run = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -12525,7 +12593,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             comm = (
                 '%(script)s \
                 --study-folder="%(study_dir)s" \
-                --subject-list="%(subject_list)s" \
+                --session-list="%(session_list)s" \
                 --fmri-names="%(fmri_names)s" \
                 --output-fmri-name="%(output_fmri_name)s" \
                 --surf-reg-name="%(surf_reg_name)s" \
@@ -12533,7 +12601,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 --proc-string="%(proc_string)s" \
                 --out-group-name="%(outgroupname)s" \
                 --fmri-resolution="%(fmri_resolution)s" \
-                --subject-expected-timepoints="%(timepoints)s" \
+                --session-expected-timepoints="%(timepoints)s" \
                 --num-wishart="%(num_wishart)s" \
                 --low-res="%(low_res)s" \
                 --matlab-run-mode="%(matlabrunmode)s" \
@@ -12543,7 +12611,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                         os.environ["HCPPIPEDIR"], "tICA", "tICAPipeline.sh"
                     ),
                     "study_dir": study_dir,
-                    "subject_list": subject_list,
+                    "session_list": session_list,
                     "fmri_names": fmri_names,
                     "output_fmri_name": out_fmri_name,
                     "surf_reg_name": surfregname,
@@ -12588,7 +12656,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 )
 
             # hcp_tica_precomputed_group_name
-            if options["hcp_tica_precomputed_fmri_name"] is not None:
+            if options["hcp_tica_precomputed_group_name"] is not None:
                 comm += (
                     '                    --precomputed-group-name="%s"'
                     % options["hcp_tica_precomputed_group_name"]
@@ -12688,7 +12756,25 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             # hcp_tica_extract_fmri_out
             if options["hcp_tica_extract_fmri_out"]:
-                comm += f'                    --extract-fmri-out={options["hcp_tica_extract_fmri_out"]}'
+                comm += f'                    --extract-fmri-out="{options["hcp_tica_extract_fmri_out"]}"'
+
+            # longitudinal
+            if options["longitudinal"]:
+                comm += '                --is-longitudinal="TRUE"'
+                comm += '                --longitudinal-template="' + options["hcp_longitudinal_template"] + '"'
+                comm += '                --longitudinal-subject="' + options["hcp_longitudinal_subject"] + '"'
+                if options["hcp_tica_longitudinal_extract_all"]:
+                    comm += '                --longitudinal-extract-all="TRUE"'
+
+                if not options["hcp_tica_icamode"]:
+                    comm += (
+                        '                    --ica-mode="REUSE_TICA"'
+                    )
+                elif options["hcp_tica_icamode"] != "REUSE_TICA":
+                    r += (
+                        "\n---> ERROR: Longitudinal processing is set, but hcp_tica_icamode is not set to REUSE_TICA, this will not work!"
+                    )
+                    run = False
 
             # -- Report command
             if run:
@@ -12702,7 +12788,12 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                r, endlog, report, failed = pc.runExternalForFile(
+
+                logtags = [options["logtag"]]
+                if options["longitudinal"]:
+                    logtags.append("long")
+
+                r, _, report, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP temporal ICA",
@@ -12711,7 +12802,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=options["logtag"],
+                    logtags=logtags,
                     fullTest=None,
                     shell=True,
                     r=r,
@@ -12823,8 +12914,8 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             be averaged.
 
     Output files:
-        A group folder with outputs is created inside the QuNex's session
-        folder.
+        A group folder with outputs is created inside the average_dataset foledr in
+        QuNex's sessions folder.
 
     Notes:
         Mapping of QuNex parameters onto HCP ASL pipeline parameters:
@@ -12912,7 +13003,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         # multi session
         else:
             # set study dir
-            study_dir = os.path.join(options["sessionsfolder"], outgroupname)
+            study_dir = os.path.join(options["sessionsfolder"], "average_dataset", outgroupname)
 
             # create folder
             if not os.path.exists(study_dir):
@@ -13368,7 +13459,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             # set ok to true for now
             boldok = True
 
-            _, boldtarget, _ = _get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
@@ -13591,11 +13682,9 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
             r += "\n------------------------------------------------------------\n"
 
         # -- Test files
-
         tfile = os.path.join(hcp["T1w_folder"], "Diffusion", "dti_FA.nii.gz")
 
         # -- Run
-
         if run:
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
@@ -13713,13 +13802,11 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
             r += "\n------------------------------------------------------------\n"
 
         # -- test files
-
         tfile = os.path.join(
             hcp["T1w_folder"], "Diffusion.bedpostX", "mean_fsumsamples.nii.gz"
         )
 
         # -- run
-
         if run:
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):

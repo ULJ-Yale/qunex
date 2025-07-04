@@ -196,6 +196,22 @@ def use_or_skip_bold(sinfo, options, r=""):
     return bolds, bskip, len(bskip), r
 
 
+def get_bold_names(boldinfo, options):
+    """
+    Get bold names based on the boldinfo and options.
+    """
+
+    if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
+        printbold = boldinfo["filename"]
+        boldtarget = boldinfo["filename"]
+        boldsource = boldinfo["filename"]
+    else:
+        printbold = str(boldinfo["bold_number"])
+        boldsource = "BOLD_%d" % (boldinfo["bold_number"])
+        boldtarget = "%s%s" % (options["hcp_bold_prefix"], printbold)
+
+    return printbold, boldtarget, boldsource
+
 def doOptionsCheck(options, sinfo, command):
     # logs
     logs = [e.strip() for e in re.split(r" +|\||, *", options["log"])]
@@ -906,14 +922,18 @@ def runExternalForFile(
     printComm += "Running external command via QuNex:\n\n"
 
     comm = run + "\n"
+    comm = re.sub(r"( +--)", r" \\\n  --", comm)
+    comm = re.sub(r"( +-)(?!-)", r" \\\n  -", comm)
+    comm = re.sub(r"(  +)(?!-)", r" \\\n  ", comm)
 
     printComm += comm
+
     if checkfile is not None and checkfile != "":
         printComm += "\nTest file: \n%s\n" % checkfile
     printComm += "------------------------------------------------------------"
 
     # report for local runs
-    print("Running external command: %s" % comm)
+    print("Running external command: %s" % printComm)
 
     # add an empty line for log purposes
     printComm += "\n"
