@@ -11961,6 +11961,8 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                     run = False
                 comm += f"                --matlab-run-mode={matlabrunmode}"
+            else:
+                matlabrunmode = "0"
 
             # -- Report command
             if run:
