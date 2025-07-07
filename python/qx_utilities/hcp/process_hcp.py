@@ -108,9 +108,6 @@ def _build_skipped_report(report, skipped, options):
             report["skipped"] = [str(binfo["bold_number"]) for binfo in skipped]
 
 
-
-
-
 # -------------------------------------------------------------------
 #
 #                       HCP Pipeline Scripts
@@ -319,15 +316,17 @@ def getHCPPaths(sinfo, options):
         d["TB1TFL-Phase"] = tb1tlf_phase[0]
 
     # AFI
-    t1w_afi = os.path.join(d["source"], "B1", sinfo["id"] + "*_AFI.nii.gz")
+    t1w_afi = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*_AFI.nii.gz"))
     if len(t1w_afi) != 0:
         d["T1w-AFI"] = t1w_afi[0]
 
-    rb1cor_32ch = os.path.join(d["source"], "B1", sinfo["id"] + "*_*CH.nii.gz")
+    rb1cor_32ch = glob.glob(
+        os.path.join(d["source"], "B1", sinfo["id"] + "*_*CH.nii.gz")
+    )
     if len(rb1cor_32ch) != 0:
         d["RB1COR-Head"] = rb1cor_32ch[0]
 
-    rb1cor_bc = os.path.join(d["source"], "B1", sinfo["id"] + "*_BC.nii.gz")
+    rb1cor_bc = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*_BC.nii.gz"))
     if len(rb1cor_bc) != 0:
         d["RB1COR-Body"] = rb1cor_bc[0]
 
@@ -7212,8 +7211,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         if options["hcp_icafix_icadim_mode"] is not None:
             comm += (
-                '             --icadim-mode="%s"'
-                % options["hcp_icafix_icadim_mode"]
+                '             --icadim-mode="%s"' % options["hcp_icafix_icadim_mode"]
             )
 
         if options["hcp_reuse_existing_ica"] is not None:
@@ -10058,7 +10056,9 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                                     # fix path
                                     sinfo_long_i["hcp"] = path
                                     # fix id
-                                    sinfo_long_i["id"] = f"{sl}.long.{options['hcp_longitudinal_template']}"
+                                    sinfo_long_i["id"] = (
+                                        f"{sl}.long.{options['hcp_longitudinal_template']}"
+                                    )
                                     # add step info
                                     sinfo_long_i["long"] = 1
                                     future = executor.submit(
@@ -10395,14 +10395,10 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         ppe = ProcessPoolExecutor(parelements)
         # single-run
         if single_run:
-            f = partial(
-                executeHCPSingleDeDriftAndResample, sinfo, options, hcp, run
-            )
+            f = partial(executeHCPSingleDeDriftAndResample, sinfo, options, hcp, run)
         # multi-run
         else:
-            f = partial(
-                executeHCPMultiDeDriftAndResample, sinfo, options, hcp, run
-            )
+            f = partial(executeHCPMultiDeDriftAndResample, sinfo, options, hcp, run)
         results = ppe.map(f, dedrift_groups)
 
         # merge r and report
@@ -10729,7 +10725,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
 
         # runok
         runok = True
-
 
         # check if files for all bolds exist
         # get group data
@@ -11724,6 +11719,10 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
+        if options["hcp_transmit_mode"] is None:
+            r += "\n---> ERROR: the hcp_transmit_mode parameter is mandatory!"
+            run = False
+
         if options["hcp_gmwm_template"] is None:
             r += "\n---> ERROR: the hcp_gmwm_template parameter is mandatory!"
             run = False
@@ -11757,7 +11756,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 if options["hcp_afi_image"]:
                     comm += f"                --afi-image={options['hcp_afi_image']}"
                 else:
-                    r += "\n---> Setting hcp_afi_image automatically"
+                    r += "\n---> Setting the hcp_afi_image automatically"
                     if "T1w-AFI" in hcp:
                         comm += f"                --afi-image={hcp['T1w-AFI']}"
                     else:
@@ -11803,7 +11802,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 if options["hcp_b1tx_magnitude"]:
                     comm += f"                --b1tx-magnitude={options['hcp_b1tx_magnitude']}"
                 else:
-                    r += "\n---> Setting hcp_b1tx_magnitude automatically"
+                    r += "\n---> Setting the hcp_b1tx_magnitude automatically"
                     if "TB1TFL-Magnitude" in hcp:
                         comm += f"                --b1tx-magnitude={hcp['TB1TFL-Magnitude']}"
                     else:
@@ -11813,7 +11812,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 if options["hcp_b1tx_phase"]:
                     comm += f"                --b1tx-phase={options['hcp_b1tx_phase']}"
                 else:
-                    r += "\n---> Setting hcp_b1tx_phase automatically"
+                    r += "\n---> Setting the hcp_b1tx_phase automatically"
                     if "TB1TFL-Phase" in hcp:
                         comm += f"                --b1tx-phase={hcp['TB1TFL-Phase']}"
                     else:
@@ -11836,7 +11835,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     pt_fmri_names = options["hcp_pt_fmri_names"].replace(",", "@")
 
                 else:
-                    r += "\n---> Setting hcp_pt_fmri_names automatically"
+                    r += "\n---> Setting the hcp_pt_fmri_names automatically"
                     # --- Get sorted bold numbers and bold data
                     bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
                     pt_fmri_names = []
@@ -11887,7 +11886,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             # optional general parameters
             if options["hcp_unproc_t1w_list"] is not None:
                 if options["hcp_unproc_t1w_list"] == "auto":
-                    r += "\n---> Setting hcp_unproc_t1w_list automatically"
+                    r += "\n---> Setting the hcp_unproc_t1w_list automatically"
                     comm += f"                --unproc-t1w-list={hcp['T1w']}"
                 else:
                     unproc_t1w_list = options["hcp_unproc_t1w_list"].replace(",", "@")
@@ -11895,7 +11894,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_unproc_t2w_list"] is not None:
                 if options["hcp_unproc_t2w_list"] == "auto":
-                    r += "\n---> Setting hcp_unproc_t2w_list automatically"
+                    r += "\n---> Setting the hcp_unproc_t2w_list automatically"
                     comm += f"                --unproc-t2w-list={hcp['T2w']}"
                 else:
                     unproc_t2w_list = options["hcp_unproc_t2w_list"].replace(",", "@")
@@ -11905,7 +11904,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
             else:
                 if "RB1COR-Body" in hcp:
-                    r += "\n---> Setting hcp_receive_bias_body_coil automatically"
+                    r += "\n---> Setting the hcp_receive_bias_body_coil automatically"
                     comm += (
                         f"                --receive-bias-body-coil={hcp['RB1COR-Body']}"
                     )
@@ -11914,7 +11913,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
             else:
                 if "RB1COR-Head" in hcp:
-                    r += "\n---> Setting hcp_receive_bias_head_coil automatically"
+                    r += "\n---> Setting the hcp_receive_bias_head_coil automatically"
                     comm += (
                         f"                --receive-bias-head-coil={hcp['RB1COR-Head']}"
                     )
@@ -12509,7 +12508,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                     run = False
 
                 # set study dir
-                study_dir = os.path.join(studyfolder, "subjects", options["hcp_longitudinal_subject"])
+                study_dir = os.path.join(
+                    studyfolder, "subjects", options["hcp_longitudinal_subject"]
+                )
 
                 # create folder
                 if not os.path.exists(study_dir):
@@ -12568,7 +12569,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 run = False
-            sessions_mad_dir = os.path.join(studyfolder, "sessions", "average_dataset", outgroupname)
+            sessions_mad_dir = os.path.join(
+                studyfolder, "sessions", "average_dataset", outgroupname
+            )
             if os.path.exists(sessions_mad_dir):
                 gc.link_or_copy(sessions_mad_dir, mad_dir, symlink=True)
 
@@ -12763,19 +12766,23 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             # longitudinal
             if options["longitudinal"]:
                 comm += '                --is-longitudinal="TRUE"'
-                comm += '                --longitudinal-template="' + options["hcp_longitudinal_template"] + '"'
-                comm += '                --longitudinal-subject="' + options["hcp_longitudinal_subject"] + '"'
+                comm += (
+                    '                --longitudinal-template="'
+                    + options["hcp_longitudinal_template"]
+                    + '"'
+                )
+                comm += (
+                    '                --longitudinal-subject="'
+                    + options["hcp_longitudinal_subject"]
+                    + '"'
+                )
                 if options["hcp_tica_longitudinal_extract_all"]:
                     comm += '                --longitudinal-extract-all="TRUE"'
 
                 if not options["hcp_tica_icamode"]:
-                    comm += (
-                        '                    --ica-mode="REUSE_TICA"'
-                    )
+                    comm += '                    --ica-mode="REUSE_TICA"'
                 elif options["hcp_tica_icamode"] != "REUSE_TICA":
-                    r += (
-                        "\n---> ERROR: Longitudinal processing is set, but hcp_tica_icamode is not set to REUSE_TICA, this will not work!"
-                    )
+                    r += "\n---> ERROR: Longitudinal processing is set, but hcp_tica_icamode is not set to REUSE_TICA, this will not work!"
                     run = False
 
             # -- Report command
@@ -13005,7 +13012,9 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         # multi session
         else:
             # set study dir
-            study_dir = os.path.join(options["sessionsfolder"], "average_dataset", outgroupname)
+            study_dir = os.path.join(
+                options["sessionsfolder"], "average_dataset", outgroupname
+            )
 
             # create folder
             if not os.path.exists(study_dir):
@@ -14090,14 +14099,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     # --- sanity checks
     if "sessionsfolder" not in options:
         r += "\nERROR: sessionsfolder not specified in options, cannot map HCP data!"
-        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters!")
+        rstatus = f"Mapping {sinfo['id']} failed, check your input parameters!"
         failed = 1
         return (r, (sinfo["id"], rstatus, failed))
 
     session_path = os.path.join(options["sessionsfolder"], sinfo["id"])
     if not os.path.exists(session_path):
         r += f"\nERROR: session {sinfo['id']} does not exists at {session_path}!"
-        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!")
+        rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
         return (r, (sinfo["session"], rstatus, failed))
 
@@ -14107,7 +14116,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     if "hcp" not in d:
         r += f"\nERROR: something went wrong, mapping was unable to get the HCP folder for session {sinfo['id']}!"
-        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters and data!")
+        rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and data!"
         failed = 1
 
         r += "\n\nsession information:\n"
@@ -14120,7 +14129,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     if not os.path.exists(d["hcp"]):
         r += f"\nERROR: HCP folder for session {sinfo['id']} does not exists at {d['hcp']}!"
-        rstatus = (f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!")
+        rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
         return (r, (sinfo["session"], rstatus, failed))
 
@@ -14136,11 +14145,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     failed = 0
 
     if "hcp" not in d or "s_images" not in d:
-        r += (
-            f"\nERROR: found issues with session {sinfo['id']}\n...................................\n{traceback.format_exc()}...................................\n"
-        )
+        r += f"\nERROR: found issues with session {sinfo['id']}\n...................................\n{traceback.format_exc()}...................................\n"
         failed += 1
-        rstatus = (f"Mapping {sinfo['id']} failed, check your batch file and session processing!")
+        rstatus = f"Mapping {sinfo['id']} failed, check your batch file and session processing!"
     else:
         r += "\n\nSource folder: " + d["hcp"]
         r += "\nTarget folder: " + d["s_images"]
@@ -14277,7 +14284,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         report["boldfail"] = 0
         report["boldskipped"] = 0
 
-        bolds, skipped, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
+        bolds, skipped, report["boldskipped"], r = pc.use_or_skip_bold(
+            sinfo, options, r
+        )
 
         # add additional BOLDS
         if options["additional_bolds"] is not None:
@@ -14313,7 +14322,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     d["s_bold"],
                     boldinfo["name"] + options["qx_cifti_tail"] + ".dtseries.nii",
                 )
-                f["bold_mov"] = os.path.join(d["s_bold_mov"], boldinfo["name"] + "_mov.dat")
+                f["bold_mov"] = os.path.join(
+                    d["s_bold_mov"], boldinfo["name"] + "_mov.dat"
+                )
 
             status = True
             hcp_bold_name = ""
@@ -14370,7 +14381,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         status, r = gc.link_or_copy(
                             os.path.join(
                                 hcp_bold_path,
-                                hcp_bold_name + options["hcp_cifti_tail"] + ".dtseries.nii",
+                                hcp_bold_name
+                                + options["hcp_cifti_tail"]
+                                + ".dtseries.nii",
                             ),
                             f["bold_qx_dts"],
                             r,
@@ -14383,7 +14396,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         r += "\n     ... movement data ready"
                     else:
                         movement_regressors = f"Movement_Regressors{options['hcp_cifti_tail'].replace('_Atlas', '')}.txt"
-                        if os.path.exists(os.path.join(hcp_bold_path, movement_regressors)):
+                        if os.path.exists(
+                            os.path.join(hcp_bold_path, movement_regressors)
+                        ):
                             mdata = [
                                 line.strip().split()
                                 for line in open(
@@ -14445,7 +14460,10 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             )
             for boldinfo in skipped:
                 if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                    r += "\n ... %s [task: '%s']" % (boldinfo["filename"], boldinfo["task"])
+                    r += "\n ... %s [task: '%s']" % (
+                        boldinfo["filename"],
+                        boldinfo["task"],
+                    )
                 else:
                     r += "\n ... %s [task: '%s']" % (boldinfo["name"], boldinfo["task"])
 
