@@ -136,7 +136,7 @@ if ischar(flist)
             list.session(nsessions).conc = strtrim(s(2:end));
         elseif ~isempty(strfind(s, 'fidl:'))
             [t, s] = strtok(s, ':');
-            slist.ession(nsessions).fidl = strtrim(s(2:end));
+            list.session(nsessions).fidl = strtrim(s(2:end));
         elseif ~isempty(strfind(s, 'glm:'))
             [t, s] = strtok(s, ':');
             list.session(nsessions).glm = strtrim(s(2:end));
