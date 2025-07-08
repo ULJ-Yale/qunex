@@ -132,7 +132,9 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %                   with event extraction)
 %               - <column>
 %                   the column name in ∗_scrub.txt file that matches bold file
-%                   to be used for ignore mask.
+%                   to be used for ignore mask
+%               - none
+%                   do not ignore any frames.
 %
 %               Defaults to 'use,fidl'.
 %
@@ -657,6 +659,8 @@ for s = 1:list.nsessions
         end 
     end
     
+    first_subject = false;
+
     % ===================================================================================================
     %                                                                             save individual results
 
@@ -681,7 +685,7 @@ for s = 1:list.nsessions
         switch save_format{1}
             case 'mat'
                 if verbose; fprintf('         ... saving mat file'); end
-                save(basefilename, 'fcmat');
+                save('-mat', [basefilename '.mat'], 'fcmat');
                 if verbose; fprintf(' ... done\n'); end
             case 'long'
                 save_long(fcmat, fcmeasure, lname, basefilename, verbose, printdebug);
@@ -692,7 +696,6 @@ for s = 1:list.nsessions
         end
     end        
 
-    first_subject = false;
 end
 
 
@@ -712,7 +715,12 @@ for save_format = options.savegroup
         case 'mat'
             if verbose; fprintf('         ... saving mat file'); end
             fcmat = fcmats;
-            save(basefilename, 'fcmat');
+            try
+                save('-mat', [basefilename '.mat'], 'fcmat', '-v7.3');
+            catch
+                if verbose; fprintf(' ... failed to save using -v7.3. Using default format instead.'); end
+                save('-mat', [basefilename '.mat'], 'fcmat');
+            end
             if verbose; fprintf(' ... done\n'); end
         case 'all_long'
             save_long(fcmats, fcmeasure, lname, basefilename, verbose, printdebug);
