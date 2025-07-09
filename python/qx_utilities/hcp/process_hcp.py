@@ -13221,12 +13221,16 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_res (str, default '2'):
             Resolution of data.
 
-        --hcp_autoreclean_timepoints (str, default ''):
-            Output spectra size for sICA individual projection,
-            RunsXNumTimePoints, like '4800'.
-
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
+
+        --hcp_grayordinatesres (int, default 2):
+            The size of voxels for the subcortical and cerebellar data in
+            grayordinate space in mm.
+
+        --hcp_bold_smoothFWHM (int, default 2):
+            Smoothing FWHM that matches what was used in the fMRISurface
+            pipeline.
 
         --hcp_autoreclean_model_folder (str, default '<$HCPPIPEDIR/ICAFIX/rclean_models>'):
             The folder path of the trained models. Will use the HCP's model
@@ -13260,8 +13264,9 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             ``hcp_icafix_bolds``               ``mrfix-concat-name``
             ``hcp_icafix_highpass``            ``bandpass``
             ``hcp_bold_res``                   ``fmri-resolution``
-            ``hcp_autoreclean_timepoints``     ``subject-expected-timepoints``
             ``hcp_lowresmesh``                 ``low-res-mesh``
+            ``hcp_grayordinatesres``           ``grayordinatesres``
+            ``hcp_bold_smoothFWHM``            ``smoothingFWHM``
             ``hcp_autoreclean_model_folder``   ``model-folder``
             ``hcp_autoreclean_model_to_use``   ``model-to-use``
             ``hcp_autoreclean_vote_threshold`` ``vote-threshold``
@@ -13273,8 +13278,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_apply_auto_reclean \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
-                --hcp_autoreclean_timepoints="4800"
+                --sessionsfolder=sessions
 
         ::
 
@@ -13282,7 +13286,6 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
                 --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
-                --hcp_autoreclean_timepoints="4800" \\
                 --hcp_matlab_mode="interpreted"
     """
 
@@ -13509,14 +13512,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
                 else options["hcp_icafix_highpass"]
             )
 
-        # hcp_autoreclean_timepoints
-        timepoints = ""
-        if options["hcp_autoreclean_timepoints"] is None:
-            r += "\n---> ERROR: hcp_autoreclean_timepoints is not provided!"
-            run = False
-        else:
-            timepoints = options["hcp_autoreclean_timepoints"]
-
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
@@ -13541,9 +13536,10 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             --subject="%(subject)s" \
             --fmri-names="%(boldimgs)s" \
             --fix-high-pass="%(highpass)s" \
-            --fmri-resolution="%(fmri_resolution)s" \
-            --subject-expected-timepoints="%(timepoints)s" \
+            --fmrires="%(fmrires)s" \
             --low-res="%(low_res)s" \
+            --grayordinatesres="%(grayordinatesres)s" \
+            --smoothingFWHM="%(smoothingFWHM)s" \
             --matlab-run-mode="%(matlabrunmode)s"'
             % {
                 "script": os.path.join(
@@ -13553,9 +13549,10 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
                 "subject": subject,
                 "boldimgs": boldimgs,
                 "highpass": highpass,
-                "fmri_resolution": options["hcp_bold_res"],
-                "timepoints": timepoints,
+                "fmrires": options["hcp_bold_res"],
                 "low_res": options["hcp_lowresmesh"],
+                "grayordinatesres": options["hcp_grayordinatesres"],
+                "smoothingFWHM": options["hcp_bold_smoothFWHM"],
                 "matlabrunmode": matlabrunmode,
             }
         )
