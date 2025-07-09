@@ -488,7 +488,6 @@ arglist = [
     ["hcp_longitudinal_subject", None, isNone],
     ["hcp_longitudinal_sessions", None, isNone],
     ["# --- hcp_apply_auto_reclean options"],
-    ["hcp_autoreclean_timepoints", "", isNone],
     ["hcp_autoreclean_model_folder", "", isNone],
     ["hcp_autoreclean_model_to_use", "", isNone],
     ["hcp_autoreclean_vote_threshold", "", isNone],
