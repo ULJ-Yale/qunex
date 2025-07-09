@@ -448,6 +448,12 @@ def import_bids(
         Extra notes:
             Please see `map_bids2nii` inline documentation!
 
+        If you encounter any errors during the import process, please check that
+        the BIDS dataset complies with the BIDS Validator
+        (https://github.com/bids-standard/bids-validator (command-line version),
+        https://bids-standard.github.io/bids-validator/ (online version)) or
+        refer to the BIDS specification (https://bids.neuroimaging.io/).
+
     Examples:
         ::
 
@@ -1061,7 +1067,10 @@ def import_bids(
 
     if not report:
         raise ge.CommandNull(
-            "import_bids", "No sessions were mapped in this call. Please check report!"
+                "import_bids", "No sessions were mapped during import. Please refer to the report"
+                "for more information, and verify that your BIDS dataset is valid using the BIDS "
+                "Validator: https://github.com/bids-standard/bids-validator (command-line version) or"
+                "https://bids-standard.github.io/bids-validator/ (online version)."
         )
 
 
