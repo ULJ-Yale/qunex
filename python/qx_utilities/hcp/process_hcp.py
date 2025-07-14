@@ -1170,7 +1170,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         "FieldMap%s%s" % (fmnum, options["fctail"]),
                     )
 
-                    fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
+                    fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))
 
                     if len(fmap_json) != 0:
                         fmap_json = fmap_json[0]
