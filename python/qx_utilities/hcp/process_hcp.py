@@ -977,18 +977,21 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             # try to set hcp_seechospacing from the JSON sidecar if not yet set
             if options["hcp_seechospacing"] == "NONE" and tufolder:
-                fmap_ap_json = glob.glob(os.path.join(tufolder, "*AP*.json"))[0]
-                json_sidecar = os.path.join(tufolder, fmap_ap_json)
+                fmap_ap_json = glob.glob(os.path.join(tufolder, "*AP*.json"))
 
-                if os.path.exists(json_sidecar):
-                    r += "\n---> Trying to set hcp_seechospacing from the JSON sidecar."
-                    with open(json_sidecar, "r") as file:
-                        sidecar_data = json.load(file)
-                        if "EffectiveEchoSpacing" in sidecar_data:
-                            options["hcp_seechospacing"] = (
-                                f"{sidecar_data['EffectiveEchoSpacing']:.10f}"
-                            )
-                            r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
+                if len(fmap_ap_json) != 0:
+                    fmap_ap_json = fmap_ap_json[0]
+                    json_sidecar = os.path.join(tufolder, fmap_ap_json)
+
+                    if os.path.exists(json_sidecar):
+                        r += "\n---> Trying to set hcp_seechospacing from the JSON sidecar."
+                        with open(json_sidecar, "r") as file:
+                            sidecar_data = json.load(file)
+                            if "EffectiveEchoSpacing" in sidecar_data:
+                                options["hcp_seechospacing"] = (
+                                    f"{sidecar_data['EffectiveEchoSpacing']:.10f}"
+                                )
+                                r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
 
             sesettings = True
             for p in [
@@ -1168,27 +1171,34 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     )
 
                     fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
-                    json_sidecar = os.path.join(fmfolder, fmap_json)
 
-                    if os.path.exists(json_sidecar):
-                        r += "\n---> Trying to set hcp_echodiff from the JSON sidecar."
-                        with open(json_sidecar, "r") as file:
-                            sidecar_data = json.load(file)
-                            if (
-                                "EchoTime1" in sidecar_data
-                                and "EchoTime2" in sidecar_data
-                            ):
-                                echodiff = (
-                                    sidecar_data["EchoTime2"]
-                                    - sidecar_data["EchoTime1"]
-                                )
-                                # from s to ms
-                                echodiff = echodiff * 1000
-                                options["hcp_echodiff"] = f"{echodiff:.10f}"
-                                r += f"\n       - hcp_echodiff set to {options['hcp_echodiff']}"
+                    if len(fmap_json) != 0:
+                        fmap_json = fmap_json[0]
+                        json_sidecar = os.path.join(fmfolder, fmap_json)
+
+                        if os.path.exists(json_sidecar):
+                            r += "\n---> Trying to set hcp_echodiff from the JSON sidecar."
+                            with open(json_sidecar, "r") as file:
+                                sidecar_data = json.load(file)
+                                if (
+                                    "EchoTime1" in sidecar_data
+                                    and "EchoTime2" in sidecar_data
+                                ):
+                                    echodiff = (
+                                        sidecar_data["EchoTime2"]
+                                        - sidecar_data["EchoTime1"]
+                                    )
+                                    # from s to ms
+                                    echodiff = echodiff * 1000
+                                    options["hcp_echodiff"] = f"{echodiff:.10f}"
+                                    r += f"\n       - hcp_echodiff set to {options['hcp_echodiff']}"
+                        else:
+                            r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
+                            options["hcp_echodiff"] = "NONE"
                     else:
-                        r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
+                        r += "\n---> JSON sidecar not found, setting hcp_echodiff to NONE."
                         options["hcp_echodiff"] = "NONE"
+
         else:
             r += "\n---> WARNING: No distortion correction method specified."
 
@@ -5066,27 +5076,35 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             "FieldMap%s%s" % (fmnum, options["fctail"]),
                         )
 
-                        fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))[0]
-                        json_sidecar = os.path.join(fmfolder, fmap_json)
+                        fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))
 
-                        if os.path.exists(json_sidecar):
-                            r += "\n     ... Trying to set hcp_echodiff from the JSON sidecar."
-                            with open(json_sidecar, "r") as file:
-                                sidecar_data = json.load(file)
-                                if (
-                                    "EchoTime1" in sidecar_data
-                                    and "EchoTime2" in sidecar_data
-                                ):
-                                    echodiff = (
-                                        sidecar_data["EchoTime2"]
-                                        - sidecar_data["EchoTime1"]
-                                    )
-                                    # from s to ms
-                                    echodiff = echodiff * 1000
-                                    options["hcp_bold_echodiff"] = f"{echodiff:.10f}"
-                                    r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
+                        if len(fmap_json) != 0:
+                            fmap_json = fmap_json[0]
+                            json_sidecar = os.path.join(fmfolder, fmap_json)
+
+                            if os.path.exists(json_sidecar):
+                                r += "\n     ... Trying to set hcp_echodiff from the JSON sidecar."
+                                with open(json_sidecar, "r") as file:
+                                    sidecar_data = json.load(file)
+                                    if (
+                                        "EchoTime1" in sidecar_data
+                                        and "EchoTime2" in sidecar_data
+                                    ):
+                                        echodiff = (
+                                            sidecar_data["EchoTime2"]
+                                            - sidecar_data["EchoTime1"]
+                                        )
+                                        # from s to ms
+                                        echodiff = echodiff * 1000
+                                        options["hcp_bold_echodiff"] = (
+                                            f"{echodiff:.10f}"
+                                        )
+                                        r += f"\n     ... hcp_bold_echodiff set to {options['hcp_bold_echodiff']}"
+                            else:
+                                r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
+                                options["hcp_bold_echodiff"] = None
                         else:
-                            r += "\n---> hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
+                            r += "\n---> JSON sidecar not found, setting hcp_bold_echodiff to NONE."
                             options["hcp_bold_echodiff"] = None
 
                     if not pc.is_number(options["hcp_bold_echodiff"]):
