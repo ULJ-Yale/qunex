@@ -31,6 +31,7 @@ import zipfile
 import tarfile
 import glob
 import json
+import yaml
 import ast
 from datetime import datetime
 
@@ -160,9 +161,10 @@ def import_hcp(
     nameformat=None,
     filesort=None,
     processed_data=None,
+    hcp_dataset=None,
 ):
     """
-    ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=leave] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>]``
+    ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=leave] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>] [hcp_dataset=<HCP dataset name>]``
 
     Maps HCPLS data to the QuNex Suite file structure.
 
@@ -179,7 +181,8 @@ def import_hcp(
             folder that contains a compressed package. For instance the user
             can specify "<path>/<hcpfs_file>.zip" or "<path>" to a folder that
             contains multiple packages. The default location where the command
-            will look for a HCPLS dataset is "<sessionsfolder>/inbox/HCPLS".
+            will look for a HCPLS dataset is "<sessionsfolder>/inbox/HCPLS". Set
+            to "NONE" if onboarding preprocessed data only.
 
         --sessions (str, default detailed below):
             An optional parameter that specifies a comma or pipe separated list
@@ -265,12 +268,23 @@ def import_hcp(
             will copy that data along with unprocessed data. If onboarding
             multiple sessions then define the portion of the path to be replaced
             with session id with <session_id>, e.g.:
-            --processed_data=/archive/fMRI/hca/<session_id>.
+            --processed_data=/archive/fMRI/hca/<session_id>. If the inbox
+            parameter is set to NONE, then only processed data will be
+            onboarded. When onboarding preprocessed data, processed HCP folder
+            structure needs to reside inside the root of the session folder or
+            immediately inside the zip archive.
+
+        --hcp_dataset (str):
+            When onboarding a preprocessed HCP dataset, this parameter is
+            mandatory. Set to HCA, HCD or HCYA depending on the dataset you are
+            onboarding.
 
     Output files:
         After running the `import_hcp` command the HCPLS dataset will be
         mapped to the QuNex folder structure and image files will be
-        prepared for further processing along with required metadata.
+        prepared for further processing along with required metadata. When
+        onboarding preprocessed data, only HCP folders with preprocessed data
+        will be created.
 
         - The original HCPL session-level data is stored in::
 
@@ -289,7 +303,9 @@ def import_hcp(
             <sessionsfolder>/<session>/hcpls/hcpls2nii.log
 
     Notes:
-        The import_hcp command consists of two steps:
+        When onboarding only preprocessed data only that data will be copied
+        into the QuNex study. Otherwise, the import_hcp command consists of two
+        steps:
 
         1. Mapping HCPLS dataset to QuNex Suite folder structure:
             The `inbox` parameter specifies the location of the HCPLS
@@ -389,8 +405,8 @@ def import_hcp(
               --overwrite=no
 
         The above example additionally specifies, that only sessions
-        ‘HCA6086369_V1_MR' and ‘HCA6166973_V1_MR', and any session that starts
-        with ‘HCD00' should be imported.
+        HCA6086369_V1_MR and HCA6166973_V1_MR, and any session that starts
+        with HCD00 should be imported.
 
         ::
 
@@ -430,6 +446,16 @@ def import_hcp(
             "Please only use keys: name, type, se!",
         )
 
+    if hcp_dataset:
+        hcp_dataset = hcp_dataset.lower()
+        if hcp_dataset not in ["hca", "hcd", "hcya"]:
+            raise ge.CommandError(
+                "import_hcp",
+                "invalid hcp_dataset option",
+                "%s is not a valid option for hcp_dataset parameter!" % (hcp_dataset),
+                "Please use one of: HCA, HCD, HCYA!",
+            )
+
     if sessionsfolder is None:
         sessionsfolder = os.path.abspath(".")
 
@@ -463,281 +489,337 @@ def import_hcp(
     if sessions:
         sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
-    print("---> identifying files in %s" % (inbox))
+    # traditional onboarding with unprocessed data
+    report = []
+    if inbox != "NONE":
+        print("---> identifying files in %s" % (inbox))
 
-    sourceFiles = []
+        source_files = _get_source_files(inbox, sessions, nameformat)
 
-    if os.path.exists(inbox):
-        if os.path.isfile(inbox):
-            sourceFiles = [inbox]
-        elif os.path.isdir(inbox):
-            for path, _, files in os.walk(inbox):
-                for file in files:
-                    filepath = os.path.join(path, file)
-                    if sessions:
-                        if any(
-                            [
-                                file.endswith(e)
-                                for e in [
-                                    ".zip",
-                                    ".tar",
-                                    ".tar.gz",
-                                    ".tar.bz",
-                                    ".tarz",
-                                    ".tar.bzip2",
-                                    ".tgz",
-                                ]
-                            ]
-                        ):
-                            for session in sessions:
-                                if re.search(session, file):
-                                    sourceFiles.append(filepath)
-                                    break
-                        else:
-                            m = re.search(nameformat, filepath)
-                            try:
-                                file_subjid = m.group("subject_id")
-                                file_session = m.group("session_name")
-                                file_sessionid = "%s_%s" % (file_subjid, file_session)
-                                for session in sessions:
-                                    if re.search(session, file_sessionid):
-                                        sourceFiles.append(filepath)
-                                        break
-                            except:
-                                pass
-                    else:
-                        sourceFiles.append(filepath)
-        else:
-            raise ge.CommandFailed(
-                "import_hcp",
-                "Invalid inbox",
-                "%s is neither a file or a folder!" % (inbox),
-                "Please check your path!",
-            )
-    else:
-        raise ge.CommandFailed(
-            "import_hcp",
-            "Inbox does not exist",
-            "The specified inbox [%s] does not exist!" % (inbox),
-            "Please check your path!",
-        )
+        # ---> mapping data to sessions' folders
+        print("---> mapping files to QuNex hcpls folders")
 
-    if not sourceFiles:
-        raise ge.CommandFailed(
-            "import_hcp",
-            "No files found",
-            "No files were found to be processed at the specified inbox [%s]!"
-            % (inbox),
-            "Please check your path!",
-        )
+        for file in source_files:
+            if file.endswith(".zip"):
+                print("    ---> processing zip package [%s]" % (file))
 
-    # ---> mapping data to sessions' folders
-    print("---> mapping files to QuNex hcpls folders")
+                try:
+                    z = zipfile.ZipFile(file, "r")
+                    for sf in z.infolist():
+                        if sf.filename[-1] != "/":
+                            tfile = mapToQUNEXcpls(
+                                sf.filename,
+                                sessionsfolder,
+                                hcplsname,
+                                sessionsList,
+                                overwrite,
+                                "        ",
+                                nameformat,
+                            )
+                            if tfile:
+                                fdata = z.read(sf)
+                                fout = open(tfile, "wb")
+                                fout.write(fdata)
+                                fout.close()
+                    z.close()
 
-    for file in sourceFiles:
-        if file.endswith(".zip"):
-            print("    ---> processing zip package [%s]" % (file))
-
-            try:
-                z = zipfile.ZipFile(file, "r")
-                for sf in z.infolist():
-                    if sf.filename[-1] != "/":
-                        tfile = mapToQUNEXcpls(
-                            sf.filename,
-                            sessionsfolder,
-                            hcplsname,
-                            sessionsList,
-                            overwrite,
-                            "        ",
-                            nameformat,
-                        )
-                        if tfile:
-                            fdata = z.read(sf)
-                            fout = open(tfile, "wb")
-                            fout.write(fdata)
-                            fout.close()
-                z.close()
-
-                print("        -> done!")
-            except:
-                print(
-                    "        => Error: Processing of zip package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
-                allOk = False
-                raise
-
-        elif ".tar" in file or ".tgz" in file:
-            print("   ---> processing tar package [%s]" % (file))
-
-            try:
-                tar = tarfile.open(file)
-                for member in tar.getmembers():
-                    if member.isfile():
-                        tfile = mapToQUNEXcpls(
-                            member.name,
-                            sessionsfolder,
-                            hcplsname,
-                            sessionsList,
-                            overwrite,
-                            "        ",
-                            nameformat,
-                        )
-                        if tfile:
-                            fobj = tar.extractfile(member)
-                            fdata = fobj.read()
-                            fobj.close()
-                            fout = open(tfile, "wb")
-                            fout.write(fdata)
-                            fout.close()
-                tar.close()
-
-                print("        -> done!")
-            except:
-                print(
-                    "        => Error: Processing of tar package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
-                allOk = False
-
-        else:
-            tfile = mapToQUNEXcpls(
-                file,
-                sessionsfolder,
-                hcplsname,
-                sessionsList,
-                overwrite,
-                "    ",
-                nameformat,
-            )
-            if tfile:
-                status, msg = gc.moveLinkOrCopy(
-                    file, tfile, action, r="", prefix="    .. "
-                )
-                allOk = allOk and status
-                if not status:
-                    errors += msg
-
-    # ---> archiving the dataset
-    if errors:
-        print("   ---> The following errors were encountered when mapping the files:")
-        print(errors)
-    else:
-        if os.path.isfile(inbox) or not os.path.samefile(
-            inbox, os.path.join(sessionsfolder, "inbox", "HCPLS")
-        ):
-            try:
-                if archive == "move":
-                    print("---> moving dataset to archive")
-                    shutil.move(inbox, os.path.join(sessionsfolder, "archive", "HCPLS"))
-                elif archive == "copy":
-                    print("---> copying dataset to archive")
-                    shutil.copy2(
-                        inbox, os.path.join(sessionsfolder, "archive", "HCPLS")
+                    print("        -> done!")
+                except:
+                    print(
+                        "        => Error: Processing of zip package failed. Please check the package!"
                     )
-                elif archive == "delete":
-                    print("---> deleting dataset")
-                    if os.path.isfile(inbox):
-                        os.remove(inbox)
-                    else:
-                        shutil.rmtree(inbox)
-            except:
-                print("---> %s failed!" % (archive))
+                    errors += "\n    .. Processing of package %s failed!" % (file)
+                    allOk = False
+                    raise
+
+            elif ".tar" in file or ".tgz" in file:
+                print("   ---> processing tar package [%s]" % (file))
+
+                try:
+                    tar = tarfile.open(file)
+                    for member in tar.getmembers():
+                        if member.isfile():
+                            tfile = mapToQUNEXcpls(
+                                member.name,
+                                sessionsfolder,
+                                hcplsname,
+                                sessionsList,
+                                overwrite,
+                                "        ",
+                                nameformat,
+                            )
+                            if tfile:
+                                fobj = tar.extractfile(member)
+                                fdata = fobj.read()
+                                fobj.close()
+                                fout = open(tfile, "wb")
+                                fout.write(fdata)
+                                fout.close()
+                    tar.close()
+
+                    print("        -> done!")
+                except:
+                    print(
+                        "        => Error: Processing of tar package failed. Please check the package!"
+                    )
+                    errors += "\n    .. Processing of package %s failed!" % (file)
+                    allOk = False
+
+            else:
+                tfile = mapToQUNEXcpls(
+                    file,
+                    sessionsfolder,
+                    hcplsname,
+                    sessionsList,
+                    overwrite,
+                    "    ",
+                    nameformat,
+                )
+                if tfile:
+                    status, msg = gc.moveLinkOrCopy(
+                        file, tfile, action, r="", prefix="    .. "
+                    )
+                    allOk = allOk and status
+                    if not status:
+                        errors += msg
+
+        # ---> archiving the dataset
+        if errors:
+            print(
+                "   ---> The following errors were encountered when mapping the files:"
+            )
+            print(errors)
         else:
-            files = glob.glob(os.path.join(inbox, "*"))
-            for file in files:
+            if os.path.isfile(inbox) or not os.path.samefile(
+                inbox, os.path.join(sessionsfolder, "inbox", "HCPLS")
+            ):
                 try:
                     if archive == "move":
                         print("---> moving dataset to archive")
                         shutil.move(
-                            file, os.path.join(sessionsfolder, "archive", "HCPLS")
+                            inbox, os.path.join(sessionsfolder, "archive", "HCPLS")
                         )
                     elif archive == "copy":
                         print("---> copying dataset to archive")
                         shutil.copy2(
-                            file, os.path.join(sessionsfolder, "archive", "HCPLS")
+                            inbox, os.path.join(sessionsfolder, "archive", "HCPLS")
                         )
                     elif archive == "delete":
                         print("---> deleting dataset")
-                        if os.path.isfile(file):
-                            os.remove(file)
+                        if os.path.isfile(inbox):
+                            os.remove(inbox)
                         else:
-                            shutil.rmtree(file)
+                            shutil.rmtree(inbox)
                 except:
-                    print("---> %s of %s failed!" % (archive, file))
+                    print("---> %s failed!" % (archive))
+            else:
+                files = glob.glob(os.path.join(inbox, "*"))
+                for file in files:
+                    try:
+                        if archive == "move":
+                            print("---> moving dataset to archive")
+                            shutil.move(
+                                file, os.path.join(sessionsfolder, "archive", "HCPLS")
+                            )
+                        elif archive == "copy":
+                            print("---> copying dataset to archive")
+                            shutil.copy2(
+                                file, os.path.join(sessionsfolder, "archive", "HCPLS")
+                            )
+                        elif archive == "delete":
+                            print("---> deleting dataset")
+                            if os.path.isfile(file):
+                                os.remove(file)
+                            else:
+                                shutil.rmtree(file)
+                    except:
+                        print("---> %s of %s failed!" % (archive, file))
 
-    # ---> check status
-    if not allOk:
-        print("\nFinal report\n============")
-        raise ge.CommandFailed(
-            "import_hcp",
-            "Processing of some packages failed",
-            "Mapping of image files aborted.",
-            "Please check report!",
-        )
+        # ---> check status
+        if not allOk:
+            print("\nFinal report\n============")
+            raise ge.CommandFailed(
+                "import_hcp",
+                "Processing of some packages failed",
+                "Mapping of image files aborted.",
+                "Please check report!",
+            )
 
-    # ---> mapping data to QuNex nii folder
-    report = []
-    for execute in ["map", "clean"]:
-        for session in sessionsList[execute]:
-            if session != "hcpls":
+        # ---> mapping data to QuNex nii folder
+        for execute in ["map", "clean"]:
+            for session in sessionsList[execute]:
+                if session != "hcpls":
 
-                sparts = session.split("_")
-                subjectid = sparts.pop(0)
-                sessionid = "_".join([e for e in sparts + [""] if e])
-                info = "subject " + subjectid
-                if sessionid:
-                    info += ", session " + sessionid
+                    sparts = session.split("_")
+                    subjectid = sparts.pop(0)
+                    sessionid = "_".join([e for e in sparts + [""] if e])
+                    info = "subject " + subjectid
+                    if sessionid:
+                        info += ", session " + sessionid
 
-                try:
-                    nimg, nmapped = map_hcpls2nii(
-                        os.path.join(sessionsfolder, session),
-                        overwrite,
-                        filesort=filesort,
-                    )
-                    if nimg == 0:
-                        report.append("%s had no images found to be mapped" % (info))
+                    try:
+                        nimg, nmapped = map_hcpls2nii(
+                            os.path.join(sessionsfolder, session),
+                            overwrite,
+                            filesort=filesort,
+                        )
+                        if nimg == 0:
+                            report.append(
+                                "%s had no images found to be mapped" % (info)
+                            )
+                            allOk = False
+                        elif nimg == nmapped:
+                            report.append(
+                                "%s completed ok. %d images mapped" % (info, nmapped)
+                            )
+                        else:
+                            report.append(
+                                "%s mapped incompletely [%d images, %d mapped]"
+                                % (info, nimg, nmapped)
+                            )
+                            allOk = False
+                    except ge.CommandFailed as e:
+                        print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                        report.append("%s failed" % (info))
                         allOk = False
-                    elif nimg == nmapped:
-                        report.append(
-                            "%s completed ok. %d images mapped" % (info, nmapped)
-                        )
-                    else:
-                        report.append(
-                            "%s mapped incompletely [%d images, %d mapped]"
-                            % (info, nimg, nmapped)
-                        )
-                        allOk = False
-                except ge.CommandFailed as e:
-                    print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
-                    report.append("%s failed" % (info))
-                    allOk = False
 
-            # ---> also copy over processed data
-            if processed_data:
-                print("\n---> copying processed data")
-                # path to the session's processed data
-                session_path = processed_data.replace("<session_id>", sessionid)
-                if not os.path.exists(session_path):
-                    session_path = processed_data.replace("<session_id>", subjectid)
-                if not os.path.exists(session_path):
-                    session_path = processed_data.replace("<session_id>", session)
-                if not os.path.exists(session_path):
-                    session_path = processed_data
+                # ---> also copy over processed data
+                if processed_data:
+                    print("\n---> copying processed data")
+                    # path to the session's processed data
+                    session_path = processed_data.replace("<session_id>", sessionid)
+                    if not os.path.exists(session_path):
+                        session_path = processed_data.replace("<session_id>", subjectid)
+                    if not os.path.exists(session_path):
+                        session_path = processed_data.replace("<session_id>", session)
+                    if not os.path.exists(session_path):
+                        session_path = processed_data
 
-                # target folder
-                tfolder = os.path.join(sessionsfolder, session, "hcp", session)
-                if not os.path.exists(tfolder):
-                    os.makedirs(tfolder)
+                    # target folder
+                    tfolder = os.path.join(sessionsfolder, session, "hcp", session)
+                    if not os.path.exists(tfolder):
+                        os.makedirs(tfolder)
 
-                modalities = ["T1w", "T2w", "Diffusion", "MNINonLinear"]
-                for m in modalities:
-                    modality_path = os.path.join(session_path, m)
-                    if os.path.exists(modality_path):
-                        print(
-                            f"    ... copying processed {m} data to QuNex session folder"
+                    modalities = ["T1w", "T2w", "Diffusion", "MNINonLinear"]
+                    for m in modalities:
+                        modality_path = os.path.join(session_path, m)
+                        if os.path.exists(modality_path):
+                            print(
+                                f"    ... copying processed {m} data to QuNex session folder"
+                            )
+                            shutil.copytree(modality_path, os.path.join(tfolder, m))
+
+    # processed data only
+    else:
+        print("---> onboarding preprocessed data only")
+        # load the yaml file
+        template_folder = os.environ["NIUTemplateFolder"]
+        hcp_onboarding = os.path.join(template_folder, "hcp_onboarding.yaml")
+        with open(hcp_onboarding, "r", encoding="UTF-8") as f:
+            hcp_onboarding_data = yaml.safe_load(f)
+        dataset_info = hcp_onboarding_data[hcp_dataset]
+        anat_info = dataset_info["anat"]
+        dwi_info = dataset_info["dwi"]
+        func_info = hcp_onboarding_data["func"]
+
+        # look for files and folders in the processed_data folder
+        source_files = _get_source_files(processed_data, sessions, nameformat, True)
+
+        for sf in source_files:
+            # session id
+            session = os.path.basename(sf)
+            print(f"---> onboarding {session}")
+            subject = session.split("_")[0]
+
+            session_folder = os.path.join(sessionsfolder, session)
+            hcp_folder = os.path.join(sessionsfolder, session, "hcp", session)
+            mni_folder = os.path.join(hcp_folder, "MNINonLinear")
+            if not os.path.exists(hcp_folder):
+                os.makedirs(hcp_folder)
+
+            # if .zip unzip into hcp_folder
+            is_file = True
+            if sf.endswith(".zip"):
+                print(f" ... unzipping {sf} to {hcp_folder}")
+
+                with zipfile.ZipFile(sf, "r") as zf:
+                    zf.extractall(hcp_folder)
+            else:
+                is_file = False
+                print(f" ... copying {sf} to {hcp_folder}")
+                shutil.copytree(sf, hcp_folder, dirs_exist_ok=True)
+
+            # archive
+            if archive == "move":
+                print(
+                    f" ... archiving {sf} to {os.path.join(sessionsfolder, 'archive', 'HCPLS')}"
+                )
+                shutil.move(sf, os.path.join(sessionsfolder, "archive", "HCPLS"))
+            elif archive == "copy":
+                print(
+                    f" ... copying {sf} to {os.path.join(sessionsfolder, 'archive', 'HCPLS')}"
+                )
+                if is_file:
+                    shutil.copy2(sf, os.path.join(sessionsfolder, "archive", "HCPLS"))
+                else:
+                    # if it is a folder, copy the whole folder
+                    if not os.path.exists(
+                        os.path.join(sessionsfolder, "archive", "HCPLS")
+                    ):
+                        os.makedirs(os.path.join(sessionsfolder, "archive", "HCPLS"))
+                    if os.path.isdir(sf):
+                        shutil.copytree(
+                            sf, os.path.join(sessionsfolder, "archive", "HCPLS")
                         )
-                        shutil.copytree(modality_path, os.path.join(tfolder, m))
+            elif archive == "delete":
+                print(f" ... deleting {sf}")
+                shutil.rmtree(sf)
+
+            # create session_hcp.txt
+            session_hcp_file = os.path.join(session_folder, "session_hcp.txt")
+            print(f" ... creating {session_hcp_file}")
+
+            with open(session_hcp_file, "w", encoding="UTF-8") as f:
+                gc.print_qunex_header(timestamp=None, file=f)
+                f.write("#\n")
+                f.write(f"session: {session}\n")
+                f.write(f"subject: {subject}\n")
+                f.write(f"hcp: {hcp_folder}\n")
+                f.write("hcpready: true\n\n")
+
+                # anat
+                ix = 1
+                if os.path.exists(os.path.join(mni_folder, "T1w_restore.nii.gz")):
+                    f.write(f"{ix:02d}: T1w : {anat_info['T1w']}\n")
+                    ix += 1
+                if os.path.exists(os.path.join(mni_folder, "T2w_restore.nii.gz")):
+                    f.write(f"{ix:02d}: T2w : {anat_info['T2w']}\n")
+                    ix += 1
+
+                # dwi
+                if os.path.exists(os.path.join(hcp_folder, "T1w", "Diffusion")):
+                    for dwi_tag in dwi_info:
+                        for direction in dataset_info["direction"]:
+                            f.write(
+                                f"{ix:02d}: DWI: {dwi_tag}_{direction} : DWI_{dwi_tag}_{direction}\n"
+                            )
+                            ix += 1
+
+                # func
+                bold_ix = 1
+                for bold_info in func_info:
+                    bold_tag = bold_info[0]
+                    for direction in dataset_info["direction"]:
+                        bold = f"{bold_info[1]}_{direction}"
+                        if os.path.exists(os.path.join(mni_folder, "Results", bold)):
+                            f.write(f"{ix:02d}: bold{bold_ix} : {bold_tag}: {bold}\n")
+                            bold_ix += 1
+                            ix += 1
+
+            session_file = os.path.join(session_folder, "session.txt")
+            shutil.copyfile(session_hcp_file, session_file)
+
+            report.append(f"{session} onboarded successfully with {ix-1} images.")
 
     print("\nFinal report\n============")
     for line in report:
@@ -747,6 +829,89 @@ def import_hcp(
         raise ge.CommandFailed(
             "import_hcp", "Some actions failed", "Please check report!"
         )
+
+
+def _get_source_files(archive_folder, sessions, nameformat, processed=False):
+    """
+    Get source files given a folder, sessions and the name format.
+    """
+    source_files = []
+    if os.path.exists(archive_folder):
+        if os.path.isfile(archive_folder):
+            source_files = [archive_folder]
+        elif os.path.isdir(archive_folder):
+            if not processed:
+                for path, _, files in os.walk(archive_folder):
+                    for file in files:
+                        filepath = os.path.join(path, file)
+                        if sessions:
+                            if any(
+                                [
+                                    file.endswith(e)
+                                    for e in [
+                                        ".zip",
+                                        ".tar",
+                                        ".tar.gz",
+                                        ".tar.bz",
+                                        ".tarz",
+                                        ".tar.bzip2",
+                                        ".tgz",
+                                    ]
+                                ]
+                            ):
+                                for session in sessions:
+                                    if re.search(session, file):
+                                        source_files.append(filepath)
+                                        break
+                            else:
+                                m = re.search(nameformat, filepath)
+                                try:
+                                    file_subjid = m.group("subject_id")
+                                    file_session = m.group("session_name")
+                                    file_sessionid = "%s_%s" % (
+                                        file_subjid,
+                                        file_session,
+                                    )
+                                    for session in sessions:
+                                        if re.search(session, file_sessionid):
+                                            source_files.append(filepath)
+                                            break
+                                except:
+                                    pass
+                        else:
+                            source_files.append(filepath)
+            else:
+                # add only root if it matches the
+                for file in os.listdir(archive_folder):
+                    filepath = os.path.join(archive_folder, file)
+                    if os.path.isfile(filepath):
+                        source_files.append(filepath)
+                    elif os.path.isdir(filepath):
+                        if sessions:
+                            for session in sessions:
+                                if re.search(session, file):
+                                    source_files.append(filepath)
+                                    break
+                        else:
+                            source_files.append(filepath)
+    else:
+        raise ge.CommandFailed(
+            "import_hcp",
+            "Inbox does not exist",
+            "The specified inbox [%s] does not exist!" % (archive_folder),
+            "Please check your path!",
+        )
+
+    if not source_files:
+        raise ge.CommandFailed(
+            "import_hcp",
+            "No files found",
+            "No files were found to be processed at the specified inbox [%s]!"
+            % (archive_folder),
+            "Please check your path!",
+        )
+
+    return source_files
 
 
 def processHCPLS(sessionfolder, filesort):
@@ -818,9 +983,15 @@ def processHCPLS(sessionfolder, filesort):
         # --- Proces spin echo files
         sefile = [e for e in files if ("SpinEchoFieldMap" in e or "DistortionMap" in e)]
         if sefile:
-            senum = [e for e in sefile[0].split("_") if ("SpinEchoFieldMap" in e or "DistortionMap" in e)][
-                0
-            ].replace("SpinEchoFieldMap", "").replace("DistortionMap", "")
+            senum = (
+                [
+                    e
+                    for e in sefile[0].split("_")
+                    if ("SpinEchoFieldMap" in e or "DistortionMap" in e)
+                ][0]
+                .replace("SpinEchoFieldMap", "")
+                .replace("DistortionMap", "")
+            )
             if senum:
                 senum = int(senum)
             else:
@@ -845,7 +1016,12 @@ def processHCPLS(sessionfolder, filesort):
                 fileName.replace(session + "_", "").replace(".nii.gz", "").split("_")
             )
             fileParts = [
-                "SpinEchoFieldMap" if "SpinEchoFieldMap" in e else "DistortionMap" if "DistortionMap" in e else e for e in fileParts
+                (
+                    "SpinEchoFieldMap"
+                    if "SpinEchoFieldMap" in e
+                    else "DistortionMap" if "DistortionMap" in e else e
+                )
+                for e in fileParts
             ]
             folderFiles.append(
                 {
@@ -865,19 +1041,33 @@ def processHCPLS(sessionfolder, filesort):
             # sort folderfiles by dir
             folderFiles.sort(
                 key=lambda x: (
-                    int(x["parts"][1].replace("dir", "")) if "dir" in x["parts"][1] else float('inf'),
-                    x["parts"][2] if len(x["parts"]) > 2 else "z"
+                    (
+                        int(x["parts"][1].replace("dir", ""))
+                        if "dir" in x["parts"][1]
+                        else float("inf")
+                    ),
+                    x["parts"][2] if len(x["parts"]) > 2 else "z",
                 )
             )
             for file in folderFiles:
                 match = False
                 for fcheck in check:
-                    if "dir" in file["parts"][1] or ("b0" in file["parts"] and len(file["parts"]) == 3):
-                        if file["parts"][0] == fcheck[0] and file["parts"][1].startswith(fcheck[1]) and file["parts"][2] == fcheck[2]:
+                    if "dir" in file["parts"][1] or (
+                        "b0" in file["parts"] and len(file["parts"]) == 3
+                    ):
+                        if (
+                            file["parts"][0] == fcheck[0]
+                            and file["parts"][1].startswith(fcheck[1])
+                            and file["parts"][2] == fcheck[2]
+                        ):
                             match = True
                             break
                     elif "b0" in file["parts"]:
-                        if file["parts"][0] == fcheck[0] and file["parts"][1].startswith(fcheck[1]) and file["parts"][3] == fcheck[2]:
+                        if (
+                            file["parts"][0] == fcheck[0]
+                            and file["parts"][1].startswith(fcheck[1])
+                            and file["parts"][3] == fcheck[2]
+                        ):
                             match = True
                             break
                 if match:
@@ -1124,7 +1314,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     nfolder = os.path.join(sourcefolder, "nii")
 
     # --- report file
-
     if report is None:
         study = gc.deduceFolders({"sourcefolder": sfolder})
         basefolder = study.get("basefolder")
@@ -1137,7 +1326,6 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
         rout = open(os.devnull, "w")
 
     # --- session info
-
     session = os.path.basename(sfolder)
     sparts = session.split("_")
     subjectid = sparts.pop(0)
@@ -1521,7 +1709,8 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                         elif len(fileInfo["parts"]) == 5:
                             out = "%02d: %-20s: %-30s: phenc(%s)" % (
                                 imgn,
-                                "DWIref:%s_%s_%s" % (fileInfo["parts"][1], fileInfo["parts"][2], phenc),
+                                "DWIref:%s_%s_%s"
+                                % (fileInfo["parts"][1], fileInfo["parts"][2], phenc),
                                 "_".join(fileInfo["parts"]),
                                 phenc,
                             )
@@ -1557,7 +1746,8 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                         elif len(fileInfo["parts"]) == 4:
                             out = "%02d: %-20s: %-30s: phenc(%s)" % (
                                 imgn,
-                                "DWI:%s_%s_%s" % (fileInfo["parts"][1], fileInfo["parts"][2], phenc),
+                                "DWI:%s_%s_%s"
+                                % (fileInfo["parts"][1], fileInfo["parts"][2], phenc),
                                 "_".join(fileInfo["parts"]),
                                 phenc,
                             )
@@ -1581,7 +1771,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                             "%-25s : %.8f"
                             % (
                                 "_hcp_dwi_echospacing",
-                                fileInfo["json"].get("EffectiveEchoSpacing", -0.009)
+                                fileInfo["json"].get("EffectiveEchoSpacing", -0.009),
                             ),
                             file=rout,
                         )
