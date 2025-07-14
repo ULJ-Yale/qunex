@@ -1,0 +1,42 @@
+hcya:
+  direction:
+    - "LR"
+    - "RL"
+  anat:
+    "T1w" : "T1w_MPR1"
+    "T2w" : "T2w_SPC1"
+  dwi:
+    - "dir95"
+    - "dir96"
+    - "dir97"
+
+hca:
+  direction:
+    - "AP"
+    - "PA"
+  anat:
+    "T1w" : "T1w_MPR_vNav_4e_RMS"
+    "T2w" : "T2w_SPC_vNav"
+  dwi:
+    - "dir98"
+    - "dir99"
+
+hcd:
+  direction:
+    - "AP"
+    - "PA"
+  anat:
+    "T1w" : "T1w_MPR_vNav_4e_RMS"
+    "T2w" : "T2w_SPC_vNav"
+  dwi:
+    - "dir98"
+    - "dir99"
+
+func:
+  - ["REST1", "rfMRI_REST1"]
+  - ["CARIT", "tfMRI_CARIT"]
+  - ["EMOTION", "tfMRI_EMOTION"]
+  - ["GUESSING", "tfMRI_GUESSING"]
+  - ["FACENAME", "tfMRI_FACENAME"]
+  - ["VISMOTOR", "tfMRI_VISMOTOR"]
+  - ["REST2", "rfMRI_REST2"]

@@ -120,6 +120,7 @@ commands = {
             "nameformat",
             "filesort",
             "processed_data",
+            "hcp_dataset",
         ),
     },
     "map_hcpls2nii": {
