@@ -6299,7 +6299,6 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
     boldtags = []
 
     for boldinfo in bolds:
-
         _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
         boldtag = boldinfo["task"]
 

@@ -732,7 +732,8 @@ def import_hcp(
             subject = session.split("_")[0]
 
             session_folder = os.path.join(sessionsfolder, session)
-            hcp_folder = os.path.join(sessionsfolder, session, "hcp", session)
+            hcp_folder_no_session = os.path.join(sessionsfolder, session, "hcp")
+            hcp_folder = os.path.join(hcp_folder_no_session, session)
             mni_folder = os.path.join(hcp_folder, "MNINonLinear")
             if not os.path.exists(hcp_folder):
                 os.makedirs(hcp_folder)
@@ -784,7 +785,7 @@ def import_hcp(
                 f.write("#\n")
                 f.write(f"session: {session}\n")
                 f.write(f"subject: {subject}\n")
-                f.write(f"hcp: {hcp_folder}\n")
+                f.write(f"hcp: {hcp_folder_no_session}\n")
                 f.write("hcpready: true\n\n")
 
                 # anat
@@ -812,7 +813,9 @@ def import_hcp(
                     for direction in dataset_info["direction"]:
                         bold = f"{bold_info[1]}_{direction}"
                         if os.path.exists(os.path.join(mni_folder, "Results", bold)):
-                            f.write(f"{ix:02d}: bold{bold_ix} : {bold_tag}: {bold}\n")
+                            f.write(
+                                f"{ix:02d}: bold{bold_ix} : {bold_tag}: {bold}: filename({bold})\n"
+                            )
                             bold_ix += 1
                             ix += 1
 
