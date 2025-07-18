@@ -4179,7 +4179,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --hcp_bold_dcmethod (str):
             BOLD image deformation correction that should be used: TOPUP,
-            FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
+            TOPUP_MISMATCHED, FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
             GEHealthCareLegacyFieldMap, PhilipsFieldMap or NONE.
 
         --hcp_bold_echodiff (str):
@@ -4702,6 +4702,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         if options["hcp_bold_dcmethod"].lower() not in [
             "topup",
+            "topup_mismatched",
             "fieldmap",
             "siemensfieldmap",
             "philipsfieldmap",
@@ -4712,7 +4713,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             r += f"\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter {options['hcp_bold_dcmethod']}!"
             run = False
 
-        if options["hcp_bold_dcmethod"].lower() == "topup":
+        if options["hcp_bold_dcmethod"].lower() in ["topup", "topup_mismatched"]:
             # -- spin echo settings
             sesettings = True
             for p in [
@@ -4788,79 +4789,81 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             )
                             spinok = False
 
-                        # if hcp_bold_seechospacing is not set, try to get it from the JSON sidecar
-                        if options["hcp_bold_seechospacing"] is None:
-                            fmap_json = glob.glob(os.path.join(sepath, "*AP*.json"))
-                            if len(fmap_json) == 0:
-                                fmap_json = glob.glob(os.path.join(sepath, "*LR*.json"))
+                        # if hcp_bold_seechospacing is not set, try to get it from the JSON sidecar, only for TOPUP_MISMATCHED
+                        if options["hcp_bold_dcmethod"].lower() == "topup_mismatched":
+                            if options["hcp_bold_seechospacing"] is None:
+                                fmap_json = glob.glob(os.path.join(sepath, "*AP*.json"))
+                                if len(fmap_json) == 0:
+                                    fmap_json = glob.glob(os.path.join(sepath, "*LR*.json"))
 
-                            if len(fmap_json) != 0:
-                                fmap_json = fmap_json[0]
-                                json_sidecar = os.path.join(sepath, fmap_json)
+                                if len(fmap_json) != 0:
+                                    fmap_json = fmap_json[0]
+                                    json_sidecar = os.path.join(sepath, fmap_json)
 
-                                if os.path.exists(json_sidecar):
-                                    r += "\n---> Trying to set hcp_bold_seechospacing from the JSON sidecar."
-                                    with open(json_sidecar, "r") as file:
-                                        sidecar_data = json.load(file)
-                                        if "EffectiveEchoSpacing" in sidecar_data:
-                                            options["hcp_bold_seechospacing"] = (
-                                                f"{sidecar_data['EffectiveEchoSpacing']:.10f}"
-                                            )
-                                            r += f"\n       - hcp_bold_seechospacing set to {options['hcp_bold_seechospacing']}"
+                                    if os.path.exists(json_sidecar):
+                                        r += "\n---> Trying to set hcp_bold_seechospacing from the JSON sidecar."
+                                        with open(json_sidecar, "r") as file:
+                                            sidecar_data = json.load(file)
+                                            if "EffectiveEchoSpacing" in sidecar_data:
+                                                options["hcp_bold_seechospacing"] = (
+                                                    f"{sidecar_data['EffectiveEchoSpacing']:.10f}"
+                                                )
+                                                r += f"\n       - hcp_bold_seechospacing set to {options['hcp_bold_seechospacing']}"
 
-                        # try to set hcp_bold_seechospacing and hcp_bold_seunwarpdir from se info
-                        # get SE info from session info
-                        try:
-                            se_info = [
-                                v
-                                for (k, v) in sinfo.items()
-                                if k.isdigit()
-                                and "SE-FM" in v["name"]
-                                and "se" in v
-                                and v["se"] == str(senum)
-                            ][0]
-                        except:
-                            se_info = None
+                            # try to set hcp_bold_seechospacing and hcp_bold_seunwarpdir from se info
+                            # get SE info from session info
+                            try:
+                                se_info = [
+                                    v
+                                    for (k, v) in sinfo.items()
+                                    if k.isdigit()
+                                    and "SE-FM" in v["name"]
+                                    and "se" in v
+                                    and v["se"] == str(senum)
+                                ][0]
+                            except:
+                                se_info = None
 
-                        if options["hcp_bold_seechospacing"] is None:
-                            if (
-                                se_info
-                                and "EchoSpacing" in se_info
-                                and checkInlineParameterUse("SE", "EchoSpacing", options)
-                            ):
-                                options["hcp_bold_seechospacing"] = se_info["EchoSpacing"]
-                                r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (
-                                    options["hcp_bold_seechospacing"]
-                                )
+                            if options["hcp_bold_seechospacing"] is None:
+                                if (
+                                    se_info
+                                    and "EchoSpacing" in se_info
+                                    and checkInlineParameterUse("SE", "EchoSpacing", options)
+                                ):
+                                    options["hcp_bold_seechospacing"] = se_info["EchoSpacing"]
+                                    r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (
+                                        options["hcp_bold_seechospacing"]
+                                    )
 
-                        if options["hcp_bold_seunwarpdir"] is None:
-                            if se_info and "phenc" in se_info:
-                                options["hcp_bold_seunwarpdir"] = SEDirMap[se_info["phenc"]]
-                                r += "\n---> Spin-Echo unwarp direction: %s" % (
-                                    options["hcp_bold_seunwarpdir"]
-                                )
-                            elif (
-                                se_info
-                                and "PEDirection" in se_info
-                                and checkInlineParameterUse("SE", "PEDirection", options)
-                            ):
-                                options["hcp_bold_seunwarpdir"] = se_info["PEDirection"]
-                                r += "\n---> Spin-Echo unwarp direction: %s" % (
-                                    options["hcp_bold_seunwarpdir"]
-                                )
+                            if options["hcp_bold_seunwarpdir"] is None:
+                                if se_info and "phenc" in se_info:
+                                    options["hcp_bold_seunwarpdir"] = SEDirMap[se_info["phenc"]]
+                                    r += "\n---> Spin-Echo unwarp direction: %s" % (
+                                        options["hcp_bold_seunwarpdir"]
+                                    )
+                                elif (
+                                    se_info
+                                    and "PEDirection" in se_info
+                                    and checkInlineParameterUse("SE", "PEDirection", options)
+                                ):
+                                    options["hcp_bold_seunwarpdir"] = se_info["PEDirection"]
+                                    r += "\n---> Spin-Echo unwarp direction: %s" % (
+                                        options["hcp_bold_seunwarpdir"]
+                                    )
 
                     if spinok:
                         sepresent.append(senum)
                         sepairs[senum] = {"spinPos": spinPos, "spinNeg": spinNeg}
                         break
 
-                for p in [
-                    "hcp_bold_seechospacing",
-                    "hcp_bold_seunwarpdir",
-                ]:
-                    if p in options and not options[p]:
-                        r += f"\nERROR: {p} parameter not set manually and QuNex was unable to set it automatically."
-                        run = False
+                if options["hcp_bold_dcmethod"].lower() == "topup_mismatched":
+                    for p in [
+                        "hcp_bold_seechospacing",
+                        "hcp_bold_seunwarpdir",
+                    ]:
+                        if p in options and not options[p]:
+                            r += f"\nERROR: {p} parameter not set manually and QuNex was unable to set it automatically. This is required for TOPUP_MISMATCHED processing! Please set it manually."
+                            run = False
 
             # ---> check for topupconfig
             if (
@@ -4888,6 +4891,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         # --- Process unwarp direction
         if options["hcp_bold_dcmethod"].lower() in [
             "topup",
+            "topup_mismatched",
             "fieldmap",
             "siemensfieldmap",
             "philipsfieldmap",
@@ -4938,6 +4942,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             dcset = options["hcp_bold_dcmethod"].lower() in [
                 "topup",
+                "topup_mismatched",
                 "fieldmap",
                 "siemensfieldmap",
                 "philipsfieldmap",
@@ -5041,7 +5046,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         boldok = False
 
             # --- check for spin-echo-fieldmap image
-            if options["hcp_bold_dcmethod"].lower() == "topup" and sesettings:
+            if options["hcp_bold_dcmethod"].lower() in ["topup", "topup_mismatched"] and sesettings:
                 if not sepresent:
                     r += "\n     ... ERROR: No spin echo fieldmap set images present!"
                     boldok = False
@@ -5327,8 +5332,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- SEBASED
             elif options["hcp_bold_biascorrection"].lower() == "sebased":
                 r += "\n     ... SEBASED bias correction used"
-                if options["hcp_bold_dcmethod"].lower() != "topup":
-                    r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP!"
+                if options["hcp_bold_dcmethod"].lower() not in ["topup", "topup_mismatched"]:
+                    r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP or TOPUP_MISMATCHED!"
                     run = False
 
             # --- ERROR
