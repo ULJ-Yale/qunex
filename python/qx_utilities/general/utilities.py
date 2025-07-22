@@ -621,10 +621,10 @@ def copy_study(
                 src_path = os.path.join(subjects_path, entry)
                 folder_name = os.path.basename(src_path)
                 if not os.path.isdir(src_path) or folder_name in subjects:
-                        dest_path = os.path.join(studyfolder, "subjects", entry)
-                        print(f" ... rsyncing {entry}: {src_path} -> {dest_path}")
-                        cmd = ["rsync", "-aH", f"{src_path}/", dest_path]
-                        subprocess.run(cmd, check=True)
+                    dest_path = os.path.join(studyfolder, "subjects", entry)
+                    print(f" ... rsyncing {entry}: {src_path} -> {dest_path}")
+                    cmd = ["rsync", "-aH", f"{src_path}/", dest_path]
+                    subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError:
             print(f"ERROR: Failed to rsync {src_path}!")
             raise
@@ -2488,6 +2488,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 key = list(com.keys())[0]
                 if key in steps:
                     commands_subset.append(com)
+                elif key == "external":
+                    for step in steps:
+                        if com["external"]["path"].endswith(step):
+                            commands_subset.append(com)
+                # backwards compatibility
                 elif key == "script":
                     for step in steps:
                         if com["script"]["path"].endswith(step):
@@ -2537,16 +2542,18 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
         # executing a custom script
         error = False
-        if command_name == "script":
+        if command_name == "script" or command_name == "external":
             if "path" in command_parameters:
-                script_path = command_parameters["path"]
+                external_path = command_parameters["path"]
 
-                labels = _find_enclosed_substrings(script_path)
+                labels = _find_enclosed_substrings(external_path)
                 for label in labels:
                     cleaned_label = label.replace("{", "").replace("}", "")
                     os_label = cleaned_label[1:]
                     if cleaned_label[0] == "$" and os_label in os.environ:
-                        script_path = script_path.replace(label, os.environ[os_label])
+                        external_path = external_path.replace(
+                            label, os.environ[os_label]
+                        )
                     else:
                         raise ge.CommandFailed(
                             "run_recipe",
@@ -2557,46 +2564,46 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             else:
                 raise ge.CommandFailed(
                     "run_recipe",
-                    "Script path not provided",
-                    f"Script path not provided [{command_parameters}]",
-                    "Please provide the path to the script!",
+                    "Path to the external script or programme not provided",
+                    f"Path not provided [{command_parameters}]",
+                    "Please provide the path!",
                 )
             print(
-                f"\n--------------------------------------------\n---> Running script: {script_path}"
+                f"\n--------------------------------------------\n---> Running external: {external_path}"
             )
             print(
-                f"\n--------------------------------------------\n---> Running script: {script_path}",
+                f"\n--------------------------------------------\n---> Running external: {external_path}",
                 file=log,
             )
-            if not os.path.exists(script_path):
+            if not os.path.exists(external_path):
                 raise ge.CommandFailed(
                     "run_recipe",
-                    "Script not found",
-                    f"Script not found [{script_path}]",
-                    "Please check the script path!",
+                    "External command not found",
+                    f"External command not found [{external_path}]",
+                    "Please check the external command path!",
                 )
 
             # log
-            script_name = os.path.basename(script_path)
+            external_name = os.path.basename(external_path)
             timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             log_path = os.path.join(
                 comlogfolder,
-                f"tmp_{script_name}_{command_name}_{timestamp}.log",
+                f"tmp_{external_name}_{command_name}_{timestamp}.log",
             )
 
             # prep command
-            if script_path.endswith(".sh") or "." not in script_path:
-                command = ["bash", script_path]
-            elif script_path.endswith(".py"):
-                command = ["python", script_path]
-            elif script_path.endswith(".R"):
-                command = ["Rscript", script_path]
+            if external_path.endswith(".sh") or "." not in external_path:
+                command = ["bash", external_path]
+            elif external_path.endswith(".py"):
+                command = ["python", external_path]
+            elif external_path.endswith(".R"):
+                command = ["Rscript", external_path]
             else:
                 raise ge.CommandFailed(
                     "run_recipe",
-                    "Script type not supported",
-                    f"Script type not supported [{script_path}]",
-                    "Please use .sh or .py scripts!",
+                    "External command type not supported",
+                    f"External command type not supported [{external_path}]",
+                    "Please use binaries, .sh, .py or .R scripts!",
                 )
 
             # add parameters to the command
@@ -2640,22 +2647,22 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
             if exit_code != 0:
                 error = True
-                summary += f"\n - script {script_path} ... FAILED"
+                summary += f"\n - external {external_path} ... FAILED"
                 error_log = log_path.replace("tmp_", "error_")
-                print(f"    ... failed [{script_path}], see [{error_log}]")
-                print(f"    ... failed [{script_path}], see [{error_log}]", file=log)
+                print(f"    ... failed [{external_path}], see [{error_log}]")
+                print(f"    ... failed [{external_path}], see [{error_log}]", file=log)
                 os.rename(log_path, error_log)
                 raise ge.CommandFailed(
                     "run_recipe",
-                    "Script failed",
-                    f"Script failed [{script_path}]",
+                    "External command failed",
+                    f"External command failed [{external_path}]",
                     "Please check the log for details!",
                 )
             else:
-                summary += f"\n - script {script_path} ... OK"
+                summary += f"\n - external {external_path} ... OK"
                 done_log = log_path.replace("tmp_", "done_")
-                print(f"    ... done [{script_path}], see [{done_log}]")
-                print(f"    ... done [{script_path}], see [{done_log}]", file=log)
+                print(f"    ... done [{external_path}], see [{done_log}]")
+                print(f"    ... done [{external_path}], see [{done_log}]", file=log)
                 os.rename(log_path, done_log)
 
         elif _is_qunex_command(command_name):
@@ -2837,7 +2844,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 "run_recipe",
                 "Unknown command",
                 f"Unknown command [{command_name}]",
-                "This is not a QuNex command or a custom script!",
+                "This is not a QuNex command or an external script!",
             )
 
     summary += "\n\n----------==== END SUMMARY ====----------"
