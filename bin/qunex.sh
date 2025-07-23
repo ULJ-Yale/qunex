@@ -60,12 +60,14 @@ qunex_failed() {
     echo ""
     echo "QuNex FAILED!"
     echo ""
+    exit 1
 }
 
 qunex_done() {
     echo ""
     echo "QuNex DONE!"
     echo ""
+    exit 0
 }
 
 # =======================================================================================================
