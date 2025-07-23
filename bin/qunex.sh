@@ -126,7 +126,6 @@ bash_call_execute() {
         echo "WARNING: QuNex study folder specification .qunexstudy in ${StudyFolder} not found."
         echo "         Check that ${StudyFolder} is a valid QuNex folder."
         echo "         Consider re-generating QuNex hierarchy..."; echo ""
-        # gmri create_study --studyfolder=${StudyFolder}
     fi
 
     # -- Added checks for study folder generation
@@ -186,6 +185,7 @@ bash_call_execute() {
         echo ""
         echo "---------------------------------------------------------"
         eval "gmri ${gmriinput}"
+        return $?
     else
         # log tag
         if [[ ${CommandToRun} == "compute_bold_fc" ]]; then
@@ -298,7 +298,6 @@ bash_call_execute() {
             echo ""
         fi
     fi
-
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -1090,8 +1089,7 @@ if [[ $is_gmri_command == 1 ]]; then
 
     # execute
     bash_call_execute
-
-    exit 0
+    exit $?
 else
     unset qxutil_command_to_run
 fi

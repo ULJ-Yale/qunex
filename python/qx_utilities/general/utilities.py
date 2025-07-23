@@ -2796,7 +2796,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     print(line, end=" ", file=log)
                     log.flush()
 
-            if error:
+            exit_code = process.wait()
+
+            if error or exit_code != 0:
                 summary += f"\n - command {command_name} ... FAILED"
                 summary += "\n\n----------==== END SUMMARY ====----------"
                 print(summary, file=log)
