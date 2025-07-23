@@ -735,6 +735,7 @@ def import_hcp(
             hcp_folder_no_session = os.path.join(sessionsfolder, session, "hcp")
             hcp_folder = os.path.join(hcp_folder_no_session, session)
             mni_folder = os.path.join(hcp_folder, "MNINonLinear")
+            t1w_folder = os.path.join(hcp_folder, "T1w")
             if not os.path.exists(hcp_folder):
                 os.makedirs(hcp_folder)
 
@@ -793,12 +794,22 @@ def import_hcp(
                 if os.path.exists(os.path.join(mni_folder, "T1w_restore.nii.gz")):
                     f.write(f"{ix:02d}: T1w : {anat_info['T1w']}\n")
                     ix += 1
+                elif os.path.exists(
+                    os.path.join(t1w_folder, "T1w_acpc_dc_restore.nii.gz")
+                ):
+                    f.write(f"{ix:02d}: T1w : {anat_info['T1w']}\n")
+                    ix += 1
                 if os.path.exists(os.path.join(mni_folder, "T2w_restore.nii.gz")):
+                    f.write(f"{ix:02d}: T2w : {anat_info['T2w']}\n")
+                    ix += 1
+                elif os.path.exists(
+                    os.path.join(t1w_folder, "T2w_acpc_dc_restore.nii.gz")
+                ):
                     f.write(f"{ix:02d}: T2w : {anat_info['T2w']}\n")
                     ix += 1
 
                 # dwi
-                if os.path.exists(os.path.join(hcp_folder, "T1w", "Diffusion")):
+                if os.path.exists(os.path.join(t1w_folder, "Diffusion")):
                     for dwi_tag in dwi_info:
                         for direction in dataset_info["direction"]:
                             f.write(
