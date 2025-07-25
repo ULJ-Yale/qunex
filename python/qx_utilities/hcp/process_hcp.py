@@ -917,6 +917,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmmag = ""
         fmphase = ""
         fmcombined = ""
+        echodiff = ""
 
         if options["hcp_avgrdcmethod"].lower() == "topup":
             try:
@@ -1127,7 +1128,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 fmphase = None
                 fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
 
-        echodiff = ""
         elif options["hcp_avgrdcmethod"].lower() in [
             "fieldmap",
             "siemensfieldmap",
