@@ -1041,11 +1041,11 @@ elif [[ -z $OMP_NUM_THREADS ]]; then
     if [[ -z ${PARELEMENTS} ]]; then
         PARELEMENTS=1;
     fi
-    OMP_NUM_THREADS=$(( $(nproc) / ( ${PARSESSIONS} * ${PARELEMENTS} ) ))
+    export OMP_NUM_THREADS=$(( $(nproc) / ( ${PARSESSIONS} * ${PARELEMENTS} ) ))
     if [[ ${OMP_NUM_THREADS} -lt 1 ]]; then
-        OMP_NUM_THREADS=1
+        export OMP_NUM_THREADS=1
     elif [[ ${OMP_NUM_THREADS} -gt 8 ]]; then
-        OMP_NUM_THREADS=8
+        export OMP_NUM_THREADS=8
     fi
 fi
 
