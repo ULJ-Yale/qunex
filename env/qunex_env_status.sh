@@ -58,7 +58,7 @@ main() {
 
 # -- Hard reset for the environment in the container manually
      #
-     #   Useful links on how to rename variables to be passe back to parent shell: 
+     #   Useful links on how to rename variables to be passe back to parent shell:
      #   ---> https://unix.stackexchange.com/questions/129084/in-bash-how-can-i-echo-the-variable-name-not-the-variable-value
      #   ---> https://stackoverflow.com/questions/23564995/how-to-modify-a-global-variable-within-a-function-in-bash
      #
@@ -68,14 +68,14 @@ if [[ "$1" == "--envreset" ]] || [[ "$1" == "--envclear" ]] || [[ "$1" == "--env
     echo ""
     echo " ---> Requested a hard reset of the QuNex environment! "
     echo ""
-    for ENVVARIABLE in ${ENVVARIABLES}; do 
+    for ENVVARIABLE in ${ENVVARIABLES}; do
         echo " ---> Unsetting ${ENVVARIABLE}"
         EnvVarName=(${!ENVVARIABLE@})
         unset $EnvVarName
-        if [ -z ${ENVVARIABLE+x} ]; then 
-            echo "     ---> Unset successful: $ENVVARIABLE"; 
-        else 
-            echo "     ---> $ENVVARIABLE is still set!"; 
+        if [ -z ${ENVVARIABLE+x} ]; then
+            echo "     ---> Unset successful: $ENVVARIABLE";
+        else
+            echo "     ---> $ENVVARIABLE is still set!";
         fi
     done
     echo ""
@@ -114,7 +114,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "   Core Dependencies Environment Variables"
     echo "----------------------------------------------"
     echo ""
-    echo "                 CONDADIR : $CONDADIR";             if [[ -z $CONDADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport CONDADIR"; fi
+    echo "                 MAMBADIR : $MAMBADIR";             if [[ -z $MAMBADIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport MAMBADIR"; fi
     echo "                   FSLDIR : $FSLDIR";               if [[ -z $FSLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLDIR"; fi
     echo "               FSLCONFDIR : $FSLCONFDIR";           if [[ -z $FSLCONFDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLCONFDIR"; fi
     echo "                FSLBINDIR : $FSLBINDIR";            if [[ -z $FSLBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLBINDIR"; fi
@@ -163,7 +163,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "   Binary / Executable Locations and Versions"
     echo "----------------------------------------------"
     echo ""
-    
+
     unset BinaryErrorReport
     unset BinaryError
 
@@ -184,7 +184,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
 
     ## -- Check for FSL
     echo "         FSL Binary  : $(which fsl 2>&1 | grep -v 'no fsl')"
-    if [[ -z $(which fsl 2>&1 | grep -v 'no fsl') ]]; then 
+    if [[ -z $(which fsl 2>&1 | grep -v 'no fsl') ]]; then
         BinaryError="yes"; BinaryErrorReport="fsl"
         echo "         FSL Version : Binary not found!"
         if [[ -L "$FSLDIR"  && ! -e "$FSLDIR" ]]; then
@@ -197,7 +197,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
 
     ## -- Check for FreeSurfer
     echo "  FreeSurfer Binary  : $(which freesurfer 2>&1 | grep -v 'no freesurfer')"
-    if [[ -z $(which freesurfer 2>&1 | grep -v 'no freesurfer') ]]; then 
+    if [[ -z $(which freesurfer 2>&1 | grep -v 'no freesurfer') ]]; then
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport freesurfer"
         echo "  FreeSurfer Version : Binary not found!"
         if [[ -L "$FREESURFER_HOME"  && ! -e "$FREESURFER_HOME" ]]; then
@@ -210,7 +210,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
 
     ## -- Check for AFNI
     echo "        AFNI Binary  : $(which afni 2>&1 | grep -v 'no afni')"
-    if [[ -z $(which afni 2>&1 | grep -v 'no afni') ]]; then 
+    if [[ -z $(which afni 2>&1 | grep -v 'no afni') ]]; then
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport afni"
         echo "        AFNI Version : Binary not found!"
         if [[ -L "$AFNIDIR"  && ! -e "$AFNIDIR" ]]; then
@@ -223,7 +223,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
 
     ## -- Check for ANTs (only very few ANTs commands support --version flag)
     echo "        ANTs Binary  : $(which antsRegistration 2>&1 | grep -v 'no antsRegistration')"
-    if [[ -z $(which antsRegistration 2>&1 | grep -v 'no antsRegistration') ]]; then 
+    if [[ -z $(which antsRegistration 2>&1 | grep -v 'no antsRegistration') ]]; then
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport ants"
         echo "        ANTs Version : Binary not found!"
         if [[ -L "$ANTSDIR"  && ! -e "$ANTSDIR" ]]; then
@@ -236,7 +236,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
 
     ## -- Check for dcm2niix
     echo "    dcm2niix Binary  : $(which dcm2niix 2>&1 | grep -v 'no dcm2niix')"
-    if [[ -z $(which dcm2niix 2>&1 | grep -v 'no dcm2niix') ]]; then 
+    if [[ -z $(which dcm2niix 2>&1 | grep -v 'no dcm2niix') ]]; then
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport dcm2niix"
         echo "    dcm2niix Version : Binary not found!"
         if [[ -L "$DCMNIIDIR"  && ! -e "$DCMNIIDIR" ]]; then
@@ -249,7 +249,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
 
     ## -- Check for fix
     echo "         FIX Binary  : $(which fix 2>&1 | grep -v 'no fix')"
-    if [[ -z $(which fix 2>&1 | grep -v 'no fix') ]]; then 
+    if [[ -z $(which fix 2>&1 | grep -v 'no fix') ]]; then
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport fix"
         echo "         FIX Version : Binary not found!"
         if [[ -L "$FSL_FIXDIR"  && ! -e "$FSL_FIXDIR" ]]; then
@@ -263,7 +263,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     ## -- Check for Octave
     if [ "$USEOCTAVE" == "TRUE" ]; then
         echo "      Octave Binary  : $(which octave 2>&1 | grep -v 'no octave')"
-        if [[ -z $(which octave 2>&1 | grep -v 'no octave') ]]; then 
+        if [[ -z $(which octave 2>&1 | grep -v 'no octave') ]]; then
             BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport octave"
             echo "      Octave Version : Binary not found!"
         else
@@ -280,7 +280,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         else
             echo "      Matlab Version : $(which matlab 2>&1 | grep -v 'no matlab')"
         fi
-        # echo "     matlab : $(matlab -nodisplay -nojvm -nosplash -r "v=version;fprintf('%s', v);" | tail -1)"  
+        # echo "     matlab : $(matlab -nodisplay -nojvm -nosplash -r "v=version;fprintf('%s', v);" | tail -1)"
     fi
     echo ""
 
@@ -306,10 +306,10 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         echo "     python Version : $(python --version | head -1)"
     fi
     echo ""
-        
+
     ## -- Check for PALM
     echo "        PALM Binary  : $PALMDIR/palm.m"
-    if [[ -z `ls $PALMDIR/palm.m 2> /dev/null` ]]; then 
+    if [[ -z `ls $PALMDIR/palm.m 2> /dev/null` ]]; then
         BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport palm"
         echo "        PALM Version : Executable not found!"
         if [[ -L "$PALMDIR"  && ! -e "$PALMDIR" ]]; then
@@ -342,7 +342,7 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     #echo ""
     echo "  MATLABPATH : $MATLABPATH"
     echo ""
-    
+
     if [[ ${EnvError} == "yes" ]]; then
         echo ""
         echo "  ERROR: The following environment variable(s) are missing: ${EnvErrorReport}"
