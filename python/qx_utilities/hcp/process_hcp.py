@@ -917,7 +917,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmmag = ""
         fmphase = ""
         fmcombined = ""
-        echodiff = ""
+        echodiff = "NONE"
 
         if options["hcp_avgrdcmethod"].lower() == "topup":
             try:
@@ -1207,11 +1207,17 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                     echodiff = f"{echodiff:.10f}"
                                     r += f"\n       - hcp_echodiff set to {echodiff}"
                         else:
-                            r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to ''."
-                            echodiff = ""
+                            r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to 'NONE'."
+                            echodiff = "NONE"
+                            if options["hcp_avgrdcmethod"].lower() == "fieldmap":
+                                r += "\n---> ERROR: hcp_echodiff is not set and cannot be deducted from the JSON sidecar."
+                                run = False
                     else:
-                        r += "\n---> JSON sidecar not found, setting hcp_echodiff to ''."
-                        echodiff = ""
+                        r += "\n---> JSON sidecar not found, setting hcp_echodiff to 'NONE'."
+                        echodiff = "NONE"
+                        if options["hcp_avgrdcmethod"].lower() == "fieldmap":
+                            r += "\n---> ERROR: hcp_echodiff is not set and cannot be deducted from the JSON sidecar."
+                            run = False
                 else:
                     echodiff = options["hcp_echodiff"]
 
