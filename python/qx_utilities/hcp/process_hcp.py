@@ -1127,6 +1127,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 fmphase = None
                 fmcombined = hcp["fieldmap"][int(fmnum)]["GE"]
 
+        echodiff = ""
         elif options["hcp_avgrdcmethod"].lower() in [
             "fieldmap",
             "siemensfieldmap",
@@ -1203,14 +1204,16 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                     )
                                     # from s to ms
                                     echodiff = echodiff * 1000
-                                    options["hcp_echodiff"] = f"{echodiff:.10f}"
-                                    r += f"\n       - hcp_echodiff set to {options['hcp_echodiff']}"
+                                    echodiff = f"{echodiff:.10f}"
+                                    r += f"\n       - hcp_echodiff set to {echodiff}"
                         else:
-                            r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to NONE."
-                            options["hcp_echodiff"] = "NONE"
+                            r += "\n---> hcp_echodiff not provided and not found in the JSON sidecar, setting it to ''."
+                            echodiff = ""
                     else:
-                        r += "\n---> JSON sidecar not found, setting hcp_echodiff to NONE."
-                        options["hcp_echodiff"] = "NONE"
+                        r += "\n---> JSON sidecar not found, setting hcp_echodiff to ''."
+                        echodiff = ""
+                else:
+                    echodiff = options["hcp_echodiff"]
 
         else:
             r += "\n---> WARNING: No distortion correction method specified."
@@ -1395,7 +1398,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
             ("fmapcombined", fmcombined),
-            ("echodiff", options["hcp_echodiff"]),
+            ("echodiff", echodiff),
             ("SEPhaseNeg", seneg),
             ("SEPhasePos", sepos),
             ("seechospacing", options["hcp_seechospacing"]),
