@@ -5694,16 +5694,6 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             + " "
         )
 
-        # set to "NONE" if None
-        if spinNeg is None:
-            spinNeg = "NONE"
-        if spinPos is None:
-            spinPos = "NONE"
-        if seechospacing is None:
-            seechospacing = "NONE"
-        if seunwarpdir is None:
-            seunwarpdir = "NONE"
-
         print(
             "======================================================================================================================================="
         )
