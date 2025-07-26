@@ -8913,7 +8913,7 @@ def parse_msmall_bolds(options, bolds, r):
                 hmb = None
                 for b in bolds:
                     # does the name match?
-                    if "filename" in b and mb == b["filename"]:
+                    if "filename" in b and mb == b["filename"] and options["hcp_filename"] == "userdefined":
                         hmb = b["filename"]
                         break
                     # does the number match?
@@ -8922,7 +8922,7 @@ def parse_msmall_bolds(options, bolds, r):
                         break
                     # does the tag match?
                     if "task" in b and mb == b["task"]:
-                        if "filename" in b:
+                        if "filename" in b and options["hcp_filename"] == "userdefined":
                             hmb = b["filename"]
                             break
                         else:
@@ -8941,7 +8941,7 @@ def parse_msmall_bolds(options, bolds, r):
         else:
             msmall_bolds = []
             for bold in icafix_group["bolds"]:
-                if "filename" in bold:
+                if "filename" in bold and options["hcp_filename"] == "userdefined":
                     msmall_bolds.append(bold["filename"])
                 else:
                     msmall_bolds.append(
