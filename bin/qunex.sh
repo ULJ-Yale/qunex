@@ -67,7 +67,6 @@ qunex_done() {
     echo ""
     echo "QuNex DONE!"
     echo ""
-    exit 0
 }
 
 # =======================================================================================================
@@ -2091,7 +2090,9 @@ if [ "$CommandToRun" == "dwi_dtifit" ]; then
     fi
 
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
+    for CASE in ${CASES}; do
+        ${CommandToRun} ${CASE};
+    done
 fi
 
 # ------------------------------------------------------------------------------
