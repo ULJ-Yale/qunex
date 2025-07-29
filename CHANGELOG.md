@@ -6,6 +6,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.3.1
+
+* You can now use import_hcp to onboard processed HCA, HCD or HCYA data, without unprocessed data.
+* Fixed the default matlab mode for hcp_transmit_bias_individual.
+* Made automatic setup of several parameters more robust.
+* Fixed a bug where processing crashed sometimes if DICOMs did not have JSON sidecars.
+
 ## 1.3.0
 
 * Added support for longitudinal temporal ICA.
