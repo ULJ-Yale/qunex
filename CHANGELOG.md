@@ -128,7 +128,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Connectome Workbench updated to the latest version.
 * The commercial rights for the container of QuNex 1.0 (QIO) are transferd to a Yale startup called Manifest Technologies, Inc. For any QuNex container v1.0 commercial licensing inquiries please contact <qunex@manifesttech.io>.
 
-## 0.100.0 [QX IO]
+## 0.100.0
 
 * Completely new FC pipeline (`fc_compute_roifc`, `fc_compute_seedmap`).
 * Complete container rework with updates to almost all of the tools in it.
