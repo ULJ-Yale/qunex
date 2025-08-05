@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 1.3.1
 
+* Added support for longitudinal transmit bias pipeline (`hcp_long_transmit_bias`).
 * You can now use import_hcp to onboard processed HCA, HCD or HCYA data, without unprocessed data.
 * Fixed the default matlab mode for hcp_transmit_bias_individual.
 * Made automatic setup of several parameters more robust.

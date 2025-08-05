@@ -8,41 +8,7 @@
 """
 ``process_hcp.py``
 
-This file holds code for running HCP preprocessing pipeline. It
-consists of functions:
-
---hcp_pre_freesurfer            Runs HCP PreFS preprocessing.
---hcp_freesurfer                Runs HCP FS preprocessing.
---hcp_post_freesurfer           Runs HCP PostFS preprocessing.
---hcp_long_freesurfer           Runs HCP Longitudinal FS preprocessing.
---hcp_long_post_freesurfer      Runs HCP Longitudinal Post FS preprocessing.
---hcp_long_msmall               Runs HCP Longitudinal MSMAll preprocessing.
---hcp_diffusion                 Runs HCP Diffusion weighted image preprocessing.
---hcp_fmri_volume               Runs HCP BOLD Volume preprocessing.
---hcp_fmri_surface              Runs HCP BOLD Surface preprocessing.
---hcp_icafix                    Runs HCP ICAFix.
---hcp_post_fix                  Runs HCP PostFix.
---hcp_reapply_fix               Runs HCP ReApplyFix.
---hcp_msmall                    Runs HCP MSMAll.
---hcp_dedrift_and_resample      Runs HCP DeDriftAndResample.
---hcp_asl                       Runs HCP ASL pipeline.
---hcp_temporal_ica              Runs HCP temporal ICA pipeline.
---hcp_make_average_dataset      Runs HCP make average dataset pipeline.
---hcp_apply_auto_reclean        Runs HCP apply auto reclean pipeline.
---hcp_dtifit                    Runs DTI Fit.
---hcp_bedpostx                  Runs Bedpost X.
---hcp_task_fmri_analysis        Runs HCP TaskfMRIanalysis.
---map_hcp_data                  Maps results of HCP preprocessing into `images` folder.
-
-All the functions are part of the processing suite. They should be called
-from the command line using `qunex` command. Help is available through:
-
-- ``qunex <command> -h`` for command specific help
-
-There are additional support functions that are not to be used
-directly.
-
-Code split from dofcMRIp_core gCodeP/preprocess codebase.
+This file holds code for running HCP preprocessing pipelines.
 """
 
 """
@@ -2531,7 +2497,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         doHCPOptionsCheck(options, "hcp_long_freesurfer")
         hcp = getHCPPaths(sinfo[1], options)
 
-        # get subjects and their sesssions from the batch file
+        # get subjects and their sessions from the batch file
         run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
 
         # launch
@@ -2571,6 +2537,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             # merge r and report
             for result in results:
                 r += result["r"]
+                run_report = result["report"]
                 if run_report["done"]:
                     report["done"].extend(run_report["done"])
                 if run_report["failed"]:
@@ -12148,6 +12115,537 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo["id"], report, failed))
+
+
+def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0):
+    """
+    ``hcp_long_transmit_bias [... processing options]``
+
+    Runs the HCP Longitudinal Transmit Bias Pipeline.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsubjects (int, default 1):
+            How many subjects to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --hcp_gmwm_template (str, default ''):
+            Location of the GMWMtemplate, the file containing GM+WM volume ROI.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            Input registration name.
+
+        --hcp_transmit_mode (str, default ''):
+            What type of transmit bias correction to apply, options and required
+            inputs are:
+
+            a) AFI: actual flip angle sequence with two different echo times,
+            requires the following parameters: afi-image, afi-tr-one,afi-tr-two,
+            afi-angle, group-corrected-myelin.
+
+            b) B1Tx: b1 transmit sequence magnitude/phase pair, requires the
+            following parameters: b1tx-magnitude, b1tx-phase, group-corrected-myelin.
+
+            c) PseudoTransmit: use spin echo fieldmaps, SBRef, and a
+            template transmit-corrected myelin map to derive empirical
+            correction, requires the following parameters: pt-fmri-names,
+            myelin-template, group-uncorrected-myelin, reference-value.
+
+        --hcp_group_corrected_myelin (str, default ''):
+            The group-corrected myelin file from AFI or B1Tx.
+
+        --hcp_afi_tr_one (str, default ''):
+            TR of first AFI frame.
+
+        --hcp_afi_tr_two (str, default ''):
+            TR of second AFI frame.
+
+        --hcp_afi_angle (str, default ''):
+            Target flip angle of AFI sequence.
+
+        --hcp_b1tx_magnitude (str, default ''):
+            B1Tx magnitude image (for alignment).
+
+        --hcp_b1tx_phase (str, default ''):
+            B1Tx phase image.
+
+        --hcp_b1tx_phase_divisor (str, default '800'):
+            What to divide the phase map by to obtain proportion of intended
+
+        --hcp_pt_fmri_names (str, default <list of all BOLDs>):
+            A comma separated list of fMRI runs to use SE/SBRef files from. Set
+            to a list of all BOLDs by default.
+
+        --hcp_pt_bbr_threshold (str, default '0.5'):
+            Mincost threshold for reinitializing fMRI bbregister with flirt
+            (may need to be increased for aging-related reduction of gray/white
+            contrast).
+
+        --hcp_myelin_template (str, default ''):
+            Expected transmit-corrected group-average myelin pattern (for testing
+            correction parameters).
+
+        --hcp_group_uncorrected_myelin (str, default ''):
+            The group-average uncorrected myelin file (to set the appropriate
+            scaling of the myelin template).
+
+        --hcp_pt_reference_value_file (str, default ''):
+            Text file containing the value in the pseudotransmit map where the
+            flip angle best matches the intended angle, from the Phase2 group
+            script.
+
+        --hcp_transmit_res (str, default ''):
+            Resolution to use for transmit field, default equal to
+            hcp_grayordinatesres.
+
+        --hcp_myelin_mapping_fwhm (str, default '5'):
+            The fwhm value to use in -myelin-style [5]
+
+        --hcp_old_myelin_mapping (flag, not set by default):
+            If myelin mapping was done using version 1.2.3 or earlier of
+            wb_command, set this flag.
+
+        --hcp_gdcoeffs (str, default ''):
+            Path to a file containing gradient distortion coefficients.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            The name of the registration used.
+
+        --hcp_lowresmesh (int, default 32):
+            Mesh resolution.
+
+        --hcp_grayordinatesres (int, default 2):
+            The size of voxels for the subcortical and cerebellar data in
+            grayordinate space in mm.
+
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'compiled' will be used, outside
+            'interpreted' is the default.
+
+    Notes:
+        hcp_transmit_bias_individual parameter mapping:
+
+            ================================== ============================
+            QuNex parameter                    HCPpipelines parameter
+            ================================== ============================
+            ``hcp_gmwm_template``              ``gmwm-template``
+            ``hcp_regname``                    ``reg-name``
+            ``hcp_transmit_mode``              ``mode``
+            ``hcp_group_corrected_myelin``     ``group-corrected-myelin``
+            ``hcp_afi_image``                  ``afi-image``
+            ``hcp_afi_tr_one``                 ``afi-tr-one``
+            ``hcp_afi_tr_two``                 ``afi-tr-two``
+            ``hcp_afi_angle``                  ``afi-angle``
+            ``hcp_b1tx_magnitude``              ``b1tx-magnitude``
+            ``hcp_b1tx_phase``                 ``b1tx-phase``
+            ``hcp_b1tx_phase_divisor``         ``b1tx-phase-divisor``
+            ``hcp_pt_fmri_names``              ``pt-fmri-names``
+            ``hcp_pt_bbr_threshold``           ``pt-bbr-threshold``
+            ``hcp_myelin_template``            ``myelin-template``
+            ``hcp_group_uncorrected_myelin``   ``group-uncorrected-myelin``
+            ``hcp_pt_reference_value_file``    ``pt-reference-value-file``
+            ``hcp_unproc_t1w_list``            ``unproc-t1w-list``
+            ``hcp_unproc_t2w_list``            ``unproc-t2w-list``
+            ``hcp_receive_bias_body_coil``     ``receive-bias-body-coil``
+            ``hcp_receive_bias_head_coil``     ``receive-bias-head-coil``
+            ``hcp_raw_psn_t1w``                ``raw-psn-t1w``
+            ``hcp_raw_nopsn_t1w``              ``raw-nopsn-t1w``
+            ``hcp_transmit_res``               ``transmit-res``
+            ``hcp_myelin_mapping_fwhm``        ``myelin-mapping-fwhm``
+            ``hcp_old_myelin_mapping``         ``old-myelin-mapping``
+            ``hcp_gdcoeffs``                   ``scanner-grad-coeffs``
+            ``hcp_regname``                    ``reg-name``
+            ``hcp_lowresmesh``                 ``low-res-mesh``
+            ``hcp_grayordinatesres``           ``grayordinates-res``
+            ``hcp_matlab_mode``                ``matlab-run-mode``
+            ``hcp_longitudinal_template``      ``longitudinal-template``
+            ================================== ============================
+
+    Examples:
+        Example run::
+
+            qunex hcp_long_transmit_bias \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSubjects: %s \n[started on %s]" % (
+        subjectids,
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP Longitudnal FS Pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    failed = 0
+
+    try:
+        # checks
+        pc.doOptionsCheck(options, sinfo[1], "hcp_long_transmit_bias")
+        doHCPOptionsCheck(options, "hcp_long_transmit_bias")
+        hcp = getHCPPaths(sinfo[1], options)
+
+        run = True
+        report = {"done": [], "failed": [], "ready": [], "not ready": []}
+        failed = 0
+
+        # get subjects and their sessions from the batch file
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
+
+        # launch
+        parsubjects = options["parsubjects"]
+
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(
+            _execute_hcp_long_transmit_bias,
+            options,
+            overwrite,
+            run,
+            hcp["hcp_base"],
+        )
+        results = processPoolExecutor.map(f, subjects_list)
+
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].extend(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].extend(run_report["failed"])
+            if run_report["ready"]:
+                report["ready"].extend(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].extend(run_report["not ready"])
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        report = "Error"
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        report = "Error"
+        failed = 1
+
+    r += (
+        "\n\nHCP Longitudinal Transmit Bias Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (subjectids, report, failed))
+
+
+def _execute_hcp_long_transmit_bias(subject, options, overwrite, run, hcp_base):
+# prepare return variables
+    r = ""
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+
+    # get subject data
+    subject_id = subject["id"]
+    sessions_list = subject["sessions"]
+
+    # sort out the folder structure
+    sessionsfolder = options["sessionsfolder"]
+    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
+    if not os.path.exists(subjectsfolder):
+        os.makedirs(subjectsfolder)
+    study_folder = os.path.join(subjectsfolder, subject_id)
+    if not os.path.exists(study_folder):
+        os.makedirs(study_folder)
+
+    longitudinal_template = options["hcp_longitudinal_template"]
+
+    # logdir
+    logdir = os.path.join(
+        options["logfolder"],
+        "comlogs",
+        f"extra_logs_hcp_long_transmit_bias_{subject['id']}",
+    )
+    if os.path.exists(logdir):
+        shutil.rmtree(logdir)
+    os.makedirs(logdir)
+
+    if options["hcp_transmit_mode"] is None:
+        r += "\n---> ERROR: the hcp_transmit_mode parameter is mandatory!"
+        run = False
+
+    if options["hcp_gmwm_template"] is None:
+        r += "\n---> ERROR: the hcp_gmwm_template parameter is mandatory!"
+        run = False
+
+    # build the command
+    if run:
+        comm = (
+            '%(script)s \
+            --study-folder="%(studyfolder)s" \
+            --subject="%(subject)s" \
+            --sessions="%(sessions)s" \
+            --longitudinal-template="%(longitudinal_template)s" \
+            --mode="%(mode)s" \
+            --gmwm-template="%(gmwm_template)s" \
+            --reg-name="%(reg_name)s" \
+            --parallel-mode="%(parallel_mode)s" \
+            --logdir="%(logdir)s"'
+            % {
+                "script": os.path.join(
+                    hcp_base,
+                    "TransmitBias",
+                    "TransmitBiasLong.sh",
+                ),
+                "studyfolder": study_folder,
+                "subject": subject_id,
+                "sessions": "@".join(sessions_list),
+                "longitudinal_template": longitudinal_template,
+                "mode": options["hcp_transmit_mode"],
+                "gmwm_template": options["hcp_gmwm_template"],
+                "reg_name": options["hcp_regname"],
+                "parallel_mode": options["hcp_parallel_mode"],
+                "logdir": logdir,
+            }
+        )
+
+        # check and set parameters given the mode
+        # AFI
+        if options["hcp_transmit_mode"] == "AFI":
+            if not options["hcp_afi_tr_two"]:
+                r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
+                run = False
+            if not options["hcp_afi_angle"]:
+                r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
+                run = False
+            if not options["hcp_group_corrected_myelin"]:
+                r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+                run = False
+
+            if options["hcp_afi_tr_one"]:
+                comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
+            else:
+                r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
+                run = False
+
+            if options["hcp_afi_tr_two"]:
+                comm += f"                --afi-tr-two={options['hcp_afi_tr_two']}"
+            else:
+                r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
+                run = False
+
+            if options["hcp_afi_angle"]:
+                comm += f"                --afi-angle={options['hcp_afi_angle']}"
+            else:
+                r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
+                run = False
+
+            if options["hcp_group_corrected_myelin"]:
+                comm += f"                --group-corrected-myelin={options['hcp_group_corrected_myelin']}"
+            else:
+                r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+                run = False
+
+        # B1Tx
+        elif options["hcp_transmit_mode"] == "B1Tx":
+            if options["hcp_group_corrected_myelin"]:
+                comm += f"                --group-corrected-myelin={options['hcp_group_corrected_myelin']}"
+            else:
+                r += "\n---> ERROR: the hcp_group_corrected_myelin parameter is not provided!"
+                run = False
+
+            # optional B1Tx parameters
+            if options["hcp_b1tx_phase_divisor"]:
+                comm += f"                --b1tx-phase-divisor={options['hcp_b1tx_phase_divisor']}"
+
+        # PseudoTransmit
+        elif options["hcp_transmit_mode"] == "PseudoTransmit":
+            if options["hcp_pt_fmri_names"]:
+                pt_fmri_names = options["hcp_pt_fmri_names"].replace(",", "@")
+
+            else:
+                r += "\n---> Setting the hcp_pt_fmri_names automatically"
+                # --- Get sorted bold numbers and bold data
+                bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
+                pt_fmri_names = []
+                for boldinfo in bolds:
+                    if (
+                        "filename" in boldinfo
+                        and options["hcp_filename"] == "userdefined"
+                    ):
+                        pt_fmri_names.append(boldinfo["filename"])
+                    else:
+                        pt_fmri_names.append(
+                            f"{options['hcp_bold_prefix']}{boldinfo['bold_number']}"
+                        )
+
+                if len(pt_fmri_names) == 0:
+                    r += "\n---> ERROR: the hcp_pt_fmri_names parameter is not provided, and QuNex cannot find any BOLDs!"
+                    run = False
+                else:
+                    pt_fmri_names = "@".join(pt_fmri_names)
+
+            comm += f"                --pt-fmri-names={pt_fmri_names}"
+
+            if not options["hcp_myelin_template"]:
+                r += "\n---> ERROR: the hcp_myelin_template parameter is not provided!"
+                run = False
+            if not options["hcp_group_uncorrected_myelin"]:
+                r += "\n---> ERROR: the hcp_group_uncorrected_myelin parameter is not provided!"
+                run = False
+            if not options["hcp_pt_reference_value_file"]:
+                r += "\n---> ERROR: the hcp_pt_reference_value_file parameter is not provided!"
+                run = False
+            else:
+                comm += f"                --pt-reference-value-file={options['hcp_pt_reference_value_file']}"
+
+            # optional PseudoTransmit parameters
+            if options["hcp_pt_bbr_threshold"]:
+                comm += f"                --pt-bbr-threshold={options['hcp_pt_bbr_threshold']}"
+
+            if options["hcp_myelin_template"]:
+                comm += f"                --myelin-template={options['hcp_myelin_template']}"
+
+            if options["hcp_group_uncorrected_myelin"]:
+                comm += f"                --group-uncorrected-myelin={options['hcp_group_uncorrected_myelin']}"
+
+        else:
+            r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
+
+        # optional general parameters
+        if options["hcp_transmit_res"]:
+            comm += f"                --transmit-res={options['hcp_transmit_res']}"
+
+        if options["hcp_myelin_mapping_fwhm"]:
+            comm += f"                --myelin-mapping-fwhm={options['hcp_myelin_mapping_fwhm']}"
+
+        if options["hcp_old_myelin_mapping"]:
+            comm += f"                --old-myelin-mapping=TRUE"
+
+        if options["hcp_gdcoeffs"]:
+            # lookup gdcoeffs file
+            gdcfile, r, run = check_gdc_coeff_file(
+                options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
+            )
+            if gdcfile != "NONE":
+                comm += f"                --scanner-grad-coeffs={gdcfile}"
+
+        if options["hcp_lowresmesh"]:
+            comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
+
+        if options["hcp_grayordinatesres"]:
+            comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
+
+        if options["hcp_matlab_mode"]:
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
+            comm += f"                --matlab-run-mode={matlabrunmode}"
+        else:
+            matlabrunmode = "0"
+
+        # -- Report command
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
+            r += comm.replace("                --", "\n    --")
+            r += "\n------------------------------------------------------------\n"
+
+        # -- Test file
+        if options["run"] == "run":
+            r, endlog, _, failed = pc.runExternalForFile(
+                None,
+                comm,
+                "Running HCP Longitudinal Transmit Bias",
+                overwrite=overwrite,
+                thread=subject_id,
+                remove=options["log"] == "remove",
+                task=options["command_ran"],
+                logfolder=options["comlogs"],
+                logtags=options["logtag"],
+                fullTest=None,
+                shell=True,
+                r=r,
+            )
+
+            if failed == 0:
+                report["done"] = subject_id
+            else:
+                report["failed"] = subject_id
+
+            # read and print all files in logdir
+            with open(endlog, "w", encoding = "UTF-8") as log_file:
+                for filename in os.listdir(logdir):
+                    file_path = os.path.join(logdir, filename)
+
+                    with open(file_path, "r", encoding = "UTF-8") as file:
+                        content = file.read()
+                        print(file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(f"Contents of {filename}:", file=log_file)
+                        print("----------------------------------------", file=log_file)
+                        print(content, file=log_file)
+
+                # print succesful completion
+                print("\n---> Successful completion of task", file=log_file)
+
+            # remove the directory and its contents
+            shutil.rmtree(logdir)
+
+        # -- just checking
+        else:
+            passed, _, r, _ = pc.checkRun(
+                None, None, "HCP Longitudinal Transmit Bias", r, overwrite=overwrite
+            )
+            if passed is None:
+                r += "\n---> HCP Longitudinal Transmit Bias can be run"
+                report["ready"] = subject_id
+            else:
+                r += "\n---> HCP Longitudinal Transmit Bias cannot be run"
+                report["not ready"] = subject_id
+
+    else:
+        r += "\n---> Subject cannot be processed."
+        report["not ready"] = subject_id
+
+    return {"r": r, "report": report}
 
 
 def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
