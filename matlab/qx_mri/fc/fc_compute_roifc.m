@@ -2,23 +2,23 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 
 %``fc_compute_roifc(flist, roiinfo, frames, targetf, options)``
 %
-%   Computes ROI functional connectivity matrices for group and/or 
+%   Computes ROI functional connectivity matrices for group and/or
 %   individual subjects / sessions.
 %
 %   Parameters:
 %       --flist (str):
 %           A .list file listing the subjects and their files for which to
-%           compute seedmaps. 
+%           compute seedmaps.
 %
 %           Alternatively, a string that specifies the list, session id(s)
 %           and files to be used for computing seedmaps. The string has to
 %           have the following form:
-%           
+%
 %               'listname:<name>|session id:<session id>|file:<path to bold file>|
 %                roi:<path to individual roi mask>'
 %
 %           Note:
-%           - 'roi' is optional, if individual roi masks are to be used, 
+%           - 'roi' is optional, if individual roi masks are to be used,
 %           - 'file' can be replaced by 'conc' if a conc file is provied.
 %
 %           Example:
@@ -27,7 +27,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %
 %       --roiinfo (str):
 %           A path to the names file specifying group based ROI for which to
-%           extract timeseries for. 
+%           extract timeseries for.
 %
 %       --frames (cell array | int | str, default ''):
 %           The definition of which frames to extract, specifically
@@ -70,7 +70,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               'encoding:e-color,e-shape:s2:s2|delay:d-color,d-shape:s2:e0'
 %
 %       --targetf (str, default '.'):
-%           The group level folder to save results in. 
+%           The group level folder to save results in.
 %
 %       --options (str, default 'sessions=all|roimethod=mean|eventdata=all|ignore=use,fidl|badevents=use|fcmeasure=r|saveind=none|savesessionid=false|fcname=|verbose=false|debug=false'):
 %           A string specifying additional analysis options formated as pipe
@@ -118,7 +118,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               - median
 %                   use the median value across frames of each identified
 %                   event.
-%                   
+%
 %               Defaults to 'all'.
 %
 %           - ignore
@@ -184,11 +184,11 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               'fcargs>standardize:partialcorr,shrinkage:LW'
 %
 %           - savegroup
-%               A comma separated list of formats to use to save the group 
+%               A comma separated list of formats to use to save the group
 %               data:
 %
 %               - all_long
-%                   save the results from all sessions in a long format .tsv 
+%                   save the results from all sessions in a long format .tsv
 %                   file
 %               - all_wide_single
 %                   save the results from all sessions in a single wide format
@@ -284,7 +284,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               - id
 %                   An id of the subject/session.
 %               - <fcmeasure>
-%                   A matrix of functional connectivity measure between all ROI 
+%                   A matrix of functional connectivity measure between all ROI
 %                   for that subject/session.
 %               - fz
 %                   Fisher z transformed connectivity matrix between all ROI for
@@ -298,7 +298,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               A structure with group-level data:
 %
 %               - <fcmeasure>
-%                   A matrix of mean functional connectivity measure between 
+%                   A matrix of mean functional connectivity measure between
 %                   all ROI averaged over the group.
 %               - fz
 %                   Fisher z transformed connectivity matrix between all ROI
@@ -309,7 +309,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %                   p-values computed across the group connectivity matrices.
 %
 %   Notes:
-%       Please note, that only those results that are valid for the specific 
+%       Please note, that only those results that are valid for the specific
 %       fcmeasure are saved. For example, `fz`, `p`, and `z` will not be
 %       reported for `cv` at the individual level, and `fz` won't be reported
 %       on the group level.
@@ -327,7 +327,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %       - `<fcname>` is the provided name of the functional connectivity
 %         computed, if it was specified.
 %
-%       - `<fcmeasure>` is the measure of functional connectivity that was 
+%       - `<fcmeasure>` is the measure of functional connectivity that was
 %         computed.
 %
 %       `long` and `wide` will be added for long and wide tsv files, respectively.
@@ -351,7 +351,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %         `savesessionid` or if the files are saved in the group target folder.
 %
 %       `long` and `wide` will be added for long and wide tsv files, respectively.
-%       `Fz` will be added when wide data is saved in separate wide 
+%       `Fz` will be added when wide data is saved in separate wide
 %       format files.
 %
 %       The text file will have the following columns (depending on the
@@ -367,7 +367,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %       - Fz
 %       - Z
 %       - p
-%   
+%
 %       wide format
 %       - name
 %       - title
@@ -376,7 +376,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %       - [<roi1_code>]_<roi1_name>-[<roi_code>2]_<roi3_name>
 %
 %       Note:
-%       In wide format only <fcmeasure> and Fz data will be saved. 
+%       In wide format only <fcmeasure> and Fz data will be saved.
 %
 %       Use:
 %           The function computes functional connectivity matrices for the
@@ -395,7 +395,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %           specified frames will be concatenated in a single timeseries,
 %           otherwise, each event will be summarised by a single frame in a
 %           newly generated events series image.
-%   
+%
 %           From the resulting timeseries, ROI series will be extracted for each
 %           specified ROI as specified by the roimethod option. A functional
 %           connectivity matrix between ROI will be computed.
@@ -500,7 +500,7 @@ for s = 1:list.nsessions
     go = true;
 
     if verbose; fprintf('\n---------------------------------\nProcessing session %s', list.session(s).id); end
-    
+
     % ---> check roi files
 
     if isfield(list.session(s), 'roi')
@@ -515,12 +515,12 @@ for s = 1:list.nsessions
     if isfield(list.session(s), 'conc') && ~isempty(list.session(s).conc)
         go = go & general_check_file(list.session(s).conc, 'conc file', 'error');
         bolds = general_read_concfile(list.session(s).conc);
-    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files) 
+    elseif isfield(list.session(s), 'files') && ~isempty(list.session(s).files)
         bolds = list.session(s).files;
     else
         fprintf(' ... ERROR: %s missing bold or conc file specification!\n', list.session(s).id);
         go = false;
-    end    
+    end
 
     for bold = bolds
         go = go & general_check_file(bold{1}, 'bold file', 'error');
@@ -533,8 +533,8 @@ for s = 1:list.nsessions
     if isempty(frames)
         frames = 0;
     elseif isa(frames, 'char')
-        frames = str2num(frames);        
-        if isempty(frames) 
+        frames = str2num(frames);
+        if isempty(frames)
             if isfield(list.session(s), 'fidl')
                 go = go & general_check_file(list.session(s).fidl, [list.session(s).id ' fidl file'], 'error');
             else
@@ -556,7 +556,6 @@ for s = 1:list.nsessions
     else
         stargetf = targetf;
     end
-    subjectid = list.session(s).id;
 
     % ---> reading image files
 
@@ -574,7 +573,7 @@ for s = 1:list.nsessions
         if ~isfield(y.cifti, 'parcels') || isempty(y.cifti.parcels)
             error('ERROR: The bold file lacks parcel specification! [%s]', list.session(s).id);
         end
-        if length(parcels) == 1 && strcmp(parcels{1}, 'all')        
+        if length(parcels) == 1 && strcmp(parcels{1}, 'all')
             parcels = y.cifti.parcels;
         end
         for r = 1:length(parcels)
@@ -601,36 +600,36 @@ for s = 1:list.nsessions
     if verbose; fprintf('     ... computing fc matrices\n'); end
 
     nsets = length(exsets);
-    for n = 1:nsets        
+    for n = 1:nsets
         if verbose; fprintf('         ... set %s\n', exsets(n).title); end
-        
+
         % ---> get the extracted timeseries
-    
+
         ts = y.img_extract_timeseries(exsets(n).exmat, options.eventdata);
-    
+
         if verbose; fprintf('         ... extracted ts\n'); end
-        
+
         % ---> generate fc matrice
-        
+
         if isempty(parcels)
             rs = ts.img_extract_roi(roi, [], options.roimethod);
         else
-            rs = ts.img_extract_roi(roiinfo, [], options.roimethod); 
+            rs = ts.img_extract_roi(roiinfo, [], options.roimethod);
         end
-    
+
         fc = fc_compute(rs, [], fcmeasure, false, options);
-        
+
         if verbose; fprintf('         ... computed fc matrix\n'); end
-    
-        % ---> store 
-        
+
+        % ---> store
+
         if first_subject
             fcmat(n).title     = exsets(n).title;
             fcmat(n).roi       = {roi.roi.roiname};
             fcmat(n).subjects = {};
         end
 
-        fcmat(n).subjects = {subjectid};
+        fcmat(n).subjects = {list.session(s).id};
         fcmat(n).fc.(fcmeasure) = fc;
         fcmat(n).fc.N = ts.frames;
 
@@ -646,7 +645,7 @@ for s = 1:list.nsessions
                 fcmats(n).roi       = {roi.roi.roiname};
                 fcmats(n).subjects = {};
             end
-            fcmats(n).subjects(s) = {subjectid};
+            fcmats(n).subjects{s} = list.session(s).id;
             fcmats(n).fc(s).(fcmeasure) = fc;
             fcmats(n).fc(s).N = ts.frames;
             if ismember(fcmeasure, {'r', 'rho', 'coh'})
@@ -654,15 +653,17 @@ for s = 1:list.nsessions
                 fcmats(n).fc(s).z  = fcmat(n).fc.z;
                 fcmats(n).fc(s).p  = fcmat(n).fc.p;
             end
-        end 
+        end
     end
-    
+
+    first_subject = false;
+
     % ===================================================================================================
     %                                                                             save individual results
 
     if ~any(ismember({'mat', 'long', 'wide_single', 'wide_separate'}, options.saveind))
         if verbose; fprintf(' ... done\n'); end
-        continue; 
+        continue;
     end
 
     if verbose; fprintf('     ... saving results\n'); end
@@ -690,9 +691,8 @@ for s = 1:list.nsessions
             case 'wide_single'
                 save_wide(fcmat, fcmeasure, lname, basefilename, false, verbose, printdebug);
         end
-    end        
+    end
 
-    first_subject = false;
 end
 
 
@@ -712,7 +712,7 @@ for save_format = options.savegroup
         case 'mat'
             if verbose; fprintf('         ... saving mat file'); end
             fcmat = fcmats;
-            save(basefilename, 'fcmat');
+            save([basefilename, '.mat'], 'fcmat');
             if verbose; fprintf(' ... done\n'); end
         case 'all_long'
             save_long(fcmats, fcmeasure, lname, basefilename, verbose, printdebug);
@@ -721,11 +721,11 @@ for save_format = options.savegroup
         case 'all_wide_single'
             save_wide(fcmats, fcmeasure, lname, basefilename, false, verbose, printdebug);
     end
-end  
+end
 
 
 % -------------------------------------------------------------------------------------------
-%                                                  support function for saving in long format 
+%                                                  support function for saving in long format
 
 function [] = save_long(fcmat, fcmeasure, lname, basefilename, verbose, printdebug)
 
@@ -760,12 +760,12 @@ function [] = save_long(fcmat, fcmeasure, lname, basefilename, verbose, printdeb
 
         idx  = reshape([1:nroi*nroi], nroi, nroi);
         idx  = tril(idx, -1);
-        idx  = idx(idx > 0);        
+        idx  = idx(idx > 0);
 
         nfc  = length(idx);
 
         % --- write up
-        
+
         for s = 1:length(fcmat(n).subjects)
             if ismember(fcmeasure, {'cv', 'icv', 'mi', 'mar', 'cc'})
                 fc = fcmat(n).fc(s).(fcmeasure)(idx);
@@ -787,7 +787,7 @@ function [] = save_long(fcmat, fcmeasure, lname, basefilename, verbose, printdeb
     if verbose; fprintf(' ... done\n'); end
 
 % -------------------------------------------------------------------------------------------
-%                                                        support function for printing header 
+%                                                        support function for printing header
 
 function [] = printHeader(fout, roinames)
     fprintf(fout, 'name\ttitle\tsubject\tmeasure\troiname');
@@ -798,20 +798,20 @@ function [] = printHeader(fout, roinames)
 
 
 % -------------------------------------------------------------------------------------------
-%                                                  support function for saving in wide format 
+%                                                  support function for saving in wide format
 function [] = save_wide(fcmat, fcmeasure, lname, basefilename, separate, verbose, printdebug);
 
     if verbose; fprintf('         ... saving wide tsv file'); end
 
     nroi = length(fcmat(1).roi);
     roi  = fcmat(1).roi;
-    
+
     if printdebug; fprintf([' ' basefilename '_wide.tsv']); end
     fout_fc = fopen([basefilename '_wide.tsv'], 'w');
     printHeader(fout_fc, roi);
     toclose = [fout_fc];
 
-    if separate && ismember(fcmeasure, {'r', 'rho', 'coh'}) 
+    if separate && ismember(fcmeasure, {'r', 'rho', 'coh'})
         if printdebug; fprintf([' ' basefilename '_Fz_wide.tsv']); end
         fout_Fz = fopen([basefilename '_Fz_wide.tsv'], 'w');
         printHeader(fout_Fz, roi);
@@ -839,5 +839,5 @@ function [] = save_wide(fcmat, fcmeasure, lname, basefilename, separate, verbose
     for f = toclose
         fclose(f);
     end
-    
-    if verbose; fprintf(' ... done\n'); end        
+
+    if verbose; fprintf(' ... done\n'); end
