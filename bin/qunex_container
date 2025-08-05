@@ -961,6 +961,7 @@ def main(args=None):
         "hcp_temporal_ica",
         "hcp_make_average_dataset",
         "fsl_melodic",
+        "hcp_long_transmit_bias",
     ]
     if any(c in command for c in multi_commands):
         multi_session_command = True
