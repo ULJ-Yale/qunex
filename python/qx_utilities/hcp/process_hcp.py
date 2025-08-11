@@ -12226,9 +12226,6 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
             If myelin mapping was done using version 1.2.3 or earlier of
             wb_command, set this flag.
 
-        --hcp_gdcoeffs (str, default ''):
-            Path to a file containing gradient distortion coefficients.
-
         --hcp_regname (str, default 'MSMSulc'):
             The name of the registration used.
 
@@ -12275,7 +12272,6 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
             ``hcp_transmit_res``               ``transmit-res``
             ``hcp_myelin_mapping_fwhm``        ``myelin-mapping-fwhm``
             ``hcp_old_myelin_mapping``         ``old-myelin-mapping``
-            ``hcp_gdcoeffs``                   ``scanner-grad-coeffs``
             ``hcp_regname``                    ``reg-name``
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_grayordinatesres``           ``grayordinates-res``
@@ -12552,14 +12548,6 @@ def _execute_hcp_long_transmit_bias(subject, options, overwrite, run, hcp_base):
 
         if options["hcp_old_myelin_mapping"]:
             comm += f"                --old-myelin-mapping=TRUE"
-
-        if options["hcp_gdcoeffs"]:
-            # lookup gdcoeffs file
-            gdcfile, r, run = check_gdc_coeff_file(
-                options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
-            )
-            if gdcfile != "NONE":
-                comm += f"                --scanner-grad-coeffs={gdcfile}"
 
         if options["hcp_lowresmesh"]:
             comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
