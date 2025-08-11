@@ -698,6 +698,7 @@ lalist = [
     ["hcp_long_freesurfer", process_hcp.hcp_long_freesurfer],
     ["hcp_long_post_freesurfer", process_hcp.hcp_long_post_freesurfer],
     ["hcp_long_msmall", process_hcp.hcp_long_msmall],
+    ["hcp_long_transmit_bias", process_hcp.hcp_long_transmit_bias],
     ["fsl_melodic", fsl.fsl_melodic],
 ]
 

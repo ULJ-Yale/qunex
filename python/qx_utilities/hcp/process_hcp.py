@@ -12367,7 +12367,7 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
     return (r, (subjectids, report, failed))
 
 
-def _execute_hcp_long_transmit_bias(subject, options, overwrite, run, hcp_base):
+def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
 # prepare return variables
     r = ""
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -12385,7 +12385,7 @@ def _execute_hcp_long_transmit_bias(subject, options, overwrite, run, hcp_base):
     if not os.path.exists(study_folder):
         os.makedirs(study_folder)
 
-    longitudinal_template = options["hcp_longitudinal_template"]
+    longitudinal_template = f"{subject['id']}_{options['hcp_longitudinal_template']}"
 
     # logdir
     logdir = os.path.join(
