@@ -12416,8 +12416,6 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
     if not os.path.exists(study_folder):
         os.makedirs(study_folder)
 
-    longitudinal_template = f"{subject['id']}_{options['hcp_longitudinal_template']}"
-
     # logdir
     logdir = os.path.join(
         options["logfolder"],
@@ -12458,7 +12456,7 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
                 "studyfolder": study_folder,
                 "subject": subject_id,
                 "sessions": "@".join(sessions_list),
-                "longitudinal_template": longitudinal_template,
+                "longitudinal_template": options["hcp_longitudinal_template"],
                 "mode": options["hcp_transmit_mode"],
                 "gmwm_template": options["hcp_gmwm_template"],
                 "reg_name": options["hcp_regname"],
