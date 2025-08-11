@@ -3389,7 +3389,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         --hcp_dwi_phasepos (str, default 'PA'):
             The direction of unwarping for positive phase. Can be AP,
-            PA, LR, or RL. Negative phase isset automatically based on
+            PA, LR, or RL. Negative phase is set automatically based on
             this setting.
 
         --hcp_dwi_gdcoeffs (str, default 'NONE'):
