@@ -69,7 +69,7 @@ Parameters:
 
     --forcematrix1 (str, default 'no'):
         Whether to force matrix1 model calculation when storestreamlineslength
-        is set to yes. This is not advice, as it can lead to erroneous path
+        is set to yes. This is not advised, as it can lead to erroneous path
         length calculations.
 
     --scriptsfolder (str):
