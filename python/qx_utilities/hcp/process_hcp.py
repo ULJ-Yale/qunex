@@ -133,6 +133,7 @@ def getHCPPaths(sinfo, options):
 
     d["hcp_nonlin"] = os.path.join(hcpbase, "MNINonLinear")
     d["T1w_source"] = os.path.join(d["source"], "T1w")
+    d["T2w_source"] = os.path.join(d["source"], "T2w")
     d["DWI_source"] = os.path.join(d["source"], "Diffusion")
     d["ASL_source"] = os.path.join(d["source"], "ASL")
 
@@ -148,14 +149,14 @@ def getHCPPaths(sinfo, options):
             d["T1w"] = "@".join(
                 glob.glob(
                     os.path.join(
-                        d["source"], "T1w", sinfo["id"] + "*" + filename + "*.nii.gz"
+                        d["T1w_source"], sinfo["id"] + "*" + filename + "*.nii.gz"
                     )
                 )
             )
         else:
             d["T1w"] = "@".join(
                 glob.glob(
-                    os.path.join(d["source"], "T1w", sinfo["id"] + "*T1w_MPR*.nii.gz")
+                    os.path.join(d["T1w_source"], sinfo["id"] + "*T1w_MPR*.nii.gz")
                 )
             )
     except:
@@ -184,7 +185,7 @@ def getHCPPaths(sinfo, options):
                 d["T2w"] = "@".join(
                     glob.glob(
                         os.path.join(
-                            d["source"], "T2w", sinfo["id"] + "_T2w_SPC*.nii.gz"
+                            d["T2w_source"], sinfo["id"] + "_T2w_SPC*.nii.gz"
                         )
                     )
                 )
@@ -277,19 +278,19 @@ def getHCPPaths(sinfo, options):
         d["TB1TFL-Magnitude"] = tb1tlf_magnitude[0]
     else:
         tb1tlf_magnitude = glob.glob(
-            os.path.join(d["source"], "T1w", sinfo["id"] + "*_TB1TFL-Magnitude.nii.gz")
+            os.path.join(d["T1w_source"], sinfo["id"] + "*_TB1TFL-Magnitude.nii.gz")
         )
         if len(tb1tlf_magnitude) != 0:
             d["TB1TFL-Magnitude"] = tb1tlf_magnitude[0]
 
     tb1tlf_phase = glob.glob(
-        os.path.join(d["source"], "B1", sinfo["id"] + "*_TB1TFL-Phase.nii.gz")
+        os.path.join(d["T1w_source"], sinfo["id"] + "*_TB1TFL-Phase.nii.gz")
     )
     if len(tb1tlf_phase) != 0:
         d["TB1TFL-Phase"] = tb1tlf_phase[0]
     else:
         tb1tlf_phase = glob.glob(
-            os.path.join(d["source"], "T1w", sinfo["id"] + "*_TB1TFL-Phase.nii.gz")
+            os.path.join(d["T1w_source"], sinfo["id"] + "*_TB1TFL-Phase.nii.gz")
         )
         if len(tb1tlf_phase) != 0:
             d["TB1TFL-Phase"] = tb1tlf_phase[0]
@@ -299,7 +300,8 @@ def getHCPPaths(sinfo, options):
     if len(t1w_afi) != 0:
         d["T1w-AFI"] = t1w_afi[0]
     else:
-        t1w_afi = glob.glob(os.path.join(d["source"], "T1w", sinfo["id"] + "*_AFI.nii.gz"))
+        print(os.path.join(d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"))
+        t1w_afi = glob.glob(os.path.join(d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"))
         if len(t1w_afi) != 0:
             d["T1w-AFI"] = t1w_afi[0]
 
@@ -310,7 +312,7 @@ def getHCPPaths(sinfo, options):
         d["RB1COR-Head"] = rb1cor_32ch[0]
     else:
         rb1cor_32ch = glob.glob(
-            os.path.join(d["source"], "T1w", sinfo["id"] + "*_*CH.nii.gz")
+            os.path.join(d["T1w_source"], sinfo["id"] + "*_*CH.nii.gz")
         )
         if len(rb1cor_32ch) != 0:
             d["RB1COR-Head"] = rb1cor_32ch[0]
@@ -320,7 +322,7 @@ def getHCPPaths(sinfo, options):
         d["RB1COR-Body"] = rb1cor_bc[0]
     else:
         rb1cor_bc = glob.glob(
-            os.path.join(d["source"], "T1w", sinfo["id"] + "*_BC.nii.gz")
+            os.path.join(d["T1w_source"], sinfo["id"] + "*_BC.nii.gz")
         )
         if len(rb1cor_bc) != 0:
             d["RB1COR-Body"] = rb1cor_bc[0]
