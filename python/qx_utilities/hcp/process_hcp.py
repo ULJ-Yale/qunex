@@ -2544,13 +2544,13 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
                 # merge
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].extend(run_report["done"])
+                    report["done"].append(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].extend(run_report["failed"])
+                    report["failed"].append(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].extend(run_report["ready"])
+                    report["ready"].append(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].extend(run_report["not ready"])
+                    report["not ready"].append(run_report["not ready"])
 
         else:  # parallel execution
             # create a multiprocessing Pool
@@ -2570,13 +2570,13 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
                 r += result["r"]
                 run_report = result["report"]
                 if run_report["done"]:
-                    report["done"].extend(run_report["done"])
+                    report["done"].append(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].extend(run_report["failed"])
+                    report["failed"].append(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].extend(run_report["ready"])
+                    report["ready"].append(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].extend(run_report["not ready"])
+                    report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -3004,13 +3004,13 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 # merge
                 r += result["r"]
                 if run_report["done"]:
-                    report["done"].extend(run_report["done"])
+                    report["done"].append(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].extend(run_report["failed"])
+                    report["failed"].append(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].extend(run_report["ready"])
+                    report["ready"].append(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].extend(run_report["not ready"])
+                    report["not ready"].append(run_report["not ready"])
         else:  # parallel execution
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(parsubjects)
@@ -3023,13 +3023,13 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
                 r += result["r"]
                 run_report = result["report"]
                 if run_report["done"]:
-                    report["done"].extend(run_report["done"])
+                    report["done"].append(run_report["done"])
                 if run_report["failed"]:
-                    report["failed"].extend(run_report["failed"])
+                    report["failed"].append(run_report["failed"])
                 if run_report["ready"]:
-                    report["ready"].extend(run_report["ready"])
+                    report["ready"].append(run_report["ready"])
                 if run_report["not ready"]:
-                    report["not ready"].extend(run_report["not ready"])
+                    report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -9902,14 +9902,14 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
             r += result["r"]
             run_report = result["report"]
             if run_report["done"]:
-                report["done"].extend(run_report["done"])
+                report["done"].append(run_report["done"])
             if run_report["failed"]:
-                report["failed"].extend(run_report["failed"])
+                report["failed"].append(run_report["failed"])
                 failed = 1
             if run_report["ready"]:
-                report["ready"].extend(run_report["ready"])
+                report["ready"].append(run_report["ready"])
             if run_report["not ready"]:
-                report["not ready"].extend(run_report["not ready"])
+                report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -12366,13 +12366,13 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
             r += result["r"]
             run_report = result["report"]
             if run_report["done"]:
-                report["done"].extend(run_report["done"])
+                report["done"].append(run_report["done"])
             if run_report["failed"]:
-                report["failed"].extend(run_report["failed"])
+                report["failed"].append(run_report["failed"])
             if run_report["ready"]:
-                report["ready"].extend(run_report["ready"])
+                report["ready"].append(run_report["ready"])
             if run_report["not ready"]:
-                report["not ready"].extend(run_report["not ready"])
+                report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
