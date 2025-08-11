@@ -1325,7 +1325,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # hcp_prefs_t2template
         if options["hcp_t2"] == "NONE":
-            t2template = ""
+            t2template = "NONE"
         elif options["hcp_prefs_t2template"] is None:
             t2template = os.path.join(
                 hcp["hcp_Templates"],
@@ -1336,7 +1336,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # hcp_prefs_t2templatebrain
         if options["hcp_t2"] == "NONE":
-            t2templatebrain = ""
+            t2templatebrain = "NONE"
         elif options["hcp_prefs_t2templatebrain"] is None:
             t2templatebrain = os.path.join(
                 hcp["hcp_Templates"],
@@ -1347,7 +1347,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # hcp_prefs_t2template2mm
         if options["hcp_t2"] == "NONE":
-            t2template2mm = ""
+            t2template2mm = "NONE"
         elif options["hcp_prefs_t2template2mm"] is None:
             t2template2mm = os.path.join(hcp["hcp_Templates"], "MNI152_T2_2mm.nii.gz")
         else:
