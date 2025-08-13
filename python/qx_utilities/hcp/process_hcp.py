@@ -9053,6 +9053,73 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii
             by default.
 
+        --hcp_msmall_module_name (str, default 'MSMAll.sh'):
+            The name of script or code used to run registration.
+
+        --hcp_msmall_iteration_modes (str, default 'CA_CAT'):
+            Specifies what modalities:
+                - C=RSN Connectivity,
+                - A=Myelin Architecture,
+                - T=RSN Topography.
+
+            So, the default CA_CAT means one iteration using RSN Connectivity
+            and Myelin Architecture, followed by another iteration using RSN
+            Connectivity, Myelin Architecture, and RSN Topography.
+
+        --hcp_msmall_method (str, default 'WRN'):
+            Possible values: DR, DRZ, DRN, WR, WRZ, WRN.
+
+        --hcp_msmall_use_migp (flag, not set by default):
+            Whether to use MIGP (MELODIC's Incremental Group
+            Component Analysis)
+
+        --hcp_msmall_ica_dim (int, default 40):
+            ICA (Independent Component Analysis) dimensions.
+
+        --hcp_msmall_low_sica_dims (str, default '7@8@9@10@11@12@13@14@15@16@17@18@19@20@21'):
+            The low sICA dimensionalities to use for determining weighting for
+            individual projection.
+
+        --hcp_msmall_vn (flag, not set by default):
+            Whether to perform variance normalization.
+
+        --hcp_msmall_reg_conf_path (str, 'MSMAllStrainFinalconf1to1_1to3'):
+            Either the relative path where the registration configuration exists
+            in MSMCONFIGDIR, or an absolute.
+
+        --hcp_msmall_reg_vars (str, 'NONE'):
+            The registration configure variables to override instead of using
+            the configuration file. Please use quotes without space between
+            parameters, e.g. 'REGNUMBER=1,REGPOWER=3'.
+
+        --hcp_msmall_rsn_template (str, 'rfMRI_REST_Atlas_MSMAll_2_d41_WRN_DeDrift_hp2000_clean_PCA.ica_dREPLACEDIM_ROW_vn/melodic_oIC.dscalar.nii'):
+            Alternate rsn template file, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_rsn_weights (str, 'rfMRI_REST_Atlas_MSMAll_2_d41_WRN_DeDrift_hp2000_clean_PCA.ica_dREPLACEDIM_ROW_vn/Weights.txt'):
+            Alternate rsn weights file, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_topography_roi (str, 'Q1-Q6_RelatedParcellation210.atlas_Topographic_ROIs.32k_fs_LR.dscalar.nii'):
+            Alternate topography roi file, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_topography_target (str, 'Q1-Q6_RelatedParcellation210.atlas_Topography.32k_fs_LR.dscalar.nii'):
+            Alternate topography target, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_no_ind_mean (flag, not set by default):
+            Whether not to use the mean of the individual myelin map as the
+            group reference map's mean.
+
+        --hcp_msmall_start_frame (int, 1):
+            The starting frame to choose from each fMRI run (inclusive),
+            only applied for single runs.
+
+        --hcp_msmall_end_frame (int):
+            The ending frame to choose from each fMRI run (inclusive),
+            only applied for single runs.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -9093,20 +9160,36 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
         hcp_msmall parameter mapping:
 
-            ============================ ============================
-            QuNex parameter              HCPpipelines parameter
-            ============================ ============================
-            ``hcp_msmall_outfmriname``   ``output-fmri-name``
-            ``hcp_icafix_highpass``      ``high-pass``
-            ``hcp_msmall_templates``     ``msm-all-templates``
-            ``hcp_msmall_outregname``    ``output-registration-name``
-            ``hcp_hiresmesh``            ``high-res-mesh``
-            ``hcp_lowresmesh``           ``low-res-mesh``
-            ``hcp_regname``              ``input-registration-name``
-            ``hcp_matlab_mode``          ``matlab-run-mode``
-            ``hcp_msmall_procstring``    ``fmri-proc-string``
-            ``hcp_msmall_myelin_target`` ``myelin-target-file``
-            ============================ ============================
+            ================================ ===============================
+            QuNex parameter                  HCPpipelines parameter
+            ================================ ===============================
+            ``hcp_msmall_outfmriname``       ``output-fmri-name``
+            ``hcp_icafix_highpass``          ``high-pass``
+            ``hcp_msmall_templates``         ``msm-all-templates``
+            ``hcp_msmall_outregname``        ``output-registration-name``
+            ``hcp_hiresmesh``                ``high-res-mesh``
+            ``hcp_lowresmesh``               ``low-res-mesh``
+            ``hcp_regname``                  ``input-registration-name``
+            ``hcp_matlab_mode``              ``matlab-run-mode``
+            ``hcp_msmall_procstring``        ``fmri-proc-string``
+            ``hcp_msmall_myelin_target``     ``myelin-target-file``
+            ``hcp_msmall_module_name``       ``module-name``
+            ``hcp_msmall_iteration_modes``   ``iteration-modes``
+            ``hcp_msmall_method``            ``method``
+            ``hcp_msmall_use_migp``          ``use-migp``
+            ``hcp_msmall_ica_dim``           ``ica-dim``
+            ``hcp_msmall_low_sica_dims``     ``low-sica-dims``
+            ``hcp_msmall_vn``                ``vn``
+            ``hcp_msmall_reg_conf_path``     ``registration-configure-path``
+            ``hcp_msmall_reg_vars``          ``registration-configure-override-variables``
+            ``hcp_msmall_rsn_template``      ``rsn-template-file``
+            ``hcp_msmall_rsn_weights``       ``rsn-weights-file``
+            ``hcp_msmall_topography_roi``    ``topography-roi-file``
+            ``hcp_msmall_topography_target`` ``topography-target-file``
+            ``hcp_msmall_no_ind_mean``       ``use-ind-mean``
+            ``hcp_msmall_start_frame``       ``start-frame``
+            ``hcp_msmall_end_frame``         ``end-frame``
+            ================================ ===============================
 
     Examples:
         HCP MSMAll after application of single-run ICAFix::
@@ -9414,6 +9497,71 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             }
         )
 
+        # Optional parameters
+        # hcp_msmall_module_name
+        if options["hcp_msmall_module_name"] is not None:
+            comm += "                --module-name=" + options["hcp_msmall_module_name"]
+
+        # hcp_msmall_iteration_modes
+        if options["hcp_msmall_iteration_modes"] is not None:
+            comm += "                --iteration-modes=" + options["hcp_msmall_iteration_modes"]
+
+        # hcp_msmall_method
+        if options["hcp_msmall_method"] is not None:
+            comm += "                --method=" + options["hcp_msmall_method"]
+
+        # hcp_msmall_use_migp
+        if options["hcp_msmall_use_migp"] is not None:
+            comm += "                --use-migp=YES"
+
+        # hcp_msmall_ica_dim
+        if options["hcp_msmall_ica_dim"] is not None:
+            comm += "                --ica-dim=" + options["hcp_msmall_ica_dim"]
+
+        # hcp_msmall_low_sica_dims
+        if options["hcp_msmall_low_sica_dims"] is not None:
+            comm += "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+
+        # hcp_msmall_vn
+        if options["hcp_msmall_vn"] is not None:
+            comm += "                --vn=YES"
+
+        # hcp_msmall_reg_conf_path
+        if options["hcp_msmall_reg_conf_path"] is not None:
+            comm += "                --registration-configure-path=" + options["hcp_msmall_reg_conf_path"]
+
+        # hcp_msmall_reg_vars
+        if options["hcp_msmall_reg_vars"] is not None:
+            comm += "                --registration-configure-override-variables=" + options["hcp_msmall_reg_vars"]
+
+        # hcp_msmall_rsn_template
+        if options["hcp_msmall_rsn_template"] is not None:
+            comm += "                --rsn-template-file=" + options["hcp_msmall_rsn_template"]
+
+        # hcp_msmall_rsn_weights
+        if options["hcp_msmall_rsn_weights"] is not None:
+            comm += "                --rsn-weights-file=" + options["hcp_msmall_rsn_weights"]
+
+        # hcp_msmall_topography_roi
+        if options["hcp_msmall_topography_roi"] is not None:
+            comm += "                --topography-roi-file=" + options["hcp_msmall_topography_roi"]
+
+        # hcp_msmall_topography_target
+        if options["hcp_msmall_topography_target"] is not None:
+            comm += "                --topography-target-file=" + options["hcp_msmall_topography_target"]
+
+        # hcp_msmall_no_ind_mean
+        if options["hcp_msmall_no_ind_mean"] is not None:
+            comm += "                --use-ind-mean=NO"
+
+        # hcp_msmall_start_frame
+        if options["hcp_msmall_start_frame"] is not None:
+            comm += "                --start-frame=" + options["hcp_msmall_start_frame"]
+
+        # hcp_msmall_end_frame
+        if options["hcp_msmall_end_frame"] is not None:
+            comm += "                --end-frame=" + options["hcp_msmall_end_frame"]
+
         # -- Report command
         if boldsok:
             r += "\n\n------------------------------------------------------------\n"
@@ -9634,6 +9782,63 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 "matlabrunmode": matlabrunmode,
             }
         )
+
+        # Optional parameters
+        # hcp_msmall_module_name
+        if options["hcp_msmall_module_name"] is not None:
+            comm += "                --module-name=" + options["hcp_msmall_module_name"]
+
+        # hcp_msmall_iteration_modes
+        if options["hcp_msmall_iteration_modes"] is not None:
+            comm += "                --iteration-modes=" + options["hcp_msmall_iteration_modes"]
+
+        # hcp_msmall_method
+        if options["hcp_msmall_method"] is not None:
+            comm += "                --method=" + options["hcp_msmall_method"]
+
+        # hcp_msmall_use_migp
+        if options["hcp_msmall_use_migp"] is not None:
+            comm += "                --use-migp=YES"
+
+        # hcp_msmall_ica_dim
+        if options["hcp_msmall_ica_dim"] is not None:
+            comm += "                --ica-dim=" + options["hcp_msmall_ica_dim"]
+
+        # hcp_msmall_low_sica_dims
+        if options["hcp_msmall_low_sica_dims"] is not None:
+            comm += "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+
+        # hcp_msmall_vn
+        if options["hcp_msmall_vn"] is not None:
+            comm += "                --vn=YES"
+
+        # hcp_msmall_reg_conf_path
+        if options["hcp_msmall_reg_conf_path"] is not None:
+            comm += "                --registration-configure-path=" + options["hcp_msmall_reg_conf_path"]
+
+        # hcp_msmall_reg_vars
+        if options["hcp_msmall_reg_vars"] is not None:
+            comm += "                --registration-configure-override-variables=" + options["hcp_msmall_reg_vars"]
+
+        # hcp_msmall_rsn_template
+        if options["hcp_msmall_rsn_template"] is not None:
+            comm += "                --rsn-template-file=" + options["hcp_msmall_rsn_template"]
+
+        # hcp_msmall_rsn_weights
+        if options["hcp_msmall_rsn_weights"] is not None:
+            comm += "                --rsn-weights-file=" + options["hcp_msmall_rsn_weights"]
+
+        # hcp_msmall_topography_roi
+        if options["hcp_msmall_topography_roi"] is not None:
+            comm += "                --topography-roi-file=" + options["hcp_msmall_topography_roi"]
+
+        # hcp_msmall_topography_target
+        if options["hcp_msmall_topography_target"] is not None:
+            comm += "                --topography-target-file=" + options["hcp_msmall_topography_target"]
+
+        # hcp_msmall_no_ind_mean
+        if options["hcp_msmall_no_ind_mean"] is not None:
+            comm += "                --use-ind-mean=NO"
 
         # -- Report command
         if boldok:
