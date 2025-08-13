@@ -11564,10 +11564,15 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         asl_se_info = []
         for k, v in sinfo.items():
             if k.isdigit():
-                if v["name"] in ["PCASLhr"] or ("task" in v and "SpinEchoFieldMap" in v["task"]):
+                if v["name"] == "PCASLhr":
                     asl_se_info.append(v)
-                elif v["name"] in ["ASL", "mbPCASLhr"]:
+                elif v["name"] == ["mbPCASLhr"]:
                     asl_info = v
+                elif v["name"] == "ASL":
+                    if "phenc" in v and "SE-FM" in v["phenc"]:
+                        asl_se_info.append(v)
+                    else:
+                        asl_info = v
 
         # ASL file
         if len(asl_info) == 0:
