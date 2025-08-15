@@ -7536,11 +7536,6 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         --parelements (int, default 1):
             How many elements (e.g. bolds) to run in parallel.
 
-        --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no). Note that
-            previous data is deleted before the run, so in the case of a failed
-            command run, previous results are lost.
-
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
@@ -7696,7 +7691,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             for b in icafixBolds:
                 # process
                 result = executeHCPPostFix(
-                    sinfo, options, overwrite, hcp, run, singleFix, b
+                    sinfo, options, hcp, run, singleFix, b
                 )
 
                 # merge r
@@ -7716,7 +7711,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             processPoolExecutor = ProcessPoolExecutor(parelements)
             # process
             f = partial(
-                executeHCPPostFix, sinfo, options, overwrite, hcp, run, singleFix
+                executeHCPPostFix, sinfo, options, hcp, run, singleFix
             )
             results = processPoolExecutor.map(f, icafixBolds)
 
@@ -7772,7 +7767,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
+def executeHCPPostFix(sinfo, options, hcp, run, singleFix, boldinfo):
     # prepare return variables
     r = ""
     report = {
@@ -7907,33 +7902,20 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test files
-        tfile = os.path.join(
-            hcp["hcp_nonlin"],
-            "Results",
-            boldtarget,
-            "%s_%s_hp%s_ICA_Classification_singlescreen.scene"
-            % (subject, boldtarget, highpass),
-        )
-        fullTest = None
-
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
                 r, endlog, _, failed = pc.runExternalForFile(
-                    tfile,
-                    comm,
-                    "Running HCP PostFix",
-                    overwrite=overwrite,
+                    checkfile=None,
+                    run=comm,
+                    description="Running HCP PostFix",
+                    overwrite=False,
                     thread=sinfo["id"],
                     remove=options["log"] == "remove",
                     task="hcp_post_fix",
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"], boldtarget],
-                    fullTest=fullTest,
+                    fullTest=None,
                     shell=True,
                     r=r,
                 )
@@ -7946,7 +7928,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
             # -- just checking
             else:
                 passed, _, r, failed = pc.checkRun(
-                    tfile, fullTest, "HCP PostFix " + boldtarget, r, overwrite=overwrite
+                    None, None, "HCP PostFix " + boldtarget, r, overwrite=False
                 )
                 if passed is None:
                     r += "\n---> HCP PostFix can be run"
