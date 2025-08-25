@@ -12040,13 +12040,28 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         # build the command
         if run:
+            if options["hcp_matlab_mode"]:
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    run = False
+                comm += f"                --matlab-run-mode={matlabrunmode}"
+            else:
+                matlabrunmode = "0"
+
             comm = (
                 '%(script)s \
                 --study-folder="%(studyfolder)s" \
                 --subject="%(subject)s" \
                 --mode="%(mode)s" \
                 --gmwm-template="%(gmwm_template)s" \
-                --reg-name="%(reg_name)s"'
+                --reg-name="%(reg_name)s" \
+                --matlab-run-mode="%(matlab_run_mode)s"'
                 % {
                     "script": os.path.join(
                         hcp["hcp_base"],
@@ -12058,6 +12073,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     "mode": options["hcp_transmit_mode"],
                     "gmwm_template": options["hcp_gmwm_template"],
                     "reg_name": options["hcp_regname"],
+                    "matlab_run_mode": matlabrunmode,
                 }
             )
 
@@ -12259,20 +12275,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_grayordinatesres"]:
                 comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
-
-            if options["hcp_matlab_mode"]:
-                if options["hcp_matlab_mode"] == "compiled":
-                    matlabrunmode = "0"
-                elif options["hcp_matlab_mode"] == "interpreted":
-                    matlabrunmode = "1"
-                elif options["hcp_matlab_mode"] == "octave":
-                    matlabrunmode = "2"
-                else:
-                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                    run = False
-                comm += f"                --matlab-run-mode={matlabrunmode}"
-            else:
-                matlabrunmode = "0"
 
             # -- Report command
             if run:
@@ -12628,6 +12630,20 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
 
     # build the command
     if run:
+        if options["hcp_matlab_mode"]:
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
+            comm += f"                --matlab-run-mode={matlabrunmode}"
+        else:
+            matlabrunmode = "0"
+
         comm = (
             '%(script)s \
             --study-folder="%(studyfolder)s" \
@@ -12638,7 +12654,8 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
             --gmwm-template="%(gmwm_template)s" \
             --reg-name="%(reg_name)s" \
             --parallel-mode="%(parallel_mode)s" \
-            --logdir="%(logdir)s"'
+            --logdir="%(logdir)s" \
+            --matlab-run-mode="%(matlab_run_mode)s"'
             % {
                 "script": os.path.join(
                     hcp_base,
@@ -12654,6 +12671,7 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
                 "reg_name": options["hcp_regname"],
                 "parallel_mode": options["hcp_parallel_mode"],
                 "logdir": logdir,
+                "matlab_run_mode": matlabrunmode,
             }
         )
 
@@ -12775,20 +12793,6 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
 
         if options["hcp_grayordinatesres"]:
             comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
-
-        if options["hcp_matlab_mode"]:
-            if options["hcp_matlab_mode"] == "compiled":
-                matlabrunmode = "0"
-            elif options["hcp_matlab_mode"] == "interpreted":
-                matlabrunmode = "1"
-            elif options["hcp_matlab_mode"] == "octave":
-                matlabrunmode = "2"
-            else:
-                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                run = False
-            comm += f"                --matlab-run-mode={matlabrunmode}"
-        else:
-            matlabrunmode = "0"
 
         # -- Report command
         if run:
