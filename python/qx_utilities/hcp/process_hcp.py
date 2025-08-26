@@ -296,12 +296,12 @@ def getHCPPaths(sinfo, options):
             d["TB1TFL-Phase"] = tb1tlf_phase[0]
 
     # AFI
-    t1w_afi = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*_AFI.nii.gz"))
+    t1w_afi = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*AFI.nii.gz"))
     if len(t1w_afi) != 0:
         d["T1w-AFI"] = t1w_afi[0]
     else:
         print(os.path.join(d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"))
-        t1w_afi = glob.glob(os.path.join(d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"))
+        t1w_afi = glob.glob(os.path.join(d["T1w_source"], sinfo["id"] + "*AFI.nii.gz"))
         if len(t1w_afi) != 0:
             d["T1w-AFI"] = t1w_afi[0]
 
@@ -7536,11 +7536,6 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         --parelements (int, default 1):
             How many elements (e.g. bolds) to run in parallel.
 
-        --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no). Note that
-            previous data is deleted before the run, so in the case of a failed
-            command run, previous results are lost.
-
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
             empty otherwise.
@@ -7696,7 +7691,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             for b in icafixBolds:
                 # process
                 result = executeHCPPostFix(
-                    sinfo, options, overwrite, hcp, run, singleFix, b
+                    sinfo, options, hcp, run, singleFix, b
                 )
 
                 # merge r
@@ -7716,7 +7711,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             processPoolExecutor = ProcessPoolExecutor(parelements)
             # process
             f = partial(
-                executeHCPPostFix, sinfo, options, overwrite, hcp, run, singleFix
+                executeHCPPostFix, sinfo, options, hcp, run, singleFix
             )
             results = processPoolExecutor.map(f, icafixBolds)
 
@@ -7772,7 +7767,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
+def executeHCPPostFix(sinfo, options, hcp, run, singleFix, boldinfo):
     # prepare return variables
     r = ""
     report = {
@@ -7907,33 +7902,20 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test files
-        tfile = os.path.join(
-            hcp["hcp_nonlin"],
-            "Results",
-            boldtarget,
-            "%s_%s_hp%s_ICA_Classification_singlescreen.scene"
-            % (subject, boldtarget, highpass),
-        )
-        fullTest = None
-
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
                 r, endlog, _, failed = pc.runExternalForFile(
-                    tfile,
-                    comm,
-                    "Running HCP PostFix",
-                    overwrite=overwrite,
+                    checkfile=None,
+                    run=comm,
+                    description="Running HCP PostFix",
+                    overwrite=False,
                     thread=sinfo["id"],
                     remove=options["log"] == "remove",
                     task="hcp_post_fix",
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"], boldtarget],
-                    fullTest=fullTest,
+                    fullTest=None,
                     shell=True,
                     r=r,
                 )
@@ -7946,7 +7928,7 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, boldinfo):
             # -- just checking
             else:
                 passed, _, r, failed = pc.checkRun(
-                    tfile, fullTest, "HCP PostFix " + boldtarget, r, overwrite=overwrite
+                    None, None, "HCP PostFix " + boldtarget, r, overwrite=False
                 )
                 if passed is None:
                     r += "\n---> HCP PostFix can be run"
@@ -9053,6 +9035,73 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii
             by default.
 
+        --hcp_msmall_module_name (str, default 'MSMAll.sh'):
+            The name of script or code used to run registration.
+
+        --hcp_msmall_iteration_modes (str, default 'CA_CAT'):
+            Specifies what modalities:
+                - C=RSN Connectivity,
+                - A=Myelin Architecture,
+                - T=RSN Topography.
+
+            So, the default CA_CAT means one iteration using RSN Connectivity
+            and Myelin Architecture, followed by another iteration using RSN
+            Connectivity, Myelin Architecture, and RSN Topography.
+
+        --hcp_msmall_method (str, default 'WRN'):
+            Possible values: DR, DRZ, DRN, WR, WRZ, WRN.
+
+        --hcp_msmall_use_migp (flag, not set by default):
+            Whether to use MIGP (MELODIC's Incremental Group
+            Component Analysis)
+
+        --hcp_msmall_ica_dim (int, default 40):
+            ICA (Independent Component Analysis) dimensions.
+
+        --hcp_msmall_low_sica_dims (str, default '7@8@9@10@11@12@13@14@15@16@17@18@19@20@21'):
+            The low sICA dimensionalities to use for determining weighting for
+            individual projection.
+
+        --hcp_msmall_vn (flag, not set by default):
+            Whether to perform variance normalization.
+
+        --hcp_msmall_reg_conf_path (str, 'MSMAllStrainFinalconf1to1_1to3'):
+            Either the relative path where the registration configuration exists
+            in MSMCONFIGDIR, or an absolute.
+
+        --hcp_msmall_reg_vars (str, 'NONE'):
+            The registration configure variables to override instead of using
+            the configuration file. Please use quotes without space between
+            parameters, e.g. 'REGNUMBER=1,REGPOWER=3'.
+
+        --hcp_msmall_rsn_template (str, 'rfMRI_REST_Atlas_MSMAll_2_d41_WRN_DeDrift_hp2000_clean_PCA.ica_dREPLACEDIM_ROW_vn/melodic_oIC.dscalar.nii'):
+            Alternate rsn template file, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_rsn_weights (str, 'rfMRI_REST_Atlas_MSMAll_2_d41_WRN_DeDrift_hp2000_clean_PCA.ica_dREPLACEDIM_ROW_vn/Weights.txt'):
+            Alternate rsn weights file, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_topography_roi (str, 'Q1-Q6_RelatedParcellation210.atlas_Topographic_ROIs.32k_fs_LR.dscalar.nii'):
+            Alternate topography roi file, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_topography_target (str, 'Q1-Q6_RelatedParcellation210.atlas_Topography.32k_fs_LR.dscalar.nii'):
+            Alternate topography target, relative to the --msm-all-templates
+            folder.
+
+        --hcp_msmall_no_ind_mean (flag, not set by default):
+            Whether not to use the mean of the individual myelin map as the
+            group reference map's mean.
+
+        --hcp_msmall_start_frame (int, 1):
+            The starting frame to choose from each fMRI run (inclusive),
+            only applied for single runs.
+
+        --hcp_msmall_end_frame (int):
+            The ending frame to choose from each fMRI run (inclusive),
+            only applied for single runs.
+
     Output files:
         The results of this step will be generated and populated in the
         MNINonLinear folder inside the same sessions's root hcp folder.
@@ -9093,20 +9142,36 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
         hcp_msmall parameter mapping:
 
-            ============================ ============================
-            QuNex parameter              HCPpipelines parameter
-            ============================ ============================
-            ``hcp_msmall_outfmriname``   ``output-fmri-name``
-            ``hcp_icafix_highpass``      ``high-pass``
-            ``hcp_msmall_templates``     ``msm-all-templates``
-            ``hcp_msmall_outregname``    ``output-registration-name``
-            ``hcp_hiresmesh``            ``high-res-mesh``
-            ``hcp_lowresmesh``           ``low-res-mesh``
-            ``hcp_regname``              ``input-registration-name``
-            ``hcp_matlab_mode``          ``matlab-run-mode``
-            ``hcp_msmall_procstring``    ``fmri-proc-string``
-            ``hcp_msmall_myelin_target`` ``myelin-target-file``
-            ============================ ============================
+            ================================ ===============================
+            QuNex parameter                  HCPpipelines parameter
+            ================================ ===============================
+            ``hcp_msmall_outfmriname``       ``output-fmri-name``
+            ``hcp_icafix_highpass``          ``high-pass``
+            ``hcp_msmall_templates``         ``msm-all-templates``
+            ``hcp_msmall_outregname``        ``output-registration-name``
+            ``hcp_hiresmesh``                ``high-res-mesh``
+            ``hcp_lowresmesh``               ``low-res-mesh``
+            ``hcp_regname``                  ``input-registration-name``
+            ``hcp_matlab_mode``              ``matlab-run-mode``
+            ``hcp_msmall_procstring``        ``fmri-proc-string``
+            ``hcp_msmall_myelin_target``     ``myelin-target-file``
+            ``hcp_msmall_module_name``       ``module-name``
+            ``hcp_msmall_iteration_modes``   ``iteration-modes``
+            ``hcp_msmall_method``            ``method``
+            ``hcp_msmall_use_migp``          ``use-migp``
+            ``hcp_msmall_ica_dim``           ``ica-dim``
+            ``hcp_msmall_low_sica_dims``     ``low-sica-dims``
+            ``hcp_msmall_vn``                ``vn``
+            ``hcp_msmall_reg_conf_path``     ``registration-configure-path``
+            ``hcp_msmall_reg_vars``          ``registration-configure-override-variables``
+            ``hcp_msmall_rsn_template``      ``rsn-template-file``
+            ``hcp_msmall_rsn_weights``       ``rsn-weights-file``
+            ``hcp_msmall_topography_roi``    ``topography-roi-file``
+            ``hcp_msmall_topography_target`` ``topography-target-file``
+            ``hcp_msmall_no_ind_mean``       ``use-ind-mean``
+            ``hcp_msmall_start_frame``       ``start-frame``
+            ``hcp_msmall_end_frame``         ``end-frame``
+            ================================ ===============================
 
     Examples:
         HCP MSMAll after application of single-run ICAFix::
@@ -9414,6 +9479,71 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             }
         )
 
+        # Optional parameters
+        # hcp_msmall_module_name
+        if options["hcp_msmall_module_name"] is not None:
+            comm += "                --module-name=" + options["hcp_msmall_module_name"]
+
+        # hcp_msmall_iteration_modes
+        if options["hcp_msmall_iteration_modes"] is not None:
+            comm += "                --iteration-modes=" + options["hcp_msmall_iteration_modes"]
+
+        # hcp_msmall_method
+        if options["hcp_msmall_method"] is not None:
+            comm += "                --method=" + options["hcp_msmall_method"]
+
+        # hcp_msmall_use_migp
+        if options["hcp_msmall_use_migp"] is not None:
+            comm += "                --use-migp=YES"
+
+        # hcp_msmall_ica_dim
+        if options["hcp_msmall_ica_dim"] is not None:
+            comm += "                --ica-dim=" + options["hcp_msmall_ica_dim"]
+
+        # hcp_msmall_low_sica_dims
+        if options["hcp_msmall_low_sica_dims"] is not None:
+            comm += "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+
+        # hcp_msmall_vn
+        if options["hcp_msmall_vn"] is not None:
+            comm += "                --vn=YES"
+
+        # hcp_msmall_reg_conf_path
+        if options["hcp_msmall_reg_conf_path"] is not None:
+            comm += "                --registration-configure-path=" + options["hcp_msmall_reg_conf_path"]
+
+        # hcp_msmall_reg_vars
+        if options["hcp_msmall_reg_vars"] is not None:
+            comm += "                --registration-configure-override-variables=" + options["hcp_msmall_reg_vars"]
+
+        # hcp_msmall_rsn_template
+        if options["hcp_msmall_rsn_template"] is not None:
+            comm += "                --rsn-template-file=" + options["hcp_msmall_rsn_template"]
+
+        # hcp_msmall_rsn_weights
+        if options["hcp_msmall_rsn_weights"] is not None:
+            comm += "                --rsn-weights-file=" + options["hcp_msmall_rsn_weights"]
+
+        # hcp_msmall_topography_roi
+        if options["hcp_msmall_topography_roi"] is not None:
+            comm += "                --topography-roi-file=" + options["hcp_msmall_topography_roi"]
+
+        # hcp_msmall_topography_target
+        if options["hcp_msmall_topography_target"] is not None:
+            comm += "                --topography-target-file=" + options["hcp_msmall_topography_target"]
+
+        # hcp_msmall_no_ind_mean
+        if options["hcp_msmall_no_ind_mean"] is not None:
+            comm += "                --use-ind-mean=NO"
+
+        # hcp_msmall_start_frame
+        if options["hcp_msmall_start_frame"] is not None:
+            comm += "                --start-frame=" + options["hcp_msmall_start_frame"]
+
+        # hcp_msmall_end_frame
+        if options["hcp_msmall_end_frame"] is not None:
+            comm += "                --end-frame=" + options["hcp_msmall_end_frame"]
+
         # -- Report command
         if boldsok:
             r += "\n\n------------------------------------------------------------\n"
@@ -9634,6 +9764,63 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
                 "matlabrunmode": matlabrunmode,
             }
         )
+
+        # Optional parameters
+        # hcp_msmall_module_name
+        if options["hcp_msmall_module_name"] is not None:
+            comm += "                --module-name=" + options["hcp_msmall_module_name"]
+
+        # hcp_msmall_iteration_modes
+        if options["hcp_msmall_iteration_modes"] is not None:
+            comm += "                --iteration-modes=" + options["hcp_msmall_iteration_modes"]
+
+        # hcp_msmall_method
+        if options["hcp_msmall_method"] is not None:
+            comm += "                --method=" + options["hcp_msmall_method"]
+
+        # hcp_msmall_use_migp
+        if options["hcp_msmall_use_migp"] is not None:
+            comm += "                --use-migp=YES"
+
+        # hcp_msmall_ica_dim
+        if options["hcp_msmall_ica_dim"] is not None:
+            comm += "                --ica-dim=" + options["hcp_msmall_ica_dim"]
+
+        # hcp_msmall_low_sica_dims
+        if options["hcp_msmall_low_sica_dims"] is not None:
+            comm += "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+
+        # hcp_msmall_vn
+        if options["hcp_msmall_vn"] is not None:
+            comm += "                --vn=YES"
+
+        # hcp_msmall_reg_conf_path
+        if options["hcp_msmall_reg_conf_path"] is not None:
+            comm += "                --registration-configure-path=" + options["hcp_msmall_reg_conf_path"]
+
+        # hcp_msmall_reg_vars
+        if options["hcp_msmall_reg_vars"] is not None:
+            comm += "                --registration-configure-override-variables=" + options["hcp_msmall_reg_vars"]
+
+        # hcp_msmall_rsn_template
+        if options["hcp_msmall_rsn_template"] is not None:
+            comm += "                --rsn-template-file=" + options["hcp_msmall_rsn_template"]
+
+        # hcp_msmall_rsn_weights
+        if options["hcp_msmall_rsn_weights"] is not None:
+            comm += "                --rsn-weights-file=" + options["hcp_msmall_rsn_weights"]
+
+        # hcp_msmall_topography_roi
+        if options["hcp_msmall_topography_roi"] is not None:
+            comm += "                --topography-roi-file=" + options["hcp_msmall_topography_roi"]
+
+        # hcp_msmall_topography_target
+        if options["hcp_msmall_topography_target"] is not None:
+            comm += "                --topography-target-file=" + options["hcp_msmall_topography_target"]
+
+        # hcp_msmall_no_ind_mean
+        if options["hcp_msmall_no_ind_mean"] is not None:
+            comm += "                --use-ind-mean=NO"
 
         # -- Report command
         if boldok:
@@ -11359,10 +11546,15 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         asl_se_info = []
         for k, v in sinfo.items():
             if k.isdigit():
-                if v["name"] in ["PCASLhr"] or "SpinEchoFieldMap" in v["task"]:
+                if v["name"] == "PCASLhr":
                     asl_se_info.append(v)
-                elif v["name"] in ["ASL", "mbPCASLhr"]:
+                elif v["name"] == ["mbPCASLhr"]:
                     asl_info = v
+                elif v["name"] == "ASL":
+                    if "phenc" in v and "SE-FM" in v["phenc"]:
+                        asl_se_info.append(v)
+                    else:
+                        asl_info = v
 
         # ASL file
         if len(asl_info) == 0:
@@ -11848,13 +12040,28 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         # build the command
         if run:
+            if options["hcp_matlab_mode"]:
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    run = False
+                comm += f"                --matlab-run-mode={matlabrunmode}"
+            else:
+                matlabrunmode = "0"
+
             comm = (
                 '%(script)s \
                 --study-folder="%(studyfolder)s" \
                 --subject="%(subject)s" \
                 --mode="%(mode)s" \
                 --gmwm-template="%(gmwm_template)s" \
-                --reg-name="%(reg_name)s"'
+                --reg-name="%(reg_name)s" \
+                --matlab-run-mode="%(matlab_run_mode)s"'
                 % {
                     "script": os.path.join(
                         hcp["hcp_base"],
@@ -11866,6 +12073,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     "mode": options["hcp_transmit_mode"],
                     "gmwm_template": options["hcp_gmwm_template"],
                     "reg_name": options["hcp_regname"],
+                    "matlab_run_mode": matlabrunmode,
                 }
             )
 
@@ -12067,20 +12275,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_grayordinatesres"]:
                 comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
-
-            if options["hcp_matlab_mode"]:
-                if options["hcp_matlab_mode"] == "compiled":
-                    matlabrunmode = "0"
-                elif options["hcp_matlab_mode"] == "interpreted":
-                    matlabrunmode = "1"
-                elif options["hcp_matlab_mode"] == "octave":
-                    matlabrunmode = "2"
-                else:
-                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                    run = False
-                comm += f"                --matlab-run-mode={matlabrunmode}"
-            else:
-                matlabrunmode = "0"
 
             # -- Report command
             if run:
@@ -12436,6 +12630,20 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
 
     # build the command
     if run:
+        if options["hcp_matlab_mode"]:
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
+            comm += f"                --matlab-run-mode={matlabrunmode}"
+        else:
+            matlabrunmode = "0"
+
         comm = (
             '%(script)s \
             --study-folder="%(studyfolder)s" \
@@ -12446,7 +12654,8 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
             --gmwm-template="%(gmwm_template)s" \
             --reg-name="%(reg_name)s" \
             --parallel-mode="%(parallel_mode)s" \
-            --logdir="%(logdir)s"'
+            --logdir="%(logdir)s" \
+            --matlab-run-mode="%(matlab_run_mode)s"'
             % {
                 "script": os.path.join(
                     hcp_base,
@@ -12462,6 +12671,7 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
                 "reg_name": options["hcp_regname"],
                 "parallel_mode": options["hcp_parallel_mode"],
                 "logdir": logdir,
+                "matlab_run_mode": matlabrunmode,
             }
         )
 
@@ -12583,20 +12793,6 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
 
         if options["hcp_grayordinatesres"]:
             comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
-
-        if options["hcp_matlab_mode"]:
-            if options["hcp_matlab_mode"] == "compiled":
-                matlabrunmode = "0"
-            elif options["hcp_matlab_mode"] == "interpreted":
-                matlabrunmode = "1"
-            elif options["hcp_matlab_mode"] == "octave":
-                matlabrunmode = "2"
-            else:
-                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                run = False
-            comm += f"                --matlab-run-mode={matlabrunmode}"
-        else:
-            matlabrunmode = "0"
 
         # -- Report command
         if run:
