@@ -30,7 +30,7 @@ Past contributors to the QuNex code:
 
 ## Version
 
-* QuNex: 1.3.1 [QIO]
+* QuNex: 1.3.2 [QIO]
 * qx_library: 1.3.1 [QIO]
 
 ## References
