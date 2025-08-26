@@ -6,6 +6,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.3.2
+
+* Added support for additional `hcp_msmall` parameters.
+* Made the `hcp_asl` pipeline more robust.
+* Fixed a bug in `hcp_transmit_bias` when looking for AFI images.
+
 ## 1.3.1
 
 * Added support for longitudinal transmit bias pipeline (`hcp_long_transmit_bias`).
