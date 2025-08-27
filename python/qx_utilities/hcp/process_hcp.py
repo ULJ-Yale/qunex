@@ -4861,7 +4861,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     if spinok:
                         sepresent.append(senum)
                         sepairs[senum] = {"spinPos": spinPos, "spinNeg": spinNeg}
-                        break
 
                 if options["hcp_bold_dcmethod"].lower() == "topup_mismatched":
                     for p in [
@@ -5084,6 +5083,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                 spinN = sen
                             elif not spinN:
                                 spinN = sen
+
                     spinNeg = sepairs[spinN]["spinNeg"]
                     spinPos = sepairs[spinN]["spinPos"]
                     r += "\n     ... using spin echo fieldmap set %d" % (spinN)
