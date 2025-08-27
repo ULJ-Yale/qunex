@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Added support for additional `hcp_msmall` parameters.
 * Made the `hcp_asl` pipeline more robust.
 * Fixed a bug in `hcp_transmit_bias` when looking for AFI images.
+* Fixed a bug where spin-echo pairs were not correctly picked up by `hcp_fmri_volume`.
 
 ## 1.3.1
 
