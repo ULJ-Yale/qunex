@@ -9782,9 +9782,6 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         if options["hcp_msmall_use_migp"]:
             comm += "                --use-migp=YES"
 
-        print(comm)
-        os._exit(1)
-
         # hcp_msmall_ica_dim
         if options["hcp_msmall_ica_dim"] is not None:
             comm += "                --ica-dim=" + options["hcp_msmall_ica_dim"]
