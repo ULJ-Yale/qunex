@@ -7147,7 +7147,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
                         and report["not ready"] == []
                     ):
                         result = executeHCPPostFix(
-                            sinfo, options, overwrite, hcp, run, True, boldinfo
+                            sinfo, options, hcp, run, True, boldinfo
                         )
                         r += result["r"]
                         report = result["report"]
@@ -7463,7 +7463,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                         and report["not ready"] == []
                     ):
                         result = executeHCPPostFix(
-                            sinfo, options, overwrite, hcp, run, False, groupname
+                            sinfo, options, hcp, run, False, groupname
                         )
                         r += result["r"]
                         report = result["report"]
@@ -7687,44 +7687,24 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
                 groupBolds = g["name"]
                 icafixBolds.append(groupBolds)
 
-        if parelements == 1:  # serial execution
-            for b in icafixBolds:
-                # process
-                result = executeHCPPostFix(
-                    sinfo, options, hcp, run, singleFix, b
-                )
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(
+            executeHCPPostFix, sinfo, options, hcp, run, singleFix
+        )
+        results = processPoolExecutor.map(f, icafixBolds)
 
-                # merge r
-                r += result["r"]
-
-                # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(
-                executeHCPPostFix, sinfo, options, hcp, run, singleFix
-            )
-            results = processPoolExecutor.map(f, icafixBolds)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            tempReport = result["report"]
+            report["done"] += tempReport["done"]
+            report["failed"] += tempReport["failed"]
+            report["incomplete"] += tempReport["incomplete"]
+            report["ready"] += tempReport["ready"]
+            report["not ready"] += tempReport["not ready"]
+            report["skipped"] += tempReport["skipped"]
 
         # report
         rep = []
