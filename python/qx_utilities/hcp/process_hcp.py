@@ -9493,7 +9493,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             comm += "                --method=" + options["hcp_msmall_method"]
 
         # hcp_msmall_use_migp
-        if options["hcp_msmall_use_migp"] is not None:
+        if options["hcp_msmall_use_migp"]:
             comm += "                --use-migp=YES"
 
         # hcp_msmall_ica_dim
@@ -9779,8 +9779,11 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             comm += "                --method=" + options["hcp_msmall_method"]
 
         # hcp_msmall_use_migp
-        if options["hcp_msmall_use_migp"] is not None:
+        if options["hcp_msmall_use_migp"]:
             comm += "                --use-migp=YES"
+
+        print(comm)
+        os._exit(1)
 
         # hcp_msmall_ica_dim
         if options["hcp_msmall_ica_dim"] is not None:
