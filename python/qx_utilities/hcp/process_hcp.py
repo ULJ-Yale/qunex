@@ -308,24 +308,44 @@ def getHCPPaths(sinfo, options):
     rb1cor_32ch = glob.glob(
         os.path.join(d["source"], "B1", sinfo["id"] + "*_*CH.nii.gz")
     )
+    rb1cor_head = glob.glob(
+        os.path.join(d["source"], "B1", sinfo["id"] + "*-Head.nii.gz")
+    )
     if len(rb1cor_32ch) != 0:
         d["RB1COR-Head"] = rb1cor_32ch[0]
+    elif len(rb1cor_head) != 0:
+        d["RB1COR-Head"] = rb1cor_head[0]
     else:
         rb1cor_32ch = glob.glob(
             os.path.join(d["T1w_source"], sinfo["id"] + "*_*CH.nii.gz")
         )
         if len(rb1cor_32ch) != 0:
             d["RB1COR-Head"] = rb1cor_32ch[0]
+        else:
+            rb1cor_head = glob.glob(
+                os.path.join(d["T1w_source"], sinfo["id"] + "*-Head.nii.gz")
+            )
+            if len(rb1cor_head) != 0:
+                d["RB1COR-Head"] = rb1cor_head[0]
 
     rb1cor_bc = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*_BC.nii.gz"))
+    rb1cor_body = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*-Body.nii.gz"))
     if len(rb1cor_bc) != 0:
         d["RB1COR-Body"] = rb1cor_bc[0]
+    elif len(rb1cor_body) != 0:
+        d["RB1COR-Body"] = rb1cor_body[0]
     else:
         rb1cor_bc = glob.glob(
             os.path.join(d["T1w_source"], sinfo["id"] + "*_BC.nii.gz")
         )
         if len(rb1cor_bc) != 0:
             d["RB1COR-Body"] = rb1cor_bc[0]
+        else:
+            rb1cor_body = glob.glob(
+                os.path.join(d["T1w_source"], sinfo["id"] + "*-Body.nii.gz")
+            )
+            if len(rb1cor_body) != 0:
+                d["RB1COR-Body"] = rb1cor_body[0]
 
     # --- default check files
     for pipe, default in [
@@ -7147,7 +7167,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, boldinfo):
                         and report["not ready"] == []
                     ):
                         result = executeHCPPostFix(
-                            sinfo, options, overwrite, hcp, run, True, boldinfo
+                            sinfo, options, hcp, run, True, boldinfo
                         )
                         r += result["r"]
                         report = result["report"]
@@ -7463,7 +7483,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                         and report["not ready"] == []
                     ):
                         result = executeHCPPostFix(
-                            sinfo, options, overwrite, hcp, run, False, groupname
+                            sinfo, options, hcp, run, False, groupname
                         )
                         r += result["r"]
                         report = result["report"]
@@ -7687,44 +7707,24 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
                 groupBolds = g["name"]
                 icafixBolds.append(groupBolds)
 
-        if parelements == 1:  # serial execution
-            for b in icafixBolds:
-                # process
-                result = executeHCPPostFix(
-                    sinfo, options, hcp, run, singleFix, b
-                )
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(
+            executeHCPPostFix, sinfo, options, hcp, run, singleFix
+        )
+        results = processPoolExecutor.map(f, icafixBolds)
 
-                # merge r
-                r += result["r"]
-
-                # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(
-                executeHCPPostFix, sinfo, options, hcp, run, singleFix
-            )
-            results = processPoolExecutor.map(f, icafixBolds)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            tempReport = result["report"]
+            report["done"] += tempReport["done"]
+            report["failed"] += tempReport["failed"]
+            report["incomplete"] += tempReport["incomplete"]
+            report["ready"] += tempReport["ready"]
+            report["not ready"] += tempReport["not ready"]
+            report["skipped"] += tempReport["skipped"]
 
         # report
         rep = []
@@ -9493,7 +9493,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             comm += "                --method=" + options["hcp_msmall_method"]
 
         # hcp_msmall_use_migp
-        if options["hcp_msmall_use_migp"] is not None:
+        if options["hcp_msmall_use_migp"]:
             comm += "                --use-migp=YES"
 
         # hcp_msmall_ica_dim
@@ -9779,7 +9779,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             comm += "                --method=" + options["hcp_msmall_method"]
 
         # hcp_msmall_use_migp
-        if options["hcp_msmall_use_migp"] is not None:
+        if options["hcp_msmall_use_migp"]:
             comm += "                --use-migp=YES"
 
         # hcp_msmall_ica_dim
