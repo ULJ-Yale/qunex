@@ -308,24 +308,44 @@ def getHCPPaths(sinfo, options):
     rb1cor_32ch = glob.glob(
         os.path.join(d["source"], "B1", sinfo["id"] + "*_*CH.nii.gz")
     )
+    rb1cor_head = glob.glob(
+        os.path.join(d["source"], "B1", sinfo["id"] + "*-Head.nii.gz")
+    )
     if len(rb1cor_32ch) != 0:
         d["RB1COR-Head"] = rb1cor_32ch[0]
+    elif len(rb1cor_head) != 0:
+        d["RB1COR-Head"] = rb1cor_head[0]
     else:
         rb1cor_32ch = glob.glob(
             os.path.join(d["T1w_source"], sinfo["id"] + "*_*CH.nii.gz")
         )
         if len(rb1cor_32ch) != 0:
             d["RB1COR-Head"] = rb1cor_32ch[0]
+        else:
+            rb1cor_head = glob.glob(
+                os.path.join(d["T1w_source"], sinfo["id"] + "*-Head.nii.gz")
+            )
+            if len(rb1cor_head) != 0:
+                d["RB1COR-Head"] = rb1cor_head[0]
 
     rb1cor_bc = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*_BC.nii.gz"))
+    rb1cor_body = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*-Body.nii.gz"))
     if len(rb1cor_bc) != 0:
         d["RB1COR-Body"] = rb1cor_bc[0]
+    elif len(rb1cor_body) != 0:
+        d["RB1COR-Body"] = rb1cor_body[0]
     else:
         rb1cor_bc = glob.glob(
             os.path.join(d["T1w_source"], sinfo["id"] + "*_BC.nii.gz")
         )
         if len(rb1cor_bc) != 0:
             d["RB1COR-Body"] = rb1cor_bc[0]
+        else:
+            rb1cor_body = glob.glob(
+                os.path.join(d["T1w_source"], sinfo["id"] + "*-Body.nii.gz")
+            )
+            if len(rb1cor_body) != 0:
+                d["RB1COR-Body"] = rb1cor_body[0]
 
     # --- default check files
     for pipe, default in [
