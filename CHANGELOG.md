@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.3.3
+
+* todo
+
 ## 1.3.2
 
 * Added support for additional `hcp_msmall` parameters.

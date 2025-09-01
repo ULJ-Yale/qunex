@@ -163,32 +163,32 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         ---
         id: OP578
         subject: OP578
-        dicom: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/dicom
-        raw_data: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii
-        hcp: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp
+        dicom: /data/qx_study/sessions/OP578/dicom
+        raw_data: /data/qx_study/sessions/OP578/nii
+        hcp: /data/qx_study/sessions/OP578/hcp
         group: control
 
     If script.sh contains among others::
 
         ls -l {{hcp}}/{{id}}/MNINonLinear
         if [ "{{group}}" = "control" ]; then
-            mkdir /gpfs/project/fas/n3/Studies/tmp/{{id}}
-            cp {{raw_data}}/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/{{id}}
+            mkdir /data/tmp/{{id}}
+            cp {{raw_data}}/*.nii.gz /data/tmp/{{id}}
         fi
         echo "{{nothing}}"
 
     Before running the function will change that part of the script to::
 
-        ls -l /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/hcp/OP578/MNINonLinear
+        ls -l /data/qx_study/sessions/OP578/hcp/OP578/MNINonLinear
         if [ "control" = "control" ]; then
-            mkdir /gpfs/project/fas/n3/Studies/tmp/OP578
-            cp /gpfs/project/fas/n3/Studies/MBLab/WM.v3/sessions/OP578/nii/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/OP578
+            mkdir /data/tmp/OP578
+            cp /data/qx_study/sessions/OP578/nii/*.nii.gz /data/tmp/OP578
         fi
         echo "{{nothing}}"
 
     EXAMPLE USE
     ===========
-    
+
     ::
 
         qunex run_shell_script sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\

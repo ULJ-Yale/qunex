@@ -35,7 +35,7 @@ Parameters:
 
     --parcellationfile (str):
         Specify the absolute path of the file you want to use for parcellation
-        (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii).
+        (e.g. /data/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii).
 
     --outname (str):
         Specify the suffix output name of the pconn file.
@@ -124,8 +124,8 @@ fi
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
-    # SessionsFolder 
-    # Session        
+    # SessionsFolder
+    # Session
     # MatrixVersion     e.g. 1 or 3
     # ParcellationFile  in *.dlabel.nii format
     # OutName
@@ -253,7 +253,7 @@ fi
 # -- Set StudyFolder
 cd $SessionsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
-   
+
 # -- Report options
 echo ""
 echo ""
@@ -292,7 +292,7 @@ if [ "$Lengths" == "yes" ]; then
     DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pdconn.nii"
     if [ ! "$WayTotal" == "none" ]; then
         echo "--- ignoring waytotal argument (should be set to none when parcellating the streamline lengths matrix)"; echo ""
-    fi 
+    fi
 else
 
     if [ "$WayTotal" == "none" ]; then
