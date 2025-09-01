@@ -3688,6 +3688,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     dwis[int(k)] = v["task"]
 
             # QuNex's automatic posData and negData setup
+            have_pairs = False
             if (
                 options["hcp_dwi_posdata"] is None
                 and options["hcp_dwi_negdata"] is None
@@ -3721,6 +3722,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                                         "file": "EMPTY",
                                     }
                                     dwi_data[dwi_matching] = dwi_dict
+                                else:
+                                    have_pairs = True
 
                 # prepare pos and neg files
                 dwi_files = dict()
@@ -3782,7 +3785,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 for image in pos_list:
                     if image != "EMPTY":
                         pos_paths.append(hcp["DWI_source"] + "/" + image)
-                    else:
+                    # append empty only if there are pairs
+                    elif have_pairs:
                         pos_paths.append(image)
                 pos_data = "@".join(pos_paths)
                 # neg
@@ -3791,7 +3795,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 for image in neg_list:
                     if image != "EMPTY":
                         neg_paths.append(hcp["DWI_source"] + "/" + image)
-                    else:
+                    # append empty only if there are pairs
+                    elif have_pairs:
                         neg_paths.append(image)
                 neg_data = "@".join(neg_paths)
 
@@ -3879,7 +3884,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     "echospacing": echospacing,
                     "pe_dir": pe_dir,
                     "gdcoeffs": gdcfile,
-                    "combinedataflag": options["hcp_dwi_combinedata"],
                     "printcom": options["hcp_printcom"],
                 }
             )
@@ -3893,6 +3897,12 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 )
 
             # -- Optional parameters
+            # if there are no pairs combine-data-flag default is 2
+            if options["hcp_dwi_combinedata"] is not None:
+                comm += "                --combine-data-flag=" + options["hcp_dwi_combinedata"]
+            elif not have_pairs:
+                comm += "                --combine-data-flag=2"
+
             if options["hcp_dwi_b0maxbval"] is not None:
                 comm += "                --b0maxbval=" + options["hcp_dwi_b0maxbval"]
 
