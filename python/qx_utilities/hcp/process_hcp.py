@@ -3726,9 +3726,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 # prepare pos and neg files
                 dwi_files = dict()
                 for _, dwi in dwi_data.items():
-                    if not has_pair and dwi["file"] == "EMPTY":
-                        continue
-
                     if dwi["dir"] in dwi_files:
                         dwi_files[dwi["dir"]] = (
                             dwi_files[dwi["dir"]] + "@" + dwi["file"]
