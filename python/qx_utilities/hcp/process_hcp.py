@@ -3686,7 +3686,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     dwis[int(k)] = v["task"]
 
             # QuNex's automatic posData and negData setup
-            have_pairs = False
+            has_pair = False
             if (
                 options["hcp_dwi_posdata"] is None
                 and options["hcp_dwi_negdata"] is None
@@ -3721,11 +3721,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                                     }
                                     dwi_data[dwi_matching] = dwi_dict
                                 else:
-                                    have_pairs = True
+                                    has_pair = True
 
                 # prepare pos and neg files
                 dwi_files = dict()
                 for _, dwi in dwi_data.items():
+                    if not has_pair and dwi["file"] == "EMPTY":
+                        continue
+
                     if dwi["dir"] in dwi_files:
                         dwi_files[dwi["dir"]] = (
                             dwi_files[dwi["dir"]] + "@" + dwi["file"]
@@ -3783,8 +3786,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 for image in pos_list:
                     if image != "EMPTY":
                         pos_paths.append(hcp["DWI_source"] + "/" + image)
-                    # append empty only if there are pairs
-                    elif have_pairs:
+                    else:
                         pos_paths.append(image)
                 pos_data = "@".join(pos_paths)
                 # neg
@@ -3793,8 +3795,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 for image in neg_list:
                     if image != "EMPTY":
                         neg_paths.append(hcp["DWI_source"] + "/" + image)
-                    # append empty only if there are pairs
-                    elif have_pairs:
+                    else:
                         neg_paths.append(image)
                 neg_data = "@".join(neg_paths)
 
@@ -3897,7 +3898,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             # if there are no pairs combine-data-flag default is 2
             if options["hcp_dwi_combinedata"] is not None:
                 comm += "                --combine-data-flag=" + options["hcp_dwi_combinedata"]
-            elif not have_pairs:
+            elif not has_pair:
                 comm += "                --combine-data-flag=2"
 
             if options["hcp_dwi_b0maxbval"] is not None:
