@@ -3459,11 +3459,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             considered as b0s.
 
         --hcp_dwi_combinedata (int, default 1):
-            Specified value is passed as the CombineDataFlag value for
-            the eddy_postproc.sh script. If JAC resampling has been
-            used in eddy, this value determines what to do with the
-            output file.
-
+            If JAC resampling has been used in eddy, this value determines what
+            to do with the output file:
             - 2 ... include in the output all volumes uncombined (i.e. output
               file of eddy)
             - 1 ... include in the output and combine only volumes where
@@ -3572,7 +3569,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             ``hcp_dwi_gdcoeffs``          ``gdcoeffs``
             ``hcp_dwi_dof``               ``dof``
             ``hcp_dwi_b0maxbval``         ``b0maxbval``
-            ``hcp_dwi_combinedata``       ``combinedataflag``
+            ``hcp_dwi_combinedata``       ``combine-data-flag``
             ``hcp_printcom``              ``printcom``
             ``hcp_dwi_extraeddyarg``      ``extra-eddy-arg``
             ``hcp_dwi_name``              ``dwiname``
@@ -3869,7 +3866,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 --negData="%(neg_data)s" \
                 --echospacing-seconds="%(echospacing)s" \
                 --gdcoeffs="%(gdcoeffs)s" \
-                --combine-data-flag="%(combinedataflag)s" \
                 --printcom="%(printcom)s"'
                 % {
                     "script": os.path.join(
