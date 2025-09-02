@@ -1263,7 +1263,7 @@ def main(args=None):
                     batchlogsfolder=logsfolder,
                     slurm_array=slurm_array,
                 )
-                # sleep here for 100 ms
+                # sleep here for scheduling_delay
                 time.sleep(scheduling_delay)
             else:
                 subprocess.run(container_command, shell=True, check=False)
