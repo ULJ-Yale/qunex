@@ -3461,6 +3461,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         --hcp_dwi_combinedata (int, default 1):
             If JAC resampling has been used in eddy, this value determines what
             to do with the output file:
+
             - 2 ... include in the output all volumes uncombined (i.e. output
               file of eddy)
             - 1 ... include in the output and combine only volumes where
