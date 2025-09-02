@@ -636,55 +636,59 @@ def main(args=None):
     INPUTS
     ======
 
-    --container     specifies either the path to the Singularity/Apptainer
-                    container image  or the full specification of the Docker
-                    container to be used (e.g. qunex/qunex_suite:0_45_07).
-    --bash_pre      If any additional commands have to be run in bash before the
-                    execution of qunex_container command itself. Use a semicolon
-                    separated list to chain multiple commands. ['']
-    --bash_post     Used if any additional commands have to be run inside the
-                    QuNex container before executing the desired QuNex command.
-                    Use a semicolon separated list to chain multiple commands.
-                    ['']
-    --bind          Used for binding external folders in order for the system in
-                    the container to have access to relvant data. Maps to -B
-                    parameter of Singularity/Apptainer and -v parmaeter of
-                    Docker.
-    --nocleanenv    By default QuNex will use the --cleanenv flag of
-                    Singularity/Apptainer so your local environment setup will
-                    not be propagated into the container. If you want to disable
-                    this functionality use this flag. The flag is not set by
-                    default.
-    --cuda          Use in order to prepare the container for CUDA usage. This
-                    flag is not set by default.
-    --cuda_path     Can be used to bind a local CUDA version over the one in the
-                    system.
-    --nv            An old way of using using CUDA inside Singularity/Apptainer.
-                    If provided then --nv option will be used when executing.
-    --script        If a script is to be run against the Singularity/Apptainer
-                    container rather than a single command, the path to the
-                    script to be run is specified here. ['']
-    --containeropt  A string that lists the additional options to be used when
-                    running the container. The parameters are to be specified in
-                    a string exactly as they would be on a command line, e.g.
-                    to run Docker in detached mode and mount a specific folder
-                    use::
+    --container         specifies either the path to the Singularity/Apptainer
+                        container image  or the full specification of the Docker
+                        container to be used (e.g. qunex/qunex_suite:0_45_07).
+    --bash_pre          If any additional commands have to be run in bash before the
+                        execution of qunex_container command itself. Use a semicolon
+                        separated list to chain multiple commands. ['']
+    --bash_post         Used if any additional commands have to be run inside the
+                        QuNex container before executing the desired QuNex command.
+                        Use a semicolon separated list to chain multiple commands.
+                        ['']
+    --bind              Used for binding external folders in order for the system in
+                        the container to have access to relvant data. Maps to -B
+                        parameter of Singularity/Apptainer and -v parmaeter of
+                        Docker.
+    --nocleanenv        By default QuNex will use the --cleanenv flag of
+                        Singularity/Apptainer so your local environment setup will
+                        not be propagated into the container. If you want to disable
+                        this functionality use this flag. The flag is not set by
+                        default.
+    --cuda              Use in order to prepare the container for CUDA usage. This
+                        flag is not set by default.
+    --cuda_path         Can be used to bind a local CUDA version over the one in the
+                        system.
+    --nv                An old way of using using CUDA inside Singularity/Apptainer.
+                        If provided then --nv option will be used when executing.
+    --script            If a script is to be run against the Singularity/Apptainer
+                        container rather than a single command, the path to the
+                        script to be run is specified here. ['']
+    --containeropt      A string that lists the additional options to be used when
+                        running the container. The parameters are to be specified in
+                        a string exactly as they would be on a command line, e.g.
+                        to run Docker in detached mode and mount a specific folder
+                        use::
 
-                        "-d -v /host/directory:/container/directory"
-    --scheduler     A string that specifies the details to use to submit the
-                    container job to a scheduling system.
-    --parjobs       Specify the maximum amount of jobs that will be created
-                    and run in parallel. By default this equals the number
-                    of sessions your provided.
-    --parsessions   Specify the amount of sessions that will be run in parallel
-                    inside each created job. [1]
-    --parelements   Specify the amount of elements that will be run in parallel
-                    inside each session (for example BOLDs in hcp_fmri_volume).
-                    [1]
-    --parinfo       If this flag is set then qunex_container will not execute
-                    the command, it will only printout the parallelism
-                    information, e.g. how many jobs will be spawned, how many
-                    sessions will be run in parallel, etc.
+                            "-d -v /host/directory:/container/directory"
+    --scheduler         A string that specifies the details to use to submit the
+                            container job to a scheduling system.
+    --scheduling_delay  A string that specifies the delay to use when scheduling
+                        the container job. This can be useful to avoid overloading
+                        the scheduling system.
+    --parjobs           Specify the maximum amount of jobs that will be created
+                        and run in parallel. By default this equals the number
+                        of sessions your provided.
+    --parsessions       Specify the amount of sessions that will be run in parallel
+                        inside each created job. [1]
+    --parelements       Specify the amount of elements that will be run in parallel
+                        inside each session (for example BOLDs in hcp_fmri_volume).
+                        [1]
+    --parinfo           If this flag is set then qunex_container will not execute
+                        the command, it will only printout the parallelism
+                        information, e.g. how many jobs will be spawned, how many
+                        sessions will be run in parallel, etc.
+
 
     RESULTS
     =======
