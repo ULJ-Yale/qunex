@@ -13,6 +13,7 @@ import os
 import sys
 import re
 import math
+import time
 
 from datetime import datetime
 
@@ -780,6 +781,7 @@ def main(args=None):
     output = None
     parinfo = None
     overwrite = None
+    scheduling_delay = 0
 
     for arg in args:
         # cleanup -- at start
@@ -846,6 +848,9 @@ def main(args=None):
                 nv = True
             elif arg == "parinfo":
                 parinfo = True
+            elif arg.startswith("scheduling_delay="):
+                k, scheduling_delay = arg.split("=", 1)
+                scheduling_delay = int(scheduling_delay)
             elif "=" in arg:
                 k, v = arg.split("=", 1)
                 command += f'--{k}="{v}" '
@@ -1258,6 +1263,8 @@ def main(args=None):
                     batchlogsfolder=logsfolder,
                     slurm_array=slurm_array,
                 )
+                # sleep here for 100 ms
+                time.sleep(scheduling_delay)
             else:
                 subprocess.run(container_command, shell=True, check=False)
 
