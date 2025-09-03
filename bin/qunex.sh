@@ -2423,7 +2423,7 @@ if [ "$CommandToRun" == "dwi_parcellate" ]; then
             if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
 
-    if [ -z "$WayTotal" ]; then WayTotal="no"; echo "NOTE: --waytotal normalized data not specified. Assuming default [no]"; fi
+    if [ -z "$WayTotal" ]; then WayTotal="none"; echo "NOTE: --waytotal normalized data not specified. Assuming default [none]"; fi
 
     if [ -z "$Lengths" ]; then Lengths="no"; echo "NOTE --lengths not specified. Assuming default [no]"; fi
 

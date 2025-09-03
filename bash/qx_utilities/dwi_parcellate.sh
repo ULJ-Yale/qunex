@@ -148,7 +148,6 @@ unset Overwrite
 unset WayTotal
 unset Lengths
 unset DWIOutFilePconn
-unset DWIOutFilePDconn
 unset DWIOutFileDPconn
 runcmd=""
 
@@ -250,10 +249,6 @@ if [ -z ${OutName} ]; then
     exit 1
 fi
 
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
-
 # -- Report options
 echo ""
 echo ""
@@ -273,9 +268,6 @@ echo ""
 }
 
 ######################################### DO WORK ##########################################
-# gzip $ResultsFolder/${OutFileName} --fast
-# gzip $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
-
 main() {
 # -- Get Command Line Options
 get_options $@
@@ -289,35 +281,26 @@ if [ "$Lengths" == "yes" ]; then
     DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_lengths.dconn.nii.gz"
     DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pconn.nii"
     DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.dpconn.nii"
-    DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_lengths_${OutName}.pdconn.nii"
     if [ ! "$WayTotal" == "none" ]; then
         echo "--- ignoring waytotal argument (should be set to none when parcellating the streamline lengths matrix)"; echo ""
     fi
 else
-
     if [ "$WayTotal" == "none" ]; then
         echo "--- Using dconn file without waytotal normalization"; echo ""
         DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
         DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
         DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_${OutName}.dpconn.nii"
-
-    fi
-    if [ "$WayTotal" == "standard" ]; then
+    elif [ "$WayTotal" == "standard" ]; then
         echo "--- Using waytotal normalized dconn file"; echo ""
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
         DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.pdconn.nii"
         DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dpconn.nii"
-    fi
-    if [ "$WayTotal" == "log" ]; then
+    elif [ "$WayTotal" == "log" ]; then
         echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
         DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pconn.nii"
-        DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.pdconn.nii"
         DWIOutFileDPconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dpconn.nii"
     fi
-
 fi
 
 # -- Define output
@@ -330,7 +313,6 @@ if [ "$Overwrite" == "yes" ]; then
     echo "--- Deleting prior runs for $DiffData..."
     echo ""
     rm -f "$DWIOutput"/"$DWIOutFileDPconn" > /dev/null 2>&1
-    rm -f "$DWIOutput"/"$DWIOutFilePDconn" > /dev/null 2>&1
     rm -f "$DWIOutput"/"$DWIOutFilePconn" > /dev/null 2>&1
 fi
 
@@ -347,23 +329,25 @@ if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
 else
     echo "--- Parcellation data not found."
     echo ""
+    # -- First parcellate by ROW and save a *dpconn file
     echo "--- Computing parcellation by ROW on $DWIInput..."
     echo ""
-    # -- First parcellate by ROW and save a *dpconn file
     wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFileDPconn"
-    echo "--- Computing parcellation by COLUMN on ${DWIOutput}/${DWIOutFileDPconn} ..."
+
+    # -- Next parcellate by COLUMN
+    echo "--- Computing parcellation by COLUMN on ${DWIOutput}/${DWIOutFileDPconn}..."
     echo ""
-    # -- Next parcellate by COLUMN and save final *pconn file
     wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFileDPconn" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePconn"
-    wb_command -cifti-transpose "$DWIOutput"/"$DWIOutFileDPconn" "$DWIOutput"/"$DWIOutFilePDconn"
-	rm "$DWIOutput"/"$DWIOutFileDPconn"
+
+    # -- Cleanup of *dpconn
+    rm "$DWIOutput"/"$DWIOutFileDPconn"
 fi
 
 # -- Perform completion checks
 echo "--- Checking outputs..."
 echo ""
 if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
-    echo "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
+    echo "Parcellated (pconn) file for Matrix $MatrixVersion: ${DWIOutput}/${DWIOutFilePconn}"
     echo ""
 else
     echo "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
