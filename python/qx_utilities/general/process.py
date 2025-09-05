@@ -371,7 +371,7 @@ arglist = [
     ["hcp_dwi_gdcoeffs", "NONE", str],
     ["hcp_dwi_dof", "", isNone],
     ["hcp_dwi_b0maxbval", "", isNone],
-    ["hcp_dwi_combinedata", "1", str],
+    ["hcp_dwi_combinedata", "", isNone],
     ["hcp_dwi_extraeddyarg", "", isNone],
     ["hcp_dwi_name", "", isNone],
     ["hcp_nogpu", None, flag],

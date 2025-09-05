@@ -113,15 +113,15 @@ fi
 # -- Parse arguments
 # ------------------------------------------------------------------------------
 
-########################################## INPUTS ########################################## 
+########################################## INPUTS ##########################################
 
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
-    # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome/sessions
+    # SessionsFolder # e.g. /data/qx_study/sessions
     # Session      # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
-    # SeedFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
+    # SeedFile  # e.g. /data/qx_study/sessions/100307/hcp/100307/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz
     # OutName  # e.g. THALAMUS
 
 ########################################## OUTPUTS #########################################
@@ -193,7 +193,7 @@ while [ ${index} -lt ${numArgs} ]; do
         --overwrite=*)
             Overwrite=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;      
+            ;;
         *)
             usage
             echo "ERROR: Unrecognized Option: ${argument}"
@@ -277,7 +277,7 @@ if [ ${WayTotal} == "standard" ]; then
     if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
     else
-        DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"    
+        DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"
     fi
     DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg.dscalar.nii"
     DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dconn.nii"
@@ -288,7 +288,7 @@ elif [ ${WayTotal} == "log" ]; then
     if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
         DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
     else
-        DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"    
+        DWIInput="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"
     fi
     DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}_Avg.dscalar.nii"
     DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dconn.nii"
@@ -299,7 +299,7 @@ elif ! { [ "${WayTotal}" = "log" ] || [ "${WayTotal}" = "standard" ]; }; then
     if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
         DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
     else
-        DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii"    
+        DWIInput="$SessionsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii"
     fi
     DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii"
     DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
@@ -334,7 +334,7 @@ if [ -f ${DWIOutput}/${DWIOutFileDscalar} ]; then
     exit 1
 else
     echo "--- Dense scalar seed tractography data not found."; echo ""
-    # -- Check of GBC only was requested 
+    # -- Check of GBC only was requested
     if [ ${SeedFile} == "gbc" ]; then
         echo "--- Computing dense DWI GBC on $DWIInput..."; echo ""
         wb_command -cifti-reduce ${DWIInput} MEAN ${DWIOutput}/${DWIOutFileDscalar}
@@ -346,7 +346,7 @@ else
         # -- Next average the restricted dense connectome across the input structure and save the dscalar
         wb_command -cifti-average-dense-roi ${DWIOutput}/${DWIOutFileDscalar} -cifti ${DWIOutput}/${DWIOutFileDconn} -vol-roi ${SeedFile}
     fi
-fi    
+fi
 
 # -- Perform completion checks
 echo "--- Checking outputs..."; echo ""

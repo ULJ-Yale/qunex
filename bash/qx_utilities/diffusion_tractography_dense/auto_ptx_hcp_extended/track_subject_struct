@@ -8,7 +8,7 @@
 # as in De Groot et al., NeuroImage 2013.
 
 ptx_bin_CPU=$FSLDIR/bin/probtrackx2 #CPU_version
-ptx_bin_GPU=/gpfs/project/fas/n3/software/fsl-5.0.9/fsl/bin/probtrackx2_gpu #GPU_version
+ptx_bin_GPU=$FSLDIR/bin/probtrackx2_gpu #GPU_version
 #ptx_bin_GPU=/gpfs/project2/fas/n3/software/CodeHCPe/DiffusionTractographyStam/probtrackx2_gpu #GPU_version
 
 Usage() {
@@ -95,12 +95,12 @@ fi
 jobMATH4="1"
 
 #Copy the seed, target and exclude files
-imcp $masks/seed $tracts/seed 
+imcp $masks/seed $tracts/seed
 if [ $waypointNum -gt "1" ]; then
     cp $masks/target.txt $tracts/target.txt
     suf=".txt"
 else
-    imcp $masks/target $tracts/target 
+    imcp $masks/target $tracts/target
     suf=".nii.gz"
 fi
 imcp $masks/exclude $tracts/exclude
@@ -134,7 +134,7 @@ if [ "$symtrack" = "1" ]; then
   rm -f $tracts/tracts/waytotal
   way2=`cat $tracts/tractsInv/waytotal | sed 's/e/\\*10^/' | tr -d '+' `
   way=$(echo "scale=5; $way1 + $way2 "|bc)
-  echo $way > $tracts/tracts/waytotal 
+  echo $way > $tracts/tracts/waytotal
 fi
 
 # perform normalisation for waytotal
