@@ -6,11 +6,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.3.3
+
+* Improved the documentation at several locations.
+* Improved support in `hcp_diffusion` for diffusion acquisition that does not exactly match the HCP protocol.
+* Fixed a bug in `dwi_parcellate` where default parameter values did not get used properly.
+
 ## 1.3.2
 
 * Added support for additional `hcp_msmall` parameters.
 * Made the `hcp_asl` pipeline more robust.
 * Fixed a bug in `hcp_transmit_bias` when looking for AFI images.
+* Fixed a bug where spin-echo pairs were not correctly picked up by `hcp_fmri_volume`.
+* Fixed a bug where sometimes `gradunwrap` was not found.
+* Fixed a bug where sometimes `hcp_post_fix` would not trigger after `hcp_icafix`.
 
 ## 1.3.1
 

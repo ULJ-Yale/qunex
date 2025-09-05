@@ -40,7 +40,7 @@ Parameters:
 
     --parcellationfile (str):
        Specify the absolute path of the file you want to use for parcellation
-       (e.g. '/gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii').
+       (e.g. '/data/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii').
 
     --singleinputfile (str):
        Parcellate only a single file in any location. Individual flags are not
@@ -131,12 +131,12 @@ fi
 # -- Check if command line arguments are specified
 # ------------------------------------------------------------------------------
 
-########################################## INPUTS ########################################## 
+########################################## INPUTS ##########################################
 
 # BOLD data should be pre-processed and in CIFTI format
 # The data should be in the folder relative to the master study folder, specified by the inputfile
 # Mandatory input parameters:
-    # SessionsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    # SessionsFolder # e.g. /data/qx_study/Connectome
     # Session      # e.g. 100206
     # InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
     # InputPath # e.g. /images/functional/
@@ -144,9 +144,9 @@ fi
     # SingleInputFile # Input only a single file to parcellate
     # OutPath # e.g. /images/functional/
     # OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
-    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+    # ParcellationFile  # e.g. /data/qx_study/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
     # ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
-    # UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
+    # UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no)
     # WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
     # ExtractData # yes/no
 
@@ -211,15 +211,15 @@ while [ ${index} -lt ${numArgs} ]; do
         --singleinputfile=*)
             SingleInputFile=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                
+            ;;
         --inputpath=*)
             InputPath=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;            
+            ;;
         --inputdatatype=*)
             InputDataType=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;            
+            ;;
         --parcellationfile=*)
             ParcellationFile=${argument/*=/""}
             index=$(( index + 1 ))
@@ -235,19 +235,19 @@ while [ ${index} -lt ${numArgs} ]; do
         --overwrite=*)
             Overwrite=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;      
+            ;;
         --computepconn=*)
             ComputePConn=${argument/*=/""}
             index=$(( index + 1 ))
-            ;; 
+            ;;
         --useweights=*)
             UseWeights=${argument/*=/""}
             index=$(( index + 1 ))
-            ;; 
+            ;;
         --weightsfile=*)
             WeightsFile=${argument/*=/""}
             index=$(( index + 1 ))
-            ;; 
+            ;;
         --extractdata=*)
             ExtractData=${argument/*=/""}
             index=$(( index + 1 ))
@@ -366,7 +366,7 @@ if [ "$InputDataType" == "dtseries" ]; then
     echo "      Working with dtseries files..."
     echo ""
     # -- Define extension
-    if [ `echo ${InputFile} | grep '.dtseries.nii'` ]; then 
+    if [ `echo ${InputFile} | grep '.dtseries.nii'` ]; then
         InputFile=`echo ${InputFile} | sed 's|.dtseries.nii||g'`
     fi
     InputFileExt="dtseries.nii"
@@ -387,11 +387,11 @@ if [ "$InputDataType" == "dtseries" ]; then
     echo "      Parcellated BOLD Output:       ${BOLDOutput}"
     echo ""
 fi
-if [ "$InputDataType" == "dscalar" ]; then 
+if [ "$InputDataType" == "dscalar" ]; then
     echo "       Working with dscalar files..."
     echo ""
-    # -- Define extension 
-    if [ `echo ${InputFile} | grep '.dscalar.nii'` ]; then 
+    # -- Define extension
+    if [ `echo ${InputFile} | grep '.dscalar.nii'` ]; then
         InputFile=`echo ${InputFile} | sed 's|.dscalar.nii||g'`
     fi
     InputFileExt="dscalar.nii"
@@ -429,7 +429,7 @@ if [ -f "$BOLDOutput" ]; then
     echo ""
     echo "      $BOLDOutput"
     echo ""
-if [[ ${Overwrite} == "no" ]]; then 
+if [[ ${Overwrite} == "no" ]]; then
     echo ""
     echo " ---> Overwrite set to no. If you wish to overwrite, set --overwrite='yes' and re-run."
     echo ""
@@ -454,11 +454,11 @@ echo "-- Computing parcellation on $BOLDInput..."
 echo ""
 # -- First parcellate by COLUMN and save a parcellated file
 wb_command -cifti-parcellate ${BOLDInput} ${ParcellationFile} COLUMN ${BOLDOutput} -only-numeric
-# -- Check if specified file was a *dtseries and compute a pconn file as well 
+# -- Check if specified file was a *dtseries and compute a pconn file as well
 if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
     # Check if pconn calculation is requested
     if [ "$ComputePConn" == "yes" ]; then
-        # -- Specify pconn file outputs for correlation (r) value and covariance 
+        # -- Specify pconn file outputs for correlation (r) value and covariance
         OutPConnFileExtR="r.pconn.nii"
         OutPConnFileExtRfZ="r_Fz.pconn.nii"
         OutPConnFileExtCov="cov.pconn.nii"
@@ -532,13 +532,13 @@ if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
     fi
 fi
 
-if [ "$ExtractData" == "yes" ]; then 
+if [ "$ExtractData" == "yes" ]; then
     echo "--- Requested extraction of data in CSV format."
     echo ""
     if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ] && [ "$ComputePConn" == "yes" ]; then
         echo "--- Saving out the parcellated data in a CSV file..."
         echo ""
-        # -- Specify pconn file outputs for correlation (r) value and covariance 
+        # -- Specify pconn file outputs for correlation (r) value and covariance
         CSVOutPConnFileExtR="r.csv"
         CSVOutPConnFileExtCov="cov.csv"
         CSVOutPConnFileExtRfZ="r_Fz.csv"

@@ -645,8 +645,11 @@ MAMBADIR=${MAMBADIR}/bin
 PATH=${MAMBADIR}:${PATH}
 export MAMBADIR PATH
 
-# activate qunex
-source activate $QUNEXENV 2> /dev/null
-
-# set prompt
-PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "
+# activate
+if [[ -e /opt/.container ]]; then
+    eval "$(micromamba shell hook --shell bash 2>/dev/null)"
+    micromamba activate /opt/env/qunex
+else
+    source activate $QUNEXENV 2> /dev/null
+    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "
+fi
