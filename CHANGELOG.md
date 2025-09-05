@@ -8,7 +8,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 1.3.3
 
-* todo
+* Improved the documentation at several locations.
+* Improved support in `hcp_diffusion` for diffusion acquisition that does not exactly match the HCP protocol.
+* Fixed a bug in `dwi_parcellate` where default parameter values did not get used properly.
 
 ## 1.3.2
 

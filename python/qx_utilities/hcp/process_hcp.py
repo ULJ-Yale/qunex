@@ -184,9 +184,7 @@ def getHCPPaths(sinfo, options):
             else:
                 d["T2w"] = "@".join(
                     glob.glob(
-                        os.path.join(
-                            d["T2w_source"], sinfo["id"] + "_T2w_SPC*.nii.gz"
-                        )
+                        os.path.join(d["T2w_source"], sinfo["id"] + "_T2w_SPC*.nii.gz")
                     )
                 )
         except:
@@ -329,7 +327,9 @@ def getHCPPaths(sinfo, options):
                 d["RB1COR-Head"] = rb1cor_head[0]
 
     rb1cor_bc = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*_BC.nii.gz"))
-    rb1cor_body = glob.glob(os.path.join(d["source"], "B1", sinfo["id"] + "*-Body.nii.gz"))
+    rb1cor_body = glob.glob(
+        os.path.join(d["source"], "B1", sinfo["id"] + "*-Body.nii.gz")
+    )
     if len(rb1cor_bc) != 0:
         d["RB1COR-Body"] = rb1cor_bc[0]
     elif len(rb1cor_body) != 0:
@@ -1068,8 +1068,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             and checkInlineParameterUse("SE", "EchoSpacing", options)
                         ):
                             options["hcp_seechospacing"] = seInfo["EchoSpacing"]
-                            r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (
-                                options["hcp_seechospacing"]
+                            r += (
+                                "\n---> Spin-Echo images specific EchoSpacing: %s s"
+                                % (options["hcp_seechospacing"])
                             )
 
                     if options["hcp_seunwarpdir"] is None:
@@ -3726,6 +3727,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 # prepare pos and neg files
                 dwi_files = dict()
                 for _, dwi in dwi_data.items():
+                    if not has_pair and dwi["file"] == "EMPTY":
+                        continue
+
                     if dwi["dir"] in dwi_files:
                         dwi_files[dwi["dir"]] = (
                             dwi_files[dwi["dir"]] + "@" + dwi["file"]
@@ -3894,7 +3898,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             # -- Optional parameters
             # if there are no pairs combine-data-flag default is 2
             if options["hcp_dwi_combinedata"] is not None:
-                comm += "                --combine-data-flag=" + options["hcp_dwi_combinedata"]
+                comm += (
+                    "                --combine-data-flag="
+                    + options["hcp_dwi_combinedata"]
+                )
             elif not has_pair:
                 comm += "                --combine-data-flag=2"
 
@@ -3916,6 +3923,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_dwi_selectbestb0"]:
                 comm += "                --select-best-b0"
+            # elif not has_pair:
+            #     comm += "                --select-best-b0"
 
             if options["hcp_dwi_topupconfig"] is not None:
                 comm += (
@@ -4826,7 +4835,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             if options["hcp_bold_seechospacing"] is None:
                                 fmap_json = glob.glob(os.path.join(sepath, "*AP*.json"))
                                 if len(fmap_json) == 0:
-                                    fmap_json = glob.glob(os.path.join(sepath, "*LR*.json"))
+                                    fmap_json = glob.glob(
+                                        os.path.join(sepath, "*LR*.json")
+                                    )
 
                                 if len(fmap_json) != 0:
                                     fmap_json = fmap_json[0]
@@ -4860,25 +4871,36 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                 if (
                                     se_info
                                     and "EchoSpacing" in se_info
-                                    and checkInlineParameterUse("SE", "EchoSpacing", options)
+                                    and checkInlineParameterUse(
+                                        "SE", "EchoSpacing", options
+                                    )
                                 ):
-                                    options["hcp_bold_seechospacing"] = se_info["EchoSpacing"]
-                                    r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (
-                                        options["hcp_bold_seechospacing"]
+                                    options["hcp_bold_seechospacing"] = se_info[
+                                        "EchoSpacing"
+                                    ]
+                                    r += (
+                                        "\n---> Spin-Echo images specific EchoSpacing: %s s"
+                                        % (options["hcp_bold_seechospacing"])
                                     )
 
                             if options["hcp_bold_seunwarpdir"] is None:
                                 if se_info and "phenc" in se_info:
-                                    options["hcp_bold_seunwarpdir"] = SEDirMap[se_info["phenc"]]
+                                    options["hcp_bold_seunwarpdir"] = SEDirMap[
+                                        se_info["phenc"]
+                                    ]
                                     r += "\n---> Spin-Echo unwarp direction: %s" % (
                                         options["hcp_bold_seunwarpdir"]
                                     )
                                 elif (
                                     se_info
                                     and "PEDirection" in se_info
-                                    and checkInlineParameterUse("SE", "PEDirection", options)
+                                    and checkInlineParameterUse(
+                                        "SE", "PEDirection", options
+                                    )
                                 ):
-                                    options["hcp_bold_seunwarpdir"] = se_info["PEDirection"]
+                                    options["hcp_bold_seunwarpdir"] = se_info[
+                                        "PEDirection"
+                                    ]
                                     r += "\n---> Spin-Echo unwarp direction: %s" % (
                                         options["hcp_bold_seunwarpdir"]
                                     )
@@ -5077,7 +5099,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         boldok = False
 
             # --- check for spin-echo-fieldmap image
-            if options["hcp_bold_dcmethod"].lower() in ["topup", "topup_mismatched"] and sesettings:
+            if (
+                options["hcp_bold_dcmethod"].lower() in ["topup", "topup_mismatched"]
+                and sesettings
+            ):
                 if not sepresent:
                     r += "\n     ... ERROR: No spin echo fieldmap set images present!"
                     boldok = False
@@ -5364,7 +5389,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- SEBASED
             elif options["hcp_bold_biascorrection"].lower() == "sebased":
                 r += "\n     ... SEBASED bias correction used"
-                if options["hcp_bold_dcmethod"].lower() not in ["topup", "topup_mismatched"]:
+                if options["hcp_bold_dcmethod"].lower() not in [
+                    "topup",
+                    "topup_mismatched",
+                ]:
                     r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP or TOPUP_MISMATCHED!"
                     run = False
 
@@ -7715,9 +7743,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(parelements)
         # process
-        f = partial(
-            executeHCPPostFix, sinfo, options, hcp, run, singleFix
-        )
+        f = partial(executeHCPPostFix, sinfo, options, hcp, run, singleFix)
         results = processPoolExecutor.map(f, icafixBolds)
 
         # merge r and report
@@ -8898,7 +8924,11 @@ def parse_msmall_bolds(options, bolds, r):
                 hmb = None
                 for b in bolds:
                     # does the name match?
-                    if "filename" in b and mb == b["filename"] and options["hcp_filename"] == "userdefined":
+                    if (
+                        "filename" in b
+                        and mb == b["filename"]
+                        and options["hcp_filename"] == "userdefined"
+                    ):
                         hmb = b["filename"]
                         break
                     # does the number match?
@@ -9491,7 +9521,10 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
 
         # hcp_msmall_iteration_modes
         if options["hcp_msmall_iteration_modes"] is not None:
-            comm += "                --iteration-modes=" + options["hcp_msmall_iteration_modes"]
+            comm += (
+                "                --iteration-modes="
+                + options["hcp_msmall_iteration_modes"]
+            )
 
         # hcp_msmall_method
         if options["hcp_msmall_method"] is not None:
@@ -9507,7 +9540,9 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
 
         # hcp_msmall_low_sica_dims
         if options["hcp_msmall_low_sica_dims"] is not None:
-            comm += "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+            comm += (
+                "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+            )
 
         # hcp_msmall_vn
         if options["hcp_msmall_vn"] is not None:
@@ -9515,27 +9550,45 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
 
         # hcp_msmall_reg_conf_path
         if options["hcp_msmall_reg_conf_path"] is not None:
-            comm += "                --registration-configure-path=" + options["hcp_msmall_reg_conf_path"]
+            comm += (
+                "                --registration-configure-path="
+                + options["hcp_msmall_reg_conf_path"]
+            )
 
         # hcp_msmall_reg_vars
         if options["hcp_msmall_reg_vars"] is not None:
-            comm += "                --registration-configure-override-variables=" + options["hcp_msmall_reg_vars"]
+            comm += (
+                "                --registration-configure-override-variables="
+                + options["hcp_msmall_reg_vars"]
+            )
 
         # hcp_msmall_rsn_template
         if options["hcp_msmall_rsn_template"] is not None:
-            comm += "                --rsn-template-file=" + options["hcp_msmall_rsn_template"]
+            comm += (
+                "                --rsn-template-file="
+                + options["hcp_msmall_rsn_template"]
+            )
 
         # hcp_msmall_rsn_weights
         if options["hcp_msmall_rsn_weights"] is not None:
-            comm += "                --rsn-weights-file=" + options["hcp_msmall_rsn_weights"]
+            comm += (
+                "                --rsn-weights-file="
+                + options["hcp_msmall_rsn_weights"]
+            )
 
         # hcp_msmall_topography_roi
         if options["hcp_msmall_topography_roi"] is not None:
-            comm += "                --topography-roi-file=" + options["hcp_msmall_topography_roi"]
+            comm += (
+                "                --topography-roi-file="
+                + options["hcp_msmall_topography_roi"]
+            )
 
         # hcp_msmall_topography_target
         if options["hcp_msmall_topography_target"] is not None:
-            comm += "                --topography-target-file=" + options["hcp_msmall_topography_target"]
+            comm += (
+                "                --topography-target-file="
+                + options["hcp_msmall_topography_target"]
+            )
 
         # hcp_msmall_no_ind_mean
         if options["hcp_msmall_no_ind_mean"] is not None:
@@ -9777,7 +9830,10 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
 
         # hcp_msmall_iteration_modes
         if options["hcp_msmall_iteration_modes"] is not None:
-            comm += "                --iteration-modes=" + options["hcp_msmall_iteration_modes"]
+            comm += (
+                "                --iteration-modes="
+                + options["hcp_msmall_iteration_modes"]
+            )
 
         # hcp_msmall_method
         if options["hcp_msmall_method"] is not None:
@@ -9793,7 +9849,9 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
 
         # hcp_msmall_low_sica_dims
         if options["hcp_msmall_low_sica_dims"] is not None:
-            comm += "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+            comm += (
+                "                --low-sica-dims=" + options["hcp_msmall_low_sica_dims"]
+            )
 
         # hcp_msmall_vn
         if options["hcp_msmall_vn"] is not None:
@@ -9801,27 +9859,45 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
 
         # hcp_msmall_reg_conf_path
         if options["hcp_msmall_reg_conf_path"] is not None:
-            comm += "                --registration-configure-path=" + options["hcp_msmall_reg_conf_path"]
+            comm += (
+                "                --registration-configure-path="
+                + options["hcp_msmall_reg_conf_path"]
+            )
 
         # hcp_msmall_reg_vars
         if options["hcp_msmall_reg_vars"] is not None:
-            comm += "                --registration-configure-override-variables=" + options["hcp_msmall_reg_vars"]
+            comm += (
+                "                --registration-configure-override-variables="
+                + options["hcp_msmall_reg_vars"]
+            )
 
         # hcp_msmall_rsn_template
         if options["hcp_msmall_rsn_template"] is not None:
-            comm += "                --rsn-template-file=" + options["hcp_msmall_rsn_template"]
+            comm += (
+                "                --rsn-template-file="
+                + options["hcp_msmall_rsn_template"]
+            )
 
         # hcp_msmall_rsn_weights
         if options["hcp_msmall_rsn_weights"] is not None:
-            comm += "                --rsn-weights-file=" + options["hcp_msmall_rsn_weights"]
+            comm += (
+                "                --rsn-weights-file="
+                + options["hcp_msmall_rsn_weights"]
+            )
 
         # hcp_msmall_topography_roi
         if options["hcp_msmall_topography_roi"] is not None:
-            comm += "                --topography-roi-file=" + options["hcp_msmall_topography_roi"]
+            comm += (
+                "                --topography-roi-file="
+                + options["hcp_msmall_topography_roi"]
+            )
 
         # hcp_msmall_topography_target
         if options["hcp_msmall_topography_target"] is not None:
-            comm += "                --topography-target-file=" + options["hcp_msmall_topography_target"]
+            comm += (
+                "                --topography-target-file="
+                + options["hcp_msmall_topography_target"]
+            )
 
         # hcp_msmall_no_ind_mean
         if options["hcp_msmall_no_ind_mean"] is not None:
@@ -12598,7 +12674,7 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
 
 
 def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
-# prepare return variables
+    # prepare return variables
     r = ""
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
 
@@ -12797,7 +12873,9 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
             comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
 
         if options["hcp_grayordinatesres"]:
-            comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
+            comm += (
+                f"                --grayordinates-res={options['hcp_grayordinatesres']}"
+            )
 
         # -- Report command
         if run:
@@ -12829,11 +12907,11 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            with open(endlog, "w", encoding = "UTF-8") as log_file:
+            with open(endlog, "w", encoding="UTF-8") as log_file:
                 for filename in os.listdir(logdir):
                     file_path = os.path.join(logdir, filename)
 
-                    with open(file_path, "r", encoding = "UTF-8") as file:
+                    with open(file_path, "r", encoding="UTF-8") as file:
                         content = file.read()
                         print(file=log_file)
                         print("----------------------------------------", file=log_file)
