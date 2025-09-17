@@ -159,6 +159,11 @@ def getHCPPaths(sinfo, options):
                     os.path.join(d["T1w_source"], sinfo["id"] + "*T1w_MPR*.nii.gz")
                 )
             )
+
+        # raw_psn_t1w and # raw_nopsn_t1w
+        other_files = os.path.join(d["source"], filename, "OTHER_FILES")
+        d["hcp_raw_psn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
+        d["hcp_raw_nopsn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_4e_RMS.nii.gz")
     except:
         d["T1w"] = "NONE"
 
@@ -12007,9 +12012,12 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         --hcp_raw_psn_t1w (str, default ''):
             The bias-corrected version of the T1w image acquired with pre-scan
             normalize, which was used to generate the original myelin maps.
+            You can set this to "auto" and QuNex will try to fill it
+            automatically.
 
         --hcp_raw_nopsn_t1w (str, default ''):
-            The uncorrected version of the --raw-psn-t1w image.
+            The uncorrected version of the --raw-psn-t1w image. You can set this
+            to "auto" and QuNex will try to fill it automatically.
 
         --hcp_transmit_res (str, default ''):
             Resolution to use for transmit field, default equal to
@@ -12327,12 +12335,20 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     )
 
             if options["hcp_raw_psn_t1w"]:
-                comm += f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
+                if options["hcp_raw_psn_t1w"] == "auto":
+                    r += "\n---> Setting the hcp_raw_psn_t1w automatically"
+                    comm += f"                --raw-psn-t1w={hcp['hcp_raw_psn_t1w']}"
+                else:
+                    comm += f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
 
             if options["hcp_raw_nopsn_t1w"]:
-                comm += (
-                    f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
-                )
+                if options["hcp_raw_nopsn_t1w"] == "auto":
+                    r += "\n---> Setting the hcp_raw_nopsn_t1w automatically"
+                    comm += f"                --raw-nopsn-t1w={hcp['hcp_raw_nopsn_t1w']}"
+                else:
+                    comm += (
+                        f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
+                    )
 
             if options["hcp_transmit_res"]:
                 comm += f"                --transmit-res={options['hcp_transmit_res']}"
@@ -12557,24 +12573,15 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
             ``hcp_regname``                    ``reg-name``
             ``hcp_transmit_mode``              ``mode``
             ``hcp_group_corrected_myelin``     ``group-corrected-myelin``
-            ``hcp_afi_image``                  ``afi-image``
             ``hcp_afi_tr_one``                 ``afi-tr-one``
             ``hcp_afi_tr_two``                 ``afi-tr-two``
             ``hcp_afi_angle``                  ``afi-angle``
-            ``hcp_b1tx_magnitude``              ``b1tx-magnitude``
-            ``hcp_b1tx_phase``                 ``b1tx-phase``
             ``hcp_b1tx_phase_divisor``         ``b1tx-phase-divisor``
             ``hcp_pt_fmri_names``              ``pt-fmri-names``
             ``hcp_pt_bbr_threshold``           ``pt-bbr-threshold``
             ``hcp_myelin_template``            ``myelin-template``
             ``hcp_group_uncorrected_myelin``   ``group-uncorrected-myelin``
             ``hcp_pt_reference_value_file``    ``pt-reference-value-file``
-            ``hcp_unproc_t1w_list``            ``unproc-t1w-list``
-            ``hcp_unproc_t2w_list``            ``unproc-t2w-list``
-            ``hcp_receive_bias_body_coil``     ``receive-bias-body-coil``
-            ``hcp_receive_bias_head_coil``     ``receive-bias-head-coil``
-            ``hcp_raw_psn_t1w``                ``raw-psn-t1w``
-            ``hcp_raw_nopsn_t1w``              ``raw-nopsn-t1w``
             ``hcp_transmit_res``               ``transmit-res``
             ``hcp_myelin_mapping_fwhm``        ``myelin-mapping-fwhm``
             ``hcp_old_myelin_mapping``         ``old-myelin-mapping``
