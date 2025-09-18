@@ -161,9 +161,8 @@ def getHCPPaths(sinfo, options):
             )
 
         # raw_psn_t1w and # raw_nopsn_t1w
-        other_files = os.path.join(d["source"], filename, "OTHER_FILES")
-        d["hcp_raw_psn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
-        d["hcp_raw_nopsn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
+        d["hcp_raw_psn_t1w"] = os.path.join(d["source"], filename, "OTHER_FILES", f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
+        d["hcp_raw_nopsn_t1w"] = os.path.join(d["source"], filename, "T1w_MPR_vNav_4e_e1e2_mean", f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
     except:
         d["T1w"] = "NONE"
 
