@@ -163,7 +163,7 @@ def getHCPPaths(sinfo, options):
         # raw_psn_t1w and # raw_nopsn_t1w
         other_files = os.path.join(d["source"], filename, "OTHER_FILES")
         d["hcp_raw_psn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
-        d["hcp_raw_nopsn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_4e_RMS.nii.gz")
+        d["hcp_raw_nopsn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
     except:
         d["T1w"] = "NONE"
 
@@ -12129,20 +12129,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         # build the command
         if run:
-            if options["hcp_matlab_mode"]:
-                if options["hcp_matlab_mode"] == "compiled":
-                    matlabrunmode = "0"
-                elif options["hcp_matlab_mode"] == "interpreted":
-                    matlabrunmode = "1"
-                elif options["hcp_matlab_mode"] == "octave":
-                    matlabrunmode = "2"
-                else:
-                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                    run = False
-                comm += f"                --matlab-run-mode={matlabrunmode}"
-            else:
-                matlabrunmode = "0"
-
             comm = (
                 '%(script)s \
                 --study-folder="%(studyfolder)s" \
@@ -12165,6 +12151,20 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     "matlab_run_mode": matlabrunmode,
                 }
             )
+
+            if options["hcp_matlab_mode"]:
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    run = False
+                comm += f"                --matlab-run-mode={matlabrunmode}"
+            else:
+                matlabrunmode = "0"
 
             # check and set parameters given the mode
             # AFI
@@ -12718,20 +12718,6 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
 
     # build the command
     if run:
-        if options["hcp_matlab_mode"]:
-            if options["hcp_matlab_mode"] == "compiled":
-                matlabrunmode = "0"
-            elif options["hcp_matlab_mode"] == "interpreted":
-                matlabrunmode = "1"
-            elif options["hcp_matlab_mode"] == "octave":
-                matlabrunmode = "2"
-            else:
-                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                run = False
-            comm += f"                --matlab-run-mode={matlabrunmode}"
-        else:
-            matlabrunmode = "0"
-
         comm = (
             '%(script)s \
             --study-folder="%(studyfolder)s" \
@@ -12762,6 +12748,20 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
                 "matlab_run_mode": matlabrunmode,
             }
         )
+
+        if options["hcp_matlab_mode"]:
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
+            comm += f"                --matlab-run-mode={matlabrunmode}"
+        else:
+            matlabrunmode = "0"
 
         # check and set parameters given the mode
         # AFI
