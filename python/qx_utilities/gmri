@@ -147,7 +147,10 @@ def runCommand(command, args):
             # all sessions
             all_sessions = []
             for session in sessions:
-                all_sessions.append(session["session"])
+                if "id" in session:
+                    all_sessions.append(session["id"])
+                elif "session" in session:
+                    all_sessions.append(session["session"])
 
             if "scheduler" in eargs:
                 gs.runThroughScheduler(
@@ -208,9 +211,6 @@ def runCommand(command, args):
                             "logfile": None,
                         }
                     )
-
-                # execute each run_recipe in parallel
-                parsessions = len(calls)
 
         else:
             # -- if using a scheduler schedule the whole run_recipe commmand

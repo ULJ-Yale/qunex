@@ -247,10 +247,6 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
             boldtargets.append(boldtarget)
 
-        r += f"\n---> Found {len(boldtargets)} bolds:"
-        for boldtarget in boldtargets:
-            r += f"\n  - {boldtarget}"
-
         # bolds loop
         report = {
             "done": [],
@@ -259,55 +255,65 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             "ready": [],
         }
 
-        # run in parallel
-        parelements = max(1, min(options["parelements"], len(boldtargets)))
-        ppe = ProcessPoolExecutor(parelements)
-        # process
-        f = partial(
-            _execute_rapidtide,
-            options,
-            sinfo,
-            overwrite,
-            run,
-            hcp_folders,
-            rapidtide_folder,
-        )
-        results = ppe.map(f, boldtargets)
-
-        # merge r and report
-        for result in results:
-            r += result["r"]
-            run_report = result["report"]
-            if run_report["done"]:
-                report["done"].extend(run_report["done"])
-            if run_report["failed"]:
-                report["failed"].extend(run_report["failed"])
-            if run_report["skipped"]:
-                report["ready"].extend(run_report["ready"])
-            if run_report["ready"]:
-                report["ready"].extend(run_report["not ready"])
-
-        # parse report
-        if report["failed"]:
-            report = (
-                sinfo["id"],
-                f"rapidtide failed: {','.join(report['failed'])}",
-                len(report["failed"]),
-            )
+        if len(boldtargets) == 0:
+            r += f"\n---> ERROR: No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file."
+            report["failed"].append("no bolds found")
+            run = False
         else:
-            message = "rapidtide: "
-            sep = ""
-            if report["done"]:
-                message += f"done: {','.join(report['done'])}"
-                sep = " | "
-            if report["skipped"]:
-                message += f"{sep}skipped: {','.join(report['skipped'])}"
+            r += f"\n---> Found {len(boldtargets)} bolds:"
+            for boldtarget in boldtargets:
+                r += f"\n  - {boldtarget}"
 
-            report = (
-                sinfo["id"],
-                message,
-                0,
+        # run in parallel
+        if run:
+            parelements = max(1, min(options["parelements"], len(boldtargets)))
+            ppe = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(
+                _execute_rapidtide,
+                options,
+                sinfo,
+                overwrite,
+                run,
+                hcp_folders,
+                rapidtide_folder,
             )
+            results = ppe.map(f, boldtargets)
+
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                run_report = result["report"]
+                if run_report["done"]:
+                    report["done"].extend(run_report["done"])
+                if run_report["failed"]:
+                    report["failed"].extend(run_report["failed"])
+                if run_report["skipped"]:
+                    report["ready"].extend(run_report["ready"])
+                if run_report["ready"]:
+                    report["ready"].extend(run_report["not ready"])
+
+            # parse report
+            if report["failed"]:
+                report = (
+                    sinfo["id"],
+                    f"rapidtide failed: {','.join(report['failed'])}",
+                    len(report["failed"]),
+                )
+            else:
+                message = "rapidtide: "
+                sep = ""
+                if report["done"]:
+                    message += f"done: {','.join(report['done'])}"
+                    sep = " | "
+                if report["skipped"]:
+                    message += f"{sep}skipped: {','.join(report['skipped'])}"
+
+                report = (
+                    sinfo["id"],
+                    message,
+                    0,
+                )
 
         # rapidtide ------------------------------------------------------------
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -434,6 +440,11 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
     r += f"\n\n---> Running rapidtide for {boldtarget}"
     boldname = f"{boldtarget}{options['nifti_tail']}.nii.gz"
     bold = os.path.join(hcp_folders["hcp_nonlin"], "Results", boldtarget, boldname)
+    if not os.path.exists(bold):
+        r += f"\n---> ERROR: Cannot find BOLD image {bold} for session {session}"
+        report["failed"].append(boldtarget)
+        run = False
+
     rapidtide_comm = (
         'rapidtide \
         %(bold)s \
