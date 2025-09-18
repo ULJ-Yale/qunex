@@ -6,6 +6,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.3.4
+
+* More robust parameter parsing for several commands.
+* Fixed a bug that sometime poped up with sessions detection when using run_recipe.
+* Some commands did not exit cleanly.
+* Fixed a bug that in transmit bias that made it error out immediately after execution.
+
 ## 1.3.3
 
 * Improved the documentation at several locations.
