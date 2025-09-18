@@ -161,9 +161,8 @@ def getHCPPaths(sinfo, options):
             )
 
         # raw_psn_t1w and # raw_nopsn_t1w
-        other_files = os.path.join(d["source"], filename, "OTHER_FILES")
-        d["hcp_raw_psn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
-        d["hcp_raw_nopsn_t1w"] = os.path.join(other_files, f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
+        d["hcp_raw_psn_t1w"] = os.path.join(d["source"], filename, "OTHER_FILES", f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
+        d["hcp_raw_nopsn_t1w"] = os.path.join(d["source"], filename, "T1w_MPR_vNav_4e_e1e2_mean", f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
     except:
         d["T1w"] = "NONE"
 
@@ -1813,6 +1812,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     run = True
     status = True
     report = "Error"
+    failed = 0
 
     try:
         pc.doOptionsCheck(options, sinfo, "hcp_freesurfer")
@@ -3665,6 +3665,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             )
 
         # --- set up data
+        direction = None
+        pe_dir = None
         if options["hcp_dwi_phasepos"] == "PA":
             direction = {"pos": "PA", "neg": "AP"}
             pe_dir = 2
@@ -4979,6 +4981,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         # --- Preprocess
         boldsData = []
 
+        firstSE = None
         if bolds:
             firstSE = bolds[0].get("se", None)
 
@@ -7312,6 +7315,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         )
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -7888,6 +7892,7 @@ def executeHCPPostFix(sinfo, options, hcp, run, singleFix, boldinfo):
             dualscene = options["hcp_postfix_dualscene"]
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -8349,6 +8354,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, boldinfo):
             )
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
+            matlabrunmode = None
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
                     r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -8571,10 +8577,10 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             groupok = True
 
             # matlab run mode, compiled=0, interpreted=1, octave=2
+            matlabrunmode = None
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
                     r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                    pars_ok = False
                 else:
                     matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
             else:
@@ -9466,6 +9472,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
             myelintarget = options["hcp_msmall_myelin_target"]
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -9770,6 +9777,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
             myelintarget = options["hcp_msmall_myelin_target"]
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -10335,6 +10343,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                     myelintarget = options["hcp_msmall_myelin_target"]
 
                 # matlab run mode, compiled=0, interpreted=1, octave=2
+                matlabrunmode = None
                 if options["hcp_matlab_mode"] is None:
                     if "FSL_FIX_MATLAB_MODE" not in os.environ:
                         r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -10938,10 +10947,10 @@ def executeHCPSingleDeDriftAndResample(sinfo, options, hcp, run, group):
             myelintarget = options["hcp_msmall_myelin_target"]
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
-                pars_ok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -11210,6 +11219,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
             myelintarget = options["hcp_msmall_myelin_target"]
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -11300,6 +11310,7 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
         # -- hcp_resample_extractnames
         if options["hcp_resample_extractnames"] is not None:
             # variables for storing
+            boldnames = ""
             extractnames = ""
             extractconcatnames = ""
 
@@ -11647,6 +11658,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             r += f"\n---> ERROR: No ASL images found in the batch file!"
             run = False
 
+        asl_file = ""
         if "filename" in asl_info:
             asl_file = os.path.join(
                 hcp["ASL_source"], sinfo["id"] + "_" + asl_info["filename"] + ".nii.gz"
@@ -11699,7 +11711,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                             )
                         else:
                             fmap_pa_file = glob.glob(
-                                os.path.join(sefolder, "*SpinEchoFieldMap_PA*.nii.gz")
+                                os.path.join(hcp["ASL_source"], "*SpinEchoFieldMap_PA*.nii.gz")
                             )
                             if len(fmap_pa_file) == 0:
                                 r += (
@@ -11762,16 +11774,19 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
 
         # set mtname
+        mtname = ""
         if options["hcp_asl_mtname"] is None:
             mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
 
         # set territories atlas
+        territories_atlas = ""
         if options["hcp_asl_territories_atlas"] is None:
             territories_atlas = os.path.join(
                 asl_library, "vascular_territories_eroded5_atlas.nii.gz"
             )
 
         # set territories labels
+        territories_labels = ""
         if options["hcp_asl_territories_labels"] is None:
             territories_labels = os.path.join(
                 asl_library, "vascular_territories_atlas.txt"
@@ -12129,6 +12144,20 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         # build the command
         if run:
+            matlabrunmode = None
+            if options["hcp_matlab_mode"]:
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    run = False
+            else:
+                matlabrunmode = "0"
+
             comm = (
                 '%(script)s \
                 --study-folder="%(studyfolder)s" \
@@ -12151,20 +12180,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     "matlab_run_mode": matlabrunmode,
                 }
             )
-
-            if options["hcp_matlab_mode"]:
-                if options["hcp_matlab_mode"] == "compiled":
-                    matlabrunmode = "0"
-                elif options["hcp_matlab_mode"] == "interpreted":
-                    matlabrunmode = "1"
-                elif options["hcp_matlab_mode"] == "octave":
-                    matlabrunmode = "2"
-                else:
-                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                    run = False
-                comm += f"                --matlab-run-mode={matlabrunmode}"
-            else:
-                matlabrunmode = "0"
 
             # check and set parameters given the mode
             # AFI
@@ -12636,6 +12651,7 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
         # process
         f = partial(
             _execute_hcp_long_transmit_bias,
+            sinfo,
             options,
             overwrite,
             run,
@@ -12680,7 +12696,7 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
     return (r, (subjectids, report, failed))
 
 
-def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
+def _execute_hcp_long_transmit_bias(sinfo, options, overwrite, run, hcp_base, subject):
     # prepare return variables
     r = ""
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -12718,6 +12734,20 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
 
     # build the command
     if run:
+        matlabrunmode = None
+        if options["hcp_matlab_mode"]:
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
+        else:
+            matlabrunmode = "0"
+
         comm = (
             '%(script)s \
             --study-folder="%(studyfolder)s" \
@@ -12748,20 +12778,6 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
                 "matlab_run_mode": matlabrunmode,
             }
         )
-
-        if options["hcp_matlab_mode"]:
-            if options["hcp_matlab_mode"] == "compiled":
-                matlabrunmode = "0"
-            elif options["hcp_matlab_mode"] == "interpreted":
-                matlabrunmode = "1"
-            elif options["hcp_matlab_mode"] == "octave":
-                matlabrunmode = "2"
-            else:
-                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
-                run = False
-            comm += f"                --matlab-run-mode={matlabrunmode}"
-        else:
-            matlabrunmode = "0"
 
         # check and set parameters given the mode
         # AFI
@@ -12874,7 +12890,7 @@ def _execute_hcp_long_transmit_bias(options, overwrite, run, hcp_base, subject):
             comm += f"                --myelin-mapping-fwhm={options['hcp_myelin_mapping_fwhm']}"
 
         if options["hcp_old_myelin_mapping"]:
-            comm += f"                --old-myelin-mapping=TRUE"
+            comm += "                --old-myelin-mapping=TRUE"
 
         if options["hcp_lowresmesh"]:
             comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
@@ -13498,6 +13514,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 gc.link_or_copy(sessions_mad_dir, mad_dir, symlink=True)
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
@@ -15149,6 +15166,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k", "*.*")
             )
             npre, ncp = 0, 0
+            sid = ""
             if len(sfiles):
                 sid = os.path.basename(sfiles[0]).split(".")[0]
             for sfile in sfiles:
