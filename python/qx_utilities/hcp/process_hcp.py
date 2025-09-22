@@ -161,8 +161,12 @@ def getHCPPaths(sinfo, options):
             )
 
         # raw_psn_t1w and # raw_nopsn_t1w
-        d["hcp_raw_psn_t1w"] = os.path.join(d["source"], filename, "OTHER_FILES", f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
-        d["hcp_raw_nopsn_t1w"] = os.path.join(d["source"], filename, "T1w_MPR_vNav_4e_e1e2_mean", f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
+        if filename:
+            d["hcp_raw_psn_t1w"] = os.path.join(d["source"], filename, "OTHER_FILES", f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
+            d["hcp_raw_nopsn_t1w"] = os.path.join(d["source"], filename, "T1w_MPR_vNav_4e_e1e2_mean", f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
+        else:
+            d["hcp_raw_psn_t1w"] = os.path.join(d["source"], "T1w", "OTHER_FILES", f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
+            d["hcp_raw_nopsn_t1w"] = os.path.join(d["source"], "T1w", "T1w_MPR_vNav_4e_e1e2_mean", f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
     except:
         d["T1w"] = "NONE"
 
@@ -850,14 +854,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if "DwellTime" in T1w and checkInlineParameterUse(
                     "T1w", "DwellTime", options
                 ):
-                    options["hcp_t1samplespacing"] = T1w["DwellTime"]
+                    options["hcp_t1samplespacing"] = f"{float(T1w['DwellTime']):.10f}"
                     r += "\n---> T1w image specific EchoSpacing: %s s" % (
                         options["hcp_t1samplespacing"]
                     )
                 elif "EchoSpacing" in T1w and checkInlineParameterUse(
                     "T1w", "EchoSpacing", options
                 ):
-                    options["hcp_t1samplespacing"] = T1w["EchoSpacing"]
+                    options["hcp_t1samplespacing"] = f"{float(T1w['EchoSpacing']):.10f}"
                     r += "\n---> T1w image specific EchoSpacing: %s s" % (
                         options["hcp_t1samplespacing"]
                     )
@@ -878,7 +882,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             sidecar_data = json.load(file)
                             if "DwellTime" in sidecar_data:
                                 options["hcp_t1samplespacing"] = (
-                                    f"{sidecar_data['DwellTime']:.10f}"
+                                    f"{float(sidecar_data['DwellTime']):.10f}"
                                 )
                                 r += f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}"
 
@@ -900,14 +904,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if "DwellTime" in T2w and checkInlineParameterUse(
                         "T2w", "DwellTime", options
                     ):
-                        options["hcp_t2samplespacing"] = T2w["DwellTime"]
+                        options["hcp_t2samplespacing"] = f"{float(T2w['DwellTime']):.10f}"
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (
                             options["hcp_t2samplespacing"]
                         )
                     elif "EchoSpacing" in T2w and checkInlineParameterUse(
                         "T2w", "EchoSpacing", options
                     ):
-                        options["hcp_t2samplespacing"] = T2w["EchoSpacing"]
+                        options["hcp_t2samplespacing"] = f"{float(T2w['EchoSpacing']):.10f}"
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (
                             options["hcp_t2samplespacing"]
                         )
@@ -921,7 +925,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 sidecar_data = json.load(file)
                                 if "DwellTime" in sidecar_data:
                                     options["hcp_t2samplespacing"] = (
-                                        f"{sidecar_data['DwellTime']:.10f}"
+                                        f"{float(sidecar_data['DwellTime']):.10f}"
                                     )
                                     r += f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}"
 
@@ -1013,7 +1017,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             sidecar_data = json.load(file)
                             if "EffectiveEchoSpacing" in sidecar_data:
                                 options["hcp_seechospacing"] = (
-                                    f"{sidecar_data['EffectiveEchoSpacing']:.10f}"
+                                    f"{float(sidecar_data['EffectiveEchoSpacing']):.10f}"
                                 )
                                 r += f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}"
 
@@ -1220,12 +1224,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                     "EchoTime1" in sidecar_data
                                     and "EchoTime2" in sidecar_data
                                 ):
-                                    echodiff = (
-                                        sidecar_data["EchoTime2"]
-                                        - sidecar_data["EchoTime1"]
-                                    )
-                                    # from s to ms
-                                    echodiff = echodiff * 1000
+                                    et2 = float(sidecar_data["EchoTime2"])
+                                    et1 = float(sidecar_data["EchoTime1"])
+                                    echodiff = (et2 - et1) * 1000
                                     echodiff = f"{echodiff:.10f}"
                                     r += f"\n       - hcp_echodiff set to {echodiff}"
                         else:

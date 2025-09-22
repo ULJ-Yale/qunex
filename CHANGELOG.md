@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.3.6
+
+* Fixed a bug where `hcp_pre_freesurfer` sometimes did not start because of an erroneous report of missing images.
+
 ## 1.3.5
 
 * Fixed a bug with `hcp_matlab_mode` in the HCP transmit bias pipeline.
