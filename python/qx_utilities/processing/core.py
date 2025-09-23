@@ -696,19 +696,18 @@ def getSessionFolders(sinfo, options):
     )
 
     folder_creation_lock = multiprocessing.Lock()
-
-    for key, fpath in d.items():
-        if key != "s_source":
-            if not os.path.exists(fpath):
-                try:
-                    with folder_creation_lock:
+    with folder_creation_lock:
+        for key, fpath in d.items():
+            if key != "s_source":
+                if not os.path.exists(fpath):
+                    try:
                         # Check again inside the lock to ensure no other process created the folder
                         if not os.path.exists(fpath):
                             os.makedirs(fpath)
-                except:
-                    print(
-                        f"WARNING: Could not create folder {fpath}! Please check paths and permissions!"
-                    )
+                    except:
+                        print(
+                            f"WARNING: Could not create folder {fpath}! Please check paths and permissions!"
+                        )
 
     return d
 
