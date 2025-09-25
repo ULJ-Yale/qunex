@@ -11520,6 +11520,16 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             A comma separated list of stages (zero-indexed) to run.
             All prior stages are assumed to have run successfully.
 
+        --hcp_regname (str, default 'MSMSulc'):
+            Input registration name.
+
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of this
+            command.
+
     Output files:
         The results of this step will be present in the ASL folder in the
         sessions's root hcp folder.
@@ -11563,10 +11573,12 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             ``hcp_asl_use_t1``             ``use_t1``
             ``hcp_asl_nobandingcorr``      ``nobandingcorr``
             ``hcp_asl_interpolation``      ``interpolation``
-            ``hcp_asl_cores``              ``cores``
+            ``hcp_asl_cores``              ``cores```
             ``hcp_asl_stages``             ``stages``
+            ``hcp_regname``                ``regname``
+            ``longitudinal``               ``is-longitudinal``
+            ``hcp_longitudinal_template``  ``longitudinal-template``
             ============================== ======================
-
 
     Examples:
         Example run::
@@ -11646,7 +11658,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if k.isdigit():
                 if v["name"] == "PCASLhr":
                     asl_se_info.append(v)
-                elif v["name"] == ["mbPCASLhr"]:
+                elif v["name"] == "mbPCASLhr" or v["name"] == ["mbPCASLhr"]:
                     asl_info = v
                 elif v["name"] == "ASL":
                     if "phenc" in v and "SE-FM" in v["phenc"]:
@@ -11797,7 +11809,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         if run:
             comm = (
                 '%(script)s \
-                --studydir="%(studydir)s" \
+                --subdir="%(subdir)s" \
                 --subid="%(subid)s" \
                 --grads="%(grads)s" \
                 --struct="%(struct)s" \
@@ -11809,10 +11821,11 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --ribbon="%(ribbon)s" \
                 --mtname="%(mtname)s" \
                 --territories_atlas="%(territories_atlas)s" \
-                --territories_labels="%(territories_labels)s"'
+                --territories_labels="%(territories_labels)s" \
+                --regname="%(regname)s"'
                 % {
                     "script": "process_hcp_asl",
-                    "studydir": sinfo["hcp"],
+                    "subdir": os.path.join(sinfo["hcp"], sinfo["id"]),
                     "subid": sinfo["id"] + options["hcp_suffix"],
                     "grads": gdcfile,
                     "struct": t1w_file,
@@ -11825,6 +11838,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     "mtname": mtname,
                     "territories_atlas": territories_atlas,
                     "territories_labels": territories_labels,
+                    "regname": options["hcp_regname"],
                 }
             )
 
@@ -11848,6 +11862,11 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 stages = options["hcp_asl_stages"].replace(",", " ")
                 comm += "                --stages " + stages
 
+            # -- Longitudinal parameters
+            if options["longitudinal"]:
+                comm += "                --is-longitudinal"
+                comm += f"                --longitudinal_template={options['hcp_longitudinal_template']}"
+
             # -- Report command
             if run:
                 r += (
@@ -11860,6 +11879,12 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
+
+                if not options["longitudinal"]:
+                    logtags = options["logtag"]
+                else:
+                    logtags = ["long", options['hcp_longitudinal_template']]
+
                 r, endlog, report, failed = pc.runExternalForFile(
                     None,
                     comm,
@@ -11869,7 +11894,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=options["logtag"],
+                    logtags=logtags,
                     fullTest=None,
                     shell=True,
                     r=r,
