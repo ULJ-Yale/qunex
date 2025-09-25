@@ -11864,8 +11864,8 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             # -- Longitudinal parameters
             if options["longitudinal"]:
-                comm += "                --is-longitudinal"
                 comm += f"                --longitudinal_template={options['hcp_longitudinal_template']}"
+                comm += "                --is-longitudinal"
 
             # -- Report command
             if run:
