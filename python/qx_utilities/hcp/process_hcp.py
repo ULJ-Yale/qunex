@@ -11620,6 +11620,21 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
+        # subdir
+        if not options["longitudinal"]:
+            subdir = os.path.join(sinfo["hcp"], sinfo["id"])
+        else:
+            studyfolder = gc.deduceFolders(options)["basefolder"]
+            if not studyfolder:
+                r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                run = False
+            # replace path
+            subdir = os.path.join(studyfolder, "subjects", sinfo["subject"], sinfo["id"])
+
+            # if longitudinal HCP path needs to point to the subject folder
+            sinfo["hcp"] = os.path.join(studyfolder, "subjects", sinfo["subject"])
+            hcp["ASL_source"] = os.path.join(subdir, "unprocessed", "ASL")
+
         # lookup gdcoeffs file
         gdcfile, r, run = check_gdc_coeff_file(
             options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
@@ -11825,7 +11840,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --regname="%(regname)s"'
                 % {
                     "script": "process_hcp_asl",
-                    "subdir": os.path.join(sinfo["hcp"], sinfo["id"]),
+                    "subdir": subdir,
                     "subid": sinfo["id"] + options["hcp_suffix"],
                     "grads": gdcfile,
                     "struct": t1w_file,
@@ -11850,22 +11865,19 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 comm += "                --nobandingcorr"
 
             if options["hcp_asl_interpolation"] is not None:
-                comm += (
-                    "                --interpolation="
-                    + options["hcp_asl_interpolation"]
-                )
+                comm += f"                --interpolation=\"{options['hcp_asl_interpolation']}\""
 
             if options["hcp_asl_cores"] is not None:
-                comm += "                --cores=" + options["hcp_asl_cores"]
+                comm += f"                --cores=\"{options['hcp_asl_cores']}\""
 
             if options["hcp_asl_stages"] is not None:
                 stages = options["hcp_asl_stages"].replace(",", " ")
-                comm += "                --stages " + stages
+                comm += f"                --stages=\"{stages}\""
 
             # -- Longitudinal parameters
             if options["longitudinal"]:
-                comm += f"                --longitudinal_template={options['hcp_longitudinal_template']}"
-                comm += "                --is-longitudinal"
+                comm += f"                --longitudinal_template=\"{options['hcp_longitudinal_template']}\""
+                comm += "                --is_longitudinal"
 
             # -- Report command
             if run:
