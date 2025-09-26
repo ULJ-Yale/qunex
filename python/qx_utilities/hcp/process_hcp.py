@@ -11620,21 +11620,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
-        # subdir
-        if not options["longitudinal"]:
-            subdir = os.path.join(sinfo["hcp"], sinfo["id"])
-        else:
-            studyfolder = gc.deduceFolders(options)["basefolder"]
-            if not studyfolder:
-                r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
-                run = False
-            # replace path
-            subdir = os.path.join(studyfolder, "subjects", sinfo["subject"], sinfo["id"])
-
-            # if longitudinal HCP path needs to point to the subject folder
-            sinfo["hcp"] = os.path.join(studyfolder, "subjects", sinfo["subject"])
-            hcp["ASL_source"] = os.path.join(subdir, "unprocessed", "ASL")
-
         # lookup gdcoeffs file
         gdcfile, r, run = check_gdc_coeff_file(
             options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
@@ -11683,7 +11668,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
         # ASL file
         if len(asl_info) == 0:
-            r += f"\n---> ERROR: No ASL images found in the batch file!"
+            r += "\n---> ERROR: No ASL images found in the batch file!"
             run = False
 
         asl_file = ""
@@ -11840,7 +11825,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --regname="%(regname)s"'
                 % {
                     "script": "process_hcp_asl",
-                    "subdir": subdir,
+                    "subdir": os.path.join(sinfo["hcp"], sinfo["id"]),
                     "subid": sinfo["id"] + options["hcp_suffix"],
                     "grads": gdcfile,
                     "struct": t1w_file,
@@ -11876,7 +11861,15 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             # -- Longitudinal parameters
             if options["longitudinal"]:
+                studyfolder = gc.deduceFolders(options)["basefolder"]
+                if not studyfolder:
+                    r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                    run = False
+                # replace path
+                longitudinal_study_dir = os.path.join(studyfolder, "subjects", sinfo["subject"])
+
                 comm += f"                --longitudinal_template=\"{options['hcp_longitudinal_template']}\""
+                comm += f"                --longitudinal_study_dir=\"{longitudinal_study_dir}\""
                 comm += "                --is_longitudinal"
 
             # -- Report command
@@ -11897,7 +11890,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 else:
                     logtags = ["long", options['hcp_longitudinal_template']]
 
-                r, endlog, report, failed = pc.runExternalForFile(
+                r, _, report, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP ASL",
