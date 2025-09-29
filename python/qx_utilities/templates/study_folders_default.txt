@@ -40,5 +40,3 @@ sessions
     behavior
   specs
   QC
-
-subjects

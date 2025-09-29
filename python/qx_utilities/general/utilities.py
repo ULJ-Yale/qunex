@@ -390,24 +390,23 @@ def create_study(studyfolder=None, folders=None):
             │   ├── stimuli
             │   ├── bids
             │   └── hcpls
-            ├── sessions
-            |   ├── inbox
-            |   │   ├── MR
-            |   │   ├── EEG
-            |   │   ├── BIDS
-            |   │   ├── HCPLS
-            |   │   ├── behavior
-            |   │   ├── concs
-            |   │   └── events
-            |   ├── archive
-            |   │   ├── MR
-            |   │   ├── EEG
-            |   │   ├── BIDS
-            |   │   ├── HCPLS
-            |   │   └── behavior
-            |   ├── specs
-            |   └── QC
-            └── subjects
+            └── sessions
+                ├── inbox
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   ├── behavior
+                │   ├── concs
+                │   └── events
+                ├── archive
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   └── behavior
+                └── specs
+                    └── QC
 
         Do note that the command will create all the missing folders in which
         the specified study is to reside. The command also prepares template

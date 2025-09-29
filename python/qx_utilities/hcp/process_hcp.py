@@ -2439,6 +2439,160 @@ def _get_subjects_from_batch(sinfo, hcp, run):
     return run, subjects_list
 
 
+def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
+    """
+    ``hcp_prep_long [... processing options]``
+
+    Prepares the data for longitudinal processing with HCP longitudinal
+    pipelines. Not needed if the starting point is hcp_long_freesurfer as that
+    command does the prep work automatically.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+    Output files:
+        The results of this step will be present in the
+        <study_folder>/subjects.
+
+    Examples:
+        ::
+
+            qunex hcp_prep_long \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSubjects: %s \n[started on %s]" % (
+        subjectids,
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP prep long [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    failed = 0
+
+    try:
+        # checks
+        pc.doOptionsCheck(options, sinfo[0], "hcp_prep_long")
+        doHCPOptionsCheck(options, "hcp_prep_long")
+        hcp = getHCPPaths(sinfo[0], options)
+
+        # get subjects and their sessions from the batch file
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
+
+        # launch
+        parsubjects = options["parsubjects"]
+
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(
+            _execute_hcp_prep_long,
+            options,
+            overwrite,
+        )
+        results = processPoolExecutor.map(f, subjects_list)
+
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].append(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].append(run_report["failed"])
+            if run_report["ready"]:
+                report["ready"].append(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].append(run_report["not ready"])
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        report = "Error"
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        report = "Error"
+        failed = 1
+
+    r += (
+        "\n\nHCP prep long %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (subjectids, report, failed))
+
+
+def _execute_hcp_prep_long(options, overwrite, subject):
+    # prepare return variables
+    r = ""
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+
+    # get subject data
+    subject_id = subject["id"]
+    hcp_list = subject["hcp"]
+    sessions_list = subject["sessions"]
+
+    # sort out the folder structure
+    sessionsfolder = options["sessionsfolder"]
+    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
+    if not os.path.exists(subjectsfolder):
+        os.makedirs(subjectsfolder)
+    study_folder = os.path.join(subjectsfolder, subject_id)
+    if not os.path.exists(study_folder):
+        os.makedirs(study_folder)
+
+    # symlink sessions
+    i = 0
+    for i in range(len(sessions_list)):
+        session = sessions_list[i]
+        hcp = hcp_list[i]
+        source_dir = os.path.join(hcp, session)
+        # check that source exists
+        if not os.path.exists(source_dir):
+            r += f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!"
+            report["failed"] = subject_id
+
+        target_dir = os.path.join(study_folder, session)
+        gc.link_or_copy(source_dir, target_dir, symlink=True)
+        i += 1
+
+    if len (report["failed"]) == 0:
+        report["done"] = subject_id
+
+    return {"r": r, "report": report}
+
+
 def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_freesurfer [... processing options]``
@@ -2551,9 +2705,9 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_freesurfer")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_freesurfer")
         doHCPOptionsCheck(options, "hcp_long_freesurfer")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         # get subjects and their sessions from the batch file
         run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
@@ -2561,49 +2715,30 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         # launch
         parsubjects = options["parsubjects"]
 
-        if parsubjects == 1:  # serial execution
-            for subject in subjects_list:
-                result = _execute_hcp_long_freesurfer(
-                    options, overwrite, run, hcp["hcp_base"], subject
-                )
-                run_report = result["report"]
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(
+            _execute_hcp_long_freesurfer,
+            options,
+            overwrite,
+            run,
+            hcp["hcp_base"],
+        )
+        results = processPoolExecutor.map(f, subjects_list)
 
-                # merge
-                r += result["r"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parsubjects)
-            # process
-            f = partial(
-                _execute_hcp_long_freesurfer,
-                options,
-                overwrite,
-                run,
-                hcp["hcp_base"],
-            )
-            results = processPoolExecutor.map(f, subjects_list)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                run_report = result["report"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].append(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].append(run_report["failed"])
+            if run_report["ready"]:
+                report["ready"].append(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -2650,7 +2785,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
     longitudinal_template = options["hcp_longitudinal_template"]
     long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
-    # exit if overwrite is not set, else create folders
+    # exit if overwrite is not set, else cleanup
     if not overwrite and os.path.exists(long_dir):
         r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
         run = False
@@ -3012,51 +3147,34 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_post_freesurfer")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_post_freesurfer")
         doHCPOptionsCheck(options, "hcp_long_post_freesurfer")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         # get subjects and their sesssions from the batch file
         run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
 
         # launch
         parsubjects = options["parsubjects"]
-        if parsubjects == 1:  # serial execution
-            for subject in subjects_list:
-                result = _execute_hcp_long_post_freesurfer(
-                    options, overwrite, run, hcp, subject
-                )
-                run_report = result["report"]
 
-                # merge
-                r += result["r"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parsubjects)
-            # process
-            f = partial(_execute_hcp_long_post_freesurfer, options, overwrite, run, hcp)
-            results = processPoolExecutor.map(f, subjects_list)
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(_execute_hcp_long_post_freesurfer, options, overwrite, run, hcp)
+        results = processPoolExecutor.map(f, subjects_list)
 
-            # merge
-            for result in results:
-                r += result["r"]
-                run_report = result["report"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+        # merge
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].append(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].append(run_report["failed"])
+            if run_report["ready"]:
+                report["ready"].append(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -5522,78 +5640,53 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         # --- Process
         r += "\n"
 
-        parelements = max(1, min(options["parelements"], len(boldsData)))
-        r += "\n%s %d BOLD images in parallel" % (
-            pc.action("Running", options["run"]),
-            parelements,
-        )
-
-        if parelements == 1:  # serial execution
-            # loop over bolds
+        # if moveref equals first and seimage equals independent (complex scenario)
+        if (
+            not options["longitudinal"]
+            and options["hcp_bold_movref"] == "first"
+            and options["hcp_bold_seimg"] == "independent"
+        ):
+            # loop over bolds to prepare processing pools
+            boldsPool = []
             for b in boldsData:
-                # process
-                result = executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b)
-
-                # merge r
-                r += result["r"]
-
-                # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
-
-        else:  # parallel execution
-            # if moveref equals first and seimage equals independent (complex scenario)
-            if (
-                not options["longitudinal"]
-                and options["hcp_bold_movref"] == "first"
-                and options["hcp_bold_seimg"] == "independent"
-            ):
-                # loop over bolds to prepare processing pools
-                boldsPool = []
-                for b in boldsData:
-                    fmriref = b["fmriref"]
-                    # if fmriref is "NONE" then process the previous pool followed by this one as single
-                    if fmriref == "NONE":
-                        if len(boldsPool) > 0:
-                            r, report = executeMultipleHCPfMRIVolume(
-                                sinfo, options, overwrite, hcp, boldsPool, r, report
-                            )
-                        boldsPool = []
-                        r, report = executeSingleHCPfMRIVolume(
-                            sinfo, options, overwrite, hcp, b, r, report
+                fmriref = b["fmriref"]
+                # if fmriref is "NONE" then process the previous pool followed by this one as single
+                if fmriref == "NONE":
+                    if len(boldsPool) > 0:
+                        r, report = executeMultipleHCPfMRIVolume(
+                            sinfo, options, overwrite, hcp, boldsPool, r, report
                         )
-                    else:  # else add to pool
-                        boldsPool.append(b)
-
-                # execute remaining pool
-                r, report = executeMultipleHCPfMRIVolume(
-                    sinfo, options, overwrite, hcp, boldsPool, r, report
-                )
-
-            else:
-                # if moveref equals first then process first one in serial
-                if (
-                    not options["longitudinal"]
-                    and options["hcp_bold_movref"] == "first"
-                ):
-                    # process first one
-                    b = boldsData[0]
+                    boldsPool = []
                     r, report = executeSingleHCPfMRIVolume(
                         sinfo, options, overwrite, hcp, b, r, report
                     )
+                else:  # else add to pool
+                    boldsPool.append(b)
 
-                    # remove first one from array then process others in parallel
-                    boldsData.pop(0)
+            # execute remaining pool
+            r, report = executeMultipleHCPfMRIVolume(
+                sinfo, options, overwrite, hcp, boldsPool, r, report
+            )
 
-                # process the rest in parallel
-                r, report = executeMultipleHCPfMRIVolume(
-                    sinfo, options, overwrite, hcp, boldsData, r, report
+        else:
+            # if moveref equals first then process first one in serial
+            if (
+                not options["longitudinal"]
+                and options["hcp_bold_movref"] == "first"
+            ):
+                # process first one
+                b = boldsData[0]
+                r, report = executeSingleHCPfMRIVolume(
+                    sinfo, options, overwrite, hcp, b, r, report
                 )
+
+                # remove first one from array then process others in parallel
+                boldsData.pop(0)
+
+            # process the rest in parallel
+            r, report = executeMultipleHCPfMRIVolume(
+                sinfo, options, overwrite, hcp, boldsData, r, report
+            )
 
         rep = []
         for k in ["done", "incomplete", "failed", "ready", "not ready", "skipped"]:
@@ -6207,40 +6300,22 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             parelements,
         )
 
-        if parelements == 1:  # serial execution
-            for b in bolds:
-                # process
-                result = executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, b)
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(executeHCPfMRISurface, sinfo, options, overwrite, hcp, run)
+        results = processPoolExecutor.map(f, bolds)
 
-                # merge r
-                r += result["r"]
-
-                # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(executeHCPfMRISurface, sinfo, options, overwrite, hcp, run)
-            results = processPoolExecutor.map(f, bolds)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            tempReport = result["report"]
+            report["done"] += tempReport["done"]
+            report["failed"] += tempReport["failed"]
+            report["incomplete"] += tempReport["incomplete"]
+            report["ready"] += tempReport["ready"]
+            report["not ready"] += tempReport["not ready"]
+            report["skipped"] += tempReport["skipped"]
 
         rep = []
         for k in ["done", "incomplete", "failed", "ready", "not ready", "skipped"]:
@@ -6964,81 +7039,41 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         # --- Execute
         # single fix
         if singleFix:
-            if parelements == 1:  # serial execution
-                for b in icafixBolds:
-                    # process
-                    result = executeHCPSingleICAFix(
-                        sinfo, options, overwrite, hcp, run, b
-                    )
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
+            results = processPoolExecutor.map(f, icafixBolds)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
-                results = processPoolExecutor.map(f, icafixBolds)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # multi fix
         else:
-            if parelements == 1:  # serial execution
-                for g in icafixGroups:
-                    # process
-                    result = executeHCPMultiICAFix(
-                        sinfo, options, overwrite, hcp, run, g
-                    )
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPMultiICAFix, sinfo, options, overwrite, hcp, run)
+            results = processPoolExecutor.map(f, icafixGroups)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPMultiICAFix, sinfo, options, overwrite, hcp, run)
-                results = processPoolExecutor.map(f, icafixGroups)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # report
         rep = []
@@ -8199,77 +8234,41 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         # --- Execute
         # single fix
         if singleFix:
-            if parelements == 1:  # serial execution
-                for b in icafixBolds:
-                    # process
-                    result = executeHCPSingleReApplyFix(sinfo, options, hcp, run, b)
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPSingleReApplyFix, sinfo, options, hcp, run)
+            results = processPoolExecutor.map(f, icafixBolds)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPSingleReApplyFix, sinfo, options, hcp, run)
-                results = processPoolExecutor.map(f, icafixBolds)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # multi fix
         else:
-            if parelements == 1:  # serial execution
-                for g in icafixGroups:
-                    # process
-                    result = executeHCPMultiReApplyFix(sinfo, options, hcp, run, g)
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPMultiReApplyFix, sinfo, options, hcp, run)
+            results = processPoolExecutor.map(f, icafixGroups)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPMultiReApplyFix, sinfo, options, hcp, run)
-                results = processPoolExecutor.map(f, icafixGroups)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # report
         rep = []
@@ -10157,9 +10156,9 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_msmall")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_msmall")
         doHCPOptionsCheck(options, "hcp_long_msmall")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         # get subjects and their sesssions from the batch file
         run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
@@ -12663,9 +12662,9 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_transmit_bias")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_transmit_bias")
         doHCPOptionsCheck(options, "hcp_long_transmit_bias")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         run = True
         report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -14329,44 +14328,24 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             )
 
         # --- Execute
-        if parelements == 1:  # serial execution
-            for re in reclean_elements:
-                # process
-                result = execute_hcp_apply_auto_reclean(
-                    sinfo, options, overwrite, hcp, run, re, single_fix
-                )
+        # create a multiprocessing Pool
+        ppe = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(
+            execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run
+        )
+        results = ppe.map(f, icafix_groups)
 
-                # merge r
-                r += result["r"]
-
-                # merge report
-                temp_report = result["report"]
-                report["done"] += temp_report["done"]
-                report["incomplete"] += temp_report["incomplete"]
-                report["failed"] += temp_report["failed"]
-                report["ready"] += temp_report["ready"]
-                report["not ready"] += temp_report["not ready"]
-                report["skipped"] += temp_report["skipped"]
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            ppe = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(
-                execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run
-            )
-            results = ppe.map(f, icafix_groups)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                temp_report = result["report"]
-                report["done"] += temp_report["done"]
-                report["failed"] += temp_report["failed"]
-                report["incomplete"] += temp_report["incomplete"]
-                report["ready"] += temp_report["ready"]
-                report["not ready"] += temp_report["not ready"]
-                report["skipped"] += temp_report["skipped"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            temp_report = result["report"]
+            report["done"] += temp_report["done"]
+            report["failed"] += temp_report["failed"]
+            report["incomplete"] += temp_report["incomplete"]
+            report["ready"] += temp_report["ready"]
+            report["not ready"] += temp_report["not ready"]
+            report["skipped"] += temp_report["skipped"]
 
         # report
         rep = []

@@ -714,6 +714,7 @@ calist = [
 
 # longitudinal commands
 lalist = [
+    ["hcp_prep_long", process_hcp.hcp_prep_long],
     ["hcp_long_freesurfer", process_hcp.hcp_long_freesurfer],
     ["hcp_long_post_freesurfer", process_hcp.hcp_long_post_freesurfer],
     ["hcp_long_msmall", process_hcp.hcp_long_msmall],

@@ -301,6 +301,11 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.hcp.process_hcp.hcp_prep_long",
+        "Prepares a study for longitudinal processing.",
+        "python",
+    ),
+    (
         "qx_utilities.hcp.process_hcp.hcp_long_freesurfer",
         "Runs the longitudinal HCP FreeSurfer pipeline.",
         "python",
