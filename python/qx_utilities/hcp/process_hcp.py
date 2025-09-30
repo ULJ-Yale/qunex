@@ -13956,16 +13956,28 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         QuNex's sessions folder.
 
     Notes:
-        Mapping of QuNex parameters onto HCP ASL pipeline parameters:
+        Mapping of QuNex parameters onto HCP make average dataset parameters:
             Below is a detailed specification about how QuNex parameters are
-            mapped onto the HCP ASL parameters.
+            mapped onto the HCP make average dataset parameters.
 
-            ============================== ======================
-            QuNex parameter                HCP ASL parameter
-            ============================== ======================
-            ``hcp_gdcoeffs``               ``grads``
-            TODO
-            ============================== ======================
+            ================================== =====================================
+            QuNex parameter                    HCP make average dataset parameter
+            ================================== =====================================
+            ``hcp_outgroupname``               ``group-average-name``
+            ``hcp_surface_atlas_dir``          ``surface-atlas-dir``
+            ``hcp_grayordinates_dir``          ``grayordinates-space-dir``
+            ``hcp_hiresmesh``                  ``high-res-mesh``
+            ``hcp_lowresmeshes``               ``low-res-meshes``
+            ``hcp_freesurfer_labels``          ``freesurfer-labels``
+            ``hcp_pregradient_smoothing``      ``sigma``
+            ``hcp_mad_regname``                ``reg-name``
+            ``hcp_mad_videen_maps``            ``videen-maps``
+            ``hcp_mad_greyscale_maps``         ``greyscale-maps``
+            ``hcp_mad_distortion_maps``        ``distortion-maps``
+            ``hcp_mad_gradient_maps``          ``gradient-maps``
+            ``hcp_mad_std_maps``               ``std-maps``
+            ``hcp_mad_multi_maps``             ``multi-maps``
+            ================================== =====================================
 
     Examples:
         A run with the default set of parameters::
