@@ -11484,21 +11484,21 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_gdcoeffs (str, default ''):
+        --hcp_gdcoeffs (str, optional):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see
             below) can be provided.
 
-        --hcp_asl_mtname (str, default ''):
+        --hcp_asl_mtname (str, optional):
             Filename for empirically estimated MT-correction scaling factors.
 
-        --hcp_asl_territories_atlas (str, default ''):
+        --hcp_asl_territories_atlas (str, optional):
             Atlas of vascular territories from Mutsaerts.
 
-        --hcp_asl_territories_labels (str, default ''):
+        --hcp_asl_territories_labels (str, optional):
             Labels corresponding to territories_atlas.
 
-        --hcp_asl_cores (int, default 1)
+        --hcp_asl_cores (int, optional)
             Number of cores to use when applying motion correction and
             other potentially multi-core operations.
 
@@ -11507,7 +11507,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             will be used in perfusion estimation in oxford_asl. The
             flag is not set by default.
 
-        --hcp_asl_interpolation (int, default 1):
+        --hcp_asl_interpolation (int, optional):
             Interpolation order for registrations corresponding to
             scipy's map_coordinates function.
 
@@ -11515,9 +11515,36 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             If this option is provided, MT and ST banding corrections
             won't be applied. The flag is not set by default.
 
-        --hcp_asl_stages (str)
+        --hcp_asl_stages (str, optional)
             A comma separated list of stages (zero-indexed) to run.
             All prior stages are assumed to have run successfully.
+
+        --hcp_asl_ntis (int, optional)
+            Number of TIs.
+
+        --hcp_asl_tis (str, optional)
+            Comma separated list of TIs in seconds (e.g., 1.7,2.2,2.7,3.2,3.7).
+
+        --hcp_asl_rpts (str, optional)
+            Comma separated repeats for each TI (e.g., 6,6,6,10,15).
+
+        --hcp_asl_bolus (float, optional)
+            Labeling/bolus duration in seconds.
+
+        --hcp_asl_slicedt (float, optional)
+            Slice time in seconds.
+
+        --hcp_asl_sliceband (int, optional)
+            Slices per band (if omitted, derived from sidecar MB factor).
+
+        --hcp_asl_te (float, optional)
+            Echo time in milliseconds.
+
+        --hcp_asl_tail_discard_vols (int, optional)
+            Volumes immediately before calibrations to discard.
+
+        --hcp_asl_ibf (str, optional)
+            Input block format.
 
         --hcp_regname (str, default 'MSMSulc'):
             Input registration name.
@@ -11566,6 +11593,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             QuNex parameter                HCP ASL parameter
             ============================== ======================
             ``hcp_gdcoeffs``               ``grads``
+            ``hcp_regname``                ``regname``
             ``hcp_asl_mtname``             ``mtname``
             ``hcp_asl_territories_atlas``  ``territories_atlas``
             ``hcp_asl_territories_labels`` ``territories_labels``
@@ -11574,7 +11602,15 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             ``hcp_asl_interpolation``      ``interpolation``
             ``hcp_asl_cores``              ``cores```
             ``hcp_asl_stages``             ``stages``
-            ``hcp_regname``                ``regname``
+            ``hcp_asl_ntis``               ``ntis``
+            ``hcp_asl_tis``                ``tis``
+            ``hcp_asl_rpts``               ``rpts``
+            ``hcp_asl_bolus``              ``bolus``
+            ``hcp_asl_slicedt``            ``slicedt``
+            ``hcp_asl_sliceband``          ``sliceband``
+            ``hcp_asl_te``                 ``te``
+            ``hcp_asl_tail_discard_vols``  ``tail_discard_vols``
+            ``hcp_asl_ibf``                ``ibf``
             ``longitudinal``               ``is-longitudinal``
             ``hcp_longitudinal_template``  ``longitudinal-template``
             ============================== ======================
@@ -11616,37 +11652,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         if "hcp" not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
                 sinfo["id"]
-            )
-            run = False
-
-        # lookup gdcoeffs file
-        gdcfile, r, run = check_gdc_coeff_file(
-            options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
-        )
-        if gdcfile == "NONE":
-            r += "\n---> ERROR: Gradient coefficient file is required!"
-            run = False
-
-        # get struct files
-        # ACPC-aligned, DC-restored structural image
-        t1w_file = os.path.join(
-            sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz"
-        )
-        if not os.path.exists(t1w_file):
-            r += (
-                "\n---> ERROR: ACPC-aligned, DC-restored structural image not found [%s]"
-                % t1w_file
-            )
-            run = False
-
-        # Brain-extracted ACPC-aligned DC-restored structural image
-        t1w_brain_file = os.path.join(
-            sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore_brain.nii.gz"
-        )
-        if not os.path.exists(t1w_brain_file):
-            r += (
-                "\n---> ERROR: Brain-extracted ACPC-aligned DC-restored structural image not found [%s]"
-                % t1w_brain_file
             )
             run = False
 
@@ -11764,99 +11769,154 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
                 run = False
 
-        # wmparc
-        wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
-        if not os.path.exists(wmparc_file):
-            r += (
-                "\n---> ERROR: wmparc.nii.gz from FreeSurfer not found [%s]"
-                % wmparc_file
-            )
-            run = False
-
-        # ribbon
-        ribbon_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz")
-        if not os.path.exists(ribbon_file):
-            r += (
-                "\n---> ERROR: ribbon.nii.gz from FreeSurfer not found [%s]"
-                % ribbon_file
-            )
-            run = False
-
         # get library path
         asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
-
-        # set mtname
-        mtname = ""
-        if options["hcp_asl_mtname"] is None:
-            mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
-
-        # set territories atlas
-        territories_atlas = ""
-        if options["hcp_asl_territories_atlas"] is None:
-            territories_atlas = os.path.join(
-                asl_library, "vascular_territories_eroded5_atlas.nii.gz"
-            )
-
-        # set territories labels
-        territories_labels = ""
-        if options["hcp_asl_territories_labels"] is None:
-            territories_labels = os.path.join(
-                asl_library, "vascular_territories_atlas.txt"
-            )
 
         # build the command
         if run:
             comm = (
                 '%(script)s \
-                --subdir="%(subdir)s" \
-                --subid="%(subid)s" \
-                --grads="%(grads)s" \
-                --struct="%(struct)s" \
-                --sbrain="%(sbrain)s" \
-                --mbpcasl="%(mbpcasl)s" \
-                --fmap_ap="%(fmap_ap)s" \
-                --fmap_pa="%(fmap_pa)s" \
-                --wmparc="%(wmparc)s" \
-                --ribbon="%(ribbon)s" \
-                --mtname="%(mtname)s" \
-                --territories_atlas="%(territories_atlas)s" \
-                --territories_labels="%(territories_labels)s" \
-                --regname="%(regname)s"'
+                --subdir %(subdir)s \
+                --subid %(subid)s \
+                --mbpcasl %(mbpcasl)s \
+                --fmap_ap %(fmap_ap)s \
+                --fmap_pa %(fmap_pa)s \
+                --regname %(regname)s'
                 % {
                     "script": "process_hcp_asl",
                     "subdir": os.path.join(sinfo["hcp"], sinfo["id"]),
                     "subid": sinfo["id"] + options["hcp_suffix"],
-                    "grads": gdcfile,
-                    "struct": t1w_file,
-                    "sbrain": t1w_brain_file,
                     "mbpcasl": asl_file,
                     "fmap_ap": fmap_ap_file,
                     "fmap_pa": fmap_pa_file,
-                    "wmparc": wmparc_file,
-                    "ribbon": ribbon_file,
-                    "mtname": mtname,
-                    "territories_atlas": territories_atlas,
-                    "territories_labels": territories_labels,
                     "regname": options["hcp_regname"],
                 }
             )
 
             # -- Optional parameters
+            # grads
+            gdcfile, r, run = check_gdc_coeff_file(
+                options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
+            )
+            if gdcfile != "NONE":
+                comm += f'                --grads {gdcfile}'
+
+            # struct
+            # get struct files
+            # ACPC-aligned, DC-restored structural image
+            t1w_file = os.path.join(
+                sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz"
+            )
+            if os.path.exists(t1w_file):
+                comm += f"                --struct {t1w_file}"
+
+            # sbrain
+            t1w_brain_file = os.path.join(
+                sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore_brain.nii.gz"
+            )
+            if os.path.exists(t1w_brain_file):
+                comm += f"                --sbrain {t1w_brain_file}"
+
+            # wmparc
+            wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
+            if os.path.exists(wmparc_file):
+                comm += f"                --wmparc {wmparc_file}"
+
+            # ribbon
+            ribbon_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz")
+            if os.path.exists(ribbon_file):
+                comm += f"                --ribbon {ribbon_file}"
+
+            # use_t1
             if options["hcp_asl_use_t1"]:
                 comm += "                --use_t1"
 
+            # mtname
+            if options["hcp_asl_mtname"] is None:
+                mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
+                if os.path.exists(mtname):
+                    comm += f"                --mtname {mtname}"
+            else:
+                comm += f"                --mtname {options['hcp_asl_mtname']}"
+
+            # stages
+            if options["hcp_asl_stages"] is not None:
+                stages = options["hcp_asl_stages"].replace(",", " ")
+                comm += f"                --stages {stages}"
+
+            # cores
+            if options["hcp_asl_cores"] is not None:
+                comm += f"                --cores {options['hcp_asl_cores']}"
+
+            # interpolation
+            if options["hcp_asl_interpolation"] is not None:
+                comm += f"                --interpolation {options['hcp_asl_interpolation']}"
+
+            # nobandingcorr
             if options["hcp_asl_nobandingcorr"]:
                 comm += "                --nobandingcorr"
 
-            if options["hcp_asl_interpolation"] is not None:
-                comm += f"                --interpolation=\"{options['hcp_asl_interpolation']}\""
+            # territories_atlas
+            if options["hcp_asl_territories_atlas"] is None:
+                territories_atlas = os.path.join(
+                    asl_library, "vascular_territories_eroded5_atlas.nii.gz"
+                )
+                if os.path.exists(territories_atlas):
+                    comm += f"                --territories_atlas {territories_atlas}"
+            else:
+                comm += f"                --territories_atlas {options['hcp_asl_territories_atlas']}"
 
-            if options["hcp_asl_cores"] is not None:
-                comm += f"                --cores=\"{options['hcp_asl_cores']}\""
+            # territories_labels
+            if options["hcp_asl_territories_labels"] is None:
+                territories_labels = os.path.join(
+                    asl_library, "vascular_territories_atlas.txt"
+                )
+                if os.path.exists(territories_labels):
+                    comm += f"                --territories_labels {territories_labels}"
+            else:
+                comm += f"                --territories_labels {options['hcp_asl_territories_labels']}"
 
-            if options["hcp_asl_stages"] is not None:
-                stages = options["hcp_asl_stages"].replace(",", " ")
-                comm += f"                --stages=\"{stages}\""
+            # ntis
+            if options["hcp_asl_ntis"] is not None:
+                comm += f"                --ntis {options['hcp_asl_ntis']}"
+
+            # tis
+            if options["hcp_asl_tis"] is not None:
+                hcp_asl_tis = options["hcp_asl_tis"].replace(",", " ")
+                comm += f"                --tis {hcp_asl_tis}"
+
+            # rpts
+            if options["hcp_asl_rpts"] is not None:
+                hcp_asl_rpts = options["hcp_asl_rpts"].replace(",", " ")
+                comm += f"                --rpts {hcp_asl_rpts}"
+
+            # bolus
+            if options["hcp_asl_bolus"] is not None:
+                comm += f"                --bolus {options['hcp_asl_bolus']}"
+
+            # slicedt
+            if options["hcp_asl_slicedt"] is not None:
+                comm += f"                --slicedt {options['hcp_asl_slicedt']}"
+
+            # sliceband
+            if options["hcp_asl_sliceband"] is not None:
+                comm += f"                --sliceband {options['hcp_asl_sliceband']}"
+
+            # te
+            if options["hcp_asl_te"] is not None:
+                comm += f"                --te {options['hcp_asl_te']}"
+
+            # tail_discard_vols
+            if options["hcp_asl_tail_discard_vols"] is not None:
+                comm += f"                --tail_discard_vols {options['hcp_asl_tail_discard_vols']}"
+
+            # ibf
+            if options["hcp_asl_ibf"] is not None:
+                comm += f"                --ibf {options['hcp_asl_ibf']}"
+
+            # clean/overwrite
+            if overwrite:
+                comm += "                --clean"
 
             # -- Longitudinal parameters
             if options["longitudinal"]:
@@ -13904,13 +13964,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             QuNex parameter                HCP ASL parameter
             ============================== ======================
             ``hcp_gdcoeffs``               ``grads``
-            ``hcp_asl_mtname``             ``mtname``
-            ``hcp_asl_territories_atlas``  ``territories_atlas``
-            ``hcp_asl_territories_labels`` ``territories_labels``
-            ``hcp_asl_use_t1``             ``use_t1``
-            ``hcp_asl_nobandingcorr``      ``nobandingcorr``
-            ``hcp_asl_interpolation``      ``interpolation``
-            ``hcp_asl_cores``              ``cores``
+            TODO
             ============================== ======================
 
     Examples:
