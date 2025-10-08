@@ -14398,9 +14398,9 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         ppe = ProcessPoolExecutor(parelements)
         # process
         f = partial(
-            execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run
+            execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run, single_fix
         )
-        results = ppe.map(f, icafix_groups)
+        results = ppe.map(f, reclean_elements)
 
         # merge r and report
         for result in results:
@@ -14454,7 +14454,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, single_fix):
+def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_fix, re):
     """Execute HCP Apply Auto Reclean"""
     if single_fix:
         groupname = None
