@@ -1212,10 +1212,12 @@ def processBIDS(bfolder):
         for element in bidsData[session].get("fmap", []):
             basename_no_suffix = element["filename"][: element["filename"].rfind("_")]
             # cleanup needed for SEs
-            basename_no_suffix = basename_no_suffix.replace("dir-AP", "")
-            basename_no_suffix = basename_no_suffix.replace("dir-PA", "")
-            basename_no_suffix = basename_no_suffix.replace("dir-RL", "")
-            basename_no_suffix = basename_no_suffix.replace("dir-LR", "")
+            for pe_dir in ["AP", "PA", "RL", "LR", "FPE", "BPE"]:
+                for variant in (pe_dir, pe_dir.lower()):
+                    basename_no_suffix = basename_no_suffix.replace(
+                        f"dir-{variant}", ""
+                    )
+
 
             if basename_no_suffix not in basenames:
                 basenames.append(basename_no_suffix)
