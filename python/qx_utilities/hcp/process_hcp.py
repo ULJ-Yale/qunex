@@ -1409,6 +1409,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             + " "
         )
 
+        # if hcp_seechospacing and hcp_seunwarpdir are None at this point, set to "NONE"
+        if options["hcp_seechospacing"] is None:
+            options["hcp_seechospacing"] = "NONE"
+        if options["hcp_seunwarpdir"] is None:
+            options["hcp_seunwarpdir"] = "NONE"
+
         elements = [
             ("path", sinfo["hcp"]),
             ("subject", sinfo["id"] + options["hcp_suffix"]),
