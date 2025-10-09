@@ -15063,7 +15063,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --hcp_cifti_tail=_Atlas \\
-                --additional_bolds=rfMRI_REST,fMRI_CONCAT_ALL
+                --additional_bolds=fMRI_CONCAT_ALL
 
         Run using absolute paths with scheduler::
 
@@ -15074,8 +15074,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 --hcp_cifti_tail="_Atlas" \\
                 --overwrite="yes" \\
                 --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
-
-
     """
 
     r = "\n------------------------------------------------------------"
@@ -15408,7 +15406,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(f["bold_mov"]) and not overwrite:
                         r += "\n     ... movement data ready"
                     else:
-                        movement_regressors = f"Movement_Regressors{options['hcp_cifti_tail'].replace('_Atlas', '')}.txt"
+                        movement_regressors = f"Movement_Regressors{options['hcp_nifti_tail'].replace('_Atlas', '')}.txt"
                         if os.path.exists(
                             os.path.join(hcp_bold_path, movement_regressors)
                         ):
