@@ -14501,7 +14501,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             )
 
             if not boldok:
-                r += "\n---> ERROR: bold not found [%s]!" % boldimg
                 run = False
                 break
             else:
