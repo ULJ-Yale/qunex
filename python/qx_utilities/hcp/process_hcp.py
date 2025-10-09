@@ -14489,7 +14489,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             boldok = True
 
             _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
-
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
@@ -14502,6 +14501,8 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             )
 
             if not boldok:
+                r += "\n---> ERROR: bold not found [%s]!" % boldimg
+                run = False
                 break
             else:
                 # add @ separator
