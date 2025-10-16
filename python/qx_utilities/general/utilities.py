@@ -2778,11 +2778,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             for line in iter(process.stdout.readline, b""):
                 line = line.decode("utf-8")
                 print(line)
-                if (
-                    "ERROR in completing" in line
-                    or "ERROR:" in line
-                    or "failed with error" in line
-                ):
+                if "ERROR" in line or "failed with error" in line or "/error_" in line:
                     print("", file=log)
                     error = True
 
