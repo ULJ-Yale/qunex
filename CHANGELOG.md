@@ -8,7 +8,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 1.4.0
 
-* Updated container to Debian 13.
+* Updated OS in the container to Debian 13 which should resolve some CUDA issues when using the container.
+* Optimized the container so it is significantly smaller.
+* Added support for the hcp_asl longitudinal pipeline.
+* HCP ASL pipeline is now more flexible through a more extensive parametrization.
+* Improved the import_bids functionality to make it more robust and support additional imaging types and annotations.
+* Fixed a bug where run_palm sometimes did not work properly in the container.
+* Fixed a bug where QuNex sometimes did not communicate success/fail or processing correctly.
+* Fixed several smaller issues and bugs which should improve the overall robustness of QuNex.
 
 ## 1.3.6
 
