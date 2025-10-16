@@ -1409,6 +1409,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             + " "
         )
 
+        # if hcp_seechospacing and hcp_seunwarpdir are None at this point, set to "NONE"
+        if options["hcp_seechospacing"] is None:
+            options["hcp_seechospacing"] = "NONE"
+        if options["hcp_seunwarpdir"] is None:
+            options["hcp_seunwarpdir"] = "NONE"
+
         elements = [
             ("path", sinfo["hcp"]),
             ("subject", sinfo["id"] + options["hcp_suffix"]),
@@ -2439,6 +2445,160 @@ def _get_subjects_from_batch(sinfo, hcp, run):
     return run, subjects_list
 
 
+def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
+    """
+    ``hcp_prep_long [... processing options]``
+
+    Prepares the data for longitudinal processing with HCP longitudinal
+    pipelines. Not needed if the starting point is hcp_long_freesurfer as that
+    command does the prep work automatically.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+    Output files:
+        The results of this step will be present in the
+        <study_folder>/subjects.
+
+    Examples:
+        ::
+
+            qunex hcp_prep_long \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSubjects: %s \n[started on %s]" % (
+        subjectids,
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP prep long [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    failed = 0
+
+    try:
+        # checks
+        pc.doOptionsCheck(options, sinfo[0], "hcp_prep_long")
+        doHCPOptionsCheck(options, "hcp_prep_long")
+        hcp = getHCPPaths(sinfo[0], options)
+
+        # get subjects and their sessions from the batch file
+        run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
+
+        # launch
+        parsubjects = options["parsubjects"]
+
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(
+            _execute_hcp_prep_long,
+            options,
+            overwrite,
+        )
+        results = processPoolExecutor.map(f, subjects_list)
+
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].append(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].append(run_report["failed"])
+            if run_report["ready"]:
+                report["ready"].append(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].append(run_report["not ready"])
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        report = "Error"
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        report = "Error"
+        failed = 1
+
+    r += (
+        "\n\nHCP prep long %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (subjectids, report, failed))
+
+
+def _execute_hcp_prep_long(options, overwrite, subject):
+    # prepare return variables
+    r = ""
+    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+
+    # get subject data
+    subject_id = subject["id"]
+    hcp_list = subject["hcp"]
+    sessions_list = subject["sessions"]
+
+    # sort out the folder structure
+    sessionsfolder = options["sessionsfolder"]
+    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
+    if not os.path.exists(subjectsfolder):
+        os.makedirs(subjectsfolder)
+    study_folder = os.path.join(subjectsfolder, subject_id)
+    if not os.path.exists(study_folder):
+        os.makedirs(study_folder)
+
+    # symlink sessions
+    i = 0
+    for i in range(len(sessions_list)):
+        session = sessions_list[i]
+        hcp = hcp_list[i]
+        source_dir = os.path.join(hcp, session)
+        # check that source exists
+        if not os.path.exists(source_dir):
+            r += f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!"
+            report["failed"] = subject_id
+
+        target_dir = os.path.join(study_folder, session)
+        gc.link_or_copy(source_dir, target_dir, symlink=True)
+        i += 1
+
+    if len (report["failed"]) == 0:
+        report["done"] = subject_id
+
+    return {"r": r, "report": report}
+
+
 def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_freesurfer [... processing options]``
@@ -2551,9 +2711,9 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_freesurfer")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_freesurfer")
         doHCPOptionsCheck(options, "hcp_long_freesurfer")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         # get subjects and their sessions from the batch file
         run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
@@ -2561,49 +2721,30 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         # launch
         parsubjects = options["parsubjects"]
 
-        if parsubjects == 1:  # serial execution
-            for subject in subjects_list:
-                result = _execute_hcp_long_freesurfer(
-                    options, overwrite, run, hcp["hcp_base"], subject
-                )
-                run_report = result["report"]
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(
+            _execute_hcp_long_freesurfer,
+            options,
+            overwrite,
+            run,
+            hcp["hcp_base"],
+        )
+        results = processPoolExecutor.map(f, subjects_list)
 
-                # merge
-                r += result["r"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parsubjects)
-            # process
-            f = partial(
-                _execute_hcp_long_freesurfer,
-                options,
-                overwrite,
-                run,
-                hcp["hcp_base"],
-            )
-            results = processPoolExecutor.map(f, subjects_list)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                run_report = result["report"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].append(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].append(run_report["failed"])
+            if run_report["ready"]:
+                report["ready"].append(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -2650,7 +2791,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
 
     longitudinal_template = options["hcp_longitudinal_template"]
     long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
-    # exit if overwrite is not set, else create folders
+    # exit if overwrite is not set, else cleanup
     if not overwrite and os.path.exists(long_dir):
         r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
         run = False
@@ -3012,51 +3153,34 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_post_freesurfer")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_post_freesurfer")
         doHCPOptionsCheck(options, "hcp_long_post_freesurfer")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         # get subjects and their sesssions from the batch file
         run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
 
         # launch
         parsubjects = options["parsubjects"]
-        if parsubjects == 1:  # serial execution
-            for subject in subjects_list:
-                result = _execute_hcp_long_post_freesurfer(
-                    options, overwrite, run, hcp, subject
-                )
-                run_report = result["report"]
 
-                # merge
-                r += result["r"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parsubjects)
-            # process
-            f = partial(_execute_hcp_long_post_freesurfer, options, overwrite, run, hcp)
-            results = processPoolExecutor.map(f, subjects_list)
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parsubjects)
+        # process
+        f = partial(_execute_hcp_long_post_freesurfer, options, overwrite, run, hcp)
+        results = processPoolExecutor.map(f, subjects_list)
 
-            # merge
-            for result in results:
-                r += result["r"]
-                run_report = result["report"]
-                if run_report["done"]:
-                    report["done"].append(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].append(run_report["failed"])
-                if run_report["ready"]:
-                    report["ready"].append(run_report["ready"])
-                if run_report["not ready"]:
-                    report["not ready"].append(run_report["not ready"])
+        # merge
+        for result in results:
+            r += result["r"]
+            run_report = result["report"]
+            if run_report["done"]:
+                report["done"].append(run_report["done"])
+            if run_report["failed"]:
+                report["failed"].append(run_report["failed"])
+            if run_report["ready"]:
+                report["ready"].append(run_report["ready"])
+            if run_report["not ready"]:
+                report["not ready"].append(run_report["not ready"])
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = str(errormessage)
@@ -5522,78 +5646,53 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         # --- Process
         r += "\n"
 
-        parelements = max(1, min(options["parelements"], len(boldsData)))
-        r += "\n%s %d BOLD images in parallel" % (
-            pc.action("Running", options["run"]),
-            parelements,
-        )
-
-        if parelements == 1:  # serial execution
-            # loop over bolds
+        # if moveref equals first and seimage equals independent (complex scenario)
+        if (
+            not options["longitudinal"]
+            and options["hcp_bold_movref"] == "first"
+            and options["hcp_bold_seimg"] == "independent"
+        ):
+            # loop over bolds to prepare processing pools
+            boldsPool = []
             for b in boldsData:
-                # process
-                result = executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b)
-
-                # merge r
-                r += result["r"]
-
-                # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
-
-        else:  # parallel execution
-            # if moveref equals first and seimage equals independent (complex scenario)
-            if (
-                not options["longitudinal"]
-                and options["hcp_bold_movref"] == "first"
-                and options["hcp_bold_seimg"] == "independent"
-            ):
-                # loop over bolds to prepare processing pools
-                boldsPool = []
-                for b in boldsData:
-                    fmriref = b["fmriref"]
-                    # if fmriref is "NONE" then process the previous pool followed by this one as single
-                    if fmriref == "NONE":
-                        if len(boldsPool) > 0:
-                            r, report = executeMultipleHCPfMRIVolume(
-                                sinfo, options, overwrite, hcp, boldsPool, r, report
-                            )
-                        boldsPool = []
-                        r, report = executeSingleHCPfMRIVolume(
-                            sinfo, options, overwrite, hcp, b, r, report
+                fmriref = b["fmriref"]
+                # if fmriref is "NONE" then process the previous pool followed by this one as single
+                if fmriref == "NONE":
+                    if len(boldsPool) > 0:
+                        r, report = executeMultipleHCPfMRIVolume(
+                            sinfo, options, overwrite, hcp, boldsPool, r, report
                         )
-                    else:  # else add to pool
-                        boldsPool.append(b)
-
-                # execute remaining pool
-                r, report = executeMultipleHCPfMRIVolume(
-                    sinfo, options, overwrite, hcp, boldsPool, r, report
-                )
-
-            else:
-                # if moveref equals first then process first one in serial
-                if (
-                    not options["longitudinal"]
-                    and options["hcp_bold_movref"] == "first"
-                ):
-                    # process first one
-                    b = boldsData[0]
+                    boldsPool = []
                     r, report = executeSingleHCPfMRIVolume(
                         sinfo, options, overwrite, hcp, b, r, report
                     )
+                else:  # else add to pool
+                    boldsPool.append(b)
 
-                    # remove first one from array then process others in parallel
-                    boldsData.pop(0)
+            # execute remaining pool
+            r, report = executeMultipleHCPfMRIVolume(
+                sinfo, options, overwrite, hcp, boldsPool, r, report
+            )
 
-                # process the rest in parallel
-                r, report = executeMultipleHCPfMRIVolume(
-                    sinfo, options, overwrite, hcp, boldsData, r, report
+        else:
+            # if moveref equals first then process first one in serial
+            if (
+                not options["longitudinal"]
+                and options["hcp_bold_movref"] == "first"
+            ):
+                # process first one
+                b = boldsData[0]
+                r, report = executeSingleHCPfMRIVolume(
+                    sinfo, options, overwrite, hcp, b, r, report
                 )
+
+                # remove first one from array then process others in parallel
+                boldsData.pop(0)
+
+            # process the rest in parallel
+            r, report = executeMultipleHCPfMRIVolume(
+                sinfo, options, overwrite, hcp, boldsData, r, report
+            )
 
         rep = []
         for k in ["done", "incomplete", "failed", "ready", "not ready", "skipped"]:
@@ -6207,40 +6306,22 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             parelements,
         )
 
-        if parelements == 1:  # serial execution
-            for b in bolds:
-                # process
-                result = executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, b)
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(executeHCPfMRISurface, sinfo, options, overwrite, hcp, run)
+        results = processPoolExecutor.map(f, bolds)
 
-                # merge r
-                r += result["r"]
-
-                # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(executeHCPfMRISurface, sinfo, options, overwrite, hcp, run)
-            results = processPoolExecutor.map(f, bolds)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["incomplete"] += tempReport["incomplete"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
-                report["skipped"] += tempReport["skipped"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            tempReport = result["report"]
+            report["done"] += tempReport["done"]
+            report["failed"] += tempReport["failed"]
+            report["incomplete"] += tempReport["incomplete"]
+            report["ready"] += tempReport["ready"]
+            report["not ready"] += tempReport["not ready"]
+            report["skipped"] += tempReport["skipped"]
 
         rep = []
         for k in ["done", "incomplete", "failed", "ready", "not ready", "skipped"]:
@@ -6964,81 +7045,41 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         # --- Execute
         # single fix
         if singleFix:
-            if parelements == 1:  # serial execution
-                for b in icafixBolds:
-                    # process
-                    result = executeHCPSingleICAFix(
-                        sinfo, options, overwrite, hcp, run, b
-                    )
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
+            results = processPoolExecutor.map(f, icafixBolds)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
-                results = processPoolExecutor.map(f, icafixBolds)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # multi fix
         else:
-            if parelements == 1:  # serial execution
-                for g in icafixGroups:
-                    # process
-                    result = executeHCPMultiICAFix(
-                        sinfo, options, overwrite, hcp, run, g
-                    )
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPMultiICAFix, sinfo, options, overwrite, hcp, run)
+            results = processPoolExecutor.map(f, icafixGroups)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPMultiICAFix, sinfo, options, overwrite, hcp, run)
-                results = processPoolExecutor.map(f, icafixGroups)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # report
         rep = []
@@ -8199,77 +8240,41 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         # --- Execute
         # single fix
         if singleFix:
-            if parelements == 1:  # serial execution
-                for b in icafixBolds:
-                    # process
-                    result = executeHCPSingleReApplyFix(sinfo, options, hcp, run, b)
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPSingleReApplyFix, sinfo, options, hcp, run)
+            results = processPoolExecutor.map(f, icafixBolds)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPSingleReApplyFix, sinfo, options, hcp, run)
-                results = processPoolExecutor.map(f, icafixBolds)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # multi fix
         else:
-            if parelements == 1:  # serial execution
-                for g in icafixGroups:
-                    # process
-                    result = executeHCPMultiReApplyFix(sinfo, options, hcp, run, g)
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(parelements)
+            # process
+            f = partial(executeHCPMultiReApplyFix, sinfo, options, hcp, run)
+            results = processPoolExecutor.map(f, icafixGroups)
 
-                    # merge r
-                    r += result["r"]
-
-                    # merge report
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["failed"] += tempReport["failed"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
-
-            else:  # parallel execution
-                # create a multiprocessing Pool
-                processPoolExecutor = ProcessPoolExecutor(parelements)
-                # process
-                f = partial(executeHCPMultiReApplyFix, sinfo, options, hcp, run)
-                results = processPoolExecutor.map(f, icafixGroups)
-
-                # merge r and report
-                for result in results:
-                    r += result["r"]
-                    tempReport = result["report"]
-                    report["done"] += tempReport["done"]
-                    report["failed"] += tempReport["failed"]
-                    report["incomplete"] += tempReport["incomplete"]
-                    report["ready"] += tempReport["ready"]
-                    report["not ready"] += tempReport["not ready"]
-                    report["skipped"] += tempReport["skipped"]
+            # merge r and report
+            for result in results:
+                r += result["r"]
+                tempReport = result["report"]
+                report["done"] += tempReport["done"]
+                report["failed"] += tempReport["failed"]
+                report["incomplete"] += tempReport["incomplete"]
+                report["ready"] += tempReport["ready"]
+                report["not ready"] += tempReport["not ready"]
+                report["skipped"] += tempReport["skipped"]
 
         # report
         rep = []
@@ -10157,9 +10162,9 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_msmall")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_msmall")
         doHCPOptionsCheck(options, "hcp_long_msmall")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         # get subjects and their sesssions from the batch file
         run, subjects_list = _get_subjects_from_batch(sinfo, hcp, run)
@@ -11485,21 +11490,21 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_gdcoeffs (str, default ''):
+        --hcp_gdcoeffs (str, optional):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see
             below) can be provided.
 
-        --hcp_asl_mtname (str, default ''):
+        --hcp_asl_mtname (str, optional):
             Filename for empirically estimated MT-correction scaling factors.
 
-        --hcp_asl_territories_atlas (str, default ''):
+        --hcp_asl_territories_atlas (str, optional):
             Atlas of vascular territories from Mutsaerts.
 
-        --hcp_asl_territories_labels (str, default ''):
+        --hcp_asl_territories_labels (str, optional):
             Labels corresponding to territories_atlas.
 
-        --hcp_asl_cores (int, default 1)
+        --hcp_asl_cores (int, optional)
             Number of cores to use when applying motion correction and
             other potentially multi-core operations.
 
@@ -11508,7 +11513,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             will be used in perfusion estimation in oxford_asl. The
             flag is not set by default.
 
-        --hcp_asl_interpolation (int, default 1):
+        --hcp_asl_interpolation (int, optional):
             Interpolation order for registrations corresponding to
             scipy's map_coordinates function.
 
@@ -11516,9 +11521,46 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             If this option is provided, MT and ST banding corrections
             won't be applied. The flag is not set by default.
 
-        --hcp_asl_stages (str)
+        --hcp_asl_stages (str, optional)
             A comma separated list of stages (zero-indexed) to run.
             All prior stages are assumed to have run successfully.
+
+        --hcp_asl_ntis (int, optional)
+            Number of TIs.
+
+        --hcp_asl_tis (str, optional)
+            Comma separated list of TIs in seconds (e.g., 1.7,2.2,2.7,3.2,3.7).
+
+        --hcp_asl_rpts (str, optional)
+            Comma separated repeats for each TI (e.g., 6,6,6,10,15).
+
+        --hcp_asl_bolus (float, optional)
+            Labeling/bolus duration in seconds.
+
+        --hcp_asl_slicedt (float, optional)
+            Slice time in seconds.
+
+        --hcp_asl_sliceband (int, optional)
+            Slices per band (if omitted, derived from sidecar MB factor).
+
+        --hcp_asl_te (float, optional)
+            Echo time in milliseconds.
+
+        --hcp_asl_tail_discard_vols (int, optional)
+            Volumes immediately before calibrations to discard.
+
+        --hcp_asl_ibf (str, optional)
+            Input block format.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            Input registration name.
+
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of this
+            command.
 
     Output files:
         The results of this step will be present in the ASL folder in the
@@ -11557,16 +11599,27 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             QuNex parameter                HCP ASL parameter
             ============================== ======================
             ``hcp_gdcoeffs``               ``grads``
+            ``hcp_regname``                ``regname``
             ``hcp_asl_mtname``             ``mtname``
             ``hcp_asl_territories_atlas``  ``territories_atlas``
             ``hcp_asl_territories_labels`` ``territories_labels``
             ``hcp_asl_use_t1``             ``use_t1``
             ``hcp_asl_nobandingcorr``      ``nobandingcorr``
             ``hcp_asl_interpolation``      ``interpolation``
-            ``hcp_asl_cores``              ``cores``
+            ``hcp_asl_cores``              ``cores```
             ``hcp_asl_stages``             ``stages``
+            ``hcp_asl_ntis``               ``ntis``
+            ``hcp_asl_tis``                ``tis``
+            ``hcp_asl_rpts``               ``rpts``
+            ``hcp_asl_bolus``              ``bolus``
+            ``hcp_asl_slicedt``            ``slicedt``
+            ``hcp_asl_sliceband``          ``sliceband``
+            ``hcp_asl_te``                 ``te``
+            ``hcp_asl_tail_discard_vols``  ``tail_discard_vols``
+            ``hcp_asl_ibf``                ``ibf``
+            ``longitudinal``               ``is-longitudinal``
+            ``hcp_longitudinal_template``  ``longitudinal-template``
             ============================== ======================
-
 
     Examples:
         Example run::
@@ -11608,37 +11661,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             )
             run = False
 
-        # lookup gdcoeffs file
-        gdcfile, r, run = check_gdc_coeff_file(
-            options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
-        )
-        if gdcfile == "NONE":
-            r += "\n---> ERROR: Gradient coefficient file is required!"
-            run = False
-
-        # get struct files
-        # ACPC-aligned, DC-restored structural image
-        t1w_file = os.path.join(
-            sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz"
-        )
-        if not os.path.exists(t1w_file):
-            r += (
-                "\n---> ERROR: ACPC-aligned, DC-restored structural image not found [%s]"
-                % t1w_file
-            )
-            run = False
-
-        # Brain-extracted ACPC-aligned DC-restored structural image
-        t1w_brain_file = os.path.join(
-            sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore_brain.nii.gz"
-        )
-        if not os.path.exists(t1w_brain_file):
-            r += (
-                "\n---> ERROR: Brain-extracted ACPC-aligned DC-restored structural image not found [%s]"
-                % t1w_brain_file
-            )
-            run = False
-
         # extract ASL and SE info
         asl_info = []
         asl_se_info = []
@@ -11646,7 +11668,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if k.isdigit():
                 if v["name"] == "PCASLhr":
                     asl_se_info.append(v)
-                elif v["name"] == ["mbPCASLhr"]:
+                elif v["name"] == "mbPCASLhr" or v["name"] == ["mbPCASLhr"]:
                     asl_info = v
                 elif v["name"] == "ASL":
                     if "phenc" in v and "SE-FM" in v["phenc"]:
@@ -11656,7 +11678,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
         # ASL file
         if len(asl_info) == 0:
-            r += f"\n---> ERROR: No ASL images found in the batch file!"
+            r += "\n---> ERROR: No ASL images found in the batch file!"
             run = False
 
         asl_file = ""
@@ -11753,100 +11775,167 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file
                 run = False
 
-        # wmparc
-        wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
-        if not os.path.exists(wmparc_file):
-            r += (
-                "\n---> ERROR: wmparc.nii.gz from FreeSurfer not found [%s]"
-                % wmparc_file
-            )
-            run = False
-
-        # ribbon
-        ribbon_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz")
-        if not os.path.exists(ribbon_file):
-            r += (
-                "\n---> ERROR: ribbon.nii.gz from FreeSurfer not found [%s]"
-                % ribbon_file
-            )
-            run = False
-
         # get library path
         asl_library = os.path.join(os.environ["QUNEXLIBRARY"], "etc/asl")
-
-        # set mtname
-        mtname = ""
-        if options["hcp_asl_mtname"] is None:
-            mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
-
-        # set territories atlas
-        territories_atlas = ""
-        if options["hcp_asl_territories_atlas"] is None:
-            territories_atlas = os.path.join(
-                asl_library, "vascular_territories_eroded5_atlas.nii.gz"
-            )
-
-        # set territories labels
-        territories_labels = ""
-        if options["hcp_asl_territories_labels"] is None:
-            territories_labels = os.path.join(
-                asl_library, "vascular_territories_atlas.txt"
-            )
 
         # build the command
         if run:
             comm = (
                 '%(script)s \
-                --studydir="%(studydir)s" \
-                --subid="%(subid)s" \
-                --grads="%(grads)s" \
-                --struct="%(struct)s" \
-                --sbrain="%(sbrain)s" \
-                --mbpcasl="%(mbpcasl)s" \
-                --fmap_ap="%(fmap_ap)s" \
-                --fmap_pa="%(fmap_pa)s" \
-                --wmparc="%(wmparc)s" \
-                --ribbon="%(ribbon)s" \
-                --mtname="%(mtname)s" \
-                --territories_atlas="%(territories_atlas)s" \
-                --territories_labels="%(territories_labels)s"'
+                --subdir %(subdir)s \
+                --subid %(subid)s \
+                --mbpcasl %(mbpcasl)s \
+                --fmap_ap %(fmap_ap)s \
+                --fmap_pa %(fmap_pa)s \
+                --regname %(regname)s'
                 % {
                     "script": "process_hcp_asl",
-                    "studydir": sinfo["hcp"],
+                    "subdir": os.path.join(sinfo["hcp"], sinfo["id"]),
                     "subid": sinfo["id"] + options["hcp_suffix"],
-                    "grads": gdcfile,
-                    "struct": t1w_file,
-                    "sbrain": t1w_brain_file,
                     "mbpcasl": asl_file,
                     "fmap_ap": fmap_ap_file,
                     "fmap_pa": fmap_pa_file,
-                    "wmparc": wmparc_file,
-                    "ribbon": ribbon_file,
-                    "mtname": mtname,
-                    "territories_atlas": territories_atlas,
-                    "territories_labels": territories_labels,
+                    "regname": options["hcp_regname"],
                 }
             )
 
             # -- Optional parameters
+            # grads
+            gdcfile, r, run = check_gdc_coeff_file(
+                options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
+            )
+            if gdcfile != "NONE":
+                comm += f'                --grads {gdcfile}'
+
+            # struct
+            # get struct files
+            # ACPC-aligned, DC-restored structural image
+            t1w_file = os.path.join(
+                sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz"
+            )
+            if os.path.exists(t1w_file):
+                comm += f"                --struct {t1w_file}"
+
+            # sbrain
+            t1w_brain_file = os.path.join(
+                sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore_brain.nii.gz"
+            )
+            if os.path.exists(t1w_brain_file):
+                comm += f"                --sbrain {t1w_brain_file}"
+
+            # wmparc
+            wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
+            if os.path.exists(wmparc_file):
+                comm += f"                --wmparc {wmparc_file}"
+
+            # ribbon
+            ribbon_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz")
+            if os.path.exists(ribbon_file):
+                comm += f"                --ribbon {ribbon_file}"
+
+            # use_t1
             if options["hcp_asl_use_t1"]:
                 comm += "                --use_t1"
 
+            # mtname
+            if options["hcp_asl_mtname"] is None:
+                mtname = os.path.join(asl_library, "mt_scaling_factors.txt")
+                if os.path.exists(mtname):
+                    comm += f"                --mtname {mtname}"
+            else:
+                comm += f"                --mtname {options['hcp_asl_mtname']}"
+
+            # stages
+            if options["hcp_asl_stages"] is not None:
+                stages = options["hcp_asl_stages"].replace(",", " ")
+                comm += f"                --stages {stages}"
+
+            # cores
+            if options["hcp_asl_cores"] is not None:
+                comm += f"                --cores {options['hcp_asl_cores']}"
+
+            # interpolation
+            if options["hcp_asl_interpolation"] is not None:
+                comm += f"                --interpolation {options['hcp_asl_interpolation']}"
+
+            # nobandingcorr
             if options["hcp_asl_nobandingcorr"]:
                 comm += "                --nobandingcorr"
 
-            if options["hcp_asl_interpolation"] is not None:
-                comm += (
-                    "                --interpolation="
-                    + options["hcp_asl_interpolation"]
+            # territories_atlas
+            if options["hcp_asl_territories_atlas"] is None:
+                territories_atlas = os.path.join(
+                    asl_library, "vascular_territories_eroded5_atlas.nii.gz"
                 )
+                if os.path.exists(territories_atlas):
+                    comm += f"                --territories_atlas {territories_atlas}"
+            else:
+                comm += f"                --territories_atlas {options['hcp_asl_territories_atlas']}"
 
-            if options["hcp_asl_cores"] is not None:
-                comm += "                --cores=" + options["hcp_asl_cores"]
+            # territories_labels
+            if options["hcp_asl_territories_labels"] is None:
+                territories_labels = os.path.join(
+                    asl_library, "vascular_territories_atlas.txt"
+                )
+                if os.path.exists(territories_labels):
+                    comm += f"                --territories_labels {territories_labels}"
+            else:
+                comm += f"                --territories_labels {options['hcp_asl_territories_labels']}"
 
-            if options["hcp_asl_stages"] is not None:
-                stages = options["hcp_asl_stages"].replace(",", " ")
-                comm += "                --stages " + stages
+            # ntis
+            if options["hcp_asl_ntis"] is not None:
+                comm += f"                --ntis {options['hcp_asl_ntis']}"
+
+            # tis
+            if options["hcp_asl_tis"] is not None:
+                hcp_asl_tis = options["hcp_asl_tis"].replace(",", " ")
+                comm += f"                --tis {hcp_asl_tis}"
+
+            # rpts
+            if options["hcp_asl_rpts"] is not None:
+                hcp_asl_rpts = options["hcp_asl_rpts"].replace(",", " ")
+                comm += f"                --rpts {hcp_asl_rpts}"
+
+            # bolus
+            if options["hcp_asl_bolus"] is not None:
+                comm += f"                --bolus {options['hcp_asl_bolus']}"
+
+            # slicedt
+            if options["hcp_asl_slicedt"] is not None:
+                comm += f"                --slicedt {options['hcp_asl_slicedt']}"
+
+            # sliceband
+            if options["hcp_asl_sliceband"] is not None:
+                comm += f"                --sliceband {options['hcp_asl_sliceband']}"
+
+            # te
+            if options["hcp_asl_te"] is not None:
+                comm += f"                --te {options['hcp_asl_te']}"
+
+            # tail_discard_vols
+            if options["hcp_asl_tail_discard_vols"] is not None:
+                comm += f"                --tail_discard_vols {options['hcp_asl_tail_discard_vols']}"
+
+            # ibf
+            if options["hcp_asl_ibf"] is not None:
+                comm += f"                --ibf {options['hcp_asl_ibf']}"
+
+            # clean/overwrite
+            if overwrite:
+                comm += "                --clean"
+
+            # -- Longitudinal parameters
+            if options["longitudinal"]:
+                studyfolder = gc.deduceFolders(options)["basefolder"]
+                if not studyfolder:
+                    r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                    run = False
+                # replace path
+                longitudinal_study_dir = os.path.join(studyfolder, "subjects", sinfo["subject"])
+
+                comm += f"                --longitudinal_template=\"{options['hcp_longitudinal_template']}\""
+                comm += f"                --longitudinal_study_dir=\"{longitudinal_study_dir}\""
+                comm += "                --is_longitudinal"
 
             # -- Report command
             if run:
@@ -11860,7 +11949,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                r, endlog, report, failed = pc.runExternalForFile(
+
+                if not options["longitudinal"]:
+                    logtags = options["logtag"]
+                else:
+                    logtags = ["long", options['hcp_longitudinal_template']]
+
+                r, _, report, failed = pc.runExternalForFile(
                     None,
                     comm,
                     "Running HCP ASL",
@@ -11869,7 +11964,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=options["logtag"],
+                    logtags=logtags,
                     fullTest=None,
                     shell=True,
                     r=r,
@@ -12633,9 +12728,9 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
 
     try:
         # checks
-        pc.doOptionsCheck(options, sinfo[1], "hcp_long_transmit_bias")
+        pc.doOptionsCheck(options, sinfo[0], "hcp_long_transmit_bias")
         doHCPOptionsCheck(options, "hcp_long_transmit_bias")
-        hcp = getHCPPaths(sinfo[1], options)
+        hcp = getHCPPaths(sinfo[0], options)
 
         run = True
         report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -13867,22 +13962,28 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
         QuNex's sessions folder.
 
     Notes:
-        Mapping of QuNex parameters onto HCP ASL pipeline parameters:
+        Mapping of QuNex parameters onto HCP make average dataset parameters:
             Below is a detailed specification about how QuNex parameters are
-            mapped onto the HCP ASL parameters.
+            mapped onto the HCP make average dataset parameters.
 
-            ============================== ======================
-            QuNex parameter                HCP ASL parameter
-            ============================== ======================
-            ``hcp_gdcoeffs``               ``grads``
-            ``hcp_asl_mtname``             ``mtname``
-            ``hcp_asl_territories_atlas``  ``territories_atlas``
-            ``hcp_asl_territories_labels`` ``territories_labels``
-            ``hcp_asl_use_t1``             ``use_t1``
-            ``hcp_asl_nobandingcorr``      ``nobandingcorr``
-            ``hcp_asl_interpolation``      ``interpolation``
-            ``hcp_asl_cores``              ``cores``
-            ============================== ======================
+            ================================== =====================================
+            QuNex parameter                    HCP make average dataset parameter
+            ================================== =====================================
+            ``hcp_outgroupname``               ``group-average-name``
+            ``hcp_surface_atlas_dir``          ``surface-atlas-dir``
+            ``hcp_grayordinates_dir``          ``grayordinates-space-dir``
+            ``hcp_hiresmesh``                  ``high-res-mesh``
+            ``hcp_lowresmeshes``               ``low-res-meshes``
+            ``hcp_freesurfer_labels``          ``freesurfer-labels``
+            ``hcp_pregradient_smoothing``      ``sigma``
+            ``hcp_mad_regname``                ``reg-name``
+            ``hcp_mad_videen_maps``            ``videen-maps``
+            ``hcp_mad_greyscale_maps``         ``greyscale-maps``
+            ``hcp_mad_distortion_maps``        ``distortion-maps``
+            ``hcp_mad_gradient_maps``          ``gradient-maps``
+            ``hcp_mad_std_maps``               ``std-maps``
+            ``hcp_mad_multi_maps``             ``multi-maps``
+            ================================== =====================================
 
     Examples:
         A run with the default set of parameters::
@@ -14299,44 +14400,24 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             )
 
         # --- Execute
-        if parelements == 1:  # serial execution
-            for re in reclean_elements:
-                # process
-                result = execute_hcp_apply_auto_reclean(
-                    sinfo, options, overwrite, hcp, run, re, single_fix
-                )
+        # create a multiprocessing Pool
+        ppe = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(
+            execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run, single_fix
+        )
+        results = ppe.map(f, reclean_elements)
 
-                # merge r
-                r += result["r"]
-
-                # merge report
-                temp_report = result["report"]
-                report["done"] += temp_report["done"]
-                report["incomplete"] += temp_report["incomplete"]
-                report["failed"] += temp_report["failed"]
-                report["ready"] += temp_report["ready"]
-                report["not ready"] += temp_report["not ready"]
-                report["skipped"] += temp_report["skipped"]
-
-        else:  # parallel execution
-            # create a multiprocessing Pool
-            ppe = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(
-                execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run
-            )
-            results = ppe.map(f, icafix_groups)
-
-            # merge r and report
-            for result in results:
-                r += result["r"]
-                temp_report = result["report"]
-                report["done"] += temp_report["done"]
-                report["failed"] += temp_report["failed"]
-                report["incomplete"] += temp_report["incomplete"]
-                report["ready"] += temp_report["ready"]
-                report["not ready"] += temp_report["not ready"]
-                report["skipped"] += temp_report["skipped"]
+        # merge r and report
+        for result in results:
+            r += result["r"]
+            temp_report = result["report"]
+            report["done"] += temp_report["done"]
+            report["failed"] += temp_report["failed"]
+            report["incomplete"] += temp_report["incomplete"]
+            report["ready"] += temp_report["ready"]
+            report["not ready"] += temp_report["not ready"]
+            report["skipped"] += temp_report["skipped"]
 
         # report
         rep = []
@@ -14379,7 +14460,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
-def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, single_fix):
+def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_fix, re):
     """Execute HCP Apply Auto Reclean"""
     if single_fix:
         groupname = None
@@ -14414,7 +14495,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             boldok = True
 
             _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
-
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
@@ -14427,6 +14507,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, re, sing
             )
 
             if not boldok:
+                run = False
                 break
             else:
                 # add @ separator
@@ -14988,7 +15069,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --hcp_cifti_tail=_Atlas \\
-                --additional_bolds=rfMRI_REST,fMRI_CONCAT_ALL
+                --additional_bolds=fMRI_CONCAT_ALL
 
         Run using absolute paths with scheduler::
 
@@ -14999,8 +15080,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 --hcp_cifti_tail="_Atlas" \\
                 --overwrite="yes" \\
                 --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
-
-
     """
 
     r = "\n------------------------------------------------------------"
@@ -15333,7 +15412,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(f["bold_mov"]) and not overwrite:
                         r += "\n     ... movement data ready"
                     else:
-                        movement_regressors = f"Movement_Regressors{options['hcp_cifti_tail'].replace('_Atlas', '')}.txt"
+                        movement_regressors = f"Movement_Regressors{options['hcp_nifti_tail'].replace('_Atlas', '')}.txt"
                         if os.path.exists(
                             os.path.join(hcp_bold_path, movement_regressors)
                         ):

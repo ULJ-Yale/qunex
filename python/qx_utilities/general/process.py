@@ -471,6 +471,15 @@ arglist = [
     ["hcp_asl_use_t1", None, flag],
     ["hcp_asl_nobandingcorr", None, flag],
     ["hcp_asl_stages", None, isNone],
+    ["hcp_asl_ntis", None, isNone],
+    ["hcp_asl_tis", None, isNone],
+    ["hcp_asl_rpts", None, isNone],
+    ["hcp_asl_bolus", None, isNone],
+    ["hcp_asl_slicedt", None, isNone],
+    ["hcp_asl_sliceband", None, isNone],
+    ["hcp_asl_te", None, isNone],
+    ["hcp_asl_tail_discard_vols", None, isNone],
+    ["hcp_asl_ibf", None, isNone],
     ["# --- hcp_temporal_ica options"],
     ["hcp_tica_studyfolder", "", isNone],
     ["hcp_tica_bolds", "", isNone],
@@ -714,6 +723,7 @@ calist = [
 
 # longitudinal commands
 lalist = [
+    ["hcp_prep_long", process_hcp.hcp_prep_long],
     ["hcp_long_freesurfer", process_hcp.hcp_long_freesurfer],
     ["hcp_long_post_freesurfer", process_hcp.hcp_long_post_freesurfer],
     ["hcp_long_msmall", process_hcp.hcp_long_msmall],

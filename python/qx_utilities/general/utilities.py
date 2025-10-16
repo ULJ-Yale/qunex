@@ -390,24 +390,23 @@ def create_study(studyfolder=None, folders=None):
             │   ├── stimuli
             │   ├── bids
             │   └── hcpls
-            ├── sessions
-            |   ├── inbox
-            |   │   ├── MR
-            |   │   ├── EEG
-            |   │   ├── BIDS
-            |   │   ├── HCPLS
-            |   │   ├── behavior
-            |   │   ├── concs
-            |   │   └── events
-            |   ├── archive
-            |   │   ├── MR
-            |   │   ├── EEG
-            |   │   ├── BIDS
-            |   │   ├── HCPLS
-            |   │   └── behavior
-            |   ├── specs
-            |   └── QC
-            └── subjects
+            └── sessions
+                ├── inbox
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   ├── behavior
+                │   ├── concs
+                │   └── events
+                ├── archive
+                │   ├── MR
+                │   ├── EEG
+                │   ├── BIDS
+                │   ├── HCPLS
+                │   └── behavior
+                └── specs
+                    └── QC
 
         Do note that the command will create all the missing folders in which
         the specified study is to reside. The command also prepares template
@@ -2779,11 +2778,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             for line in iter(process.stdout.readline, b""):
                 line = line.decode("utf-8")
                 print(line)
-                if (
-                    "ERROR in completing" in line
-                    or "ERROR:" in line
-                    or "failed with error" in line
-                ):
+                if "ERROR" in line or "failed with error" in line or "/error_" in line:
                     print("", file=log)
                     error = True
 
