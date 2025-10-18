@@ -251,7 +251,7 @@
 # _hcp_msmall_outfmriname    The name which will be given to the concatenation of scans specified by the hcp_msmall_bolds parameter [rfMRI_REST]
 # _hcp_msmall_templates      Path to directory containing MSMAll template files [<HCPPIPEDIR>/global/templates/MSMAll]
 # _hcp_msmall_outregname     Output registration name [MSMAll_InitialReg]
-# _hcp_msmall_procstring     Identification for FIX cleaned dtseries to use [<hcp_cifti_tail>_hp<hcp_icafix_highpass>_clean]
+# _hcp_msmall_procstring     Identification for FIX cleaned dtseries to use [_Atlas_hp<hcp_icafix_highpass>_clean]
 # _hcp_msmall_resample       Whether to automatically run HCP DeDriftAndResample if HCP MSMAll finishes successfully [TRUE]
 #
 # # --- hcp_dedrift_and_resample options
