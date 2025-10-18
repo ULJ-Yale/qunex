@@ -16,6 +16,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Fixed a bug where run_palm sometimes did not work properly in the container.
 * Fixed a bug where QuNex sometimes did not communicate success/fail or processing correctly.
 * Fixed several smaller issues and bugs which should improve the overall robustness of QuNex.
+* More robust cifti and nifti tail parsing and usage.
+* `run_recipe` now ouputs nicer overview logs.
 
 ## 1.3.6
 
