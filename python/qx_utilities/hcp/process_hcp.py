@@ -6444,7 +6444,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
                 hcp["hcp_nonlin"],
                 "Results",
                 boldtarget,
-                "%s%s.dtseries.nii" % (boldtarget, options["hcp_cifti_tail"]),
+                "%s%s.dtseries.nii" % (boldtarget, "_Atlas"),
             )
 
             if hcp["hcp_bold_surf_check"]:
@@ -8426,7 +8426,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, boldinfo):
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (
                 boldtarget,
-                options["hcp_cifti_tail"],
+                "_Atlas",
                 highpass,
             )
             if (
@@ -8435,7 +8435,7 @@ def executeHCPSingleReApplyFix(sinfo, options, hcp, run, boldinfo):
             ):
                 postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (
                     boldtarget,
-                    options["hcp_cifti_tail"],
+                    "_Atlas",
                     options["hcp_icafix_regname"],
                     highpass,
                 )
@@ -8696,7 +8696,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # postfix
             postfix = "%s%s_hp%s_clean.dtseries.nii" % (
                 groupname,
-                options["hcp_cifti_tail"],
+                "_Atlas",
                 highpass,
             )
             if (
@@ -8705,7 +8705,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             ):
                 postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (
                     groupname,
-                    options["hcp_cifti_tail"],
+                    "_Atlas",
                     options["hcp_icafix_regname"],
                     highpass,
                 )
@@ -9424,7 +9424,7 @@ def executeHCPSingleMSMAll(sinfo, options, hcp, run, group):
         )
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%s_clean" % (options["hcp_cifti_tail"], str(highpass))
+        fmriprocstring = "%s_hp%s_clean" % ("_Atlas", str(highpass))
         if options["hcp_msmall_procstring"] is not None:
             fmriprocstring = options["hcp_msmall_procstring"]
 
@@ -9719,7 +9719,7 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
         )
 
         # fmriprocstring
-        fmriprocstring = "%s_hp%s_clean" % (options["hcp_cifti_tail"], str(highpass))
+        fmriprocstring = "%s_hp%s_clean" % ("_Atlas", str(highpass))
         if options["hcp_msmall_procstring"] is not None:
             fmriprocstring = options["hcp_msmall_procstring"]
 
@@ -10281,7 +10281,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
 
                 # fmriprocstring
                 fmriprocstring = "%s_hp%s_clean" % (
-                    options["hcp_cifti_tail"],
+                    "_Atlas",
                     str(highpass),
                 )
                 if options["hcp_msmall_procstring"] is not None:
@@ -13490,7 +13490,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         if options["hcp_tica_procstring"] is None:
             proc_string = ""
             if "hcp_cifti_tail" in options:
-                proc_string = "%s_" % options["hcp_cifti_tail"]
+                proc_string = "%s_" % "_Atlas"
 
             proc_string = "%s%s_hp%s_clean" % (
                 proc_string,

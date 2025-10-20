@@ -2561,6 +2561,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
                 del command_parameters["path"]
             else:
+                summary += f"\n - external {command_parameters} ... FAILED"
+                _print_end_summary(summary, log, f"{command_parameters} path not provided!")
+
                 raise ge.CommandFailed(
                     "run_recipe",
                     "Path to the external script or programme not provided",
@@ -2575,6 +2578,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 file=log,
             )
             if not os.path.exists(external_path):
+                summary += f"\n - external {external_path} ... FAILED"
+                _print_end_summary(summary, log, f"{external_path} does not exist!")
+
                 raise ge.CommandFailed(
                     "run_recipe",
                     "External command not found",
@@ -2651,6 +2657,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 print(f"    ... failed [{external_path}], see [{error_log}]")
                 print(f"    ... failed [{external_path}], see [{error_log}]", file=log)
                 os.rename(log_path, error_log)
+
+                summary += f"\n - external {external_path} ... FAILED"
+                _print_end_summary(summary, log, f"Failed external {external_path}!")
+
                 raise ge.CommandFailed(
                     "run_recipe",
                     "External command failed",
@@ -2746,6 +2756,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                         if cleaned_label[0] == "$" and os_label in os.environ:
                             value = value.replace(label, os.environ[os_label])
                         else:
+                            summary += f"\n - command {command_name} ... FAILED"
+                            _print_end_summary(summary, log, f"Failed running command {command_name}! Cannot inject values marked with double curly braces in the recipe.")
+
                             raise ge.CommandFailed(
                                 "run_recipe",
                                 f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
@@ -2795,13 +2808,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
             if error or exit_code != 0:
                 summary += f"\n - command {command_name} ... FAILED"
-                summary += "\n\n----------==== END SUMMARY ====----------"
-                print(summary, file=log)
-                print(
-                    f"\n---> run_recipe not completed successfully: failed running command {command_name}",
-                    file=log,
-                )
-                log.close()
+                _print_end_summary(summary, log, f"Failed running command {command_name}!")
+
                 raise ge.CommandFailed(
                     "run_recipe",
                     "run_recipe command failed",
@@ -2816,11 +2824,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
             # XNAT individual command cleanup, creates _out checkpoint
             if os.environ.get("XNAT", "") == "yes":
-                print("Attempting Xnat specific cleanup...", file=log)
+                print("Attempting XNAT specific cleanup...", file=log)
                 if not xnat_command:
                     print("\n------------------------")
                     print(
-                        "\nNo Xnat cleanup method detected for: "
+                        "\nNo XNAT cleanup method detected for: "
                         + command_name
                         + ", continuing...",
                         file=log,
@@ -2836,7 +2844,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 )
 
         else:
-            print(f"\n---> ERROR: run_recipe failed, {command_name} is not known!")
+            summary += f"\n - command {command_name} ... FAILED"
+            _print_end_summary(summary, log, f"Unknown command [{command_name}]!")
+
             raise ge.CommandFailed(
                 "run_recipe",
                 "Unknown command",
@@ -2844,16 +2854,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 "This is not a QuNex command or an external script!",
             )
 
-    summary += "\n\n----------==== END SUMMARY ====----------"
-
-    print(summary, file=log)
-    print("\n---> Successful completion of task: run_recipe", file=log)
-
-    print("\n------------------------")
-    print("---> Successful completion of run_recipe")
-    print(summary)
-
-    log.close()
+    _print_end_summary(summary, log, None)
 
     # hack copy the log from runlogs to comlogs as well
     comlog = logname.replace("runlogs", "comlogs")
@@ -2864,6 +2865,30 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
     # copy logname to comlog
     shutil.copyfile(logname, comlog)
+
+
+def _print_end_summary(summary, log, error=None):
+    summary += "\n\n----------==== END SUMMARY ====----------"
+
+    print(summary, file=log)
+    print(summary)
+
+    if not error:
+        print("\n------------------------", file=log)
+        print("\n---> Successful completion of QuNex run_recipe", file=log)
+
+        print("\n------------------------")
+        print("---> Successful completion of QuNex run_recipe")
+    else:
+        print("\n------------------------", file=log)
+        print(f"\nERROR: {error}", file=log)
+        print("\n---> run_recipe failed", file=log)
+
+        print("\n------------------------")
+        print(f"\nERROR: {error}")
+        print("---> run_recipe failed")
+
+    log.close()
 
 
 def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter="}}"):
@@ -4953,7 +4978,7 @@ def xnat_load_checkpoint(file_path):
         )
 
     # Filters out logs
-    # Dicoms are deleted Xnat, so /dicom/ only contains logs
+    # Dicoms are deleted XNAT, so /dicom/ only contains logs
     files = list(filter(lambda n: "/dicom/" not in n, files))
     files = list(filter(lambda n: "/checkpoints/" not in n, files))
     files = list(filter(lambda n: "/processing/logs" not in n, files))
