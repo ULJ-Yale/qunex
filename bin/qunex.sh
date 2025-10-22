@@ -1556,6 +1556,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
     OutName=`get_parameters "${setflag}outname" $@`
     WayTotal=`get_parameters "${setflag}waytotal" $@`
+    Lengths=`get_parameters "${setflag}lengths" $@`
 
     # -- Input flags for  dwi_seed_tractography_dense
     SeedFile=`get_parameters "${setflag}seedfile" $@`
