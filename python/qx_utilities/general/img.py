@@ -455,15 +455,6 @@ def remove_qunex_metadata(infile, outfile=None):
         removed_block = hdr.meta.pop(idx)
         print("-> Removed block #%d: Size %d bytes" % (idx + 1, removed_block[0]))
 
-    # Update vox_offset to reflect removed metadata
-    if hdr.nifti_version == 1:
-        base_offset = 352
-    else:
-        base_offset = 544
-
-    remaining_size = sum([mb[0] for mb in hdr.meta])
-    hdr.vox_offset = base_offset + remaining_size
-
     # If no metadata remains, clear the extension flag
     if len(hdr.meta) == 0:
         hdr.ext = chr(0) * 4
@@ -489,18 +480,9 @@ def remove_qunex_metadata(infile, outfile=None):
     old_hdr = niftihdr()
     old_hdr.unpackHdr(inf)
 
-    # Calculate how much data to copy
-    if old_hdr.nifti_version == 1:
-        old_base = 352
-    else:
-        old_base = 544
-
-    # Calculate old metadata size
-    old_meta_size = int(old_hdr.vox_offset - old_base)
-
-    # Skip the old metadata by reading it
-    if old_meta_size > 0:
-        inf.read(old_meta_size)
+    # The unpackHdr function already reads the header, extension flag, and all extensions
+    # The file pointer is now at vox_offset, ready to read image data
+    # No need to skip anything else
 
     # Read the actual image data
     image_data = inf.read()
@@ -514,7 +496,26 @@ def remove_qunex_metadata(infile, outfile=None):
         outf = open(outfile, 'wb')
 
     # Write new header (with updated metadata)
-    outf.write(hdr.packHdr())
+
+    # Write header (540 bytes for NIfTI-2, 352 for NIfTI-1)
+    header_bytes = hdr.packHdr()
+    outf.write(header_bytes)
+
+    # Write extension flag (4 bytes)
+    if hasattr(hdr, 'ext'):
+        if isinstance(hdr.ext, str):
+            ext_bytes = bytes(hdr.ext, 'utf-8')
+        else:
+            ext_bytes = hdr.ext
+    else:
+        ext_bytes = b'\x00\x00\x00\x00'
+    outf.write(ext_bytes)
+
+    # Write metadata blocks (if any)
+    for msize, mcode, mdata in getattr(hdr, 'meta', []):
+        outf.write(struct.pack(hdr.e + 'I', msize))   # 4 bytes: size
+        outf.write(struct.pack(hdr.e + 'I', mcode))   # 4 bytes: code
+        outf.write(mdata)                             # msize bytes: data
 
     # Write image data
     outf.write(image_data)
@@ -854,81 +855,77 @@ class niftihdr:
         s += bytes(self.magic[0:3] + chr(0), "utf-8")                 # char[4]   - magic word and zero char
         s += bytes((self.ext + chr(0) * 4)[0:4], "utf-8")             # char[4]   - extension
 
-        for msize, mcode, mdata in self.meta:
-            s += struct.pack(self.e + "I", msize)                     # int       - length
-            s += struct.pack(self.e + "I", mcode)                     # int       - code
-            s += mdata                                                # data
-
         return s
 
     def _packHdrV2(self):
         """Pack NIfTI-2 header (540 bytes base)"""
 
-        self.vox_offset = 544  # NIfTI-2 header is 540 bytes + 4 bytes extension
+        # NIfTI-2 header is 540 bytes, see https://nifti.nimh.nih.gov/pub/dist/src/nifti2.h
+        # Calculate vox_offset based on current metadata
+        self.vox_offset = 544  # 540 header + 4 extension flag
         for m in self.meta:
             self.vox_offset += m[0]
 
-        s = struct.pack(self.e + "i", 540)                            # int       - must be 540 for NIfTI-2
-        s += bytes("ni2" + chr(0), "utf-8")                           # char[8]   - magic word "ni2\0" followed by cr/lf/cr/lf
-        s += chr(0x0D).encode("utf-8")  # CR
-        s += chr(0x0A).encode("utf-8")  # LF
-        s += chr(0x0D).encode("utf-8")  # CR
-        s += chr(0x0A).encode("utf-8")  # LF
-        s += struct.pack(self.e + "h", self.data_type)                # short     - datatype
-        s += struct.pack(self.e + "h", self.bitpix)                   # short     - bits per voxel
-        s += struct.pack(self.e + "q", self.ndimensions)              # int64     - number of dimensions used
-        s += struct.pack(self.e + "q", self.sizex)                    # int64     - size in dimension x
-        s += struct.pack(self.e + "q", self.sizey)                    # int64     - size in dimension y
-        s += struct.pack(self.e + "q", self.sizez)                    # int64     - size in dimension z
-        s += struct.pack(self.e + "q", self.frames)                   # int64     - number of frames (4th dimension)
-        s += struct.pack(self.e + "q", self.size_5)                   # int64     - size of 5th dimension
-        s += struct.pack(self.e + "q", self.size_6)                   # int64     - size of 6th dimension
-        s += struct.pack(self.e + "q", self.size_7)                   # int64     - size of 7th dimension
-        s += struct.pack(self.e + "d", self.intention1)               # double    - intention 1 parameter
-        s += struct.pack(self.e + "d", self.intention2)               # double    - intention 2 parameter
-        s += struct.pack(self.e + "d", self.intention3)               # double    - intention 3 parameter
-        s += struct.pack(self.e + "d", self.pixdim_0)                 # double    - zero dimension size
-        s += struct.pack(self.e + "d", self.pixdim_x)                 # double    - x dimension size
-        s += struct.pack(self.e + "d", self.pixdim_y)                 # double    - y dimension size
-        s += struct.pack(self.e + "d", self.pixdim_z)                 # double    - z dimension size
-        s += struct.pack(self.e + "d", self.pixdim_t)                 # double    - t dimension size
-        s += struct.pack(self.e + "d", self.pixdim_5)                 # double    - 5 dimension size
-        s += struct.pack(self.e + "d", self.pixdim_6)                 # double    - 6 dimension size
-        s += struct.pack(self.e + "d", self.pixdim_7)                 # double    - 7 dimension size
-        s += struct.pack(self.e + "q", int(self.vox_offset))          # int64     - offset of data when within the same file
-        s += struct.pack(self.e + "d", self.scl_slope)                # double    - slope of data scaling
-        s += struct.pack(self.e + "d", self.scl_inter)                # double    - intersect of data scaling
-        s += struct.pack(self.e + "d", self.cal_max)                  # double    - maximum value in the dataset
-        s += struct.pack(self.e + "d", self.cal_min)                  # double    - minimum value in the dataset
-        s += struct.pack(self.e + "d", self.slice_duration)           # double    - slice duration
-        s += struct.pack(self.e + "d", self.toffset)                  # double    - time offset for first datapoint
-        s += struct.pack(self.e + "q", self.slice_start)              # int64     - First slice index
-        s += struct.pack(self.e + "q", self.slice_end)                # int64     - Last slice index
-        s += bytes((self.descrip + "12345678901234567890123456789012345678901234567890123456789012345678901234567890")[0:80], "utf-8")  # char[80]
-        s += bytes((self.aux_file + "123456789012345678901234")[0:24], "utf-8")  # char[24]
-        s += struct.pack(self.e + "i", self.qform_code)               # int       - qform code
-        s += struct.pack(self.e + "i", self.sform_code)               # int       - sform code
-        s += struct.pack(self.e + "d", self.quatern_b)                # double    - Quaternion b param
-        s += struct.pack(self.e + "d", self.quatern_c)                # double    - Quaternion c param
-        s += struct.pack(self.e + "d", self.quatern_d)                # double    - Quaternion d param
-        s += struct.pack(self.e + "d", self.qoffset_x)                # double    - Quaternion x shift
-        s += struct.pack(self.e + "d", self.qoffset_y)                # double    - Quaternion y shift
-        s += struct.pack(self.e + "d", self.qoffset_z)                # double    - Quaternion z shift
-        s += struct.pack(self.e + "dddd", self.srow_x[0], self.srow_x[1], self.srow_x[2], self.srow_x[3])  # double[4]
-        s += struct.pack(self.e + "dddd", self.srow_y[0], self.srow_y[1], self.srow_y[2], self.srow_y[3])  # double[4]
-        s += struct.pack(self.e + "dddd", self.srow_z[0], self.srow_z[1], self.srow_z[2], self.srow_z[3])  # double[4]
-        s += struct.pack(self.e + "i", self.slice_code)               # int       - slice order code
-        s += struct.pack(self.e + "i", self.xyz_unit + self.t_unit)   # int       - codes for units used
-        s += struct.pack(self.e + "i", self.intent_code)              # int       - intent code
-        s += bytes((self.intent_name + "1234567890123456")[0:16], "utf-8")  # char[16]
-        s += struct.pack(self.e + "c", bytes(self.dim_info, "utf-8")) # char      - MRI slice ordering
-        s += bytes(chr(0) * 15, "utf-8")                              # char[15]  - unused (padding)
-        s += bytes((self.ext + chr(0) * 4)[0:4], "utf-8")             # char[4]   - extension
+        # Pack header fields in order, matching nifti2.h
+        s = b''
+        s += struct.pack(self.e + 'i', 540)  # sizeof_hdr
+        s += bytes("n+2" + chr(0) + chr(13) + chr(10) + chr(26) + chr(10), "utf-8")  # magic
+        s += struct.pack(self.e + 'h', self.data_type)
+        s += struct.pack(self.e + 'h', self.bitpix)
+        s += struct.pack(self.e + 'q', self.ndimensions)
+        s += struct.pack(self.e + 'q', self.sizex)
+        s += struct.pack(self.e + 'q', self.sizey)
+        s += struct.pack(self.e + 'q', self.sizez)
+        s += struct.pack(self.e + 'q', self.frames)
+        s += struct.pack(self.e + 'q', self.size_5)
+        s += struct.pack(self.e + 'q', self.size_6)
+        s += struct.pack(self.e + 'q', self.size_7)
+        s += struct.pack(self.e + 'd', self.intention1)
+        s += struct.pack(self.e + 'd', self.intention2)
+        s += struct.pack(self.e + 'd', self.intention3)
+        s += struct.pack(self.e + 'd', self.pixdim_0)
+        s += struct.pack(self.e + 'd', self.pixdim_x)
+        s += struct.pack(self.e + 'd', self.pixdim_y)
+        s += struct.pack(self.e + 'd', self.pixdim_z)
+        s += struct.pack(self.e + 'd', self.pixdim_t)
+        s += struct.pack(self.e + 'd', self.pixdim_5)
+        s += struct.pack(self.e + 'd', self.pixdim_6)
+        s += struct.pack(self.e + 'd', self.pixdim_7)
+        s += struct.pack(self.e + 'q', int(self.vox_offset))
+        s += struct.pack(self.e + 'd', self.scl_slope)
+        s += struct.pack(self.e + 'd', self.scl_inter)
+        s += struct.pack(self.e + 'd', self.cal_max)
+        s += struct.pack(self.e + 'd', self.cal_min)
+        s += struct.pack(self.e + 'd', self.slice_duration)
+        s += struct.pack(self.e + 'd', self.toffset)
+        s += struct.pack(self.e + 'q', self.slice_start)
+        s += struct.pack(self.e + 'q', self.slice_end)
+        s += bytes((self.descrip + ' ' * 80)[0:80], 'utf-8')
+        s += bytes((self.aux_file + ' ' * 24)[0:24], 'utf-8')
+        s += struct.pack(self.e + 'i', self.qform_code)
+        s += struct.pack(self.e + 'i', self.sform_code)
+        s += struct.pack(self.e + 'd', self.quatern_b)
+        s += struct.pack(self.e + 'd', self.quatern_c)
+        s += struct.pack(self.e + 'd', self.quatern_d)
+        s += struct.pack(self.e + 'd', self.qoffset_x)
+        s += struct.pack(self.e + 'd', self.qoffset_y)
+        s += struct.pack(self.e + 'd', self.qoffset_z)
+        s += struct.pack(self.e + 'dddd', *self.srow_x)
+        s += struct.pack(self.e + 'dddd', *self.srow_y)
+        s += struct.pack(self.e + 'dddd', *self.srow_z)
+        s += struct.pack(self.e + 'i', self.slice_code)
+        s += struct.pack(self.e + 'i', self.xyz_unit + self.t_unit)
+        s += struct.pack(self.e + 'i', self.intent_code)
+        s += bytes((self.intent_name + ' ' * 16)[0:16], 'utf-8')
+        s += struct.pack(self.e + 'c', bytes(self.dim_info, 'utf-8'))
+        s += bytes(chr(0) * 15, 'utf-8')
+        # Extension flag (4 bytes) is written after header, not here
 
-        for msize, mcode, mdata in self.meta:
-            s += struct.pack(self.e + "I", msize)                     # int       - length
-            s += struct.pack(self.e + "I", mcode)                     # int       - code
-            s += mdata                                                # data
+        # Pad to 540 bytes if needed
+        if len(s) < 540:
+            s += bytes(540 - len(s))
+        elif len(s) > 540:
+            s = s[:540]
 
         return s
 
