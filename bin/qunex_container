@@ -1036,7 +1036,7 @@ def main(args=None):
                 f.write('echo ""\n')
                 f.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
                 f.write('echo ""\n')
-                f.write('export PS1="[QuNex container: \\w]\\$ "\n')
+                f.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
                 f.write("exec bash\n")
 
             # Make it executable
@@ -1066,7 +1066,7 @@ def main(args=None):
                 f.write('echo ""\n')
                 f.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
                 f.write('echo ""\n')
-                f.write('export PS1="[QuNex container: \\w]\\$ "\n')
+                f.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
                 f.write("bash\n")
 
             # Make it executable
