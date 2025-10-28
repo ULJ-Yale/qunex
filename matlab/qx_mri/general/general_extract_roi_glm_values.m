@@ -125,6 +125,11 @@ elseif length(parcels) == 1 && strcmp(parcels{1}, 'all')
         roi.roi(r).roiname = parcels{r};
         [~, roi.roi(r).roicode] = ismember(parcels{r}, t.cifti.parcels);
     end
+else
+    for r = 1:length(parcels)
+        roi.roi(r).roiname = parcels{r};
+        roi.roi(r).roicode = r;
+    end
 end
 nroi = length(roi.roi);
 nparcels = length(parcels);

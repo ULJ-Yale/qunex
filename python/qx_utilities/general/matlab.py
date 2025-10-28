@@ -51,6 +51,7 @@ functions = {
     'general_plot_bold_timeseries':          [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('sessionid', 'string'), ('verbose', 'bool')],
     'general_plot_bold_timeseries_list':     [('flist', 'string'), ('elements', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('fformat', 'string'), ('verbose', 'bool')],
     'general_qa_concfile':                   [('file', 'string'), ('do', 'string'), ('target', 'string')],
+    'general_remove_meta':                   [('fin', 'string'), ('fout', 'string')],
     'general_image_conjunction':             [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string'), ('psign', 'string')],
     'general_image_overlap':                 [('af', 'string'), ('bf', 'string'), ('tf', 'string'), ('v', 'numeric')],
     'general_create_roi':                    [('targetf', 'string'), ('roi', 'string'), ('mask', 'string'), ('options', 'string')],
@@ -76,7 +77,7 @@ functions = {
 }
 
 # -- update functions with information from extensions
-functions.update(extensions.compile_dict('functions')) 
+functions.update(extensions.compile_dict('functions'))
 
 functionList = sorted(functions.keys())
 

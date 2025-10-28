@@ -430,7 +430,23 @@ def run_palm(
                 simage = troot + "_cifti.ptseries.nii"
                 shutil.copy(image, simage)
                 toclean.append(simage)
+                print("    ... removing QuNex metadata")
+                command = ["qunex", "general_remove_meta", f"--fin={simage}", f"--fout={simage}"]
+                if subprocess.call(command, stdout=subprocess.DEVNULL):
+                    print("ERROR: Command failed: %s" % (" ".join(command)))
+                    raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
                 iformat = "ptseries"
+
+            elif image.endswith(".pscalar.nii"):
+                simage = troot + "_cifti.pscalar.nii"
+                shutil.copy(image, simage)
+                toclean.append(simage)
+                print("    ... removing QuNex metadata")
+                command = ["qunex", "general_remove_meta", f"--fin={simage}", f"--fout={simage}"]
+                if subprocess.call(command, stdout=subprocess.DEVNULL):
+                    print("ERROR: Command failed: %s" % (" ".join(command)))
+                    raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
+                iformat = "pscalar"
 
             elif image.endswith(".dtseries.nii") or image.endswith(".dscalar.nii"):
                 print(" ---> decomposing %s" % (image))
@@ -633,7 +649,7 @@ def run_palm(
                         "Please provide a valid mask!",
                     )
 
-            elif iformat == "ptseries":
+            elif iformat == "ptseries" or iformat == "pscalar":
                 if mask.endswith(".ptseries.nii") or mask.endswith(".pscalar.nii"):
                     mask_parcelated = troot + "_cifti_mask.ptseries.nii"
                     shutil.copy(mask, mask_parcelated)
@@ -694,6 +710,22 @@ def run_palm(
         elif iformat == "ptseries":
             print(" ---> running PALM for ptseries CIFTI input")
             infiles = setInFiles(root, "cifti.ptseries.nii", nimages)
+            if mask_parcelated:
+                inargs = ["-m", mask_parcelated]
+            else:
+                inargs = []
+            command = ["palm"] + infiles + inargs + dargs + sargs + ["-o", root]
+            if subprocess.call(command):
+                raise ge.CommandFailed(
+                    "run_palm",
+                    "PALM failed",
+                    "The PALM command failed to run: %s" % (" ".join(command)),
+                    "Please check your settings!",
+                )
+
+        elif iformat == "pscalar":
+            print(" ---> running PALM for pscalar CIFTI input")
+            infiles = setInFiles(root, "cifti.pscalar.nii", nimages)
             if mask_parcelated:
                 inargs = ["-m", mask_parcelated]
             else:
@@ -796,7 +828,7 @@ def run_palm(
                 raise ge.CommandFailed("run_palm", *report)
 
         # --- process output
-        if iformat in ["nifti", "ptseries"]:
+        if iformat in ["nifti", "ptseries", "pscalar"]:
             pass
         else:
             print(" ---> reconstructing results into CIFTI files")

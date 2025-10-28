@@ -276,7 +276,7 @@ if mi > 0
             elseif strcmp(mmeta.meta, 'list')
                 keepmeta(m) = false;
                 img.list    = mmeta;
-                lists       = fields(img.list);
+                lists       = fieldnames(img.list);
                 lists       = lists(~ismember(lists, 'meta'));
                 ltest       = [img.frames];
                 for l = lists(:)'

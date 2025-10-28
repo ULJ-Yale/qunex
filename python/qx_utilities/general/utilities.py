@@ -1649,7 +1649,9 @@ def create_list(
     lines = []
 
     for session in sessions_list:
-        lines.append("session id: %s" % (session["id"]))
+        session_lines = []
+        session_lines.append("session id: %s" % (session["id"]))
+        skip_session = False
 
         if boldnums:
             for boldnum in boldnums:
@@ -1662,7 +1664,10 @@ def create_list(
                 )
                 includeFile = checkFile(tfile)
                 if includeFile:
-                    lines.append("    file:" + tfile)
+                    session_lines.append("    file:" + tfile)
+                else:
+                    skip_session = True
+                    break
 
         if boldtags:
             try:
@@ -1688,13 +1693,18 @@ def create_list(
                 )
                 includeFile = checkFile(tfile)
                 if includeFile:
-                    lines.append("    file:" + tfile)
+                    session_lines.append("    file:" + tfile)
+                else:
+                    skip_session = True
+                    break
 
         if roi:
             tfile = os.path.join(sessionsfolder, session["id"], images_folder, roi)
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    roi:" + tfile)
+                session_lines.append("    roi:" + tfile)
+            else:
+                skip_session = True
 
         if glm:
             tfile = os.path.join(
@@ -1702,7 +1712,9 @@ def create_list(
             )
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    glm:" + tfile)
+                session_lines.append("    glm:" + tfile)
+            else:
+                skip_session = True
 
         if conc:
             tfile = os.path.join(
@@ -1715,7 +1727,9 @@ def create_list(
             )
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    conc:" + tfile)
+                session_lines.append("    conc:" + tfile)
+            else:
+                skip_session = True
 
         if fidl:
             tfile = os.path.join(
@@ -1728,7 +1742,14 @@ def create_list(
             )
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    fidl:" + tfile)
+                session_lines.append("    fidl:" + tfile)
+            else:
+                skip_session = True
+
+        if not skip_session:
+            lines += session_lines
+        else:
+            print("---> Skipping session %s from the list!" % (session["id"]))
 
     # --- write to target file
     if overwrite == "yes" or overwrite is True:
