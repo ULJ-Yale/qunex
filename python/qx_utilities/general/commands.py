@@ -173,6 +173,8 @@ commands = {
         ),
     },
     "printniftihdr": {"com": img.printniftihdr, "args": ("filename",)},
+    "remove_qunex_metadata": {"com": img.remove_qunex_metadata, "args": ("infile","outfile")},
+    "print_nifti_metadata": {"com": img.print_nifti_metadata, "args": ("filename","info")},
     "modniftihdr": {"com": qximg.modniftihdr, "args": ("filename", "s")},
     "create_batch": {
         "com": utilities.create_batch,

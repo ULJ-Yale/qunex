@@ -104,7 +104,8 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [outfolder=<output_folder>] [fidlname=<optional fidl name>]``
 
     Combines all the fidl files matching root based on the information in conc
-    file.
+    file. To determine the length of each bold file, it reads the bold files
+    specified in the conc file.
 
     Parameters:
         --concfile (str):
@@ -199,7 +200,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
         print("%g\t%s" % (l[0], "\t".join(l[1:])), file=out)
 
     out.close()
-    return 
+    return
 
 
 def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
@@ -264,7 +265,7 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
     Splits a multi-bold fidl file into run specific bold files based on the
     sequence of bold files in conc file and their lengths.
-    
+
     Parameters:
         --concfile (str):
             The path to the conc file.
@@ -338,7 +339,7 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]``
 
     Prints figures showing fidl events and their duration.
-    
+
     Parameters:
         --fidlfile (str, default detailed below):
             The path to the fidl file to plot. By default all the fidl files in
@@ -367,7 +368,7 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
             raise ge.CommandFailed("check_fidl", "Fidl file does not exist", "The specified fidl file does not exist [%s]" % (fidlfile), "Please check your data!")
     else:
         if not glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")):
-            raise ge.CommandFailed("check_fidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")   
+            raise ge.CommandFailed("check_fidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")
 
     command = ['Rscript', os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'check_fidl.R')]
     command.append('-fidlfolder=%s' % (fidlfolder))

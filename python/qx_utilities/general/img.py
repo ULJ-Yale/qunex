@@ -142,6 +142,393 @@ def printniftihdr(filename=None):
     print(hdr)
 
 
+def print_nifti_metadata(filename, info='list'):
+    """
+    ``print_nifti_metadata <image_filename> [info=list]``
+
+    Prints metadata extension blocks from a NIfTI file.
+
+    NIfTI files can contain metadata extension blocks after the header.
+    This function inspects and displays the content of these blocks.
+
+    INPUTS
+    ======
+
+    filename  Path to the NIfTI file (.nii or .nii.gz)
+    info      Which metadata to print:
+              - 'list': List metadata blocks without content (default)
+              - 'all': Print all metadata blocks with full content
+              - 'cifti': Print CIFTI metadata (ecode 32)
+              - 'qunex' or 'qx': Print QuNex metadata (ecode 64)
+              - Numeric code (e.g., 32, 64, 2, etc.): Print metadata with that code
+
+    METADATA CODES
+    ==============
+
+    Common NIfTI extension codes:
+    - 0: Unknown private format
+    - 2: DICOM format
+    - 4: AFNI group format
+    - 6: Comment
+    - 8: XCEDE format
+    - 10: Jiffy XML format
+    - 12: Unused
+    - 14: Unused
+    - 16: Unused
+    - 18: MIND_IDENT format
+    - 20: B_VALUE extension
+    - 22: SPHERICAL_DIRECTION extension
+    - 24: DT_COMPONENT extension
+    - 26: SHC_DEGREEORDER extension
+    - 28: VOXBO extension
+    - 30: CARET extension
+    - 32: CIFTI extension (XML format)
+    - 34: VARIABLE_FRAME_TIMING extension
+    - 36: MATLAB workspace extension
+    - 38: QUANTIPHYSE extension
+    - 40: MRS extension
+    - 42: PYTHON pickle extension
+    - 64: QuNex extension
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        # List metadata blocks (default)
+        print_nifti_metadata('bold1.dtseries.nii')
+
+        # Print all metadata with full content
+        print_nifti_metadata('bold1.dtseries.nii', info='all')
+
+        # Print only CIFTI metadata
+        print_nifti_metadata('bold1.dtseries.nii', info='cifti')
+
+        # Print only QuNex metadata
+        print_nifti_metadata('bold1.nii', info='qunex')
+
+        # Print metadata with specific numeric code
+        print_nifti_metadata('bold1.nii', info=32)  # CIFTI
+        print_nifti_metadata('bold1.nii', info=6)   # Comment
+    """
+
+    # Parse the info parameter
+    info_str = str(info).lower()
+    list_only = False
+
+    # Map info strings to extension codes
+    code_filter = None
+
+    if info_str == 'list':
+        list_only = True
+        code_filter = None
+        info_label = "List"
+    elif info_str == 'all':
+        code_filter = None
+        info_label = "All"
+    elif info_str == 'cifti':
+        code_filter = [32]
+        info_label = "CIFTI"
+    elif info_str in ['qunex', 'qx']:
+        code_filter = [64]
+        info_label = "QuNex"
+    else:
+        # Try to parse as numeric code
+        try:
+            numeric_code = int(info)
+            code_filter = [numeric_code]
+            info_label = "Code %d" % numeric_code
+        except ValueError:
+            print("Warning: Unknown info parameter '%s', using 'list'" % info)
+            list_only = True
+            code_filter = None
+            info_label = "List"
+
+    # Extension code names for display
+    ecode_names = {
+        0: "Unknown private",
+        2: "DICOM",
+        4: "AFNI group",
+        6: "Comment",
+        8: "XCEDE",
+        10: "Jiffy XML",
+        18: "MIND_IDENT",
+        20: "B_VALUE",
+        22: "SPHERICAL_DIRECTION",
+        24: "DT_COMPONENT",
+        26: "SHC_DEGREEORDER",
+        28: "VOXBO",
+        30: "CARET",
+        32: "CIFTI",
+        34: "VARIABLE_FRAME_TIMING",
+        36: "MATLAB workspace",
+        38: "QUANTIPHYSE",
+        40: "MRS",
+        42: "PYTHON pickle",
+        64: "QuNex"
+    }
+
+    # Read the NIfTI header and metadata
+    hdr = niftihdr(filename)
+
+    # print("-" * 70)
+    print("NIfTI Metadata for: %s" % filename)
+    print("NIfTI Version: %d" % hdr.nifti_version)
+    if list_only:
+        print("Mode: List metadata blocks")
+    else:
+        print("Filter: %s metadata" % info_label)
+    print()
+
+    if not hasattr(hdr, 'meta') or len(hdr.meta) == 0:
+        print("No metadata extensions found in this file.")
+        return
+
+    # If list mode, just show summary
+    if list_only:
+        print("Found %d metadata block(s):" % len(hdr.meta))
+        print()
+        for idx, (msize, mcode, mdata) in enumerate(hdr.meta, 1):
+            # Extract the actual code value
+            if isinstance(mcode, tuple):
+                mcode = mcode[0]
+
+            # Get the extension name
+            ecode_name = ecode_names.get(mcode, "Unknown")
+
+            print("  Block #%d: Code %d (%s), Size %d bytes" % (idx, mcode, ecode_name, msize))
+
+        print()
+        print("Use info='all' to see full content, or info=<code> for specific block")
+        print("-" * 70)
+        return
+
+    # Filter and display metadata with full content
+    found_count = 0
+    total_count = len(hdr.meta)
+
+    for idx, (msize, mcode, mdata) in enumerate(hdr.meta, 1):
+        # Extract the actual code value (it's returned as a tuple)
+        if isinstance(mcode, tuple):
+            mcode = mcode[0]
+
+        # Check if this metadata should be displayed
+        if code_filter is None or mcode in code_filter:
+            found_count += 1
+
+            # Get the extension name
+            ecode_name = ecode_names.get(mcode, "Unknown")
+
+            print("--------------------------------")
+            print("Metadata Block #%d (of %d total)" % (idx, total_count))
+            print("Extension Code: %d (%s)" % (mcode, ecode_name))
+            print("Block Size: %d bytes" % msize)
+            print()
+
+            # Try to decode and display the metadata content
+            try:
+                # For CIFTI (32) and many XML-based formats, try UTF-8 decoding
+                if mcode in [32, 8, 10, 30]:  # XML-based formats
+                    if isinstance(mdata, bytes):
+                        content = mdata.decode('utf-8', errors='replace')
+                    else:
+                        content = ''.join([chr(ord(c)) if ord(c) < 128 else '?' for c in mdata])
+
+                    # Clean up null terminators
+                    content = content.rstrip('\x00')
+
+                    print("Content (XML):\n----- START -----")
+                    print(content)
+                    print("------ END ------")
+
+                # For QuNex (64) and text-based formats
+                elif mcode in [64, 6]:  # QuNex or Comment
+                    if isinstance(mdata, bytes):
+                        content = mdata.decode('utf-8', errors='replace')
+                    else:
+                        content = ''.join([chr(ord(c)) if ord(c) < 128 else '?' for c in mdata])
+
+                    # Clean up null terminators
+                    content = content.rstrip('\x00')
+
+                    print("Content (Text):\n----- START -----")
+                    print(content)
+                    print("------ END ------")
+
+                # For binary formats, show hex dump of first 256 bytes
+                else:
+                    if isinstance(mdata, bytes):
+                        data_bytes = mdata
+                    else:
+                        data_bytes = bytes([ord(c) if isinstance(c, str) else c for c in mdata])
+
+                    print("Content (Binary, first 256 bytes):")
+                    display_bytes = data_bytes[:256]
+
+                    # Print hex dump in groups of 16 bytes
+                    for i in range(0, len(display_bytes), 16):
+                        chunk = display_bytes[i:i+16]
+                        hex_str = ' '.join(['%02x' % b for b in chunk])
+                        ascii_str = ''.join([chr(b) if 32 <= b < 127 else '.' for b in chunk])
+                        print("  %04x: %-48s  %s" % (i, hex_str, ascii_str))
+
+                    if len(data_bytes) > 256:
+                        print("  ... (%d more bytes not shown)" % (len(data_bytes) - 256))
+
+            except Exception as e:
+                print("Error decoding metadata: %s" % str(e))
+                print("Raw data length: %d bytes" % len(mdata))
+
+            print()
+
+    if code_filter is None:
+        print("Found %d metadata block(s)" % found_count)
+    else:
+        print("Found %d matching metadata block(s) out of %d total" % (found_count, total_count))
+    # print("-" * 70)
+
+
+def remove_qunex_metadata(infile, outfile=None):
+    """
+    ``remove_qunex_metadata <infile> [outfile=None]``
+
+    Removes QuNex metadata (extension code 64) from a NIfTI file.
+
+    This function inspects a NIfTI file for QuNex metadata extensions.
+    If found, it removes them and saves the file. All other metadata
+    blocks (e.g., CIFTI) are preserved.
+
+    INPUTS
+    ======
+
+    infile   Path to the input NIfTI file (.nii or .nii.gz)
+    outfile  Path to the output file (optional)
+             If not provided, the input file is replaced.
+
+    OUTPUTS
+    =======
+
+    Returns True if QuNex metadata was found and removed, False otherwise.
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        # Remove QuNex metadata from file (replace original)
+        remove_qunex_metadata('bold1.nii')
+
+        # Remove QuNex metadata and save to new file
+        remove_qunex_metadata('bold1.nii', 'bold1_clean.nii')
+    """
+
+    # Read the header and metadata
+    hdr = niftihdr(infile)
+    print("Removing QuNex Metadata\n\n-> Inspecting file for QuNex metadata: %s" % infile)
+
+    # Check if there's any metadata
+    if not hasattr(hdr, 'meta') or len(hdr.meta) == 0:
+        print("   -> No metadata extensions found in file.")
+        return False
+
+    # Find QuNex metadata blocks (code 64)
+    original_count = len(hdr.meta)
+    qunex_indices = []
+
+    for idx, (msize, mcode, mdata) in enumerate(hdr.meta):
+        # Extract the actual code value
+        if isinstance(mcode, tuple):
+            mcode = mcode[0]
+
+        if mcode == 64:
+            qunex_indices.append(idx)
+
+    # Check if any QuNex metadata was found
+    if len(qunex_indices) == 0:
+        print("   No QuNex metadata (code 64) found in file.")
+        return False
+
+    print("   Found %d QuNex metadata block(s) in file." % (len(qunex_indices), ))
+
+    # Remove QuNex metadata blocks (in reverse order to maintain indices)
+    for idx in reversed(qunex_indices):
+        removed_block = hdr.meta.pop(idx)
+        print("-> Removed block #%d: Size %d bytes" % (idx + 1, removed_block[0]))
+
+    # Update vox_offset to reflect removed metadata
+    if hdr.nifti_version == 1:
+        base_offset = 352
+    else:
+        base_offset = 544
+
+    remaining_size = sum([mb[0] for mb in hdr.meta])
+    hdr.vox_offset = base_offset + remaining_size
+
+    # If no metadata remains, clear the extension flag
+    if len(hdr.meta) == 0:
+        hdr.ext = chr(0) * 4
+        print("   All metadata removed, clearing extension flag")
+    else:
+        print("   %d metadata block(s) remain" % len(hdr.meta))
+
+    # Determine output file
+    if outfile is None:
+        outfile = infile
+        print("-> Updating original file: %s" % infile)
+    else:
+        print("-> Writing to new file: %s" % outfile)
+
+    # Read the image data from the input file
+    sform = getImgFormat(infile)
+    if sform == '.nii.gz':
+        inf = gzip.open(infile, 'rb')
+    else:
+        inf = open(infile, 'rb')
+
+    # Read the old header to skip it
+    old_hdr = niftihdr()
+    old_hdr.unpackHdr(inf)
+
+    # Calculate how much data to copy
+    if old_hdr.nifti_version == 1:
+        old_base = 352
+    else:
+        old_base = 544
+
+    # Calculate old metadata size
+    old_meta_size = int(old_hdr.vox_offset - old_base)
+
+    # Skip the old metadata by reading it
+    if old_meta_size > 0:
+        inf.read(old_meta_size)
+
+    # Read the actual image data
+    image_data = inf.read()
+    inf.close()
+
+    # Write the new file
+    tform = getImgFormat(outfile)
+    if tform == '.nii.gz':
+        outf = gzip.open(outfile, 'wb')
+    else:
+        outf = open(outfile, 'wb')
+
+    # Write new header (with updated metadata)
+    outf.write(hdr.packHdr())
+
+    # Write image data
+    outf.write(image_data)
+
+    outf.flush()
+    os.fsync(outf.fileno())
+    outf.close()
+
+    print("-> Successfully removed QuNex metadata")
+    print("   Original metadata blocks: %d" % original_count)
+    print("   Remaining metadata blocks: %d" % len(hdr.meta))
+
+    return True
+
 
 class fidl:
     def __init__(self, filename=False):
@@ -670,14 +1057,18 @@ class niftihdr:
         self.meta = []
         pointer = 352
 
-        if self.ext == [1, 0, 0, 0]:
+        # Check if extension flag is set (first byte should be 1)
+        ext_flag = ord(self.ext[0]) if isinstance(self.ext, str) else self.ext[0]
+        if ext_flag == 1:
             while pointer < self.vox_offset:
                 msize = struct.unpack(e + "I", s.read(si))
                 mcode = struct.unpack(e + "I", s.read(si))
-                if pointer + msize <= self.vox_offset:
-                    mdata = s.read(sc * msize - 8)
-                    pointer += msize
-                self.meta.append([msize, mcode, mdata])
+                if pointer + msize[0] <= self.vox_offset:
+                    mdata = s.read(msize[0] - 8)
+                    pointer += msize[0]
+                    self.meta.append([msize[0], mcode[0], mdata])
+                else:
+                    break
         return
 
     def _unpackHdrV2(self, s):
@@ -770,14 +1161,18 @@ class niftihdr:
         self.meta = []
         pointer = 544  # NIfTI-2 header is 540 + 4
 
-        if self.ext == [1, 0, 0, 0]:
+        # Check if extension flag is set (first byte should be 1)
+        ext_flag = ord(self.ext[0]) if isinstance(self.ext, str) else self.ext[0]
+        if ext_flag == 1:
             while pointer < self.vox_offset:
                 msize = struct.unpack(e + "I", s.read(si))
                 mcode = struct.unpack(e + "I", s.read(si))
-                if pointer + msize <= self.vox_offset:
-                    mdata = s.read(sc * msize - 8)
-                    pointer += msize
-                self.meta.append([msize, mcode, mdata])
+                if pointer + msize[0] <= self.vox_offset:
+                    mdata = s.read(msize[0] - 8)
+                    pointer += msize[0]
+                    self.meta.append([msize[0], mcode[0], mdata])
+                else:
+                    break
         return
 
     def readHeader(self, filename):
