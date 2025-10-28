@@ -52,6 +52,10 @@ def getImgFormat(filename):
             return '.dtseries.nii'
         elif ".".join(p[-2:])  == 'ptseries.nii':
             return '.ptseries.nii'
+        if ".".join(p[-2:])  == 'dscalar.nii':
+            return '.dscalar.nii'
+        elif ".".join(p[-2:])  == 'pscalar.nii':
+            return '.pscalar.nii'
         else:
             return '.nii'
     elif ".".join(p[-2:]) == '4dfp.img':
@@ -84,7 +88,7 @@ def readConc(filename, boldname=None, check=False):
         for boldfile in boldfiles:
             if not os.path.exists(boldfile):
                 missing.append(boldfile)
-    
+
         if missing:
             raise ge.CommandFailed("readConc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
 
@@ -321,15 +325,16 @@ class ifhhdr:
 class niftihdr:
 
     def __init__(self, filename=False):
+        self.nifti_version = 1           # NIfTI version (1 or 2)
         self.dim_info    = chr(0)        # char      - MRI slice ordering ---- information not available in IFH
-        self.ndimensions = 4             # short     - number of dimensions used
-        self.sizex       = 48            # short     - size in dimension x
-        self.sizey       = 64            # short     - size in dimension y
-        self.sizez       = 48            # short     - size in dimension z
-        self.frames      = 1             # short     - number of frames (4th dimension))
-        self.size_5      = 0             # short     - size of 5th dimension
-        self.size_6      = 0             # short     - size of 6th dimension
-        self.size_7      = 0             # short     - size of 7th dimension
+        self.ndimensions = 4             # short/int64 - number of dimensions used
+        self.sizex       = 48            # short/int64 - size in dimension x
+        self.sizey       = 64            # short/int64 - size in dimension y
+        self.sizez       = 48            # short/int64 - size in dimension z
+        self.frames      = 1             # short/int64 - number of frames (4th dimension))
+        self.size_5      = 0             # short/int64 - size of 5th dimension
+        self.size_6      = 0             # short/int64 - size of 6th dimension
+        self.size_7      = 0             # short/int64 - size of 7th dimension
         self.intention1  = 0.0           # float     - intention 1 parameter
         self.intention2  = 0.0           # float     - intention 2 parameter
         self.intention3  = 0.0           # float     - intention 3 parameter
@@ -365,11 +370,11 @@ class niftihdr:
         self.qoffset_x   = 70.5          # float     - Quaternion x shift
         self.qoffset_y   = 84.0          # float     - Quaternion y shift
         self.qoffset_z   = -60.0         # float     - Quaternion z shift
-        self.srow_x      = [-1, 0, 0, 0]  # float[4]  - affine transform row x
-        self.srow_y      =  [0, 1, 0, 0]  # float[4]  - affine transform row y
-        self.srow_z      =  [0, 0, 1, 0]  # float[4]  - affine transform row z
+        self.srow_x      = [-1, 0, 0, 0]  # float[4]/double[4] - affine transform row x
+        self.srow_y      =  [0, 1, 0, 0]  # float[4]/double[4] - affine transform row y
+        self.srow_z      =  [0, 0, 1, 0]  # float[4]/double[4] - affine transform row z
         self.intent_name = ""             # char[16]  - intent name
-        self.magic       = "n+1" + chr(0)  # char[4]     - magic word and zero char
+        self.magic       = "n+1" + chr(0)  # char[4]/char[8] - magic word and zero char
         self.ext         = chr(0) * 4      # extension code
 
         self.xyz_unit    = 2             # used units for xyz dimension (0-unspecified, 1-m, 2-mm, 3-micronm)
@@ -389,6 +394,13 @@ class niftihdr:
             self.hdr = self.packHdr()
 
     def packHdr(self):
+
+        if self.nifti_version == 2:
+            return self._packHdrV2()
+        else:
+            return self._packHdrV1()
+
+    def _packHdrV1(self):
 
         self.vox_offset = 352
         for m in self.meta:
@@ -462,7 +474,115 @@ class niftihdr:
 
         return s
 
+    def _packHdrV2(self):
+        """Pack NIfTI-2 header (540 bytes base)"""
+
+        self.vox_offset = 544  # NIfTI-2 header is 540 bytes + 4 bytes extension
+        for m in self.meta:
+            self.vox_offset += m[0]
+
+        s = struct.pack(self.e + "i", 540)                            # int       - must be 540 for NIfTI-2
+        s += bytes("ni2" + chr(0), "utf-8")                           # char[8]   - magic word "ni2\0" followed by cr/lf/cr/lf
+        s += chr(0x0D).encode("utf-8")  # CR
+        s += chr(0x0A).encode("utf-8")  # LF
+        s += chr(0x0D).encode("utf-8")  # CR
+        s += chr(0x0A).encode("utf-8")  # LF
+        s += struct.pack(self.e + "h", self.data_type)                # short     - datatype
+        s += struct.pack(self.e + "h", self.bitpix)                   # short     - bits per voxel
+        s += struct.pack(self.e + "q", self.ndimensions)              # int64     - number of dimensions used
+        s += struct.pack(self.e + "q", self.sizex)                    # int64     - size in dimension x
+        s += struct.pack(self.e + "q", self.sizey)                    # int64     - size in dimension y
+        s += struct.pack(self.e + "q", self.sizez)                    # int64     - size in dimension z
+        s += struct.pack(self.e + "q", self.frames)                   # int64     - number of frames (4th dimension)
+        s += struct.pack(self.e + "q", self.size_5)                   # int64     - size of 5th dimension
+        s += struct.pack(self.e + "q", self.size_6)                   # int64     - size of 6th dimension
+        s += struct.pack(self.e + "q", self.size_7)                   # int64     - size of 7th dimension
+        s += struct.pack(self.e + "d", self.intention1)               # double    - intention 1 parameter
+        s += struct.pack(self.e + "d", self.intention2)               # double    - intention 2 parameter
+        s += struct.pack(self.e + "d", self.intention3)               # double    - intention 3 parameter
+        s += struct.pack(self.e + "d", self.pixdim_0)                 # double    - zero dimension size
+        s += struct.pack(self.e + "d", self.pixdim_x)                 # double    - x dimension size
+        s += struct.pack(self.e + "d", self.pixdim_y)                 # double    - y dimension size
+        s += struct.pack(self.e + "d", self.pixdim_z)                 # double    - z dimension size
+        s += struct.pack(self.e + "d", self.pixdim_t)                 # double    - t dimension size
+        s += struct.pack(self.e + "d", self.pixdim_5)                 # double    - 5 dimension size
+        s += struct.pack(self.e + "d", self.pixdim_6)                 # double    - 6 dimension size
+        s += struct.pack(self.e + "d", self.pixdim_7)                 # double    - 7 dimension size
+        s += struct.pack(self.e + "q", int(self.vox_offset))          # int64     - offset of data when within the same file
+        s += struct.pack(self.e + "d", self.scl_slope)                # double    - slope of data scaling
+        s += struct.pack(self.e + "d", self.scl_inter)                # double    - intersect of data scaling
+        s += struct.pack(self.e + "d", self.cal_max)                  # double    - maximum value in the dataset
+        s += struct.pack(self.e + "d", self.cal_min)                  # double    - minimum value in the dataset
+        s += struct.pack(self.e + "d", self.slice_duration)           # double    - slice duration
+        s += struct.pack(self.e + "d", self.toffset)                  # double    - time offset for first datapoint
+        s += struct.pack(self.e + "q", self.slice_start)              # int64     - First slice index
+        s += struct.pack(self.e + "q", self.slice_end)                # int64     - Last slice index
+        s += bytes((self.descrip + "12345678901234567890123456789012345678901234567890123456789012345678901234567890")[0:80], "utf-8")  # char[80]
+        s += bytes((self.aux_file + "123456789012345678901234")[0:24], "utf-8")  # char[24]
+        s += struct.pack(self.e + "i", self.qform_code)               # int       - qform code
+        s += struct.pack(self.e + "i", self.sform_code)               # int       - sform code
+        s += struct.pack(self.e + "d", self.quatern_b)                # double    - Quaternion b param
+        s += struct.pack(self.e + "d", self.quatern_c)                # double    - Quaternion c param
+        s += struct.pack(self.e + "d", self.quatern_d)                # double    - Quaternion d param
+        s += struct.pack(self.e + "d", self.qoffset_x)                # double    - Quaternion x shift
+        s += struct.pack(self.e + "d", self.qoffset_y)                # double    - Quaternion y shift
+        s += struct.pack(self.e + "d", self.qoffset_z)                # double    - Quaternion z shift
+        s += struct.pack(self.e + "dddd", self.srow_x[0], self.srow_x[1], self.srow_x[2], self.srow_x[3])  # double[4]
+        s += struct.pack(self.e + "dddd", self.srow_y[0], self.srow_y[1], self.srow_y[2], self.srow_y[3])  # double[4]
+        s += struct.pack(self.e + "dddd", self.srow_z[0], self.srow_z[1], self.srow_z[2], self.srow_z[3])  # double[4]
+        s += struct.pack(self.e + "i", self.slice_code)               # int       - slice order code
+        s += struct.pack(self.e + "i", self.xyz_unit + self.t_unit)   # int       - codes for units used
+        s += struct.pack(self.e + "i", self.intent_code)              # int       - intent code
+        s += bytes((self.intent_name + "1234567890123456")[0:16], "utf-8")  # char[16]
+        s += struct.pack(self.e + "c", bytes(self.dim_info, "utf-8")) # char      - MRI slice ordering
+        s += bytes(chr(0) * 15, "utf-8")                              # char[15]  - unused (padding)
+        s += bytes((self.ext + chr(0) * 4)[0:4], "utf-8")             # char[4]   - extension
+
+        for msize, mcode, mdata in self.meta:
+            s += struct.pack(self.e + "I", msize)                     # int       - length
+            s += struct.pack(self.e + "I", mcode)                     # int       - code
+            s += mdata                                                # data
+
+        return s
+
     def unpackHdr(self, s):
+
+        si = struct.calcsize('i')
+        sc = struct.calcsize('c')
+        sh = struct.calcsize('h')
+        sf = struct.calcsize('f')
+        sq = struct.calcsize('q')
+        sd = struct.calcsize('d')
+
+        # Detect NIfTI version by reading the first 4 bytes
+        header_size, = struct.unpack(">i", s.read(si))
+
+        if header_size == 348:
+            # NIfTI-1
+            self.nifti_version = 1
+            s.seek(0)  # Reset to beginning
+            return self._unpackHdrV1(s)
+        elif header_size == 540:
+            # NIfTI-2
+            self.nifti_version = 2
+            s.seek(0)  # Reset to beginning
+            return self._unpackHdrV2(s)
+        else:
+            # Try little endian
+            s.seek(0)
+            header_size, = struct.unpack("<i", s.read(si))
+            if header_size == 348:
+                self.nifti_version = 1
+                s.seek(0)
+                return self._unpackHdrV1(s)
+            elif header_size == 540:
+                self.nifti_version = 2
+                s.seek(0)
+                return self._unpackHdrV2(s)
+            else:
+                raise ValueError(f"Invalid NIfTI header size: {header_size}")
+
+    def _unpackHdrV1(self, s):
 
         si = struct.calcsize('i')
         sc = struct.calcsize('c')
@@ -560,13 +680,113 @@ class niftihdr:
                 self.meta.append([msize, mcode, mdata])
         return
 
+    def _unpackHdrV2(self, s):
+        """Unpack NIfTI-2 header (540 bytes)"""
+
+        si = struct.calcsize('i')
+        sc = struct.calcsize('c')
+        sh = struct.calcsize('h')
+        sf = struct.calcsize('f')
+        sq = struct.calcsize('q')
+        sd = struct.calcsize('d')
+
+        # Determine endianness
+        header_size, = struct.unpack(">i", s.read(si))
+        if header_size == 540:
+            e = ">"
+        else:
+            e = "<"
+        self.e = e
+
+        # Read magic string and verify NIfTI-2 format
+        magic = s.read(sc * 8).decode("utf-8", errors="ignore")  # char[8]
+        if not magic.startswith("ni2") and not magic.startswith("n+2"):
+            raise ValueError("Invalid NIfTI-2 magic string")
+
+        self.data_type,      = struct.unpack(e + "h", s.read(sh))      # short     - datatype
+        self.bitpix,         = struct.unpack(e + "h", s.read(sh))      # short     - bits per voxel
+        self.ndimensions,    = struct.unpack(e + "q", s.read(sq))      # int64     - number of dimensions used
+        self.sizex,          = struct.unpack(e + "q", s.read(sq))      # int64     - size in dimension x
+        self.sizey,          = struct.unpack(e + "q", s.read(sq))      # int64     - size in dimension y
+        self.sizez,          = struct.unpack(e + "q", s.read(sq))      # int64     - size in dimension z
+        self.frames,         = struct.unpack(e + "q", s.read(sq))      # int64     - number of frames (4th dimension)
+        self.size_5,         = struct.unpack(e + "q", s.read(sq))      # int64     - size of 5th dimension
+        self.size_6,         = struct.unpack(e + "q", s.read(sq))      # int64     - size of 6th dimension
+        self.size_7,         = struct.unpack(e + "q", s.read(sq))      # int64     - size of 7th dimension
+        self.intention1,     = struct.unpack(e + "d", s.read(sd))      # double    - intention 1 parameter
+        self.intention2,     = struct.unpack(e + "d", s.read(sd))      # double    - intention 2 parameter
+        self.intention3,     = struct.unpack(e + "d", s.read(sd))      # double    - intention 3 parameter
+        self.pixdim_0,       = struct.unpack(e + "d", s.read(sd))      # double    - zero dimension size
+        self.pixdim_x,       = struct.unpack(e + "d", s.read(sd))      # double    - x dimension size
+        self.pixdim_y,       = struct.unpack(e + "d", s.read(sd))      # double    - y dimension size
+        self.pixdim_z,       = struct.unpack(e + "d", s.read(sd))      # double    - z dimension size
+        self.pixdim_t,       = struct.unpack(e + "d", s.read(sd))      # double    - t dimension size
+        self.pixdim_5,       = struct.unpack(e + "d", s.read(sd))      # double    - 5 dimension size
+        self.pixdim_6,       = struct.unpack(e + "d", s.read(sd))      # double    - 6 dimension size
+        self.pixdim_7,       = struct.unpack(e + "d", s.read(sd))      # double    - 7 dimension size
+        self.vox_offset,     = struct.unpack(e + "q", s.read(sq))      # int64     - offset of data
+        self.scl_slope,      = struct.unpack(e + "d", s.read(sd))      # double    - slope of data scaling
+        self.scl_inter,      = struct.unpack(e + "d", s.read(sd))      # double    - intersect of data scaling
+        self.cal_max,        = struct.unpack(e + "d", s.read(sd))      # double    - maximum value
+        self.cal_min,        = struct.unpack(e + "d", s.read(sd))      # double    - minimum value
+        self.slice_duration, = struct.unpack(e + "d", s.read(sd))      # double    - slice duration
+        self.toffset,        = struct.unpack(e + "d", s.read(sd))      # double    - time offset
+        self.slice_start,    = struct.unpack(e + "q", s.read(sq))      # int64     - First slice index
+        self.slice_end,      = struct.unpack(e + "q", s.read(sq))      # int64     - Last slice index
+
+        self.descrip         = s.read(sc * 80).decode("utf-8")         # char[80]  - data description
+        self.aux_file        = s.read(sc * 24).decode("utf-8")         # char[24]  - auxilary filename
+        self.qform_code,     = struct.unpack(e + "i", s.read(si))      # int       - qform code
+        self.sform_code,     = struct.unpack(e + "i", s.read(si))      # int       - sform code
+        self.quatern_b,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion b param
+        self.quatern_c,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion c param
+        self.quatern_d,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion d param
+        self.qoffset_x,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion x shift
+        self.qoffset_y,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion y shift
+        self.qoffset_z,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion z shift
+        self.srow_x          = list(struct.unpack(e + "dddd", s.read(sd * 4)))     # double[4]  - affine transform row x
+        self.srow_y          = list(struct.unpack(e + "dddd", s.read(sd * 4)))     # double[4]  - affine transform row y
+        self.srow_z          = list(struct.unpack(e + "dddd", s.read(sd * 4)))     # double[4]  - affine transform row z
+        self.slice_code,     = struct.unpack(e + "i", s.read(si))      # int       - slice order code
+        self.xyzt_units,     = struct.unpack(e + "i", s.read(si))      # int       - codes for units used
+        self.intent_code,    = struct.unpack(e + "i", s.read(si))      # int       - intent code
+        self.intent_name     = s.read(sc * 16).decode("utf-8")         # char[16]  - intent name
+        self.dim_info,       = struct.unpack(e + "c", s.read(sc))      # char      - MRI slice ordering
+        self.dim_info        = self.dim_info.decode("utf-8", errors="ignore")
+
+        t = s.read(sc * 15)                                            # char[15]  - unused (padding)
+        self.ext             = s.read(sc * 4).decode("utf-8")          # char[4]   - extension
+
+        # Set magic for NIfTI-2
+        self.magic = magic
+        self.dType = niftiDataTypes[self.data_type]
+
+        t = self.xyzt_units
+        self.xyz_unit = t % 8
+        t = t - (t % 8)
+        self.t_unit = t % 64
+
+        # --- Read extensions
+        self.meta = []
+        pointer = 544  # NIfTI-2 header is 540 + 4
+
+        if self.ext == [1, 0, 0, 0]:
+            while pointer < self.vox_offset:
+                msize = struct.unpack(e + "I", s.read(si))
+                mcode = struct.unpack(e + "I", s.read(si))
+                if pointer + msize <= self.vox_offset:
+                    mdata = s.read(sc * msize - 8)
+                    pointer += msize
+                self.meta.append([msize, mcode, mdata])
+        return
+
     def readHeader(self, filename):
 
         sform = getImgFormat(filename)
         if sform == '.nii.gz':
-            h = gzip.open(filename, 'r')
+            h = gzip.open(filename, 'rb')
         else:
-            h = open(filename, 'r')
+            h = open(filename, 'rb')
 
         self.unpackHdr(h)
         h.close()
@@ -575,7 +795,7 @@ class niftihdr:
 
     def writeHeader(self, filename):
 
-        h = open(filename, "w")
+        h = open(filename, "wb")
         s = self.packHdr()
         h.write(s)
         h.close
@@ -641,8 +861,32 @@ class niftihdr:
 
         return ifhdr
 
+    def convertToV1(self):
+        """Convert NIfTI-2 header to NIfTI-1 format (if possible)"""
+        if self.nifti_version == 1:
+            return  # Already V1
+
+        # Check if dimensions fit in int16
+        max_dim = max(self.sizex, self.sizey, self.sizez, self.frames,
+                     self.size_5, self.size_6, self.size_7)
+        if max_dim > 32767:
+            raise ValueError("Dimensions too large for NIfTI-1 (max 32767)")
+
+        self.nifti_version = 1
+        self.magic = "n+1" + chr(0)
+        self.vox_offset = 352.0  # NIfTI-1 default offset
+
+    def convertToV2(self):
+        """Convert NIfTI-1 header to NIfTI-2 format"""
+        if self.nifti_version == 2:
+            return  # Already V2
+
+        self.nifti_version = 2
+        self.magic = "n+2" + chr(0) + chr(0x0D) + chr(0x0A) + chr(0x0D) + chr(0x0A)
+        self.vox_offset = 544  # NIfTI-2 default offset
+
     def __str__(self):
-        s = "# ----------------------------------\n# NIfTI Header\n\n"
+        s = "# ----------------------------------\n# NIfTI Header (Version %d)\n\n" % self.nifti_version
         d = self.__dict__
         fields = ["dim_info", "ndimensions", "sizex", "sizey", "sizez", "frames", "size_5", "size_6", "size_7", "intention1", "intention2", "intention3", "intent_code", "data_type", "bitpix", "slice_start", "pixdim_0", "pixdim_x", "pixdim_y", "pixdim_z", "pixdim_t", "pixdim_5", "pixdim_6", "pixdim_7", "vox_offset", "scl_slope", "scl_inter", "slice_end", "slice_code", "xyzt_units", "cal_max", "cal_min", "slice_duration", "toffset", "descrip", "aux_file", "qform_code", "sform_code", "quatern_b", "quatern_c", "quatern_d", "qoffset_x", "qoffset_y", "qoffset_z", "srow_x", "srow_y", "srow_z", "intent_name", "magic"]
         for f in fields:
@@ -767,8 +1011,8 @@ def slice4dfp(sourcefile, targetfile, frames=1):
     hdr.ifh['matrix size [4]'] = str(frames)
     hdr.writeHeader(targetfile.replace('.img', '.ifh'))
 
-    sf = open(sourcefile, 'r')
-    df = open(targetfile, 'w')
+    sf = open(sourcefile, 'rb')
+    df = open(targetfile, 'wb')
 
     df.write(sf.read(voxels * frames * 4))
 
@@ -783,20 +1027,23 @@ def sliceNIfTI(sourcefile, targetfile, frames=1):
     tform = getImgFormat(targetfile)
 
     if sform == '.nii.gz':
-        sf = gzip.open(sourcefile, 'r')
+        sf = gzip.open(sourcefile, 'rb')
     else:
-        sf = open(sourcefile, 'r')
+        sf = open(sourcefile, 'rb')
 
     if tform == '.nii.gz':
-        tf = gzip.open(targetfile, 'w')
+        tf = gzip.open(targetfile, 'wb')
     else:
-        tf = open(targetfile, 'w')
+        tf = open(targetfile, 'wb')
 
     hdr = niftihdr()
     hdr.unpackHdr(sf)
     nvox = hdr.sizex * hdr.sizey * hdr.sizez
     hdr.frames = frames
-    tocopy = int(hdr.vox_offset - 352 + nvox * (hdr.bitpix / 8) * frames)
+
+    # Calculate offset based on NIfTI version
+    header_base_size = 540 if hdr.nifti_version == 2 else 352
+    tocopy = int(hdr.vox_offset - header_base_size + nvox * (hdr.bitpix / 8) * frames)
 
     tf.write(hdr.packHdr())
     tf.write(sf.read(tocopy))
