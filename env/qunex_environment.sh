@@ -88,22 +88,27 @@ export ENVVARIABLES
 
 # -- Check if inside the container and reset the environment on first setup
 if [[ -e /opt/.container ]]; then
-    # -- Perform initial reset for the environment in the container
-    if [[ "$FIRSTRUNDONE" != "TRUE" ]]; then
-        # -- First unset all conflicting variables in the environment
-        unset $ENVVARIABLES
-
-        # -- Set PATH
-        export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-
-        if [ -z ${TOOLS+x} ]; then TOOLS="/opt"; fi
-        if [ -z ${USEOCTAVE+x} ]; then USEOCTAVE="TRUE"; fi
-
-        PATH=${TOOLS}:${PATH}
-        export TOOLS PATH USEOCTAVE
-        export FIRSTRUNDONE="TRUE"
+    # -- Allow only one sourcing in the container
+    if [[ "$QUNEX_SOURCED" != "TRUE" ]]; then
+        export QUNEX_SOURCED="TRUE"
+    else
+        # -- Already sourced outside, so exit
+        return
     fi
 
+    # -- First unset all conflicting variables in the environment
+    unset $ENVVARIABLES
+
+    # -- Set PATH
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+    if [ -z ${TOOLS+x} ]; then TOOLS="/opt"; fi
+    if [ -z ${USEOCTAVE+x} ]; then USEOCTAVE="TRUE"; fi
+
+    PATH=${TOOLS}:${PATH}
+    export TOOLS PATH USEOCTAVE
+
+# -- Use Octave outside of container, inside this is auto set to TRUE
 elif [[ -e ~/.qunexuseoctave ]]; then
     export USEOCTAVE="TRUE"
 fi
