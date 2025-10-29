@@ -887,6 +887,14 @@ def main(args=None):
         else:
             command += f"{arg} "
 
+    if interactive and env_status:
+        print("ERROR: Cannot use interactive mode with env_status!")
+        exit(1)
+
+    if interactive and scheduler is not None:
+        print("ERROR: Cannot use interactive mode with scheduler!")
+        exit(1)
+
     # parsessions
     if parsessions is None:
         parsessions = 1
@@ -963,19 +971,18 @@ def main(args=None):
         if bash_pre:
             container_command += bash_pre + ";"
 
+        # binds
+        if bind is None:
+            container_bind = f"{homedir}:{homedir}"
+        else:
+            container_bind = f"{homedir}:{homedir},{bind}"
+
+        # bind cuda path if provided
+            if cuda_path:
+                container_bind += f",{cuda_path}:/usr/local/cuda"
+
         if apptainer:
             container_command += "singularity exec "
-
-            # binds
-            if bind is None:
-                container_bind = f"{homedir}"
-            else:
-                container_bind = f"{homedir},{bind}"
-
-            # bind cuda path if provided
-            if cuda_path:
-                container_bind = f"{container_bind},{cuda_path}:/usr/local/cuda/"
-
             container_command += f"--bind {container_bind} "
 
             # containeropt
@@ -994,19 +1001,8 @@ def main(args=None):
             if nv:
                 container_command += "--nv "
 
-            container_command += f"{container.strip()}"
         else:
             container_command += "docker run -it "
-
-            # binds
-            if bind is None:
-                container_bind = f"{homedir}:{homedir}"
-            else:
-                container_bind = f"{homedir}:{homedir},{bind}"
-
-            # bind cuda path if provided
-            if cuda_path:
-                container_bind += f",{cuda_path}:/usr/local/cuda"
 
             bind_list = container_bind.split(",")
             for b in bind_list:
@@ -1020,70 +1016,35 @@ def main(args=None):
             if cuda:
                 container_command += "--gpus all "
 
-            container_command += f"{container.strip()} bash"
+        # prepare startup script
+        startup_script = os.path.join(homedir, ".container_startup_qunex.sh")
+        with open(startup_script, "w", encoding="UTF-8") as f:
+            f.write("#!/bin/bash\n")
+            f.write("# QuNex interactive session setup\n")
+            f.write("source /opt/qunex/env/qunex_environment.sh\n")
+            if bash_post:
+                f.write(f"{bash_post}\n")
+            f.write('echo ""\n')
+            f.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
+            f.write('echo ""\n')
+            f.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
 
-        # For Apptainer, we need to use exec with bash instead of shell
-        # because shell doesn't properly source BASH_ENV
-        if apptainer:
-            # Create a temporary bashrc for the interactive session
-            startup_script = os.path.join(homedir, ".singularity_startup_qunex.sh")
-            with open(startup_script, "w", encoding="UTF-8") as f:
-                f.write("#!/bin/bash\n")
-                f.write("# QuNex interactive session setup\n")
-                f.write("source /opt/qunex/env/qunex_environment.sh\n")
-                if bash_post:
-                    f.write(f"{bash_post}\n")
-                f.write('echo ""\n')
-                f.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
-                f.write('echo ""\n')
-                f.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
+            if apptainer:
                 f.write("exec bash\n")
-
-            # Make it executable
-            os.chmod(startup_script, 0o755)
-
-            # Change from 'singularity shell' to 'singularity exec' with bash
-            container_command = container_command.replace(
-                "singularity shell ",
-                "singularity exec "
-            )
-            container_command += f" bash {startup_script}"
-
-            print(f"Executing: {container_command}\n")
-            subprocess.run(container_command, shell=True, check=False)
-
-            # Clean up
-            if os.path.exists(startup_script):
-                os.remove(startup_script)
-        else:
-            # For Docker, we create a startup script
-            startup_script = os.path.join(homedir, ".qunex_docker_startup.sh")
-            with open(startup_script, "w", encoding="UTF-8") as f:
-                f.write("#!/bin/bash\n")
-                f.write("source /opt/qunex/env/qunex_environment.sh\n")
-                if bash_post:
-                    f.write(f"{bash_post}\n")
-                f.write('echo ""\n')
-                f.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
-                f.write('echo ""\n')
-                f.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
+            else:
                 f.write("bash\n")
 
-            # Make it executable
-            os.chmod(startup_script, 0o755)
+        # Make script executable
+        os.chmod(startup_script, 0o755)
 
-            # Modify docker command to use the startup script
-            container_command = container_command.replace(
-                f"{container.strip()} bash",
-                f"{container.strip()} bash {startup_script}"
-            )
+        container_command += f"{container.strip()} bash {startup_script}"
 
-            print(f"Executing: {container_command}\n")
-            subprocess.run(container_command, shell=True, check=False)
+        print(f"Executing: {container_command}\n")
+        subprocess.run(container_command, shell=True, check=False)
 
-            # Clean up
-            if os.path.exists(startup_script):
-                os.remove(startup_script)
+        # Clean up
+        if os.path.exists(startup_script):
+            os.remove(startup_script)
 
         exit(0)
 
