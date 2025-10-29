@@ -91,7 +91,7 @@ def readConc(concf, TR):
     for boldfile in boldfiles:
         boldname = m.match(boldfile).group(1)
         print(boldname, end=" ")
-        length = boldInfo(boldfile).frames * TR
+        length = boldInfo(boldfile).volumes * TR
         bolds.append([boldname, start, length, boldfile])
         start += length
 

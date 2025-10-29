@@ -781,6 +781,34 @@ class niftihdr:
         else:
             self.hdr = self.packHdr()
 
+    def is_cifti(self):
+        """Check if this is a CIFTI file based on metadata or filename."""
+        # Check for CIFTI extension (code 32)
+        for msize, mcode, mdata in self.meta:
+            if mcode == 32:
+                return True
+
+        # Check filename if available
+        if self.filename:
+            cifti_extensions = ['.dtseries.nii', '.ptseries.nii', '.dscalar.nii', '.pscalar.nii']
+            for ext in cifti_extensions:
+                if self.filename.endswith(ext):
+                    return True
+
+        return False
+
+    @property
+    def volumes(self):
+        """
+        Get the number of volumes in the file.
+        For CIFTI files, this is stored in size_5 (5th dimension).
+        For regular NIfTI files, this is stored in frames (4th dimension).
+        """
+        if self.is_cifti():
+            return self.size_5
+        else:
+            return self.frames
+
     def packHdr(self):
 
         if self.nifti_version == 2:
