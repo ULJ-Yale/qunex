@@ -1003,24 +1003,23 @@ def main(args=None):
                 container_command += "--nv "
 
             # prepare startup script
-            startup_script = tempfile.NamedTemporaryFile(mode='w', dir=homedir, delete=False, suffix='.sh')
-            startup_script.write("#!/usr/bin/env bash\n")
-            startup_script.write("# QuNex interactive session setup\n")
-            startup_script.write("source /opt/qunex/env/qunex_environment.sh\n")
+
+            bash_script = "#!/usr/bin/env bash\n"
+            bash_script += "# QuNex interactive session setup\n"
+            bash_script += "source /opt/qunex/env/qunex_environment.sh\n"
             if bash_post:
-                f.write(f"{bash_post}\n")
-            startup_script.write('echo ""\n')
-            startup_script.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
-            startup_script.write('echo ""\n')
-            startup_script.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
-            startup_script.write('rm -- "$0" \n')
-            startup_script.write("exec bash\n")
-            startup_script.flush()
+                bash_script +=  f"{bash_post}\n"
+            bash_script +=  'echo ""\n'
+            bash_script +=  'echo "QuNex environment loaded. You are now in an interactive QuNex container."\n'
+            bash_script +=  'echo ""\n'
+            bash_script +=  'export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n'
+            bash_script +=  "exec bash\n"
 
-            # Make script executable
-            os.chmod(startup_script.name, 0o755)
+            container_command += f"{container.strip()} bash -s"
 
-            container_command += f"{container.strip()} bash {startup_script.name}"
+            print(f"Executing: {container_command}\n")
+            #subprocess.run(container_command, shell=True, check=False, input=bash_script.encode("utf-8"), text=True)
+            subprocess.run(container_command, shell=True, check=False, input=bash_script, text=True)
 
         else:
             container_command += "docker run -it "
@@ -1039,8 +1038,8 @@ def main(args=None):
 
             container_command += f"{container.strip()}"
 
-        print(f"Executing: {container_command}\n")
-        subprocess.run(container_command, shell=True, check=False)
+            print(f"Executing: {container_command}\n")
+            subprocess.run(container_command, shell=True, check=False)
 
         exit(0)
 
