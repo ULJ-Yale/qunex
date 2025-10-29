@@ -14,6 +14,7 @@ import sys
 import re
 import math
 import time
+import shlex
 import tempfile
 
 from datetime import datetime
@@ -888,12 +889,25 @@ def main(args=None):
         else:
             command += f"{arg} "
 
+    fail = False
+
     if interactive and env_status:
         print("ERROR: Cannot use interactive mode with env_status!")
-        exit(1)
+        fail = True
 
     if interactive and scheduler is not None:
         print("ERROR: Cannot use interactive mode with scheduler!")
+        fail = True
+
+    if interactive and bash_post is not None:
+        print("ERROR: Cannot use interactive mode with bash_post!")
+        fail = True
+
+    if interactive and bash_pre is not None:
+        print("ERROR: Cannot use interactive mode with bash_pre!")
+        fail = True
+
+    if fail:
         exit(1)
 
     # parsessions
@@ -967,10 +981,6 @@ def main(args=None):
     if interactive:
         print("\n---> Starting QuNex container in interactive mode...\n")
 
-        # setup the container command
-        container_command = ""
-        if bash_pre:
-            container_command += bash_pre + ";"
 
         # binds
         if bind is None:
@@ -983,63 +993,60 @@ def main(args=None):
                 container_bind += f",{cuda_path}:/usr/local/cuda"
 
         if apptainer:
-            container_command += "singularity exec "
-            container_command += f"--bind {container_bind} "
+            container_command = []
+            container_command += ["singularity", "exec"]
+            container_command += ["--bind", container_bind]
 
-            # containeropt
             if containeropt:
-                container_command += containeropt + " "
+                container_command += shlex.split(containeropt)
 
             # no clean env
             if nocleanenv is None:
-                container_command += "--cleanenv "
+                container_command.append("--cleanenv")
 
             # cuda
             if cuda:
-                container_command += "--nvccli -u "
+                container_command += ["--nvccli", "-u"]
 
             # nv
             if nv:
-                container_command += "--nv "
+                container_command += ["--nv "]
+
+            container_command += [container.strip(), "bash", "-c"]
 
             # prepare startup script
 
-            bash_script = "#!/usr/bin/env bash\n"
-            bash_script += "# QuNex interactive session setup\n"
-            bash_script += "source /opt/qunex/env/qunex_environment.sh\n"
-            if bash_post:
-                bash_script +=  f"{bash_post}\n"
+            bash_script = "source /opt/qunex/env/qunex_environment.sh\n"
             bash_script +=  'echo ""\n'
             bash_script +=  'echo "QuNex environment loaded. You are now in an interactive QuNex container."\n'
             bash_script +=  'echo ""\n'
-            bash_script +=  'export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n'
+            bash_script +=  'export PS1="($(basename $CONDA_DEFAULT_ENV)) \\[\\e[0;36m\\][QuNex Container \\w]\\$\\[\\e[0m\\] "\n'
             bash_script +=  "exec bash\n"
 
-            container_command += f"{container.strip()} bash -s"
+            print(f"Executing: {' '.join(container_command)}\n")
 
-            print(f"Executing: {container_command}\n")
-            #subprocess.run(container_command, shell=True, check=False, input=bash_script.encode("utf-8"), text=True)
-            subprocess.run(container_command, shell=True, check=False, input=bash_script, text=True)
+            container_command.append(bash_script)
+            subprocess.run(container_command)
 
         else:
-            container_command += "docker run -it "
+            container_command = ["docker", "run", "-it"]
 
             bind_list = container_bind.split(",")
             for b in bind_list:
-                container_command += f"-v {b} "
+                container_command += ["-v", b]
 
             # containeropt
             if containeropt:
-                container_command += containeropt + " "
+                container_command += shlex.split(containeropt)
 
             # cuda
             if cuda:
-                container_command += "--gpus all "
+                container_command += ["--gpus", "all"]
 
-            container_command += f"{container.strip()}"
+            container_command += [container.strip()]
 
-            print(f"Executing: {container_command}\n")
-            subprocess.run(container_command, shell=True, check=False)
+            print(f"Executing: {' '.join(container_command)}\n")
+            subprocess.run(container_command)
 
         exit(0)
 
