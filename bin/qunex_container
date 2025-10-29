@@ -14,6 +14,7 @@ import sys
 import re
 import math
 import time
+import tempfile
 
 from datetime import datetime
 
@@ -1001,6 +1002,26 @@ def main(args=None):
             if nv:
                 container_command += "--nv "
 
+            # prepare startup script
+            startup_script = tempfile.NamedTemporaryFile(mode='w', dir=homedir, delete=False, suffix='.sh')
+            startup_script.write("#!/usr/bin/env bash\n")
+            startup_script.write("# QuNex interactive session setup\n")
+            startup_script.write("source /opt/qunex/env/qunex_environment.sh\n")
+            if bash_post:
+                f.write(f"{bash_post}\n")
+            startup_script.write('echo ""\n')
+            startup_script.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
+            startup_script.write('echo ""\n')
+            startup_script.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
+            startup_script.write('rm -- "$0" \n')
+            startup_script.write("exec bash\n")
+            startup_script.flush()
+
+            # Make script executable
+            os.chmod(startup_script.name, 0o755)
+
+            container_command += f"{container.strip()} bash {startup_script.name}"
+
         else:
             container_command += "docker run -it "
 
@@ -1016,35 +1037,10 @@ def main(args=None):
             if cuda:
                 container_command += "--gpus all "
 
-        # prepare startup script
-        startup_script = os.path.join(homedir, ".container_startup_qunex.sh")
-        with open(startup_script, "w", encoding="UTF-8") as f:
-            f.write("#!/bin/bash\n")
-            f.write("# QuNex interactive session setup\n")
-            f.write("source /opt/qunex/env/qunex_environment.sh\n")
-            if bash_post:
-                f.write(f"{bash_post}\n")
-            f.write('echo ""\n')
-            f.write('echo "QuNex environment loaded. You are now in an interactive QuNex container."\n')
-            f.write('echo ""\n')
-            f.write('export PS1="\\[\\033[0;31m\\][QuNex container: \\w]\\$ \\[\\033[0m\\]"\n')
-
-            if apptainer:
-                f.write("exec bash\n")
-            else:
-                f.write("bash\n")
-
-        # Make script executable
-        os.chmod(startup_script, 0o755)
-
-        container_command += f"{container.strip()} bash {startup_script}"
+            container_command += f"{container.strip()}"
 
         print(f"Executing: {container_command}\n")
         subprocess.run(container_command, shell=True, check=False)
-
-        # Clean up
-        if os.path.exists(startup_script):
-            os.remove(startup_script)
 
         exit(0)
 
