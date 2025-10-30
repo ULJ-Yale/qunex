@@ -1345,8 +1345,8 @@ for current = char(doIt)
                     if isnumeric(reg.betaseries) && reg.betaseries > 0 && ismember(reg.name, bs_list)
                         fprintf('\n     ---> processing beta-series for regressor: %s (%d events)', reg.name, reg.betaseries);
 
-                        % Initialize beta storage
-                        beta_img = img(1).zeroframes(reg.betaseries);
+                        % Initialize beta storage (+1 for gmean appended at the end)
+                        beta_img = img(1).zeroframes(reg.betaseries + 1);
 
                         % Use stored original filtered images for beta-series GLM
                         % img_bs is already prepared before the main GLM
@@ -1451,13 +1451,30 @@ for current = char(doIt)
                             end
                         end
 
+                        % Append gmean as last frame for PSC normalization (from main GLM coeff)
+                        gmean_idx = find(strcmp(coeff.cifti.maps, 'gmean f1'));
+                        if isempty(gmean_idx)
+                            % Fallback: match any 'gmean f#' entry
+                            gmean_idx = find(strncmp(coeff.cifti.maps, 'gmean ', 6), 1);
+                        end
+                        if ~isempty(gmean_idx)
+                            beta_img.data(:, reg.betaseries + 1) = coeff.data(:, gmean_idx);
+                        end
+
                         % Save beta-series
                         beta_img.filetype = [beta_img.filetype(1) 'scalar'];
-                        map_names = cell(1, reg.betaseries);
+                        map_names = cell(1, reg.betaseries + 1);
                         for ev = 1:reg.betaseries
                             map_names{ev} = sprintf('%s_event%02d', reg.name, ev);
                         end
+                        % Name the appended mean frame for clarity
+                        map_names{reg.betaseries + 1} = 'gmean';
                         beta_img.cifti.maps = map_names;
+
+                        % Provide only an in-memory list structure with frame names;
+                        % metadata will be embedded automatically by img_save_nifti
+                        beta_img.list.meta  = 'list';
+                        beta_img.list.event = map_names;
 
                         bs_name = [file_croot ext '_' reg.name '_Bseries' btail];
                         fprintf('\n     ---> saving beta-series %s ', bs_name);
