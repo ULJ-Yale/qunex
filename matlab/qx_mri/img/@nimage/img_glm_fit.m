@@ -101,7 +101,7 @@ if nargout > 1
         MSE = sum(residuals.^2,1) / Xdof;
         rvar = obj.zeroframes(1);
         rvar.data = MSE';
-        
+
         if nargout > 4
             B_se = obj.zeroframes(size(X,2));
             B_se.data = reshape(B_se.data,B_se.frames,B_se.voxels);
@@ -114,16 +114,16 @@ if nargout > 1
 
             % ---- compute the standard error of beta estimates
             var_beta = diag(inv(X'*X));
-            SE_beta = sqrt(MSE' * var_beta')';
+            SE_beta = sqrt(var_beta * MSE);
 
-            % ---- compute the z-scores and p-values for beta estimates
-            z_beta = beta  .* (1./SE_beta);
-            p_beta = 2 .* (1 - normcdf(abs(z_beta)));
+            % ---- compute the t-statistics and p-values for beta estimates
+            t_beta = beta ./ SE_beta;
+            p_beta = 2 .* (1 - tcdf(abs(t_beta), Xdof));
 
             % ---- embed data to output images
             B_se.data(good,:) = SE_beta;
             B_se.data = B_se.data';
-            B_z.data(good,:) = z_beta;
+            B_z.data(good,:) = t_beta;
             B_z.data = B_z.data';
             B_pval.data(good,:) = p_beta;
             B_pval.data = B_pval.data';

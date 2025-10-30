@@ -1771,9 +1771,20 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
 
     if nargout > 2
     	[coeff, res, rvar, ~, B_se, B_z, B_pval] = Y.img_glm_fit(X);
+
+        statmaps = mapnames(1:end - 2);
         coeffstats.B_se = B_se;
+        coeffstats.B_se.filetype = [coeffstats.B_se.filetype(1) 'scalar'];
+        coeffstats.B_se.cifti.maps = statmaps;
+
         coeffstats.B_z = B_z;
+        coeffstats.B_z.filetype = [coeffstats.B_z.filetype(1) 'scalar'];
+        coeffstats.B_z.cifti.maps = statmaps;
+
         coeffstats.B_pval = B_pval;
+        coeffstats.B_pval.filetype = [coeffstats.B_pval.filetype(1) 'scalar'];
+        coeffstats.B_pval.cifti.maps = statmaps;
+
         coeffstats.res = res;
     else
     	[coeff res] = Y.img_glm_fit(X);
