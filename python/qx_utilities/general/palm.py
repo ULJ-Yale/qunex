@@ -37,6 +37,7 @@ from functools import reduce
 
 import general.exceptions as ge
 import general.core as gc
+import general.img as gi
 
 
 def run_palm(
@@ -83,7 +84,8 @@ def run_palm(
         --image (str):
             One or multiple files can be specified as input. If multiple files
             are specified, they will be all passed to PALM. If they are cifti
-            files, they will be split into separate structures and run in
+            files and topography based multiple comparisons correction was
+            selected, they will be split into separate structures and run in
             parallel. To specify multiple files, separate them with pipe ("|")
             character and take care to put the whole string with files in
             quotes. Also, if specifying multiple files, do take care, that they
@@ -226,7 +228,7 @@ def run_palm(
 
         --surface (str, default 'no'):
             Should the command only analyze left and right surfaces from
-            dtseries or dscalar files.
+            dtseries or dscalar files when T or C is requested.
 
         --mask (str, default None):
             Path to the mask file that will be used instead of the
@@ -259,7 +261,6 @@ def run_palm(
             separately for 2D and 3D analysis. run_palm therefore provides two
             additional optional parameters that are separately expanded to TFCE
             2D and 3D settings: --T2DHEC and --T3DHEC.
-
 
             All three values need to be provided when the parameter is
             specified, for example::
@@ -410,6 +411,8 @@ def run_palm(
     cnum = re.compile(r".*_c([0-9]+).gii")
     mnum = re.compile(r".*_m([0-9]+)_")
 
+    extensions = {"nifti": ".nii.gz", "ptseries": ".ptseries.nii", "pscalar": ".pscalar.nii", "dtseries": ".dtseries.nii", "dscalar": ".dscalar.nii"}
+
     try:
         # --- prepare input files and arguments
         c = 0
@@ -417,7 +420,20 @@ def run_palm(
             c += 1
             troot = "%s_i%d" % (root, c)
 
-            if image.endswith(".nii.gz"):
+            recombine = False
+
+            for iformat, ext in extensions.items():
+                if image.endswith(ext):
+                    break
+
+            if iformat is None:
+                raise ge.CommandFailed(
+                    "run_palm",
+                    "Unsuported file format",
+                    "Unknown format of the input file [%s]!" % (image),
+                    "Please check your data!",
+                )
+            elif iformat == "nifti":
                 simage = troot + "_volume.nii"
 
                 print(" ---> ungzipping %s" % (image))
@@ -426,29 +442,16 @@ def run_palm(
                 toclean.append(simage)
                 iformat = "nifti"
 
-            elif image.endswith(".ptseries.nii"):
-                simage = troot + "_cifti.ptseries.nii"
-                shutil.copy(image, simage)
+            elif iformat in ["ptseries", "pscalar"] or iformat in ["dtseries", "dscalar"] and "T" not in arguments and "C" not in arguments:
+                simage = troot + "_cifti" + ext
+                print("-" * 40)
+                gi.remove_qunex_metadata(image, simage)
+                print("-" * 40)
                 toclean.append(simage)
-                print("    ... removing QuNex metadata")
-                command = ["qunex", "general_remove_meta", f"--fin={simage}", f"--fout={simage}"]
-                if subprocess.call(command, stdout=subprocess.DEVNULL):
-                    print("ERROR: Command failed: %s" % (" ".join(command)))
-                    raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
-                iformat = "ptseries"
 
-            elif image.endswith(".pscalar.nii"):
-                simage = troot + "_cifti.pscalar.nii"
-                shutil.copy(image, simage)
-                toclean.append(simage)
-                print("    ... removing QuNex metadata")
-                command = ["qunex", "general_remove_meta", f"--fin={simage}", f"--fout={simage}"]
-                if subprocess.call(command, stdout=subprocess.DEVNULL):
-                    print("ERROR: Command failed: %s" % (" ".join(command)))
-                    raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
-                iformat = "pscalar"
+            else:
+                recombine = True
 
-            elif image.endswith(".dtseries.nii") or image.endswith(".dscalar.nii"):
                 print(" ---> decomposing %s" % (image))
                 if surface:
                     command = [
@@ -492,21 +495,6 @@ def run_palm(
                         troot + e
                         for e in ["_volume.nii", "_left.func.gii", "_right.func.gii"]
                     ]
-                iformat = "dtseries"
-
-            elif image.endswith(".nii"):
-                simage = troot + "_volume.nii"
-                shutil.copy(image, simage)
-                toclean.append(simage)
-                iformat = "nifti"
-
-            else:
-                raise ge.CommandFailed(
-                    "run_palm",
-                    "Unsuported file format",
-                    "Unknown format of the input file [%s]!" % (image),
-                    "Please check your data!",
-                )
 
         # --- compile PALM command
         print(" ---> compiling PALM commands")
@@ -535,7 +523,7 @@ def run_palm(
         mask_right = os.path.join(
             atlas, "hcp", "masks", "surface.cifti.R.mask.32k_fs_LR.func.gii"
         )
-        mask_parcelated = None
+        mask_cifti = None
 
         # ---> replace the default masks with custom masks if provided
         if mask is not None:
@@ -592,7 +580,7 @@ def run_palm(
                         "Please provide a valid mask!",
                     )
 
-            elif iformat == "dtseries":
+            elif recombine:
                 if mask.endswith(".dtseries.nii") or mask.endswith(".dscalar.nii"):
 
                     mask_left = troot + "_left_mask.func.gii"
@@ -649,16 +637,16 @@ def run_palm(
                         "Please provide a valid mask!",
                     )
 
-            elif iformat == "ptseries" or iformat == "pscalar":
-                if mask.endswith(".ptseries.nii") or mask.endswith(".pscalar.nii"):
-                    mask_parcelated = troot + "_cifti_mask.ptseries.nii"
-                    shutil.copy(mask, mask_parcelated)
-                    toclean.append(mask_parcelated)
+            elif iformat in ["dtseries", "dscalar", "pscalar", "ptseries"]:
+                if mask.endswith(".ptseries.nii") or mask.endswith(".pscalar.nii") or mask.endswith(".dscalar.nii") or mask.endswith(".dtseries.nii"):
+                    mask_cifti = troot + "_cifti_mask" + ext
+                    shutil.copy(mask, mask_cifti)
+                    toclean.append(mask_cifti)
                 else:
                     raise ge.CommandFailed(
                         "run_palm",
                         "Invalid mask image",
-                        "The specified mask is not a valid image file for parcellated input: %s."
+                        "The specified mask is not a valid image file for the specified cifti input: %s."
                         % (mask),
                     )
 
@@ -707,27 +695,11 @@ def run_palm(
                     "Please check your settings!",
                 )
 
-        elif iformat == "ptseries":
+        elif not recombine:
             print(" ---> running PALM for ptseries CIFTI input")
-            infiles = setInFiles(root, "cifti.ptseries.nii", nimages)
-            if mask_parcelated:
-                inargs = ["-m", mask_parcelated]
-            else:
-                inargs = []
-            command = ["palm"] + infiles + inargs + dargs + sargs + ["-o", root]
-            if subprocess.call(command):
-                raise ge.CommandFailed(
-                    "run_palm",
-                    "PALM failed",
-                    "The PALM command failed to run: %s" % (" ".join(command)),
-                    "Please check your settings!",
-                )
-
-        elif iformat == "pscalar":
-            print(" ---> running PALM for pscalar CIFTI input")
-            infiles = setInFiles(root, "cifti.pscalar.nii", nimages)
-            if mask_parcelated:
-                inargs = ["-m", mask_parcelated]
+            infiles = setInFiles(root, "cifti" + ext, nimages)
+            if mask_cifti:
+                inargs = ["-m", mask_cifti]
             else:
                 inargs = []
             command = ["palm"] + infiles + inargs + dargs + sargs + ["-o", root]
@@ -740,7 +712,7 @@ def run_palm(
                 )
 
         else:
-            print(" ---> setting up PALM for dtseries/dscalar CIFTI input")
+            print(" ---> setting up PALM for split CIFTI input")
             calls = []
 
             if not surface:
@@ -828,10 +800,10 @@ def run_palm(
                 raise ge.CommandFailed("run_palm", *report)
 
         # --- process output
-        if iformat in ["nifti", "ptseries", "pscalar"]:
+        if not recombine:
             pass
         else:
-            print(" ---> reconstructing results into CIFTI files")
+            print(" ---> reconstructing split results into CIFTI files")
 
             for pval in [
                 "_fdrp",

@@ -52,6 +52,10 @@ def getImgFormat(filename):
             return '.dtseries.nii'
         elif ".".join(p[-2:])  == 'ptseries.nii':
             return '.ptseries.nii'
+        if ".".join(p[-2:])  == 'dscalar.nii':
+            return '.dscalar.nii'
+        elif ".".join(p[-2:])  == 'pscalar.nii':
+            return '.pscalar.nii'
         else:
             return '.nii'
     elif ".".join(p[-2:]) == '4dfp.img':
@@ -84,7 +88,7 @@ def readConc(filename, boldname=None, check=False):
         for boldfile in boldfiles:
             if not os.path.exists(boldfile):
                 missing.append(boldfile)
-    
+
         if missing:
             raise ge.CommandFailed("readConc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
 
@@ -137,6 +141,394 @@ def printniftihdr(filename=None):
     hdr = niftihdr(filename)
     print(hdr)
 
+
+def print_nifti_metadata(filename, info='list'):
+    """
+    ``print_nifti_metadata <image_filename> [info=list]``
+
+    Prints metadata extension blocks from a NIfTI file.
+
+    NIfTI files can contain metadata extension blocks after the header.
+    This function inspects and displays the content of these blocks.
+
+    INPUTS
+    ======
+
+    filename  Path to the NIfTI file (.nii or .nii.gz)
+    info      Which metadata to print:
+              - 'list': List metadata blocks without content (default)
+              - 'all': Print all metadata blocks with full content
+              - 'cifti': Print CIFTI metadata (ecode 32)
+              - 'qunex' or 'qx': Print QuNex metadata (ecode 64)
+              - Numeric code (e.g., 32, 64, 2, etc.): Print metadata with that code
+
+    METADATA CODES
+    ==============
+
+    Common NIfTI extension codes:
+    - 0: Unknown private format
+    - 2: DICOM format
+    - 4: AFNI group format
+    - 6: Comment
+    - 8: XCEDE format
+    - 10: Jiffy XML format
+    - 12: Unused
+    - 14: Unused
+    - 16: Unused
+    - 18: MIND_IDENT format
+    - 20: B_VALUE extension
+    - 22: SPHERICAL_DIRECTION extension
+    - 24: DT_COMPONENT extension
+    - 26: SHC_DEGREEORDER extension
+    - 28: VOXBO extension
+    - 30: CARET extension
+    - 32: CIFTI extension (XML format)
+    - 34: VARIABLE_FRAME_TIMING extension
+    - 36: MATLAB workspace extension
+    - 38: QUANTIPHYSE extension
+    - 40: MRS extension
+    - 42: PYTHON pickle extension
+    - 64: QuNex extension
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        # List metadata blocks (default)
+        print_nifti_metadata('bold1.dtseries.nii')
+
+        # Print all metadata with full content
+        print_nifti_metadata('bold1.dtseries.nii', info='all')
+
+        # Print only CIFTI metadata
+        print_nifti_metadata('bold1.dtseries.nii', info='cifti')
+
+        # Print only QuNex metadata
+        print_nifti_metadata('bold1.nii', info='qunex')
+
+        # Print metadata with specific numeric code
+        print_nifti_metadata('bold1.nii', info=32)  # CIFTI
+        print_nifti_metadata('bold1.nii', info=6)   # Comment
+    """
+
+    # Parse the info parameter
+    info_str = str(info).lower()
+    list_only = False
+
+    # Map info strings to extension codes
+    code_filter = None
+
+    if info_str == 'list':
+        list_only = True
+        code_filter = None
+        info_label = "List"
+    elif info_str == 'all':
+        code_filter = None
+        info_label = "All"
+    elif info_str == 'cifti':
+        code_filter = [32]
+        info_label = "CIFTI"
+    elif info_str in ['qunex', 'qx']:
+        code_filter = [64]
+        info_label = "QuNex"
+    else:
+        # Try to parse as numeric code
+        try:
+            numeric_code = int(info)
+            code_filter = [numeric_code]
+            info_label = "Code %d" % numeric_code
+        except ValueError:
+            print("Warning: Unknown info parameter '%s', using 'list'" % info)
+            list_only = True
+            code_filter = None
+            info_label = "List"
+
+    # Extension code names for display
+    ecode_names = {
+        0: "Unknown private",
+        2: "DICOM",
+        4: "AFNI group",
+        6: "Comment",
+        8: "XCEDE",
+        10: "Jiffy XML",
+        18: "MIND_IDENT",
+        20: "B_VALUE",
+        22: "SPHERICAL_DIRECTION",
+        24: "DT_COMPONENT",
+        26: "SHC_DEGREEORDER",
+        28: "VOXBO",
+        30: "CARET",
+        32: "CIFTI",
+        34: "VARIABLE_FRAME_TIMING",
+        36: "MATLAB workspace",
+        38: "QUANTIPHYSE",
+        40: "MRS",
+        42: "PYTHON pickle",
+        64: "QuNex"
+    }
+
+    # Read the NIfTI header and metadata
+    hdr = niftihdr(filename)
+
+    # print("-" * 70)
+    print("NIfTI Metadata for: %s" % filename)
+    print("NIfTI Version: %d" % hdr.nifti_version)
+    if list_only:
+        print("Mode: List metadata blocks")
+    else:
+        print("Filter: %s metadata" % info_label)
+    print()
+
+    if not hasattr(hdr, 'meta') or len(hdr.meta) == 0:
+        print("No metadata extensions found in this file.")
+        return
+
+    # If list mode, just show summary
+    if list_only:
+        print("Found %d metadata block(s):" % len(hdr.meta))
+        print()
+        for idx, (msize, mcode, mdata) in enumerate(hdr.meta, 1):
+            # Extract the actual code value
+            if isinstance(mcode, tuple):
+                mcode = mcode[0]
+
+            # Get the extension name
+            ecode_name = ecode_names.get(mcode, "Unknown")
+
+            print("  Block #%d: Code %d (%s), Size %d bytes" % (idx, mcode, ecode_name, msize))
+
+        print()
+        print("Use info='all' to see full content, or info=<code> for specific block")
+        print("-" * 70)
+        return
+
+    # Filter and display metadata with full content
+    found_count = 0
+    total_count = len(hdr.meta)
+
+    for idx, (msize, mcode, mdata) in enumerate(hdr.meta, 1):
+        # Extract the actual code value (it's returned as a tuple)
+        if isinstance(mcode, tuple):
+            mcode = mcode[0]
+
+        # Check if this metadata should be displayed
+        if code_filter is None or mcode in code_filter:
+            found_count += 1
+
+            # Get the extension name
+            ecode_name = ecode_names.get(mcode, "Unknown")
+
+            print("--------------------------------")
+            print("Metadata Block #%d (of %d total)" % (idx, total_count))
+            print("Extension Code: %d (%s)" % (mcode, ecode_name))
+            print("Block Size: %d bytes" % msize)
+            print()
+
+            # Try to decode and display the metadata content
+            try:
+                # For CIFTI (32) and many XML-based formats, try UTF-8 decoding
+                if mcode in [32, 8, 10, 30]:  # XML-based formats
+                    if isinstance(mdata, bytes):
+                        content = mdata.decode('utf-8', errors='replace')
+                    else:
+                        content = ''.join([chr(ord(c)) if ord(c) < 128 else '?' for c in mdata])
+
+                    # Clean up null terminators
+                    content = content.rstrip('\x00')
+
+                    print("Content (XML):\n----- START -----")
+                    print(content)
+                    print("------ END ------")
+
+                # For QuNex (64) and text-based formats
+                elif mcode in [64, 6]:  # QuNex or Comment
+                    if isinstance(mdata, bytes):
+                        content = mdata.decode('utf-8', errors='replace')
+                    else:
+                        content = ''.join([chr(ord(c)) if ord(c) < 128 else '?' for c in mdata])
+
+                    # Clean up null terminators
+                    content = content.rstrip('\x00')
+
+                    print("Content (Text):\n----- START -----")
+                    print(content)
+                    print("------ END ------")
+
+                # For binary formats, show hex dump of first 256 bytes
+                else:
+                    if isinstance(mdata, bytes):
+                        data_bytes = mdata
+                    else:
+                        data_bytes = bytes([ord(c) if isinstance(c, str) else c for c in mdata])
+
+                    print("Content (Binary, first 256 bytes):")
+                    display_bytes = data_bytes[:256]
+
+                    # Print hex dump in groups of 16 bytes
+                    for i in range(0, len(display_bytes), 16):
+                        chunk = display_bytes[i:i+16]
+                        hex_str = ' '.join(['%02x' % b for b in chunk])
+                        ascii_str = ''.join([chr(b) if 32 <= b < 127 else '.' for b in chunk])
+                        print("  %04x: %-48s  %s" % (i, hex_str, ascii_str))
+
+                    if len(data_bytes) > 256:
+                        print("  ... (%d more bytes not shown)" % (len(data_bytes) - 256))
+
+            except Exception as e:
+                print("Error decoding metadata: %s" % str(e))
+                print("Raw data length: %d bytes" % len(mdata))
+
+            print()
+
+    if code_filter is None:
+        print("Found %d metadata block(s)" % found_count)
+    else:
+        print("Found %d matching metadata block(s) out of %d total" % (found_count, total_count))
+    # print("-" * 70)
+
+
+def remove_qunex_metadata(infile, outfile=None):
+    """
+    ``remove_qunex_metadata <infile> [outfile=None]``
+
+    Removes QuNex metadata (extension code 64) from a NIfTI file.
+
+    This function inspects a NIfTI file for QuNex metadata extensions.
+    If found, it removes them and saves the file. All other metadata
+    blocks (e.g., CIFTI) are preserved.
+
+    INPUTS
+    ======
+
+    infile   Path to the input NIfTI file (.nii or .nii.gz)
+    outfile  Path to the output file (optional)
+             If not provided, the input file is replaced.
+
+    OUTPUTS
+    =======
+
+    Returns True if QuNex metadata was found and removed, False otherwise.
+
+    EXAMPLE USE
+    ===========
+
+    ::
+
+        # Remove QuNex metadata from file (replace original)
+        remove_qunex_metadata('bold1.nii')
+
+        # Remove QuNex metadata and save to new file
+        remove_qunex_metadata('bold1.nii', 'bold1_clean.nii')
+    """
+
+    # Read the header and metadata
+    hdr = niftihdr(infile)
+    print("Removing QuNex Metadata\n\n-> Inspecting file for QuNex metadata: %s" % infile)
+
+    # Check if there's any metadata
+    if not hasattr(hdr, 'meta') or len(hdr.meta) == 0:
+        print("   -> No metadata extensions found in file.")
+        return False
+
+    # Find QuNex metadata blocks (code 64)
+    original_count = len(hdr.meta)
+    qunex_indices = []
+
+    for idx, (msize, mcode, mdata) in enumerate(hdr.meta):
+        # Extract the actual code value
+        if isinstance(mcode, tuple):
+            mcode = mcode[0]
+
+        if mcode == 64:
+            qunex_indices.append(idx)
+
+    # Check if any QuNex metadata was found
+    if len(qunex_indices) == 0:
+        print("   No QuNex metadata (code 64) found in file.")
+        return False
+
+    print("   Found %d QuNex metadata block(s) in file." % (len(qunex_indices), ))
+
+    # Remove QuNex metadata blocks (in reverse order to maintain indices)
+    for idx in reversed(qunex_indices):
+        removed_block = hdr.meta.pop(idx)
+        print("-> Removed block #%d: Size %d bytes" % (idx + 1, removed_block[0]))
+
+    # If no metadata remains, clear the extension flag
+    if len(hdr.meta) == 0:
+        hdr.ext = chr(0) * 4
+        print("   All metadata removed, clearing extension flag")
+    else:
+        print("   %d metadata block(s) remain" % len(hdr.meta))
+
+    # Determine output file
+    if outfile is None:
+        outfile = infile
+        print("-> Updating original file: %s" % infile)
+    else:
+        print("-> Writing to new file: %s" % outfile)
+
+    # Read the image data from the input file
+    sform = getImgFormat(infile)
+    if sform == '.nii.gz':
+        inf = gzip.open(infile, 'rb')
+    else:
+        inf = open(infile, 'rb')
+
+    # Read the old header to skip it
+    old_hdr = niftihdr()
+    old_hdr.unpackHdr(inf)
+
+    # The unpackHdr function already reads the header, extension flag, and all extensions
+    # The file pointer is now at vox_offset, ready to read image data
+    # No need to skip anything else
+
+    # Read the actual image data
+    image_data = inf.read()
+    inf.close()
+
+    # Write the new file
+    tform = getImgFormat(outfile)
+    if tform == '.nii.gz':
+        outf = gzip.open(outfile, 'wb')
+    else:
+        outf = open(outfile, 'wb')
+
+    # Write new header (with updated metadata)
+
+    # Write header (540 bytes for NIfTI-2, 352 for NIfTI-1)
+    header_bytes = hdr.packHdr()
+    outf.write(header_bytes)
+
+    # Write extension flag (4 bytes)
+    if hasattr(hdr, 'ext'):
+        if isinstance(hdr.ext, str):
+            ext_bytes = bytes(hdr.ext, 'utf-8')
+        else:
+            ext_bytes = hdr.ext
+    else:
+        ext_bytes = b'\x00\x00\x00\x00'
+    outf.write(ext_bytes)
+
+    # Write metadata blocks (if any)
+    for msize, mcode, mdata in getattr(hdr, 'meta', []):
+        outf.write(struct.pack(hdr.e + 'I', msize))   # 4 bytes: size
+        outf.write(struct.pack(hdr.e + 'I', mcode))   # 4 bytes: code
+        outf.write(mdata)                             # msize bytes: data
+
+    # Write image data
+    outf.write(image_data)
+
+    outf.flush()
+    os.fsync(outf.fileno())
+    outf.close()
+
+    print("-> Successfully removed QuNex metadata")
+    print("   Original metadata blocks: %d" % original_count)
+    print("   Remaining metadata blocks: %d" % len(hdr.meta))
+
+    return True
 
 
 class fidl:
@@ -321,15 +713,16 @@ class ifhhdr:
 class niftihdr:
 
     def __init__(self, filename=False):
+        self.nifti_version = 1           # NIfTI version (1 or 2)
         self.dim_info    = chr(0)        # char      - MRI slice ordering ---- information not available in IFH
-        self.ndimensions = 4             # short     - number of dimensions used
-        self.sizex       = 48            # short     - size in dimension x
-        self.sizey       = 64            # short     - size in dimension y
-        self.sizez       = 48            # short     - size in dimension z
-        self.frames      = 1             # short     - number of frames (4th dimension))
-        self.size_5      = 0             # short     - size of 5th dimension
-        self.size_6      = 0             # short     - size of 6th dimension
-        self.size_7      = 0             # short     - size of 7th dimension
+        self.ndimensions = 4             # short/int64 - number of dimensions used
+        self.sizex       = 48            # short/int64 - size in dimension x
+        self.sizey       = 64            # short/int64 - size in dimension y
+        self.sizez       = 48            # short/int64 - size in dimension z
+        self.frames      = 1             # short/int64 - number of frames (4th dimension))
+        self.size_5      = 0             # short/int64 - size of 5th dimension
+        self.size_6      = 0             # short/int64 - size of 6th dimension
+        self.size_7      = 0             # short/int64 - size of 7th dimension
         self.intention1  = 0.0           # float     - intention 1 parameter
         self.intention2  = 0.0           # float     - intention 2 parameter
         self.intention3  = 0.0           # float     - intention 3 parameter
@@ -365,11 +758,11 @@ class niftihdr:
         self.qoffset_x   = 70.5          # float     - Quaternion x shift
         self.qoffset_y   = 84.0          # float     - Quaternion y shift
         self.qoffset_z   = -60.0         # float     - Quaternion z shift
-        self.srow_x      = [-1, 0, 0, 0]  # float[4]  - affine transform row x
-        self.srow_y      =  [0, 1, 0, 0]  # float[4]  - affine transform row y
-        self.srow_z      =  [0, 0, 1, 0]  # float[4]  - affine transform row z
+        self.srow_x      = [-1, 0, 0, 0]  # float[4]/double[4] - affine transform row x
+        self.srow_y      =  [0, 1, 0, 0]  # float[4]/double[4] - affine transform row y
+        self.srow_z      =  [0, 0, 1, 0]  # float[4]/double[4] - affine transform row z
         self.intent_name = ""             # char[16]  - intent name
-        self.magic       = "n+1" + chr(0)  # char[4]     - magic word and zero char
+        self.magic       = "n+1" + chr(0)  # char[4]/char[8] - magic word and zero char
         self.ext         = chr(0) * 4      # extension code
 
         self.xyz_unit    = 2             # used units for xyz dimension (0-unspecified, 1-m, 2-mm, 3-micronm)
@@ -388,7 +781,42 @@ class niftihdr:
         else:
             self.hdr = self.packHdr()
 
+    def is_cifti(self):
+        """Check if this is a CIFTI file based on metadata or filename."""
+        # Check for CIFTI extension (code 32)
+        for msize, mcode, mdata in self.meta:
+            if mcode == 32:
+                return True
+
+        # Check filename if available
+        if self.filename:
+            cifti_extensions = ['.dtseries.nii', '.ptseries.nii', '.dscalar.nii', '.pscalar.nii']
+            for ext in cifti_extensions:
+                if self.filename.endswith(ext):
+                    return True
+
+        return False
+
+    @property
+    def volumes(self):
+        """
+        Get the number of volumes in the file.
+        For CIFTI files, this is stored in size_5 (5th dimension).
+        For regular NIfTI files, this is stored in frames (4th dimension).
+        """
+        if self.is_cifti():
+            return self.size_5
+        else:
+            return self.frames
+
     def packHdr(self):
+
+        if self.nifti_version == 2:
+            return self._packHdrV2()
+        else:
+            return self._packHdrV1()
+
+    def _packHdrV1(self):
 
         self.vox_offset = 352
         for m in self.meta:
@@ -455,14 +883,118 @@ class niftihdr:
         s += bytes(self.magic[0:3] + chr(0), "utf-8")                 # char[4]   - magic word and zero char
         s += bytes((self.ext + chr(0) * 4)[0:4], "utf-8")             # char[4]   - extension
 
-        for msize, mcode, mdata in self.meta:
-            s += struct.pack(self.e + "I", msize)                     # int       - length
-            s += struct.pack(self.e + "I", mcode)                     # int       - code
-            s += mdata                                                # data
+        return s
+
+    def _packHdrV2(self):
+        """Pack NIfTI-2 header (540 bytes base)"""
+
+        # NIfTI-2 header is 540 bytes, see https://nifti.nimh.nih.gov/pub/dist/src/nifti2.h
+        # Calculate vox_offset based on current metadata
+        self.vox_offset = 544  # 540 header + 4 extension flag
+        for m in self.meta:
+            self.vox_offset += m[0]
+
+        # Pack header fields in order, matching nifti2.h
+        s = b''
+        s += struct.pack(self.e + 'i', 540)  # sizeof_hdr
+        s += bytes("n+2" + chr(0) + chr(13) + chr(10) + chr(26) + chr(10), "utf-8")  # magic
+        s += struct.pack(self.e + 'h', self.data_type)
+        s += struct.pack(self.e + 'h', self.bitpix)
+        s += struct.pack(self.e + 'q', self.ndimensions)
+        s += struct.pack(self.e + 'q', self.sizex)
+        s += struct.pack(self.e + 'q', self.sizey)
+        s += struct.pack(self.e + 'q', self.sizez)
+        s += struct.pack(self.e + 'q', self.frames)
+        s += struct.pack(self.e + 'q', self.size_5)
+        s += struct.pack(self.e + 'q', self.size_6)
+        s += struct.pack(self.e + 'q', self.size_7)
+        s += struct.pack(self.e + 'd', self.intention1)
+        s += struct.pack(self.e + 'd', self.intention2)
+        s += struct.pack(self.e + 'd', self.intention3)
+        s += struct.pack(self.e + 'd', self.pixdim_0)
+        s += struct.pack(self.e + 'd', self.pixdim_x)
+        s += struct.pack(self.e + 'd', self.pixdim_y)
+        s += struct.pack(self.e + 'd', self.pixdim_z)
+        s += struct.pack(self.e + 'd', self.pixdim_t)
+        s += struct.pack(self.e + 'd', self.pixdim_5)
+        s += struct.pack(self.e + 'd', self.pixdim_6)
+        s += struct.pack(self.e + 'd', self.pixdim_7)
+        s += struct.pack(self.e + 'q', int(self.vox_offset))
+        s += struct.pack(self.e + 'd', self.scl_slope)
+        s += struct.pack(self.e + 'd', self.scl_inter)
+        s += struct.pack(self.e + 'd', self.cal_max)
+        s += struct.pack(self.e + 'd', self.cal_min)
+        s += struct.pack(self.e + 'd', self.slice_duration)
+        s += struct.pack(self.e + 'd', self.toffset)
+        s += struct.pack(self.e + 'q', self.slice_start)
+        s += struct.pack(self.e + 'q', self.slice_end)
+        s += bytes((self.descrip + ' ' * 80)[0:80], 'utf-8')
+        s += bytes((self.aux_file + ' ' * 24)[0:24], 'utf-8')
+        s += struct.pack(self.e + 'i', self.qform_code)
+        s += struct.pack(self.e + 'i', self.sform_code)
+        s += struct.pack(self.e + 'd', self.quatern_b)
+        s += struct.pack(self.e + 'd', self.quatern_c)
+        s += struct.pack(self.e + 'd', self.quatern_d)
+        s += struct.pack(self.e + 'd', self.qoffset_x)
+        s += struct.pack(self.e + 'd', self.qoffset_y)
+        s += struct.pack(self.e + 'd', self.qoffset_z)
+        s += struct.pack(self.e + 'dddd', *self.srow_x)
+        s += struct.pack(self.e + 'dddd', *self.srow_y)
+        s += struct.pack(self.e + 'dddd', *self.srow_z)
+        s += struct.pack(self.e + 'i', self.slice_code)
+        s += struct.pack(self.e + 'i', self.xyz_unit + self.t_unit)
+        s += struct.pack(self.e + 'i', self.intent_code)
+        s += bytes((self.intent_name + ' ' * 16)[0:16], 'utf-8')
+        s += struct.pack(self.e + 'c', bytes(self.dim_info, 'utf-8'))
+        s += bytes(chr(0) * 15, 'utf-8')
+        # Extension flag (4 bytes) is written after header, not here
+
+        # Pad to 540 bytes if needed
+        if len(s) < 540:
+            s += bytes(540 - len(s))
+        elif len(s) > 540:
+            s = s[:540]
 
         return s
 
     def unpackHdr(self, s):
+
+        si = struct.calcsize('i')
+        sc = struct.calcsize('c')
+        sh = struct.calcsize('h')
+        sf = struct.calcsize('f')
+        sq = struct.calcsize('q')
+        sd = struct.calcsize('d')
+
+        # Detect NIfTI version by reading the first 4 bytes
+        header_size, = struct.unpack(">i", s.read(si))
+
+        if header_size == 348:
+            # NIfTI-1
+            self.nifti_version = 1
+            s.seek(0)  # Reset to beginning
+            return self._unpackHdrV1(s)
+        elif header_size == 540:
+            # NIfTI-2
+            self.nifti_version = 2
+            s.seek(0)  # Reset to beginning
+            return self._unpackHdrV2(s)
+        else:
+            # Try little endian
+            s.seek(0)
+            header_size, = struct.unpack("<i", s.read(si))
+            if header_size == 348:
+                self.nifti_version = 1
+                s.seek(0)
+                return self._unpackHdrV1(s)
+            elif header_size == 540:
+                self.nifti_version = 2
+                s.seek(0)
+                return self._unpackHdrV2(s)
+            else:
+                raise ValueError(f"Invalid NIfTI header size: {header_size}")
+
+    def _unpackHdrV1(self, s):
 
         si = struct.calcsize('i')
         sc = struct.calcsize('c')
@@ -550,23 +1082,131 @@ class niftihdr:
         self.meta = []
         pointer = 352
 
-        if self.ext == [1, 0, 0, 0]:
+        # Check if extension flag is set (first byte should be 1)
+        ext_flag = ord(self.ext[0]) if isinstance(self.ext, str) else self.ext[0]
+        if ext_flag == 1:
             while pointer < self.vox_offset:
                 msize = struct.unpack(e + "I", s.read(si))
                 mcode = struct.unpack(e + "I", s.read(si))
-                if pointer + msize <= self.vox_offset:
-                    mdata = s.read(sc * msize - 8)
-                    pointer += msize
-                self.meta.append([msize, mcode, mdata])
+                if pointer + msize[0] <= self.vox_offset:
+                    mdata = s.read(msize[0] - 8)
+                    pointer += msize[0]
+                    self.meta.append([msize[0], mcode[0], mdata])
+                else:
+                    break
+        return
+
+    def _unpackHdrV2(self, s):
+        """Unpack NIfTI-2 header (540 bytes)"""
+
+        si = struct.calcsize('i')
+        sc = struct.calcsize('c')
+        sh = struct.calcsize('h')
+        sf = struct.calcsize('f')
+        sq = struct.calcsize('q')
+        sd = struct.calcsize('d')
+
+        # Determine endianness
+        header_size, = struct.unpack(">i", s.read(si))
+        if header_size == 540:
+            e = ">"
+        else:
+            e = "<"
+        self.e = e
+
+        # Read magic string and verify NIfTI-2 format
+        magic = s.read(sc * 8).decode("utf-8", errors="ignore")  # char[8]
+        if not magic.startswith("ni2") and not magic.startswith("n+2"):
+            raise ValueError("Invalid NIfTI-2 magic string")
+
+        self.data_type,      = struct.unpack(e + "h", s.read(sh))      # short     - datatype
+        self.bitpix,         = struct.unpack(e + "h", s.read(sh))      # short     - bits per voxel
+        self.ndimensions,    = struct.unpack(e + "q", s.read(sq))      # int64     - number of dimensions used
+        self.sizex,          = struct.unpack(e + "q", s.read(sq))      # int64     - size in dimension x
+        self.sizey,          = struct.unpack(e + "q", s.read(sq))      # int64     - size in dimension y
+        self.sizez,          = struct.unpack(e + "q", s.read(sq))      # int64     - size in dimension z
+        self.frames,         = struct.unpack(e + "q", s.read(sq))      # int64     - number of frames (4th dimension)
+        self.size_5,         = struct.unpack(e + "q", s.read(sq))      # int64     - size of 5th dimension
+        self.size_6,         = struct.unpack(e + "q", s.read(sq))      # int64     - size of 6th dimension
+        self.size_7,         = struct.unpack(e + "q", s.read(sq))      # int64     - size of 7th dimension
+        self.intention1,     = struct.unpack(e + "d", s.read(sd))      # double    - intention 1 parameter
+        self.intention2,     = struct.unpack(e + "d", s.read(sd))      # double    - intention 2 parameter
+        self.intention3,     = struct.unpack(e + "d", s.read(sd))      # double    - intention 3 parameter
+        self.pixdim_0,       = struct.unpack(e + "d", s.read(sd))      # double    - zero dimension size
+        self.pixdim_x,       = struct.unpack(e + "d", s.read(sd))      # double    - x dimension size
+        self.pixdim_y,       = struct.unpack(e + "d", s.read(sd))      # double    - y dimension size
+        self.pixdim_z,       = struct.unpack(e + "d", s.read(sd))      # double    - z dimension size
+        self.pixdim_t,       = struct.unpack(e + "d", s.read(sd))      # double    - t dimension size
+        self.pixdim_5,       = struct.unpack(e + "d", s.read(sd))      # double    - 5 dimension size
+        self.pixdim_6,       = struct.unpack(e + "d", s.read(sd))      # double    - 6 dimension size
+        self.pixdim_7,       = struct.unpack(e + "d", s.read(sd))      # double    - 7 dimension size
+        self.vox_offset,     = struct.unpack(e + "q", s.read(sq))      # int64     - offset of data
+        self.scl_slope,      = struct.unpack(e + "d", s.read(sd))      # double    - slope of data scaling
+        self.scl_inter,      = struct.unpack(e + "d", s.read(sd))      # double    - intersect of data scaling
+        self.cal_max,        = struct.unpack(e + "d", s.read(sd))      # double    - maximum value
+        self.cal_min,        = struct.unpack(e + "d", s.read(sd))      # double    - minimum value
+        self.slice_duration, = struct.unpack(e + "d", s.read(sd))      # double    - slice duration
+        self.toffset,        = struct.unpack(e + "d", s.read(sd))      # double    - time offset
+        self.slice_start,    = struct.unpack(e + "q", s.read(sq))      # int64     - First slice index
+        self.slice_end,      = struct.unpack(e + "q", s.read(sq))      # int64     - Last slice index
+
+        self.descrip         = s.read(sc * 80).decode("utf-8")         # char[80]  - data description
+        self.aux_file        = s.read(sc * 24).decode("utf-8")         # char[24]  - auxilary filename
+        self.qform_code,     = struct.unpack(e + "i", s.read(si))      # int       - qform code
+        self.sform_code,     = struct.unpack(e + "i", s.read(si))      # int       - sform code
+        self.quatern_b,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion b param
+        self.quatern_c,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion c param
+        self.quatern_d,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion d param
+        self.qoffset_x,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion x shift
+        self.qoffset_y,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion y shift
+        self.qoffset_z,      = struct.unpack(e + "d", s.read(sd))      # double    - Quaternion z shift
+        self.srow_x          = list(struct.unpack(e + "dddd", s.read(sd * 4)))     # double[4]  - affine transform row x
+        self.srow_y          = list(struct.unpack(e + "dddd", s.read(sd * 4)))     # double[4]  - affine transform row y
+        self.srow_z          = list(struct.unpack(e + "dddd", s.read(sd * 4)))     # double[4]  - affine transform row z
+        self.slice_code,     = struct.unpack(e + "i", s.read(si))      # int       - slice order code
+        self.xyzt_units,     = struct.unpack(e + "i", s.read(si))      # int       - codes for units used
+        self.intent_code,    = struct.unpack(e + "i", s.read(si))      # int       - intent code
+        self.intent_name     = s.read(sc * 16).decode("utf-8")         # char[16]  - intent name
+        self.dim_info,       = struct.unpack(e + "c", s.read(sc))      # char      - MRI slice ordering
+        self.dim_info        = self.dim_info.decode("utf-8", errors="ignore")
+
+        t = s.read(sc * 15)                                            # char[15]  - unused (padding)
+        self.ext             = s.read(sc * 4).decode("utf-8")          # char[4]   - extension
+
+        # Set magic for NIfTI-2
+        self.magic = magic
+        self.dType = niftiDataTypes[self.data_type]
+
+        t = self.xyzt_units
+        self.xyz_unit = t % 8
+        t = t - (t % 8)
+        self.t_unit = t % 64
+
+        # --- Read extensions
+        self.meta = []
+        pointer = 544  # NIfTI-2 header is 540 + 4
+
+        # Check if extension flag is set (first byte should be 1)
+        ext_flag = ord(self.ext[0]) if isinstance(self.ext, str) else self.ext[0]
+        if ext_flag == 1:
+            while pointer < self.vox_offset:
+                msize = struct.unpack(e + "I", s.read(si))
+                mcode = struct.unpack(e + "I", s.read(si))
+                if pointer + msize[0] <= self.vox_offset:
+                    mdata = s.read(msize[0] - 8)
+                    pointer += msize[0]
+                    self.meta.append([msize[0], mcode[0], mdata])
+                else:
+                    break
         return
 
     def readHeader(self, filename):
 
         sform = getImgFormat(filename)
         if sform == '.nii.gz':
-            h = gzip.open(filename, 'r')
+            h = gzip.open(filename, 'rb')
         else:
-            h = open(filename, 'r')
+            h = open(filename, 'rb')
 
         self.unpackHdr(h)
         h.close()
@@ -575,7 +1215,7 @@ class niftihdr:
 
     def writeHeader(self, filename):
 
-        h = open(filename, "w")
+        h = open(filename, "wb")
         s = self.packHdr()
         h.write(s)
         h.close
@@ -641,8 +1281,32 @@ class niftihdr:
 
         return ifhdr
 
+    def convertToV1(self):
+        """Convert NIfTI-2 header to NIfTI-1 format (if possible)"""
+        if self.nifti_version == 1:
+            return  # Already V1
+
+        # Check if dimensions fit in int16
+        max_dim = max(self.sizex, self.sizey, self.sizez, self.frames,
+                     self.size_5, self.size_6, self.size_7)
+        if max_dim > 32767:
+            raise ValueError("Dimensions too large for NIfTI-1 (max 32767)")
+
+        self.nifti_version = 1
+        self.magic = "n+1" + chr(0)
+        self.vox_offset = 352.0  # NIfTI-1 default offset
+
+    def convertToV2(self):
+        """Convert NIfTI-1 header to NIfTI-2 format"""
+        if self.nifti_version == 2:
+            return  # Already V2
+
+        self.nifti_version = 2
+        self.magic = "n+2" + chr(0) + chr(0x0D) + chr(0x0A) + chr(0x0D) + chr(0x0A)
+        self.vox_offset = 544  # NIfTI-2 default offset
+
     def __str__(self):
-        s = "# ----------------------------------\n# NIfTI Header\n\n"
+        s = "# ----------------------------------\n# NIfTI Header (Version %d)\n\n" % self.nifti_version
         d = self.__dict__
         fields = ["dim_info", "ndimensions", "sizex", "sizey", "sizez", "frames", "size_5", "size_6", "size_7", "intention1", "intention2", "intention3", "intent_code", "data_type", "bitpix", "slice_start", "pixdim_0", "pixdim_x", "pixdim_y", "pixdim_z", "pixdim_t", "pixdim_5", "pixdim_6", "pixdim_7", "vox_offset", "scl_slope", "scl_inter", "slice_end", "slice_code", "xyzt_units", "cal_max", "cal_min", "slice_duration", "toffset", "descrip", "aux_file", "qform_code", "sform_code", "quatern_b", "quatern_c", "quatern_d", "qoffset_x", "qoffset_y", "qoffset_z", "srow_x", "srow_y", "srow_z", "intent_name", "magic"]
         for f in fields:
@@ -767,8 +1431,8 @@ def slice4dfp(sourcefile, targetfile, frames=1):
     hdr.ifh['matrix size [4]'] = str(frames)
     hdr.writeHeader(targetfile.replace('.img', '.ifh'))
 
-    sf = open(sourcefile, 'r')
-    df = open(targetfile, 'w')
+    sf = open(sourcefile, 'rb')
+    df = open(targetfile, 'wb')
 
     df.write(sf.read(voxels * frames * 4))
 
@@ -783,20 +1447,23 @@ def sliceNIfTI(sourcefile, targetfile, frames=1):
     tform = getImgFormat(targetfile)
 
     if sform == '.nii.gz':
-        sf = gzip.open(sourcefile, 'r')
+        sf = gzip.open(sourcefile, 'rb')
     else:
-        sf = open(sourcefile, 'r')
+        sf = open(sourcefile, 'rb')
 
     if tform == '.nii.gz':
-        tf = gzip.open(targetfile, 'w')
+        tf = gzip.open(targetfile, 'wb')
     else:
-        tf = open(targetfile, 'w')
+        tf = open(targetfile, 'wb')
 
     hdr = niftihdr()
     hdr.unpackHdr(sf)
     nvox = hdr.sizex * hdr.sizey * hdr.sizez
     hdr.frames = frames
-    tocopy = int(hdr.vox_offset - 352 + nvox * (hdr.bitpix / 8) * frames)
+
+    # Calculate offset based on NIfTI version
+    header_base_size = 540 if hdr.nifti_version == 2 else 352
+    tocopy = int(hdr.vox_offset - header_base_size + nvox * (hdr.bitpix / 8) * frames)
 
     tf.write(hdr.packHdr())
     tf.write(sf.read(tocopy))
