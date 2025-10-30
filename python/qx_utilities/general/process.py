@@ -522,6 +522,7 @@ arglist = [
     ["hcp_surface_atlas_dir", "", isNone],
     ["hcp_grayordinates_dir", "", isNone],
     ["hcp_freesurfer_labels", "", isNone],
+    ["hcp_thickness_regression", "", isNone],
     ["hcp_pregradient_smoothing", "1", int],
     ["hcp_mad_regname", "MSMAll", str],
     ["hcp_mad_videen_maps", "corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC", str],

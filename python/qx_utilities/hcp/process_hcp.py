@@ -2143,6 +2143,10 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_freesurfer_labels (str, default '${HCPPIPEDIR}/global/config/FreeSurferAllLut.txt'):
             Path to the location of the FreeSurfer look up table file.
 
+        --hcp_thickness_regression (str, default 'BOTH'):
+            Wwhether to use the updated curvature-thickness regression, set to
+            'OLD', 'NEW' or 'BOTH', defaults to 'BOTH'.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder.
@@ -2156,23 +2160,24 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         hcp_post_freesurfer parameter mapping:
 
-            ========================= =======================
-            QuNex parameter           HCPpipelines parameter
-            ========================= =======================
-            ``hcp_freesurfer_labels`` ``freesurferlabels``
-            ``hcp_surfatlasdir``      ``surfatlasdir``
-            ``hcp_grayordinatesdir``  ``grayordinatesdir``
-            ``hcp_grayordinatesres``  ``grayordinatesres``
-            ``hcp_subcortgraylabels`` ``subcortgraylabels``
-            ``hcp_refmyelinmaps``     ``refmyelinmaps``
-            ``hcp_hiresmesh``         ``hiresmesh``
-            ``hcp_lowresmesh``        ``lowresmesh``
-            ``hcp_mcsigma``           ``mcsigma``
-            ``hcp_regname``           ``regname``
-            ``hcp_inflatescale``      ``inflatescale``
-            ``hcp_fs_ind_mean``       ``use-ind-mean``
-            ``hcp_processing_mode``   ``processing-mode``
-            ========================= =======================
+            ============================ ========================
+            QuNex parameter              HCPpipelines parameter
+            ============================ ========================
+            ``hcp_freesurfer_labels``    ``freesurferlabels``
+            ``hcp_surfatlasdir``         ``surfatlasdir``
+            ``hcp_grayordinatesdir``     ``grayordinatesdir``
+            ``hcp_grayordinatesres``     ``grayordinatesres``
+            ``hcp_subcortgraylabels``    ``subcortgraylabels``
+            ``hcp_refmyelinmaps``        ``refmyelinmaps``
+            ``hcp_hiresmesh``            ``hiresmesh``
+            ``hcp_lowresmesh``           ``lowresmesh``
+            ``hcp_mcsigma``              ``mcsigma``
+            ``hcp_regname``              ``regname``
+            ``hcp_inflatescale``         ``inflatescale``
+            ``hcp_fs_ind_mean``          ``use-ind-mean``
+            ``hcp_processing_mode``      ``processing-mode``
+            ``hcp_thickness_regression`` ``thickness-regression``
+            ============================ ========================
 
     Examples:
         Example run from the base study folder with test flag::
@@ -2319,6 +2324,11 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         # optional parameters
         if options["hcp_fs_ind_mean"] != "YES":
             elements.append(("use-ind-mean", options["hcp_fs_ind_mean"]))
+
+        if options["hcp_thickness_regression"] is not None:
+            elements.append(
+                ("thickness-regression", options["hcp_thickness_regression"])
+            )
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
