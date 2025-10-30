@@ -219,7 +219,7 @@ end
 % ---> prepare metadata
 
 if isstruct(img.list)
-    lists = fields(img.list)';
+    lists = fieldnames(img.list)';
     s = '';
     for fname = lists
         fname = fname{1};

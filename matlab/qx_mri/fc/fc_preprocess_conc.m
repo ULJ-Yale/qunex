@@ -1465,7 +1465,7 @@ for current = char(doIt)
                         beta_img.filetype = [beta_img.filetype(1) 'scalar'];
                         map_names = cell(1, reg.betaseries + 1);
                         for ev = 1:reg.betaseries
-                            map_names{ev} = sprintf('%s_event%02d', reg.name, ev);
+                            map_names{ev} = sprintf('%s_event_%02d', reg.name, ev);
                         end
                         % Name the appended mean frame for clarity
                         map_names{reg.betaseries + 1} = 'gmean';

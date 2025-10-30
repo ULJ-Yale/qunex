@@ -983,7 +983,7 @@ classdef nimage
 
             % ---> combine list data
             if ~isempty(obj.list) & ~isempty(add.list)
-                for f = fields(obj.list)'
+                for f = fieldnames(obj.list)'
                     f = f{1};
                     if strcmp(f, 'meta')
                         continue
@@ -1154,7 +1154,7 @@ classdef nimage
             % ---> mask list data
 
             if ~isempty(obj.list)
-                lists = fields(obj.list);
+                lists = fieldnames(obj.list);
                 lists = lists(~ismember(lists, 'meta'));
 
                 for l = lists(:)'
@@ -1272,7 +1272,7 @@ classdef nimage
                 end
 
                 if ~isempty(obj.list)
-                    for f = fields(obj.list)'
+                    for f = fieldnames(obj.list)'
                         f = f{1};
                         if strcmp(f, 'meta')
                             continue

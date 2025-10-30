@@ -64,7 +64,7 @@ if verbose, fprintf('\n\nStarting processing of %s...\n\n---> Reading in the fil
 
 list = general_read_file_list(flist, 'all', [], verbose);
 
-rois = ismember('roi', fields(list.session));
+rois = ismember('roi', fieldnames(list.session));
 
 for s = 1:list.nsessions
 
