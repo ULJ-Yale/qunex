@@ -535,7 +535,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %               Assumed Modelling:
 %                   ::
 %
-%                       <fidl code>:<hrf>[-<normalize>][:<length>]
+%                       <fidl code>:<hrf>[-<normalize>][-series][:<length>]
 %
 %                   where <fidl code> is the same as above, <hrf> is the type of
 %                   the hemodynamic response function to use, and <normalize>
@@ -557,6 +557,17 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %                   default. The default behavior has changed with QuNex version
 %                   0.93.4, which can result in different assumed HRF regressor
 %                   scaling and the resulting GLM beta estimates.
+%
+%                   If '-s' or '-series' is specified after the <hrf> parameter,
+%                   betaseries for that regressor will be computed in addition
+%                   to the standard beta estimates. This results in one beta
+%                   estimate per event. When computing betaseries, the target
+%                   event is modelled separately, and all other events are
+%                   modelled in a single regressor. GLM is run for each event
+%                   separately to obtain the betaseries estimates. The
+%                   betaseries is saved in a separate file that includes only
+%                   beta values for each event and a mean image that allows
+%                   beta weight normalization (computing precent signal change).
 %
 %                   Parameter <length> is also optional in case of 'SPM' and
 %                   'boynton' assumed HRF modelling, and it overrides the event
@@ -616,6 +627,11 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %
 %               - GLM image:
 %                   `<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_Bcoeff.<ext>`
+%
+%               - beta-series image(s):
+%                   `<bold name><bold tail>_conc_<event root>_res-<regressors><glm name>_<regressor name>_Bseries.<ext>`
+%                   One file per regressor specified in eventlist, each containing
+%                   the beta estimates for each individual event in that regressor.
 %
 %               - text GLM regressor matrix:
 %                   `glm/<bold name><bold tail>_GLM-X_<event root>_res-<regressors><glm name>.txt`
@@ -945,10 +961,22 @@ if strfind(doIt, 'r')
     if ~isempty(eventstring)
         rmodel = general_create_task_regressors(file_fidl, frames, eventstring);
         runs   = rmodel.run;
+
+        % Check if any regressors have beta-series enabled
+        do_bseries = false;
+        bs_list = {};
+        for reg_idx = 1:length(rmodel.regressor)
+            if isnumeric(rmodel.regressor(reg_idx).betaseries) && rmodel.regressor(reg_idx).betaseries > 0
+                do_bseries = true;
+                bs_list{end+1} = rmodel.regressor(reg_idx).name;
+            end
+        end
     else
         rmodel.fidl.fidl   = 'None';
         rmodel.description = 'None';
         rmodel.ignore      = 'None';
+        do_bseries = false;
+        bs_list = {};
 
         for b = 1:nbolds
             runs(b).matrix = [];
@@ -1234,9 +1262,51 @@ for current = char(doIt)
             for b = 1:nbolds
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
+
+            % Store original filtered images for beta-series GLM only if do_bseries is true
+            if do_bseries
+                img_bs = img;
+            end
+
+            % --- prepare nuisance structure for regular GLM (exclude beta-series columns)
+            nuisance_regular = nuisance;
+            if do_bseries
+                % Remove beta-series columns from regular GLM
+                for b = 1:nbolds
+                    % Identify beta-series columns for this run
+                    bs_col_mask = false(1, length(nuisance(b).eventnamesr));
+                    for col_idx = 1:length(nuisance(b).eventnamesr)
+                        col_name = nuisance(b).eventnamesr{col_idx};
+                        if ~isempty(strfind(col_name, '-bs-'))
+                            bs_col_mask(col_idx) = true;
+                        end
+                    end
+
+                    % Filter columns
+                    keep_cols = ~bs_col_mask;
+                    nuisance_regular(b).events = nuisance(b).events(:, keep_cols);
+                    nuisance_regular(b).nevents = sum(keep_cols);
+                    nuisance_regular(b).eventnamesr = nuisance(b).eventnamesr(keep_cols);
+
+                    % Also filter eventnames and eventframes
+                    if isfield(nuisance(b), 'eventnames') && ~isempty(nuisance(b).eventnames)
+                        bs_event_mask = false(1, length(nuisance(b).eventnames));
+                        for ev_idx = 1:length(nuisance(b).eventnames)
+                            ev_name = nuisance(b).eventnamesr{ev_idx};
+                            if ~isempty(strfind(ev_name, '-bs-'))
+                                bs_event_mask(ev_idx) = true;
+                            end
+                        end
+                        keep_event_cols = ~bs_event_mask;
+                        nuisance_regular(b).eventnames = nuisance(b).eventnames(keep_event_cols);
+                        nuisance_regular(b).eventframes = nuisance(b).eventframes(keep_event_cols);
+                    end
+                end
+            end
+
             fprintf('\n---> running GLM ');
             if ~(do_zscores || do_pvals || do_stderrors)
-            	[img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            	[img coeff] = regressNuisance(img, omit, nuisance_regular, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
             	if do_coeff
                 	cname = [file_croot ext '_Bcoeff' btail];
 	                fprintf('\n---> saving %s ', cname);
@@ -1244,7 +1314,7 @@ for current = char(doIt)
 	                fprintf('... done!');
             	end
             else
-            	[img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
+            	[img coeff coeffstats] = regressNuisance(img, omit, nuisance_regular, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel, file_sconc);
             	cname = [file_croot ext '_Bcoeff' btail];
                 fprintf('\n---> saving %s ', cname);
                 if do_coeff
@@ -1263,6 +1333,169 @@ for current = char(doIt)
                 fprintf('... done!');
             end
             fprintf('... done!');
+
+            % --- compute beta-series if requested
+            if do_bseries
+                fprintf('\n---> computing beta-series for: %s', strjoin(bs_list, ', '));
+
+                % Find regressors that have beta-series
+                for reg_idx = 1:length(rmodel.regressor)
+                    reg = rmodel.regressor(reg_idx);
+
+                    if isnumeric(reg.betaseries) && reg.betaseries > 0 && ismember(reg.name, bs_list)
+                        fprintf('\n     ---> processing beta-series for regressor: %s (%d events)', reg.name, reg.betaseries);
+
+                        % Initialize beta storage
+                        beta_img = img(1).zeroframes(reg.betaseries);
+
+                        % Use stored original filtered images for beta-series GLM
+                        % img_bs is already prepared before the main GLM
+
+                        % Loop through each event
+                        for ev_idx = 1:reg.betaseries
+                            % Create nuisance structure for this event's GLM
+                            nuisance_bs = nuisance;
+
+                            % For each run, keep only the relevant beta-series columns
+                            for b = 1:nbolds
+                                % Find columns for this event
+                                col_e = sprintf('%s-bs-e%02d', reg.name, ev_idx);
+                                col_o = sprintf('%s-bs-o%02d', reg.name, ev_idx);
+
+                                % Find indices
+                                idx_e = find(strcmp(nuisance(b).eventnamesr, col_e));
+                                idx_o = find(strcmp(nuisance(b).eventnamesr, col_o));
+
+                                % Create mask for beta-series columns in this run
+                                bs_col_mask = false(1, length(nuisance(b).eventnamesr));
+                                for col_idx = 1:length(nuisance(b).eventnamesr)
+                                    col_name = nuisance(b).eventnamesr{col_idx};
+                                    if ~isempty(strfind(col_name, '-bs-'))
+                                        bs_col_mask(col_idx) = true;
+                                    end
+                                end
+
+                                % Create mask: keep all non-betaseries columns + this event's columns
+                                keep_mask = ~bs_col_mask;
+
+                                % Remove the regular regressor column
+                                reg_col = find(strcmp(nuisance(b).eventnamesr, reg.name));
+                                if ~isempty(reg_col)
+                                    keep_mask(reg_col) = false;
+                                end
+
+                                % Add this event's beta-series columns
+                                if ~isempty(idx_e)
+                                    keep_mask(idx_e) = true;
+                                end
+                                if ~isempty(idx_o)
+                                    keep_mask(idx_o) = true;
+                                end
+
+                                % Apply mask
+                                nuisance_bs(b).events = nuisance(b).events(:, keep_mask);
+                                nuisance_bs(b).nevents = sum(keep_mask);
+                                nuisance_bs(b).eventnamesr = nuisance(b).eventnamesr(keep_mask);
+
+                                % Filter eventnames and eventframes
+                                if isfield(nuisance(b), 'eventnames') && ~isempty(nuisance(b).eventnames)
+                                    bs_event_mask = false(1, length(nuisance(b).eventnames));
+                                    for ev_col_idx = 1:length(nuisance(b).eventnames)
+                                        if ev_col_idx <= length(nuisance(b).eventnamesr)
+                                            ev_name = nuisance(b).eventnamesr{ev_col_idx};
+                                            if ~isempty(strfind(ev_name, '-bs-'))
+                                                bs_event_mask(ev_col_idx) = true;
+                                            end
+                                        end
+                                    end
+                                    keep_event_mask = ~bs_event_mask;
+                                    % Remove regular regressor from eventnames too
+                                    if ~isempty(reg_col) && reg_col <= length(keep_event_mask)
+                                        keep_event_mask(reg_col) = false;
+                                    end
+                                    % Add this event's columns
+                                    if ~isempty(idx_e) && idx_e <= length(keep_event_mask)
+                                        keep_event_mask(idx_e) = true;
+                                    end
+                                    if ~isempty(idx_o) && idx_o <= length(keep_event_mask)
+                                        keep_event_mask(idx_o) = true;
+                                    end
+                                    nuisance_bs(b).eventnames = nuisance(b).eventnames(keep_event_mask);
+                                    nuisance_bs(b).eventframes = nuisance(b).eventframes(keep_event_mask);
+                                end
+                            end
+
+                            % For beta-series GLM runs, don't save GLM matrices per event
+                            % Pass empty Xroot and override glm_matrix to 'none'
+                            options_bs = options;
+                            options_bs.glm_matrix = 'none';
+                            bs_Xroot = [];
+
+                            % Run GLM for this event
+                            [~, coeff_bs] = regressNuisance(img_bs, omit, nuisance_bs, rgss, rtype, ignore.regress, options_bs, bs_Xroot, rmodel, file_sconc);
+
+                            % Extract beta for the selected event regressor
+                            col_e = sprintf('%s-bs-e%02d', reg.name, ev_idx);
+                            % Try exact match with f1 suffix first, otherwise match any frame suffix
+                            reg_frame = find(strcmp(coeff_bs.cifti.maps, [col_e ' f1']));
+                            if isempty(reg_frame)
+                                % Match any ' f#' suffix that follows the regressor name
+                                reg_frame = find(strncmp(coeff_bs.cifti.maps, [col_e ' '], length(col_e) + 1), 1);
+                            end
+                            if ~isempty(reg_frame)
+                                beta_img.data(:, ev_idx) = coeff_bs.data(:, reg_frame);
+                            end
+
+                            if mod(ev_idx, 10) == 0
+                                fprintf('.');
+                            end
+                        end
+
+                        % Save beta-series
+                        beta_img.filetype = [beta_img.filetype(1) 'scalar'];
+                        map_names = cell(1, reg.betaseries);
+                        for ev = 1:reg.betaseries
+                            map_names{ev} = sprintf('%s_event%02d', reg.name, ev);
+                        end
+                        beta_img.cifti.maps = map_names;
+
+                        bs_name = [file_croot ext '_' reg.name '_Bseries' btail];
+                        fprintf('\n     ---> saving beta-series %s ', bs_name);
+                        beta_img.img_saveimage(bs_name);
+                        fprintf('... done!');
+
+                        % Save a single GLM matrix (text/image) for this regressor's beta-series columns
+                        if ~strcmp(options.glm_matrix, 'none')
+                            % Build a nuisance structure that includes only this regressor's beta-series columns across runs
+                            nuisance_bsmat = nuisance;
+                            prefix = [reg.name '-bs-'];
+                            for bb = 1:nbolds
+                                namesr = nuisance(bb).eventnamesr;
+                                regmask = false(1, length(namesr));
+                                for cc = 1:length(namesr)
+                                    if strncmp(namesr{cc}, prefix, length(prefix))
+                                        regmask(cc) = true;
+                                    end
+                                end
+                                nuisance_bsmat(bb).events = nuisance(bb).events(:, regmask);
+                                nuisance_bsmat(bb).nevents = sum(regmask);
+                                nuisance_bsmat(bb).eventnamesr = nuisance(bb).eventnamesr(regmask);
+                                if isfield(nuisance(bb), 'eventnames') && ~isempty(nuisance(bb).eventnames)
+                                    nuisance_bsmat(bb).eventnames = nuisance(bb).eventnames(regmask);
+                                end
+                                if isfield(nuisance(bb), 'eventframes') && ~isempty(nuisance(bb).eventframes)
+                                    nuisance_bsmat(bb).eventframes = nuisance(bb).eventframes(regmask);
+                                end
+                            end
+
+                            % Use img_bs (copy of filtered images) to avoid side effects and save matrix once per regressor
+                            Xroot_reg = sprintf('%s%s_%s_Bseries', file(1).Xroot, ext, reg.name);
+                            % This call writes matrix files (txt/png) via options.glm_matrix and Xroot_reg; results are ignored
+                            regressNuisance(img_bs, omit, nuisance_bsmat, rgss, rtype, ignore.regress, options, Xroot_reg, rmodel, file_sconc);
+                        end
+                    end
+                end
+            end
 
             if strcmp(options.glm_residuals, 'save') || do_residuals
                 for b = 1:nbolds
@@ -1416,35 +1649,45 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
     %   ---> movement
 
     if movement
+
         for mi = 1:nM
-            effects{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+            effects{end + 1} = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
         end
+
         for b = 1:nbolds
             xE = xS + nM - 1;
             X(bS(b):bE(b), xS:xE) = nuisance(b).mov;
+
             if ~joinn
-                xS = xS+nM;
+                xS = xS + nM;
+
                 for mi = 1:nM
                     ts = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
-                    hdr{end+1}  = sprintf('%s_b%d', ts, b);
-                    hdre{end+1} = sprintf('%s.b%d', ts, b);
-                    hdrf(end+1) = 1;
-                    effect(end+1) = find(ismember(effects, ts));
-                    eindex(end+1) = b;
+                    hdr{end + 1} = sprintf('%s_b%d', ts, b);
+                    hdre{end + 1} = sprintf('%s.b%d', ts, b);
+                    hdrf(end + 1) = 1;
+                    effect(end + 1) = find(ismember(effects, ts));
+                    eindex(end + 1) = b;
                 end
+
             end
+
         end
+
         if joinn
-            xS = xS+nM;
+            xS = xS + nM;
+
             for mi = 1:nM
                 ts = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
-                hdr{end+1}  = ts;
-                hdre{end+1} = ts;
-                hdrf(end+1) = 1;
-                effect(end+1) = find(ismember(effects, ts));
-                eindex(end+1) = 1;
+                hdr{end + 1} = ts;
+                hdre{end + 1} = ts;
+                hdrf(end + 1) = 1;
+                effect(end + 1) = find(ismember(effects, ts));
+                eindex(end + 1) = 1;
             end
+
         end
+
     end
 
  %----- movement derivatives
@@ -1728,7 +1971,10 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
     effect  = [effect find(ismember(effects, 'gmean')), find(ismember(effects, 'sd'))];
     eindex  = [eindex 1 1];
 
-    if ismember(options.glm_matrix, {'text', 'both'})
+    % Only write matrix/image files when requested AND Xroot is non-empty
+    write_matrix = (~isempty(Xroot)) && ismember(options.glm_matrix, {'text', 'both'});
+    write_image  = (~isempty(Xroot)) && ismember(options.glm_matrix, {'image', 'both'});
+    if write_matrix
         xfile = [Xroot '.txt'];
     else
         xfile = [];
@@ -1740,8 +1986,9 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
     xeindex  = sprintf('%d\t', eindex);
     xuse     = sprintf('%d\t', nmask);
 
+    % Use regressor names (hdr) for map labels so beta-series '-bs-' columns are discoverable
     for f = 1:length(hdr)
-        mapnames{f} = sprintf('%s f%d', hdre{f}, hdrf(f));
+        mapnames{f} = sprintf('%s f%d', hdr{f}, hdrf(f));
     end
 
     % generate header
@@ -1750,7 +1997,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
     pre      = sprintf('%s# fidl: %s\n# model: %s\n# bolds: %d\n# source: %s\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# use: %s\n# event: %s\n# frame: %s', header, rmodel.fidl.fidl, rmodel.description, nbolds, file_sconc, xeffects, xeffect, xeindex, rmodel.ignore, xuse, xevents, xframes(1:end-1));
     xtable   = general_write_table(xfile, [X(nmask==1, :) zeros(sum(nmask==1), 2)], hdr, 'sd|mean|min|max', [], [], pre);
 
-    if ismember(options.glm_matrix, {'image', 'both'})
+    if write_image
         mimg = X(nmask==1, :);
         mimg = mimg / (max(max(abs(mimg))) * 2);
         mimg = mimg + 0.5;

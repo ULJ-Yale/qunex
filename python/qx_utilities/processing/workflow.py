@@ -1963,8 +1963,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     """
     ``preprocess_bold [... processing options]``
 
-    Prepares BOLD files for further analysis. It performs spatial smoothing, 
-    temporal filtering, removal of nuisance signals and complex modeling of 
+    Prepares BOLD files for further analysis. It performs spatial smoothing,
+    temporal filtering, removal of nuisance signals and complex modeling of
     events. It is to be used when processing individual bold files. When
     processing multiple bold files from a session for task-related analysis,
     please use the ``preprocess_conc`` command instead.

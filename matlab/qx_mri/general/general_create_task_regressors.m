@@ -9,7 +9,7 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %
 %   --fidlf     session's fidl event file
 %   --concf     session's conc file or an array of run lengths
-%   --model     array structure that specifies what needs to be modelled and how 
+%   --model     array structure that specifies what needs to be modelled and how
 %               or a string description:
 %
 %               decription
@@ -26,13 +26,13 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %                       - 'u' (unassumed response)
 %                       - 'block' (block response)
 %               normalize
-%                   - run - normalize hrf based regressors to amplitude 1 within 
+%                   - run - normalize hrf based regressors to amplitude 1 within
 %                           each run separately (old behavior)
-%                   - uni - normalize hrf based regressors universaly to hrf 
+%                   - uni - normalize hrf based regressors universaly to hrf
 %                           area-under-the-curve = 1 (new behavior)
 %               length
 %                  - number of frames to model (for unasumed response)
-%                  - length of event in s (for assumed response - if empty, 
+%                  - length of event in s (for assumed response - if empty,
 %                    duration is taken from event file)
 %                  - start and end offset in frames (for block response)
 %
@@ -84,11 +84,11 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   structure.
 %
 %   The input model can be specified as a struct variable (as described above)
-%   or using a specificaly structured string. The string should provide a pipe 
+%   or using a specificaly structured string. The string should provide a pipe
 %   separated list of regressor descriptions for each event:
 %
 %   - assumed regressors: "<fidl code>:<hrf>[-run|-uni][:<length in s>]"
-%     Example 1: "encoding:SPM-uni:5" - model encoding using SPM HRF with 
+%     Example 1: "encoding:SPM-uni:5" - model encoding using SPM HRF with
 %     5 second duration, normalize the regressor universaly (see below).
 %     If the length is not provided, the duration specified in the fidl file
 %     will be used.
@@ -101,34 +101,34 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %     regressors across 8 frames following the event start.
 %
 %   - each regressor info can follow with ">" and a weight descriptor in a form
-%     "<name of the resulting regressor>[:<behavioral column to use from fidl 
+%     "<name of the resulting regressor>[:<behavioral column to use from fidl
 %     file (1-based)>[:<normalization span>[:<normalization method>]]]"
 %     Example 1: "delay:SPM-uni>delay_precision:2:within:z" - scale the assumed
 %     regressor for each trial by the values provided in the second extra column
-%     in the fidl file. Before applying the scaling, normalize the values from 
-%     the second column to z-scores taking into account only the values that 
+%     in the fidl file. Before applying the scaling, normalize the values from
+%     the second column to z-scores taking into account only the values that
 %     pertain to delay trials.
-%     Example 2: "emotional:11>emotional_rt:3:across:-11" - scale the 11 
+%     Example 2: "emotional:11>emotional_rt:3:across:-11" - scale the 11
 %     unassumed regressors for each trial by values provided in the third extra
 %     column in the fidl file. Before applying the scaling, normalize the values
 %     to span -1 to 1 across all the values in the fidl file column.
 %
 %   Assumed HRF regressors normalization
 %   hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
-%   how to normalize the regressor. 
-%   
-%   In case of `<hrf function>-uni`, e.g. 
-%   'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
-%   the area under the curve equal to 1. This ensures uniform and universal, 
+%   how to normalize the regressor.
+%
+%   In case of `<hrf function>-uni`, e.g.
+%   'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have
+%   the area under the curve equal to 1. This ensures uniform and universal,
 %   scaling of the resulting regressor across all event lengths. In addition,
 %   the scaling is not impacted by weights (e.g. behavioral coregressors), which
 %   in turn ensures that the weights are not scaled.
 %
-%   In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
-%   resulting regressor is normalized to amplitude of 1 within each bold run 
-%   separately. This can result in different scaling of regressors with different 
-%   durations, and of the same regressor across different runs. Scaling in this 
-%   case is performed after the signal is weighted, so in effect the scaling of  
+%   In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the
+%   resulting regressor is normalized to amplitude of 1 within each bold run
+%   separately. This can result in different scaling of regressors with different
+%   durations, and of the same regressor across different runs. Scaling in this
+%   case is performed after the signal is weighted, so in effect the scaling of
 %   weights (e.g. behavioral regressors), can differ across bold runs.
 %
 %   The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
@@ -147,7 +147,7 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 %   =====
 %
 %   Assumed response regressors now get normalized to HRF area-under-the-curve = 1
-%   by default. This results in different assumed HRF regressor scaling and 
+%   by default. This results in different assumed HRF regressor scaling and
 %   resulting GLM beta estimates as of QuNex version 0.93.4.
 %
 
@@ -215,44 +215,44 @@ nvalide = sum(valide);
 for m = 1:nregressors
     if ~isempty(model.regressor(m).weight.column)
         w = tevents.beh(:, model.regressor(m).weight.column);
-        
+
         % --- are we normalizing at all
-        
+
         if ~strcmp(model.regressor(m).weight.method, 'none')
-            
+
             % --- what are we normalizing over > create a mask, extract relevant data
-            
+
             wm = ones(nvalide, 1) == 1;
             if model.regressor(m).weight.normalize(1) == 'w'
                 wm = ismember(tevents.event(valide), model.regressor(m).code);
             end
-            
+
             tw = w(wm);
-            
+
             % --- normalize
-            
+
             switch strtrim(model.regressor(m).weight.method)
-                
+
                 case 'z'
                     tw = zscore(tw);
-                    
+
                 case '01'
                     tw = (tw - min(tw)) / (max(tw) - min(tw));
-                    
+
                 case '-11'
                     tw = (tw - min(tw)) / (max(tw) - min(tw)) * 2 - 1;
-                    
+
                 otherwise
                     error('\nERROR: No known option for behavioral covariates normalization method [%s]!\n', model.regressor(m).weight.method);
-                    
+
             end
-            
+
             % --- embed back
-            
+
             w(wm) = tw;
             w(~wm) = 0;
         end
-        
+
         tevents.weights(valide, m) = w;
     end
 end
@@ -264,10 +264,19 @@ end
 model.columns.event = {};
 model.columns.frame = [];
 
+% --- pre-count total events for beta-series regressors across all runs
+for m = 1:nregressors
+    if model.regressor(m).betaseries
+        % Count total events across all runs for this regressor
+        relevant_global = ismember(tevents.event, model.regressor(m).code);
+        model.regressor(m).betaseries = sum(relevant_global);
+    end
+end
+
 for r = 1:nruns
-    
+
     %------------------------- set base variables
-    
+
     nframes = frames(r);
     if r > 1
         start_frame = sum(frames(1:r-1)) + 1;
@@ -275,31 +284,31 @@ for r = 1:nruns
         start_frame = 1;
     end
     end_frame = start_frame + nframes - 1;
-    
+
     in_run = (tevents.frame >= start_frame) & (tevents.frame <= end_frame);
-    
+
     run(r).matrix = [];
     run(r).regressors = {};
-    
+
     %------------------------- loop over models
-    
+
     for m = 1:nregressors
-        
+
         relevant = in_run & ismember(tevents.event, model.regressor(m).code);
         nrelevant = sum(relevant);
-        
+
         basename = model.regressor(m).name;
-        
+
         model.regressor(m).hrf_type = lower(model.regressor(m).hrf_type);
-        
+
         %------------------------- code for unassumed models
-        
+
         if strcmp(model.regressor(m).hrf_type, 'u')
-            
+
             mtx = zeros(nframes, model.regressor(m).length);
             rel_frame  = tevents.frame(relevant);
             rel_weight = tevents.weights(relevant, m);
-            
+
             for ievent = 1:nrelevant
                 for iframe = 1:model.regressor(m).length
                     target = rel_frame(ievent) - start_frame + iframe;
@@ -308,9 +317,9 @@ for r = 1:nruns
                     end
                 end
             end
-            
+
             run(r).matrix = [run(r).matrix mtx];
-            
+
             for iname = 1:model.regressor(m).length
                 run(r).regressors = [run(r).regressors, [basename '.' num2str(iname)]];
             end
@@ -318,27 +327,27 @@ for r = 1:nruns
                 model.columns.event(end+1:end+model.regressor(m).length) = {basename};
                 model.columns.frame(end+1:end+model.regressor(m).length) = 1:model.regressor(m).length;
             end
-            
-            
+
+
             %------------------------- code for block models
-            
+
         elseif strcmp(model.regressor(m).hrf_type, 'block')
-            
+
             ts = zeros(nframes, 1);
             soff = 0;
             eoff = 0;
-            
+
             if ~isempty(model.regressor(m).length)
                 soff = model.regressor(m).length(1);
                 if length(model.regressor(m).length) > 1
                     eoff = model.regressor(m).length(2);
                 end
             end
-            
+
             rel_start   = tevents.frame(relevant) - start_frame + 1;
             rel_end     = tevents.frame(relevant) - start_frame + tevents.elength(relevant);
             rel_weights = tevents.weights(relevant, m);
-            
+
             for ievent = 1:nrelevant
                 e_start = rel_start(ievent) + soff;
                 e_end   = rel_end(ievent) + eoff;
@@ -366,38 +375,38 @@ for r = 1:nruns
                 model.columns.event(end+1) = {basename};
                 model.columns.frame(end+1) = 1;
             end
-            
-            
+
+
             %------------------------- code for assumed models
-            
+
         elseif ismember(model.regressor(m).hrf_type, {'boynton', 'spm', 'gamma'})
-            
+
             %======================================================================
             %                                                  create the right HRF
-            
+
             hrf = general_hrf(tevents.TR/100, model.regressor(m).hrf_type);
-            
+
             %======================================================================
             %                                           create the event timeseries
-            
+
             % ts = zeros(round(tevents.TR*100)*nframes),1);
             ts = zeros(100*nframes,1);
-            
+
             rel_times   = tevents.event_s(relevant);
             rel_times   = rel_times - (start_frame-1) * tevents.TR;
             rel_weights = tevents.weights(relevant, m);
-            
+
             rel_lengths = tevents.event_l(relevant);
             if (~isempty(model.regressor(m).length))
                 rel_lengths(:) = model.regressor(m).length;
             end
-            
+
             for ievent = 1:nrelevant
                 % e_start = floor(rel_times(ievent)*100)+1;
                 % e_end = e_start + floor(rel_lengths(ievent)*100) -1;
                 e_start = floor(rel_times(ievent)/tevents.TR*100)+1;
                 e_end   = e_start + floor(rel_lengths(ievent)/tevents.TR*100)-1;
-                
+
                 if e_end > length(ts)
                     e_end = length(ts);
                 end
@@ -414,10 +423,10 @@ for r = 1:nruns
                 end
                 ts(e_start:e_end,1) = rel_weights(ievent);
             end
-            
+
             %======================================================================
             %                          convolve event with HRF, downsample and crop
-            
+
             ts = conv(ts, hrf);
             ts = ts(1:100*nframes);
 
@@ -436,30 +445,141 @@ for r = 1:nruns
             end
             run(r).matrix = [run(r).matrix ts'];
             run(r).regressors = [run(r).regressors, basename];
-            
+
             if r == 1
                 model.columns.event(end+1) = {basename};
                 model.columns.frame(end+1) = 1;
             end
-            
+
+            %======================================================================
+            %                         create beta-series columns if requested
+
+            if model.regressor(m).betaseries > 0
+
+                % Get all events for this regressor across all runs
+                relevant_global = find(ismember(tevents.event, model.regressor(m).code));
+                n_global_events = length(relevant_global);
+
+                % Get indices of events in current run
+                relevant_indices = find(relevant);
+
+                % For each global event, create two columns: selected (-bs-eNN) and others (-bs-oNN)
+                for iev_global = 1:n_global_events
+                    global_event_idx = relevant_global(iev_global);
+
+                    % Check if this event is in the current run
+                    is_in_run = in_run(global_event_idx);
+
+                    if is_in_run
+                        % Get event info relative to run start
+                        event_time_s = tevents.event_s(global_event_idx) - (start_frame-1) * tevents.TR;
+                        event_length_s = tevents.event_l(global_event_idx);
+                        if ~isempty(model.regressor(m).length)
+                            event_length_s = model.regressor(m).length;
+                        end
+                        event_weight = tevents.weights(global_event_idx, m);
+
+                        % Create timeseries for selected event only
+                        ts_selected = zeros(100*nframes, 1);
+                        e_start = floor(event_time_s/tevents.TR*100)+1;
+                        e_end   = e_start + floor(event_length_s/tevents.TR*100)-1;
+                        if e_end > length(ts_selected)
+                            e_end = length(ts_selected);
+                        end
+                        if e_start >= 1
+                            ts_selected(e_start:e_end,1) = event_weight;
+                        end
+
+                        % Create timeseries for all other events in this run (excluding the selected one)
+                        ts_others = zeros(100*nframes, 1);
+                        for iother = 1:nrelevant
+                            other_global_idx = relevant_indices(iother);
+                            if other_global_idx ~= global_event_idx
+                                e_start = floor(rel_times(iother)/tevents.TR*100)+1;
+                                e_end   = e_start + floor(rel_lengths(iother)/tevents.TR*100)-1;
+                                if e_end > length(ts_others)
+                                    e_end = length(ts_others);
+                                end
+                                if e_start >= 1
+                                    ts_others(e_start:e_end,1) = rel_weights(iother);
+                                end
+                            end
+                        end
+                    else
+                        % Event not in this run - create zero for selected, all run events for others
+                        ts_selected = zeros(100*nframes, 1);
+                        ts_others = zeros(100*nframes, 1);
+
+                        % ts_others should have ALL events from this run
+                        for iother = 1:nrelevant
+                            e_start = floor(rel_times(iother)/tevents.TR*100)+1;
+                            e_end   = e_start + floor(rel_lengths(iother)/tevents.TR*100)-1;
+                            if e_end > length(ts_others)
+                                e_end = length(ts_others);
+                            end
+                            if e_start >= 1
+                                ts_others(e_start:e_end,1) = rel_weights(iother);
+                            end
+                        end
+                    end
+
+                    % Convolve both with HRF
+                    ts_selected = conv(ts_selected, hrf);
+                    ts_selected = ts_selected(1:100*nframes);
+                    ts_others = conv(ts_others, hrf);
+                    ts_others = ts_others(1:100*nframes);
+
+                    % Normalize
+                    if strcmp(model.regressor(m).normalize, 'uni')
+                        ts_selected = ts_selected ./ sum(hrf(hrf>0));
+                        ts_others = ts_others ./ sum(hrf(hrf>0));
+                    end
+
+                    % Downsample
+                    ts_selected = mean(reshape(ts_selected, 100, nframes), 1);
+                    ts_others = mean(reshape(ts_others, 100, nframes), 1);
+
+                    % Normalize per run
+                    if strcmp(model.regressor(m).normalize, 'run')
+                        if max(ts_selected) > 0
+                            ts_selected = ts_selected / max(ts_selected);
+                        end
+                        if max(ts_others) > 0
+                            ts_others = ts_others / max(ts_others);
+                        end
+                    end
+
+                    % Add to matrix
+                    run(r).matrix = [run(r).matrix ts_selected' ts_others'];
+                    run(r).regressors = [run(r).regressors, ...
+                        sprintf('%s-bs-e%02d', basename, iev_global), ...
+                        sprintf('%s-bs-o%02d', basename, iev_global)];
+
+                    if r == 1
+                        model.columns.event(end+1:end+2) = {basename, basename};
+                        model.columns.frame(end+1:end+2) = [iev_global, iev_global];
+                    end
+                end
+            end
+
         end
-        
+
         %------------------------- end models loop
     end
-    
+
     %======================================================================
     %                                                 zero frames to ignore
-    
+
     if ~strcmpi(ignore, 'no')
-        
+
         ts = zeros(nframes, 1);
-        
+
         relevant  = in_run & (tevents.event == -1);
         nrelevant = sum(relevant);
-        
+
         rel_start = tevents.frame(relevant) - start_frame + 1;
         rel_end   = tevents.frame(relevant) - start_frame + tevents.elength(relevant);
-        
+
         for ievent = 1:nrelevant
             e_start = rel_start(ievent);
             e_end   = rel_end(ievent);
@@ -468,7 +588,7 @@ for r = 1:nruns
             end
             ts(e_start:e_end, 1) = 1;
         end
-        
+
         if strcmpi(ignore, 'ignore') | strcmpi(ignore, 'both')
             run(r).matrix(ts==1, :) = 0;
         end
@@ -476,10 +596,10 @@ for r = 1:nruns
             run(r).matrix = [run(r).matrix ts];
             run(r).regressors = [run(r).regressors, 'ignore'];
         end
-        
+
     end
     %------------------------- end zero frames to ignore
-    
+
 end
 
 model.run    = run;
@@ -493,7 +613,7 @@ model.fidl   = tevents;
 %
 %   - description
 %     - pipe separated list of regressor information for each event
-%       assumed: <fidl code>:<hrf>[-run|-uni][:<length in s>] --- length is assumed empty if not provided
+%       assumed: <fidl code>:<hrf>[-run|-uni][-series][:<length in s>] --- length is assumed empty if not provided
 %       unassumed: <fidl code>:<length in frames>
 %     - each regressor info can follow with ">" and a weight descriptor in a form
 %       <name of the resulting regressor>[:<behavioral column to use from fidl file (1-based)>[:<normalization span>[:<normalization method>]]]
@@ -512,6 +632,8 @@ model.fidl   = tevents;
 %       - number of frames to model (for unasumed response)
 %       - length of event in s (for assumed response - if empty, duration is taken from event file)
 %       - start and end offset in frames (for block response)
+%     - betaseries
+%       -> true/false - whether to create beta series for this regressor
 %     - weight
 %       - name
 %       - column
@@ -520,25 +642,25 @@ model.fidl   = tevents;
 %
 %   Assumed HRF regressors normalization
 %   hrf_types `boynton` and `SPM` can be marked with an additional flag denoting
-%   how to normalize the regressor. 
-%   
-%   In case of `<hrf function>-uni`, e.g. 
-%   'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have 
-%   the area under the curve equal to 1. This ensures uniform and universal, 
+%   how to normalize the regressor.
+%
+%   In case of `<hrf function>-uni`, e.g.
+%   'boynton-uni' or 'SPM-uni', the HRF function will be normalized to have
+%   the area under the curve equal to 1. This ensures uniform and universal,
 %   scaling of the resulting regressor across all event lengths. In addition,
 %   the scaling is not impacted by weights (e.g. behavioral coregressors), which
 %   in turn ensures that the weights are not scaled.
 %
-%   In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the 
-%   resulting regressor is normalized to amplitude of 1 within each bold run 
-%   separately. This can result in different scaling of regressors with different 
-%   durations, and of the same regressor across different runs. Scaling in this 
-%   case is performed after the signal is weighted, so in effect the scaling of  
+%   In case of `<hrf function>-run`, e.g. `boynton-run` or `SPM-run`, the
+%   resulting regressor is normalized to amplitude of 1 within each bold run
+%   separately. This can result in different scaling of regressors with different
+%   durations, and of the same regressor across different runs. Scaling in this
+%   case is performed after the signal is weighted, so in effect the scaling of
 %   weights (e.g. behavioral regressors), can differ across bold runs.
 %
 %   The flag can be abbreviated to '-r' and '-u'. If not specified, '-uni' will
-%   be assumed. The default has changed from the original '-run', which will 
-%   result in different default assumed HRF regressor scaling and resulting GLM 
+%   be assumed. The default has changed from the original '-run', which will
+%   result in different default assumed HRF regressor scaling and resulting GLM
 %   beta estimates as of QuNex version 0.93.4.
 
 
@@ -547,30 +669,30 @@ function [model] = parseModels(s)
 a = strtrim(splitby(s, '|'));
 
 for n = 1:length(a)
-    
+
     m = strtrim(splitby(a{n}, '>'));
     if length(m) == 0
         continue
     end
-    
+
     % --=> deal with the event modelling specification
-    
+
     b = strtrim(splitby(m{1}, ':'));
     regressor(n).event = strtrim(splitby(b{1}, ','));
     regressor(n).code  = [];
-    
+
     if length(b) == 0
         continue
     end
-    
+
     % --- do we have event modelling info?
-    
+
     if length(b) == 1
         error('\nERROR: Can not parse event model, no information given for event: %s\n', b{1});
     end
-    
+
     % --- is field 2 a number ?
-    
+
     if sum(isletter(b{2}))
         regressor(n).hrf_type = b{2};
         regressor(n).length = [];
@@ -589,36 +711,44 @@ for n = 1:length(a)
         regressor(n).normalize = 'uni';
     end
 
+    % --- betaseries type
+    if ~isempty(strfind(regressor(n).hrf_type, '-s'))
+        regressor(n).betaseries = true;
+    else
+        regressor(n).betaseries = false;
+    end
+
+    % --- remove flags from hrf_type
     if ~isempty(strfind(regressor(n).hrf_type, '-'))
         regressor(n).hrf_type = regressor(n).hrf_type(1:strfind(regressor(n).hrf_type, '-')-1);
     end
 
     % --- do we have a third field ?
-    
+
     if length(b) >= 3
         regressor(n).length = str2num(b{3});
     end
     if length(b) == 4
         regressor(n).length = [regressor(n).length str2num(b{4})];
     end
-    
+
     % --=> deal with weighting specification
-    
+
     regressor(n).name             = strjoin(regressor(n).event, '|');
     regressor(n).weight.column    = [];
     regressor(n).weight.normalize = [];
     regressor(n).weight.method    = [];
-    
+
     if length(m) > 1
         c = strtrim(splitby(m{2}, ':'));
         nc = length(c);
-        
+
         if nc > 0, regressor(n).name             = c{1}         ; else regressor(n).name             = [];       end
         if nc > 1, regressor(n).weight.column    = str2num(c{2}); else regressor(n).weight.normalize = [];       end
         if nc > 2, regressor(n).weight.normalize = c{3}         ; else regressor(n).weight.normalize = 'within'; end
         if nc > 3, regressor(n).weight.method    = c{4}         ; else regressor(n).weight.method    = 'z';      end
     end
-    
+
 end
 
 model.regressor   = regressor;
