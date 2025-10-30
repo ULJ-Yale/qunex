@@ -985,7 +985,7 @@ classdef nimage
             if ~isempty(obj.list) & ~isempty(add.list)
                 for f = fieldnames(obj.list)'
                     f = f{1};
-                    if strcmp(f, 'meta')
+                    if strcmp(f, 'meta') || ischar(obj.list.(f)) || isscalar(obj.list.(f))
                         continue
                     elseif isfield(add.list, f)
                         obj.list.(f) = [obj.list.(f) add.list.(f)];
@@ -1159,6 +1159,9 @@ classdef nimage
 
                 for l = lists(:)'
                     l = l{1};
+                    if ischar(obj.list.(l)) || isscalar(obj.list.(l))
+                        continue
+                    end
                     obj.list.(l) = obj.list.(l)(selectframes);
                 end
 
@@ -1274,7 +1277,7 @@ classdef nimage
                 if ~isempty(obj.list)
                     for f = fieldnames(obj.list)'
                         f = f{1};
-                        if strcmp(f, 'meta')
+                        if strcmp(f, 'meta') || ischar(obj.list.(f)) || isscalar(obj.list.(f))
                             continue
                         else
                             conc(n).list.(f) = obj.list.(f)(startframe:endframe);

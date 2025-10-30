@@ -226,7 +226,16 @@ if isstruct(img.list)
         if strcmp(fname, 'meta')
             metaname = img.list.meta;
         else
-            if length(img.list.(fname)) ~= img.frames
+            if ischar(img.list.(fname)) || length(img.list.(fname)) == 1
+                if isnumeric(img.list.(fname))
+                    s = [s sprintf('# %s: %s\n', fname, num2str(img.list.(fname)))];
+                elseif iscell(img.list.(fname))
+                    s = [s sprintf('# %s: %s\n', fname, img.list.(fname){1})];
+                elseif ischar(img.list.(fname))
+                    s = [s sprintf('# %s: %s\n', fname, img.list.(fname))];
+                end
+                continue;
+            elseif length(img.list.(fname)) ~= img.frames
                 error('\nERROR: list %s length (%d) does not match number of image frames (%d)! Aborting img_saveimage!', fname, length(img.list.(fname)), img.frames);
             end
             if isnumeric(img.list.(fname))

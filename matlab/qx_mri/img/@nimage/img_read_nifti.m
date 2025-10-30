@@ -283,10 +283,19 @@ if mi > 0
                     l = l{1};
                     if max(isstrprop(strrep(img.list.(l), 'e', ''), 'alpha'))
                         img.list.(l) = strread(img.list.(l), '%s')';
+                        if length(img.list.(l)) == 1
+                            img.list.(l) = img.list.(l){1};
+                        else
+                            ltest = [ltest length(img.list.(l))];
+                        end
                     else
                         img.list.(l) = strread(img.list.(l), '%f')';
+                        if length(img.list.(l)) == 1
+                            img.list.(l) = img.list.(l)(1);
+                        else
+                            ltest = [ltest length(img.list.(l))];
+                        end
                     end
-                    ltest = [ltest length(img.list.(l))];
                 end
                 if sum(abs(diff(ltest)))
                     error('\nERROR: Corrupt list file! Number of frames (%d) and list items ([%s]) does not match!\n', img.frames, num2str(ltest(2:end)));

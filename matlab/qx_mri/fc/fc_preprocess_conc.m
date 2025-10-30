@@ -1474,6 +1474,7 @@ for current = char(doIt)
                         % Provide only an in-memory list structure with frame names;
                         % metadata will be embedded automatically by img_save_nifti
                         beta_img.list.meta  = 'list';
+                        beta_img.list.type  = 'betaseries';
                         beta_img.list.event = map_names;
 
                         bs_name = [file_croot ext '_' reg.name '_Bseries' btail];

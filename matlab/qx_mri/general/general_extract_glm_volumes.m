@@ -222,6 +222,7 @@ if ismember(saveoption, {'by_effect', 'by_session'})
     out = setMeta(out, session, effect, frame, event, verbose);
     if nargout > 0
         out.list.meta    = 'list';
+        out.list.type    = ['glm_' saveoption];
         out.list.session = session;
         out.list.effect  = effect;
         out.list.frame   = frame;
