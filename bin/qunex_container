@@ -989,8 +989,8 @@ def main(args=None):
             container_bind = f"{homedir}:{homedir},{bind}"
 
         # bind cuda path if provided
-            if cuda_path:
-                container_bind += f",{cuda_path}:/usr/local/cuda"
+        if cuda_path:
+            container_bind += f",{cuda_path}:/usr/local/cuda"
 
         if apptainer:
             container_command = []
