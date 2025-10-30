@@ -219,7 +219,7 @@ if ismember(saveoption, {'by_effect', 'by_session'})
     out = glm.zeroframes(pt);
     out.data = data;
     out.cifti.maps = mapnames;
-    out = setMeta(out, session, effect, frame, event, verbose);
+    out = setMeta(out, session, effect, frame, event, saveoption, verbose);
     if nargout > 0
         out.list.meta    = 'list';
         out.list.type    = ['glm_' saveoption];
@@ -251,7 +251,7 @@ else
         out = glm.zeroframes(sum(mask));
         out.data = data(:, mask);
         out.cifti.maps = mapnames(mask);
-        out = setMeta(out, session(mask), effect(mask), frame(mask), event(mask), verbose);
+        out = setMeta(out, session(mask), effect(mask), frame(mask), event(mask), 'single_effect', verbose);
         if ~strcmp(outf, 'none')
             if verbose, fprintf('\n---> saving data in separate files for each effect'); end
             out.img_saveimage([outf '_' e{1}]);
@@ -280,8 +280,9 @@ if verbose, fprintf('\n---> DONE\n'); end
 
 % --- Support function
 
-function [img] = setMeta(img, session, effect, frame, event, verbose)
+function [img] = setMeta(img, session, effect, frame, event, saveoption, verbose)
     s = '';
+    s = [s sprintf('# type: glm_%s\n', saveoption)];
     s = [s sprintf('# session: %s\n', strjoin(session))];
     s = [s sprintf('# effect: %s\n', strjoin(effect))];
     s = [s sprintf('# frame:%s\n', sprintf(' %d', frame))];
