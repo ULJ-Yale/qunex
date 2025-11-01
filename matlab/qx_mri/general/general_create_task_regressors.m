@@ -1,4 +1,4 @@
-function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check)
+function [model] = general_create_task_regressors(fidlf, concf, model, ignore, check, verbose)
 
 %``general_create_task_regressors(fidlf, concf, model, ignore, check)``
 %
@@ -159,6 +159,7 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 
     if nargin < 4 || isempty(ignore),   ignore   = 'no';      end
     if nargin < 5 || isempty(check), check = 'warning'; end
+    if nargin < 6 || isempty(verbose), verbose = true; end
     if ~any(strcmpi({'ignore','warning','error'},check))
         error('\nERROR: Option [%s] for handleEM argument is invalid! Valid options are ''ignore'', ''warning'' and ''error''.\n',check);
     end
@@ -354,7 +355,7 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
                     if e_end > length(ts)
                         e_end = length(ts);
                     end
-                    if(e_start < 1)
+                    if (e_start < 1) && verbose
                         fprintf('r:%d, m:%d, ie:%d, sf:%d, tr:%.4f\n', r, m, ievent, e_start, tevents.TR);
                         fprintf('\n');
                         fprintf('%d ', relevant);
@@ -410,7 +411,7 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
                     if e_end > length(ts)
                         e_end = length(ts);
                     end
-                    if(e_start < 1)
+                    if (e_start < 1) && verbose
                         fprintf('r:%d, m:%d, ie:%d, sf:%d, tr:%.4f\n', r, m, ievent, start_frame, tevents.TR);
                         fprintf('\n');
                         fprintf('%d ', relevant);
@@ -426,6 +427,8 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
 
                 %======================================================================
                 %                          convolve event with HRF, downsample and crop
+                % Keep a copy of the upsampled all-events series for beta-series 'others'
+                ts_all_up = ts;
                 ts = hrf_convolve(ts, hrf, nframes, model.regressor(m).normalize);
                 run(r).matrix = [run(r).matrix ts'];
                 run(r).regressors = [run(r).regressors, basename];
@@ -444,9 +447,6 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
                     relevant_global = find(ismember(tevents.event, model.regressor(m).code));
                     n_global_events = length(relevant_global);
 
-                    % Get indices of events in current run
-                    relevant_indices = find(relevant);
-
                     % For each global event, create two columns: selected (-bs-eNN) and others (-bs-oNN)
                     for iev_global = 1:n_global_events
                         global_event_idx = relevant_global(iev_global);
@@ -454,46 +454,27 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
                         % Check if this event is in the current run
                         is_in_run = in_run(global_event_idx);
 
+                        % Selected event upsampled timeseries
+                        ts_selected = zeros(100 * nframes, 1);
+                        ts_others = ts_all_up;
+
                         if is_in_run
-                            % Get event info relative to run start
-                            event_time_s = tevents.event_s(global_event_idx) - (start_frame-1) * tevents.TR;
+                            % Event info relative to run start
+                            event_time_s = tevents.event_s(global_event_idx) - (start_frame - 1) * tevents.TR;
                             event_length_s = tevents.event_l(global_event_idx);
                             if ~isempty(model.regressor(m).length)
                                 event_length_s = model.regressor(m).length;
                             end
                             event_weight = tevents.weights(global_event_idx, m);
 
-                            % Create timeseries for selected event only
-                            ts_selected = zeros(100*nframes, 1);
-                            e_start = floor(event_time_s/tevents.TR*100)+1;
-                            e_end   = e_start + floor(event_length_s/tevents.TR*100)-1;
+                            e_start = floor(event_time_s / tevents.TR * 100) + 1;
+                            e_end = e_start + floor(event_length_s / tevents.TR * 100) - 1;
                             if e_end > length(ts_selected)
                                 e_end = length(ts_selected);
                             end
                             if e_start >= 1
-                                ts_selected(e_start:e_end,1) = event_weight;
-                            end
-
-
-                        else
-                            % Event not in this run - create zero for selected, all run events for others
-                            ts_selected = zeros(100*nframes, 1);
-                        end
-
-                        % Create timeseries for all other events in this run (excluding the selected one)
-                        ts_others = zeros(100 * nframes, 1);
-
-                        for iother = 1:nrelevant
-                            other_global_idx = relevant_indices(iother);
-                            if other_global_idx ~= global_event_idx
-                                e_start = floor(rel_times(iother) / tevents.TR * 100) + 1;
-                                e_end = e_start + floor(rel_lengths(iother) / tevents.TR * 100) - 1;
-                                if e_end > length(ts_others)
-                                    e_end = length(ts_others);
-                                end
-                                if e_start >= 1
-                                    ts_others(e_start:e_end, 1) = rel_weights(iother);
-                                end
+                                ts_selected(e_start:e_end, 1) = event_weight;
+                                ts_others(e_start:e_end, 1) = ts_others(e_start:e_end, 1) - event_weight;
                             end
                         end
 
