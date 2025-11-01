@@ -474,35 +474,25 @@ function [model] = general_create_task_regressors(fidlf, concf, model, ignore, c
                                 ts_selected(e_start:e_end,1) = event_weight;
                             end
 
-                            % Create timeseries for all other events in this run (excluding the selected one)
-                            ts_others = zeros(100*nframes, 1);
-                            for iother = 1:nrelevant
-                                other_global_idx = relevant_indices(iother);
-                                if other_global_idx ~= global_event_idx
-                                    e_start = floor(rel_times(iother)/tevents.TR*100)+1;
-                                    e_end   = e_start + floor(rel_lengths(iother)/tevents.TR*100)-1;
-                                    if e_end > length(ts_others)
-                                        e_end = length(ts_others);
-                                    end
-                                    if e_start >= 1
-                                        ts_others(e_start:e_end,1) = rel_weights(iother);
-                                    end
-                                end
-                            end
+
                         else
                             % Event not in this run - create zero for selected, all run events for others
                             ts_selected = zeros(100*nframes, 1);
-                            ts_others = zeros(100*nframes, 1);
+                        end
 
-                            % ts_others should have ALL events from this run
-                            for iother = 1:nrelevant
-                                e_start = floor(rel_times(iother)/tevents.TR*100)+1;
-                                e_end   = e_start + floor(rel_lengths(iother)/tevents.TR*100)-1;
+                        % Create timeseries for all other events in this run (excluding the selected one)
+                        ts_others = zeros(100 * nframes, 1);
+
+                        for iother = 1:nrelevant
+                            other_global_idx = relevant_indices(iother);
+                            if other_global_idx ~= global_event_idx
+                                e_start = floor(rel_times(iother) / tevents.TR * 100) + 1;
+                                e_end = e_start + floor(rel_lengths(iother) / tevents.TR * 100) - 1;
                                 if e_end > length(ts_others)
                                     e_end = length(ts_others);
                                 end
                                 if e_start >= 1
-                                    ts_others(e_start:e_end,1) = rel_weights(iother);
+                                    ts_others(e_start:e_end, 1) = rel_weights(iother);
                                 end
                             end
                         end
