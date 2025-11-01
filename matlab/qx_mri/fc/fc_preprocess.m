@@ -131,8 +131,21 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 %           - img_suffix      :
 %           - glm_matrix      : none  ('none' / 'text' / 'image' / 'both')
 %           - glm_residuals   : save   [deprectated -> see glm_results]
-%           - glm_results     : 'c,r' ('c', 'z', 'p', 'se', 'r', 'all')
+%           - glm_results     : 'c,r' ('c', 't', 'z', 'p', 'se', 'r', 'all')
 %           - glm_name        :
+%
+%           glm_results details:
+%           - c  : Save beta coefficients (per regressor map)
+%           - t  : Save t-statistics; list metadata is embedded with fields:
+%                  type='t-values', effect, frame, event (per volume), and df (vector)
+%           - z  : Save z-scores (two-sided, signed); list metadata embeds type='z-scores', effect, frame, event
+%           - p  : Save two-sided p-values; list metadata embeds type='p-values', effect, frame, event
+%           - se : Save standard errors of beta coefficients
+%           - r  : Save residuals (also gated by deprecated glm_residuals)
+%           - all: Shorthand for c,t,z,p,se,r
+%           - fdr-<q>: Additionally compute Benjamini–Hochberg FDR at level q (0<q<1):
+%                      saves adjusted p-values as *_coeff_pvals_fdr and z-scores thresholded at q
+%                      as *_coeff_zscores_fdr-<q>; list.type set to 'p-values-fdr' and 'z-scores-fdr-<q>'.
 %
 %   Notes:
 %       fc_preprocess is a complex function initially used to prepare BOLD files
@@ -718,6 +731,11 @@ if strfind(options.glm_results, 'z')
     do_zscores = true;
 end
 
+do_tstats = false;
+if strfind(options.glm_results, 't')
+    do_tstats = true;
+end
+
 do_pvals = false;
 if strfind(options.glm_results, 'p')
     do_pvals = true;
@@ -737,10 +755,27 @@ end
 
 if strfind(options.glm_results, 'all')
     do_coeff = true;
+    do_tstats = true;
     do_zscores = true;
     do_pvals = true;
     do_stderrors = true;
     do_residuals = true;
+end
+
+%    % Check for glm_results option 'fdr-<q>' (explicit only; not implied by 'all')
+fdr_q = [];
+if ~isempty(options.glm_results)
+    tokens = regexp(options.glm_results, ',|\|', 'split');
+    for tk = 1:numel(tokens)
+        t = strtrim(tokens{tk});
+        m = regexp(t, '^fdr-([0-9eE\.+-]+)$', 'tokens', 'once');
+        if ~isempty(m)
+            qv = str2double(m{1});
+            if ~isnan(qv) && qv > 0 && qv < 1
+                fdr_q = qv;
+            end
+        end
+    end
 end
 
 % ======================================================
@@ -1010,7 +1045,8 @@ for current = char(doIt)
                 img = img.img_filter(0, lpsigma, omit, true, ignore.lopass);
             case 'r'
                 img = readIfEmpty(img, sfile, omit);
-                if ~(do_zscores || do_pvals || do_stderrors)
+                need_fdr_stats = ~isempty(fdr_q);
+                if ~(do_tstats || do_zscores || do_pvals || do_stderrors || need_fdr_stats)
                 	[img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore.regress, options, [file.Xroot ext], rmodel, sfile);
                 	if do_coeff
                     	coeff.img_saveimage([froot ext '_coeff' btail]);
@@ -1023,11 +1059,38 @@ for current = char(doIt)
                     if do_stderrors
                         coeffstats.B_se.img_saveimage([froot ext '_coeff_stderrors' btail]);
                     end
+                    if do_tstats
+                        coeffstats.B_t.img_saveimage([froot ext '_coeff_tstats' btail]);
+                    end
                     if do_zscores
-                	    coeffstats.B_z.img_saveimage([froot ext '_coeff_zscores' btail]);
+	                coeffstats.B_z.img_saveimage([froot ext '_coeff_zscores' btail]);
                     end
                     if do_pvals
                         coeffstats.B_pval.img_saveimage([froot ext '_coeff_pvals' btail]);
+                    end
+
+                    % If requested, compute BH-FDR adjusted p-values and thresholded Z
+                    if need_fdr_stats
+                        try
+                            nF = coeffstats.B_pval.frames;
+                            P_adj = coeffstats.B_pval;
+                            P_adj.list.type = 'p-values-fdr';
+                            for kf = 1:nF
+                                P_adj.data(:, kf) = bh_fdr_local(coeffstats.B_pval.image2D(:, kf));
+                            end
+                            P_adj.img_saveimage([froot ext '_coeff_pvals_fdr' btail]);
+
+                            Z_thr = coeffstats.B_z;
+                            Z_thr.list.type = sprintf('z-scores-fdr-%.4g', fdr_q);
+                            mask = P_adj.data <= fdr_q;
+                            Zt = coeffstats.B_z.data;
+                            Zt(~mask) = 0;
+                            Z_thr.data = Zt;
+                            qstr = sprintf('%.4g', fdr_q);
+                            Z_thr.img_saveimage([froot ext '_coeff_zscores_fdr-' qstr btail]);
+                        catch fdrErr
+                            fprintf('\n---> WARNING: FDR computation failed: %s', fdrErr.message);
+                        end
                     end
                 end
                 dor = false;
@@ -1264,22 +1327,15 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     Y = img.sliceframes(mask);
 
     if nargout > 2
-    	[coeff, res, rvar, ~, B_se, B_z, B_pval] = Y.img_glm_fit(X);
+		[coeff, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = Y.img_glm_fit(X);
 
-        statmaps = mapnames(1:end - 2);
-        coeffstats.B_se = B_se;
-        coeffstats.B_se.filetype = [coeffstats.B_se.filetype(1) 'scalar'];
-        coeffstats.B_se.cifti.maps = statmaps;
-
-        coeffstats.B_z = B_z;
-        coeffstats.B_z.filetype = [coeffstats.B_z.filetype(1) 'scalar'];
-        coeffstats.B_z.cifti.maps = statmaps;
-
+        % Defer assigning map labels until after mapnames are defined
+        coeffstats.B_se   = B_se;
+        coeffstats.B_t    = B_t;
+        coeffstats.B_z    = B_z;
         coeffstats.B_pval = B_pval;
-        coeffstats.B_pval.filetype = [coeffstats.B_pval.filetype(1) 'scalar'];
-        coeffstats.B_pval.cifti.maps = statmaps;
-
-        coeffstats.res = res;
+        coeffstats.res    = res;
+        coeffstats.Xdof   = Xdof;
     else
     	[coeff res] = Y.img_glm_fit(X);
     end
@@ -1339,6 +1395,55 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
             imwrite(mimg, [Xroot '.png']);
         catch
             fprintf('\n---> WARNING: Could not save GLM PNG image! Check supported image formats!');
+        end
+    end
+
+    % Now that mapnames exist, assign them to coeff and stats images
+    statmaps = mapnames(1:end - 2);
+    if exist('coeffstats','var') && ~isempty(coeffstats)
+        try
+            coeffstats.B_se.filetype = [coeffstats.B_se.filetype(1) 'scalar'];
+            coeffstats.B_se.cifti.maps = statmaps;
+            coeffstats.B_t.filetype = [coeffstats.B_t.filetype(1) 'scalar'];
+            coeffstats.B_t.cifti.maps = statmaps;
+            coeffstats.B_z.filetype = [coeffstats.B_z.filetype(1) 'scalar'];
+            coeffstats.B_z.cifti.maps = statmaps;
+            coeffstats.B_pval.filetype = [coeffstats.B_pval.filetype(1) 'scalar'];
+            coeffstats.B_pval.cifti.maps = statmaps;
+
+            % Embed list metadata directly from GLM design info (omit last two: gmean, sd)
+            statN   = length(hdr) - 2;
+            leffect = effects(effect(1:statN));
+            levent  = hdre(1:statN);
+            lframe  = hdrf(1:statN);
+
+            coeffstats.B_se.list.meta   = 'list';
+            coeffstats.B_se.list.type   = 'standard-errors';
+            coeffstats.B_se.list.effect = leffect;
+            coeffstats.B_se.list.event  = levent;
+            coeffstats.B_se.list.frame  = lframe;
+
+            coeffstats.B_t.list.meta    = 'list';
+            coeffstats.B_t.list.type    = 't-values';
+            coeffstats.B_t.list.effect  = leffect;
+            coeffstats.B_t.list.event   = levent;
+            coeffstats.B_t.list.frame   = lframe;
+            if exist('Xdof','var') && ~isempty(Xdof)
+                coeffstats.B_t.list.df = Xdof * ones(1, statN);
+            end
+
+            coeffstats.B_z.list.meta    = 'list';
+            coeffstats.B_z.list.type    = 'z-scores';
+            coeffstats.B_z.list.effect  = leffect;
+            coeffstats.B_z.list.event   = levent;
+            coeffstats.B_z.list.frame   = lframe;
+
+            coeffstats.B_pval.list.meta   = 'list';
+            coeffstats.B_pval.list.type   = 'p-values';
+            coeffstats.B_pval.list.effect = leffect;
+            coeffstats.B_pval.list.event  = levent;
+            coeffstats.B_pval.list.frame  = lframe;
+        catch
         end
     end
 
@@ -1490,5 +1595,20 @@ function [] = wbSmooth(sfile, tfile, file, options)
     else
         fprintf(' ... done!');
     end
+
+
+% --- Local helper: Benjamini–Hochberg FDR (per vector)
+function q = bh_fdr_local(p)
+    p = p(:);
+    n = numel(p);
+    [ps, order] = sort(p);
+    ranks = (1:n)';
+    adj = ps .* n ./ ranks;
+    % enforce monotonicity
+    adj_rev = cummin(flipud(adj));
+    adj_mon = flipud(adj_rev);
+    adj_mon = min(adj_mon, 1);
+    q = zeros(n,1);
+    q(order) = adj_mon;
 
 

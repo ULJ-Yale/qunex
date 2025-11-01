@@ -1,4 +1,4 @@
-function [B, res, rvar, Xdof, B_se, B_z, B_pval] = img_glm_fit(obj, X)
+function [B, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = img_glm_fit(obj, X)
 
 %``img_glm_fit(obj, X)``.
 %
@@ -23,8 +23,10 @@ function [B, res, rvar, Xdof, B_se, B_z, B_pval] = img_glm_fit(obj, X)
 %        model degrees of freedom
 %   B_se
 %        standard error of beta weights
+%   B_t
+%        t-statistics of beta weights
 %   B_z
-%        z scores of beta weights
+%        z-scores of beta weights (signed; derived from two-sided p-values)
 %   B_pval
 %        P-values of beta weights
 %
@@ -106,6 +108,9 @@ if nargout > 1
             B_se = obj.zeroframes(size(X,2));
             B_se.data = reshape(B_se.data,B_se.frames,B_se.voxels);
 
+            B_t = obj.zeroframes(size(X,2));
+            B_t.data = reshape(B_t.data,B_t.frames,B_t.voxels);
+
             B_z = obj.zeroframes(size(X,2));
             B_z.data = reshape(B_z.data,B_z.frames,B_z.voxels);
 
@@ -120,10 +125,18 @@ if nargout > 1
             t_beta = beta ./ SE_beta;
             p_beta = 2 .* (1 - tcdf(abs(t_beta), Xdof));
 
+            % ---- compute signed z-scores from two-sided p-values
+            % z = sign(t) * norminv(1 - p/2)
+            % Guard against p=0 due to underflow by flooring at realmin
+            p_safe = max(min(p_beta, 1-1e-16), realmin);
+            z_beta = sign(t_beta) .* norminv(1 - p_safe/2, 0, 1);
+
             % ---- embed data to output images
             B_se.data(good,:) = SE_beta;
             B_se.data = B_se.data';
-            B_z.data(good,:) = t_beta;
+            B_t.data(good,:) = t_beta;
+            B_t.data = B_t.data';
+            B_z.data(good,:) = z_beta;
             B_z.data = B_z.data';
             B_pval.data(good,:) = p_beta;
             B_pval.data = B_pval.data';
