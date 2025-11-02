@@ -27,6 +27,14 @@ function [B, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = img_glm_fit(obj, X, opti
 %               - arp_pmax: max AR order for ARP (default 6)
 %               - arp_auto: true | false (default true)
 %               - debug_mode: true | false (default false)
+%               - protect_drifts: true | false (default false)
+%               - drift_cols: columns in X that are drift regressors
+%                 (default: empty, auto-detect)
+%               - drift_autodetect: true | false (default true)
+%               - drift_detect_tol: tolerance for drift auto-detection
+%                 (default 0.9995)
+%               - drift_detect_maxperseg: max drift regressors per segments for
+%                 drift auto-detection (default 2)
 %
 %   OUTPUTS
 %    =======
@@ -80,17 +88,19 @@ function [B, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = img_glm_fit(obj, X, opti
     if nargin < 2, error('ERROR: Not enough parameters to compute GLM!'); end
     if nargin < 3, options = ''; end
 
-    default = 'method:none|order:3|pool:global|film_maxlag:|film_alpha:0.5|film_eps:1e-6|iterate:false|min_seg_skip:20|min_seg_ar1:40|fast_lambda:0.25|fast_win:9|fast_log:true|permutation_safe:false|shrink_k:200|arp_pmax:6|arp_auto:true|debug_mode:false|protect_drifts:false|drift_cols:|drift_autodetect:true|drift_detect_tol:0.9995|drift_detect_maxperseg:2';
+    default = 'method:none|order:3|pool:global|film_maxlag:|film_alpha:0.5|film_eps:1e-6|iterate:false|min_seg_skip:20|min_seg_ar1:50|fast_lambda:0.25|fast_win:9|fast_log:true|permutation_safe:false|shrink_k:150|arp_pmax:6|arp_auto:true|debug_mode:false|protect_drifts:false|drift_cols:|drift_autodetect:true|drift_detect_tol:0.9995|drift_detect_maxperseg:2|film_autotune:true|film_target_ac:0.04|film_max_ac:0.12|film_tune_lags:5|film_lambda_grid:[0.02 0.05 0.08 0.1 0.15 0.2 0.25]|film_lag_grid:[30 40 60 80 100]|film_autotune_runs:1|film_lowbins_unity:2|film_padlen:0';
     options = general_parse_options([], options, default);
 
-    options.debug_mode       = strcmp(options.debug_mode, 'true');
-    options.permutation_safe = strcmp(options.permutation_safe, 'true');
-    options.iterate          = strcmp(options.iterate, 'true');
-    options.fast_log         = strcmp(options.fast_log, 'true');
-    options.arp_auto         = strcmp(options.arp_auto, 'true');
-    options.film_eps         = str2double(options.film_eps);
-    options.protect_drifts   = strcmp(options.protect_drifts, 'true');
-    options.drift_autodetect = strcmp(options.drift_autodetect, 'true');
+    if ischar(options.debug_mode),       options.debug_mode       = strcmp(options.debug_mode, 'true');  end
+    if ischar(options.permutation_safe), options.permutation_safe = strcmp(options.permutation_safe, 'true');  end
+    if ischar(options.iterate),          options.iterate          = strcmp(options.iterate, 'true');  end
+    if ischar(options.fast_log),         options.fast_log         = strcmp(options.fast_log, 'true');  end
+    if ischar(options.arp_auto),         options.arp_auto         = strcmp(options.arp_auto, 'true');  end
+    if ischar(options.film_eps),         options.film_eps         = str2double(options.film_eps);  end
+    if ischar(options.protect_drifts),   options.protect_drifts   = strcmp(options.protect_drifts, 'true');  end
+    if ischar(options.drift_autodetect), options.drift_autodetect = strcmp(options.drift_autodetect, 'true');  end
+    if ischar(options.film_autotune),    options.film_autotune    = strcmp(options.film_autotune, 'true'); end
+
 
     if options.debug_mode
         fprintf('\n');
@@ -152,6 +162,12 @@ function [B, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = img_glm_fit(obj, X, opti
     residuals0 = y - X * beta0;
 
     %% ---------------- APPLY PREWHITENING IF REQUESTED ----------------
+    % Always initialize these so later code can safely use them
+    Xw = X; % default: no whitening
+    yw = y;
+    parcel_mode = false; % becomes true if apply_whitening returns 3-D Xw
+    XtXw = []; % filled in global-whiten path
+
     if ~strcmp(options.method, 'none')
         if options.debug_mode
             fprintf('--> Applying prewhitening method: %s\n', options.method);
@@ -165,72 +181,146 @@ function [B, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = img_glm_fit(obj, X, opti
             end
         end
 
+        % ---- FILM autotune (before any whitening)
+        if strcmp(options.method, 'film') && options.film_autotune
+            options = film_autotune_params(X, y, residuals0, seg_id, options, w_parc);
+        end
+
         % ---- 1st whiten – GLS
         [Xw, yw] = apply_whitening(X, y, residuals0, seg_id, options, w_parc);
+        [beta, residuals, XtXw] = solve_gls_whitened(Xw, yw);
+        parcel_mode = (ndims(Xw) == 3);
 
-        if ndims(Xw) == 2
-            % === Global whitening case ===
-            XtXw = Xw' * Xw;
-            beta = (XtXw \ Xw') * yw;
-            residuals = yw - Xw * beta;
+        % ---- Check first-pass FILM state for later iteration guard or switch to arma11 ----
+        if strcmp(options.method, 'film')
 
-        else
-            % === Parcel-wise whitening case ===
-            % Xw: T × predictors × parcels
-            % yw: T × parcels
-            [T, npred, nparc] = size(Xw);
-            beta = zeros(npred, nparc);
-            residuals = zeros(size(yw));
+            % Compute whitened residuals from first pass (in whitened space)
+            if ~parcel_mode
+                beta_tmp = (Xw' * Xw) \ (Xw' * yw);
+                resid_w1 = yw - Xw * beta_tmp;
+            else
+                [T, ~, P] = size(Xw);
+                resid_w1 = zeros(T, P);
 
-            for p = 1:nparc
-                Xp = Xw(:, :, p);
-                yp = yw(:, p);
-                betap = (Xp' * Xp) \ (Xp' * yp);
-                beta(:, p) = betap;
-                residuals(:, p) = yp - Xp * betap;
+                for p = 1:P
+                    Xp = Xw(:, :, p); yp = yw(:, p);
+                    bp = (Xp' * Xp) \ (Xp' * yp);
+                    resid_w1(:, p) = yp - Xp * bp;
+                end
             end
 
-            % XtX equivalent for SE computation will be per parcel,
-            % but we will track final XtX in XtX_current below.
-            XtXw = []; % marker: handled later
+            % Whiteness score (mean |AC| over first few lags)
+            film_acm_pass1 = compute_ac_mean(resid_w1, options.film_tune_lags);
+
+            % ----- Optional auto-switch to ARMA(1,1) if FILM under-whitens -----
+            if film_acm_pass1 > 0.18
+
+                if options.debug_mode
+                    fprintf('[FILM→ARMA(1,1)] ACm %.3f too high; switching to arma11 and re-running first pass.\n', film_acm_pass1);
+                end
+
+                % Switch method and redo FIRST PASS whitening + GLS locally (no recursion)
+                options.method = 'arma11';
+
+                [Xw, yw] = apply_whitening(X, y, residuals0, seg_id, options, w_parc);
+                [beta, residuals, XtXw] = solve_gls_whitened(Xw, yw);
+                parcel_mode = (ndims(Xw) == 3);
+
+            elseif options.iterate
+                % Save pass-1 state to restore if pass-2 is worse (FILM guard)
+                Xw_pass1 = Xw;
+                yw_pass1 = yw;
+                beta_pass1 = beta;
+                resid_pass1 = residuals;
+
+                if exist('XtXw', 'var')
+                    XtXw_pass1 = XtXw;
+                else
+                    XtXw_pass1 = [];
+                end
+            end
         end
 
         % ---- Optional REML iteration ---
         if options.iterate
-            residuals_gls = y - X * beta;
+            % Use *original-domain* residuals for noise re-estimation
+            residuals_gls = y - X * beta; % works for both global (beta: npred×1 or ×nvox)
 
             [Xw2, yw2] = apply_whitening(X, y, residuals_gls, seg_id, options, w_parc);
+            [beta, residuals, XtXw] = solve_gls_whitened(Xw2, yw2);
+            Xw = Xw2; yw = yw2;
 
-            if ndims(Xw2) == 2
-                XtXw2 = Xw2' * Xw2;
-                beta = (XtXw2 \ Xw2') * yw2;
-                residuals = yw2 - Xw2 * beta;
-                XtXw = XtXw2;
-            else
-                [T, npred, nparc] = size(Xw2);
-                beta = zeros(npred, nparc);
-                residuals = zeros(size(yw2));
+            % ---- FILM iteration guard: keep pass-1 if pass-2 is worse ----
+            if strcmp(options.method, 'film') && exist('film_acm_pass1', 'var')
+                % Compute whitened-residual whiteness metric for pass-2
+                if ndims(Xw) == 2
+                    beta_tmp = (Xw' * Xw) \ (Xw' * yw);
+                    resid_w2 = yw - Xw * beta_tmp;
+                else
+                    [T, ~, P] = size(Xw);
+                    resid_w2 = zeros(T, P);
 
-                for p = 1:nparc
-                    Xp = Xw2(:, :, p);
-                    yp = yw2(:, p);
-                    betap = (Xp' * Xp) \ (Xp' * yp);
-                    beta(:, p) = betap;
-                    residuals(:, p) = yp - Xp * betap;
+                    for p = 1:P
+                        Xp = Xw(:, :, p); yp = yw(:, p);
+                        bp = (Xp' * Xp) \ (Xp' * yp);
+                        resid_w2(:, p) = yp - Xp * bp;
+                    end
+
                 end
 
-                XtXw = []; % parcel mode, handled later
+                film_acm_pass2 = compute_ac_mean(resid_w2, options.film_tune_lags);
+
+                % If pass-2 whiteness is worse by > 0.01, revert to pass-1
+                if film_acm_pass2 > film_acm_pass1 + 0.01
+
+                    if options.debug_mode
+                        fprintf('[FILM guard] Iteration worsened whiteness: %.3f → %.3f. Keeping pass-1.\n', ...
+                            film_acm_pass1, film_acm_pass2);
+                    end
+
+                    Xw = Xw_pass1;
+                    yw = yw_pass1;
+                    beta = beta_pass1;
+                    residuals = resid_pass1;
+
+                    if exist('XtXw_pass1', 'var') && ~isempty(XtXw_pass1)
+                        XtXw = XtXw_pass1;
+                    else
+                        XtXw = []; % parcel mode
+                    end
+
+                    % Prevent further iteration within this fit
+                    options.iterate = false;
+                else
+                    % Otherwise, accept pass-2 and update baseline in case of future loops
+                    film_acm_pass1 = film_acm_pass2;
+                    Xw_pass1 = Xw;
+                    yw_pass1 = yw;
+                    beta_pass1 = beta;
+                    resid_pass1 = residuals;
+                    if exist('XtXw', 'var'), XtXw_pass1 = XtXw; else, XtXw_pass1 = []; end
+                end
             end
         end
 
-        XtX_current = XtXw;
+        % Set current XtX depending on mode
+        if ~isempty(XtXw)
+            XtX_current = XtXw; % global whitening
+        else
+            XtX_current = []; % parcel mode → compute per parcel later
+        end
     else
         if options.debug_mode
             fprintf('--> No prewhitening applied (OLS)\n');
         end
+
+        % No prewhitening: keep OLS results, but also set Xw/yw for downstream code
         beta = beta0;
         residuals = residuals0;
         XtX_current = XtX;
+        Xw = X; % ensure defined for ndims(Xw) checks later
+        yw = y;
+        parcel_mode = false;
     end
 
     % ---- embed beta weights to output
@@ -265,26 +355,24 @@ function [B, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = img_glm_fit(obj, X, opti
                 B_pval.data = reshape(B_pval.data,B_pval.frames,B_pval.voxels);
 
                 % ---- compute the standard error of beta estimates
-                if size(MSE, 2) > 1
-                    MSE = MSE'; % ensure column
-                end
+                % Ensure MSE is a column vector [nVox × 1]
+                if size(MSE, 2) > 1, MSE = MSE'; end
+
                 % var_beta = diag(inv(X'*X));
-                if ndims(Xw) == 2
-                    % global whitening case
-                    var_beta = diag(inv(XtX_current)); % [nPred × 1]
-                    SE_beta  = sqrt(var_beta * MSE'); % [nPred × nVox]
+
+                if ~parcel_mode
+                    % Global whitening or OLS
+                    var_beta = diag(inv(XtX_current));          % [nPred × 1]
+                    SE_beta  = sqrt(var_beta * MSE');           % [nPred × nVox]
                 else
-                    % parcel-wise case: compute SE per parcel
-                    npred = size(Xw, 2);
-                    nvox = size(MSE, 1);
-
+                    % Parcel-wise whitening
+                    npred = size(Xw,2);
+                    nvox  = size(MSE,1);
                     SE_beta = zeros(npred, nvox);
-
                     for p = 1:nvox
-                        Xp = Xw(:, :, p);
-                        XtX = Xp' * Xp;
-                        var_b = diag(inv(XtX)); % [nPred × 1]
-                        SE_beta(:, p) = sqrt(var_b * MSE(p)); % [nPred × 1]
+                        Xp = Xw(:,:,p);
+                        var_b = diag(inv(Xp' * Xp));            % [nPred × 1]
+                        SE_beta(:,p) = sqrt(var_b * MSE(p));    % [nPred × 1]
                     end
                 end
 
@@ -370,6 +458,10 @@ function [Xw, Yw] = apply_whitening(X, Y, R, seg_id, opts, w_parc)
             eff_method = 'ar1(forced)';
         else
             eff_method = opts.method;
+        end
+
+        if strcmp(opts.method, 'arma11') && Tseg < 80
+            eff_method = 'ar1(forced)';
         end
 
         % if AR auto-select, note it later; placeholder
@@ -654,9 +746,10 @@ function [Yw, Xw] = whiten_arma11(Y, X, phi, theta)
 
     Xw = zeros(size(X));
 
-    for j = 1:size(X, 2)
-        Xw(:, j) = filter(b, a, X(:, j));
-    end
+    % for j = 1:size(X, 2)
+    %     Xw(:, j) = filter(b, a, X(:, j));
+    % end
+    Xw = filter(b, a, X);
 
 end
 
@@ -751,21 +844,69 @@ end
 
 %% --------- FILM whitening by FFT ----------
 function [Yw, Xw] = film_whiten_fft(Yseg, Xseg, psd, opts)
-    % Applies 1/sqrt(PSD) in frequency domain to Y and each column of X
     Tseg = size(Yseg, 1);
-    W = 1 ./ sqrt(psd); % Tseg×1
-    W = W(:);
+    pad = 0;
 
-    % FFT along time; multiply; IFFT back (real part)
-    FY = fft(Yseg, [], 1);
-    FY = bsxfun(@times, FY, W);
-    Yw = real(ifft(FY, [], 1));
+    if isfield(opts, 'film_padlen') && ~isempty(opts.film_padlen)
+        pad = max(0, min(opts.film_padlen, Tseg - 2));
+    end
 
-    Xw = zeros(size(Xseg));
-    FX = fft(Xseg, [], 1);
-    FX = bsxfun(@times, FX, W);
-    Xw = real(ifft(FX, [], 1));
+    if pad > 0
+        % reflect pad
+        Ypad = [flipud(Yseg(1:pad, :)); Yseg; flipud(Yseg(end - pad + 1:end, :))];
+        Xpad = zeros(size(Ypad, 1), size(Xseg, 2));
+
+        for j = 1:size(Xseg, 2)
+            xj = Xseg(:, j);
+            Xpad(:, j) = [flipud(xj(1:pad)); xj; flipud(xj(end - pad + 1:end))];
+        end
+
+        % build PSD at padded length by zero-padding the ACF spectrum
+        Npad = size(Ypad, 1);
+        if ~isnumeric(psd)
+            error('FILM PSD error: expected numeric PSD, got %s', class(psd));
+        end
+        c = ifft(psd, [], 1); % back to ACF length Tseg (circulant)
+        c = real(c);
+        cpad = zeros(Npad, 1); % zero pad ACF symmetrically
+        cpad(1:numel(c)) = c;
+        psd_pad = real(fft(cpad));
+        psd_pad = max(psd_pad, opts.film_eps);
+
+        W = 1 ./ sqrt(psd_pad);
+
+        % low-freq unity bins (as above)
+        K = max(0, min(opts.film_lowbins_unity, numel(W)));
+
+        if K > 0
+            W(1:K) = 1; for k = 1:K - 1, W(end - k + 1) = 1; end
+        end
+
+        FY = fft(Ypad, [], 1); FY = bsxfun(@times, FY, W);
+        Ywp = real(ifft(FY, [], 1));
+        Yw = Ywp(1 + pad:pad + Tseg, :);
+
+        Xw = zeros(Tseg, size(Xseg, 2));
+        FX = fft(Xpad, [], 1); FX = bsxfun(@times, FX, W);
+        Xwp = real(ifft(FX, [], 1));
+        Xw = Xwp(1 + pad:pad + Tseg, :);
+    else
+        W = 1 ./ sqrt(psd);
+        % low-freq unity bins (as above)
+        K = max(0, min(opts.film_lowbins_unity, numel(W)));
+
+        if K > 0
+            W(1:K) = 1; for k = 1:K - 1, W(end - k + 1) = 1; end
+        end
+
+        FY = fft(Yseg, [], 1); FY = bsxfun(@times, FY, W);
+        Yw = real(ifft(FY, [], 1));
+        Xw = zeros(size(Xseg));
+        FX = fft(Xseg, [], 1); FX = bsxfun(@times, FX, W);
+        Xw = real(ifft(FX, [], 1));
+    end
 end
+
 
 %% --------- Minimal Tukey window (toolbox-free) ----------
 function w = local_tukey(N, alpha)
@@ -956,4 +1097,125 @@ function Ainv = pinv_safe(A)
     s(s < thr) = 0;
     s(s > 0) = 1 ./ s(s > 0);
     Ainv = V * diag(s) * U';
+end
+
+
+function acm = compute_ac_mean(resid, L)
+    % resid: T×V (whitened residuals)
+    % L: number of lags to average (e.g., 5)
+    if nargin < 2, L = 5; end
+    T = size(resid, 1);
+    acm_v = zeros(1, size(resid, 2));
+
+    for v = 1:size(resid, 2)
+        e = resid(:, v);
+        e = e - mean(e);
+        denom = sum(e .^ 2);
+        if denom <= 0, continue; end
+        acc = 0;
+
+        for k = 1:min(L, T - 1)
+            acc = acc + abs(sum(e(1 + k:end) .* e(1:end - k)) / (denom - sum(e(end - k + 1:end) .^ 2)));
+        end
+
+        acm_v(v) = acc / min(L, T - 1);
+    end
+
+    acm = mean(acm_v(~isnan(acm_v)));
+end
+
+function opts = film_autotune_params(X, y, residuals0, seg_id, opts, w_parc)
+
+    if ~strcmp(opts.method, 'film') || ~opts.film_autotune
+        return;
+    end
+
+    opt_tmp = opts;
+    opt_tmp.iterate = false; % tune on a single pass
+
+    lambda_grid = opts.film_lambda_grid;
+    lag_grid = opts.film_lag_grid;
+
+    best_score = Inf;
+    best_lambda = opts.fast_lambda;
+    best_lag = opts.film_maxlag;
+
+    for lam = lambda_grid
+
+        for lag = lag_grid
+            opt_tmp.fast_lambda = lam;
+            opt_tmp.film_maxlag = lag;
+
+            % IMPORTANT: use OLS residuals0 so PSD is estimated from real data
+            [Xw_test, yw_test] = apply_whitening(X, y, residuals0, seg_id, opt_tmp, w_parc);
+
+            % Fit GLS in whitened space and get whitened residuals
+            if ndims(Xw_test) == 2
+                bet = (Xw_test' * Xw_test) \ (Xw_test' * yw_test);
+                resid_w = yw_test - Xw_test * bet;
+            else
+                [T, ~, P] = size(Xw_test);
+                resid_w = zeros(T, P);
+
+                for p = 1:P
+                    Xp = Xw_test(:, :, p); yp = yw_test(:, p);
+                    bp = (Xp' * Xp) \ (Xp' * yp);
+                    resid_w(:, p) = yp - Xp * bp;
+                end
+
+            end
+
+            % Score by whitened autocorrelation
+            acm = compute_ac_mean(resid_w, opts.film_tune_lags);
+            score = abs(acm - opts.film_target_ac);
+
+            if score < best_score
+                best_score = score;
+                best_lambda = lam;
+                best_lag = lag;
+            end
+
+        end
+
+    end
+
+    opts.fast_lambda = best_lambda;
+    opts.film_maxlag = best_lag;
+
+    if isfield(opts, 'debug_mode') && opts.debug_mode
+        fprintf('[FILM autotune] λ=%.3f, maxlag=%d, score=%.4f\n', best_lambda, best_lag, best_score);
+    end
+
+end
+
+
+
+
+% ======================================================================
+% Local helper: GLS solve for whitened data (global or parcel mode)
+% ======================================================================
+function [beta, residuals, XtXw] = solve_gls_whitened(Xw, yw)
+    parcel_mode = (ndims(Xw) == 3);
+
+    if ~parcel_mode
+        % ---- global whitening ----
+        XtXw = Xw' * Xw;
+        beta = (XtXw \ Xw') * yw;
+        residuals = yw - Xw * beta;
+
+    else
+        % ---- parcel-wise whitening ----
+        [~, npred, nparc] = size(Xw);
+        beta = zeros(npred, nparc);
+        residuals = zeros(size(yw));
+        XtXw = []; % design differs per parcel -> no single XtX
+
+        for p = 1:nparc
+            Xp = Xw(:, :, p);
+            yp = yw(:, p);
+            bp = (Xp' * Xp) \ (Xp' * yp);
+            beta(:, p) = bp;
+            residuals(:, p) = yp - Xp * bp;
+        end
+    end
 end
