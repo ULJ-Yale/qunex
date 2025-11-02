@@ -655,7 +655,7 @@ fprintf('\n        ignores: %s', ignores);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=|prewhitening>method:none';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'fc_preprocess options used');
@@ -1324,6 +1324,13 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     end
     mask(1:omit) = false;
 
+    % -- identify segments of continuous data
+    edges = diff([0 mask]);
+    segment = cumsum(edges == 1);
+    segment(~mask) = 0
+    Y.use = segment;
+
+    % -- apply mask
     Y = img.sliceframes(mask);
 
     if nargout > 2

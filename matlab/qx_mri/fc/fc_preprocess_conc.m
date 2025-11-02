@@ -731,7 +731,7 @@ fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 fprintf('\n');
 
-default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=';
+default = 'boldname=bold|concname=conc|fidlname=|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|hipass_do=nuisance|lopass_do=nuisance,movement,events,task|framework_path=|wb_command_path=|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_results=c,r|glm_name=|bold_tail=|ref_bold_tail=|bold_variant=|img_suffix=|prewhitening>method:none';
 options = general_parse_options([], options, default);
 
 general_print_struct(options, 'fc_preprocess_conc options used');
@@ -1782,9 +1782,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
                     effect(end + 1) = find(ismember(effects, ts));
                     eindex(end + 1) = b;
                 end
-
             end
-
         end
 
         if joinn
@@ -1798,9 +1796,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
                 effect(end + 1) = find(ismember(effects, ts));
                 eindex(end + 1) = 1;
             end
-
         end
-
     end
 
  %----- movement derivatives
@@ -1946,7 +1942,6 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
     if nuisanceDer
 
         %   ---> signal
-
         for mi = 1:nS
             effects{end+1}  = sprintf('%s_1d', nuisance(1).signal_hdr{mi});
         end
@@ -2044,32 +2039,47 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
 
     %   ---> first create per bold masks
 
-    masks   = {};
-    mframes = zeros(1, nbolds);
-    nmask   = [];
+    segments = {};
+    csegment = 1;
+    masks    = {};
+    mframes  = zeros(1, nbolds);
+    nmask    = [];
     if ~strcmp(ignore, 'keep'), fprintf(' excluding'); end
     for b = 1:nbolds
         if ~strcmp(ignore, 'keep')
             fprintf(' %d', sum(img(b).use == 0));
             mask = img(b).use == 1;
+
+            edges = diff([0 mask]);
+            segment = cumsum(edges == 1);
+            nsegments = max(segment);
+            segment = segment + csegment -1;
+            segment(~mask) = 0;
+            csegment = csegment + nsegments;
         else
             mask = true(1, img(b).frames);
+            segment  = ones(1, img(b).frames) * csegment;
+            csegment = csegment + 1;
         end
         mask(1:omit) = false;
         masks{b}     = mask;
         mframes(b)   = sum(mask);
         nmask        = [nmask mask];
+
+        segment(~mask) = 0;
+        segments{b}    = segment;
     end
     if ~strcmp(ignore, 'keep'), fprintf(' frames '); end
 
     %   ---> create and fill placeholder image
 
     Y = img(1).zeroframes(sum(mframes));
-
+    Y.use = [];
     for b = 1:nbolds
         fstart = sum(mframes(1:b-1)) + 1;
         fend   = sum(mframes(1:b));
         Y.data(:, fstart:fend) = img(b).data(:,masks{b});
+        Y.use  = [Y.use segments{b}(masks{b})];
     end
 
     %   ---> save GLM matrix data
@@ -2130,7 +2140,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
     X = X(nmask==1, :);
 
     if nargout > 2
-		[coeff, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = Y.img_glm_fit(X);
+		[coeff, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = Y.img_glm_fit(X, options.prewhitening);
 
         % Defer assigning map labels until after mapnames are defined
         coeffstats.B_se   = B_se;

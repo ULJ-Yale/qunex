@@ -2381,6 +2381,38 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
                 An additional name to add to the residuals and GLM files to
                 distinguish between different possible models used.
 
+            --glm_prewhitening (str, default 'no'):
+                A string specifying whether to use prewhitening in the GLM
+                modeling or not, and providing parameters for it. It needs to
+                be constructed as comma separated list of <key>:<value> pairs.
+                The possible keys and values are:
+
+                - method  ... what mehod to use for prewhitening. Options are:
+                                'none' (default), 'ar1', 'arp', 'arma11', 'film'
+                - order   ... order of the AR model to use (default 3)
+                - pool    ... whether to pool the prewhitening parameters
+                                across voxels ('global') or estimate them
+                                per each parcel ('parcel'). Default is 'global'.
+                - film_maxlag
+                - film_alpha
+                - film_eps
+                - iterate
+                - min_seg_skip
+                - min_seg_ar1
+                - fast_lamda
+                - fast_win
+                - fast_log
+                - permutation_safe
+                - shrink_k
+                - arp_pmax
+                - arp_auto
+                - debug_mode
+                - protect_drifts
+                - drift_cols
+                - drift_autodetect
+                - drift_detect_tol
+                - drift_detect_maxperseg
+
         GLM modeling:
             There are two important variables that affect the exact GLM
             model used to estimate nuisance and task beta coefficients and
@@ -2750,7 +2782,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldinfo):
             % (options)
         )
         opts = (
-            "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_results=%(glm_results)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s"
+            "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_results=%(glm_results)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s|prewhitening>%(glm_prewhitening)s"
             % (options)
         )
 
@@ -3254,6 +3286,38 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 An additional name to add to the residuals and GLM files to
                 distinguish between different possible models used.
 
+            --glm_prewhitening (str, default 'no'):
+                A string specifying whether to use prewhitening in the GLM
+                modeling or not, and providing parameters for it. It needs to
+                be constructed as comma separated list of <key>:<value> pairs.
+                The possible keys and values are:
+
+                - method  ... what mehod to use for prewhitening. Options are:
+                                'none' (default), 'ar1', 'arp', 'arma11', 'film'
+                - order   ... order of the AR model to use (default 3)
+                - pool    ... whether to pool the prewhitening parameters
+                                across voxels ('global') or estimate them
+                                per each parcel ('parcel'). Default is 'global'.
+                - film_maxlag
+                - film_alpha
+                - film_eps
+                - iterate
+                - min_seg_skip
+                - min_seg_ar1
+                - fast_lamda
+                - fast_win
+                - fast_log
+                - permutation_safe
+                - shrink_k
+                - arp_pmax
+                - arp_auto
+                - debug_mode
+                - protect_drifts
+                - drift_cols
+                - drift_autodetect
+                - drift_detect_tol
+                - drift_detect_maxperseg
+
             GLM modeling:
                 There are two important variables that affect the exact GLM
                 model used to estimate nuisance and task beta coefficients and
@@ -3677,7 +3741,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     % (options)
                 )
                 opts = (
-                    "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_results=%(glm_results)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s"
+                    "boldname=%(boldname)s|fidlname=%(fidlname)s|concname=%(concname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_results=%(glm_results)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|ref_bold_tail=%(nifti_tail)s|bold_variant=%(bold_variant)s|img_suffix=%(img_suffix)s|prewhitening>%(glm_prewhitening)s"
                     % (options)
                 )
 

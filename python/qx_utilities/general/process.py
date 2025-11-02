@@ -238,6 +238,7 @@ arglist = [
     ["glm_residuals", "save", str,],
     ["glm_results", "c,r", str,],
     ["glm_name", "", str,],
+    ["glm_prewhitening", "", str,],
     ["# ---- Movement thresholding and report options"],
     ["mov_dvars", "3.0", float,],
     ["mov_dvarsme", "1.5", float,],
