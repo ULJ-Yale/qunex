@@ -1334,7 +1334,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
     Y = img.sliceframes(mask);
 
     if nargout > 2
-		[coeff, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = Y.img_glm_fit(X);
+		[coeff, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = Y.img_glm_fit_w(X, options.prewhitening);
 
         % Defer assigning map labels until after mapnames are defined
         coeffstats.B_se   = B_se;
@@ -1344,7 +1344,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, ign
         coeffstats.res    = res;
         coeffstats.Xdof   = Xdof;
     else
-    	[coeff res] = Y.img_glm_fit(X);
+    	[coeff res] = Y.img_glm_fit_w(X, options.prewhitening);
     end
     img.data(:,mask) = res.image2D;
     coeff = [coeff Y.img_stats({'m', 'sd'})];

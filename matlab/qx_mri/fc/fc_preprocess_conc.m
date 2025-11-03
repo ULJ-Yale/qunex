@@ -2140,7 +2140,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
     X = X(nmask==1, :);
 
     if nargout > 2
-		[coeff, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = Y.img_glm_fit(X, options.prewhitening);
+		[coeff, res, rvar, Xdof, B_se, B_t, B_z, B_pval] = Y.img_glm_fit_w(X, options.prewhitening);
 
         % Defer assigning map labels until after mapnames are defined
         coeffstats.B_se   = B_se;
@@ -2150,7 +2150,7 @@ function [img coeff coeffstats] = regressNuisance(img, omit, nuisance, rgss, rty
         coeffstats.res    = res;
         coeffstats.Xdof   = Xdof;
     else
-    	[coeff res] = Y.img_glm_fit(X);
+    [coeff res] = Y.img_glm_fit_w(X, options.prewhitening);
     end
     coeff = [coeff Y.img_stats({'m', 'sd'})];
 
