@@ -12244,10 +12244,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: the hcp_transmit_mode parameter is mandatory!"
             run = False
 
-        if options["hcp_gmwm_template"] is None:
-            r += "\n---> ERROR: the hcp_gmwm_template parameter is mandatory!"
-            run = False
-
         # build the command
         if run:
             matlabrunmode = None
@@ -12832,10 +12828,6 @@ def _execute_hcp_long_transmit_bias(sinfo, options, overwrite, run, hcp_base, su
 
     if options["hcp_transmit_mode"] is None:
         r += "\n---> ERROR: the hcp_transmit_mode parameter is mandatory!"
-        run = False
-
-    if options["hcp_gmwm_template"] is None:
-        r += "\n---> ERROR: the hcp_gmwm_template parameter is mandatory!"
         run = False
 
     # build the command
