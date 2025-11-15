@@ -1717,7 +1717,6 @@ main() {
                 echo " ---> Looping through requested BOLDS: ${BOLDS}"
                 echo ""
                 for BOLD in ${BOLDS}; do
-
                     # -- Check if BOLD FC requested
                     if [[ ! -z ${BOLDfc} ]]; then
                         echo " --- Working on BOLD FC QC scene..."; echo ""
@@ -1730,11 +1729,10 @@ main() {
                         fi
                         scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                         WorkingSceneFile="${CASEName}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
-                        # -- Rsync over template files for a given BOLD
-                        Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
-                        Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
-                        ComQueue="$Com1; $Com2"
-                        echo " --- Copied ${scenetemplatefolder}/${TemplateSceneFile} over to ${OutPath}"
+                        # -- cp template files
+                        Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
+                        ComQueue="$Com1"
+                        echo " --- Copied ${scenetemplatefolder}/${TemplateSceneFile} over to ${OutPath}/${WorkingSceneFile}"
                         runscene_BOLDfc
                         # -- Clean up prior conflicting scripts, generate script and set permissions
                         rm -f ${RunQCLogFolder}/${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
@@ -1802,14 +1800,13 @@ main() {
                                     TemplateSceneFile="template_${modality_lower}_qc.wb.scene"
                                     scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
-                                    # -- Rsync over template files for a given BOLD
+                                    # -- cp template files
                                     runsnr_BOLD
-                                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
-                                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
-                                    Com3="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${WorkingSceneFile}"
-                                    Com4="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${WorkingSceneFile}"
-                                    Com5="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${WorkingSceneFile}"
-                                    ComQueue="$Com1; $Com2; $Com3; $Com4; $Com5"
+                                    Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
+                                    Com2="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${WorkingSceneFile}"
+                                    Com3="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${WorkingSceneFile}"
+                                    Com4="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${WorkingSceneFile}"
+                                    ComQueue="$Com1; $Com2; $Com3; $Com4"
                                     runscene_BOLD
                                     # -- Clean up prior conflicting scripts, generate script and set permissions
                                     rm -f ${RunQCLogFolder}/${CASEName}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
@@ -1830,10 +1827,9 @@ main() {
                                 for TemplateSceneFile in ${CustomTemplateSceneFiles}; do
                                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.${TemplateSceneFile}"
                                     DummyVariable_Check
-                                    # -- Rsync over template files for a given BOLD
-                                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
-                                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
-                                    ComQueue="$Com1; $Com2"
+                                    # -- cp template files
+                                    Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
+                                    ComQueue="$Com1"
                                     runscene_BOLD
                                     CustomRunQUEUE=${ComRunBoldQUEUE}
                                     # -- Clean up prior conflicting scripts, generate script and set permissions
@@ -1870,10 +1866,9 @@ main() {
                 # -- Check if running defaults w/o UserSceneFile
                 if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ]; then
                     # -- Setup naming conventions before generating scene
-                    Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
-                    Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
-                    Com3="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}"
-                    Com4="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
+                    Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
+                    Com2="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}"
+                    Com3="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
                     # -------------------------------------------
                     # -- General QC
                     # -------------------------------------------
@@ -1896,9 +1891,9 @@ main() {
                             echo "---> Data inputs found: ${GeneralPathCheck}"
                             echo ""
                             # -- Setup naming conventions for general inputs before generating scene
-                            Com4a="sed -i -e 's|DUMMYIMAGEPATH|$SessionsFolder/$CASE/$GeneralSceneDataPath|g' ${OutPath}/${WorkingSceneFile}"
-                            Com4b="sed -i -e 's|DUMMYIMAGEFILE|$GeneralSceneDataFile|g' ${OutPath}/${WorkingSceneFile}"
-                            Com4="$Com4; $Com4a; $Com4b"
+                            Com3a="sed -i -e 's|DUMMYIMAGEPATH|$SessionsFolder/$CASE/$GeneralSceneDataPath|g' ${OutPath}/${WorkingSceneFile}"
+                            Com3b="sed -i -e 's|DUMMYIMAGEFILE|$GeneralSceneDataFile|g' ${OutPath}/${WorkingSceneFile}"
+                            Com3="$Com3; $Com3a; $Com3b"
                         fi
                     fi
 
@@ -2009,14 +2004,14 @@ main() {
                             echo "---> DWI inputs found: ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz "
                             echo ""
                             # -- Split the data and setup 1st and 2nd volumes for visualization
-                            Com4a="fslsplit ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split -t"
-                            Com4b="fslmaths ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split0000.nii.gz -mul ${NoDiffBrainMask} ${HCPFolder}/T1w/${DWIPath}/data_frame1_brain"
-                            Com4c="fslmaths ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split0010.nii.gz -mul ${NoDiffBrainMask} ${HCPFolder}/T1w/${DWIPath}/data_frame10_brain"
+                            Com3a="fslsplit ${HCPFolder}/T1w/${DWIPath}/${DWIName}.nii.gz ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split -t"
+                            Com3b="fslmaths ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split0000.nii.gz -mul ${NoDiffBrainMask} ${HCPFolder}/T1w/${DWIPath}/data_frame1_brain"
+                            Com3c="fslmaths ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split0010.nii.gz -mul ${NoDiffBrainMask} ${HCPFolder}/T1w/${DWIPath}/data_frame10_brain"
                             # -- Clean split volumes
-                            Com4d="rm -f ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split* &> /dev/null"
+                            Com3d="rm -f ${HCPFolder}/T1w/${DWIPath}/${DWIName}_split* &> /dev/null"
                             # -- Setup naming conventions for DWI before generating scene
-                            Com4e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${WorkingSceneFile}"
-                            Com4="$Com4; $Com4a; $Com4b; $Com4c; $Com4d; $Com4e"
+                            Com3e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${WorkingSceneFile}"
+                            Com3="$Com3; $Com3a; $Com3b; $Com3c; $Com3d; $Com3e"
                             # --------------------------------------------------
                             # -- Check if DTIFIT and BEDPOSTX flags are set
                             # --------------------------------------------------
@@ -2042,15 +2037,15 @@ main() {
                                     echo "    ---> FSL dtifit results found here: ${HCPFolder}/T1w/${DWIPath}/"
                                     echo ""
                                     # -- Replace DWI scene specifications with the dtifit results
-                                    Com4g1="cp ${OutPath}/${WorkingSceneFile} ${OutPath}/${WorkingDTISceneFile}"
-                                    Com4g2="sed -i -e 's|1st frame|dti FA|g' ${OutPath}/${WorkingDTISceneFile}"
-                                    Com4g3="sed -i -e 's|10th frame|dti L3|g' ${OutPath}/${WorkingDTISceneFile}"
-                                    Com4g4="sed -i -e 's|data_frame1_brain.nii.gz|dti_FA.nii.gz|g' ${OutPath}/${WorkingDTISceneFile}"
-                                    Com4g5="sed -i -e 's|data_frame10_brain.nii.gz|dti_L3.nii.gz|g' ${OutPath}/${WorkingDTISceneFile}"
+                                    Com3g1="cp ${OutPath}/${WorkingSceneFile} ${OutPath}/${WorkingDTISceneFile}"
+                                    Com3g2="sed -i -e 's|1st frame|dti FA|g' ${OutPath}/${WorkingDTISceneFile}"
+                                    Com3g3="sed -i -e 's|10th frame|dti L3|g' ${OutPath}/${WorkingDTISceneFile}"
+                                    Com3g4="sed -i -e 's|data_frame1_brain.nii.gz|dti_FA.nii.gz|g' ${OutPath}/${WorkingDTISceneFile}"
+                                    Com3g5="sed -i -e 's|data_frame10_brain.nii.gz|dti_L3.nii.gz|g' ${OutPath}/${WorkingDTISceneFile}"
                                     # -- Combine dtifit commands
-                                    Com4g="$Com4g1; $Com4g2; $Com4g3; $Com4g4; $Com4g5"
+                                    Com3g="$Com3g1; $Com3g2; $Com3g3; $Com3g4; $Com3g5"
                                     # -- Combine DWI commands
-                                    Com4="$Com4; $Com4g"
+                                    Com3="$Com3; $Com3g"
                                 else
                                     echo "---> ERROR: FSL dtifit not found for $CASEName. Skipping dtifit QC request for upcoming QC calls. Check dtifit results: "
                                     echo "           ---> ${HCPFolder}/T1w/${DWIPath}/ "
@@ -2080,15 +2075,15 @@ main() {
                                             echo "    ---> BedpostX outputs found and completed here: ${HCPFolder}/T1w/Diffusion.bedpostX/"
                                             echo ""
                                             # -- Replace DWI scene specifications with the dtifit results
-                                            Com4h1="cp ${OutPath}/${WorkingSceneFile} ${OutPath}/${WorkingBedpostXSceneFile}"
-                                            Com4h2="sed -i -e 's|1st frame|mean d diffusivity|g' ${OutPath}/${WorkingBedpostXSceneFile}"
-                                            Com4h3="sed -i -e 's|10th frame|mean f anisotropy|g' ${OutPath}/${WorkingBedpostXSceneFile}"
-                                            Com4h4="sed -i -e 's|$DWIPath/data_frame1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
-                                            Com4h5="sed -i -e 's|$DWIPath/data_frame10_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+                                            Com3h1="cp ${OutPath}/${WorkingSceneFile} ${OutPath}/${WorkingBedpostXSceneFile}"
+                                            Com3h2="sed -i -e 's|1st frame|mean d diffusivity|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+                                            Com3h3="sed -i -e 's|10th frame|mean f anisotropy|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+                                            Com3h4="sed -i -e 's|$DWIPath/data_frame1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+                                            Com3h5="sed -i -e 's|$DWIPath/data_frame10_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
                                             # -- combine BedpostX commands
-                                            Com4h="$Com4h1; $Com4h2; $Com4h3; $Com4h4; $Com4h5"
+                                            Com3h="$Com3h1; $Com3h2; $Com3h3; $Com3h4; $Com3h5"
                                             # -- Combine BedpostX commands
-                                            Com4="$Com4; $Com4h"
+                                            Com3="$Com3; $Com3h"
                                         fi
                                     fi
                                 else
@@ -2137,37 +2132,37 @@ main() {
                     # -------------------------------------------
 
                     # -- Add timestamp to the scene
-                    Com5="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingSceneFile}"
+                    Com4="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingSceneFile}"
                     PNGName="${WorkingSceneFile}.png"
                     ComRunPngName="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingSceneFile}"
-                    Com5="$Com5; $ComRunPngName"
+                    Com4="$Com4; $ComRunPngName"
                     # -- Output image of the scene
-                    Com6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
+                    Com5="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
                     echo ""
                     echo "---> Running PNG extraction using the following command..."
-                    echo "      $Com6"
+                    echo "      $Com5"
                     echo ""
 
                     # -- Check if dtifit is requested
                     if [ "$DtiFitQC" == "yes" ]; then
-                        Com5a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingDTISceneFile}"
+                        Com4a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingDTISceneFile}"
                         PNGNameDtiFit="${WorkingDTISceneFile}.png"
                         ComRunPngNameDtiFit="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingDTISceneFile}"
-                        Com5b="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
-                        Com5="$Com5; $ComRunPngNameDtiFit; $Com5a; $Com5b"
+                        Com4b="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
+                        Com4="$Com4; $ComRunPngNameDtiFit; $Com4a; $Com4b"
                     fi
                     # -- Check of bedpostx QC is requested
                     if [ "$BedpostXQC" == "yes" ]; then
-                        Com5c="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+                        Com4c="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingBedpostXSceneFile}"
                         PNGNameBedpostX="${WorkingDTISceneFile}.png"
                         ComRunPngNameBedpostX="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingDTISceneFile}"
-                        Com5d="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
-                        Com5="$Com5; $ComRunPngNameBedpostX; $Com5c; $Com5d"
+                        Com4d="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.png 1194 539 > /dev/null 2>&1"
+                        Com4="$Com4; $ComRunPngNameBedpostX; $Com4c; $Com4d"
                     fi
 
                     # -- Clean templates and files for next session
-                    Com7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
-                    Com9="rm -f ${OutPath}/data_split*"
+                    Com6="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
+                    Com7="rm -f ${OutPath}/data_split*"
 
                     # -------------------------------------------
                     # -- Zip QC Scenes
@@ -2187,31 +2182,31 @@ main() {
                              echo "    ${SessionsFolder}/${CASE}"
                              echo ""
                              RemoveScenePath="${SessionsFolder}/${CASE}"
-                             Com10a="cp ${OutPath}/${WorkingSceneFile} ${SessionsFolder}/${CASE}/"
-                             Com10b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
-                             Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SessionsFolder}/${CASE}/${WorkingSceneFile}"
-                             Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SessionsFolder}/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip"
+                             Com8a="cp ${OutPath}/${WorkingSceneFile} ${SessionsFolder}/${CASE}/"
+                             Com8b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
+                             Com8c="sed -i -e 's|$RemoveScenePath|.|g' ${SessionsFolder}/${CASE}/${WorkingSceneFile}"
+                             Com8d="cd ${OutPath}; wb_command -zip-scene-file ${SessionsFolder}/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip"
                              echo ""
                              echo "---> Running PNG extraction using the following command..."
-                             echo "      $Com10d"
+                             echo "      $Com8d"
                              echo ""
-                             Com10e="echo ${SessionsFolder}/${CASE}/${WorkingSceneFile}"
-                             Com10f="mkdir -p ${SessionsFolder}/${CASE}/qc &> /dev/null"
-                             Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SessionsFolder}/${CASE}/qc/"
-                             Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
+                             Com8e="echo ${SessionsFolder}/${CASE}/${WorkingSceneFile}"
+                             Com8f="mkdir -p ${SessionsFolder}/${CASE}/qc &> /dev/null"
+                             Com8g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SessionsFolder}/${CASE}/qc/"
+                             Com8="$Com8a; $Com8b; $Com8c; $Com8d; $Com8e; $Com8f; $Com8g"
                         else
                              echo "---> ${Modality} scene type requested. Outputs will be set relative to: "
                              echo "    ${HCPFolder}"
                              echo ""
                              RemoveScenePath="${HCPFolder}"
-                             Com10a="cp ${OutPath}/${WorkingSceneFile} ${HCPFolder}/"
-                             Com10b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
-                             Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingSceneFile}"
-                             Com10d="cd ${OutPath}; wb_command -zip-scene-file ${HCPFolder}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${HCPFolder}"
-                             Com10e="echo ${HCPFolder}/${WorkingSceneFile}"
-                             Com10f="mkdir -p ${HCPFolder}/qc &> /dev/null"
-                             Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
-                             Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
+                             Com8a="cp ${OutPath}/${WorkingSceneFile} ${HCPFolder}/"
+                             Com8b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
+                             Com8c="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingSceneFile}"
+                             Com8d="cd ${OutPath}; wb_command -zip-scene-file ${HCPFolder}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${HCPFolder}"
+                             Com8e="echo ${HCPFolder}/${WorkingSceneFile}"
+                             Com8f="mkdir -p ${HCPFolder}/qc &> /dev/null"
+                             Com8g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
+                             Com8="$Com8a; $Com8b; $Com8c; $Com8d; $Com8e; $Com8f; $Com8g"
                         fi
                     fi
 
@@ -2225,14 +2220,14 @@ main() {
                         echo "    ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip"
                         echo ""
                         RemoveScenePath="${HCPFolder}"
-                        Com11a="cp ${OutPath}/${WorkingDTISceneFile} ${HCPFolder}/"
-                        Com11b="rm ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip &> /dev/null"
-                        Com11c="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingDTISceneFile}"
-                        Com11d="cd ${OutPath}; wb_command -zip-scene-file ${HCPFolder}/${WorkingDTISceneFile} ${WorkingDTISceneFile}.${TimeStamp} ${WorkingDTISceneFile}.${TimeStamp}.zip -base-dir ${HCPFolder}"
-                        Com11e="rm ${HCPFolder}/${WorkingDTISceneFile}"
-                        Com11f="mkdir -p ${HCPFolder}/qc &> /dev/null"
-                        Com11g="cp ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
-                        Com11="$Com11a; $Com11b; $Com11c; $Com11d; $Com11e; $Com11f; $Com11g"
+                        Com9a="cp ${OutPath}/${WorkingDTISceneFile} ${HCPFolder}/"
+                        Com9b="rm ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip &> /dev/null"
+                        Com9c="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingDTISceneFile}"
+                        Com9d="cd ${OutPath}; wb_command -zip-scene-file ${HCPFolder}/${WorkingDTISceneFile} ${WorkingDTISceneFile}.${TimeStamp} ${WorkingDTISceneFile}.${TimeStamp}.zip -base-dir ${HCPFolder}"
+                        Com9e="rm ${HCPFolder}/${WorkingDTISceneFile}"
+                        Com9f="mkdir -p ${HCPFolder}/qc &> /dev/null"
+                        Com9g="cp ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
+                        Com9="$Com9a; $Com9b; $Com9c; $Com9d; $Com9e; $Com9f; $Com9g"
                     fi
                     # -- Generate Zip files for bedpostx scenes if requested
                     if [ "$BedpostXQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
@@ -2244,32 +2239,32 @@ main() {
                         echo "    ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip"
                         echo ""
                         RemoveScenePath="${HCPFolder}"
-                        Com12a="cp ${OutPath}/${WorkingBedpostXSceneFile} ${HCPFolder}/"
-                        Com12b="rm ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip &> /dev/null"
-                        Com12c="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingBedpostXSceneFile}"
-                        Com12d="cd ${OutPath}; wb_command -zip-scene-file ${HCPFolder}/${WorkingBedpostXSceneFile} ${WorkingBedpostXSceneFile}.${TimeStamp} ${WorkingBedpostXSceneFile}.${TimeStamp}.zip -base-dir ${HCPFolder}"
-                        Com12e="rm ${HCPFolder}/${WorkingBedpostXSceneFile}"
-                        Com12f="mkdir -p ${HCPFolder}/qc &> /dev/null"
-                        Com12g="cp ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
-                        Com12="$Com12a; $Com12b; $Com12c; $Com12d; $Com12e; $Com12f; $Com12g"
+                        Com10a="cp ${OutPath}/${WorkingBedpostXSceneFile} ${HCPFolder}/"
+                        Com10b="rm ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip &> /dev/null"
+                        Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingBedpostXSceneFile}"
+                        Com10d="cd ${OutPath}; wb_command -zip-scene-file ${HCPFolder}/${WorkingBedpostXSceneFile} ${WorkingBedpostXSceneFile}.${TimeStamp} ${WorkingBedpostXSceneFile}.${TimeStamp}.zip -base-dir ${HCPFolder}"
+                        Com10e="rm ${HCPFolder}/${WorkingBedpostXSceneFile}"
+                        Com10f="mkdir -p ${HCPFolder}/qc &> /dev/null"
+                        Com10g="cp ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
+                        Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
                     fi
                     # -- Combine all the calls into a single command based on various specifications
                     if [ "$SceneZip" == "yes" ]; then
                         if [ "$DtiFitQC" == "no" ]; then
                             if [ "$BedpostXQC" == "no" ]; then
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8"
                             else
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10; $Com12"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com10"
                             fi
                         else
                             if [ "$BedpostXQC" == "yes" ]; then
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10; $Com11; $Com12"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10"
                             else
-                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9; $Com10; $Com11"
+                                ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
                             fi
                         fi
                     else
-                        ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com9"
+                        ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7"
                     fi
                     # -- Clean up prior conflicting scripts, generate script and set permissions
                     rm -f "$RunQCLogFolder"/${CASEName}_ComQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
