@@ -1,0 +1,203 @@
+Description: >
+  Create a list of sessions and related files.
+
+  This command generates a structured list of sessions within a specified study folder.
+  It can utilize a batch file containing session metadata to enable tagging and filtering
+  of sessions based on user-defined criteria.
+
+Source specification:
+  description: >
+    In this section we define the parameters required to locate and select the sessions that should be included in the
+    generated list file.
+
+  sessionsfolder:
+    optional: no
+    type: string
+    default: "."
+    placeholder: "/mystudy/sessions"
+    description: "Study sessions folder containing individual session subfolders."
+
+  batchfile:
+    optional: no
+    type: string
+    default: "none"
+    placeholder: "/mystudy/processing/batch.txt"
+    description: "Batch file with session metadata (enables tagging & filtering)."
+
+  sessions:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "s001_s1, s002_s1"
+    description: >
+      If only specific sessions are to be included, provide a comma-separated list of specific sessions to include when
+      generating the list file (e.g., "s001_s1, s002_s2").
+      If not specified, all sessions in the `sessionsfolder` will be included. The sessions must match those defined in
+      the `batchfile` if provided. A glob pattern (e.g., "s001_*") can also be used to include multiple sessions.
+
+  filter:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "<key>:<value>|<key>:<value>"
+    description: >
+      If only specific sessions matching certain criteria are to be included, provide a pipe (`|`) separated list of
+      <key>:<value> pairs to only include those sessions in the list, which match the specified requirements. For
+      instance, to include only sessions from the control group, use `group:control`. The keys and values used
+      have to be present in the `batch.txt` file. If a session does not have the specified key, it will be excluded.
+      Only sessions matching all specified criteria will be included in the generated list file.
+
+  bold_variant:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: ""
+    description: >
+      By default, the files for each session are assumed to be in the standard location within each session folder,
+      which is `<session folder>/images/functional/`. QuNex supports having multiple variants of the functional images
+      in this case, these would be present in a folder with a specified `bold_variant` tail. For example, if `bold_variant`
+      is set to `_icafix`, the command will look for image files in the folder
+      `<session folder>/images/functional_icafix/`. If no `bold_variant` is specified, the default location is used.
+
+  img_suffix:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: ""
+    description: >
+      Similar to `bold_variant`, this parameter allows specifying a tail that is added to the `<session folder>/images`
+      folder. This functionality enables multiple parallel workflows within the same session structure. For example, if
+      `img_suffix` is set to `_nodc` (possibly denoting that no distortion correction was used when preprocessing the
+      images), the command will look for image files in folders named `<session folder>/images_nodc/functional/`.
+      If not specified, the command will look for image files in the standard location within each session folder.
+
+
+Input specification:
+  description: >
+    In this section we define the parameters required to identify the relevant files within each session that should be
+    included in the list file.
+
+  bolds:
+    optional: no
+    type: string
+    placeholder: "rest, task"
+    description: >
+      Comma-separated list of BOLD runs to include in the list. The runs can be specified using their numbers (e.g., `1,2,3`)
+      or tags (e.g., `rest, task`). If a number is provided, it corresponds to the run index, for instance `bold1` for `1`
+      (see also the `boldname` parameter), if a string is provided, it should match the tag used in the batch file that
+      identifies the run. An example tag could be `rest` for resting-state runs or `task` for task-based runs.
+      If not specified, all BOLD runs found within each session will be included.
+
+  boldname:
+    optional: yes
+    type: string
+    default: "bold"
+    placeholder: "bold"
+    description: >
+      In QuNex, fMRI images are typically named as `bold[N]`, where `[N]` is a number indicating the run index. If the
+      functional images in your study use a different naming convention, specify the name that is used to identify them.
+      For example, if the images are named `func1`, `func2`, etc., set `boldname` to `func`.
+
+  bold_tail:
+    optional: yes
+    type: string
+    default: ".nii.gz"
+    placeholder: ".nii.gz"
+    description: >
+      Usually, multiple different versions of the same bold file exist in the `images/functional` folder. They can differ
+      in terms of the format (e.g., NIFTI vs CIFTI) or the preprocessing steps that have been applied (e.g., raw vs
+      preprocessed). To specify which version should be included in the list file, provide the file extension (tail)
+      that identifies the desired files. For example, to include preprocessed dense cifti files, you may use the tail
+      `_Atlas_s_res-mVWMWBd1.dtseries.nii`. If not specified, the default tail `.nii.gz` will be used.
+
+  conc:
+    optional: no
+    type: string
+    default: ""
+    description: >
+      When specified, the command will look for the specified conc file and include it in the list file for each session.
+      The conc file is expected to be located in the `images/functional/conc` folder within each session folder. The
+      specification should include the full file name. For instance `bold_CANP_ptseries_axcpt.conc` would be included in
+      the list file as:
+      ```    conc: <sessionsfolder>/<session>/images<img_suffix>/functional<bold_variant>/conc/bold_CANP_ptseries_axcpt.conc
+      ```
+      If not specified, no conc files will be included in the list file.
+
+  fidl:
+    optional: no
+    type: string
+    default: ""
+    description: >
+      When specified, the command will look for the specified fidl file and include it in the list file for each session.
+      The fidl file is expected to be located in the `images/functional/events` folder within each session folder. The
+      specification should include the full file name. For instance `axcpt.fidl` would be included in
+      the list file as:
+      ```    fidl: <sessionsfolder>/<session>/images<img_suffix>/functional<bold_variant>/events/axcpt.fidl
+      ```
+      If not specified, no fidl files will be included in the list file.
+
+  glm:
+    optional: no
+    type: string
+    default: ""
+    description: >
+      When specified, the command will look for the specified glm file and include it in the list file for each session.
+      The glm file is expected to be located in the `images/functional` folder within each session folder. The
+      specification should include the full file name. For instance `bold_Atlas_conc_axcpt_res-e_v1_Bcoeff.dscalar.nii`
+      would be included in the list file as:
+      ```    glm: <sessionsfolder>/<session>/images<img_suffix>/functional<bold_variant>/bold_Atlas_conc_axcpt_res-e_v1_Bcoeff.dscalar.nii
+      ```
+      If not specified, no glm files will be included in the list file.
+
+  roi:
+    optional: no
+    type: string
+    default: ""
+    description: >
+      When specified, the command will look for the specified roi file and include it in the list file for each session.
+      The roi file is expected to be located under the `images` folder within each session folder. The
+      specification should include the full path from within the images folder name. For instance
+      `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz` would be included in the list file as:
+      ```    roi: <sessionsfolder>/<session>/images<img_suffix>/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
+      ```
+      If not specified, no roi files will be included in the list file.
+
+Output specification:
+  description: >
+    Define the location of the generated list file and additional processing parameters.
+
+  listfile:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "/mystudy/processing/mylist.list"
+    description: >
+      Full path (including filename) for the generated list file.
+      If not specified, the list file will be created in the `processing` folder within the study folder with the
+      default name `sessions.list`:
+      ```<studyfolder>/processing/lists/sessions.list```
+
+  overwrite:
+    optional: yes
+    type: options
+    options: "yes,no,append"
+    default: "no"
+    description: |
+      Specifies whether to overwrite an existing list file, append to it, or not overwrite it.
+
+      * `yes`: Overwrite any existing list file at the specified location.
+      * `no`: Do not overwrite an existing list file; if it exists, the command will exit with an error.
+      * `append`: Append new entries to the existing list file if it exists; otherwise, create a new file.
+
+  check:
+    optional: yes
+    type: options
+    options: "yes,no,warn,present"
+    default: "yes"
+    description: |
+      Specifies whether to check for the existence of the specified files for each session before including them in the list file.
+
+      * `yes`: Verify that each specified file exists in the corresponding session folder. If a file is missing, abort processing and report an error.
+      * `no`: Do not check for file existence; include all specified sessions and files in the list file regardless of whether the files actually exist.
+      * `warn`: Check for file existence, but only issue a warning if files are missing; still include the sessions and the specified files in the list file.
+      * `present`: Do check for presence of the specified files. Only include sessions in the list file if all specified files exist; skip sessions with missing files without issuing an error.

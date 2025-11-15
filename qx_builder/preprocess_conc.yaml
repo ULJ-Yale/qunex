@@ -1,0 +1,105 @@
+# QuNex preprocess_conc Command Specification
+
+Description: |
+  The `preprocess_conc` command concatenates and preprocesses BOLD timeseries data.
+
+  This command performs the following operations:
+
+  - **Concatenation**: Combines multiple BOLD runs into a single timeseries
+  - **Spatial smoothing**: Applies Gaussian smoothing to the data
+  - **High-pass filtering**: Removes low-frequency drift
+  - **Regression**: Removes confounds (motion, physiological noise, etc.)
+  - **Low-pass filtering**: Optional temporal filtering
+
+  The command can process both volumetric (NIFTI) and surface-based (CIFTI) data, and supports task-based fMRI with event files.
+
+Source specification:
+  description: |
+    Specify locations for sessions and logs used by multiple commands. These parameters define the **workspace structure** and enable batch processing across multiple sessions.
+
+  sessionsfolder:
+    optional: no
+    type: string
+    default: "."
+    placeholder: "/path/to/study/sessions"
+    description: "Study sessions folder containing QuNex session subfolders."
+
+  batchfile:
+    optional: no
+    type: string
+    default: "none"
+    placeholder: "/path/to/batch.txt"
+    description: "Batch file with session metadata (enables tagging & filtering)."
+
+  logfolder:
+    optional: yes
+    type: string
+    default: "auto-deduced"
+    placeholder: "/path/to/logs"
+    description: "Destination for run_recipe and command logs (auto-deduced if blank)."
+
+Input specification:
+  description: |
+    Configure input data locations and naming conventions for BOLD images. These parameters control how the command identifies and accesses your **neuroimaging data**.
+
+  boldname:
+    optional: no
+    type: string
+    default: "bold"
+    placeholder: "bold"
+    description: "The name of the BOLD folder containing the BOLD images. Should match the BOLD folder name in your sessions structure."
+
+  image_target:
+    optional: no
+    type: options
+    options: "frame,volume"
+    default: "frame"
+    description: |
+      Specifies whether to target **frames** (CIFTI) or **volumes** (NIFTI) for processing:
+
+      * `frame` - Surface-based analysis using CIFTI format
+      * `volume` - Volumetric analysis using NIFTI format
+
+  bolds:
+    optional: yes
+    type: string
+    placeholder: "rest1,rest2,task1"
+    description: "Comma-separated list of BOLD run names to process (e.g., \"rest1,rest2,task1\"). If not specified, all BOLD runs will be processed."
+
+  event_file:
+    optional: yes
+    type: string
+    placeholder: "/path/to/events.txt"
+    description: "Path to an event file for task-based fMRI processing. Defines timing and conditions for task events."
+
+  nifti_tail:
+    optional: no
+    type: string
+    default: ".nii.gz"
+    placeholder: ".nii.gz"
+    description: "File extension for NIFTI files (e.g., \".nii.gz\" or \".nii\")."
+
+  cifti_tail:
+    optional: no
+    type: string
+    default: ".dtseries.nii"
+    placeholder: ".dtseries.nii"
+    description: "File extension for CIFTI files (e.g., \".dtseries.nii\")."
+
+  bold_prefix:
+    optional: yes
+    type: string
+    placeholder: ""
+    description: "Prefix to prepend to BOLD image filenames when searching for input files."
+
+  bold_variant:
+    optional: yes
+    type: string
+    placeholder: ""
+    description: "BOLD variant suffix to use when searching for input files (e.g., \"_Atlas\", \"_smoothed\")."
+
+  img_suffix:
+    optional: yes
+    type: string
+    placeholder: ""
+    description: "Additional suffix to append to image filenames when searching for input files."

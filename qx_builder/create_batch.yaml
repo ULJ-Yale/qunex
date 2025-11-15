@@ -1,0 +1,79 @@
+Description: |
+  The command combines all the specified individual session information file across the session folders into a single
+  batch file. This batch file can then be used to run commands in batch mode across multiple sessions. At the start of
+  the bacth file it includes a header section that sets the global parameters for the batch processing.
+
+Parameters:
+
+  sessionsfolder:
+    optional: no
+    type: string
+    default: "."
+    placeholder: "/path/to/study/sessions"
+    description: "Study sessions folder containing QuNex session subfolders."
+
+  sourcefiles:
+    optional: yes
+    type: string
+    default: "session_hcp.txt"
+    placeholder: "session_hcp.txt"
+    description: >
+      For each session, the command looks for the session information in the specified source file located within the
+      session folder. This file should contain metadata about the session, such as subject ID, description of scans, and
+      any tags associated with the session. The default source file is `session_hcp.txt`.
+
+  targetfile:
+    optional: yes
+    type: string
+    default: "<study folder>/processing/batch.txt"
+    placeholder: "/path/to/batch.txt"
+    description: |
+      Path to the batch file to be created and populated with session metadata. If not specified, the command
+      creates the batch file at `<study folder>/processing/batch.txt`. This batch file will contain entries for each session
+      found in the sessions folder, along with their associated metadata from the source files.
+
+  sessions:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "s001, s002"
+    description: |
+      By default, the command processes all session folders found within the specified sessions folder. However,
+      you can limit the processing to a specific subset of sessions by providing a comma-separated list of
+      session IDs here (e.g., `s001, s002`). Glob patterns (e.g., `s*` to include all sessions starting with 's') are
+      also supported.
+
+  filter:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "<key>:<value>"
+    description: |
+      Optionally, you can filter sessions based on specific tags included in the individual session files. For instance,
+      if you want to include only sessions from a control group, you can specify a filter like `group:control`. This will
+      ensure that only sessions with the specified key-value pair in their metadata are included in the generated batch file.
+
+  overwrite:
+    optional: yes
+    type: options
+    options: "yes,no,append"
+    default: "yes"
+    description: |
+      Specifies the behavior if the target batch file already exists:
+
+      * `yes` - Overwrite the existing batch file with the new content.
+      * `no` - Do not modify the existing batch file; leave it unchanged.
+      * `append` - Add new session entries to the end of the existing batch file without removing existing content.
+
+  paramfile:
+    optional: yes
+    type: string
+    default: "<sessionsfolder>/specs/parameters.txt"
+    placeholder: "/path/to/params.txt"
+    description: |
+      If you have prepared a parameter file with global parameters to be applied to all sessions in the batch,
+      you can specify its path here. The command will include these parameters at the start of the batch file.
+      If not specified, the command will add the content of `<sessionsfolder>/specs/parameters.txt`. By default,
+      this file lists most of the available parameters with common parameters used in HCP-style processing. All the
+      parameters in the default file are commented out, so that the user has to enable the parameters that are valid
+      for the study and the specific batch file.

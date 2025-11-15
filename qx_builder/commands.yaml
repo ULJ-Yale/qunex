@@ -1,0 +1,16 @@
+# QuNex Commands Registry
+# This file lists all available commands with their descriptions
+
+commands:
+
+  create_study:
+    description: "Create the base study folder structure."
+
+  create_batch:
+    description: "Create a batch file with session metadata."
+
+  create_list:
+    description: "Create a list of sessions and related files."
+
+  preprocess_conc:
+    description: "Preprocess concatenated fMRI data."

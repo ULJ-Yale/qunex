@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>QuNex Command Builder</title>
+	<style>
+		:root {
+			--bg: #1e1e1e;
+			--bg-lighter: #252526;
+			--bg-card: #2d2d30;
+			--border: #3e3e42;
+			--text: #cccccc;
+			--text-dim: #858585;
+			--accent: #569cd6;
+			--accent-2: #4ec9b0;
+			--muted: #858585;
+			--danger: #f48771;
+			--optional-blue: #569cd6;
+		}
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+			background: var(--bg);
+			color: var(--text);
+			line-height: 1.6;
+			padding: 2rem;
+		}
+		.container {
+			max-width: 1400px;
+			margin: 0 auto;
+		}
+		h1 {
+			font-size: 2rem;
+			margin-bottom: 0.5rem;
+			color: var(--accent);
+		}
+		.command-name-display {
+			font-size: 1.5rem;
+			font-weight: 600;
+			color: #d16969;
+			margin-bottom: 0.5rem;
+			font-family: 'Consolas', 'Monaco', monospace;
+		}
+		.subtitle {
+			color: var(--text-dim);
+			margin-bottom: 2rem;
+		}
+		.card {
+			background: var(--bg-card);
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			padding: 1.5rem;
+			margin-bottom: 1.5rem;
+		}
+		.section-title {
+			font-size: 1.25rem;
+			margin-bottom: 0.5rem;
+			color: var(--accent-2);
+		}
+		.help {
+			color: var(--text-dim);
+			font-size: 0.9rem;
+			margin-bottom: 1rem;
+		}
+
+		/* Markdown content styles */
+		.markdown-content {
+			color: var(--text);
+			line-height: 1.7;
+		}
+		.markdown-content p {
+			margin-bottom: 1rem;
+		}
+		.markdown-content h1, .markdown-content h2, .markdown-content h3,
+		.markdown-content h4, .markdown-content h5, .markdown-content h6 {
+			margin-top: 1.5rem;
+			margin-bottom: 0.75rem;
+			color: var(--accent-2);
+		}
+		.markdown-content h1 { font-size: 1.5rem; }
+		.markdown-content h2 { font-size: 1.3rem; }
+		.markdown-content h3 { font-size: 1.1rem; }
+		.markdown-content ul, .markdown-content ol {
+			margin-left: 1.5rem;
+			margin-bottom: 1rem;
+		}
+		.markdown-content li {
+			margin-bottom: 0.25rem;
+		}
+		.markdown-content code {
+			background: var(--bg-lighter);
+			padding: 0.15rem 0.4rem;
+			border-radius: 3px;
+			font-family: 'Consolas', 'Monaco', monospace;
+			font-size: 0.9em;
+			color: var(--accent);
+		}
+		.markdown-content pre {
+			background: var(--bg);
+			padding: 1rem;
+			border-radius: 4px;
+			border: 1px solid var(--border);
+			overflow-x: auto;
+			margin-bottom: 1rem;
+		}
+		.markdown-content pre code {
+			background: none;
+			padding: 0;
+			color: var(--text);
+		}
+		.markdown-content strong {
+			color: var(--accent-2);
+			font-weight: 600;
+		}
+		.markdown-content em {
+			font-style: italic;
+			color: var(--text);
+		}
+		.markdown-content a {
+			color: var(--accent);
+			text-decoration: none;
+		}
+		.markdown-content a:hover {
+			text-decoration: underline;
+		}
+		.markdown-content blockquote {
+			border-left: 3px solid var(--accent);
+			padding-left: 1rem;
+			margin-left: 0;
+			margin-bottom: 1rem;
+			color: var(--text-dim);
+		}
+
+		/* Command selector */
+		.command-selector {
+			margin-bottom: 2rem;
+		}
+		.command-selector label {
+			display: block;
+			margin-bottom: 0.5rem;
+			font-weight: 500;
+		}
+		.command-selector select {
+			width: 100%;
+			max-width: 800px;
+			padding: 0.75rem;
+			background: var(--bg-lighter);
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			color: var(--text);
+			font-size: 0.9rem;
+		}
+
+		/* Parameter blocks */
+		.param-block {
+			margin-bottom: 1.25rem;
+		}
+		.param-header {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin-bottom: 0.4rem;
+			flex-wrap: wrap;
+		}
+		.param-name {
+			font-weight: 600;
+			color: var(--accent-2);
+		}
+		.param-name.optional {
+			color: var(--optional-blue);
+		}
+		.param-badge {
+			font-size: 0.75rem;
+			padding: 0.15rem 0.4rem;
+			background: var(--bg-lighter);
+			border: 1px solid var(--border);
+			border-radius: 3px;
+			color: var(--text-dim);
+		}
+		.param-badge.optional-badge {
+			background: var(--bg);
+			color: var(--optional-blue);
+		}
+		.param-desc {
+			color: var(--text-dim);
+			font-size: 0.9rem;
+			margin-bottom: 0.5rem;
+		}
+		.param-desc.markdown-content p:first-child {
+			margin-top: 0;
+		}
+		.param-desc.markdown-content p:last-child {
+			margin-bottom: 0.5rem;
+		}
+		.param-desc.markdown-content ul,
+		.param-desc.markdown-content ol {
+			margin-top: 0.5rem;
+			margin-bottom: 0.5rem;
+		}
+
+		/* Input fields */
+		.path-input, select {
+			width: 100%;
+			padding: 0.5rem 0.75rem;
+			background: var(--bg-lighter);
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			color: var(--text);
+			font-family: 'Consolas', 'Monaco', monospace;
+			font-size: 0.9rem;
+		}
+		.path-input:focus, select:focus {
+			outline: none;
+			border-color: var(--accent);
+		}
+		input[type="number"] {
+			width: 100%;
+			padding: 0.5rem 0.75rem;
+			background: var(--bg-lighter);
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			color: var(--text);
+			font-family: 'Consolas', 'Monaco', monospace;
+			font-size: 0.9rem;
+		}
+
+		/* Radio buttons */
+		.radio-group {
+			display: flex;
+			gap: 1.5rem;
+			margin-bottom: 1rem;
+		}
+		.radio-label {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			cursor: pointer;
+		}
+		input[type="radio"] {
+			cursor: pointer;
+		}
+
+		/* Container config */
+		#container-config {
+			margin-top: 1rem;
+			padding: 1rem;
+			background: var(--bg-lighter);
+			border-radius: 4px;
+		}
+		.bind-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr auto;
+			gap: 0.5rem;
+			margin-bottom: 0.5rem;
+		}
+		.btn-ghost {
+			background: transparent;
+			border: 1px solid var(--border);
+			color: var(--text);
+			padding: 0.5rem 1rem;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 0.9rem;
+		}
+		.btn-ghost:hover {
+			background: var(--bg);
+		}
+		.btn-danger {
+			color: var(--danger);
+			border-color: var(--danger);
+		}
+		.btn-primary {
+			background: var(--accent);
+			border: none;
+			color: white;
+			padding: 0.5rem 1rem;
+			border-radius: 4px;
+			cursor: pointer;
+			margin-top: 0.5rem;
+		}
+
+		/* Code output */
+		.code-card {
+			background: var(--bg-lighter);
+		}
+		.code-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 1rem;
+			padding-bottom: 0.5rem;
+			border-bottom: 1px solid var(--border);
+		}
+		.code-title {
+			font-weight: 600;
+			color: var(--accent);
+		}
+		.copy-btn {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			background: transparent;
+			border: 1px solid var(--border);
+			color: var(--text);
+			padding: 0.4rem 0.8rem;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 0.85rem;
+		}
+		.copy-btn:hover {
+			background: var(--bg);
+		}
+		.copy-badge {
+			display: inline-block;
+			margin-left: 0.5rem;
+			padding: 0.2rem 0.5rem;
+			background: #4ec9b0;
+			color: #1e1e1e;
+			border-radius: 3px;
+			font-size: 0.75rem;
+			font-weight: 600;
+			opacity: 0;
+			transition: opacity 0.2s;
+		}
+		.copy-badge.show {
+			opacity: 1;
+		}
+		pre {
+			overflow-x: auto;
+			background: var(--bg);
+			padding: 1rem;
+			border-radius: 4px;
+			border: 1px solid var(--border);
+		}
+		code {
+			font-family: 'Consolas', 'Monaco', monospace;
+			font-size: 0.9rem;
+			line-height: 1.5;
+		}
+
+		/* Syntax highlighting */
+		.bash .cmd { color: #dcdcaa; }
+		.bash .param { color: #9cdcfe; }
+		.bash .str { color: #ce9178; }
+		.bash .op { color: #d4d4d4; }
+		.yaml .key { color: #9cdcfe; }
+		.yaml .str { color: #ce9178; }
+		.yaml .bool { color: #569cd6; }
+		.yaml .null { color: #569cd6; }
+
+		/* Loading state */
+		.loading {
+			text-align: center;
+			padding: 2rem;
+			color: var(--text-dim);
+		}
+		.error {
+			background: #5a1d1d;
+			border: 1px solid #f48771;
+			color: #f48771;
+			padding: 1rem;
+			border-radius: 4px;
+			margin-bottom: 1rem;
+		}
+
+		/* Hidden by default */
+		.hidden {
+			display: none !important;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>QuNex Command Builder</h1>
+		<p class="subtitle">Interactive tool to construct QuNex commands and recipe files</p>
+
+		<!-- Command Selector -->
+		<div class="card command-selector">
+			<label for="command-select">Select a command:</label>
+			<select id="command-select">
+				<option value="">-- Choose a command --</option>
+			</select>
+		</div>
+
+		<!-- Command Name Display -->
+		<div id="command-name-display" class="command-name-display hidden"></div>
+
+		<!-- Error message -->
+		<div id="error-message" class="error hidden"></div>
+
+		<!-- Loading indicator -->
+		<div id="loading" class="loading hidden">Loading command specification...</div>
+
+		<!-- Main content (hidden until command is selected) -->
+		<div id="main-content" class="hidden">
+
+			<!-- Description section (dynamically populated if present in YAML) -->
+			<div id="description-section"></div>
+
+			<!-- Running the command -->
+			<section class="card">
+				<h2 class="section-title">Running the command</h2>
+				<p class="help">Choose how to run the command: directly on the host system or inside a container.</p>
+
+				<div class="radio-group">
+					<label class="radio-label">
+						<input type="radio" name="mode" value="direct" checked />
+						<span>Direct execution (qunex)</span>
+					</label>
+					<label class="radio-label">
+						<input type="radio" name="mode" value="container" />
+						<span>Container execution (qunex_container)</span>
+					</label>
+				</div>
+
+				<div id="container-config" style="display: none;">
+					<div class="param-block">
+						<div class="param-header">
+							<span class="param-name">Container path</span>
+						</div>
+						<input id="containerPath" class="path-input" type="text" placeholder="/path/to/container.sif" />
+					</div>
+
+					<div class="param-block">
+						<div class="param-header">
+							<span class="param-name">Filesystem bindings</span>
+						</div>
+						<div class="param-desc">Map host directories to container paths (host:container)</div>
+						<div id="bind-rows"></div>
+						<button id="addBindBtn" class="btn-primary">Add binding</button>
+					</div>
+				</div>
+			</section>
+
+			<!-- Dynamic sections will be inserted here -->
+			<div id="dynamic-sections"></div>
+
+			<!-- CLI Command Output -->
+			<section class="card code-card">
+				<div class="code-header">
+					<div class="code-title">CLI command (bash)</div>
+					<div>
+						<button id="copyCmd" class="copy-btn" type="button" aria-label="Copy command">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<rect x="9" y="9" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+								<rect x="3" y="3" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+							</svg>
+							Copy
+						</button>
+						<span id="copiedCmd" class="copy-badge">Copied</span>
+					</div>
+				</div>
+				<pre><code id="commandOut" class="bash"></code></pre>
+			</section>
+
+			<!-- Recipe YAML Output -->
+			<section class="card code-card">
+				<div class="code-header">
+					<div class="code-title">Recipe file (YAML for run_recipe)</div>
+					<div>
+						<button id="copyYaml" class="copy-btn" type="button" aria-label="Copy YAML">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<rect x="9" y="9" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+								<rect x="3" y="3" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+							</svg>
+							Copy
+						</button>
+						<span id="copiedYaml" class="copy-badge">Copied</span>
+					</div>
+				</div>
+				<pre><code id="yamlOut" class="yaml"></code></pre>
+			</section>
+
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+	<script>
+		// Configure marked for better rendering
+		marked.setOptions({
+			breaks: false,  // Only create <br> for lines ending with two spaces (standard markdown)
+			gfm: true
+		});
+
+		// --- Global State ---
+		const state = {
+			mode: 'direct',
+			containerPath: '',
+			binds: [],
+			currentCommand: '',
+			commandSpec: null,
+			params: {}
+		};
+
+		// --- DOM References ---
+		const commandSelect = document.getElementById('command-select');
+		const errorMessage = document.getElementById('error-message');
+		const loading = document.getElementById('loading');
+		const mainContent = document.getElementById('main-content');
+		const descriptionSection = document.getElementById('description-section');
+		const containerConfig = document.getElementById('container-config');
+		const containerPathInput = document.getElementById('containerPath');
+		const bindRows = document.getElementById('bind-rows');
+		const addBindBtn = document.getElementById('addBindBtn');
+		const dynamicSections = document.getElementById('dynamic-sections');
+		const commandOut = document.getElementById('commandOut');
+		const yamlOut = document.getElementById('yamlOut');
+		const copyCmdBtn = document.getElementById('copyCmd');
+		const copyYamlBtn = document.getElementById('copyYaml');
+		const copiedCmdBadge = document.getElementById('copiedCmd');
+		const copiedYamlBadge = document.getElementById('copiedYaml');
+
+		// --- Utilities ---
+		const escapeHtml = (s) => s
+			.replaceAll('&', '&amp;')
+			.replaceAll('<', '&lt;')
+			.replaceAll('>', '&gt;');
+
+		function showError(message) {
+			errorMessage.textContent = message;
+			errorMessage.classList.remove('hidden');
+		}
+
+		function hideError() {
+			errorMessage.classList.add('hidden');
+		}
+
+		// --- Load commands.yaml ---
+		async function loadCommands() {
+			try {
+				const response = await fetch('commands.yaml');
+				if (!response.ok) throw new Error('Failed to load commands.yaml');
+				const text = await response.text();
+				const data = jsyaml.load(text);
+
+				// Populate command select
+				for (const [cmdName, cmdInfo] of Object.entries(data.commands)) {
+					const option = document.createElement('option');
+					option.value = cmdName;
+					option.textContent = `${cmdName} - ${cmdInfo.description}`;
+					commandSelect.appendChild(option);
+				}
+			} catch (error) {
+				showError(`Error loading commands: ${error.message}`);
+			}
+		}
+
+		// --- Load command specification ---
+		async function loadCommandSpec(commandName) {
+			loading.classList.remove('hidden');
+			mainContent.classList.add('hidden');
+			hideError();
+
+			// Show command name
+			const commandNameDisplay = document.getElementById('command-name-display');
+			commandNameDisplay.textContent = commandName;
+			commandNameDisplay.classList.remove('hidden');
+
+			try {
+				const response = await fetch(`${commandName}.yaml`);
+				if (!response.ok) throw new Error(`Failed to load ${commandName}.yaml`);
+				const text = await response.text();
+				const spec = jsyaml.load(text);
+
+				state.currentCommand = commandName;
+				state.commandSpec = spec;
+				state.params = {};
+
+				// Build UI
+				buildDynamicSections(spec);
+				mainContent.classList.remove('hidden');
+				render();
+			} catch (error) {
+				showError(`Error loading command specification: ${error.message}`);
+			} finally {
+				loading.classList.add('hidden');
+			}
+		}
+
+		// --- Build dynamic parameter sections ---
+		function buildDynamicSections(spec) {
+			// Clear both description and dynamic sections
+			descriptionSection.innerHTML = '';
+			dynamicSections.innerHTML = '';
+
+			for (const [sectionName, content] of Object.entries(spec)) {
+				// Check if this is the Description section (string content)
+				if (sectionName === 'Description' && typeof content === 'string') {
+					// Add Description to the dedicated section BEFORE "Running the command"
+					const section = document.createElement('section');
+					section.className = 'card';
+
+					const title = document.createElement('h2');
+					title.className = 'section-title';
+					title.textContent = sectionName;
+					section.appendChild(title);
+
+					const descDiv = document.createElement('div');
+					descDiv.className = 'markdown-content';
+					descDiv.innerHTML = marked.parse(content);
+					section.appendChild(descDiv);
+
+					descriptionSection.appendChild(section);
+				} else {
+					// Regular parameter section (object with parameters)
+					const section = document.createElement('section');
+					section.className = 'card';
+
+					const title = document.createElement('h2');
+					title.className = 'section-title';
+					title.textContent = sectionName;
+					section.appendChild(title);
+
+					// Check if section has a description field
+					if (content.description && typeof content.description === 'string') {
+						const sectionDesc = document.createElement('div');
+						sectionDesc.className = 'markdown-content help';
+						sectionDesc.innerHTML = marked.parse(content.description);
+						section.appendChild(sectionDesc);
+					}
+
+					for (const [paramName, paramSpec] of Object.entries(content)) {
+						// Skip the description field as it's not a parameter
+						if (paramName === 'description') continue;
+
+						const paramBlock = createParameterBlock(paramName, paramSpec);
+						section.appendChild(paramBlock);
+
+						// Initialize state
+						if (!state.params[paramName]) {
+							state.params[paramName] = '';
+						}
+					}
+
+					dynamicSections.appendChild(section);
+				}
+			}
+		}
+
+		// --- Create parameter input block ---
+		function createParameterBlock(paramName, spec) {
+			const block = document.createElement('div');
+			block.className = 'param-block';
+
+			// Header
+			const header = document.createElement('div');
+			header.className = 'param-header';
+
+			const name = document.createElement('span');
+			name.className = spec.optional === 'yes' ? 'param-name optional' : 'param-name';
+			name.textContent = paramName;
+			header.appendChild(name);
+
+			if (spec.optional === 'yes') {
+				const optBadge = document.createElement('span');
+				optBadge.className = 'param-badge optional-badge';
+				optBadge.textContent = 'optional';
+				header.appendChild(optBadge);
+			}
+
+			const typeBadge = document.createElement('span');
+			typeBadge.className = 'param-badge';
+			if (spec.type === 'options') {
+				typeBadge.textContent = `options: ${spec.options.split(',').join(' | ')}`;
+			} else {
+				typeBadge.textContent = spec.type;
+			}
+			header.appendChild(typeBadge);
+
+			if (spec.default) {
+				const defaultBadge = document.createElement('span');
+				defaultBadge.className = 'param-badge';
+				defaultBadge.textContent = `default: ${spec.default}`;
+				header.appendChild(defaultBadge);
+			}
+
+			block.appendChild(header);
+
+			// Description - render as full markdown (supports lists, paragraphs, etc.)
+			const desc = document.createElement('div');
+			desc.className = 'param-desc markdown-content';
+			desc.innerHTML = marked.parse(spec.description);
+			block.appendChild(desc);
+
+			// Input field
+			let input;
+			if (spec.type === 'options') {
+				input = document.createElement('select');
+				input.className = 'path-input';
+				input.id = paramName;
+
+				const defaultOption = document.createElement('option');
+				defaultOption.value = '';
+				defaultOption.textContent = spec.default ? `Use default (${spec.default})` : '-- Select --';
+				input.appendChild(defaultOption);
+
+				for (const option of spec.options.split(',')) {
+					const opt = document.createElement('option');
+					opt.value = option.trim();
+					opt.textContent = option.trim();
+					input.appendChild(opt);
+				}
+
+				input.addEventListener('change', e => {
+					state.params[paramName] = e.target.value;
+					render();
+				});
+			} else if (spec.type === 'number') {
+				input = document.createElement('input');
+				input.type = 'number';
+				input.id = paramName;
+				input.placeholder = spec.placeholder || '';
+
+				input.addEventListener('input', e => {
+					state.params[paramName] = e.target.value;
+					render();
+				});
+			} else {
+				// string type
+				input = document.createElement('input');
+				input.type = 'text';
+				input.className = 'path-input';
+				input.id = paramName;
+				input.placeholder = spec.placeholder || '';
+
+				input.addEventListener('input', e => {
+					state.params[paramName] = e.target.value;
+					render();
+				});
+			}
+
+			block.appendChild(input);
+			return block;
+		}
+
+		// --- Bind rows management ---
+		function addBindRow(data = { host: '', cont: '' }) {
+			state.binds.push({ host: data.host || '', cont: data.cont || '' });
+			const idx = state.binds.length - 1;
+
+			const row = document.createElement('div');
+			row.className = 'bind-row';
+			row.dataset.index = String(idx);
+
+			const host = document.createElement('input');
+			host.className = 'path-input';
+			host.placeholder = '/path/on/host';
+			host.value = data.host || '';
+			host.addEventListener('input', (e) => { state.binds[idx].host = e.target.value; render(); });
+
+			const cont = document.createElement('input');
+			cont.className = 'path-input';
+			cont.placeholder = '/path/in/container';
+			cont.value = data.cont || '';
+			cont.addEventListener('input', (e) => { state.binds[idx].cont = e.target.value; render(); });
+
+			const del = document.createElement('button');
+			del.className = 'btn-ghost btn-danger';
+			del.textContent = 'Remove';
+			del.addEventListener('click', () => {
+				state.binds.splice(idx, 1);
+				rebuildBindRows();
+				render();
+			});
+
+			row.append(host, cont, del);
+			bindRows.appendChild(row);
+		}
+
+		function rebuildBindRows() {
+			bindRows.innerHTML = '';
+			const current = [...state.binds];
+			state.binds = [];
+			current.forEach(b => addBindRow(b));
+		}
+
+		// --- Build CLI Command ---
+		function buildCommand() {
+			if (!state.currentCommand) return '';
+
+			const cmdStart = state.mode === 'container' ? 'qunex_container' : 'qunex';
+			const params = [];
+
+			// Add all parameters from state (command parameters come first)
+			for (const [paramName, paramValue] of Object.entries(state.params)) {
+				if (paramValue && paramValue.trim()) {
+					params.push(`--${paramName}="${paramValue.trim()}"`);
+				}
+			}
+
+			// Container-specific parameters go LAST
+			if (state.mode === 'container') {
+				const pairs = state.binds
+					.filter(b => b.host?.trim() && b.cont?.trim())
+					.map(b => `${b.host.trim()}:${b.cont.trim()}`);
+				if (pairs.length > 0) {
+					params.push(`--bind=${pairs.join(',')}`);
+				}
+				const cpath = state.containerPath.trim() || '<path-to-container>';
+				params.push(`--container=${cpath}`);
+			}
+
+			// Format: qunex[_container] <command> \ on first line, then params
+			if (params.length === 0) {
+				return `${cmdStart} ${state.currentCommand}`;
+			}
+			const lines = [`${cmdStart} ${state.currentCommand} \\`];
+			params.forEach((p, i) => {
+				const isLast = i === params.length - 1;
+				lines.push(`  ${p}${isLast ? '' : ' \\'}`);
+			});
+			return lines.join('\n');
+		}
+
+		// --- Build YAML Recipe ---
+		function buildYAML() {
+			if (!state.currentCommand) return '';
+
+			const lines = [];
+			lines.push('# QuNex run_recipe file generated by builder');
+			lines.push(`# Execute with: qunex run_recipe --recipe_file=<this file> --recipe=${state.currentCommand}`);
+
+			if (state.mode === 'container') {
+				lines.push('# NOTE: run_recipe invokes host qunex; to run in container start shell first or wrap manually.');
+				lines.push('# Container image: ' + (state.containerPath.trim() || '<path-to-container>'));
+				const bindPairs = state.binds
+					.filter(b => b.host?.trim() && b.cont?.trim())
+					.map(b => b.host.trim() + ':' + b.cont.trim());
+				if (bindPairs.length) {
+					lines.push('# Suggested binds: ' + bindPairs.join(','));
+				}
+			}
+
+			lines.push('');
+			lines.push('global_parameters:');
+			lines.push('  overwrite: "no"');
+
+			// Add global parameters if defined in spec
+			if (state.commandSpec) {
+				const sourceSpec = state.commandSpec['Source specification'];
+				if (sourceSpec) {
+					for (const [paramName, paramSpec] of Object.entries(sourceSpec)) {
+						const value = state.params[paramName];
+						if (value && value.trim()) {
+							lines.push(`  ${paramName}: "${value.trim()}"`);
+						} else {
+							lines.push(`  # ${paramName}: ${paramSpec.placeholder || '/path/to/value'}`);
+						}
+					}
+				}
+			}
+
+			lines.push('  # parsessions: 1');
+			lines.push('  # parelements: 1');
+			lines.push('');
+			lines.push('recipes:');
+			lines.push(`  ${state.currentCommand}:`);
+			lines.push('    commands:');
+			lines.push(`      - ${state.currentCommand}:`);
+
+			// Add command parameters (excluding source specification)
+			let hasParams = false;
+			if (state.commandSpec) {
+				for (const [sectionName, parameters] of Object.entries(state.commandSpec)) {
+					if (sectionName === 'Source specification') continue;
+
+					for (const [paramName, paramSpec] of Object.entries(parameters)) {
+						const value = state.params[paramName];
+						if (value && value.trim()) {
+							lines.push(`          ${paramName}: "${value.trim()}"`);
+							hasParams = true;
+						}
+					}
+				}
+			}
+
+			if (!hasParams) {
+				lines.push('          # Add parameters here');
+			}
+
+			return lines.join('\n');
+		}
+
+		// --- Syntax highlighting ---
+		function highlightBash(plain) {
+			const esc = escapeHtml(plain);
+			return esc
+				.replace(/("[^"]*")/g, '<span class="str">$1</span>')
+				.replace(/(\\\s*$)/gm, '<span class="op">$1</span>')
+				.replace(/\b(qunex_container|qunex)\b/g, '<span class="cmd">$1</span>')
+				.replace(/(--[\w\-]+)/g, '<span class="param">$1</span>');
+		}
+
+		function highlightYAML(plain) {
+			const esc = escapeHtml(plain);
+			return esc
+				.replace(/("[^"]*")/g, '<span class="str">$1</span>')
+				.replace(/('[^']*')/g, '<span class="str">$1</span>')
+				.replace(/(^|\n)([\s-]*)([a-zA-Z0-9_\-]+)(:)(\s)/g, (m, a, indent, key, colon, space) => {
+					return `${a}${indent}<span class="key">${key}</span>${colon}${space}`;
+				})
+				.replace(/\b(true|false)\b/g, '<span class="bool">$1</span>')
+				.replace(/\bnull\b/g, '<span class="null">null</span>');
+		}
+
+		// --- Render outputs ---
+		function render() {
+			if (!state.currentCommand) return;
+
+			// Toggle container config
+			containerConfig.style.display = state.mode === 'container' ? 'block' : 'none';
+
+			// Build and render command & YAML
+			const cmdText = buildCommand();
+			const yamlText = buildYAML();
+
+			commandOut.innerHTML = highlightBash(cmdText);
+			yamlOut.innerHTML = highlightYAML(yamlText);
+
+			commandOut.dataset.plain = cmdText;
+			yamlOut.dataset.plain = yamlText;
+		}
+
+		// --- Event Listeners ---
+		commandSelect.addEventListener('change', (e) => {
+			const commandNameDisplay = document.getElementById('command-name-display');
+			if (e.target.value) {
+				loadCommandSpec(e.target.value);
+			} else {
+				mainContent.classList.add('hidden');
+				commandNameDisplay.classList.add('hidden');
+			}
+		});
+
+		const modeRadios = Array.from(document.querySelectorAll('input[name="mode"]'));
+		modeRadios.forEach(r => r.addEventListener('change', (e) => {
+			state.mode = e.target.value;
+			if (state.mode === 'container' && state.binds.length === 0) {
+				addBindRow();
+			}
+			render();
+		}));
+
+		containerPathInput.addEventListener('input', (e) => {
+			state.containerPath = e.target.value;
+			render();
+		});
+
+		addBindBtn.addEventListener('click', () => {
+			addBindRow();
+			render();
+		});
+
+		// Copy buttons
+		function showCopied(badgeEl) {
+			badgeEl.classList.add('show');
+			setTimeout(() => badgeEl.classList.remove('show'), 1200);
+		}
+
+		// Fallback copy function for environments where clipboard API doesn't work
+		function copyToClipboard(text) {
+			// Try modern clipboard API first
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				return navigator.clipboard.writeText(text);
+			}
+
+			// Fallback to older method
+			return new Promise((resolve, reject) => {
+				const textarea = document.createElement('textarea');
+				textarea.value = text;
+				textarea.style.position = 'fixed';
+				textarea.style.opacity = '0';
+				document.body.appendChild(textarea);
+				textarea.select();
+				try {
+					const successful = document.execCommand('copy');
+					document.body.removeChild(textarea);
+					if (successful) {
+						resolve();
+					} else {
+						reject(new Error('Copy command failed'));
+					}
+				} catch (err) {
+					document.body.removeChild(textarea);
+					reject(err);
+				}
+			});
+		}
+
+		copyCmdBtn.addEventListener('click', async () => {
+			const txt = commandOut.dataset.plain || '';
+			if (!txt) {
+				alert('No command to copy. Please configure parameters first.');
+				return;
+			}
+			try {
+				await copyToClipboard(txt);
+				showCopied(copiedCmdBadge);
+			} catch (e) {
+				console.error('Copy failed:', e);
+				alert('Failed to copy to clipboard: ' + e.message);
+			}
+		});
+
+		copyYamlBtn.addEventListener('click', async () => {
+			const txt = yamlOut.dataset.plain || '';
+			if (!txt) {
+				alert('No YAML to copy. Please configure parameters first.');
+				return;
+			}
+			try {
+				await copyToClipboard(txt);
+				showCopied(copiedYamlBadge);
+			} catch (e) {
+				console.error('Copy failed:', e);
+				alert('Failed to copy to clipboard: ' + e.message);
+			}
+		});
+
+		// --- Initialize ---
+		loadCommands();
+	</script>
+</body>
+</html>
