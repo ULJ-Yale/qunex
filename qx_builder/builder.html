@@ -199,6 +199,63 @@
 			margin-bottom: 0.5rem;
 		}
 
+		/* Composite parameter styling */
+		.composite-kv-container {
+			border-left: 3px solid var(--accent-2);
+			padding-left: 1rem;
+			margin-top: 0.5rem;
+		}
+		.composite-kv-container.optional {
+			border-left-color: var(--optional-blue);
+		}
+		.composite-include-checkbox {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin-bottom: 0.75rem;
+		}
+		.composite-include-checkbox input[type="checkbox"] {
+			width: auto;
+		}
+		.composite-include-checkbox label {
+			cursor: pointer;
+			user-select: none;
+		}
+		.composite-item {
+			margin-bottom: 0.75rem;
+		}
+		.composite-item-header {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin-bottom: 0.4rem;
+			flex-wrap: wrap;
+		}
+		.composite-item-label {
+			font-size: 0.85rem;
+			font-weight: 500;
+			color: var(--text);
+		}
+		.composite-item-label.optional {
+			color: var(--optional-blue);
+		}
+		.composite-item-desc {
+			color: var(--text-dim);
+			font-size: 0.8rem;
+			margin-bottom: 0.4rem;
+			line-height: 1.4;
+		}
+		.composite-output {
+			margin-top: 1rem;
+			padding-top: 1rem;
+			border-top: 1px solid var(--border);
+		}
+		.composite-output-label {
+			font-size: 0.85rem;
+			color: var(--text-dim);
+			margin-bottom: 0.25rem;
+		}
+
 		/* Input fields */
 		.path-input, select {
 			width: 100%;
@@ -491,7 +548,8 @@
 			binds: [],
 			currentCommand: '',
 			commandSpec: null,
-			params: {}
+			params: {},
+			compositeParams: {} // Store composite parameter values: { paramName: { items: {}, included: bool, manualEdit: string } }
 		};
 
 		// --- DOM References ---
@@ -567,6 +625,7 @@
 				state.currentCommand = commandName;
 				state.commandSpec = spec;
 				state.params = {};
+				state.compositeParams = {};
 
 				// Build UI
 				buildDynamicSections(spec);
@@ -628,8 +687,8 @@
 						const paramBlock = createParameterBlock(paramName, paramSpec);
 						section.appendChild(paramBlock);
 
-						// Initialize state
-						if (!state.params[paramName]) {
+						// Initialize state (skip composite-kv as they have their own state)
+						if (paramSpec.type !== 'composite-kv' && !state.params[paramName]) {
 							state.params[paramName] = '';
 						}
 					}
@@ -669,7 +728,7 @@
 			}
 			header.appendChild(typeBadge);
 
-			if (spec.default) {
+			if (spec.default && spec.type !== 'composite-kv') {
 				const defaultBadge = document.createElement('span');
 				defaultBadge.className = 'param-badge';
 				defaultBadge.textContent = `default: ${spec.default}`;
@@ -684,7 +743,172 @@
 			desc.innerHTML = marked.parse(spec.description);
 			block.appendChild(desc);
 
-			// Input field
+			// Handle composite-kv type
+			if (spec.type === 'composite-kv') {
+				const container = document.createElement('div');
+				container.className = spec.optional === 'yes' ? 'composite-kv-container optional' : 'composite-kv-container';
+
+				// Initialize composite param state if not exists
+				if (!state.compositeParams[paramName]) {
+					state.compositeParams[paramName] = {
+						items: {},
+						included: spec.optional === 'no',
+						manualEdit: null
+					};
+				}
+
+				// Optional checkbox for "include"
+				if (spec.optional === 'yes') {
+					const checkboxDiv = document.createElement('div');
+					checkboxDiv.className = 'composite-include-checkbox';
+
+					const checkbox = document.createElement('input');
+					checkbox.type = 'checkbox';
+					checkbox.id = `${paramName}-include`;
+					checkbox.checked = state.compositeParams[paramName].included;
+					checkbox.addEventListener('change', e => {
+						state.compositeParams[paramName].included = e.target.checked;
+						render();
+					});
+
+					const label = document.createElement('label');
+					label.htmlFor = `${paramName}-include`;
+					label.textContent = 'Include this parameter';
+
+					checkboxDiv.appendChild(checkbox);
+					checkboxDiv.appendChild(label);
+					container.appendChild(checkboxDiv);
+				}
+
+				// Create inputs for each item
+				for (const [itemName, itemSpec] of Object.entries(spec.items)) {
+					const itemDiv = document.createElement('div');
+					itemDiv.className = 'composite-item';
+
+					// Item header with badges (similar to regular parameters)
+					const itemHeader = document.createElement('div');
+					itemHeader.className = 'composite-item-header';
+
+					const itemLabel = document.createElement('span');
+					itemLabel.className = itemSpec.optional === 'yes' ? 'composite-item-label optional' : 'composite-item-label';
+					itemLabel.textContent = itemName;
+					itemHeader.appendChild(itemLabel);
+
+					// Optional badge
+					if (itemSpec.optional === 'yes') {
+						const optBadge = document.createElement('span');
+						optBadge.className = 'param-badge optional-badge';
+						optBadge.textContent = 'optional';
+						itemHeader.appendChild(optBadge);
+					}
+
+					// Type badge
+					const typeBadge = document.createElement('span');
+					typeBadge.className = 'param-badge';
+					const itemType = itemSpec.type.replace(/^nokey-/, '');
+					if (itemType === 'options') {
+						typeBadge.textContent = `options: ${itemSpec.options.split(',').join(' | ')}`;
+					} else {
+						typeBadge.textContent = itemSpec.type; // Show full type including nokey- prefix if present
+					}
+					itemHeader.appendChild(typeBadge);
+
+					// Default badge
+					if (itemSpec.default) {
+						const defaultBadge = document.createElement('span');
+						defaultBadge.className = 'param-badge';
+						defaultBadge.textContent = `default: ${itemSpec.default}`;
+						itemHeader.appendChild(defaultBadge);
+					}
+
+					itemDiv.appendChild(itemHeader);
+
+					// Add item description if present
+					if (itemSpec.description) {
+						const itemDesc = document.createElement('div');
+						itemDesc.className = 'composite-item-desc markdown-content';
+						itemDesc.innerHTML = marked.parse(itemSpec.description);
+						itemDiv.appendChild(itemDesc);
+					}
+
+					let itemInput;
+					const itemTypeBase = itemSpec.type.replace(/^nokey-/, '');
+
+					if (itemTypeBase === 'options') {
+						itemInput = document.createElement('select');
+						itemInput.className = 'path-input';
+
+						const defaultOption = document.createElement('option');
+						defaultOption.value = '';
+						defaultOption.textContent = itemSpec.default ? `Use default (${itemSpec.default})` : '-- Select --';
+						itemInput.appendChild(defaultOption);
+
+						for (const option of itemSpec.options.split(',')) {
+							const opt = document.createElement('option');
+							opt.value = option.trim();
+							opt.textContent = option.trim();
+							itemInput.appendChild(opt);
+						}
+					} else if (itemTypeBase === 'number') {
+						itemInput = document.createElement('input');
+						itemInput.type = 'number';
+						itemInput.placeholder = itemSpec.placeholder || '';
+					} else {
+						itemInput = document.createElement('input');
+						itemInput.type = 'text';
+						itemInput.className = 'path-input';
+						itemInput.placeholder = itemSpec.placeholder || '';
+					}
+
+					itemInput.id = `${paramName}-${itemName}`;
+					itemInput.value = state.compositeParams[paramName].items[itemName] || '';
+					itemInput.addEventListener('input', e => {
+						state.compositeParams[paramName].items[itemName] = e.target.value;
+						state.compositeParams[paramName].manualEdit = null; // Clear manual edit when items change
+						updateCompositeOutput(paramName, spec);
+						render();
+					});
+					if (itemTypeBase === 'options') {
+						itemInput.addEventListener('change', e => {
+							state.compositeParams[paramName].items[itemName] = e.target.value;
+							state.compositeParams[paramName].manualEdit = null;
+							updateCompositeOutput(paramName, spec);
+							render();
+						});
+					}
+
+					itemDiv.appendChild(itemInput);
+					container.appendChild(itemDiv);
+				}
+
+				// Compiled output field
+				const outputDiv = document.createElement('div');
+				outputDiv.className = 'composite-output';
+
+				const outputLabel = document.createElement('div');
+				outputLabel.className = 'composite-output-label';
+				outputLabel.textContent = 'Compiled parameter value:';
+				outputDiv.appendChild(outputLabel);
+
+				const outputInput = document.createElement('input');
+				outputInput.type = 'text';
+				outputInput.className = 'path-input';
+				outputInput.id = `${paramName}-output`;
+				const compiledValue = buildCompositeValue(paramName, spec);
+				outputInput.value = compiledValue;
+				outputInput.placeholder = compiledValue || 'Will be generated based on items above';
+				outputInput.addEventListener('input', e => {
+					state.compositeParams[paramName].manualEdit = e.target.value;
+					render();
+				});
+				outputDiv.appendChild(outputInput);
+
+				container.appendChild(outputDiv);
+				block.appendChild(container);
+				return block;
+			}
+
+			// Input field for regular types
 			let input;
 			if (spec.type === 'options') {
 				input = document.createElement('select');
@@ -735,6 +959,51 @@
 			return block;
 		}
 
+		// Build composite parameter value from items
+		function buildCompositeValue(paramName, spec) {
+			const composite = state.compositeParams[paramName];
+			if (!composite || !composite.included) return '';
+
+			const parts = [];
+			for (const [itemName, itemSpec] of Object.entries(spec.items)) {
+				const value = composite.items[itemName];
+				const itemType = itemSpec.type;
+				const isNoKey = itemType.startsWith('nokey-');
+
+				// Determine if we should include this item
+				let shouldInclude = false;
+				let finalValue = value;
+
+				if (value && value.trim()) {
+					// User explicitly provided a value
+					shouldInclude = true;
+					finalValue = value.trim();
+				} else if (itemSpec.optional === 'no') {
+					// Required item - use default if available
+					shouldInclude = true;
+					finalValue = itemSpec.default || '';
+				}
+
+				if (shouldInclude && finalValue) {
+					if (isNoKey) {
+						parts.push(finalValue);
+					} else {
+						parts.push(`${itemName}${spec.assignment}${finalValue}`);
+					}
+				}
+			}
+
+			return parts.join(spec.separator);
+		}
+
+		// Update composite output field
+		function updateCompositeOutput(paramName, spec) {
+			const outputInput = document.getElementById(`${paramName}-output`);
+			if (outputInput && state.compositeParams[paramName].manualEdit === null) {
+				outputInput.value = buildCompositeValue(paramName, spec);
+			}
+		}
+
 		// --- Bind rows management ---
 		function addBindRow(data = { host: '', cont: '' }) {
 			state.binds.push({ host: data.host || '', cont: data.cont || '' });
@@ -783,10 +1052,20 @@
 			const cmdStart = state.mode === 'container' ? 'qunex_container' : 'qunex';
 			const params = [];
 
-			// Add all parameters from state (command parameters come first)
+			// Add all regular parameters from state
 			for (const [paramName, paramValue] of Object.entries(state.params)) {
 				if (paramValue && paramValue.trim()) {
 					params.push(`--${paramName}="${paramValue.trim()}"`);
+				}
+			}
+
+			// Add composite parameters
+			for (const [paramName, composite] of Object.entries(state.compositeParams)) {
+				if (composite.included) {
+					const value = composite.manualEdit !== null ? composite.manualEdit : getCompositeValueForParam(paramName);
+					if (value && value.trim()) {
+						params.push(`--${paramName}="${value.trim()}"`);
+					}
 				}
 			}
 
@@ -812,6 +1091,19 @@
 				lines.push(`  ${p}${isLast ? '' : ' \\'}`);
 			});
 			return lines.join('\n');
+		}
+
+		// Get composite parameter value for building command/YAML
+		function getCompositeValueForParam(paramName) {
+			if (!state.commandSpec) return '';
+
+			// Find the spec for this composite parameter
+			for (const [sectionName, parameters] of Object.entries(state.commandSpec)) {
+				if (typeof parameters === 'object' && parameters[paramName] && parameters[paramName].type === 'composite-kv') {
+					return buildCompositeValue(paramName, parameters[paramName]);
+				}
+			}
+			return '';
 		}
 
 		// --- Build YAML Recipe ---
@@ -864,13 +1156,29 @@
 			let hasParams = false;
 			if (state.commandSpec) {
 				for (const [sectionName, parameters] of Object.entries(state.commandSpec)) {
-					if (sectionName === 'Source specification') continue;
+					if (sectionName === 'Source specification' || sectionName === 'Description') continue;
+					if (typeof parameters !== 'object') continue;
 
 					for (const [paramName, paramSpec] of Object.entries(parameters)) {
-						const value = state.params[paramName];
-						if (value && value.trim()) {
-							lines.push(`          ${paramName}: "${value.trim()}"`);
-							hasParams = true;
+						if (typeof paramSpec !== 'object') continue;
+
+						// Handle composite-kv parameters
+						if (paramSpec.type === 'composite-kv') {
+							const composite = state.compositeParams[paramName];
+							if (composite && composite.included) {
+								const value = composite.manualEdit !== null ? composite.manualEdit : buildCompositeValue(paramName, paramSpec);
+								if (value && value.trim()) {
+									lines.push(`          ${paramName}: "${value.trim()}"`);
+									hasParams = true;
+								}
+							}
+						} else {
+							// Regular parameters
+							const value = state.params[paramName];
+							if (value && value.trim()) {
+								lines.push(`          ${paramName}: "${value.trim()}"`);
+								hasParams = true;
+							}
 						}
 					}
 				}

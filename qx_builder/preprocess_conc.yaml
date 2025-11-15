@@ -1,17 +1,13 @@
 # QuNex preprocess_conc Command Specification
 
 Description: |
-  The `preprocess_conc` command concatenates and preprocesses BOLD timeseries data.
+  The `preprocess_conc` command enables performing a set of preprocessing steps on concatenated fMRI data across multiple
+  runs for each session in a study. Specifically, the command can perform:
 
-  This command performs the following operations:
-
-  - **Concatenation**: Combines multiple BOLD runs into a single timeseries
-  - **Spatial smoothing**: Applies Gaussian smoothing to the data
-  - **High-pass filtering**: Removes low-frequency drift
-  - **Regression**: Removes confounds (motion, physiological noise, etc.)
-  - **Low-pass filtering**: Optional temporal filtering
-
-  The command can process both volumetric (NIFTI) and surface-based (CIFTI) data, and supports task-based fMRI with event files.
+  * spatial smoothing (volume and surface),
+  * temporal filtering (high-pass and low-pass),
+  * regression of nuisance variables (motion parameters, physiological noise, etc.),
+  * complex modeling of task events.
 
 Source specification:
   description: |
@@ -103,3 +99,204 @@ Input specification:
     type: string
     placeholder: ""
     description: "Additional suffix to append to image filenames when searching for input files."
+
+Movement scrubbing specification:
+  description: |
+    BOLD timeseries can include signal artefacts due to head motion. To mitigate the impact of these artifacts on data quality,
+    the `preprocess_conc` command supports motion scrubbing. The identification of frames to be scrubed is typically
+    performed before running this command, and the frames to be scrubbed are specified in a text file that is read
+    automatically when loading the bold file. When calling `preprocess_conc`, it is important to indicate, which frames
+    to consider as bad and what to do them in different phases of preprocessing.
+
+  mov_bad:
+    optional: yes
+    type: options
+    options: "mov,dvars,dvarsme,idvars,udvars,idvarsme,udvarsme"
+    default: "udvarsme"
+    description: |
+      Specifies which combination of criteria to use for identifying bad frames. The options are:
+
+      * `mov` - Use only motion criteria (e.g., framewise displacement)
+      * `dvars` - Use only signal intensity criteria (DVARS)
+      * `dvarsme` - Use only signal intensity criteria (DVARS) that has been normalised by the median across the timeseries.
+      * `idvars` - Use both motion and signal intensity criteria (intersection, logical AND)
+      * `udvars` - Use both motion and signal intensity criteria (union, logical OR)
+      * `idvarsme` - Use both motion and normalised signal intensity criteria (intersection, logical AND)
+      * `udvarsme` - Use both motion and normalised signal intensity criteria (union, logical OR)
+
+  pignore:
+    optional: yes
+    type: composite-kv
+    separator: "|"
+    assignment: ":"
+    default: "hipass:keep|regress:keep|lopass:keep"
+    description: |
+      Specifies how to handle bad frames during different preprocessing steps. The options for each step are defined as
+      key-value pairs in the format: `hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>`.
+
+    items:
+      hipass:
+        optional: no
+        type: options
+        options: "keep,linear,spline"
+        default: "keep"
+        description: |
+          Specifies how to handle bad frames during high-pass filtering:
+
+          * `keep` - Retain bad frames as they are
+          * `linear` - Replace bad frames with linear interpolation
+          * `spline` - Replace bad frames with spline interpolation
+
+      regress:
+        optional: no
+        type: options
+        options: "keep,ignore,mark,linear,spline"
+        default: "keep"
+        description: |
+          Specifies how to handle bad frames during nuisance regression / GLM step:
+
+          * `keep` - Retain bad frames as they are
+          * `ignore` - Exclude bad frames from regression and retain them in the residual with their original values
+          * `mark` - Exclude bad frames from regression and mark them with NaNs in the residual
+          * `linear` - Replace bad frames with linear interpolation and include them in regression
+          * `spline` - Replace bad frames with spline interpolation and include them in regression
+
+      lopass:
+        optional: no
+        type: options
+        options: "keep,linear,spline"
+        default: "keep"
+        description: |
+          Specifies how to handle bad frames during low-pass filtering:
+
+          * `keep` - Retain bad frames as they are
+          * `linear` - Replace bad frames with linear interpolation
+          * `spline` - Replace bad frames with spline interpolation
+
+Spatial smoothing of volume images:
+  description: |
+    This section specifies how spatial smooting will be performed if specified as one of the actions in the case of
+    volume images (NIFTI).
+
+  voxel_smooth:
+    optional: yes
+    type: number
+    default: "1"
+    placeholder: "1"
+    description: |
+      This parameter specifies the size of the Gaussian kernel (FWHM, in voxels) used for spatial smoothing of volume images.
+
+  smooth_mask:
+    optional: yes
+    type: options
+    options: "nonzero,brainsignal,brainmask,<filename>,false"
+    default: "false"
+    description: |
+      When performing spatial smoothing, spatial kernel may extend beyond the brain region, leading to unwanted injection
+      of non-brain signals into brain voxels. To avoid this, a mask can be applied during smoothing to restrict the operation
+      to brain areas only, preventing contamination of brain signals during spatial smoothing. This parameter specifies,
+      whether and what type of mask to use during spatial smoothing:
+
+      * `nonzero` - Use a mask that includes all non-zero voxels in the first volume of the image. This is a good option
+        when bold images were masked during preprocessing to remove non-brain areas.
+      * `brainsignal` - Use a mask that includes all voxels in the first volume with signal intensity of 300 or higher.
+        This is a good option when bold images were not masked during preprocessing and it can be used for images that
+        were normalised to mean or median brain signal intensity of 1000 or more.
+      * `brainmask` - Use the brain mask file generated using the `create_bold_brain_masks` command.
+      * `<filename>` - Provide a custom binary mask NIFTI file that defines the brain region for spatial smoothing.
+        Please, replace the placeholder with actual filename in the constructed command and recipe specification.
+      * `false` - Do not use any mask during spatial smoothing.
+
+  dilate_mask:
+    optional: yes
+    type: options
+    options: "nonzero,brainsignal,brainmask,<filename>,same,false"
+    default: "false"
+    description: |
+      When performing spatial smoothing constrained to a brain mask, the signal from within the brain mask will "bleed"
+      out of the mask that is used to restrict the voxels from which the smoothing kernel samples signal. If the dilation
+      is to be restricted to a mask, the mask can be specified using this parameter.
+
+      In other words, smooth_mask defines the voxels from which the smoothing kernel samples signal, while dilate_mask
+      defines the voxels to which the smoothed signal is assigned. The possible options are:
+
+      * `nonzero` - Use a mask that includes all non-zero voxels in the first volume of the image. This is a good option
+        when bold images were masked during preprocessing to remove non-brain areas.
+      * `brainsignal` - Use a mask that includes all voxels in the first volume with signal intensity of 300 or higher.
+        This is a good option when bold images were not masked during preprocessing and it can be used for images that
+        were normalised to mean or median brain signal intensity of 1000 or more.
+      * `brainmask` - Use the brain mask file generated using the `create_bold_brain_masks` command.
+      * `<filename>` - Provide a custom binary mask NIFTI file that defines the brain region for spatial smoothing.
+        Please, replace the placeholder with actual filename in the constructed command and recipe specification.
+      * `same` - Use the same mask as specified for `smooth_mask`.
+      * `false` - Do not use any mask during spatial smoothing.
+
+Spatial smoothing of CIFTI images:
+  description: |
+    This section specifies how spatial smooting will be performed if specified as one of the actions in the case of
+    combined surface/volume (CIFTI) images. The parameters will be passed on to `wb_command -cifti-smoothing`, which performs
+    the spatial smoothing operation on CIFTI images.
+
+  surface_smooth:
+    optional: yes
+    type: number
+    default: "2"
+    placeholder: "2"
+    description: |
+      This parameter specifies the size of the Gaussian kernel (FWHM, in mm) used for spatial smoothing on the surface
+      components of CIFTI images.
+
+  volume_smooth:
+    optional: yes
+    type: number
+    default: "2"
+    placeholder: "2"
+    description: |
+      This parameter specifies the size of the Gaussian kernel (FWHM, in mm) used for spatial smoothing on the volume
+      components of CIFTI images.
+
+Temporal filtering specification:
+  description: |
+    This section specifies how temporal filtering will be performed on the BOLD timeseries data. Temporal filtering can help
+    to remove low-frequency drifts and high-frequency noise from the fMRI signal. The filtering is performed using
+    a gaussian kernel, the code for which is adapted from FSL's C++ code with modification to work appropriately in
+    combination with motion scrubbing (see "Movement scrubbing specification" above).
+
+    When filtering the bold data, it is important to also filter the nuisance regressors used in the regression step
+    and task regressors, to ensure that the frequency components of the regressors match those of the bold data. Which
+    regressors are filtered is specified by the `hipass_do` and  `lopass_do` parameters.
+
+  highpass_filter:
+    optional: yes
+    type: number
+    default: "0.008"
+    placeholder: "0.008"
+    description: |
+      Specifies the high-pass filter cutoff frequency in Hz.
+
+  lopass_filter:
+    optional: yes
+    type: number
+    default: "0.09"
+    placeholder: "0.09"
+    description: |
+      Specifies the low-pass filter cutoff frequency in Hz.
+
+  hipass_do:
+    optional: yes
+    type: checklist
+    options: "nuisance,movement,events,task"
+    default: "nuisance"
+    description: |
+      Specifies which regressors to apply high-pass filtering to. Note that `events` pertains to regressors created
+      based on event files, whereas `task` pertains to task matrix that is passed directly in the matlab call.
+
+  lopass_do:
+    optional: yes
+    type: checklist
+    options: "nuisance,movement,events,task"
+    default: "nuisance,movement,events,task"
+    description: |
+      Specifies which regressors to apply low-pass filtering to. Note that `events` pertains to regressors created
+      based on event files, whereas `task` pertains to task matrix that is passed directly in the matlab call.
+

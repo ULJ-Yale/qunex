@@ -14,3 +14,6 @@ commands:
 
   preprocess_conc:
     description: "Preprocess concatenated fMRI data."
+
+  test_composite:
+    description: "Test command demonstrating composite-kv parameter type."
