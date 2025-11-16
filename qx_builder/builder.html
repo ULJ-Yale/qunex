@@ -1195,24 +1195,22 @@
 						itemInput.placeholder = itemSpec.placeholder || '';
 					}
 
-					itemInput.id = `${paramName}-${itemName}`;
-					itemInput.value = state.compositeParams[paramName].items[itemName] || '';
-					itemInput.addEventListener('input', e => {
+				itemInput.id = `${paramName}-${itemName}`;
+				itemInput.value = state.compositeParams[paramName].items[itemName] || '';
+				itemInput.addEventListener('input', e => {
+					state.compositeParams[paramName].items[itemName] = e.target.value;
+					state.compositeParams[paramName].manualEdit = null; // Clear manual edit when items change
+					updateCompositeOutput(paramName, spec);
+					render(); // Update command/YAML outputs
+				});
+				if (itemTypeBase === 'options') {
+					itemInput.addEventListener('change', e => {
 						state.compositeParams[paramName].items[itemName] = e.target.value;
-						state.compositeParams[paramName].manualEdit = null; // Clear manual edit when items change
+						state.compositeParams[paramName].manualEdit = null;
 						updateCompositeOutput(paramName, spec);
-						render();
+						render(); // Update command/YAML outputs
 					});
-					if (itemTypeBase === 'options') {
-						itemInput.addEventListener('change', e => {
-							state.compositeParams[paramName].items[itemName] = e.target.value;
-							state.compositeParams[paramName].manualEdit = null;
-							updateCompositeOutput(paramName, spec);
-							render();
-						});
-					}
-
-					itemDiv.appendChild(itemInput);
+				}					itemDiv.appendChild(itemInput);
 					container.appendChild(itemDiv);
 				}
 
@@ -1297,7 +1295,7 @@
 		// Build composite parameter value from items
 		function buildCompositeValue(paramName, spec) {
 			const composite = state.compositeParams[paramName];
-			if (!composite || !composite.included) return '';
+			if (!composite) return '';
 
 			const parts = [];
 			for (const [itemName, itemSpec] of Object.entries(spec.items)) {
