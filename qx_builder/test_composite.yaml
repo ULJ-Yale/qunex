@@ -1,0 +1,105 @@
+Description: |
+  Test command to demonstrate composite-kv parameter type.
+
+  This is a demonstration of how composite parameters work in the QuNex Command Builder.
+
+Test Parameters:
+  description: |
+    This section includes a composite-kv parameter example.
+
+  options:
+    optional: no
+    type: composite-kv
+    separator: "|"
+    assignment: ":"
+    description: |
+      Composite parameter that combines multiple options into a single string.
+
+      The format will be: `--options="key1:value1|key2:value2"`
+    items:
+      overwrite:
+        optional: yes
+        type: options
+        options: "yes,no"
+        default: "yes"
+        placeholder: ""
+        description: "Whether to overwrite existing files"
+      verbose:
+        optional: no
+        type: options
+        options: "yes,no"
+        default: "no"
+        placeholder: ""
+        description: "Enable verbose output"
+      threads:
+        optional: yes
+        type: number
+        default: "4"
+        placeholder: "4"
+        description: "Number of threads to use"
+
+  settings:
+    optional: yes
+    type: composite-kv
+    separator: ","
+    assignment: "="
+    description: |
+      Optional composite parameter with different separators.
+
+      The format will be: `--settings="param1=value1,param2=value2"`
+    items:
+      mode:
+        optional: no
+        type: options
+        options: "fast,normal,thorough"
+        default: "normal"
+        placeholder: ""
+        description: "Processing mode"
+      quality:
+        optional: yes
+        type: number
+        default: ""
+        placeholder: "0-100"
+        description: "Quality level (0-100)"
+      flag:
+        optional: yes
+        type: nokey-string
+        default: ""
+        placeholder: ""
+        description: "A flag value that appears without a key (just the value)"
+
+  regularParam:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/path/to/file"
+    description: "A regular string parameter for comparison"
+
+  steps:
+    optional: no
+    type: checklist
+    separator: ","
+    default: "init,process,export"
+    description: |
+      Select which processing steps to run. Multiple steps can be selected.
+
+      The selected steps will be executed in the order they appear in the list.
+    items:
+      init: "Initialize the processing environment"
+      process: "Run the main processing pipeline"
+      compute: "Compute statistics and metrics"
+      export: "Export results to output directory"
+      cleanup: "Clean up temporary files"
+
+  features:
+    optional: yes
+    type: checklist
+    separator: "|"
+    default: "motion,quality"
+    description: |
+      Optional features to enable during processing.
+    items:
+      motion: "Generate motion correction reports"
+      quality: "Perform quality assessment"
+      stats: "Calculate statistical measures"
+      plots: "Generate visualization plots"

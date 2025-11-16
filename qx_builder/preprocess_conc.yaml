@@ -287,16 +287,171 @@ Temporal filtering specification:
     type: checklist
     options: "nuisance,movement,events,task"
     default: "nuisance"
+    separator: ","
+    items:
+      nuisance: "nuisance signal extracted from BOLD image using `extract_niuisance_signals` command"
+      movement: "motion parameters used in regression"
+      events: "regressors created based on event files"
+      task: "task matrix that is passed directly in the matlab call"
     description: |
-      Specifies which regressors to apply high-pass filtering to. Note that `events` pertains to regressors created
-      based on event files, whereas `task` pertains to task matrix that is passed directly in the matlab call.
+      Specifies which regressors to apply high-pass filtering to.
 
   lopass_do:
     optional: yes
     type: checklist
     options: "nuisance,movement,events,task"
     default: "nuisance,movement,events,task"
+    separator: ","
+    items:
+      nuisance: "nuisance signal extracted from BOLD image using `extract_niuisance_signals` command"
+      movement: "motion parameters used in regression"
+      events: "regressors created based on event files"
+      task: "task matrix that is passed directly in the matlab call"
     description: |
-      Specifies which regressors to apply low-pass filtering to. Note that `events` pertains to regressors created
-      based on event files, whereas `task` pertains to task matrix that is passed directly in the matlab call.
+      Specifies which regressors to apply low-pass filtering to.
 
+
+Regression specification:
+  description: |
+    This section specifies how regression / GLM modeling will be performed on the BOLD timeseries data. Nuisance regression
+    helps to remove unwanted sources of variability from the fMRI signal, whereas event modeling enables estimation of
+    bold response to events in a task.
+
+  bold_nuisance:
+    optional: yes
+    type: checklist
+    options: "m,m1d,mSq,m1dSq,V,WM,WB,1d,e"
+    default: "m,m1d,mSq,m1dSq,V,WM,WB,1d"
+    items:
+      m: "6 motion parameters (3 translation, 3 rotation)"
+      m1d: "first temporal derivatives of the 6 motion parameters"
+      mSq: "squared terms of the 6 motion parameters"
+      m1dSq: "squared terms of the first temporal derivatives of the 6 motion parameters"
+      V: "mean signal across brain ventricles"
+      WM: "mean white matter signal"
+      WB: "whole brain signal, defined as mean signal across all gray matter voxels"
+      1d: "first temporal derivatioves of all nuisance regressors (excluding event-related regressors)"
+      e: "event-related task regressors created based on event file"
+    description: |
+      Specifies which regressors to include in the regression / GLM modeling. Note that both nuisance and event-related
+      regressors of interest can be included here.
+
+  event_string:
+    optional: yes
+    type: string
+    placeholder: ""
+    description: |
+      Custom event string to define task events for regression / GLM modeling.
+
+  glm_matrix:
+    optional: yes
+    type: options
+    options: "text,image,both,none"
+    default: "none"
+    description: |
+      Whether to save the predictor matrix used in the regression / GLM modeling:
+
+      * `text` - Save the predictor matrix as a text file
+      * `image` - Save the predictor matrix as a PNG image
+      * `both` - Save both text and image versions of the predictor matrix
+      * `none` - Do not save the predictor matrix
+
+  glm_results:
+    optional: yes
+    type: checklist
+    options: "c,z,o,se,r,all,fdr-<q>"
+    default: "c,r"
+    separator: ","
+    items:
+      c: "beta coefficient maps for each regressor"
+      t: "t-statistic maps for each regressor"
+      z: "z-score maps for each regressor"
+      p: "p-value maps for each regressor"
+      se: "standard error maps for each regressor"
+      r: "residual timeseries after regression"
+      all: "shorthand for, c,z,p,se,r"
+      fdr-<q>: "apply FDR correction at q-value <q> to p-value maps and save thresholded z-score maps"
+    description: |
+      Specifies which regression / GLM results to save. Note, for FDR correction, replace `<q>` with the desired q-value
+      (e.g., `fdr-0.05`) in the constructed command!
+
+  glm_name:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "_task"
+    description: |
+      An additional tag to append to the names of the regression / GLM output files to distinguish them from outputs
+      of other regression analyses performed on the same BOLD data.
+
+
+Prewhitening specification:
+  description: |
+    This section specifies whether prewhitening is to be applied to the BOLD timeseries data before regression / GLM
+    modeling to account for temporal autocorrelation in the fMRI signal, and the relevant parameters. Prewhitening can
+    help to improve the validity of statistical inference in fMRI analysis by reducing the impact of temporal
+    autocorrelation on the estimation of regression coefficients and their standard errors. A number of
+    prewhitening methods are supported, adapted from other neuroimaging software packages. Numerous parameters are
+    available to fine-tune the prewhitening process. A detailed report of the prewhitening process and its effects on the
+    data will be saved in the logs when `debug_mode` is set to `true`.
+
+  glm_prewhitening:
+    optional: yes
+    type: composite-kv
+    separator: ","
+    assignment: ":"
+    items:
+      method:
+        optional: no
+        type: options
+        options: "none,ar1,arp,arma11,film"
+        default: "none"
+        description: "Prewhitening method to use."
+      pool:
+        optional: yes
+        type: options
+        options: "global,parcel"
+        default: "global"
+        description: "Whether to estimate prewhitening parameters globally or separately for each parcel."
+      iterate:
+        optional: yes
+        type: options
+        options: "true,false"
+        default: "false"
+        description: "Whether to iterate prewhitening estimation by making a REML-like second pass."
+      min_seg_skip:
+        optional: yes
+        type: number
+        default: "20"
+        description: "Minimum number of consecutive frames required to avoid skipping prewhitening."
+      min_seg_ar1:
+        optional: yes
+        type: number
+        default: "50"
+        description: "Minimum number of consecutive frames required to not force AR(1) model."
+      order:
+        optional: yes
+        type: number
+        default: "1"
+        description: "Order of the AR model (used if method is 'arp' and `arp_auto` is set to false)."
+      arp_auto:
+        optional: yes
+        type: options
+        options: "true,false"
+        default: "true"
+        description: "Whether to automatically determine the AR model order (used if method is 'arp')."
+      arp_pmax:
+        optional: yes
+        type: number
+        default: "6"
+        description: "Maximum AR model order to consider (used if method is 'arp' and `arp_auto` is set to true)."
+      shrink_k:
+        optional: yes
+        type: number
+        default: "5"
+        description: "Shrinkage parameter for AR model estimation."
+
+
+    description: |
+      Specifies whether to apply prewhitening to the BOLD timeseries data before regression / GLM modeling to account
+      for temporal autocorrelation in the fMRI signal, and the relevant parameters.
