@@ -74,6 +74,11 @@ Parameters:
     --nogpu (flag, default 'no'):
         If set, this command will be processed useing a CPU instead of a GPU.
 
+    --extra_eddy_args (str, default '--fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --data_is_shelled --repol --cnr_maps'):
+        Extra arguments to pass to eddy command. By default, some recommended
+        parameters are set, but you can override them by providing your own
+        string of parameters. The string is appended to the eddy call as is.
+
 Output files:
     - difffolder=${sessionsfolder}/${session}/hcp/${session}/Diffusion
     - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
@@ -163,7 +168,7 @@ fi
 get_options() {
     local script_name=$(basename ${0})
     local arguments=($@)
-    
+
     # -- initialize global output variables
     unset sessionsfolder
     unset session
@@ -175,7 +180,9 @@ get_options() {
     unset overwrite
     unset usefieldmap
     unset nogpu
+    unset extra_eddy_args
     runcmd=""
+
     # -- parse arguments
     local index=0
     local numArgs=${#arguments[@]}
@@ -215,7 +222,7 @@ get_options() {
             --unwarpdir=*)
                 unwarpdir=${argument/*=/""}
                 index=$(( index + 1 ))
-                ;;  
+                ;;
             --diffdatasuffix=*)
                 diffdatasuffix=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -230,6 +237,10 @@ get_options() {
                 ;;
             --nogpu=*)
                 nogpu=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
+            --extra_eddy_args=*)
+                extra_eddy_args=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             *)
@@ -262,7 +273,7 @@ get_options() {
     if [ -z ${usefieldmap} ]; then
         echo "Note: <fieldmap> specification not set"
         exit 1
-    fi    
+    fi
     if [ ${usefieldmap} == "yes" ]; then
         if [ -z ${te} ]; then
             echo "ERROR: <te> not specified"
@@ -291,6 +302,7 @@ get_options() {
     echo "   Diffusion data sufix: ${diffdatasuffix}"
     echo "   Overwrite: ${overwrite}"
     echo "   No GPU: ${nogpu}"
+    echo "   Extra eddy args: ${extra_eddy_args}"
     echo "-- ${script_name}: Specified Command-Line Options - End --"
     echo ""
     echo "------------------------- Start of work --------------------------------"
@@ -519,7 +531,7 @@ main() {
         echo ""
         fsl_prepare_fieldmap SIEMENS "$difffolder"/"$session"_FieldMap_Phase.nii.gz "$difffolder"/fieldmap/"$session"_FieldMap_Magnitude_brain.nii.gz "$difffolder"/fieldmap/"$session"_fmap_rads "$te"
         echo ""
-    else 
+    else
         echo ""
         echo "--- Omitting FieldMap step..."
         echo ""
@@ -595,11 +607,10 @@ main() {
 
     ############################################
     # STEP 3 - Run eddy
-    ############################################    
+    ############################################
 
-    # -- Performs eddy call with --fwhm=10,0,0,0,0  --ff=10 -- this performs an initial FWHM smoothing for the first step of registration, then re-run with 4 more iterations without smoothing; the --ff flag adds a fat factor for angular smoothing. 
-    # -- For best possible results you want opposing diff directions but in practice we distribute directions on the sphere. Instead we look at 'cones'. This does not smooth the data but rather the predictions to allow best possible estimation via EDDY.
-    echo "--- Running eddy..."    
+    # -- Eddy
+    echo "--- Running eddy..."
     echo ""
 
     if [[ ${nogpu} == "yes" ]]; then
@@ -614,33 +625,33 @@ main() {
     # -- Eddy call with cuda with extra QC options
     echo "Running command:"
     echo ""
-    echo "${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v"
+    echo "${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --out=${difffolder}/eddy/${diffdata}_eddy_corrected ${extra_eddy_args} -v"
     echo ""
-    ${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${difffolder}/eddy/${diffdata}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
+    ${eddy_bin} --imain=${difffolder}/${diffdata} --mask=${difffolder}/rawdata/${diffdata}_nodif_brain_mask --acqp=${difffolder}/acqparams/${diffdata}/acqparams.txt --index=${difffolder}/acqparams/${diffdata}/index.txt --bvecs=${difffolder}/${diffdata}.bvec --bvals=${difffolder}/${diffdata}.bval --out=${difffolder}/eddy/${diffdata}_eddy_corrected ${extra_eddy_args} -v
 
     ############################################
     # STEP 4 - Run epi_reg w/fieldmap correction
     ############################################
 
-    # -- Performs registration on the DWI EPI raw B0 image to T1w while using the Fieldmap. 
-    # -- This gives the EPI ---> T1 transformation given the FieldMap. 
-    # -- This yields a transformation matrix that can then be applied to the DWI data. 
+    # -- Performs registration on the DWI EPI raw B0 image to T1w while using the Fieldmap.
+    # -- This gives the EPI ---> T1 transformation given the FieldMap.
+    # -- This yields a transformation matrix that can then be applied to the DWI data.
 
     if [ ${usefieldmap} == "yes" ]; then
         echo ""
-        echo "--- Running epi_reg for EPI--T1 data with fieldmap specification..." 
+        echo "--- Running epi_reg for EPI--T1 data with fieldmap specification..."
         echo ""
         epi_reg --epi="$difffolder"/rawdata/"$diffdata"_nodif_brain --t1="$t1wimage" --t1brain="$t1wbrainimage" --out="$difffolder"/reg/"$diffdata"_nodif2T1 --fmap="$difffolder"/fieldmap/"$session"_fmap_rads --wmseg="$wmsegimage" --fmapmag="$difffolder"/"$session"_FieldMap_Magnitude --fmapmagbrain="$difffolder"/fieldmap/"$session"_FieldMap_Magnitude_brain --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     else
         echo ""
-        echo "--- Running epi_reg for EPI--T1 data without fieldmap specification..." 
+        echo "--- Running epi_reg for EPI--T1 data without fieldmap specification..."
         echo ""
         epi_reg --epi="$difffolder"/rawdata/"$diffdata"_nodif_brain --t1="$t1wimage" --t1brain="$t1wbrainimage" --out="$difffolder"/reg/"$diffdata"_nodif2T1 --wmseg="$wmsegimage" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     fi
 
     ################################################################################################
     # STEP 5 - Apply the epi_reg warp field (fieldmap correction + BBR to T1) to all diffusion data
-    ################################################################################################    
+    ################################################################################################
 
     # -- Registers the eddy_corrected DWI data to T1w space
     echo ""
@@ -678,12 +689,12 @@ main() {
     echo ""
     echo "Running fslmaths to brain-mask $diffdata using the down-sampled $t1wimagemask..."
     fslmaths "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}" -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}"_masked_with_DWI1stframe
-    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}" "$t1wdifffolder"/data_brain_masked_with_T1.nii.gz 
-    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/data_brain_masked_with_DWI.nii.gz 
-    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}"_masked_with_DWI1stframe "$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz 
+    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}" "$t1wdifffolder"/data_brain_masked_with_T1.nii.gz
+    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/data_1stframe_mask "$t1wdifffolder"/data_brain_masked_with_DWI.nii.gz
+    fslmaths "$t1wdifffolder"/data.nii.gz -mul "$t1wdifffolder"/"T1w_brain_mask_downsampled2diff_${diffresext}"_masked_with_DWI1stframe "$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz
 
     echo ""
-    # -- Aligns the BVECS and BVALS using HCP 
+    # -- Aligns the BVECS and BVALS using HCP
     echo "--- Aligning BVECS to T1 space using HCP code"
     echo ""
     $HCPPIPEDIR_Global/Rotate_bvecs.sh "$difffolder"/"$diffdata".bvec "$difffolder"/reg/"$diffdata"_nodif2T1.mat "$t1wdifffolder"/bvecs
@@ -716,7 +727,7 @@ main() {
         run_error="yes"
     fi
     if [ -f  "$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz ]; then
-        OutFile="$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz 
+        OutFile="$t1wdifffolder"/data_brain_masked_with_T1orDWI.nii.gz
         echo "DWI brain-masked data:        $OutFile"
         echo ""
     else
@@ -742,7 +753,7 @@ main() {
         echo ""
         run_error="yes"
     fi
-    if [[ -z ${run_error} ]]; then 
+    if [[ -z ${run_error} ]]; then
         echo ""
         echo "--- DWI preprocessing successfully completed"
         echo ""
