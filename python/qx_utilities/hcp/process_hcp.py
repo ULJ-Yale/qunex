@@ -4363,7 +4363,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_dcmethod (str):
             BOLD image deformation correction that should be used: TOPUP,
             TOPUP_MISMATCHED, FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
-            GEHealthCareLegacyFieldMap, PhilipsFieldMap or NONE.
+            GEHealthCareLegacyFieldMap, PhilipsFieldMap, OnScanner or NONE.
 
         --hcp_bold_echodiff (str):
             Delta TE for BOLD fieldmap images or NONE if not used.
@@ -4891,6 +4891,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "philipsfieldmap",
             "gehealthcarefieldmap",
             "gehealthcarelegacyfieldmap",
+            "onscanner",
             "none",
         ]:
             r += f"\n---> ERROR: invalid value for the hcp_bold_dcmethod parameter {options['hcp_bold_dcmethod']}!"
