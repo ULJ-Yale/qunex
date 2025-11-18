@@ -1,0 +1,67 @@
+Description: |
+  # Read PAR Info
+
+  The `readPARInfo` command reads and extracts information from Philips PAR (Parameter) files.
+
+  PAR files are ASCII text files that contain acquisition parameters for Philips MRI scanner data. They accompany REC (image) files in the PAR/REC file format, which is Philips' proprietary format for storing MRI data.
+
+  ## What It Does
+
+  This command parses a `.PAR` file and extracts key imaging parameters including:
+
+  - **Session information**: Patient name, exam date/time
+  - **Series identifiers**: Series number, series description
+  - **Timing parameters**: TR (repetition time), TE (echo time)
+  - **Volume structure**: Number of frames, slices, volumes
+  - **Diffusion data**: Number of gradient directions (for DTI/DWI)
+  - **Protocol details**: Acquisition and reconstruction numbers
+
+  ## Output Information
+
+  The command extracts and standardizes the following fields:
+
+  - `sessionid` - Patient/session identifier
+  - `seriesNumber` - Unique series identifier
+  - `seriesDescription` - Protocol name/description
+  - `TR` - Repetition time in milliseconds
+  - `TE` - Echo time in milliseconds
+  - `frames` - Maximum number of dynamics (timepoints)
+  - `directions` - Number of diffusion gradient orientations
+  - `volumes` - Total number of volumes
+  - `slices` - Number of slices per volume
+  - `datetime` - Examination date and time
+
+  ## Use Cases
+
+  - **Data organization**: Extract metadata for session files
+  - **Quality control**: Verify scan parameters
+  - **Data conversion**: Prepare for PAR/REC to NIfTI conversion
+  - **Protocol verification**: Confirm acquisition parameters
+
+  ## Example Usage
+
+  ```bash
+  qunex readPARInfo \
+      --filename=/data/raw/sub-001/scan_001.PAR
+  ```
+
+  This will read the PAR file and return a dictionary with all extracted imaging parameters.
+
+Parameters:
+  filename:
+    optional: no
+    type: string
+    placeholder: "path/to/file.PAR"
+    description: |
+      **The path to the PAR file to read**.
+
+      This should be a Philips PAR (Parameter) file, typically with a `.PAR` extension.
+
+      PAR files are text files that contain acquisition parameters and should be paired with corresponding `.REC` files containing the actual image data.
+
+      The file must exist and be readable, otherwise the command will fail with an error.
+
+      **Example values:**
+      - `/data/raw/sub-001/T1_001.PAR`
+      - `../scanner_data/fMRI_BOLD_002.PAR`
+      - `./DTI_030dirs.PAR`

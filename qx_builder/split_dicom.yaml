@@ -1,0 +1,118 @@
+Description: |
+  # Split DICOM Files
+
+  The `split_dicom` command sorts out DICOM images from different sessions that are mixed together in the same folder.
+
+  This command is useful when:
+  - Multiple sessions' DICOM files are stored in a single folder
+  - Scanner output mixed files from different subjects/sessions
+  - Data transfer or archiving combined files that need to be separated
+  - You need to organize multi-session data before further processing
+
+  ## How It Works
+
+  The command:
+
+  1. **Searches** the specified folder and its immediate subfolders for DICOM files
+  2. **Reads** each DICOM file to extract the session ID from the header
+  3. **Identifies** all unique session IDs present in the folder
+  4. **Creates** a separate subfolder for each session ID
+  5. **Moves** each DICOM file to its corresponding session subfolder
+  6. **Organizes** files so each session's data is isolated
+
+  ## Input Structure
+
+  Before running (mixed files):
+  ```
+  dicommess/
+    file1.dcm    (session: OP001)
+    file2.dcm    (session: OP002)
+    file3.dcm    (session: OP001)
+    file4.dcm    (session: OP003)
+    file5.dcm    (session: OP002)
+    subdir/
+      file6.dcm  (session: OP001)
+  ```
+
+  ## Output Structure
+
+  After running (organized by session):
+  ```
+  dicommess/
+    OP001/
+      file1.dcm
+      file3.dcm
+      file6.dcm
+    OP002/
+      file2.dcm
+      file5.dcm
+    OP003/
+      file4.dcm
+  ```
+
+  ## Session ID Extraction
+
+  The session ID is extracted from DICOM headers, typically from:
+  - PatientID field
+  - StudyID field (if PatientID is not available)
+
+  ## Use Cases
+
+  - **Multi-session archives**: Separate files when multiple sessions were archived together
+  - **Scanner output**: Organize files when scanner saved multiple sessions in one location
+  - **Data recovery**: Sort out mixed files after data transfer or backup restoration
+  - **Batch preparation**: Organize files before running `sort_dicom` on individual sessions
+
+  ## Workflow Integration
+
+  Typical workflow when dealing with mixed DICOM files:
+
+  1. **split_dicom**: Separate files by session ID into subfolders
+  2. **sort_dicom**: Organize each session's files by series/sequence
+  3. **dicom2nii/dicom2niix**: Convert organized files to NIfTI format
+
+  ## Example Usage
+
+  **Split files in default inbox folder:**
+  ```bash
+  qunex split_dicom
+  ```
+
+  **Split files in a specific folder:**
+  ```bash
+  qunex split_dicom \
+      --folder=dicommess
+  ```
+
+  **Split files in a custom location:**
+  ```bash
+  qunex split_dicom \
+      --folder=/data/mixed_scans/batch_2024_01
+  ```
+
+  **After data transfer:**
+  ```bash
+  qunex split_dicom \
+      --folder=/mnt/transfer/scanner_output
+  ```
+
+Parameters:
+  folder:
+    optional: yes
+    type: string
+    default: "inbox"
+    placeholder: "path/to/mixed/folder"
+    description: |
+      **The folder containing mixed DICOM files from different sessions**.
+
+      The command searches this folder and its immediate subfolders for DICOM files, reads each file to extract the session ID, and creates separate subfolders for each unique session.
+
+      If not specified, defaults to the `inbox` subfolder in the current directory.
+
+      **Example values:**
+      - `inbox` (default)
+      - `dicommess`
+      - `/data/mixed_scans/batch_2024_01`
+      - `../scanner_output/multi_session`
+
+      **Note:** Files are moved (not copied), so the original folder structure will be modified.

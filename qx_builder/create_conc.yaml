@@ -1,0 +1,206 @@
+Description: |
+  The `create_conc` command generates `.conc` (concatenation) files that specify which BOLD fMRI runs should be
+  combined for analysis. Conc files are used by many QuNex processing commands to:
+
+  * **Concatenate multiple runs** from the same session for analysis (e.g., all resting-state runs, all task runs)
+  * **Define analysis sets** by grouping runs with the same task or condition
+  * **Enable batch processing** by creating standardized input specifications across sessions
+
+  ## Conc File Format
+
+  A conc file is a simple text file that lists the BOLD files to be concatenated:
+  ```
+  number_of_files: 3
+      file: /path/to/session/images/functional/bold1.nii.gz
+      file: /path/to/session/images/functional/bold2.nii.gz
+      file: /path/to/session/images/functional/bold3.nii.gz
+  ```
+
+  ## Use Cases
+
+  * **Resting-state analysis**: Concatenate all resting-state runs for improved statistical power
+  * **Task analysis**: Combine runs from the same task for event-related analysis
+  * **Preprocessing pipelines**: Create standardized inputs for `preprocess_conc` or `fc_compute`
+  * **Quality control**: Generate conc files only for runs that pass QC criteria
+
+  ## Generated Files
+
+  One conc file is created per session in the format: `<session_id><concname>.conc`
+
+  By default, files are saved to: `<sessionsfolder>/<session_id>/inbox/concs/`
+
+Source specification:
+  description: |
+    Specify the location of sessions and which sessions to include when generating conc files.
+
+  sessionsfolder:
+    optional: no
+    type: string
+    default: "."
+    placeholder: "/mystudy/sessions"
+    description: |
+      Study sessions folder containing individual session subfolders. The command will process sessions within
+      this folder to generate conc files.
+
+  sessions:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "s001, s002, s003"
+    description: |
+      Comma, pipe, or space-separated list of session names to process. Supports glob patterns for matching
+      multiple sessions.
+
+      Examples:
+      * `s001, s002, s003` - Process specific sessions
+      * `s001_*` - Process all sessions starting with "s001_"
+      * `AP*|OR*` - Process all sessions starting with "AP" or "OR"
+
+      Alternatively, you can specify a batch.txt file to include the sessions listed in the batch.txt file and
+      potentially filter them using the `filter` parameter.
+
+      If not specified, all sessions in `sessionsfolder` with an `images` subfolder will be processed.
+
+  filter:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "group:control|timepoint:baseline"
+    description: |
+      Filter to select specific sessions when using a batch file (via `sessions` parameter). Provide as
+      pipe-separated key-value pairs.
+
+      Only sessions that match **all** specified criteria will be processed.
+
+      Examples:
+      * `task:rest` - Only sessions with task=rest
+      * `group:control|timepoint:baseline` - Only baseline sessions from control group
+
+      **Note**: Requires a path to batch.txt to be provided as `sessions` parameter value.
+
+  img_suffix:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "_nodc"
+    description: |
+      Optional suffix appended to the `images` folder name to support multiple parallel processing workflows.
+
+      For example, if `img_suffix="_nodc"`, the command looks for files in:
+      `<session>/images_nodc/functional/`
+
+      If not specified, the standard `<session>/images/functional/` location is used.
+
+  bold_variant:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "_icafix"
+    description: |
+      Optional suffix appended to the `functional` folder name to support multiple preprocessing variants.
+
+      For example, if `bold_variant="_icafix"`, the command looks for files in:
+      `<session>/images/functional_icafix/`
+
+      If not specified, the standard `<session>/images/functional/` location is used.
+
+Input specification:
+  description: |
+    Specify which BOLD runs to include in the conc files and how to identify them.
+
+  bolds:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "1,2,3"
+    description: |
+      Specify which BOLD runs to include in the conc files. Can be provided as:
+
+      * **Numbers**: `1,2,3` - Include specific BOLD run numbers (e.g., bold1, bold2, bold3)
+      * **Tags**: `rest, task` - Include runs with specific tags from the batch file
+      * **Mixed**: `1, rest, 3` - Combine numbers and tags
+      * **All**: `all` - Include all BOLD runs listed in the batch file
+
+      Separators can be commas, spaces, or pipes.
+
+      This parameter is **required** - you must specify which runs to include.
+
+  boldname:
+    optional: yes
+    type: string
+    default: "bold"
+    placeholder: "bold"
+    description: |
+      Prefix used for BOLD file names. In QuNex, fMRI images are typically named as `bold[N]`.
+
+      If your functional images use a different naming convention (e.g., `func1`, `func2`), specify
+      the alternative prefix here.
+
+  bold_tail:
+    optional: yes
+    type: string
+    default: ".nii.gz"
+    placeholder: ".nii.gz"
+    description: |
+      File extension (tail) that identifies which version of BOLD files to include in the conc files.
+
+      Examples:
+      * `.nii.gz` - Raw NIFTI files (default)
+      * `_Atlas.dtseries.nii` - Surface-mapped CIFTI dense timeseries
+      * `_s_hpss_res-mVWMWB1de.dtseries.nii` - Preprocessed CIFTI with specific pipeline steps
+
+      The complete filename will be: `<boldname><number><bold_tail>`
+
+Output specification:
+  description: |
+    Specify where conc files should be saved and how they should be named.
+
+  concfolder:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/mystudy/analysis/concs"
+    description: |
+      Path to the folder where conc files will be saved.
+
+      If not specified, conc files are saved to: `<sessionsfolder>/<session_id>/inbox/concs/`
+
+      The folder will be created if it doesn't exist.
+
+  concname:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "_rest"
+    description: |
+      Suffix to append to the session ID when naming conc files.
+
+      Conc files are named as: `<session_id><concname>.conc`
+
+      Examples:
+      * `concname="_rest"` → `s001_rest.conc`
+      * `concname="_WM_preprocessed"` → `s001_WM_preprocessed.conc`
+      * `concname=""` → `s001.conc` (default)
+
+  overwrite:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "no"
+    description: |
+      Specifies what to do if a conc file already exists:
+
+      * `yes` - Overwrite the existing file
+      * `no` - Skip the file and continue (will report a warning)
+
+  check:
+    optional: yes
+    type: options
+    options: "yes,no,warn"
+    default: "yes"
+    description: |
+      Specifies whether to check if BOLD files exist before adding them to conc files:
+
+      * `yes` - Verify files exist; abort if any file is missing
+      * `no` - Don't check; include files regardless of existence
+      * `warn` - Check files; warn if missing but still create conc file

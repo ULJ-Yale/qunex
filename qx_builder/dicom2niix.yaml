@@ -1,0 +1,269 @@
+Description: |
+  # DICOM/PAR-REC to NIfTI Conversion (Advanced)
+
+  The `dicom2niix` command is an advanced version of `dicom2nii` that converts MR images from DICOM and PAR/REC formats to NIfTI format.
+
+  This command provides more control over the conversion process, including:
+  - Support for multiple conversion tools (dcm2niix, dcm2nii, dicm2nii)
+  - Automatic tool selection based on file type
+  - Enhanced metadata extraction from JSON sidecar files
+  - Custom session ID specification
+  - Image type annotation for Siemens scanners
+
+  ## Key Differences from dicom2nii
+
+  - **Multi-format support**: Handles both DICOM and Philips PAR/REC files
+  - **Tool selection**: Can choose or auto-detect conversion tool
+  - **JSON metadata**: Extracts additional sequence information from sidecar files
+  - **Image type labels**: Can add Siemens image type information to sequence names
+  - **Session ID control**: Can override automatic session ID extraction
+
+  ## How It Works
+
+  The command:
+
+  1. **Searches** for DICOM or PAR/REC files in the `dicom` subfolder
+  2. **Selects** the appropriate conversion tool (auto or specified)
+  3. **Converts** each series to NIfTI format
+  4. **Extracts** metadata from DICOM headers and JSON sidecar files
+  5. **Places** converted files in the `nii` subfolder
+  6. **Generates** `session.txt` with image catalog and metadata
+  7. **Creates** `DICOM-Report.txt` with detailed conversion information
+  8. **Optionally compresses** source files after conversion
+
+  ## Conversion Tools
+
+  - **dcm2niix** (default for DICOM): Modern, actively maintained, creates JSON sidecars
+  - **dcm2nii**: Legacy tool, broader compatibility with older formats
+  - **dicm2nii**: MATLAB-based, default for PAR/REC files when MATLAB is available
+  - **auto**: Automatically selects the best tool based on file type and availability
+
+  ## Output Files
+
+  ### session.txt
+  Located in the session base folder. Contains:
+  - Session ID and subject ID (extracted as `<subject>_<session>`)
+  - Folder paths (dicom, nii, hcp, etc.)
+  - Image catalog with sequence numbers and descriptions
+  - Optional metadata from JSON sidecars (TR, PE direction, echo spacing, etc.)
+
+  Example:
+  ```
+  id: OP169_baseline
+  subject: OP169
+  dicom: /path/to/sessions/OP169/dicom
+  raw_data: /path/to/sessions/OP169/nii
+  01: Survey
+  02: T1w 0.7mm N1     : TR:2400
+  07: BOLD 3mm 48 2.5s : TR:2500 : PEDirection:j-
+  ```
+
+  ### JSON Metadata Fields
+  The following information can be extracted from JSON sidecar files:
+  - `TR`: RepetitionTime
+  - `PEDirection`: PhaseEncodingDirection
+  - `EchoSpacing`: EffectiveEchoSpacing
+  - `DwellTime`: DwellTime
+  - `ReadoutDirection`: ReadoutDirection
+
+  ### DICOM-Report.txt
+  Detailed conversion log in the `dicom` subfolder
+
+  ### Log files
+  Individual conversion logs (e.g., `dcm2niix_[N].log`, `dicm2nii_[N].log`)
+
+  ## Example Usage
+
+  **Single session with auto tool selection:**
+  ```bash
+  qunex dicom2niix \
+      --folder=. \
+      --clean=yes \
+      --unzip=yes \
+      --gzip=folder \
+      --parelements=3
+  ```
+
+  **With custom session ID and JSON metadata:**
+  ```bash
+  qunex dicom2niix \
+      --folder=. \
+      --sessionid=SUB001_baseline \
+      --add_json_info=all \
+      --tool=dcm2niix
+  ```
+
+  **Multiple sessions:**
+  ```bash
+  qunex dicom2niix \
+      --sessionsfolder=/data/my_study/sessions \
+      --sessions="OP*" \
+      --clean=yes \
+      --parelements=3
+  ```
+
+Parameters:
+  folder:
+    optional: yes
+    type: string
+    default: "."
+    placeholder: "path/to/session/folder"
+    description: |
+      **The base session folder containing the `dicom` subfolder**.
+
+      The command expects the following structure:
+      ```
+      session_folder/
+        dicom/
+          001/  (DICOM or PAR/REC files for series 1)
+          002/  (DICOM or PAR/REC files for series 2)
+          ...
+        nii/    (created by this command)
+      ```
+
+      Defaults to the current directory (`.`).
+
+  clean:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "no"
+    description: |
+      **Whether to remove preexisting NIfTI files before conversion**.
+
+      - `yes`: Remove any existing NIfTI files in the `nii` folder and proceed with conversion
+      - `no` (default): Abort if existing NIfTI files are found
+
+      Use `yes` when reprocessing or if you want to ensure a clean conversion.
+
+  unzip:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "yes"
+    description: |
+      **Whether to automatically unzip gzipped DICOM or REC files**.
+
+      - `yes` (default): Automatically gunzip any compressed files and continue
+      - `no`: Abort if gzipped files are found
+
+      Some scanners or transfer protocols compress image files. This option handles that automatically.
+
+  gzip:
+    optional: yes
+    type: options
+    options: "folder,file,no"
+    default: "folder"
+    description: |
+      **How to compress DICOM/REC files after conversion to save disk space**.
+
+      - `folder` (default): Compress each series/acquisition as a tar.gz archive
+      - `file`: Compress individual files with gzip
+      - `no`: Leave files uncompressed
+
+      Recommended: Use `folder` to save maximum space while keeping data organized by series.
+
+  sessionid:
+    optional: yes
+    type: string
+    placeholder: "SUB001_baseline"
+    description: |
+      **The session ID to use for this session**.
+
+      If not provided, the session ID is automatically extracted from DICOM headers.
+
+      If the session ID contains an underscore, the subject ID is extracted as the part before the underscore:
+      - Session ID: `SUB001_baseline` → Subject: `SUB001`
+      - Session ID: `OP169` → Subject: `OP169` (same as session)
+
+      Use this parameter to override automatic extraction or ensure consistent naming.
+
+  verbose:
+    optional: yes
+    type: options
+    options: "true,false"
+    default: "true"
+    description: |
+      **Whether to report detailed progress during conversion**.
+
+      - `true` (default): Display detailed progress information
+      - `false`: Minimal output
+
+      Verbose mode is useful for monitoring conversion progress and troubleshooting.
+
+  parelements:
+    optional: yes
+    type: string
+    default: "1"
+    placeholder: "1, 3, 8, or 'all'"
+    description: |
+      **Number of parallel conversion processes to run**.
+
+      - Specify a number (e.g., `3`) to run that many parallel conversions
+      - Specify `all` to utilize all available CPU cores
+      - Default is `1` (sequential processing)
+
+      Parallel processing can significantly speed up conversion of sessions with many series.
+
+      **Example values:**
+      - `1` - Sequential (default)
+      - `3` - Run 3 conversions in parallel
+      - `8` - Run 8 conversions in parallel
+      - `all` - Use all available cores
+
+  tool:
+    optional: yes
+    type: options
+    options: "auto,dcm2niix,dcm2nii,dicm2nii"
+    default: "auto"
+    description: |
+      **Which conversion tool to use**.
+
+      - `auto` (default): Automatically select the best tool based on file type and availability
+        - DICOM files: uses dcm2niix
+        - PAR/REC files: uses dicm2nii (if MATLAB available) or dcm2niix
+      - `dcm2niix`: Modern tool with JSON sidecar support, recommended for most cases
+      - `dcm2nii`: Legacy tool with broader compatibility for older DICOM formats
+      - `dicm2nii`: MATLAB-based tool, particularly good for Philips PAR/REC files
+
+      Use `auto` unless you have specific requirements or compatibility issues.
+
+  add_image_type:
+    optional: yes
+    type: number
+    default: "0"
+    placeholder: "0, 1, 2, etc."
+    description: |
+      **Number of image type labels to add to sequence names (Siemens scanners)**.
+
+      For Siemens scanners, DICOM headers contain image type information (e.g., ORIGINAL, DERIVED, M, ND).
+      This parameter specifies how many labels from the **end** of the image type list to append to the sequence name.
+
+      - `0` (default): Don't add image type labels
+      - `1`: Add the last label (e.g., "ND")
+      - `2`: Add the last two labels (e.g., "M_ND")
+      - `3`: Add the last three labels (e.g., "DERIVED_M_ND")
+
+      Useful for distinguishing between different variants of the same sequence.
+
+  add_json_info:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "all or TR,PEDirection,EchoSpacing"
+    description: |
+      **What sequence information to extract from JSON sidecar files and add to session.txt**.
+
+      Specify either:
+      - `all`: Extract all available metadata fields
+      - Comma-separated list of specific fields (e.g., `TR,PEDirection,EchoSpacing`)
+      - Leave empty to not extract JSON metadata
+
+      **Available fields:**
+      - `TR`: RepetitionTime
+      - `PEDirection`: PhaseEncodingDirection
+      - `EchoSpacing`: EffectiveEchoSpacing
+      - `DwellTime`: DwellTime
+      - `ReadoutDirection`: ReadoutDirection
+
+      Extracted metadata appears in session.txt as: `07: BOLD 3mm : TR:2500 : PEDirection:j-`

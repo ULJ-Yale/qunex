@@ -1,0 +1,102 @@
+Description: |
+  # List DICOM Files
+
+  The `list_dicom` command inspects a folder for DICOM files and prints a detailed report of what it finds.
+
+  This is a diagnostic and quality control tool that helps you:
+  - Verify DICOM files are readable
+  - Check session IDs and sequence information
+  - Review acquisition dates and times
+  - Inspect folder contents before conversion
+  - Troubleshoot data organization issues
+
+  ## How It Works
+
+  The command:
+
+  1. **Searches** the specified folder and its immediate subfolders for files
+  2. **Attempts to read** each file as a DICOM file
+  3. **Extracts** key metadata from readable DICOM files
+  4. **Prints** a formatted report to the console
+  5. **Handles** both regular and gzipped DICOM files
+
+  ## Output Information
+
+  For each DICOM file found, the report includes:
+
+  - **File location**: Full path to the file
+  - **Session ID**: Patient/session identifier from DICOM header
+  - **Series number**: Numeric sequence identifier
+  - **Series description**: Protocol or sequence name (e.g., "T1w", "BOLD 3mm")
+  - **Acquisition date/time**: When the scan was performed
+
+  ## Example Output
+
+  ```
+  ============================================
+
+  Listing dicoms from OP269/dicom
+
+  ---> OP269/dicom/010/file1.dcm - OP269      1 - T1w 0.7mm                   scanned on 2024-01-15 09:30:45
+  ---> OP269/dicom/010/file2.dcm - OP269      1 - T1w 0.7mm                   scanned on 2024-01-15 09:30:45
+  ---> OP269/dicom/020/file3.dcm - OP269      2 - T2w 0.7mm                   scanned on 2024-01-15 09:45:12
+  ---> OP269/dicom/070/file4.dcm - OP269      7 - BOLD 3mm 48 2.5s            scanned on 2024-01-15 10:15:30
+  ```
+
+  ## Use Cases
+
+  - **Pre-conversion check**: Verify DICOM files before running `sort_dicom` or `dicom2nii`
+  - **Quality control**: Check that session IDs and sequence names are correct
+  - **Troubleshooting**: Identify problematic or corrupted files
+  - **Data verification**: Confirm expected scans are present
+  - **Session validation**: Check acquisition dates and ensure files are from the correct session
+
+  ## Compatibility
+
+  - Works with regular DICOM files (`.dcm`, `.IMA`, no extension)
+  - Works with gzipped DICOM files (`.dcm.gz`, `.IMA.gz`)
+  - Automatically skips non-DICOM files without errors
+
+  ## Example Usage
+
+  **List files in inbox folder (default):**
+  ```bash
+  qunex list_dicom
+  ```
+
+  **List files in a specific folder:**
+  ```bash
+  qunex list_dicom \
+      --folder=OP269/dicom
+  ```
+
+  **List files in sorted dicom folder:**
+  ```bash
+  qunex list_dicom \
+      --folder=/data/my_study/sessions/SUB001/dicom
+  ```
+
+  **Check inbox before sorting:**
+  ```bash
+  qunex list_dicom \
+      --folder=OP269/inbox
+  ```
+
+Parameters:
+  folder:
+    optional: yes
+    type: string
+    default: "inbox"
+    placeholder: "path/to/folder"
+    description: |
+      **The folder to inspect for DICOM files**.
+
+      The command searches this folder and its immediate subfolders for DICOM files.
+
+      If not specified, defaults to the `inbox` subfolder in the current directory.
+
+      **Example values:**
+      - `inbox` (default)
+      - `OP269/dicom`
+      - `/data/my_study/sessions/SUB001/inbox`
+      - `../raw_data/dicom_files`

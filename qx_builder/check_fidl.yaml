@@ -1,0 +1,107 @@
+Description: |
+  # Check Fidl
+
+  The `check_fidl` command creates visualizations of fidl event files, showing events and their duration as graphical plots.
+
+  This is a quality control and visualization tool that helps you:
+  - Verify the timing and structure of experimental events
+  - Visualize event codes and their occurrences
+  - Check for gaps or unexpected patterns in event timing
+  - Generate publication-ready event diagrams
+
+  ## How It Works
+
+  The command can operate in two modes:
+
+  1. **Single file mode**: Visualize a specific fidl file
+  2. **Batch mode**: Visualize all fidl files in a folder
+
+  The visualization shows:
+  - Event timing along the x-axis (time in seconds or TRs)
+  - Event codes along the y-axis
+  - Duration of events as bars or lines
+
+  ## Output Options
+
+  - **Interactive display**: Shows plots on screen (default)
+  - **File output**: Save plots to a file (PDF, PNG, etc.) using `plotfile` parameter
+
+  ## Example Usage
+
+  **Visualize all fidl files in a folder:**
+  ```bash
+  qunex check_fidl \
+      --fidlfolder=jfidls
+  ```
+
+  **Visualize a specific file and save to PDF:**
+  ```bash
+  qunex check_fidl \
+      --fidlfile=OP333_WM.fidl \
+      --plotfile=OP333_WM_events.pdf
+  ```
+
+  **Show all possible event codes (even if not present):**
+  ```bash
+  qunex check_fidl \
+      --fidlfile=OP333_WM.fidl \
+      --allcodes=true
+  ```
+
+Parameters:
+  fidlfile:
+    optional: yes
+    type: string
+    placeholder: "path/to/file.fidl"
+    description: |
+      **The path to a specific fidl file to plot**.
+
+      If specified, only this single fidl file will be visualized.
+
+      If not specified, all `.fidl` files in the `fidlfolder` will be processed.
+
+      **Note:** The `plotfile` parameter only makes sense when `fidlfile` is specified (single file mode).
+
+  fidlfolder:
+    optional: yes
+    type: string
+    default: "."
+    placeholder: "path/to/fidl/folder"
+    description: |
+      **The folder containing fidl files to visualize**.
+
+      Used in two contexts:
+      - **Batch mode** (when `fidlfile` is not specified): All `.fidl` files in this folder will be processed
+      - **Single file mode** (when `fidlfile` is specified): The folder to look for the specified fidl file
+
+      Defaults to the current directory (`.`).
+
+  plotfile:
+    optional: yes
+    type: string
+    default: "-fidlplot.pdf"
+    placeholder: "path/to/output.pdf"
+    description: |
+      **The name of the file to save the plot to**.
+
+      Common formats include:
+      - PDF: `events.pdf`
+      - PNG: `events.png`
+      - JPEG: `events.jpg`
+
+      In single file mode (when `fidlfile` is specified), this parameter saves the plot to the given file. In batch mode,
+      plots are saved as <fidl filename root><plotfile> for each fidl file processed. Given fidl file `OP333_WM.fidl` and
+      `plotfile` set to `-events.pdf`, the output plot will be saved as `OP333_WM-events.pdf`.
+
+  allcodes:
+    optional: yes
+    type: options
+    options: "true"
+    default: ""
+    description: |
+      **Whether to plot lines for all fidl codes even if no event has that code**.
+
+      - `true`: Show all possible event codes on the y-axis, including those with no events
+      - `false` (default): Show only event codes that actually appear in the data
+
+      Setting this to `true` is useful when comparing multiple fidl files to ensure consistent y-axis scales.

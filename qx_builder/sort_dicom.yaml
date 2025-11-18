@@ -1,0 +1,147 @@
+Description: |
+  # Sort DICOM Files
+
+  The `sort_dicom` command organizes unsorted DICOM and PAR/REC files from a scanner into a structured folder hierarchy suitable for conversion with `dicom2nii` or `dicom2niix`.
+
+  This command is typically the first step after receiving raw imaging data from the scanner, organizing files by series/sequence for downstream processing.
+
+  ## How It Works
+
+  The command:
+
+  1. **Searches** for DICOM or PAR/REC files in the `inbox` subfolder and its subdirectories
+  2. **Inspects** each file to determine series number and imaging sequence information
+  3. **Creates** a `dicom` folder with numbered subfolders for each series
+  4. **Moves/copies** files to the appropriate series subfolder
+  5. **Handles** PAR/REC files by ensuring uppercase extensions (.PAR/.REC)
+  6. **Separates** log files into a dedicated `log` subfolder
+  7. **Renames** DICOM files with a standardized naming scheme
+
+  ## Input Structure
+
+  Expected folder structure:
+  ```
+  session_folder/
+    inbox/
+      (unsorted DICOM files)
+      subdirectory1/
+        (more DICOM files)
+      subdirectory2/
+        (PAR/REC files)
+  ```
+
+  ## Output Structure
+
+  Created folder structure:
+  ```
+  session_folder/
+    dicom/
+      010/  (series 1 files)
+        SUB001-010-1.2.3.456.dcm
+        SUB001-010-1.2.3.457.dcm
+      020/  (series 2 files)
+        SUB001-020-1.2.3.500.dcm
+      030/  (series 3 files - PAR/REC)
+        scan.PAR
+        scan.REC
+      log/
+        scanner.log
+  ```
+
+  ## File Naming
+
+  DICOM files are renamed as: `<sessionid>-<series>-<SOPInstanceUID>.dcm`
+  - Session ID is extracted from DICOM header
+  - Series number is multiplied by 10 to create folder names
+  - SOP Instance UID ensures unique filenames
+
+  ## PAR/REC Handling
+
+  - Ensures extensions are uppercase (.PAR and .REC)
+  - Keeps PAR and REC files paired in the same series folder
+  - Automatically handles both .par/.rec and .PAR/.REC input files
+
+  ## Multiple Sessions
+
+  The command supports batch processing across multiple sessions using `sessions`, `sessionsfolder`, and `parelements` parameters. It can also be run on computing clusters using the `scheduler` parameter.
+
+  ## Example Usage
+
+  **Single session:**
+  ```bash
+  qunex sort_dicom \
+      --folder=OP667
+  ```
+
+  **Multiple sessions:**
+  ```bash
+  qunex sort_dicom \
+      --sessionsfolder=/data/my_study/sessions \
+      --sessions="OP*"
+  ```
+
+  **Copy instead of move:**
+  ```bash
+  qunex sort_dicom \
+      --folder=OP667 \
+      --copy=copy
+  ```
+
+  **Custom output directory:**
+  ```bash
+  qunex sort_dicom \
+      --folder=OP667 \
+      --outdir=/data/organized_scans/OP667
+  ```
+
+Parameters:
+  folder:
+    optional: yes
+    type: string
+    default: "."
+    placeholder: "path/to/session/folder"
+    description: |
+      **The base session folder containing the `inbox` subfolder with unsorted files**.
+
+      The command looks for files in the `inbox` subfolder and its subdirectories.
+
+      Defaults to the current directory (`.`).
+
+  copy:
+    optional: yes
+    type: options
+    options: "move,copy"
+    default: "move"
+    description: |
+      **Whether to move or copy files from inbox to dicom folder**.
+
+      - `move` (default): Move files from inbox to dicom folder (removes from inbox)
+      - `copy`: Copy files from inbox to dicom folder (keeps originals in inbox)
+
+      Use `copy` if you want to preserve the original inbox structure, or `move` to save disk space.
+
+  outdir:
+    optional: yes
+    type: string
+    placeholder: "path/to/output/directory"
+    description: |
+      **Optional directory where the sorted files should be saved**.
+
+      If not specified, defaults to the `folder` parameter value (creates `dicom` subfolder there).
+
+      Use this to organize files to a different location than where the inbox is located.
+
+      **Example:** `--outdir=/data/organized_scans/SUB001`
+
+  files:
+    optional: yes
+    type: string
+    placeholder: "file1.dcm,file2.dcm,file3.PAR"
+    description: |
+      **Comma-separated list of specific files to sort**.
+
+      If not specified, the command will automatically find and process all DICOM and PAR/REC files in the `inbox` folder.
+
+      Use this parameter to sort only specific files rather than the entire inbox.
+
+      **Example:** `--files=/path/to/scan1.dcm,/path/to/scan2.dcm,/path/to/mri.PAR`

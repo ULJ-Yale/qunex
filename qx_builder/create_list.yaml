@@ -1,9 +1,32 @@
-Description: >
-  Create a list of sessions and related files.
+Description: |
+  The `create_list` command generates a `.list` formatted file that specifies sessions and their associated data files
+  for use in QuNex processing and analysis pipelines. This flexible command enables you to:
 
-  This command generates a structured list of sessions within a specified study folder.
-  It can utilize a batch file containing session metadata to enable tagging and filtering
-  of sessions based on user-defined criteria.
+  * Create lists of BOLD fMRI files across multiple sessions
+  * Include concatenated timeseries (conc files), event files (fidl), GLM results, and ROI masks
+  * Filter sessions based on batch file metadata (e.g., only include control group baseline scans)
+  * Support multiple parallel workflows with different preprocessing variants
+
+  ## List File Format
+
+  The generated list file contains entries in the format:
+  ```
+  session: <session_id>
+      file: <path_to_bold_file>
+      conc: <path_to_conc_file>
+      fidl: <path_to_fidl_file>
+      glm: <path_to_glm_file>
+      roi: <path_to_roi_file>
+  ```
+
+  Each session can have multiple file types specified, and you can include multiple BOLD runs per session.
+
+  ## Use Cases
+
+  * **Creating input for fc_compute**: List BOLD files and conc files for functional connectivity analysis
+  * **GLM analysis**: List sessions with their event files (fidl) and output GLM files
+  * **ROI extraction**: Combine BOLD files with parcellation masks for timeseries extraction
+  * **Quality control**: Generate lists of specific preprocessing variants to compare results
 
 Source specification:
   description: >
@@ -18,11 +41,18 @@ Source specification:
     description: "Study sessions folder containing individual session subfolders."
 
   batchfile:
-    optional: no
+    optional: yes
     type: string
-    default: "none"
+    default: ""
     placeholder: "/mystudy/processing/batch.txt"
-    description: "Batch file with session metadata (enables tagging & filtering)."
+    description: |
+      Path to a batch file containing session metadata. When provided, enables:
+
+      * Filtering sessions using the `filter` parameter
+      * Using BOLD task tags (e.g., "rest", "task") instead of numbers in the `bolds` parameter
+      * Including only sessions listed in the batch file
+
+      If not provided, all sessions in `sessionsfolder` with an `images` subfolder will be included.
 
   sessions:
     optional: yes
@@ -78,15 +108,19 @@ Input specification:
     included in the list file.
 
   bolds:
-    optional: no
+    optional: yes
     type: string
+    default: ""
     placeholder: "rest, task"
-    description: >
-      Comma-separated list of BOLD runs to include in the list. The runs can be specified using their numbers (e.g., `1,2,3`)
-      or tags (e.g., `rest, task`). If a number is provided, it corresponds to the run index, for instance `bold1` for `1`
-      (see also the `boldname` parameter), if a string is provided, it should match the tag used in the batch file that
-      identifies the run. An example tag could be `rest` for resting-state runs or `task` for task-based runs.
-      If not specified, all BOLD runs found within each session will be included.
+    description: |
+      Specify which BOLD runs to include in the list. Can be provided as:
+
+      * **Numbers**: `1,2,3` - Include specific BOLD run numbers (e.g., bold1, bold2, bold3)
+      * **Tags**: `rest, task` - Include runs with specific tags from the batch file (requires `batchfile` parameter)
+      * **Mixed**: `1, rest, 3` - Combine numbers and tags
+      * **All**: `all` - Include all BOLD runs listed in the batch file
+
+      If not specified, no BOLD files will be included in the list. Separators can be commas, spaces, or pipes.
 
   boldname:
     optional: yes
@@ -103,79 +137,111 @@ Input specification:
     type: string
     default: ".nii.gz"
     placeholder: ".nii.gz"
-    description: >
-      Usually, multiple different versions of the same bold file exist in the `images/functional` folder. They can differ
-      in terms of the format (e.g., NIFTI vs CIFTI) or the preprocessing steps that have been applied (e.g., raw vs
-      preprocessed). To specify which version should be included in the list file, provide the file extension (tail)
-      that identifies the desired files. For example, to include preprocessed dense cifti files, you may use the tail
-      `_Atlas_s_res-mVWMWBd1.dtseries.nii`. If not specified, the default tail `.nii.gz` will be used.
+    description: |
+      File extension (tail) that identifies which version of BOLD files to include. Multiple versions often exist
+      in the same folder with different processing stages or formats. Examples:
+
+      * `.nii.gz` - Raw NIFTI files (default)
+      * `_Atlas.dtseries.nii` - Surface-mapped CIFTI dense timeseries
+      * `_Atlas_s_hpss_res-mVWMWB1d.dtseries.nii` - Preprocessed CIFTI with specific pipeline steps
+      * `.nii` - Uncompressed NIFTI files
+
+      The tail is appended after the BOLD name and number: `<boldname><number><bold_tail>`
 
   conc:
-    optional: no
+    optional: yes
     type: string
     default: ""
-    description: >
-      When specified, the command will look for the specified conc file and include it in the list file for each session.
-      The conc file is expected to be located in the `images/functional/conc` folder within each session folder. The
-      specification should include the full file name. For instance `bold_CANP_ptseries_axcpt.conc` would be included in
-      the list file as:
-      ```    conc: <sessionsfolder>/<session>/images<img_suffix>/functional<bold_variant>/conc/bold_CANP_ptseries_axcpt.conc
+    placeholder: "bold_CANP_ptseries_axcpt.conc"
+    description: |
+      Filename of a conc (concatenation) file to include for each session. Conc files specify how multiple
+      BOLD runs are concatenated for analysis.
+
+      The file should be located in: `<session>/images<img_suffix>/functional<bold_variant>/conc/`
+
+      Example entry `bold_CANP_ptseries_axcpt.conc` would be included in list file as:
       ```
-      If not specified, no conc files will be included in the list file.
+      conc: /mystudy/sessions/s001/images/functional/conc/bold_CANP_ptseries_axcpt.conc
+      ```
+
+      If not specified, no conc files will be included.
 
   fidl:
-    optional: no
+    optional: yes
     type: string
     default: ""
-    description: >
-      When specified, the command will look for the specified fidl file and include it in the list file for each session.
-      The fidl file is expected to be located in the `images/functional/events` folder within each session folder. The
-      specification should include the full file name. For instance `axcpt.fidl` would be included in
-      the list file as:
-      ```    fidl: <sessionsfolder>/<session>/images<img_suffix>/functional<bold_variant>/events/axcpt.fidl
+    placeholder: "axcpt.fidl"
+    description: |
+      Filename of a fidl (fMRI event description language) file to include for each session. Fidl files define
+      task timing and conditions for event-related fMRI analysis.
+
+      The file should be located in: `<session>/images<img_suffix>/functional<bold_variant>/events/`
+
+      Example entry `axcpt.fidl` would be included in list file as:
       ```
-      If not specified, no fidl files will be included in the list file.
+      fidl: /mystudy/sessions/s001/images/functional/events/axcpt.fidl
+      ```
+
+      If not specified, no fidl files will be included.
 
   glm:
-    optional: no
+    optional: yes
     type: string
     default: ""
-    description: >
-      When specified, the command will look for the specified glm file and include it in the list file for each session.
-      The glm file is expected to be located in the `images/functional` folder within each session folder. The
-      specification should include the full file name. For instance `bold_Atlas_conc_axcpt_res-e_v1_Bcoeff.dscalar.nii`
-      would be included in the list file as:
-      ```    glm: <sessionsfolder>/<session>/images<img_suffix>/functional<bold_variant>/bold_Atlas_conc_axcpt_res-e_v1_Bcoeff.dscalar.nii
+    placeholder: "bold_Atlas_conc_axcpt_res-e_v1_Bcoeff.dscalar.nii"
+    description: |
+      Filename of a GLM (general linear model) results file to include for each session. GLM files
+      contain beta coefficient maps from task analyses generated by `preprocess_conc` command.
+
+      The file should be located in: `<session>/images<img_suffix>/functional<bold_variant>/`
+
+      Example entry `bold_Atlas_conc_axcpt_res-e_v1_Bcoeff.dscalar.nii` would be included in list file as:
       ```
-      If not specified, no glm files will be included in the list file.
+      glm: /mystudy/sessions/s001/images/functional/bold_Atlas_conc_axcpt_res-e_v1_Bcoeff.dscalar.nii
+      ```
+
+      If not specified, no GLM files will be included.
 
   roi:
-    optional: no
+    optional: yes
     type: string
     default: ""
-    description: >
-      When specified, the command will look for the specified roi file and include it in the list file for each session.
-      The roi file is expected to be located under the `images` folder within each session folder. The
-      specification should include the full path from within the images folder name. For instance
-      `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz` would be included in the list file as:
-      ```    roi: <sessionsfolder>/<session>/images<img_suffix>/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
+    placeholder: "segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz"
+    description: |
+      Relative path (from the `images` folder) to an ROI (region of interest) file to include for each session.
+      ROI files are typically parcellation or segmentation masks used for extracting regional timeseries.
+
+      The file should be located under: `<session>/images<img_suffix>/`
+
+      Common examples:
+      * `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz` - FreeSurfer parcellation
+      * `segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii` - HCP surface parcellation
+
+      Example entry `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz` would be included in list file as:
       ```
-      If not specified, no roi files will be included in the list file.
+      roi: /mystudy/sessions/s001/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
+      ```
+
+      If not specified, no ROI files will be included.
 
 Output specification:
   description: >
     Define the location of the generated list file and additional processing parameters.
 
   listfile:
-    optional: no
+    optional: yes
     type: string
     default: ""
-    placeholder: "/mystudy/processing/mylist.list"
-    description: >
+    placeholder: "/mystudy/processing/lists/mylist.list"
+    description: |
       Full path (including filename) for the generated list file.
-      If not specified, the list file will be created in the `processing` folder within the study folder with the
-      default name `sessions.list`:
-      ```<studyfolder>/processing/lists/sessions.list```
+
+      If not specified, the list file will be created at:
+      ```
+      <studyfolder>/processing/lists/sessions.list
+      ```
+
+      The file extension `.list` is conventional but not required.
 
   overwrite:
     optional: yes

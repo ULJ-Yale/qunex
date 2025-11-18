@@ -1,0 +1,176 @@
+Description: |
+  # DICOM to NIfTI Conversion
+
+  The `dicom2nii` command converts MR images from DICOM format to NIfTI format, which is the standard format used in neuroimaging analysis.
+
+  This command is typically the first step in neuroimaging data processing, converting raw scanner data (DICOM) into analysis-ready NIfTI files.
+
+  ## How It Works
+
+  The command:
+
+  1. **Searches** for DICOM files in the `dicom` subfolder of the session folder
+  2. **Expects** each image series to be in a separate numbered subfolder
+  3. **Converts** each DICOM series to NIfTI format using dcm2nii
+  4. **Places** converted files in the `nii` subfolder with sequential numbering
+  5. **Generates** a `session.txt` file with image catalog
+  6. **Creates** a `DICOM-Report.txt` file with detailed conversion information
+  7. **Optionally compresses** DICOM files after conversion to save space
+
+  ## Output Files
+
+  ### session.txt
+  Located in the session base folder. Contains:
+  - Session and subject identifiers
+  - Folder paths (dicom, nii, hcp, etc.)
+  - List of images with sequence numbers and descriptions
+
+  Example:
+  ```
+  id: OP169
+  subject: OP169
+  dicom: /path/to/sessions/OP169/dicom
+  raw_data: /path/to/sessions/OP169/nii
+  01: Survey
+  02: T1w 0.7mm N1
+  03: T2w 0.7mm N1
+  07: BOLD 3mm 48 2.5s
+  ```
+
+  ### DICOM-Report.txt
+  Located in the `dicom` subfolder. Contains:
+  - Original sequence numbers and resulting NIfTI file numbers
+  - Sequence names, frames, TR, TE values
+  - Subject ID and acquisition time
+  - Processing warnings (recentering, dimension switching, reslicing, etc.)
+
+  ### NIfTI files
+  Located in the `nii` subfolder, named sequentially (e.g., `7.nii.gz`)
+
+  ### dcm2nii log files
+  Individual `dcm2nii_[N].log` files for each conversion attempt
+
+  ## Parallel Processing
+
+  The command can run multiple dcm2nii conversions in parallel to speed up processing. Use `parelements` to specify how many parallel processes to run.
+
+  ## Multiple Sessions
+
+  The command supports batch processing across multiple sessions using `sessions`, `sessionsfolder`, and related parameters. It can also be run on computing clusters using the `scheduler` parameter.
+
+  ## Example Usage
+
+  **Single session:**
+  ```bash
+  qunex dicom2nii \
+      --folder=. \
+      --clean=yes \
+      --unzip=yes \
+      --gzip=folder \
+      --parelements=3
+  ```
+
+  **Multiple sessions:**
+  ```bash
+  qunex dicom2nii \
+      --sessionsfolder=/data/my_study/sessions \
+      --sessions="OP*" \
+      --clean=yes \
+      --unzip=yes \
+      --gzip=no \
+      --parelements=3
+  ```
+
+Parameters:
+  folder:
+    optional: yes
+    type: string
+    default: "."
+    placeholder: "path/to/session/folder"
+    description: |
+      **The base session folder containing the `dicom` subfolder**.
+
+      The command expects the following structure:
+      ```
+      session_folder/
+        dicom/
+          001/  (DICOM files for series 1)
+          002/  (DICOM files for series 2)
+          ...
+        nii/    (created by this command)
+      ```
+
+      Defaults to the current directory (`.`).
+
+  clean:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "no"
+    description: |
+      **Whether to remove preexisting NIfTI files before conversion**.
+
+      - `yes`: Remove any existing NIfTI files in the `nii` folder and proceed with conversion
+      - `no` (default): Abort if existing NIfTI files are found
+
+      Use `yes` when reprocessing or if you want to ensure a clean conversion.
+
+  unzip:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "yes"
+    description: |
+      **Whether to automatically unzip gzipped DICOM files**.
+
+      - `yes` (default): Automatically gunzip any compressed DICOM files and continue
+      - `no`: Abort if gzipped DICOM files are found
+
+      Some scanners or transfer protocols compress DICOM files. This option handles that automatically.
+
+  gzip:
+    optional: yes
+    type: options
+    options: "folder,file,no"
+    default: "folder"
+    description: |
+      **How to compress DICOM files after conversion to save disk space**.
+
+      - `folder` (default): Compress each DICOM series/acquisition as a tar.gz archive
+      - `file`: Compress individual DICOM files with gzip
+      - `no`: Leave DICOM files uncompressed
+
+      Recommended: Use `folder` to save maximum space while keeping data organized by series.
+
+  verbose:
+    optional: yes
+    type: options
+    options: "true,false"
+    default: "true"
+    description: |
+      **Whether to report detailed progress during conversion**.
+
+      - `true` (default): Display detailed progress information
+      - `false`: Minimal output
+
+      Verbose mode is useful for monitoring conversion progress and troubleshooting.
+
+  parelements:
+    optional: yes
+    type: string
+    default: "1"
+    placeholder: "1, 3, 8, or 'all'"
+    description: |
+      **Number of parallel dcm2nii processes to run**.
+
+      - Specify a number (e.g., `3`) to run that many parallel conversions
+      - Specify `all` to utilize all available CPU cores
+      - Default is `1` (sequential processing)
+
+      Parallel processing can significantly speed up conversion of sessions with many series.
+
+      **Example values:**
+      - `1` - Sequential (default)
+      - `3` - Run 3 conversions in parallel
+      - `8` - Run 8 conversions in parallel
+      - `all` - Use all available cores

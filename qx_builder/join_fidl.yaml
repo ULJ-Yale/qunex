@@ -1,0 +1,101 @@
+Description: |
+  The `join_fidl` command combines multiple run-specific fidl (fMRI event description language) files into a single
+  concatenated fidl file that corresponds to a concatenated BOLD timeseries. This is essential for:
+
+  * **Task-based fMRI analysis** of concatenated runs with the same task
+  * **Event timing alignment** across multiple BOLD runs
+  * **GLM analysis** where events from separate runs are combined
+  * **Quality control** by verifying event timing matches BOLD data duration
+
+  ## What is a Fidl File?
+
+  Fidl (fMRI event description language) files define the timing and properties of task events in fMRI experiments.
+  Each line specifies an event with timing and optional parameters:
+  ```
+  <onset_time>	<event_type>	[duration]	[other_parameters]
+  ```
+
+  ## How It Works
+
+  1. Reads the conc file to identify which BOLD runs are concatenated and their lengths
+  2. Finds all fidl files matching the specified pattern (one per BOLD run)
+  3. Verifies the number of fidl files matches the number of BOLD runs
+  4. For each fidl file, adjusts event timings by adding the cumulative offset from previous runs
+  5. Combines all events into a single fidl file corresponding to the concatenated timeseries
+  6. Validates that events don't extend beyond the BOLD run duration
+
+  ## Example
+
+  **Input:**
+  * Conc file lists 3 BOLD runs: `bold1.nii.gz` (200s), `bold2.nii.gz` (200s), `bold3.nii.gz` (200s)
+  * Three fidl files: `task_run1.fidl`, `task_run2.fidl`, `task_run3.fidl`
+
+  **Event in run2 fidl** (at 50s): `50.0	cue	2.0`
+
+  **Same event in joined fidl** (at 250s = 200s + 50s): `250.0	cue	2.0`
+
+  All events are shifted by the cumulative duration of previous runs.
+
+Input specification:
+
+  concfile:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/s001/images/functional/OP33-WM.conc"
+    description: |
+      Path to the conc (concatenation) file that serves as the reference for joining fidl files.
+
+      The conc file specifies:
+      * Which BOLD runs are concatenated
+      * The order of concatenation
+      * File paths to read BOLD durations from
+
+      The number of BOLD runs in the conc file must match the number of fidl files found.
+
+  fidlroot:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/s001/images/functional/events/OP33-WM"
+    description: |
+      Root pattern for finding fidl files to join. The command will search for all files matching:
+      `<fidlroot>*.fidl`
+
+      Examples:
+      * If `fidlroot="task_"`, finds: `task_1.fidl`, `task_2.fidl`, `task_3.fidl`
+      * If `fidlroot="WM_run"`, finds: `WM_run1.fidl`, `WM_run2.fidl`, etc.
+      * If `fidlroot="/path/to/events/OP33-WM"`, finds all fidl files starting with that pattern
+
+      **Important**: Fidl files are sorted alphabetically before joining, so naming should ensure
+      correct ordering (e.g., use `run01`, `run02` rather than `run1`, `run2`).
+
+Output specification:
+
+  outfolder:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/s001/images/functional/events"
+    description: |
+      Folder where the joined fidl file will be saved.
+
+      If not specified, the joined fidl file will be saved in the same directory as the fidl files
+      specified by `fidlroot`.
+
+      The folder will be created if it doesn't exist.
+
+  fidlname:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "_concatenated"
+    description: |
+      Optional suffix to append to the output fidl filename.
+
+      The output filename is constructed as: `<fidlroot><fidlname>.fidl`
+
+      Examples:
+      * If `fidlroot="WM"` and `fidlname="_concat"`: output is `WM_concat.fidl`
+      * If `fidlroot="task"` and `fidlname=""`: output is `task.fidl`
+      * If `fidlroot="/path/events/OP33-WM"` and `fidlname="_joined"`: output is `OP33-WM_joined.fidl`

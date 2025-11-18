@@ -1,0 +1,360 @@
+Description: |
+  # Import DICOM Files
+
+  The `import_dicom` command automatically processes packets with individual sessions' DICOM or PAR/REC files all the way through to NIfTI conversion.
+
+  This is a powerful **end-to-end automation** command that combines multiple steps:
+  - Identifies and processes scanner data packages (ZIP, TAR, folders)
+  - Extracts session and subject information
+  - Creates session folder structure
+  - Sorts DICOM files by series
+  - Converts to NIfTI format
+  - Generates session.txt files
+  - Archives original packages
+
+  ## Two Operation Modes
+
+  ### Mode 1: Processing from Master Inbox (Default)
+
+  Processes packages from a centralized inbox folder and creates session folders:
+
+  ```
+  study/sessions/
+    inbox/MR/
+      OP001.zip
+      OP002_baseline.tar.gz
+      OP003_followup/
+
+  → Creates:
+
+  study/sessions/
+    OP001/
+      inbox/ (extracted files)
+      dicom/ (sorted by series)
+      nii/ (converted NIfTI)
+      session.txt
+    OP002_baseline/...
+    OP003_followup/...
+    archive/MR/
+      OP001.zip
+      OP002_baseline.tar.gz
+  ```
+
+  ### Mode 2: Processing from Session Folders
+
+  Processes data already in individual session inbox folders (set `masterinbox=none`):
+
+  ```
+  study/sessions/
+    SUB001_baseline/inbox/
+      (DICOM files or packages)
+    SUB002_baseline/inbox/
+      (DICOM files or packages)
+
+  → Processes in place
+  ```
+
+  ## Session ID Extraction
+
+  Session IDs are generated from:
+  - **Packet name** via regex pattern
+  - **Log file** lookup (CSV/TSV mapping)
+  - **Folder name** (in session folder mode)
+
+  Formula: `<subject_id>[_<session_name>]`
+
+  ### Examples:
+
+  | Packet Name | Pattern/Format | Subject | Session | Session ID |
+  |-------------|----------------|---------|---------|------------|
+  | OP386 | Default | OP386 | - | OP386 |
+  | AP346_MR_1 | `(?P<subject_id>.*?)_(?P<session_name>.*)` | AP346 | MR_1 | AP346_MR_1 |
+  | Yale-EQ469-Placebo | `(?P<subject_id>.*?)-(?P<session_name>.*)` | EQ469 | Placebo | EQ469_Placebo |
+
+  ## Supported Package Formats
+
+  - `.zip`
+  - `.tar`
+  - `.tar.gz`, `.tgz`
+  - `.tar.bz2`, `.tar.bzip2`
+  - Uncompressed folders
+
+  ## Processing Steps
+
+  1. Identify packages using `pattern` parameter
+  2. Filter by `sessions` parameter (optional)
+  3. Extract subject/session IDs (via `nameformat` or `logfile`)
+  4. Create session folders
+  5. Extract/copy files to session inbox
+  6. Sort DICOM files by series (`sort_dicom`)
+  7. Convert to NIfTI (`dicom2niix`)
+  8. Generate session.txt
+  9. Archive/delete original packages
+
+  ## Example Usage
+
+  **Basic - default settings:**
+  ```bash
+  qunex import_dicom \
+      --sessionsfolder=/data/my_study/sessions
+  ```
+
+  **Filter specific sessions:**
+  ```bash
+  qunex import_dicom \
+      --sessionsfolder=/data/my_study/sessions \
+      --sessions="AP.*,HQ.*" \
+      --check=any
+  ```
+
+  **Extract session name from packet:**
+  ```bash
+  qunex import_dicom \
+      --sessionsfolder=/data/my_study/sessions \
+      --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \
+      --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \
+      --check=any
+  ```
+
+  **Use log file for mapping:**
+  ```bash
+  qunex import_dicom \
+      --sessionsfolder=/data/my_study/sessions \
+      --logfile="path:/data/scanning_log.csv|packet_name:1|subject_id:2|session_name:3" \
+      --check=any
+  ```
+
+  **Process from session folders:**
+  ```bash
+  qunex import_dicom \
+      --sessionsfolder=/data/my_study/sessions \
+      --sessions="SUB*_baseline" \
+      --masterinbox=none \
+      --check=any
+  ```
+
+Parameters:
+  sessionsfolder:
+    optional: yes
+    type: string
+    default: "."
+    placeholder: "/path/to/study/sessions"
+    description: |
+      **The base study sessions folder** where session folders and inbox are located.
+
+      If not specified, uses the current working directory.
+
+  sessions:
+    optional: yes
+    type: string
+    placeholder: "AP.*,HQ.*,SUB001_baseline"
+    description: |
+      **Comma-delimited list of sessions to process** (supports regex/glob patterns).
+
+      - **Master inbox mode**: Filters packet names (can use regex patterns)
+      - **Session folder mode**: Specifies session folders to process (can use glob patterns)
+
+      If not specified, all found packets/sessions are processed.
+
+      **Examples:**
+      - `AP.*,HQ.*` - Process packets starting with AP or HQ
+      - `.*_baseline` - Process only baseline sessions
+      - `SUB001_baseline,SUB002_baseline` - Process specific sessions
+
+  masterinbox:
+    optional: yes
+    type: string
+    default: "<sessionsfolder>/inbox/MR"
+    placeholder: "/path/to/inbox or 'none'"
+    description: |
+      **Location of master inbox folder with packages to process**.
+
+      - Default: `<sessionsfolder>/inbox/MR`
+      - Custom path: `/data/scanner_output`
+      - `none`: Process data already in session-specific inbox folders
+
+      Set to `none` to process data from individual session folders instead of a centralized inbox.
+
+  check:
+    optional: yes
+    type: options
+    options: "any,no"
+    default: "any"
+    description: |
+      **Type of check to perform when identifying packages/sessions**.
+
+      - `any` (default): Continue if any packages found, report error otherwise
+      - `no`: Continue without checks, no error if nothing found
+
+      Use `any` for production pipelines to catch missing data issues.
+
+  pattern:
+    optional: yes
+    type: string
+    default: "(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|\\.tgz$|\\.tar\\..*$|$)"
+    placeholder: "regex pattern"
+    description: |
+      **Regex pattern to identify packages and extract packet name**.
+
+      Must include a named group `(?P<packet_name>...)` to capture the packet identifier.
+
+      **Default pattern:** Matches files/folders with or without archive extensions, extracting base name.
+
+      **Custom examples:**
+      - `.*?-(?P<packet_name>.*?)($|\\..*$)` - Extract after hyphen (e.g., "Yale-OP001.zip" → "OP001")
+      - `Scanner_(?P<packet_name>[A-Z0-9]+).*` - Extract alphanumeric code after prefix
+
+  nameformat:
+    optional: yes
+    type: string
+    default: "(?P<subject_id>.*)"
+    placeholder: "regex pattern"
+    description: |
+      **Regex pattern to extract subject ID and session name from packet/folder name**.
+
+      Must include named group `(?P<subject_id>...)` and optionally `(?P<session_name>...)`.
+
+      **Default:** Entire name is subject ID, no session name.
+
+      **Examples:**
+      - `(?P<subject_id>.*?)_(?P<session_name>.*)` - Extract around underscore (e.g., "SUB001_baseline")
+      - `(?P<subject_id>.*?)_.*` - Extract before underscore, ignore rest
+      - `.*?_(?P<subject_id>.*)` - Extract after underscore
+
+  tool:
+    optional: yes
+    type: options
+    options: "auto,dcm2niix,dcm2nii,dicm2nii"
+    default: "auto"
+    description: |
+      **Conversion tool to use for DICOM to NIfTI conversion**.
+
+      - `auto` (default): Automatically select best tool
+      - `dcm2niix`: Modern tool with JSON sidecars
+      - `dcm2nii`: Legacy tool
+      - `dicm2nii`: MATLAB-based, good for PAR/REC
+
+  parelements:
+    optional: yes
+    type: string
+    default: "1"
+    placeholder: "1, 3, 8, or 'all'"
+    description: |
+      **Number of parallel processes for DICOM to NIfTI conversion**.
+
+      - Number (e.g., `3`): Run that many parallel conversions
+      - `all`: Use all available CPU cores
+      - Default: `1` (sequential)
+
+  logfile:
+    optional: yes
+    type: string
+    placeholder: "path:/data/log.csv|packet_name:1|subject_id:2|session_name:3"
+    description: |
+      **CSV/TSV file mapping packet names to subject/session IDs**.
+
+      Format: `path:<file>|packet_name:<col>|subject_id:<col>[|session_name:<col>]`
+
+      Column numbers are 1-indexed.
+
+      **Example:**
+      `path:/data/scanning_log.csv|packet_name:1|subject_id:2|session_name:3`
+
+  archive:
+    optional: yes
+    type: options
+    options: "leave,move,copy,delete"
+    default: "leave"
+    description: |
+      **What to do with processed packages**.
+
+      - `leave` (default): Keep package in inbox folder
+      - `move`: Move to `<sessionsfolder>/archive/MR`
+      - `copy`: Copy to archive, keep original
+      - `delete`: Delete package after processing
+
+      Only applies to compressed packages.
+
+  add_image_type:
+    optional: yes
+    type: number
+    default: "0"
+    placeholder: "0, 1, 2"
+    description: |
+      **Number of image type labels to add to sequence names (Siemens)**.
+
+      Adds labels from end of image type list to sequence names.
+
+      - `0` (default): Don't add labels
+      - `1`: Add last label
+      - `2`: Add last two labels
+
+  add_json_info:
+    optional: yes
+    type: string
+    default: "all"
+    placeholder: "all or TR,PEDirection,EchoSpacing"
+    description: |
+      **Metadata to extract from JSON sidecar files and add to session.txt**.
+
+      - `all` (default): Extract all available fields
+      - Comma-separated list: Extract specific fields
+      - Empty: Don't extract metadata
+
+      **Available:** TR, PEDirection, EchoSpacing, DwellTime, ReadoutDirection
+
+  unzip:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "yes"
+    description: |
+      **Whether to automatically unzip gzipped DICOM files**.
+
+      - `yes` (default): Auto-unzip compressed files
+      - `no`: Abort if gzipped files found
+
+  gzip:
+    optional: yes
+    type: options
+    options: "folder,file,no"
+    default: "folder"
+    description: |
+      **How to compress DICOM files after processing**.
+
+      - `folder` (default): Archive series as tar.gz
+      - `file`: Gzip individual files
+      - `no`: Leave uncompressed
+
+  verbose:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "yes"
+    description: |
+      **Whether to provide detailed reports**.
+
+      - `yes` (default): Detailed reporting including unmatched packets
+      - `no`: Minimal output
+
+  overwrite:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "no"
+    description: |
+      **Whether to overwrite existing data**.
+
+      - `yes`: Delete existing data and reprocess (WARNING: previous data lost if command fails)
+      - `no` (default): Skip sessions with existing data
+
+  existing_structure:
+    optional: yes
+    type: options
+    options: "true,false"
+    default: "false"
+    description: |
+      **Whether images are already organized in series folders**.
+
+      - `true`: Skip reorganization, images already in proper structure
+      - `false` (default): Reorganize files by series

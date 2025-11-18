@@ -1,0 +1,81 @@
+Description: |
+  # Split Fidl
+
+  The `split_fidl` command splits a multi-bold fidl event file into run-specific bold files based on the sequence of bold files in a conc file and their lengths.
+
+  This is the reverse operation of `join_fidl` - it takes a concatenated fidl file and splits it back into individual run-specific files.
+
+  ## How It Works
+
+  The command:
+
+  1. Reads the concatenated fidl file to get event timing information
+  2. Reads the conc file to determine the lengths of individual BOLD runs
+  3. For each BOLD run in the conc file:
+     - Extracts events that fall within that run's timeframe
+     - Adjusts event timings relative to the start of each run
+     - Saves to a run-specific fidl file
+
+  ## Output Naming
+
+  Output files are named based on the input fidl file with the BOLD run name inserted:
+
+  ```
+  Input:  OP333_WM.fidl
+  Output: OP333_WM_BOLD_1.fidl
+          OP333_WM_BOLD_2.fidl
+          OP333_WM_BOLD_3.fidl
+  ```
+
+  ## Example Usage
+
+  ```bash
+  qunex split_fidl \
+      --concfile=OP333_WM.conc \
+      --fidlfile=OP333_WM.fidl \
+      --outfolder=/data/mystudy/analysis/splitfidls
+  ```
+
+  This will split the concatenated fidl file into individual run-specific files based on the length of bold runs
+  specified in the conc file.
+
+Parameters:
+  concfile:
+    optional: no
+    type: string
+    placeholder: "path/to/file.conc"
+    description: |
+      **The path to the conc file** that defines the structure of BOLD runs.
+
+      This file specifies:
+      - Which BOLD runs are included
+      - The length (number of frames) of each run
+      - The order of runs in the concatenation
+
+      The conc file is used as a reference to determine how to split the fidl file.
+
+  fidlfile:
+    optional: no
+    type: string
+    placeholder: "path/to/concatenated.fidl"
+    description: |
+      **The path to the fidl file to split**.
+
+      This should be a concatenated fidl file containing events for multiple BOLD runs.
+
+      The file must:
+      - Have a proper fidl header with TR information
+      - Contain event timings in the concatenated timeframe
+      - Correspond to the bold files defined in the conc file
+
+  outfolder:
+    optional: yes
+    type: string
+    default: "."
+    placeholder: "path/to/output/folder"
+    description: |
+      **The folder to save the split fidl files in**.
+
+      If not specified, files are saved in the current directory.
+
+      The folder will contain one fidl file per BOLD run defined in the conc file.

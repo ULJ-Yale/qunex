@@ -6,11 +6,62 @@ commands:
   create_study:
     description: "Create the base study folder structure."
 
+  copy_study:
+    description: "Copy an existing QuNex study to a new location."
+
   create_batch:
     description: "Create a batch file with session metadata."
 
   create_list:
     description: "Create a list of sessions and related files."
+
+  create_conc:
+    description: "Create conc files for concatenating BOLD runs."
+
+  gather_behavior:
+    description: "Compile behavioral data from individual sessions into a group file."
+
+  pull_sequence_names:
+    description: "Extract and compile MRI sequence names from session files."
+
+  create_session_info:
+    description: "Map sequence names to pipeline labels for HCP/MICE processing."
+
+  join_fidl:
+    description: "Combine multiple run-specific fidl files into a concatenated fidl file."
+
+  join_fidl_folder:
+    description: "Batch join fidl files for all conc files in a folder."
+
+  split_fidl:
+    description: "Split a concatenated fidl file into run-specific files."
+
+  check_fidl:
+    description: "Visualize fidl event files with graphical plots."
+
+  readPARInfo:
+    description: "Read and extract information from Philips PAR files."
+
+  readDICOMInfo:
+    description: "Read and extract information from DICOM files."
+
+  dicom2nii:
+    description: "Convert DICOM images to NIfTI format."
+
+  dicom2niix:
+    description: "Convert DICOM/PAR-REC images to NIfTI format (advanced)."
+
+  sort_dicom:
+    description: "Organize unsorted DICOM/PAR-REC files into series folders."
+
+  list_dicom:
+    description: "Inspect and report on DICOM files in a folder."
+
+  split_dicom:
+    description: "Separate mixed DICOM files by session ID into subfolders."
+
+  import_dicom:
+    description: "Automated end-to-end DICOM import and NIfTI conversion pipeline."
 
   preprocess_conc:
     description: "Preprocess concatenated fMRI data."

@@ -1,0 +1,181 @@
+Description: |
+  The `gather_behavior` command compiles behavioral data from individual session folders into a single group-level
+  behavioral file. This is useful for:
+
+  * **Creating analysis datasets** by combining behavioral measures across all participants
+  * **Quality control** by identifying sessions with missing or incomplete behavioral data
+  * **Preparing inputs** for statistical analysis or data sharing
+  * **Filtering participants** based on behavioral performance criteria
+
+  ## How It Works
+
+  1. The command identifies sessions to process (all, specific, or filtered)
+  2. For each session, it looks for behavioral data files in the `<session>/behavior/` folder
+  3. It reads tab-separated data files and compiles them into a single group file
+  4. Missing data is marked as 'NA' in the output file
+  5. A report summarizes successful processing, missing files, and errors
+
+  ## Input File Format
+
+  Individual session behavioral files must be **tab-separated** text files with:
+  * Lines starting with `#` are treated as comments (ignored)
+  * First valid line contains column headers (variable names)
+  * Second line contains the data values
+  * One data line per file (multiple files per session are merged)
+
+  Example individual file (`s001/behavior/behavior.txt`):
+  ```
+  # Behavioral data for session s001
+  accuracy	reaction_time	completed
+  0.85	450	yes
+  ```
+
+  ## Output File Format
+
+  The compiled group file contains:
+  * Optional header comment with generation date (if `report="yes"`)
+  * Tab-separated columns: `session id` followed by all variables found across sessions
+  * One row per session with 'NA' for missing values
+  * Optional footer with processing report (if `report="yes"`)
+
+  Example group file:
+  ```
+  # Data compiled using gather_behavior on 2025-11-18
+  session id	accuracy	reaction_time	completed
+  s001	0.85	450	yes
+  s002	0.92	380	yes
+  s003	NA	NA	no
+  # Sessions for which no behavioral data was found
+  # -> s004
+  ```
+
+Source specification:
+  description: |
+    Specify the location of sessions and which sessions to include when gathering behavioral data.
+
+  sessionsfolder:
+    optional: no
+    type: string
+    default: "."
+    placeholder: "/mystudy/sessions"
+    description: |
+      Base study sessions folder containing individual session subfolders. The command will look for
+      behavioral data in `<sessionsfolder>/<session>/behavior/` for each session.
+
+  sessions:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "s001, s002, AP*"
+    description: |
+      Comma, pipe, or space-separated list of session names to process. Supports glob patterns for matching
+      multiple sessions.
+
+      Examples:
+      * `s001, s002, s003` - Process specific sessions
+      * `AP*` - Process all sessions starting with "AP"
+      * `AP*|OP*` - Process all sessions starting with "AP" or "OP"
+      * `batch.txt` - Use sessions from a batch file (can be combined with `filter`)
+
+      If not specified, all sessions with a `behavior` subfolder will be processed.
+
+  filter:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "group:controls|behavioral:yes"
+    description: |
+      Filter to select specific sessions when using a batch file. Provide as pipe-separated key-value pairs.
+
+      Only sessions that match **all** specified criteria will be processed.
+
+      Examples:
+      * `behavioral:yes` - Only sessions with behavioral data collected
+      * `group:controls|timepoint:baseline` - Only baseline sessions from control group
+
+      **Note**: Requires that `sessions` parameter points to a batch file.
+
+Input specification:
+  description: |
+    Specify which behavioral data files to gather from each session's behavior folder.
+
+  sourcefiles:
+    optional: yes
+    type: string
+    default: "behavior.txt"
+    placeholder: "behavior.txt"
+    description: |
+      Comma, pipe, or space-separated list of filenames or glob patterns specifying which behavioral files
+      to gather from each session's `behavior` folder.
+
+      Examples:
+      * `behavior.txt` - Single specific file (default)
+      * `*test*` - All files containing "test" in the name
+      * `*test*|*results*` - Files matching either pattern
+      * `task1.txt,task2.txt` - Multiple specific files
+
+      Files are searched in: `<sessionsfolder>/<session>/behavior/`
+
+      **Multiple files per session**: If multiple files match for a session, they will be merged. Column
+      headers must match, or values will be treated as separate variables.
+
+Output specification:
+  description: |
+    Specify where the compiled group behavioral file should be saved and how to handle existing files.
+
+  targetfile:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/mystudy/analysis/controls_behavior.txt"
+    description: |
+      Full path (including filename) for the compiled group behavioral file.
+
+      If not specified, the file will be saved to:
+      ```
+      <sessionsfolder>/inbox/behavior/behavior.txt
+      ```
+
+      The directory will be created if it doesn't exist.
+
+  overwrite:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "no"
+    description: |
+      Specifies what to do if the target file already exists:
+
+      * `yes` - Remove the existing file and create a new one
+      * `no` - Exit with an error if the file exists
+
+Processing options:
+  description: |
+    Configure validation and reporting behavior during processing.
+
+  check:
+    optional: yes
+    type: options
+    options: "yes,no,warn"
+    default: "yes"
+    description: |
+      Specifies how to handle sessions with missing or problematic behavioral data:
+
+      * `yes` - Exit with an error if any session is missing data or has processing errors
+      * `warn` - Report missing/error sessions but still create the output file (exit with null status)
+      * `no` - Ignore missing/error sessions and create output file (exit with success status)
+
+      Sessions with missing data will have 'NA' values in the compiled file.
+
+  report:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "yes"
+    description: |
+      Whether to include metadata and processing report in the output file:
+
+      * `yes` - Include date stamp header and footer with processing report (sessions processed, missing, errors)
+      * `no` - Output only the data table without metadata or report
+
+      The report helps track which sessions were successfully processed and which had issues.

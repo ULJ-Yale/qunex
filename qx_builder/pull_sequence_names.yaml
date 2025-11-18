@@ -1,0 +1,186 @@
+Description: |
+  The `pull_sequence_names` command extracts and compiles a list of MRI sequence names from session information
+  files across multiple sessions. This is useful for:
+
+  * **Identifying all sequences** used across a study for documentation
+  * **Creating mapping files** for HCP pipeline processing or data organization
+  * **Quality control** by verifying consistent sequence acquisition across sessions
+  * **Preparing standardized protocols** by cataloging sequences that need to be processed
+
+  ## How It Works
+
+  1. The command identifies sessions to process (all, specific, or filtered)
+  2. For each session, it looks for session information files (default: `session.txt`)
+  3. It parses these files to extract sequence names from imaging data entries
+  4. It compiles a unique, sorted list of all sequences found across sessions
+  5. Optionally reports which sessions were processed successfully or had issues
+
+  ## Input File Format
+
+  The command expects session information files (typically `session.txt` or `session_hcp.txt`) with lines in the format:
+  ```
+  <number>: <sequence_name> <additional_info>
+  ```
+
+  Example session file:
+  ```
+  1: T1w ND 0.8mm 176sl
+  2: T2w ND 0.8mm 176sl
+  3: rfMRI_REST1_AP
+  4: rfMRI_REST1_PA
+  5: DWI_dir98_AP
+  ```
+
+  The command extracts the sequence names (T1w, T2w, rfMRI_REST1_AP, etc.)
+
+  ## Output File Format
+
+  The compiled file contains:
+  * Optional header comment with generation date (if `report="yes"`)
+  * One sequence name per line, alphabetically sorted, with duplicates removed
+  * Optional footer with processing report (if `report="yes"`)
+
+  Example output:
+  ```
+  # Data compiled using pull_sequence_names on 2025-11-18
+  DWI_dir98_AP
+  DWI_dir98_PA
+  rfMRI_REST1_AP
+  rfMRI_REST1_PA
+  T1w
+  T2w
+  # Sessions for which no imaging data was found
+  # -> s004
+  ```
+
+Source specification:
+  description: |
+    Specify the location of sessions and which sessions to include when extracting sequence names.
+
+  sessionsfolder:
+    optional: no
+    type: string
+    default: "."
+    placeholder: "/mystudy/sessions"
+    description: |
+      Base study sessions folder containing individual session subfolders. The command will look for
+      session information files in `<sessionsfolder>/<session>/` for each session.
+
+  sessions:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "s001, s002, AP*"
+    description: |
+      Comma, pipe, or space-separated list of session names to process. Supports glob patterns for matching
+      multiple sessions.
+
+      Examples:
+      * `s001, s002, s003` - Process specific sessions
+      * `AP*` - Process all sessions starting with "AP"
+      * `AP*|OP*` - Process all sessions starting with "AP" or "OP"
+      * `batch.txt` - Use sessions from a batch file (can be combined with `filter`)
+
+      If not specified, all sessions in `sessionsfolder` will be processed.
+
+  filter:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "group:controls|scan_complete:yes"
+    description: |
+      Filter to select specific sessions when using a batch file. Provide as pipe-separated key-value pairs.
+
+      Only sessions that match **all** specified criteria will be processed.
+
+      Examples:
+      * `scan_complete:yes` - Only sessions with complete scans
+      * `group:controls|timepoint:baseline` - Only baseline sessions from control group
+
+      **Note**: Requires that `sessions` parameter points to a batch file.
+
+Input specification:
+  description: |
+    Specify which session information files to parse for sequence names.
+
+  sourcefiles:
+    optional: yes
+    type: string
+    default: "session.txt"
+    placeholder: "session.txt"
+    description: |
+      Comma, pipe, or space-separated list of filenames or glob patterns specifying which session information
+      files to process from each session folder.
+
+      Examples:
+      * `session.txt` - Single specific file (default)
+      * `session_hcp.txt` - HCP-style session file
+      * `session*.txt` - All files starting with "session" and ending with ".txt"
+      * `session.txt|session_hcp.txt` - Multiple specific files
+      * `*.txt` - All text files in the session folder
+
+      Files are searched in: `<sessionsfolder>/<session>/`
+
+      **Multiple files per session**: If multiple files match for a session, all will be processed and
+      their sequence names combined.
+
+Output specification:
+  description: |
+    Specify where the compiled sequence list should be saved and how to handle existing files.
+
+  targetfile:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/specs/hcp_mapping.txt"
+    description: |
+      Full path (including filename) for the compiled sequence names file.
+
+      If not specified, the file will be saved to:
+      ```
+      <sessionsfolder>/inbox/MR/sequences.txt
+      ```
+
+      This file can be used as input for HCP mapping configurations or other sequence-based processing workflows.
+
+  overwrite:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "no"
+    description: |
+      Specifies what to do if the target file already exists:
+
+      * `yes` - Remove the existing file and create a new one
+      * `no` - Exit with an error if the file exists
+
+Processing options:
+  description: |
+    Configure validation and reporting behavior during processing.
+
+  check:
+    optional: yes
+    type: options
+    options: "yes,no,warn"
+    default: "yes"
+    description: |
+      Specifies how to handle sessions with missing or problematic session information files:
+
+      * `yes` - Exit with an error if any session is missing files or has processing errors
+      * `warn` - Report missing/error sessions but still create the output file (exit with null status)
+      * `no` - Ignore missing/error sessions and create output file (exit with success status)
+
+      Sessions with missing files will be listed in the report (if enabled).
+
+  report:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "yes"
+    description: |
+      Whether to include metadata and processing report in the output file:
+
+      * `yes` - Include date stamp header and footer with processing report (sessions processed, missing, errors)
+      * `no` - Output only the sequence names without metadata or report
+
+      The report helps track which sessions were successfully processed and which had issues.

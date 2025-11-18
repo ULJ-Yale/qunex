@@ -1,0 +1,95 @@
+Description: |
+  The `copy_study` command copies an existing QuNex study to a new location. This is useful for:
+
+  * **Backing up** an existing study
+  * **Creating a derivative study** to continue processing or analysis with different parameters
+  * **Extracting a subset** of sessions or subjects for focused analysis or sharing
+
+  The command preserves the complete study folder structure and can optionally filter which sessions or subjects
+  are copied using various selection methods.
+
+  ## What gets copied?
+
+  By default, the entire study is copied including:
+
+  * All study folders (analysis, processing, info, etc.)
+  * All sessions and subjects
+  * All processing logs, scripts, and results
+
+  When filtering is applied (via `sessions`, `subjects`, `batchfile`, or `filter`), only the specified subset
+  is copied while maintaining the study structure.
+
+  ## Automatic path updating
+
+  The command automatically updates file paths in `.txt`, `.conc`, and `.list` files to reflect the new
+  study location, ensuring that references to data files remain valid in the copied study.
+
+Parameters:
+
+  studyfolder:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "/path/to/new/studyfolder"
+    description: |
+      Path where the new study folder will be created. The command will create this folder if it doesn't exist,
+      along with the standard QuNex study folder structure.
+
+  existing_study:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "/path/to/existing/studyfolder"
+    description: |
+      Path to the existing QuNex study that will be copied. This folder must be a valid QuNex study
+      (i.e., it must contain a `.qunexstudy` file in its root directory).
+
+Selection options:
+
+  sessions:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "s001-01, s001-02, s002-01"
+    description: |
+      If provided, only the specified sessions will be copied from the source study. Sessions should be
+      specified as a comma-separated list (e.g., `s001-01, s001-02, s002-01`).
+
+      **Note:** This parameter cannot be used simultaneously with the `subjects` parameter. Use one or the other.
+
+  subjects:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "s001, s002"
+    description: |
+      If provided, only the specified subjects and their associated sessions will be copied from the source study.
+      Subjects should be specified as a comma-separated list (e.g., `s001, s002`).
+
+      **Note:** This parameter cannot be used simultaneously with the `sessions` parameter. Use one or the other.
+
+  batchfile:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/path/to/batch.txt"
+    description: |
+      Path to a batch file containing session metadata. When provided, only the sessions listed in the batch file
+      will be copied. This can be combined with the `filter` parameter to further refine which sessions are copied.
+
+      The batch file is also used to identify which subjects should be copied based on their associated sessions.
+
+  filter:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "group:control|timepoint:baseline"
+    description: |
+      Optional filter to select specific sessions from the batch file. The filter should be specified as
+      pipe-separated key-value pairs in the format: `key:value|key:value`.
+
+      Only sessions that match **all** specified criteria will be copied. For example:
+      * `group:control` - Copy only sessions from the control group
+      * `group:control|timepoint:baseline` - Copy only baseline sessions from the control group
+
+      **Note:** This parameter requires that the `batchfile` parameter also be provided.

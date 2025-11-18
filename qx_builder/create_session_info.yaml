@@ -1,0 +1,207 @@
+Description: |
+  The `create_session_info` command prepares pipeline-specific session information files by mapping original MRI
+  sequence names to standardized labels required by processing pipelines (HCP, MICE, etc.). This is essential for:
+
+  * **Preparing sessions for pipeline processing** by translating site-specific sequence names to pipeline conventions
+  * **Standardizing data organization** across sessions with varying acquisition protocols
+  * **Automatically numbering BOLD runs** sequentially for consistent processing
+  * **Managing fieldmap pairings** for distortion correction (SE-EPI, gradient fieldmaps)
+
+  ## How It Works
+
+  1. Reads a mapping file that defines sequence name → pipeline label translations
+  2. For each session, reads the source session file (e.g., `session.txt`)
+  3. Matches sequence names against mapping rules and assigns pipeline labels
+  4. Automatically numbers BOLD runs sequentially (bold1, bold2, etc.)
+  5. Identifies and pairs fieldmaps (SE or FM) for distortion correction
+  6. Writes a pipeline-ready session file (e.g., `session_hcp.txt`)
+
+  ## Mapping File Format
+
+  The mapping file defines how to translate sequence names to pipeline labels:
+  ```
+  # Structural images
+  T1w 0.7mm N1 => T1w
+  T2w 0.7mm N1 => T2w
+
+  # BOLD runs (automatically numbered as bold1, bold2, etc.)
+  RSBOLD 3mm 48 2.5s  => bold:rest
+  BOLD 3mm 48 2.5s    => bold:task
+
+  # Fieldmaps
+  C-BOLD 3mm 48 2.5s FS-P => SE-FM-AP
+  C-BOLD 3mm 48 2.5s FS-A => SE-FM-PA
+
+  # Map by sequence number instead of name
+  5 => bold:sleep
+  ```
+
+  **Key features:**
+  * Lines starting with `#` are comments
+  * Format: `<original_sequence_name> => <pipeline_label>`
+  * BOLD runs use compound labels: `bold:<task_name>`
+  * Can map by sequence number (left side) or name
+  * Number-based mappings take priority over name-based mappings
+
+  ## Example Transformation
+
+  **Input** (`session.txt`):
+  ```
+  01: Scout
+  02: T1w 0.7mm N1
+  03: T2w 0.7mm N1
+  04: RSBOLD 3mm 48 2.5s
+  05: RSBOLD 3mm 48 2.5s
+  ```
+
+  **Output** (`session_hcp.txt`):
+  ```
+  hcpready: true
+
+  01:                  :Scout
+  02: T1w              :T1w 0.7mm N1
+  03: T2w              :T2w 0.7mm N1
+  04: bold1:rest       :RSBOLD 3mm 48 2.5s
+  05: bold2:rest       :RSBOLD 3mm 48 2.5s
+  ```
+
+  Note: Original sequence names are preserved after the second colon.
+
+Source specification:
+  description: |
+    Specify which sessions to process and where to find them.
+
+  sessions:
+    optional: yes
+    type: string
+    default: "*"
+    placeholder: "s001, s002, AP*"
+    description: |
+      Sessions to process. Can be specified as:
+
+      * **Explicit list**: `s001, s002, s003` - Process specific sessions
+      * **Glob patterns**: `AP*`, `OP*|AP*` - Process all matching sessions
+      * **Batch file**: `batch.txt` - Process sessions from batch file (can combine with `filter`)
+      * **All sessions**: `*` - Process all sessions in sessionsfolder (default)
+
+      Separators: commas, pipes, or spaces
+
+  sessionsfolder:
+    optional: yes
+    type: string
+    default: "."
+    placeholder: "/mystudy/sessions"
+    description: |
+      Base study sessions folder containing individual session subfolders.
+
+      The command looks for session files in: `<sessionsfolder>/<session>/`
+
+  filter:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "group:controls|ready:yes"
+    description: |
+      Filter to select specific sessions when using a batch file. Provide as pipe-separated key-value pairs.
+
+      Only sessions matching **all** criteria will be processed.
+
+      Examples:
+      * `ready:yes` - Only sessions marked as ready
+      * `group:controls|timepoint:baseline` - Only baseline control sessions
+
+      **Note**: Requires `sessions` parameter to specify a batch file.
+
+Pipeline configuration:
+  description: |
+    Specify which pipeline(s) to prepare session files for and related settings.
+
+  pipelines:
+    optional: yes
+    type: string
+    default: "hcp"
+    placeholder: "hcp"
+    description: |
+      Comma-separated list of pipelines to prepare session files for.
+
+      Currently supported pipelines:
+      * `hcp` - Human Connectome Project pipeline
+      * `mice` - Mouse/rodent imaging pipeline
+
+      Examples:
+      * `hcp` - Prepare for HCP pipeline only (default)
+      * `hcp,mice` - Prepare for both HCP and MICE pipelines
+
+      For each pipeline, a separate target file will be created.
+
+  mapping:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/specs/hcp_mapping.txt"
+    description: |
+      Path to the mapping file that defines sequence name → pipeline label translations.
+
+      If not specified, defaults to: `<sessionsfolder>/specs/<pipeline>_mapping.txt`
+
+      The mapping file format:
+      * One mapping per line: `<sequence_name> => <pipeline_label>`
+      * BOLD runs: `<sequence_name> => bold:<task_name>`
+      * Comments: Lines starting with `#`
+      * Fieldmap tags: Can specify `fm(N)` or `se(N)` for explicit pairing
+
+      See Description section for detailed mapping file examples.
+
+Input/Output files:
+  description: |
+    Specify source and target session file names and how to handle existing files.
+
+  sourcefile:
+    optional: yes
+    type: string
+    default: "session.txt"
+    placeholder: "session.txt"
+    description: |
+      Name of the source session information file in each session folder.
+
+      This file contains the original sequence names from the scanner. The file is expected to be in:
+      `<sessionsfolder>/<session>/<sourcefile>`
+
+      Common names:
+      * `session.txt` - Default generic session file
+      * `session_original.txt` - Original scanner sequences
+
+  targetfile:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "session_hcp.txt"
+    description: |
+      Name of the target (output) session information file to create in each session folder.
+
+      If not specified, defaults to: `session_<pipeline>.txt`
+
+      Examples:
+      * For `pipeline=hcp`: `session_hcp.txt`
+      * For `pipeline=mice`: `session_mice.txt`
+
+      The file will be created in: `<sessionsfolder>/<session>/<targetfile>`
+
+      The target file will include:
+      * Mapped sequence labels in pipeline format
+      * Original sequence names (preserved)
+      * Pipeline-ready flag (e.g., `hcpready: true`)
+
+  overwrite:
+    optional: yes
+    type: options
+    options: "yes,no"
+    default: "no"
+    description: |
+      Whether to overwrite existing target files:
+
+      * `yes` - Remove and recreate target files if they exist
+      * `no` - Skip sessions that already have target files (default)
+
+      **Warning**: When set to `yes`, previous data is deleted before processing. If the command fails,
+      previous results may be lost.

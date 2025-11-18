@@ -1,0 +1,117 @@
+Description: |
+  The `join_fidl_folder` command is a batch version of `join_fidl` that processes multiple sessions at once. It
+  automatically finds all conc files in a folder and joins their corresponding fidl files. This is useful for:
+
+  * **Batch processing** entire studies or groups of sessions
+  * **Standardizing workflows** by processing all sessions in a consistent manner
+  * **Time efficiency** by avoiding manual execution for each session
+  * **Automated pipelines** where multiple sessions need joined fidl files
+
+  Please, see `join_fidl` command for details on how individual fidl files are joined.
+
+  ## How It Works
+
+  1. Finds all `.conc` files in the specified `concfolder`
+  2. For each conc file, derives the fidl file pattern from the conc filename
+  3. Calls `join_fidl` for each conc file with matching fidl files
+  4. Saves all joined fidl files to the output folder
+  5. Reports any failures encountered during processing
+
+  ## Example Workflow
+
+  **Input structure:**
+  ```
+  concs/
+    ├── s001_WM.conc
+    ├── s002_WM.conc
+    └── s003_WM.conc
+
+  fidls/
+    ├── s001_WM_run1.fidl
+    ├── s001_WM_run2.fidl
+    ├── s002_WM_run1.fidl
+    ├── s002_WM_run2.fidl
+    ├── s003_WM_run1.fidl
+    └── s003_WM_run2.fidl
+  ```
+
+  **Processing:**
+  * For `s001_WM.conc`, joins `s001_WM_run*.fidl` → `s001_WM.fidl`
+  * For `s002_WM.conc`, joins `s002_WM_run*.fidl` → `s002_WM.fidl`
+  * For `s003_WM.conc`, joins `s003_WM_run*.fidl` → `s003_WM.fidl`
+
+  **Output:**
+  ```
+  output/
+    ├── s001_WM.fidl
+    ├── s002_WM.fidl
+    └── s003_WM.fidl
+  ```
+
+Source specification:
+
+  concfolder:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/inbox/concs"
+    description: |
+      Path to the folder containing conc (concatenation) files to process.
+
+      The command will find all `.conc` files in this folder and process each one. For each conc file,
+      it will look for matching fidl files based on the conc filename.
+
+      For example, if a conc file is named `s001_WM.conc`, the command will search for fidl files
+      matching the pattern `s001_WM*.fidl` in the `fidlfolder`.
+
+  fidlfolder:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/inbox/fidls"
+    description: |
+      Path to the folder containing the fidl files to join.
+
+      If not specified, defaults to the same folder as `concfolder`.
+
+      For each conc file found, the command constructs a fidl file pattern by:
+      1. Taking the conc filename without the `.conc` extension
+      2. Searching for all fidl files matching `<basename>*.fidl` in this folder
+
+      Example:
+      * Conc file: `s001_task.conc`
+      * Fidl pattern: `<fidlfolder>/s001_task*.fidl`
+      * Matches: `s001_task_run1.fidl`, `s001_task_run2.fidl`, etc.
+
+Output specification:
+
+  outfolder:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "/mystudy/sessions/inbox/fidls_joined"
+    description: |
+      Path to the folder where joined fidl files will be saved.
+
+      If not specified, defaults to the same folder as `fidlfolder`.
+
+      The output filenames will be based on the conc filenames:
+      * Conc file: `s001_WM.conc`
+      * Output fidl: `<outfolder>/s001_WM.fidl`
+
+      The folder will be created if it doesn't exist.
+
+  fidlname:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "_concatenated"
+    description: |
+      Optional suffix to append to each output fidl filename.
+
+      The output filename is constructed as: `<conc_basename><fidlname>.fidl`
+
+      Examples:
+      * If conc file is `s001_WM.conc` and `fidlname="_concat"`: output is `s001_WM_concat.fidl`
+      * If conc file is `task.conc` and `fidlname=""`: output is `task.fidl`
+      * If conc file is `rest.conc` and `fidlname="_joined"`: output is `rest_joined.fidl`
