@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>QuNex Command Builder</title>
+	<style>
+		:root {
+			--bg: #0b1020;
+			--panel: #121833;
+			--panel-alt: #0f1530;
+			--text: #e9eefc;
+			--muted: #9fb0e3;
+			--accent: #5eb1ff;
+			--accent-2: #9ad1ff;
+			--param: #e7ab77;
+			--param-optional: #e6d663; /* #9ad1ff; */
+			--danger: #ff6b6b;
+			--ok: #4cd964;
+			--code-bg: #0a0f24;
+			--border: #22305f;
+			--shadow: rgba(0,0,0,0.35);
+			--mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+			--radius: 12px;
+			--optional-blue: #8b9fcc;
+		}
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body {
+			font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial;
+			background: var(--bg);
+			color: var(--text);
+			line-height: 1.45;
+			padding: 28px 16px 80px;
+		}
+		.container {
+			max-width: 1100px;
+			margin: 0 auto;
+		}
+		h1 {
+			font-size: 22px;
+			margin-bottom: 6px;
+			color: var(--text);
+			letter-spacing: 0.2px;
+		}
+		.command-name-display {
+			font-size: 1.5rem;
+			font-weight: 600;
+			color: #d16969;
+			margin-bottom: 0.5rem;
+			font-family: var(--mono);
+		}
+		.subtitle {
+			color: var(--muted);
+			margin-bottom: 20px;
+			font-size: 14px;
+		}
+		.card {
+			background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			padding: 18px 16px;
+			box-shadow: 0 10px 30px var(--shadow), inset 0 -1px 0 rgba(255,255,255,0.04);
+			margin-bottom: 16px;
+		}
+		.section-title {
+			font-size: 18px;
+			margin-bottom: 12px;
+			color: var(--accent-2);
+			letter-spacing: 0.2px;
+		}
+		.help {
+			color: var(--muted);
+			font-size: 13px;
+			margin-bottom: 12px;
+		}
+
+		/* Markdown content styles */
+		.markdown-content {
+			color: var(--text);
+			line-height: 1.7;
+		}
+		.markdown-content p {
+			margin-bottom: 1rem;
+		}
+		.markdown-content h1, .markdown-content h2, .markdown-content h3,
+		.markdown-content h4, .markdown-content h5, .markdown-content h6 {
+			margin-top: 1.5rem;
+			margin-bottom: 0.75rem;
+			color: var(--accent-2);
+		}
+		.markdown-content h1 { font-size: 1.5rem; }
+		.markdown-content h2 { font-size: 1.3rem; }
+		.markdown-content h3 { font-size: 1.1rem; }
+		.markdown-content ul, .markdown-content ol {
+			margin-left: 1.5rem;
+			margin-bottom: 1rem;
+		}
+		.markdown-content li {
+			margin-bottom: 0.25rem;
+		}
+		.markdown-content code {
+			background: #0d1430;
+			padding: 0.15rem 0.1rem;
+			border-radius: 3px;
+			font-family: var(--mono);
+			font-size: 0.9em;
+			color: var(--accent);
+		}
+		.markdown-content pre {
+			background: var(--code-bg);
+			padding: 1rem;
+			border-radius: 4px;
+			border: 1px solid var(--border);
+			overflow-x: auto;
+			margin-bottom: 1rem;
+		}
+		.markdown-content pre code {
+			background: none;
+			padding: 0;
+			color: var(--text);
+		}
+		.markdown-content strong {
+			color: var(--accent-2);
+			font-weight: 600;
+		}
+		.markdown-content em {
+			font-style: italic;
+			color: var(--text);
+		}
+		.markdown-content a {
+			color: var(--accent);
+			text-decoration: none;
+		}
+		.markdown-content a:hover {
+			text-decoration: underline;
+		}
+		.markdown-content blockquote {
+			border-left: 3px solid var(--accent);
+			padding-left: 1rem;
+			margin-left: 0;
+			margin-bottom: 1rem;
+			color: var(--muted);
+		}
+
+		/* Command selector */
+		.command-selector {
+			margin-bottom: 20px;
+		}
+		.command-selector label {
+			display: block;
+			margin-bottom: 6px;
+			font-weight: 500;
+			font-size: 14px;
+		}
+		.command-selector select {
+			width: 100%;
+			max-width: 800px;
+			padding: 10px 12px;
+			background: #0d1430;
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			color: var(--text);
+			font-size: 13px;
+			outline: none;
+			transition: 0.15s ease-in-out;
+		}
+		.command-selector select:focus {
+			border-color: #3b57aa;
+			box-shadow: 0 0 0 3px rgba(62, 124, 255, 0.18);
+		}
+
+		/* Parameter blocks */
+		.param-block {
+			margin-bottom: 18px;
+		}
+		.param-header {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin-bottom: 6px;
+			flex-wrap: wrap;
+		}
+		.param-name {
+			font-weight: 600;
+			font-size: 15px;
+			color: var(--param);
+			font-family: var(--mono);
+		}
+		.param-name.optional {
+			color: var(--param-optional);
+		}
+		.param-badge {
+			display: inline-flex;
+			align-items: center;
+			padding: 3px 8px;
+			border-radius: 6px;
+			font-size: 11px;
+			font-weight: 500;
+			background: #1a2a55;
+			color: #a8c5ff;
+			white-space: nowrap;
+		}
+		.param-badge.optional-badge {
+			background: #2a3555;
+			color: var(--optional-blue);
+		}
+		.param-desc {
+			color: var(--muted);
+			font-size: 13px;
+			margin-bottom: 8px;
+			line-height: 1.4;
+		}
+		.param-desc.markdown-content p {
+			margin-bottom: 0.5rem;
+		}
+		.param-desc.markdown-content p:first-child {
+			margin-top: 0;
+		}
+		.param-desc.markdown-content p:last-child {
+			margin-bottom: 0;
+		}
+		.param-desc.markdown-content ul,
+		.param-desc.markdown-content ol {
+			margin-top: 0.5rem;
+			margin-bottom: 0.5rem;
+		}
+
+		/* Composite parameter styling */
+		.composite-kv-container {
+			border-left: 3px solid var(--accent-2);
+			padding-left: 1rem;
+			margin-top: 0.5rem;
+		}
+		.composite-kv-container.optional {
+			border-left-color: var(--optional-blue);
+		}
+		.composite-include-checkbox {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-bottom: 12px;
+		}
+		.composite-include-checkbox input[type="checkbox"] {
+			width: auto;
+			accent-color: var(--accent);
+		}
+		.composite-include-checkbox label {
+			cursor: pointer;
+			user-select: none;
+			font-size: 14px;
+		}
+		.composite-item {
+			margin-bottom: 12px;
+		}
+		.composite-item-header {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin-bottom: 6px;
+			flex-wrap: wrap;
+		}
+		.composite-item-label {
+			font-size: 14px;
+			font-weight: 500;
+			color: var(--param);
+			font-family: var(--mono);
+		}
+		.composite-item-label.optional {
+			color: var(--param-optional);
+		}
+		.composite-item-desc {
+			color: var(--muted);
+			font-size: 13px;
+			margin-bottom: 6px;
+			line-height: 1.4;
+		}
+		.composite-item-desc.markdown-content p {
+			margin-bottom: 0.5rem;
+		}
+		.composite-item-desc.markdown-content p:first-child {
+			margin-top: 0;
+		}
+		.composite-item-desc.markdown-content p:last-child {
+			margin-bottom: 0;
+		}
+		.composite-output {
+			margin-top: 1rem;
+			padding-top: 1rem;
+			border-top: 1px solid var(--border);
+		}
+		.composite-output-label {
+			font-size: 13px;
+			color: var(--muted);
+			margin-bottom: 0.25rem;
+		}
+
+		/* Checklist styling */
+		.checklist-wrapper {
+			border-left: 3px solid var(--accent-2);
+			padding-left: 1rem;
+			margin-top: 0.5rem;
+		}
+		.checklist-wrapper.optional {
+			border-left-color: var(--optional-blue);
+		}
+		.checklist-container {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+		.checklist-item {
+			display: flex;
+			align-items: flex-start;
+			gap: 0.5rem;
+			padding: 0.5rem;
+			background: #0d1430;
+			border-radius: 4px;
+			cursor: move;
+			transition: background 0.2s;
+		}
+		.checklist-item:hover {
+			background: #15306f;
+		}
+		.checklist-item.dragging {
+			opacity: 0.5;
+		}
+		.checklist-item input[type="checkbox"] {
+			width: auto;
+			margin: 0;
+			margin-top: 0.2rem;
+			flex-shrink: 0;
+			accent-color: var(--accent);
+		}
+		.checklist-item-content {
+			flex: 1;
+			font-size: 0.9rem;
+		}
+		.checklist-item-key {
+			font-family: var(--mono);
+			color: var(--accent);
+			font-weight: 500;
+		}
+		.checklist-item-desc {
+			color: var(--text);
+			margin-left: 0.25rem;
+		}
+		.checklist-output {
+			margin-top: 1rem;
+			padding-top: 1rem;
+			border-top: 1px solid var(--border);
+		}
+		.checklist-output-label {
+			font-size: 13px;
+			color: var(--muted);
+			margin-bottom: 0.25rem;
+		}
+
+		/* Input fields */
+		.path-input, select {
+			width: 100%;
+			padding: 10px 12px;
+			background: #0d1430;
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			color: var(--text);
+			font-family: var(--mono);
+			font-size: 13px;
+			outline: none;
+			transition: 0.15s ease-in-out;
+		}
+		.path-input:focus, select:focus {
+			border-color: #3b57aa;
+			box-shadow: 0 0 0 3px rgba(62, 124, 255, 0.18);
+		}
+		input[type="number"] {
+			width: 100%;
+			padding: 10px 12px;
+			background: #0d1430;
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			color: var(--text);
+			font-family: var(--mono);
+			font-size: 13px;
+			outline: none;
+			transition: 0.15s ease-in-out;
+		}
+		input[type="number"]:focus {
+			border-color: #3b57aa;
+			box-shadow: 0 0 0 3px rgba(62, 124, 255, 0.18);
+		}
+
+		/* Radio buttons */
+		.radio-group {
+			display: flex;
+			gap: 1.5rem;
+			margin-bottom: 1rem;
+		}
+		.radio-label {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 6px 10px;
+			border: 1px solid var(--border);
+			border-radius: 999px;
+			cursor: pointer;
+			background: #0d1430;
+			user-select: none;
+			transition: 0.15s ease-in-out;
+		}
+		.radio-label:hover {
+			border-color: #2f4690;
+		}
+		.radio-label input[type="radio"] {
+			accent-color: var(--accent);
+		}
+		input[type="radio"] {
+			cursor: pointer;
+		}
+
+		/* Container config */
+		#container-config {
+			margin-top: 1rem;
+			padding: 1rem;
+			background: #0c1230;
+			border: 1px dashed #2a3a78;
+			border-radius: var(--radius);
+		}
+		.bind-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr auto;
+			gap: 8px;
+			margin-bottom: 8px;
+		}
+		.bind-row:last-child {
+			margin-bottom: 0;
+		}
+		.btn, .btn-ghost {
+			border-radius: 10px;
+			padding: 10px 12px;
+			font-size: 14px;
+			cursor: pointer;
+			border: 1px solid var(--border);
+			background: #112055;
+			color: var(--text);
+			transition: 0.15s ease;
+			box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05);
+		}
+		.btn:hover, .btn-ghost:hover {
+			background: #15306f;
+		}
+		.btn-ghost {
+			background: transparent;
+		}
+		.btn-ghost:hover {
+			background: rgba(255,255,255,0.04);
+		}
+		.btn-danger {
+			background: #3b1430;
+			border-color: #6d224f;
+			color: #ffb4b4;
+		}
+		.btn-danger:hover {
+			background: #4a183a;
+		}
+		.btn-primary {
+			background: var(--accent);
+			border-color: var(--accent);
+			color: white;
+			padding: 10px 12px;
+			border-radius: 10px;
+			cursor: pointer;
+			margin-top: 8px;
+		}
+
+		/* Code output */
+		.code-card {
+			position: relative;
+			padding: 0;
+			background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+		}
+		.code-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 12px 14px;
+			border-bottom: 1px solid var(--border);
+			background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+			border-top-left-radius: var(--radius);
+			border-top-right-radius: var(--radius);
+		}
+		.code-title {
+			font-size: 14px;
+			color: var(--muted);
+		}
+		.copy-btn {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			background: transparent;
+			border: 1px solid var(--border);
+			color: var(--text);
+			padding: 6px 10px;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: 0.15s ease;
+			font-size: 13px;
+		}
+		.copy-btn:hover {
+			background: rgba(255,255,255,0.04);
+		}
+		.copy-badge {
+			font-size: 12px;
+			color: var(--muted);
+			margin-left: 8px;
+			opacity: 0;
+			transition: 0.15s;
+		}
+		.copy-badge.show {
+			opacity: 1;
+		}
+		pre {
+			margin: 0;
+		}
+		pre code {
+			display: block;
+			padding: 14px;
+			overflow: auto;
+			max-height: 460px;
+			background: var(--code-bg);
+			color: #e6edf3;
+			font-family: var(--mono);
+			font-size: 13px;
+			border-bottom-left-radius: var(--radius);
+			border-bottom-right-radius: var(--radius);
+		}
+
+		/* Syntax highlighting */
+		.bash .cmd { color: #7ee787; }
+		.bash .param { color: #79c0ff; }
+		.bash .str { color: #c9d1d9; }
+		.bash .op { color: #3fb950; }
+		.yaml .key { color: #ffab70; }
+		.yaml .str { color: #a5d6ff; }
+		.yaml .scalar { color: #a5d6ff; }
+		.yaml .bool { color: #7ee787; }
+		.yaml .null { color: #8b949e; font-style: italic; }
+
+		/* Loading state */
+		.loading {
+			text-align: center;
+			padding: 2rem;
+			color: var(--muted);
+		}
+		.error {
+			background: #3b1430;
+			border: 1px solid var(--danger);
+			color: var(--danger);
+			padding: 1rem;
+			border-radius: var(--radius);
+			margin-bottom: 1rem;
+		}
+
+		/* Hidden by default */
+		.hidden {
+			display: none !important;
+		}
+
+		/* Sticky output sections */
+		.sticky-output {
+			max-width: 1100px;
+			margin-left: auto;
+			margin-right: auto;
+			margin-bottom: 16px;
+		}
+		/* Fixed bottom container for pinned sections */
+		#pinned-container {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			background: var(--bg);
+			box-shadow: 0 -4px 20px var(--shadow);
+			z-index: 1000;
+			display: none; /* Hidden when no sections are pinned */
+			max-height: 50vh;
+			overflow-y: auto;
+			padding: 16px;
+		}
+		#pinned-container.active {
+			display: block;
+		}
+		#pinned-container .container {
+			max-width: 1100px;
+			margin: 0 auto;
+		}
+		/* Sections inside the pinned container */
+		#pinned-container .sticky-output {
+			margin-bottom: 16px;
+		}
+		#pinned-container .sticky-output:last-child {
+			margin-bottom: 0;
+		}
+		.pin-toggle {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 32px;
+			height: 32px;
+			cursor: pointer;
+			border-radius: 8px;
+			transition: 0.15s ease;
+			color: var(--muted);
+			margin-right: 8px;
+		}
+		.pin-toggle:hover {
+			background: rgba(255,255,255,0.04);
+			color: var(--accent);
+		}
+		.pin-toggle input[type="checkbox"] {
+			display: none;
+		}
+		.pin-toggle input[type="checkbox"]:checked + svg {
+			color: var(--accent);
+		}
+		/* Spacing when container is active */
+		body.has-pinned {
+			padding-bottom: 50vh;
+		}
+
+		/* Header styling */
+		header {
+			margin-bottom: 20px;
+			padding: 18px 20px;
+			background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			box-shadow: 0 10px 30px var(--shadow), inset 0 -1px 0 rgba(255,255,255,0.04);
+		}
+		header h1 {
+			margin: 0 0 6px 0;
+			font-size: 22px;
+			letter-spacing: 0.2px;
+		}
+		header p {
+			margin: 0;
+			color: var(--muted);
+			font-size: 14px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>QuNex Command Builder</h1>
+			<p>Interactive tool to construct QuNex commands and recipe files from YAML specifications</p>
+		</header>
+
+		<!-- Command Selector -->
+		<div class="card command-selector">
+			<label for="command-select">Select a command:</label>
+			<select id="command-select">
+				<option value="">-- Choose a command --</option>
+			</select>
+		</div>
+
+		<!-- Command Name Display -->
+		<div id="command-name-display" class="command-name-display hidden"></div>
+
+		<!-- Error message -->
+		<div id="error-message" class="error hidden"></div>
+
+		<!-- Loading indicator -->
+		<div id="loading" class="loading hidden">Loading command specification...</div>
+
+		<!-- Main content (hidden until command is selected) -->
+		<div id="main-content" class="hidden">
+
+			<!-- Description section (dynamically populated if present in YAML) -->
+			<div id="description-section"></div>
+
+			<!-- Running the command -->
+			<section class="card">
+				<h2 class="section-title">Running the command</h2>
+				<p class="help">Choose how to run the command: directly on the host system or inside a container.</p>
+
+				<div class="radio-group">
+					<label class="radio-label">
+						<input type="radio" name="mode" value="direct" checked />
+						<span>Direct execution (qunex)</span>
+					</label>
+					<label class="radio-label">
+						<input type="radio" name="mode" value="container" />
+						<span>Container execution (qunex_container)</span>
+					</label>
+				</div>
+
+				<div id="container-config" style="display: none;">
+					<div class="param-block">
+						<div class="param-header">
+							<span class="param-name">Container path</span>
+						</div>
+						<input id="containerPath" class="path-input" type="text" placeholder="/path/to/container.sif" />
+					</div>
+
+					<div class="param-block">
+						<div class="param-header">
+							<span class="param-name">Filesystem bindings</span>
+						</div>
+						<div class="param-desc">Map host directories to container paths (host:container)</div>
+						<div id="bind-rows"></div>
+						<button id="addBindBtn" class="btn-primary">Add binding</button>
+					</div>
+				</div>
+			</section>
+
+			<!-- Dynamic sections will be inserted here -->
+			<div id="dynamic-sections"></div>
+		</div>
+	</div>
+
+	<!-- CLI Command Output -->
+	<section id="cmd-output" class="card code-card sticky-output">
+		<div class="code-header">
+			<div class="code-title">CLI command (bash)</div>
+			<div>
+				<label class="pin-toggle">
+					<input type="checkbox" id="pin-cmd" checked />
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M16 12V4H17V2H7V4H8V12L6 14V16H11V22H13V16H18V14L16 12Z" fill="currentColor"/>
+					</svg>
+				</label>
+				<button id="copyCmd" class="copy-btn" type="button" aria-label="Copy command">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<rect x="9" y="9" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+								<rect x="3" y="3" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+							</svg>
+							Copy
+						</button>
+						<span id="copiedCmd" class="copy-badge">Copied</span>
+					</div>
+				</div>
+				<pre><code id="commandOut" class="bash"></code></pre>
+			</section>
+
+			<!-- Recipe YAML Output -->
+			<section id="yaml-output" class="card code-card sticky-output">
+				<div class="code-header">
+					<div class="code-title">Recipe file (YAML for run_recipe)</div>
+					<div>
+						<label class="pin-toggle">
+							<input type="checkbox" id="pin-yaml" checked />
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M16 12V4H17V2H7V4H8V12L6 14V16H11V22H13V16H18V14L16 12Z" fill="currentColor"/>
+							</svg>
+						</label>
+						<button id="copyYaml" class="copy-btn" type="button" aria-label="Copy YAML">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+								<rect x="9" y="9" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+								<rect x="3" y="3" width="12" height="12" rx="2" stroke="#9fb0e3" stroke-width="1.5"/>
+							</svg>
+							Copy
+						</button>
+						<span id="copiedYaml" class="copy-badge">Copied</span>
+					</div>
+				</div>
+				<pre><code id="yamlOut" class="yaml"></code></pre>
+			</section>
+		</div>
+	</div>
+
+	<!-- Fixed bottom container for pinned sections -->
+	<div id="pinned-container">
+		<div class="container"></div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+	<script>
+		// Configure marked for better rendering
+		marked.setOptions({
+			breaks: false,  // Only create <br> for lines ending with two spaces (standard markdown)
+			gfm: true
+		});
+
+		// --- Global State ---
+		const state = {
+			mode: 'direct',
+			containerPath: '',
+			binds: [],
+			currentCommand: '',
+			commandSpec: null,
+			params: {},
+			compositeParams: {}, // Store composite parameter values: { paramName: { items: {}, included: bool, manualEdit: string } }
+			checklistParams: {} // Store checklist selections: { paramName: [selected values] }
+		};
+
+		// --- DOM References ---
+		const commandSelect = document.getElementById('command-select');
+		const errorMessage = document.getElementById('error-message');
+		const loading = document.getElementById('loading');
+		const mainContent = document.getElementById('main-content');
+		const descriptionSection = document.getElementById('description-section');
+		const containerConfig = document.getElementById('container-config');
+		const containerPathInput = document.getElementById('containerPath');
+		const bindRows = document.getElementById('bind-rows');
+		const addBindBtn = document.getElementById('addBindBtn');
+		const dynamicSections = document.getElementById('dynamic-sections');
+		const commandOut = document.getElementById('commandOut');
+		const yamlOut = document.getElementById('yamlOut');
+		const copyCmdBtn = document.getElementById('copyCmd');
+		const copyYamlBtn = document.getElementById('copyYaml');
+		const copiedCmdBadge = document.getElementById('copiedCmd');
+		const copiedYamlBadge = document.getElementById('copiedYaml');
+		const pinCmd = document.getElementById('pin-cmd');
+		const pinYaml = document.getElementById('pin-yaml');
+		const cmdOutput = document.getElementById('cmd-output');
+		const yamlOutput = document.getElementById('yaml-output');
+		const pinnedContainer = document.getElementById('pinned-container');
+		const pinnedContainerInner = pinnedContainer.querySelector('.container');
+
+		// Store original parent for unpinning
+		const cmdOriginalParent = cmdOutput.parentElement;
+		const yamlOriginalParent = yamlOutput.parentElement;
+		const cmdOriginalNextSibling = cmdOutput.nextElementSibling;
+		const yamlOriginalNextSibling = yamlOutput.nextElementSibling;
+
+		// --- Individual pin toggles ---
+		function updatePinnedState() {
+			const cmdPinned = pinCmd.checked;
+			const yamlPinned = pinYaml.checked;
+
+			// Move sections to/from pinned container
+			if (cmdPinned) {
+				pinnedContainerInner.appendChild(cmdOutput);
+			} else {
+				if (cmdOriginalNextSibling) {
+					cmdOriginalParent.insertBefore(cmdOutput, cmdOriginalNextSibling);
+				} else {
+					cmdOriginalParent.appendChild(cmdOutput);
+				}
+			}
+
+			if (yamlPinned) {
+				pinnedContainerInner.appendChild(yamlOutput);
+			} else {
+				if (yamlOriginalNextSibling) {
+					yamlOriginalParent.insertBefore(yamlOutput, yamlOriginalNextSibling);
+				} else {
+					yamlOriginalParent.appendChild(yamlOutput);
+				}
+			}
+
+			// Show/hide pinned container and update body padding
+			const hasPinned = cmdPinned || yamlPinned;
+			pinnedContainer.classList.toggle('active', hasPinned);
+			document.body.classList.toggle('has-pinned', hasPinned);
+		}
+
+		pinCmd.addEventListener('change', updatePinnedState);
+		pinYaml.addEventListener('change', updatePinnedState);
+
+		// Initialize pinned state
+		updatePinnedState();
+
+		// --- Utilities ---
+		const escapeHtml = (s) => s
+			.replaceAll('&', '&amp;')
+			.replaceAll('<', '&lt;')
+			.replaceAll('>', '&gt;');
+
+		function showError(message) {
+			errorMessage.textContent = message;
+			errorMessage.classList.remove('hidden');
+		}
+
+		function hideError() {
+			errorMessage.classList.add('hidden');
+		}
+
+		// --- Load commands.yaml ---
+		async function loadCommands() {
+			try {
+				const response = await fetch('commands.yaml');
+				if (!response.ok) throw new Error('Failed to load commands.yaml');
+				const text = await response.text();
+				const data = jsyaml.load(text);
+
+				// Populate command select
+				for (const [cmdName, cmdInfo] of Object.entries(data.commands)) {
+					const option = document.createElement('option');
+					option.value = cmdName;
+					option.textContent = `${cmdName} - ${cmdInfo.description}`;
+					commandSelect.appendChild(option);
+				}
+			} catch (error) {
+				showError(`Error loading commands: ${error.message}`);
+			}
+		}
+
+		// --- Load command specification ---
+		async function loadCommandSpec(commandName) {
+			loading.classList.remove('hidden');
+			mainContent.classList.add('hidden');
+			hideError();
+
+			// Show command name
+			const commandNameDisplay = document.getElementById('command-name-display');
+			commandNameDisplay.textContent = commandName;
+			commandNameDisplay.classList.remove('hidden');
+
+			try {
+				const response = await fetch(`${commandName}.yaml`);
+				if (!response.ok) throw new Error(`Failed to load ${commandName}.yaml`);
+				const text = await response.text();
+				const spec = jsyaml.load(text);
+
+				state.currentCommand = commandName;
+				state.commandSpec = spec;
+				state.params = {};
+				state.compositeParams = {};
+				state.checklistParams = {};
+
+				// Build UI
+				buildDynamicSections(spec);
+				mainContent.classList.remove('hidden');
+				render();
+			} catch (error) {
+				showError(`Error loading command specification: ${error.message}`);
+			} finally {
+				loading.classList.add('hidden');
+			}
+		}
+
+		// --- Build dynamic parameter sections ---
+		function buildDynamicSections(spec) {
+			// Clear both description and dynamic sections
+			descriptionSection.innerHTML = '';
+			dynamicSections.innerHTML = '';
+
+			for (const [sectionName, content] of Object.entries(spec)) {
+				// Check if this is the Description section (string content)
+				if (sectionName === 'Description' && typeof content === 'string') {
+					// Add Description to the dedicated section BEFORE "Running the command"
+					const section = document.createElement('section');
+					section.className = 'card';
+
+					const title = document.createElement('h2');
+					title.className = 'section-title';
+					title.textContent = sectionName;
+					section.appendChild(title);
+
+					const descDiv = document.createElement('div');
+					descDiv.className = 'markdown-content';
+					descDiv.innerHTML = marked.parse(content);
+					section.appendChild(descDiv);
+
+					descriptionSection.appendChild(section);
+				} else {
+					// Regular parameter section (object with parameters)
+					const section = document.createElement('section');
+					section.className = 'card';
+
+					const title = document.createElement('h2');
+					title.className = 'section-title';
+					title.textContent = sectionName;
+					section.appendChild(title);
+
+					// Check if section has a description field
+					if (content.description && typeof content.description === 'string') {
+						const sectionDesc = document.createElement('div');
+						sectionDesc.className = 'markdown-content help';
+						sectionDesc.innerHTML = marked.parse(content.description);
+						section.appendChild(sectionDesc);
+					}
+
+					for (const [paramName, paramSpec] of Object.entries(content)) {
+						// Skip the description field as it's not a parameter
+						if (paramName === 'description') continue;
+
+						const paramBlock = createParameterBlock(paramName, paramSpec);
+						section.appendChild(paramBlock);
+
+						// Initialize state (skip composite-kv and checklist as they have their own state)
+						if (paramSpec.type !== 'composite-kv' && paramSpec.type !== 'checklist' && !state.params[paramName]) {
+							state.params[paramName] = '';
+						}
+					}
+
+					dynamicSections.appendChild(section);
+				}
+			}
+		}
+
+		// --- Create parameter input block ---
+		function createParameterBlock(paramName, spec) {
+			const block = document.createElement('div');
+			block.className = 'param-block';
+
+			// Header
+			const header = document.createElement('div');
+			header.className = 'param-header';
+
+			const name = document.createElement('span');
+			name.className = spec.optional === 'yes' ? 'param-name optional' : 'param-name';
+			name.textContent = paramName;
+			header.appendChild(name);
+
+			if (spec.optional === 'yes') {
+				const optBadge = document.createElement('span');
+				optBadge.className = 'param-badge optional-badge';
+				optBadge.textContent = 'optional';
+				header.appendChild(optBadge);
+			}
+
+			const typeBadge = document.createElement('span');
+			typeBadge.className = 'param-badge';
+			if (spec.type === 'options') {
+				typeBadge.textContent = `options: ${spec.options.split(',').join(' | ')}`;
+			} else if (spec.type === 'checklist') {
+				typeBadge.textContent = 'checklist';
+			} else {
+				typeBadge.textContent = spec.type;
+			}
+			header.appendChild(typeBadge);
+
+			if (spec.default && spec.type !== 'composite-kv' && spec.type !== 'checklist') {
+				const defaultBadge = document.createElement('span');
+				defaultBadge.className = 'param-badge';
+				defaultBadge.textContent = `default: ${spec.default}`;
+				header.appendChild(defaultBadge);
+			} else if (spec.type === 'checklist' && spec.default) {
+				const defaultBadge = document.createElement('span');
+				defaultBadge.className = 'param-badge';
+				defaultBadge.textContent = `default: ${spec.default}`;
+				header.appendChild(defaultBadge);
+			}
+
+			block.appendChild(header);
+
+			// Description - render as full markdown (supports lists, paragraphs, etc.)
+			const desc = document.createElement('div');
+			desc.className = 'param-desc markdown-content';
+			desc.innerHTML = marked.parse(spec.description);
+			block.appendChild(desc);
+
+			// Handle checklist type
+			if (spec.type === 'checklist') {
+				const wrapper = document.createElement('div');
+				wrapper.className = spec.optional === 'yes' ? 'checklist-wrapper optional' : 'checklist-wrapper';
+
+				// Initialize checklist state if not exists
+				if (!state.checklistParams[paramName]) {
+					// Parse default selections and order
+					const defaultSelections = spec.default ? spec.default.split(',').map(s => s.trim()) : [];
+					state.checklistParams[paramName] = {
+						order: Object.keys(spec.items), // Initial order from YAML
+						selected: defaultSelections,
+						included: spec.optional === 'no', // Required params always included
+						manualEdit: null
+					};
+				}
+
+				// Optional checkbox for "include"
+				if (spec.optional === 'yes') {
+					const checkboxDiv = document.createElement('div');
+					checkboxDiv.className = 'composite-include-checkbox';
+
+					const checkbox = document.createElement('input');
+					checkbox.type = 'checkbox';
+					checkbox.id = `${paramName}-include`;
+					checkbox.checked = state.checklistParams[paramName].included;
+					checkbox.addEventListener('change', e => {
+						state.checklistParams[paramName].included = e.target.checked;
+						render();
+					});
+
+					const label = document.createElement('label');
+					label.htmlFor = `${paramName}-include`;
+					label.textContent = 'Include this parameter';
+
+					checkboxDiv.appendChild(checkbox);
+					checkboxDiv.appendChild(label);
+					wrapper.appendChild(checkboxDiv);
+				}
+
+				const checklistContainer = document.createElement('div');
+				checklistContainer.className = 'checklist-container';
+				checklistContainer.id = `${paramName}-checklist`;
+
+				// Render items in current order
+				const renderChecklistItems = () => {
+					checklistContainer.innerHTML = '';
+					const currentOrder = state.checklistParams[paramName].order;
+
+					currentOrder.forEach((itemKey, index) => {
+						const itemDesc = spec.items[itemKey];
+						const itemDiv = document.createElement('div');
+						itemDiv.className = 'checklist-item';
+						itemDiv.draggable = true;
+						itemDiv.dataset.key = itemKey;
+						itemDiv.dataset.index = index;
+
+						// Drag and drop event handlers
+						itemDiv.addEventListener('dragstart', e => {
+							itemDiv.classList.add('dragging');
+							e.dataTransfer.effectAllowed = 'move';
+							e.dataTransfer.setData('text/plain', itemKey);
+						});
+
+						itemDiv.addEventListener('dragend', e => {
+							itemDiv.classList.remove('dragging');
+						});
+
+						itemDiv.addEventListener('dragover', e => {
+							e.preventDefault();
+							e.dataTransfer.dropEffect = 'move';
+						});
+
+						itemDiv.addEventListener('drop', e => {
+							e.preventDefault();
+							const draggedKey = e.dataTransfer.getData('text/plain');
+							const targetKey = itemKey;
+
+							if (draggedKey !== targetKey) {
+								// Reorder the array
+								const order = state.checklistParams[paramName].order;
+								const draggedIndex = order.indexOf(draggedKey);
+								const targetIndex = order.indexOf(targetKey);
+
+								order.splice(draggedIndex, 1);
+								order.splice(targetIndex, 0, draggedKey);
+
+								state.checklistParams[paramName].manualEdit = null; // Clear manual edit
+								renderChecklistItems();
+								updateChecklistOutput(paramName, spec);
+								render();
+							}
+						});
+
+						// Checkbox
+						const checkbox = document.createElement('input');
+						checkbox.type = 'checkbox';
+						checkbox.id = `${paramName}-${itemKey}`;
+						checkbox.value = itemKey;
+						checkbox.checked = state.checklistParams[paramName].selected.includes(itemKey);
+
+						checkbox.addEventListener('change', e => {
+							if (e.target.checked) {
+								if (!state.checklistParams[paramName].selected.includes(itemKey)) {
+									state.checklistParams[paramName].selected.push(itemKey);
+								}
+							} else {
+								state.checklistParams[paramName].selected = state.checklistParams[paramName].selected.filter(v => v !== itemKey);
+							}
+							state.checklistParams[paramName].manualEdit = null;
+							updateChecklistOutput(paramName, spec);
+							render();
+						});
+
+						// Content
+						const content = document.createElement('div');
+						content.className = 'checklist-item-content';
+
+						const keySpan = document.createElement('span');
+						keySpan.className = 'checklist-item-key';
+						keySpan.textContent = itemKey;
+
+						const descSpan = document.createElement('span');
+						descSpan.className = 'checklist-item-desc';
+						descSpan.textContent = ': ' + itemDesc;
+
+						content.appendChild(keySpan);
+						content.appendChild(descSpan);
+
+						itemDiv.appendChild(checkbox);
+						itemDiv.appendChild(content);
+						checklistContainer.appendChild(itemDiv);
+					});
+				};
+
+				renderChecklistItems();
+				wrapper.appendChild(checklistContainer);
+
+				// Compiled output field
+				const outputDiv = document.createElement('div');
+				outputDiv.className = 'checklist-output';
+
+				const outputLabel = document.createElement('div');
+				outputLabel.className = 'checklist-output-label';
+				outputLabel.textContent = 'Compiled parameter value:';
+				outputDiv.appendChild(outputLabel);
+
+				const outputInput = document.createElement('input');
+				outputInput.type = 'text';
+				outputInput.className = 'path-input';
+				outputInput.id = `${paramName}-checklist-output`;
+				const compiledValue = buildChecklistValue(paramName, spec);
+				outputInput.value = compiledValue;
+				outputInput.placeholder = compiledValue || 'Select items above';
+				outputInput.addEventListener('input', e => {
+					state.checklistParams[paramName].manualEdit = e.target.value;
+					render();
+				});
+				outputDiv.appendChild(outputInput);
+
+				wrapper.appendChild(outputDiv);
+				block.appendChild(wrapper);
+				return block;
+			}
+
+			// Handle composite-kv type
+			if (spec.type === 'composite-kv') {
+				const container = document.createElement('div');
+				container.className = spec.optional === 'yes' ? 'composite-kv-container optional' : 'composite-kv-container';
+
+				// Initialize composite param state if not exists
+				if (!state.compositeParams[paramName]) {
+					state.compositeParams[paramName] = {
+						items: {},
+						included: spec.optional === 'no',
+						manualEdit: null
+					};
+				}
+
+				// Optional checkbox for "include"
+				if (spec.optional === 'yes') {
+					const checkboxDiv = document.createElement('div');
+					checkboxDiv.className = 'composite-include-checkbox';
+
+					const checkbox = document.createElement('input');
+					checkbox.type = 'checkbox';
+					checkbox.id = `${paramName}-include`;
+					checkbox.checked = state.compositeParams[paramName].included;
+					checkbox.addEventListener('change', e => {
+						state.compositeParams[paramName].included = e.target.checked;
+						render();
+					});
+
+					const label = document.createElement('label');
+					label.htmlFor = `${paramName}-include`;
+					label.textContent = 'Include this parameter';
+
+					checkboxDiv.appendChild(checkbox);
+					checkboxDiv.appendChild(label);
+					container.appendChild(checkboxDiv);
+				}
+
+				// Create inputs for each item
+				for (const [itemName, itemSpec] of Object.entries(spec.items)) {
+					const itemDiv = document.createElement('div');
+					itemDiv.className = 'composite-item';
+
+					// Item header with badges (similar to regular parameters)
+					const itemHeader = document.createElement('div');
+					itemHeader.className = 'composite-item-header';
+
+					const itemLabel = document.createElement('span');
+					itemLabel.className = itemSpec.optional === 'yes' ? 'composite-item-label optional' : 'composite-item-label';
+					itemLabel.textContent = itemName;
+					itemHeader.appendChild(itemLabel);
+
+					// Optional badge
+					if (itemSpec.optional === 'yes') {
+						const optBadge = document.createElement('span');
+						optBadge.className = 'param-badge optional-badge';
+						optBadge.textContent = 'optional';
+						itemHeader.appendChild(optBadge);
+					}
+
+					// Type badge
+					const typeBadge = document.createElement('span');
+					typeBadge.className = 'param-badge';
+					const itemType = itemSpec.type.replace(/^nokey-/, '');
+					if (itemType === 'options') {
+						typeBadge.textContent = `options: ${itemSpec.options.split(',').join(' | ')}`;
+					} else {
+						typeBadge.textContent = itemSpec.type; // Show full type including nokey- prefix if present
+					}
+					itemHeader.appendChild(typeBadge);
+
+					// Default badge
+					if (itemSpec.default) {
+						const defaultBadge = document.createElement('span');
+						defaultBadge.className = 'param-badge';
+						defaultBadge.textContent = `default: ${itemSpec.default}`;
+						itemHeader.appendChild(defaultBadge);
+					}
+
+					itemDiv.appendChild(itemHeader);
+
+					// Add item description if present
+					if (itemSpec.description) {
+						const itemDesc = document.createElement('div');
+						itemDesc.className = 'composite-item-desc markdown-content';
+						itemDesc.innerHTML = marked.parse(itemSpec.description);
+						itemDiv.appendChild(itemDesc);
+					}
+
+					let itemInput;
+					const itemTypeBase = itemSpec.type.replace(/^nokey-/, '');
+
+					if (itemTypeBase === 'options') {
+						itemInput = document.createElement('select');
+						itemInput.className = 'path-input';
+
+						const defaultOption = document.createElement('option');
+						defaultOption.value = '';
+						defaultOption.textContent = itemSpec.default ? `Use default (${itemSpec.default})` : '-- Select --';
+						itemInput.appendChild(defaultOption);
+
+						for (const option of itemSpec.options.split(',')) {
+							const opt = document.createElement('option');
+							opt.value = option.trim();
+							opt.textContent = option.trim();
+							itemInput.appendChild(opt);
+						}
+					} else if (itemTypeBase === 'number') {
+						itemInput = document.createElement('input');
+						itemInput.type = 'number';
+						itemInput.placeholder = itemSpec.placeholder || '';
+					} else {
+						itemInput = document.createElement('input');
+						itemInput.type = 'text';
+						itemInput.className = 'path-input';
+						itemInput.placeholder = itemSpec.placeholder || '';
+					}
+
+				itemInput.id = `${paramName}-${itemName}`;
+				itemInput.value = state.compositeParams[paramName].items[itemName] || '';
+				itemInput.addEventListener('input', e => {
+					state.compositeParams[paramName].items[itemName] = e.target.value;
+					state.compositeParams[paramName].manualEdit = null; // Clear manual edit when items change
+					updateCompositeOutput(paramName, spec);
+					render(); // Update command/YAML outputs
+				});
+				if (itemTypeBase === 'options') {
+					itemInput.addEventListener('change', e => {
+						state.compositeParams[paramName].items[itemName] = e.target.value;
+						state.compositeParams[paramName].manualEdit = null;
+						updateCompositeOutput(paramName, spec);
+						render(); // Update command/YAML outputs
+					});
+				}					itemDiv.appendChild(itemInput);
+					container.appendChild(itemDiv);
+				}
+
+				// Compiled output field
+				const outputDiv = document.createElement('div');
+				outputDiv.className = 'composite-output';
+
+				const outputLabel = document.createElement('div');
+				outputLabel.className = 'composite-output-label';
+				outputLabel.textContent = 'Compiled parameter value:';
+				outputDiv.appendChild(outputLabel);
+
+				const outputInput = document.createElement('input');
+				outputInput.type = 'text';
+				outputInput.className = 'path-input';
+				outputInput.id = `${paramName}-output`;
+				const compiledValue = buildCompositeValue(paramName, spec);
+				outputInput.value = compiledValue;
+				outputInput.placeholder = compiledValue || 'Will be generated based on items above';
+				outputInput.addEventListener('input', e => {
+					state.compositeParams[paramName].manualEdit = e.target.value;
+					render();
+				});
+				outputDiv.appendChild(outputInput);
+
+				container.appendChild(outputDiv);
+				block.appendChild(container);
+				return block;
+			}
+
+			// Input field for regular types
+			let input;
+			if (spec.type === 'options') {
+				input = document.createElement('select');
+				input.className = 'path-input';
+				input.id = paramName;
+
+				const defaultOption = document.createElement('option');
+				defaultOption.value = '';
+				defaultOption.textContent = spec.default ? `Use default (${spec.default})` : '-- Select --';
+				input.appendChild(defaultOption);
+
+				for (const option of spec.options.split(',')) {
+					const opt = document.createElement('option');
+					opt.value = option.trim();
+					opt.textContent = option.trim();
+					input.appendChild(opt);
+				}
+
+				input.addEventListener('change', e => {
+					state.params[paramName] = e.target.value;
+					render();
+				});
+			} else if (spec.type === 'number') {
+				input = document.createElement('input');
+				input.type = 'number';
+				input.id = paramName;
+				input.placeholder = spec.placeholder || '';
+
+				input.addEventListener('input', e => {
+					state.params[paramName] = e.target.value;
+					render();
+				});
+			} else {
+				// string type
+				input = document.createElement('input');
+				input.type = 'text';
+				input.className = 'path-input';
+				input.id = paramName;
+				input.placeholder = spec.placeholder || '';
+
+				input.addEventListener('input', e => {
+					state.params[paramName] = e.target.value;
+					render();
+				});
+			}
+
+			block.appendChild(input);
+			return block;
+		}
+
+		// Build composite parameter value from items
+		function buildCompositeValue(paramName, spec) {
+			const composite = state.compositeParams[paramName];
+			if (!composite) return '';
+
+			const parts = [];
+			for (const [itemName, itemSpec] of Object.entries(spec.items)) {
+				const value = composite.items[itemName];
+				const itemType = itemSpec.type;
+				const isNoKey = itemType.startsWith('nokey-');
+
+				// Determine if we should include this item
+				let shouldInclude = false;
+				let finalValue = value;
+
+				if (value && value.trim()) {
+					// User explicitly provided a value
+					shouldInclude = true;
+					finalValue = value.trim();
+				} else if (itemSpec.optional === 'no') {
+					// Required item - use default if available
+					shouldInclude = true;
+					finalValue = itemSpec.default || '';
+				}
+
+				if (shouldInclude && finalValue) {
+					if (isNoKey) {
+						parts.push(finalValue);
+					} else {
+						parts.push(`${itemName}${spec.assignment}${finalValue}`);
+					}
+				}
+			}
+
+			return parts.join(spec.separator);
+		}
+
+		// Update composite output field
+		function updateCompositeOutput(paramName, spec) {
+			const outputInput = document.getElementById(`${paramName}-output`);
+			if (outputInput && state.compositeParams[paramName].manualEdit === null) {
+				outputInput.value = buildCompositeValue(paramName, spec);
+			}
+		}
+
+		// Build checklist parameter value
+		function buildChecklistValue(paramName, spec) {
+			const checklist = state.checklistParams[paramName];
+			if (!checklist) return '';
+
+			const separator = spec.separator || ',';
+			// Filter order to include only selected items, maintaining order
+			const selectedInOrder = checklist.order.filter(key => checklist.selected.includes(key));
+			return selectedInOrder.join(separator);
+		}
+
+		// Update checklist output field
+		function updateChecklistOutput(paramName, spec) {
+			const outputInput = document.getElementById(`${paramName}-checklist-output`);
+			if (outputInput && state.checklistParams[paramName].manualEdit === null) {
+				const value = buildChecklistValue(paramName, spec);
+				outputInput.value = value;
+				outputInput.placeholder = value || 'Select items above';
+			}
+		}
+
+		// --- Bind rows management ---
+		function addBindRow(data = { host: '', cont: '' }) {
+			state.binds.push({ host: data.host || '', cont: data.cont || '' });
+			const idx = state.binds.length - 1;
+
+			const row = document.createElement('div');
+			row.className = 'bind-row';
+			row.dataset.index = String(idx);
+
+			const host = document.createElement('input');
+			host.className = 'path-input';
+			host.placeholder = '/path/on/host';
+			host.value = data.host || '';
+			host.addEventListener('input', (e) => { state.binds[idx].host = e.target.value; render(); });
+
+			const cont = document.createElement('input');
+			cont.className = 'path-input';
+			cont.placeholder = '/path/in/container';
+			cont.value = data.cont || '';
+			cont.addEventListener('input', (e) => { state.binds[idx].cont = e.target.value; render(); });
+
+			const del = document.createElement('button');
+			del.className = 'btn-ghost btn-danger';
+			del.textContent = 'Remove';
+			del.addEventListener('click', () => {
+				state.binds.splice(idx, 1);
+				rebuildBindRows();
+				render();
+			});
+
+			row.append(host, cont, del);
+			bindRows.appendChild(row);
+		}
+
+		function rebuildBindRows() {
+			bindRows.innerHTML = '';
+			const current = [...state.binds];
+			state.binds = [];
+			current.forEach(b => addBindRow(b));
+		}
+
+		// --- Build CLI Command ---
+		function buildCommand() {
+			if (!state.currentCommand) return '';
+
+			const cmdStart = state.mode === 'container' ? 'qunex_container' : 'qunex';
+			const params = [];
+
+			// Add all regular parameters from state
+			for (const [paramName, paramValue] of Object.entries(state.params)) {
+				if (paramValue && paramValue.trim()) {
+					params.push(`--${paramName}="${paramValue.trim()}"`);
+				}
+			}
+
+		// Add checklist parameters
+		for (const [paramName, checklistState] of Object.entries(state.checklistParams)) {
+			if (checklistState && checklistState.included) {
+				const value = checklistState.manualEdit !== null
+					? checklistState.manualEdit
+					: buildChecklistValue(paramName, getParamSpec(paramName));
+				if (value && value.trim()) {
+					params.push(`--${paramName}="${value.trim()}"`);
+				}
+			}
+		}
+
+		// Add composite parameters
+			for (const [paramName, composite] of Object.entries(state.compositeParams)) {
+				if (composite.included) {
+					const value = composite.manualEdit !== null ? composite.manualEdit : getCompositeValueForParam(paramName);
+					if (value && value.trim()) {
+						params.push(`--${paramName}="${value.trim()}"`);
+					}
+				}
+			}
+
+			// Container-specific parameters go LAST
+			if (state.mode === 'container') {
+				const pairs = state.binds
+					.filter(b => b.host?.trim() && b.cont?.trim())
+					.map(b => `${b.host.trim()}:${b.cont.trim()}`);
+				if (pairs.length > 0) {
+					params.push(`--bind=${pairs.join(',')}`);
+				}
+				const cpath = state.containerPath.trim() || '<path-to-container>';
+				params.push(`--container=${cpath}`);
+			}
+
+			// Format: qunex[_container] <command> \ on first line, then params
+			if (params.length === 0) {
+				return `${cmdStart} ${state.currentCommand}`;
+			}
+			const lines = [`${cmdStart} ${state.currentCommand} \\`];
+			params.forEach((p, i) => {
+				const isLast = i === params.length - 1;
+				lines.push(`  ${p}${isLast ? '' : ' \\'}`);
+			});
+			return lines.join('\n');
+		}
+
+		// Get composite parameter value for building command/YAML
+		function getCompositeValueForParam(paramName) {
+			if (!state.commandSpec) return '';
+
+			// Find the spec for this composite parameter
+			for (const [sectionName, parameters] of Object.entries(state.commandSpec)) {
+				if (typeof parameters === 'object' && parameters[paramName] && parameters[paramName].type === 'composite-kv') {
+					return buildCompositeValue(paramName, parameters[paramName]);
+				}
+			}
+			return '';
+		}
+
+		// Get parameter spec by name
+		function getParamSpec(paramName) {
+			if (!state.commandSpec) return null;
+
+			for (const [sectionName, parameters] of Object.entries(state.commandSpec)) {
+				if (typeof parameters === 'object' && parameters[paramName]) {
+					return parameters[paramName];
+				}
+			}
+			return null;
+		}		// --- Build YAML Recipe ---
+		function buildYAML() {
+			if (!state.currentCommand) return '';
+
+			const lines = [];
+			lines.push('# QuNex run_recipe file generated by builder');
+			lines.push(`# Execute with: qunex run_recipe --recipe_file=<this file> --recipe=${state.currentCommand}`);
+
+			if (state.mode === 'container') {
+				lines.push('# NOTE: run_recipe invokes host qunex; to run in container start shell first or wrap manually.');
+				lines.push('# Container image: ' + (state.containerPath.trim() || '<path-to-container>'));
+				const bindPairs = state.binds
+					.filter(b => b.host?.trim() && b.cont?.trim())
+					.map(b => b.host.trim() + ':' + b.cont.trim());
+				if (bindPairs.length) {
+					lines.push('# Suggested binds: ' + bindPairs.join(','));
+				}
+			}
+
+			lines.push('');
+			lines.push('global_parameters:');
+			lines.push('  overwrite: "no"');
+
+			// Add global parameters if defined in spec
+			if (state.commandSpec) {
+				const sourceSpec = state.commandSpec['Source specification'];
+				if (sourceSpec) {
+					for (const [paramName, paramSpec] of Object.entries(sourceSpec)) {
+						const value = state.params[paramName];
+						if (value && value.trim()) {
+							lines.push(`  ${paramName}: "${value.trim()}"`);
+						} else {
+							lines.push(`  # ${paramName}: ${paramSpec.placeholder || '/path/to/value'}`);
+						}
+					}
+				}
+			}
+
+			lines.push('  # parsessions: 1');
+			lines.push('  # parelements: 1');
+			lines.push('');
+			lines.push('recipes:');
+			lines.push(`  ${state.currentCommand}:`);
+			lines.push('    commands:');
+			lines.push(`      - ${state.currentCommand}:`);
+
+			// Add command parameters (excluding source specification)
+			let hasParams = false;
+			if (state.commandSpec) {
+				for (const [sectionName, parameters] of Object.entries(state.commandSpec)) {
+					if (sectionName === 'Source specification' || sectionName === 'Description') continue;
+					if (typeof parameters !== 'object') continue;
+
+					for (const [paramName, paramSpec] of Object.entries(parameters)) {
+						if (typeof paramSpec !== 'object') continue;
+
+						// Handle composite-kv parameters
+						if (paramSpec.type === 'composite-kv') {
+							const composite = state.compositeParams[paramName];
+							if (composite && composite.included) {
+								const value = composite.manualEdit !== null ? composite.manualEdit : buildCompositeValue(paramName, paramSpec);
+								if (value && value.trim()) {
+									lines.push(`          ${paramName}: "${value.trim()}"`);
+									hasParams = true;
+								}
+							}
+						} else if (paramSpec.type === 'checklist') {
+							// Handle checklist parameters
+							const checklistState = state.checklistParams[paramName];
+							if (checklistState && checklistState.included) {
+								const value = checklistState.manualEdit !== null
+									? checklistState.manualEdit
+									: buildChecklistValue(paramName, paramSpec);
+								if (value && value.trim()) {
+									lines.push(`          ${paramName}: "${value.trim()}"`);
+									hasParams = true;
+								}
+							}
+						} else {
+							// Regular parameters
+							const value = state.params[paramName];
+							if (value && value.trim()) {
+								lines.push(`          ${paramName}: "${value.trim()}"`);
+								hasParams = true;
+							}
+						}
+					}
+				}
+			}
+
+			if (!hasParams) {
+				lines.push('          # Add parameters here');
+			}
+
+			return lines.join('\n');
+		}
+
+		// --- Syntax highlighting ---
+		function highlightBash(plain) {
+			const esc = escapeHtml(plain);
+			return esc
+				.replace(/("[^"]*")/g, '<span class="str">$1</span>')
+				.replace(/(\\\s*$)/gm, '<span class="op">$1</span>')
+				.replace(/\b(qunex_container|qunex)\b/g, '<span class="cmd">$1</span>')
+				.replace(/(--[\w\-]+)/g, '<span class="param">$1</span>');
+		}
+
+		function highlightYAML(plain) {
+			const esc = escapeHtml(plain);
+			return esc
+				.replace(/("[^"]*")/g, '<span class="str">$1</span>')
+				.replace(/('[^']*')/g, '<span class="str">$1</span>')
+				.replace(/(^|\n)([\s-]*)([a-zA-Z0-9_\-]+)(:)(\s)/g, (m, a, indent, key, colon, space) => {
+					return `${a}${indent}<span class="key">${key}</span>${colon}${space}`;
+				})
+				.replace(/\b(true|false)\b/g, '<span class="bool">$1</span>')
+				.replace(/\bnull\b/g, '<span class="null">null</span>');
+		}
+
+		// --- Render outputs ---
+		function render() {
+			if (!state.currentCommand) return;
+
+			// Toggle container config
+			containerConfig.style.display = state.mode === 'container' ? 'block' : 'none';
+
+			// Build and render command & YAML
+			const cmdText = buildCommand();
+			const yamlText = buildYAML();
+
+			commandOut.innerHTML = highlightBash(cmdText);
+			yamlOut.innerHTML = highlightYAML(yamlText);
+
+			commandOut.dataset.plain = cmdText;
+			yamlOut.dataset.plain = yamlText;
+		}
+
+		// --- Event Listeners ---
+		commandSelect.addEventListener('change', (e) => {
+			const commandNameDisplay = document.getElementById('command-name-display');
+			if (e.target.value) {
+				loadCommandSpec(e.target.value);
+			} else {
+				mainContent.classList.add('hidden');
+				commandNameDisplay.classList.add('hidden');
+			}
+		});
+
+		const modeRadios = Array.from(document.querySelectorAll('input[name="mode"]'));
+		modeRadios.forEach(r => r.addEventListener('change', (e) => {
+			state.mode = e.target.value;
+			if (state.mode === 'container' && state.binds.length === 0) {
+				addBindRow();
+			}
+			render();
+		}));
+
+		containerPathInput.addEventListener('input', (e) => {
+			state.containerPath = e.target.value;
+			render();
+		});
+
+		addBindBtn.addEventListener('click', () => {
+			addBindRow();
+			render();
+		});
+
+		// Copy buttons
+		function showCopied(badgeEl) {
+			badgeEl.classList.add('show');
+			setTimeout(() => badgeEl.classList.remove('show'), 1200);
+		}
+
+		// Fallback copy function for environments where clipboard API doesn't work
+		function copyToClipboard(text) {
+			// Try modern clipboard API first
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				return navigator.clipboard.writeText(text);
+			}
+
+			// Fallback to older method
+			return new Promise((resolve, reject) => {
+				const textarea = document.createElement('textarea');
+				textarea.value = text;
+				textarea.style.position = 'fixed';
+				textarea.style.opacity = '0';
+				document.body.appendChild(textarea);
+				textarea.select();
+				try {
+					const successful = document.execCommand('copy');
+					document.body.removeChild(textarea);
+					if (successful) {
+						resolve();
+					} else {
+						reject(new Error('Copy command failed'));
+					}
+				} catch (err) {
+					document.body.removeChild(textarea);
+					reject(err);
+				}
+			});
+		}
+
+		copyCmdBtn.addEventListener('click', async () => {
+			const txt = commandOut.dataset.plain || '';
+			if (!txt) {
+				alert('No command to copy. Please configure parameters first.');
+				return;
+			}
+			try {
+				await copyToClipboard(txt);
+				showCopied(copiedCmdBadge);
+			} catch (e) {
+				console.error('Copy failed:', e);
+				alert('Failed to copy to clipboard: ' + e.message);
+			}
+		});
+
+		copyYamlBtn.addEventListener('click', async () => {
+			const txt = yamlOut.dataset.plain || '';
+			if (!txt) {
+				alert('No YAML to copy. Please configure parameters first.');
+				return;
+			}
+			try {
+				await copyToClipboard(txt);
+				showCopied(copiedYamlBadge);
+			} catch (e) {
+				console.error('Copy failed:', e);
+				alert('Failed to copy to clipboard: ' + e.message);
+			}
+		});
+
+		// --- Initialize ---
+		loadCommands();
+	</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+Description: |
+  The command creates the base folder structure for a QuNex study at the specified location. This includes setting up
+  necessary subfolders for sessions, logs, and other study components. The default structure is:
+
+  ```
+  <studyfolder>
+  ├── analysis
+  │   └── scripts
+  ├── processing
+  │   ├── logs
+  │   │   ├── batchlogs
+  │   │   ├── comlogs
+  │   │   ├── runchecks
+  │   │   └── runlogs
+  │   ├── lists
+  │   ├── scripts
+  │   └── scenes
+  │       └── QC
+  │           ├── T1w
+  │           ├── T2w
+  │           ├── myelin
+  │           ├── BOLD
+  │           └── DWI
+  ├── info
+  │   ├── demographics
+  │   ├── tasks
+  │   ├── stimuli
+  │   ├── bids
+  │   └── hcpls
+  └── sessions
+      ├── inbox
+      │   ├── MR
+      │   ├── EEG
+      │   ├── BIDS
+      │   ├── HCPLS
+      │   ├── behavior
+      │   ├── concs
+      │   └── events
+      ├── archive
+      │   ├── MR
+      │   ├── EEG
+      │   ├── BIDS
+      │   ├── HCPLS
+      │   └── behavior
+      └── specs
+          └── QC
+  ```
+  Do note that the command will create all the missing folders in which the specified study is to reside.
+  The command also prepares template `batch_example.txt` and pipeline example mapping files in
+  `<studyfolder>/sessions/specs` folder. Finally, it creates a `.qunexstudy` file in the `<studyfolder>` to identify it
+  as a QuNex study basefolder.
+
+Parameters:
+  studyfolder:
+    optional: no
+    type: string
+    default: ""
+    placeholder: "/path/to/studyfolder"
+    description: "Path with the folder where the base study folder structure will be created."
+
+  folders:
+    optional: yes
+    type: string
+    default: ""
+    placeholder: "$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt"
+    description: |
+      The folder structure to be created is specified in a file: `$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt`.
+      If you want to customize the folder structure, you can provide a different file path here. The file should contain a list of
+      subfolders (one per line) to be created under the study folder. Nested folders are specified using indentation:
+
+      ```
+      analysis
+        scripts
+
+      processing
+        logs
+        batchlogs
+        comlogs
+        runlogs
+      ```
+
+      If left blank, the default structure will be used.
