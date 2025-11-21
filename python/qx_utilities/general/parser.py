@@ -120,6 +120,7 @@ def read_mapping_file(mapping_file_path):
             "group_rules": {
                 "image_number" => {<rule_schema>}
                 "name" => {<rule_schema>}
+                "glob" => {<rule_schema>}
             }
             "session_rules": { # reserved for session specific mapping rules
                 <session id>: {
@@ -234,6 +235,7 @@ def _parse_mapping_file_lines(lines):
         "group_rules": {
             "image_number" => {}
             "name" => {}
+            "glob" => {}
         }
         "session_rules": { // reserved for session specific mapping rules
             <session id>: {
@@ -243,7 +245,7 @@ def _parse_mapping_file_lines(lines):
     }
     """
 
-    result = {"group_rules": {"image_number": {}, "name": {}}}
+    result = {"group_rules": {"image_number": {}, "name": {}, "glob": {}}}
     for l in lines:
         if l == "":
             continue
@@ -259,7 +261,10 @@ def _parse_mapping_file_lines(lines):
             rule_set = result["group_rules"]["image_number"]
         else:
             rule_key = tokens[0]
-            rule_set = result["group_rules"]["name"]
+            if "*" in rule_key:
+                rule_set = result["group_rules"]["glob"]
+            else:
+                rule_set = result["group_rules"]["name"]
 
         if rule_key in rule_set:
             raise ge.SpecFileSyntaxError(error="duplicated rules")

@@ -1,0 +1,5 @@
+# Glob mapping test - conflicting patterns
+# This should raise an error because both patterns match but map to different targets
+
+rfMRI_*_AP_SBRef  => boldref:rest
+rfMRI_*           => bold:rest

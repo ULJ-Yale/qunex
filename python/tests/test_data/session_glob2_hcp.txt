@@ -1,0 +1,14 @@
+# Expected output for session_glob2 with mapping_glob2
+# tfMRI_SPECIAL_AP uses exact match (bold:special)
+# tfMRI_REST1_AP, REST2_AP, REST3_AP all match glob tfMRI_*_AP (bold:task)
+session: glob_test_2
+subject: GT002
+
+hcpready: true
+
+01: T1w                     : T1w_MPRAGE
+02: T2w                     : T2w_SPACE
+03: bold1:task              : tfMRI_REST1_AP
+04: bold2:task              : tfMRI_REST2_AP
+05: bold3:special           : tfMRI_SPECIAL_AP
+06: bold4:task              : tfMRI_REST3_AP

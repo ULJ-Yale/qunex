@@ -1,0 +1,18 @@
+# Expected output for session_glob1 with mapping_glob1
+# One glob pattern (rfMRI_*_AP) matches multiple images (REST1, REST2)
+# One glob pattern (tfMRI_*_AP) matches multiple task images
+session: glob_test_1
+subject: GT001
+
+hcpready: true
+
+01: T1w: se(1)              : T1w_MPRAGE
+02: SE-FM-AP: se(1)         : rfMRI_REST1_AP
+03: SE-FM-PA: se(1)         : rfMRI_REST1_PA
+04: SE-FM-AP: se(2)         : rfMRI_REST2_AP
+05: SE-FM-PA: se(2)         : rfMRI_REST2_PA
+06: boldref1:rest: se(2)    : rfMRI_REST1_AP_SBRef
+07: boldref2:rest: se(2)    : rfMRI_REST2_AP_SBRef
+08: bold2:task: se(2)       : tfMRI_MOTOR_AP
+09: bold3:task: se(2)       : tfMRI_WM_AP
+10: bold4:task: se(2)       : tfMRI_EMOTION_AP
