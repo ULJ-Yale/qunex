@@ -9,6 +9,7 @@ import sys
 import os
 import tempfile
 import shutil
+import struct
 
 # Add the parent directory to the path to import qx_utilities
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -47,7 +48,17 @@ def create_test_file(filename, add_cifti=False, add_qunex=False):
     if len(hdr.meta) > 0:
         hdr.vox_offset = 352 + sum([m[0] for m in hdr.meta])
 
-    hdr.writeHeader(filename)
+    # Write the file manually with proper metadata extensions
+    with open(filename, 'wb') as f:
+        # Write header (348 bytes + 4 byte extension flag = 352 bytes)
+        header_bytes = hdr.packHdr()
+        f.write(header_bytes)
+
+        # Write metadata blocks
+        for msize, mcode, mdata in hdr.meta:
+            f.write(struct.pack(hdr.e + 'I', msize))
+            f.write(struct.pack(hdr.e + 'I', mcode))
+            f.write(mdata)
 
 
 def test_no_metadata():
@@ -60,9 +71,8 @@ def test_no_metadata():
         tmpfile = tmp.name
 
     try:
-        # Create file without metadata
-        hdr = niftihdr()
-        hdr.writeHeader(tmpfile)
+        # Create file without metadata using create_test_file
+        create_test_file(tmpfile, add_cifti=False, add_qunex=False)
 
         # Try to remove QuNex metadata
         result = remove_qunex_metadata(tmpfile)
@@ -265,7 +275,16 @@ def test_multiple_qunex_blocks():
         hdr.meta.append([esize3, 64, qunex2_data])
 
         hdr.vox_offset = 352 + esize1 + esize2 + esize3
-        hdr.writeHeader(tmpfile)
+
+        # Write file manually with metadata extensions
+        with open(tmpfile, 'wb') as f:
+            header_bytes = hdr.packHdr()
+            f.write(header_bytes)
+
+            for msize, mcode, mdata in hdr.meta:
+                f.write(struct.pack(hdr.e + 'I', msize))
+                f.write(struct.pack(hdr.e + 'I', mcode))
+                f.write(mdata)
 
         # Verify we have 3 blocks (1 CIFTI, 2 QuNex)
         hdr_before = niftihdr(tmpfile)

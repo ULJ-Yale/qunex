@@ -462,6 +462,12 @@ def remove_qunex_metadata(infile, outfile=None):
     else:
         print("   %d metadata block(s) remain" % len(hdr.meta))
 
+    # Recalculate vox_offset based on remaining metadata
+    if hdr.nifti_version == 2:
+        hdr.vox_offset = 544.0 + sum([float(m[0]) for m in hdr.meta])
+    else:
+        hdr.vox_offset = 352.0 + sum([float(m[0]) for m in hdr.meta])
+
     # Determine output file
     if outfile is None:
         outfile = infile
@@ -496,26 +502,17 @@ def remove_qunex_metadata(infile, outfile=None):
         outf = open(outfile, 'wb')
 
     # Write new header (with updated metadata)
-
-    # Write header (540 bytes for NIfTI-2, 352 for NIfTI-1)
+    # Note: packHdr() includes the extension flag at the end
+    # For NIfTI-1: 348 bytes header + 4 bytes extension flag = 352 bytes
+    # For NIfTI-2: 540 bytes header + 4 bytes extension flag = 544 bytes
     header_bytes = hdr.packHdr()
     outf.write(header_bytes)
-
-    # Write extension flag (4 bytes)
-    if hasattr(hdr, 'ext'):
-        if isinstance(hdr.ext, str):
-            ext_bytes = bytes(hdr.ext, 'utf-8')
-        else:
-            ext_bytes = hdr.ext
-    else:
-        ext_bytes = b'\x00\x00\x00\x00'
-    outf.write(ext_bytes)
 
     # Write metadata blocks (if any)
     for msize, mcode, mdata in getattr(hdr, 'meta', []):
         outf.write(struct.pack(hdr.e + 'I', msize))   # 4 bytes: size
         outf.write(struct.pack(hdr.e + 'I', mcode))   # 4 bytes: code
-        outf.write(mdata)                             # msize bytes: data
+        outf.write(mdata)                             # msize-8 bytes: data
 
     # Write image data
     outf.write(image_data)
@@ -818,9 +815,9 @@ class niftihdr:
 
     def _packHdrV1(self):
 
-        self.vox_offset = 352
+        self.vox_offset = 352.0
         for m in self.meta:
-            self.vox_offset += m[0]
+            self.vox_offset += float(m[0])
 
         s = struct.pack(self.e + "i", 348)                            # int       - must be 348
         for n in range(0, 10):                                        # char[10]  - unused
@@ -947,13 +944,18 @@ class niftihdr:
         s += bytes((self.intent_name + ' ' * 16)[0:16], 'utf-8')
         s += struct.pack(self.e + 'c', bytes(self.dim_info, 'utf-8'))
         s += bytes(chr(0) * 15, 'utf-8')
-        # Extension flag (4 bytes) is written after header, not here
 
         # Pad to 540 bytes if needed
         if len(s) < 540:
             s += bytes(540 - len(s))
         elif len(s) > 540:
             s = s[:540]
+
+        # Add extension flag (4 bytes) - part of the header structure
+        if isinstance(self.ext, str):
+            s += bytes(self.ext, 'utf-8')
+        else:
+            s += self.ext
 
         return s
 
