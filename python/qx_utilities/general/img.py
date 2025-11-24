@@ -1220,7 +1220,7 @@ class niftihdr:
         h = open(filename, "wb")
         s = self.packHdr()
         h.write(s)
-        h.close
+        h.close()
 
         return
 

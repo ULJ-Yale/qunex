@@ -76,8 +76,17 @@ def create_nifti_with_metadata(filename, add_cifti=False, add_qunex=False):
     total_extension_size = sum([mb[0] for mb in hdr.meta])
     hdr.vox_offset = base_offset + total_extension_size
 
-    # Write the file using the header's built-in packing which includes metadata
-    hdr.writeHeader(filename)
+    # Write the file manually with proper metadata extensions
+    with open(filename, 'wb') as f:
+        # Write header (348 bytes + 4 byte extension flag = 352 bytes for NIfTI-1)
+        header_bytes = hdr.packHdr()
+        f.write(header_bytes)
+
+        # Write metadata blocks
+        for msize, mcode, mdata in hdr.meta:
+            f.write(struct.pack(hdr.e + 'I', msize))
+            f.write(struct.pack(hdr.e + 'I', mcode))
+            f.write(mdata)
 
 
 def test_no_metadata():
@@ -90,9 +99,8 @@ def test_no_metadata():
         tmpfile = tmp.name
 
     try:
-        # Create a simple file without metadata
-        hdr = niftihdr()
-        hdr.writeHeader(tmpfile)
+        # Create a simple file without metadata using the helper function
+        create_nifti_with_metadata(tmpfile, add_cifti=False, add_qunex=False)
 
         # Test reading metadata (list mode)
         print_nifti_metadata(tmpfile)
