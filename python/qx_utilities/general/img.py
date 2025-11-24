@@ -15,6 +15,7 @@ import struct
 import re
 import gzip
 import os.path
+import shutil
 
 import general.exceptions as ge
 
@@ -422,13 +423,21 @@ def remove_qunex_metadata(infile, outfile=None):
         remove_qunex_metadata('bold1.nii', 'bold1_clean.nii')
     """
 
+    def no_metadata(infile, outfile):
+        if outfile is None or outfile == infile:
+            print("   No changes made to original file.")
+        else:
+            print("   Copying original file to destination.")
+            shutil.copy2(infile, outfile)
+
     # Read the header and metadata
     hdr = niftihdr(infile)
     print("Removing QuNex Metadata\n\n-> Inspecting file for QuNex metadata: %s" % infile)
 
     # Check if there's any metadata
     if not hasattr(hdr, 'meta') or len(hdr.meta) == 0:
-        print("   -> No metadata extensions found in file.")
+        print("   No metadata extensions found in file.")
+        no_metadata(infile, outfile)
         return False
 
     # Find QuNex metadata blocks (code 64)
@@ -446,6 +455,7 @@ def remove_qunex_metadata(infile, outfile=None):
     # Check if any QuNex metadata was found
     if len(qunex_indices) == 0:
         print("   No QuNex metadata (code 64) found in file.")
+        no_metadata(infile, outfile)
         return False
 
     print("   Found %d QuNex metadata block(s) in file." % (len(qunex_indices), ))
