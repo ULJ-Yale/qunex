@@ -32,6 +32,7 @@ import ast
 import json
 import yaml
 import sys
+import subprocess
 
 import general.exceptions as ge
 import general.core as gc
@@ -268,9 +269,10 @@ def import_bids(
     bidsname=None,
     fileinfo=None,
     add_json_info="all",
+    merge_multi_echo="no",
 ):
     """
-    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=leave] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all']``
+    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=leave] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all'] [merge_multi_echo='no']``
 
     Maps a BIDS dataset to the QuNex Suite file structure.
 
@@ -355,6 +357,11 @@ def import_bids(
             - EchoSpacing
             - 'all' ... all of the above listed information, if present in
               the `.json` sidecar file.
+
+        --merge_multi_echo (str, default 'no'):
+            Whether to merge multi-echo BOLD and sbref files into a single 4D
+            image. If set to 'yes', the echoes will be merged and an entry
+            will be created in the session file.
 
     Output files:
         After running the `import_bids` command the BIDS dataset will be
@@ -687,7 +694,7 @@ def import_bids(
                 "README",
                 "CHANGES",
                 "participants.*",
-                "phenotype/*"
+                "phenotype/*",
             ]
 
             if folderType in studyat:
@@ -1015,6 +1022,7 @@ def import_bids(
                         overwrite=overwrite,
                         fileinfo=fileinfo,
                         add_json_info=add_json_info,
+                        merge_multi_echo=merge_multi_echo,
                     )
                     nmapping = True
                 except ge.CommandFailed as e:
@@ -1022,13 +1030,15 @@ def import_bids(
                     nmapping = False
 
                 # -- do behavioral mapping
-                try:
-                    bmapping = mapBIDS2behavior(
-                        os.path.join(sessionsfolder, session), behavior, overwrite
-                    )
-                except ge.CommandFailed as e:
-                    print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
-                    bmapping = False
+                bmapping = None
+                if behavior:
+                    try:
+                        bmapping = mapBIDS2behavior(
+                            os.path.join(sessionsfolder, session), behavior, overwrite
+                        )
+                    except ge.CommandFailed as e:
+                        print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                        bmapping = False
 
                 # -- compile report
                 if nmapping:
@@ -1049,7 +1059,7 @@ def import_bids(
                         binfo.append("%d files invalid" % (len(bmapping["invalid"])))
                         # all_ok = False
                     minfo += ", ".join(binfo)
-                else:
+                elif bmapping is False:
                     minfo += ", behavior file mapping failed"
                     # all_ok = False
 
@@ -1067,10 +1077,11 @@ def import_bids(
 
     if not report:
         raise ge.CommandNull(
-                "import_bids", "No sessions were mapped during import. Please refer to the report"
-                "for more information, and verify that your BIDS dataset is valid using the BIDS "
-                "Validator: https://github.com/bids-standard/bids-validator (command-line version) or"
-                "https://bids-standard.github.io/bids-validator/ (online version)."
+            "import_bids",
+            "No sessions were mapped during import. Please refer to the report"
+            "for more information, and verify that your BIDS dataset is valid using the BIDS "
+            "Validator: https://github.com/bids-standard/bids-validator (command-line version) or"
+            "https://bids-standard.github.io/bids-validator/ (online version).",
         )
 
 
@@ -1218,7 +1229,6 @@ def processBIDS(bfolder):
                         f"dir-{variant}", ""
                     )
 
-
             if basename_no_suffix not in basenames:
                 basenames.append(basename_no_suffix)
             if ".nii" in element["filename"]:
@@ -1299,9 +1309,15 @@ def _sort_bids_images(bidsData, bids):
                         bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
 
-def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info="all"):
+def map_bids2nii(
+    sourcefolder=".",
+    overwrite="no",
+    fileinfo=None,
+    add_json_info="all",
+    merge_multi_echo="no",
+):
     """
-    ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [add_json_info='all']``
+    ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [add_json_info='all'] [merge_multi_echo='no']``
 
     Maps data organized according to BIDS specification to `nii` folder
     structure as expected by QuNex commands.
@@ -1358,6 +1374,11 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
             - EchoSpacing
             - 'all' ... all of the above listed information, if present in
               the `.json` sidecar file.
+
+        --merge_multi_echo (str, default 'no'):
+            Whether to merge multi-echo BOLD and sbref files into a single 4D
+            image. If set to 'yes', the echoes will be merged using fslmerge -t
+            and the resulting file will be mapped to the nii folder.
 
     Output files:
         After running the mapped nifti files will be in the `nii` subfolder,
@@ -1501,6 +1522,84 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
     # --- process bids folder
     bidsData = processBIDS(bfolder)
 
+    if merge_multi_echo == "yes" or merge_multi_echo is True:
+        print("---> checking for multi-echo sequences to merge")
+        session_data = bidsData.get(session)
+        if session_data:
+            groups = {}
+            # Group images by everything except echo
+            for _, info in session_data["images"]["info"].items():
+                if "echo" in info and info["echo"]:
+                    # Create a key based on relevant attributes
+                    # We exclude specific file info and echo
+                    key_parts = []
+                    for k in sorted(info.keys()):
+                        if k not in [
+                            "echo",
+                            "filepath",
+                            "filename",
+                            "json_file",
+                            "json_info",
+                            "tag",
+                            "imgn",
+                            "seq_info",
+                            "label",
+                        ]:
+                            if info[k]:
+                                key_parts.append((k, info[k]))
+                    key_parts.append(("label", info["label"]))
+
+                    key = tuple(key_parts)
+                    if key not in groups:
+                        groups[key] = []
+                    groups[key].append(info)
+
+            merged_count = 0
+            for key, files in groups.items():
+                if len(files) > 1:
+                    # Sort by echo
+                    files.sort(key=lambda x: int(x["echo"]))
+
+                    # Construct output filename
+                    first_file = files[0]["filename"]
+                    # Remove echo part. e.g. _echo-1
+                    # Regex to remove _echo-<digits> or echo-<digits>_
+                    output_filename = re.sub(r"_echo-\d+", "", first_file)
+                    if output_filename == first_file:
+                        # Try removing echo-<digits>_ at start?
+                        output_filename = re.sub(r"echo-\d+_", "", first_file)
+
+                    output_path = os.path.join(
+                        os.path.dirname(files[0]["filepath"]), output_filename
+                    )
+
+                    if not os.path.exists(output_path):
+                        print(
+                            f"    ... merging {len(files)} echoes into {output_filename}"
+                        )
+                        cmd = ["fslmerge", "-t", output_path] + [
+                            f["filepath"] for f in files
+                        ]
+                        try:
+                            # Use subprocess to run fslmerge
+                            subprocess.check_call(
+                                cmd,
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL,
+                            )
+                            merged_count += 1
+                        except Exception as e:
+                            print(f"    ... ERROR: failed to merge files: {e}")
+                    else:
+                        # print(f"    ... merged file {output_filename} already exists")
+                        pass
+
+            if merged_count > 0:
+                print(
+                    f"---> merged {merged_count} multi-echo sequences, refreshing BIDS data"
+                )
+                bidsData = processBIDS(bfolder)
+
     if session not in bidsData:
         raise ge.CommandFailed(
             "map_bids2nii",
@@ -1610,7 +1709,7 @@ def map_bids2nii(sourcefolder=".", overwrite="no", fileinfo=None, add_json_info=
                 )
 
             # ---> print info to session.txt
-            print(f"{imgn}: {file_info} {seq_info} {json_info}", file=sout)
+            print(f"{imgn}: {file_info} {seq_info} {json_info}".strip(), file=sout)
 
             print(
                 "%s => %s" % (bidsData["images"]["info"][image]["filepath"], tfile),
@@ -2155,7 +2254,6 @@ def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
     """ """
 
     # -- set up variables
-
     sfolder = os.path.abspath(sfolder)
     bfolder = os.path.join(sfolder, "behavior")
 
@@ -2164,7 +2262,6 @@ def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
     sessionid = (session.split("_") + [""])[1]
 
     # -- print splash
-
     info = "subject " + subject
     if sessionid:
         info += ", session " + sessionid
@@ -2174,13 +2271,9 @@ def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
     print("".join(["=" for e in range(len(splash))]))
 
     # -- map data
-
     report = {"mapped": [], "invalid": []}
 
     subjectid = "sub-" + subject
-    if not os.path.exists(bfolder):
-        print("---> created behavior subfolder")
-        os.makedirs(bfolder)
 
     for bfile in behavior:
         outlines = []
@@ -2205,6 +2298,10 @@ def mapBIDS2behavior(sfolder=".", behavior=[], overwrite="no"):
 
         bfilename = os.path.basename(bfile)
         if len(outlines) >= 2:
+            if not os.path.exists(bfolder):
+                print("---> created behavior subfolder")
+                os.makedirs(bfolder)
+
             with open(os.path.join(bfolder, bfilename), "w") as ofile:
                 for oline in outlines:
                     print(oline, file=ofile)

@@ -654,8 +654,8 @@ export MAMBADIR PATH
 if [[ -e /opt/.container ]]; then
     eval "$(micromamba shell hook --shell bash 2>/dev/null)"
     micromamba activate /opt/env/qunex
-    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][QuNex Container \w]\$\[\e[0m\] "
+    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][QuNex Container \W]\$\[\e[0m\] "
 else
     source activate $QUNEXENV 2> /dev/null
-    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][${HOSTNAME%%.*} \w]\$\[\e[0m\] "
+    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "
 fi

@@ -18,7 +18,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `dwi_legacy_gpu` now has a parameter call `extra_eddy_args` that you can use to customize eddy behavior. By default this is set as it was now hard coded: `--fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --data_is_shelled --repol --cnr_maps`.
 * Fixed a bug where AFNI did not work sometimes inside the container.
 * Mapping files for `create_session_info` now support asterisk patterns when selecting images. For example, the mapping rule `rfMRI_*_AP => bold:rest:phenc(AP)` will map all images whose name matches the `rfMRI_*_AP` pattern (e.g., `rfMRI_REST1_AP`, `rfMRI_REST2_AP`, `rfMRI_SLEEP_AP`) to the defined target (`bold1:rest`, `bold2:rest`, `bold3:rest`, with the appropraiate `phenc`).
-* Added support for `import_bids` that merges multi echo BOLD data into a single image that is compliant with HCP multi echo processing.
+* Added support for `import_bids` that merges multi echo BOLD data into a single image that is compliant with HCP multi echo processing. Set `--merge_multi_echo="yes"` to achieve this.
 
 ## 1.4.0
 
