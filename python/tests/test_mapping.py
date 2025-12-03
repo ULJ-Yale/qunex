@@ -9,8 +9,9 @@ from general.utilities import (
     _reserved_bold_numbers,
     _process_pipeline_hcp_mapping,
     _serialize_session,
+    _simple_glob_match,
 )
-from general.exceptions import CommandError
+from general.exceptions import CommandError, SpecFileSyntaxError
 import pytest
 
 
@@ -227,3 +228,65 @@ def test_mapping_manual_se_fm():
     with pytest.raises(CommandError) as exc_info:
         _run_mapping_test("session_manual2.txt", "mapping_manual_se1.txt")
     print(exc_info.value.args)
+
+
+def test_glob_match_patterns():
+    """Test the _simple_glob_match function with various patterns"""
+    # Test exact match
+    assert _simple_glob_match("T1w", "T1w") == True
+    assert _simple_glob_match("T1w", "T2w") == False
+
+    # Test * at the beginning
+    assert _simple_glob_match("rfMRI_REST_AP", "*_AP") == True
+    assert _simple_glob_match("rfMRI_REST_PA", "*_AP") == False
+    assert _simple_glob_match("BOLD_Task", "*BOLD_Task") == True
+
+    # Test * at the end
+    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*") == True
+    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*") == True
+    assert _simple_glob_match("tfMRI_REST_AP", "rfMRI_*") == False
+
+    # Test * in the middle
+    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*_AP") == True
+    assert _simple_glob_match("rfMRI_TASK_AP", "rfMRI_*_AP") == True
+    assert _simple_glob_match("rfMRI_REST_PA", "rfMRI_*_AP") == False
+
+    # Test multiple *
+    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*_AP_*") == True
+    assert _simple_glob_match("rfMRI_TASK_AP_Run1", "rfMRI_*_AP_*") == True
+    assert _simple_glob_match("rfMRI_REST_PA_SBRef", "rfMRI_*_AP_*") == False
+
+    # Test * at both ends
+    assert _simple_glob_match("prefix_middle_suffix", "*middle*") == True
+    assert _simple_glob_match("just_middle", "*middle*") == True
+    assert _simple_glob_match("no_match", "*middle*") == False
+
+
+def test_mapping_glob_basic():
+    """Test glob-based mapping with simple patterns"""
+    _, lines = _run_mapping_test("session_glob1.txt", "mapping_glob1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_glob1_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_glob_priority():
+    """Test that exact name matches take priority over glob patterns"""
+    _, lines = _run_mapping_test("session_glob2.txt", "mapping_glob2.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_glob2_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_glob_conflict():
+    """Test that conflicting glob patterns raise an error"""
+    with pytest.raises(SpecFileSyntaxError) as exc_info:
+        _run_mapping_test("session_glob3.txt", "mapping_glob3.txt")
+
+    error_msg = str(exc_info.value.error)
+    print(error_msg)
+    assert "conflicting" in error_msg.lower()
+    assert "rfMRI_REST_AP_SBRef" in error_msg
+

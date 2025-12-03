@@ -14,6 +14,8 @@ import sys
 import re
 import math
 import time
+import shlex
+import tempfile
 
 from datetime import datetime
 
@@ -688,6 +690,13 @@ def main(args=None):
                         the command, it will only printout the parallelism
                         information, e.g. how many jobs will be spawned, how many
                         sessions will be run in parallel, etc.
+    --interactive       Start the container in interactive mode. When this flag
+                        is set, instead of running a specific command, an
+                        interactive shell will be started inside the container
+                        with the QuNex environment already configured. All
+                        relevant parameters (--bind, --cuda, --bash_pre,
+                        --bash_post, --nocleanenv, --cuda_path, --nv,
+                        --containeropt) will be applied.
 
 
     RESULTS
@@ -732,7 +741,7 @@ def main(args=None):
     EXAMPLE USE
     ===========
 
-    ::
+    Running a QuNex command in a container::
 
         qunex_container hcp_freesurfer \\
             --sessionsfolder=/data/study/sessions \\
@@ -740,6 +749,19 @@ def main(args=None):
             --parsessions=4 \\
             --container=/apptainer/qunex_suite-0_38_10.sif \\
             --scheduler="SLURM,time=2-00:00:00,cpus-per-task=2,mem-per-cpu=15000,partition=week"
+
+    Starting an interactive session in a container::
+
+        qunex_container --interactive \\
+            --container=/apptainer/qunex_suite-0_38_10.sif \\
+            --bind=/data:/data
+
+    Starting an interactive session with CUDA support::
+
+        qunex_container --interactive \\
+            --container=/apptainer/qunex_suite-0_38_10.sif \\
+            --bind=/data:/data \\
+            --cuda
     """
 
     if args is None:
@@ -786,6 +808,7 @@ def main(args=None):
     parinfo = None
     overwrite = None
     scheduling_delay = 0
+    interactive = False
 
     for arg in args:
         # cleanup -- at start
@@ -852,6 +875,8 @@ def main(args=None):
                 nv = True
             elif arg == "parinfo":
                 parinfo = True
+            elif arg == "interactive":
+                interactive = True
             elif arg.startswith("scheduling_delay="):
                 k, scheduling_delay = arg.split("=", 1)
                 scheduling_delay = int(scheduling_delay)
@@ -863,6 +888,27 @@ def main(args=None):
 
         else:
             command += f"{arg} "
+
+    fail = False
+
+    if interactive and env_status:
+        print("ERROR: Cannot use interactive mode with env_status!")
+        fail = True
+
+    if interactive and scheduler is not None:
+        print("ERROR: Cannot use interactive mode with scheduler!")
+        fail = True
+
+    if interactive and bash_post is not None:
+        print("ERROR: Cannot use interactive mode with bash_post!")
+        fail = True
+
+    if interactive and bash_pre is not None:
+        print("ERROR: Cannot use interactive mode with bash_pre!")
+        fail = True
+
+    if fail:
+        exit(1)
 
     # parsessions
     if parsessions is None:
@@ -929,6 +975,79 @@ def main(args=None):
 
         # run
         subprocess.run(env_command, shell=True, check=False)
+        exit(0)
+
+    # interactive mode
+    if interactive:
+        print("\n---> Starting QuNex container in interactive mode...\n")
+
+
+        # binds
+        if bind is None:
+            container_bind = f"{homedir}:{homedir}"
+        else:
+            container_bind = f"{homedir}:{homedir},{bind}"
+
+        # bind cuda path if provided
+        if cuda_path:
+            container_bind += f",{cuda_path}:/usr/local/cuda"
+
+        if apptainer:
+            container_command = []
+            container_command += ["singularity", "exec"]
+            container_command += ["--bind", container_bind]
+
+            if containeropt:
+                container_command += shlex.split(containeropt)
+
+            # no clean env
+            if nocleanenv is None:
+                container_command.append("--cleanenv")
+
+            # cuda
+            if cuda:
+                container_command += ["--nvccli", "-u"]
+
+            # nv
+            if nv:
+                container_command += ["--nv "]
+
+            container_command += [container.strip(), "bash", "-c"]
+
+            # prepare startup script
+
+            bash_script = "source /opt/qunex/env/qunex_environment.sh\n"
+            bash_script +=  'echo ""\n'
+            bash_script +=  'echo "QuNex environment loaded. You are now in an interactive QuNex container."\n'
+            bash_script +=  'echo ""\n'
+            bash_script +=  'export PS1="($(basename $CONDA_DEFAULT_ENV)) \\[\\e[0;36m\\][QuNex Container \\w]\\$\\[\\e[0m\\] "\n'
+            bash_script +=  "exec bash\n"
+
+            print(f"Executing: {' '.join(container_command)}\n")
+
+            container_command.append(bash_script)
+            subprocess.run(container_command)
+
+        else:
+            container_command = ["docker", "run", "-it"]
+
+            bind_list = container_bind.split(",")
+            for b in bind_list:
+                container_command += ["-v", b]
+
+            # containeropt
+            if containeropt:
+                container_command += shlex.split(containeropt)
+
+            # cuda
+            if cuda:
+                container_command += ["--gpus", "all"]
+
+            container_command += [container.strip()]
+
+            print(f"Executing: {' '.join(container_command)}\n")
+            subprocess.run(container_command)
+
         exit(0)
 
     if command.startswith("?scheduler"):

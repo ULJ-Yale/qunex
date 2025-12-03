@@ -83,27 +83,32 @@ fi
 #  Environment clear and check functions
 # ------------------------------------------------------------------------------
 
-ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXEXTENSIONS QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLBINDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_FS_CUSTOM HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder EDDYCUDA USEOCTAVE QUNEXENV MAMBADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT ANTSDIR CUDIMOT'
+ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXEXTENSIONS QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_BINDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLBINDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_FS_CUSTOM HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder EDDYCUDA USEOCTAVE QUNEXENV MAMBADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT ANTSDIR CUDIMOT'
 export ENVVARIABLES
 
 # -- Check if inside the container and reset the environment on first setup
 if [[ -e /opt/.container ]]; then
-    # -- Perform initial reset for the environment in the container
-    if [[ "$FIRSTRUNDONE" != "TRUE" ]]; then
-        # -- First unset all conflicting variables in the environment
-        unset $ENVVARIABLES
-
-        # -- Set PATH
-        export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-
-        if [ -z ${TOOLS+x} ]; then TOOLS="/opt"; fi
-        if [ -z ${USEOCTAVE+x} ]; then USEOCTAVE="TRUE"; fi
-
-        PATH=${TOOLS}:${PATH}
-        export TOOLS PATH USEOCTAVE
-        export FIRSTRUNDONE="TRUE"
+    # -- Allow only one sourcing in the container
+    if [[ "$QUNEX_SOURCED" != "TRUE" ]]; then
+        export QUNEX_SOURCED="TRUE"
+    else
+        # -- Already sourced outside, so exit
+        return
     fi
 
+    # -- First unset all conflicting variables in the environment
+    unset $ENVVARIABLES
+
+    # -- Set PATH
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+    if [ -z ${TOOLS+x} ]; then TOOLS="/opt"; fi
+    if [ -z ${USEOCTAVE+x} ]; then USEOCTAVE="TRUE"; fi
+
+    PATH=${TOOLS}:${PATH}
+    export TOOLS PATH USEOCTAVE
+
+# -- Use Octave outside of container, inside this is auto set to TRUE
 elif [[ -e ~/.qunexuseoctave ]]; then
     export USEOCTAVE="TRUE"
 fi
@@ -191,7 +196,7 @@ fi
 # -- Check if folders for dependencies are set in the global path
 if [[ -z ${FSLDIR} ]]; then FSLDIR="${TOOLS}/fsl/fsl"; export FSLDIR; fi
 if [[ -z ${FSLCONFDIR} ]]; then FSLCONFDIR="${FSLDIR}/config"; export FSLCONFDIR; fi
-if [[ -z ${FSL_FIXDIR} ]]; then FSL_FIXDIR="${TOOLS}/fsl/fix"; fi
+if [[ -z ${FSL_BINDIR} ]]; then FSL_BINDIR="${TOOLS}/fsl/bin"; fi
 if [[ -z ${FREESURFERDIR} ]]; then FREESURFERDIR="${TOOLS}/freesurfer/freesurfer"; export FREESURFERDIR; fi
 if [[ -z ${FreeSurferSchedulerDIR} ]]; then FreeSurferSchedulerDIR="${TOOLS}/freesurfer/FreeSurferScheduler"; export FreeSurferSchedulerDIR; fi
 if [[ -z ${HCPWBDIR} ]]; then HCPWBDIR="${TOOLS}/workbench/workbench"; export HCPWBDIR; fi
@@ -575,9 +580,9 @@ export EDDYCUDA=${FSLBINDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
 # ------------------------------------------------------------------------------
 
 # -- ICA FIX path
-PATH=${FSL_FIXDIR}:${PATH}
-export FSL_FIXDIR PATH
-MATLABPATH=$FSL_FIXDIR:$MATLABPATH
+PATH=${FSL_BINDIR}:${PATH}
+export FSL_BINDIR PATH
+MATLABPATH=$FSL_BINDIR:$MATLABPATH
 export MATLABPATH
 if [ ! -z `which matlab 2>/dev/null` ]; then
     MATLABBIN=$(dirname `which matlab 2>/dev/null`)
@@ -649,6 +654,7 @@ export MAMBADIR PATH
 if [[ -e /opt/.container ]]; then
     eval "$(micromamba shell hook --shell bash 2>/dev/null)"
     micromamba activate /opt/env/qunex
+    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][QuNex Container \W]\$\[\e[0m\] "
 else
     source activate $QUNEXENV 2> /dev/null
     PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "

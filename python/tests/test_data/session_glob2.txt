@@ -1,0 +1,10 @@
+# Test session for glob priority - exact match should win, glob matches multiple
+session: glob_test_2
+subject: GT002
+
+01: T1w_MPRAGE
+02: T2w_SPACE
+03: tfMRI_REST1_AP
+04: tfMRI_REST2_AP
+05: tfMRI_SPECIAL_AP
+06: tfMRI_REST3_AP

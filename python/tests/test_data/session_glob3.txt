@@ -1,0 +1,5 @@
+# Test session for glob conflict
+session: glob_test_3
+subject: GT003
+
+01: rfMRI_REST_AP_SBRef

@@ -6,6 +6,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.4.1
+
+* Added support for some new HCP Pipelines parameter.
+* Improved handling of NIfTI metadata in our nii loading and saving scripts.
+* `qunex_container` now has interactive mode, you can enter the container interactively by using `--interactive` flag.
+* Improved the PALM interface (`run_palm` command).
+* Fixed a bug in `join_fidl` when working with CIfTI conc files.
+* Fixed a race condition in `run_qc` that made everything crash when running across a lot of sessions in parallel on some systems.
+* `hcp_fmri_volume` now support `OnScanner` distortion correction method.
+* `dwi_legacy_gpu` now has a parameter call `extra_eddy_args` that you can use to customize eddy behavior. By default this is set as it was now hard coded: `--fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --data_is_shelled --repol --cnr_maps`.
+* Fixed a bug where AFNI did not work sometimes inside the container.
+* Mapping files for `create_session_info` now support asterisk patterns when selecting images. For example, the mapping rule `rfMRI_*_AP => bold:rest:phenc(AP)` will map all images whose name matches the `rfMRI_*_AP` pattern (e.g., `rfMRI_REST1_AP`, `rfMRI_REST2_AP`, `rfMRI_SLEEP_AP`) to the defined target (`bold1:rest`, `bold2:rest`, `bold3:rest`, with the appropraiate `phenc`).
+* Added support for `import_bids` that merges multi echo BOLD data into a single image that is compliant with HCP multi echo processing. Set `--merge_multi_echo="yes"` to achieve this.
+
 ## 1.4.0
 
 * Updated OS in the container to Debian 13 which should resolve some CUDA issues when using the container.

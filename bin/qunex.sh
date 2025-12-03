@@ -331,7 +331,8 @@ dwi_legacy_gpu() {
     --unwarpdir=${UnwarpDir} \
     --diffdatasuffix=${diffdatasuffix} \
     --overwrite=${Overwrite} \
-    --nogpu=${nogpu}"
+    --nogpu=${nogpu} \
+    --extra_eddy_args='${extra_eddy_args}'"
 
     # -- QuNex bash execute function
     bash_call_execute
@@ -1521,6 +1522,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
     diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
+    extra_eddy_args=`get_parameters "${setflag}extra_eddy_args" $@`
 
     # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`
@@ -1556,6 +1558,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     ParcellationFile=`get_parameters "${setflag}parcellationfile" $@`
     OutName=`get_parameters "${setflag}outname" $@`
     WayTotal=`get_parameters "${setflag}waytotal" $@`
+    Lengths=`get_parameters "${setflag}lengths" $@`
 
     # -- Input flags for  dwi_seed_tractography_dense
     SeedFile=`get_parameters "${setflag}seedfile" $@`
@@ -2116,21 +2119,25 @@ fi
 if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then echo "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$UseFieldmap" ]; then echo "ERROR: UseFieldmap yes/no specification missing"; exit 1; fi
+    if [[ -z "$UseFieldmap" ]]; then echo "ERROR: UseFieldmap yes/no specification missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then echo "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then echo "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then echo "ERROR: List of sessions missing"; exit 1; fi
-    if [ -z "$diffdatasuffix" ]; then echo "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
+    if [[ -z "$diffdatasuffix" ]]; then echo "ERROR: Diffusion Data Suffix Name missing"; exit 1; fi
 
-    if [ ${UseFieldmap} == "yes" ]; then
-        if [ -z "$te" ]; then echo "ERROR: TE (--te) value for Fieldmap missing"; exit 1; fi
-    elif [ ${UseFieldmap} == "no" ]; then
+    if [[ ${UseFieldmap} == "yes" ]]; then
+        if [[ -z "$te" ]]; then echo "ERROR: TE (--te) value for Fieldmap missing"; exit 1; fi
+    elif [[ ${UseFieldmap} == "no" ]]; then
         echo "NOTE: Processing without FieldMap (TE option not needed)"
     fi
 
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
-            if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
+        if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
+    fi
+
+    if [ -z ${extra_eddy_args} ]; then
+        extra_eddy_args="--fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --data_is_shelled --repol --cnr_maps"
     fi
 
     # -- Report parameters
@@ -2149,6 +2156,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Diffusion Data Suffix Name: ${diffdatasuffix}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "   No GPU: ${nogpu}"
+    echo "   Extra Eddy Args: ${extra_eddy_args}"
     echo ""
 
     # -- Loop through all the cases

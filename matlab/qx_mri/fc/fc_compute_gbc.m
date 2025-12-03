@@ -673,14 +673,17 @@ for s = 1:list.nsessions
     if isempty(frames)
         frames = 0;
     elseif isa(frames, 'char')
-        frames = str2num(frames);
-        if isempty(frames)
+        frames_n = str2num(frames);
+        if isempty(frames_n)
             if isfield(list.session(s), 'fidl')
                 go = go & general_check_file(list.session(s).fidl, [list.session(s).id ' fidl file'], 'error');
+                frames_s = [list.session(s).fidl "|" frames];
             else
                 go = false;
                 fprintf(' ... ERROR: %s missing fidl file specification!\n', list.session(s).id);
             end
+        else
+            frames_s = frames_n;
         end
     end
 
@@ -737,7 +740,7 @@ for s = 1:list.nsessions
     % ---> create extraction sets
 
     if verbose; fprintf('     ... generating extraction sets ...'); end
-    exsets = y.img_get_extraction_matrices(frames, gem_options);
+    exsets = y.img_get_extraction_matrices(frames_s, gem_options);
     if verbose; fprintf(' done.\n'); end
 
     % ---> loop through extraction sets

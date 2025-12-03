@@ -1649,7 +1649,9 @@ def create_list(
     lines = []
 
     for session in sessions_list:
-        lines.append("session id: %s" % (session["id"]))
+        session_lines = []
+        session_lines.append("session id: %s" % (session["id"]))
+        skip_session = False
 
         if boldnums:
             for boldnum in boldnums:
@@ -1662,7 +1664,10 @@ def create_list(
                 )
                 includeFile = checkFile(tfile)
                 if includeFile:
-                    lines.append("    file:" + tfile)
+                    session_lines.append("    file:" + tfile)
+                else:
+                    skip_session = True
+                    break
 
         if boldtags:
             try:
@@ -1688,13 +1693,18 @@ def create_list(
                 )
                 includeFile = checkFile(tfile)
                 if includeFile:
-                    lines.append("    file:" + tfile)
+                    session_lines.append("    file:" + tfile)
+                else:
+                    skip_session = True
+                    break
 
         if roi:
             tfile = os.path.join(sessionsfolder, session["id"], images_folder, roi)
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    roi:" + tfile)
+                session_lines.append("    roi:" + tfile)
+            else:
+                skip_session = True
 
         if glm:
             tfile = os.path.join(
@@ -1702,7 +1712,9 @@ def create_list(
             )
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    glm:" + tfile)
+                session_lines.append("    glm:" + tfile)
+            else:
+                skip_session = True
 
         if conc:
             tfile = os.path.join(
@@ -1715,7 +1727,9 @@ def create_list(
             )
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    conc:" + tfile)
+                session_lines.append("    conc:" + tfile)
+            else:
+                skip_session = True
 
         if fidl:
             tfile = os.path.join(
@@ -1728,7 +1742,14 @@ def create_list(
             )
             includeFile = checkFile(tfile)
             if includeFile:
-                lines.append("    fidl:" + tfile)
+                session_lines.append("    fidl:" + tfile)
+            else:
+                skip_session = True
+
+        if not skip_session:
+            lines += session_lines
+        else:
+            print("---> Skipping session %s from the list!" % (session["id"]))
 
     # --- write to target file
     if overwrite == "yes" or overwrite is True:
@@ -3931,6 +3952,10 @@ def create_session_info(
 
                 <sequence number> => <user_specified_label>
 
+            or::
+
+                <pattern_with_*>  => <user_specified_label>
+
             BOLD files should be given a compound label after the => separator::
 
                 <original_sequence_name>  => bold:<user_specified_label>
@@ -3946,6 +3971,13 @@ def create_session_info(
             target file, images with names that do not match any of the
             specified mappings will be given empty labels. When both sequence
             number and sequence name match, sequence number will have priority.
+
+            Asterisk (*) patterns are supported in the original sequence names.
+            Such patterns will match any sequence of characters. For example,
+            the pattern `T*BOLD` will match both `T1BOLD` and `T2BOLD`. Asterisk
+            can be used multiple times in a single pattern, e.g. `*BOLD*3mm*`.
+            Each asterisk will match any sequence of characters, including an
+            empty sequence.
 
             If multiple mappings are specified for fieldmap magnitude images
             only the last magnitude image will be used. To pair two fieldmap
@@ -3974,6 +4006,8 @@ def create_session_info(
 
                 5 => bold:sleep
 
+                T*BOLD => bold:task
+
                 Example lines in a source session.txt file:
 
                 01: Scout
@@ -3981,6 +4015,8 @@ def create_session_info(
                 03: T2w 0.7mm N1
                 04: RSBOLD 3mm 48 2.5s
                 05: RSBOLD 3mm 48 2.5s
+                06: T1BOLD 3mm 48 2.5s
+                07: T2BOLD 3mm 48 2.5s
 
                 Resulting lines in target session_<pipeline>.txt file:
 
@@ -3989,6 +4025,8 @@ def create_session_info(
                 03: T2w              :T2w 0.7mm N1
                 04: bold1:rest       :RSBOLD 3mm 48 2.5s
                 05: bold2:sleep      :RSBOLD 3mm 48 2.5s
+                06: bold1:task       :T1BOLD 3mm 48 2.5s
+                07: bold2:task       :T2BOLD 3mm 48 2.5s
 
             Note, that the old sequence names are preserved.
 
@@ -4141,9 +4179,13 @@ def create_session_info(
                     print(line, file=fout)
                 report["processed"].append(sfolder)
 
-            except e:  # session file syntax error, conflicting rules
+            # session file syntax error, conflicting rules
+            except ge.SpecFileSyntaxError as e:
                 report["error"].append(sfolder)
-                print(traceback.format_exc())
+                print(f"  ... ERROR: {e.error}")
+            except Exception as e:
+                report["error"].append(sfolder)
+                print(f"  ... ERROR: {str(e)}")
 
     print("\n---> Final report")
 
@@ -4219,6 +4261,55 @@ def _process_pipeline_hcp_mapping(src_session, mapping_rules):
     return tgt_session
 
 
+def _simple_glob_match(text, pattern):
+    """
+    Simple glob matching that handles * at the beginning, end, or in between.
+
+    Args:
+        text: The text to match against
+        pattern: A pattern string that may contain * wildcards
+
+    Returns:
+        True if the text matches the pattern, False otherwise
+    """
+    # Split pattern by * to get literal parts
+    parts = pattern.split('*')
+
+    # Check if the first part matches the beginning (if not starting with *)
+    if pattern[0] != '*':
+        if not text.startswith(parts[0]):
+            return False
+        text = text[len(parts[0]):]
+        parts = parts[1:]
+    else:
+        # Remove empty string from leading *
+        parts = parts[1:]
+
+    # Check if the last part matches the end (if not ending with *)
+    if pattern[-1] != '*' and len(parts) > 0:
+        if not text.endswith(parts[-1]):
+            return False
+        text = text[:-len(parts[-1])] if parts[-1] else text
+        parts = parts[:-1]
+    else:
+        if len(parts) > 0 and parts[-1] == '':
+            # Remove empty string from trailing *
+            parts = parts[:-1]
+
+    # Check middle parts
+    pos = 0
+    for part in parts:
+        # Skip empty strings from consecutive **
+        if not part:
+            continue
+        idx = text.find(part, pos)
+        if idx == -1:
+            return False
+        pos = idx + len(part)
+
+    return True
+
+
 def _apply_rules(src_session, mapping_rules):
     """Apply mapping rules for each image
 
@@ -4239,6 +4330,7 @@ def _apply_rules(src_session, mapping_rules):
 
     grp_img_num_rule = mapping_rules["group_rules"]["image_number"]
     grp_name_rule = mapping_rules["group_rules"]["name"]
+    grp_glob_rule = mapping_rules["group_rules"]["glob"]
 
     for img_num, img_info in src_session["images"].items():
         # evaluate session specific rules
@@ -4250,6 +4342,45 @@ def _apply_rules(src_session, mapping_rules):
             rule = grp_img_num_rule[img_num]
         elif img_name in grp_name_rule:
             rule = grp_name_rule[img_name]
+        # Try glob-based matching (simple * patterns)
+        else:
+            matched_rules = []
+            for pattern, glob_rule in grp_glob_rule.items():
+                if _simple_glob_match(img_name, pattern):
+                    matched_rules.append((pattern, glob_rule))
+
+            if len(matched_rules) > 1:
+                # Check if all matched rules map to the same target
+                first_hcp_type = matched_rules[0][1].get("hcp_image_type")
+                conflicting = False
+                for pattern, matched_rule in matched_rules[1:]:
+                    if matched_rule.get("hcp_image_type") != first_hcp_type:
+                        conflicting = True
+                        break
+
+                if conflicting:
+                    # Format image number properly (handle tuple case)
+                    img_num_str = str(img_num[0]) if isinstance(img_num, tuple) else str(img_num)
+
+                    # Build detailed rule descriptions
+                    rule_details = []
+                    for p, matched_rule in matched_rules:
+                        hcp_type = matched_rule.get('hcp_image_type')
+                        if hcp_type:
+                            type_str = f"{hcp_type[0]}" + (f":{hcp_type[2]}" if len(hcp_type) > 2 and hcp_type[2] else "")
+                        else:
+                            type_str = "no mapping"
+                        rule_details.append(f"  • Pattern: '{p}'  →  maps to: {type_str}")
+
+                    patterns_str = "\n".join(rule_details)
+                    raise ge.SpecFileSyntaxError(
+                        error=f"Image {img_num_str} ('{img_name}') matches multiple conflicting mapping rules:\n\n"
+                        f"{patterns_str}\n\n"
+                        f"Fix: Make your patterns more specific so only one matches, or ensure all matching patterns map to the same target."
+                    )
+
+            if matched_rules:
+                rule = matched_rules[0][1]
 
         tgt_session["images"][img_num] = _apply_image_rule(img_info, rule)
 

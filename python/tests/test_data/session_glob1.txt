@@ -1,0 +1,14 @@
+# Test session for glob matching - one pattern matches multiple images
+session: glob_test_1
+subject: GT001
+
+01: T1w_MPRAGE
+02: rfMRI_REST1_AP
+03: rfMRI_REST1_PA
+04: rfMRI_REST2_AP
+05: rfMRI_REST2_PA
+06: rfMRI_REST1_AP_SBRef
+07: rfMRI_REST2_AP_SBRef
+08: tfMRI_MOTOR_AP
+09: tfMRI_WM_AP
+10: tfMRI_EMOTION_AP

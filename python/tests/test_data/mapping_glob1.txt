@@ -1,0 +1,9 @@
+# Glob mapping test - one pattern matches multiple images
+# rfMRI_* matches all REST images (REST1, REST2, etc.)
+# tfMRI_* matches all task images (MOTOR, WM, EMOTION)
+
+*MPRAGE           => T1w
+rfMRI_*_AP_SBRef  => boldref:rest
+rfMRI_*_AP        => SE-FM-AP
+rfMRI_*_PA        => SE-FM-PA
+tfMRI_*_AP        => bold:task

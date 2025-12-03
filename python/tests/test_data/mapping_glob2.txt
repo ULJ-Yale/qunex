@@ -1,0 +1,8 @@
+# Glob mapping test - priority test with one pattern matching multiple images
+# Exact match (tfMRI_SPECIAL_AP) should take priority over glob (tfMRI_*_AP)
+# The glob tfMRI_*_AP matches REST1, REST2, and REST3
+
+T1w_MPRAGE           => T1w
+T2w_*                => T2w
+tfMRI_SPECIAL_AP     => bold:special
+tfMRI_*_AP           => bold:task
