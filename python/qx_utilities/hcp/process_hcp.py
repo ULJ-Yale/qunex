@@ -5703,8 +5703,6 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     echospacing = b["echospacing"]
     spinNeg = b["spinNeg"]
     spinPos = b["spinPos"]
-    seechospacing = b["seechospacing"]
-    seunwarpdir = b["seunwarpdir"]
     topupconfig = b["topupconfig"]
     fmmag = b["fmmag"]
     fmphase = b["fmphase"]
@@ -5782,8 +5780,6 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             ("fmriscout", refimg),
             ("SEPhaseNeg", spinNeg),
             ("SEPhasePos", spinPos),
-            ("seechospacing", seechospacing),
-            ("seunwarpdir", seunwarpdir),
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
             ("fmapcombined", fmcombined),
