@@ -4378,7 +4378,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not
             used.
 
-        --hcp_boold_seunwarpdir (str, default 'NONE'):
+        --hcp_bold_seunwarpdir (str, default 'NONE'):
             Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
 
         --hcp_bold_unwarpdir (str, default 'y'):
