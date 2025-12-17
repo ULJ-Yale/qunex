@@ -4374,13 +4374,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_sephaseneg (str, default ''):
             Label for the negative image of the Spin Echo Field Map pair.
 
-        --hcp_bold_seechospacing (str, default 'NONE'):
-            Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not
-            used.
-
-        --hcp_bold_seunwarpdir (str, default 'NONE'):
-            Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
-
         --hcp_bold_unwarpdir (str, default 'y'):
             The direction of unwarping. Can be specified separately for
             LR/RL : `'LR=x|RL=-x|x'` or separately for PA/AP :
@@ -4973,93 +4966,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             )
                             spinok = False
 
-                        # if hcp_bold_seechospacing is not set, try to get it from the JSON sidecar, only for TOPUP_MISMATCHED
-                        if options["hcp_bold_dcmethod"].lower() == "topup_mismatched":
-                            if options["hcp_bold_seechospacing"] is None:
-                                fmap_json = glob.glob(os.path.join(sepath, "*AP*.json"))
-                                if len(fmap_json) == 0:
-                                    fmap_json = glob.glob(
-                                        os.path.join(sepath, "*LR*.json")
-                                    )
-
-                                if len(fmap_json) != 0:
-                                    fmap_json = fmap_json[0]
-                                    json_sidecar = os.path.join(sepath, fmap_json)
-
-                                    if os.path.exists(json_sidecar):
-                                        r += "\n---> Trying to set hcp_bold_seechospacing from the JSON sidecar."
-                                        with open(json_sidecar, "r") as file:
-                                            sidecar_data = json.load(file)
-                                            if "EffectiveEchoSpacing" in sidecar_data:
-                                                options["hcp_bold_seechospacing"] = (
-                                                    f"{sidecar_data['EffectiveEchoSpacing']:.10f}"
-                                                )
-                                                r += f"\n       - hcp_bold_seechospacing set to {options['hcp_bold_seechospacing']}"
-
-                            # try to set hcp_bold_seechospacing and hcp_bold_seunwarpdir from se info
-                            # get SE info from session info
-                            try:
-                                se_info = [
-                                    v
-                                    for (k, v) in sinfo.items()
-                                    if k.isdigit()
-                                    and "SE-FM" in v["name"]
-                                    and "se" in v
-                                    and v["se"] == str(senum)
-                                ][0]
-                            except:
-                                se_info = None
-
-                            if options["hcp_bold_seechospacing"] is None:
-                                if (
-                                    se_info
-                                    and "EchoSpacing" in se_info
-                                    and checkInlineParameterUse(
-                                        "SE", "EchoSpacing", options
-                                    )
-                                ):
-                                    options["hcp_bold_seechospacing"] = se_info[
-                                        "EchoSpacing"
-                                    ]
-                                    r += (
-                                        "\n---> Spin-Echo images specific EchoSpacing: %s s"
-                                        % (options["hcp_bold_seechospacing"])
-                                    )
-
-                            if options["hcp_bold_seunwarpdir"] is None:
-                                if se_info and "phenc" in se_info:
-                                    options["hcp_bold_seunwarpdir"] = SEDirMap[
-                                        se_info["phenc"]
-                                    ]
-                                    r += "\n---> Spin-Echo unwarp direction: %s" % (
-                                        options["hcp_bold_seunwarpdir"]
-                                    )
-                                elif (
-                                    se_info
-                                    and "PEDirection" in se_info
-                                    and checkInlineParameterUse(
-                                        "SE", "PEDirection", options
-                                    )
-                                ):
-                                    options["hcp_bold_seunwarpdir"] = se_info[
-                                        "PEDirection"
-                                    ]
-                                    r += "\n---> Spin-Echo unwarp direction: %s" % (
-                                        options["hcp_bold_seunwarpdir"]
-                                    )
-
                     if spinok:
                         sepresent.append(senum)
                         sepairs[senum] = {"spinPos": spinPos, "spinNeg": spinNeg}
-
-                if options["hcp_bold_dcmethod"].lower() == "topup_mismatched":
-                    for p in [
-                        "hcp_bold_seechospacing",
-                        "hcp_bold_seunwarpdir",
-                    ]:
-                        if p in options and not options[p]:
-                            r += f"\nERROR: {p} parameter not set manually and QuNex was unable to set it automatically. This is required for TOPUP_MISMATCHED processing! Please set it manually."
-                            run = False
 
             # ---> check for topupconfig
             if (
@@ -5644,8 +5553,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "echospacing": echospacing,
                 "spinNeg": spinNeg,
                 "spinPos": spinPos,
-                "seunwarpdir": options["hcp_bold_seunwarpdir"],
-                "seechospacing": options["hcp_bold_seechospacing"],
                 "topupconfig": topupconfig,
                 "fmmag": fmmag,
                 "fmphase": fmphase,
