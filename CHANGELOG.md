@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.4.2
+
+* Fixed a bug where `hcp_fmri_volume` did not work under some configurations with SE-FM corrections.
+
 ## 1.4.1
 
 * Added support for some new HCP Pipelines parameter.
