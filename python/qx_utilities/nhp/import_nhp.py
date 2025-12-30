@@ -30,8 +30,9 @@ import re
 from datetime import datetime
 
 # qx imports
-import general.exceptions as ge
-import general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+from qx_registry import register_command
 
 
 def map_to_qunex(file, sessionsfolder, sessions, overwrite):
@@ -91,6 +92,10 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
     return [session, tfile]
 
 
+
+@register_command(
+    description="Imports non-human primate (NHP) data into the QuNex Suite file structure.",
+    type="utility")
 def import_nhp(
     sessionsfolder=None,
     inbox=None,

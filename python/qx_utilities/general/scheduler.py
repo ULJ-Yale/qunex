@@ -20,13 +20,19 @@ import os.path
 import time
 import re
 
-import general.exceptions as ge
-import general.core as gc
-import general.process as gp
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.process as gp
+from qx_registry import register_command
+from qx_registry import registry as qx_commands
 
 from datetime import datetime
 
 
+@register_command(
+    description="Schedules the provided command using the specified scheduler.",
+    type="utility",
+)
 def schedule(
     command=None,
     script=None,
@@ -663,7 +669,7 @@ def runThroughScheduler(
             parjobs = chunks
 
         # do not create multiple jobs if running a multi-session command
-        if command in gp.mactions or command in gp.lactions:
+        if any([e in qx_commands[command].type for e in ["longitudinal", "multisession"]]):
             parjobs = 1
 
         # init queues

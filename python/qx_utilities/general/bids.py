@@ -34,12 +34,14 @@ import yaml
 import sys
 import subprocess
 
-import general.exceptions as ge
-import general.core as gc
-import general.filelock as fl
-import processing.core as pc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.filelock as fl
+import qx_utilities.processing.core as pc
 
 from datetime import datetime
+
+from qx_registry import register_command
 
 unwarp = {
     None: "Unknown",
@@ -258,7 +260,9 @@ def mapToQUNEXBids(
     # ---> return file and locking info
     return tfile, session == "bids"
 
-
+@register_command(
+    description="Maps a BIDS dataset to the QuNex Suite file structure.",
+    type="utility")
 def import_bids(
     sessionsfolder=None,
     inbox=None,
@@ -1308,7 +1312,9 @@ def _sort_bids_images(bidsData, bids):
                     else:
                         bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
-
+@register_command(
+    description="Maps BIDS organized data to nii folder structure.",
+    type="utility")
 def map_bids2nii(
     sourcefolder=".",
     overwrite="no",
@@ -1780,7 +1786,9 @@ def map_bids2nii(
             "Please check logs and data!",
         )
 
-
+@register_command(
+    description="Maps images from the sessions's nii folder to BIDS structure.",
+    type="utility")
 def map_nii2bids(
     sinfo, options, overwrite=False, action="hardlink", session_mapping_file=None
 ):

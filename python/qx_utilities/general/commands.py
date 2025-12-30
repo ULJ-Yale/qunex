@@ -12,7 +12,7 @@ Definition of commands used in gmri along with their parameters.
 """
 
 # qx_utilities imports
-from general import (
+from qx_utilities.general import (
     dicom,
     bids,
     fourdfp,
@@ -31,11 +31,11 @@ from general import (
 )
 
 # pipeline imports
-from hcp import import_hcp, setup_hcp, export_hcp
-from nhp import import_nhp
+from qx_utilities.hcp import import_hcp, setup_hcp, export_hcp
+from qx_utilities.nhp import import_nhp
 
 # QA imports
-from qa import run_qa
+from qx_utilities.qa import run_qa
 
 # all command mappings
 commands = {

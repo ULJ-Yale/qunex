@@ -25,15 +25,18 @@ import glob
 import traceback
 import time
 import json
-import general.core as gc
-import processing.core as pc
-import general.img as gi
-import general.exceptions as ge
+
 import nibabel as nib
 import pprint
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+
+import qx_utilities.general.core as gc
+import qx_utilities.processing.core as pc
+import qx_utilities.general.img as gi
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
 
 unwarp = {
     None: "Unknown",
@@ -485,6 +488,9 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
     return gdcfile, r, run
 
 
+@register_command(
+    description="Run the PreFreeSurfer step of the HCP Pipeline.",
+    type="processing.session.hcp",)
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     r"""
     ``hcp_pre_freesurfer [... processing options]``
@@ -1594,6 +1600,9 @@ def _set_hcp_prefs_template_res(image):
             return (0, r)
 
 
+@register_command(
+    description="Run the FreeSurfer step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_freesurfer [... processing options]``
@@ -2038,6 +2047,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+@register_command(
+    description="Run the PostFreeSurfer step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_post_freesurfer [... processing options]``
@@ -2455,6 +2467,9 @@ def _get_subjects_from_batch(sinfo, hcp, run):
     return run, subjects_list
 
 
+@register_command(
+    description="Prepare data for longitudinal processing with HCP longitudinal pipelines.",
+    type="processing.longitudinal.hcp")
 def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_prep_long [... processing options]``
@@ -2609,6 +2624,10 @@ def _execute_hcp_prep_long(options, overwrite, subject):
     return {"r": r, "report": report}
 
 
+
+@register_command(
+    description="Run the HCP Longitudinal FreeSurfer Pipeline.",
+    type="processing.longitudinal.hcp")
 def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_freesurfer [... processing options]``
@@ -2955,6 +2974,9 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Run the HCP Longitudinal FreeSurfer Pipeline.",
+    type="processing.longitudinal.hcp")
 def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_post_freesurfer [... processing options]``
@@ -3510,6 +3532,10 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
     return {"r": r, "report": report}
 
 
+
+@register_command(
+    description="Run the Diffusion step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_diffusion [... processing options]``
@@ -4246,6 +4272,9 @@ def _check_dwi_echospacing(echospacing):
     )
 
 
+@register_command(
+    description="Run the fMRIVolume step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_volume [... processing options]``
@@ -5995,6 +6024,9 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Run the fMRISurface step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_surface [... processing options]``
@@ -6673,6 +6705,9 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
     return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
 
+@register_command(
+    description="Run the ICAFix step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_icafix [... processing options]``
@@ -7524,6 +7559,9 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Run the PostFix step of the HCP Pipeline.",
+    type="processing.session.hcp",)
 def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_post_fix [... processing options]``
@@ -7957,6 +7995,9 @@ def executeHCPPostFix(sinfo, options, hcp, run, singleFix, boldinfo):
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Run the ReApplyFix step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_reapply_fix [... processing options]``
@@ -8901,6 +8942,10 @@ def parse_msmall_bolds(options, bolds, r):
     return (msmall_groups, single_run, pars_ok, r)
 
 
+
+@register_command(
+    description="Run the MSMAll step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_msmall(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_msmall [... processing options]``
@@ -9900,6 +9945,9 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Run the HCP Longitudinal MSMAll Pipeline.",
+    type="processing.longitudinal.hcp")
 def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_msmall [... processing options]``
@@ -10488,6 +10536,10 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
     return {"r": r, "report": report}
 
 
+
+@register_command(
+    description="Run the DeDriftAndResample step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_dedrift_and_resample [... processing options]``
@@ -11367,6 +11419,9 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Run the HCP ASL Pipeline.",
+    type="processing.session.hcp")
 def hcp_asl(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_asl [... processing options]``
@@ -11919,6 +11974,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+@register_command(
+    description="Run the HCP Transmit Bias Individual Only Pipeline.",
+    type="processing.session.hcp")
 def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_transmit_bias_individual [... processing options]``
@@ -12460,6 +12518,9 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+@register_command(
+    description="Run the HCP Longitudinal Transmit Bias Pipeline.",
+    type="processing.longitudinal.hcp")
 def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_transmit_bias [... processing options]``
@@ -12969,6 +13030,9 @@ def _execute_hcp_long_transmit_bias(sinfo, options, overwrite, run, hcp_base, su
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Run the HCP temporal ICA Pipeline.",
+    type="processing.multisession.hcp")
 def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     """
     ``hcp_temporal_ica [... processing options]``
@@ -13795,6 +13859,9 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     return (r, (sessionids, report, failed))
 
 
+@register_command(
+    description="Runs the HCP MakeAverageDataset pipeline.",
+    type="processing.multisession.hcp")
 def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thread=0):
     """
     ``hcp_make_average_dataset [... processing options]``
@@ -14108,6 +14175,9 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
     return (r, (sessionids, report, failed))
 
 
+@register_command(
+    description="Runs the ApplyAutoRecleanPipeline step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_apply_auto_reclean [... processing options]``
@@ -14558,6 +14628,9 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Runs ditfit pipeline.",
+    type="processing.session.hcp")
 def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     """
     hcp_dtifit - documentation not yet available.
@@ -14676,6 +14749,9 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+@register_command(
+    description="Runs the HCP BedpostX GPU pipeline.",
+    type="processing.session.hcp")
 def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
     """
     hcp_bedpostx - documentation not yet available.
@@ -14798,6 +14874,10 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
+
+@register_command(
+    description="Map HCP preprocessed data into QuNex folder structure.",
+    type="processing.session.hcp")
 def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     """
     ``map_hcp_data [... processing options]``
@@ -15403,6 +15483,10 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], rstatus, failed))
 
 
+
+@register_command(
+    description="Run the Task fMRI Analysis step of the HCP Pipeline.",
+    type="processing.session.hcp")
 def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_task_fmri_analysis [... processing options]``

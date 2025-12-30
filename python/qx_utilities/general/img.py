@@ -17,7 +17,8 @@ import gzip
 import os.path
 import shutil
 
-import general.exceptions as ge
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
 
 niftiDataTypes = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
 niftiBytesPerVoxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
@@ -132,17 +133,24 @@ def readBasicInfo(filename):
     return info
 
 
+@register_command(
+    description="Prints the header contents of the NIfTI file.",
+    type="utility")
 def printniftihdr(filename=None):
     """
     ``printniftihdr <image_filename>``
 
     Prints the header contents of the NIfTI file.
     """
-
+    if filename is None:
+        raise ge.CommandError('printniftihdr', 'No filename provided', 'Please provide a NIfTI filename to inspect!')
     hdr = niftihdr(filename)
     print(hdr)
 
 
+@register_command(
+    description="Prints metadata extension blocks from a NIfTI file.",
+    type="utility")
 def print_nifti_metadata(filename, info='list'):
     """
     ``print_nifti_metadata <image_filename> [info=list]``
@@ -389,6 +397,10 @@ def print_nifti_metadata(filename, info='list'):
     # print("-" * 70)
 
 
+
+@register_command(
+    description="Removes QuNex metadata (extension code 64) from a NIfTI file.",
+    type="utility")
 def remove_qunex_metadata(infile, outfile=None):
     """
     ``remove_qunex_metadata <infile> [outfile=None]``
@@ -1402,6 +1414,9 @@ class niftihdr:
                 print("WARNING: %s not a valid key for NIfTI header" % (k))
 
 
+@register_command(
+    description="Slices a NIfTI or 4dfp volume image to retain only the first N frames.",
+    type="utility")
 def slice_image(sourcefile, targetfile, frames=1):
     """
     ``slice_image sourcefile=<source image> targetfile=<target image> [frames=1]``

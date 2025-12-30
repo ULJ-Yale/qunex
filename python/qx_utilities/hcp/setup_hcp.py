@@ -24,10 +24,12 @@ All rights reserved.
 import os
 import shutil
 import collections
-import general.exceptions as ge
 import os.path
-import general.core as gc
 import json
+
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+from qx_registry import register_command
 
 # ---- some definitions
 unwarp = {
@@ -66,6 +68,9 @@ def checkInlineParameterUse(modality, parameter, options):
     )
 
 
+@register_command(
+    description="Map session data into a folder structure compliant with HCP minimal preprocessing workflow.",
+    type="utility")
 def setup_hcp(
     sourcefolder=".",
     targetfolder="hcp",
@@ -731,6 +736,9 @@ def setup_hcp(
     return
 
 
+@register_command(
+    description="Prepare slice timing file for fsl slicetimer based on json sidecar.",
+    type="utility")
 def prepare_slice_timing(jsonfile, slicetimingfile):
     """
     ``prepare_slice_timing jsonfile=<path to json file> slicetimingfile=<path to slice timing file>``

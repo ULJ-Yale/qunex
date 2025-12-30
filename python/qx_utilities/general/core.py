@@ -29,9 +29,9 @@ import gzip
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 
-import general.filelock as fl
-import general.exceptions as ge
-import general.commands_support as gcs
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.commands_support as gcs
 
 
 def print_qunex_header(timestamp=None, file=None):

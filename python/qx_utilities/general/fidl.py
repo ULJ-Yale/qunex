@@ -21,8 +21,9 @@ import os.path
 import glob
 import subprocess
 
-import general.img as gi
-import general.exceptions as ge
+import qx_utilities.general.img as gi
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
 
 ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
 
@@ -99,6 +100,9 @@ def readConc(concf, TR):
     return bolds
 
 
+@register_command(
+    description="Combines all the fidl files matching root based on the information in conc file.",
+    type="utility")
 def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     """
     ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [outfolder=<output_folder>] [fidlname=<optional fidl name>]``
@@ -203,6 +207,9 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     return
 
 
+@register_command(
+    description="Joins all the fidl files that match the name of each conc file in the concfolder.",
+    type="utility")
 def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     """
     ``join_fidl_folder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder_in_which_to_save_joint_files>] [fidlname=<folder_with_fidl_files>]``
@@ -259,6 +266,9 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
         raise ge.CommandFailed("join_fidl_folder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
 
 
+@register_command(
+    description="Splits a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.",
+    type="utility")
 def split_fidl(concfile, fidlfile, outfolder=None):
     """
     ``split_fidl concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
@@ -333,7 +343,9 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
     return
 
-
+@register_command(
+    description="Prints figures showing fidl events and their duration.",
+    type="utility")
 def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     """
     ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]``

@@ -25,8 +25,9 @@ import os.path
 import glob
 import re
 
-import general.core as gc
-import general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
 
 from datetime import datetime
 
@@ -56,7 +57,9 @@ set seq = ""
 
 recode = {True: "ok", False: "missing"}
 
-
+@register_command(
+    description="Runs NIL preprocessing of all sessions in a folder.",
+    type="utility")
 def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     """
     ``run_nil_folder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
@@ -140,6 +143,9 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     print("\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder))
 
 
+@register_command(
+    description="Runs NIL preprocessing script on the session data in specified folder.",
+    type="utility")
 def run_nil(folder=".", overwrite=None, sourcefile=None):
     """
     ``run_nil [folder=.] [overwrite=no] [sourcefile=session.txt]``
@@ -322,6 +328,9 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         print("...  preproc_NIL_nifti finished successfully")
 
 
+@register_command(
+    description="Maps volume files to metric surface files using PALS12 surface atlas.",
+    type="utility")
 def map2pals(volume, metric, atlas="711-2C", method="interpolated", mapping="afm"):
     """
     ``map2pals volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]``
@@ -393,6 +402,9 @@ def map2pals(volume, metric, atlas="711-2C", method="interpolated", mapping="afm
             )
 
 
+@register_command(
+    description="Maps volume files to dense scalar files using HCP templates.",
+    type="utility")
 def map2hcp(volume, method="trilinear"):
     """
     ``map2hcp volume=<volume file> [method=trilinear]``

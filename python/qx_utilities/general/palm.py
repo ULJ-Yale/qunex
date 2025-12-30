@@ -35,11 +35,16 @@ import glob
 import re
 from functools import reduce
 
-import general.exceptions as ge
-import general.core as gc
-import general.img as gi
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.img as gi
+from qx_registry import register_command
 
 
+
+@register_command(
+    description="Runs second level analysis using PALM permutation resampling.",
+    type="utility")
 def run_palm(
     image,
     design=None,
@@ -1026,6 +1031,9 @@ def setInFiles(root, tail, nimages):
     return out
 
 
+@register_command(
+    description="Enables easy masking of CIFTI images using provided masks and thresholds.",
+    type="utility")
 def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR"):
     """
     ``mask_map image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]``
@@ -1180,6 +1188,9 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
         )
 
 
+@register_command(
+    description="Concatenates the listed cifti images and names the individual volumes.",
+    type="utility")
 def join_maps(images=None, output=None, names=None, originals=None):
     """
     ``join_maps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]``
@@ -1308,6 +1319,9 @@ def fNuissance(n):
     return block
 
 
+@register_command(
+    description="Prepares design files for a single group within-subject PALM designs.",
+    type="utility")
 def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     """
     ``create_ws_palm_design factors=<factor string> nsubjects=<number of subjects> root=<design root name>``

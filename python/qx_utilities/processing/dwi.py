@@ -31,9 +31,16 @@ All rights reserved.
 import os
 import shutil
 import traceback
-import processing.core as pc
 from datetime import datetime
 
+import qx_utilities.processing.core as pc
+from qx_registry import register_command
+
+
+
+@register_command(
+    description="Run FSL F99 command for macaque data registration.",
+    type="processing.session.dwi")
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_f99 [... processing options]``
@@ -209,6 +216,9 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
+@register_command(
+    description="Run FSL XTRACT command for cross-species tractography.",
+    type="processing.session.dwi")
 def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_xtract [... processing options]``
@@ -497,6 +507,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
+
+@register_command(
+    description="Run CUDIMOT's NODDI microstructure modelling using GPU acceleration.",
+    type="processing.session.dwi")
 def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_noddi_gpu [... processing options]``

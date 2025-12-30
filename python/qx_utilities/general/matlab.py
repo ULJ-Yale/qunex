@@ -21,7 +21,8 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import subprocess
-from general import extensions
+from qx_utilities.general import extensions
+from qx_registry import register_external_command
 
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -81,7 +82,16 @@ functions.update(extensions.compile_dict('functions'))
 
 functionList = sorted(functions.keys())
 
-
+# -- add matlab functions to the registry
+for func in functionList:
+    register_external_command(
+        name=func,
+        description="Matlab function wrapper for %s" % (func),
+        type="matlab",
+        args=[arg for arg, form in functions[func]],
+        language="matlab",
+        path=""
+    )
 
 
 # ==============================================================================

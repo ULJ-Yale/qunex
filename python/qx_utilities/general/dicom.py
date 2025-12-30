@@ -43,11 +43,13 @@ import csv
 import json
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import general.core as gc
-import general.img as gi
-import general.nifti as gn
-import general.qximg as qxi
-import general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.img as gi
+import qx_utilities.general.nifti as gn
+import qx_utilities.general.qximg as qxi
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
+
 from datetime import datetime
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -458,6 +460,10 @@ def getTRTE(info):
     return float(TR), float(TE)
 
 
+
+@register_command(
+    description="Processes sessions's DICOM or PAR/REC files and generates NIfTI files using dcm2niix.",
+    type="utility")
 def dicom2nii(
     folder=".",
     clean="no",
@@ -1104,6 +1110,9 @@ def dicom2nii(
                 )
 
 
+@register_command(
+    description="Processes sessions's DICOM or PAR/REC files and generates NIfTI files using dcm2niix.",
+    type="utility")
 def dicom2niix(
     folder=".",
     clean="no",
@@ -2280,6 +2289,10 @@ def _unzip_dicom(dicom_root_folder, parelements):
             raise ge.CommandError("_unzip_dicom", "Unable to unzip one or more files")
 
 
+@register_command(
+    description="Sorts DICOM files.",
+    type="utility",
+    args=[('folder', 'copy', 'outfdir', 'files')])
 def sort_dicom(folder=".", **kwargs):
     """
     ``sort_dicom [folder=.]``
@@ -2362,7 +2375,7 @@ def sort_dicom(folder=".", **kwargs):
 
     # --- establish target folder
 
-    dcmf = os.path.join(kwargs.get("out_dir", folder), "dicom")
+    dcmf = os.path.join(kwargs.get("outdir", folder), "dicom")
 
     # --- get list of files
 
@@ -2488,7 +2501,9 @@ def sort_dicom(folder=".", **kwargs):
     print("---> Done")
     return
 
-
+@register_command(
+    description="Lists DICOM files in a folder and prints a detailed report.",
+    type="utility")
 def list_dicom(folder=None):
     """
     ``list_dicom [folder=inbox]``
@@ -2559,6 +2574,9 @@ def list_dicom(folder=None):
     return
 
 
+@register_command(
+    description="Sorts out DICOM images from different sessions.",
+    type="utility")
 def split_dicom(folder=None):
     """
     ``split_dicom [folder=inbox]``
@@ -2627,7 +2645,9 @@ def split_dicom(folder=None):
 
     return
 
-
+@register_command(
+    description="Processes sessions's DICOM or PAR/REC files and generates NIfTI files.",
+    type="utility")
 def import_dicom(
     sessionsfolder=None,
     sessions=None,
@@ -3893,6 +3913,9 @@ def import_dicom(
     return
 
 
+@register_command(
+    description="Inspects the specified DICOM file for relevant information.",
+    type="utility")
 def get_dicom_info(dicomfile=None, scanner="siemens"):
     """
     ``get_dicom_info dicomfile=<dicom_file> [scanner=siemens]``

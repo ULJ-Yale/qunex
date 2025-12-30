@@ -29,14 +29,15 @@ from datetime import datetime
 import traceback
 import itertools
 import yaml
-import general.commands_support as gcs
-import general.process as gp
-import general.core as gc
-import processing.core as gpc
-import general.exceptions as ge
-import general.filelock as fl
-import general.parser as parser
-import general.all_commands as gac
+import qx_utilities.general.commands_support as gcs
+import qx_utilities.general.process as gp
+import qx_utilities.general.core as gc
+import qx_utilities.processing.core as gpc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.parser as parser
+import qx_utilities.general.all_commands as gac
+from qx_registry import register_command
 
 
 parameterTemplateHeader = """#  Parameters file
@@ -76,6 +77,9 @@ parameterTemplateHeader = """#  Parameters file
 #  (... <description>) after the values for the parameters to be used."""
 
 
+@register_command(
+    description="Check the study folder structure and create missing content if needed.",
+    type="utility")
 def manage_study(studyfolder=None, action="create", folders=None, verbose=False):
     """
     manage_study studyfolder=None action="create"
@@ -293,7 +297,6 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                     "Please check paths and permissions!",
                 )
 
-
 def create_study_folders(folders_spec):
     """
     create_study_folders folders=None
@@ -348,6 +351,9 @@ def create_study_folders(folders_spec):
     return folder_structure
 
 
+@register_command(
+    description="Create the base study folder structure.",
+    type="utility")
 def create_study(studyfolder=None, folders=None):
     """
     ``create_study studyfolder=<path to study base folder> [folders=$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt]``
@@ -435,6 +441,9 @@ def create_study(studyfolder=None, folders=None):
     )
 
 
+@register_command(
+    description="Copy an existing QuNex study to a new location.",
+    type="utility")
 def copy_study(
     studyfolder,
     existing_study,
@@ -713,6 +722,9 @@ def filter_batch(batchfile, sessions=None, subjects=None):
         f.write(new_batch)
 
 
+@register_command(
+    description="Identify and report the study base folder.",
+    type="utility")
 def check_study(startfolder=".", folders=None):
     """
     ``check_study startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
@@ -744,6 +756,10 @@ def check_study(startfolder=".", folders=None):
     return studyfolder
 
 
+
+@register_command(
+    description="Create a joint batch file from source files in all session folders",
+    type="utility")
 def create_batch(
     sessionsfolder=".",
     sourcefiles=None,
@@ -1247,6 +1263,9 @@ def remove_session_block(file_path, session_id):
         file.write(updated_content)
 
 
+@register_command(
+    description="Create a .list formatted file for the specified sessions",
+    type="utility")
 def create_list(
     sessionsfolder=".",
     batchfile=None,
@@ -1769,6 +1788,10 @@ def create_list(
     lfile.close()
 
 
+
+@register_command(
+    description="Create .conc files for specified sessions.",
+    type="utility")
 def create_conc(
     sessionsfolder=".",
     sessions=None,
@@ -2152,6 +2175,10 @@ def _is_qunex_command(command):
     return False
 
 
+
+@register_command(
+    description="Run a chain of multiple commands through recipe files and recipes.",
+    type="utility")
 def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=None):
     """
     ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [<extra arguments>]``
@@ -2943,6 +2970,9 @@ def strip_quotes(string):
     return string
 
 
+@register_command(
+    description="Extracts the data for the specified session and returns the list of bold numbers or names.",
+    type="utility")
 def batch_tag2namekey(
     filename=None, sessionid=None, bolds=None, output="number", prefix="BOLD_"
 ):
@@ -3023,6 +3053,9 @@ def batch_tag2namekey(
     print("BOLDS:%s" % (",".join(boldlist)))
 
 
+@register_command(
+    description="Returns the subset of sessions that will be processed for a SLURM array job.",
+    type="utility")
 def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None):
     """
     get_sessions_for_slurm_array \\
@@ -3053,6 +3086,9 @@ def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None)
     print(",".join(sarray))
 
 
+@register_command(
+    description="Gather specified individual behavioral data from each session's behavior folder and compile it into a specified group behavioral file.",
+    type="utility")
 def gather_behavior(
     sessionsfolder=".",
     sessions=None,
@@ -3449,6 +3485,10 @@ def gather_behavior(
         )
 
 
+
+@register_command(
+    description="Gather a list of all the sequence names across the sessions and save it into a specified file.",
+    type="utility")
 def pull_sequence_names(
     sessionsfolder=".",
     sessions=None,
@@ -3871,6 +3911,9 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
     return sessionsfolder, mapto, mapexclude
 
 
+@register_command(
+    description="Create session info files for specified sessions and pipeline.",
+    type="utility")
 def create_session_info(
     sessions=None,
     pipelines="hcp",

@@ -26,9 +26,14 @@ Copyright (c) Grega Repovs. All rights reserved.
 import numpy as np
 import gzip
 
-import general.img as gi
-import general.qximg as qxi
+import qx_utilities.general.img as gi
+import qx_utilities.general.qximg as qxi
+from qx_registry import register_command
 
+
+@register_command(
+    description="Converts the xyfz order of data to xyzf.",
+    type="utility")
 def fz2zf(inf, outf=None):
     """
     ``fz2zf inf=<input_image> [outf=<output_image>]``
@@ -84,7 +89,9 @@ def fz2zf(inf, outf=None):
     tf.write(out.astype(dataType).tostring())
     tf.close
 
-#
+@register_command(
+    description="Removes extra slices for interrupted BOLD sequences.",
+    type="utility")
 def reslice(inf, slices, outf=None):
     """
     ``reslice inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]``
@@ -185,6 +192,9 @@ def reslice(inf, slices, outf=None):
     tf.write(out.astype(dataType).tostring())
     tf.close
 
+@register_command(
+    description="Reorders the slices (y dimension) for images that are upside down.",
+    type="utility")
 def reorder(inf, outf=None):
     """
     ``reorder inf=<input_image> [outf=<output_image>]``
@@ -239,6 +249,10 @@ def reorder(inf, outf=None):
     tf.write(out.astype(dataType).tostring())
     tf.close
 
+
+@register_command(
+    description="Converts a NIfTI file to a 4dfp file.",
+    type="utility")
 def nifti24dfp(inf, outf=None):
     """
     ``nifti24dfp inf=<input_image> [outf=<output_image>]``

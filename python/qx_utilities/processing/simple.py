@@ -31,10 +31,14 @@ import os
 import re
 from datetime import datetime
 
-import general.img as gi
-import processing.core as pc
+import qx_utilities.general.img as gi
+import qx_utilities.processing.core as pc
+from qx_registry import register_command
 
 
+@register_command(
+    description="Create a list with paths to each session's BOLD files.",
+    type="processing.session.simple")
 def create_bold_list(sinfo, options, overwrite=False, thread=0):
     """
     create_bold_list - documentation not yet available.
@@ -61,6 +65,9 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
     bfile.close()
 
 
+@register_command(
+    description="Create a list with paths to each session's conc files.",
+    type="processing.simple")
 def create_conc_list(sinfo, options, overwrite=False, thread=0):
     """
     ``create_conc_list``
@@ -114,12 +121,14 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
     bfile.close()
 
 
-
+@register_command(
+    description="List session information from the batch file.",
+    type="processing.simple")
 def list_session_info(sinfo, options, overwrite=False, thread=0):
     """
     list_session_info - documentation not yet available.
     """
-    bfile = open(os.path.join(options['sessionsfolder'], 'SessionInfo.txt'), 'w')
+    bfile = open(os.path.join(options['sessionsfolder'], 'session_info.txt'), 'w')
 
     for session in sinfo:
         print("session: %s, group: %s" % (session['id'], session['group']), file=bfile)
@@ -128,6 +137,9 @@ def list_session_info(sinfo, options, overwrite=False, thread=0):
 
 
 
+@register_command(
+    description="Run the specified script on every selected session from batch.txt file.",
+    type="processing.session")
 def run_shell_script(sinfo, options, overwrite=False, thread=0):
     """
     ``run_shell_script [... processing options]``

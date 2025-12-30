@@ -23,7 +23,8 @@ import functools
 import struct
 import shutil
 
-import general.exceptions as ge
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
 
 try:
     import pydicom
@@ -111,6 +112,7 @@ def get_dicom_name(opened_dicom, extension="dcm"):
         extension=extension)
 
     return filename
+
 
 def discover_dicom(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file=""):
     """
@@ -390,6 +392,9 @@ def write_field_dict(output_file, limit):
                 writer.writerow(row)
 
 
+@register_command(
+    description="Returns an overview of DICOM fields across all the DICOM files in the specified folder.",
+    type="utility")
 def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     """
     ``get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]``
@@ -463,7 +468,9 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
-
+@register_command(
+    description="Changes all the dicom files in the specified folder according the `paramfile`.",
+    type="utility")
 def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
     """
     ``change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``

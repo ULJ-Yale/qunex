@@ -5,21 +5,53 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+
+# ------------------------------------------------------------------------------
+#                                              prevent mulitiple path to imports
+#
+# To prevent double imports from both qx_utilities and qx_utilities.general
+# we remove the alias path from sys.path before importing anything from
+# qx_utilities directly.
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+BAD = ROOT / "qx_utilities"
+sys.path[:] = [p for p in sys.path if p and Path(p).resolve() != BAD.resolve()]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+# --- continnue with imports
+
 import os
 import os.path
-import sys
 import copy
 
 from datetime import datetime
-from general import scheduler as gs
-from general import utilities as gu
-from general import process as gp
-from general import matlab as gm
-from general import core as gc
-from general import exceptions as ge
-from general import all_commands as gac
-from general import commands as gcom
-from general import commands_support as gcs
+from qx_utilities.general import scheduler as gs
+from qx_utilities.general import utilities as gu
+from qx_utilities.general import process as gp
+from qx_utilities.general import matlab as gm
+from qx_utilities.general import core as gc
+from qx_utilities.general import exceptions as ge
+from qx_utilities.general import commands_support as gcs
+from qx_utilities.general import extensions
+from qx_registry import registry as qx_commands
+
+
+def init_commands():
+    qx_commands.discover("qx_utilities.general", origin="core", priority=0, allow_override=False)
+    qx_commands.discover("qx_utilities.processing", origin="core", priority=0, allow_override=False)
+    qx_commands.discover("qx_utilities.hcp", origin="core", priority=0, allow_override=False)
+    qx_commands.discover("qx_utilities.nhp", origin="core", priority=0, allow_override=False)
+    qx_commands.discover("qx_utilities.qa", origin="core", priority=0, allow_override=False)
+    qx_commands.discover("qx_mice", origin="core", priority=0, allow_override=False)
+
+# -- update commands list with information from extensions
+# qx_commands.update(extensions.compile_dict("commands"))
+# qx_commands.update(extensions.commands)
+
 
 help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 (qx_utilities) commands can be invoked via the "qunex <command>" call.
@@ -63,13 +95,20 @@ def runCommand(command, args):
         # -- remap deprecated arguments
         args = gcs.check_deprecated_parameters(args, command)
 
-    # --- sort commands by type
-    if command in gcom.commands:
-        pass
-    elif command in gp.allactions:
+    qx_command = qx_commands.get(command.strip())
+
+    # -- is this a valid qunex command?
+    if qx_command is None:
+        print(f"ERROR: Command '{command}' not recognized. Please run qunex -l to see list of valid commands.")
+        sys.exit(1)
+
+    # -- is this a processing command?
+    if qx_command.type.startswith("processing"):
         gp.run(command, args)
         return
-    elif command in gm.functions:
+    
+    # -- is this a matlab command?
+    if qx_command.language == "matlab":
         if "scheduler" in args:
             gs.runThroughScheduler(
                 command, sessions=None, args=args, logfolder=folders["logfolder"]
@@ -77,19 +116,14 @@ def runCommand(command, args):
         else:
             gm.run(command, args)
         return
-    else:
-        print(
-            "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands."
-            % (command)
-        )
-        sys.exit(1)
-
-    # --- process commands
+    
+    # -- continue with regular python command
+    
     # -- sort arguments
     bargs = {}
     eargs = {}
     for k, v in args.items():
-        if k in gcom.commands[command]["args"]:
+        if k in qx_commands[command]["args"]:
             bargs[k] = v
         else:
             eargs[k] = v
@@ -100,10 +134,7 @@ def runCommand(command, args):
         for k, v in eargs.items():
             if k not in gcs.extra_parameters:
                 bad.append(k)
-                print(
-                    "ERROR: Extra argument %s is not valid! Please check your command!"
-                    % (k)
-                )
+                print(f"ERROR: Extra argument {k} is not valid! Please check your command!")
         if bad:
             raise ge.CommandError(
                 "gmri",
@@ -115,7 +146,7 @@ def runCommand(command, args):
     sessions = None
     if "sessions" in eargs:
         if command != "run_recipe" and not any(
-            [e in gcom.commands[command]["args"] for e in ["sourcefolder", "folder"]]
+            [e in qx_commands[command]["args"] for e in ["sourcefolder", "folder"]]
         ):
             raise ge.CommandError(
                 "gmri",
@@ -206,7 +237,7 @@ def runCommand(command, args):
                     calls.append(
                         {
                             "name": "run_recipe_%d" % (c),
-                            "function": gcom.commands[command]["com"],
+                            "function": qx_commands[command]["com"],
                             "args": recipe_args,
                             "logfile": None,
                         }
@@ -239,7 +270,7 @@ def runCommand(command, args):
 
             else:
                 bargs["eargs"] = eargs
-                gcom.commands[command]["com"](**bargs)
+                qx_commands[command]["com"](**bargs)
                 print("\n---> Successful completion of task")
 
     # -- all other commands
@@ -307,13 +338,13 @@ def runCommand(command, args):
             # remove logs for exceptions
             if command in gcs.logskip_commands:
                 # remove non-command args
-                args = {k: v for k, v in args.items() if k in gcom.commands[command]["args"]}
+                args = {k: v for k, v in args.items() if k in qx_commands[command]["args"]}
                 # execute
-                gcom.commands[command]["com"](**args)
+                qx_commands[command]["com"](**args)
             # run with log
             else:
                 _, result, _, _ = gc.runWithLog(
-                    gcom.commands[command]["com"], args=args, logfile=logfile
+                    qx_commands[command]["com"], args=args, logfile=logfile
                 )
 
         # -- sessions loop
@@ -329,13 +360,13 @@ def runCommand(command, args):
                         "%s_%s.log" % (command, session["id"]),
                     )
                 for targ in ["sourcefolder", "folder"]:
-                    if targ in gcom.commands[command]["args"]:
+                    if targ in qx_commands[command]["args"]:
                         targs[targ] = sessionsfolder
 
                 calls.append(
                     {
                         "name": name,
-                        "function": gcom.commands[command]["com"],
+                        "function": qx_commands[command]["com"],
                         "args": targs,
                         "logfile": logfile,
                     }
@@ -372,57 +403,26 @@ def runCommand(command, args):
 def print_help(com):
     # --- print list of available commands, required for qunex.sh checks
     if com == "available":
-        available_commands = []
-        # -> gmri commands
-        for c, _ in gcom.commands.items():
-            available_commands.append(c)
-        # -> processing commands
-        for l in gp.calist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> longitudinal processing commands
-        for l in gp.lalist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> multi-sesssion processing commands
-        for l in gp.malist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> simple processing commands
-        for l in gp.salist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> matlab wrapped commands
-        for l in gm.functions.keys():
-            available_commands.append(l)
-
-        # print the commands
-        available_commands.sort()
+        available_commands = qx_commands.gmri_commands()        
         print(" ".join(available_commands))
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
-        for full_name, description, _ in gac.all_qunex_commands:
+        for full_name, description, _ in qx_commands.export_qunex_list():
             print("- " + full_name.split(".")[-1] + ": " + description)
 
-    # --- print help for gmri local commands
-    elif com in gcom.commands:
-        print("\nqunex", gcom.commands[com]["com"].__doc__.strip(), "\n")
-
-    # --- print help for processing actions
-    elif com in gp.allactions:
-        print("\nqunex", gp.allactions[com].__doc__.strip(), "\n")
+    cmd = qx_commands.get(com)
+    # --- print help for python commands
+    if cmd and cmd.language == "python":
+        print("\nqunex", cmd.com.__doc__.strip(), "\n")
 
     # --- print help for matlab functions
-    elif com in gm.functions:
+    elif cmd and cmd.language == "matlab":
         gm.help(com)
 
     # --- print error
     else:
-        print(
-            "\nERROR: %s ---> Requested command is not supported. Refer to general QuNex usage.\n"
-            % com
-        )
+        print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")
 
 
 def main(args=None):
@@ -437,6 +437,8 @@ def main(args=None):
 
     comm = args[0].strip("-")
     opts = dict()
+
+    init_commands()
 
     try:
         help_request = False
@@ -465,10 +467,7 @@ def main(args=None):
                 comm = gcs.check_deprecated_commands(comm)
                 print_help(comm)
             except:
-                print(
-                    "ERROR: '%s' is not a recognized command!\n-----------------------"
-                    % (comm[1:])
-                )
+                print(f"ERROR: '{comm}' is not a recognized command!\n-----------------------")
                 print(help)
                 raise
         else:

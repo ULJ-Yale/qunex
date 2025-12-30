@@ -21,13 +21,17 @@ import os
 import os.path
 import glob
 
-import general.img as gi
+import qx_utilities.general.img as gi
+from qx_registry import register_command
 
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
 
 
+@register_command(
+    description="Merge movement ignore frames to fidl based on conc file.",
+    type="general")
 def meltmovfidl(cfile, ifile, iffile, offile):
     """
     ``meltmovfidl <concfile> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``

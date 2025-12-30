@@ -24,21 +24,21 @@ import sys
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-import general.scheduler as gs
-import general.core as gc
-import general.exceptions as ge
-import general.commands_support as gcs
-from processing import fs, simple, workflow, dwi, fsl, rapidtide
-from general.bids import map_nii2bids
-from general import extensions
+import qx_utilities.general.scheduler as gs
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.commands_support as gcs
+from qx_utilities.processing import fs, simple, workflow, dwi, fsl, rapidtide
+from qx_utilities.general.bids import map_nii2bids
+from qx_utilities.general import extensions
+from qx_registry import registry as qx_commands
 
 # pipelines imports
-from hcp import process_hcp
+from qx_utilities.hcp import process_hcp
 
 # qx_mice
-import qx_mice
-from qx_mice import setup_mice, process_mice
-
+import qx_mice.process_mice
+import qx_mice.setup_mice
 
 # =======================================================================
 #                                                                 GLOBALS
@@ -829,8 +829,9 @@ def run(command, args):
         verbose=False,
     )
 
+    qx_command = qx_commands.get(command)
     # check if all sessions have subjects for longitudinal
-    if command in lactions:
+    if 'longitudinal' in qx_command.type:
         subject_list = []
         if sessions is not None:
             for session in sessions:
@@ -931,7 +932,7 @@ def run(command, args):
     sout += "\n=================================================================\n"
 
     # no parsessions for longitudinal and multi-session commands
-    if (command in lactions) or (command in mactions):
+    if ('longitudinal' in qx_command.type) or ('multisession' in qx_command.type):
         if parsessions > 1:
             sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a longitudinal or a multi-session command!\n"
             parsessions = 1
@@ -986,43 +987,9 @@ def run(command, args):
 
         c = 0
         if parsessions == 1 or options["run"] == "test":
-            # processing commands
-            if command in pactions:
-                pending_actions = pactions[command]
-                for session in sessions:
-                    if len(session["id"]) > 1:
-                        if options["run"] == "test":
-                            action = "testing"
-                        else:
-                            action = "processing"
-                        soptions = update_options(session, options)
-                        consoleLog += "\nStarting %s of sessions %s at %s" % (
-                            action,
-                            session["id"],
-                            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                        )
-                        print(
-                            "\nStarting %s of sessions %s at %s"
-                            % (
-                                action,
-                                session["id"],
-                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                            )
-                        )
-                        r, status = procResponse(
-                            pending_actions(session, soptions, overwrite, c + 1)
-                        )
-                        writelog(r)
-                        consoleLog += r
-                        print(r)
-                        stati.append(status)
-                        c += 1
-                        if nprocess and c >= nprocess:
-                            break
-
             # multi-session commands
-            elif command in mactions:
-                pending_actions = mactions[command]
+            if 'multisession' in qx_command.type:
+                pending_actions = qx_command.com
 
                 # test or processing
                 if options["run"] == "test":
@@ -1067,8 +1034,8 @@ def run(command, args):
                 stati.append(status)
 
             # longitudinal commands
-            elif command in lactions:
-                pending_actions = lactions[command]
+            elif 'longitudinal' in qx_command.type:
+                pending_actions = qx_command.com
 
                 # test or processing
                 if options["run"] == "test":
@@ -1109,19 +1076,62 @@ def run(command, args):
                 stati.append(status)
 
             # simple processing commands
-            elif command in sactions:
-                pending_actions = sactions[command]
+            elif 'simple' in qx_command.type:
+                pending_actions = qx_command.com
                 for session in sessions:
                     soptions = update_options(session, options)
                 r, status = procResponse(pending_actions(sessions, soptions, overwrite))
                 writelog(r)
 
+            # processing commands
+            else:
+                pending_actions = qx_command.com
+                for session in sessions:
+                    if len(session["id"]) > 1:
+                        if options["run"] == "test":
+                            action = "testing"
+                        else:
+                            action = "processing"
+                        soptions = update_options(session, options)
+                        consoleLog += "\nStarting %s of sessions %s at %s" % (
+                            action,
+                            session["id"],
+                            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+                        )
+                        print(
+                            "\nStarting %s of sessions %s at %s"
+                            % (
+                                action,
+                                session["id"],
+                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+                            )
+                        )
+                        r, status = procResponse(
+                            pending_actions(session, soptions, overwrite, c + 1)
+                        )
+                        writelog(r)
+                        consoleLog += r
+                        print(r)
+                        stati.append(status)
+                        c += 1
+                        if nprocess and c >= nprocess:
+                            break
+
         else:
             c = 0
             processPoolExecutor = ProcessPoolExecutor(parsessions)
             futures = []
-            if command in pactions:
-                pending_actions = pactions[command]
+
+            # simple processing commands
+            if 'simple' in qx_command.type:
+                pending_actions = qx_command.com
+                soptions = update_options(session, options)
+                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
+                writelog(r)
+
+            # processing commands
+            if ('session' in qx_command.type):
+                pending_actions = qx_command.com
                 for session in sessions:
                     if len(session["id"]) > 1:
                         soptions = update_options(session, options)
@@ -1152,12 +1162,6 @@ def run(command, args):
                     writelog(result)
                     consoleLog += result[0]
                     print(result[0])
-
-            elif command in sactions:
-                pending_actions = sactions[command]
-                soptions = update_options(session, options)
-                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
-                writelog(r)
 
         # print(console log)
         # print(consoleLog)

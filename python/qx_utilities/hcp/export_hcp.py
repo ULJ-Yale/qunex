@@ -25,10 +25,14 @@ import os.path
 import os
 import time
 import shutil
-import general.core as gc
-import general.exceptions as ge
-import re
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
 
+
+@register_command(
+    description="Export HCP style data out of the QuNex Suite file structure.",
+    type="utility")
 def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
 
     """

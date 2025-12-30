@@ -40,12 +40,14 @@ from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-import processing.core as pc
-import general.exceptions as ge
-import general.filelock as fl
-import general.meltmovfidl as gm
-import general.img as gi
-import general.core as gc
+import qx_utilities.processing.core as pc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.meltmovfidl as gm
+import qx_utilities.general.img as gi
+import qx_utilities.general.core as gc
+from qx_registry import register_command
+
 
 if "QUNEXMCOMMAND" not in os.environ:
     print(
@@ -56,6 +58,9 @@ else:
     mcommand = os.environ["QUNEXMCOMMAND"]
 
 
+@register_command(
+    description="Get NIL processed BOLD data for the specified session.",
+    type="processing.session")
 def get_bold_data(sinfo, options, overwrite=False, thread=0):
     """
     get_bold_data - documentation not yet available.
@@ -191,6 +196,10 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     return r
 
 
+
+@register_command(
+    description="Create brain masks for each BOLD image.",
+    type="processing.session")
 def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     """
     ``create_bold_brain_masks [... processing options]``
@@ -650,6 +659,10 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
     return {"r": r, "report": report}
 
 
+
+@register_command(
+    description="Compute statistics for BOLD files.",
+    type="processing.session")
 def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     """
     ``compute_bold_stats [... processing options]``
@@ -1043,6 +1056,10 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldinfo):
     return {"r": r, "report": report}
 
 
+
+@register_command(
+    description="Create BOLD movement statistic reports and plots.",
+    type="processing.session")
 def create_stats_report(sinfo, options, overwrite=False, thread=0):
     """
     ``create_stats_report(sinfo, options, overwrite=False, thread=0)``
@@ -1575,6 +1592,9 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     )
 
 
+@register_command(
+    description="Extract nuisance signal from BOLD images.",
+    type="processing.session")
 def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     """
     ``extract_nuisance_signal [... processing options]``
@@ -1959,6 +1979,10 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldinfo):
     return {"r": r, "report": report}
 
 
+
+@register_command(
+    description="Preprocesses single BOLD images.",
+    type="processing.session")
 def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     """
     ``preprocess_bold [... processing options]``
@@ -2842,6 +2866,9 @@ def executePreprocessBold(sinfo, options, overwrite, boldinfo):
     return {"r": r, "report": report}
 
 
+@register_command(
+    description="Preproces conc bundles of BOLD images.",
+    type="processing.session")
 def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     r"""
     ``preprocess_conc [... processing options]``

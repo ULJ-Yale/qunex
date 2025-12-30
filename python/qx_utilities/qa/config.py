@@ -15,7 +15,8 @@ Config related functions for 'run_qa' Quality Assurance.
 Created by Samuel Brege on 2024-04-19.
 """
 import yaml
-import general.exceptions as ge
+
+import qx_utilities.general.exceptions as ge
 
 #Valid datatypes for run_qa
 valid_datatypes = ['raw_data', 'check_config']

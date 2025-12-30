@@ -27,10 +27,16 @@ All rights reserved.
 
 import os
 import traceback
-import processing.core as pc
 from datetime import datetime
 
+import qx_utilities.processing.core as pc
+from qx_registry import register_command
 
+
+
+@register_command(
+    description="Run FSL feat command for FMRI data analysis.",
+    type="processing.session.fsl")
 def fsl_feat(sinfo, options, overwrite=False, thread=0):
     """
     ``fsl_feat [... processing options]``
@@ -192,6 +198,9 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
+@register_command(
+    description="Run FSL melodic command for ICA decomposition on FMRI data.",
+    type="processing.longitudinal.fsl")
 def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
     """
     ``fsl_melodic [... processing options]``

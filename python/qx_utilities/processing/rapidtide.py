@@ -27,12 +27,18 @@ All rights reserved.
 import os
 import shutil
 import traceback
-import processing.core as pc
-import hcp.process_hcp as hcp
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
+import qx_utilities.processing.core as pc
+import qx_utilities.hcp.process_hcp as hcp
+from qx_registry import register_command
+
+
+@register_command(
+    description="Run rapidtide command for similarity function calculation on BOLD fMRI data.",
+    type="processing.session.rapidtide")
 def rapidtide(sinfo, options, overwrite=False, thread=0):
     """
     ``rapidtide [... processing options]``

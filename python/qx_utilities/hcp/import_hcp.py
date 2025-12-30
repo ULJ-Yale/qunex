@@ -25,14 +25,15 @@ import os
 import os.path
 import re
 import shutil
-import general.exceptions as ge
-import general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
 import zipfile
 import tarfile
 import glob
 import json
 import yaml
 import ast
+from qx_registry import register_command
 from datetime import datetime
 
 unwarp = {
@@ -150,6 +151,9 @@ def mapToQUNEXcpls(
     return tfile
 
 
+@register_command(
+    description="Maps HCP style data to QuNex structure.",
+    type="utility")
 def import_hcp(
     sessionsfolder=None,
     inbox=None,
@@ -1153,6 +1157,9 @@ def processHCPLS(sessionfolder, filesort):
     return checkedFolders
 
 
+@register_command(
+    description="Map HCPLS organized data to `nii` folder structure.",
+    type="utility")
 def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     """
     ``map_hcpls2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``

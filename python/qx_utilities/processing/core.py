@@ -30,10 +30,11 @@ import sys
 import traceback
 import multiprocessing
 from datetime import datetime
-import general.exceptions as ge
-import general.core as gc
-from general.img import *
-from general.meltmovfidl import *
+
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+from qx_utilities.general.img import *
+from qx_utilities.general.meltmovfidl import *
 
 
 def is_number(s):

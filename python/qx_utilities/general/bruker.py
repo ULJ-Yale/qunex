@@ -35,10 +35,14 @@ import re
 import shutil
 
 # qx imports
-import general.core as gc
-import general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+from qx_registry import register_command
 
 
+@register_command(
+    description="Converts bruker data into DICOM format for QuNex import.",
+    type="utility")
 def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='leave', parelements=1):
     """
     ``bruker_to_dicom [... processing options]``

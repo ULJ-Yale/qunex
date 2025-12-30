@@ -22,7 +22,7 @@ import numpy as np
 import gzip
 import os.path
 
-import general.img as gi
+import qx_utilities.general.img as gi
 
 def removeExt(s, ext):
     if type(ext) not in (tuple, list):

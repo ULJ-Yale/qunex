@@ -35,10 +35,15 @@ import traceback
 import time
 from datetime import datetime
 
-import general.img as gi
-import general.core as gc
-from processing.core import *
+import qx_utilities.general.img as gi
+import qx_utilities.general.core as gc
+from qx_utilities.processing.core import *
+from qx_registry import register_command
 
+
+@register_command(
+    description="Run basic structural segmentation on NIL preprocessed images.",
+    type="processing.session.fs")
 def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
     """
     runBasicStructuralSegmentation - documentation not yet available.
@@ -145,6 +150,9 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
 #   --- Check for existing FreeSurfer data
 #
 
+@register_command(
+    description="Check for existing FreeSurfer data for NIL preprocessed images in the session folder.",
+    type="processing.session.fs")
 def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
     """
     checkForFreeSurferData - documentation not yet available.
@@ -236,6 +244,9 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
 #   --- Run FreeSurfer segmentation
 #
 
+@register_command(
+    description="Run full FreeSurfer segmentation on NIL preprocessed images.",
+    type="processiing.fs")
 def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
     """
     runFreeSurferFullSegmentation - documentation not yet available.
@@ -363,6 +374,10 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
     return r
 
 
+
+@register_command(
+    description="Run subcortical FreeSurfer segmentation on NIL preprocessed images.",
+    type="processing.session.fs")
 def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread=0):
     """
     runFreeSurferFullSegmentation - documentation not yet available.
