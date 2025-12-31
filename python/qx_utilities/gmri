@@ -37,20 +37,9 @@ from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
 from qx_utilities.general import extensions
-from qx_registry import registry as qx_commands
+from qx_registry import build_commands_registry, load_command_registry, qx_commands
 
 
-def init_commands():
-    qx_commands.discover("qx_utilities.general", origin="core", priority=0, allow_override=False)
-    qx_commands.discover("qx_utilities.processing", origin="core", priority=0, allow_override=False)
-    qx_commands.discover("qx_utilities.hcp", origin="core", priority=0, allow_override=False)
-    qx_commands.discover("qx_utilities.nhp", origin="core", priority=0, allow_override=False)
-    qx_commands.discover("qx_utilities.qa", origin="core", priority=0, allow_override=False)
-    qx_commands.discover("qx_mice", origin="core", priority=0, allow_override=False)
-
-# -- update commands list with information from extensions
-# qx_commands.update(extensions.compile_dict("commands"))
-# qx_commands.update(extensions.commands)
 
 
 help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
@@ -95,6 +84,7 @@ def runCommand(command, args):
         # -- remap deprecated arguments
         args = gcs.check_deprecated_parameters(args, command)
 
+    qx_commands = load_command_registry()
     qx_command = qx_commands.get(command.strip())
 
     # -- is this a valid qunex command?
@@ -104,7 +94,7 @@ def runCommand(command, args):
 
     # -- is this a processing command?
     if qx_command.type.startswith("processing"):
-        gp.run(command, args)
+        gp.run(qx_command, args)
         return
     
     # -- is this a matlab command?
@@ -114,7 +104,7 @@ def runCommand(command, args):
                 command, sessions=None, args=args, logfolder=folders["logfolder"]
             )
         else:
-            gm.run(command, args)
+            gm.run(qx_command, args)
         return
     
     # -- continue with regular python command
@@ -401,6 +391,7 @@ def runCommand(command, args):
 
 
 def print_help(com):
+
     # --- print list of available commands, required for qunex.sh checks
     if com == "available":
         available_commands = qx_commands.gmri_commands()        
@@ -408,24 +399,26 @@ def print_help(com):
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
-        for full_name, description, _ in qx_commands.export_qunex_list():
-            print("- " + full_name.split(".")[-1] + ": " + description)
+        for name, path, description, _ in qx_commands.to_qunex_list():
+            print(f"- {name}: {description}")
 
-    cmd = qx_commands.get(com)
-    # --- print help for python commands
-    if cmd and cmd.language == "python":
-        print("\nqunex", cmd.com.__doc__.strip(), "\n")
+    else: 
+        cmd = qx_commands.get(com)
+        # --- print help for python commands
+        if cmd and cmd.language == "python":
+            print("\nqunex", qx_commands.load_callable(com).__doc__.strip(), "\n")
 
-    # --- print help for matlab functions
-    elif cmd and cmd.language == "matlab":
-        gm.help(com)
+        # --- print help for matlab functions
+        elif cmd and cmd.language == "matlab":
+            gm.help(com)
 
-    # --- print error
-    else:
-        print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")
+        # --- print error
+        else:
+            print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")
 
 
 def main(args=None):
+
     if args is None:
         args = sys.argv[1:]
 
@@ -438,9 +431,13 @@ def main(args=None):
     comm = args[0].strip("-")
     opts = dict()
 
-    init_commands()
-
     try:
+        if comm == 'build_registry':
+            print("Building command registry...")
+            build_commands_registry()
+            print("Command registry successfully built!")
+            sys.exit(0)      
+
         help_request = False
         if comm in ["a", "A", "allcommands", "available"]:
             help_request = True

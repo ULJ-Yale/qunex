@@ -2,13 +2,16 @@ function [] = general_plot_bold_timeseries_list(flist, elements, filename, skip,
 
 %``general_plot_bold_timeseries_list(flist, elements, filename, skip, fformat, verbose)``
 %
-%   Creates and saves a plot of BOLD timeseries for a list of sessions.
+%   Create and save a plot of BOLD timeseries for a list of sessions.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
 %           List of files in the standard format.
 %
-%       --elements (struct | str, default 'type=stats|stats>type=dvarsme,img=1>type=fd,img=1;type=image|name=V|mask=1;type=image|name=WM|mask=1;type=image|name=GM|mask=1;type=image|name=V|mask=1|img=2|use=1|scale=2;type=image|name=GM|mask=1|img=2|use=1|scale=4'):
+%       --elements (str | struct str, default 'type=stats|stats>type=dvarsme,img=1>type=fd,img=1;type=image|name=V|mask=1;type=image|name=WM|mask=1;type=image|name=GM|mask=1;type=image|name=V|mask=1|img=2|use=1|scale=2;type=image|name=GM|mask=1|img=2|use=1|scale=4'):
 %           Plot element specification.
 %
 %       --filename (str, default ''):

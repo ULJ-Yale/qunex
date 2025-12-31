@@ -26,12 +26,9 @@ import qx_utilities.general.filelock as fl
 import qx_utilities.general.parser as parser
 import qx_utilities.qa.core as qa
 import qx_utilities.qa.config as config
-from qx_registry import register_command
 
 
-@register_command(
-    description="Runs Quality Assurance on a QuNex study based on data type and user-defined configuration.",
-    type="qa")
+
 def run_qa(
     datatype=None,
     sessionsfolder=".",
@@ -44,7 +41,10 @@ def run_qa(
     """
     ``run_qa [datatype=None] [sessionsfolder=.] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
 
-    Runs Quality Assurance on a QuNex study, based off data-type and a user-defined config.
+    Run Quality Assurance on a QuNex study, based off data-type and a user-defined config.
+
+    ..  qx_command:
+        type: qa
 
     Parameters:
         --datatype (str):

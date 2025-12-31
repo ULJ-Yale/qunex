@@ -2,13 +2,19 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, ps
 
 %``general_image_conjunction(imgf, maskf, method, effect, q, data, psign)``
 %
-%   Reads image file, computes conjunction using general_conjunction and
-%   saves results. Accepts image of significance estimates and computes
-%   conjunction for 1 <= u <= n. Results at each step are thresholded using
-%   FDR q.
+%   Computes image conjunction using specified method and thresholds results.
+%   
+%   Description:
+%       Reads image file, computes conjunction using general_conjunction and
+%       saves results. Accepts image of significance estimates and computes
+%       conjunction for 1 <= u <= n. Results at each step are thresholded using
+%       FDR q.
 %
-%   Based on Heller et al. (2017). NeuroImage 37, 1178–1185.
-%   (https://doi.org/10.1016/j.neuroimage.2007.05.051).
+%       Based on Heller et al. (2017). NeuroImage 37, 1178–1185.
+%       (https://doi.org/10.1016/j.neuroimage.2007.05.051).
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --imgf (str):
@@ -28,14 +34,14 @@ function [] = general_image_conjunction(imgf, maskf, method, effect, q, data, ps
 %           - 'Stouffer' ... pooling independent p-values (eq. 6)
 %           - 'Fisher'   ... pooling independent p-values (eq. 7).
 %
-%       --effects (str, default 'all'):
+%       --effect (str, default 'all'):
 %           The effect of interest:
 %
 %           - 'pos'    ... positive effect only (one tailed test)
 %           - 'neg'    ... negative effect only (one tailed test)
 %           - 'all'    ... both effects (two tailed test).
 %
-%       --q (float, default 0.05):
+%       --q (numeric, default 0.05):
 %           The FDR q value at which to threshold.
 %
 %       --data (str, default 'z'):

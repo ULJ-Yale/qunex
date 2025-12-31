@@ -5,10 +5,14 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %   Computes GBC averages for each specified ROI for n bands defined as distance
 %   from ROI.
 %
-%   NOTE: Please, note that fc_compute_gbc3 function is being deprecated.
-%         The function will no longer be developed and will be removed in future
-%         releases of QuNex. The functionality may be included in fc_compute_gbc,
-%         which offers additional functionality, instead.
+%   NOTE: 
+%       Please, note that fc_compute_gbc3 function is being deprecated.
+%       The function will no longer be developed and will be removed in future
+%       releases of QuNex. The functionality may be included in fc_compute_gbc,
+%       which offers additional functionality, instead.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -49,7 +53,7 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       --roi (str):
 %           The roi names file.
 %
-%       --rcodes (vector, default ''):
+%       --rcodes (numeric, default ''):
 %           Codes of regions from roi file to compute GBC for (all if not
 %           provided or left empty).
 %
@@ -63,7 +67,7 @@ function [] = fc_compute_gbcd(flist, command, roi, rcodes, nbands, mask, verbose
 %       --verbose (bool, default false):
 %           Report what is going on.
 %
-%       --target (vector, default FreeSurfer scortex codes):
+%       --target (numeric, default FreeSurfer scortex codes):
 %           Array of ROI codes that define target ROI.
 %
 %       --targetf (str, default ''):

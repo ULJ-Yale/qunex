@@ -2,8 +2,11 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 
 %``general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)``
 %
-%   Performs smoothing using img_smooth() method and uses img_find_peaks method
+%   Perform smoothing using img_smooth() method and use img_find_peaks method
 %   to define peak ROI using a watershed algorithm to grow regions from peaks.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --fin (str | matrix | cell array | nimage):
@@ -12,10 +15,10 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %       --fout (str):
 %           Output filename.
 %
-%       --mins (vector, default [0, 0]):
+%       --mins (numeric, default [0, 0]):
 %           [minimal size, minimal area] of the resulting ROI.
 %
-%       --maxs (vector, default [inf, inf]):
+%       --maxs (numeric, default [inf, inf]):
 %           [maximum size, maximum area] of the resulting ROI.
 %
 %       --val (str, default 'b'):
@@ -25,7 +28,7 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           Threshold value.
 %
 %       --presmooth (str, default ''):
-%           String containing presmoothing parameters:
+%           A pipe-separated string containing presmoothing parameters.
 %
 %           String format::
 %                   
@@ -97,7 +100,10 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           instead.
 %
 %       --options (str, default ''):
-%           List of options separated with a pipe symbol ("|"):
+%           A pipe-separated list of <key>:<value> pairs specifying additional
+%           options.
+%
+%           The available options are::
 %
 %           - frames
 %               for the number of frames to be analized:
@@ -139,7 +145,7 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %                 (applies to volume structures only)
 %               - 'limitvol:0'... growth of regions is not limited.
 %
-%       --verbose (int | bool, default false):
+%       --verbose (numeric | bool, default false):
 %           Whether to be verbose:
 %
 %           - 1     ... on the first level

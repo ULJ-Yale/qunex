@@ -2,13 +2,16 @@ function [] = general_plot_bold_timeseries(images, elements, masks, filename, sk
 
 %``general_plot_bold_timeseries(images, elements, masks, filename, skip, sessionid, verbose)``
 %
-%   Creates and saves a plot of BOLD timeseries.
+%   Create and save a plot of BOLD timeseries.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --images (str | cell array):
 %           Input image(s) as gmri images or paths.
 %
-%       --elements (struct | str):
+%       --elements (str | struct):
 %           Plot element specifications.
 %
 %       --masks (str | matrix | cell array | nimage, default ''):

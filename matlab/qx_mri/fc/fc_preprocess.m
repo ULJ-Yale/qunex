@@ -2,8 +2,10 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 
 %``fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, eventstring, variant, overwrite, tail, scrub, ignores, options)``
 %
-%   A command for running single BOLD file based functional connectivity
-%   preprocessing.
+%   Perform single BOLD file based (functional connectivity) preprocessing.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --sessionf (str):

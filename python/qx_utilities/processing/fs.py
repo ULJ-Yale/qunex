@@ -38,15 +38,40 @@ from datetime import datetime
 import qx_utilities.general.img as gi
 import qx_utilities.general.core as gc
 from qx_utilities.processing.core import *
-from qx_registry import register_command
 
 
-@register_command(
-    description="Run basic structural segmentation on NIL preprocessed images.",
-    type="processing.session.fs")
+
 def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
     """
-    runBasicStructuralSegmentation - documentation not yet available.
+    ``runBasicStructuralSegmentation [... processing options]``
+
+    Run basic structural segmentation (BET + FAST) on NIL preprocessed images.
+
+    ..  qx_command:
+        type: processing.session.fs
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing outputs (yes) or not (no).
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --bet (str, default ''):
+            Options passed to FSL BET.
+
+        --fast (str, default ''):
+            Options passed to FSL FAST.
     """
 
     f = getFileNames(sinfo, options)
@@ -150,12 +175,43 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
 #   --- Check for existing FreeSurfer data
 #
 
-@register_command(
-    description="Check for existing FreeSurfer data for NIL preprocessed images in the session folder.",
-    type="processing.session.fs")
+
 def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
     """
-    checkForFreeSurferData - documentation not yet available.
+    ``checkForFreeSurferData [... processing options]``
+
+    Check for (and optionally copy) existing FreeSurfer outputs into the
+    session folder.
+
+    ..  qx_command:
+        type: processing.session.fs
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing outputs (yes) or not (no).
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --path_freesurfer (str, default ''):
+            Path template to a precomputed FreeSurfer directory (supports
+            replacing "[sid]" with session id).
+
+        --path_aseg_t1 (str, default ''):
+            Path template to an aseg segmentation in T1 space.
+
+        --path_aparc_t1 (str, default ''):
+            Path template to an aparc+aseg segmentation in T1 space.
     """
 
     if not r:
@@ -244,12 +300,34 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
 #   --- Run FreeSurfer segmentation
 #
 
-@register_command(
-    description="Run full FreeSurfer segmentation on NIL preprocessed images.",
-    type="processiing.fs")
+# -> @register_command(
+#        description="Run full FreeSurfer segmentation on NIL preprocessed images.",
+#         type="processiing.fs")
 def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
     """
-    runFreeSurferFullSegmentation - documentation not yet available.
+    ``runFreeSurferFullSegmentation [... processing options]``
+
+    Run full FreeSurfer segmentation on NIL preprocessed images.
+
+    ..  qx_command:
+        type: processing.session.fs
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing outputs (yes) or not (no).
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
     """
 
     try:
@@ -375,12 +453,32 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
 
 
 
-@register_command(
-    description="Run subcortical FreeSurfer segmentation on NIL preprocessed images.",
-    type="processing.session.fs")
+
 def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread=0):
     """
-    runFreeSurferFullSegmentation - documentation not yet available.
+    ``runFreeSurferSubcorticalSegmentation [... processing options]``
+
+    Run subcortical-only FreeSurfer segmentation on NIL preprocessed images.
+
+    ..  qx_command:
+        type: processing.session.fs
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing outputs (yes) or not (no).
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
     """
     try:
 

@@ -2,12 +2,16 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 
 %``fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)``
 %
-%   Computes GBC maps for individuals as well as group maps.
+%   Compute group and/or individual GBC maps.
 %
-%   NOTE: Please, note that fc_compute_gbc3 function is being deprecated.
-%         The function will no longer be developed and will be removed in future 
-%         releases of QuNex. Consider using fc_compute_gbc, which offers 
-%         additional functionality, instead.
+%   .. qx_command:
+%       type: matlab
+%
+%   NOTE: 
+%       Please, note that fc_compute_gbc3 function is being deprecated.
+%       The function will no longer be developed and will be removed in future 
+%       releases of QuNex. Consider using fc_compute_gbc, which offers 
+%       additional functionality, instead.
 %
 %   Parameters:
 %       --flist (str):
@@ -69,14 +73,14 @@ function [] = fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rs
 %               computes proportion of voxels within n strength ranges of
 %               negative r.
 %
-%       --mask (int | logical | vector, default ''):
+%       --mask (numeric | logical | vector, default ''):
 %           A mask defining which frames to use (1) and which not (0). All if
 %           empty.
 %
 %       --verbose (bool, default false):
 %           Report what is going on.
 %
-%       --target (vector, default FreeSurfer cortex codes):
+%       --target (int, default FreeSurfer cortex codes):
 %           Array of ROI codes that define target ROI.
 %
 %       --targetf (str):

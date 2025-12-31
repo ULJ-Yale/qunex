@@ -377,6 +377,18 @@ def get_sessions_list(
     return slist, gpref
 
 
+def compile_sessionid_list(sessions):
+    """
+    ``compile_sessionid_list(sessions)``
+
+    Compiles a list of session IDs from the sessions list of dictionaries.
+    """
+
+    sessionid_list = ",".join([session.get("sessionid", "") for session in sessions if "sessionid" in session])
+
+    return sessionid_list
+
+
 def deduceFolders(args):
     """
     ``deduceFolders(args)``

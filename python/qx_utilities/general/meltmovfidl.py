@@ -22,27 +22,43 @@ import os.path
 import glob
 
 import qx_utilities.general.img as gi
-from qx_registry import register_command
 
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
 
 
-@register_command(
-    description="Merge movement ignore frames to fidl based on conc file.",
-    type="general")
+
 def meltmovfidl(cfile, ifile, iffile, offile):
     """
     ``meltmovfidl <concfile> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
 
-    Checks movement folder for each bold file specified in 
-    <concfile> for corresponding scrub fidl file matching <ignore_fild_pattern>
-    It then melts information on frames to be ignored into the <input_fidl_file> 
-    and saves it to <output_fidl_file>.
+    Merge movement ignore frames to fidl based on conc file.
 
-    Take into account that it expects bold runs and ignore .fidl files to both
-    match b.*[1-9] pattern.
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --cfile (str):
+            Concatenation file listing bold files with their offsets.
+
+        --ifile (str):
+            Ignore fidl file pattern to match in movement folders.  
+
+        --iffile (str):
+            Input fidl file to melt ignore frames into. 
+
+        --offile (str):
+            Output fidl file with melted ignore frames.
+
+    Notes:
+        Checks movement folder for each bold file specified in 
+        <concfile> for corresponding scrub fidl file matching <ignore_fild_pattern>
+        It then melts information on frames to be ignored into the <input_fidl_file> 
+        and saves it to <output_fidl_file>.
+
+        Take into account that it expects bold runs and ignore .fidl files to both
+        match b.*[1-9] pattern.
     """
 
     # ---> read the original fidl file

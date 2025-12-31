@@ -41,8 +41,6 @@ import qx_utilities.processing.core as pc
 
 from datetime import datetime
 
-from qx_registry import register_command
-
 unwarp = {
     None: "Unknown",
     "i": "x",
@@ -260,9 +258,6 @@ def mapToQUNEXBids(
     # ---> return file and locking info
     return tfile, session == "bids"
 
-@register_command(
-    description="Maps a BIDS dataset to the QuNex Suite file structure.",
-    type="utility")
 def import_bids(
     sessionsfolder=None,
     inbox=None,
@@ -279,6 +274,9 @@ def import_bids(
     ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=leave] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all'] [merge_multi_echo='no']``
 
     Maps a BIDS dataset to the QuNex Suite file structure.
+
+    .. qx_command:
+       type: utility
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -1312,9 +1310,7 @@ def _sort_bids_images(bidsData, bids):
                     else:
                         bidsData[session][modality].sort(key=lambda x: x[key] or "")
 
-@register_command(
-    description="Maps BIDS organized data to nii folder structure.",
-    type="utility")
+
 def map_bids2nii(
     sourcefolder=".",
     overwrite="no",
@@ -1325,8 +1321,10 @@ def map_bids2nii(
     """
     ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [add_json_info='all'] [merge_multi_echo='no']``
 
-    Maps data organized according to BIDS specification to `nii` folder
-    structure as expected by QuNex commands.
+    Maps BIDS organized data to QuNex nii folder.
+
+    ..  qx_command:
+        type: utility
 
     Warning:
         File order:
@@ -1786,25 +1784,29 @@ def map_bids2nii(
             "Please check logs and data!",
         )
 
-@register_command(
-    description="Maps images from the sessions's nii folder to BIDS structure.",
-    type="utility")
+
 def map_nii2bids(
     sinfo, options, overwrite=False, action="hardlink", session_mapping_file=None
 ):
     """
     ``map_nii2bids [batchfile=''] [sessionsfolder='.'] [sessions=''] [overwrite='no'] [action='hardlink'] [session_mapping_file=None]``
 
-    Maps data from the `nii` folder to the `bids` folder. Requires
-    `session_hcp.txt` files. Entities (key-value) pairs should be specified by
-    the user in `hcp_mapping.txt` file and `session_hcp.txt` should be created
-    using the `create_session_info` function. Suffix is inferred from data, but
-    can be specified manually in case of ambiguity (e.g. for fieldmaps).
+    Maps images from the sessions's nii folder to BIDS structure.
 
-    In case session name contains non-alphanumeric characters, these characters
-    will be replaced with 'x' in the BIDS session name.
+    ..  qx_command:
+        type: processing.study
 
-    See examples below for details.
+    Description:
+        Maps data from the `nii` folder to the `bids` folder. Requires
+        `session_hcp.txt` files. Entities (key-value) pairs should be specified by
+        the user in `hcp_mapping.txt` file and `session_hcp.txt` should be created
+        using the `create_session_info` function. Suffix is inferred from data, but
+        can be specified manually in case of ambiguity (e.g. for fieldmaps).
+
+        In case session name contains non-alphanumeric characters, these characters
+        will be replaced with 'x' in the BIDS session name.
+
+        See examples below for details.    
 
     Parameters:
         --batchfile (str, default ''):

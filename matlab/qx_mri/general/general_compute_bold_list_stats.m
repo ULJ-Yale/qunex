@@ -2,8 +2,11 @@ function [] = general_compute_bold_list_stats(flist, target, store, scrub, verbo
 
 %``general_compute_bold_list_stats(flist, target, store, scrub, verbose)``
 %
-%   Computes BOLD run per frame statistics and scrubbing information for a list
+%   Compute BOLD run per frame statistics and scrubbing information for a list
 %   of sessions.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):

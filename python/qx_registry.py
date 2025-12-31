@@ -4,427 +4,1408 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+
 from __future__ import annotations
 
-import sys
+# from typing import Mapping, Sequence
+
+import ast
+import json
+import os
+import re
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
-import importlib.util
-import importlib
-import inspect
-import pkgutil
-from dataclasses import dataclass, field
-from types import ModuleType
-from typing import Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Callable, Union
+
 
 # ==============================================================================
-#                                                             Command Definition
-#
-# Defines a Command data structure for registering QuNex coimmands.
+#                                                                       DEFAULTS
+DEBUG = True
+DEFAULT_CORE_REGISTRY_BASENAME = "qx_commands.yaml"
+DEFAULT_EXTENSION_REGISTRY_FILENAME = "qx_commands.yaml"
 
-@dataclass(frozen=True, slots=True)
-class Command:
+# Extension folder layout:
+# qx_<name>/
+#   python/
+#   bin/ (bash)
+#   bash/
+#   matlab/
+#   r/
+
+
+# ==============================================================================
+#                                                                     DATA MODEL
+
+@dataclass(frozen=True)
+class ArgInfo:
     name: str
-    path: str
-    description: Optional[str] = None
     type: Optional[str] = None
-    args: Tuple[str, ...] = field(default_factory=tuple)
-    has_var_kwargs: bool = False
-    language: str = "python"
-    com: Optional[Callable] = None
+    default: Optional[str] = None
+    description: Optional[str] = None  # short: up to first empty line
 
-    origin: str = "core"         # "core" or "extension:<id>"
-    priority: int = 0            # core=0, extension=100 (or use ordering)
 
+@dataclass(frozen=True)
+class CommandInfo:
+    name: str
+    aliases: Tuple[str, ...]
+    path: str
+    language: str
+    call: Optional[str]
+    description: Optional[str]
+    type: Optional[str]
+    args: Tuple[ArgInfo, ...]        # ordered by function signature
+    options: Tuple[ArgInfo, ...]     # populated only if signature has 'options'
+    returns: Tuple[ArgInfo, ...]     # ordered as listed in Returns:
+    origin: str
+
+
+@dataclass(frozen=True)
+class Registry:
+    version: int
+    generated_at: str
+    source_id: str
+    commands: Tuple[CommandInfo, ...]
+
+    def iter(self, *, language: Optional[str] = None, origin: Optional[str] = None) -> Iterable[CommandInfo]:
+        for c in self.commands:
+            if language is not None and c.language != language:
+                continue
+            if origin is not None and c.origin != origin:
+                continue
+            yield c
+
+
+# ==============================================================================
+#                                                                        UTILITY
+
+def _now_utc_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _warn(msg: str) -> None:
+    print(f"    => WARNING: {msg}")
+
+
+# ==============================================================================
+#                                                              DOCSTRING PARSING
+
+_QX_MARKERS = {
+    ".. qx_command:",
+    ".. qx-command:",
+    "..  qx_command:",
+    ".. qx:",
+    ".. qunex:",
+    ".. qunex-command:",
+    ".. qunex_command:",
+}
+
+
+
+_PARAM_HEADER_RE = re.compile(r"^\s*Parameters:\s*$")
+_RET_HEADER_RE = re.compile(r"^\s*Returns:\s*$")
+_SECTION_HEADER_RE = re.compile(r"^\s*[A-Z][A-Za-z0-9_ ]+:\s*$")
+_WS_RE = re.compile(r"\s+")
+
+# Parameter/return entry line:
+#   --name (type, default 'x'):
+#   --name (type, default 20):
+#   --name (type):
+_ENTRY_RE = re.compile(r"^\s*--(?P<name>[A-Za-z_]\w*)\s*\((?P<spec>[^)]*)\)\s*(?P<colon>:?)\s*$")
+
+def normalize_text_one_line(s: Optional[str]) -> Optional[str]:
+    if s is None:
+        return None
+    s = s.strip()
+    if not s:
+        return None
+    return _WS_RE.sub(" ", s)
+
+
+_DEFAULT_RE = re.compile(r"\bdefault\b\s*(?:=|:)?\s*(.+)\s*$", re.IGNORECASE)
+
+def _strip_quotes(s: str) -> str:
+    s = s.strip()
+    if (len(s) >= 2) and ((s[0] == s[-1]) and s[0] in ("'", '"')):
+        return s[1:-1]
+    return s
+
+def _parse_type_default(spec: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    spec examples:
+      "str | vector"
+      "str | vector, default 'abc'"
+      "int, default 20"
+      "str, default '.'"
+      "str|vector, default=foo"
+
+    Returns: (type_str, default_str)
+    """
+    if not spec or not spec.strip():
+        return None, None
+
+    # Split only on the first comma: everything before is "type", everything after can contain more commas
+    head, sep, tail = spec.partition(",")
+    type_str = head.strip() or None
+
+    default_str: Optional[str] = None
+    if sep:
+        # Look for "default ..." anywhere in the tail (robust if tail contains extra commas)
+        m = _DEFAULT_RE.search(tail)
+        if m:
+            default_str = _strip_quotes(m.group(1).strip())
+
+    return type_str, default_str
+
+
+def _short_paragraph(lines: list[str]) -> Optional[str]:
+    """
+    Return text up to first empty line. If first line is empty, return None.
+    """
+    out: list[str] = []
+    for ln in lines:
+        if ln.strip() == "":
+            break
+        out.append(ln.rstrip())
+    txt = "\n".join(out).strip()
+    return txt or None
+
+
+def _extract_qx_meta_from_docstring(doc: str) -> dict[str, str]:
+    # reuse your existing parse_qx_block_from_docstring, but include .. qx_command:
+    return parse_qx_block_from_docstring(doc)
+
+
+def parse_command_docstring(doc: str, *, file: Path, func_name: str) -> tuple[
+    Optional[str], Optional[str], dict[str, str], list[ArgInfo], list[ArgInfo]
+]:
+    """
+    Returns:
+      call, description, qx_meta, param_entries, return_entries
+
+    Errors are raised as ValueError with a message; caller will catch and skip.
+    """
+    if not doc or not doc.strip():
+        raise ValueError("missing docstring")
+
+    lines = doc.splitlines()
+
+    # 1) call line: first line containing ``...``
+    call = None
+    for ln in lines:
+        s = ln.strip()
+        if s.startswith("``") and s.endswith("``") and len(s) >= 4:
+            call = s[2:-2].strip()
+            break
+
+    if call is None:
+        raise ValueError("missing example call line using ``...``")
+
+    # 2) description paragraph: starts after call line; take up to first empty line
+    call_idx = next(i for i, ln in enumerate(lines) if ln.strip().startswith("``") and ln.strip().endswith("``"))
+    tail = lines[call_idx + 1 :]
+
+    # skip leading empty lines
+    while tail and tail[0].strip() == "":
+        tail.pop(0)
+
+    description = normalize_text_one_line(_short_paragraph(tail))
+
+    # 3) qx meta (type, aliases) block
+    qx_meta = _extract_qx_meta_from_docstring(doc)
+    # not mandatory, but recommended; no error if missing
+
+    # 4) parse Parameters and Returns sections (ignore everything else)
+    params: list[ArgInfo] = []
+    rets: list[ArgInfo] = []
+
+    def parse_section(start_pat: re.Pattern[str]) -> tuple[int, int, list[str]] | None:
+        for i, ln in enumerate(lines):
+            if start_pat.match(ln):
+                base_indent = len(ln) - len(ln.lstrip())
+                return i, base_indent, lines[i + 1 :]
+        return None
+
+    # Parameters
+    ps = parse_section(_PARAM_HEADER_RE)
+    if ps:
+        _, base_indent, sec = ps
+        i = 0
+        while i < len(sec):
+            ln = sec[i]
+            if ln.strip() == "":
+                i += 1
+                continue
+
+            indent = len(ln) - len(ln.lstrip())
+
+            # Stop only on a *top-level* new section header (same indent as "Parameters:" or less)
+            if indent <= base_indent and _SECTION_HEADER_RE.match(ln):
+                break
+
+            m = _ENTRY_RE.match(ln)
+            if not m:
+                i += 1
+                continue
+
+            name = m.group("name")
+            spec = m.group("spec")
+            a_type, a_default = _parse_type_default(spec)
+
+            has_colon = bool(m.group("colon"))
+            if not has_colon:
+                _warn(f"{file}:{func_name}: parameter '--{name}' missing trailing ':'")
+
+            # description: consume until next entry OR next top-level section header
+            desc_lines: list[str] = []
+            i += 1
+            while i < len(sec):
+                ln2 = sec[i]
+                if ln2.strip() == "":
+                    desc_lines.append("")   # preserve paragraph boundary for _short_paragraph()
+                    i += 1
+                    continue
+
+                indent2 = len(ln2) - len(ln2.lstrip())
+                if _ENTRY_RE.match(ln2):
+                    break
+                if indent2 <= base_indent and _SECTION_HEADER_RE.match(ln2):
+                    break
+
+                desc_lines.append(ln2.strip())
+                i += 1
+
+            a_desc = normalize_text_one_line(_short_paragraph(desc_lines))
+            params.append(ArgInfo(name=name, type=a_type, default=a_default, description=a_desc))
+            continue
+
+    # Returns
+    rs = parse_section(_RET_HEADER_RE)
+    if rs:
+        _, base_indent, sec = rs
+        i = 0
+        while i < len(sec):
+            ln = sec[i]
+            if ln.strip() == "":
+                i += 1
+                continue
+
+            indent = len(ln) - len(ln.lstrip())
+            if indent <= base_indent and _SECTION_HEADER_RE.match(ln):
+                break
+
+            m = _ENTRY_RE.match(ln)
+            if not m:
+                i += 1
+                continue
+
+            name = m.group("name")
+            spec = m.group("spec")
+            r_type, _ = _parse_type_default(spec)
+
+            has_colon = bool(m.group("colon"))
+            if not has_colon:
+                _warn(f"{file}:{func_name}: return '--{name}' missing trailing ':'")
+
+            desc_lines: list[str] = []
+            i += 1
+            while i < len(sec):
+                ln2 = sec[i]
+                if ln2.strip() == "":
+                    desc_lines.append("")
+                    i += 1
+                    continue
+
+                indent2 = len(ln2) - len(ln2.lstrip())
+                if _ENTRY_RE.match(ln2):
+                    break
+                if indent2 <= base_indent and _SECTION_HEADER_RE.match(ln2):
+                    break
+
+                desc_lines.append(ln2.strip())
+                i += 1
+
+            r_desc = normalize_text_one_line(_short_paragraph(desc_lines))
+            rets.append(ArgInfo(name=name, type=r_type, default=None, description=r_desc))
+            continue
+
+    # Parameters section is required by your spec for commands
+    if not params:
+        raise ValueError("missing or empty Parameters: section")
+
+    return call, description, qx_meta, params, rets
+
+
+
+def _normalize_rst_marker(line: str) -> str:
+    s = line.lstrip()
+    if not s.startswith(".."):
+        return s
+    # Collapse any extra whitespace after ".."
+    return ".. " + s[2:].lstrip()
+
+
+def parse_qx_block_from_docstring(doc: str) -> Dict[str, str]:
+    """
+    Parse a reST comment block inside a docstring, allowing indentation:
+
+    |   .. qx_command:
+    |      type: utility
+    |      aliases: a, b
+
+    The marker may be indented in the docstring.
+    """
+    if not doc:
+        return {}
+
+    lines = doc.splitlines()
+    meta: Dict[str, str] = {}
+
+    i = 0
+    while i < len(lines):
+        raw = lines[i].rstrip("\n")
+        stripped = _normalize_rst_marker(raw)
+        if not (stripped.startswith(".. ") and stripped.strip() in _QX_MARKERS):
+            i += 1
+            continue
+
+        # indentation level of marker line
+        marker_indent = len(raw) - len(raw.lstrip())
+        i += 1
+
+        while i < len(lines):
+            raw2 = lines[i].rstrip("\n")
+            if raw2.strip() == "":
+                i += 1
+                continue
+
+            indent2 = len(raw2) - len(raw2.lstrip())
+
+            # Stop when we return to marker indent or less (new section / paragraph)
+            if indent2 <= marker_indent:
+                break
+
+            entry = raw2.lstrip()
+            if ":" in entry:
+                k, v = entry.split(":", 1)
+                k = k.strip()
+                v = v.strip()
+                if k:
+                    meta[k] = v
+            i += 1
+
+        # continue scanning; later blocks override earlier keys
+        continue
+
+    return meta
+
+
+def parse_aliases(value: Optional[str]) -> Tuple[str, ...]:
+    """
+    Accepts:
+      aliases: a,b,c
+      aliases: a, b, c
+      aliases: [a, b, c]
+    """
+    if not value:
+        return ()
+    s = value.strip()
+    if s.startswith("[") and s.endswith("]"):
+        s = s[1:-1].strip()
+    parts = [p.strip() for p in s.split(",")]
+    return tuple(p for p in parts if p)
+
+
+
+# ==============================================================================
+#                                                                PYTHON INDEXING
 
 # ------------------------------------------------------------------------------
-#                                      Helper to compare command implementations
+#                                                           AST HELPERS (Python)
 
-def _impl_id(cmd: Command) -> Optional[tuple[str, int]]:
-    if cmd.com is None:
+def unparse_annotation(node: Optional[ast.AST]) -> Optional[str]:
+    if node is None:
         return None
     try:
-        return (str(Path(cmd.com.__code__.co_filename).resolve()), cmd.com.__code__.co_firstlineno)
+        return ast.unparse(node).strip()
     except Exception:
         return None
 
 
+def python_function_args(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> Tuple[Tuple[str, Optional[str]], ...]:
+    """
+    Returns ordered tuples: (arg_name, annotation_type_str_or_None)
+    Includes: posonlyargs, args, kwonlyargs
+    Excludes: *args and **kwargs as named args (consistent with earlier)
+    """
+    out: List[Tuple[str, Optional[str]]] = []
+
+    def add(a: ast.arg) -> None:
+        out.append((a.arg, unparse_annotation(a.annotation)))
+
+    for a in fn.args.posonlyargs:
+        add(a)
+    for a in fn.args.args:
+        add(a)
+    for a in fn.args.kwonlyargs:
+        add(a)
+
+    return tuple(out)
+
+
+
+def module_name_from_file(pyfile: Path, root: Path) -> str:
+    """
+    /root/qx_utilities/general/bids.py -> qx_utilities.general.bids
+    /root/qx_utilities/general/__init__.py -> qx_utilities.general
+    """
+    rel = pyfile.resolve().relative_to(root.resolve())
+    parts = list(rel.parts)
+    if not parts:
+        raise ValueError(f"Unexpected path: {pyfile}")
+
+    if parts[-1].endswith(".py"):
+        parts[-1] = parts[-1][:-3]
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+
+    return ".".join(parts)
+
+
+def iter_files(root: Path, suffix: str, *, exclude_dirs: Tuple[str, ...] = ("__pycache__", ".git")) -> Iterable[Path]:
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
+        for fn in filenames:
+            if fn.endswith(suffix):
+                yield Path(dirpath) / fn
+
+
+# ------------------------------------------------------------------------------
+#                                                               INDEXER (Python)
+
+def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
+    root = root.resolve()
+    out: List[CommandInfo] = []
+
+    for pyfile in iter_files(root, ".py"):        
+        try:
+            source = pyfile.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            source = pyfile.read_text(errors="replace")
+
+        try:
+            tree = ast.parse(source, filename=str(pyfile))
+        except SyntaxError as e:
+            _warn(f"{pyfile}: SyntaxError skipped: {e}")
+            continue
+
+        mod_name = module_name_from_file(pyfile, root)
+
+        for node in tree.body:
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+
+            raw_doc = ast.get_docstring(node, clean=False) or ""
+            if not raw_doc.strip():
+                continue
+
+            # command marker: require qx block OR (per your new format) require Parameters section presence?
+            # We'll require the .. qx_command block OR at least Parameters section + call line.
+            # But spec says required format includes .. qx_command. We'll treat missing qx block as NOT a command.
+            meta = parse_qx_block_from_docstring(raw_doc)
+            if not meta:
+                continue  # not a command
+
+            func_name = node.name            
+
+            try:
+                call, desc, qx_meta, doc_params, doc_returns = parse_command_docstring(
+                    raw_doc, file=pyfile, func_name=func_name
+                )
+            except ValueError as e:
+                _warn(f"{pyfile}:{func_name}: invalid command docstring: {e}; command excluded")
+                continue
+
+            cmd_name = (qx_meta.get("name") or func_name).strip()  # still optional if you ever add it
+            aliases = parse_aliases(qx_meta.get("aliases"))
+            cmd_type = qx_meta.get("type")
+
+            # Signature args (ordered) + annotations
+            sig_args = python_function_args(node)  # (name, ann_str)
+            sig_names = [n for n, _ in sig_args]
+            has_options = "options" in sig_names
+
+            # Build lookup from doc params by name
+            doc_map: Dict[str, ArgInfo] = {a.name: a for a in doc_params}
+
+            # args list in signature order (excluding options itself? keep it as real arg)
+            args: List[ArgInfo] = []
+            for n, ann_t in sig_args:
+                doc_a = doc_map.get(n)
+                # annotation wins over doc type
+                a_type = ann_t if ann_t is not None else (doc_a.type if doc_a else None)
+                a_default = doc_a.default if doc_a else None
+                a_desc = doc_a.description if doc_a else None
+                args.append(ArgInfo(name=n, type=a_type, default=a_default, description=a_desc))
+
+            # extras from doc_params not in signature
+            extras = [a for a in doc_params if a.name not in sig_names]
+            options: List[ArgInfo] = []
+            if extras:
+                if has_options:
+                    options.extend(extras)
+                    # _warn(f"{pyfile}:{func_name}: doc Parameters not in signature routed to 'options': {[a.name for a in extras]}")
+                    if DEBUG: print(f"       adding options: {[a.name for a in extras]}")
+                else:
+                    _warn(f"{pyfile}:{func_name}: doc Parameters not in signature ignored (no 'options' arg): {[a.name for a in extras]}")
+
+            impl_path = f"{mod_name}.{func_name}"
+
+            if DEBUG: print(f"    -> registering {impl_path}")
+
+            out.append(
+                CommandInfo(
+                    name=cmd_name,
+                    aliases=aliases,
+                    path=impl_path,
+                    language="python",
+                    call=call,
+                    description=desc,
+                    type=cmd_type,
+                    args=tuple(args),
+                    options=tuple(options),
+                    returns=tuple(doc_returns),
+                    origin=source_id,
+                )
+            )
+
+    return out
+
+
 # ==============================================================================
-#                                                                CommandRegistry
+#                                                                MATLAB INDEXING
+
+# Function line examples:
+# function out = foo(a,b)
+# function [o1,o2] = foo(a, b, varargin)
+# function foo(a,b)
+# function foo
 #
-# Defines a CommandRegistry class for registering and querying commands.
+# We'll parse the first function definition in the file that appears to define a function.
+_MATLAB_FUNC_RE = re.compile(
+    r"""^\s*function\s+
+        (?:(?P<out>\[[^\]]*\]|\w+)\s*=\s*)?
+        (?P<name>[A-Za-z]\w*)
+        (?:\s*\(\s*(?P<args>[^)]*)\s*\))?
+        \s*$
+    """,
+    re.VERBOSE,
+)
 
-def _inspect_callable(func: Callable) -> tuple[list[str], bool]:
-    '''
-    Inspects a callable to determine its accepted named arguments and whether it
-    accepts variable keyword arguments.
+def _strip_matlab_comment_prefix(line: str) -> str:
+    s = line.lstrip()
+    if not s.startswith("%"):
+        return line
+    s = s[1:]
+    if s.startswith(" "):
+        s = s[1:]
+    return s
+
+
+def _matlab_parse_outputs(out_str: Optional[str]) -> List[str]:
+    if not out_str:
+        return []
+    s = out_str.strip()
+    if s.startswith("[") and s.endswith("]"):
+        inner = s[1:-1].strip()
+        if not inner:
+            return []
+        return [x.strip() for x in inner.split(",") if x.strip()]
+    return [s]
+
+
+def _matlab_parse_args(arg_str: Optional[str]) -> List[str]:
+    if not arg_str:
+        return []
+    s = arg_str.strip()
+    if not s:
+        return []
+    parts = [x.strip() for x in s.split(",") if x.strip()]
+    # treat varargin like **kwargs: exclude from named args list
+    parts = [p for p in parts if p not in ("varargin",)]
+    return parts
+
+
+def _matlab_help_block_after_function(text: str) -> Optional[str]:
+    """
+    Return the contiguous MATLAB help comment block immediately following
+    the first function definition line. De-comments '%' prefixes.
+    """
+    lines = text.splitlines()
+    func_idx = None
+    for i, ln in enumerate(lines):
+        if _MATLAB_FUNC_RE.match(ln):
+            func_idx = i
+            break
+    if func_idx is None:
+        return None
+
+    # collect consecutive comment lines after function line
+    out: List[str] = []
+    i = func_idx + 1
+    while i < len(lines):
+        ln = lines[i]
+        if ln.strip() == "":
+            # keep blank lines inside help block only if we already started
+            if out:
+                out.append("")
+                i += 1
+                continue
+            i += 1
+            continue
+
+        if ln.lstrip().startswith("%"):
+            out.append(_strip_matlab_comment_prefix(ln).rstrip("\n"))
+            i += 1
+            continue
+
+        # stop at first real code line
+        break
+
+    if not out:
+        return None
+    return "\n".join(out)
+
+
+
+def index_matlab_commands(matlab_root: Path, *, source_id: str) -> List[CommandInfo]:
+    """
+    Find commands in .m files under matlab_root.
+
+    A file is considered a command if it contains a qx metadata block in comments.
+    Function name/args/returns are taken from the MATLAB 'function' line.
+    Types for args/returns come from doc metadata args/returns (if provided).
+    command.path is the relative path to the .m file where the function was found.
+    """
+    matlab_root = matlab_root.resolve()
+    out: List[CommandInfo] = []
+
+    for mfile in iter_files(matlab_root, ".m"):        
+        try:
+            text = mfile.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            text = mfile.read_text(errors="replace")
+
+        # Parse function signature (name, args, outs)
+        func_name = None
+        func_args: List[str] = []
+        func_outs: List[str] = []
+
+        for line in text.splitlines():
+            m = _MATLAB_FUNC_RE.match(line)
+            if not m:
+                continue
+            func_name = m.group("name")
+            func_args = _matlab_parse_args(m.group("args"))
+            func_outs = _matlab_parse_outputs(m.group("out"))
+            # treat varargin/varargout as **kwargs / variadic returns: ignore as named
+            func_args = [a for a in func_args if a not in ("varargin",)]
+            func_outs = [o for o in func_outs if o not in ("varargout",)]
+            break
+
+        if not func_name:
+            continue
+
+        # Get MATLAB "docstring" (help block)
+        doc = _matlab_help_block_after_function(text)
+        if not doc:
+            continue
+
+        # Determine if it's a command: requires qx_command block
+        qx_meta = parse_qx_block_from_docstring(doc)
+        if not qx_meta:
+            continue
+
+        # Parse the docstring format (call, description, Parameters, Returns)
+        try:
+            call, desc, _qx_meta2, doc_params, doc_returns = parse_command_docstring(
+                doc, file=mfile, func_name=func_name
+            )
+        except ValueError as e:
+            _warn(f"{mfile}:{func_name}: invalid command docstring: {e}; command excluded")
+            continue
+
+        cmd_name = (qx_meta.get("name") or func_name).strip()
+        aliases = parse_aliases(qx_meta.get("aliases"))
+        cmd_type = qx_meta.get("type")
+
+        # Map doc params/returns by name
+        doc_param_map: Dict[str, ArgInfo] = {a.name: a for a in doc_params}
+        doc_ret_map: Dict[str, ArgInfo] = {r.name: r for r in doc_returns}
+
+        # Args in function order, types/default/desc from doc if available
+        args: List[ArgInfo] = []
+        for a in func_args:
+            da = doc_param_map.get(a)
+            args.append(
+                ArgInfo(
+                    name=a,
+                    type=da.type if da else None,
+                    default=da.default if da else None,
+                    description=da.description if da else None,
+                )
+            )
+
+        # Warn about doc params not in signature
+        extra_doc_args = [a.name for a in doc_params if a.name not in func_args]
+        if extra_doc_args:
+            _warn(f"{mfile}:{func_name}: doc Parameters not in function signature ignored: {extra_doc_args}")
+
+        # Returns: if function outputs exist, use that order; else use doc order
+        returns: List[ArgInfo] = []
+        if func_outs:
+            for r in func_outs:
+                dr = doc_ret_map.get(r)
+                returns.append(
+                    ArgInfo(
+                        name=r,
+                        type=dr.type if dr else None,
+                        default=None,
+                        description=dr.description if dr else None,
+                    )
+                )
+            extra_doc_rets = [r.name for r in doc_returns if r.name not in func_outs]
+            if extra_doc_rets:
+                _warn(f"{mfile}:{func_name}: doc Returns not in function outputs ignored: {extra_doc_rets}")
+        else:
+            returns = list(doc_returns)
+
+        rel_path = mfile.relative_to(matlab_root).as_posix()
+
+        if DEBUG: print(f"    -> registering {rel_path}")
+
+        out.append(
+            CommandInfo(
+                name=cmd_name,
+                aliases=aliases,
+                path=rel_path,            # .m location
+                language="matlab",
+                call=call,
+                description=desc,
+                type=cmd_type,
+                args=tuple(args),
+                options=tuple(),          # matlab has no 'options' routing
+                returns=tuple(returns),
+                origin=source_id,
+            )
+        )
+
+    return out
+
+
+# ==============================================================================
+#                                                                     VALIDATION
+
+def validate_unique_tokens(commands: List[CommandInfo]) -> None:
+    used: Dict[str, CommandInfo] = {}
+
+    def claim(token: str, cmd: CommandInfo, kind: str) -> None:
+        if token in used:
+            prev = used[token]
+            raise ValueError(
+                f"Duplicate command token '{token}' ({kind}).\n"
+                f"Already used by: {prev.name} ({prev.language}, {prev.origin}, {prev.path})\n"
+                f"Conflicts with:  {cmd.name} ({cmd.language}, {cmd.origin}, {cmd.path})"
+            )
+        used[token] = cmd
+
+    for c in commands:
+        claim(c.name, c, "name")
+        for a in c.aliases:
+            claim(a, c, "alias")
+
+
+# ==============================================================================
+#                                                                  YAML/JSON I/O
+
+def registry_to_obj(commands: List[CommandInfo], *, source_id: str) -> Dict[str, Any]:
+    return {
+        "version": 1,
+        "generated_at": _now_utc_iso(),
+        "source": {"id": source_id},
+        "commands": [
+            {
+                "name": c.name,
+                "aliases": list(c.aliases),
+                "path": c.path,
+                "language": c.language,
+                "call": c.call,
+                "description": c.description,
+                "type": c.type,
+                "args": [{"name": a.name, "type": a.type, "default": a.default, "description": normalize_text_one_line(a.description)} for a in c.args],
+                "options": [{"name": a.name, "type": a.type, "default": a.default, "description": normalize_text_one_line(a.description)} for a in c.options],
+                "returns": [{"name": r.name, "type": r.type, "default": r.default, "description": normalize_text_one_line(r.description)} for r in c.returns],
+                "origin": c.origin,
+            }
+            for c in sorted(commands, key=lambda x: x.name)
+        ],
+    }
+
+
+def registry_from_obj(obj: Dict[str, Any]) -> Registry:
+    cmds: List[CommandInfo] = []
+    source_id = (obj.get("source") or {}).get("id", "unknown")
+    generated_at = obj.get("generated_at") or ""
+    version = int(obj.get("version") or 1)
+
+    def load_args(lst: list[dict[str, Any]]) -> Tuple[ArgInfo, ...]:
+        return tuple(
+            ArgInfo(
+                name=a.get("name"),
+                type=a.get("type"),
+                default=a.get("default"),
+                description=a.get("description"),
+            )
+            for a in (lst or [])
+        )
+
+    for c in obj.get("commands", []):
+        cmds.append(
+            CommandInfo(
+                name=c["name"],
+                aliases=tuple(c.get("aliases") or ()),
+                path=c["path"],
+                language=c.get("language", "python"),
+                call=c.get("call"),
+                description=c.get("description"),
+                type=c.get("type"),
+                args=load_args(c.get("args") or []),
+                options=load_args(c.get("options") or []),
+                returns=load_args(c.get("returns") or []),
+                origin=c.get("origin", source_id),
+            )
+        )
+
+    return Registry(version=version, generated_at=generated_at, source_id=source_id, commands=tuple(cmds))
+
+
+def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
+    path = path.resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        import yaml  # type: ignore
+        text = yaml.safe_dump(obj,sort_keys=False, allow_unicode=True, width=120, indent=4)
+        path.write_text(text, encoding="utf-8")
+    except Exception:
+        path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def read_registry_file(path: Path) -> Dict[str, Any]:
+    path = path.resolve()
+    data = path.read_text(encoding="utf-8")
+    try:
+        import yaml  # type: ignore
+        return yaml.safe_load(data)
+    except Exception:
+        return json.loads(data)
     
-    :param func: Description
-    :type func: Callable
-    :return: Description
-    :rtype: tuple[list[str], bool]
-    '''
-    sig = inspect.signature(func)
-    accepts = []
-    has_var_kwargs = False
 
-    for p in sig.parameters.values():
-        if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD, p.KEYWORD_ONLY):
-            accepts.append(p.name)
-        elif p.kind == p.VAR_KEYWORD:
-            has_var_kwargs = True
-        # VAR_POSITIONAL (*args) usually not useful for named-arg routing
+def load_registry_yaml(path: str | Path) -> Registry:
+    return registry_from_obj(read_registry_file(Path(path)))
 
-    return accepts, has_var_kwargs
 
+# ==============================================================================
+#                                                                   LOAD / MERGE
+
+def merge_registries(
+    base: Registry,
+    overlays: List[Registry],
+    *,
+    extension_order: Optional[List[str]] = None,
+) -> Tuple[Registry, Dict[str, CommandInfo]]:
+    if extension_order:
+        order_map = {sid: i for i, sid in enumerate(extension_order)}
+        overlays = sorted(overlays, key=lambda r: order_map.get(r.source_id, 10**9))
+
+    # override by command name
+    by_name: Dict[str, CommandInfo] = {c.name: c for c in base.commands}
+    for reg in overlays:
+        for c in reg.commands:
+            by_name[c.name] = c
+
+    merged_cmds = list(by_name.values())
+
+    # token map (names + aliases must be globally unique)
+    token_map: Dict[str, CommandInfo] = {}
+    for c in merged_cmds:
+        for t in (c.name,) + c.aliases:
+            if t in token_map:
+                prev = token_map[t]
+                raise ValueError(
+                    f"After merge, token '{t}' is ambiguous.\n"
+                    f"Used by: {prev.name} ({prev.origin})\n"
+                    f"Also by: {c.name} ({c.origin})"
+                )
+            token_map[t] = c
+
+    merged = Registry(
+        version=max([base.version] + [r.version for r in overlays] or [1]),
+        generated_at=_now_utc_iso(),
+        source_id=base.source_id,
+        commands=tuple(sorted(merged_cmds, key=lambda x: x.name)),
+    )
+    return merged, token_map
+
+
+def resolve_command(token_map: Dict[str, CommandInfo], name_or_alias: str) -> Optional[CommandInfo]:
+    return token_map.get(name_or_alias)
+
+
+def load_python_callable(command: CommandInfo):
+    if command.language != "python":
+        raise ValueError(f"Not a python command: {command.language}")
+
+    mod_path, _, fn_name = command.path.rpartition(".")
+    if not mod_path:
+        raise ValueError(f"Invalid python command.path: {command.path}")
+
+    import importlib
+    mod = importlib.import_module(mod_path)
+    return getattr(mod, fn_name)
+
+
+# ==============================================================================
+#                                                            EXTENSION DISCOVERY
+
+def _split_env_path_list(value: str) -> List[str]:
+    value = (value or "").strip()
+    if not value:
+        return []
+    value = value.replace(";", ":")
+    return [p.strip() for p in value.split(":") if p.strip()]
+
+
+def extension_search_roots() -> List[Path]:
+    roots: List[Path] = []
+
+    qunexpath = os.environ.get("QUNEXPATH", "").strip()
+    if qunexpath:
+        roots.append(Path(qunexpath) / "qx_extensions")
+
+    tools = os.environ.get("TOOLS", "").strip()
+    if tools:
+        roots.append(Path(tools) / "qx_extensions")
+
+    extra = os.environ.get("QUNEXEXTENSIONFOLDERS", "").strip()
+    for folder in _split_env_path_list(extra):
+        roots.append(Path(folder))
+
+    # de-dup preserving order
+    seen = set()
+    uniq: List[Path] = []
+    for r in roots:
+        rr = r.expanduser()
+        try:
+            rr = rr.resolve()
+        except Exception:
+            pass
+        s = str(rr)
+        if s not in seen:
+            seen.add(s)
+            uniq.append(rr)
+    return uniq
+
+
+def discover_extension_registries(
+    *,
+    registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
+    require_registry_file: bool = True,
+) -> List[Tuple[str, Path]]:
+    """
+    Find extension registries at:
+      <root>/qx_<name>/<registry_filename>
+
+    Returns: [("extension:<name>", Path(.../qx_<name>/qx_commands.yaml)), ...]
+
+    If the same extension exists in multiple roots, later roots override earlier ones.
+    """
+    roots = extension_search_roots()
+    found: Dict[str, Path] = {}
+
+    for root in roots:
+        if not root.exists() or not root.is_dir():
+            continue
+        for ext_dir in sorted([p for p in root.iterdir() if p.is_dir() and p.name.startswith("qx_")]):
+            ext_name = ext_dir.name[len("qx_") :].strip()
+            if not ext_name:
+                continue
+            reg_path = ext_dir / registry_filename
+            if require_registry_file and not reg_path.exists():
+                continue
+            found[f"extension:{ext_name}"] = reg_path
+
+    return sorted(found.items(), key=lambda x: x[0])
+
+
+# ==============================================================================
+#                                                                         LOADER
+
+def load_commands_registry(
+    *,
+    core_registry_path: Optional[str | Path] = None,
+    extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
+    require_extension_registry: bool = True,
+    extension_order: Optional[List[str]] = None,
+) -> Tuple[Registry, Dict[str, CommandInfo]]:
+    """
+    Load core from $QUNEXPATH/qx_commands.yaml, then discover & merge extension registries.
+    """
+    if core_registry_path is None:
+        qunexpath = os.environ.get("QUNEXPATH", "").strip()
+        if not qunexpath:
+            raise RuntimeError("QUNEXPATH is not set and no core_registry_path was provided.")
+        core_registry_path = Path(qunexpath) / DEFAULT_CORE_REGISTRY_BASENAME
+
+    core_registry_path = Path(core_registry_path).resolve()
+    if not core_registry_path.exists():
+        raise FileNotFoundError(f"Core registry not found: {core_registry_path}")
+
+    core = load_registry_yaml(core_registry_path)
+
+    exts = discover_extension_registries(
+        registry_filename=extension_registry_filename,
+        require_registry_file=require_extension_registry,
+    )
+    overlay_regs = [load_registry_yaml(p) for _id, p in exts]
+
+    return merge_registries(core, overlay_regs, extension_order=extension_order)
+
+
+# ==============================================================================
+#                                                                        BUILDER
+
+def _get_qunexpath() -> Path:
+    qunexpath = os.environ.get("QUNEXPATH", "").strip()
+    if not qunexpath:
+        raise RuntimeError("QUNEXPATH is not set.")
+    return Path(qunexpath).resolve()
+
+
+def build_registry_yaml(commands: List[CommandInfo], *, out: Path, source_id: str) -> Registry:
+    validate_unique_tokens(commands)
+    obj = registry_to_obj(commands, source_id=source_id)
+    write_registry_file(out, obj)
+    return registry_from_obj(obj)
+
+
+def build_commands_registry(
+    *,
+    core_python_root: Optional[str | Path] = None,
+    core_registry_yaml: Optional[str | Path] = None,
+    build_extensions: bool = True,
+    extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
+    extension_python_subdir: str = "python",
+    extension_matlab_subdir: str = "matlab",
+) -> Tuple[Registry, List[Tuple[str, Path]]]:
+    """
+    Build core registry at $QUNEXPATH/qx_commands.yaml (python only for core),
+    and build each extension registry at <ext_root>/qx_commands.yaml (python + matlab if present).
+
+    Returns:
+      (core_registry, built_extensions) where built_extensions = [(extension_id, registry_yaml_path), ...]
+    """
+    qunex_root = _get_qunexpath()
+
+    if core_python_root is None:
+        core_python_root = qunex_root / "python"
+    core_python_root = Path(core_python_root).resolve()
+
+    if core_registry_yaml is None:
+        core_registry_yaml = qunex_root / DEFAULT_CORE_REGISTRY_BASENAME
+    core_registry_yaml = Path(core_registry_yaml).resolve()
+
+    if not core_python_root.exists():
+        raise FileNotFoundError(f"Core python root not found: {core_python_root}")
+
+    # Core: python
+    print(f"--> Building core python command registry from {core_python_root}")
+    core_cmds = index_python_commands(core_python_root, source_id="core")
+
+    # Core Matlab
+    # if DEBUG: print(f"--> Checking for core matlab commands in {qunex_root / 'matlab'}")
+    matlab_root = qunex_root / "matlab"
+    if matlab_root.exists():
+        core_cmds.extend( index_matlab_commands(matlab_root, source_id="core"))
+
+    core_reg = build_registry_yaml(core_cmds, out=core_registry_yaml, source_id="core")
+
+    built_exts: Dict[str, Path] = {}
+
+    if not build_extensions:
+        return core_reg, []
+
+    roots = extension_search_roots()
+    for root in roots:
+        if not root.exists() or not root.is_dir():
+            continue
+
+        for ext_root in sorted([p for p in root.iterdir() if p.is_dir() and p.name.startswith("qx_")]):
+            ext_name = ext_root.name[len("qx_") :].strip()
+            if not ext_name:
+                continue
+            ext_id = f"extension:{ext_name}"
+
+            cmds: List[CommandInfo] = []
+
+            py_root = ext_root / extension_python_subdir
+            if py_root.exists() and py_root.is_dir():
+                cmds.extend(index_python_commands(py_root, source_id=ext_id))
+
+            m_root = ext_root / extension_matlab_subdir
+            if m_root.exists() and m_root.is_dir():
+                cmds.extend(index_matlab_commands(m_root, source_id=ext_id))
+
+            if not cmds:
+                continue  # nothing to build yet
+
+            out_yaml = (ext_root / extension_registry_filename).resolve()
+            build_registry_yaml(cmds, out=out_yaml, source_id=ext_id)
+            built_exts[ext_id] = out_yaml  # later roots override earlier
+
+    built = sorted(built_exts.items(), key=lambda x: x[0])
+    return core_reg, built
+
+
+
+# ==============================================================================
+#                                                                 REGISTRY CLASS
+
+CommandRef = Union[str, CommandInfo]
 
 class CommandRegistry:
     """
-    Class that maintains a registry of commands for QuNex and provides methods
-    to register, query, and discover commands.
+    Queryable registry wrapper around a merged Registry + token_map.
+
+    Note:
+      - No `com` stored. Use `load_callable()` for python commands.
+      - token_map maps command name OR alias -> CommandInfo
     """
 
-    def __init__(self) -> None:
-        self._commands_by_name: dict[str, Command] = {}
-        self._discovered_packages: set[tuple[str, tuple[str, ...]]] = set()
-        self._discovered_module_files: set[str] = set() 
-        self._context: Optional[tuple[str, int, bool]] = None  # (origin, priority, allow_override)        
-        self._default_context: tuple[str, int, bool] = ("core", 0, False)
-
-    # --------------------------------------------------------------------------
-    #                                            Registration of python commands   
-
-    def register_python(
+    def __init__(
         self,
-        func: Callable,
+        registry: Registry,
+        token_map: Dict[str, CommandInfo],
         *,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        type: Optional[str] = None,
-        args: Optional[Sequence[str]] = None,
-        language: str = "python",
-        origin: str = "core",
-        priority: int = 0,
-        allow_override: bool = False,
-    ) -> Callable:
-        """
-        Decorator to register a Python command in the registry.
-        """
-        key = name or func.__name__
-        mod = sys.modules.get(func.__module__)
-        module_name = getattr(getattr(mod, "__spec__", None), "name", func.__module__)
-        path = f"{module_name}.{key}"
-
-        accepts, has_var_kwargs = _inspect_callable(func)
-
-        if args is None:
-            args = tuple(accepts)
-        else:
-            args = tuple(args)
-
-        cmd = Command(
-            name=key,
-            path=path,
-            description=description,
-            type=type,
-            args=args,
-            has_var_kwargs=has_var_kwargs,
-            language=language,
-            com=func,
-            origin=origin, 
-            priority=priority
-        )
-
-        self._add(cmd, allow_override=allow_override)
-        return func
-    
-    # --------------------------------------------------------------------------
-    #                                          Registration of external commands
-
-    def register_external(
-        self,
-        *,
-        name: str,
-        path: str,
-        description: Optional[str] = None,
-        type: Optional[str] = None,
-        args: Optional[Sequence[str]] = None,
-        language: str,
-        has_var_kwargs: bool = True,
-        origin: str = "core",
-        priority: int = 0,
-        allow_override: bool = False,
+        core_registry_path: Optional[Path] = None,
+        extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
+        require_extension_registry: bool = True,
+        extension_order: Optional[List[str]] = None,
     ) -> None:
-        """
-        Register an external command in the registry.
-        """
-        args = tuple(args or ())        
+        self._registry = registry
+        self._token_map = token_map
 
-        cmd = Command(
-            name=name,
-            path=path,
-            description=description,
-            type=type,
-            args=args,
-            has_var_kwargs=has_var_kwargs,
-            language=language,
-            com=None,
-            origin=origin, 
-            priority=priority
-        )
-        self._add(cmd, allow_override=allow_override)
+        # for reload()
+        self._core_registry_path = core_registry_path
+        self._extension_registry_filename = extension_registry_filename
+        self._require_extension_registry = require_extension_registry
+        self._extension_order = extension_order
 
-    # -------------------------------------------------------------------------
-    #                                        Internal helper for adding commands
+        # cache for python callables: path -> callable
+        self._callable_cache: Dict[str, Callable] = {}
 
-    def _add(self, cmd: Command, *, allow_override: bool) -> None:
-        existing = self._commands_by_name.get(cmd.name)
-        if existing is None:
-            self._commands_by_name[cmd.name] = cmd
-            return
+    # -------------------------
+    # basic container behavior
+    # -------------------------
 
-        # Ignore alias-import duplicates of the same underlying function
-        if _impl_id(existing) is not None and _impl_id(existing) == _impl_id(cmd):
-            return
+    def __len__(self) -> int:
+        return len(self._registry.commands)
 
-        if allow_override:
-            # Extension wins if higher priority (or equal priority, last one wins)
-            if cmd.priority >= existing.priority:
-                self._commands_by_name[cmd.name] = cmd
-                return
+    def __contains__(self, name_or_alias: str) -> bool:
+        return name_or_alias in self._token_map
 
-        raise ValueError(
-            f"Duplicate command name '{cmd.name}'.\n"
-            f"Existing: path={existing.path!r}, origin={existing.origin!r}, priority={existing.priority}\n"
-            f"New:      path={cmd.path!r}, origin={cmd.origin!r}, priority={cmd.priority}"
-        )
+    @property
+    def registry(self) -> Registry:
+        return self._registry
 
-    def current_context_or_defaults(self) -> tuple[str, int, bool]:
-        return self._context or self._default_context
+    # -------------------------
+    # lookups
+    # -------------------------
 
-    # def _add(self, cmd: Command) -> None:
-    #     existing = self._commands_by_name.get(cmd.name)
-    #     if existing is not None:
-    #         # If it's the same underlying function loaded via an alias import, ignore
-    #         if _same_implementation(existing, cmd):
-    #             return
-    #         raise ValueError(
-    #             f"Duplicate command name '{cmd.name}'.\n"
-    #             f"Existing: path={existing.path!r}, language={existing.language!r}\n"
-    #             f"New:      path={cmd.path!r}, language={cmd.language!r}"
-    #         )
-    #     self._commands_by_name[cmd.name] = cmd
+    def get(self, name_or_alias: str, default: Optional[CommandInfo] = None) -> Optional[CommandInfo]:
+        return self._token_map.get(name_or_alias, default)
 
-    # def _add(self, cmd: Command) -> None:
-    #     existing = self._commands_by_name.get(cmd.name)
-    #     if existing is not None:
-    #         # If it’s truly the same command, ignore (idempotent)
-    #         if (existing.path, existing.language) == (cmd.path, cmd.language):
-    #             return
-    #         raise ValueError(
-    #             f"Duplicate command name '{cmd.name}'.\n"
-    #             f"Existing: path={existing.path!r}, language={existing.language!r}\n"
-    #             f"New:      path={cmd.path!r}, language={cmd.language!r}"
-    #         )
-    #     self._commands_by_name[cmd.name] = cmd
+    def require(self, name_or_alias: str) -> CommandInfo:
+        cmd = self.get(name_or_alias)
+        if cmd is None:
+            raise KeyError(f"Unknown command: {name_or_alias}")
+        return cmd
 
-    # --------------------------------------------------------------------------
-    #                                                                  Query API    
+    def resolve(self, name_or_alias: str) -> Optional[CommandInfo]:
+        return self.get(name_or_alias)
 
-    def get(self, name: str) -> Optional[Command]:
-        """
-        Returns a Command by name, or None if not found.
-        """
-        return self._commands_by_name.get(name)
+    # -------------------------
+    # iteration & filtering
+    # -------------------------
 
-    def has(self, name: str) -> bool:
-        """
-        Returns True if a Command with the given name exists in the registry.
-        """
-        return name in self._commands_by_name
-
-    def all(self) -> Tuple[Command, ...]:
-        """
-        Returns all registered Commands as a tuple.
-        """
-        # Stable order (by name) is often nicer for help text
-        return tuple(self._commands_by_name[k] for k in sorted(self._commands_by_name.keys()))
-    
-    def all_commands(self) -> Tuple[str, ...]:
-        """
-        Returns all registered command names as a tuple.
-        """
-        return tuple(sorted(self._commands_by_name.keys()))
-    
-    def gmri_commands(self) -> Tuple[str, ...]:
-        """
-        Returns all matlab and python commands.
-        """
-        return tuple(
-            sorted(
-                c.name
-                for c in self._commands_by_name.values()
-                if c.language in ("matlab", "python")
-            )
-        )
-        
     def iter(
         self,
         *,
         language: Optional[str] = None,
+        origin: Optional[str] = None,
         type: Optional[str] = None,
-        name_prefix: Optional[str] = None,
-        path_prefix: Optional[str] = None,
-        has_callable: Optional[bool] = None,
-    ) -> Iterator[Command]:
-        """
-        Iterator over Commands, with optional filtering.
-        :param language: If provided, only commands with this language are included.
-        :param type: If provided, only commands of this type are included.
-        :param name_prefix: If provided, only commands whose names start with this prefix are included.
-        :param path_prefix: If provided, only commands whose paths start with this prefix are included.
-        :param has_callable: If True, only commands with a callable are included.
-                             If False, only commands without a callable are included.
-                             If None, no filtering on callable presence is done.
-        """
-        for cmd in self.all():
-            if language is not None and cmd.language != language:
+    ) -> Iterator[CommandInfo]:
+        for c in self._registry.iter(language=language, origin=origin):
+            if type is not None and c.type != type:
                 continue
-            if type is not None and cmd.type != type:
-                continue
-            if name_prefix is not None and not cmd.name.startswith(name_prefix):
-                continue
-            if path_prefix is not None and not cmd.path.startswith(path_prefix):
-                continue
-            if has_callable is not None:
-                if has_callable and cmd.com is None:
-                    continue
-                if (not has_callable) and cmd.com is not None:
-                    continue
-            yield cmd
+            yield c
 
-    # --------------------------------------------------------------------------
-    #                                                 Export API (derived views)
-
-    def export_qunex_list(
+    def list_names(
         self,
         *,
         language: Optional[str] = None,
-        type: Optional[str] = None,
-    ) -> List[Tuple[str, Optional[str], str]]:
+        include_aliases: bool = False,
+    ) -> List[str]:
+        names: List[str] = []
+        for c in self.iter(language=language):
+            names.append(c.name)
+            if include_aliases:
+                names.extend(list(c.aliases))
+        return sorted(set(names))
+
+    def search(self, text: str, *, language: Optional[str] = None, limit: int = 50) -> List[CommandInfo]:
         """
-        Reurns a list of commands: (path, description, language).
+        Simple substring search over name/aliases/description/call/path.
         """
-        return [(c.path, c.description, c.language) for c in self.iter(language=language, type=type)]
+        t = (text or "").strip().lower()
+        if not t:
+            return []
 
-    # --------------------------------------------------------------------------
-    #                                                          Dynamic discovery
+        matches: List[CommandInfo] = []
+        for c in self.iter(language=language):
+            hay = " ".join(
+                [
+                    c.name,
+                    " ".join(c.aliases),
+                    c.description or "",
+                    c.call or "",
+                    c.path,
+                    c.type or "",
+                ]
+            ).lower()
+            if t in hay:
+                matches.append(c)
+                if len(matches) >= limit:
+                    break
+        return matches
 
-    def discover(self, package: str, *, origin: str, priority: int, allow_override: bool) -> None:
-        prev = self._context
-        self._context = (origin, priority, allow_override)
-        
-        try:
-            # Resolve spec first (helps canonicalize name)
-            spec = importlib.util.find_spec(package)
-            if spec is None:
-                raise ValueError(f"Cannot find package '{package}'")
+    # -------------------------
+    # export helpers
+    # -------------------------
 
-            # Canonical import name (prevents some aliasing)
-            canonical_name = spec.name
-            pkg = importlib.import_module(canonical_name)
+    def to_qunex_list(self) -> List[Tuple[str, Optional[str], str]]:
+        """
+        Similar to your old all_qunex_commands:
+          (name, path, description, language)
 
-            if not hasattr(pkg, "__path__"):
-                raise ValueError(f"'{canonical_name}' is not a package (no __path__)")
+        Note: path is:
+          - python: dotted module.func
+          - matlab: relative .m path
+          - bash/r: TBD
+        """
+        return [(c.name, c.path, c.description, c.language) for c in self.iter()]
 
-            # Resolve package paths to make an identity key
-            pkg_paths = tuple(sorted(str(Path(p).resolve()) for p in pkg.__path__))
-            pkg_key = (canonical_name, pkg_paths)
+    # -------------------------
+    # python callable resolution
+    # -------------------------
 
-            if pkg_key in self._discovered_packages:
-                return
+    def load_callable(self, cmd: CommandRef) -> Callable:
+        """
+        For python commands only: lazily import and return the function.
 
-            # Walk and import submodules, but skip modules already loaded
-            for modinfo in pkgutil.walk_packages(pkg.__path__, prefix=pkg.__name__ + "."):
-                name = modinfo.name
+        Accepts:
+          - command name/alias (str)
+          - CommandInfo
+        """
+        if isinstance(cmd, str):
+            cmd_obj = self.require(cmd)
+        else:
+            cmd_obj = cmd
 
-                # If already imported under this name, skip
-                if name in sys.modules:
-                    continue
+        if cmd_obj.language != "python":
+            raise ValueError(f"Command '{cmd_obj.name}' is not python (language={cmd_obj.language})")
 
-                mod = importlib.import_module(name)
+        # cache by implementation path
+        cached = self._callable_cache.get(cmd_obj.path)
+        if cached is not None:
+            return cached
 
-                # Track resolved file path so even if imported again under a different name, we can detect it
-                mod_file = getattr(mod, "__file__", None)
-                if mod_file:
-                    self._discovered_module_files.add(str(Path(mod_file).resolve()))
+        fn = load_python_callable(cmd_obj)
+        self._callable_cache[cmd_obj.path] = fn
+        return fn
 
-            self._discovered_packages.add(pkg_key)
+    # -------------------------
+    # reload support
+    # -------------------------
 
-        finally:
-            self._context = prev
+    def reload(self) -> None:
+        """
+        Reload YAML-backed registry from disk (core + extensions), rebuilding token map.
 
-
-
-# ==============================================================================
-#                              Module-level singleton + compatible decorator API
-
-registry = CommandRegistry()
-
-# ------------------------------------------------------------------------------
-#                                               Module-level decorator functions
-
-def register_command(name=None, description=None, type=None, args=None):
-    """
-    Decorator to register a Python command in the global registry.
-    """
-    def decorator(func: Callable) -> Callable:
-        origin, priority, allow_override = registry.current_context_or_defaults()
-        return registry.register_python(
-            func,
-            name=name,
-            description=description,
-            type=type,
-            args=args,
-            language="python",
-            origin=origin, 
-            priority=priority, 
-            allow_override=allow_override
+        Uses the same settings passed at construction time.
+        """
+        reg, token_map = load_commands_registry(
+            core_registry_path=self._core_registry_path,
+            extension_registry_filename=self._extension_registry_filename,
+            require_extension_registry=self._require_extension_registry,
+            extension_order=self._extension_order,
         )
-    return decorator
+        self._registry = reg
+        self._token_map = token_map
+        self._callable_cache.clear()
 
-# ------------------------------------------------------------------------------
-#                                         Module-level external registration API
 
-def register_external_command(
+# Convenience: one-liner to get a CommandRegistry instance
+def load_command_registry(
     *,
-    name: str,
-    path: str,
-    language: str,
-    description: Optional[str] = None,
-    type: Optional[str] = None,
-    args: Optional[Sequence[str]] = None,
-    has_var_kwargs: bool = True,
-    origin: Optional[str] = None,
-    priority: Optional[int] = None,
-    allow_override: Optional[bool] = None,
-) -> None:
-    """
-    Register an external (non-python-callable) command.
-
-    If origin/priority/allow_override are not provided, they are taken from the
-    current discovery context (or defaults).
-    """
-    ctx_origin, ctx_priority, ctx_allow_override = registry.current_context_or_defaults()
-
-    registry.register_external(
-        name=name,
-        path=path,
-        description=description,
-        type=type,
-        args=args,  # becomes call_args
-        has_var_kwargs=has_var_kwargs,
-        language=language,
-        origin=origin if origin is not None else ctx_origin,
-        priority=priority if priority is not None else ctx_priority,
-        allow_override=allow_override if allow_override is not None else ctx_allow_override,
+    core_registry_path: Optional[str | Path] = None,
+    extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
+    require_extension_registry: bool = True,
+    extension_order: Optional[List[str]] = None,
+) -> CommandRegistry:
+    reg, token_map = load_commands_registry(
+        core_registry_path=core_registry_path,
+        extension_registry_filename=extension_registry_filename,
+        require_extension_registry=require_extension_registry,
+        extension_order=extension_order,
     )
+    return CommandRegistry(
+        reg,
+        token_map,
+        core_registry_path=Path(core_registry_path).resolve() if core_registry_path is not None else None,
+        extension_registry_filename=extension_registry_filename,
+        require_extension_registry=require_extension_registry,
+        extension_order=extension_order,
+    )
+
+
+_registry: Optional[CommandRegistry] = None
+
+class _RegistryProxy:
+    def _real(self) -> CommandRegistry:
+        global _registry
+        if _registry is None:
+            _registry = load_command_registry()
+        return _registry
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._real(), name)
+
+    def reload(self) -> None:
+        global _registry
+        if _registry is None:
+            _registry = load_command_registry()
+        else:
+            _registry.reload()
+
+qx_commands = _RegistryProxy()

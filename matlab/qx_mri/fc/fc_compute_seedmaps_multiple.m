@@ -2,22 +2,26 @@ function [] = fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targ
 
 %``fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)``
 %
-%   Computes seed based correlations maps for individuals as well as group maps.
+%   Compute seed based correlations maps for individuals as well as group maps.
 %
-%   NOTE: Please, note that fc_compute_seedmaps_multiple function is being deprecated.
-%         The function will no longer be developed and will be removed in future
-%         releases of QuNex. Consider using fc_compute_seedmaps_multiple, which 
-%         offers additional functionality, instead.
+%   NOTE: 
+%       Please, note that fc_compute_seedmaps_multiple function is being deprecated.
+%       The function will no longer be developed and will be removed in future
+%       releases of QuNex. Consider using fc_compute_seedmaps_multiple, which 
+%       offers additional functionality, instead.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
 %           A .list file of session information, or a well strucutured
 %           string (see general_read_file_list).
 %
-%       --roinfo (str):
+%       --roiinfo (str):
 %           An ROI file.
 %
-%       --inmask (matrix | string, default ''):
+%       --inmask (str | matrix, default ''):
 %           Either an array mask defining which frames to use (1) and which
 %           not (0) or an event string specifying the events and frames to
 %           extract.

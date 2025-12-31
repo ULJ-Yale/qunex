@@ -26,7 +26,7 @@ import traceback
 import time
 import json
 
-import nibabel as nib
+#import nibabel as nib
 import pprint
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
@@ -36,7 +36,6 @@ import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
 import qx_utilities.general.img as gi
 import qx_utilities.general.exceptions as ge
-from qx_registry import register_command
 
 unwarp = {
     None: "Unknown",
@@ -488,14 +487,15 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
     return gdcfile, r, run
 
 
-@register_command(
-    description="Run the PreFreeSurfer step of the HCP Pipeline.",
-    type="processing.session.hcp",)
+
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     r"""
     ``hcp_pre_freesurfer [... processing options]``
 
-    Runs the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
+    Run the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the input images to be named and present in the
@@ -594,7 +594,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_t2samplespacing (str, default 'NONE'):
             T2 image sample spacing, 'NONE' if not used.
 
-        --hcp_gdcoeffs (str, default 'NONE):
+        --hcp_gdcoeffs (str, default 'NONE'):
             Path to a file containing gradient distortion coefficients,
             alternatively a string describing multiple options (see below), or
             "NONE", if not used.
@@ -1570,8 +1570,8 @@ def _set_hcp_prefs_template_res(image):
         image: image to use for pixel setting.
     """
 
-    img = nib.load(image)
-    pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
+    #img = nib.load(image)
+    #pixdim1, pixdim2, pixdim3 = img.header["pixdim"][1:4]
 
     # do they match
     epsilon = 0.05
@@ -1600,14 +1600,15 @@ def _set_hcp_prefs_template_res(image):
             return (0, r)
 
 
-@register_command(
-    description="Run the FreeSurfer step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_freesurfer [... processing options]``
 
-    Runs the FS step of the HCP Pipeline (FreeSurferPipeline.sh).
+    Run the FS step of the HCP Pipeline (FreeSurferPipeline.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the previous step (hcp_pre_freesurfer) to have run
@@ -2047,14 +2048,15 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-@register_command(
-    description="Run the PostFreeSurfer step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_post_freesurfer [... processing options]``
 
-    Runs the PostFS step of the HCP Pipeline (PostFreeSurferPipeline.sh).
+    Run the PostFS step of the HCP Pipeline (PostFreeSurferPipeline.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the previous step (hcp_freesurfer) to have run
@@ -2467,16 +2469,17 @@ def _get_subjects_from_batch(sinfo, hcp, run):
     return run, subjects_list
 
 
-@register_command(
-    description="Prepare data for longitudinal processing with HCP longitudinal pipelines.",
-    type="processing.longitudinal.hcp")
+
 def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_prep_long [... processing options]``
 
-    Prepares the data for longitudinal processing with HCP longitudinal
+    Prepare the data for longitudinal processing with HCP longitudinal
     pipelines. Not needed if the starting point is hcp_long_freesurfer as that
     command does the prep work automatically.
+
+    ..  qx_command:
+        type: processing.subject.hcp
 
     Parameters:
         --batchfile (str, default ''):
@@ -2625,17 +2628,16 @@ def _execute_hcp_prep_long(options, overwrite, subject):
 
 
 
-@register_command(
-    description="Run the HCP Longitudinal FreeSurfer Pipeline.",
-    type="processing.longitudinal.hcp")
+
 def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_freesurfer [... processing options]``
 
-    ``hcp_lfs [... processing options]``
+    Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
 
-    Runs the HCP Longitudinal FreeSurfer Pipeline
-    (LongitudinalFreeSurferPipeline.sh).
+    ..  qx_command:
+        type: processing.subject.hcp
+        aliases: hcp_lfs
 
     Warning:
         The code expects the first three HCP preprocessing steps
@@ -2669,7 +2671,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         --hcp_longitudinal_template (str, default 'base'):
             Name of the longitudinal template.
 
-        --hcp_no_t2w:
+        --hcp_no_t2w (flag, optional):
             Set this flag to process without T2w. Disabled by default.
 
         --hcp_seed (int):
@@ -2974,17 +2976,16 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Run the HCP Longitudinal FreeSurfer Pipeline.",
-    type="processing.longitudinal.hcp")
+
 def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_post_freesurfer [... processing options]``
 
-    ``hcp_lpfs [... processing options]``
+    Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
 
-    Runs the HCP Longitudinal FreeSurfer Pipeline
-    (LongitudinalFreeSurferPipeline.sh).
+    ..  qx_command:
+        type: processing.subject.hcp
+        aliases: hcp_lpfs
 
     Warning:
         The code expects the first three HCP preprocessing steps
@@ -3533,17 +3534,18 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
 
 
 
-@register_command(
-    description="Run the Diffusion step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_diffusion [... processing options]``
 
-    Runs the Diffusion step of HCP Pipeline (DiffPreprocPipeline.sh). This
+    Run the Diffusion step of HCP Pipeline (DiffPreprocPipeline.sh). This
     command uses GPUs by default so CUDA Libraries are required for this to
     work. Use the hcp_nogpu flag to run without a GPU if needed, note that this
     results in much slower processing speed.
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the first HCP preprocessing step (hcp_pre_freesurfer)
@@ -4272,18 +4274,22 @@ def _check_dwi_echospacing(echospacing):
     )
 
 
-@register_command(
-    description="Run the fMRIVolume step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_volume [... processing options]``
 
-    Runs the fMRI Volume (GenericfMRIVolumeProcessingPipeline.sh) step of HCP
-    Pipeline. It preprocesses BOLD images and linearly and nonlinearly
-    registers them to the MNI atlas. It makes use of the PreFS and FS steps of
-    the pipeline. It enables the use of a number of parameters to customize the
-    specific preprocessing steps.
+    Run the fMRI Volume (GenericfMRIVolumeProcessingPipeline.sh) step of HCP
+    Pipeline. 
+    
+    Description:
+        The command preprocesses BOLD images and linearly and nonlinearly
+        registers them to the MNI atlas. It makes use of the PreFS and FS steps of
+        the pipeline. It enables the use of a number of parameters to customize the
+        specific preprocessing steps.
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the first two HCP preprocessing steps
@@ -6024,15 +6030,16 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Run the fMRISurface step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_surface [... processing options]``
 
-    Runs the fMRI Surface (GenericfMRISurfaceProcessingPipeline.sh) step of the
+    Run the fMRI Surface (GenericfMRISurfaceProcessingPipeline.sh) step of the
     HCP Pipeline .
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects all the previous HCP preprocessing steps
@@ -6705,14 +6712,15 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
     return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
 
 
-@register_command(
-    description="Run the ICAFix step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_icafix [... processing options]``
 
-    Runs the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
+    Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -7559,14 +7567,15 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Run the PostFix step of the HCP Pipeline.",
-    type="processing.session.hcp",)
+
 def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_post_fix [... processing options]``
 
-    Runs the PostFix step of HCP Pipeline (PostFix.sh).
+    Run the PostFix step of HCP Pipeline (PostFix.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -7995,15 +8004,16 @@ def executeHCPPostFix(sinfo, options, hcp, run, singleFix, boldinfo):
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Run the ReApplyFix step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_reapply_fix [... processing options]``
 
-    Runs the ReApplyFix step of HCP Pipeline
+    Run the ReApplyFix step of HCP Pipeline
     (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -8943,14 +8953,15 @@ def parse_msmall_bolds(options, bolds, r):
 
 
 
-@register_command(
-    description="Run the MSMAll step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_msmall(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_msmall [... processing options]``
 
-    Runs the MSMAll step of the HCP Pipeline (MSMAllPipeline.sh).
+    Run the MSMAll step of the HCP Pipeline (MSMAllPipeline.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -9945,17 +9956,17 @@ def executeHCPMultiMSMAll(sinfo, options, hcp, run, group):
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Run the HCP Longitudinal MSMAll Pipeline.",
-    type="processing.longitudinal.hcp")
+
 def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_msmall [... processing options]``
 
-    ``hcp_lmsm [... processing options]``
-
-    Runs the HCP Longitudinal MSMAll Pipeline
+    Run the HCP Longitudinal MSMAll Pipeline
     (MSMAllPipeline.sh with the longitudinal setup).
+
+    ..  qx_command:
+        type: processing.subject.hcp
+        aliases: hcp_lmsm
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -10537,14 +10548,15 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
 
 
 
-@register_command(
-    description="Run the DeDriftAndResample step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_dedrift_and_resample [... processing options]``
 
-    Runs the DeDriftAndResample step of the HCP Pipeline.
+    Run the DeDriftAndResample step of the HCP Pipeline.
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -11419,16 +11431,15 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Run the HCP ASL Pipeline.",
-    type="processing.session.hcp")
 def hcp_asl(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_asl [... processing options]``
 
-    ``hcpa [... processing options]``
+    Run the HCP ASL Pipeline (https://github.com/physimals/hcp-asl).
 
-    Runs the HCP ASL Pipeline (https://github.com/physimals/hcp-asl).
+    ..  qx_command:
+        type: processing.session.hcp
+        aliases: hcpa
 
     Warning:
         The code expects the first three HCP preprocessing steps
@@ -11473,7 +11484,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         --hcp_asl_territories_labels (str, optional):
             Labels corresponding to territories_atlas.
 
-        --hcp_asl_cores (int, optional)
+        --hcp_asl_cores (int, optional):
             Number of cores to use when applying motion correction and
             other potentially multi-core operations.
 
@@ -11490,35 +11501,35 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             If this option is provided, MT and ST banding corrections
             won't be applied. The flag is not set by default.
 
-        --hcp_asl_stages (str, optional)
+        --hcp_asl_stages (str, optional):
             A comma separated list of stages (zero-indexed) to run.
             All prior stages are assumed to have run successfully.
 
-        --hcp_asl_ntis (int, optional)
+        --hcp_asl_ntis (int, optional):
             Number of TIs.
 
-        --hcp_asl_tis (str, optional)
+        --hcp_asl_tis (str, optional):
             Comma separated list of TIs in seconds (e.g., 1.7,2.2,2.7,3.2,3.7).
 
-        --hcp_asl_rpts (str, optional)
+        --hcp_asl_rpts (str, optional):
             Comma separated repeats for each TI (e.g., 6,6,6,10,15).
 
-        --hcp_asl_bolus (float, optional)
+        --hcp_asl_bolus (float, optional):
             Labeling/bolus duration in seconds.
 
-        --hcp_asl_slicedt (float, optional)
+        --hcp_asl_slicedt (float, optional):
             Slice time in seconds.
 
-        --hcp_asl_sliceband (int, optional)
+        --hcp_asl_sliceband (int, optional):
             Slices per band (if omitted, derived from sidecar MB factor).
 
-        --hcp_asl_te (float, optional)
+        --hcp_asl_te (float, optional):
             Echo time in milliseconds.
 
-        --hcp_asl_tail_discard_vols (int, optional)
+        --hcp_asl_tail_discard_vols (int, optional):
             Volumes immediately before calibrations to discard.
 
-        --hcp_asl_ibf (str, optional)
+        --hcp_asl_ibf (str, optional):
             Input block format.
 
         --hcp_regname (str, default 'MSMSulc'):
@@ -11974,14 +11985,15 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-@register_command(
-    description="Run the HCP Transmit Bias Individual Only Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_transmit_bias_individual [... processing options]``
 
-    Runs the HCP Transmit Bias Individual Only Pipeline.
+    Run the HCP Transmit Bias Individual Only Pipeline.
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Parameters:
         --batchfile (str, default ''):
@@ -12518,14 +12530,15 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-@register_command(
-    description="Run the HCP Longitudinal Transmit Bias Pipeline.",
-    type="processing.longitudinal.hcp")
+
 def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0):
     """
     ``hcp_long_transmit_bias [... processing options]``
 
-    Runs the HCP Longitudinal Transmit Bias Pipeline.
+    Run the HCP Longitudinal Transmit Bias Pipeline.
+
+    ..  qx_command:
+        type: processing.subject.hcp
 
     Parameters:
         --batchfile (str, default ''):
@@ -13030,16 +13043,16 @@ def _execute_hcp_long_transmit_bias(sinfo, options, overwrite, run, hcp_base, su
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Run the HCP temporal ICA Pipeline.",
-    type="processing.multisession.hcp")
-def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
+
+def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
     """
     ``hcp_temporal_ica [... processing options]``
 
-    ``hcp_tica [... processing options]``
+    Run the HCP temporal ICA pipeline (tICAPipeline.sh).
 
-    Runs the HCP temporal ICA pipeline (tICAPipeline.sh).
+    ..  qx_command:
+        type: processing.study.hcp
+        aliases: hcp_tica
 
     Warning:
         The code expects the HCP minimal preprocessing pipeline, HCP ICAFix,
@@ -13362,10 +13375,10 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
                 --hcp_matlab_mode="interpreted"
 
     """
-
+    sessionid_list = gc.compile_sessionid_list(sessions)
     r = "\n------------------------------------------------------------"
     r += "\nSession ids: %s \n[started on %s]" % (
-        sessionids,
+        sessionid_list,
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     )
     r += "\n%s HCP temporal ICA Pipeline [%s] ..." % (
@@ -13856,19 +13869,19 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
     )
 
     # print r
-    return (r, (sessionids, report, failed))
+    return (r, (sessionid_list, report, failed))
 
 
-@register_command(
-    description="Runs the HCP MakeAverageDataset pipeline.",
-    type="processing.multisession.hcp")
-def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thread=0):
+
+def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
     """
     ``hcp_make_average_dataset [... processing options]``
 
-    ``hcp_mad [... processing options]``
+    Run the HCP make average dataset pipeline (MakeAverageDataset.sh).
 
-    Runs the HCP make average dataset pipeline (MakeAverageDataset.sh).
+    ..  qx_command:
+        type: processing.study.hcp
+        aliases: hcp_mad
 
     Warning:
         The code expects the HCP minimal preprocessing pipeline to be executed.
@@ -13967,10 +13980,10 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
                 --hcp_outgroupname="hcp_group"
 
     """
-
+    sessionid_list = gc.compile_sessionid_list(sessions)
     r = "\n------------------------------------------------------------"
     r += "\nSession ids: %s \n[started on %s]" % (
-        sessionids,
+        sessionid_list,
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     )
     r += "\n%s HCP make average dataset pipeline [%s] ..." % (
@@ -14172,18 +14185,19 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
     )
 
     # print r
-    return (r, (sessionids, report, failed))
+    return (r, (sessionid_list, report, failed))
 
 
-@register_command(
-    description="Runs the ApplyAutoRecleanPipeline step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_apply_auto_reclean [... processing options]``
 
-    Runs the ApplyAutoRecleanPipeline step of HCP Pipeline
+    Run the ApplyAutoRecleanPipeline step of HCP Pipeline
     (ApplyAutoRecleanPipeline.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -14628,12 +14642,34 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
     return {"r": r, "report": report}
 
 
-@register_command(
-    description="Runs ditfit pipeline.",
-    type="processing.session.hcp")
+
 def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     """
-    hcp_dtifit - documentation not yet available.
+    ``hcp_dtifit [... processing options]``
+
+    Run the DTI fitting step on HCP diffusion outputs using FSL `dtifit`.
+
+    ..  qx_command:
+        type: processing.session.hcp
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored.
     """
 
     r = "\n------------------------------------------------------------"
@@ -14749,12 +14785,34 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-@register_command(
-    description="Runs the HCP BedpostX GPU pipeline.",
-    type="processing.session.hcp")
+
 def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
     """
-    hcp_bedpostx - documentation not yet available.
+    ``hcp_bedpostx [... processing options]``
+
+    Run the BedpostX GPU step on HCP diffusion outputs using `fslbedpostx_gpu`.
+
+    ..  qx_command:
+        type: processing.session.hcp
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored.
     """
 
     r = "\n------------------------------------------------------------"
@@ -14875,37 +14933,43 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
 
 
 
-@register_command(
-    description="Map HCP preprocessed data into QuNex folder structure.",
-    type="processing.session.hcp")
+
 def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     """
     ``map_hcp_data [... processing options]``
 
-    Maps the results of the HCP preprocessing:
+    Map the results of the HCP preprocessing to the QuNex folder structure.
 
-    * T1w.nii.gz
-        └-> images/structural/T1w.nii.gz
+    ..  qx_command:
+        type: processing.session.hcp
 
-    * aparc+aseg.nii.gz
-        └-> images/segmentation/freesurfer/mri/aparc+aseg_t1.nii.gz
+    
+    Description:
+        This function maps the results of the HCP preprocessing into the QuNex
+        folder structure. The following files are mapped:
 
-        └-> images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
-        (2mm iso downsampled version)
+        * T1w.nii.gz
+            └-> images/structural/T1w.nii.gz
 
-    * fsaverage_LR32k/*
-        └-> images/segmentation/hcp/fsaverage_LR32k
+        * aparc+aseg.nii.gz
+            └-> images/segmentation/freesurfer/mri/aparc+aseg_t1.nii.gz
 
-    * BOLD_[N][hcp_nifti_tail].nii.gz
-        └-> images/functional/[boldname][N][qx_nifti_tail].nii.gz
+            └-> images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
+            (2mm iso downsampled version)
 
-    * BOLD_[N][hcp_cifti_tail].dtseries.nii
-        └-> images/functional/[boldname][N][qx_cifti_tail].dtseries.nii
+        * fsaverage_LR32k/*
+            └-> images/segmentation/hcp/fsaverage_LR32k
 
-    * Movement_Regressors.txt
-        └-> images/functional/movement/[boldname][N]_mov.dat
+        * BOLD_[N][hcp_nifti_tail].nii.gz
+            └-> images/functional/[boldname][N][qx_nifti_tail].nii.gz
 
-    See Use section for details.
+        * BOLD_[N][hcp_cifti_tail].dtseries.nii
+            └-> images/functional/[boldname][N][qx_cifti_tail].dtseries.nii
+
+        * Movement_Regressors.txt
+            └-> images/functional/movement/[boldname][N]_mov.dat
+
+        See Use section for details.
 
     Parameters:
         --batchfile (str, default ''):
@@ -15484,14 +15548,15 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
 
 
-@register_command(
-    description="Run the Task fMRI Analysis step of the HCP Pipeline.",
-    type="processing.session.hcp")
+
 def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_task_fmri_analysis [... processing options]``
 
-    Runs the Diffusion step of HCP Pipeline (TaskfMRIAnalysis.sh).
+    Run the Task fMRI analysis step of the HCP Pipeline (TaskfMRIAnalysis.sh).
+
+    ..  qx_command:
+        type: processing.session.hcp
 
     Warning:
         The requirement for this command is a successful completion of the

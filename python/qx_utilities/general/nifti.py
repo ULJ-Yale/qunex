@@ -28,25 +28,23 @@ import gzip
 
 import qx_utilities.general.img as gi
 import qx_utilities.general.qximg as qxi
-from qx_registry import register_command
 
-
-@register_command(
-    description="Converts the xyfz order of data to xyzf.",
-    type="utility")
 def fz2zf(inf, outf=None):
     """
     ``fz2zf inf=<input_image> [outf=<output_image>]``
 
-    Converts the xyfz order of data to xyzf (needed for Philips functionals, 
-    DTIs, ...).
+    Convert the xyfz order of data to xyzf.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
+    
+    Parameters:
+        --inf (str):
+            Input image filename to be shuffled.
 
-    --inf       input image filename to be shuffled
-    --outf      output image filename. If not provided, it replaces the original
-                file.
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
+
     """
 
     # ---> check data format
@@ -89,37 +87,39 @@ def fz2zf(inf, outf=None):
     tf.write(out.astype(dataType).tostring())
     tf.close
 
-@register_command(
-    description="Removes extra slices for interrupted BOLD sequences.",
-    type="utility")
+
 def reslice(inf, slices, outf=None):
     """
     ``reslice inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]``
 
-    Removes extra slices for interrupted BOLD sequences.
+    Remove extra slices for interrupted BOLD sequences.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --inf         input image filename to be reordered.
-    --slices      number of slices per volume.
-    --outf        output image filename. If not provided, it replaces the 
-                  original file.
+    Parameters:
+        --inf (str):
+            Input image filename to be reordered.
 
-    USE
-    ===
+        --slices (int):
+            Number of slices per volume.
 
-    Removes extra slices for interrupted BOLD sequences and creates an image with good
-    frames with data in xyzf order.
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
+            
+    Notes:
 
-    WARNING: it assumes ascending interpolated acquisition of slices!
+        Removes extra slices for interrupted BOLD sequences and creates an image with good
+        frames with data in xyzf order.
 
-    EXAMPLE USE
-    ===========
+    Warning: 
+        It assumes ascending interpolated acquisition of slices!
 
-    ::
+    Examples:
+
+        ::
         
-        qunex reslice 07.nii.gz 48
+            qunex reslice 07.nii.gz 48
     """
 
     slices = int(slices)
@@ -192,21 +192,22 @@ def reslice(inf, slices, outf=None):
     tf.write(out.astype(dataType).tostring())
     tf.close
 
-@register_command(
-    description="Reorders the slices (y dimension) for images that are upside down.",
-    type="utility")
+
 def reorder(inf, outf=None):
     """
     ``reorder inf=<input_image> [outf=<output_image>]``
 
-    Reorders the slices (y dimension) for images that are upside down.
+    Reorder the slices (y dimension) for images that are upside down.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --inf       input image filename to be reordered
-    --outf      output image filename. If not provided, it replaces the original
-                file.
+    Parameters:
+        --inf (str):
+            Input image filename to be reordered.
+
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
     """
 
     # ---> check data format
@@ -250,21 +251,22 @@ def reorder(inf, outf=None):
     tf.close
 
 
-@register_command(
-    description="Converts a NIfTI file to a 4dfp file.",
-    type="utility")
+
 def nifti24dfp(inf, outf=None):
     """
     ``nifti24dfp inf=<input_image> [outf=<output_image>]``
 
-    Converts a NIfTI file to a 4dfp file.
-    
-    INPUTS
-    ======
+    Convert a NIfTI file to a 4dfp file.
 
-    --inf       input image filename to be converted.
-    --outf      output image filename. If not provided, it replaces the original
-                file.
+    ..  qx_command:
+        type: utility
+    
+    Parameters:
+        --inf (str):
+            Input image filename to be converted.
+
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
     """
 
     if outf is None:

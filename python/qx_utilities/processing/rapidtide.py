@@ -33,23 +33,28 @@ from functools import partial
 
 import qx_utilities.processing.core as pc
 import qx_utilities.hcp.process_hcp as hcp
-from qx_registry import register_command
 
 
-@register_command(
-    description="Run rapidtide command for similarity function calculation on BOLD fMRI data.",
-    type="processing.session.rapidtide")
+
 def rapidtide(sinfo, options, overwrite=False, thread=0):
     """
     ``rapidtide [... processing options]``
 
-    This command executes rapidtide, it calculates a similarity function between
-    a signal and every voxel of a BOLD fMRI dataset. It then determines the peak
-    value, time delay, and width of the similarity function to determine when
-    and how strongly that probe signal appears in each voxel.
+    Run rapidtide command for similarity function calculation on BOLD fMRI data.
 
-    See (https://rapidtide.readthedocs.io/en/latest/usage_rapidtide.html) for
-    additional details.
+    Description:
+        This command executes rapidtide, it calculates a similarity function between
+        a signal and every voxel of a BOLD fMRI dataset. It then determines the peak
+        value, time delay, and width of the similarity function to determine when
+        and how strongly that probe signal appears in each voxel.
+
+         See (https://rapidtide.readthedocs.io/en/latest/usage_rapidtide.html) for
+        additional details.
+
+    ..  qx_command:
+        type: processing.session.rapidtide
+
+   
 
     Parameters:
         --batchfile (str, default ''):

@@ -31,7 +31,7 @@ import qx_utilities.general.commands_support as gcs
 from qx_utilities.processing import fs, simple, workflow, dwi, fsl, rapidtide
 from qx_utilities.general.bids import map_nii2bids
 from qx_utilities.general import extensions
-from qx_registry import registry as qx_commands
+from qx_registry import qx_commands
 
 # pipelines imports
 from qx_utilities.hcp import process_hcp
@@ -798,7 +798,7 @@ for line in flaglist:
 # ==============================================================================
 #                                                               RUNNING COMMANDS
 #
-def run(command, args):
+def run(qx_command, args):
     global log
     global stati
     global logname
@@ -807,7 +807,7 @@ def run(command, args):
     #                                                            Parsing options
 
     # set command
-    options = {"command_ran": command}
+    options = {"command_ran": qx_command.name}
 
     # setup default options
     for line in arglist:
@@ -829,7 +829,6 @@ def run(command, args):
         verbose=False,
     )
 
-    qx_command = qx_commands.get(command)
     # check if all sessions have subjects for longitudinal
     if 'longitudinal' in qx_command.type:
         subject_list = []
@@ -837,7 +836,7 @@ def run(command, args):
             for session in sessions:
                 if "subject" not in session:
                     raise ge.CommandFailed(
-                        command,
+                        qx_command.name,
                         "Missing subject information",
                         f"No subject information provided for session id: {session['id']}.",
                         "Please check the batch file!",
@@ -847,8 +846,7 @@ def run(command, args):
                     subject_list.append(session["subject"])
 
     # take parameters from batch file
-    batch_args = gcs.check_deprecated_parameters(gpref, command)
-
+    batch_args = gcs.check_deprecated_parameters(gpref, qx_command.name)
     for k, v in batch_args.items():
         options[k] = v
 
@@ -874,7 +872,7 @@ def run(command, args):
                 options[line[0]] = line[2](options[line[0]])
             except:
                 raise ge.CommandError(
-                    command,
+                    qx_command.name,
                     "Invalid parameter value!",
                     "Parameter `%s` is specified but is set to an invalid value:"
                     % (line[0]),
@@ -883,7 +881,7 @@ def run(command, args):
                 )
 
     # impute unspecified parameters
-    options = gcs.impute_parameters(options, command)
+    options = gcs.impute_parameters(options, qx_command.name)
 
     # set key parameters
     overwrite = options["overwrite"]
@@ -911,16 +909,16 @@ def run(command, args):
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if not options["longitudinal"]:
-        logname = os.path.join(runlogfolder, "Log-%s-%s.log") % (command, logstamp)
+        logname = os.path.join(runlogfolder, "Log-%s-%s.log") % (qx_command.name, logstamp)
     else:
-        logname = os.path.join(runlogfolder, "Log-%s-long-%s.log") % (command, logstamp)
+        logname = os.path.join(runlogfolder, "Log-%s-long-%s.log") % (qx_command.name, logstamp)
 
     log = []
     stati = []
     sout = gc.print_qunex_header()
     sout += "#\n"
     sout += "=================================================================\n"
-    sout += "qunex " + command + " \\"
+    sout += "qunex " + qx_command.name + " \\"
 
     arg_items = list(args.items())
     for i, (k, v) in enumerate(arg_items):
@@ -931,10 +929,10 @@ def run(command, args):
 
     sout += "\n=================================================================\n"
 
-    # no parsessions for longitudinal and multi-session commands
-    if ('longitudinal' in qx_command.type) or ('multisession' in qx_command.type):
+    # no parsessions for subject and multi-session commands
+    if ('subject' in qx_command.type) or ('multisession' in qx_command.type):
         if parsessions > 1:
-            sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a longitudinal or a multi-session command!\n"
+            sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a multi-session command!\n"
             parsessions = 1
 
     # check if there are no sessions
@@ -987,8 +985,7 @@ def run(command, args):
 
         c = 0
         if parsessions == 1 or options["run"] == "test":
-            # multi-session commands
-            if 'multisession' in qx_command.type:
+            if 'study' in qx_command.type:
                 pending_actions = qx_command.com
 
                 # test or processing
@@ -997,34 +994,30 @@ def run(command, args):
                 else:
                     action = "processing"
 
+                
                 # update options and prepare the all sessions string for labeling
-                sessionids = ""
+                sessionid_list = gc.compile_sessionid_list(sessions)
                 for session in sessions:
                     soptions = update_options(session, options)
-
-                    if sessionids == "":
-                        sessionids = session["id"]
-                    else:
-                        sessionids = sessionids + "," + session["id"]
 
                 # log
                 consoleLog += "\nStarting %s of sessions %s at %s" % (
                     action,
-                    sessionids,
+                    sessionid_list,
                     datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
                 )
                 print(
                     "\nStarting %s of sessions %s at %s"
                     % (
                         action,
-                        sessionids,
+                        sessionid_list,
                         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
                     )
                 )
 
                 # process
                 r, status = procResponse(
-                    pending_actions(sessions, sessionids, soptions, overwrite, c + 1)
+                    pending_actions(sessions, soptions, overwrite, c + 1)
                 )
 
                 # write log
@@ -1033,8 +1026,8 @@ def run(command, args):
                 print(r)
                 stati.append(status)
 
-            # longitudinal commands
-            elif 'longitudinal' in qx_command.type:
+            # subject commands
+            elif 'subject' in qx_command.type:
                 pending_actions = qx_command.com
 
                 # test or processing
@@ -1075,14 +1068,6 @@ def run(command, args):
                 print(r)
                 stati.append(status)
 
-            # simple processing commands
-            elif 'simple' in qx_command.type:
-                pending_actions = qx_command.com
-                for session in sessions:
-                    soptions = update_options(session, options)
-                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
-                writelog(r)
-
             # processing commands
             else:
                 pending_actions = qx_command.com
@@ -1121,13 +1106,6 @@ def run(command, args):
             c = 0
             processPoolExecutor = ProcessPoolExecutor(parsessions)
             futures = []
-
-            # simple processing commands
-            if 'simple' in qx_command.type:
-                pending_actions = qx_command.com
-                soptions = update_options(session, options)
-                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
-                writelog(r)
 
             # processing commands
             if ('session' in qx_command.type):
@@ -1209,7 +1187,7 @@ def run(command, args):
     else:
         # schedule
         gs.runThroughScheduler(
-            command,
+            qx_command.name,
             sessions=sessions,
             args=args,
             parsessions=parsessions,
