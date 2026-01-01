@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2025-12-31T14:27:30.754062+00:00'
+generated_at: '2026-01-01T16:44:24.137009+00:00'
 source:
     id: core
 commands:
@@ -171,6 +171,25 @@ commands:
         default: ''
         description: Path template to an aparc+aseg segmentation in T1 space.
     returns: []
+    origin: core
+-   name: check_deprecated_commands
+    aliases: []
+    path: qx_utilities.general.commands_support.check_deprecated_commands
+    language: python
+    call: check_deprecated_commands command
+    description: Check for deprecated commands and report the correct ones.
+    type: utility
+    args:
+    -   name: command
+        type: str
+        default: null
+        description: The command to check for deprecation.
+    options: []
+    returns:
+    -   name: new_command
+        type: str
+        default: null
+        description: The updated command name if it was deprecated, otherwise the original command name.
     origin: core
 -   name: check_fidl
     aliases: []
@@ -4224,10 +4243,6 @@ commands:
         type: null
         default: null
         description: null
-    -   name: subjectids
-        type: null
-        default: null
-        description: null
     -   name: options
         type: null
         default: null
@@ -4417,10 +4432,6 @@ commands:
     type: processing.subject.hcp
     args:
     -   name: sinfo
-        type: null
-        default: null
-        description: null
-    -   name: subjectids
         type: null
         default: null
         description: null
@@ -5400,10 +5411,6 @@ commands:
         type: null
         default: null
         description: null
-    -   name: subjectids
-        type: null
-        default: null
-        description: null
     -   name: options
         type: null
         default: null
@@ -5526,6 +5533,85 @@ commands:
         type: str
         default: base
         description: Name of the longitudinal template.
+    returns: []
+    origin: core
+-   name: hcp_run_qc
+    aliases: []
+    path: qx_utilities.hcp.process_hcp.hcp_run_qc
+    language: python
+    call: hcp_run_qc [... processing options]
+    description: Run visual QC for a session.
+    type: processing.session.hcp
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: null
+        default: null
+        description: null
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: qc_modality
+        type: str
+        default: BOLD
+        description: 'One or more modalities to run QC for. Can be a comma-separated list, e.g. ''BOLD,T1w''. Implemented:
+            ''BOLD'', ''T1w'', ''T2w'', ''myelin'', ''general''.'
+    -   name: qc_outpath
+        type: str
+        default: <sessionsfolder>/QC/<modality>
+        description: Output folder for QC artifacts.
+    -   name: qc_scenetemplatefolder
+        type: str
+        default: <QUNEXPATH>/qx_library/data/scenes/qc
+        description: Folder containing Workbench scene templates.
+    -   name: qc_scenezip
+        type: str
+        default: 'yes'
+        description: If 'yes', also create a Workbench scene zip in <hcp>/qc/.
+    -   name: timestamp
+        type: str
+        default: now
+        description: Timestamp suffix for outputs.
+    -   name: bolds
+        type: str
+        default: all
+        description: Which BOLDs to run QC for (reuses pc.use_or_skip_bold selection rules).
+    -   name: hcp_bold_prefix
+        type: str
+        default: BOLD_
+        description: Prefix used for HCP BOLD names (e.g. BOLD_1). If running with ``hcp_filename=userdefined``, the filename
+            from batch.txt is used.
+    -   name: hcp_cifti_tail
+        type: str
+        default: _Atlas
+        description: CIFTI tail used in .dtseries naming. Typically starts with an underscore (e.g. ``_Atlas``). If empty,
+            code will attempt to infer it by globbing.
+    -   name: qc_bold_skipframes
+        type: int
+        default: '0'
+        description: Number of initial frames to omit from GS plot range computations.
+    -   name: qc_bold_snronly
+        type: str
+        default: 'no'
+        description: If 'yes', compute TSNR report only and skip scene/png.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: Number of QC jobs to process in parallel within a session. A job is either a single non-BOLD modality
+            (e.g. T1w) or a single BOLD run.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Optional suffix for HCP folder naming (matches bash --hcp_suffix).
     returns: []
     origin: core
 -   name: hcp_task_fmri_analysis

@@ -77,6 +77,28 @@ class Registry:
 
 
 # ==============================================================================
+#                                                                 COMMAND OBJECT
+
+class Command:
+    """Runtime wrapper: exposes CommandInfo fields + lazy loading helpers."""
+    __slots__ = ("info", "_registry")
+
+    def __init__(self, info: CommandInfo, registry: "CommandRegistry") -> None:
+        self.info = info
+        self._registry = registry
+
+    def __getattr__(self, name: str) -> Any:
+        # Delegate attribute access to the underlying CommandInfo
+        return getattr(self.info, name)
+
+    def load_callable(self) -> Callable:
+        return self._registry.load_callable(self.info)
+
+    def has_arg(self, name: str) -> bool:
+        return any(arg.name == name for arg in self.args)
+
+
+# ==============================================================================
 #                                                                        UTILITY
 
 def _now_utc_iso() -> str:
@@ -99,8 +121,6 @@ _QX_MARKERS = {
     ".. qunex-command:",
     ".. qunex_command:",
 }
-
-
 
 _PARAM_HEADER_RE = re.compile(r"^\s*Parameters:\s*$")
 _RET_HEADER_RE = re.compile(r"^\s*Returns:\s*$")
@@ -1051,7 +1071,7 @@ def discover_extension_registries(
 # ==============================================================================
 #                                                                         LOADER
 
-def load_commands_registry(
+def load_qx_registry(
     *,
     core_registry_path: Optional[str | Path] = None,
     extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
@@ -1099,7 +1119,7 @@ def build_registry_yaml(commands: List[CommandInfo], *, out: Path, source_id: st
     return registry_from_obj(obj)
 
 
-def build_commands_registry(
+def build_qx_registry(
     *,
     core_python_root: Optional[str | Path] = None,
     core_registry_yaml: Optional[str | Path] = None,
@@ -1109,11 +1129,18 @@ def build_commands_registry(
     extension_matlab_subdir: str = "matlab",
 ) -> Tuple[Registry, List[Tuple[str, Path]]]:
     """
+    ``build_qx_registry()``
+
     Build core registry at $QUNEXPATH/qx_commands.yaml (python only for core),
     and build each extension registry at <ext_root>/qx_commands.yaml (python + matlab if present).
 
+    ..  qx_command:
+        type: utility
+
     Returns:
-      (core_registry, built_extensions) where built_extensions = [(extension_id, registry_yaml_path), ...]
+        --registry (tuple):
+            A tuple with elements: (core_registry, built_extensions) where 
+            built_extensions = [(extension_id, registry_yaml_path), ...]
     """
     qunex_root = _get_qunexpath()
 
@@ -1181,7 +1208,7 @@ def build_commands_registry(
 # ==============================================================================
 #                                                                 REGISTRY CLASS
 
-CommandRef = Union[str, CommandInfo]
+CommandRef = Union[str, CommandInfo, Command]
 
 class CommandRegistry:
     """
@@ -1189,7 +1216,7 @@ class CommandRegistry:
 
     Note:
       - No `com` stored. Use `load_callable()` for python commands.
-      - token_map maps command name OR alias -> CommandInfo
+      - token_map maps command name OR alias -> CommandInfo (input)
     """
 
     def __init__(
@@ -1203,7 +1230,6 @@ class CommandRegistry:
         extension_order: Optional[List[str]] = None,
     ) -> None:
         self._registry = registry
-        self._token_map = token_map
 
         # for reload()
         self._core_registry_path = core_registry_path
@@ -1214,6 +1240,22 @@ class CommandRegistry:
         # cache for python callables: path -> callable
         self._callable_cache: Dict[str, Callable] = {}
 
+        # ---- NEW: build runtime Command wrappers
+
+        # Unique Command wrappers by canonical name
+        self._commands_by_name: Dict[str, Command] = {
+            info.name: Command(info, self) for info in registry.commands
+        }
+
+        # Token map: name + aliases -> Command wrapper
+        self._commands_by_token: Dict[str, Command] = {}
+        for token, info in token_map.items():
+            cmd = self._commands_by_name.get(info.name)
+            if cmd is None:
+                # Should not happen unless registry/token_map are inconsistent
+                continue
+            self._commands_by_token[token] = cmd
+
     # -------------------------
     # basic container behavior
     # -------------------------
@@ -1222,7 +1264,7 @@ class CommandRegistry:
         return len(self._registry.commands)
 
     def __contains__(self, name_or_alias: str) -> bool:
-        return name_or_alias in self._token_map
+        return name_or_alias in self._commands_by_token
 
     @property
     def registry(self) -> Registry:
@@ -1232,33 +1274,29 @@ class CommandRegistry:
     # lookups
     # -------------------------
 
-    def get(self, name_or_alias: str, default: Optional[CommandInfo] = None) -> Optional[CommandInfo]:
-        return self._token_map.get(name_or_alias, default)
+    def get(self, name_or_alias: str, default: Optional[Command] = None) -> Optional[Command]:
+        return self._commands_by_token.get(name_or_alias, default)
 
-    def require(self, name_or_alias: str) -> CommandInfo:
+    def require(self, name_or_alias: str) -> Command:
         cmd = self.get(name_or_alias)
         if cmd is None:
             raise KeyError(f"Unknown command: {name_or_alias}")
         return cmd
 
-    def resolve(self, name_or_alias: str) -> Optional[CommandInfo]:
-        return self.get(name_or_alias)
-
     # -------------------------
     # iteration & filtering
     # -------------------------
 
-    def iter(
-        self,
-        *,
-        language: Optional[str] = None,
-        origin: Optional[str] = None,
-        type: Optional[str] = None,
-    ) -> Iterator[CommandInfo]:
-        for c in self._registry.iter(language=language, origin=origin):
-            if type is not None and c.type != type:
+    def iter(self, *, language: Optional[str] = None, origin: Optional[str] = None, type: Optional[str] = None):
+        for cmd in self._commands_by_name.values():
+            info = cmd.info
+            if language is not None and info.language != language:
                 continue
-            yield c
+            if origin is not None and info.origin != origin:
+                continue
+            if type is not None and info.type != type:
+                continue
+            yield cmd
 
     def list_names(
         self,
@@ -1281,7 +1319,7 @@ class CommandRegistry:
         if not t:
             return []
 
-        matches: List[CommandInfo] = []
+        matches: List[Command] = []
         for c in self.iter(language=language):
             hay = " ".join(
                 [
@@ -1302,6 +1340,13 @@ class CommandRegistry:
     # -------------------------
     # export helpers
     # -------------------------
+
+    def gmri_commands(self) -> List[Tuple[str, str, str]]:
+        """
+        A list of all gmri command names (python, matlab)
+        """
+        return [c.name for c in self.iter() if c.language in ("python", "matlab")]
+
 
     def to_qunex_list(self) -> List[Tuple[str, Optional[str], str]]:
         """
@@ -1324,24 +1369,26 @@ class CommandRegistry:
         For python commands only: lazily import and return the function.
 
         Accepts:
-          - command name/alias (str)
-          - CommandInfo
+        - command name/alias (str)
+        - Command (wrapper)
+        - CommandInfo
         """
         if isinstance(cmd, str):
-            cmd_obj = self.require(cmd)
+            info = self.require(cmd).info          # require() returns Command
+        elif isinstance(cmd, Command):
+            info = cmd.info
         else:
-            cmd_obj = cmd
+            info = cmd                              # CommandInfo
 
-        if cmd_obj.language != "python":
-            raise ValueError(f"Command '{cmd_obj.name}' is not python (language={cmd_obj.language})")
+        if info.language != "python":
+            raise ValueError(f"Command '{info.name}' is not python (language={info.language})")
 
-        # cache by implementation path
-        cached = self._callable_cache.get(cmd_obj.path)
+        cached = self._callable_cache.get(info.path)
         if cached is not None:
             return cached
 
-        fn = load_python_callable(cmd_obj)
-        self._callable_cache[cmd_obj.path] = fn
+        fn = load_python_callable(info)            # expects CommandInfo
+        self._callable_cache[info.path] = fn
         return fn
 
     # -------------------------
@@ -1349,20 +1396,23 @@ class CommandRegistry:
     # -------------------------
 
     def reload(self) -> None:
-        """
-        Reload YAML-backed registry from disk (core + extensions), rebuilding token map.
-
-        Uses the same settings passed at construction time.
-        """
-        reg, token_map = load_commands_registry(
+        reg, token_map = load_qx_registry(
             core_registry_path=self._core_registry_path,
             extension_registry_filename=self._extension_registry_filename,
             require_extension_registry=self._require_extension_registry,
             extension_order=self._extension_order,
         )
         self._registry = reg
-        self._token_map = token_map
         self._callable_cache.clear()
+
+        # rebuild wrappers
+        self._commands_by_name = {info.name: Command(info, self) for info in reg.commands}
+        self._commands_by_token = {}
+
+        for token, info in token_map.items():
+            cmd = self._commands_by_name.get(info.name)
+            if cmd is not None:
+                self._commands_by_token[token] = cmd
 
 
 # Convenience: one-liner to get a CommandRegistry instance
@@ -1373,7 +1423,7 @@ def load_command_registry(
     require_extension_registry: bool = True,
     extension_order: Optional[List[str]] = None,
 ) -> CommandRegistry:
-    reg, token_map = load_commands_registry(
+    reg, token_map = load_qx_registry(
         core_registry_path=core_registry_path,
         extension_registry_filename=extension_registry_filename,
         require_extension_registry=require_extension_registry,

@@ -18,6 +18,7 @@ None of the code is run directly from the terminal interface.
 """
 
 # imports
+from copy import deepcopy
 import os
 import os.path
 import sys
@@ -829,21 +830,27 @@ def run(qx_command, args):
         verbose=False,
     )
 
-    # check if all sessions have subjects for longitudinal
-    if 'longitudinal' in qx_command.type:
-        subject_list = []
-        if sessions is not None:
-            for session in sessions:
-                if "subject" not in session:
-                    raise ge.CommandFailed(
-                        qx_command.name,
-                        "Missing subject information",
-                        f"No subject information provided for session id: {session['id']}.",
-                        "Please check the batch file!",
-                        "Aborting processing!",
-                    )
-                if session["subject"] not in subject_list:
-                    subject_list.append(session["subject"])
+    processing_type = "session"
+    if 'subject' in qx_command.type:
+        processing_type = "subject"
+    elif 'study' in qx_command.type:
+        processing_type = "study"
+
+    # -- do we need a list of subjects?
+    subjects = []
+    if processing_type == "subject":
+        # check if all sessions have subjects for longitudinal
+        missing_subjects = sessions.dont_have_key("subject")
+        if missing_subjects:
+            missing_list = missing_subjects.get_list_by_key("id")
+            raise ge.CommandFailed(
+                qx_command.name,
+                "Missing subject information",
+                "No subject information provided for session ids: %s." % (missing_list),
+                "Please check the batch file!",
+                "Aborting processing!",
+            )
+        subjects = sessions.group_by_key("subject")
 
     # take parameters from batch file
     batch_args = gcs.check_deprecated_parameters(gpref, qx_command.name)
@@ -886,6 +893,7 @@ def run(qx_command, args):
     # set key parameters
     overwrite = options["overwrite"]
     parsessions = options["parsessions"]
+    parsubjects = options["parsubjects"]    
     nprocess = options["nprocess"]
     printinfo = options["datainfo"]
     printoptions = options["printoptions"]
@@ -930,22 +938,23 @@ def run(qx_command, args):
     sout += "\n=================================================================\n"
 
     # no parsessions for subject and multi-session commands
-    if ('subject' in qx_command.type) or ('multisession' in qx_command.type):
+    if processing_type in ["subject", "study"]:
         if parsessions > 1:
             sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a multi-session command!\n"
             parsessions = 1
 
+    parprocesses = parsubjects if processing_type == "subject" else parsessions
+
     # check if there are no sessions
-    if not sessions:
-        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
+    if not sessions or processing_type == "subject" and not subjects:
+        sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
         print(sout)
         writelog(sout)
         exit()
-
-    elif options["run"] == "run":
+    
+    elif options["run"] == "run":        
         sout += (
-            f"\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n"
-            % (options["sessions"], parsessions)
+            f"\nStarting multiprocessing {processing_type}s in {options['sessions']} with a pool of {parprocesses} concurrent processes\n"
         )
 
     else:
@@ -967,7 +976,10 @@ def run(qx_command, args):
     # -----------------------------------------------------------------------
     #                                                              print info
     if printinfo:
-        print(sessions)
+        if processing_type == "subject":
+            print(subjects)
+        else:
+            print(sessions)
 
     # =======================================================================
     #                                               RUN BY SESSION PROCESSING
@@ -983,37 +995,26 @@ def run(qx_command, args):
     if options["scheduler"] == "local":
         consoleLog = ""
 
+        # testing or processing
+        action = "testing" if options["run"] == "test" else "processing"
+        pending_actions = qx_command.load_callable()
+
         c = 0
-        if parsessions == 1 or options["run"] == "test":
-            if 'study' in qx_command.type:
-                pending_actions = qx_command.com
+        if parprocesses == 1 or options["run"] == "test":
 
-                # test or processing
-                if options["run"] == "test":
-                    action = "testing"
-                else:
-                    action = "processing"
+            # ------------------------------------------------------------------
+            #                                          study processing commands
+            if processing_type == "study":
+                sessionid_list = sessions.get_list_by_key("id")
 
-                
                 # update options and prepare the all sessions string for labeling
-                sessionid_list = gc.compile_sessionid_list(sessions)
+                # TODO: soptions may be invalid here!
                 for session in sessions:
                     soptions = update_options(session, options)
 
-                # log
-                consoleLog += "\nStarting %s of sessions %s at %s" % (
-                    action,
-                    sessionid_list,
-                    datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                )
-                print(
-                    "\nStarting %s of sessions %s at %s"
-                    % (
-                        action,
-                        sessionid_list,
-                        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                    )
-                )
+                message = f"\nStarting {action} of sessions {sessionid_list} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                consoleLog += message
+                print(message)
 
                 # process
                 r, status = procResponse(
@@ -1026,71 +1027,38 @@ def run(qx_command, args):
                 print(r)
                 stati.append(status)
 
-            # subject commands
-            elif 'subject' in qx_command.type:
-                pending_actions = qx_command.com
 
-                # test or processing
-                if options["run"] == "test":
-                    action = "testing"
-                else:
-                    action = "processing"
+            # ------------------------------------------------------------------
+            #                                        subject processing commands
+            elif processing_type == "subject":
+                for subject in subjects:
+                    message = f"\nProcessing subject {subject[0]['subject']} with sessions {", ".join([s['id'] for s in subject])} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                    consoleLog += message
+                    print(message)
 
-                # update options and prepare the all subjects string for labeling
-                for session in sessions:
-                    soptions = update_options(session, options)
-
-                subjectids = ",".join(subject_list)
-
-                # log
-                consoleLog += "\nStarting %s of subjects %s at %s" % (
-                    action,
-                    subjectids,
-                    datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                )
-                print(
-                    "\nStarting %s of subjects %s at %s"
-                    % (
-                        action,
-                        subjectids,
-                        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+                    r, status = procResponse(
+                        pending_actions(subject, options, overwrite, c + 1)
                     )
-                )
+                    writelog(r)
+                    consoleLog += r
+                    print(r)
+                    stati.append(status)
+                    c += 1
+                    if nprocess and c >= nprocess:
+                        break
 
-                # process
-                r, status = procResponse(
-                    pending_actions(sessions, subjectids, soptions, overwrite, c + 1)
-                )
 
-                # write log
-                writelog(r)
-                consoleLog += r
-                print(r)
-                stati.append(status)
-
-            # processing commands
+            # ------------------------------------------------------------------
+            #                                        session processing commands
             else:
-                pending_actions = qx_command.com
                 for session in sessions:
                     if len(session["id"]) > 1:
-                        if options["run"] == "test":
-                            action = "testing"
-                        else:
-                            action = "processing"
+                        message = f"\nStarting {action} of session {session['id']} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                        consoleLog += message
+                        print(message)
+
                         soptions = update_options(session, options)
-                        consoleLog += "\nStarting %s of sessions %s at %s" % (
-                            action,
-                            session["id"],
-                            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                        )
-                        print(
-                            "\nStarting %s of sessions %s at %s"
-                            % (
-                                action,
-                                session["id"],
-                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                            )
-                        )
+
                         r, status = procResponse(
                             pending_actions(session, soptions, overwrite, c + 1)
                         )
@@ -1104,29 +1072,37 @@ def run(qx_command, args):
 
         else:
             c = 0
-            processPoolExecutor = ProcessPoolExecutor(parsessions)
+            processPoolExecutor = ProcessPoolExecutor(parprocesses)
             futures = []
 
-            # processing commands
-            if ('session' in qx_command.type):
-                pending_actions = qx_command.com
+            # ------------------------------------------------------------------
+            #                                        subject processing commands
+
+            if processing_type == "subject":
+                for subject in subjects:
+                    message = f"\nAdding processing of subject {subject[0]['subject']} with sessions {', '.join([s['id'] for s in subject])} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                    consoleLog += message
+                    print(message)
+
+                    future = processPoolExecutor.submit(
+                        pending_actions, subject, options, overwrite, c + 1
+                    )
+                    futures.append(future)
+                    c += 1
+                    if nprocess and c >= nprocess:
+                        break
+
+            # ------------------------------------------------------------------
+            #                                        session processing commands
+
+            if processing_type == "session":
                 for session in sessions:
                     if len(session["id"]) > 1:
                         soptions = update_options(session, options)
-                        consoleLog += (
-                            "\nAdding processing of session %s to the pool at %s"
-                            % (
-                                session["id"],
-                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                            )
-                        )
-                        print(
-                            "\nAdding processing of session %s to the pool at %s"
-                            % (
-                                session["id"],
-                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                            )
-                        )
+                        message = f"\nAdding processing of session {session['id']} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                        consoleLog += message
+                        print(message)
+
                         future = processPoolExecutor.submit(
                             pending_actions, session, soptions, overwrite, c + 1
                         )
@@ -1135,11 +1111,11 @@ def run(qx_command, args):
                         if nprocess and c >= nprocess:
                             break
 
-                for future in as_completed(futures):
-                    result = future.result()
-                    writelog(result)
-                    consoleLog += result[0]
-                    print(result[0])
+            for future in as_completed(futures):
+                result = future.result()
+                writelog(result)
+                consoleLog += result[0]
+                print(result[0])
 
         # print(console log)
         # print(consoleLog)
@@ -1184,6 +1160,8 @@ def run(qx_command, args):
 
     # -----------------------------------------------------------------------
     #                                                  general scheduler code
+    #
+    # TODO: adapt for subject and study level processing
     else:
         # schedule
         gs.runThroughScheduler(

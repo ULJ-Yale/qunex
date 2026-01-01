@@ -180,9 +180,21 @@ deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 #     type="utility")
 def check_deprecated_commands(command):
     """
-    check_deprecated_commands(options, deprecatedCommands)
-    Checks for deprecated commands, remaps deprecated ones
-    and notifies the user.
+    ``check_deprecated_commands command``
+
+    Check for deprecated commands, print a warning if needed and
+    return the updated command name.
+
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --command (str):
+        The command to check for deprecation.
+    
+    Returns:
+        --new_command (str):
+        The updated command name if it was deprecated, otherwise the original command name.
     """
 
     # store the command

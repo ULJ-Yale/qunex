@@ -37,7 +37,7 @@ from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
 from qx_utilities.general import extensions
-from qx_registry import build_commands_registry, load_command_registry, qx_commands
+from qx_registry import build_qx_registry, load_qx_registry, qx_commands
 
 
 
@@ -84,7 +84,6 @@ def runCommand(command, args):
         # -- remap deprecated arguments
         args = gcs.check_deprecated_parameters(args, command)
 
-    qx_commands = load_command_registry()
     qx_command = qx_commands.get(command.strip())
 
     # -- is this a valid qunex command?
@@ -113,7 +112,7 @@ def runCommand(command, args):
     bargs = {}
     eargs = {}
     for k, v in args.items():
-        if k in qx_commands[command]["args"]:
+        if qx_command.has_arg(k):
             bargs[k] = v
         else:
             eargs[k] = v
@@ -328,13 +327,13 @@ def runCommand(command, args):
             # remove logs for exceptions
             if command in gcs.logskip_commands:
                 # remove non-command args
-                args = {k: v for k, v in args.items() if k in qx_commands[command]["args"]}
+                args = {k: v for k, v in args.items() if qx_commands.get(command).has_arg(k)}
                 # execute
-                qx_commands[command]["com"](**args)
+                qx_commands.get(command).load_callable()(**args)
             # run with log
             else:
                 _, result, _, _ = gc.runWithLog(
-                    qx_commands[command]["com"], args=args, logfile=logfile
+                    qx_commands.get(command).load_callable(), args=args, logfile=logfile
                 )
 
         # -- sessions loop
@@ -432,9 +431,9 @@ def main(args=None):
     opts = dict()
 
     try:
-        if comm == 'build_registry':
+        if comm == 'build_qx_registry':
             print("Building command registry...")
-            build_commands_registry()
+            build_qx_registry()
             print("Command registry successfully built!")
             sys.exit(0)      
 
