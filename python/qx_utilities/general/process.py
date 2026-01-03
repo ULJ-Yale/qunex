@@ -658,136 +658,6 @@ flaglist += extensions.compile_list("flaglist")
 #   The options dictionary
 options = {}
 
-
-# ==============================================================================
-#                                                                   COMMAND LIST
-#
-#   Commands are specified in the calist and salist lists. calist specifies
-#   commands that can be run in parallel, one instance per subeject. salist
-#   specifies commands that need to be run as a single process across all the
-#   sessions. Both are a list of commands in which each command is specified
-#   as list of four values:
-#
-#   1/ command long name
-#   2/ the actual function ran for the command
-#
-#   Empty lists denote there should be a blank line when printing out a command
-#   list.
-# processing commands
-calist = [
-    ["map_hcp_data", process_hcp.map_hcp_data],
-    [],
-    ["get_bold_data", workflow.get_bold_data],
-    ["create_bold_brain_masks", workflow.create_bold_brain_masks],
-    [],
-    ["run_basic_segmentation", fs.runBasicStructuralSegmentation],
-    ["get_fs_data", fs.checkForFreeSurferData],
-    ["run_subcortical_fs", fs.runFreeSurferSubcorticalSegmentation],
-    ["run_full_fs", fs.runFreeSurferFullSegmentation],
-    [],
-    ["compute_bold_stats", workflow.compute_bold_stats],
-    ["create_stats_report", workflow.create_stats_report],
-    ["extract_nuisance_signal", workflow.extract_nuisance_signal],
-    [],
-    ["preprocess_bold", workflow.preprocess_bold],
-    ["preprocess_conc", workflow.preprocess_conc],
-    [],
-    ["hcp_pre_freesurfer", process_hcp.hcp_pre_freesurfer],
-    ["hcp_freesurfer", process_hcp.hcp_freesurfer],
-    ["hcp_post_freesurfer", process_hcp.hcp_post_freesurfer],
-    ["hcp_fmri_volume", process_hcp.hcp_fmri_volume],
-    ["hcp_fmri_surface", process_hcp.hcp_fmri_surface],
-    ["hcp_icafix", process_hcp.hcp_icafix],
-    ["hcp_post_fix", process_hcp.hcp_post_fix],
-    ["hcp_reapply_fix", process_hcp.hcp_reapply_fix],
-    ["hcp_msmall", process_hcp.hcp_msmall],
-    ["hcp_dedrift_and_resample", process_hcp.hcp_dedrift_and_resample],
-    ["hcp_task_fmri_analysis", process_hcp.hcp_task_fmri_analysis],
-    [],
-    ["hcp_diffusion", process_hcp.hcp_diffusion],
-    ["hcp_apply_auto_reclean", process_hcp.hcp_apply_auto_reclean],
-    ["hcp_asl", process_hcp.hcp_asl],
-    ["hcp_transmit_bias_individual", process_hcp.hcp_transmit_bias_individual],
-    [],
-    ["run_shell_script", simple.run_shell_script],
-    [],
-    ["dwi_f99", dwi.dwi_f99],
-    ["dwi_xtract", dwi.dwi_xtract],
-    ["dwi_noddi_gpu", dwi.dwi_noddi_gpu],
-    [],
-    ["setup_mice", qx_mice.setup_mice.setup_mice],
-    ["preprocess_mice", qx_mice.process_mice.preprocess_mice],
-    ["map_mice_data", qx_mice.process_mice.map_mice_data],
-    [],
-    ["fsl_feat", fsl.fsl_feat],
-    ["rapidtide", rapidtide.rapidtide],
-]
-
-# longitudinal commands
-lalist = [
-    ["hcp_prep_long", process_hcp.hcp_prep_long],
-    ["hcp_long_freesurfer", process_hcp.hcp_long_freesurfer],
-    ["hcp_long_post_freesurfer", process_hcp.hcp_long_post_freesurfer],
-    ["hcp_long_msmall", process_hcp.hcp_long_msmall],
-    ["hcp_long_transmit_bias", process_hcp.hcp_long_transmit_bias],
-    ["fsl_melodic", fsl.fsl_melodic],
-]
-
-# multi-session commands
-malist = [
-    ["hcp_temporal_ica", process_hcp.hcp_temporal_ica],
-    ["hcp_make_average_dataset", process_hcp.hcp_make_average_dataset],
-]
-
-salist = [
-    ["create_bold_list", simple.create_bold_list],
-    ["create_conc_list", simple.create_conc_list],
-    ["list_session_info", simple.list_session_info],
-    ["map_nii2bids", map_nii2bids],
-]
-
-# Add command lists used in extensions
-calist += extensions.compile_list("calist")
-lalist += extensions.compile_list("lalist")
-malist += extensions.compile_list("malist")
-salist += extensions.compile_list("salist")
-
-calist += extensions.calist
-lalist += extensions.lalist
-malist += extensions.malist
-salist += extensions.salist
-
-#   -------------------------------------------------------- COMMAND DICTIONARY
-#   Code that transcribes the comand specifications into a dictionary for
-#   calling the relevant command when specified.
-
-pactions = {}
-for line in calist:
-    if len(line) == 2:
-        pactions[line[0]] = line[1]
-
-lactions = {}
-for line in lalist:
-    if len(line) == 2:
-        lactions[line[0]] = line[1]
-
-mactions = {}
-for line in malist:
-    if len(line) == 2:
-        mactions[line[0]] = line[1]
-
-sactions = {}
-for line in salist:
-    if len(line) == 2:
-        sactions[line[0]] = line[1]
-
-# all actions
-allactions = {}
-allactions.update(pactions.copy())
-allactions.update(lactions.copy())
-allactions.update(mactions.copy())
-allactions.update(sactions.copy())
-
 flist = {}
 for line in flaglist:
     if len(line) == 2:
@@ -1153,8 +1023,8 @@ def run(qx_command, args):
             print("---> Not all tasks completed fully!")
             print("---> Not all tasks completed fully!", file=f)
         else:
-            print("---> Successful completion of all tasks")
-            print("---> Successful completion of all tasks", file=f)
+            print(f"---> Successful completion of all tasks at {datetime.now()}")
+            print(f"---> Successful completion of all tasks at {datetime.now()}", file=f)
 
         f.close()
 

@@ -36,7 +36,6 @@ from qx_utilities.general import matlab as gm
 from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
-from qx_utilities.general import extensions
 from qx_registry import build_qx_registry, load_qx_registry, qx_commands
 
 

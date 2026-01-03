@@ -645,7 +645,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
         log_prefix = "error"
     elif not overwrite and final_log == "":
         final_log = "Previous results present, overwrite set to no.\n\n"
-        final_log = final_log + "---> Successful completion of task"
+        final_log = final_log + f"---> Successful completion of task at {datetime.now()}"
 
     # print to log file
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
