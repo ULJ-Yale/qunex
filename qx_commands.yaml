@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-01-01T16:44:24.137009+00:00'
+generated_at: '2026-01-03T10:19:15.353420+00:00'
 source:
     id: core
 commands:
@@ -177,7 +177,7 @@ commands:
     path: qx_utilities.general.commands_support.check_deprecated_commands
     language: python
     call: check_deprecated_commands command
-    description: Check for deprecated commands and report the correct ones.
+    description: Check for deprecated commands, print a warning if needed and return the updated command name.
     type: utility
     args:
     -   name: command
@@ -4324,10 +4324,6 @@ commands:
         type: null
         default: null
         description: null
-    -   name: subjectids
-        type: null
-        default: null
-        description: null
     -   name: options
         type: null
         default: null
@@ -4591,10 +4587,6 @@ commands:
     type: processing.subject.hcp
     args:
     -   name: sinfo
-        type: null
-        default: null
-        description: null
-    -   name: subjectids
         type: null
         default: null
         description: null
@@ -7655,7 +7647,7 @@ commands:
     aliases: []
     path: qx_utilities.general.utilities.run_recipe
     language: python
-    call: run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [<extra arguments>]
+    call: run_recipe [recipe_file=None] [recipe=None] [steps=None] [startwith=None] [logfolder=None] [<extra arguments>]
     description: Run a chain of multiple commands through recipe files and recipes.
     type: utility
     args:
@@ -7672,6 +7664,11 @@ commands:
         default: ''
         description: A comma separated list of steps (QuNex commands) to run. This can be used to run only a subset of commands
             from the list or as an alternative to specifying the recipe file and a recipe name.
+    -   name: startwith
+        type: str
+        default: ''
+        description: Name of the step (QuNex command) in the recipe to start with. If provided, the execution of the recipe
+            will start with the specified step, skipping any preceding steps.
     -   name: logfolder
         type: str
         default: ''

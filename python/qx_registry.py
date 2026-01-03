@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Callable, Union
+from qx_utilities.general import exceptions as ge
 
 
 # ==============================================================================
@@ -482,7 +483,7 @@ def module_name_from_file(pyfile: Path, root: Path) -> str:
     rel = pyfile.resolve().relative_to(root.resolve())
     parts = list(rel.parts)
     if not parts:
-        raise ValueError(f"Unexpected path: {pyfile}")
+        raise ge.CommandFailed('module_name_from_file', f"unexpected path: {pyfile}")
 
     if parts[-1].endswith(".py"):
         parts[-1] = parts[-1][:-3]
@@ -832,11 +833,10 @@ def validate_unique_tokens(commands: List[CommandInfo]) -> None:
     def claim(token: str, cmd: CommandInfo, kind: str) -> None:
         if token in used:
             prev = used[token]
-            raise ValueError(
+            raise ge.CommandFailed('validate_unique_tokens', 
                 f"Duplicate command token '{token}' ({kind}).\n"
                 f"Already used by: {prev.name} ({prev.language}, {prev.origin}, {prev.path})\n"
-                f"Conflicts with:  {cmd.name} ({cmd.language}, {cmd.origin}, {cmd.path})"
-            )
+                f"Conflicts with:  {cmd.name} ({cmd.language}, {cmd.origin}, {cmd.path})")
         used[token] = cmd
 
     for c in commands:
@@ -962,7 +962,7 @@ def merge_registries(
         for t in (c.name,) + c.aliases:
             if t in token_map:
                 prev = token_map[t]
-                raise ValueError(
+                raise ge.CommandFailed('merge_registries',
                     f"After merge, token '{t}' is ambiguous.\n"
                     f"Used by: {prev.name} ({prev.origin})\n"
                     f"Also by: {c.name} ({c.origin})"
@@ -984,12 +984,11 @@ def resolve_command(token_map: Dict[str, CommandInfo], name_or_alias: str) -> Op
 
 def load_python_callable(command: CommandInfo):
     if command.language != "python":
-        raise ValueError(f"Not a python command: {command.language}")
+        raise ge.CommandFailed('load_python_callable', f"Not a python command: {command.language}")
 
     mod_path, _, fn_name = command.path.rpartition(".")
     if not mod_path:
-        raise ValueError(f"Invalid python command.path: {command.path}")
-
+        raise ge.CommandFailed('load_python_callable', f"Invalid python command.path: {command.path}")
     import importlib
     mod = importlib.import_module(mod_path)
     return getattr(mod, fn_name)
@@ -1084,12 +1083,12 @@ def load_qx_registry(
     if core_registry_path is None:
         qunexpath = os.environ.get("QUNEXPATH", "").strip()
         if not qunexpath:
-            raise RuntimeError("QUNEXPATH is not set and no core_registry_path was provided.")
+            raise ge.CommandError('load_qx_registry', "QUNEXPATH is not set and no core_registry_path was provided.")
         core_registry_path = Path(qunexpath) / DEFAULT_CORE_REGISTRY_BASENAME
 
     core_registry_path = Path(core_registry_path).resolve()
     if not core_registry_path.exists():
-        raise FileNotFoundError(f"Core registry not found: {core_registry_path}")
+        raise ge.CommandError('load_qx_registry', f"Core registry not found: {core_registry_path}")
 
     core = load_registry_yaml(core_registry_path)
 
@@ -1108,7 +1107,7 @@ def load_qx_registry(
 def _get_qunexpath() -> Path:
     qunexpath = os.environ.get("QUNEXPATH", "").strip()
     if not qunexpath:
-        raise RuntimeError("QUNEXPATH is not set.")
+        raise ge.CommandError('build_qx_registry', "QUNEXPATH is not set.")
     return Path(qunexpath).resolve()
 
 
@@ -1153,7 +1152,7 @@ def build_qx_registry(
     core_registry_yaml = Path(core_registry_yaml).resolve()
 
     if not core_python_root.exists():
-        raise FileNotFoundError(f"Core python root not found: {core_python_root}")
+        raise ge.CommandFailed('build_qx_registry', f"Core python root not found: {core_python_root}")
 
     # Core: python
     print(f"--> Building core python command registry from {core_python_root}")
@@ -1280,7 +1279,7 @@ class CommandRegistry:
     def require(self, name_or_alias: str) -> Command:
         cmd = self.get(name_or_alias)
         if cmd is None:
-            raise KeyError(f"Unknown command: {name_or_alias}")
+            raise ge.CommandFailed('CommandRegistry.require', f"Unknown command: {name_or_alias}")
         return cmd
 
     # -------------------------
@@ -1381,7 +1380,9 @@ class CommandRegistry:
             info = cmd                              # CommandInfo
 
         if info.language != "python":
-            raise ValueError(f"Command '{info.name}' is not python (language={info.language})")
+            raise ge.CommandFailed('CommandRegistry.load_callable', "command not python",
+                f"Cannot load callable for non-python command: {info.name} (language={info.language})"
+            )
 
         cached = self._callable_cache.get(info.path)
         if cached is not None:
