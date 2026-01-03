@@ -102,7 +102,12 @@ class SessionList(UserList):
             return item_value == pattern or fnmatch.fnmatchcase(item_value, pattern)
 
         # Normalize value to list
-        values = value if isinstance(value, list) else [value]
+        if isinstance(value, str):
+            if "," in value:
+                values = [e.strip() for e in value.split(",")] 
+            else:
+                values = [value]
+        # values = value if isinstance(value, list) else [value]
 
         return SessionList([
             deepcopy(e)
@@ -187,13 +192,17 @@ class SessionList(UserList):
 
         return SessionList(filtered_data)
 
-    def get_list_by_key(self, key):
+    def get_list_by_key(self, key, sep=","):
         """
-        ``get_list_by_key(key)``
+        ``get_list_by_key(key, sep=",")``
 
-        Compile a comma separated list of unique values for the specified key.
+        Compile a list of unique values for the specified key. By default it returns
+        a comma separated string. If sep is None or empty string, it returns a list.
         """
-        return ",".join(list(dict.fromkeys(str(item[key]) for item in self.data if key in item)))
+        if sep is None or sep == "":
+            return list(dict.fromkeys(str(item[key]) for item in self.data if key in item))
+        else:
+            return sep.join(list(dict.fromkeys(str(item[key]) for item in self.data if key in item)))
         
     def group_by_key(self, key):
         """
@@ -506,6 +515,8 @@ def get_sessions_list(
 
     slist = SessionList(slist)
 
+    verbose=True
+
     # filter with sessionids
     slist = slist.filter_by_key("id", sessionids) if sessionids is not None and sessionids.strip() != "" else slist
 
@@ -525,44 +536,10 @@ def get_sessions_list(
 
     return slist, gpref
 
-# ------------------------------------------------------------------------------
-#                                                                Filter sessions
-
-
-
-
-# ------------------------------------------------------------------------------
-#                                                                  Compile lists
-
-
-def compile_sessionid_list(sessions):
-    """
-    ``compile_sessionid_list(sessions)``
-
-    Compiles a list of session IDs from the sessions list of dictionaries.
-    """
-
-    sessionid_list = ",".join([session.get("sessionid", "") for session in sessions if "sessionid" in session])
-
-    return sessionid_list
-
-
-
-def compile_subjectid_list(subjects):
-    """
-    ``compile_subjectid_list(subjects)``
-
-    Compiles a list of subject IDs from the subjects list of dictionaries.
-    """
-
-    subjectid_list = ",".join([subject.get("id", "") for subject in subjects if "id" in subject])
-
-    return subjectid_list
-
     
 
 # ==============================================================================
-#                                                             TO BE SORTED LATER
+#                                                          EXECUTION AND LOGGING
 
 def deduceFolders(args):
     """
@@ -947,7 +924,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         result = False
 
     if not result:
-        print("\n---> Successful completion of task")
+        print(f"\n---> Successful completion of task at {datetime.now()}")
 
     if logfile:
         sys.stdout.close()
@@ -1003,7 +980,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         if result:
             lf.write("\nERROR running %s\n" % name)
         else:
-            lf.write("\n---> Successful completion of task\n")
+            lf.write(f"\n---> Successful completion of task at {datetime.now()}\n")
 
         lf.close()
     else:
