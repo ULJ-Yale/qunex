@@ -615,8 +615,8 @@ def runThroughScheduler(
                     settings[s.strip()] = None
 
         # only allow HCP MPP commands with job array
+        qx_command = command.split(" ")[0]
         if slurm_array:
-            qx_command = command.split(" ")[0]
 
             array_commands = [
                 "hcp_pre_freesurfer",
@@ -652,8 +652,8 @@ def runThroughScheduler(
         if chunks < parjobs:
             parjobs = chunks
 
-        # do not create multiple jobs if running a multi-session command
-        if any([e in qx_commands[command].type for e in ["longitudinal", "multisession"]]):
+        # do not create multiple jobs if running a multi-session command (registered commands only)
+        if qx_commands.get(qx_command) and any([e in qx_commands.get(qx_command).type for e in ["processing.study"]]):
             parjobs = 1
 
         # init queues
