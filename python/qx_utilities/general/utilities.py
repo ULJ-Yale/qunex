@@ -2210,9 +2210,9 @@ def _is_qunex_command(command):
 
 
 
-def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=None):
+def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfolder=None, eargs=None):
     """
-    ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [logfolder=None] [<extra arguments>]``
+    ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [startwith=None] [logfolder=None] [<extra arguments>]``
 
     Run a chain of multiple commands through recipe files and recipes.
 
@@ -2225,6 +2225,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
         --recipe (str):
             Name of the recipe in the recipe_file to run.
+
+        --startwith (str, default ''):
+            Name of the step (QuNex command) in the recipe to start with. If 
+            provided, the execution of the recipe will start with the specified
+            step, skipping any preceding steps. 
 
         --steps (str, default ''):
             A comma separated list of steps (QuNex commands) to run. This can
@@ -2448,6 +2453,14 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             "Please check your paths!",
         )
 
+    if startwith and recipe is None:
+        raise ge.CommandError(
+            "run_recipe",
+            "startwith specified without a recipe",
+            "No recipe specified",
+            "Please provide --recipe together with --recipe_file when using --startwith!",
+        )
+
     # parse the recipe file
     parameters = {}
     commands = []
@@ -2525,8 +2538,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     comlogfolder = os.path.join(logfolder, "comlogs")
 
     # create folder if it does not exist
-    if not os.path.isdir(runlogfolder):
-        os.makedirs(runlogfolder)
+    for folder in [logfolder, runlogfolder, comlogfolder]:
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
 
     print(f"\n---> Saving the run_recipe runlog to: {runlogfolder}")
 
@@ -2554,7 +2568,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     summary += f"\n\nRecipe: {recipe}"
 
     print(f"---> Running commands from recipe: {recipe}")
-    print(f"---> Running commands from recipe: {recipe}\n", file=log)
+    print(f"---> Running commands from recipe: {recipe}", file=log)
 
     # commands
     if "commands" not in recipe_dict:
@@ -2586,19 +2600,57 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
         commands = commands_subset
 
+    commands_skipped = []
+    if startwith and startwith.strip() != "":
+        def _get_command_name(command_spec):
+            if isinstance(command_spec, dict):
+                return list(command_spec.keys())[0]
+            return command_spec
+
+        start_indices = [
+            idx for idx, command_spec in enumerate(commands)
+            if _get_command_name(command_spec) == startwith
+        ]
+
+        if not start_indices:
+            print(f"WARNING: startwith step [{startwith}] is not a part of recipe [{recipe}].")
+            print(f"WARNING: startwith step [{startwith}] is not a part of recipe [{recipe}].", file=log,)
+            log.close()
+            raise ge.CommandError(
+                "run_recipe",
+                "startwith step not found in recipe",
+                "Startwith step not found",
+                "Please check the recipe steps and provide a valid --startwith step name!",
+            )
+
+        if len(start_indices) > 1:
+            print(f"WARNING: startwith step [{startwith}] is present more than once in recipe [{recipe}]. Starting with the first occurrence.")
+            print(f"WARNING: startwith step [{startwith}] is present more than once in recipe [{recipe}]. Starting with the first occurrence.", file=log)
+
+        start_index = start_indices[0]
+        commands_skipped = commands[:start_index]
+        commands = commands[start_index:]
+
     # print commands
-    print("---> Commands:")
-    print("---> Commands:", file=log)
-    commands_set = []
-    for com in commands:
-        if isinstance(com, dict):
-            command_name = list(com.keys())[0]
-        else:
-            command_name = com
-        if command_name not in commands_set:
-            commands_set.append(command_name)
-            print(f"    - {command_name}")
-            print(f"    - {command_name}", file=log)
+    def _print_commands(title, command_list):
+        print(title)
+        print(title, file=log)
+        commands_set = []
+        for com in command_list:
+            if isinstance(com, dict):
+                command_name = list(com.keys())[0]
+            else:
+                command_name = com
+            if command_name not in commands_set:
+                commands_set.append(command_name)
+                print(f"    - {command_name}")
+                print(f"    - {command_name}", file=log, flush=True)
+
+    if startwith:
+        _print_commands("\n---> Commands skipped:", commands_skipped)
+        _print_commands("\n---> Commands to run:", commands)
+    else:
+        _print_commands("\n---> Commands:", commands)
 
     # XNAT initial setup
     # If running on XNAT, try and load checkpoint if supplied
@@ -2778,7 +2830,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     command_parameters[parameter] = value
 
             # remove parameters that are not allowed
-            import general.commands as gcom
+            import qx_utilities.general.commands as gcom
 
             if command_name in gcom.commands:
                 allowed_parameters = list(gcom.commands.get(command_name)["args"]) + [
@@ -2863,7 +2915,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 )
 
             print(commandr)
-            print(commandr, file=log)
+            print(commandr, file=log, flush=True)
 
             # run command
             process = subprocess.Popen(
@@ -2876,10 +2928,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             for line in iter(process.stdout.readline, b""):
                 line = line.decode("utf-8")
                 print(line)
-                if "ERROR" in line or "failed with error" in line or "/error_" in line:
+                if any([tag in line for tag in ["ERROR", "failed with error", "/error_", "Not all tasks completed"]]):
                     print("", file=log)
                     error = True
-
+                
                 if "Final report" in line:
                     print("", file=log)
                     logging = True
@@ -2904,7 +2956,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             else:
                 summary += f"\n - command {command_name} ... OK"
                 print(
-                    f"---> Successful completion of the run_recipe command {command_name}\n"
+                    f"---> Successful completion of the run_recipe command {command_name} at {datetime.now()}\n"
                 )
 
             # XNAT individual command cleanup, creates _out checkpoint
@@ -2960,19 +3012,18 @@ def _print_end_summary(summary, log, error=None):
 
     if not error:
         print("\n------------------------", file=log)
-        print("\n---> Successful completion of QuNex run_recipe", file=log)
+        print(f"\n---> Successful completion of QuNex run_recipe at {datetime.now()}", file=log)
 
         print("\n------------------------")
-        print("---> Successful completion of QuNex run_recipe")
+        print(f"---> Successful completion of QuNex run_recipe at {datetime.now()}")
     else:
         print("\n------------------------", file=log)
         print(f"\nERROR: {error}", file=log)
-        print("\n---> run_recipe failed", file=log)
+        print(f"\n---> run_recipe failed at {datetime.now()}", file=log)
 
         print("\n------------------------")
         print(f"\nERROR: {error}")
-        print("---> run_recipe failed")
-
+        print(f"---> run_recipe failed at {datetime.now()}")
     log.close()
 
 
