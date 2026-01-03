@@ -135,7 +135,7 @@ def runCommand(command, args):
     sessions = None
     if "sessions" in eargs:
         if command != "run_recipe" and not any(
-            [e in qx_commands[command]["args"] for e in ["sourcefolder", "folder"]]
+            [qx_command.has_arg(e) for e in ["sourcefolder", "folder"]]
         ):
             raise ge.CommandError(
                 "gmri",
@@ -259,8 +259,8 @@ def runCommand(command, args):
 
             else:
                 bargs["eargs"] = eargs
-                qx_commands[command]["com"](**bargs)
-                print("\n---> Successful completion of task")
+                qx_commands.get(command).load_callable()(**bargs)
+                print(f"\n---> Successful completion of task at {datetime.now()}")
 
     # -- all other commands
     else:
@@ -349,13 +349,13 @@ def runCommand(command, args):
                         "%s_%s.log" % (command, session["id"]),
                     )
                 for targ in ["sourcefolder", "folder"]:
-                    if targ in qx_commands[command]["args"]:
+                    if qx_command.has_arg(targ):
                         targs[targ] = sessionsfolder
 
                 calls.append(
                     {
                         "name": name,
-                        "function": qx_commands[command]["com"],
+                        "function": qx_command.load_callable(),
                         "args": targs,
                         "logfile": logfile,
                     }
@@ -386,7 +386,7 @@ def runCommand(command, args):
             else:
                 print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
         if ok:
-            print("\n---> Successful completion of task")
+            print(f"\n---> Successful completion of task at {datetime.now()}")
 
 
 def print_help(com):
