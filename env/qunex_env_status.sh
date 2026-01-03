@@ -156,7 +156,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo " HCPPIPEDIR_dMRITractFull : $HCPPIPEDIR_dMRITractFull";  if [[ -z $HCPPIPEDIR_dMRITractFull ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRITractFull"; fi
     echo "    HCPPIPEDIR_dMRILegacy : $HCPPIPEDIR_dMRILegacy";    if [[ -z $HCPPIPEDIR_dMRILegacy ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport HCPPIPEDIR_dMRILegacy"; fi
     echo "            AutoPtxFolder : $AutoPtxFolder";            if [[ -z $AutoPtxFolder ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport AutoPtxFolder"; fi
-    echo "                 EDDYCUDA : $EDDYCUDA";                 if [[ -z $EDDYCUDA ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport EDDYCUDA"; fi
     echo "                   ASLDIR : $ASLDIR";                   if [[ -z $ASLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport ASLDIR"; fi
     echo ""
     echo ""

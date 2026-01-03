@@ -16,10 +16,10 @@
 #
 #  Wrapper for RunMatrix3 GPU without scheduler specification
 #
-# ## Description 
-#   
+# ## Description
+#
 # This script, run_matrix3.sh, implements gpu-based probtracX
-# 
+#
 # ## Prerequisite Installed Software
 #
 # * FSL with GPU binaries
@@ -28,18 +28,11 @@
 #
 #
 # ### Expected Previous Processing
-# 
+#
 # * The necessary input files are DWI data from previous processing
-# * These data are stored in: "$SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/ 
+# * These data are stored in: "$SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/
 #
 #~ND~END~
-
-## -- if ProbtrackXGPUBin is not set then set it automatically
-if [[ -z ${ProbtrackXGPUBin} ]]; then
-	bindir=${FSLGPUBinary}/probtrackx_gpu_cuda_${DEFAULT_CUDA_VERSION}
-else
-	bindir=${ProbtrackXGPUBin}
-fi
 
 # -- Define paths
 scriptsdir=$HCPPIPEDIR_dMRITractFull/tractography_gpu_scripts
@@ -151,7 +144,7 @@ echo $ResultsFolder/CIFTI_STRUCTURE_THALAMUS_RIGHT >> $ResultsFolder/wtstop
 echo $ResultsFolder/white.L.asc >> $ResultsFolder/wtstop
 echo $ResultsFolder/white.R.asc >> $ResultsFolder/wtstop
 oG=" $oG --stop=${ResultsFolder}/stop --wtstop=$ResultsFolder/wtstop"  # -- Should we include an exclusion along the midsagittal plane (without the CC and the commisures)?
-oG=" $oG --waypoints=${ROIsFolder}/Whole_Brain_Trajectory_ROI_2"       # -- Use a waypoint to exclude streamlines that go through CSF 
+oG=" $oG --waypoints=${ROIsFolder}/Whole_Brain_Trajectory_ROI_2"       # -- Use a waypoint to exclude streamlines that go through CSF
 
 # -- Define Targets
 echo $ResultsFolder/white.L.asc >> $ResultsFolder/Mat3_targets
@@ -193,7 +186,7 @@ bash ${ResultsFolder}/commands_Mat3.sh ########## <<< commands_Mat3.sh
 
 # -- Create CIFTI file=Mat3+Mat3_transp (~1.5 hours, 50GB RAM)
 echo ""
-echo "-- Queueing Post-Matrix 3 Calls" 
+echo "-- Queueing Post-Matrix 3 Calls"
 echo ""
 
 # -- Clean prior results, specify commands and make executable

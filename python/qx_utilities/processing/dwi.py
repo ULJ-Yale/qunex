@@ -560,7 +560,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         --noddi_model (str, default 'Watson'):
             Whether to use the Watson or the Bingham NODDI model.
 
-        --cuda_version (str, default '10.2'):
+        --cuda_version (str, default '11.3'):
             Which CUDA version to use. Supports 10.2, 11.3 and 12.
 
     Output files:
