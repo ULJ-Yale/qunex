@@ -2,7 +2,7 @@ import os
 import tempfile
 from datetime import datetime
 
-from general.palm import run_palm
+from qx_utilities.general.palm import run_palm
 
 from .utils import get_test_data_path
 

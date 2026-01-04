@@ -19,12 +19,7 @@ import struct
 import tempfile
 import io
 
-# Add the parent directory to the path to import qx_utilities
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, parent_dir)
-sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
-
-from general.img import niftihdr, printniftihdr
+from qx_utilities.general.img import niftihdr, printniftihdr
 
 
 # =============================================================================

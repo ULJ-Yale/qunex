@@ -1,5 +1,5 @@
 from .utils import get_test_data_path
-from general.parser import (
+from qx_utilities.general.parser import (
     read_generic_session_file,
     read_hcp_session_file,
     read_mapping_file,

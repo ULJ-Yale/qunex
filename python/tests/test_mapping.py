@@ -1,17 +1,17 @@
 from .utils import get_test_data_path
-from general.parser import (
+from qx_utilities.general.parser import (
     read_generic_session_file,
     read_hcp_session_file,
     read_mapping_file,
     _parse_session_file_lines,
 )
-from general.utilities import (
+from qx_utilities.general.utilities import (
     _reserved_bold_numbers,
     _process_pipeline_hcp_mapping,
     _serialize_session,
     _simple_glob_match,
 )
-from general.exceptions import CommandError, SpecFileSyntaxError
+from qx_utilities.general.exceptions import CommandError, SpecFileSyntaxError
 import pytest
 
 

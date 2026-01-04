@@ -1,6 +1,6 @@
 from .utils import get_test_data_path
 import json
-from general.bids import _sort_bids_images
+from qx_utilities.general.bids import _sort_bids_images
 import ast
 
 

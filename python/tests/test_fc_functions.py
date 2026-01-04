@@ -8,7 +8,8 @@ import pandas as pd
 
 from datetime import datetime
 from pymatreader import read_mat
-from general import matlab as gm
+from qx_utilities.general import matlab as gm
+from qx_registry import qx_commands
 
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -29,7 +30,9 @@ else:
 
 def _run_fc_function(command, ref_dir, output_subdir, args, tolerance=0):
     os.makedirs(output_subdir, exist_ok=True)
-    gm.run(command, args)
+
+    qx_command = qx_commands.get(command.strip())
+    gm.run(qx_command, args)
     if PREPARE_REF_DATA:
         return
 
