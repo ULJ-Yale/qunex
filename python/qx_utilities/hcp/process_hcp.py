@@ -15788,6 +15788,213 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
 
 
 
+def hcp_parcellate_anat(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_parcellate_anat [... processing options]``
+
+    Parcellate an anatomical dense scalar (e.g. corrThickness, MyelinMap_BC)
+    using a whole-brain parcellation (*.dlabel.nii).
+
+    This is the session-processing equivalent of the legacy bash
+    ``parcellate_anat`` utility.
+
+    ..  qx_command:
+        type: processing.session
+
+    Parameters:
+        --hcp_parcellate_input_type (str):
+            Dense scalar type (e.g. ``MyelinMap_BC`` or ``corrThickness``).
+
+        --hcp_parcellate_dlabel (str):
+            Absolute path to the parcellation ``*.dlabel.nii`` file.
+
+        --hcp_parcellate_output_name (str):
+            Suffix name to append in the output filename.
+
+        --hcp_parcellate_extract_data (flag, default 'False'):
+            If set, also write a ``.csv`` with the parcellated values.
+
+        --hcp_suffix (str, default ''):
+            Optional suffix to the session id when multiple variants are run.
+
+    Outputs:
+        - <hcp>/MNINonLinear/fsaverage_LR32k/<CASE>.<InputType>.32k_fs_LR_<OutName>.pscalar.nii
+        - optional: same stem with ``.csv``
+
+    Deprecated parameter names are remapped by QuNex automatically.
+    """
+
+    def _as_bool(v) -> bool:
+        if isinstance(v, bool):
+            return v
+        if v is None:
+            return False
+        s = str(v).strip().lower()
+        return s in ["true", "yes", "1", "y", "t"]
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP parcellate anat ...\n" % (pc.action("Running", options["run"]))
+
+    run = True
+    report = "Error"
+
+    try:
+        pc.doOptionsCheck(options, sinfo, "hcp_parcellate_anat")
+        doHCPOptionsCheck(options, "hcp_parcellate_anat")
+        hcp = getHCPPaths(sinfo, options)
+
+        case_name = sinfo["id"] + options.get("hcp_suffix", "")
+
+        input_type = options.get("hcp_parcellate_input_type")
+        dlabel = options.get("hcp_parcellate_dlabel")
+        out_name = options.get("hcp_parcellate_output_name")
+        extract = _as_bool(options.get("hcp_parcellate_extract_data"))
+
+        if not input_type:
+            r += "\n---> ERROR: missing --hcp_parcellate_input_type"
+            run = False
+        if not dlabel:
+            r += "\n---> ERROR: missing --hcp_parcellate_dlabel"
+            run = False
+        if not out_name:
+            r += "\n---> ERROR: missing --hcp_parcellate_output_name"
+            run = False
+
+        if run and not os.path.exists(dlabel):
+            r += "\n---> ERROR: parcellation dlabel not found: %s" % (dlabel)
+            run = False
+
+        fs32k = os.path.join(hcp["hcp_nonlin"], "fsaverage_LR32k")
+        data_input = os.path.join(
+            fs32k,
+            "%s.%s.32k_fs_LR.dscalar.nii" % (case_name, input_type),
+        )
+        data_output = os.path.join(
+            fs32k,
+            "%s.%s.32k_fs_LR_%s.pscalar.nii" % (case_name, input_type, out_name),
+        )
+        data_csv = os.path.join(
+            fs32k,
+            "%s.%s.32k_fs_LR_%s.csv" % (case_name, input_type, out_name),
+        )
+
+        r += "\nDense input: %s" % (data_input)
+        r += "\nParcellated output: %s" % (data_output)
+        if extract:
+            r += "\nCSV output: %s" % (data_csv)
+
+        if run and not os.path.exists(data_input):
+            r += "\n---> ERROR: input dense scalar not found: %s" % (data_input)
+            run = False
+
+        # logtags: extend safely
+        logtags = options.get("logtag") or []
+        if isinstance(logtags, str):
+            logtags = [logtags]
+        logtags = list(logtags) + ["parcellate_anat", str(input_type)]
+
+        if run:
+            comm = 'wb_command -cifti-parcellate "%s" "%s" COLUMN "%s"' % (
+                data_input,
+                dlabel,
+                data_output,
+            )
+
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running external command via QuNex:\n\n"
+            r += comm
+            r += "\n------------------------------------------------------------\n"
+
+            if options["run"] == "run":
+                if overwrite:
+                    for f in [data_output, data_csv]:
+                        try:
+                            if os.path.exists(f):
+                                os.remove(f)
+                        except Exception:
+                            pass
+
+                r, _, _, failed = pc.runExternalForFile(
+                    data_output,
+                    comm,
+                    "Running HCP parcellate anat",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options.get("log") == "remove",
+                    task=options.get("command_ran", "hcp_parcellate_anat"),
+                    logfolder=options.get("comlogs", ""),
+                    logtags=logtags,
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+                if failed == 0 and extract:
+                    r, _, _, failed_csv = pc.runExternalForFile(
+                        data_csv,
+                        'wb_command -nifti-information -print-matrix "%s" > "%s"'
+                        % (data_output, data_csv),
+                        "Extracting CSV matrix",
+                        overwrite=True,
+                        thread=sinfo["id"],
+                        remove=options.get("log") == "remove",
+                        task=options.get("command_ran", "hcp_parcellate_anat"),
+                        logfolder=options.get("comlogs", ""),
+                        logtags=logtags + ["csv"],
+                        fullTest=None,
+                        shell=True,
+                        r=r,
+                    )
+                    if failed_csv != 0:
+                        failed = failed_csv
+
+                if failed == 0:
+                    report = "HCP parcellate anat completed"
+                else:
+                    report = "HCP parcellate anat failed"
+
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    data_output, None, "HCP parcellate anat", r, overwrite=overwrite
+                )
+                if passed is None:
+                    r += "\n---> HCP parcellate anat can be run"
+                    report = "HCP parcellate anat can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Due to missing files session cannot be processed."
+            report = "Files missing, HCP parcellate anat cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        report = "HCP parcellate anat failed"
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        report = "HCP parcellate anat failed"
+        failed = 1
+
+    r += (
+        "\n\nHCP parcellate anat %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    return (r, (sinfo["id"], report, failed))
+
+
+
 # ------------------------------------------------------------------------------
 #                                                                     PILOT CODE
 

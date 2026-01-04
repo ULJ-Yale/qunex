@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-01-04T17:49:14.684345+00:00'
+generated_at: '2026-01-04T19:33:22.358693+00:00'
 source:
     id: core
 commands:
@@ -5100,6 +5100,54 @@ commands:
         type: int
         default: null
         description: The ending frame to choose from each fMRI run (inclusive), only applied for single runs.
+    returns: []
+    origin: core
+-   name: hcp_parcellate_anat
+    aliases: []
+    path: qx_utilities.hcp.process_hcp.hcp_parcellate_anat
+    language: python
+    call: hcp_parcellate_anat [... processing options]
+    description: Parcellate an anatomical dense scalar (e.g. corrThickness, MyelinMap_BC) using a whole-brain parcellation
+        (*.dlabel.nii).
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: null
+        default: null
+        description: null
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: hcp_parcellate_input_type
+        type: str
+        default: null
+        description: Dense scalar type (e.g. ``MyelinMap_BC`` or ``corrThickness``).
+    -   name: hcp_parcellate_dlabel
+        type: str
+        default: null
+        description: Absolute path to the parcellation ``*.dlabel.nii`` file.
+    -   name: hcp_parcellate_output_name
+        type: str
+        default: null
+        description: Suffix name to append in the output filename.
+    -   name: hcp_parcellate_extract_data
+        type: flag
+        default: 'False'
+        description: If set, also write a ``.csv`` with the parcellated values.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Optional suffix to the session id when multiple variants are run.
     returns: []
     origin: core
 -   name: hcp_post_fix
