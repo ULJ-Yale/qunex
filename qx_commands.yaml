@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-01-04T13:01:56.743704+00:00'
+generated_at: '2026-01-04T17:49:14.684345+00:00'
 source:
     id: core
 commands:
@@ -1050,6 +1050,112 @@ commands:
         description: What sequence information to extract from JSON sidecar files and add to session.txt file. Specify a comma
             separated list of fields or 'all'. See list in session.txt file description below.
     options: []
+    returns: []
+    origin: core
+-   name: dwi_dtifit
+    aliases: []
+    path: qx_utilities/dwi_dtifit.sh
+    language: bash
+    call: dwi_dtifit
+    description: Run FSL's dtifit to fit a diffusion tensor model at each voxel.
+    type: processing.session
+    args: []
+    options:
+    -   name: sessionsfolder
+        type: str
+        default: null
+        description: Path to study folder that contains sessions.
+    -   name: sessions
+        type: str
+        default: null
+        description: The sessions to run.
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: species
+        type: str
+        default: null
+        description: dtifit currently supports processing of human and macaqu data. If processing macaques set this parameter
+            to macaque.
+    -   name: mask
+        type: str
+        default: T1w/Diffusion/nodif_brain_mask
+        description: Set binary mask file.
+    -   name: bvecs
+        type: str
+        default: T1w/Diffusion/bvecs
+        description: b vectors file.
+    -   name: bvals
+        type: str
+        default: T1w/Diffusion/bvals
+        description: b values file.
+    -   name: diffdata
+        type: str
+        default: /T1w/Diffusion/data.nii.gz
+        description: Diffusion data file.
+    -   name: cni
+        type: str
+        default: null
+        description: Input confound regressors [not set by default].
+    -   name: sse
+        type: str
+        default: null
+        description: Output sum of squared errors [not set by default].
+    -   name: wls
+        type: str
+        default: null
+        description: Fit the tensor with weighted least square [not set by default].
+    -   name: kurt
+        type: str
+        default: null
+        description: Output mean kurtosis map (for multi-shell data [not set by default].
+    -   name: kurtdir
+        type: str
+        default: null
+        description: Output parallel/perpendicular kurtosis map (for multi-shell data) [not set by default].
+    -   name: littlebit
+        type: str
+        default: null
+        description: Only process small area of brain [not set by default].
+    -   name: save_tensor
+        type: str
+        default: null
+        description: Save the elements of the tensor [not set by default].
+    -   name: zmin
+        type: str
+        default: null
+        description: Min z [not set by default].
+    -   name: zmax
+        type: str
+        default: null
+        description: Max z [not set by default].
+    -   name: ymin
+        type: str
+        default: null
+        description: Min y [not set by default].
+    -   name: ymax
+        type: str
+        default: null
+        description: Max y [not set by default].
+    -   name: xmin
+        type: str
+        default: null
+        description: Min x [not set by default].
+    -   name: xmax
+        type: str
+        default: null
+        description: Max x [not set by default].
+    -   name: gradnonlin
+        type: str
+        default: null
+        description: Gradient nonlinearity tensor file [not set by default].
+    -   name: scheduler
+        type: str
+        default: null
+        description: 'A string for the cluster scheduler (e.g. PBS or SLURM) followed by relevant options; e.g. for SLURM
+            the string would look like this::'
     returns: []
     origin: core
 -   name: dwi_f99

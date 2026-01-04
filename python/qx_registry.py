@@ -17,7 +17,12 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Callable, Union
-from qx_utilities.general import exceptions as ge
+try:
+    # Preferred when 'python' is on PYTHONPATH
+    from qx_utilities.general import exceptions as ge
+except ModuleNotFoundError:
+    # Back-compat with environments that put 'python/qx_utilities' on PYTHONPATH
+    from general import exceptions as ge
 
 
 # ==============================================================================
@@ -499,6 +504,132 @@ def iter_files(root: Path, suffix: str, *, exclude_dirs: Tuple[str, ...] = ("__p
         for fn in filenames:
             if fn.endswith(suffix):
                 yield Path(dirpath) / fn
+
+
+# ==============================================================================
+#                                                                  BASH INDEXING
+
+_BASH_USAGE_DEF_RE = re.compile(r"^\s*usage\s*\(\s*\)\s*\{\s*$")
+_BASH_HEREDOC_START_RE = re.compile(
+    r"^\s*cat\s*<<(?P<strip>-?)\s*(?P<q>['\"]?)(?P<tag>[A-Za-z0-9_]+)(?P=q)\s*$"
+)
+
+
+def _bash_usage_heredoc(text: str) -> Optional[str]:
+    """Extract the documentation text embedded in a bash script's usage() heredoc.
+
+    We look for:
+
+        usage() {
+            cat << EOF
+            ...doc...
+        EOF
+
+    Returns the heredoc body (without the delimiter lines), or None.
+    """
+
+    lines = text.splitlines()
+    usage_idx: Optional[int] = None
+    for i, ln in enumerate(lines):
+        if _BASH_USAGE_DEF_RE.match(ln):
+            usage_idx = i
+            break
+    if usage_idx is None:
+        return None
+
+    # Find the heredoc start within usage()
+    start_idx: Optional[int] = None
+    tag: Optional[str] = None
+    strip_tabs = False
+    for j in range(usage_idx, len(lines)):
+        m = _BASH_HEREDOC_START_RE.match(lines[j])
+        if not m:
+            continue
+        start_idx = j
+        tag = m.group("tag")
+        strip_tabs = bool(m.group("strip"))
+        break
+
+    if start_idx is None or tag is None:
+        return None
+
+    body: List[str] = []
+    k = start_idx + 1
+    while k < len(lines):
+        ln = lines[k]
+        check = ln.lstrip("\t") if strip_tabs else ln
+        if check.strip() == tag:
+            break
+        body.append(ln)
+        k += 1
+
+    if not body:
+        return None
+    return "\n".join(body).strip("\n")
+
+
+def index_bash_commands(bash_root: Path, *, source_id: str) -> List[CommandInfo]:
+    """Find commands in .sh files under bash_root.
+
+    A file is considered a command if its usage() heredoc contains a qx metadata
+    block (.. qx_command:).
+    """
+
+    bash_root = bash_root.resolve()
+    out: List[CommandInfo] = []
+
+    for shfile in iter_files(bash_root, ".sh"):
+        try:
+            text = shfile.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            text = shfile.read_text(errors="replace")
+
+        doc = _bash_usage_heredoc(text)
+        if not doc:
+            continue
+
+        qx_meta = parse_qx_block_from_docstring(doc)
+        if not qx_meta:
+            continue
+
+        func_name = shfile.stem
+
+        try:
+            call, desc, _qx_meta2, doc_params, doc_returns = parse_command_docstring(
+                doc, file=shfile, func_name=func_name
+            )
+        except ValueError as e:
+            _warn(f"{shfile}:{func_name}: invalid usage() doc block: {e}; command excluded")
+            continue
+
+        # For bash commands the call line is typically just ``<command>``.
+        call_token = (call or "").strip().split()[0] if call else ""
+        cmd_name = (qx_meta.get("name") or call_token or func_name).strip()
+        aliases = parse_aliases(qx_meta.get("aliases"))
+        cmd_type = qx_meta.get("type")
+
+        rel_path = shfile.relative_to(bash_root).as_posix()
+
+        if DEBUG:
+            print(f"    -> registering {rel_path}")
+
+        out.append(
+            CommandInfo(
+                name=cmd_name,
+                aliases=aliases,
+                path=rel_path,            # .sh location relative to bash_root
+                language="bash",
+                call=call,
+                description=desc,
+                type=cmd_type,
+                args=tuple(),
+                options=tuple(doc_params),
+                returns=tuple(doc_returns),
+                origin=source_id,
+            )
+        )
+
+    return out
 
 
 # ------------------------------------------------------------------------------
@@ -1126,12 +1257,13 @@ def build_qx_registry(
     extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
     extension_python_subdir: str = "python",
     extension_matlab_subdir: str = "matlab",
+    extension_bash_subdir: str = "bash",
 ) -> Tuple[Registry, List[Tuple[str, Path]]]:
     """
     ``build_qx_registry()``
 
-    Build core registry at $QUNEXPATH/qx_commands.yaml (python only for core),
-    and build each extension registry at <ext_root>/qx_commands.yaml (python + matlab if present).
+    Build core registry at $QUNEXPATH/qx_commands.yaml (python + matlab + bash for core),
+    and build each extension registry at <ext_root>/qx_commands.yaml (python + matlab + bash if present).
 
     ..  qx_command:
         type: utility
@@ -1164,6 +1296,11 @@ def build_qx_registry(
     if matlab_root.exists():
         core_cmds.extend( index_matlab_commands(matlab_root, source_id="core"))
 
+    # Core Bash
+    bash_root = qunex_root / "bash"
+    if bash_root.exists():
+        core_cmds.extend(index_bash_commands(bash_root, source_id="core"))
+
     core_reg = build_registry_yaml(core_cmds, out=core_registry_yaml, source_id="core")
 
     built_exts: Dict[str, Path] = {}
@@ -1191,6 +1328,10 @@ def build_qx_registry(
             m_root = ext_root / extension_matlab_subdir
             if m_root.exists() and m_root.is_dir():
                 cmds.extend(index_matlab_commands(m_root, source_id=ext_id))
+
+            b_root = ext_root / extension_bash_subdir
+            if b_root.exists() and b_root.is_dir():
+                cmds.extend(index_bash_commands(b_root, source_id=ext_id))
 
             if not cmds:
                 continue  # nothing to build yet
@@ -1355,7 +1496,7 @@ class CommandRegistry:
         Note: path is:
           - python: dotted module.func
           - matlab: relative .m path
-          - bash/r: TBD
+          - r: TBD
         """
         return [(c.name, c.path, c.description, c.language) for c in self.iter()]
 

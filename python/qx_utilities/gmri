@@ -105,6 +105,12 @@ def runCommand(command, args):
             gm.run(qx_command, args)
         return
     
+    # -- is this a bash command?
+    if qx_command.language == "bash":
+        print(f"ERROR: Bash commands are not yet supported through gmri command line interface.")
+        return
+        sys.exit(1)
+
     # -- continue with regular python command
     
     # -- sort arguments
