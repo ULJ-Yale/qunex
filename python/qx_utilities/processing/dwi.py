@@ -44,7 +44,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
     Run FSL's F99 registration for macaque diffusion/structural data.
 
     ..  qx_command:
-        type: processing.session.dwi
+        type: processing.session
         aliases: f99
 
     Description:
@@ -224,7 +224,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     Run FSL's XTRACT (cross-species tractography) command.
 
     ..  qx_command:
-        type: processing.session.dwi
+        type: processing.session
         aliases: fslx
 
     Description:
@@ -520,7 +520,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     Run CUDIMOT NODDI microstructure modelling using GPU acceleration.
 
     ..  qx_command:
-        type: processing.session.dwi
+        type: processing.session
         aliases: noddi
 
     Description:

@@ -52,7 +52,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         additional details.
 
     ..  qx_command:
-        type: processing.session.rapidtide
+        type: processing.session
 
    
 

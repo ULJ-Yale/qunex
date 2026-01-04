@@ -41,7 +41,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     FMRI data analysis.
 
     ..  qx_command:
-        type: processing.session.fsl
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -205,7 +205,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
     Execute FSL's melodic command line tool for ICA decomposition.
 
     ..  qx_command:
-        type: processing.subject.fsl
+        type: processing.subject
 
     Parameters:
         --batchfile (str, default ''):

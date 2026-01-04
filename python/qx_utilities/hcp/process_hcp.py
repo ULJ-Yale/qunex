@@ -513,7 +513,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     Run the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the input images to be named and present in the
@@ -1626,7 +1626,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     Run the FS step of the HCP Pipeline (FreeSurferPipeline.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the previous step (hcp_pre_freesurfer) to have run
@@ -2074,7 +2074,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     Run the PostFS step of the HCP Pipeline (PostFreeSurferPipeline.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the previous step (hcp_freesurfer) to have run
@@ -2497,7 +2497,7 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
     command does the prep work automatically.
 
     ..  qx_command:
-        type: processing.subject.hcp
+        type: processing.subject
 
     Parameters:
         --batchfile (str, default ''):
@@ -2620,7 +2620,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
     Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
 
     ..  qx_command:
-        type: processing.subject.hcp
+        type: processing.subject
         aliases: hcp_lfs
 
     Warning:
@@ -2933,7 +2933,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
 
     ..  qx_command: 
-        type: processing.subject.hcp
+        type: processing.subject
         aliases: hcp_lpfs
 
     Warning:
@@ -3467,7 +3467,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     results in much slower processing speed.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the first HCP preprocessing step (hcp_pre_freesurfer)
@@ -4211,7 +4211,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         specific preprocessing steps.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the first two HCP preprocessing steps
@@ -5961,7 +5961,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     HCP Pipeline .
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects all the previous HCP preprocessing steps
@@ -6642,7 +6642,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -7497,7 +7497,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     Run the PostFix step of HCP Pipeline (PostFix.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -7935,7 +7935,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -8883,7 +8883,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
     Run the MSMAll step of the HCP Pipeline (MSMAllPipeline.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -9887,7 +9887,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
     (MSMAllPipeline.sh with the longitudinal setup).
 
     ..  qx_command:
-        type: processing.subject.hcp
+        type: processing.subject
         aliases: hcp_lmsm
 
     Warning:
@@ -10435,7 +10435,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
     Run the DeDriftAndResample step of the HCP Pipeline.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -11317,7 +11317,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     Run the HCP ASL Pipeline (https://github.com/physimals/hcp-asl).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
         aliases: hcpa
 
     Warning:
@@ -11872,7 +11872,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
     Run the HCP Transmit Bias Individual Only Pipeline.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -12416,7 +12416,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
     Run the HCP Longitudinal Transmit Bias Pipeline.
 
     ..  qx_command:
-        type: processing.subject.hcp
+        type: processing.subject
 
     Parameters:
         --batchfile (str, default ''):
@@ -12892,7 +12892,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
     Run the HCP temporal ICA pipeline (tICAPipeline.sh).
 
     ..  qx_command:
-        type: processing.study.hcp
+        type: processing.study
         aliases: hcp_tica
 
     Warning:
@@ -13721,7 +13721,7 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
     Run the HCP make average dataset pipeline (MakeAverageDataset.sh).
 
     ..  qx_command:
-        type: processing.study.hcp
+        type: processing.study
         aliases: hcp_mad
 
     Warning:
@@ -14038,7 +14038,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     (ApplyAutoRecleanPipeline.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The code expects the input images to be named and present in the QuNex
@@ -14491,7 +14491,7 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     Run the DTI fitting step on HCP diffusion outputs using FSL `dtifit`.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -14634,7 +14634,7 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
     Run the BedpostX GPU step on HCP diffusion outputs using `fslbedpostx_gpu`.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -14782,7 +14782,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     Map the results of the HCP preprocessing to the QuNex folder structure.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     
     Description:
@@ -15397,7 +15397,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     Run the Task fMRI analysis step of the HCP Pipeline (TaskfMRIAnalysis.sh).
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Warning:
         The requirement for this command is a successful completion of the
@@ -15799,7 +15799,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
     Run visual QC for a session.
 
     ..  qx_command:
-        type: processing.session.hcp
+        type: processing.session
 
     Parameters:
         --qc_modality (str, default 'BOLD'):

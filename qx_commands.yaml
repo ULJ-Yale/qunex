@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-01-03T10:19:15.353420+00:00'
+generated_at: '2026-01-04T13:01:56.743704+00:00'
 source:
     id: core
 commands:
@@ -119,7 +119,7 @@ commands:
     language: python
     call: checkForFreeSurferData [... processing options]
     description: Check for (and optionally copy) existing FreeSurfer outputs into the session folder.
-    type: processing.session.fs
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -498,7 +498,7 @@ commands:
     language: python
     call: create_bold_list [... processing options]
     description: Create a list with paths to each session's processed BOLD files.
-    type: processing.session.simple
+    type: processing.study
     args:
     -   name: sinfo
         type: null
@@ -1059,7 +1059,7 @@ commands:
     language: python
     call: dwi_f99 [... processing options]
     description: Run FSL's F99 registration for macaque diffusion/structural data.
-    type: processing.session.dwi
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -1108,7 +1108,7 @@ commands:
     language: python
     call: dwi_noddi_gpu [... processing options]
     description: Run CUDIMOT NODDI microstructure modelling using GPU acceleration.
-    type: processing.session.dwi
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -1154,7 +1154,7 @@ commands:
         description: Whether to use the Watson or the Bingham NODDI model.
     -   name: cuda_version
         type: str
-        default: '10.2'
+        default: '11.3'
         description: Which CUDA version to use. Supports 10.2, 11.3 and 12.
     returns: []
     origin: core
@@ -1165,7 +1165,7 @@ commands:
     language: python
     call: dwi_xtract [... processing options]
     description: Run FSL's XTRACT (cross-species tractography) command.
-    type: processing.session.dwi
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -2125,7 +2125,7 @@ commands:
     language: python
     call: fsl_feat [... processing options]
     description: Execute FSL's feat software tool for high quality model-based FMRI data analysis.
-    type: processing.session.fsl
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -2177,7 +2177,7 @@ commands:
     language: python
     call: fsl_melodic [... processing options]
     description: Execute FSL's melodic command line tool for ICA decomposition.
-    type: processing.subject.fsl
+    type: processing.subject
     args:
     -   name: sinfo
         type: null
@@ -3044,7 +3044,7 @@ commands:
     language: python
     call: hcp_apply_auto_reclean [... processing options]
     description: Run the ApplyAutoRecleanPipeline step of HCP Pipeline (ApplyAutoRecleanPipeline.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3145,7 +3145,7 @@ commands:
     language: python
     call: hcp_asl [... processing options]
     description: Run the HCP ASL Pipeline (https://github.com/physimals/hcp-asl).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3275,7 +3275,7 @@ commands:
     language: python
     call: hcp_bedpostx [... processing options]
     description: Run the BedpostX GPU step on HCP diffusion outputs using `fslbedpostx_gpu`.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3322,7 +3322,7 @@ commands:
     language: python
     call: hcp_dedrift_and_resample [... processing options]
     description: Run the DeDriftAndResample step of the HCP Pipeline.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3466,7 +3466,7 @@ commands:
     description: Run the Diffusion step of HCP Pipeline (DiffPreprocPipeline.sh). This command uses GPUs by default so CUDA
         Libraries are required for this to work. Use the hcp_nogpu flag to run without a GPU if needed, note that this results
         in much slower processing speed.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3595,7 +3595,7 @@ commands:
     language: python
     call: hcp_dtifit [... processing options]
     description: Run the DTI fitting step on HCP diffusion outputs using FSL `dtifit`.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3642,7 +3642,7 @@ commands:
     language: python
     call: hcp_fmri_surface [... processing options]
     description: Run the fMRI Surface (GenericfMRISurfaceProcessingPipeline.sh) step of the HCP Pipeline .
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3741,7 +3741,7 @@ commands:
     language: python
     call: hcp_fmri_volume [... processing options]
     description: Run the fMRI Volume (GenericfMRIVolumeProcessingPipeline.sh) step of HCP Pipeline.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -3952,7 +3952,7 @@ commands:
     language: python
     call: hcp_freesurfer [... processing options]
     description: Run the FS step of the HCP Pipeline (FreeSurferPipeline.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -4076,7 +4076,7 @@ commands:
     language: python
     call: hcp_icafix [... processing options]
     description: Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -4237,7 +4237,7 @@ commands:
     language: python
     call: hcp_long_freesurfer [... processing options]
     description: Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
-    type: processing.subject.hcp
+    type: processing.subject
     args:
     -   name: sinfo
         type: null
@@ -4318,7 +4318,7 @@ commands:
     language: python
     call: hcp_long_msmall [... processing options]
     description: Run the HCP Longitudinal MSMAll Pipeline (MSMAllPipeline.sh with the longitudinal setup).
-    type: processing.subject.hcp
+    type: processing.subject
     args:
     -   name: sinfo
         type: null
@@ -4425,7 +4425,7 @@ commands:
     language: python
     call: hcp_long_post_freesurfer [... processing options]
     description: Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
-    type: processing.subject.hcp
+    type: processing.subject
     args:
     -   name: sinfo
         type: null
@@ -4584,7 +4584,7 @@ commands:
     language: python
     call: hcp_long_transmit_bias [... processing options]
     description: Run the HCP Longitudinal Transmit Bias Pipeline.
-    type: processing.subject.hcp
+    type: processing.subject
     args:
     -   name: sinfo
         type: null
@@ -4728,7 +4728,7 @@ commands:
     language: python
     call: hcp_make_average_dataset [... processing options]
     description: Run the HCP make average dataset pipeline (MakeAverageDataset.sh).
-    type: processing.study.hcp
+    type: processing.study
     args:
     -   name: sessions
         type: null
@@ -4823,7 +4823,7 @@ commands:
     language: python
     call: hcp_msmall [... processing options]
     description: Run the MSMAll step of the HCP Pipeline (MSMAllPipeline.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -5002,7 +5002,7 @@ commands:
     language: python
     call: hcp_post_fix [... processing options]
     description: Run the PostFix step of HCP Pipeline (PostFix.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -5084,7 +5084,7 @@ commands:
     language: python
     call: hcp_post_freesurfer [... processing options]
     description: Run the PostFS step of the HCP Pipeline (PostFreeSurferPipeline.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -5207,7 +5207,7 @@ commands:
     language: python
     call: hcp_pre_freesurfer [... processing options]
     description: Run the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -5397,7 +5397,7 @@ commands:
     call: hcp_prep_long [... processing options]
     description: Prepare the data for longitudinal processing with HCP longitudinal pipelines. Not needed if the starting
         point is hcp_long_freesurfer as that command does the prep work automatically.
-    type: processing.subject.hcp
+    type: processing.subject
     args:
     -   name: sinfo
         type: null
@@ -5441,7 +5441,7 @@ commands:
     language: python
     call: hcp_reapply_fix [... processing options]
     description: Run the ReApplyFix step of HCP Pipeline (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -5533,7 +5533,7 @@ commands:
     language: python
     call: hcp_run_qc [... processing options]
     description: Run visual QC for a session.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -5612,7 +5612,7 @@ commands:
     language: python
     call: hcp_task_fmri_analysis [... processing options]
     description: Run the Task fMRI analysis step of the HCP Pipeline (TaskfMRIAnalysis.sh).
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -5744,7 +5744,7 @@ commands:
     language: python
     call: hcp_temporal_ica [... processing options]
     description: Run the HCP temporal ICA pipeline (tICAPipeline.sh).
-    type: processing.study.hcp
+    type: processing.study
     args:
     -   name: sessions
         type: null
@@ -5931,7 +5931,7 @@ commands:
     language: python
     call: hcp_transmit_bias_individual [... processing options]
     description: Run the HCP Transmit Bias Individual Only Pipeline.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -6631,7 +6631,7 @@ commands:
     language: python
     call: map_hcp_data [... processing options]
     description: Map the results of the HCP preprocessing to the QuNex folder structure.
-    type: processing.session.hcp
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -7167,7 +7167,7 @@ commands:
     language: python
     call: rapidtide [... processing options]
     description: Run rapidtide command for similarity function calculation on BOLD fMRI data.
-    type: processing.session.rapidtide
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -7372,7 +7372,7 @@ commands:
     language: python
     call: runBasicStructuralSegmentation [... processing options]
     description: Run basic structural segmentation (BET + FAST) on NIL preprocessed images.
-    type: processing.session.fs
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -7423,7 +7423,7 @@ commands:
     language: python
     call: runFreeSurferFullSegmentation [... processing options]
     description: Run full FreeSurfer segmentation on NIL preprocessed images.
-    type: processing.session.fs
+    type: processing.session
     args:
     -   name: sinfo
         type: null
@@ -7466,7 +7466,7 @@ commands:
     language: python
     call: runFreeSurferSubcorticalSegmentation [... processing options]
     description: Run subcortical-only FreeSurfer segmentation on NIL preprocessed images.
-    type: processing.session.fs
+    type: processing.session
     args:
     -   name: sinfo
         type: null

@@ -43,7 +43,7 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
     Create a list with paths to each session's processed BOLD files.
 
     ..  qx_command:
-        type: processing.session.simple
+        type: processing.study
 
     Parameters:
         --sessionsfolder (str, default '.'): 

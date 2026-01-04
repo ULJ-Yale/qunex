@@ -48,7 +48,7 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
     Run basic structural segmentation (BET + FAST) on NIL preprocessed images.
 
     ..  qx_command:
-        type: processing.session.fs
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -184,7 +184,7 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
     session folder.
 
     ..  qx_command:
-        type: processing.session.fs
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -310,7 +310,7 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
     Run full FreeSurfer segmentation on NIL preprocessed images.
 
     ..  qx_command:
-        type: processing.session.fs
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -461,7 +461,7 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
     Run subcortical-only FreeSurfer segmentation on NIL preprocessed images.
 
     ..  qx_command:
-        type: processing.session.fs
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
