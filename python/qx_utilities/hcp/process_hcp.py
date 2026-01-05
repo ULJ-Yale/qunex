@@ -2528,7 +2528,6 @@ def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
         f = partial(
             _execute_hcp_prep_long,
             options,
-            overwrite,
         )
         results = processPoolExecutor.map(f, subjects_list)
 
@@ -2569,7 +2568,7 @@ def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
     return (r, (subjectids, report, failed))
 
 
-def _execute_hcp_prep_long(options, overwrite, subject):
+def _execute_hcp_prep_long(options, subject):
     # prepare return variables
     r = ""
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -2589,19 +2588,26 @@ def _execute_hcp_prep_long(options, overwrite, subject):
         os.makedirs(study_folder)
 
     # symlink sessions
-    i = 0
-    for i in range(len(sessions_list)):
+    for i, _ in enumerate(sessions_list):
         session = sessions_list[i]
         hcp = hcp_list[i]
         source_dir = os.path.join(hcp, session)
         # check that source exists
         if not os.path.exists(source_dir):
-            r += f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!"
+            r += f"\n---> ERROR: {source_dir} does not exists, cannot map into the longitudinal folder structure!"
             report["failed"] = subject_id
 
         target_dir = os.path.join(study_folder, session)
         gc.link_or_copy(source_dir, target_dir, symlink=True)
-        i += 1
+
+        # symlink long sessions back
+        session_long = f"{session}.long.{options['hcp_longitudinal_template']}"
+        source_long_dir = os.path.join(hcp, session_long)
+        target_long_dir = os.path.join(study_folder, session_long)
+        # create root long dir if needed
+        if not os.path.exists(source_long_dir):
+            os.makedirs(source_long_dir)
+        gc.link_or_copy(source_long_dir, target_long_dir, symlink=True)
 
     if len (report["failed"]) == 0:
         report["done"] = subject_id
@@ -2781,24 +2787,19 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
 
 
 def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
-    # prepare return variables
-    r = ""
-    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    prep_result = _execute_hcp_prep_long(options, subject)
+    r = prep_result["r"]
+    report = prep_result["report"]
 
     # get subject data
     subject_id = subject["id"]
-    hcp_list = subject["hcp"]
     sessions_list = subject["sessions"]
 
-    # sort out the folder structure
-    sessionsfolder = options["sessionsfolder"]
-    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-    if not os.path.exists(subjectsfolder):
-        os.makedirs(subjectsfolder)
+    # studyfolder
+    subjectsfolder = options["sessionsfolder"].replace("sessions", "subjects")
     study_folder = os.path.join(subjectsfolder, subject_id)
-    if not os.path.exists(study_folder):
-        os.makedirs(study_folder)
 
+    # main long folder
     longitudinal_template = options["hcp_longitudinal_template"]
     long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
     # exit if overwrite is not set, else cleanup
@@ -2808,21 +2809,6 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
     else:
         if os.path.exists(long_dir):
             shutil.rmtree(long_dir)
-
-    # symlink sessions
-    i = 0
-    for i in range(len(sessions_list)):
-        session = sessions_list[i]
-        hcp = hcp_list[i]
-        source_dir = os.path.join(hcp, session)
-        # check that source exists
-        if not os.path.exists(source_dir):
-            r += f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!"
-            run = False
-
-        target_dir = os.path.join(study_folder, session)
-        gc.link_or_copy(source_dir, target_dir, symlink=True)
-        i += 1
 
     # logdir
     logdir = os.path.join(
@@ -2918,7 +2904,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            with open(endlog, "w") as log_file:
+            with open(endlog, "w", encoding="utf-8") as log_file:
                 for filename in os.listdir(logdir):
                     file_path = os.path.join(logdir, filename)
 
@@ -12710,15 +12696,6 @@ def _execute_hcp_long_transmit_bias(sinfo, options, overwrite, run, hcp_base, su
     # get subject data
     subject_id = subject["id"]
     sessions_list = subject["sessions"]
-
-    # sort out the folder structure
-    sessionsfolder = options["sessionsfolder"]
-    subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-    if not os.path.exists(subjectsfolder):
-        os.makedirs(subjectsfolder)
-    study_folder = os.path.join(subjectsfolder, subject_id)
-    if not os.path.exists(study_folder):
-        os.makedirs(study_folder)
 
     # logdir
     logdir = os.path.join(
