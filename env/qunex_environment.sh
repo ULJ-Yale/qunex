@@ -33,18 +33,6 @@
 #
 #~ND~END~
 
-# -- Set general options functions
-opts_GetOpt() {
-sopt="$1"
-shift 1
-for fn in "$@" ; do
-    if [ `echo ${fn} | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-        echo "${fn}" | sed "s/^${sopt}=//"
-        return 0
-    fi
-done
-}
-
 # ------------------------------------------------------------------------------
 # -- General help usage function
 # ------------------------------------------------------------------------------
@@ -93,7 +81,7 @@ if [[ -e /opt/.container ]]; then
         export QUNEX_SOURCED="TRUE"
     else
         # -- Already sourced outside, so exit
-        return
+        exit 0
     fi
 
     # -- First unset all conflicting variables in the environment
