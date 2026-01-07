@@ -162,11 +162,31 @@ def getHCPPaths(sinfo, options):
 
         # raw_psn_t1w and # raw_nopsn_t1w
         if filename:
-            d["hcp_raw_psn_t1w"] = os.path.join(d["source"], filename, "OTHER_FILES", f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
-            d["hcp_raw_nopsn_t1w"] = os.path.join(d["source"], filename, "T1w_MPR_vNav_4e_e1e2_mean", f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
+            d["hcp_raw_psn_t1w"] = os.path.join(
+                d["source"],
+                filename,
+                "OTHER_FILES",
+                f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz",
+            )
+            d["hcp_raw_nopsn_t1w"] = os.path.join(
+                d["source"],
+                filename,
+                "T1w_MPR_vNav_4e_e1e2_mean",
+                f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz",
+            )
         else:
-            d["hcp_raw_psn_t1w"] = os.path.join(d["source"], "T1w", "OTHER_FILES", f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz")
-            d["hcp_raw_nopsn_t1w"] = os.path.join(d["source"], "T1w", "T1w_MPR_vNav_4e_e1e2_mean", f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz")
+            d["hcp_raw_psn_t1w"] = os.path.join(
+                d["source"],
+                "T1w",
+                "OTHER_FILES",
+                f"{sinfo['id']}_T1w_MPR_vNav_Norm_4e_RMS.nii.gz",
+            )
+            d["hcp_raw_nopsn_t1w"] = os.path.join(
+                d["source"],
+                "T1w",
+                "T1w_MPR_vNav_4e_e1e2_mean",
+                f"{sinfo['id']}_T1w_MPR_vNav_4e_e1e2_mean.nii.gz",
+            )
     except:
         d["T1w"] = "NONE"
 
@@ -904,14 +924,18 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if "DwellTime" in T2w and checkInlineParameterUse(
                         "T2w", "DwellTime", options
                     ):
-                        options["hcp_t2samplespacing"] = f"{float(T2w['DwellTime']):.10f}"
+                        options["hcp_t2samplespacing"] = (
+                            f"{float(T2w['DwellTime']):.10f}"
+                        )
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (
                             options["hcp_t2samplespacing"]
                         )
                     elif "EchoSpacing" in T2w and checkInlineParameterUse(
                         "T2w", "EchoSpacing", options
                     ):
-                        options["hcp_t2samplespacing"] = f"{float(T2w['EchoSpacing']):.10f}"
+                        options["hcp_t2samplespacing"] = (
+                            f"{float(T2w['EchoSpacing']):.10f}"
+                        )
                         r += "\n---> T2w image specific EchoSpacing: %s s" % (
                             options["hcp_t2samplespacing"]
                         )
@@ -2609,7 +2633,7 @@ def _execute_hcp_prep_long(options, subject):
             os.makedirs(source_long_dir)
         gc.link_or_copy(source_long_dir, target_long_dir, symlink=True)
 
-    if len (report["failed"]) == 0:
+    if len(report["failed"]) == 0:
         report["done"] = subject_id
 
     return {"r": r, "report": report}
@@ -5108,34 +5132,29 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             )
 
             # -- set echospacing
-            if dcset:
-                if "EchoSpacing" in boldinfo and checkInlineParameterUse(
-                    "BOLD", "EchoSpacing", options
-                ):
-                    echospacing = boldinfo["EchoSpacing"]
-                    r += "\n     ... using image specific EchoSpacing: %s s" % (
-                        echospacing
-                    )
-                elif options["hcp_bold_echospacing"]:
-                    echospacing = options["hcp_bold_echospacing"]
-                    r += "\n     ... using study general EchoSpacing: %s s" % (
-                        echospacing
-                    )
-                else:
-                    # try to set from the JSON sidecar
-                    json_sidecar = boldimgs[0].replace(".nii.gz", ".json")
-                    if os.path.exists(json_sidecar):
-                        r += "\n     ... trying to set hcp_bold_echospacing from the JSON sidecar"
-                        with open(json_sidecar, "r") as file:
-                            sidecar_data = json.load(file)
-                            if "EffectiveEchoSpacing" in sidecar_data:
-                                echospacing = sidecar_data["EffectiveEchoSpacing"]
-                                r += f"\n     ... hcp_bold_echospacing set to {echospacing}"
+            if "EchoSpacing" in boldinfo and checkInlineParameterUse(
+                "BOLD", "EchoSpacing", options
+            ):
+                echospacing = boldinfo["EchoSpacing"]
+                r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)
+            elif options["hcp_bold_echospacing"]:
+                echospacing = options["hcp_bold_echospacing"]
+                r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
+            else:
+                # try to set from the JSON sidecar
+                json_sidecar = boldimgs[0].replace(".nii.gz", ".json")
+                if os.path.exists(json_sidecar):
+                    r += "\n     ... trying to set hcp_bold_echospacing from the JSON sidecar"
+                    with open(json_sidecar, "r") as file:
+                        sidecar_data = json.load(file)
+                        if "EffectiveEchoSpacing" in sidecar_data:
+                            echospacing = sidecar_data["EffectiveEchoSpacing"]
+                            r += f"\n     ... hcp_bold_echospacing set to {echospacing}"
 
-                    if not options["hcp_bold_echospacing"]:
-                        echospacing = ""
-                        r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
-                        boldok = False
+                if not options["hcp_bold_echospacing"]:
+                    echospacing = ""
+                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
+                    boldok = False
 
             # --- check for spin-echo-fieldmap image
             if (
@@ -5580,10 +5599,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         else:
             # if moveref equals first then process first one in serial
-            if (
-                not options["longitudinal"]
-                and options["hcp_bold_movref"] == "first"
-            ):
+            if not options["longitudinal"] and options["hcp_bold_movref"] == "first":
                 # process first one
                 b = boldsData[0]
                 r, report = executeSingleHCPfMRIVolume(
@@ -11634,7 +11650,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                             )
                         else:
                             fmap_pa_file = glob.glob(
-                                os.path.join(hcp["ASL_source"], "*SpinEchoFieldMap_PA*.nii.gz")
+                                os.path.join(
+                                    hcp["ASL_source"], "*SpinEchoFieldMap_PA*.nii.gz"
+                                )
                             )
                             if len(fmap_pa_file) == 0:
                                 r += (
@@ -11681,13 +11699,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         # build the command
         if run:
             comm = (
-                '%(script)s \
+                "%(script)s \
                 --subdir %(subdir)s \
                 --subid %(subid)s \
                 --mbpcasl %(mbpcasl)s \
                 --fmap_ap %(fmap_ap)s \
                 --fmap_pa %(fmap_pa)s \
-                --regname %(regname)s'
+                --regname %(regname)s"
                 % {
                     "script": "process_hcp_asl",
                     "subdir": os.path.join(sinfo["hcp"], sinfo["id"]),
@@ -11705,7 +11723,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
             )
             if gdcfile != "NONE":
-                comm += f'                --grads {gdcfile}'
+                comm += f"                --grads {gdcfile}"
 
             # struct
             # get struct files
@@ -11724,12 +11742,16 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --sbrain {t1w_brain_file}"
 
             # wmparc
-            wmparc_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz")
+            wmparc_file = os.path.join(
+                sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz"
+            )
             if os.path.exists(wmparc_file):
                 comm += f"                --wmparc {wmparc_file}"
 
             # ribbon
-            ribbon_file = os.path.join(sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz")
+            ribbon_file = os.path.join(
+                sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz"
+            )
             if os.path.exists(ribbon_file):
                 comm += f"                --ribbon {ribbon_file}"
 
@@ -11831,10 +11853,12 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                     run = False
                 # replace path
-                longitudinal_study_dir = os.path.join(studyfolder, "subjects", sinfo["subject"])
+                longitudinal_study_dir = os.path.join(
+                    studyfolder, "subjects", sinfo["subject"]
+                )
 
                 comm += f"                --longitudinal_template=\"{options['hcp_longitudinal_template']}\""
-                comm += f"                --longitudinal_study_dir=\"{longitudinal_study_dir}\""
+                comm += f'                --longitudinal_study_dir="{longitudinal_study_dir}"'
                 comm += "                --is_longitudinal"
 
             # -- Report command
@@ -11853,7 +11877,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 if not options["longitudinal"]:
                     logtags = options["logtag"]
                 else:
-                    logtags = ["long", options['hcp_longitudinal_template']]
+                    logtags = ["long", options["hcp_longitudinal_template"]]
 
                 r, _, report, failed = pc.runExternalForFile(
                     None,
@@ -12346,16 +12370,18 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> Setting the hcp_raw_psn_t1w automatically"
                     comm += f"                --raw-psn-t1w={hcp['hcp_raw_psn_t1w']}"
                 else:
-                    comm += f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
+                    comm += (
+                        f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
+                    )
 
             if options["hcp_raw_nopsn_t1w"]:
                 if options["hcp_raw_nopsn_t1w"] == "auto":
                     r += "\n---> Setting the hcp_raw_nopsn_t1w automatically"
-                    comm += f"                --raw-nopsn-t1w={hcp['hcp_raw_nopsn_t1w']}"
-                else:
                     comm += (
-                        f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
+                        f"                --raw-nopsn-t1w={hcp['hcp_raw_nopsn_t1w']}"
                     )
+                else:
+                    comm += f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
 
             if options["hcp_transmit_res"]:
                 comm += f"                --transmit-res={options['hcp_transmit_res']}"
@@ -14287,7 +14313,13 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         ppe = ProcessPoolExecutor(parelements)
         # process
         f = partial(
-            execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run, single_fix
+            execute_hcp_apply_auto_reclean,
+            sinfo,
+            options,
+            overwrite,
+            hcp,
+            run,
+            single_fix,
         )
         results = ppe.map(f, reclean_elements)
 
