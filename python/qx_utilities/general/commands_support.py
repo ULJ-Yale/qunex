@@ -274,6 +274,12 @@ deprecated_parameters = {
     "PEdir": "pedir",
     "sequenceinfo": "add_json_info",
     "hcp_icafix_traindata": "hcp_icafix_model",
+
+    # parcellate_anat -> hcp_parcellate_anat (legacy parameter name mapping)
+    "inputdatatype": "hcp_parcellate_input_type",
+    "parcellationfile": "hcp_parcellate_dlabel",
+    "outname": "hcp_parcellate_output_name",
+    "extractdata": "hcp_parcellate_extract_data",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

@@ -90,8 +90,9 @@ def runCommand(command, args):
         print(f"ERROR: Command '{command}' not recognized. Please run qunex -l to see list of valid commands.")
         sys.exit(1)
 
+    
     # -- is this a processing command?
-    if qx_command.type.startswith("processing"):
+    if qx_command.language == "python" and qx_command.type.startswith("processing"):
         gp.run(qx_command, args)
         return
     
@@ -106,11 +107,10 @@ def runCommand(command, args):
         return
     
     # -- is this a bash command?
-    if qx_command.language == "bash":
-        print(f"ERROR: Bash commands are not yet supported through gmri command line interface.")
+    if qx_command.language != "python":
+        print(f"ERROR: Commands in {qx_command.language} are not yet supported through gmri command line interface. Please see QuNex documentation for usage instructions.")
         return
-        sys.exit(1)
-
+    
     # -- continue with regular python command
     
     # -- sort arguments
@@ -417,6 +417,9 @@ def print_help(com):
             gm.help(com)
 
         # --- print error
+        elif cmd and cmd.language == "bash":
+            print(f"\nBash command help is not yet supported through gmri command line interface.\n")
+
         else:
             print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")
 

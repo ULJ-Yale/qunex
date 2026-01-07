@@ -16,13 +16,17 @@ usage() {
     cat << EOF
 ``run_qc``
 
-This function runs the QC preprocessing for a specified modality / processing
-step.
+Run QC preprocessing for a specified modality / processing step.
 
-Currently Supported: ${SupportedQC}
+Notes: 
+    Currently Supported modalities: ${SupportedQC}
 
-This function is compatible with both legacy data [without T2w scans] and
-HCP-compliant data [with T2w scans and DWI].
+    This function is compatible with both legacy data [without T2w scans] and
+    HCP-compliant data [with T2w scans and DWI].
+
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Parameters:
     --sessionsfolder (str):

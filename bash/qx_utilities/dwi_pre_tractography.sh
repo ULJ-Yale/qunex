@@ -38,12 +38,15 @@ usage() {
     cat << EOF
 ``dwi_pre_tractography``
 
-This function runs the Pretractography Dense trajectory space generation.
+Run the Pretractography Dense trajectory space generation.
 
-Note that this is a very quick function to run (less than 5min) so no overwrite
-options exist.
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Warning:
+    This is a very quick function to run (less than 5min) so no overwrite
+    options exist.
 
     It explicitly assumes the Human Connectome Project folder structure for
     preprocessing and completed diffusion and bedpostX processing.

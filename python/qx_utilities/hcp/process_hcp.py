@@ -2555,9 +2555,6 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         doHCPOptionsCheck(options, "hcp_prep_long")
         hcp = _check_hcp_info(sinfo, options)
         
-        # TODO: check T1w == 'NONE' for
-        # hcp = getHCPPaths(sinfo[0], options)
-
         # sort out the folder structure
         sessionsfolder = options["sessionsfolder"]
         subjectsfolder = sessionsfolder.replace("sessions", "subjects")
