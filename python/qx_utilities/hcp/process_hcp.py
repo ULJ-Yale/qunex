@@ -5132,29 +5132,34 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             )
 
             # -- set echospacing
-            if "EchoSpacing" in boldinfo and checkInlineParameterUse(
-                "BOLD", "EchoSpacing", options
-            ):
-                echospacing = boldinfo["EchoSpacing"]
-                r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)
-            elif options["hcp_bold_echospacing"]:
-                echospacing = options["hcp_bold_echospacing"]
-                r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
-            else:
-                # try to set from the JSON sidecar
-                json_sidecar = boldimgs[0].replace(".nii.gz", ".json")
-                if os.path.exists(json_sidecar):
-                    r += "\n     ... trying to set hcp_bold_echospacing from the JSON sidecar"
-                    with open(json_sidecar, "r") as file:
-                        sidecar_data = json.load(file)
-                        if "EffectiveEchoSpacing" in sidecar_data:
-                            echospacing = sidecar_data["EffectiveEchoSpacing"]
-                            r += f"\n     ... hcp_bold_echospacing set to {echospacing}"
+            if dcset:
+                if "EchoSpacing" in boldinfo and checkInlineParameterUse(
+                    "BOLD", "EchoSpacing", options
+                ):
+                    echospacing = boldinfo["EchoSpacing"]
+                    r += "\n     ... using image specific EchoSpacing: %s s" % (
+                        echospacing
+                    )
+                elif options["hcp_bold_echospacing"]:
+                    echospacing = options["hcp_bold_echospacing"]
+                    r += "\n     ... using study general EchoSpacing: %s s" % (
+                        echospacing
+                    )
+                else:
+                    # try to set from the JSON sidecar
+                    json_sidecar = boldimgs[0].replace(".nii.gz", ".json")
+                    if os.path.exists(json_sidecar):
+                        r += "\n     ... trying to set hcp_bold_echospacing from the JSON sidecar"
+                        with open(json_sidecar, "r") as file:
+                            sidecar_data = json.load(file)
+                            if "EffectiveEchoSpacing" in sidecar_data:
+                                echospacing = sidecar_data["EffectiveEchoSpacing"]
+                                r += f"\n     ... hcp_bold_echospacing set to {echospacing}"
 
-                if not options["hcp_bold_echospacing"]:
-                    echospacing = ""
-                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
-                    boldok = False
+                    if not options["hcp_bold_echospacing"]:
+                        echospacing = ""
+                        r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
+                        boldok = False
 
             # --- check for spin-echo-fieldmap image
             if (
