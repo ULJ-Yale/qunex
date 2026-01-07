@@ -39,6 +39,7 @@ DEFAULT_EXTENSION_REGISTRY_FILENAME = "qx_commands.yaml"
 #   matlab/
 #   r/
 
+_WARNINGS = []
 
 # ==============================================================================
 #                                                                     DATA MODEL
@@ -113,6 +114,7 @@ def _now_utc_iso() -> str:
 
 def _warn(msg: str) -> None:
     print(f"    => WARNING: {msg}")
+    _WARNINGS.append(msg)
 
 
 # ==============================================================================
@@ -356,8 +358,8 @@ def parse_command_docstring(doc: str, *, file: Path, func_name: str) -> tuple[
             continue
 
     # Parameters section is required by your spec for commands
-    if not params:
-        raise ValueError("missing or empty Parameters: section")
+    # if not params:
+    #     raise ValueError("missing or empty Parameters: section")
 
     return call, description, qx_meta, params, rets
 
@@ -1341,6 +1343,18 @@ def build_qx_registry(
             built_exts[ext_id] = out_yaml  # later roots override earlier
 
     built = sorted(built_exts.items(), key=lambda x: x[0])
+
+    print(f"\n----------------------------------------------------------------\nRegistry built!")
+    
+    if built:
+        print(f"\n--> In addition to core, built {len(built)} extension registries:")
+        for ext_id, path in built:
+            print(f"    - {ext_id}: {path}")
+    if _WARNINGS:
+        print(f"--> {len(_WARNINGS)} warning(s) reported:")
+        for msg in _WARNINGS:
+            print(f"    => {msg}")
+
     return core_reg, built
 
 

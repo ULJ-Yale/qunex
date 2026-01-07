@@ -14,9 +14,13 @@ usage() {
     cat << EOF
 ``parcellate_anat``
 
-This function implements parcellation on the dense cortical thickness OR myelin
-files using a whole-brain parcellation (e.g. Glasser parcellation with
-subcortical labels included).
+Run parcellation on the dense cortical thickness OR myelin files using a 
+whole-brain parcellation (e.g. Glasser parcellation with subcortical labels 
+included).
+
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Parameters:
     --sessionsfolder (str):

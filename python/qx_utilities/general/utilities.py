@@ -36,7 +36,7 @@ import qx_utilities.processing.core as gpc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.filelock as fl
 import qx_utilities.general.parser as parser
-import qx_utilities.general.all_commands as gac
+from qx_registry import qx_commands
 
 
 parameterTemplateHeader = """#  Parameters file
@@ -2191,25 +2191,6 @@ def create_conc(
         )
 
 
-def _is_qunex_command(command):
-    """
-    Check if the command is a QuNex command.
-
-    Parameters:
-        command (str): The command to check.
-    """
-    if command in gac.partial_commands:
-        return True
-
-    for full_name, _, _ in gac.all_qunex_commands:
-        full_name = full_name.split(".")[-1]
-        if full_name == command:
-            return True
-
-    return False
-
-
-
 def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfolder=None, eargs=None):
     """
     ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [startwith=None] [logfolder=None] [<extra arguments>]``
@@ -2811,7 +2792,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 print(f"    ... done [{external_path}], see [{done_log}]", file=log)
                 os.rename(log_path, done_log)
 
-        elif _is_qunex_command(command_name):
+        elif qx_commands.get(command_name) is not None:
             # override params with those from eargs (passed because of parallelization on a higher level)
             if eargs is not None:
                 # do not add parameter if it is flagged as removed
@@ -2830,12 +2811,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                     command_parameters[parameter] = value
 
             # remove parameters that are not allowed
-            import qx_utilities.general.commands as gcom
+            qx_command = qx_commands.get(command_name)
 
-            if command_name in gcom.commands:
-                allowed_parameters = list(gcom.commands.get(command_name)["args"]) + [
-                    "logfolder"
-                ]
+            if qx_command.type == "utility" and qx_command.language == "python":
+                allowed_parameters = list([e.name for e in qx_command.args] + ["logfolder"])
                 if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
                     allowed_parameters += gcs.extra_parameters
 

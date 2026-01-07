@@ -14,12 +14,11 @@ usage() {
     cat << EOF
 ``dwi_probtrackx_dense_gpu``
 
-This function runs the probtrackxgpu dense whole-brain connectome generation by
+Run the probtrackxgpu dense whole-brain connectome generation by
 calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh.
 
 Warning:
-
-    It explicitly assumes the Human Connectome Project folder structure and
+    The command assumes the Human Connectome Project folder structure and
     completed dwi_bedpostx_gpu and dwi_pre_tractography functions processing:
 
     - HCP Pipelines
@@ -36,6 +35,10 @@ Warning:
     T1w images need to be in MNINonLinear space here::
 
         <study_folder>/<session>/hcp/<session>/MNINonLinear
+
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Parameters:
     --sessionsfolder (str):
