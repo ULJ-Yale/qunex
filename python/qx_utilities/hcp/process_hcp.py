@@ -4091,7 +4091,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 comm += "                --gpu=False"
             else:
                 comm += "                --gpu=True"
-                comm += "                --cuda-version=11"
+                comm += "                --cuda-version=10.2"
 
             # create dummy bvals and bvecs if demanded
             if options["hcp_dwi_dummy_bval_bvec"]:
