@@ -5459,6 +5459,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> ERROR: SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP or TOPUP_MISMATCHED!"
                     run = False
 
+            # --- OnScanner
+            elif options["hcp_bold_dcmethod"].lower() == "onscanner":
+                r += "\n     ... OnScanner distortion correction used "
+
             # --- ERROR
             else:
                 r += "\n     ... ERROR: Issues detected with distortion correction setup! Please check related parameters!"
