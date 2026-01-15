@@ -559,7 +559,7 @@ export HCPPIPEDIR_dMRITract=${QUNEXPATH}/bash/qx_utilities/diffusion_tractograph
 export HCPPIPEDIR_dMRITractFull=${QUNEXPATH}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
 export HCPPIPEDIR_dMRILegacy=${QUNEXPATH}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
-export DEFAULT_CUDA_VERSION="10.2";
+export DEFAULT_CUDA_VERSION="11.0";
 export DEFAULT_CUDA_VERSION_CUDIMOT="11.3";
 
 # ------------------------------------------------------------------------------
