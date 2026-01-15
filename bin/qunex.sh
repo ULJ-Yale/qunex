@@ -169,8 +169,8 @@ bash_call_execute() {
         mkdir ${RunChecksFolder} &> /dev/null
     fi
 
-    # -- Set and generate temp run_turnkey unit tests folder
-    ComRunFolder="${StudyFolder}/processing/scripts/run_turnkey"
+    # -- Set and generate temp run folder
+    ComRunFolder="${StudyFolder}/processing/scripts/tmp"
     if [[ ! -d ${ComRunFolder} ]]; then
         mkdir ${ComRunFolder} &> /dev/null
     fi
@@ -264,7 +264,7 @@ bash_call_execute() {
         # -- Run the commands locally
         if [[ ${Cluster} == 1 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; rm -rf ${ComRunFolder}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
             echo "--------------------------------------------------------------"
@@ -281,7 +281,7 @@ bash_call_execute() {
         # -- Run the commands via scheduler
         if [[ ${Cluster} == 2 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; rm -rf ${ComRunFolder}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
             cd ${MasterRunLogFolder}
