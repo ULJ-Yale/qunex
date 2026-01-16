@@ -2928,11 +2928,11 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            with open(endlog, "w", encoding="utf-8") as log_file:
+            with open(endlog, "a", encoding="utf-8") as log_file:
                 for filename in os.listdir(logdir):
                     file_path = os.path.join(logdir, filename)
 
-                    with open(file_path, "r") as file:
+                    with open(file_path, "r", encoding="utf-8") as file:
                         content = file.read()
                         print(file=log_file)
                         print("----------------------------------------", file=log_file)
@@ -3495,11 +3495,11 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            with open(endlog, "w") as log_file:
+            with open(endlog, "a", encoding="utf-8") as log_file:
                 for filename in os.listdir(logdir):
                     file_path = os.path.join(logdir, filename)
 
-                    with open(file_path, "r") as file:
+                    with open(file_path, "r", encoding="utf-8") as file:
                         content = file.read()
                         print(file=log_file)
                         print("----------------------------------------", file=log_file)
@@ -12944,11 +12944,11 @@ def _execute_hcp_long_transmit_bias(sinfo, options, overwrite, run, hcp_base, su
                 report["failed"] = subject_id
 
             # read and print all files in logdir
-            with open(endlog, "w", encoding="UTF-8") as log_file:
+            with open(endlog, "a", encoding="utf-8") as log_file:
                 for filename in os.listdir(logdir):
                     file_path = os.path.join(logdir, filename)
 
-                    with open(file_path, "r", encoding="UTF-8") as file:
+                    with open(file_path, "r", encoding="utf-8") as file:
                         content = file.read()
                         print(file=log_file)
                         print("----------------------------------------", file=log_file)
