@@ -1530,6 +1530,10 @@ main() {
                     SessAcqInfoFile="session_hcp.txt"
                 elif [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
                     SessAcqInfoFile="subject_hcp.txt"
+                else
+                    echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your data and inputs."
+                    echo ""
+                    exit 1
                 fi
             fi
 
