@@ -6,6 +6,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.4.3
+
+* Fixed a bug in longitudinal pipelines were some log contents were overwritten by others.
+* Fixed a bug with the `OnScanner` distortion correction method in `hcp_fmri_volume`.
+* Fixed an issue that popped up when `run_qc` was executed in a massively parallel way.
+* Fixed the CUDA version so it is compatible with the FSL's new default (11.0).
+* Optimized symlinking subject and session folders for longitudinal commands.
+
 ## 1.4.2
 
 * Fixed a bug where `hcp_fmri_volume` did not work under some configurations with SE-FM corrections.
