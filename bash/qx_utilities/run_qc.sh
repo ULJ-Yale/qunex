@@ -1530,10 +1530,6 @@ main() {
                     SessAcqInfoFile="session_hcp.txt"
                 elif [ -f ${SessionsFolder}/${CASE}/subject_hcp.txt ]; then
                     SessAcqInfoFile="subject_hcp.txt"
-                else
-                    echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your data and inputs."
-                    echo ""
-                    exit 1
                 fi
             fi
 
@@ -1544,7 +1540,7 @@ main() {
             if [[ -f "${SessionsFolder}/${CASE}/${SessAcqInfoFile}" ]]; then
                 echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} found. Proceeding ..."
             else
-                echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your data and inputs."
+                echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your data and inputs. If the name of your session or subject file is different than the default session_hcp.txt or subject_hcp.txt please provide it using --sourcefile parameter."
                 echo ""
                 exit 1
             fi
