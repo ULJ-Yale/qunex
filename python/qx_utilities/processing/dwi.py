@@ -34,6 +34,7 @@ import traceback
 import processing.core as pc
 from datetime import datetime
 
+
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_f99 [... processing options]``
@@ -101,9 +102,13 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (
-        sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
     r += "\n%s FSL F99 registration [%s] ..." % (
-        pc.action("Running", options["run"]), session)
+        pc.action("Running", options["run"]),
+        session,
+    )
 
     # status variables
     run = True
@@ -114,7 +119,8 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
         # construct dirs
         dwi_f99_dir = os.path.join(
-            os.environ["FSLDIR"], "data/xtract_data/standard/F99")
+            os.environ["FSLDIR"], "data/xtract_data/standard/F99"
+        )
         nhp_dir = os.path.join(options["sessionsfolder"], session, "NHP")
         f99reg_dir = os.path.join(nhp_dir, "F99reg")
         if not os.path.exists(f99reg_dir):
@@ -127,23 +133,26 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
             r += "\n---> dtifit results present."
         else:
             r += "\n---> ERROR: Could not find dtifit results."
-            report = (sinfo['id'], "Not ready for FSL F99", 1)
+            report = (sinfo["id"], "Not ready for FSL F99", 1)
             run = False
 
         # script location
         niu_template_dir = os.environ["NIUTemplateFolder"]
-        f99_script = "bash " + \
-            os.path.join(niu_template_dir, "nhp", "do_reg_F99.sh")
+        f99_script = "bash " + os.path.join(niu_template_dir, "nhp", "do_reg_F99.sh")
 
         # set up the command
-        comm = "%(script)s \
+        comm = (
+            "%(script)s \
                 %(input)s \
                 %(output)s \
-                %(f99dir)s" % {
-            "script": f99_script,
-            "input": dti_file,
-            "output": f99reg_dir + "/F99",
-            "f99dir": dwi_f99_dir}
+                %(f99dir)s"
+            % {
+                "script": f99_script,
+                "input": dti_file,
+                "output": f99reg_dir + "/F99",
+                "f99dir": dwi_f99_dir,
+            }
+        )
 
         # report command
         r += "\n\n------------------------------------------------------------\n"
@@ -173,38 +182,57 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 comm = comm_pre + comm + comm_post
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL F99", overwrite=overwrite, thread=sinfo["id"], remove=options[
-                                                             "log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(
+                    target_file,
+                    comm,
+                    "Running FSL F99",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=[options["logtag"]],
+                    fullTest=fullTest,
+                    shell=True,
+                    r=r,
+                )
 
                 if failed:
                     r += "\n---> FSL F99 processing for session %s failed" % session
-                    report = (sinfo['id'], "FSL F99 failed", 1)
+                    report = (sinfo["id"], "FSL F99 failed", 1)
                 else:
                     r += "\n---> FSL F99 processing for session %s completed" % session
-                    report = (sinfo['id'], "FSL F99 completed", 0)
+                    report = (sinfo["id"], "FSL F99 completed", 0)
 
             # just checking
             else:
                 passed, _, r, failed = pc.checkRun(
-                    target_file, None, "FSL F99 " + session, r, overwrite=overwrite)
+                    target_file, None, "FSL F99 " + session, r, overwrite=overwrite
+                )
 
                 if passed is None:
                     r += "\n---> FSL F99 can be run"
-                    report = (sinfo['id'], "FSL F99 ready", 0)
+                    report = (sinfo["id"], "FSL F99 ready", 0)
                 else:
-                    r += "\n---> FSL F99 processing for session %s would be skipped" % session
-                    report = (sinfo['id'], "FSL F99 would be skipped", 1)
+                    r += (
+                        "\n---> FSL F99 processing for session %s would be skipped"
+                        % session
+                    )
+                    report = (sinfo["id"], "FSL F99 would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (
-            session)
+            session
+        )
         r += str(errormessage)
-        report = (sinfo['id'], "FSL F99 failed", 1)
+        report = (sinfo["id"], "FSL F99 failed", 1)
 
     except:
         r += "\n --- Failed during processing of session %s with error:\n %s\n" % (
-            session, traceback.format_exc())
-        report = (sinfo['id'], "FSL F99 failed", 1)
+            session,
+            traceback.format_exc(),
+        )
+        report = (sinfo["id"], "FSL F99 failed", 1)
 
     return (r, report)
 
@@ -288,6 +316,14 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             tractography in reference space, Diff2Reference and Reference2Diff
             transforms.
 
+        --xtract_out (str, default detailed below):
+            Output folder for XTRACT results. By default it is set to
+            dMRI/NHP/xtract for macaques and hcp/session/T1w/xtract for humans.
+
+        --xtract_bpx (str, default detailed below):
+            Bedpostx folder. By default it is set to dMRI.bedpostX for macaques
+            and T1w/Diffusion.bedpostX for humans.
+
     Output files:
         The results of this step will be present in the dMRI/NHP/xtract folder
         in the sessions's root::
@@ -328,9 +364,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (
-        sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s FSL XTRACT [%s] ..." % (pc.action("Running",
-                                       options["run"]), session)
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session)
 
     # status variables
     run = True
@@ -347,7 +384,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         # set dirs
         if species == "MACAQUE":
             ptx_options = os.path.join(
-                os.environ["NIUTemplateFolder"], "nhp", "ptx_options")
+                os.environ["NIUTemplateFolder"], "nhp", "ptx_options"
+            )
             nhp_dir = os.path.join(options["sessionsfolder"], session, "NHP")
             f99reg_dir = os.path.join(nhp_dir, "F99reg")
             bedpostx_dir = os.path.join(nhp_dir, "dMRI.bedpostX")
@@ -357,39 +395,50 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             # if sessions is a folder
             if os.path.isfile(options["sessions"]):
                 hcp_dir = os.path.join(
-                    sinfo["hcp"], sinfo["id"] + options["hcp_suffix"])
+                    sinfo["hcp"], sinfo["id"] + options["hcp_suffix"]
+                )
             xfms_dir = os.path.join(hcp_dir, "MNINonLinear", "xfms")
             t1w_dir = os.path.join(hcp_dir, "T1w")
             bedpostx_dir = os.path.join(t1w_dir, "Diffusion.bedpostX")
             output_dir = os.path.join(t1w_dir, "xtract")
 
+        # custom out dir
+        if "xtract_out" in options:
+            output_dir = options["xtract_out"]
+
+        # custom bedpostx dir
+        if "xtract_bpx" in options:
+            bedpostx_dir = options["xtract_bpx"]
+
         # check bedpostx results
         if species == "MACAQUE":
-            bedpostx_file = os.path.join(
-                bedpostx_dir, "mean_fsumsamples.nii.gz")
+            bedpostx_file = os.path.join(bedpostx_dir, "mean_fsumsamples.nii.gz")
         else:
-            bedpostx_file = os.path.join(
-                bedpostx_dir, "mean_fsumsamples.nii.gz")
+            bedpostx_file = os.path.join(bedpostx_dir, "mean_fsumsamples.nii.gz")
 
         if os.path.exists(bedpostx_file):
             r += "\n---> f results present."
         else:
             r += "\n---> ERROR: Could not find bedpostx results."
-            report = (sinfo['id'], "Not ready for XTRACT", 1)
+            report = (sinfo["id"], "Not ready for XTRACT", 1)
             run = False
 
         # script location
         xtract_script = os.path.join(os.environ["FSLDIR"], "bin/xtract")
 
         # set up the core command
-        comm = "%(script)s \
+        comm = (
+            "%(script)s \
                 -bpx %(bedpostx_dir)s \
                 -out %(output_dir)s \
-                -species %(species)s" % {
-            "script": xtract_script,
-            "bedpostx_dir": bedpostx_dir,
-            "output_dir": output_dir,
-            "species": species}
+                -species %(species)s"
+            % {
+                "script": xtract_script,
+                "bedpostx_dir": bedpostx_dir,
+                "output_dir": output_dir,
+                "species": species,
+            }
+        )
 
         # optional parameters
         # nogpu
@@ -445,8 +494,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         r += "\n------------------------------------------------------------\n"
 
         # check for existing XTRACT results
-        target_file = os.path.join(
-            output_dir, "tracts", "vof_r", "density.nii.gz")
+        target_file = os.path.join(output_dir, "tracts", "vof_r", "density.nii.gz")
         fullTest = None
 
         # run
@@ -458,41 +506,64 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     os.remove(target_file)
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(target_file, comm, "Running FSL XTRACT", overwrite=overwrite, thread=sinfo["id"], remove=options[
-                                                             "log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = pc.runExternalForFile(
+                    target_file,
+                    comm,
+                    "Running FSL XTRACT",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=[options["logtag"]],
+                    fullTest=fullTest,
+                    shell=True,
+                    r=r,
+                )
 
                 r += "\n---> Processing details can be found in %s" % (
-                    os.path.join(output_dir, "logs"))
+                    os.path.join(output_dir, "logs")
+                )
 
                 if failed:
                     r += "\n---> FSL XTRACT processing for session %s failed" % session
-                    report = (sinfo['id'], "FSL XTRACT failed", 1)
+                    report = (sinfo["id"], "FSL XTRACT failed", 1)
                 else:
-                    r += "\n---> FSL XTRACT processing for session %s completed" % session
-                    report = (sinfo['id'], "FSL XTRACT completed", 0)
+                    r += (
+                        "\n---> FSL XTRACT processing for session %s completed"
+                        % session
+                    )
+                    report = (sinfo["id"], "FSL XTRACT completed", 0)
 
             # just checking
             else:
                 passed, _, r, failed = pc.checkRun(
-                    target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite)
+                    target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite
+                )
 
                 if passed is None:
                     r += "\n---> FSL XTRACT can be run"
-                    report = (sinfo['id'], "FSL XTRACT ready", 0)
+                    report = (sinfo["id"], "FSL XTRACT ready", 0)
                 else:
-                    r += "\n---> FSL XTRACT processing for session %s would be skipped" % session
-                    report = (sinfo['id'], "FSL XTRACT would be skipped", 1)
+                    r += (
+                        "\n---> FSL XTRACT processing for session %s would be skipped"
+                        % session
+                    )
+                    report = (sinfo["id"], "FSL XTRACT would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = "\n\n\n --- Failed during processing of session %s with error:\n" % (
-            session)
+            session
+        )
         r += str(errormessage)
-        report = (sinfo['id'], "FSL XTRACT failed", 1)
+        report = (sinfo["id"], "FSL XTRACT failed", 1)
 
     except:
         r += "\n --- Failed during processing of session %s with error:\n %s\n" % (
-            session, traceback.format_exc())
-        report = (sinfo['id'], "FSL XTRACT failed", 1)
+            session,
+            traceback.format_exc(),
+        )
+        report = (sinfo["id"], "FSL XTRACT failed", 1)
 
     return (r, report)
 
@@ -579,9 +650,13 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
     r = "\n------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (
-        sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
     r += "\n%s CUDIMOT NODDI modelling [%s] ..." % (
-        pc.action("Running", options["run"]), session)
+        pc.action("Running", options["run"]),
+        session,
+    )
 
     # status variables
     run = True
@@ -595,11 +670,15 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         if "cuda_version" in options:
             if "QUNEXLIBRARY" not in os.environ:
                 r += "\n---> ERROR: Variable QUNEXLIBRARY not found in environment, check your QuNex setup."
-                report = (sinfo['id'], "Not ready for CUDIMOT NODDI", 1)
+                report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
                 run = False
             else:
                 cudimot_dir = os.path.join(
-                    os.environ["QUNEXLIBRARY"], "etc", "cudimot", f"cuda_{options['cuda_version']}")
+                    os.environ["QUNEXLIBRARY"],
+                    "etc",
+                    "cudimot",
+                    f"cuda_{options['cuda_version']}",
+                )
                 os.environ["CUDIMOT"] = cudimot_dir
         else:
             cudimot_dir = os.environ["CUDIMOT"]
@@ -611,22 +690,25 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         # check validity
         if options["noddi_model"] not in ["Watson", "Bingham"]:
             r += f"\n---> ERROR: Invalid NODDI model [{options['noddi_model']}], needs to be Watson or Bingham."
-            report = (sinfo['id'], "Not ready for CUDIMOT NODDI", 1)
+            report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
             run = False
 
         cudimot_script = os.path.join(
-            cudimot_dir, "bin", f"Pipeline_NODDI_{options['noddi_model']}.sh")
+            cudimot_dir, "bin", f"Pipeline_NODDI_{options['noddi_model']}.sh"
+        )
 
         # session's diffusion dir
         t1w_dir = os.path.join(
-            options["sessionsfolder"], session, "hcp", session, "T1w")
+            options["sessionsfolder"], session, "hcp", session, "T1w"
+        )
         diffusion_dir = os.path.join(t1w_dir, "Diffusion")
 
         # set up the command
-        comm = "%(script)s \
-                %(diffusion_dir)s" % {
-            "script": cudimot_script,
-            "diffusion_dir": diffusion_dir}
+        comm = (
+            "%(script)s \
+                %(diffusion_dir)s"
+            % {"script": cudimot_script, "diffusion_dir": diffusion_dir}
+        )
 
         # report command
         r += "\n\n------------------------------------------------------------\n"
@@ -640,7 +722,8 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
                 # remove previous results if overwrite
                 results_folder = os.path.join(
-                    t1w_dir, "Diffusion.NODDI_" + options["noddi_model"])
+                    t1w_dir, "Diffusion.NODDI_" + options["noddi_model"]
+                )
 
                 if overwrite:
                     if os.path.exists(results_folder):
@@ -648,31 +731,49 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
                 if os.path.exists(results_folder):
                     r += f"\n---> Results already exits and overwrite not set, skipping session {session}."
-                    report = (
-                        sinfo['id'], "CUDIMOT NODDI results already exist", 0)
+                    report = (sinfo["id"], "CUDIMOT NODDI results already exist", 0)
                 else:
                     # execute
-                    r, _, _, failed = pc.runExternalForFile(None, comm, "Running CUDIMOT NODDI modelling", overwrite=overwrite, thread=sinfo["id"], remove=options[
-                        "log"] == "remove", task=options["command_ran"], logfolder=options["comlogs"], logtags=[options["logtag"]], fullTest=None, shell=True, r=r)
+                    r, _, _, failed = pc.runExternalForFile(
+                        None,
+                        comm,
+                        "Running CUDIMOT NODDI modelling",
+                        overwrite=overwrite,
+                        thread=sinfo["id"],
+                        remove=options["log"] == "remove",
+                        task=options["command_ran"],
+                        logfolder=options["comlogs"],
+                        logtags=[options["logtag"]],
+                        fullTest=None,
+                        shell=True,
+                        r=r,
+                    )
 
                     if failed:
-                        r += "\n---> CUDIMOT NODDI processing for session %s failed" % session
-                        report = (sinfo['id'], "CUDIMOT NODDI failed", 1)
+                        r += (
+                            "\n---> CUDIMOT NODDI processing for session %s failed"
+                            % session
+                        )
+                        report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
                     else:
-                        r += "\n---> CUDIMOT NODDI processing for session %s completed" % session
-                        report = (sinfo['id'], "CUDIMOT NODDI completed", 0)
+                        r += (
+                            "\n---> CUDIMOT NODDI processing for session %s completed"
+                            % session
+                        )
+                        report = (sinfo["id"], "CUDIMOT NODDI completed", 0)
 
             # just checking
             else:
                 passed, _, r, failed = pc.checkRun(
-                    None, None, "CUDIMOT NODDI " + session, r, overwrite=overwrite)
+                    None, None, "CUDIMOT NODDI " + session, r, overwrite=overwrite
+                )
 
                 if passed is None:
                     r += "\n---> CUDIMOT NODDI can be run"
-                    report = (sinfo['id'], "CUDIMOT NODDI ready", 0)
+                    report = (sinfo["id"], "CUDIMOT NODDI ready", 0)
                 else:
                     r += f"\n---> CUDIMOT NODDI processing for session {session} would be skipped"
-                    report = (sinfo['id'], "CUDIMOT NODDI would be skipped", 1)
+                    report = (sinfo["id"], "CUDIMOT NODDI would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         r = f"\n\n\n --- Failed during processing of session {session} with error:\n"
