@@ -431,7 +431,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             "%(script)s \
                 -bpx %(bedpostx_dir)s \
                 -out %(output_dir)s \
-                -species %(species)s"
+                -species %(species)s \
+                -native"
             % {
                 "script": xtract_script,
                 "bedpostx_dir": bedpostx_dir,
