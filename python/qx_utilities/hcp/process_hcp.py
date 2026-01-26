@@ -13154,6 +13154,17 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
+        --longitudinal:
+            Set this flag if you are running the longitudinal variant of this
+            command.
+
+        --hcp_tica_longitudinal_extract_all (str, default ''):
+            Extract all runs specified in hcp_tica_bolds, with output name
+            matching the one from hcp_tica_mrfix_concat_name.
+
     Output files:
         If ran on a single session the results of this step can be found in
         the same sessions's root hcp folder. If ran on multiple sessions
