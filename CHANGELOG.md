@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.4.4
+
+* QC scene optimizations.
+
 ## 1.4.3
 
 * Fixed a bug in longitudinal pipelines were some log contents were overwritten by others.
