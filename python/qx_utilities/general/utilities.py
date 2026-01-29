@@ -5391,30 +5391,94 @@ def xnat_create_batch(prep=True):
 
 def record_snapshot(targetfolder, outfile, includehash=True):
     """
-    ``record_snapshot(targetfolder, outfile, includehash=True)``
+    ``record_snapshot targetfolder=<folder path> outfile=<output file> [includehash=True]``
 
-    Traverses a target folder and creates a tree record of the folder structure,
-    recording file name, modification datetime, size and a file hash of all the 
-    files in the folder and subfolders. The results are saved as a tree outline 
-    in a txt file.
+    Creates a hierarchical snapshot of a directory structure, recording file names,
+    modification times, sizes, and optionally MD5 hashes. The snapshot is saved as
+    a human-readable tree structure in a text file, which can later be used for
+    comparison or rollback operations.
 
     Parameters:
-    -----------
-    targetfolder : str
-        The path to the folder to snapshot
-    outfile : str
-        The path to the output txt file where the tree will be saved
-    includehash : bool or str, optional
-        Whether to compute and include file hash (default: True).
-        Can be a boolean or string ("true", "false", "yes", "no", case-insensitive).
+        --targetfolder (str):
+            The path to the folder to snapshot. The function recursively
+            traverses all subdirectories and captures metadata for every file.
+            The folder must exist or an error will be raised.
 
-    Example output:
-    ---------------
-    .
-    ├── MNINonLinear
-    │   ├── BiasField.nii.gz                                                    [<modification date>, <hash>, <size> bytes]
-    │   ├── Native
-    │   │   ├── MSMSulc
+        --outfile (str):
+            The path to the output text file where the snapshot will be saved.
+            If the file exists, it will be overwritten. Parent directories will
+            be created automatically if they don't exist.
+
+        --includehash (bool or str, default True):
+            Whether to compute and include MD5 hash for each file:
+            
+            - True: Compute MD5 hash for all files (slower but more accurate
+              for detecting modifications)
+              
+            - False: Skip hash computation (faster, relies only on modification
+              time and file size for change detection)
+              
+            Can be specified as boolean or string ("true", "false", "yes", "no").
+
+    Snapshot Format:
+        The snapshot file uses a tree structure with Unicode box-drawing characters:
+        
+        - Directories are shown with branch lines (├──, └──, │)
+        - Files include metadata aligned to column 80
+        - Metadata format: [mtime, hash, size bytes] or [mtime, size bytes]
+        - Modification time includes microseconds for precision
+        
+        Example output:
+        ::
+        
+            /home/user/project/data
+            .
+            ├── configs
+            │   ├── settings.json              [2024-01-15 10:23:45.123456, a1b2c3d4, 1024 bytes]
+            │   └── database.ini               [2024-01-15 10:23:45.234567, e5f6g7h8, 512 bytes]
+            ├── data
+            │   ├── input.txt                  [2024-01-15 10:25:30.345678, i9j0k1l2, 2048 bytes]
+            │   └── processed
+            │       └── output.csv             [2024-01-15 11:00:00.456789, m3n4o5p6, 4096 bytes]
+            └── README.md                      [2024-01-15 09:00:00.567890, q7r8s9t0, 256 bytes]
+
+    Metadata Components:
+        - **Modification time**: File's last modification timestamp with microsecond
+          precision (format: YYYY-MM-DD HH:MM:SS.ffffff)
+          
+        - **MD5 hash**: 32-character hexadecimal hash of file contents (if includehash=True)
+          
+        - **File size**: Size in bytes
+
+    Use Cases:
+        - **Baseline creation**: Capture the state of a directory before making changes
+        - **Change tracking**: Monitor what files were added, modified, or deleted
+        - **Documentation**: Record the exact state of data or configuration files
+        - **Rollback preparation**: Create snapshots before risky operations
+
+    Notes:
+        - Hash computation can be slow for large files or many files
+        - Snapshots capture file metadata, not file contents
+        - Modification times are preserved with microsecond precision
+        - The snapshot is a text file, not a backup of the actual files
+        - Can be compared with other snapshots using compare_snapshots()
+        - Can be used for rollback operations with rollback_snapshot()
+
+    Examples:
+        Create snapshot with hashes:
+        ::
+        
+            qunex record_snapshot \\
+                --targetfolder=/path/to/project/data \\
+                --outfile=/path/to/snapshots/baseline.txt
+        
+        Create fast snapshot without hashes:
+        ::
+        
+            qunex record_snapshot \\
+                --targetfolder=/path/to/project/data \\
+                --outfile=/path/to/snapshots/quick_check.txt \\
+                --includehash=no
     """
     import hashlib
     
@@ -5567,32 +5631,116 @@ def record_snapshot(targetfolder, outfile, includehash=True):
 
 def compare_snapshots(before, after, outfile, includehash=True):
     """
-    ``compare_snapshots(before, after, outfile, includehash=True)``
+    ``compare_snapshots before=<before snapshot> after=<after snapshot or folder> outfile=<output file> [includehash=True]``
 
-    Compares two directory snapshots and generates a report showing all files
-    and their status relative to the "before" snapshot.
+    Compares two directory snapshots or a snapshot against a live directory to identify
+    changes. Creates a detailed comparison tree showing which files were added, deleted,
+    or modified. The comparison can be used for change analysis or as input to
+    rollback_snapshot() for reverting changes.
 
     Parameters:
-    -----------
-    before : str
-        Path to the "before" snapshot file
-    after : str
-        Path to either the "after" snapshot file or a directory to snapshot
-    outfile : str
-        Path to the output comparison file
-    includehash : bool or str, optional
-        Whether to include file hash in comparison (default: True).
-        Can be a boolean or string ("true", "false", "yes", "no", case-insensitive).
+        --before (str):
+            Path to the "before" snapshot file (baseline state). This must be
+            a snapshot file created by record_snapshot(). The snapshot captures
+            the original state before changes were made.
+
+        --after (str):
+            Path to either:
+            
+            - A snapshot file created by record_snapshot() (for comparing two
+              snapshots from different times)
+              
+            - A directory path (the function will create a temporary snapshot
+              of the current state for comparison)
+              
+            This represents the state after changes were made.
+
+        --outfile (str):
+            Path to the output file where the comparison results will be saved.
+            The file will contain a tree structure with status markers showing
+            all changes. If the file exists, it will be overwritten.
+
+        --includehash (bool or str, default True):
+            Whether to use MD5 hash when detecting modifications:
+            
+            - True: Files are considered modified if modification time, size,
+              OR hash differs. Most accurate but only works if both snapshots
+              included hashes.
+              
+            - False: Files are considered modified only if modification time
+              or size differs. Faster and works even if snapshots lack hashes.
+              
+            Can be specified as boolean or string ("true", "false", "yes", "no").
+
+    Comparison Output Format:
+        The output file uses a tree structure with status markers:
+        ::
+        
+            before: /home/user/project/data
+            after: /home/user/project/data
+            .
+              ├── configs
+              │   ├── settings.json              [2024-01-15 10:23:45.123456, a1b2c3d4, 1024 bytes]
+              │   └── database.ini               [2024-01-15 10:23:45.234567, e5f6g7h8, 512 bytes]
+            + ├── new_data
+            + │   └── results.csv                [2024-01-15 12:00:00.123456, x1y2z3a4, 8192 bytes]
+            M ├── data
+            M │   └── input.txt                  [2024-01-15 10:25:30.345678 -> 2024-01-15 14:30:00.123456, ...]
+            - └── old_file.txt                   [2024-01-14 09:00:00.000000, q7r8s9t0, 256 bytes]
+
+    Status Markers:
+        - **+** (Added): File or folder exists in 'after' but not in 'before'
+        - **-** (Deleted): File or folder exists in 'before' but not in 'after'
+        - **M** (Modified): File metadata changed between snapshots (time, size, or hash)
+        - **  ** (Unchanged): File or folder unchanged (two spaces, no marker)
+
+    Modification Detection:
+        Files are considered modified when:
+        
+        1. Modification time differs (always checked)
+        2. File size differs (always checked)
+        3. MD5 hash differs (only if includehash=True AND both snapshots have hashes)
+        
+        For modified files, metadata shows before → after values.
+
+    Use Cases:
+        - **Change auditing**: See exactly what changed in a directory tree
+        - **Quality control**: Verify that processing modified only expected files
+        - **Rollback preparation**: Identify files to remove when reverting changes
+        - **Documentation**: Create a record of changes for compliance or debugging
 
     Notes:
-    ------
-    Status markers:
-        + : File/folder was added (present in after, not in before)
-        - : File/folder was deleted (present in before, not in after)
-        M : File/folder was modified (metadata changed)
-        (no marker) : File/folder unchanged
+        - If 'after' is a directory, a temporary snapshot is created automatically
+        - Hash comparison only works if both snapshots included hashes
+        - The comparison file can be used directly with rollback_snapshot()
+        - Comparison is smart: directories marked modified only if children changed
+        - Empty directories are tracked (shown as added/deleted if they change)
 
-    For modified files, metadata is shown as: <value before> -> <value after>
+    Examples:
+        Compare two snapshot files:
+        ::
+        
+            qunex compare_snapshots \\
+                --before=/snapshots/before_processing.txt \\
+                --after=/snapshots/after_processing.txt \\
+                --outfile=/snapshots/diff_processing.txt
+        
+        Compare snapshot against current directory state:
+        ::
+        
+            qunex compare_snapshots \\
+                --before=/snapshots/baseline.txt \\
+                --after=/path/to/project/data \\
+                --outfile=/snapshots/current_changes.txt
+        
+        Fast comparison without hash checking:
+        ::
+        
+            qunex compare_snapshots \\
+                --before=/snapshots/baseline.txt \\
+                --after=/path/to/project/data \\
+                --outfile=/snapshots/quick_diff.txt \\
+                --includehash=no
     """
     import tempfile
     
@@ -5916,31 +6064,133 @@ def _collect_file_paths(tree_node, current_path=".", status_filter=None):
 
 def rollback_snapshot(diff=None, before=None, after=None, includehash=True, action="check"):
     """
-    ``rollback_snapshot(diff=None, before=None, after=None, includehash=True, action="check")``
+    ``rollback_snapshot [diff=<diff file>] [before=<before snapshot>] [after=<after snapshot>] [includehash=True] [action=check]``
     
-    Rolls back changes by analyzing snapshot differences and optionally deleting added files.
-    
+    Analyzes snapshot differences to identify added files and optionally deletes them
+    to roll back changes. Useful for reverting unwanted modifications, cleaning up
+    failed processing runs, or undoing experimental changes. Can operate in two modes:
+    check (analyze only) or delete (perform rollback).
+
     Parameters:
-    -----------
-    diff : str, optional
-        Path to an existing comparison file from compare_snapshots.
-        If not provided, before and after must be specified.
-    before : str, optional
-        Path to the "before" snapshot file (required if diff not provided)
-    after : str, optional
-        Path to either the "after" snapshot file or directory (required if diff not provided)
-    includehash : bool or str, optional
-        Whether to include file hash in comparison when creating diff (default: True).
-        Can be a boolean or string ("true", "false", "yes", "no", case-insensitive).
-    action : str
-        Action to perform: "check" (list files) or "delete" (remove added files)
+        --diff (str, optional):
+            Path to a comparison file created by compare_snapshots(). If provided,
+            this file is used directly to determine what changed. If not provided,
+            both 'before' and 'after' parameters must be specified to generate
+            the comparison on-the-fly.
+
+        --before (str, optional):
+            Path to the "before" snapshot file (baseline state). Required if
+            'diff' is not provided. This snapshot represents the state you want
+            to roll back to.
+
+        --after (str, optional):
+            Path to either a snapshot file or a directory representing the current
+            state. Required if 'diff' is not provided. If a directory is provided,
+            a temporary snapshot will be created for comparison.
+
+        --includehash (bool or str, default True):
+            Whether to use MD5 hash when comparing files (only relevant if
+            generating comparison on-the-fly). If using an existing diff file,
+            this parameter is ignored.
+            
+            Can be specified as boolean or string ("true", "false", "yes", "no").
+
+        --action (str, default "check"):
+            The action to perform:
+            
+            - "check": Analyze changes and show what would be deleted, but don't
+              actually delete anything. Safe for previewing rollback operations.
+              
+            - "delete": Actually delete added files to perform the rollback.
+              Use with caution - deleted files cannot be recovered unless you
+              have backups.
+
+    Rollback Behavior:
+        The function categorizes all changes into three types:
         
+        1. **Added files** (+ marker):
+           - Can be automatically rolled back by deletion
+           - In "delete" mode, these files are removed from disk
+           - In "check" mode, lists files that would be deleted
+        
+        2. **Modified files** (M marker):
+           - Cannot be automatically rolled back
+           - Original content is not stored in snapshots
+           - Warning is displayed listing these files
+           - Manual intervention required to restore original state
+        
+        3. **Deleted files** (- marker):
+           - Cannot be automatically restored
+           - Original file content is not stored in snapshots
+           - Warning is displayed listing these files
+           - Manual intervention required to restore from backups
+
+    Output Information:
+        The function provides detailed information about:
+        
+        - Total number of changes detected (added/modified/deleted)
+        - List of files that can be automatically rolled back
+        - List of files that require manual intervention
+        - In "delete" mode: confirmation of files successfully deleted
+        - In "delete" mode: errors if any deletions fail
+
+    Safety Features:
+        - Default action is "check" (non-destructive preview)
+        - Clear warnings about files that cannot be auto-rolled back
+        - Detailed output before performing any deletions
+        - Reports both successful and failed deletion attempts
+
+    Use Cases:
+        - **Undo failed processing**: Remove files created by a failed analysis run
+        - **Clean up experiments**: Revert changes from experimental code
+        - **Quality control**: Preview what would be rolled back before committing
+        - **Partial rollback**: Understand what can/cannot be automatically reverted
+
+    Limitations:
+        - Only added files can be automatically removed
+        - Modified files cannot be restored (original content not in snapshot)
+        - Deleted files cannot be recovered (content not in snapshot)
+        - Snapshots record metadata only, not file contents
+        - For full rollback capability, use backup_files() before making changes
+
     Notes:
-    ------
-    - If action="check": Lists files that would be affected (added, modified, deleted)
-    - If action="delete": Deletes all added files and prints warnings about modified/deleted files
-    - Modified and deleted files cannot be rolled back automatically
-    - All paths are displayed as absolute paths in the after directory
+        - Always run with action="check" first to preview changes
+        - The function extracts the target directory path from the diff file
+        - Empty directories are not removed (only files)
+        - If any deletion fails, the function continues with remaining files
+        - Consider using backup_files() for reversible operations
+
+    Examples:
+        Preview rollback using existing diff:
+        ::
+        
+            qunex rollback_snapshot \\
+                --diff=/snapshots/processing_diff.txt \\
+                --action=check
+        
+        Actually perform rollback:
+        ::
+        
+            qunex rollback_snapshot \\
+                --diff=/snapshots/processing_diff.txt \\
+                --action=delete
+        
+        Rollback with on-the-fly comparison:
+        ::
+        
+            qunex rollback_snapshot \\
+                --before=/snapshots/baseline.txt \\
+                --after=/path/to/project/data \\
+                --action=check
+        
+        Quick preview without hash comparison:
+        ::
+        
+            qunex rollback_snapshot \\
+                --before=/snapshots/baseline.txt \\
+                --after=/path/to/project/data \\
+                --includehash=no \\
+                --action=check
     """
     import tempfile
     
