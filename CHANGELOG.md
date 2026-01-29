@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## 1.4.4
 
 * QC scene optimizations.
+* `dwi_xtract` outputs organization improvements.
 
 ## 1.4.3
 
