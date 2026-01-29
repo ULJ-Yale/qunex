@@ -223,6 +223,7 @@ commands = {
             "targetfolder",
             "outfile",
             "includehash",
+            "exclude",
         ),
     },
     "backup_files": {
@@ -250,6 +251,18 @@ commands = {
             "before",
             "after",
             "outfile",
+            "includehash",
+            "exclude",
+        ),
+    },
+    "rollback_snapshot": {
+        "com": utilities.rollback_snapshot,
+        "args": (
+            "diff",
+            "before",
+            "after",
+            "action",
+            "exclude",
             "includehash",
         ),
     },

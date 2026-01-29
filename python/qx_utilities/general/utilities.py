@@ -5386,12 +5386,27 @@ def xnat_create_batch(prep=True):
     return summary
 
 
-
-
-
-def record_snapshot(targetfolder, outfile, includehash=True):
+def _is_path_excluded(rel_path, exclude_list):
     """
-    ``record_snapshot targetfolder=<folder path> outfile=<output file> [includehash=True]``
+    Check if a relative path should be excluded.
+    
+    Parameters:
+    -----------
+    rel_path : str
+        Relative path from root (e.g., 'data/file.txt' or 'logs')
+    exclude_list : list
+        List of relative paths to exclude
+        
+    Returns:
+    --------
+    bool : True if the path should be excluded, False otherwise
+    """
+    return rel_path in exclude_list
+
+
+def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
+    """
+    ``record_snapshot targetfolder=<folder path> outfile=<output file> [includehash=True] [exclude=None]``
 
     Creates a hierarchical snapshot of a directory structure, recording file names,
     modification times, sizes, and optionally MD5 hashes. The snapshot is saved as
@@ -5419,6 +5434,20 @@ def record_snapshot(targetfolder, outfile, includehash=True):
               time and file size for change detection)
               
             Can be specified as boolean or string ("true", "false", "yes", "no").
+
+        --exclude (list or str, default None):
+            Optional list of files or folders to exclude from the snapshot.
+            Excluded items will not appear in the snapshot output. Can be specified as:
+            
+            - List of paths: ['temp', 'cache', 'logs/debug.log'] - excludes these
+              specific files or folders (relative to targetfolder)
+              
+            - Comma-separated string: 'temp, cache, logs/debug.log'
+            
+            - Quoted strings for spaces: "'build output', cache, 'temp files'"
+            
+            Exclusions are matched against relative paths from the target folder root.
+            If a folder is excluded, all its contents are also excluded.
 
     Snapshot Format:
         The snapshot file uses a tree structure with Unicode box-drawing characters:
@@ -5485,6 +5514,13 @@ def record_snapshot(targetfolder, outfile, includehash=True):
     # Convert includehash to boolean using true_or_false helper
     includehash = true_or_false(includehash)
     
+    # Process exclude list
+    exclude_list = []
+    if exclude is not None:
+        exclude_list = _process_filelist(exclude)
+        # Normalize paths (remove trailing slashes, handle ./ prefix)
+        exclude_list = [e.rstrip('/').lstrip('./') for e in exclude_list]
+    
     def compute_file_hash(filepath):
         """Compute MD5 hash of a file."""
         md5_hash = hashlib.md5()
@@ -5513,12 +5549,19 @@ def record_snapshot(targetfolder, outfile, includehash=True):
         tree = {}
         
         for dirpath, dirnames, filenames in os.walk(root_path):
-            # Sort for consistent output
-            dirnames.sort()
-            filenames.sort()
-            
             # Get relative path from root
             rel_path = os.path.relpath(dirpath, root_path)
+            
+            # Filter excluded directories (modifying dirnames in-place affects os.walk)
+            dirnames_filtered = []
+            for dirname in sorted(dirnames):
+                dir_rel_path = os.path.join(rel_path, dirname) if rel_path != '.' else dirname
+                if not _is_path_excluded(dir_rel_path, exclude_list):
+                    dirnames_filtered.append(dirname)
+            dirnames[:] = dirnames_filtered
+            
+            # Sort filenames
+            filenames.sort()
             
             # Store directory and file information
             tree[rel_path] = {
@@ -5528,6 +5571,11 @@ def record_snapshot(targetfolder, outfile, includehash=True):
             
             # Get file information
             for filename in filenames:
+                # Check if file is excluded
+                file_rel_path = os.path.join(rel_path, filename) if rel_path != '.' else filename
+                if _is_path_excluded(file_rel_path, exclude_list):
+                    continue
+                
                 filepath = os.path.join(dirpath, filename)
                 size, mtime, file_hash = get_file_info(filepath)
                 tree[rel_path]['files'].append({
@@ -5629,9 +5677,9 @@ def record_snapshot(targetfolder, outfile, includehash=True):
         write_tree(tree, targetfolder, f)
 
 
-def compare_snapshots(before, after, outfile, includehash=True):
+def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
     """
-    ``compare_snapshots before=<before snapshot> after=<after snapshot or folder> outfile=<output file> [includehash=True]``
+    ``compare_snapshots before=<before snapshot> after=<after snapshot or folder> outfile=<output file> [includehash=True] [exclude=None]``
 
     Compares two directory snapshots or a snapshot against a live directory to identify
     changes. Creates a detailed comparison tree showing which files were added, deleted,
@@ -5671,6 +5719,17 @@ def compare_snapshots(before, after, outfile, includehash=True):
               or size differs. Faster and works even if snapshots lack hashes.
               
             Can be specified as boolean or string ("true", "false", "yes", "no").
+
+        --exclude (list or str, default None):
+            Optional list of files or folders to exclude from the comparison.
+            Excluded items will not appear in the comparison output. Can be specified as:
+            
+            - List of paths: ['temp', 'cache', 'logs/debug.log']
+            - Comma-separated string: 'temp, cache, logs/debug.log'
+            - Quoted strings for spaces: "'build output', cache"
+            
+            If 'after' is a directory (not a snapshot file), the exclude list is
+            passed to record_snapshot when creating the temporary snapshot.
 
     Comparison Output Format:
         The output file uses a tree structure with status markers:
@@ -5746,6 +5805,13 @@ def compare_snapshots(before, after, outfile, includehash=True):
     
     # Convert includehash to boolean
     includehash = true_or_false(includehash)
+    
+    # Process exclude list
+    exclude_list = []
+    if exclude is not None:
+        exclude_list = _process_filelist(exclude)
+        # Normalize paths
+        exclude_list = [e.rstrip('/').lstrip('./') for e in exclude_list]
     
     def write_comparison(before_tree, after_tree, outfile_handle, before_path, after_path):
         """Write the comparison output in tree format."""
@@ -5856,7 +5922,7 @@ def compare_snapshots(before, after, outfile, includehash=True):
         temp_after_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.snapshot.txt')
         temp_after_file.close()
         after_snapshot = temp_after_file.name
-        record_snapshot(after, after_snapshot, includehash)
+        record_snapshot(after, after_snapshot, includehash, exclude)
         after_dir_path = os.path.abspath(after)
     elif os.path.isfile(after):
         after_snapshot = after
@@ -6062,9 +6128,9 @@ def _collect_file_paths(tree_node, current_path=".", status_filter=None):
     return results
 
 
-def rollback_snapshot(diff=None, before=None, after=None, includehash=True, action="check"):
+def rollback_snapshot(diff=None, before=None, after=None, includehash=True, action="check", exclude=None):
     """
-    ``rollback_snapshot [diff=<diff file>] [before=<before snapshot>] [after=<after snapshot>] [includehash=True] [action=check]``
+    ``rollback_snapshot [diff=<diff file>] [before=<before snapshot>] [after=<after snapshot>] [includehash=True] [action=check] [exclude=None]``
     
     Analyzes snapshot differences to identify added files and optionally deletes them
     to roll back changes. Useful for reverting unwanted modifications, cleaning up
@@ -6104,6 +6170,17 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
             - "delete": Actually delete added files to perform the rollback.
               Use with caution - deleted files cannot be recovered unless you
               have backups.
+
+        --exclude (list or str, default None):
+            Optional list of files or folders to exclude from rollback operations.
+            Excluded files will not be deleted even if they were added. Can be specified as:
+            
+            - List of paths: ['temp', 'cache', 'logs/debug.log']
+            - Comma-separated string: 'temp, cache, logs/debug.log'
+            - Quoted strings for spaces: "'build output', cache"
+            
+            If generating a comparison on-the-fly (using before/after parameters),
+            the exclude list is passed to compare_snapshots.
 
     Rollback Behavior:
         The function categorizes all changes into three types:
@@ -6197,6 +6274,13 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
     # Convert includehash to boolean
     includehash = true_or_false(includehash)
     
+    # Process exclude list
+    exclude_list = []
+    if exclude is not None:
+        exclude_list = _process_filelist(exclude)
+        # Normalize paths
+        exclude_list = [e.rstrip('/').lstrip('./') for e in exclude_list]
+    
     # Validate action parameter
     if action not in ["check", "delete"]:
         raise ge.CommandError(
@@ -6227,7 +6311,7 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
         diff_file = temp_diff_file.name
         
         # Generate the diff
-        compare_snapshots(before, after, diff_file, includehash)
+        compare_snapshots(before, after, diff_file, includehash, exclude)
     
     try:
         # Parse the diff file to extract root path and changes
@@ -6248,7 +6332,9 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
             lines = f.readlines()
         
         # Track current path stack to build full paths
+        # Track if current path is under an excluded directory
         path_stack = []
+        excluded_stack = []
         
         for line in lines:
             # Skip non-tree lines
@@ -6303,6 +6389,8 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
             # Adjust path stack to current depth
             while len(path_stack) > depth:
                 path_stack.pop()
+                if excluded_stack:
+                    excluded_stack.pop()
             
             # Build full path
             if path_stack:
@@ -6310,9 +6398,21 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
             else:
                 full_path = name
             
+            # Check if this path is excluded
+            is_excluded = _is_path_excluded(full_path, exclude_list)
+            
+            # Check if parent is excluded
+            if excluded_stack and excluded_stack[-1]:
+                is_excluded = True
+            
             # Add to path stack if directory
             if not is_file:
                 path_stack.append(name)
+                excluded_stack.append(is_excluded)
+            
+            # Skip if excluded
+            if is_excluded:
+                continue
             
             # Only process files with status markers (not unchanged)
             if status == 'unchanged' or status is None:
