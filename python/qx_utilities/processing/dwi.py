@@ -307,9 +307,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             For humans it defaults to '', for macaques it defaults to
             '$TOOLS/python/qx_utilities/templates/nhp/ptx_options'.
 
-        --xtract_native (flag, optional):
-            Run tractography in native (diffusion) space. This flag is not set
-            by default.
+        --xtract_mni (flag, optional):
+            Run tractography in MNI (diffusion) and not native space. This flag is not set by default.
 
         --xtract_ref (str, default ''):
             Reference image ("<refimage> <diff2ref> <ref2diff>") for running
@@ -400,7 +399,11 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             xfms_dir = os.path.join(hcp_dir, "MNINonLinear", "xfms")
             t1w_dir = os.path.join(hcp_dir, "T1w")
             bedpostx_dir = os.path.join(t1w_dir, "Diffusion.bedpostX")
-            output_dir = os.path.join(t1w_dir, "xtract")
+
+            if "xtract_mni" in options:
+                output_dir = os.path.join(hcp_dir, "xtract")
+            else:
+                output_dir = os.path.join(t1w_dir, "xtract")
 
         # custom out dir
         if "xtract_out" in options:
@@ -431,8 +434,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             "%(script)s \
                 -bpx %(bedpostx_dir)s \
                 -out %(output_dir)s \
-                -species %(species)s \
-                -native"
+                -species %(species)s"
             % {
                 "script": xtract_script,
                 "bedpostx_dir": bedpostx_dir,
@@ -440,6 +442,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                 "species": species,
             }
         )
+
+        # native?
+        if not "xtract_mni" in options:
+            comm = comm + " -native"
 
         # optional parameters
         # nogpu
@@ -479,10 +485,6 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             comm = comm + " -ptx_options %s" % options["xtract_ptx_options"]
         elif species == "MACAQUE":
             comm = comm + " -ptx_options %s" % ptx_options
-
-        # xtract_native
-        if "xtract_native" in options:
-            comm = comm + " -native"
 
         # xtract_resolution
         if "xtract_ref" in options:
