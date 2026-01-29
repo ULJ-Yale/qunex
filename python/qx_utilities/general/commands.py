@@ -225,6 +225,25 @@ commands = {
             "includehash",
         ),
     },
+    "backup_files": {
+        "com": utilities.backup_files,
+        "args": (
+            "source",
+            "target",
+            "filelist",
+            "store",
+            "overwrite",
+        ),
+    },
+    "restore_files": {
+        "com": utilities.restore_files,
+        "args": (
+            "source",
+            "target",
+            "filelist",
+            "overwrite",
+        ),
+    },
     "compare_snapshots": {
         "com": utilities.compare_snapshots,
         "args": (

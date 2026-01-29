@@ -6154,3 +6154,836 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
             except:
                 pass
 
+
+def _process_filelist(filelist):
+    """
+    Process filelist which can be a comma-separated string, list, or single string.
+    
+    Handles formats like:
+    - String with commas: "file1.txt, file2.txt"
+    - Quoted strings: "'file 1.txt', 'file 2.txt'" or '"file a.txt", "file b.txt"'
+    - Mixed: "b001, 'file with spaces.txt', b003"
+    - List: ['file1.txt', 'file2.txt']
+    
+    Returns a list of filename strings with quotes removed and whitespace stripped.
+    """
+    if isinstance(filelist, str):
+        # Parse comma-separated string
+        items = []
+        for item in filelist.split(','):
+            item = item.strip()
+            # Remove surrounding quotes (single or double)
+            if len(item) >= 2:
+                if (item.startswith("'") and item.endswith("'")) or \
+                   (item.startswith('"') and item.endswith('"')):
+                    item = item[1:-1]
+            items.append(item)
+        return items
+    else:
+        # Normalize list entries (strip whitespace)
+        return [f.strip() for f in filelist]
+
+
+def backup_files(source, target, filelist, store="original", overwrite=False):
+    """
+    ``backup_files source=<source folder path> target=<target folder path> filelist=<file list> [store=original] [overwrite=False]``
+
+    Creates a backup of specified files from a source folder to a target location.
+    Files are stored with sequential backup prefixes (b001_, b002_, etc.) and a
+    file_list.txt manifest is created to track the original locations.
+
+    Parameters:
+        --source (str):
+            The path to the source folder containing the files to back up.
+            All file paths in filelist are resolved relative to this folder
+            if they are not absolute paths.
+
+        --target (str):
+            The path to the target folder where backups will be stored.
+            If the folder does not exist, it will be created.
+            For store=zip mode, this should be the path without .zip extension
+            (the .zip extension will be added automatically).
+
+        --filelist (list of str):
+            A list of file paths to back up. Paths can be absolute or relative
+            to the source folder. The list can be provided as a Python list or
+            as a comma-separated string.
+
+        --store (str, default 'original'):
+            Storage mode for the backup files:
+            
+            - 'original': Files are copied as-is to the target folder with
+              backup prefixes. Directory structure is flattened - all files
+              are stored in the root of the target folder.
+              
+            - 'gzip': Files are gzipped during backup. Files without .gz
+              extension are compressed and get .gz added. Files already
+              ending in .gz are copied as-is without further compression.
+              
+            - 'zip': All files are packaged into a single ZIP archive named
+              <target>.zip. The target folder itself is not created. Parent
+              directories in the path are created if needed. The file_list.txt
+              manifest is included inside the ZIP archive.
+
+        --overwrite (bool, default False):
+            Controls behavior when target already exists and contains files:
+            
+            - False: If target exists and contains files, raise an error and
+              exit without creating backup.
+              
+            - True: If target exists and contains files, remove existing files
+              before creating the backup.
+
+    File Naming:
+        Each backed up file receives a sequential prefix:
+        - b001_<filename> for the first file
+        - b002_<filename> for the second file
+        - b003_<filename> for the third file
+        - And so on...
+        
+        For gzip mode, non-compressed files also get .gz extension:
+        - b001_config.json → b001_config.json.gz
+        - b002_data.nii.gz → b002_data.nii.gz (already compressed, no change)
+
+    Manifest File (file_list.txt):
+        A manifest file named file_list.txt is created with the backup:
+        - First line: Source folder path (source folder: <path>)
+        - Second line: Storage mode (store: <mode>)
+        - Following lines: <prefix>: <relative path within source folder>
+        
+        Example:
+        ::
+        
+            source folder: /home/user/project/data
+            store: original
+            b001: configs/settings.json
+            b002: results/output.txt
+            b003: logs/process.log
+
+        For store=zip mode, file_list.txt is included inside the ZIP archive.
+        For other modes, it's placed in the target folder.
+
+    Directory Structure:
+        Backups use a flat structure - all files are stored in the root of
+        the target folder or ZIP archive, regardless of their original
+        directory structure in the source. The original paths are preserved
+        only in the file_list.txt manifest.
+
+    Notes:
+        - The function creates all necessary parent directories automatically
+        - By default (overwrite=False), the function will fail if target exists
+          and contains files, preventing accidental data loss
+        - With overwrite=True, existing files in target are removed before backup
+        - For large files, gzip mode can significantly reduce storage space
+        - For many small files, zip mode provides better organization
+        - The manifest file allows easy restoration of original directory structure
+
+    Examples:
+        Back up configuration files as-is:
+        ::
+        
+            qunex backup_files \\
+                --source=/path/to/project \\
+                --target=/path/to/backups/config_backup \\
+                --filelist=configs/settings.json,configs/database.ini,README.md \\
+                --store=original
+
+        Back up data files with gzip compression:
+        ::
+        
+            qunex backup_files \\
+                --source=/path/to/study/sessions/subject01 \\
+                --target=/path/to/backups/subject01_data \\
+                --filelist="bold/run1.nii,bold/run2.nii,anat/T1w.nii" \\
+                --store=gzip
+
+        Create a ZIP archive of analysis results:
+        ::
+        
+            qunex backup_files \\
+                --source=/path/to/analysis \\
+                --target=/path/to/archives/results_2024 \\
+                --filelist="output.csv,plots/figure1.png,plots/figure2.png" \\
+                --store=zip
+    """
+    import gzip
+    import zipfile
+    import shutil
+    
+    print("Running backup_files\n====================\n")
+    
+    # Process filelist (handles strings and lists, strips whitespace and quotes)
+    filelist = _process_filelist(filelist)
+    
+    # Convert overwrite to boolean
+    overwrite = true_or_false(overwrite)
+    
+    # Validate parameters
+    if not source:
+        raise ge.CommandError(
+            "backup_files",
+            "No source folder specified",
+            "Please provide the source folder path using the source parameter!")
+    
+    if not target:
+        raise ge.CommandError(
+            "backup_files",
+            "No target folder specified",
+            "Please provide the target folder path using the target parameter!")
+    
+    if not filelist or len(filelist) == 0:
+        raise ge.CommandError(
+            "backup_files",
+            "No files specified",
+            "Please provide a list of files to back up using the filelist parameter!")
+    
+    # Validate store parameter
+    store = store.lower()
+    if store not in ['original', 'gzip', 'zip']:
+        raise ge.CommandError(
+            "backup_files",
+            f"Invalid store mode: {store}",
+            "Store parameter must be one of: 'original', 'gzip', 'zip'")
+    
+    # Get absolute source path
+    source = os.path.abspath(source)
+    
+    if not os.path.exists(source):
+        raise ge.CommandError(
+            "backup_files",
+            f"Source folder does not exist: {source}",
+            "Please check the source path!")
+    
+    if not os.path.isdir(source):
+        raise ge.CommandError(
+            "backup_files",
+            f"Source path is not a directory: {source}",
+            "Please provide a valid directory path!")
+    
+    print(f"Source folder: {source}")
+    print(f"Target: {target}")
+    print(f"Store mode: {store}")
+    print(f"Overwrite: {overwrite}")
+    print(f"Files to backup: {len(filelist)}")
+    print()
+    
+    # Check if target exists and handle overwrite
+    if store == 'zip':
+        target_check = target if target.endswith('.zip') else target + '.zip'
+    else:
+        target_check = target
+    
+    if os.path.exists(target_check):
+        # Check if it contains files
+        has_files = False
+        if store == 'zip':
+            # ZIP file exists
+            has_files = True
+        else:
+            # Directory exists - check if it has files
+            if os.path.isdir(target_check):
+                existing_items = os.listdir(target_check)
+                has_files = len(existing_items) > 0
+        
+        if has_files:
+            if not overwrite:
+                raise ge.CommandError(
+                    "backup_files",
+                    f"Target already exists and contains files: {target_check}",
+                    "Use overwrite=True to remove existing files, or choose a different target path!")
+            else:
+                print(f"Removing existing target: {target_check}")
+                if store == 'zip':
+                    os.remove(target_check)
+                else:
+                    shutil.rmtree(target_check)
+                print()
+    
+    # Prepare file list with absolute paths and relative paths
+    backup_items = []
+    missing_files = []
+    
+    for filepath in filelist:
+        # Convert to absolute path if relative
+        if os.path.isabs(filepath):
+            abs_path = filepath
+            # Calculate relative path from source
+            try:
+                rel_path = os.path.relpath(abs_path, source)
+            except ValueError:
+                # On different drives (Windows), keep as absolute
+                rel_path = abs_path
+        else:
+            abs_path = os.path.join(source, filepath)
+            rel_path = filepath
+        
+        if not os.path.exists(abs_path):
+            missing_files.append(filepath)
+            continue
+        
+        if not os.path.isfile(abs_path):
+            print(f"Warning: Skipping non-file path: {filepath}")
+            continue
+        
+        backup_items.append({
+            'abs_path': abs_path,
+            'rel_path': rel_path,
+            'original': filepath
+        })
+    
+    if missing_files:
+        print(f"Warning: {len(missing_files)} file(s) not found:")
+        for f in missing_files:
+            print(f"  - {f}")
+        print()
+    
+    if not backup_items:
+        raise ge.CommandError(
+            "backup_files",
+            "No valid files to back up",
+            "All specified files are missing or invalid!")
+    
+    print(f"Processing {len(backup_items)} file(s)...\n")
+    
+    # Build manifest content with header
+    manifest_lines = [
+        f"source folder: {source}",
+        f"store: {store}"
+    ]
+    backed_up_files = []
+    
+    # Process based on store mode
+    if store == 'zip':
+        # For ZIP mode, create parent directories and the ZIP file
+        target_zip = target if target.endswith('.zip') else target + '.zip'
+        target_dir = os.path.dirname(target_zip)
+        
+        if target_dir and not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+            print(f"Created directory: {target_dir}")
+        
+        print(f"Creating ZIP archive: {target_zip}\n")
+        
+        with zipfile.ZipFile(target_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for idx, item in enumerate(backup_items, start=1):
+                prefix = f"b{idx:03d}_"
+                original_name = os.path.basename(item['abs_path'])
+                backup_name = prefix + original_name
+                
+                # Add file to ZIP
+                zf.write(item['abs_path'], backup_name)
+                
+                # Track in manifest (prefix without trailing underscore)
+                manifest_lines.append(f"{prefix[:-1]}: {item['rel_path']}")
+                backed_up_files.append(backup_name)
+                
+                print(f"  [{idx:03d}] {item['rel_path']} → {backup_name}")
+            
+            # Add manifest to ZIP
+            manifest_content = '\n'.join(manifest_lines)
+            zf.writestr('file_list.txt', manifest_content)
+            print(f"\n  Added file_list.txt to archive")
+        
+        print(f"\nBackup complete: {target_zip}")
+        print(f"Total files backed up: {len(backed_up_files)}")
+        
+    else:
+        # For original and gzip modes, create target folder
+        if not os.path.exists(target):
+            os.makedirs(target)
+            print(f"Created directory: {target}\n")
+        
+        for idx, item in enumerate(backup_items, start=1):
+            prefix = f"b{idx:03d}_"
+            original_name = os.path.basename(item['abs_path'])
+            
+            if store == 'gzip':
+                # Check if file is already gzipped
+                if original_name.endswith('.gz'):
+                    backup_name = prefix + original_name
+                    backup_path = os.path.join(target, backup_name)
+                    # Just copy the already-gzipped file
+                    shutil.copy2(item['abs_path'], backup_path)
+                    print(f"  [{idx:03d}] {item['rel_path']} → {backup_name} (already compressed)")
+                else:
+                    backup_name = prefix + original_name + '.gz'
+                    backup_path = os.path.join(target, backup_name)
+                    # Gzip the file
+                    with open(item['abs_path'], 'rb') as f_in:
+                        with gzip.open(backup_path, 'wb') as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                    print(f"  [{idx:03d}] {item['rel_path']} → {backup_name} (compressed)")
+            else:
+                # Original mode - just copy
+                backup_name = prefix + original_name
+                backup_path = os.path.join(target, backup_name)
+                shutil.copy2(item['abs_path'], backup_path)
+                print(f"  [{idx:03d}] {item['rel_path']} → {backup_name}")
+            
+            # Track in manifest (prefix without trailing underscore)
+            manifest_lines.append(f"{prefix[:-1]}: {item['rel_path']}")
+            backed_up_files.append(backup_name)
+        
+        # Write manifest file
+        manifest_path = os.path.join(target, 'file_list.txt')
+        with open(manifest_path, 'w') as f:
+            f.write('\n'.join(manifest_lines))
+        
+        print(f"\n  Created file_list.txt")
+        print(f"\nBackup complete: {target}")
+        print(f"Total files backed up: {len(backed_up_files)}")
+    
+    return backed_up_files
+
+
+def restore_files(source, target=None, overwrite=False, filelist=None):
+    """
+    ``restore_files source=<backup location> [target=None] [overwrite=False] [filelist=None]``
+
+    Restores files from a backup created by backup_files function. The backup can
+    be in any format (original, gzip, or zip). Files are restored to their original
+    locations or to a specified target directory, with automatic decompression of
+    gzipped files when needed.
+
+    Parameters:
+        --source (str):
+            The path to the backup location. Can be either:
+            
+            - A directory containing backed up files and file_list.txt
+            - A ZIP archive (.zip file) created with store=zip mode
+            
+            The backup must contain a valid file_list.txt manifest describing
+            the backup structure and original file locations.
+
+        --target (str, default None):
+            The target directory where files should be restored:
+            
+            - If provided: Files are restored relative to this directory path,
+              using the relative paths from file_list.txt
+              
+            - If None: Files are restored to their original location as specified
+              in the "source folder" line of file_list.txt
+              
+            Parent directories are created automatically if they don't exist.
+
+        --overwrite (bool or str, default False):
+            Controls behavior when restored files already exist at target:
+            
+            - False: If ANY target files exist, raise an error and do not restore
+              anything. This prevents accidental overwriting.
+              
+            - True: Overwrite all existing files with backed up versions.
+            
+            - "skip": Only restore files that don't currently exist at the
+              target location. Skip files that already exist without error.
+
+        --filelist (list or str, default None):
+            Optional list of specific files to restore. If not provided, all files
+            from the backup are restored. Can be specified as:
+            
+            - List of backup numbers: ['b001', 'b002', 'b005'] - restores only
+              those specific backup entries
+              
+            - List of original paths: ['configs/settings.json', 'data/file.txt'] -
+              restores only files matching these exact relative paths
+              
+            - Comma-separated string: 'b001, b002, configs/settings.json' -
+              parsed into list of items
+              
+            - Single string: 'b001' or 'configs/settings.json'
+            
+            - Mixed format: ['b001', 'configs/settings.json'] - matches either
+              backup numbers or original paths
+              
+            Files not matching any entry in filelist are skipped during restoration.
+
+    Backup Format Detection:
+        The function automatically detects the backup format:
+        
+        - ZIP archives: Extracts and reads file_list.txt from the archive
+        - Directories: Reads file_list.txt from the directory
+        - Invalid backups without file_list.txt generate an error
+
+    Manifest File Structure:
+        The file_list.txt must follow this format:
+        ::
+        
+            source folder: /original/path/to/source
+            store: <original|gzip|zip>
+            b001: relative/path/file1.txt
+            b002: relative/path/file2.json
+            b003: data/file3.csv
+
+    Automatic Decompression:
+        When restoring gzipped backups (store: gzip):
+        
+        - Files that were originally uncompressed (without .gz extension) are
+          automatically decompressed during restoration
+          
+        - Files that were already compressed (with .gz extension) are copied
+          as-is without decompression
+          
+        - Decompression is determined by comparing the original filename in
+          file_list.txt with the backup filename
+
+    Restoration Process:
+        1. Validate backup source and read file_list.txt
+        2. Parse source folder path and store mode from manifest
+        3. Determine target directory (provided or from manifest)
+        4. Check for existing files based on overwrite mode
+        5. Create necessary parent directories
+        6. Restore each file:
+           - Remove b[n]_ prefix from backup filename
+           - Decompress if needed (gzip mode only)
+           - Copy to relative path specified in manifest
+        7. Report restoration summary
+
+    Notes:
+        - The function preserves the original directory structure from file_list.txt
+        - Backup file prefixes (b001_, b002_, etc.) are automatically removed
+        - With overwrite="skip", partial restoration is supported
+        - For gzip backups, only files that need decompression are unzipped
+        - The restore operation is atomic when overwrite=False (all or nothing)
+
+    Examples:
+        Restore to original location:
+        ::
+        
+            qunex restore_files \\
+                --source=/path/to/backups/config_backup
+
+        Restore to different location:
+        ::
+        
+            qunex restore_files \\
+                --source=/path/to/backups/subject01_data \\
+                --target=/path/to/new/location
+
+        Restore from ZIP archive, overwriting existing files:
+        ::
+        
+            qunex restore_files \\
+                --source=/path/to/archives/results_2024.zip \\
+                --target=/path/to/restore/location \\
+                --overwrite=True
+
+        Restore only missing files:
+        ::
+        
+            qunex restore_files \\
+                --source=/path/to/backups/config_backup \\
+                --overwrite=missing
+    """
+    import gzip
+    import zipfile
+    import shutil
+    import io
+    
+    print("Running restore_files\n=====================\n")
+    
+    # Validate source
+    if not source:
+        raise ge.CommandError(
+            "restore_files",
+            "No source specified",
+            "Please provide the backup location using the source parameter!")
+    
+    if not os.path.exists(source):
+        raise ge.CommandError(
+            "restore_files",
+            f"Source does not exist: {source}",
+            "Please check the backup path!")
+    
+    # Convert overwrite to proper type
+    if isinstance(overwrite, str):
+        if overwrite.lower() == "skip":
+            overwrite_mode = "skip"
+        else:
+            overwrite_mode = true_or_false(overwrite)
+    else:
+        overwrite_mode = overwrite
+    
+    # Validate overwrite mode
+    if overwrite_mode not in [True, False, "skip"]:
+        raise ge.CommandError(
+            "restore_files",
+            f"Invalid overwrite mode: {overwrite}",
+            "Overwrite must be True, False, or 'missing'!")
+    
+    print(f"Source: {source}")
+    print(f"Overwrite mode: {overwrite_mode}")
+    
+    # Determine if source is ZIP or directory
+    is_zip = source.endswith('.zip') and os.path.isfile(source)
+    
+    # Read and parse file_list.txt
+    manifest_content = None
+    
+    if is_zip:
+        print("Backup type: ZIP archive\n")
+        try:
+            with zipfile.ZipFile(source, 'r') as zf:
+                if 'file_list.txt' not in zf.namelist():
+                    raise ge.CommandError(
+                        "restore_files",
+                        "Not a valid backup: file_list.txt not found in ZIP archive",
+                        f"The ZIP file {source} does not contain a file_list.txt manifest!")
+                
+                manifest_content = zf.read('file_list.txt').decode('utf-8')
+        except zipfile.BadZipFile:
+            raise ge.CommandError(
+                "restore_files",
+                f"Invalid ZIP file: {source}",
+                "The file is not a valid ZIP archive!")
+    else:
+        print("Backup type: Directory\n")
+        if not os.path.isdir(source):
+            raise ge.CommandError(
+                "restore_files",
+                f"Source is neither a directory nor a ZIP file: {source}",
+                "Please provide a valid backup directory or ZIP archive!")
+        
+        manifest_path = os.path.join(source, 'file_list.txt')
+        if not os.path.exists(manifest_path):
+            raise ge.CommandError(
+                "restore_files",
+                "Not a valid backup: file_list.txt not found",
+                f"The directory {source} does not contain a file_list.txt manifest!")
+        
+        with open(manifest_path, 'r') as f:
+            manifest_content = f.read()
+    
+    # Parse manifest
+    lines = manifest_content.strip().split('\n')
+    
+    if len(lines) < 2:
+        raise ge.CommandError(
+            "restore_files",
+            "Invalid file_list.txt: insufficient header lines",
+            "The manifest must contain at least 2 header lines (source folder and store mode)!")
+    
+    # Parse header
+    source_folder = None
+    store_mode = None
+    
+    for line in lines[:2]:
+        if line.startswith('source folder:'):
+            source_folder = line.split('source folder:', 1)[1].strip()
+        elif line.startswith('store:'):
+            store_mode = line.split('store:', 1)[1].strip()
+    
+    if not source_folder or not store_mode:
+        raise ge.CommandError(
+            "restore_files",
+            "Invalid file_list.txt: missing required headers",
+            "The manifest must contain 'source folder:' and 'store:' headers!")
+    
+    print(f"Original source folder: {source_folder}")
+    print(f"Store mode: {store_mode}")
+    
+    # Parse file entries (skip header lines)
+    file_entries = []
+    for line in lines[2:]:
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Parse format: b001: relative/path/file.txt
+        if ':' not in line:
+            continue
+        
+        prefix_part, rel_path = line.split(':', 1)
+        prefix_part = prefix_part.strip()
+        rel_path = rel_path.strip()
+        
+        # Extract backup number from prefix (b001, b002, etc.)
+        if not prefix_part.startswith('b') or len(prefix_part) < 2:
+            continue
+        
+        file_entries.append({
+            'prefix': prefix_part,
+            'rel_path': rel_path
+        })
+    
+    if not file_entries:
+        raise ge.CommandError(
+            "restore_files",
+            "No files listed in file_list.txt",
+            "The manifest does not contain any file entries to restore!")
+    
+    print(f"Files to restore: {len(file_entries)}\n")
+    
+    # Determine target folder
+    if target:
+        target_folder = os.path.abspath(target)
+        print(f"Target folder: {target_folder} (user-specified)")
+    else:
+        target_folder = source_folder
+        print(f"Target folder: {target_folder} (from manifest)")
+    
+    print()
+    
+    # Build list of files to restore with their target paths
+    restore_plan = []
+    
+    for entry in file_entries:
+        # Determine backup filename
+        original_basename = os.path.basename(entry['rel_path'])
+        
+        if store_mode == 'gzip':
+            # Check if original file had .gz extension
+            if original_basename.endswith('.gz'):
+                # File was already gzipped, backup name is prefix + basename
+                backup_filename = f"{entry['prefix']}_{original_basename}"
+                needs_decompress = False
+            else:
+                # File was compressed during backup, has .gz added
+                backup_filename = f"{entry['prefix']}_{original_basename}.gz"
+                needs_decompress = True
+        else:
+            # Original or zip mode - no special handling
+            backup_filename = f"{entry['prefix']}_{original_basename}"
+            needs_decompress = False
+        
+        # Target path
+        target_path = os.path.join(target_folder, entry['rel_path'])
+        
+        restore_plan.append({
+            'backup_filename': backup_filename,
+            'target_path': target_path,
+            'rel_path': entry['rel_path'],
+            'prefix': entry['prefix'],
+            'needs_decompress': needs_decompress
+        })
+    
+    # Filter restore_plan if filelist is specified
+    if filelist is not None:
+        # Process filelist (handles strings and lists, strips whitespace and quotes)
+        filelist = _process_filelist(filelist)
+        
+        # Filter restore_plan
+        original_count = len(restore_plan)
+        filtered_plan = []
+        
+        for item in restore_plan:
+            # Check if item matches any entry in filelist
+            # Match by backup number (e.g., 'b001')
+            if item['prefix'] in filelist:
+                filtered_plan.append(item)
+                continue
+            
+            # Match by original relative path
+            if item['rel_path'] in filelist:
+                filtered_plan.append(item)
+                continue
+        
+        restore_plan = filtered_plan
+        
+        if not restore_plan:
+            raise ge.CommandError(
+                "restore_files",
+                "No files matched the specified filelist",
+                f"None of the {original_count} backup entries matched any of the {len(filelist)} filter(s)!")
+        
+        print(f"Filtered to {len(restore_plan)} file(s) matching filelist (from {original_count} total)\n")
+    
+    # Check for existing files based on overwrite mode
+    existing_files = []
+    for item in restore_plan:
+        if os.path.exists(item['target_path']):
+            existing_files.append(item['rel_path'])
+    
+    if existing_files:
+        if overwrite_mode is False:
+            print(f"ERROR: {len(existing_files)} file(s) already exist at target location:")
+            for filepath in existing_files[:10]:  # Show first 10
+                print(f"  - {filepath}")
+            if len(existing_files) > 10:
+                print(f"  ... and {len(existing_files) - 10} more")
+            print()
+            raise ge.CommandError(
+                "restore_files",
+                f"{len(existing_files)} file(s) already exist at target",
+                "Use overwrite=True to replace existing files, or overwrite='skip' to skip them!")
+        elif overwrite_mode == "skip":
+            print(f"Note: {len(existing_files)} file(s) already exist and will be skipped")
+            print()
+    
+    # Perform restoration
+    restored_count = 0
+    skipped_count = 0
+    
+    print("Restoring files...\n")
+    
+    if is_zip:
+        # Restore from ZIP
+        with zipfile.ZipFile(source, 'r') as zf:
+            for idx, item in enumerate(restore_plan, start=1):
+                # Skip if file exists and overwrite is "skip"
+                if os.path.exists(item['target_path']) and overwrite_mode == "skip":
+                    print(f"  [{idx:03d}] {item['rel_path']} (skipped - already exists)")
+                    skipped_count += 1
+                    continue
+                
+                # Create parent directory if needed
+                target_dir = os.path.dirname(item['target_path'])
+                if target_dir and not os.path.exists(target_dir):
+                    os.makedirs(target_dir)
+                
+                # Extract and restore
+                if item['needs_decompress']:
+                    # Decompress during extraction
+                    compressed_data = zf.read(item['backup_filename'])
+                    with gzip.GzipFile(fileobj=io.BytesIO(compressed_data)) as gz:
+                        with open(item['target_path'], 'wb') as f_out:
+                            shutil.copyfileobj(gz, f_out)
+                    print(f"  [{idx:03d}] {item['rel_path']} (decompressed)")
+                else:
+                    # Direct extraction
+                    with zf.open(item['backup_filename']) as f_in:
+                        with open(item['target_path'], 'wb') as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                    print(f"  [{idx:03d}] {item['rel_path']}")
+                
+                restored_count += 1
+    else:
+        # Restore from directory
+        for idx, item in enumerate(restore_plan, start=1):
+            # Skip if file exists and overwrite is "skip"
+            if os.path.exists(item['target_path']) and overwrite_mode == "skip":
+                print(f"  [{idx:03d}] {item['rel_path']} (skipped - already exists)")
+                skipped_count += 1
+                continue
+            
+            backup_path = os.path.join(source, item['backup_filename'])
+            
+            if not os.path.exists(backup_path):
+                print(f"  [{idx:03d}] {item['rel_path']} (WARNING: backup file not found)")
+                continue
+            
+            # Create parent directory if needed
+            target_dir = os.path.dirname(item['target_path'])
+            if target_dir and not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+            
+            # Restore file
+            if item['needs_decompress']:
+                # Decompress during copy
+                with gzip.open(backup_path, 'rb') as f_in:
+                    with open(item['target_path'], 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                print(f"  [{idx:03d}] {item['rel_path']} (decompressed)")
+            else:
+                # Direct copy
+                shutil.copy2(backup_path, item['target_path'])
+                print(f"  [{idx:03d}] {item['rel_path']}")
+            
+            restored_count += 1
+    
+    print(f"\nRestoration complete!")
+    print(f"Files restored: {restored_count}")
+    if skipped_count > 0:
+        print(f"Files skipped: {skipped_count}")
+    
+    return restored_count
+
