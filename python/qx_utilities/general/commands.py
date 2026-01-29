@@ -217,6 +217,23 @@ commands = {
             "filter",
         ),
     },
+    "record_snapshot": {
+        "com": utilities.record_snapshot,
+        "args": (
+            "targetfolder",
+            "outfile",
+            "includehash",
+        ),
+    },
+    "compare_snapshots": {
+        "com": utilities.compare_snapshots,
+        "args": (
+            "before",
+            "after",
+            "outfile",
+            "includehash",
+        ),
+    },
     "create_list": {
         "com": utilities.create_list,
         "args": (

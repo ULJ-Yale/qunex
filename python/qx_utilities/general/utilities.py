@@ -77,6 +77,21 @@ parameterTemplateHeader = """#  Parameters file
 #
 """
 
+def true_or_false(s):
+    """
+    ``true_or_false(s)``
+
+    First checks if string is "None", 'none', or "NONE" and returns
+    None, then Checks if s is any of the possible true strings: "True", "true",
+    or "TRUE" and returns a boolean result of the check.
+    """
+    if s in ["None", "none", "NONE"]:
+        return None
+    else:
+        return s in ["True", "true", "TRUE", "yes", "Yes", "YES", True]
+
+
+
 
 def manage_study(studyfolder=None, action="create", folders=None, verbose=False):
     """
@@ -421,10 +436,10 @@ def create_study(studyfolder=None, folders=None):
     print("Running create_study\n===================")
 
     if studyfolder is None:
-        raise ge.CommandError(
-            "create_study",
-            "No studyfolder specified",
-            "Please provide path for the new study folder using studyfolder parameter!",
+        raise ge.CommandFailed(
+                    "manage_study",
+                    "Folder structure file [%s] not found!" % folders,
+                    "Please check the value of the folders parameter.",
         )
 
     manage_study(
@@ -5369,3 +5384,773 @@ def xnat_create_batch(prep=True):
     summary += "\n\n----==== XNAT CREATE_BATCH EXECUTION END ====----\n\n"
     print(summary)
     return summary
+
+
+
+
+
+def record_snapshot(targetfolder, outfile, includehash=True):
+    """
+    ``record_snapshot(targetfolder, outfile, includehash=True)``
+
+    Traverses a target folder and creates a tree record of the folder structure,
+    recording file name, modification datetime, size and a file hash of all the 
+    files in the folder and subfolders. The results are saved as a tree outline 
+    in a txt file.
+
+    Parameters:
+    -----------
+    targetfolder : str
+        The path to the folder to snapshot
+    outfile : str
+        The path to the output txt file where the tree will be saved
+    includehash : bool or str, optional
+        Whether to compute and include file hash (default: True).
+        Can be a boolean or string ("true", "false", "yes", "no", case-insensitive).
+
+    Example output:
+    ---------------
+    .
+    ├── MNINonLinear
+    │   ├── BiasField.nii.gz                                                    [<modification date>, <hash>, <size> bytes]
+    │   ├── Native
+    │   │   ├── MSMSulc
+    """
+    import hashlib
+    
+    # Convert includehash to boolean using true_or_false helper
+    includehash = true_or_false(includehash)
+    
+    def compute_file_hash(filepath):
+        """Compute MD5 hash of a file."""
+        md5_hash = hashlib.md5()
+        try:
+            with open(filepath, "rb") as f:
+                # Read in chunks to handle large files
+                for chunk in iter(lambda: f.read(4096), b""):
+                    md5_hash.update(chunk)
+            return md5_hash.hexdigest()
+        except Exception as e:
+            return f"ERROR: {str(e)}"
+    
+    def get_file_info(filepath):
+        """Get file size, modification time, and hash."""
+        try:
+            stat_info = os.stat(filepath)
+            size = stat_info.st_size
+            mtime = datetime.fromtimestamp(stat_info.st_mtime).strftime("%Y-%m-%d %H:%M:%S.%f")
+            file_hash = compute_file_hash(filepath) if includehash else None
+            return size, mtime, file_hash
+        except Exception as e:
+            return None, None, f"ERROR: {str(e)}"
+    
+    def build_tree(root_path):
+        """Build a dictionary representation of the directory tree."""
+        tree = {}
+        
+        for dirpath, dirnames, filenames in os.walk(root_path):
+            # Sort for consistent output
+            dirnames.sort()
+            filenames.sort()
+            
+            # Get relative path from root
+            rel_path = os.path.relpath(dirpath, root_path)
+            
+            # Store directory and file information
+            tree[rel_path] = {
+                'dirs': dirnames[:],  # Copy the list
+                'files': []
+            }
+            
+            # Get file information
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                size, mtime, file_hash = get_file_info(filepath)
+                tree[rel_path]['files'].append({
+                    'name': filename,
+                    'size': size,
+                    'mtime': mtime,
+                    'hash': file_hash
+                })
+        
+        return tree
+    
+    def write_tree(tree, root_path, outfile_handle):
+        """Write the tree structure to file."""
+        
+        def write_subtree(current_path, prefix="", is_last=True):
+            """Recursively write tree structure."""
+            
+            if current_path == ".":
+                # Root level
+                abs_path = os.path.abspath(root_path)
+                outfile_handle.write(f"{abs_path}\n")
+                outfile_handle.write(".\n")
+                rel_path = "."
+            else:
+                rel_path = current_path
+            
+            if rel_path not in tree:
+                return
+            
+            dirs = tree[rel_path]['dirs']
+            files = tree[rel_path]['files']
+            
+            # Combine dirs and files for processing
+            items = [('dir', d) for d in dirs] + [('file', f) for f in files]
+            
+            for idx, (item_type, item) in enumerate(items):
+                is_last_item = (idx == len(items) - 1)
+                
+                # Determine the branch characters
+                if current_path == ".":
+                    connector = "├── " if not is_last_item else "└── "
+                    new_prefix = "│   " if not is_last_item else "    "
+                else:
+                    connector = prefix + ("├── " if not is_last_item else "└── ")
+                    new_prefix = prefix + ("│   " if not is_last_item else "    ")
+                
+                if item_type == 'dir':
+                    # Write directory name
+                    outfile_handle.write(f"{connector}{item}\n")
+                    
+                    # Recurse into subdirectory
+                    if rel_path == ".":
+                        subdir_path = item
+                    else:
+                        subdir_path = os.path.join(rel_path, item)
+                    
+                    write_subtree(subdir_path, new_prefix, is_last_item)
+                
+                else:  # file
+                    # Write file name with metadata
+                    file_info = item
+                    name = file_info['name']
+                    size = file_info['size'] if file_info['size'] is not None else 'N/A'
+                    mtime = file_info['mtime']
+                    file_hash = file_info['hash']
+                    
+                    # Calculate padding to align metadata (aim for column ~80)
+                    name_with_connector = f"{connector}{name}"
+                    padding_needed = max(1, 80 - len(name_with_connector))
+                    padding = " " * padding_needed
+                    
+                    if includehash:
+                        metadata = f"[{mtime}, {file_hash}, {size} bytes]"
+                    else:
+                        metadata = f"[{mtime}, {size} bytes]"
+                    outfile_handle.write(f"{name_with_connector}{padding}{metadata}\n")
+        
+        # Start writing from root
+        write_subtree(".")
+    
+    # Main execution
+    if not os.path.exists(targetfolder):
+        raise ge.CommandError(
+                    "record_snapshot",
+                    "Target path does not exist: %s" % targetfolder,
+                    "Please check the path!")
+    
+    if not os.path.isdir(targetfolder):
+        raise ge.CommandError(
+                    "record_snapshot",
+                    "Target path is not a directory: %s" % targetfolder,
+                    "Please check the path!")
+    
+    # Build the tree structure
+    tree = build_tree(targetfolder)
+    
+    # Write to output file
+    with open(outfile, 'w') as f:
+        write_tree(tree, targetfolder, f)
+
+
+def compare_snapshots(before, after, outfile, includehash=True):
+    """
+    ``compare_snapshots(before, after, outfile, includehash=True)``
+
+    Compares two directory snapshots and generates a report showing all files
+    and their status relative to the "before" snapshot.
+
+    Parameters:
+    -----------
+    before : str
+        Path to the "before" snapshot file
+    after : str
+        Path to either the "after" snapshot file or a directory to snapshot
+    outfile : str
+        Path to the output comparison file
+    includehash : bool or str, optional
+        Whether to include file hash in comparison (default: True).
+        Can be a boolean or string ("true", "false", "yes", "no", case-insensitive).
+
+    Notes:
+    ------
+    Status markers:
+        + : File/folder was added (present in after, not in before)
+        - : File/folder was deleted (present in before, not in after)
+        M : File/folder was modified (metadata changed)
+        (no marker) : File/folder unchanged
+
+    For modified files, metadata is shown as: <value before> -> <value after>
+    """
+    import tempfile
+    
+    # Convert includehash to boolean
+    includehash = true_or_false(includehash)
+    
+    def write_comparison(before_tree, after_tree, outfile_handle, before_path, after_path):
+        """Write the comparison output in tree format."""
+        
+        def files_differ(before_file, after_file, use_hash):
+            """Compare two file nodes and determine if they differ."""
+            # Compare mtime
+            if before_file.get('mtime') != after_file.get('mtime'):
+                return True
+            
+            # Compare size
+            if before_file.get('size') != after_file.get('size'):
+                return True
+            
+            # Compare hash only if:
+            # 1. use_hash is True (includehash parameter)
+            # 2. Both files have hash data
+            if use_hash and before_file.get('has_hash') and after_file.get('has_hash'):
+                if before_file.get('hash') != after_file.get('hash'):
+                    return True
+            
+            return False
+        
+        def compare_and_write(before_node, after_node, prefix="", is_root=True):
+            """Recursively compare and write nodes."""
+            
+            if is_root:
+                outfile_handle.write(f"before: {before_path}\n")
+                outfile_handle.write(f"after: {after_path}\n")
+                outfile_handle.write(".\n")
+            
+            # Get all unique child names
+            before_children = set(before_node.get('children', {}).keys()) if before_node else set()
+            after_children = set(after_node.get('children', {}).keys()) if after_node else set()
+            all_children = sorted(before_children | after_children)
+            
+            for idx, child_name in enumerate(all_children):
+                is_last = (idx == len(all_children) - 1)
+                
+                before_child = before_node.get('children', {}).get(child_name) if before_node else None
+                after_child = after_node.get('children', {}).get(child_name) if after_node else None
+                
+                # Determine status
+                if before_child and after_child:
+                    # Present in both
+                    if before_child['type'] == 'file' and after_child['type'] == 'file':
+                        if files_differ(before_child, after_child, includehash):
+                            status = "M "
+                        else:
+                            status = "  "
+                    else:
+                        status = "  "
+                elif after_child and not before_child:
+                    status = "+ "
+                else:  # before_child and not after_child
+                    status = "- "
+                
+                # Determine connector
+                connector = "├── " if not is_last else "└── "
+                new_prefix = prefix + ("│   " if not is_last else "    ")
+                
+                # Get node info from whichever exists
+                node = after_child if after_child else before_child
+                
+                if node['type'] == 'dir':
+                    # Directory
+                    outfile_handle.write(f"{status}{prefix}{connector}{child_name}\n")
+                    # Recurse
+                    compare_and_write(before_child, after_child, new_prefix, False)
+                else:
+                    # File
+                    name_with_connector = f"{status}{prefix}{connector}{child_name}"
+                    padding_needed = max(1, 80 - len(name_with_connector))
+                    padding = " " * padding_needed
+                    
+                    if status == "M ":
+                        # Modified - show before -> after
+                        before_meta = before_child.get('metadata_str', '')
+                        after_meta = after_child.get('metadata_str', '')
+                        metadata = f"[{before_meta} -> {after_meta}]"
+                    elif status == "+ ":
+                        # Added - show after metadata
+                        metadata = f"[{after_child.get('metadata_str', '')}]"
+                    elif status == "- ":
+                        # Deleted - show before metadata
+                        metadata = f"[{before_child.get('metadata_str', '')}]"
+                    else:
+                        # Unchanged - show current metadata
+                        metadata = f"[{after_child.get('metadata_str', '')}]"
+                    
+                    outfile_handle.write(f"{name_with_connector}{padding}{metadata}\n")
+        
+        compare_and_write(before_tree, after_tree)
+    
+    # Main execution
+    if not os.path.exists(before):
+        raise ge.CommandError(
+            "compare_snapshots",
+            "Before snapshot file does not exist: %s" % before,
+            "Please check the path!")
+    
+    # Determine if 'after' is a file or directory
+    temp_after_file = None
+    after_dir_path = None  # Track the actual directory path
+    
+    if os.path.isdir(after):
+        # Generate temporary snapshot
+        temp_after_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.snapshot.txt')
+        temp_after_file.close()
+        after_snapshot = temp_after_file.name
+        record_snapshot(after, after_snapshot, includehash)
+        after_dir_path = os.path.abspath(after)
+    elif os.path.isfile(after):
+        after_snapshot = after
+        # Extract directory path from snapshot file
+        _, after_dir_path = _parse_snapshot_tree(after, extract_root_path=True)
+        if not after_dir_path:
+            # Fallback to using the snapshot file path
+            after_dir_path = os.path.abspath(after)
+    else:
+        raise ge.CommandError(
+            "compare_snapshots",
+            "After parameter must be either a snapshot file or a directory: %s" % after,
+            "Please check the path!")
+    
+    try:
+        # Parse both snapshots using shared helper
+        before_tree = _parse_snapshot_tree(before)
+        after_tree = _parse_snapshot_tree(after_snapshot)
+        
+        # Write comparison
+        with open(outfile, 'w') as f:
+            write_comparison(before_tree, after_tree, f, os.path.abspath(before), after_dir_path)
+        
+    finally:
+        # Clean up temporary file if created
+        if temp_after_file:
+            try:
+                os.unlink(temp_after_file.name)
+            except:
+                pass
+
+
+def _parse_snapshot_tree(snapshot_file, extract_root_path=False):
+    """
+    Parse a snapshot or diff file into a hierarchical dictionary structure.
+    
+    Parameters:
+    -----------
+    snapshot_file : str
+        Path to snapshot or diff file to parse
+    extract_root_path : bool
+        If True, extract and return the root path from first line or 'after:' line
+        
+    Returns:
+    --------
+    tuple : (root_dict, root_path) if extract_root_path=True, else just root_dict
+        root_dict is the hierarchical tree structure
+        root_path is the extracted absolute path (or None)
+    """
+    with open(snapshot_file, 'r') as f:
+        lines = f.readlines()
+    
+    # Build hierarchical tree structure
+    root = {'name': '.', 'type': 'dir', 'children': {}}
+    path_stack = [root]
+    root_path = None
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Skip empty lines
+        if not stripped:
+            continue
+        
+        # Check for root path indicators
+        if extract_root_path:
+            # Look for absolute path (starts with /)
+            if stripped.startswith('/') and 'after:' not in line and 'before:' not in line:
+                root_path = stripped
+                continue
+            # Look for 'after:' line in diff files
+            if stripped.startswith('after:'):
+                root_path = stripped.split('after:', 1)[1].strip()
+                continue
+            # Skip 'before:' line
+            if stripped.startswith('before:'):
+                continue
+        
+        # Skip root marker
+        if stripped == ".":
+            continue
+        
+        # Count depth by finding the position of the connector (├── or └──)
+        # Each level adds 4 characters ("│   " or "    ")
+        # Remove status markers if present (M, +, -, or spaces at start)
+        clean_line = line
+        if len(line) >= 2 and line[1] == ' ' and line[0] in 'M+-  ':
+            clean_line = line[2:]  # Remove status marker
+        
+        connector_pos = clean_line.find("├── ")
+        if connector_pos == -1:
+            connector_pos = clean_line.find("└── ")
+        
+        if connector_pos == -1:
+            # Malformed line, skip
+            continue
+        
+        depth = connector_pos // 4
+        
+        # Extract content after connector
+        content = clean_line[connector_pos + 4:].strip()
+        
+        # Check if this is a file (has metadata in brackets)
+        if '[' in content and content.endswith(']'):
+            # It's a file
+            bracket_pos = content.rfind('[')
+            name = content[:bracket_pos].strip()
+            metadata_str = content[bracket_pos+1:-1]  # Remove [ and ]
+            
+            # Parse metadata into components
+            # Format: "mtime, hash, size bytes" or "mtime, size bytes"
+            # Or for diffs: "before_meta -> after_meta"
+            parts = [p.strip() for p in metadata_str.split(',')]
+            
+            mtime = None
+            file_hash = None
+            size = None
+            has_hash = False
+            
+            if len(parts) >= 2:
+                mtime = parts[0]
+                # Check if we have 3 parts (with hash) or 2 parts (without hash)
+                if len(parts) == 3:
+                    # Format: mtime, hash, size bytes
+                    file_hash = parts[1]
+                    size = parts[2].replace(' bytes', '').strip()
+                    has_hash = True
+                elif len(parts) == 2:
+                    # Format: mtime, size bytes
+                    size = parts[1].replace(' bytes', '').strip()
+                    has_hash = False
+            
+            node = {
+                'name': name,
+                'type': 'file',
+                'mtime': mtime,
+                'hash': file_hash,
+                'size': size,
+                'has_hash': has_hash,
+                'metadata_str': metadata_str
+            }
+        else:
+            # It's a directory
+            name = content
+            node = {
+                'name': name,
+                'type': 'dir',
+                'children': {}
+            }
+        
+        # Adjust path_stack to correct depth
+        while len(path_stack) > depth + 1:
+            path_stack.pop()
+        
+        # Add node to parent's children
+        parent = path_stack[-1]
+        parent['children'][name] = node
+        
+        # If it's a directory, add to stack for potential children
+        if node['type'] == 'dir':
+            path_stack.append(node)
+    
+    if extract_root_path:
+        return root, root_path
+    return root
+
+
+def _collect_file_paths(tree_node, current_path=".", status_filter=None):
+    """
+    Recursively collect all file paths from a tree structure.
+    
+    Parameters:
+    -----------
+    tree_node : dict
+        The tree node to traverse
+    current_path : str
+        Current path being built
+    status_filter : str or None
+        If provided, only collect files/dirs with this status (for diff trees)
+        
+    Returns:
+    --------
+    list : List of (path, node) tuples
+    """
+    results = []
+    
+    if 'children' not in tree_node:
+        return results
+    
+    for name, node in sorted(tree_node['children'].items()):
+        if current_path == ".":
+            full_path = name
+        else:
+            full_path = f"{current_path}/{name}"
+        
+        # Add this item
+        results.append((full_path, node))
+        
+        # Recurse for directories
+        if node['type'] == 'dir':
+            results.extend(_collect_file_paths(node, full_path, status_filter))
+    
+    return results
+
+
+def rollback_snapshot(diff=None, before=None, after=None, includehash=True, action="check"):
+    """
+    ``rollback_snapshot(diff=None, before=None, after=None, includehash=True, action="check")``
+    
+    Rolls back changes by analyzing snapshot differences and optionally deleting added files.
+    
+    Parameters:
+    -----------
+    diff : str, optional
+        Path to an existing comparison file from compare_snapshots.
+        If not provided, before and after must be specified.
+    before : str, optional
+        Path to the "before" snapshot file (required if diff not provided)
+    after : str, optional
+        Path to either the "after" snapshot file or directory (required if diff not provided)
+    includehash : bool or str, optional
+        Whether to include file hash in comparison when creating diff (default: True).
+        Can be a boolean or string ("true", "false", "yes", "no", case-insensitive).
+    action : str
+        Action to perform: "check" (list files) or "delete" (remove added files)
+        
+    Notes:
+    ------
+    - If action="check": Lists files that would be affected (added, modified, deleted)
+    - If action="delete": Deletes all added files and prints warnings about modified/deleted files
+    - Modified and deleted files cannot be rolled back automatically
+    - All paths are displayed as absolute paths in the after directory
+    """
+    import tempfile
+    
+    # Convert includehash to boolean
+    includehash = true_or_false(includehash)
+    
+    # Validate action parameter
+    if action not in ["check", "delete"]:
+        raise ge.CommandError(
+            "rollback_snapshot",
+            "Invalid action parameter: %s" % action,
+            "Action must be either 'check' or 'delete'")
+    
+    # Determine diff file to use
+    temp_diff_file = None
+    if diff:
+        if not os.path.exists(diff):
+            raise ge.CommandError(
+                "rollback_snapshot",
+                "Diff file does not exist: %s" % diff,
+                "Please check the path!")
+        diff_file = diff
+    else:
+        # Need to create diff
+        if not before or not after:
+            raise ge.CommandError(
+                "rollback_snapshot",
+                "Either diff or both before and after must be provided",
+                "Please provide required parameters!")
+        
+        # Create temporary diff file
+        temp_diff_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.diff.txt')
+        temp_diff_file.close()
+        diff_file = temp_diff_file.name
+        
+        # Generate the diff
+        compare_snapshots(before, after, diff_file, includehash)
+    
+    try:
+        # Parse the diff file to extract root path and changes
+        diff_tree, after_root_path = _parse_snapshot_tree(diff_file, extract_root_path=True)
+        
+        if not after_root_path:
+            raise ge.CommandError(
+                "rollback_snapshot",
+                "Could not extract 'after' path from diff file",
+                "Diff file may be malformed or missing path information!")
+        
+        # Read the diff file to identify status of each file
+        added_files = []
+        modified_files = []
+        deleted_files = []
+        
+        with open(diff_file, 'r') as f:
+            lines = f.readlines()
+        
+        # Track current path stack to build full paths
+        path_stack = []
+        
+        for line in lines:
+            # Skip non-tree lines
+            if not line.strip() or line.strip() == "." or line.startswith('before:') or line.startswith('after:'):
+                continue
+            
+            # Check for absolute path line
+            if line.strip().startswith('/'):
+                continue
+            
+            # Detect status markers (or lack thereof for unchanged items)
+            status = None
+            clean_line = line
+            
+            if len(line) >= 2 and line[1] == ' ':
+                if line[0] == '+':
+                    status = 'added'
+                    clean_line = line[2:]  # Remove status marker
+                elif line[0] == '-':
+                    status = 'deleted'
+                    clean_line = line[2:]  # Remove status marker
+                elif line[0] == 'M':
+                    status = 'modified'
+                    clean_line = line[2:]  # Remove status marker
+                elif line[0] == ' ':
+                    # Unchanged item (two spaces at start)
+                    status = 'unchanged'
+                    clean_line = line[2:]  # Remove status marker
+            
+            # Find connector position
+            connector_pos = clean_line.find("├── ")
+            if connector_pos == -1:
+                connector_pos = clean_line.find("└── ")
+            
+            if connector_pos == -1:
+                continue
+            
+            depth = connector_pos // 4
+            
+            # Extract content after connector
+            content = clean_line[connector_pos + 4:].strip()
+            
+            # Extract name (without metadata)
+            if '[' in content and content.endswith(']'):
+                bracket_pos = content.rfind('[')
+                name = content[:bracket_pos].strip()
+                is_file = True
+            else:
+                name = content
+                is_file = False
+            
+            # Adjust path stack to current depth
+            while len(path_stack) > depth:
+                path_stack.pop()
+            
+            # Build full path
+            if path_stack:
+                full_path = "/".join(path_stack + [name])
+            else:
+                full_path = name
+            
+            # Add to path stack if directory
+            if not is_file:
+                path_stack.append(name)
+            
+            # Only process files with status markers (not unchanged)
+            if status == 'unchanged' or status is None:
+                continue
+            
+            # Build absolute path in after directory
+            abs_path = os.path.join(after_root_path, full_path)
+            
+            # Categorize by status (only for files)
+            if status == 'added' and is_file:
+                added_files.append(abs_path)
+            elif status == 'modified' and is_file:
+                modified_files.append(abs_path)
+            elif status == 'deleted' and is_file:
+                deleted_files.append(abs_path)
+        
+        # Execute action
+        if action == "check":
+            # Just print the lists
+            print("\n=== Rollback Analysis ===")
+            print(f"\nAfter directory: {after_root_path}")
+            
+            if added_files:
+                print(f"\nFiles to be deleted ({len(added_files)}):")
+                for filepath in sorted(added_files):
+                    print(f"  {filepath}")
+            else:
+                print("\nNo files to delete.")
+            
+            if modified_files:
+                print(f"\nModified files (cannot be automatically rolled back) ({len(modified_files)}):")
+                for filepath in sorted(modified_files):
+                    print(f"  {filepath}")
+            
+            if deleted_files:
+                print(f"\nDeleted files (cannot be automatically rolled back) ({len(deleted_files)}):")
+                for filepath in sorted(deleted_files):
+                    print(f"  {filepath}")
+            
+            print("\n=== End Rollback Analysis ===\n")
+        
+        elif action == "delete":
+            # Delete added files and warn about others
+            print("\n=== Executing Rollback ===")
+            print(f"\nAfter directory: {after_root_path}")
+            
+            deleted_count = 0
+            failed_count = 0
+            
+            if added_files:
+                print(f"\nDeleting {len(added_files)} added file(s)...")
+                for filepath in sorted(added_files):
+                    try:
+                        if os.path.exists(filepath):
+                            os.remove(filepath)
+                            print(f"  Deleted: {filepath}")
+                            deleted_count += 1
+                        else:
+                            print(f"  Warning: File not found: {filepath}")
+                            failed_count += 1
+                    except Exception as e:
+                        print(f"  Error deleting {filepath}: {str(e)}")
+                        failed_count += 1
+                
+                print(f"\nSuccessfully deleted: {deleted_count} file(s)")
+                if failed_count > 0:
+                    print(f"Failed to delete: {failed_count} file(s)")
+            else:
+                print("\nNo files to delete.")
+            
+            # Print warnings about non-rollbackable changes
+            if modified_files:
+                print(f"\nWARNING: {len(modified_files)} modified file(s) cannot be automatically rolled back:")
+                for filepath in sorted(modified_files):
+                    print(f"  {filepath}")
+            
+            if deleted_files:
+                print(f"\nWARNING: {len(deleted_files)} deleted file(s) cannot be restored:")
+                for filepath in sorted(deleted_files):
+                    print(f"  {filepath}")
+            
+            print("\n=== Rollback Complete ===\n")
+    
+    finally:
+        # Clean up temporary diff file if created
+        if temp_diff_file:
+            try:
+                os.unlink(temp_diff_file.name)
+            except:
+                pass
+
