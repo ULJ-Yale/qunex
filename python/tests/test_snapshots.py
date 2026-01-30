@@ -961,7 +961,62 @@ def test_exclude_integration():
         print("Exclude integration test passed!")
 
 
+def test_compare_snapshots_exclude_file_to_file():
+    """Test exclude parameter when comparing two snapshot files (not directories)"""
+    print("\n" + "=" * 70)
+    print("TEST: Compare snapshots exclude (file-to-file)")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_dir = os.path.join(tmpdir, "test_folder")
+        os.makedirs(test_dir)
+        create_test_directory(test_dir)
+        
+        # Record initial snapshot
+        snapshot1 = os.path.join(tmpdir, "snapshot1.txt")
+        record_snapshot(test_dir, snapshot1, includehash=True)
+        
+        # Make changes
+        with open(os.path.join(test_dir, "new_file.txt"), 'w') as f:
+            f.write("New file\n")
+        
+        with open(os.path.join(test_dir, "temp.txt"), 'w') as f:
+            f.write("Temp file to exclude\n")
+        
+        # Create a subdirectory with files to exclude
+        exclude_dir = os.path.join(test_dir, "cache")
+        os.makedirs(exclude_dir, exist_ok=True)
+        with open(os.path.join(exclude_dir, "cache1.txt"), 'w') as f:
+            f.write("Cache file 1\n")
+        with open(os.path.join(exclude_dir, "cache2.txt"), 'w') as f:
+            f.write("Cache file 2\n")
+        
+        # Record second snapshot (without exclusions)
+        snapshot2 = os.path.join(tmpdir, "snapshot2.txt")
+        record_snapshot(test_dir, snapshot2, includehash=True)
+        
+        # Compare two snapshot FILES with exclusion - this tests the actual comparison logic
+        diff_file = os.path.join(tmpdir, "diff.txt")
+        compare_snapshots(snapshot1, snapshot2, diff_file, includehash=True, exclude=['temp.txt', 'cache'])
+        
+        diff_content = read_snapshot_file(diff_file)
+        
+        # Verify new_file.txt is detected (not excluded)
+        assert "new_file.txt" in diff_content, "new_file.txt should be in diff"
+        assert "+ " in diff_content, "Should have added files marker"
+        
+        # Verify temp.txt is excluded from diff
+        assert "temp.txt" not in diff_content, "temp.txt should be excluded from diff"
+        
+        # Verify cache directory and its contents are excluded
+        assert "cache" not in diff_content, "cache directory should be excluded from diff"
+        assert "cache1.txt" not in diff_content, "cache1.txt should be excluded from diff"
+        assert "cache2.txt" not in diff_content, "cache2.txt should be excluded from diff"
+        
+        print("File-to-file comparison with exclude test passed!")
+
 
 if __name__ == "__main__":
     # Run tests if executed directly
     pytest.main([__file__, "-v"])
+

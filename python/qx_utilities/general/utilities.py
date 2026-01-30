@@ -5404,6 +5404,50 @@ def _is_path_excluded(rel_path, exclude_list):
     return rel_path in exclude_list
 
 
+def _normalize_exclude_list(exclude_list, root_path):
+    """
+    Normalize exclude list by converting absolute paths to relative paths.
+    
+    Parameters:
+    -----------
+    exclude_list : list
+        List of paths (can be absolute or relative)
+    root_path : str
+        The root directory path to use for making paths relative
+        
+    Returns:
+    --------
+    list : Normalized list of relative paths
+    """
+    normalized = []
+    abs_root = os.path.abspath(root_path)
+    
+    for path in exclude_list:
+        # Strip trailing slashes
+        path = path.rstrip('/')
+        
+        # Check if path is absolute
+        if os.path.isabs(path):
+            # Convert to relative path from root
+            try:
+                abs_path = os.path.abspath(path)
+                rel_path = os.path.relpath(abs_path, abs_root)
+                # Don't add paths that go outside the root (start with ..)
+                if not rel_path.startswith('..'):
+                    normalized.append(rel_path)
+            except ValueError:
+                # On Windows, relpath can fail if paths are on different drives
+                # In this case, skip this exclude entry
+                pass
+        else:
+            # Already relative, strip ./ prefix if present
+            if path.startswith('./'):
+                path = path[2:]
+            normalized.append(path)
+    
+    return normalized
+
+
 def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
     """
     ``record_snapshot targetfolder=<folder path> outfile=<output file> [includehash=True] [exclude=None]``
@@ -5518,8 +5562,8 @@ def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
     exclude_list = []
     if exclude is not None:
         exclude_list = _process_filelist(exclude)
-        # Normalize paths (remove trailing slashes, handle ./ prefix)
-        exclude_list = [e.rstrip('/').lstrip('./') for e in exclude_list]
+        # Normalize paths (convert absolute to relative, remove trailing slashes, handle ./ prefix)
+        exclude_list = _normalize_exclude_list(exclude_list, targetfolder)
     
     def compute_file_hash(filepath):
         """Compute MD5 hash of a file."""
@@ -5672,6 +5716,11 @@ def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
     # Build the tree structure
     tree = build_tree(targetfolder)
     
+    # Ensure output directory exists
+    outfile_dir = os.path.dirname(os.path.abspath(outfile))
+    if outfile_dir and not os.path.exists(outfile_dir):
+        os.makedirs(outfile_dir)
+    
     # Write to output file
     with open(outfile, 'w') as f:
         write_tree(tree, targetfolder, f)
@@ -5806,15 +5855,17 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
     # Convert includehash to boolean
     includehash = true_or_false(includehash)
     
-    # Process exclude list
-    exclude_list = []
-    if exclude is not None:
-        exclude_list = _process_filelist(exclude)
-        # Normalize paths
-        exclude_list = [e.rstrip('/').lstrip('./') for e in exclude_list]
+    # Process exclude parameter (can be string, list, or None)
+    if exclude is None:
+        exclude = []
+    else:
+        exclude = _process_filelist(exclude)
     
-    def write_comparison(before_tree, after_tree, outfile_handle, before_path, after_path):
+    def write_comparison(before_tree, after_tree, outfile_handle, before_path, after_path, target_path, exclude_list=None):
         """Write the comparison output in tree format."""
+        
+        if exclude_list is None:
+            exclude_list = []
         
         def files_differ(before_file, after_file, use_hash):
             """Compare two file nodes and determine if they differ."""
@@ -5835,12 +5886,13 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
             
             return False
         
-        def compare_and_write(before_node, after_node, prefix="", is_root=True):
+        def compare_and_write(before_node, after_node, prefix="", is_root=True, current_path=""):
             """Recursively compare and write nodes."""
             
             if is_root:
                 outfile_handle.write(f"before: {before_path}\n")
                 outfile_handle.write(f"after: {after_path}\n")
+                outfile_handle.write(f"target: {target_path}\n")
                 outfile_handle.write(".\n")
             
             # Get all unique child names
@@ -5850,6 +5902,13 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
             
             for idx, child_name in enumerate(all_children):
                 is_last = (idx == len(all_children) - 1)
+                
+                # Build the full relative path for this child
+                child_rel_path = os.path.join(current_path, child_name) if current_path else child_name
+                
+                # Check if this path should be excluded
+                if _is_path_excluded(child_rel_path, exclude_list):
+                    continue
                 
                 before_child = before_node.get('children', {}).get(child_name) if before_node else None
                 after_child = after_node.get('children', {}).get(child_name) if after_node else None
@@ -5879,8 +5938,8 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
                 if node['type'] == 'dir':
                     # Directory
                     outfile_handle.write(f"{status}{prefix}{connector}{child_name}\n")
-                    # Recurse
-                    compare_and_write(before_child, after_child, new_prefix, False)
+                    # Recurse with updated path
+                    compare_and_write(before_child, after_child, new_prefix, False, child_rel_path)
                 else:
                     # File
                     name_with_connector = f"{status}{prefix}{connector}{child_name}"
@@ -5915,18 +5974,24 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
     
     # Determine if 'after' is a file or directory
     temp_after_file = None
-    after_dir_path = None  # Track the actual directory path
+    after_dir_path = None  # Track the actual directory path (for target: line)
+    after_snapshot_path = None  # Track what to show in after: line
     
     if os.path.isdir(after):
         # Generate temporary snapshot
         temp_after_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.snapshot.txt')
         temp_after_file.close()
         after_snapshot = temp_after_file.name
-        record_snapshot(after, after_snapshot, includehash, exclude)
         after_dir_path = os.path.abspath(after)
+        after_snapshot_path = after_dir_path  # Show directory path in after: line
+        
+        # Normalize exclude list relative to the 'after' directory
+        # (exclude is already processed and will be passed to record_snapshot which handles it)
+        record_snapshot(after, after_snapshot, includehash, exclude)
     elif os.path.isfile(after):
         after_snapshot = after
-        # Extract directory path from snapshot file
+        after_snapshot_path = os.path.abspath(after)  # Show snapshot file path in after: line
+        # Extract directory path from snapshot file for target: line
         _, after_dir_path = _parse_snapshot_tree(after, extract_root_path=True)
         if not after_dir_path:
             # Fallback to using the snapshot file path
@@ -5937,14 +6002,28 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
             "After parameter must be either a snapshot file or a directory: %s" % after,
             "Please check the path!")
     
+    # Also get the before directory path for normalization
+    _, before_dir_path = _parse_snapshot_tree(before, extract_root_path=True)
+    if not before_dir_path:
+        before_dir_path = os.path.abspath(before)
+    
+    # Normalize exclude list - use after_dir_path as reference since that's what we're comparing to
+    # This ensures the exclude paths are relative to the snapshot root
+    normalized_exclude = _normalize_exclude_list(exclude, after_dir_path)
+    
     try:
         # Parse both snapshots using shared helper
         before_tree = _parse_snapshot_tree(before)
         after_tree = _parse_snapshot_tree(after_snapshot)
         
-        # Write comparison
+        # Ensure output directory exists
+        outfile_dir = os.path.dirname(os.path.abspath(outfile))
+        if outfile_dir and not os.path.exists(outfile_dir):
+            os.makedirs(outfile_dir)
+        
+        # Write comparison with exclude list
         with open(outfile, 'w') as f:
-            write_comparison(before_tree, after_tree, f, os.path.abspath(before), after_dir_path)
+            write_comparison(before_tree, after_tree, f, os.path.abspath(before), after_snapshot_path, after_dir_path, normalized_exclude)
         
     finally:
         # Clean up temporary file if created
@@ -5989,16 +6068,23 @@ def _parse_snapshot_tree(snapshot_file, extract_root_path=False):
         
         # Check for root path indicators
         if extract_root_path:
-            # Look for absolute path (starts with /)
-            if stripped.startswith('/') and 'after:' not in line and 'before:' not in line:
-                root_path = stripped
+            # Look for 'target:' line in diff files (preferred)
+            if stripped.startswith('target:'):
+                root_path = stripped.split('target:', 1)[1].strip()
                 continue
-            # Look for 'after:' line in diff files
+            # Fallback: Look for 'after:' line for backwards compatibility
             if stripped.startswith('after:'):
-                root_path = stripped.split('after:', 1)[1].strip()
+                # Only use if we haven't found target: yet
+                if root_path is None:
+                    root_path = stripped.split('after:', 1)[1].strip()
                 continue
             # Skip 'before:' line
             if stripped.startswith('before:'):
+                continue
+            # Look for absolute path (starts with /) - for old snapshot format
+            if stripped.startswith('/') and 'after:' not in line and 'before:' not in line and 'target:' not in line:
+                if root_path is None:
+                    root_path = stripped
                 continue
         
         # Skip root marker
@@ -6007,10 +6093,13 @@ def _parse_snapshot_tree(snapshot_file, extract_root_path=False):
         
         # Count depth by finding the position of the connector (├── or └──)
         # Each level adds 4 characters ("│   " or "    ")
-        # Remove status markers if present (M, +, -, or spaces at start)
+        # Remove status markers if present (M, +, -, or two spaces for unchanged)
         clean_line = line
-        if len(line) >= 2 and line[1] == ' ' and line[0] in 'M+-  ':
+        if len(line) >= 2 and line[1] == ' ' and line[0] in 'M+-':
             clean_line = line[2:]  # Remove status marker
+        elif len(line) >= 3 and line[0] == ' ' and line[1] == ' ' and line[2] in '├└│':
+            # Line starts with "  " followed by tree character - this is unchanged status
+            clean_line = line[2:]  # Remove the "  " status marker
         
         connector_pos = clean_line.find("├── ")
         if connector_pos == -1:
@@ -6274,12 +6363,7 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
     # Convert includehash to boolean
     includehash = true_or_false(includehash)
     
-    # Process exclude list
-    exclude_list = []
-    if exclude is not None:
-        exclude_list = _process_filelist(exclude)
-        # Normalize paths
-        exclude_list = [e.rstrip('/').lstrip('./') for e in exclude_list]
+    # Note: exclude list will be normalized later after we extract the root path from diff file
     
     # Validate action parameter
     if action not in ["check", "delete"]:
@@ -6314,17 +6398,25 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
         compare_snapshots(before, after, diff_file, includehash, exclude)
     
     try:
-        # Parse the diff file to extract root path and changes
+        # Parse the diff file to extract target path (the actual directory to rollback)
         diff_tree, after_root_path = _parse_snapshot_tree(diff_file, extract_root_path=True)
         
         if not after_root_path:
             raise ge.CommandError(
                 "rollback_snapshot",
-                "Could not extract 'after' path from diff file",
-                "Diff file may be malformed or missing path information!")
+                "Could not extract target path from diff file",
+                "Diff file may be malformed or missing target: line!")
+        
+        # Normalize exclude list relative to the after_root_path
+        if exclude is not None:
+            exclude_list = _process_filelist(exclude)
+            exclude_list = _normalize_exclude_list(exclude_list, after_root_path)
+        else:
+            exclude_list = []
         
         # Read the diff file to identify status of each file
         added_files = []
+        added_dirs = []  # Track added directories
         modified_files = []
         deleted_files = []
         
@@ -6338,7 +6430,7 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
         
         for line in lines:
             # Skip non-tree lines
-            if not line.strip() or line.strip() == "." or line.startswith('before:') or line.startswith('after:'):
+            if not line.strip() or line.strip() == "." or line.startswith('before:') or line.startswith('after:') or line.startswith('target:'):
                 continue
             
             # Check for absolute path line
@@ -6421,9 +6513,13 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
             # Build absolute path in after directory
             abs_path = os.path.join(after_root_path, full_path)
             
-            # Categorize by status (only for files)
-            if status == 'added' and is_file:
-                added_files.append(abs_path)
+            # Categorize by status
+            if status == 'added':
+                if is_file:
+                    added_files.append(abs_path)
+                else:
+                    # Track added directories with their depth for later removal
+                    added_dirs.append((depth, abs_path))
             elif status == 'modified' and is_file:
                 modified_files.append(abs_path)
             elif status == 'deleted' and is_file:
@@ -6441,6 +6537,12 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
                     print(f"  {filepath}")
             else:
                 print("\nNo files to delete.")
+            
+            if added_dirs:
+                print(f"\nDirectories to be deleted if empty ({len(added_dirs)}):")
+                # Sort by depth (deepest first) for display
+                for depth, dirpath in sorted(added_dirs, key=lambda x: -x[0]):
+                    print(f"  {dirpath}")
             
             if modified_files:
                 print(f"\nModified files (cannot be automatically rolled back) ({len(modified_files)}):")
@@ -6482,6 +6584,35 @@ def rollback_snapshot(diff=None, before=None, after=None, includehash=True, acti
                     print(f"Failed to delete: {failed_count} file(s)")
             else:
                 print("\nNo files to delete.")
+            
+            # Remove empty added directories (deepest first)
+            if added_dirs:
+                print(f"\nRemoving empty added directories...")
+                # Sort by depth (deepest first) to remove child directories before parents
+                sorted_dirs = sorted(added_dirs, key=lambda x: -x[0])
+                dir_deleted_count = 0
+                dir_skipped_count = 0
+                
+                for depth, dirpath in sorted_dirs:
+                    try:
+                        if os.path.exists(dirpath):
+                            # Check if directory is empty
+                            if not os.listdir(dirpath):
+                                os.rmdir(dirpath)
+                                print(f"  Removed: {dirpath}")
+                                dir_deleted_count += 1
+                            else:
+                                print(f"  Skipped (not empty): {dirpath}")
+                                dir_skipped_count += 1
+                        else:
+                            print(f"  Warning: Directory not found: {dirpath}")
+                    except Exception as e:
+                        print(f"  Error removing {dirpath}: {str(e)}")
+                
+                if dir_deleted_count > 0:
+                    print(f"\nSuccessfully removed: {dir_deleted_count} empty director{'y' if dir_deleted_count == 1 else 'ies'}")
+                if dir_skipped_count > 0:
+                    print(f"Skipped (not empty): {dir_skipped_count} director{'y' if dir_skipped_count == 1 else 'ies'}")
             
             # Print warnings about non-rollbackable changes
             if modified_files:
