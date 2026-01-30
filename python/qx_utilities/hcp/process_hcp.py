@@ -74,6 +74,50 @@ def _build_skipped_report(report, skipped, options):
             report["skipped"] = [str(binfo["bold_number"]) for binfo in skipped]
 
 
+def _append_sorted_logdir_to_log(log_file, logdir):
+    """Append the contents of all files in a log directory into a single log.
+
+    Files are listed in a consistent order:
+    - first by increasing integer N in filenames matching '*.N.{e,o}.log'
+    - then with '.e.log' preceding '.o.log' for the same N
+    - any non-matching files are appended last in lexicographic order
+
+    Parameters:
+        log_file: open file handle to write to.
+        logdir (str): directory with log files to append.
+    """
+
+    def _log_sort_key(filename):
+        match = re.match(r"^(?P<prefix>.*)\.(?P<n>\d+)\.(?P<stream>[eo])\.log$", filename)
+        if not match:
+            return (float("inf"), 2, filename)
+
+        n = int(match.group("n"))
+        stream = match.group("stream")
+        stream_order = 0 if stream == "e" else 1
+        return (n, stream_order, filename)
+
+    try:
+        filenames = [entry.name for entry in os.scandir(logdir) if entry.is_file()]
+    except FileNotFoundError:
+        print(f"\n---> WARNING: log directory not found: {logdir}", file=log_file)
+        return
+
+    for filename in sorted(filenames, key=_log_sort_key):
+        file_path = os.path.join(logdir, filename)
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as file:
+                content = file.read()
+        except OSError as err:
+            content = f"[Could not read {file_path}: {err}]"
+
+        print(file=log_file)
+        print("----------------------------------------", file=log_file)
+        print(f"Contents of {filename}:", file=log_file)
+        print("----------------------------------------", file=log_file)
+        print(content, file=log_file)
+
+
 # -------------------------------------------------------------------
 #
 #                       HCP Pipeline Scripts
@@ -2927,18 +2971,8 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
             else:
                 report["failed"] = subject_id
 
-            # read and print all files in logdir
             with open(endlog, "a", encoding="utf-8") as log_file:
-                for filename in os.listdir(logdir):
-                    file_path = os.path.join(logdir, filename)
-
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                        print(file=log_file)
-                        print("----------------------------------------", file=log_file)
-                        print(f"Contents of {filename}:", file=log_file)
-                        print("----------------------------------------", file=log_file)
-                        print(content, file=log_file)
+                _append_sorted_logdir_to_log(log_file, logdir)
 
                 # print succesful completion
                 print("\n---> Successful completion of task", file=log_file)
@@ -3494,18 +3528,8 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
             else:
                 report["failed"] = subject_id
 
-            # read and print all files in logdir
             with open(endlog, "a", encoding="utf-8") as log_file:
-                for filename in os.listdir(logdir):
-                    file_path = os.path.join(logdir, filename)
-
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                        print(file=log_file)
-                        print("----------------------------------------", file=log_file)
-                        print(f"Contents of {filename}:", file=log_file)
-                        print("----------------------------------------", file=log_file)
-                        print(content, file=log_file)
+                _append_sorted_logdir_to_log(log_file, logdir)
 
                 # print succesful completion
                 print("\n---> Successful completion of task", file=log_file)
@@ -12943,18 +12967,8 @@ def _execute_hcp_long_transmit_bias(sinfo, options, overwrite, run, hcp_base, su
             else:
                 report["failed"] = subject_id
 
-            # read and print all files in logdir
             with open(endlog, "a", encoding="utf-8") as log_file:
-                for filename in os.listdir(logdir):
-                    file_path = os.path.join(logdir, filename)
-
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                        print(file=log_file)
-                        print("----------------------------------------", file=log_file)
-                        print(f"Contents of {filename}:", file=log_file)
-                        print("----------------------------------------", file=log_file)
-                        print(content, file=log_file)
+                _append_sorted_logdir_to_log(log_file, logdir)
 
                 # print succesful completion
                 print("\n---> Successful completion of task", file=log_file)
