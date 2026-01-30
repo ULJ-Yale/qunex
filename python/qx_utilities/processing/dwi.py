@@ -402,7 +402,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             if "xtract_mni" in options:
                 output_dir = os.path.join(hcp_dir, "MNINonLinear", "Results", "xtract")
             else:
-                output_dir = os.path.join(hcp_dir, "T1w", "Diffusion", "xtract")
+                output_dir = os.path.join(hcp_dir, "T1w", "xtract")
 
         # custom out dir
         if "xtract_out" in options:
