@@ -400,9 +400,9 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_dir = os.path.join(hcp_dir, "T1w", "Diffusion.bedpostX")
 
             if "xtract_mni" in options:
-                output_dir = os.path.join(hcp_dir, "MNINonLinear", "Results", "xtract")
+                output_dir = os.path.join(hcp_dir, "MNINonLinear", "Results", "Tractography", "xtract")
             else:
-                output_dir = os.path.join(hcp_dir, "T1w", "xtract")
+                output_dir = os.path.join(hcp_dir, "T1w", "Diffusion", "Tractography", "xtract")
 
         # custom out dir
         if "xtract_out" in options:
