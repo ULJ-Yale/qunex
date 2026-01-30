@@ -397,17 +397,20 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     sinfo["hcp"], sinfo["id"] + options["hcp_suffix"]
                 )
             xfms_dir = os.path.join(hcp_dir, "MNINonLinear", "xfms")
-            t1w_dir = os.path.join(hcp_dir, "T1w")
-            bedpostx_dir = os.path.join(t1w_dir, "Diffusion.bedpostX")
+            bedpostx_dir = os.path.join(hcp_dir, "T1w", "Diffusion.bedpostX")
 
             if "xtract_mni" in options:
-                output_dir = os.path.join(hcp_dir, "MNINonLinear", "xtract")
+                output_dir = os.path.join(hcp_dir, "MNINonLinear", "Results", "xtract")
             else:
-                output_dir = os.path.join(t1w_dir, "xtract")
+                output_dir = os.path.join(hcp_dir, "T1w", "Diffusion", "xtract")
 
         # custom out dir
         if "xtract_out" in options:
             output_dir = options["xtract_out"]
+
+        # create output dir if it does not exist
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         # custom bedpostx dir
         if "xtract_bpx" in options:
@@ -509,7 +512,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     os.remove(target_file)
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.runExternalForFile(
                     target_file,
                     comm,
                     "Running FSL XTRACT",
