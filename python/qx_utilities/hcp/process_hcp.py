@@ -28,6 +28,7 @@ import json
 import general.core as gc
 import processing.core as pc
 import general.img as gi
+import general.utilities as gu
 import general.exceptions as ge
 import nibabel as nib
 import pprint
@@ -131,6 +132,7 @@ def getHCPPaths(sinfo, options):
     else:
         d["source"] = os.path.join(d["base"], "unprocessed")
 
+    d['snapshots']  = os.path.join(hcpbase, 'snapshots')
     d["hcp_nonlin"] = os.path.join(hcpbase, "MNINonLinear")
     d["T1w_source"] = os.path.join(d["source"], "T1w")
     d["T2w_source"] = os.path.join(d["source"], "T2w")
@@ -1936,6 +1938,18 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             if options[optionName]:
                 comm += " %s" % (flag)
 
+        # check if post_fs was already completed
+        post_fs_tfile = os.path.join(
+            hcp["hcp_nonlin"],
+            sinfo["id"]
+            + options["hcp_suffix"]
+            + ".corrThickness.164k_fs_LR.dscalar.nii",
+        )
+
+        if os.path.exists(post_fs_tfile) and not (overwrite or options["hcp_fs_existing_session"]):
+            r += "\n---> ERROR: PostFreeSurfer results already present! Set overwrite to true or hcp_fs_existing_session to true to reprocess FreeSurfer!"
+            run = False
+
         # -- Report command
         if run:
             r += "\n\n------------------------------------------------------------\n"
@@ -1954,16 +1968,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             fullTest = None
 
-        # check if post_fs was already completed
-        post_fs_tfile = os.path.join(
-            hcp["hcp_nonlin"],
-            sinfo["id"]
-            + options["hcp_suffix"]
-            + ".corrThickness.164k_fs_LR.dscalar.nii",
-        )
-        if os.path.exists(post_fs_tfile):
-            r += "\n---> ERROR: It seems like hcp_post_freesurfer was already executed for this session. Going back and forth between hcp_freesurfer and hcp_post_freesurfer will cause issues and give invalid results. Best to manually cleanup the session and reprocess it from scratch."
-            run = False
+        
         # -- Run
         if run:
             if options["run"] == "run":
@@ -1976,9 +1981,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     os.remove(tfile)
 
                 # ---> clean up only if hcp_fs_existing_session is not set to True
-                if (overwrite or not os.path.exists(tfile)) and not options[
-                    "hcp_fs_existing_session"
-                ]:
+                if (overwrite or not os.path.exists(tfile)) and not options["hcp_fs_existing_session"]:
                     if os.path.lexists(hcp["FS_folder"]):
                         r += "\n ---> removing preexisting FS folder [%s]" % (
                             hcp["FS_folder"]
@@ -2002,6 +2005,28 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 % (rmtarget)
                             )
                             status = False
+
+                if os.path.exists(post_fs_tfile):
+                    r += "\n---> WARNING: PostFreeSurfer results already present!"
+                    # -> cleanup postfs
+                    r += "\n---> Found PostFreeSurfer results file: %s" % (post_fs_tfile)
+                    r += "\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ..."
+                    gu.rollback_snapshot(diff=os.path.join(hcp['snapshots'], "postfreesurfer_diff.txt"), 
+                                        action="delete",
+                                        exclude=hcp['snapshots'])
+
+                    # -> restore backup
+                    r += "\n     Restoring FreeSurfer backup ..."
+                    gu.restore_files(source=os.path.join(hcp['snapshots'], "postfreesurfer_backup"),            
+                                    target=hcp['base'],
+                                    overwrite=True)
+                
+                # --> record freesurfer_start_snapshot
+                r += "\n---> Recording FreeSurfer start snapshot ..."
+                gu.record_snapshot(targetfolder=hcp['base'],
+                                   outfile=os.path.join(hcp['snapshots'], "freesurfer_start.txt"), 
+                                   exclude=hcp['snapshots'])
+
                 if status:
                     r, endlog, report, failed = pc.runExternalForFile(
                         tfile,
@@ -2057,6 +2082,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
         )
     )
+
+    # -- take freesurfer_end_snapshot
+    if options["run"] == "run":
+        gu.compare_snapshots(before=os.path.join(hcp['snapshots'], "freesurfer_start.txt"), 
+                             after=os.path.join(hcp['base']),
+                             outfile=os.path.join(hcp['snapshots'], "freesurfer_diff.txt"),
+                             exclude=hcp['snapshots'])
 
     # print r
     return (r, (sinfo["id"], report, failed))
@@ -2385,6 +2417,31 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         # -- run
         if run:
             if options["run"] == "run":
+                
+                # ---> record pre freesurfer snapshot
+                gu.record_snapshot(targetfolder=hcp['base'], 
+                                   outfile=os.path.join(hcp['snapshots'], "postfreesurfer_start.txt"), 
+                                   exclude=hcp['snapshots'])
+
+                # ---> prepare freesurfer backup
+                gu.backup_files(source=hcp['base'], 
+                                target=os.path.join(hcp['snapshots'], 'postfreesurfer_backup'),
+                                filelist=['MNINonLinear/T1w.nii.gz',
+                                          'MNINonLinear/T1w_restore.nii.gz',
+                                          'MNINonLinear/T1w_restore_brain.nii.gz',
+                                          'MNINonLinear/T2w.nii.gz',
+                                          'MNINonLinear/T2w_restore.nii.gz',
+                                          'MNINonLinear/T2w_restore_brain.nii.gz',
+                                          'MNINonLinear/xfms/NonlinearRegJacobians.nii.gz',
+                                          'T1w/T1w_acpc_dc.nii.gz',
+                                          'T1w/T1w_acpc_dc_restore.nii.gz',
+                                          'T1w/T1w_acpc_dc_restore_brain.nii.gz',
+                                          'T1w/T2w_acpc_dc.nii.gz',
+                                          'T1w/T2w_acpc_dc_restore.nii.gz',
+                                          'T1w/T2w_acpc_dc_restore_brain.nii.gz'],
+                                overwrite=overwrite)
+
+                # ---> clean up test file if overwrite
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
@@ -2442,6 +2499,13 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
         )
     )
+
+    # -- take freesurfer_end_snapshot
+    if options["run"] == "run":
+        gu.compare_snapshots(before=os.path.join(hcp['snapshots'], "postfreesurfer_start.txt"), 
+                             after=os.path.join(hcp['base']),
+                             outfile=os.path.join(hcp['snapshots'], "postfreesurfer_diff.txt"),
+                             exclude=hcp['snapshots'])
 
     # print r
     return (r, (sinfo["id"], report, failed))
