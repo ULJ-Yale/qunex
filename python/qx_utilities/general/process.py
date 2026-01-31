@@ -328,6 +328,7 @@ arglist = [
     ["# --- hcp_freesurfer options"],
     ["hcp_fs_seed", "", str],
     ["hcp_fs_existing_session", "False", torf],
+    ["hcp_fs_edits", "FALSE", str],
     ["hcp_fs_extra_reconall", "", str],
     ["hcp_expert_file", "", str],
     ["hcp_fs_flair", "False", torf],

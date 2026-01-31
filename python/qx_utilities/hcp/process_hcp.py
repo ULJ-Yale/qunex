@@ -1685,6 +1685,21 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
 
+        --hcp_fs_edits (str, default 'FALSE'):
+            Indicates whether manual edits are to be applied to the FreeSurfer
+            outputs. If set to 'TRUE', the user needs to either place the edited
+            files in <sessions folder>/inbox/FS_edits and prepend '<session id>_'
+            to identify them, or place them in the standard FreeSurfer location
+            themselves. The 'existing_session' parameter will be set to TRUE, 
+            and 'extra_reconall' parameters will be set as well to only run the
+            necessary steps to incorporate the edits, depending on the edits 
+            present and/or specified. This option can be used for edits to 
+            aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted values are 
+            'FALSE', 'TRUE', or a comma-separated list of edits to apply:
+            'aseg', 'wm', 'brainmask'. If edits are not specified explicitly, 
+            they will be determined based on the files found in the FS_edits 
+            folder.
+
         --hcp_fs_existing_session (str, default 'FALSE'):
             Indicates that the command is to be run on top of an already
             existing analysis/subject. This excludes the `-i` flag from the
@@ -1886,6 +1901,48 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             os.path.join(hcp["hcp_base"], "FreeSurfer", "FreeSurferPipeline.sh") + " "
         )
 
+        # do we have edits specified?
+        if options["hcp_fs_edits"] not in ["", "False", "false", "No", "no"]:
+            edited = [e for e in ['aseg', 'wm', 'brainmask'] if e in options["hcp_fs_edits"].lower().split(",")]
+            # -- map files
+            r += "\n---> hcp_fs_edits is set to TRUE, looking for edits files ..."
+            editsfolder = os.path.join(options["sessionsfolder"], "inbox", "FS_edits")
+            editfiles = glob.glob(os.path.join(editsfolder, sinfo["id"] + "_*.mgz"))
+            if editfiles:
+                for efile in editfiles:
+                    fname = os.path.basename(efile).split("_", 1)[1]
+                    edited.append(fname.replace(".mgz",""))
+                    destfile = os.path.join(hcp["FS_folder"], 'mri', fname)
+                    if os.path.exists(destfile):
+                        r += "\n     ... replacing: %s " % (fname)
+                    else:
+                        r += "\n     ... adding: %s " % (fname)
+                    shutil.copy2(efile, destfile)
+            else:
+                r += "\n     ... no edits files found in %s!" % (editsfolder)
+
+            # -- set extra parameters
+            options["hcp_fs_existing_session"] = True
+            if 'wm' in edited:
+                add_extra = ['-autorecon2-wm', '-autorecon3']
+            elif 'aseg' in edited:
+                add_extra = ['-autorecon2-noaseg', '-autorecon3']
+            elif 'brainmask' in edited:
+                add_extra = ['-autorecon-pial', '-autorecon3']
+            else:
+                r += "\n---> ERROR: No edits specified and no edited files found!"
+                r += "\n            If you are processing edits to wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits."
+                r += "\n            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters."
+                run = False
+                add_extra = []
+
+            if not hcp['T2w'] in ["", "NONE"]:
+                add_extra.append('-T2pial')
+
+            add_extra = [p for p in add_extra if p not in options["hcp_fs_extra_reconall"]]
+            if add_extra:
+                options["hcp_fs_extra_reconall"] = "|".join(add_extra + [options["hcp_fs_extra_reconall"]])            
+
         # -> Key elements
         elements = [
             ("session-dir", hcp["T1w_folder"]),
@@ -1983,7 +2040,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 # ---> clean up only if hcp_fs_existing_session is not set to True
                 if (overwrite or not os.path.exists(tfile)) and not options["hcp_fs_existing_session"]:
                     if os.path.lexists(hcp["FS_folder"]):
-                        r += "\n ---> removing preexisting FS folder [%s]" % (
+                        r += "\n---> removing preexisting FS folder [%s]" % (
                             hcp["FS_folder"]
                         )
                         shutil.rmtree(hcp["FS_folder"], ignore_errors=True)
@@ -2009,7 +2066,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(post_fs_tfile):
                     r += "\n---> WARNING: PostFreeSurfer results already present!"
                     # -> cleanup postfs
-                    r += "\n---> Found PostFreeSurfer results file: %s" % (post_fs_tfile)
+                    r += "\n     Found PostFreeSurfer results file: %s" % (post_fs_tfile)
                     r += "\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ..."
                     gu.rollback_snapshot(diff=os.path.join(hcp['snapshots'], "postfreesurfer_diff.txt"), 
                                         action="delete",
@@ -2418,28 +2475,29 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         if run:
             if options["run"] == "run":
                 
-                # ---> record pre freesurfer snapshot
-                gu.record_snapshot(targetfolder=hcp['base'], 
-                                   outfile=os.path.join(hcp['snapshots'], "postfreesurfer_start.txt"), 
-                                   exclude=hcp['snapshots'])
-
-                # ---> prepare freesurfer backup
-                gu.backup_files(source=hcp['base'], 
-                                target=os.path.join(hcp['snapshots'], 'postfreesurfer_backup'),
-                                filelist=['MNINonLinear/T1w.nii.gz',
-                                          'MNINonLinear/T1w_restore.nii.gz',
-                                          'MNINonLinear/T1w_restore_brain.nii.gz',
-                                          'MNINonLinear/T2w.nii.gz',
-                                          'MNINonLinear/T2w_restore.nii.gz',
-                                          'MNINonLinear/T2w_restore_brain.nii.gz',
-                                          'MNINonLinear/xfms/NonlinearRegJacobians.nii.gz',
-                                          'T1w/T1w_acpc_dc.nii.gz',
-                                          'T1w/T1w_acpc_dc_restore.nii.gz',
-                                          'T1w/T1w_acpc_dc_restore_brain.nii.gz',
-                                          'T1w/T2w_acpc_dc.nii.gz',
-                                          'T1w/T2w_acpc_dc_restore.nii.gz',
-                                          'T1w/T2w_acpc_dc_restore_brain.nii.gz'],
-                                overwrite=overwrite)
+                if not os.path.exists(tfile):
+                    # ---> record pre freesurfer snapshot
+                    gu.record_snapshot(targetfolder=hcp['base'], 
+                                       outfile=os.path.join(hcp['snapshots'], "postfreesurfer_start.txt"), 
+                                       exclude=hcp['snapshots'])
+    
+                    # ---> prepare freesurfer backup
+                    gu.backup_files(source=hcp['base'], 
+                                    target=os.path.join(hcp['snapshots'], 'postfreesurfer_backup'),
+                                    filelist=['MNINonLinear/T1w.nii.gz',
+                                              'MNINonLinear/T1w_restore.nii.gz',
+                                              'MNINonLinear/T1w_restore_brain.nii.gz',
+                                              'MNINonLinear/T2w.nii.gz',
+                                              'MNINonLinear/T2w_restore.nii.gz',
+                                              'MNINonLinear/T2w_restore_brain.nii.gz',
+                                              'MNINonLinear/xfms/NonlinearRegJacobians.nii.gz',
+                                              'T1w/T1w_acpc_dc.nii.gz',
+                                              'T1w/T1w_acpc_dc_restore.nii.gz',
+                                              'T1w/T1w_acpc_dc_restore_brain.nii.gz',
+                                              'T1w/T2w_acpc_dc.nii.gz',
+                                              'T1w/T2w_acpc_dc_restore.nii.gz',
+                                              'T1w/T2w_acpc_dc_restore_brain.nii.gz'],
+                                    overwrite=overwrite)
 
                 # ---> clean up test file if overwrite
                 if overwrite and os.path.exists(tfile):
