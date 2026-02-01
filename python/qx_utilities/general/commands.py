@@ -182,6 +182,10 @@ commands = {
         "com": img.print_nifti_metadata,
         "args": ("filename", "info"),
     },
+    "compare_nifti_images": {
+        "com": img.compare_nifti_images,
+        "args": ("file1", "file2", "ndifflines"),
+    },
     "modniftihdr": {"com": qximg.modniftihdr, "args": ("filename", "s")},
     "create_batch": {
         "com": utilities.create_batch,
