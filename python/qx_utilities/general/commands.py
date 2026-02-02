@@ -46,6 +46,7 @@ commands = {
         "com": dicom.sort_dicom,
         "args": ("folder", "out_dir", "files", "copy"),
     },
+    "clean_dicom": {"com": dicom.clean_dicom, "args": ("folder", "verbose", "tol_mm", "min_files", "move_non_image", "move_incomplete")},
     "dicom2nii": {
         "com": dicom.dicom2nii,
         "args": ("folder", "clean", "unzip", "gzip", "verbose", "parelements", "debug"),
@@ -87,6 +88,7 @@ commands = {
             "overwrite",
             "test",
             "existing_structure",
+            "clean_dicom_folders"
         ),
     },
     "get_dicom_info": {"com": dicom.get_dicom_info, "args": ("dicomfile", "scanner")},
