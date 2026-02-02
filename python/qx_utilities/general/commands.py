@@ -28,6 +28,7 @@ from general import (
     commands_support,
     bruker,
     extensions,
+    snapshots
 )
 
 # pipeline imports
@@ -222,7 +223,7 @@ commands = {
         ),
     },
     "record_snapshot": {
-        "com": utilities.record_snapshot,
+        "com": snapshots.record_snapshot,
         "args": (
             "targetfolder",
             "outfile",
@@ -231,7 +232,7 @@ commands = {
         ),
     },
     "backup_files": {
-        "com": utilities.backup_files,
+        "com": snapshots.backup_files,
         "args": (
             "source",
             "target",
@@ -241,7 +242,7 @@ commands = {
         ),
     },
     "restore_files": {
-        "com": utilities.restore_files,
+        "com": snapshots.restore_files,
         "args": (
             "source",
             "target",
@@ -250,7 +251,7 @@ commands = {
         ),
     },
     "compare_snapshots": {
-        "com": utilities.compare_snapshots,
+        "com": snapshots.compare_snapshots,
         "args": (
             "before",
             "after",
@@ -260,7 +261,7 @@ commands = {
         ),
     },
     "rollback_snapshot": {
-        "com": utilities.rollback_snapshot,
+        "com": snapshots.rollback_snapshot,
         "args": (
             "diff",
             "before",

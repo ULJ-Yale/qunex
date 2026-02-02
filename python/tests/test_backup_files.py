@@ -16,7 +16,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, parent_dir)
 sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
 
-from general.utilities import backup_files, restore_files
+from general.snapshots import backup_files, restore_files
 from general.exceptions import CommandError
 import pytest
 
