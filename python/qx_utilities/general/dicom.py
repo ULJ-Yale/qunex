@@ -49,7 +49,7 @@ import general.img as gi
 import general.nifti as gn
 import general.qximg as qxi
 import general.exceptions as ge
-import general.utilities as gu
+from general.parsing import true_or_false
 from datetime import datetime
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -3019,7 +3019,7 @@ def clean_dicom(
     # Main execution
     print("Running clean_dicom\n==================")
 
-    verbose = gu.true_or_false(verbose)
+    verbose = true_or_false(verbose)
     
     dicom_folder = os.path.join(folder, "dicom")
     
@@ -3705,8 +3705,8 @@ def import_dicom(
             deleted after the successful processing.
     """
 
-    clean_dicom_folders = gu.true_or_false(clean_dicom_folders)
-    existing_structure = gu.true_or_false(existing_structure)
+    clean_dicom_folders = true_or_false(clean_dicom_folders)
+    existing_structure = true_or_false(existing_structure)
 
     isgz = re.compile(r"(^.*)\.gz$")
     iszip = re.compile(r"(^.*)\.zip$")
