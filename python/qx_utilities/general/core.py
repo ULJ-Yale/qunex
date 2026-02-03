@@ -733,6 +733,11 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         ):
             del args["logfolder"]
         result = function(**args)
+    except ge.CommandError as e:
+        with lock:
+            print(ge.reportCommandError(name, e))
+            print
+        result = e
     except ge.CommandNull as e:
         with lock:
             print(ge.reportCommandNull(name, e))

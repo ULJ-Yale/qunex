@@ -77,18 +77,6 @@ parameterTemplateHeader = """#  Parameters file
 #
 """
 
-def true_or_false(s):
-    """
-    ``true_or_false(s)``
-
-    First checks if string is "None", 'none', or "NONE" and returns
-    None, then Checks if s is any of the possible true strings: "True", "true",
-    or "TRUE" and returns a boolean result of the check.
-    """
-    if s in ["None", "none", "NONE"]:
-        return None
-    else:
-        return s in ["True", "true", "TRUE", "yes", "Yes", "YES", True]
 
 def manage_study(studyfolder=None, action="create", folders=None, verbose=False):
     """
@@ -433,10 +421,10 @@ def create_study(studyfolder=None, folders=None):
     print("Running create_study\n===================")
 
     if studyfolder is None:
-        raise ge.CommandError(
-            "create_study",
-            "No studyfolder specified",
-            "Please provide path for the new study folder using studyfolder parameter!",
+        raise ge.CommandFailed(
+                    "manage_study",
+                    "Folder structure file [%s] not found!" % folders,
+                    "Please check the value of the folders parameter.",
         )
 
     manage_study(
@@ -5381,3 +5369,4 @@ def xnat_create_batch(prep=True):
     summary += "\n\n----==== XNAT CREATE_BATCH EXECUTION END ====----\n\n"
     print(summary)
     return summary
+

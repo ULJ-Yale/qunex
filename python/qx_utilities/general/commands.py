@@ -28,6 +28,7 @@ from general import (
     commands_support,
     bruker,
     extensions,
+    snapshots
 )
 
 # pipeline imports
@@ -184,6 +185,10 @@ commands = {
         "com": img.print_nifti_metadata,
         "args": ("filename", "info"),
     },
+    "compare_nifti_images": {
+        "com": img.compare_nifti_images,
+        "args": ("file1", "file2", "ndifflines"),
+    },
     "modniftihdr": {"com": qximg.modniftihdr, "args": ("filename", "s")},
     "create_batch": {
         "com": utilities.create_batch,
@@ -217,6 +222,55 @@ commands = {
             "subjects",
             "batchfile",
             "filter",
+        ),
+    },
+    "record_snapshot": {
+        "com": snapshots.record_snapshot,
+        "args": (
+            "targetfolder",
+            "outfile",
+            "includehash",
+            "exclude",
+        ),
+    },
+    "backup_files": {
+        "com": snapshots.backup_files,
+        "args": (
+            "source",
+            "target",
+            "filelist",
+            "store",
+            "overwrite",
+        ),
+    },
+    "restore_files": {
+        "com": snapshots.restore_files,
+        "args": (
+            "source",
+            "target",
+            "filelist",
+            "overwrite",
+        ),
+    },
+    "compare_snapshots": {
+        "com": snapshots.compare_snapshots,
+        "args": (
+            "before",
+            "after",
+            "outfile",
+            "includehash",
+            "exclude",
+        ),
+    },
+    "rollback_snapshot": {
+        "com": snapshots.rollback_snapshot,
+        "args": (
+            "diff",
+            "before",
+            "after",
+            "action",
+            "exclude",
+            "includehash",
         ),
     },
     "create_list": {
