@@ -413,7 +413,7 @@ all_qunex_commands = [
     ),
     ("qx_utilities.qa.run_qa.run_qa", "QuNex quality assurance pipeline.", "python"),
     (
-        "qx_utilities.general.utilities.run_recipe",
+        "qx_utilities.general.recipe.run_recipe",
         "Executes a QuNex recipe that contains a chain of QuNex commands.",
         "python",
     ),

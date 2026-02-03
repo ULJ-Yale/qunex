@@ -28,7 +28,8 @@ from general import (
     commands_support,
     bruker,
     extensions,
-    snapshots
+    snapshots,
+    recipe
 )
 
 # pipeline imports
@@ -440,7 +441,7 @@ commands = {
         ),
     },
     "run_recipe": {
-        "com": utilities.run_recipe,
+        "com": recipe.run_recipe,
         "args": ("recipe_file", "recipe", "steps", "logfolder", "verbose", "eargs"),
     },
     "import_nhp": {
