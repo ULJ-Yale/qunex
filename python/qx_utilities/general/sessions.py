@@ -786,6 +786,12 @@ def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, t
     if not successful_ids and not failed_ids:
         print("No operations completed")
     
+    # Final status message
+    if failed == 0:
+        print("\nSuccessful completion of task.")
+    else:
+        print("\nERROR: Not all sessions joined successfully.")
+    
     return failed == 0
 
 
