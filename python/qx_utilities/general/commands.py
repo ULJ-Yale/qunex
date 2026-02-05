@@ -29,7 +29,8 @@ from general import (
     bruker,
     extensions,
     snapshots,
-    recipe
+    recipe,
+    sessions
 )
 
 # pipeline imports
@@ -473,6 +474,10 @@ commands = {
             "overwrite",
             "tag",
         ),
+    },
+    "join_session": {
+        "com": sessions.join_session,
+        "args": ("source", "target", "studyfolder", "overwrite", "raw_data"),
     },
 }
 
