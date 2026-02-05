@@ -479,6 +479,10 @@ commands = {
         "com": sessions.join_session,
         "args": ("source", "target", "studyfolder", "overwrite", "raw_data"),
     },
+    "join_sessions_list": {
+        "com": sessions.join_sessions_list,
+        "args": ("studyfolder", "session_list", "sourcefolder", "targetfolder", "overwrite", "raw_data"),
+    },
 }
 
 # -- update commands list with information from extensions

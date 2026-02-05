@@ -16,7 +16,7 @@ from typing import List, Tuple, Dict, Set
 import general.exceptions as ge
 
 
-def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'no', raw_data: str = 'copy') -> bool:
+def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'no', raw_data: str = 'copy', _indent: str = '') -> bool:
     r"""
     ``join_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>]``
     
@@ -280,7 +280,7 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
                     "Cannot merge safely. Use overwrite='clean' to replace or choose different target"
                 )
             elif overwrite == 'clean':
-                print(f"WARNING: Removing existing content from {target_path}")
+                print(f"{_indent}WARNING: Removing existing content from {target_path}")
                 shutil.rmtree(target_path)
                 target_exists = False
                 target_has_content = False
@@ -291,7 +291,7 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
         has_hcp = os.path.exists(os.path.join(session_path, 'hcp'))
         
         if has_images or has_hcp:
-            print(f"WARNING: Source session '{source_session_specs[idx]}' contains derivatives "
+            print(f"{_indent}WARNING: Source session '{source_session_specs[idx]}' contains derivatives "
                   f"({'images/' if has_images else ''}{'hcp/' if has_hcp else ''}) "
                   f"which will NOT be merged. Derivatives remain in source folder.")
     
@@ -378,7 +378,7 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
     
     # If target is a single session being merged into, renumber it first
     if overwrite == 'merge' and target_has_content and not target_is_joined:
-        print(f"Renumbering existing target session to use base increment {base_increment}")
+        print(f"{_indent}Renumbering existing target session to use base increment {base_increment}")
         target_offset = base_increment  # Target becomes session 1 (prefix 1)
         
         # Move raw data folders to nested structure if raw_data != 'leave'
@@ -537,7 +537,7 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
                     # Nest under session subfolder
                     target_session_folder = os.path.join(target_folder, nest_folder)
                     if os.path.exists(target_session_folder):
-                        print(f"WARNING: {target_session_folder} already exists, skipping")
+                        print(f"{_indent}WARNING: {target_session_folder} already exists, skipping")
                     else:
                         if raw_data == 'move':
                             shutil.move(source_folder, target_session_folder)
@@ -561,7 +561,7 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
                         target_file = os.path.join(target_nii, new_name)
                         
                         if os.path.exists(target_file):
-                            print(f"WARNING: {target_file} already exists, skipping")
+                            print(f"{_indent}WARNING: {target_file} already exists, skipping")
                         else:
                             shutil.copy2(source_file, target_file)
         
@@ -605,11 +605,188 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
         combined_hcp_metadata,
         combined_txt_metadata,
         target_sequences if overwrite == 'merge' else [],
-        session_metadata
+        session_metadata,
+        _indent
     )
     
-    print(f"Successfully joined {len(source_session_specs)} sessions into {target_path}")
+    print(f"{_indent}Successfully joined {len(source_session_specs)} sessions into {target_path}")
     return True
+
+
+def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, targetfolder: str, overwrite: str = 'no', raw_data: str = 'copy') -> bool:
+    r"""
+    ``join_sessions_list --studyfolder=<path> --session_list=<file> --sourcefolder=<path> --targetfolder=<path> [--overwrite=<mode>] [--raw_data=<mode>]``
+    
+    Join multiple sessions according to a list file.
+
+    Description:
+        Processes a list file containing multiple session join specifications,
+        calling join_session for each line. This is useful for batch processing
+        multiple session merges with a single command.
+
+    Parameters:
+        --studyfolder (str):
+            Path to the study folder. This is passed to each join_session call.
+
+        --session_list (str):
+            Path to a text file containing join specifications. Each line should
+            have the format:
+            
+            <target_id>: <source_id>, <source_id>, <source_id>
+            
+            Where target_id is the name of the merged session to create, and
+            source_id are the sessions to merge (comma-separated). Lines starting
+            with # are treated as comments and ignored. Empty lines are skipped.
+
+        --sourcefolder (str):
+            Path to the folder containing source sessions. Each source_id from
+            the session_list will be resolved as <sourcefolder>/<source_id>.
+
+        --targetfolder (str):
+            Path to the folder where target sessions will be created. Each
+            target_id from the session_list will be resolved as
+            <targetfolder>/<target_id>.
+
+        --overwrite (str, default 'no'):
+            How to handle existing target folders. Passed to each join_session
+            call. Options are 'no', 'clean', or 'merge'.
+
+        --raw_data (str, default 'copy'):
+            How to handle raw data. Passed to each join_session call. Options
+            are 'copy', 'move', or 'leave'.
+
+    Examples:
+        Session list file example (session_joins.txt)::
+
+            # Merge sessions for subject A
+            A_merged: A_001, A_002, A_003
+            
+            # Merge sessions for subject B
+            B_merged: B_001, B_002
+
+        ::
+
+            join_sessions_list(
+                studyfolder='/data/my_study',
+                session_list='/data/my_study/processing/session_joins.txt',
+                sourcefolder='/data/my_study/sessions',
+                targetfolder='/data/my_study/merged',
+                overwrite='clean',
+                raw_data='copy'
+            )
+    """
+    
+    # Validate parameters
+    if not os.path.exists(session_list):
+        raise ge.CommandFailed('join_sessions_list', f"Session list file does not exist: {session_list}")
+    
+    if not os.path.exists(studyfolder):
+        raise ge.CommandFailed('join_sessions_list', f"Study folder does not exist: {studyfolder}")
+    
+    if not os.path.exists(sourcefolder):
+        raise ge.CommandFailed('join_sessions_list', f"Source folder does not exist: {sourcefolder}")
+    
+    # Create target folder if it doesn't exist
+    if not os.path.exists(targetfolder):
+        os.makedirs(targetfolder, exist_ok=True)
+        print(f"Created target folder: {targetfolder}")
+    
+    # Parse session list file
+    join_specs = []
+    with open(session_list, 'r') as f:
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            
+            # Skip comments and empty lines
+            if not line or line.startswith('#'):
+                continue
+            
+            # Parse line: target_id: source_id1, source_id2, ...
+            if ':' not in line:
+                print(f"WARNING: Skipping malformed line {line_num}: {line}")
+                continue
+            
+            target_id, sources_str = line.split(':', 1)
+            target_id = target_id.strip()
+            
+            # Parse comma-separated source IDs
+            source_ids = [s.strip() for s in sources_str.split(',')]
+            source_ids = [s for s in source_ids if s]  # Remove empty strings
+            
+            if not target_id:
+                print(f"WARNING: Skipping line {line_num} with empty target ID")
+                continue
+            
+            if not source_ids:
+                print(f"WARNING: Skipping line {line_num} with no source IDs")
+                continue
+            
+            join_specs.append({
+                'target_id': target_id,
+                'source_ids': source_ids,
+                'line_num': line_num
+            })
+    
+    if not join_specs:
+        print("WARNING: No valid join specifications found in session list")
+        return False
+    
+    # Print header
+    print("join_sessions_list")
+    print("==================")
+    print(f"--> Running {len(join_specs)} join operations from source folder: {os.path.basename(sourcefolder)} to target folder: {os.path.basename(targetfolder)}")
+    
+    # Process each join specification
+    successful = 0
+    failed = 0
+    successful_ids = []
+    failed_ids = []
+    
+    for spec in join_specs:
+        target_id = spec['target_id']
+        source_ids = spec['source_ids']
+        line_num = spec['line_num']
+        
+        # Build source paths
+        source_paths = [os.path.join(sourcefolder, sid) for sid in source_ids]
+        source_str = ','.join(source_paths)
+        
+        # Build target path
+        target_path = os.path.join(targetfolder, target_id)
+        
+        # Compute relative target path
+        target_rel = os.path.relpath(target_path, studyfolder)
+        print(f"\n--> Joining to {target_rel}")
+        print(f"    Sources: {', '.join(source_ids)}")
+        print(f"    Target: {target_id}")
+        
+        try:
+            join_session(
+                studyfolder=studyfolder,
+                source=source_str,
+                target=target_path,
+                overwrite=overwrite,
+                raw_data=raw_data,
+                _indent='    -> '
+            )
+            successful += 1
+            successful_ids.append(target_id)
+        except Exception as e:
+            failed += 1
+            failed_ids.append(target_id)
+            print(f"    -> FAILED: {str(e)}")
+            # Continue processing remaining specifications
+    
+    # Print summary
+    print("\n=== Summary ===")
+    if successful_ids:
+        print(f"Successfully joined {len(successful_ids)}/{len(join_specs)} sessions: {', '.join(successful_ids)}")
+    if failed_ids:
+        print(f"Failed joining {len(failed_ids)}/{len(join_specs)} sessions: {', '.join(failed_ids)}")
+    if not successful_ids and not failed_ids:
+        print("No operations completed")
+    
+    return failed == 0
 
 
 def _merge_metadata(combined: Dict, new_metadata: Dict) -> None:
@@ -1087,7 +1264,8 @@ def _write_session_files(
     hcp_metadata: Dict,
     txt_metadata: Dict,
     existing_target_sequences: List[Dict],
-    session_metadata: List[Tuple[str, str]]
+    session_metadata: List[Tuple[str, str]],
+    _indent: str = ''
 ) -> None:
     """Write combined session.txt and session_hcp.txt files with proper formatting.
     
@@ -1182,7 +1360,7 @@ def _write_session_files(
                 f.write('\n')
                 f.write('\n'.join(all_hcp_sequences) + '\n')
         
-        print(f"Created {session_hcp_path}")
+        print(f"{_indent}Created {session_hcp_path}")
     
     # Write session.txt if we have txt sequences or metadata
     if txt_sequence_lines or txt_metadata.get('additional'):
@@ -1204,7 +1382,7 @@ def _write_session_files(
                 f.write('\n')
                 f.write('\n'.join(txt_sequence_lines) + '\n')
         
-        print(f"Created {session_txt_path}")
+        print(f"{_indent}Created {session_txt_path}")
     elif not hcp_sequence_lines:
         # If we have no sequences at all, still create session.txt
         session_txt_path = os.path.join(target_path, 'session.txt')
@@ -1213,4 +1391,4 @@ def _write_session_files(
             f.write('\n')
             f.write('\n'.join(section2_txt) + '\n')
         
-        print(f"Created {session_txt_path}")
+        print(f"{_indent}Created {session_txt_path}")
