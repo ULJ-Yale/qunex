@@ -16,9 +16,9 @@ from typing import List, Tuple, Dict, Set
 import general.exceptions as ge
 
 
-def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'no', raw_data: str = 'copy', _indent: str = '') -> bool:
+def merge_session(studyfolder: str, source: str, target: str, overwrite: str = 'no', raw_data: str = 'copy', original_sessions: str = 'leave', _indent: str = '') -> bool:
     r"""
-    ``join_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>]``
+    ``merge_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
     
     Join multiple sessions into a single session.
 
@@ -61,11 +61,15 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
             - 'move': Move raw data from source to target
             - 'leave': Do not transfer raw data, only merge session metadata
 
-        --raw_data (str, default 'copy'):
-            How to handle raw data (dicom/ and bids/ folders). Options are:
-            - 'copy': Copy raw data from source to target (default)
-            - 'move': Move raw data from source to target
-            - 'leave': Do not transfer raw data, only merge session metadata
+        --original_sessions (str, default 'leave'):
+            How to handle original source sessions after merging. Options are:
+            - 'leave': Leave original sessions unchanged (default)
+            - 'remove': Remove original sessions after successful merge
+            - 'move:<path>': Move original sessions to specified path (e.g., 
+            'move:/data/backup_sessions'). If a session already exists at the 
+            destination, behavior depends on the --overwrite parameter: 'no' 
+            skips the move with a warning, while 'clean' or 'merge' replaces 
+            the existing session.
 
     Output files:
         The function creates or modifies a target session folder with the 
@@ -160,7 +164,7 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
     Examples:
         ::
 
-            join_session(
+            merge_session(
                 source='session1,session2,session3',
                 target='merged_session',
                 studyfolder='/data/my_study',
@@ -169,19 +173,23 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
 
         ::
 
-            join_session(
+            merge_session(
                 source='A_001,A_002',
                 target='sessions/A_combined',
                 studyfolder='/data/my_study',
-                overwrite='merge'
+                overwrite='merge',
+                original_sessions='remove'
             )
 
         ::
 
-            join_session(
+            merge_session(
                 source='/data/study/sessions/s1,other_sessions/s2',
                 target='/data/study/sessions/merged',
                 studyfolder='/data/study',
+                overwrite='clean',
+                original_sessions='move:archive/merged_sessions'
+            )
                 overwrite='clean'
             )
     """
@@ -189,30 +197,50 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
     # Validate parameters
     if overwrite not in ['no', 'clean', 'merge']:
         raise ge.CommandError(
-            'join_session',
+            'merge_session',
             f"overwrite must be 'no', 'clean', or 'merge', got '{overwrite}'"
         )
     
     if raw_data not in ['copy', 'move', 'leave']:
         raise ge.CommandError(
-            'join_session',
+            'merge_session',
             f"raw_data must be 'copy', 'move', or 'leave', got '{raw_data}'"
         )
     
+    # Validate original_sessions parameter
+    if not (original_sessions == 'leave' or original_sessions == 'remove' or original_sessions.startswith('move:')):
+        raise ge.CommandError(
+            'merge_session',
+            f"original_sessions must be 'leave', 'remove', or 'move:<path>', got '{original_sessions}'"
+        )
+    
+    # Parse move destination if specified
+    move_destination = None
+    if original_sessions.startswith('move:'):
+        move_destination = original_sessions[5:]  # Strip 'move:' prefix
+        if not move_destination:
+            raise ge.CommandError(
+                'merge_session',
+                "move destination path must be specified after 'move:'"
+            )
+        # Convert to absolute path if relative
+        if not os.path.isabs(move_destination):
+            move_destination = os.path.join(studyfolder, move_destination)
+    
     # Validate study folder
     if not studyfolder:
-        raise ge.CommandError('join_session', "studyfolder parameter is required")
+        raise ge.CommandError('merge_session', "studyfolder parameter is required")
     
     study_folder = os.path.abspath(studyfolder)
     if not os.path.exists(study_folder):
-        raise ge.CommandFailed('join_session', f"Study folder does not exist: {study_folder}")
+        raise ge.CommandFailed('merge_session', f"Study folder does not exist: {study_folder}")
     
     sessions_folder = os.path.join(study_folder, 'sessions')
     
     # Parse source sessions
     source_session_specs = [s.strip() for s in source.split(',')]
     if not source_session_specs:
-        raise ge.CommandError('join_session', "No source sessions provided")
+        raise ge.CommandError('merge_session', "No source sessions provided")
     
     # Helper function to resolve paths
     def resolve_path(spec: str, base_folder: str, sessions_folder: str) -> str:
@@ -241,7 +269,7 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
     for session_spec in source_session_specs:
         session_path = resolve_path(session_spec, study_folder, sessions_folder)
         if not os.path.exists(session_path):
-            raise ge.CommandFailed('join_session', f"Source session not found: {session_path}")
+            raise ge.CommandFailed('merge_session', f"Source session not found: {session_path}")
         source_paths.append(session_path)
     
     # Determine target path
@@ -269,13 +297,13 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
             
             if overwrite == 'no':
                 raise ge.CommandFailed(
-                    'join_session',
+                    'merge_session',
                     f"Target session '{target_path}' exists and has content",
                     "Use overwrite='clean' or 'merge' to proceed"
                 )
             elif overwrite == 'merge' and has_derivatives:
                 raise ge.CommandFailed(
-                    'join_session',
+                    'merge_session',
                     f"Target session '{target_path}' contains derivatives (images/ or hcp/)",
                     "Cannot merge safely. Use overwrite='clean' to replace or choose different target"
                 )
@@ -610,23 +638,74 @@ def join_session(studyfolder: str, source: str, target: str, overwrite: str = 'n
     )
     
     print(f"{_indent}Successfully joined {len(source_session_specs)} sessions into {target_path}")
+    
+    # Handle original sessions if merge was successful
+    if original_sessions == 'remove':
+        # Remove original source sessions
+        for session_path in source_paths:
+            if os.path.exists(session_path):
+                print(f"{_indent}Removing original session: {session_path}")
+                shutil.rmtree(session_path)
+    elif original_sessions.startswith('move:'):
+        # Move original source sessions to specified location
+        # Handle move destination based on overwrite parameter
+        if os.path.exists(move_destination):
+            if os.path.isfile(move_destination):                
+                if overwrite != 'no':                    
+                    print(f"{_indent}Removing existing file at move destination: {move_destination}")
+                    os.remove(move_destination)
+                else:
+                    # overwrite='no' - warn and skip moving
+                    print(f"{_indent}WARNING: Move destination is a file, not a directory: {move_destination}")
+                    print(f"{_indent}         Sessions not moved. Please, resolve manually.")
+                    return True
+        else:
+            # Destination doesn't exist - create it
+            print(f"{_indent}Creating move destination folder: {move_destination}")
+            os.makedirs(move_destination, exist_ok=True)
+        
+        # Move sessions to destination
+        for session_path in source_paths:
+            if os.path.exists(session_path):
+                session_name = os.path.basename(session_path)
+                dest_path = os.path.join(move_destination, session_name)
+                
+                # If destination session exists and overwrite is not 'no', remove it first
+                if os.path.exists(dest_path):
+                    if overwrite != 'no':
+                        print(f"{_indent}Removing existing session at {dest_path}")
+                        shutil.rmtree(dest_path)
+                    elif os.path.isdir(dest_path):
+                        target_content = os.listdir(dest_path)
+                        if target_content:
+                            print(f"{_indent}WARNING: Session already exists at move destination: {dest_path}")
+                            print(f"{_indent}         Session '{session_name}' not moved. Please, resolve manually.")
+                            continue
+                    else:
+                        print(f"{_indent}WARNING: A file exists at move destination: {dest_path}")
+                        print(f"{_indent}         Session '{session_name}' not moved. Please, resolve manually.")
+                        continue
+                
+                print(f"{_indent}Moving original session {session_name} to {move_destination}")
+                shutil.move(session_path, move_destination)
+    
     return True
 
 
-def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, targetfolder: str, overwrite: str = 'no', raw_data: str = 'copy') -> bool:
+def merge_sessions_list(studyfolder: str, session_list: str, source_folder: str, target_folder: str, overwrite: str = 'no', raw_data: str = 'copy', original_sessions: str = 'leave') -> bool:
     r"""
-    ``join_sessions_list --studyfolder=<path> --session_list=<file> --sourcefolder=<path> --targetfolder=<path> [--overwrite=<mode>] [--raw_data=<mode>]``
+    ``merge_sessions_list --studyfolder=<path> --session_list=<file> --source_folder=<path> --target_folder=<path> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
     
     Join multiple sessions according to a list file.
 
     Description:
         Processes a list file containing multiple session join specifications,
-        calling join_session for each line. This is useful for batch processing
+        calling merge_session for each line. This is useful for batch processing
         multiple session merges with a single command.
 
     Parameters:
         --studyfolder (str):
-            Path to the study folder. This is passed to each join_session call.
+            Path to the study folder. This is passed to each merge_session call.
 
         --session_list (str):
             Path to a text file containing join specifications. Each line should
@@ -638,22 +717,29 @@ def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, t
             source_id are the sessions to merge (comma-separated). Lines starting
             with # are treated as comments and ignored. Empty lines are skipped.
 
-        --sourcefolder (str):
+        --source_folder (str):
             Path to the folder containing source sessions. Each source_id from
-            the session_list will be resolved as <sourcefolder>/<source_id>.
+            the session_list will be resolved as <source_folder>/<source_id>.
 
-        --targetfolder (str):
+        --target_folder (str):
             Path to the folder where target sessions will be created. Each
             target_id from the session_list will be resolved as
-            <targetfolder>/<target_id>.
+            <target_folder>/<target_id>.
 
         --overwrite (str, default 'no'):
-            How to handle existing target folders. Passed to each join_session
+            How to handle existing target folders. Passed to each merge_session
             call. Options are 'no', 'clean', or 'merge'.
 
         --raw_data (str, default 'copy'):
-            How to handle raw data. Passed to each join_session call. Options
+            How to handle raw data. Passed to each merge_session call. Options
             are 'copy', 'move', or 'leave'.
+
+        --original_sessions (str, default 'leave'):
+            How to handle original source sessions after merging. Options are:
+            - 'leave': Leave original sessions unchanged (default)
+            - 'remove': Remove original sessions after successful merge
+            - 'move:<path>': Move original sessions to specified path (e.g., 
+            'move:/data/backup_sessions')
 
     Examples:
         Session list file example (session_joins.txt)::
@@ -664,32 +750,56 @@ def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, t
             # Merge sessions for subject B
             B_merged: B_001, B_002
 
-        ::
+        Basic usage with default settings::
 
-            join_sessions_list(
+            merge_sessions_list(
                 studyfolder='/data/my_study',
                 session_list='/data/my_study/processing/session_joins.txt',
-                sourcefolder='/data/my_study/sessions',
-                targetfolder='/data/my_study/merged',
+                source_folder='/data/my_study/sessions',
+                target_folder='/data/my_study/merged',
                 overwrite='clean',
                 raw_data='copy'
+            )
+
+        Remove original sessions after successful merge::
+
+            merge_sessions_list(
+                studyfolder='/data/my_study',
+                session_list='/data/my_study/processing/session_joins.txt',
+                source_folder='/data/my_study/sessions',
+                target_folder='/data/my_study/merged',
+                overwrite='clean',
+                raw_data='copy',
+                original_sessions='remove'
+            )
+
+        Move original sessions to archive folder::
+
+            merge_sessions_list(
+                studyfolder='/data/my_study',
+                session_list='/data/my_study/processing/session_joins.txt',
+                source_folder='/data/my_study/sessions',
+                target_folder='/data/my_study/merged',
+                overwrite='clean',
+                raw_data='move',
+                original_sessions='move:archive/pre_merge_sessions'
             )
     """
     
     # Validate parameters
     if not os.path.exists(session_list):
-        raise ge.CommandFailed('join_sessions_list', f"Session list file does not exist: {session_list}")
+        raise ge.CommandFailed('merge_sessions_list', f"Session list file does not exist: {session_list}")
     
     if not os.path.exists(studyfolder):
-        raise ge.CommandFailed('join_sessions_list', f"Study folder does not exist: {studyfolder}")
+        raise ge.CommandFailed('merge_sessions_list', f"Study folder does not exist: {studyfolder}")
     
-    if not os.path.exists(sourcefolder):
-        raise ge.CommandFailed('join_sessions_list', f"Source folder does not exist: {sourcefolder}")
+    if not os.path.exists(source_folder):
+        raise ge.CommandFailed('merge_sessions_list', f"Source folder does not exist: {source_folder}")
     
     # Create target folder if it doesn't exist
-    if not os.path.exists(targetfolder):
-        os.makedirs(targetfolder, exist_ok=True)
-        print(f"Created target folder: {targetfolder}")
+    if not os.path.exists(target_folder):
+        os.makedirs(target_folder, exist_ok=True)
+        print(f"Created target folder: {target_folder}")
     
     # Parse session list file
     join_specs = []
@@ -732,9 +842,11 @@ def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, t
         return False
     
     # Print header
-    print("join_sessions_list")
+    print("merge_sessions_list")
     print("==================")
-    print(f"--> Running {len(join_specs)} join operations from source folder: {os.path.basename(sourcefolder)} to target folder: {os.path.basename(targetfolder)}")
+    print(f"--> Running {len(join_specs)} join operations from source folder: {os.path.basename(source_folder)} to target folder: {os.path.basename(target_folder)}")
+    print(f"    Raw data: {raw_data}")
+    print(f"    Original sessions: {original_sessions}")
     
     # Process each join specification
     successful = 0
@@ -748,11 +860,11 @@ def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, t
         line_num = spec['line_num']
         
         # Build source paths
-        source_paths = [os.path.join(sourcefolder, sid) for sid in source_ids]
+        source_paths = [os.path.join(source_folder, sid) for sid in source_ids]
         source_str = ','.join(source_paths)
         
         # Build target path
-        target_path = os.path.join(targetfolder, target_id)
+        target_path = os.path.join(target_folder, target_id)
         
         # Compute relative target path
         target_rel = os.path.relpath(target_path, studyfolder)
@@ -761,12 +873,13 @@ def join_sessions_list(studyfolder: str, session_list: str, sourcefolder: str, t
         print(f"    Target: {target_id}")
         
         try:
-            join_session(
+            merge_session(
                 studyfolder=studyfolder,
                 source=source_str,
                 target=target_path,
                 overwrite=overwrite,
                 raw_data=raw_data,
+                original_sessions=original_sessions,
                 _indent='    -> '
             )
             successful += 1

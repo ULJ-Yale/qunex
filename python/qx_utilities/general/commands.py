@@ -475,16 +475,16 @@ commands = {
             "tag",
         ),
     },
-    "join_session": {
-        "com": sessions.join_session,
-        "args": ("source", "target", "studyfolder", "overwrite", "raw_data"),
+    "merge_session": {
+        "com": sessions.merge_session,
+        "args": ("source", "target", "studyfolder", "overwrite", "raw_data", "original_sessions"),
     },
-    "join_sessions_list": {
-        "com": sessions.join_sessions_list,
-        "args": ("studyfolder", "session_list", "sourcefolder", "targetfolder", "overwrite", "raw_data"),
+    "merge_sessions_list": {
+        "com": sessions.merge_sessions_list,
+        "args": ("studyfolder", "session_list", "source_folder", "target_folder", "overwrite", "raw_data", "original_sessions"),
     },
 }
 
 # -- update commands list with information from extensions
-commands.update(extensions.compile_dict("commands"))
+commands.update(extensions.compile_dict("commands"))    
 commands.update(extensions.commands)

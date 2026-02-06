@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """
-Test suite for session functions: join_session, join_sessions_list
+Test suite for session functions: merge_session, merge_sessions_list
 """
 
 import sys
@@ -15,7 +15,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, parent_dir)
 sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
 
-from general.sessions import join_session, join_sessions_list
+from general.sessions import merge_session, merge_sessions_list
 from general.exceptions import CommandError, CommandFailed
 import pytest
 
@@ -67,7 +67,7 @@ def parse_sequences(content):
     return sorted(sequences)
 
 
-def test_join_session_basic():
+def test_merge_session_basic():
     """Test basic session joining with two sessions"""
     print("\n" + "=" * 70)
     print("TEST: Basic session joining")
@@ -83,7 +83,7 @@ def test_join_session_basic():
         create_test_session(os.path.join(sessions_dir, 'session2'), 'session2')
         
         # Join them
-        result = join_session(
+        result = merge_session(
             studyfolder=studyfolder,
             source='session1,session2',
             target='joined',
@@ -91,7 +91,7 @@ def test_join_session_basic():
             raw_data='leave'
         )
         
-        assert result is True, "join_session should return True on success"
+        assert result is True, "merge_session should return True on success"
         
         # Check that target was created
         target_path = os.path.join(sessions_dir, 'joined')
@@ -118,7 +118,7 @@ def test_join_session_basic():
         print(f"Successfully joined 2 sessions with sequences: {sequences}")
 
 
-def test_join_session_with_absolute_paths():
+def test_merge_session_with_absolute_paths():
     """Test joining with absolute paths"""
     print("\n" + "=" * 70)
     print("TEST: Join with absolute paths")
@@ -134,7 +134,7 @@ def test_join_session_with_absolute_paths():
         create_test_session(source2, 'src2')
         
         # Join using absolute paths
-        result = join_session(
+        result = merge_session(
             studyfolder=studyfolder,
             source=f'{source1},{source2}',
             target=target,
@@ -149,7 +149,7 @@ def test_join_session_with_absolute_paths():
         print("Successfully joined sessions using absolute paths")
 
 
-def test_join_session_bold_renumbering():
+def test_merge_session_bold_renumbering():
     """Test that bold and boldref tags are correctly renumbered"""
     print("\n" + "=" * 70)
     print("TEST: BOLD and BOLDREF renumbering")
@@ -174,7 +174,7 @@ def test_join_session_bold_renumbering():
         create_test_session(os.path.join(sessions_dir, 's2'), 's2', session2_seqs)
         
         # Join them
-        join_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
+        merge_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
         
         # Read the result
         hcp_content = read_session_file(os.path.join(sessions_dir, 'joined', 'session_hcp.txt'))
@@ -208,7 +208,7 @@ def test_join_session_bold_renumbering():
               f"\n  {seq_lines[3]}")
 
 
-def test_join_session_metadata_preservation():
+def test_merge_session_metadata_preservation():
     """Test that metadata is preserved correctly"""
     print("\n" + "=" * 70)
     print("TEST: Metadata preservation")
@@ -243,7 +243,7 @@ def test_join_session_metadata_preservation():
             f.write("2011:tag2:Scan2: TR(2.0)\n")
         
         # Join sessions
-        join_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
+        merge_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
         
         # Read result
         content = read_session_file(os.path.join(sessions_dir, 'joined', 'session_hcp.txt'))
@@ -256,7 +256,7 @@ def test_join_session_metadata_preservation():
         print("Metadata correctly preserved and tracked")
 
 
-def test_join_session_overwrite_error():
+def test_merge_session_overwrite_error():
     """Test that overwriting without permission raises error"""
     print("\n" + "=" * 70)
     print("TEST: Overwrite protection")
@@ -272,18 +272,18 @@ def test_join_session_overwrite_error():
         create_test_session(os.path.join(sessions_dir, 's2'), 's2')
         
         # First join
-        join_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
+        merge_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
         
         # Try to join again without overwrite
         with pytest.raises(CommandFailed) as exc_info:
-            join_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
+            merge_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
         
         assert 'exists' in str(exc_info.value).lower(), "Should mention existing target"
         
         print("Overwrite protection working correctly")
 
 
-def test_join_session_overwrite_yes():
+def test_merge_session_overwrite_yes():
     """Test overwriting with overwrite='yes'"""
     print("\n" + "=" * 70)
     print("TEST: Overwrite with permission")
@@ -300,10 +300,10 @@ def test_join_session_overwrite_yes():
         create_test_session(os.path.join(sessions_dir, 's3'), 's3')
         
         # First join
-        join_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
+        merge_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
         
         # Overwrite with different sources
-        result = join_session(studyfolder, 's1,s3', 'joined', 'clean', 'leave')
+        result = merge_session(studyfolder, 's1,s3', 'joined', 'clean', 'leave')
         
         assert result is True, "Should succeed with overwrite=yes"
         
@@ -315,7 +315,7 @@ def test_join_session_overwrite_yes():
         print("Overwrite succeeded with overwrite=yes")
 
 
-def test_join_session_raw_data_copy():
+def test_merge_session_raw_data_copy():
     """Test copying raw data (dicom, bids, inbox, hcpls folders)"""
     print("\n" + "=" * 70)
     print("TEST: Raw data copy mode")
@@ -350,7 +350,7 @@ def test_join_session_raw_data_copy():
             f.write("Inbox data")
         
         # Join with copy mode
-        join_session(studyfolder, 's1,s2', 'joined', 'no', 'copy')
+        merge_session(studyfolder, 's1,s2', 'joined', 'no', 'copy')
         
         target_path = os.path.join(sessions_dir, 'joined')
         
@@ -373,7 +373,7 @@ def test_join_session_raw_data_copy():
         print("Raw data successfully copied and nested")
 
 
-def test_join_session_raw_data_move():
+def test_merge_session_raw_data_move():
     """Test moving raw data folders"""
     print("\n" + "=" * 70)
     print("TEST: Raw data move mode")
@@ -394,7 +394,7 @@ def test_join_session_raw_data_move():
             f.write("DICOM data")
         
         # Join with move mode
-        join_session(studyfolder, 's1', 'joined', 'no', 'move')
+        merge_session(studyfolder, 's1', 'joined', 'no', 'move')
         
         target_path = os.path.join(sessions_dir, 'joined')
         
@@ -409,7 +409,7 @@ def test_join_session_raw_data_move():
         print("Raw data successfully moved")
 
 
-def test_join_session_raw_data_leave():
+def test_merge_session_raw_data_leave():
     """Test leaving raw data in source"""
     print("\n" + "=" * 70)
     print("TEST: Raw data leave mode")
@@ -430,7 +430,7 @@ def test_join_session_raw_data_leave():
             f.write("DICOM data")
         
         # Join with leave mode
-        join_session(studyfolder, 's1', 'joined', 'no', 'leave')
+        merge_session(studyfolder, 's1', 'joined', 'no', 'leave')
         
         target_path = os.path.join(sessions_dir, 'joined')
         
@@ -447,7 +447,7 @@ def test_join_session_raw_data_leave():
         print("Raw data correctly left in source")
 
 
-def test_join_session_invalid_source():
+def test_merge_session_invalid_source():
     """Test error handling for invalid source"""
     print("\n" + "=" * 70)
     print("TEST: Invalid source error handling")
@@ -458,7 +458,7 @@ def test_join_session_invalid_source():
         
         # Try to join non-existent session
         with pytest.raises(CommandFailed) as exc_info:
-            join_session(studyfolder, 'nonexistent', 'target', 'no', 'leave')
+            merge_session(studyfolder, 'nonexistent', 'target', 'no', 'leave')
         
         assert 'does not exist' in str(exc_info.value).lower() or \
                'not found' in str(exc_info.value).lower(), \
@@ -467,7 +467,7 @@ def test_join_session_invalid_source():
         print("Invalid source correctly rejected")
 
 
-def test_join_session_missing_session_files():
+def test_merge_session_missing_session_files():
     """Test error when session files are missing"""
     print("\n" + "=" * 70)
     print("TEST: Missing session files error")
@@ -483,7 +483,7 @@ def test_join_session_missing_session_files():
         os.makedirs(s1_path)
         
         # Try to join - should succeed but create minimal session
-        result = join_session(studyfolder, 's1', 'target', 'no', 'leave')
+        result = merge_session(studyfolder, 's1', 'target', 'no', 'leave')
         
         assert result is True, "Should create session even without source session files"
         # Should create at least session.txt
@@ -493,7 +493,7 @@ def test_join_session_missing_session_files():
         print("Missing session files correctly detected")
 
 
-def test_join_sessions_list_basic():
+def test_merge_sessions_list_basic():
     """Test batch joining from list file"""
     print("\n" + "=" * 70)
     print("TEST: Batch join from list")
@@ -519,11 +519,11 @@ def test_join_sessions_list_basic():
             f.write("joined2: s3, s4\n")
         
         # Run batch join
-        result = join_sessions_list(
+        result = merge_sessions_list(
             studyfolder=studyfolder,
             session_list=list_file,
-            sourcefolder=sourcefolder,
-            targetfolder=targetfolder,
+            source_folder=sourcefolder,
+            target_folder=targetfolder,
             overwrite='no',
             raw_data='leave'
         )
@@ -539,7 +539,7 @@ def test_join_sessions_list_basic():
         print("Batch join from list successful")
 
 
-def test_join_sessions_list_with_comments():
+def test_merge_sessions_list_with_comments():
     """Test that comments and blank lines are ignored in list file"""
     print("\n" + "=" * 70)
     print("TEST: List file with comments")
@@ -564,7 +564,7 @@ def test_join_sessions_list_with_comments():
             f.write("\n")
             f.write("# Final comment\n")
         
-        result = join_sessions_list(studyfolder, list_file, sourcefolder, 
+        result = merge_sessions_list(studyfolder, list_file, sourcefolder, 
                                     targetfolder, 'no', 'leave')
         
         assert result is True, "Should succeed despite comments"
@@ -574,7 +574,7 @@ def test_join_sessions_list_with_comments():
         print("Comments and blank lines correctly ignored")
 
 
-def test_join_sessions_list_malformed_line():
+def test_merge_sessions_list_malformed_line():
     """Test handling of malformed lines in list file"""
     print("\n" + "=" * 70)
     print("TEST: Malformed list file lines")
@@ -595,7 +595,7 @@ def test_join_sessions_list_malformed_line():
             f.write("joined: s1\n")
         
         # Should succeed but skip malformed line
-        result = join_sessions_list(studyfolder, list_file, sourcefolder,
+        result = merge_sessions_list(studyfolder, list_file, sourcefolder,
                                     targetfolder, 'no', 'leave')
         
         assert result is True, "Should succeed with valid lines"
@@ -605,7 +605,7 @@ def test_join_sessions_list_malformed_line():
         print("Malformed lines correctly skipped")
 
 
-def test_join_sessions_list_partial_failure():
+def test_merge_sessions_list_partial_failure():
     """Test that batch processing continues after individual failures"""
     print("\n" + "=" * 70)
     print("TEST: Partial failure in batch processing")
@@ -628,7 +628,7 @@ def test_join_sessions_list_partial_failure():
             f.write("joined1: s1, s2\n")  # Should succeed
             f.write("joined2: s3, s4\n")  # Should fail
         
-        result = join_sessions_list(studyfolder, list_file, sourcefolder,
+        result = merge_sessions_list(studyfolder, list_file, sourcefolder,
                                     targetfolder, 'no', 'leave')
         
         assert result is False, "Should return False when some operations fail"
@@ -644,7 +644,7 @@ def test_join_sessions_list_partial_failure():
         print("Partial failure handled correctly")
 
 
-def test_join_sessions_list_empty_file():
+def test_merge_sessions_list_empty_file():
     """Test handling of empty list file"""
     print("\n" + "=" * 70)
     print("TEST: Empty list file")
@@ -662,7 +662,7 @@ def test_join_sessions_list_empty_file():
             f.write("# Only comments\n")
             f.write("\n")
         
-        result = join_sessions_list(studyfolder, list_file, sourcefolder,
+        result = merge_sessions_list(studyfolder, list_file, sourcefolder,
                                     targetfolder, 'no', 'leave')
         
         assert result is False, "Should return False for empty list"
@@ -670,7 +670,7 @@ def test_join_sessions_list_empty_file():
         print("Empty list file correctly handled")
 
 
-def test_join_session_three_way_merge():
+def test_merge_session_three_way_merge():
     """Test joining three sessions together"""
     print("\n" + "=" * 70)
     print("TEST: Three-way session merge")
@@ -690,7 +690,7 @@ def test_join_session_three_way_merge():
                           ["3011:tag3:Scan3: TR(3.0)"])
         
         # Join all three
-        join_session(studyfolder, 's1,s2,s3', 'merged', 'no', 'leave')
+        merge_session(studyfolder, 's1,s2,s3', 'merged', 'no', 'leave')
         
         # Read result
         content = read_session_file(os.path.join(sessions_dir, 'merged', 'session_hcp.txt'))
@@ -707,7 +707,7 @@ def test_join_session_three_way_merge():
         print(f"Three-way merge successful with sequences: {sequences}")
 
 
-def test_join_session_sequence_alignment():
+def test_merge_session_sequence_alignment():
     """Test that sequence lines are properly aligned"""
     print("\n" + "=" * 70)
     print("TEST: Sequence line alignment")
@@ -725,7 +725,7 @@ def test_join_session_sequence_alignment():
         ]
         create_test_session(os.path.join(sessions_dir, 's1'), 's1', seqs)
         
-        join_session(studyfolder, 's1', 'joined', 'no', 'leave')
+        merge_session(studyfolder, 's1', 'joined', 'no', 'leave')
         
         # Read result
         hcp_content = read_session_file(os.path.join(sessions_dir, 'joined', 'session_hcp.txt'))
@@ -744,6 +744,382 @@ def test_join_session_sequence_alignment():
             assert len(parts) >= 3, f"HCP line should have at least 3 parts: {line}"
         
         print("Sequence lines properly formatted and aligned")
+
+
+def test_merge_session_original_sessions_remove():
+    """Test removing original sessions after successful merge"""
+    print("\n" + "=" * 70)
+    print("TEST: Original sessions removal")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        studyfolder = tmpdir
+        sessions_dir = os.path.join(studyfolder, 'sessions')
+        os.makedirs(sessions_dir)
+        
+        # Create source sessions
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        # Verify sources exist
+        s1_path = os.path.join(sessions_dir, 's1')
+        s2_path = os.path.join(sessions_dir, 's2')
+        assert os.path.exists(s1_path), "s1 should exist before merge"
+        assert os.path.exists(s2_path), "s2 should exist before merge"
+        
+        # Merge with remove option
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged',
+            overwrite='no',
+            raw_data='leave',
+            original_sessions='remove'
+        )
+        
+        assert result is True, "Merge should succeed"
+        
+        # Check merged session exists
+        merged_path = os.path.join(sessions_dir, 'merged')
+        assert os.path.exists(merged_path), "Merged session should exist"
+        assert os.path.exists(os.path.join(merged_path, 'session_hcp.txt')), \
+            "Merged session should have session_hcp.txt"
+        
+        # Check original sessions were removed
+        assert not os.path.exists(s1_path), "s1 should be removed after merge"
+        assert not os.path.exists(s2_path), "s2 should be removed after merge"
+        
+        print("Original sessions successfully removed")
+
+
+def test_merge_session_original_sessions_move():
+    """Test moving original sessions to archive folder after successful merge"""
+    print("\n" + "=" * 70)
+    print("TEST: Original sessions move to archive")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        studyfolder = tmpdir
+        sessions_dir = os.path.join(studyfolder, 'sessions')
+        archive_dir = os.path.join(studyfolder, 'archive')
+        os.makedirs(sessions_dir)
+        
+        # Create source sessions
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        # Verify sources exist
+        s1_path = os.path.join(sessions_dir, 's1')
+        s2_path = os.path.join(sessions_dir, 's2')
+        assert os.path.exists(s1_path), "s1 should exist before merge"
+        assert os.path.exists(s2_path), "s2 should exist before merge"
+        
+        # Merge with move option (relative path)
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged',
+            overwrite='no',
+            raw_data='leave',
+            original_sessions='move:archive'
+        )
+        
+        assert result is True, "Merge should succeed"
+        
+        # Check merged session exists
+        merged_path = os.path.join(sessions_dir, 'merged')
+        assert os.path.exists(merged_path), "Merged session should exist"
+        
+        # Check original sessions were removed from source
+        assert not os.path.exists(s1_path), "s1 should be removed from sessions folder"
+        assert not os.path.exists(s2_path), "s2 should be removed from sessions folder"
+        
+        # Check original sessions were moved to archive
+        assert os.path.exists(archive_dir), "Archive folder should be created"
+        assert os.path.exists(os.path.join(archive_dir, 's1')), \
+            "s1 should be in archive folder"
+        assert os.path.exists(os.path.join(archive_dir, 's2')), \
+            "s2 should be in archive folder"
+        assert os.path.exists(os.path.join(archive_dir, 's1', 'session_hcp.txt')), \
+            "s1 in archive should have session_hcp.txt"
+        assert os.path.exists(os.path.join(archive_dir, 's2', 'session_hcp.txt')), \
+            "s2 in archive should have session_hcp.txt"
+        
+        print("Original sessions successfully moved to archive")
+
+
+def test_merge_session_original_sessions_move_absolute():
+    """Test moving original sessions using absolute path"""
+    print("\n" + "=" * 70)
+    print("TEST: Original sessions move with absolute path")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        studyfolder = tmpdir
+        sessions_dir = os.path.join(studyfolder, 'sessions')
+        archive_dir = os.path.join(tmpdir, 'backup', 'old_sessions')
+        os.makedirs(sessions_dir)
+        
+        # Create source sessions
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        # Merge with move option (absolute path)
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged',
+            overwrite='no',
+            raw_data='leave',
+            original_sessions=f'move:{archive_dir}'
+        )
+        
+        assert result is True, "Merge should succeed"
+        
+        # Check original sessions were moved to absolute path
+        assert os.path.exists(archive_dir), "Archive folder should be created"
+        assert os.path.exists(os.path.join(archive_dir, 's1')), \
+            "s1 should be in archive folder"
+        assert os.path.exists(os.path.join(archive_dir, 's2')), \
+            "s2 should be in archive folder"
+        
+        print("Original sessions successfully moved to absolute path")
+
+
+def test_merge_session_original_sessions_leave():
+    """Test that leave option keeps original sessions"""
+    print("\n" + "=" * 70)
+    print("TEST: Original sessions leave (default)")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        studyfolder = tmpdir
+        sessions_dir = os.path.join(studyfolder, 'sessions')
+        os.makedirs(sessions_dir)
+        
+        # Create source sessions
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        # Verify sources exist
+        s1_path = os.path.join(sessions_dir, 's1')
+        s2_path = os.path.join(sessions_dir, 's2')
+        
+        # Merge with leave option (default)
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged',
+            overwrite='no',
+            raw_data='leave',
+            original_sessions='leave'
+        )
+        
+        assert result is True, "Merge should succeed"
+        
+        # Check merged session exists
+        merged_path = os.path.join(sessions_dir, 'merged')
+        assert os.path.exists(merged_path), "Merged session should exist"
+        
+        # Check original sessions still exist
+        assert os.path.exists(s1_path), "s1 should still exist with leave option"
+        assert os.path.exists(s2_path), "s2 should still exist with leave option"
+        assert os.path.exists(os.path.join(s1_path, 'session_hcp.txt')), \
+            "s1 should still have session_hcp.txt"
+        assert os.path.exists(os.path.join(s2_path, 'session_hcp.txt')), \
+            "s2 should still have session_hcp.txt"
+        
+        print("Original sessions correctly left unchanged")
+
+
+def test_merge_sessions_list_with_remove():
+    """Test batch merging with removal of original sessions"""
+    print("\n" + "=" * 70)
+    print("TEST: Batch merge with original sessions removal")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        studyfolder = tmpdir
+        sourcefolder = os.path.join(studyfolder, 'source')
+        targetfolder = os.path.join(studyfolder, 'target')
+        os.makedirs(sourcefolder)
+        
+        # Create source sessions
+        create_test_session(os.path.join(sourcefolder, 's1'), 's1')
+        create_test_session(os.path.join(sourcefolder, 's2'), 's2')
+        create_test_session(os.path.join(sourcefolder, 's3'), 's3')
+        create_test_session(os.path.join(sourcefolder, 's4'), 's4')
+        
+        # Create list file
+        list_file = os.path.join(studyfolder, 'joins.txt')
+        with open(list_file, 'w') as f:
+            f.write("# Join list\n")
+            f.write("joined1: s1, s2\n")
+            f.write("joined2: s3, s4\n")
+        
+        # Run batch merge with remove
+        result = merge_sessions_list(
+            studyfolder=studyfolder,
+            session_list=list_file,
+            source_folder=sourcefolder,
+            target_folder=targetfolder,
+            overwrite='no',
+            raw_data='leave',
+            original_sessions='remove'
+        )
+        
+        assert result is True, "Batch merge should succeed"
+        
+        # Check targets were created
+        assert os.path.exists(os.path.join(targetfolder, 'joined1', 'session_hcp.txt')), \
+            "joined1 should be created"
+        assert os.path.exists(os.path.join(targetfolder, 'joined2', 'session_hcp.txt')), \
+            "joined2 should be created"
+        
+        # Check original sessions were removed
+        assert not os.path.exists(os.path.join(sourcefolder, 's1')), \
+            "s1 should be removed"
+        assert not os.path.exists(os.path.join(sourcefolder, 's2')), \
+            "s2 should be removed"
+        assert not os.path.exists(os.path.join(sourcefolder, 's3')), \
+            "s3 should be removed"
+        assert not os.path.exists(os.path.join(sourcefolder, 's4')), \
+            "s4 should be removed"
+        
+        print("Batch merge with removal successful")
+
+
+def test_merge_session_original_sessions_move_overwrite_no():
+    """Test that move respects overwrite=no when destination exists"""
+    print("\n" + "=" * 70)
+    print("TEST: Original sessions move with overwrite=no")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        studyfolder = tmpdir
+        sessions_dir = os.path.join(studyfolder, 'sessions')
+        archive_dir = os.path.join(studyfolder, 'archive')
+        os.makedirs(sessions_dir)
+        os.makedirs(archive_dir)
+        
+        # Create first pair of sessions and merge
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        # First merge - move to archive
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged1',
+            overwrite='no',
+            raw_data='leave',
+            original_sessions='move:archive'
+        )
+        
+        assert result is True, "First merge should succeed"
+        assert os.path.exists(os.path.join(archive_dir, 's1')), "s1 should be in archive"
+        assert os.path.exists(os.path.join(archive_dir, 's2')), "s2 should be in archive"
+        
+        # Create second pair with same names
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        # Write a marker file in archived sessions to verify they aren't overwritten
+        marker_path = os.path.join(archive_dir, 's1', 'marker.txt')
+        with open(marker_path, 'w') as f:
+            f.write('original')
+        
+        # Second merge with overwrite=no - should skip moving existing sessions
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged2',
+            overwrite='no',
+            raw_data='leave',
+            original_sessions='move:archive'
+        )
+        
+        assert result is True, "Second merge should succeed"
+        assert os.path.exists(os.path.join(sessions_dir, 'merged2')), "merged2 should exist"
+        
+        # Check that original sessions still exist (weren't moved)
+        assert os.path.exists(os.path.join(sessions_dir, 's1')), \
+            "s1 should still exist in sessions (move skipped)"
+        assert os.path.exists(os.path.join(sessions_dir, 's2')), \
+            "s2 should still exist in sessions (move skipped)"
+        
+        # Check that archived sessions weren't overwritten
+        assert os.path.exists(marker_path), "Marker should still exist"
+        with open(marker_path, 'r') as f:
+            assert f.read() == 'original', "Archived session should not be overwritten"
+        
+        print("Move correctly respects overwrite=no")
+
+
+def test_merge_session_original_sessions_move_overwrite_clean():
+    """Test that move with overwrite=clean replaces existing sessions in destination"""
+    print("\n" + "=" * 70)
+    print("TEST: Original sessions move with overwrite=clean")
+    print("=" * 70)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        studyfolder = tmpdir
+        sessions_dir = os.path.join(studyfolder, 'sessions')
+        archive_dir = os.path.join(studyfolder, 'archive')
+        os.makedirs(sessions_dir)
+        os.makedirs(archive_dir)
+        
+        # Create first pair and merge
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged1',
+            overwrite='clean',
+            raw_data='leave',
+            original_sessions='move:archive'
+        )
+        
+        assert result is True, "First merge should succeed"
+        
+        # Write marker in archived s1
+        marker_path = os.path.join(archive_dir, 's1', 'marker.txt')
+        with open(marker_path, 'w') as f:
+            f.write('first_version')
+        
+        # Create new sessions with same IDs
+        create_test_session(os.path.join(sessions_dir, 's1'), 's1')
+        create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+        
+        # Merge again with overwrite=clean - should replace archived sessions
+        result = merge_session(
+            studyfolder=studyfolder,
+            source='s1,s2',
+            target='merged2',
+            overwrite='clean',
+            raw_data='leave',
+            original_sessions='move:archive'
+        )
+        
+        assert result is True, "Second merge should succeed"
+        
+        # Check that sessions were moved
+        assert not os.path.exists(os.path.join(sessions_dir, 's1')), \
+            "s1 should be moved from sessions"
+        assert not os.path.exists(os.path.join(sessions_dir, 's2')), \
+            "s2 should be moved from sessions"
+        
+        # Check that marker is gone (session was replaced)
+        assert not os.path.exists(marker_path), \
+            "Old marker should be gone (session replaced)"
+        
+        # Verify new sessions exist in archive
+        assert os.path.exists(os.path.join(archive_dir, 's1', 'session_hcp.txt')), \
+            "New s1 should be in archive"
+        
+        print("Move correctly replaces sessions with overwrite=clean")
 
 
 if __name__ == '__main__':
