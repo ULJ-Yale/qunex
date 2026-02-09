@@ -2005,11 +2005,11 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         )
 
         # do we have edits specified?
-        if options["hcp_fs_edits"] not in ["", "False", "false", "No", "no"]:
+        if options["hcp_fs_edits"] and options["hcp_fs_edits"].upper() not in ["", "FALSE", "NO", "NONE"]:
 
             extra = [e.strip() for e in options["hcp_fs_edits"].lower().split(",") if e.strip() not in ['aseg', 'wm', 'brainmask', 'yes', 'true']]
             if extra:
-                r += "\n---> ERROR: Invalid edits specified in hcp_fs_edits: %s" % ",".join(extra)
+                r += "\n---> ERROR: Invalid edits specified in hcp_fs_edits: '%s' ['%s']" % (",".join(extra), options["hcp_fs_edits"])
                 run = False
 
             else:
@@ -2251,7 +2251,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     )
 
     # -- take freesurfer_end_snapshot
-    if options["run"] == "run":
+    if options["run"] == "run" and failed == 0:
         gs.compare_snapshots(before=os.path.join(hcp['snapshots'], "freesurfer_start.txt"),
                              after=os.path.join(hcp['base']),
                              outfile=os.path.join(hcp['snapshots'], "freesurfer_diff.txt"),
@@ -2669,7 +2669,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     )
 
     # -- take freesurfer_end_snapshot
-    if options["run"] == "run":
+    if options["run"] == "run" and failed == 0:
         gs.compare_snapshots(before=os.path.join(hcp['snapshots'], "postfreesurfer_start.txt"),
                              after=os.path.join(hcp['base']),
                              outfile=os.path.join(hcp['snapshots'], "postfreesurfer_diff.txt"),

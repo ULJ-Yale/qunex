@@ -29,7 +29,8 @@ from general import (
     bruker,
     extensions,
     snapshots,
-    recipe
+    recipe,
+    sessions
 )
 
 # pipeline imports
@@ -474,8 +475,16 @@ commands = {
             "tag",
         ),
     },
+    "merge_session": {
+        "com": sessions.merge_session,
+        "args": ("source", "target", "studyfolder", "overwrite", "raw_data", "original_sessions"),
+    },
+    "merge_sessions_list": {
+        "com": sessions.merge_sessions_list,
+        "args": ("studyfolder", "session_list", "source_folder", "target_folder", "overwrite", "raw_data", "original_sessions"),
+    },
 }
 
 # -- update commands list with information from extensions
-commands.update(extensions.compile_dict("commands"))
+commands.update(extensions.compile_dict("commands"))    
 commands.update(extensions.commands)

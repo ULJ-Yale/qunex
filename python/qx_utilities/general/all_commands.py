@@ -472,6 +472,16 @@ all_qunex_commands = [
         "Maps images from the sessions's nii folder to BIDS structure.",
         "python",
     ),
+    (
+        "qx_utilities.sessions.merge_session",
+        "Join sessions.",
+        "python",
+    ),
+    (
+        "qx_utilities.sessions.merge_sessions_list",
+        "Join sessions specified in a list file.",
+        "python",
+    ),
 ]
 
 # commands that are not their own commands
