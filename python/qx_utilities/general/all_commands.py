@@ -413,7 +413,7 @@ all_qunex_commands = [
     ),
     ("qx_utilities.qa.run_qa.run_qa", "QuNex quality assurance pipeline.", "python"),
     (
-        "qx_utilities.general.utilities.run_recipe",
+        "qx_utilities.general.recipe.run_recipe",
         "Executes a QuNex recipe that contains a chain of QuNex commands.",
         "python",
     ),
@@ -470,6 +470,16 @@ all_qunex_commands = [
     (
         "qx_utilities.general.bids.map_nii2bids",
         "Maps images from the sessions's nii folder to BIDS structure.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.sessions.merge_session",
+        "Join sessions.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.sessions.merge_sessions_list",
+        "Join sessions specified in a list file.",
         "python",
     ),
 ]

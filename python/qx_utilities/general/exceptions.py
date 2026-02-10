@@ -20,7 +20,7 @@ class CommandError(Exception):
             function = "unknown function"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured in %s" % (error, function)
+        msg = "Error '%s' occurred in %s" % (error, function)
         super(CommandError, self).__init__(msg)
         self.function = function
         self.error    = error
@@ -35,7 +35,7 @@ class CommandFailed(Exception):
             function = "unknown function"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured in %s" % (error, function)
+        msg = "Error '%s' occurred in %s" % (error, function)
         super(CommandFailed, self).__init__(msg)
         self.function = function
         self.error    = error
@@ -73,7 +73,7 @@ class SpecFileSyntaxError(Exception):
             filename = "unknown file"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured when parsing %s" % (error, filename)
+        msg = "Error '%s' occurred when parsing %s" % (error, filename)
         super(SpecFileSyntaxError, self).__init__(msg)
         self.filename = filename
         self.error    = error
