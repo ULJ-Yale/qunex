@@ -1738,11 +1738,11 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             and 'extra_reconall' parameters will be set as well to only run the
             necessary steps to incorporate the edits, depending on the edits
             present and/or specified. This option can be used for edits to
-            aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted values are
-            'FALSE', 'TRUE', or a comma-separated list of edits to apply:
-            'aseg', 'wm', 'brainmask'. If edits are not specified explicitly,
-            they will be determined based on the files found in the FS_edits
-            folder.
+            control.dat, aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted 
+            values are 'FALSE', 'TRUE', or a comma-separated list of edits to 
+            apply: 'control', 'aseg', 'wm', 'brainmask'. If edits are not 
+            specified explicitly, they will be determined based on the files 
+            found in the FS_edits folder.
 
         --hcp_fs_existing_session (str, default 'FALSE'):
             Indicates that the command is to be run on top of an already
@@ -2018,30 +2018,40 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> hcp_fs_edits is set to TRUE, looking for edits files ..."
                 editsfolder = os.path.join(options["sessionsfolder"], "inbox", "FS_edits")
                 editfiles = glob.glob(os.path.join(editsfolder, sinfo["id"] + "_*.mgz"))
-                if editfiles:
+                controlfile = os.path.join(editsfolder, sinfo["id"] + "_control.dat")
+                if editfiles or os.path.exists(controlfile):
+                    copyfiles = []
                     for efile in editfiles:
                         fname = os.path.basename(efile).split("_", 1)[1]
                         edited.append(fname.replace(".mgz",""))
                         destfile = os.path.join(hcp["FS_folder"], 'mri', fname)
+                        copyfiles.append((efile, destfile))
+                    if os.path.exists(controlfile):
+                        destfile = os.path.join(hcp["FS_folder"], 'tmp', 'control.dat')
+                        copyfiles.append((controlfile, destfile))
+                        edited.append("control")
+                    for efile, destfile in copyfiles:
                         if os.path.exists(destfile):
                             r += "\n     ... replacing: %s " % (fname)
                         else:
                             r += "\n     ... adding: %s " % (fname)
-                        shutil.copy2(efile, destfile)
+                        shutil.copy2(efile, destfile)                    
                 else:
                     r += "\n     ... no edits files found in %s!" % (editsfolder)
 
                 # -- set extra parameters
                 options["hcp_fs_existing_session"] = True
-                if 'wm' in edited:
+                if "control" in edited:
+                    add_extra = ['-autorecon2-cp', '-autorecon3']
+                elif 'wm' in edited:
                     add_extra = ['-autorecon2-wm', '-autorecon3']
                 elif 'aseg' in edited:
                     add_extra = ['-autorecon2-noaseg', '-autorecon3']
                 elif 'brainmask' in edited:
-                    add_extra = ['-autorecon-pial', '-autorecon3']
+                    add_extra = ['-autorecon-pial']
                 else:
                     r += "\n---> ERROR: No edits specified and no edited files found!"
-                    r += "\n            If you are processing edits to wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits."
+                    r += "\n            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits."
                     r += "\n            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters."
                     run = False
                     add_extra = []
