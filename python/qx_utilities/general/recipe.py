@@ -61,7 +61,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             QuNex commands, but they will be passed to the command as command
             line arguments, by default in the form of `--<parameter>=<value>`.
             User can tweak this by setting the external_parameter_prefix and
-            external_parameter_delimeter parameters for the script. The first
+            external_parameter_delimiter parameters for the script. The first
             one defines the prefix for the parameters (default is "--"), while
             the second one defines the delimiter between the parameter name and
             value (default is "="). For example, if the prefix is set to "-" and
@@ -533,7 +533,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     "Please use binaries, .sh, .py or .R scripts!",
                 )
 
-            # prefix and delimeter
+            # prefix and delimiter
             external_parameter_prefix = command_parameters.pop("external_parameter_prefix", "--")
             external_parameter_delimiter = command_parameters.pop("external_parameter_delimiter", "=")
 
