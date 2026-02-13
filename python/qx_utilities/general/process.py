@@ -707,6 +707,7 @@ calist = [
     ["hcp_apply_auto_reclean", process_hcp.hcp_apply_auto_reclean],
     ["hcp_asl", process_hcp.hcp_asl],
     ["hcp_transmit_bias_individual", process_hcp.hcp_transmit_bias_individual],
+    ["hcp_transmit_bias_individual_align", process_hcp.hcp_transmit_bias_individual_align],
     [],
     ["run_shell_script", simple.run_shell_script],
     [],

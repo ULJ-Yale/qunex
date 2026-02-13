@@ -346,6 +346,11 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.hcp.process_hcp.hcp_transmit_bias_individual_align",
+        "Run HCP Transmit Bias pipeline Phase 1, Individual Align.",
+        "python",
+    ),
+    (
         "qx_utilities.hcp.process_hcp.hcp_long_transmit_bias",
         "Run HCP Longitudinal Transmit Bias pipeline.",
         "python",
