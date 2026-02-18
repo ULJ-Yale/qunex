@@ -17,24 +17,24 @@ All rights reserved.
 """
 
 import concurrent.futures
-import os
-import re
-import os.path
-import shutil
 import glob
-import traceback
-import time
 import json
-import general.core as gc
-import processing.core as pc
-import general.img as gi
-import general.snapshots as gs
-import general.exceptions as ge
-import nibabel as nib
+import os
+import os.path
 import pprint
-from datetime import datetime
+import re
+import shutil
+import time
+import traceback
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 from functools import partial
+
+import general.core as gc
+import general.exceptions as ge
+import general.snapshots as gs
+import nibabel as nib
+import processing.core as pc
 
 unwarp = {
     None: "Unknown",
@@ -89,7 +89,9 @@ def _append_sorted_logdir_to_log(log_file, logdir):
     """
 
     def _log_sort_key(filename):
-        match = re.match(r"^(?P<prefix>.*)\.(?P<n>\d+)\.(?P<stream>[eo])\.log$", filename)
+        match = re.match(
+            r"^(?P<prefix>.*)\.(?P<n>\d+)\.(?P<stream>[eo])\.log$", filename
+        )
         if not match:
             return (float("inf"), 2, filename)
 
@@ -176,7 +178,7 @@ def getHCPPaths(sinfo, options):
     else:
         d["source"] = os.path.join(d["base"], "unprocessed")
 
-    d['snapshots']  = os.path.join(hcpbase, 'snapshots')
+    d["snapshots"] = os.path.join(hcpbase, "snapshots")
     d["hcp_nonlin"] = os.path.join(hcpbase, "MNINonLinear")
     d["T1w_source"] = os.path.join(d["source"], "T1w")
     d["T2w_source"] = os.path.join(d["source"], "T2w")
@@ -611,7 +613,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_processing_mode (str, default 'HCPStyleData'):
@@ -904,8 +906,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -921,22 +924,25 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     "T1w", "DwellTime", options
                 ):
                     options["hcp_t1samplespacing"] = f"{float(T1w['DwellTime']):.10f}"
-                    r += "\n---> T1w image specific EchoSpacing: %s s" % (
-                        options["hcp_t1samplespacing"]
+                    r += (
+                        "\n---> T1w image specific EchoSpacing: %s s"
+                        % (options["hcp_t1samplespacing"])
                     )
                 elif "EchoSpacing" in T1w and checkInlineParameterUse(
                     "T1w", "EchoSpacing", options
                 ):
                     options["hcp_t1samplespacing"] = f"{float(T1w['EchoSpacing']):.10f}"
-                    r += "\n---> T1w image specific EchoSpacing: %s s" % (
-                        options["hcp_t1samplespacing"]
+                    r += (
+                        "\n---> T1w image specific EchoSpacing: %s s"
+                        % (options["hcp_t1samplespacing"])
                     )
                 if "UnwarpDir" in T1w and checkInlineParameterUse(
                     "T1w", "UnwarpDir", options
                 ):
                     options["hcp_unwarpdir"] = T1w["UnwarpDir"]
-                    r += "\n---> T1w image specific unwarp direction: %s" % (
-                        options["hcp_unwarpdir"]
+                    r += (
+                        "\n---> T1w image specific unwarp direction: %s"
+                        % (options["hcp_unwarpdir"])
                     )
 
                 # try to set hcp_t1samplespacing from the JSON sidecar if not yet set
@@ -973,8 +979,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         options["hcp_t2samplespacing"] = (
                             f"{float(T2w['DwellTime']):.10f}"
                         )
-                        r += "\n---> T2w image specific EchoSpacing: %s s" % (
-                            options["hcp_t2samplespacing"]
+                        r += (
+                            "\n---> T2w image specific EchoSpacing: %s s"
+                            % (options["hcp_t2samplespacing"])
                         )
                     elif "EchoSpacing" in T2w and checkInlineParameterUse(
                         "T2w", "EchoSpacing", options
@@ -982,8 +989,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         options["hcp_t2samplespacing"] = (
                             f"{float(T2w['EchoSpacing']):.10f}"
                         )
-                        r += "\n---> T2w image specific EchoSpacing: %s s" % (
-                            options["hcp_t2samplespacing"]
+                        r += (
+                            "\n---> T2w image specific EchoSpacing: %s s"
+                            % (options["hcp_t2samplespacing"])
                         )
 
                     # try to set hcp_t2samplespacing from the JSON sidecar if not yet set
@@ -1154,8 +1162,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if options["hcp_seunwarpdir"] is None:
                         if seInfo and "phenc" in seInfo:
                             options["hcp_seunwarpdir"] = SEDirMap[seInfo["phenc"]]
-                            r += "\n---> Spin-Echo unwarp direction: %s" % (
-                                options["hcp_seunwarpdir"]
+                            r += (
+                                "\n---> Spin-Echo unwarp direction: %s"
+                                % (options["hcp_seunwarpdir"])
                             )
                         elif (
                             seInfo
@@ -1163,8 +1172,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             and checkInlineParameterUse("SE", "PEDirection", options)
                         ):
                             options["hcp_seunwarpdir"] = seInfo["PEDirection"]
-                            r += "\n---> Spin-Echo unwarp direction: %s" % (
-                                options["hcp_seunwarpdir"]
+                            r += (
+                                "\n---> Spin-Echo unwarp direction: %s"
+                                % (options["hcp_seunwarpdir"])
                             )
 
                     if (
@@ -1697,7 +1707,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_processing_mode (str, default 'HCPStyleData'):
@@ -1738,10 +1748,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             and 'extra_reconall' parameters will be set as well to only run the
             necessary steps to incorporate the edits, depending on the edits
             present and/or specified. This option can be used for edits to
-            control.dat, aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted 
-            values are 'FALSE', 'TRUE', or a comma-separated list of edits to 
-            apply: 'control', 'aseg', 'wm', 'brainmask'. If edits are not 
-            specified explicitly, they will be determined based on the files 
+            control.dat, aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted
+            values are 'FALSE', 'TRUE', or a comma-separated list of edits to
+            apply: 'control', 'aseg', 'wm', 'brainmask'. If edits are not
+            specified explicitly, they will be determined based on the files
             found in the FS_edits folder.
 
         --hcp_fs_existing_session (str, default 'FALSE'):
@@ -1972,8 +1982,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -2005,29 +2016,46 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         )
 
         # do we have edits specified?
-        if options["hcp_fs_edits"] and options["hcp_fs_edits"].upper() not in ["", "FALSE", "NO", "NONE"]:
-
-            extra = [e.strip() for e in options["hcp_fs_edits"].lower().split(",") if e.strip() not in ['aseg', 'wm', 'brainmask', 'yes', 'true']]
+        if options["hcp_fs_edits"] and options["hcp_fs_edits"].upper() not in [
+            "",
+            "FALSE",
+            "NO",
+            "NONE",
+        ]:
+            extra = [
+                e.strip()
+                for e in options["hcp_fs_edits"].lower().split(",")
+                if e.strip() not in ["aseg", "wm", "brainmask", "yes", "true"]
+            ]
             if extra:
-                r += "\n---> ERROR: Invalid edits specified in hcp_fs_edits: '%s' ['%s']" % (",".join(extra), options["hcp_fs_edits"])
+                r += (
+                    "\n---> ERROR: Invalid edits specified in hcp_fs_edits: '%s' ['%s']"
+                    % (",".join(extra), options["hcp_fs_edits"])
+                )
                 run = False
 
             else:
-                edited = [e for e in ['aseg', 'wm', 'brainmask'] if e in options["hcp_fs_edits"].lower().split(",")]
+                edited = [
+                    e
+                    for e in ["aseg", "wm", "brainmask"]
+                    if e in options["hcp_fs_edits"].lower().split(",")
+                ]
                 # -- map files
                 r += "\n---> hcp_fs_edits is set to TRUE, looking for edits files ..."
-                editsfolder = os.path.join(options["sessionsfolder"], "inbox", "FS_edits")
+                editsfolder = os.path.join(
+                    options["sessionsfolder"], "inbox", "FS_edits"
+                )
                 editfiles = glob.glob(os.path.join(editsfolder, sinfo["id"] + "_*.mgz"))
                 controlfile = os.path.join(editsfolder, sinfo["id"] + "_control.dat")
                 if editfiles or os.path.exists(controlfile):
                     copyfiles = []
                     for efile in editfiles:
                         fname = os.path.basename(efile).split("_", 1)[1]
-                        edited.append(fname.replace(".mgz",""))
-                        destfile = os.path.join(hcp["FS_folder"], 'mri', fname)
+                        edited.append(fname.replace(".mgz", ""))
+                        destfile = os.path.join(hcp["FS_folder"], "mri", fname)
                         copyfiles.append((efile, destfile))
                     if os.path.exists(controlfile):
-                        destfile = os.path.join(hcp["FS_folder"], 'tmp', 'control.dat')
+                        destfile = os.path.join(hcp["FS_folder"], "tmp", "control.dat")
                         copyfiles.append((controlfile, destfile))
                         edited.append("control")
                     for efile, destfile in copyfiles:
@@ -2035,20 +2063,20 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                             r += "\n     ... replacing: %s " % (fname)
                         else:
                             r += "\n     ... adding: %s " % (fname)
-                        shutil.copy2(efile, destfile)                    
+                        shutil.copy2(efile, destfile)
                 else:
                     r += "\n     ... no edits files found in %s!" % (editsfolder)
 
                 # -- set extra parameters
                 options["hcp_fs_existing_session"] = True
                 if "control" in edited:
-                    add_extra = ['-autorecon2-cp', '-autorecon3']
-                elif 'wm' in edited:
-                    add_extra = ['-autorecon2-wm', '-autorecon3']
-                elif 'aseg' in edited:
-                    add_extra = ['-autorecon2-noaseg', '-autorecon3']
-                elif 'brainmask' in edited:
-                    add_extra = ['-autorecon-pial']
+                    add_extra = ["-autorecon2-cp", "-autorecon3"]
+                elif "wm" in edited:
+                    add_extra = ["-autorecon2-wm", "-autorecon3"]
+                elif "aseg" in edited:
+                    add_extra = ["-autorecon2-noaseg", "-autorecon3"]
+                elif "brainmask" in edited:
+                    add_extra = ["-autorecon-pial"]
                 else:
                     r += "\n---> ERROR: No edits specified and no edited files found!"
                     r += "\n            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits."
@@ -2056,12 +2084,16 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     run = False
                     add_extra = []
 
-                if not hcp['T2w'] in ["", "NONE"]:
-                    add_extra.append('-T2pial')
+                if hcp["T2w"] not in ["", "NONE"]:
+                    add_extra.append("-T2pial")
 
-                add_extra = [p for p in add_extra if p not in options["hcp_fs_extra_reconall"]]
+                add_extra = [
+                    p for p in add_extra if p not in options["hcp_fs_extra_reconall"]
+                ]
                 if add_extra:
-                    options["hcp_fs_extra_reconall"] = "|".join(add_extra + [options["hcp_fs_extra_reconall"]])
+                    options["hcp_fs_extra_reconall"] = "|".join(
+                        add_extra + [options["hcp_fs_extra_reconall"]]
+                    )
 
         # -> Key elements
         elements = [
@@ -2123,7 +2155,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             + ".corrThickness.164k_fs_LR.dscalar.nii",
         )
 
-        if os.path.exists(post_fs_tfile) and not (overwrite or options["hcp_fs_existing_session"]):
+        if os.path.exists(post_fs_tfile) and not (
+            overwrite or options["hcp_fs_existing_session"]
+        ):
             r += "\n---> ERROR: PostFreeSurfer results already present! Set overwrite to true or hcp_fs_existing_session to true to reprocess FreeSurfer!"
             run = False
 
@@ -2145,7 +2179,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             fullTest = None
 
-
         # -- Run
         if run:
             if options["run"] == "run":
@@ -2158,10 +2191,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     os.remove(tfile)
 
                 # ---> clean up only if hcp_fs_existing_session is not set to True
-                if (overwrite or not os.path.exists(tfile)) and not options["hcp_fs_existing_session"]:
+                if (overwrite or not os.path.exists(tfile)) and not options[
+                    "hcp_fs_existing_session"
+                ]:
                     if os.path.lexists(hcp["FS_folder"]):
-                        r += "\n---> removing preexisting FS folder [%s]" % (
-                            hcp["FS_folder"]
+                        r += (
+                            "\n---> removing preexisting FS folder [%s]"
+                            % (hcp["FS_folder"])
                         )
                         shutil.rmtree(hcp["FS_folder"], ignore_errors=True)
                     for toremove in [
@@ -2186,23 +2222,31 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(post_fs_tfile):
                     r += "\n---> WARNING: PostFreeSurfer results already present!"
                     # -> cleanup postfs
-                    r += "\n     Found PostFreeSurfer results file: %s" % (post_fs_tfile)
+                    r += "\n     Found PostFreeSurfer results file: %s" % (
+                        post_fs_tfile
+                    )
                     r += "\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ..."
-                    gs.rollback_snapshot(diff=os.path.join(hcp['snapshots'], "postfreesurfer_diff.txt"),
-                                        action="delete",
-                                        exclude=hcp['snapshots'])
+                    gs.rollback_snapshot(
+                        diff=os.path.join(hcp["snapshots"], "postfreesurfer_diff.txt"),
+                        action="delete",
+                        exclude=hcp["snapshots"],
+                    )
 
                     # -> restore backup
                     r += "\n     Restoring FreeSurfer backup ..."
-                    gs.restore_files(source=os.path.join(hcp['snapshots'], "postfreesurfer_backup"),
-                                    target=hcp['base'],
-                                    overwrite=True)
+                    gs.restore_files(
+                        source=os.path.join(hcp["snapshots"], "postfreesurfer_backup"),
+                        target=hcp["base"],
+                        overwrite=True,
+                    )
 
                 # --> record freesurfer_start_snapshot
                 r += "\n---> Recording FreeSurfer start snapshot ..."
-                gs.record_snapshot(targetfolder=hcp['base'],
-                                   outfile=os.path.join(hcp['snapshots'], "freesurfer_start.txt"),
-                                   exclude=hcp['snapshots'])
+                gs.record_snapshot(
+                    targetfolder=hcp["base"],
+                    outfile=os.path.join(hcp["snapshots"], "freesurfer_start.txt"),
+                    exclude=hcp["snapshots"],
+                )
 
                 if status:
                     r, endlog, report, failed = pc.runExternalForFile(
@@ -2262,10 +2306,12 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     # -- take freesurfer_end_snapshot
     if options["run"] == "run" and failed == 0:
-        gs.compare_snapshots(before=os.path.join(hcp['snapshots'], "freesurfer_start.txt"),
-                             after=os.path.join(hcp['base']),
-                             outfile=os.path.join(hcp['snapshots'], "freesurfer_diff.txt"),
-                             exclude=hcp['snapshots'])
+        gs.compare_snapshots(
+            before=os.path.join(hcp["snapshots"], "freesurfer_start.txt"),
+            after=os.path.join(hcp["base"]),
+            outfile=os.path.join(hcp["snapshots"], "freesurfer_diff.txt"),
+            exclude=hcp["snapshots"],
+        )
 
     # print r
     return (r, (sinfo["id"], report, failed))
@@ -2304,7 +2350,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_processing_mode (str, default 'HCPStyleData'):
@@ -2470,8 +2516,9 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -2594,30 +2641,37 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         # -- run
         if run:
             if options["run"] == "run":
-
                 if not os.path.exists(tfile):
                     # ---> record pre freesurfer snapshot
-                    gs.record_snapshot(targetfolder=hcp['base'],
-                                       outfile=os.path.join(hcp['snapshots'], "postfreesurfer_start.txt"),
-                                       exclude=hcp['snapshots'])
+                    gs.record_snapshot(
+                        targetfolder=hcp["base"],
+                        outfile=os.path.join(
+                            hcp["snapshots"], "postfreesurfer_start.txt"
+                        ),
+                        exclude=hcp["snapshots"],
+                    )
 
                     # ---> prepare freesurfer backup
-                    gs.backup_files(source=hcp['base'],
-                                    target=os.path.join(hcp['snapshots'], 'postfreesurfer_backup'),
-                                    filelist=['MNINonLinear/T1w.nii.gz',
-                                              'MNINonLinear/T1w_restore.nii.gz',
-                                              'MNINonLinear/T1w_restore_brain.nii.gz',
-                                              'MNINonLinear/T2w.nii.gz',
-                                              'MNINonLinear/T2w_restore.nii.gz',
-                                              'MNINonLinear/T2w_restore_brain.nii.gz',
-                                              'MNINonLinear/xfms/NonlinearRegJacobians.nii.gz',
-                                              'T1w/T1w_acpc_dc.nii.gz',
-                                              'T1w/T1w_acpc_dc_restore.nii.gz',
-                                              'T1w/T1w_acpc_dc_restore_brain.nii.gz',
-                                              'T1w/T2w_acpc_dc.nii.gz',
-                                              'T1w/T2w_acpc_dc_restore.nii.gz',
-                                              'T1w/T2w_acpc_dc_restore_brain.nii.gz'],
-                                    overwrite=overwrite)
+                    gs.backup_files(
+                        source=hcp["base"],
+                        target=os.path.join(hcp["snapshots"], "postfreesurfer_backup"),
+                        filelist=[
+                            "MNINonLinear/T1w.nii.gz",
+                            "MNINonLinear/T1w_restore.nii.gz",
+                            "MNINonLinear/T1w_restore_brain.nii.gz",
+                            "MNINonLinear/T2w.nii.gz",
+                            "MNINonLinear/T2w_restore.nii.gz",
+                            "MNINonLinear/T2w_restore_brain.nii.gz",
+                            "MNINonLinear/xfms/NonlinearRegJacobians.nii.gz",
+                            "T1w/T1w_acpc_dc.nii.gz",
+                            "T1w/T1w_acpc_dc_restore.nii.gz",
+                            "T1w/T1w_acpc_dc_restore_brain.nii.gz",
+                            "T1w/T2w_acpc_dc.nii.gz",
+                            "T1w/T2w_acpc_dc_restore.nii.gz",
+                            "T1w/T2w_acpc_dc_restore_brain.nii.gz",
+                        ],
+                        overwrite=overwrite,
+                    )
 
                 # ---> clean up test file if overwrite
                 if overwrite and os.path.exists(tfile):
@@ -2680,10 +2734,12 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     # -- take freesurfer_end_snapshot
     if options["run"] == "run" and failed == 0:
-        gs.compare_snapshots(before=os.path.join(hcp['snapshots'], "postfreesurfer_start.txt"),
-                             after=os.path.join(hcp['base']),
-                             outfile=os.path.join(hcp['snapshots'], "postfreesurfer_diff.txt"),
-                             exclude=hcp['snapshots'])
+        gs.compare_snapshots(
+            before=os.path.join(hcp["snapshots"], "postfreesurfer_start.txt"),
+            after=os.path.join(hcp["base"]),
+            outfile=os.path.join(hcp["snapshots"], "postfreesurfer_diff.txt"),
+            exclude=hcp["snapshots"],
+        )
 
     # print r
     return (r, (sinfo["id"], report, failed))
@@ -2696,8 +2752,9 @@ def _get_subjects_from_batch(sinfo, hcp, run):
     subjects_dict = {}
     for session in sinfo:
         if "hcp" not in session:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                session["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (session["id"])
             )
             run = False
 
@@ -2747,7 +2804,7 @@ def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
     Output files:
@@ -2916,7 +2973,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_longitudinal_template (str, default 'base'):
@@ -3232,7 +3289,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             empty otherwise.
 
         --logfolder (str, default ""):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_longitudinal_template (str, default "base"):
@@ -3778,7 +3835,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_dwi_echospacing (str, default detailed below):
@@ -4018,8 +4075,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -4113,7 +4171,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
                 for ddir in ["pos", "neg"]:
                     if ddir not in dwi_files:
-                        r += f"\n---> ERROR: No DWI files found, check the _hcp_dwi_phasepos and _hcp_dwi_phaseneg parameters."
+                        r += "\n---> ERROR: No DWI files found, check the _hcp_dwi_phasepos and _hcp_dwi_phaseneg parameters."
                         run = False
                         break
 
@@ -4225,7 +4283,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         # longitudinal mode
         if options["longitudinal"]:
-            studyfolder = gc.deduceFolders(options)["basefolder"]
+            studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 run = False
@@ -4524,7 +4582,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_processing_mode (str, default 'HCPStyleData'):
@@ -5044,8 +5102,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -5450,7 +5509,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 else:
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
-
                         if isinstance(hcp["fieldmap"][i]["magnitude"], list):
                             r, fieldok = pc.checkForFile2(
                                 r,
@@ -6059,7 +6117,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         # longitudinal mode
         if options["longitudinal"]:
-            studyfolder = gc.deduceFolders(options)["basefolder"]
+            studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 run = False
@@ -6271,7 +6329,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_folderstructure (str, default 'hcpls'):
@@ -6418,8 +6476,9 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -6554,7 +6613,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
 
         # longitudinal
         if options["longitudinal"]:
-            studyfolder = gc.deduceFolders(options)["basefolder"]
+            studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 boldok = False
@@ -6946,7 +7005,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
@@ -7792,7 +7851,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
@@ -8226,7 +8285,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
@@ -8759,7 +8818,7 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
 
             # longitudinal
             if options["longitudinal"]:
-                studyfolder = gc.deduceFolders(options)["basefolder"]
+                studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
                     r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                     groupok = False
@@ -8863,7 +8922,6 @@ def executeHCPMultiReApplyFix(sinfo, options, hcp, run, group):
             # -- Run
             if run and groupok:
                 if options["run"] == "run":
-
                     logtags = [options["logtag"], groupname]
                     if options["longitudinal"]:
                         logtags.append("long")
@@ -9170,7 +9228,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
@@ -10169,7 +10227,7 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
@@ -10517,7 +10575,7 @@ def _execute_hcp_long_msmall(sinfos, options, run, hcp, subject):
                 # fix names to use
                 fixnamestouse = "@".join(group["msmall_bolds"])
 
-                studyfolder = gc.deduceFolders(options)["basefolder"]
+                studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
                     r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                     boldok = False
@@ -10754,7 +10812,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
@@ -11289,7 +11347,6 @@ def executeHCPMultiDeDriftAndResample(sinfo, options, hcp, run, group):
         groupbolds = ""
 
         for boldinfo in bolds:
-
             _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
@@ -11634,7 +11691,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_gdcoeffs (str, optional):
@@ -11803,8 +11860,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -12079,7 +12137,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             # -- Longitudinal parameters
             if options["longitudinal"]:
-                studyfolder = gc.deduceFolders(options)["basefolder"]
+                studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
                     r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                     run = False
@@ -12088,7 +12146,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     studyfolder, "subjects", sinfo["subject"]
                 )
 
-                comm += f"                --longitudinal_template=\"{options['hcp_longitudinal_template']}\""
+                comm += f'                --longitudinal_template="{options["hcp_longitudinal_template"]}"'
                 comm += f'                --longitudinal_study_dir="{longitudinal_study_dir}"'
                 comm += "                --is_longitudinal"
 
@@ -12104,7 +12162,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-
                 if not options["longitudinal"]:
                     logtags = options["logtag"]
                 else:
@@ -12187,7 +12244,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_gmwm_template (str, default ''):
@@ -12380,8 +12437,9 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -12621,7 +12679,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --myelin-mapping-fwhm={options['hcp_myelin_mapping_fwhm']}"
 
             if options["hcp_old_myelin_mapping"]:
-                comm += f"                --old-myelin-mapping=TRUE"
+                comm += "                --old-myelin-mapping=TRUE"
 
             if options["hcp_gdcoeffs"]:
                 # lookup gdcoeffs file
@@ -12730,7 +12788,7 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_longitudinal_template (str, default 'base'):
@@ -13218,7 +13276,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_tica_studyfolder (str, default ''):
@@ -13673,7 +13731,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
 
             # longitudinal
             if options["longitudinal"]:
-                studyfolder = gc.deduceFolders(options)["basefolder"]
+                studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
                     r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                     run = False
@@ -13740,7 +13798,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
             gc.link_or_copy(options["hcp_tica_average_dataset"], mad_dir, symlink=True)
         elif options["longitudinal"]:
             # if longitudinal, check if we have to copy from sessions to subjects
-            studyfolder = gc.deduceFolders(options)["basefolder"]
+            studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
                 r += "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
                 run = False
@@ -13973,7 +14031,6 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-
                 logtags = [options["logtag"]]
                 if options["longitudinal"]:
                     logtags.append("long")
@@ -14054,7 +14111,7 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_surface_atlas_dir (str, default '${HCPPIPEDIR}/global/templates/standard_mesh_atlases'):
@@ -14379,7 +14436,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
@@ -14820,8 +14877,9 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -14938,8 +14996,9 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -15670,7 +15729,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             empty otherwise.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --hcp_task_lvl1tasks (str, default ''):
@@ -15827,8 +15886,9 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 

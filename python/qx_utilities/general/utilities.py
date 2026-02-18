@@ -16,23 +16,24 @@ Created by Grega Repovs on 2017-09-17.
 Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 """
 
-import os.path
-import os
 import errno
-import shutil
-import glob
 import getpass
+import glob
+import itertools
+import os
+import os.path
 import re
+import shutil
 import subprocess
 from datetime import datetime
-import itertools
-import general.process as gp
+
+import general.all_commands as gac
 import general.core as gc
-import processing.core as gpc
 import general.exceptions as ge
 import general.filelock as fl
 import general.parser as parser
-import general.all_commands as gac
+import general.process as gp
+import processing.core as gpc
 
 parameterTemplateHeader = """#  Parameters file
 #  =====================
@@ -94,7 +95,7 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
     niuTemplateFolder = os.environ["NIUTemplateFolder"]
 
     # default folders file
-    if folders is None:
+    if folders is None or folders == "legacy":
         folders = os.path.join(niuTemplateFolder, "study_folders_default.txt")
     else:
         # if not absolute path
@@ -350,13 +351,23 @@ def create_study(studyfolder=None, folders=None):
         --studyfolder (str):
             The path to the study folder to be generated.
 
-        --folders (str, default $TOOLS/python/python/qx_utilities/templates/study_folders_default.txt):
-            Path to the file which defines the subfolder structure.
+        --folders (str, default None):
+            Path to the file which defines the subfolder structure. Set to
+            "legacy" to use the legacy folder structure. By default, QuNex will
+            create a very limited set of folders.
 
     Notes:
+        By default, QuNex will create the minimum amount of necessary folders:
+
+            <studyfolder>
+            ├── logs
+            ├── processing
+            └── sessions
+
         Creates the base folder at the provided path location and the study folders.
-        By default $TOOLS/python/python/qx_utilities/templates/study_folders_default.txt
-        will be used for subfolder specification. The default structure is::
+        Setting the folders parameter to legacy will use
+        $TOOLS/python/python/qx_utilities/templates/study_folders_default.txt
+        Which gives the following structure::
 
             <studyfolder>
             ├── analysis
@@ -400,11 +411,12 @@ def create_study(studyfolder=None, folders=None):
                 └── specs
                     └── QC
 
-        Do note that the command will create all the missing folders in which
-        the specified study is to reside. The command also prepares template
-        batch_example.txt and pipeline example mapping files in
-        <studyfolder>/sessions/specs folder. Finally, it creates a .qunexstudy
-        file in the <studyfolder> to identify it as a study basefolder.
+        Do note that with the legacy option, the command will create all th
+        missing folders in which the specified study is to reside. The command
+        also prepares template batch_example.txt and pipeline example mapping
+        files in <studyfolder>/sessions/specs folder. Finally, it creates
+        a .qunexstudy file in the <studyfolder> to identify it as a study
+        basefolder.
 
     Examples:
         ::
@@ -417,14 +429,52 @@ def create_study(studyfolder=None, folders=None):
 
     if studyfolder is None:
         raise ge.CommandFailed(
-                    "manage_study",
-                    "Folder structure file [%s] not found!" % folders,
-                    "Please check the value of the folders parameter.",
+            "manage_study",
+            "Folder structure file [%s] not found!" % folders,
+            "Please check the value of the folders parameter.",
         )
 
-    manage_study(
-        studyfolder=studyfolder, action="create", folders=folders, verbose=True
-    )
+    if folders is None:
+        print("\n---> Creating study folder structure:")
+        for subfolder in ["logs", "processing", "sessions"]:
+            tfolder = os.path.join(studyfolder, subfolder)
+            try:
+                os.makedirs(tfolder)
+                print(" ... created:", tfolder)
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    print(" ... folder exists:", tfolder)
+                else:
+                    errstr = os.strerror(e.errno)
+                    raise ge.CommandFailed(
+                        "create_study",
+                        "I/O error: %s" % (errstr),
+                        "Folder could not be created due to '%s' error!" % (errstr),
+                        "Folder to create: %s" % (tfolder),
+                        "Please check paths and permissions!",
+                    )
+
+        print("\n---> Preparing template files:")
+        markFile = os.path.join(studyfolder, ".qunexstudy")
+        try:
+            f = os.open(markFile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(f)
+            print(" ... created .qunexstudy file")
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                print(" ... .qunexstudy file already exists")
+            else:
+                errstr = os.strerror(e.errno)
+                raise ge.CommandFailed(
+                    "create_study",
+                    "I/O error: %s" % (errstr),
+                    ".qunexstudy file could not be created [%s]!" % (markFile),
+                    "Please check paths and permissions!",
+                )
+    else:
+        manage_study(
+            studyfolder=studyfolder, action="create", folders=folders, verbose=True
+        )
 
 
 def copy_study(
@@ -703,37 +753,6 @@ def filter_batch(batchfile, sessions=None, subjects=None):
     # write back
     with open(batchfile, "w") as f:
         f.write(new_batch)
-
-
-def check_study(startfolder=".", folders=None):
-    """
-    ``check_study startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
-
-    The function looks for the path to the study folder in the hierarchy
-    starting from the provided startfolder. If found it checks that all the
-    standard folders are present and creates any missing ones. It returns
-    the path to the study folder. If the study folder can not be identified,
-    it returns None.
-
-    ---
-    Written by Grega Repovš, 2018-11-14
-    """
-
-    studyfolder = None
-    testfolder = os.path.abspath(startfolder)
-
-    while os.path.dirname(testfolder) and os.path.dirname(testfolder) != "/":
-        if os.path.exists(os.path.join(testfolder, ".qunexstudy")) or os.path.exists(
-            os.path.join(testfolder, ".mnapstudy")
-        ):
-            studyfolder = testfolder
-            break
-        testfolder = os.path.dirname(testfolder)
-
-    if studyfolder:
-        manage_study(studyfolder=studyfolder, action="check", folders=folders)
-
-    return studyfolder
 
 
 def create_batch(

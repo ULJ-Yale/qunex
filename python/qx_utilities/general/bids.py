@@ -558,7 +558,7 @@ def import_bids(
     if sessionsfolder is None:
         sessionsfolder = os.path.abspath(".")
 
-    qxfolders = gc.deduceFolders({"sessionsfolder": sessionsfolder})
+    qxfolders = gc.deduce_folders({"sessionsfolder": sessionsfolder})
 
     if inbox is None:
         inbox = os.path.join(sessionsfolder, "inbox", "BIDS")

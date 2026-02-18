@@ -31,8 +31,9 @@ All rights reserved.
 import os
 import shutil
 import traceback
-import processing.core as pc
 from datetime import datetime
+
+import processing.core as pc
 
 
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
@@ -69,7 +70,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
             command run, previous results are lost.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
     Output files:
@@ -271,8 +272,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             command run, previous results are lost.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs
-            are to be stored, if other than default.
+            The path to the folder where logs are to be stored,
+            if other than default.
 
         --species (str, default 'human'):
             Species: human or macaque.
@@ -400,9 +401,13 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_dir = os.path.join(hcp_dir, "T1w", "Diffusion.bedpostX")
 
             if "xtract_mni" in options:
-                output_dir = os.path.join(hcp_dir, "MNINonLinear", "Results", "Tractography", "xtract")
+                output_dir = os.path.join(
+                    hcp_dir, "MNINonLinear", "Results", "Tractography", "xtract"
+                )
             else:
-                output_dir = os.path.join(hcp_dir, "T1w", "Results", "Tractography", "xtract")
+                output_dir = os.path.join(
+                    hcp_dir, "T1w", "Results", "Tractography", "xtract"
+                )
 
         # custom out dir
         if "xtract_out" in options:
@@ -447,7 +452,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         )
 
         # native?
-        if not "xtract_mni" in options:
+        if "xtract_mni" not in options:
             comm = comm + " -native"
 
         # optional parameters
@@ -610,7 +615,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
             command run, previous results are lost.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --noddi_model (str, default 'Watson'):

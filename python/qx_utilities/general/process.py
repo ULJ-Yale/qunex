@@ -20,26 +20,23 @@ None of the code is run directly from the terminal interface.
 # imports
 import os
 import os.path
-import sys
-from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime
 
-import general.scheduler as gs
+import general.commands_support as gcs
 import general.core as gc
 import general.exceptions as ge
-import general.commands_support as gcs
-from processing import fs, simple, workflow, dwi, fsl, rapidtide
-from general.bids import map_nii2bids
+import general.scheduler as gs
+import qx_mice.process_mice
+import qx_mice.setup_mice
 from general import extensions
-from general.parsing import true_or_false as torf, flag, is_none
+from general.bids import map_nii2bids
+from general.parsing import flag, is_none
+from general.parsing import true_or_false as torf
 
 # pipelines imports
 from hcp import process_hcp
-
-# qx_mice
-import qx_mice
-from qx_mice import setup_mice, process_mice
-
+from processing import dwi, fs, fsl, rapidtide, simple, workflow
 
 # =======================================================================
 #                                                                 GLOBALS
@@ -146,117 +143,537 @@ arglist = [
     ["sessions", "", str],
     ["sessionsfolder", "", os.path.abspath],
     ["logfolder", "", is_none],
-    ["logtag", "", str,],
-    ["overwrite", "no", torf,],
-    ["parsubjects", "1", int,],
-    ["parsessions", "1", int,],
-    ["parelements", "1", int,],
-    ["nprocess", "0", int,],
-    ["datainfo", "False", torf,],
-    ["printoptions", "False", torf,],
-    ["filter", "", str,],
-    ["script", "", is_none,],
-    ["sessionid", "", str,],
-    ["sessionids", "", str,],
+    [
+        "logtag",
+        "",
+        str,
+    ],
+    [
+        "overwrite",
+        "no",
+        torf,
+    ],
+    [
+        "parsubjects",
+        "1",
+        int,
+    ],
+    [
+        "parsessions",
+        "1",
+        int,
+    ],
+    [
+        "parelements",
+        "1",
+        int,
+    ],
+    [
+        "nprocess",
+        "0",
+        int,
+    ],
+    [
+        "datainfo",
+        "False",
+        torf,
+    ],
+    [
+        "printoptions",
+        "False",
+        torf,
+    ],
+    [
+        "filter",
+        "",
+        str,
+    ],
+    [
+        "script",
+        "",
+        is_none,
+    ],
+    [
+        "sessionid",
+        "",
+        str,
+    ],
+    [
+        "sessionids",
+        "",
+        str,
+    ],
     ["# ---- Preprocessing options"],
-    ["bet", "-f 0.5", str,],
-    ["fast", "-t 1 -n 3 --nopve", str,],
-    ["betboldmask", "-R -m", str,],
-    ["tr", "2.5", float,],
-    ["omit", "5", int,],
-    ["bold_actions", "shrcl", str,],
-    ["bold_nuisance", "m,V,WM,WB,1d", str,],
-    ["bolds", "all", str,],
-    ["boldname", "bold", str,],
-    ["qx_nifti_tail", "", is_none,],
-    ["qx_cifti_tail", "", is_none,],
-    ["nifti_tail", "", is_none,],
-    ["cifti_tail", "", is_none,],
-    ["bold_prefix", "", str,],
-    ["bold_variant", "", str,],
-    ["img_suffix", "", str,],
-    ["pignore", "", str,],
-    ["event_file", "", str,],
-    ["event_string", "", str,],
-    ["source_folder", "True", torf,],
-    ["wbmask", "", str,],
-    ["sessionroi", "", str,],
-    ["nroi", "", str,],
-    ["shrinknsroi", "true", str,],
-    ["path_bold", "bold[N]/*faln_dbnd_xr3d_atl.4dfp.img", str,],
-    ["path_mov", "movement/*_b[N]_faln_dbnd_xr3d.dat", str,],
-    ["path_t1", "atlas/*_mpr_n*_111_t88.4dfp.img", str,],
-    ["image_source", "hcp", str,],
-    ["image_target", "nifti", str,],
-    ["image_atlas", "cifti", str,],
-    ["use_sequence_info", "all", gc.pcslist,],
-    ["conc_use", "relative", str,],
+    [
+        "bet",
+        "-f 0.5",
+        str,
+    ],
+    [
+        "fast",
+        "-t 1 -n 3 --nopve",
+        str,
+    ],
+    [
+        "betboldmask",
+        "-R -m",
+        str,
+    ],
+    [
+        "tr",
+        "2.5",
+        float,
+    ],
+    [
+        "omit",
+        "5",
+        int,
+    ],
+    [
+        "bold_actions",
+        "shrcl",
+        str,
+    ],
+    [
+        "bold_nuisance",
+        "m,V,WM,WB,1d",
+        str,
+    ],
+    [
+        "bolds",
+        "all",
+        str,
+    ],
+    [
+        "boldname",
+        "bold",
+        str,
+    ],
+    [
+        "qx_nifti_tail",
+        "",
+        is_none,
+    ],
+    [
+        "qx_cifti_tail",
+        "",
+        is_none,
+    ],
+    [
+        "nifti_tail",
+        "",
+        is_none,
+    ],
+    [
+        "cifti_tail",
+        "",
+        is_none,
+    ],
+    [
+        "bold_prefix",
+        "",
+        str,
+    ],
+    [
+        "bold_variant",
+        "",
+        str,
+    ],
+    [
+        "img_suffix",
+        "",
+        str,
+    ],
+    [
+        "pignore",
+        "",
+        str,
+    ],
+    [
+        "event_file",
+        "",
+        str,
+    ],
+    [
+        "event_string",
+        "",
+        str,
+    ],
+    [
+        "source_folder",
+        "True",
+        torf,
+    ],
+    [
+        "wbmask",
+        "",
+        str,
+    ],
+    [
+        "sessionroi",
+        "",
+        str,
+    ],
+    [
+        "nroi",
+        "",
+        str,
+    ],
+    [
+        "shrinknsroi",
+        "true",
+        str,
+    ],
+    [
+        "path_bold",
+        "bold[N]/*faln_dbnd_xr3d_atl.4dfp.img",
+        str,
+    ],
+    [
+        "path_mov",
+        "movement/*_b[N]_faln_dbnd_xr3d.dat",
+        str,
+    ],
+    [
+        "path_t1",
+        "atlas/*_mpr_n*_111_t88.4dfp.img",
+        str,
+    ],
+    [
+        "image_source",
+        "hcp",
+        str,
+    ],
+    [
+        "image_target",
+        "nifti",
+        str,
+    ],
+    [
+        "image_atlas",
+        "cifti",
+        str,
+    ],
+    [
+        "use_sequence_info",
+        "all",
+        gc.pcslist,
+    ],
+    [
+        "conc_use",
+        "relative",
+        str,
+    ],
     ["# ---- GLM related options"],
-    ["glm_matrix", "none", str,],
-    ["glm_residuals", "save", str,],
-    ["glm_results", "c,r", str,],
-    ["glm_name", "", str,],
+    [
+        "glm_matrix",
+        "none",
+        str,
+    ],
+    [
+        "glm_residuals",
+        "save",
+        str,
+    ],
+    [
+        "glm_results",
+        "c,r",
+        str,
+    ],
+    [
+        "glm_name",
+        "",
+        str,
+    ],
     ["# ---- Movement thresholding and report options"],
-    ["mov_dvars", "3.0", float,],
-    ["mov_dvarsme", "1.5", float,],
-    ["mov_fd", "0.5", float,],
-    ["mov_radius", "50.0", float,],
-    ["mov_scrub", "yes", str,],
-    ["mov_fidl", "udvarsme", str,],
-    ["mov_plot", "mov_report", str,],
-    ["mov_post", "udvarsme", str,],
-    ["mov_before", "0", int,],
-    ["mov_after", "0", int,],
-    ["mov_bad", "udvarsme", str,],
-    ["mov_mreport", "movement_report.txt", str,],
-    ["mov_preport", "movement_report_post.txt", str,],
-    ["mov_sreport", "movement_scrubbing_report.txt", str,],
-    ["mov_pdf", "movement_plots", str,],
-    ["mov_pref", "", str,],
+    [
+        "mov_dvars",
+        "3.0",
+        float,
+    ],
+    [
+        "mov_dvarsme",
+        "1.5",
+        float,
+    ],
+    [
+        "mov_fd",
+        "0.5",
+        float,
+    ],
+    [
+        "mov_radius",
+        "50.0",
+        float,
+    ],
+    [
+        "mov_scrub",
+        "yes",
+        str,
+    ],
+    [
+        "mov_fidl",
+        "udvarsme",
+        str,
+    ],
+    [
+        "mov_plot",
+        "mov_report",
+        str,
+    ],
+    [
+        "mov_post",
+        "udvarsme",
+        str,
+    ],
+    [
+        "mov_before",
+        "0",
+        int,
+    ],
+    [
+        "mov_after",
+        "0",
+        int,
+    ],
+    [
+        "mov_bad",
+        "udvarsme",
+        str,
+    ],
+    [
+        "mov_mreport",
+        "movement_report.txt",
+        str,
+    ],
+    [
+        "mov_preport",
+        "movement_report_post.txt",
+        str,
+    ],
+    [
+        "mov_sreport",
+        "movement_scrubbing_report.txt",
+        str,
+    ],
+    [
+        "mov_pdf",
+        "movement_plots",
+        str,
+    ],
+    [
+        "mov_pref",
+        "",
+        str,
+    ],
     ["# ---- CIFTI related options"],
-    ["surface_smooth", "2.0", float,],
-    ["volume_smooth", "2.0", float,],
-    ["voxel_smooth", "1", float,],
-    ["smooth_mask", "false", str,],
-    ["dilate_mask", "false", str,],
-    ["hipass_filter", "0.008", float,],
-    ["lopass_filter", "0.09", float,],
-    ["hipass_do", "nuisance", str,],
-    ["lopass_do", "nuisance,movement,events,task", str,],
-    ["omp_threads", "", is_none,],
-    ["framework_path", "", str,],
-    ["wb_command_path", "", str,],
-    ["print_command", "no", str,],
+    [
+        "surface_smooth",
+        "2.0",
+        float,
+    ],
+    [
+        "volume_smooth",
+        "2.0",
+        float,
+    ],
+    [
+        "voxel_smooth",
+        "1",
+        float,
+    ],
+    [
+        "smooth_mask",
+        "false",
+        str,
+    ],
+    [
+        "dilate_mask",
+        "false",
+        str,
+    ],
+    [
+        "hipass_filter",
+        "0.008",
+        float,
+    ],
+    [
+        "lopass_filter",
+        "0.09",
+        float,
+    ],
+    [
+        "hipass_do",
+        "nuisance",
+        str,
+    ],
+    [
+        "lopass_do",
+        "nuisance,movement,events,task",
+        str,
+    ],
+    [
+        "omp_threads",
+        "",
+        is_none,
+    ],
+    [
+        "framework_path",
+        "",
+        str,
+    ],
+    [
+        "wb_command_path",
+        "",
+        str,
+    ],
+    [
+        "print_command",
+        "no",
+        str,
+    ],
     ["# ---- scheduler options"],
-    ["scheduler", "local", str,],
-    ["scheduler_environment", "", is_none,],
-    ["scheduler_workdir", "", is_none,],
-    ["scheduler_sleep", "1", float,],
+    [
+        "scheduler",
+        "local",
+        str,
+    ],
+    [
+        "scheduler_environment",
+        "",
+        is_none,
+    ],
+    [
+        "scheduler_workdir",
+        "",
+        is_none,
+    ],
+    [
+        "scheduler_sleep",
+        "1",
+        float,
+    ],
     ["# --- general HCP options"],
-    ["hcp_processing_mode", "HCPStyleData", str,],
-    ["hcp_folderstructure", "hcpls", str,],
-    ["hcp_freesurfer_home", "", str,],
-    ["hcp_freesurfer_module", "", str,],
-    ["hcp_suffix", "", str,],
-    ["hcp_t2", "t2", str,],
-    ["hcp_printcom", "", str,],
-    ["hcp_bold_prefix", "BOLD_", str,],
-    ["hcp_filename", "automated", str,],
-    ["hcp_lowresmesh", "32", str,],
-    ["hcp_lowresmeshes", "32", str,],
-    ["hcp_hiresmesh", "164", int,],
-    ["hcp_bold_res", "2", str,],
-    ["hcp_grayordinatesres", "2", int,],
-    ["hcp_surfatlasdir", "", is_none,],
-    ["hcp_grayordinatesdir", "", is_none,],
-    ["hcp_subcortgraylabels", "", is_none,],
-    ["hcp_refmyelinmaps", "", is_none,],
-    ["hcp_regname", "MSMSulc", str,],
-    ["hcp_cifti_tail", "_Atlas", str,],
-    ["hcp_bold_variant", "", str,],
-    ["additional_bolds", "", is_none,],
-    ["hcp_nifti_tail", "", str,],
-    ["hcp_config", "", is_none,],
+    [
+        "hcp_processing_mode",
+        "HCPStyleData",
+        str,
+    ],
+    [
+        "hcp_folderstructure",
+        "hcpls",
+        str,
+    ],
+    [
+        "hcp_freesurfer_home",
+        "",
+        str,
+    ],
+    [
+        "hcp_freesurfer_module",
+        "",
+        str,
+    ],
+    [
+        "hcp_suffix",
+        "",
+        str,
+    ],
+    [
+        "hcp_t2",
+        "t2",
+        str,
+    ],
+    [
+        "hcp_printcom",
+        "",
+        str,
+    ],
+    [
+        "hcp_bold_prefix",
+        "BOLD_",
+        str,
+    ],
+    [
+        "hcp_filename",
+        "automated",
+        str,
+    ],
+    [
+        "hcp_lowresmesh",
+        "32",
+        str,
+    ],
+    [
+        "hcp_lowresmeshes",
+        "32",
+        str,
+    ],
+    [
+        "hcp_hiresmesh",
+        "164",
+        int,
+    ],
+    [
+        "hcp_bold_res",
+        "2",
+        str,
+    ],
+    [
+        "hcp_grayordinatesres",
+        "2",
+        int,
+    ],
+    [
+        "hcp_surfatlasdir",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_grayordinatesdir",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_subcortgraylabels",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_refmyelinmaps",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_regname",
+        "MSMSulc",
+        str,
+    ],
+    [
+        "hcp_cifti_tail",
+        "_Atlas",
+        str,
+    ],
+    [
+        "hcp_bold_variant",
+        "",
+        str,
+    ],
+    [
+        "additional_bolds",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_nifti_tail",
+        "",
+        str,
+    ],
+    [
+        "hcp_config",
+        "",
+        is_none,
+    ],
     ["# --- hcp_pre_freesurfer options"],
     ["hcp_brainsize", "150", int],
     ["hcp_t1samplespacing", "NONE", str],
@@ -341,7 +758,9 @@ arglist = [
     ["hcp_dwi_posdata", "", is_none],
     ["hcp_dwi_negdata", "", is_none],
     ["hcp_dwi_dummy_bval_bvec", None, flag],
-    ["# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options"],
+    [
+        "# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options"
+    ],
     ["hcp_icafix_bolds", "", is_none],
     ["hcp_icafix_highpass", "", is_none],
     ["hcp_matlab_mode", "", is_none],
@@ -484,9 +903,17 @@ arglist = [
     ["hcp_thickness_regression", "", is_none],
     ["hcp_pregradient_smoothing", "1", int],
     ["hcp_mad_regname", "MSMAll", str],
-    ["hcp_mad_videen_maps", "corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC", str],
+    [
+        "hcp_mad_videen_maps",
+        "corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC",
+        str,
+    ],
     ["hcp_mad_greyscale_maps", "sulc,curvature", str],
-    ["hcp_mad_distortion_maps", "SphericalDistortion,ArealDistortion,EdgeDistortion", str],
+    [
+        "hcp_mad_distortion_maps",
+        "SphericalDistortion,ArealDistortion,EdgeDistortion",
+        str,
+    ],
     ["hcp_mad_gradient_maps", "MyelinMap_BC,SmoothedMyelinMap_BC,corrThickness", str],
     ["hcp_mad_std_maps", "sulc@curvature,corrThickness,thickness,MyelinMap_BC", str],
     ["hcp_mad_multi_maps", "NONE", str],
@@ -555,22 +982,86 @@ arglist = [
     ["input_files", "", is_none],
     ["melodic_extra_args", "", is_none],
     ["# --- rapidtide options"],
-    ["despecklepasses", "", is_none,],
-    ["filterband", "", is_none,],
-    ["searchrange", "", is_none,],
-    ["nprocs", "", is_none,],
-    ["nofitfilt", "", flag,],
-    ["similaritymetric", "", is_none,],
-    ["ampthresh", "", is_none,],
-    ["numnull", "", is_none,],
-    ["outputlevel", "", is_none,],
-    ["spatialfilt", "", is_none,],
-    ["simcalcrange", "", is_none,],
-    ["brainmask", "", is_none,],
-    ["graymattermask", "", is_none,],
-    ["whitemattermask", "", is_none,],
-    ["refineexclude", "", is_none,],
-    ["nodenoise", "", flag,],
+    [
+        "despecklepasses",
+        "",
+        is_none,
+    ],
+    [
+        "filterband",
+        "",
+        is_none,
+    ],
+    [
+        "searchrange",
+        "",
+        is_none,
+    ],
+    [
+        "nprocs",
+        "",
+        is_none,
+    ],
+    [
+        "nofitfilt",
+        "",
+        flag,
+    ],
+    [
+        "similaritymetric",
+        "",
+        is_none,
+    ],
+    [
+        "ampthresh",
+        "",
+        is_none,
+    ],
+    [
+        "numnull",
+        "",
+        is_none,
+    ],
+    [
+        "outputlevel",
+        "",
+        is_none,
+    ],
+    [
+        "spatialfilt",
+        "",
+        is_none,
+    ],
+    [
+        "simcalcrange",
+        "",
+        is_none,
+    ],
+    [
+        "brainmask",
+        "",
+        is_none,
+    ],
+    [
+        "graymattermask",
+        "",
+        is_none,
+    ],
+    [
+        "whitemattermask",
+        "",
+        is_none,
+    ],
+    [
+        "refineexclude",
+        "",
+        is_none,
+    ],
+    [
+        "nodenoise",
+        "",
+        flag,
+    ],
     ["rapidtide_extra_args", "", is_none],
 ]
 
@@ -850,28 +1341,26 @@ def run(command, args):
     printinfo = options["datainfo"]
     printoptions = options["printoptions"]
 
-    studyfolders = gc.deduceFolders(options)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+    studyfolders = gc.deduce_folders(options, command, timestamp)
     logfolder = studyfolders["logfolder"]
-    runlogfolder = os.path.join(logfolder, "runlogs")
     comlogfolder = os.path.join(logfolder, "comlogs")
     specfolder = os.path.join(studyfolders["sessionsfolder"], "specs")
 
-    options["runlogs"] = runlogfolder
     options["comlogs"] = comlogfolder
     options["logfolder"] = logfolder
     options["specfolder"] = specfolder
 
     # --------------------------------------------------------------------------
-    #                                                       start writing runlog
-    for cfolder in [runlogfolder, comlogfolder]:
-        if not os.path.exists(cfolder):
-            os.makedirs(cfolder)
+    #                                                      start writing the log
+    if not os.path.exists(comlogfolder):
+        os.makedirs(comlogfolder)
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if not options["longitudinal"]:
-        logname = os.path.join(runlogfolder, "Log-%s-%s.log") % (command, logstamp)
+        logname = os.path.join(logfolder, "Log-%s-%s.log") % (command, logstamp)
     else:
-        logname = os.path.join(runlogfolder, "Log-%s-long-%s.log") % (command, logstamp)
+        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (command, logstamp)
 
     log = []
     stati = []
@@ -904,7 +1393,7 @@ def run(command, args):
 
     elif options["run"] == "run":
         sout += (
-            f"\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n"
+            "\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n"
             % (options["sessions"], parsessions)
         )
 

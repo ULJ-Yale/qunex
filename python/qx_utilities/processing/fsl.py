@@ -27,8 +27,9 @@ All rights reserved.
 
 import os
 import traceback
-import processing.core as pc
 from datetime import datetime
+
+import processing.core as pc
 
 
 def fsl_feat(sinfo, options, overwrite=False, thread=0):
@@ -53,7 +54,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             How many sessions to run in parallel.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --feat_file (str, default ''):
@@ -98,7 +99,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
         # get feat file
         feat_file = None
         if "feat_file" not in options or options["feat_file"] is None:
-            r += f"\n---> ERROR: feat_file not provided."
+            r += "\n---> ERROR: feat_file not provided."
             report = (sinfo["id"], "Not ready for FSL feat", 1)
             run = False
 
@@ -210,7 +211,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
             supposed to go.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --input_files (str, default ''):
@@ -259,7 +260,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
         # get input files
         input_files = []
         if "input_files" not in options or options["input_files"] is None:
-            r += f"\n---> ERROR: input_files not provided."
+            r += "\n---> ERROR: input_files not provided."
             report = ("Study", "Not ready for FSL melodic", 1)
             run = False
 

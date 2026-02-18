@@ -27,11 +27,13 @@ All rights reserved.
 import os
 import shutil
 import traceback
-import processing.core as pc
-import hcp.process_hcp as hcp
-from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 from functools import partial
+
+import hcp.process_hcp as hcp
+import processing.core as pc
+
 
 def rapidtide(sinfo, options, overwrite=False, thread=0):
     """
@@ -68,7 +70,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             command run, previous results are lost.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --bolds (str, default 'rest'):
@@ -327,7 +329,10 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
     return (r, report)
 
-def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_folder, boldtarget):
+
+def _execute_rapidtide(
+    options, sinfo, overwrite, run, hcp_folders, rapidtide_folder, boldtarget
+):
     # prepare return variables
     r = f"\n\n\n---> Working on bold {boldtarget}"
     report = {
@@ -362,25 +367,29 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
             r += f"\n---> ERROR: Cannot find aparc+aseg.nii.gz at {in_path}"
 
         # ref
-        ref_path = os.path.join(hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz")
+        ref_path = os.path.join(
+            hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz"
+        )
         if not os.path.exists(ref_path):
             r += f"\n---> ERROR: Cannot find brainmask_fs.2.nii.gz at {ref_path}"
             run = False
 
         # init
-        init_path = os.path.join(os.environ["FSLDIR"], "data", "atlases", "bin", "eye.mat")
+        init_path = os.path.join(
+            os.environ["FSLDIR"], "data", "atlases", "bin", "eye.mat"
+        )
 
         # out
         out_path = os.path.join(rapidtide_out, "aparc+aseg_res-2.nii.gz")
 
         flirt_comm = (
-            'flirt \
+            "flirt \
             -in %(in)s \
             -ref %(ref)s \
             -applyxfm \
             -init %(init)s \
             -interp nearestneighbour \
-            -out %(out)s'
+            -out %(out)s"
             % {
                 "in": in_path,
                 "ref": ref_path,
@@ -431,9 +440,7 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
                     r += "\n---> FSL flirt can be run"
                     report["ready"].append(boldtarget)
                 else:
-                    r += (
-                        f"\n---> FSL flirt processing for bold {boldtarget} would be skipped"
-                    )
+                    r += f"\n---> FSL flirt processing for bold {boldtarget} would be skipped"
                     report["skipped"].append(boldtarget)
 
     # rapidtide --------------------------------------------------------
@@ -446,10 +453,10 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
         run = False
 
     rapidtide_comm = (
-        'rapidtide \
+        "rapidtide \
         %(bold)s \
         %(out)s \
-        --noprogressbar'
+        --noprogressbar"
         % {
             "bold": bold,
             "out": f"{rapidtide_out}/{boldtarget}{options['nifti_tail']}",
@@ -458,7 +465,9 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
 
     # optional parameters
     if options["despecklepasses"] is not None:
-        rapidtide_comm += f"                --despecklepasses {options['despecklepasses']}"
+        rapidtide_comm += (
+            f"                --despecklepasses {options['despecklepasses']}"
+        )
     if options["filterband"] is not None:
         rapidtide_comm += f"                --filterband {options['filterband']}"
     if options["searchrange"] is not None:
@@ -468,7 +477,9 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
     if options["nofitfilt"]:
         rapidtide_comm += "                --nofitfilt"
     if options["similaritymetric"] is not None:
-        rapidtide_comm += f"                --similaritymetric {options['similaritymetric']}"
+        rapidtide_comm += (
+            f"                --similaritymetric {options['similaritymetric']}"
+        )
     if options["ampthresh"] is not None:
         rapidtide_comm += f"                --ampthresh {options['ampthresh']}"
     if options["outputlevel"] is not None:
@@ -491,7 +502,10 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
                 rapidtide_comm += f"                --brainmask {options['brainmask']}"
             elif options["brainmask"] is None:
                 brainmask = os.path.join(
-                    hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz"
+                    hcp_folders["hcp_nonlin"],
+                    "Results",
+                    boldtarget,
+                    "brainmask_fs.2.nii.gz",
                 )
                 if not os.path.exists(brainmask):
                     r += f"\n---> ERROR: Cannot find the default --brainmask: brainmask_fs.2.nii.gz at {brainmask}"
@@ -500,29 +514,51 @@ def _execute_rapidtide(options, sinfo, overwrite, run, hcp_folders, rapidtide_fo
                     rapidtide_comm += f"                --brainmask {brainmask}"
 
             default_mask = os.path.join(rapidtide_out, "aparc+aseg_res-2.nii.gz")
-            if options["graymattermask"] is not None and options["graymattermask"] != "None":
-                rapidtide_comm += f"                --graymattermask {options['graymattermask']}"
+            if (
+                options["graymattermask"] is not None
+                and options["graymattermask"] != "None"
+            ):
+                rapidtide_comm += (
+                    f"                --graymattermask {options['graymattermask']}"
+                )
             elif options["graymattermask"] is None:
                 if not os.path.exists(default_mask):
                     r += "\n---> ERROR: Cannot find the default --graymattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
                     run = False
                 else:
-                    rapidtide_comm += f"                --graymattermask {default_mask}:APARC_GRAY"
+                    rapidtide_comm += (
+                        f"                --graymattermask {default_mask}:APARC_GRAY"
+                    )
 
-            if options["whitemattermask"] is not None and options["whitemattermask"] != "None":
-                rapidtide_comm += f"                --whitemattermask {options['whitemattermask']}"
+            if (
+                options["whitemattermask"] is not None
+                and options["whitemattermask"] != "None"
+            ):
+                rapidtide_comm += (
+                    f"                --whitemattermask {options['whitemattermask']}"
+                )
             elif options["whitemattermask"] is None:
                 if not os.path.exists(default_mask):
                     r += "\n---> ERROR: Cannot find the default --whitemattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
                     run = False
                 else:
-                    rapidtide_comm += f"                --whitemattermask {default_mask}:APARC_WHITE"
+                    rapidtide_comm += (
+                        f"                --whitemattermask {default_mask}:APARC_WHITE"
+                    )
 
-            if options["refineexclude"] is not None and options["refineexclude"] != "None":
-                rapidtide_comm += f"                --refineexclude {options['refineexclude']}"
+            if (
+                options["refineexclude"] is not None
+                and options["refineexclude"] != "None"
+            ):
+                rapidtide_comm += (
+                    f"                --refineexclude {options['refineexclude']}"
+                )
             elif options["refineexclude"] is None:
                 refineexclude = os.path.join(
-                    hcp_folders["hcp_nonlin"], "Results", boldtarget, f"{boldtarget}_dropouts.nii.gz"
+                    hcp_folders["hcp_nonlin"],
+                    "Results",
+                    boldtarget,
+                    f"{boldtarget}_dropouts.nii.gz",
                 )
                 if not os.path.exists(refineexclude):
                     r += f"\n---> ERROR: Cannot find the default --refineexclude: {refineexclude}"

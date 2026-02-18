@@ -127,34 +127,14 @@ bash_call_execute() {
         echo "         Consider re-generating QuNex hierarchy..."; echo ""
     fi
 
-    # -- Added checks for study folder generation
-    if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
-        # -- Add check in case the sessions folder is distinct from the default name
-        # -- Eventually use the template file to replace hard-coded values
-        QuNexSessionsSubFolders=`cat $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
-        QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
-        for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
-            if [[ ! -d ${QuNexSessionsFolder} ]]; then
-                echo "QuNex folder ${QuNexSessionsFolder} not found. Generating now..."; echo ""
-                mkdir -p ${QuNexSessionsFolder} &> /dev/null
-            fi
-        done
-    fi
-
     # -- If logfolder flag set then set it and set master log
     if [[ -z ${LogFolder} ]]; then
-        MasterLogFolder="${StudyFolder}/processing/logs"
+        MasterLogFolder="${StudyFolder}/logs"
     else
         MasterLogFolder="$LogFolder"
     fi
     if [[ ! -d ${MasterLogFolder} ]]; then
         mkdir ${MasterLogFolder} &> /dev/null
-    fi
-
-    # -- Set and generate runlogs folder
-    MasterRunLogFolder="${MasterLogFolder}/runlogs"
-    if [[ ! -d ${MasterRunLogFolder} ]]; then
-        mkdir ${MasterRunLogFolder} &> /dev/null
     fi
 
     # -- Set and generate comlogs folder
@@ -209,7 +189,7 @@ bash_call_execute() {
         fi
 
         # runlog
-        Runlog="${MasterRunLogFolder}/Log-${logtag}.log"
+        Runlog="${MasterLogFolder}/Log-${logtag}.log"
 
         # comlog
         ComlogTmp="${MasterComlogFolder}/tmp_${logtag}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
@@ -284,7 +264,7 @@ bash_call_execute() {
             ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
-            cd ${MasterRunLogFolder}
+            cd ${MasterLogFolder}
             gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
             echo "--------------------------------------------------------------"
             echo ""
@@ -1317,7 +1297,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- If logfolder flag set then set it and set master log
     if [[ -z ${LogFolder} ]]; then
-        LogFolder="${StudyFolder}/processing/logs"
+        LogFolder="${StudyFolder}/logs"
     fi
 
     # -- Set additional RunTurnkey flags

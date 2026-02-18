@@ -15,18 +15,20 @@ Run recipe framework.
 Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 """
 
-import os.path
 import os
+import os.path
 import shutil
 import subprocess
 from datetime import datetime
-import yaml
+
 import general.commands as gcom
 import general.commands_support as gcs
 import general.core as gc
 import general.exceptions as ge
-import general.xnat as gx
 import general.utilities as gu
+import general.xnat as gx
+import yaml
+
 
 def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=None):
     """
@@ -118,7 +120,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             with the `steps` parameter.
 
             The log of the commands ran will be by default stored in
-            `<study>/processing/logs/runlogs` stamped with date and time that
+            `<study>/processing/logs/` stamped with date and time that
             the log was started. If a study folder is not yet created, please
             provide a valid folder to save the logs to. If the log can not be
             created the `run_recipe` command will exit with a failure.
@@ -292,7 +294,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         with open(recipe_file, "r", encoding="UTF-8") as file:
             try:
                 recipe_data = yaml.load(file, Loader=yaml.FullLoader)
-            except Exception as e:
+            except Exception:
                 raise ge.CommandFailed("run_recipe", "Cannot parse the recipe file")
 
         # get the recipe
@@ -334,11 +336,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         elif "studyfolder" in eargs:
             logfolder = os.path.join(eargs["studyfolder"], "processing", "logs")
         elif "sessionsfolder" in parameters:
-            logfolder = gc.deduceFolders(
+            logfolder = gc.deduce_folders(
                 {"sessionsfolder": parameters["sessionsfolder"]}
             )["logfolder"]
         elif "sessionsfolder" in eargs:
-            logfolder = gc.deduceFolders({"sessionsfolder": eargs["sessionsfolder"]})[
+            logfolder = gc.deduce_folders({"sessionsfolder": eargs["sessionsfolder"]})[
                 "logfolder"
             ]
 
@@ -356,17 +358,13 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                     f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
                 )
 
-    runlogfolder = os.path.join(logfolder, "runlogs")
     comlogfolder = os.path.join(logfolder, "comlogs")
 
-    # create folder if it does not exist
-    if not os.path.isdir(runlogfolder):
-        os.makedirs(runlogfolder)
-
-    print(f"\n---> Saving the run_recipe runlog to: {runlogfolder}")
+    print(f"\n---> Saving the run_recipe runlog to: {logfolder}")
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = os.path.join(runlogfolder, f"Log-run_recipe-{logstamp}.log")
+    logfilename = f"Log-run_recipe-{logstamp}.log"
+    logname = os.path.join(logfolder, logfilename)
 
     # run
     summary = "\n----==== RECIPE EXECUTION SUMMARY ====----"
@@ -534,8 +532,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 )
 
             # prefix and delimiter
-            external_parameter_prefix = command_parameters.pop("external_parameter_prefix", "--")
-            external_parameter_delimiter = command_parameters.pop("external_parameter_delimiter", "=")
+            external_parameter_prefix = command_parameters.pop(
+                "external_parameter_prefix", "--"
+            )
+            external_parameter_delimiter = command_parameters.pop(
+                "external_parameter_delimiter", "="
+            )
 
             # add parameters to the command
             for param, value in command_parameters.items():
@@ -558,7 +560,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                                 f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
                             )
 
-                command.append(f"{external_parameter_prefix}{param}{external_parameter_delimiter}{value}")
+                command.append(
+                    f"{external_parameter_prefix}{param}{external_parameter_delimiter}{value}"
+                )
 
             # create comlogfolder folder if needed
             if not os.path.isdir(comlogfolder):
@@ -702,7 +706,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             # warn if scheduler was used in the recipe file
             if "scheduler" in command_parameters:
                 print(
-                    f"\nWARNING: the scheduler parameter defined in the recipe file will be ignored. Scheduling needs to be defined at the command call level."
+                    "\nWARNING: the scheduler parameter defined in the recipe file will be ignored. Scheduling needs to be defined at the command call level."
                 )
 
             print(commandr)
@@ -787,14 +791,14 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     _print_end_summary(summary, log, None)
 
     # hack copy the log from runlogs to comlogs as well
-    comlog = logname.replace("runlogs", "comlogs")
+    comlog = os.path.join(comlogfolder, logfilename)
     if not error:
         comlog = comlog.replace("Log-", "done_")
     else:
         comlog = comlog.replace("Log-", "error_")
 
     # copy logname to comlog
-    shutil.copyfile(logname, comlog)
+    shutil.copyfile(logname, comlogfolder)
 
 
 def _print_end_summary(summary, log, error=None):
