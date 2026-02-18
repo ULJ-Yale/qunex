@@ -3192,22 +3192,9 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
             r += comm.replace("                --", "\n    --")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test file
-        last_session = sessions_list[-1]
-        tfile = os.path.join(
-            study_folder,
-            f"{subject_id}.long.{longitudinal_template}",
-            "T1w",
-            f"{last_session}.long.{longitudinal_template}",
-            "mri",
-            "T1.mgz",
-        )
-
         if options["run"] == "run":
-            if overwrite and os.path.exists(tfile):
-                os.remove(tfile)
             r, endlog, _, failed = pc.runExternalForFile(
-                tfile,
+                None,
                 comm,
                 "Running HCP Longitudinal FS",
                 overwrite=overwrite,
