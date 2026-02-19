@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Version 1.3.3 [QIO]
+# Version 1.5.0 [QIO]
 
 from __future__ import division, print_function
 
@@ -800,6 +800,7 @@ def main(args=None):
     sessionsfolder = None
     studyfolder = None
     sessionids = None
+    logfolder = None
     containeropt = ""
     output = None
     parinfo = None
@@ -857,14 +858,14 @@ def main(args=None):
                 k, batchfilter = arg.split("=", 1)
             elif arg.startswith("sessionids="):
                 k, sessionids = arg.split("=", 1)
-            elif arg.startswith("overwrite="):
-                overwrite = arg.split("=", 1)
-                overwrite = overwrite[1]
-                command += f"--overwrite={overwrite} "
             elif arg.startswith("logfolder="):
                 logfolder = arg.split("=", 1)
                 logfolder = logfolder[1]
                 command += f"--logfolder={logfolder} "
+            elif arg.startswith("overwrite="):
+                overwrite = arg.split("=", 1)
+                overwrite = overwrite[1]
+                command += f"--overwrite={overwrite} "
             elif arg == "overwrite":
                 overwrite = "yes"
                 command += "--overwrite "
@@ -952,18 +953,25 @@ def main(args=None):
     if logfolder and logfolder == "legacy":
         legacy_logfolder = True
 
-    if sessionsfolder is not None:
+    if not logfolder and sessionsfolder is not None:
         logfolder = get_logs_folder(
             sessionsfolder, qx_command, timestamp, legacy_logfolder
         )
-    elif studyfolder is not None:
-        logfolder = get_logs_folder(
-            studyfolder, qx_command, timestamp, legacy_logfolder
-        )
+    elif not logfolder and studyfolder is not None:
+        if legacy_logfolder:
+            logfolder = os.path.join(studyfolder, "processing", "logs")
+        else:
+            logfolder = os.path.join(studyfolder, "logs", f"{timestamp}_{command}")
+
+    # fallback to home
+    fallback_logfolder = False
     if not logfolder:
+        fallback_logfolder = True
         logfolder = os.path.join(homedir, "qunex")
-        if not os.path.exists(logfolder):
-            os.makedirs(logfolder)
+
+    if not os.path.exists(logfolder):
+        print(f"\n---> Log folder does not exist, creating it: {logfolder}\n")
+        os.makedirs(logfolder)
 
     if container is None:
         print(
@@ -1283,7 +1291,8 @@ def main(args=None):
                         qx_command += f'--sessions="{sessionids_array[i]}" '
 
             # logs folder
-            qx_command += f'--logfolder="{logfolder}" '
+            if not fallback_logfolder:
+                qx_command += f'--logfolder="{logfolder}" '
 
             # prepare the schedule file
             if legacy_logfolder:
@@ -1295,6 +1304,8 @@ def main(args=None):
                     logfolder, f"qunex_container_command_{timestamp}.sh"
                 )
 
+            if not os.path.exists(os.path.dirname(script_path)):
+                os.makedirs(os.path.dirname(script_path))
             f = open(script_path, "w", encoding="UTF-8")
 
             print("source /opt/qunex/env/qunex_environment.sh", file=f)

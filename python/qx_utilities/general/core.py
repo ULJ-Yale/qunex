@@ -415,16 +415,21 @@ def deduce_folders(args, command=None, timestamp=None):
                             basefolder = f
                             break
 
-    if logfolder is None:
+    if logfolder is None and timestamp and command:
         if basefolder:
             logfolder = os.path.join(basefolder, "logs", f"{timestamp}_{command}")
         else:
             logfolder = os.path.join(os.path.abspath("."), f"{timestamp}_{command}")
-    if logfolder == "legacy":
+    elif logfolder == "legacy" or (not timestamp and not command):
         if basefolder:
             logfolder = os.path.join(basefolder, "processing", "logs")
         else:
             logfolder = os.path.abspath(".")
+
+    if logfolder is None:
+        homedir = os.path.expanduser("~")
+        logfolder = os.path.join(homedir, "qunex")
+
     return {
         "basefolder": basefolder,
         "sessionsfolder": sessionsfolder,

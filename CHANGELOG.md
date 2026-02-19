@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.0
+
+* Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
+* QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
+
 ## 1.4.4
 
 * QC scene optimizations.

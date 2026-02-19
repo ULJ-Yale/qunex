@@ -120,7 +120,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             with the `steps` parameter.
 
             The log of the commands ran will be by default stored in
-            `<study>/processing/logs/` stamped with date and time that
+            `<study>/logs/` stamped with date and time that
             the log was started. If a study folder is not yet created, please
             provide a valid folder to save the logs to. If the log can not be
             created the `run_recipe` command will exit with a failure.
@@ -289,6 +289,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     parameters = {}
     commands = []
 
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+
     # open the recipe file
     if recipe_file:
         with open(recipe_file, "r", encoding="UTF-8") as file:
@@ -328,21 +330,32 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         recipe_dict["commands"] = steps.split(",")
 
     # log location
-    if "logfolder" in parameters:
+    if "logfolder" in parameters and parameters["logfolder"] != "legacy":
         logfolder = parameters["logfolder"]
     elif logfolder is None:
         if "studyfolder" in parameters:
-            logfolder = os.path.join(parameters["studyfolder"], "processing", "logs")
+            logfolder = os.path.join(
+                parameters["studyfolder"], "logs", f"{timestamp}_run_recipe"
+            )
         elif "studyfolder" in eargs:
-            logfolder = os.path.join(eargs["studyfolder"], "processing", "logs")
+            logfolder = os.path.join(
+                eargs["studyfolder"], "logs", f"{timestamp}_run_recipe"
+            )
         elif "sessionsfolder" in parameters:
-            logfolder = gc.deduce_folders(
-                {"sessionsfolder": parameters["sessionsfolder"]}
-            )["logfolder"]
-        elif "sessionsfolder" in eargs:
-            logfolder = gc.deduce_folders({"sessionsfolder": eargs["sessionsfolder"]})[
+            logfolder = gc.deduce_folders(parameters, "run_recipe", timestamp)[
                 "logfolder"
             ]
+        elif "sessionsfolder" in eargs:
+            logfolder = gc.deduce_folders(eargs, "run_recipe", timestamp)["logfolder"]
+    elif logfolder == "legacy":
+        if "studyfolder" in parameters:
+            logfolder = os.path.join(parameters["studyfolder"], "logs")
+        elif "studyfolder" in eargs:
+            logfolder = os.path.join(eargs["studyfolder"], "logs")
+        elif "sessionsfolder" in parameters:
+            logfolder = gc.deduce_folders(parameters)["logfolder"]
+        elif "sessionsfolder" in eargs:
+            logfolder = gc.deduce_folders(eargs)["logfolder"]
 
     # mustache injections to logfolder?
     if "{{" in logfolder and "}}" in logfolder:
@@ -361,6 +374,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     comlogfolder = os.path.join(logfolder, "comlogs")
 
     print(f"\n---> Saving the run_recipe runlog to: {logfolder}")
+
+    # create comlogfolder if it does not exist
+    if not os.path.exists(comlogfolder):
+        print(f"\n---> Comlog folder does not exist, creating it: {comlogfolder}\n")
+        os.makedirs(comlogfolder)
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logfilename = f"Log-run_recipe-{logstamp}.log"
@@ -510,7 +528,6 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
             # log
             external_name = os.path.basename(external_path)
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             log_path = os.path.join(
                 comlogfolder,
                 f"tmp_{external_name}_{command_name}_{timestamp}.log",
@@ -563,12 +580,6 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 command.append(
                     f"{external_parameter_prefix}{param}{external_parameter_delimiter}{value}"
                 )
-
-            # create comlogfolder folder if needed
-            if not os.path.isdir(comlogfolder):
-                print(f"    ... creating log folder [{comlogfolder}]")
-                print(f"    ... creating log folder [{comlogfolder}]", file=log)
-                os.makedirs(comlogfolder)
 
             # run the command with subprocess Popen
             with open(log_path, "w", encoding="UTF-8") as log_file:
@@ -669,6 +680,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
                 + command_name
             )
 
+            # add logfolder to command_parameters if not already in there
+            if "logfolder" not in command_parameters:
+                command_parameters["logfolder"] = logfolder
+
             for param, value in command_parameters.items():
                 # inject mustache marked values
                 if (
@@ -698,7 +713,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
 
                 if param in flags:
                     command.append(f"--{param}")
-                    commandr += f" \\\n          --{param}" % (param)
+                    commandr += f" \\\n          --{param}"
                 else:
                     command.append(f"--{param}={value}")
                     commandr += f" \\\n          --{param}='{value}'"
@@ -798,7 +813,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
         comlog = comlog.replace("Log-", "error_")
 
     # copy logname to comlog
-    shutil.copyfile(logname, comlogfolder)
+    shutil.copyfile(logname, comlog)
 
 
 def _print_end_summary(summary, log, error=None):
