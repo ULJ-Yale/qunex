@@ -3,9 +3,7 @@ analysis
 
 processing
   logs
-    batchlogs
     comlogs
-    runlogs
   lists
   scripts
   scenes
