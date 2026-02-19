@@ -592,11 +592,10 @@ def import_hcp(
             )
             print(errors)
         else:
-            if (
-                os.path.isfile(inbox)
-                or (os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS"))
+            if os.path.isfile(inbox) or (
+                os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS"))
                 and not os.path.samefile(
-                    inbox, os.path.join(sessionsfolder, "inbox", "HCPLS"))
+                    inbox, os.path.join(sessionsfolder, "inbox", "HCPLS")
                 )
             ):
                 try:

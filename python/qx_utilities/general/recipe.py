@@ -335,18 +335,20 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     elif logfolder is None:
         if "studyfolder" in parameters:
             logfolder = os.path.join(
-                parameters["studyfolder"], "logs", f"{timestamp}_run_recipe"
+                parameters["studyfolder"], "logs", f"{timestamp}_run_recipe_{recipe}"
             )
         elif "studyfolder" in eargs:
             logfolder = os.path.join(
-                eargs["studyfolder"], "logs", f"{timestamp}_run_recipe"
+                eargs["studyfolder"], "logs", f"{timestamp}_run_recipe_{recipe}"
             )
         elif "sessionsfolder" in parameters:
-            logfolder = gc.deduce_folders(parameters, "run_recipe", timestamp)[
+            logfolder = gc.deduce_folders(
+                parameters, f"run_recipe_{recipe}", timestamp
+            )["logfolder"]
+        elif "sessionsfolder" in eargs:
+            logfolder = gc.deduce_folders(eargs, f"run_recipe_{recipe}", timestamp)[
                 "logfolder"
             ]
-        elif "sessionsfolder" in eargs:
-            logfolder = gc.deduce_folders(eargs, "run_recipe", timestamp)["logfolder"]
     elif logfolder == "legacy":
         if "studyfolder" in parameters:
             logfolder = os.path.join(parameters["studyfolder"], "logs")
