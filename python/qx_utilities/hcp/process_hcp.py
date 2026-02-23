@@ -1108,10 +1108,23 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if not options[p]:
                     r += f"\nERROR: {p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner."
                     run = False
-                    sesettings = True
+                    sesettings = False
 
-            if tufolder and sesettings:
-                try:
+            try:
+                # se phase pos and neg
+                # full paths
+                if os.path.exists(options["hcp_sephasepos"]) and os.path.exists(
+                    options["hcp_sephaseneg"]
+                ):
+                    sepos = options["hcp_sephasepos"]
+                    seneg = options["hcp_sephaseneg"]
+                    r += "\n---> Spin-Echo pair of images present. [%s, %s]" % (
+                        os.path.basename(sepos),
+                        os.path.basename(seneg),
+                    )
+
+                # labes
+                elif tufolder and sesettings:
                     sepos = glob.glob(
                         os.path.join(
                             tufolder, "*_" + options["hcp_sephasepos"] + "*.nii.gz"
@@ -1134,84 +1147,81 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         )
                         run = False
 
-                    # get SE info from session info
-                    try:
-                        seInfo = [
-                            v
-                            for (k, v) in sinfo.items()
-                            if k.isdigit()
-                            and "SE-FM" in v["name"]
-                            and "se" in v
-                            and v["se"] == str(senum)
-                        ][0]
-                    except:
-                        seInfo = None
+                # get SE info from session info
+                try:
+                    seInfo = [
+                        v
+                        for (k, v) in sinfo.items()
+                        if k.isdigit()
+                        and "SE-FM" in v["name"]
+                        and "se" in v
+                        and v["se"] == str(senum)
+                    ][0]
+                except:
+                    seInfo = None
 
-                    if options["hcp_seechospacing"] is None:
-                        if (
-                            seInfo
-                            and "EchoSpacing" in seInfo
-                            and checkInlineParameterUse("SE", "EchoSpacing", options)
-                        ):
-                            options["hcp_seechospacing"] = seInfo["EchoSpacing"]
-                            r += (
-                                "\n---> Spin-Echo images specific EchoSpacing: %s s"
-                                % (options["hcp_seechospacing"])
-                            )
-
-                    if options["hcp_seunwarpdir"] is None:
-                        if seInfo and "phenc" in seInfo:
-                            options["hcp_seunwarpdir"] = SEDirMap[seInfo["phenc"]]
-                            r += (
-                                "\n---> Spin-Echo unwarp direction: %s"
-                                % (options["hcp_seunwarpdir"])
-                            )
-                        elif (
-                            seInfo
-                            and "PEDirection" in seInfo
-                            and checkInlineParameterUse("SE", "PEDirection", options)
-                        ):
-                            options["hcp_seunwarpdir"] = seInfo["PEDirection"]
-                            r += (
-                                "\n---> Spin-Echo unwarp direction: %s"
-                                % (options["hcp_seunwarpdir"])
-                            )
-
+                if options["hcp_seechospacing"] is None:
                     if (
-                        options["hcp_topupconfig"] != "NONE"
-                        and options["hcp_topupconfig"]
+                        seInfo
+                        and "EchoSpacing" in seInfo
+                        and checkInlineParameterUse("SE", "EchoSpacing", options)
                     ):
-                        topupconfig = options["hcp_topupconfig"]
-                        if not os.path.exists(options["hcp_topupconfig"]):
-                            topupconfig = os.path.join(
-                                hcp["hcp_Config"], options["hcp_topupconfig"]
+                        options["hcp_seechospacing"] = seInfo["EchoSpacing"]
+                        r += (
+                            "\n---> Spin-Echo images specific EchoSpacing: %s s"
+                            % (options["hcp_seechospacing"])
+                        )
+
+                if options["hcp_seunwarpdir"] is None:
+                    if seInfo and "phenc" in seInfo:
+                        options["hcp_seunwarpdir"] = SEDirMap[seInfo["phenc"]]
+                        r += (
+                            "\n---> Spin-Echo unwarp direction: %s"
+                            % (options["hcp_seunwarpdir"])
+                        )
+                    elif (
+                        seInfo
+                        and "PEDirection" in seInfo
+                        and checkInlineParameterUse("SE", "PEDirection", options)
+                    ):
+                        options["hcp_seunwarpdir"] = seInfo["PEDirection"]
+                        r += (
+                            "\n---> Spin-Echo unwarp direction: %s"
+                            % (options["hcp_seunwarpdir"])
+                        )
+
+                if options["hcp_topupconfig"] != "NONE" and options["hcp_topupconfig"]:
+                    topupconfig = options["hcp_topupconfig"]
+                    if not os.path.exists(options["hcp_topupconfig"]):
+                        topupconfig = os.path.join(
+                            hcp["hcp_Config"], options["hcp_topupconfig"]
+                        )
+                        if not os.path.exists(topupconfig):
+                            r += (
+                                "\n---> ERROR: Could not find TOPUP configuration file: %s."
+                                % (topupconfig)
                             )
-                            if not os.path.exists(topupconfig):
-                                r += (
-                                    "\n---> ERROR: Could not find TOPUP configuration file: %s."
-                                    % (topupconfig)
-                                )
-                                run = False
-                            else:
-                                r += "\n---> TOPUP configuration file present."
+                            run = False
                         else:
                             r += "\n---> TOPUP configuration file present."
+                    else:
+                        r += "\n---> TOPUP configuration file present."
 
-                    for p in [
-                        "hcp_seechospacing",
-                        "hcp_seunwarpdir",
-                    ]:
-                        if p in options and not options[p]:
-                            r += f"\nERROR: {p} parameter not set manually and QuNex was unable to set it automatically."
-                            run = False
+                for p in [
+                    "hcp_seechospacing",
+                    "hcp_seunwarpdir",
+                ]:
+                    if p in options and not options[p]:
+                        r += f"\nERROR: {p} parameter not set manually and QuNex was unable to set it automatically."
+                        run = False
 
-                except:
-                    r += (
-                        "\n---> ERROR: Could not find files for TOPUP processing of session %s."
-                        % (sinfo["id"])
-                    )
-                    run = False
-                    raise
+            except:
+                r += (
+                    "\n---> ERROR: Could not find files for TOPUP processing of session %s."
+                    % (sinfo["id"])
+                )
+                run = False
+                raise
 
         elif options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap":
             fmnum = T1w.get("fm", None)

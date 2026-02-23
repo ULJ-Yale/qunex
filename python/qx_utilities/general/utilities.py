@@ -800,7 +800,8 @@ def create_batch(
 
         --paramfile (str, default <sessionsfolder>/specs/parameters.txt):
             The path to the parameter file header to be used. If not explicitly
-            provided it defaults to <sessionsfolder>/specs/parameters.txt.
+            provided it defaults to <sessionsfolder>/specs/parameters.txt. If
+            that does not exist it will not use it.
 
     Notes:
         The command combines all the sourcefiles in all session folders in
@@ -1128,20 +1129,7 @@ def create_batch(
 
         # --- check for param file
         if overwrite == "yes" or overwrite is True or not preexist:
-            if paramfile is None:
-                paramfile = os.path.join(sessionsfolder, "specs", "parameters.txt")
-                if not os.path.exists(paramfile):
-                    print("---> WARNING: Creating empty parameter file!")
-                    pfile = open(paramfile, "w")
-                    print(parameterTemplateHeader, file=pfile)
-                    for line in gp.arglist:
-                        if len(line) > 1:
-                            print("# --" + line[0], file=pfile)
-                        else:
-                            print(line[0], file=pfile)
-                    pfile.close()
-
-            if os.path.exists(paramfile):
+            if paramfile and os.path.exists(paramfile):
                 print("---> appending parameter file [%s]." % (paramfile))
                 print("# Parameter file: %s\n#" % (paramfile), file=jfile)
                 with open(paramfile) as f:
