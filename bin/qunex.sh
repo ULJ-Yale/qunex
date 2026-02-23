@@ -1313,7 +1313,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     OVERWRITE_PROJECT=`get_parameters "${setflag}overwriteproject" $@`
     OVERWRITE_PROJECT_FORCE=`get_parameters "${setflag}overwriteprojectforce" $@`
     OVERWRITE_PROJECT_XNAT=`get_parameters "${setflag}overwriteprojectxnat" $@`
-    LOCAL_BATCH_FILE=`get_parameters "${setflag}local_batchfile" $@`
     BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`get_parameters "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`get_parameters "${setflag}xnataccsessionid" $@`
@@ -1623,9 +1622,15 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo ""
         echo "Using $CASES for input."
         echo ""
-        CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
         if [[ -z $CASES ]]; then
-            CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+            CASES=`cat ${BATCH_FILE} | grep "session :" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        fi
+        if [[ -z $CASES ]]; then
+            CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        fi
+        if [[ -z $CASES ]]; then
+            CASES=`cat ${BATCH_FILE} | grep "id :" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
         fi
         # convert to space separated insted of new line
         CASES=`echo $CASES | sed 's/\n/ /g'`
