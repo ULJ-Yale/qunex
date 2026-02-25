@@ -1634,26 +1634,34 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 )
             # labels
             elif options["hcp_senum2"]:
-                tufolder2 = os.path.join(
-                    hcp["source"],
-                    "SpinEchoFieldMap%d%s" % (options["hcp_senum2"], options["fctail"]),
-                )
-                sepos2 = glob.glob(
-                    os.path.join(
-                        tufolder2, "*_" + options["hcp_sephasepos2"] + "*.nii.gz"
+                try:
+                    tufolder2 = os.path.join(
+                        hcp["source"],
+                        "SpinEchoFieldMap%s%s"
+                        % (options["hcp_senum2"], options["fctail"]),
                     )
-                )[0]
-                seneg2 = glob.glob(
-                    os.path.join(
-                        tufolder2, "*_" + options["hcp_sephaseneg"] + "*.nii.gz"
-                    )
-                )[0]
+                    sepos2 = glob.glob(
+                        os.path.join(
+                            tufolder2, "*_" + options["hcp_sephasepos2"] + "*.nii.gz"
+                        )
+                    )[0]
+                    seneg2 = glob.glob(
+                        os.path.join(
+                            tufolder2, "*_" + options["hcp_sephaseneg2"] + "*.nii.gz"
+                        )
+                    )[0]
 
-                if all([sepos2, seneg2]):
-                    r += "\n---> Spin-Echo pair of images present. [%s]" % (
-                        os.path.basename(tufolder)
-                    )
-                else:
+                    if all([sepos2, seneg2]):
+                        r += "\n---> Spin-Echo pair of images present. [%s]" % (
+                            os.path.basename(tufolder)
+                        )
+                    else:
+                        r += (
+                            "\n---> ERROR: Could not find the relevant second Spin-Echo files! [%s]"
+                            % (tufolder2)
+                        )
+                        run = False
+                except:
                     r += (
                         "\n---> ERROR: Could not find the relevant second Spin-Echo files! [%s]"
                         % (tufolder2)
