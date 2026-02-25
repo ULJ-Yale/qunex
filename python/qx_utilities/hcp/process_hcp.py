@@ -809,46 +809,46 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             use the files in the SpinEchoFieldMap[N] folder from the HCP
             unprocessed folder.
 
-        --hcp_prefs_species (str, default ''):
+        --hcp_species (str, default ''):
             Species (default: Human).
 
-        --hcp_prefs_runmode (str, default ''):
+        --hcp_runmode (str, default ''):
             Specify from which step to resume the processing instead of
             starting from the beginning. Value must be one of: Default,
             ACPCAlignment, BrainExtraction, T2wToT1wRegAndBiasCorrection,
             AtlasRegistration (default: Default).
 
-        --hcp_prefs_truepatientposition (str, default ''):
+        --hcp_truepatientposition (str, default ''):
             True patient position (default: HFS).
 
-        --hcp_prefs_scannerpatientposition (str, default ''):
+        --hcp_scannerpatientposition (str, default ''):
             Scanner patient position (default: HFS).
 
-        --hcp_prefs_betcenter (str, default ''):
+        --hcp_betcenter (str, default ''):
             Center coordinates for BET (default: 45,55,39).
 
-        --hcp_prefs_betradius (str, default ''):
+        --hcp_betradius (str, default ''):
             Radius for BET (default: 75).
 
-        --hcp_prefs_betfraction (str, default ''):
+        --hcp_betfraction (str, default ''):
             Fraction for BET (default: 0.3).
 
-        --hcp_prefs_bettop2center (str, default ''):
+        --hcp_bettop2center (str, default ''):
             Distance from top to center for BET (default: 86).
 
-        --hcp_prefs_brainextract (str, default ''):
+        --hcp_brainextract (str, default ''):
             Brain extraction method (default: INVIVO).
 
-        --hcp_prefs_use_t2w_phase_zero (str, default ''):
+        --hcp_use_t2w_phase_zero (str, default ''):
             Indicates whether to add T2-weighted image as a phase zero volume,
             for bright-CSF T2w contrast acquisition types (e.g., not FLAIR).
             Accepted values are 'TRUE' and 'FALSE'.
 
-        --hcp_prefs_bias_field_sigma_no_t2w (str, default ''):
+        --hcp_bias_field_sigma_no_t2w (str, default ''):
             Bias Field Smoothing Sigma for Bias Field Correction using T1w
             image only (only for NHP, default: 20).
 
-        --hcp_prefs_betbiasfieldcor (str, default ''):
+        --hcp_betbiasfieldcor (str, default ''):
             Indicates whether to correct bias field for BET (default: FALSE).
             Accepted values are 'TRUE' and 'FALSE'.
 
@@ -884,46 +884,46 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         hcp_pre_freesurfer parameter mapping:
 
-            ============================= =======================
-            QuNex parameter               HCPpipelines parameter
-            ============================= =======================
-            ``hcp_prefs_t1template``      ``t1template``
-            ``hcp_prefs_t1templatebrain`` ``t1templatebrain``
-            ``hcp_prefs_t1template2mm``   ``t1template2mm``
-            ``hcp_prefs_t2template``      ``t2template``
-            ``hcp_prefs_t2templatebrain`` ``t2templatebrain``
-            ``hcp_prefs_t2template2mm``   ``t2template2mm``
-            ``hcp_prefs_templatemask``    ``templatemask``
-            ``hcp_prefs_template2mmmask`` ``template2mmmask``
-            ``hcp_brainsize``             ``brainsize``
-            ``hcp_prefs_fnirtconfig``     ``fnirtconfig``
-            ``hcp_sephaseneg``            ``SEPhaseNeg``
-            ``hcp_sephasepos``            ``SEPhasePos``
-            ``hcp_seechospacing``         ``seechospacing``
-            ``hcp_seunwarpdir``           ``seunwarpdir``
-            ``hcp_t1samplespacing``       ``t1samplespacing``
-            ``hcp_t2samplespacing``       ``t2samplespacing``
-            ``hcp_gdcoeffs``              ``gdcoeffs``
-            ``hcp_avgrdcmethod``          ``avgrdcmethod``
-            ``hcp_topupconfig``           ``topupconfig``
-            ``hcp_bfsigma``               ``bfsigma``
-            ``hcp_prefs_custombrain``     ``custombrain``
-            ``hcp_processing_mode``       ``processing-mode``
-            ``hcp_sephaseneg2``                      ``SEPhaseNeg2``
-            ``hcp_sephasepos2``                      ``SEPhasePos2``
-            ``hcp_prefs_species``                    ``species``
-            ``hcp_prefs_runmode``                    ``runmode``
-            ``hcp_prefs_truepatientposition``        ``truepatientposition``
-            ``hcp_prefs_scannerpatientposition``     ``scannerpatientposition``
-            ``hcp_prefs_betcenter``                  ``betcenter``
-            ``hcp_prefs_betradius``                  ``betradius``
-            ``hcp_prefs_betfraction``                ``betfraction``
-            ``hcp_prefs_bettop2center``              ``bettop2center``
-            ``hcp_prefs_brainextract``               ``brainextract``
-            ``hcp_prefs_use_t2w_phase_zero``         ``use-t2w-phase-zero``
-            ``hcp_prefs_bias_field_sigma_no_t2w``    ``bias-field-sigma-no-T2w``
-            ``hcp_prefs_betbiasfieldcor``            ``betbiasfieldcor``
-            ============================= =======================
+            =============================== ===========================
+            QuNex parameter                 HCPpipelines parameter
+            =============================== ===========================
+            ``hcp_prefs_t1template``        ``t1template``
+            ``hcp_prefs_t1templatebrain``   ``t1templatebrain``
+            ``hcp_prefs_t1template2mm``     ``t1template2mm``
+            ``hcp_prefs_t2template``        ``t2template``
+            ``hcp_prefs_t2templatebrain``   ``t2templatebrain``
+            ``hcp_prefs_t2template2mm``     ``t2template2mm``
+            ``hcp_prefs_templatemask``      ``templatemask``
+            ``hcp_prefs_template2mmmask``   ``template2mmmask``
+            ``hcp_brainsize``               ``brainsize``
+            ``hcp_prefs_fnirtconfig``       ``fnirtconfig``
+            ``hcp_sephaseneg``              ``SEPhaseNeg``
+            ``hcp_sephasepos``              ``SEPhasePos``
+            ``hcp_seechospacing``           ``seechospacing``
+            ``hcp_seunwarpdir``             ``seunwarpdir``
+            ``hcp_t1samplespacing``         ``t1samplespacing``
+            ``hcp_t2samplespacing``         ``t2samplespacing``
+            ``hcp_gdcoeffs``                ``gdcoeffs``
+            ``hcp_avgrdcmethod``            ``avgrdcmethod``
+            ``hcp_topupconfig``             ``topupconfig``
+            ``hcp_bfsigma``                 ``bfsigma``
+            ``hcp_prefs_custombrain``       ``custombrain``
+            ``hcp_processing_mode``         ``processing-mode``
+            ``hcp_sephaseneg2``             ``SEPhaseNeg2``
+            ``hcp_sephasepos2``             ``SEPhasePos2``
+            ``hcp_species``                 ``species``
+            ``hcp_runmode``                 ``runmode``
+            ``hcp_truepatientposition``     ``truepatientposition``
+            ``hcp_scannerpatientposition``  ``scannerpatientposition``
+            ``hcp_betcenter``               ``betcenter``
+            ``hcp_betradius``               ``betradius``
+            ``hcp_betfraction``             ``betfraction``
+            ``hcp_bettop2center``           ``bettop2center``
+            ``hcp_brainextract``            ``brainextract``
+            ``hcp_use_t2w_phase_zero``      ``use-t2w-phase-zero``
+            ``hcp_bias_field_sigma_no_t2w`` ``bias-field-sigma-no-T2w``
+            ``hcp_betbiasfieldcor``         ``betbiasfieldcor``
+            =============================== ===========================
 
         Use:
             Runs the PreFreeSurfer step of the HCP Pipeline. It looks for T1w
@@ -1669,52 +1669,48 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ]
 
         # optional parameters: species, runmode, patient positions, BET settings, brain extraction
-        if options["hcp_prefs_species"]:
-            elements.append(("species", options["hcp_prefs_species"]))
+        if options["hcp_species"]:
+            elements.append(("species", options["hcp_species"]))
 
-        if options["hcp_prefs_runmode"]:
-            elements.append(("runmode", options["hcp_prefs_runmode"]))
+        if options["hcp_runmode"]:
+            elements.append(("runmode", options["hcp_runmode"]))
 
-        if options["hcp_prefs_truepatientposition"]:
+        if options["hcp_truepatientposition"]:
+            elements.append(("truepatientposition", options["hcp_truepatientposition"]))
+
+        if options["hcp_scannerpatientposition"]:
             elements.append(
-                ("truepatientposition", options["hcp_prefs_truepatientposition"])
+                ("scannerpatientposition", options["hcp_scannerpatientposition"])
             )
 
-        if options["hcp_prefs_scannerpatientposition"]:
-            elements.append(
-                ("scannerpatientposition", options["hcp_prefs_scannerpatientposition"])
-            )
+        if options["hcp_betcenter"]:
+            elements.append(("betcenter", options["hcp_betcenter"]))
 
-        if options["hcp_prefs_betcenter"]:
-            elements.append(("betcenter", options["hcp_prefs_betcenter"]))
+        if options["hcp_betradius"]:
+            elements.append(("betradius", options["hcp_betradius"]))
 
-        if options["hcp_prefs_betradius"]:
-            elements.append(("betradius", options["hcp_prefs_betradius"]))
+        if options["hcp_betfraction"]:
+            elements.append(("betfraction", options["hcp_betfraction"]))
 
-        if options["hcp_prefs_betfraction"]:
-            elements.append(("betfraction", options["hcp_prefs_betfraction"]))
+        if options["hcp_bettop2center"]:
+            elements.append(("bettop2center", options["hcp_bettop2center"]))
 
-        if options["hcp_prefs_bettop2center"]:
-            elements.append(("bettop2center", options["hcp_prefs_bettop2center"]))
+        if options["hcp_brainextract"]:
+            elements.append(("brainextract", options["hcp_brainextract"]))
 
-        if options["hcp_prefs_brainextract"]:
-            elements.append(("brainextract", options["hcp_prefs_brainextract"]))
+        if options["hcp_use_t2w_phase_zero"]:
+            elements.append(("use-t2w-phase-zero", options["hcp_use_t2w_phase_zero"]))
 
-        if options["hcp_prefs_use_t2w_phase_zero"]:
-            elements.append(
-                ("use-t2w-phase-zero", options["hcp_prefs_use_t2w_phase_zero"])
-            )
-
-        if options["hcp_prefs_bias_field_sigma_no_t2w"]:
+        if options["hcp_bias_field_sigma_no_t2w"]:
             elements.append(
                 (
                     "bias-field-sigma-no-T2w",
-                    options["hcp_prefs_bias_field_sigma_no_t2w"],
+                    options["hcp_bias_field_sigma_no_t2w"],
                 )
             )
 
-        if options["hcp_prefs_betbiasfieldcor"]:
-            elements.append(("betbiasfieldcor", options["hcp_prefs_betbiasfieldcor"]))
+        if options["hcp_betbiasfieldcor"]:
+            elements.append(("betbiasfieldcor", options["hcp_betbiasfieldcor"]))
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
