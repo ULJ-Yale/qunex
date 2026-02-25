@@ -700,6 +700,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_sephaseneg (str, default ''):
             Label for the negative image of the Spin Echo Field Map pair.
 
+        --hcp_senum (str, default ''):
+            Number of the Spin Echo Field Map pair to use, will be set
+            automatically based on the batch/session file. If set, QuNex will
+            use the files in the SpinEchoFieldMap[N] folder from the HCP
+            unprocessed folder.
+
         --hcp_seunwarpdir (str, default ''):
             Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
 
@@ -792,6 +798,60 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             specification (e.g. `all`) implies all more specific cases (e.g.
             `T1w:all`).
 
+        --hcp_sephasepos2 (str, default ''):
+            Label for the positive image of the second Spin Echo Field Map pair.
+
+        --hcp_sephaseneg2 (str, default ''):
+            Label for the negative image of the second Spin Echo Field Map pair.
+
+        --hcp_senum2 (str, default ''):
+            Number of the second Spin Echo Field Map pair to use. QuNex will
+            use the files in the SpinEchoFieldMap[N] folder from the HCP
+            unprocessed folder.
+
+        --hcp_prefs_species (str, default ''):
+            Species (default: Human).
+
+        --hcp_prefs_runmode (str, default ''):
+            Specify from which step to resume the processing instead of
+            starting from the beginning. Value must be one of: Default,
+            ACPCAlignment, BrainExtraction, T2wToT1wRegAndBiasCorrection,
+            AtlasRegistration (default: Default).
+
+        --hcp_prefs_truepatientposition (str, default ''):
+            True patient position (default: HFS).
+
+        --hcp_prefs_scannerpatientposition (str, default ''):
+            Scanner patient position (default: HFS).
+
+        --hcp_prefs_betcenter (str, default ''):
+            Center coordinates for BET (default: 45,55,39).
+
+        --hcp_prefs_betradius (str, default ''):
+            Radius for BET (default: 75).
+
+        --hcp_prefs_betfraction (str, default ''):
+            Fraction for BET (default: 0.3).
+
+        --hcp_prefs_bettop2center (str, default ''):
+            Distance from top to center for BET (default: 86).
+
+        --hcp_prefs_brainextract (str, default ''):
+            Brain extraction method (default: INVIVO).
+
+        --hcp_prefs_use_t2w_phase_zero (str, default ''):
+            Indicates whether to add T2-weighted image as a phase zero volume,
+            for bright-CSF T2w contrast acquisition types (e.g., not FLAIR).
+            Accepted values are 'TRUE' and 'FALSE'.
+
+        --hcp_prefs_bias_field_sigma_no_t2w (str, default ''):
+            Bias Field Smoothing Sigma for Bias Field Correction using T1w
+            image only (only for NHP, default: 20).
+
+        --hcp_prefs_betbiasfieldcor (str, default ''):
+            Indicates whether to correct bias field for BET (default: FALSE).
+            Accepted values are 'TRUE' and 'FALSE'.
+
     Output files:
         The results of this step will be present in the above mentioned T1w
         and T2w folders as well as MNINonLinear folder generated and
@@ -849,6 +909,20 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ``hcp_bfsigma``               ``bfsigma``
             ``hcp_prefs_custombrain``     ``custombrain``
             ``hcp_processing_mode``       ``processing-mode``
+            ``hcp_sephaseneg2``                      ``SEPhaseNeg2``
+            ``hcp_sephasepos2``                      ``SEPhasePos2``
+            ``hcp_prefs_species``                    ``species``
+            ``hcp_prefs_runmode``                    ``runmode``
+            ``hcp_prefs_truepatientposition``        ``truepatientposition``
+            ``hcp_prefs_scannerpatientposition``     ``scannerpatientposition``
+            ``hcp_prefs_betcenter``                  ``betcenter``
+            ``hcp_prefs_betradius``                  ``betradius``
+            ``hcp_prefs_betfraction``                ``betfraction``
+            ``hcp_prefs_bettop2center``              ``bettop2center``
+            ``hcp_prefs_brainextract``               ``brainextract``
+            ``hcp_prefs_use_t2w_phase_zero``         ``use-t2w-phase-zero``
+            ``hcp_prefs_bias_field_sigma_no_t2w``    ``bias-field-sigma-no-T2w``
+            ``hcp_prefs_betbiasfieldcor``            ``betbiasfieldcor``
             ============================= =======================
 
         Use:
@@ -1021,7 +1095,6 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         fmphase = ""
         fmcombined = ""
         echodiff = "NONE"
-
         if options["hcp_avgrdcmethod"].lower() == "topup":
             try:
                 # -- spin echo settings
@@ -1029,6 +1102,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     v for (k, v) in sinfo.items() if k.isdigit() and v["name"] == "T1w"
                 ][0]
                 senum = T1w.get("se", None)
+                # overwrite senum if set
+                if options["hcp_senum"]:
+                    senum = options["hcp_senum"]
+                    r += (
+                        "\n---> Overwriting automatically extracted Spin-Echo pair number with a user specified value: %s"
+                        % (options["hcp_senum"])
+                    )
                 if senum:
                     try:
                         senum = int(senum)
@@ -1113,39 +1193,39 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             try:
                 # se phase pos and neg
                 # full paths
-                if os.path.exists(options["hcp_sephasepos"]) and os.path.exists(
-                    options["hcp_sephaseneg"]
-                ):
-                    sepos = options["hcp_sephasepos"]
-                    seneg = options["hcp_sephaseneg"]
-                    r += "\n---> Spin-Echo pair of images present. [%s, %s]" % (
-                        os.path.basename(sepos),
-                        os.path.basename(seneg),
-                    )
+                if sesettings:
+                    if os.path.exists(options["hcp_sephasepos"]) and os.path.exists(
+                        options["hcp_sephaseneg"]
+                    ):
+                        sepos = options["hcp_sephasepos"]
+                        seneg = options["hcp_sephaseneg"]
+                        r += "\n---> Spin-Echo pair of images present. [%s, %s]" % (
+                            os.path.basename(sepos),
+                            os.path.basename(seneg),
+                        )
+                    # labels
+                    elif tufolder:
+                        sepos = glob.glob(
+                            os.path.join(
+                                tufolder, "*_" + options["hcp_sephasepos"] + "*.nii.gz"
+                            )
+                        )[0]
+                        seneg = glob.glob(
+                            os.path.join(
+                                tufolder, "*_" + options["hcp_sephaseneg"] + "*.nii.gz"
+                            )
+                        )[0]
 
-                # labes
-                elif tufolder and sesettings:
-                    sepos = glob.glob(
-                        os.path.join(
-                            tufolder, "*_" + options["hcp_sephasepos"] + "*.nii.gz"
-                        )
-                    )[0]
-                    seneg = glob.glob(
-                        os.path.join(
-                            tufolder, "*_" + options["hcp_sephaseneg"] + "*.nii.gz"
-                        )
-                    )[0]
-
-                    if all([sepos, seneg]):
-                        r += "\n---> Spin-Echo pair of images present. [%s]" % (
-                            os.path.basename(tufolder)
-                        )
-                    else:
-                        r += (
-                            "\n---> ERROR: Could not find the relevant Spin-Echo files! [%s]"
-                            % (tufolder)
-                        )
-                        run = False
+                        if all([sepos, seneg]):
+                            r += "\n---> Spin-Echo pair of images present. [%s]" % (
+                                os.path.basename(tufolder)
+                            )
+                        else:
+                            r += (
+                                "\n---> ERROR: Could not find the relevant Spin-Echo files! [%s]"
+                                % (tufolder)
+                            )
+                            run = False
 
                 # get SE info from session info
                 try:
@@ -1539,6 +1619,102 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ("custombrain", options["hcp_prefs_custombrain"]),
             ("processing-mode", options["hcp_processing_mode"]),
         ]
+
+        # optional parameters
+        # hcp_sephasepos2, hcp_sephaseneg2, hcp_senum2 for a second SE pair for TOPUP
+        if options["hcp_sephasepos2"] and options["hcp_sephaseneg2"]:
+            if os.path.exists(options["hcp_sephasepos2"]) and os.path.exists(
+                options["hcp_sephaseneg2"]
+            ):
+                sepos2 = options["hcp_sephasepos2"]
+                seneg2 = options["hcp_sephaseneg2"]
+                r += "\n---> Second Spin-Echo pair of images present. [%s, %s]" % (
+                    os.path.basename(sepos2),
+                    os.path.basename(seneg2),
+                )
+            # labels
+            elif options["hcp_senum2"]:
+                tufolder2 = os.path.join(
+                    hcp["source"],
+                    "SpinEchoFieldMap%d%s" % (options["hcp_senum2"], options["fctail"]),
+                )
+                sepos2 = glob.glob(
+                    os.path.join(
+                        tufolder2, "*_" + options["hcp_sephasepos2"] + "*.nii.gz"
+                    )
+                )[0]
+                seneg2 = glob.glob(
+                    os.path.join(
+                        tufolder2, "*_" + options["hcp_sephaseneg"] + "*.nii.gz"
+                    )
+                )[0]
+
+                if all([sepos2, seneg2]):
+                    r += "\n---> Spin-Echo pair of images present. [%s]" % (
+                        os.path.basename(tufolder)
+                    )
+                else:
+                    r += (
+                        "\n---> ERROR: Could not find the relevant second Spin-Echo files! [%s]"
+                        % (tufolder2)
+                    )
+                    run = False
+            else:
+                r += "\n---> ERROR: Could not find the relevant second Spin-Echo files!"
+                run = False
+
+            elements += [
+                ("SEPhasePos2", sepos2),
+                ("SEPhaseNeg2", seneg2),
+            ]
+
+        # optional parameters: species, runmode, patient positions, BET settings, brain extraction
+        if options["hcp_prefs_species"]:
+            elements.append(("species", options["hcp_prefs_species"]))
+
+        if options["hcp_prefs_runmode"]:
+            elements.append(("runmode", options["hcp_prefs_runmode"]))
+
+        if options["hcp_prefs_truepatientposition"]:
+            elements.append(
+                ("truepatientposition", options["hcp_prefs_truepatientposition"])
+            )
+
+        if options["hcp_prefs_scannerpatientposition"]:
+            elements.append(
+                ("scannerpatientposition", options["hcp_prefs_scannerpatientposition"])
+            )
+
+        if options["hcp_prefs_betcenter"]:
+            elements.append(("betcenter", options["hcp_prefs_betcenter"]))
+
+        if options["hcp_prefs_betradius"]:
+            elements.append(("betradius", options["hcp_prefs_betradius"]))
+
+        if options["hcp_prefs_betfraction"]:
+            elements.append(("betfraction", options["hcp_prefs_betfraction"]))
+
+        if options["hcp_prefs_bettop2center"]:
+            elements.append(("bettop2center", options["hcp_prefs_bettop2center"]))
+
+        if options["hcp_prefs_brainextract"]:
+            elements.append(("brainextract", options["hcp_prefs_brainextract"]))
+
+        if options["hcp_prefs_use_t2w_phase_zero"]:
+            elements.append(
+                ("use-t2w-phase-zero", options["hcp_prefs_use_t2w_phase_zero"])
+            )
+
+        if options["hcp_prefs_bias_field_sigma_no_t2w"]:
+            elements.append(
+                (
+                    "bias-field-sigma-no-T2w",
+                    options["hcp_prefs_bias_field_sigma_no_t2w"],
+                )
+            )
+
+        if options["hcp_prefs_betbiasfieldcor"]:
+            elements.append(("betbiasfieldcor", options["hcp_prefs_betbiasfieldcor"]))
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
