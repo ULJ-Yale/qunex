@@ -7219,9 +7219,9 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             models shpipped with FSL or a custom model as `somefile.RData`,
             `somefile.pyfix_model`, or a pyfix built-in model without extension.
             You can provide a full path to a file or just a filename if the file
-            is in the ${FSL_FIXDIR}/training_files folder.
-            [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and
-            [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.
+            is in the FSL training_files folder. [HCP_hp<high-pass>.RData] for
+            single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData]
+            for multi-run HCP ICAFix.
 
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.

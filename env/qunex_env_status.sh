@@ -118,7 +118,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "                   FSLDIR : $FSLDIR";               if [[ -z $FSLDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLDIR"; fi
     echo "               FSLCONFDIR : $FSLCONFDIR";           if [[ -z $FSLCONFDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLCONFDIR"; fi
     echo "                FSLBINDIR : $FSLBINDIR";            if [[ -z $FSLBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLBINDIR"; fi
-    echo "               FSL_FIXDIR : $FSL_FIXDIR";           if [[ -z $FSL_FIXDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSL_FIXDIR"; fi
     echo "          FREESURFER_HOME : $FREESURFER_HOME";      if [[ -z $FREESURFER_HOME ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FREESURFER_HOME"; fi
     echo "     FREESURFER_SCHEDULER : $FREESURFER_SCHEDULER"; if [[ -z $FREESURFER_SCHEDULER ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FREESURFER_SCHEDULER"; fi
     echo "             WORKBENCHDIR : $WORKBENCHDIR";         if [[ -z $WORKBENCHDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport WORKBENCHDIR"; fi
@@ -243,19 +242,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
         fi
     else
         echo "    dcm2niix Version : $(dcm2niix -v | head -1)"
-    fi
-    echo ""
-
-    ## -- Check for fix
-    echo "         FIX Binary  : $(which fix 2>&1 | grep -v 'no fix')"
-    if [[ -z $(which fix 2>&1 | grep -v 'no fix') ]]; then
-        BinaryError="yes"; BinaryErrorReport="$BinaryErrorReport fix"
-        echo "         FIX Version : Binary not found!"
-        if [[ -L "$FSL_FIXDIR"  && ! -e "$FSL_FIXDIR" ]]; then
-            echo "                     : $FSL_FIXDIR is a link to a nonexisting folder!"
-        fi
-    else
-        echo "         FIX Version : $(fix -v | grep FMRIB)"
     fi
     echo ""
 

@@ -38,29 +38,29 @@
 # ------------------------------------------------------------------------------
 
 usage() {
- echo ""
- echo "This script implements the global environment setup for the QuNex Suite."
- echo ""
- echo "Configure the environment script by adding the following lines to the "
- echo ".bash_profile::"
- echo ""
- echo " TOOLS=<path_to_folder_with_qunex_software> "
- echo " export TOOLS "
- echo " source <path_to_folder_with_qunex_software>/env/qunex_environment.sh "
- echo ""
- echo "Permissions of this file need to be set to 770."
- echo ""
- echo "REQUIRED DEPENDENCIES"
- echo "====================="
- echo ""
- echo "The QuNex Suite assumes a set default folder names for dependencies if "
- echo "undefined by user environment. These are defined relative to the "
- echo "${TOOLS} folder which should be set as a global system variable."
- echo ""
- echo "For details about required dependencies consult the QuNex documentation."
- echo "**For full environment report run 'qunex environment'.**"
- echo ""
- exit 0
+    echo ""
+    echo "This script implements the global environment setup for the QuNex Suite."
+    echo ""
+    echo "Configure the environment script by adding the following lines to the "
+    echo ".bash_profile::"
+    echo ""
+    echo " TOOLS=<path_to_folder_with_qunex_software> "
+    echo " export TOOLS "
+    echo " source <path_to_folder_with_qunex_software>/env/qunex_environment.sh "
+    echo ""
+    echo "Permissions of this file need to be set to 770."
+    echo ""
+    echo "REQUIRED DEPENDENCIES"
+    echo "====================="
+    echo ""
+    echo "The QuNex Suite assumes a set default folder names for dependencies if "
+    echo "undefined by user environment. These are defined relative to the "
+    echo "${TOOLS} folder which should be set as a global system variable."
+    echo ""
+    echo "For details about required dependencies consult the QuNex documentation."
+    echo "**For full environment report run 'qunex environment'.**"
+    echo ""
+    return 0 2>/dev/null || exit 0
 }
 
 if [ "$1" == "--help" ] || [ "$1" == "-help" ] || [ "$1" == "help" ] || [ "$1" == "?help" ] || [ "$1" == "--usage" ] || [ "$1" == "-usage" ] || [ "$1" == "usage" ] || [ "$1" == "?usage" ]; then
@@ -81,7 +81,7 @@ if [[ -e /opt/.container ]]; then
         export QUNEX_SOURCED="TRUE"
     else
         # -- Already sourced outside, so exit
-        exit 0
+        return 0 2>/dev/null || exit 0
     fi
 
     # -- First unset all conflicting variables in the environment
