@@ -14577,6 +14577,320 @@ def hcp_make_average_dataset(sessions, sessionids, options, overwrite=True, thre
     return (r, (sessionids, report, failed))
 
 
+def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_fmri_stats [... processing options]``
+
+    Runs the fMRI Statistics step of HCP Pipeline (fMRIStats.sh).
+    Computes fMRI statistics including mTSNR, fCNR, and percent BOLD.
+
+    Warning:
+        The code expects the input images to be named and present in the QuNex
+        folder structure. The function will look into folder::
+
+            <session id>/hcp/<session id>
+
+        for data.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where logs are to be stored,
+            if other than default.
+
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs.
+
+        --hcp_concat_names (str, default 'fMRI_CONCAT_ALL'):
+            A comma separated list of fMRI concat names (e.g. tfMRI_ALLTASKS).
+            If single-run FIX is used, this list must be exactly 1 element
+            long.
+
+        --hcp_icafix_highpass (str, default ''):
+            The high pass filter value used in ICA+FIX.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            Surface registration name.
+
+        --hcp_fmristats_process_volume (str, default ''):
+            Whether to process volume data, TRUE or FALSE.
+
+        --hcp_fmristats_cleanup_effects (str, default ''):
+            Whether to compute cleanup effects metrics, TRUE or FALSE.
+
+        --hcp_fmristats_procstring (str, default ''):
+            Processing string suffix for cleaned data (only needed if
+            cleanup_effects is TRUE).
+
+        --hcp_fmristats_icamode (str, default ''):
+            ICA mode: 'sICA' for spatial ICA only, 'sICA+tICA' for combined
+            spatial+temporal ICA.
+
+        --hcp_fmristats_fmri_names (str, default ''):
+            A comma separated list of fMRI single run names (only required if
+            data was processed with single-run FIX, must be in order and
+            complete).
+
+        --hcp_fmristats_tica_component_tcs (str, default ''):
+            Path to tICA timecourse CIFTI (required if tica_icamode is
+            sICA+tICA).
+
+        --hcp_fmristats_tica_component_noise (str, default ''):
+            Path to tICA component noise indices text file (required if
+            tica_icamode is sICA+tICA).
+
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'compiled' will be used, outside
+            'interpreted' is the default.
+
+    Output files:
+        The results of this step will be generated and populated in the
+        MNINonLinear folder inside the same session's root hcp folder.
+
+    Notes:
+        hcp_fmri_stats parameter mapping:
+
+            ============================================ ============================
+            QuNex parameter                              HCPpipelines parameter
+            ============================================ ============================
+            ``hcp_concat_names``                         ``concat-names``
+            ``hcp_icafix_highpass``                      ``high-pass``
+            ``hcp_regname``                              ``reg-name``
+            ``hcp_fmristats_process_volume``             ``process-volume``
+            ``hcp_fmristats_cleanup_effects``            ``cleanup-effects``
+            ``hcp_fmristats_procstring``                 ``proc-string``
+            ``hcp_fmristats_icamode``                    ``ica-mode``
+            ``hcp_fmristats_fmri_names``                 ``fmri-names``
+            ``hcp_fmristats_tica_component_tcs``         ``tica-component-tcs``
+            ``hcp_fmristats_tica_component_noise``       ``tica-component-noise``
+            ``hcp_matlab_mode``                          ``matlab-run-mode``
+            ============================================ ============================
+
+    Examples:
+        ::
+
+            qunex hcp_fmri_stats \\
+                --batchfile=processing/batch.txt \\
+                --sessionsfolder=sessions \\
+                --hcp_concat_names="fMRI_CONCAT_ALL" \\
+                --hcp_icafix_highpass="2000" \\
+                --hcp_matlab_mode="interpreted"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP fMRIStats pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = "HCP fMRI Stats"
+    failed = 0
+
+    try:
+        # --- Base settings
+        pc.doOptionsCheck(options, sinfo, "hcp_fmri_stats")
+        doHCPOptionsCheck(options, "hcp_fmri_stats")
+        hcp = getHCPPaths(sinfo, options)
+
+        # subject
+        subject = sinfo["id"] + options["hcp_suffix"]
+
+        # --- Mandatory parameters
+
+        # hcp_concat_names
+        concat_names = options["hcp_concat_names"].replace(",", "@")
+
+        # hcp_icafix_highpass
+        highpass = ""
+        if options["hcp_icafix_highpass"] is None:
+            r += "\n---> ERROR: hcp_icafix_highpass is not provided!"
+            run = False
+        else:
+            highpass = options["hcp_icafix_highpass"]
+
+        # --- matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = None
+        if options["hcp_matlab_mode"] is None:
+            if "FSL_FIX_MATLAB_MODE" not in os.environ:
+                r += "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                run = False
+            else:
+                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
+        else:
+            if options["hcp_matlab_mode"] == "compiled":
+                matlabrunmode = "0"
+            elif options["hcp_matlab_mode"] == "interpreted":
+                matlabrunmode = "1"
+            elif options["hcp_matlab_mode"] == "octave":
+                matlabrunmode = "2"
+            else:
+                r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                run = False
+
+        # --- Build the command
+        if run:
+            comm = (
+                '%(script)s \
+                --study-folder="%(studyfolder)s" \
+                --subject="%(subject)s" \
+                --concat-names="%(concat_names)s" \
+                --high-pass="%(highpass)s" \
+                --matlab-run-mode="%(matlabrunmode)s"'
+                % {
+                    "script": os.path.join(
+                        os.environ["HCPPIPEDIR"], "fMRIStats", "fMRIStats.sh"
+                    ),
+                    "studyfolder": sinfo["hcp"],
+                    "subject": subject,
+                    "concat_names": concat_names,
+                    "highpass": highpass,
+                    "matlabrunmode": matlabrunmode,
+                }
+            )
+
+            # --- Optional parameters
+
+            # hcp_regname
+            if options["hcp_regname"] is not None and options["hcp_regname"] not in [
+                "MSMSulc",
+                "NONE",
+                "none",
+                "None",
+            ]:
+                comm += '                --reg-name="%s"' % options["hcp_regname"]
+
+            # hcp_fmristats_process_volume
+            if options["hcp_fmristats_process_volume"] is not None:
+                comm += (
+                    '                --process-volume="%s"'
+                    % options["hcp_fmristats_process_volume"]
+                )
+
+            # hcp_fmristats_cleanup_effects
+            if options["hcp_fmristats_cleanup_effects"] is not None:
+                comm += (
+                    '                --cleanup-effects="%s"'
+                    % options["hcp_fmristats_cleanup_effects"]
+                )
+
+            # hcp_fmristats_procstring
+            if options["hcp_fmristats_procstring"] is not None:
+                comm += (
+                    '                --proc-string="%s"'
+                    % options["hcp_fmristats_procstring"]
+                )
+
+            # hcp_fmristats_icamode
+            if options["hcp_fmristats_icamode"] is not None:
+                comm += (
+                    '                --ica-mode="%s"' % options["hcp_fmristats_icamode"]
+                )
+
+            # hcp_fmristats_fmri_names
+            if options["hcp_fmristats_fmri_names"] is not None:
+                fmri_names = options["hcp_fmristats_fmri_names"].replace(",", "@")
+                comm += '                --fmri-names="%s"' % fmri_names
+
+            # hcp_fmristats_tica_component_tcs
+            if options["hcp_fmristats_tica_component_tcs"] is not None:
+                comm += (
+                    '                --tica-component-tcs="%s"'
+                    % options["hcp_fmristats_tica_component_tcs"]
+                )
+
+            # hcp_fmristats_tica_component_noise
+            if options["hcp_fmristats_tica_component_noise"] is not None:
+                comm += (
+                    '                --tica-component-noise="%s"'
+                    % options["hcp_fmristats_tica_component_noise"]
+                )
+
+            # -- Report command
+            if run:
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                r, endlog, report, failed = pc.runExternalForFile(
+                    None,
+                    comm,
+                    "Running HCP fMRI Stats",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=options["logtag"],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    None, None, "HCP fMRI Stats", r, overwrite=overwrite
+                )
+                if passed is None:
+                    r += "\n---> HCP fMRI Stats can be run"
+                    report = "HCP fMRI Stats can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session cannot be processed."
+            report = "HCP fMRI Stats cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        failed = 1
+
+    r += (
+        "\n\nHCP fMRI Stats %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
+
+
 def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_apply_auto_reclean [... processing options]``
@@ -15031,248 +15345,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         report["failed"].append(groupname)
 
     return {"r": r, "report": report}
-
-
-def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
-    """
-    hcp_dtifit - documentation not yet available.
-    """
-
-    r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    )
-    r += "\n%s HCP DTI Fit pipeline ..." % (pc.action("Running", options["run"]))
-
-    run = True
-    report = "Error"
-
-    try:
-        pc.doOptionsCheck(options, sinfo, "hcp_dtifit")
-        doHCPOptionsCheck(options, "hcp_dtifit")
-        hcp = getHCPPaths(sinfo, options)
-
-        if "hcp" not in sinfo:
-            r += (
-                "---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"])
-            )
-            run = False
-
-        for tfile in ["bvals", "bvecs", "data.nii.gz", "nodif_brain_mask.nii.gz"]:
-            if not os.path.exists(os.path.join(hcp["T1w_folder"], "Diffusion", tfile)):
-                r += "---> ERROR: Could not find %s file!" % (tfile)
-                run = False
-            else:
-                r += "---> %s found!" % (tfile)
-
-        comm = (
-            'dtifit \
-            --data="%(data)s" \
-            --out="%(out)s" \
-            --mask="%(mask)s" \
-            --bvecs="%(bvecs)s" \
-            --bvals="%(bvals)s"'
-            % {
-                "data": os.path.join(hcp["T1w_folder"], "Diffusion", "data"),
-                "out": os.path.join(hcp["T1w_folder"], "Diffusion", "dti"),
-                "mask": os.path.join(
-                    hcp["T1w_folder"], "Diffusion", "nodif_brain_mask"
-                ),
-                "bvecs": os.path.join(hcp["T1w_folder"], "Diffusion", "bvecs"),
-                "bvals": os.path.join(hcp["T1w_folder"], "Diffusion", "bvals"),
-            }
-        )
-
-        # -- Report command
-        if run:
-            r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via QuNex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
-            r += "\n------------------------------------------------------------\n"
-
-        # -- Test files
-        tfile = os.path.join(hcp["T1w_folder"], "Diffusion", "dti_FA.nii.gz")
-
-        # -- Run
-        if run:
-            if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, _, report, failed = pc.runExternalForFile(
-                    tfile,
-                    comm,
-                    "Running HCP DTI Fit",
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
-                    shell=True,
-                    r=r,
-                )
-
-            # -- just checking
-            else:
-                passed, report, r, failed = pc.checkRun(
-                    tfile, None, "HCP DTI Fit", r, overwrite=overwrite
-                )
-                if passed is None:
-                    r += "\n---> HCP DTI Fit can be run"
-                    report = "HCP DTI Fit FS can be run"
-                    failed = 0
-
-        else:
-            r += "---> Session cannot be processed."
-            report = "HCP DTI Fit cannot be run"
-            failed = 1
-
-    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = str(errormessage)
-        failed = 1
-    except:
-        r += (
-            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc())
-        )
-        failed = 1
-
-    r += (
-        "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------"
-        % (
-            pc.action("completed", options["run"]),
-            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-        )
-    )
-
-    # print r
-    return (r, (sinfo["id"], report, failed))
-
-
-def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
-    """
-    hcp_bedpostx - documentation not yet available.
-    """
-
-    r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    )
-    r += "\n%s HCP Bedpostx GPU pipeline ..." % (pc.action("Running", options["run"]))
-
-    run = True
-    report = "Error"
-
-    try:
-        pc.doOptionsCheck(options, sinfo, "hcp_bedpostx")
-        doHCPOptionsCheck(options, "hcp_bedpostx")
-        hcp = getHCPPaths(sinfo, options)
-
-        if "hcp" not in sinfo:
-            r += (
-                "---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"])
-            )
-            run = False
-
-        for tfile in ["bvals", "bvecs", "data.nii.gz", "nodif_brain_mask.nii.gz"]:
-            if not os.path.exists(os.path.join(hcp["T1w_folder"], "Diffusion", tfile)):
-                r += "---> ERROR: Could not find %s file!" % (tfile)
-                run = False
-
-        for tfile in ["FA", "L1", "L2", "L3", "MD", "MO", "S0", "V1", "V2", "V3"]:
-            if not os.path.exists(
-                os.path.join(hcp["T1w_folder"], "Diffusion", "dti_" + tfile + ".nii.gz")
-            ):
-                r += "---> ERROR: Could not find %s file!" % (tfile)
-                run = False
-        if not run:
-            r += "---> all necessary files found!"
-
-        comm = (
-            'fslbedpostx_gpu \
-            %(data)s \
-            --nf=%(nf)s \
-            --rician \
-            --model="%(model)s"'
-            % {
-                "data": os.path.join(hcp["T1w_folder"], "Diffusion", "."),
-                "nf": "3",
-                "model": "2",
-            }
-        )
-
-        # -- Report command
-        if run:
-            r += "\n\n------------------------------------------------------------\n"
-            r += "Running HCP Pipelines command via QuNex:\n\n"
-            r += comm.replace("--", "\n    --").replace("             ", "")
-            r += "\n------------------------------------------------------------\n"
-
-        # -- test files
-        tfile = os.path.join(
-            hcp["T1w_folder"], "Diffusion.bedpostX", "mean_fsumsamples.nii.gz"
-        )
-
-        # -- run
-        if run:
-            if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                r, _, report, failed = pc.runExternalForFile(
-                    tfile,
-                    comm,
-                    "Running HCP BedpostX",
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
-                    shell=True,
-                    r=r,
-                )
-
-            # -- just checking
-            else:
-                passed, report, r, failed = pc.checkRun(
-                    tfile, None, "HCP BedpostX", r, overwrite=overwrite
-                )
-                if passed is None:
-                    r += "\n---> HCP BedpostX can be run"
-                    report = "HCP BedpostX can be run"
-                    failed = 0
-
-        else:
-            r += "---> Session cannot be processed."
-            report = "HCP BedpostX cannot be run"
-            failed = 1
-
-    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = str(errormessage)
-        failed = 1
-    except:
-        r += (
-            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc())
-        )
-        failed = 1
-
-    r += (
-        "\n\nHCP Diffusion Preprocessing %s on %s\n------------------------------------------------------------"
-        % (
-            pc.action("completed", options["run"]),
-            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-        )
-    )
-
-    print(r)
-    return (r, (sinfo["id"], report, failed))
 
 
 def map_hcp_data(sinfo, options, overwrite=False, thread=0):

@@ -336,6 +336,11 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.hcp.process_hcp.hcp_fmri_stats",
+        "Runs HCP fMRI statistics pipeline.",
+        "python",
+    ),
+    (
         "qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean",
         "Runs HCP apply auto reclean pipeline.",
         "python",
