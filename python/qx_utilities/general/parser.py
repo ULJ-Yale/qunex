@@ -15,8 +15,8 @@ A collection of parses for qunex file formats
 Created by Lining Pan on 2022-05-19.
 """
 import re
-import general.exceptions as ge
 
+import general.exceptions as ge
 
 # compile once but might slow down start up time
 # RE_IMAGE_NUM = re.compile(r"^\d+$")
@@ -245,7 +245,7 @@ def _parse_mapping_file_lines(lines):
     }
     """
 
-    result = {"group_rules": {"image_number": {}, "name": {}, "glob": {}}}
+    result = {"group_rules": {"image_number": {}, "name": {}, "glob": {}, "or": []}}
     for l in lines:
         if l == "":
             continue
@@ -256,9 +256,29 @@ def _parse_mapping_file_lines(lines):
         tag_tokens = [e.strip() for e in tokens[1].split(":")]
         rule = _parse_image_line_tags(tag_tokens, "mapping:hcp")
 
-        if RE_IMAGE_NUM.match(tokens[0]):
+        if "||" in tokens[0]:
+            # "or" rule: e.g. T1w_HiRes || T1w_LowRes => T1w
+            variants = [alt.strip() for alt in tokens[0].split("||")]
+            if len(variants) < 2:
+                raise ge.SpecFileSyntaxError(
+                    error="'or' rule requires at least two variants separated by ||"
+                )
+            for alt in variants:
+                if not alt:
+                    raise ge.SpecFileSyntaxError(error="empty variant in 'or' rule")
+            result["group_rules"]["or"].append(
+                {
+                    "variants": variants,
+                    "rule": rule,
+                }
+            )
+        elif RE_IMAGE_NUM.match(tokens[0]):
             rule_key = _parse_image_number(tokens[0])
             rule_set = result["group_rules"]["image_number"]
+            if rule_key in rule_set:
+                raise ge.SpecFileSyntaxError(error="duplicated rules")
+            else:
+                rule_set[rule_key] = rule
         else:
             rule_key = tokens[0]
             if "*" in rule_key:
@@ -266,10 +286,10 @@ def _parse_mapping_file_lines(lines):
             else:
                 rule_set = result["group_rules"]["name"]
 
-        if rule_key in rule_set:
-            raise ge.SpecFileSyntaxError(error="duplicated rules")
-        else:
-            rule_set[rule_key] = rule
+            if rule_key in rule_set:
+                raise ge.SpecFileSyntaxError(error="duplicated rules")
+            else:
+                rule_set[rule_key] = rule
 
     _check_fieldmap_multiplicity(result)
 
@@ -281,11 +301,13 @@ def _check_fieldmap_multiplicity(mapping_rules):
     Check if there are multiple FM-Magnitude images and warn the user to correct
     the mapping file.
     """
-    name_dict = mapping_rules['group_rules']['name']
+    name_dict = mapping_rules["group_rules"]["name"]
 
     # Count occurrences of ('FM', 'Magnitude')
     count = sum(
-        1 for item in name_dict.values() if item.get('hcp_image_type') == ('FM', 'Magnitude') and item.get('fm') is None
+        1
+        for item in name_dict.values()
+        if item.get("hcp_image_type") == ("FM", "Magnitude") and item.get("fm") is None
     )
 
     if count > 1:

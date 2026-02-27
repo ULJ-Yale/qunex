@@ -3193,6 +3193,22 @@ def create_session_info(
                 fieldmap_magnitude1  => FM-Magnitude: fm(1)
                 fieldmap_magnitude2  => FM-Magnitude: fm(1)
 
+            "Or" patterns are supported using the ``||`` separator on the
+            left-hand side of a mapping rule. For each image, the variants
+            are tried left-to-right; the first one that matches is applied and
+            the remaining variants are skipped. For example::
+
+                T1w_HiRes || T1w_LowRes => T1w
+
+            For an image named ``T1w_HiRes`` the first variants matches, so
+            it is mapped to ``T1w``. For an image named ``T1w_LowRes`` the
+            first variants does not match, but the second does, so it is also
+            mapped to ``T1w``. Each variants may be an exact name or contain
+            ``*`` glob patterns — they are all treated uniformly. Any number of
+            variantss can be chained, e.g.::
+
+                T1w_HiRes || T1w_MedRes || T1w_LowRes => T1w
+
         Example mapping file:
             ::
 
@@ -3515,6 +3531,42 @@ def _simple_glob_match(text, pattern):
     return True
 
 
+def _match_or_rule(img_name, or_rules):
+    """Try to match an image name against 'or' rules (per-image).
+
+    For each 'or' rule, variants are tried left-to-right.  The first
+    variant that matches the image name wins and the associated rule
+    is returned.  Each variant may be an exact name or a ``*`` glob
+    pattern — they are all treated uniformly.
+
+    For example, given ``T1w_HiRes || T1w_LowRes => T1w``:
+
+    * An image named ``T1w_HiRes`` matches the first variant → rule
+      returned.
+    * An image named ``T1w_LowRes`` does not match the first variant,
+      matches the second → rule returned.
+    * An image named ``T1w_Other`` matches neither → ``None``.
+
+    Args:
+        img_name: The series_description of the image to match.
+        or_rules: list of dicts with ``'variants'`` (list of str)
+                  and ``'rule'`` (dict) keys from the parsed mapping
+                  file.
+
+    Returns:
+        The matching rule dict, or ``None`` if no or-rule matches.
+    """
+    for or_rule in or_rules:
+        for alt in or_rule["variants"]:
+            if "*" in alt:
+                if _simple_glob_match(img_name, alt):
+                    return or_rule["rule"]
+            else:
+                if img_name == alt:
+                    return or_rule["rule"]
+    return None
+
+
 def _apply_rules(src_session, mapping_rules):
     """Apply mapping rules for each image
 
@@ -3536,10 +3588,9 @@ def _apply_rules(src_session, mapping_rules):
     grp_img_num_rule = mapping_rules["group_rules"]["image_number"]
     grp_name_rule = mapping_rules["group_rules"]["name"]
     grp_glob_rule = mapping_rules["group_rules"]["glob"]
+    grp_or_rules = mapping_rules["group_rules"].get("or", [])
 
     for img_num, img_info in src_session["images"].items():
-        # evaluate session specific rules
-        # evaluate group specific rules
         img_name = img_info["series_description"]
         rule = {"additional_tags": []}
         # rules defined using image number takes precedence
@@ -3547,53 +3598,60 @@ def _apply_rules(src_session, mapping_rules):
             rule = grp_img_num_rule[img_num]
         elif img_name in grp_name_rule:
             rule = grp_name_rule[img_name]
-        # Try glob-based matching (simple * patterns)
+        # Try "or" rules — variants tried left-to-right per image
         else:
-            matched_rules = []
-            for pattern, glob_rule in grp_glob_rule.items():
-                if _simple_glob_match(img_name, pattern):
-                    matched_rules.append((pattern, glob_rule))
+            or_match = _match_or_rule(img_name, grp_or_rules)
+            if or_match is not None:
+                rule = or_match
+            # Try glob-based matching (simple * patterns)
+            else:
+                matched_rules = []
+                for pattern, glob_rule in grp_glob_rule.items():
+                    if _simple_glob_match(img_name, pattern):
+                        matched_rules.append((pattern, glob_rule))
 
-            if len(matched_rules) > 1:
-                # Check if all matched rules map to the same target
-                first_hcp_type = matched_rules[0][1].get("hcp_image_type")
-                conflicting = False
-                for pattern, matched_rule in matched_rules[1:]:
-                    if matched_rule.get("hcp_image_type") != first_hcp_type:
-                        conflicting = True
-                        break
+                if len(matched_rules) > 1:
+                    # Check if all matched rules map to the same target
+                    first_hcp_type = matched_rules[0][1].get("hcp_image_type")
+                    conflicting = False
+                    for pattern, matched_rule in matched_rules[1:]:
+                        if matched_rule.get("hcp_image_type") != first_hcp_type:
+                            conflicting = True
+                            break
 
-                if conflicting:
-                    # Format image number properly (handle tuple case)
-                    img_num_str = (
-                        str(img_num[0]) if isinstance(img_num, tuple) else str(img_num)
-                    )
-
-                    # Build detailed rule descriptions
-                    rule_details = []
-                    for p, matched_rule in matched_rules:
-                        hcp_type = matched_rule.get("hcp_image_type")
-                        if hcp_type:
-                            type_str = f"{hcp_type[0]}" + (
-                                f":{hcp_type[2]}"
-                                if len(hcp_type) > 2 and hcp_type[2]
-                                else ""
-                            )
-                        else:
-                            type_str = "no mapping"
-                        rule_details.append(
-                            f"  • Pattern: '{p}'  →  maps to: {type_str}"
+                    if conflicting:
+                        # Format image number properly (handle tuple case)
+                        img_num_str = (
+                            str(img_num[0])
+                            if isinstance(img_num, tuple)
+                            else str(img_num)
                         )
 
-                    patterns_str = "\n".join(rule_details)
-                    raise ge.SpecFileSyntaxError(
-                        error=f"Image {img_num_str} ('{img_name}') matches multiple conflicting mapping rules:\n\n"
-                        f"{patterns_str}\n\n"
-                        f"Fix: Make your patterns more specific so only one matches, or ensure all matching patterns map to the same target."
-                    )
+                        # Build detailed rule descriptions
+                        rule_details = []
+                        for p, matched_rule in matched_rules:
+                            hcp_type = matched_rule.get("hcp_image_type")
+                            if hcp_type:
+                                type_str = f"{hcp_type[0]}" + (
+                                    f":{hcp_type[2]}"
+                                    if len(hcp_type) > 2 and hcp_type[2]
+                                    else ""
+                                )
+                            else:
+                                type_str = "no mapping"
+                            rule_details.append(
+                                f"  \u2022 Pattern: '{p}'  \u2192  maps to: {type_str}"
+                            )
 
-            if matched_rules:
-                rule = matched_rules[0][1]
+                        patterns_str = "\n".join(rule_details)
+                        raise ge.SpecFileSyntaxError(
+                            error=f"Image {img_num_str} ('{img_name}') matches multiple conflicting mapping rules:\n\n"
+                            f"{patterns_str}\n\n"
+                            f"Fix: Make your patterns more specific so only one matches, or ensure all matching patterns map to the same target."
+                        )
+
+                if matched_rules:
+                    rule = matched_rules[0][1]
 
         tgt_session["images"][img_num] = _apply_image_rule(img_info, rule)
 
@@ -3638,8 +3696,10 @@ def _reserved_bold_numbers(mapping_rules):
     bold_nums = set()
     grp_img_num_rules = mapping_rules["group_rules"]["image_number"]
     grp_img_name_rules = mapping_rules["group_rules"]["name"]
+    grp_or_rules = mapping_rules["group_rules"].get("or", [])
+    or_rule_values = [or_entry["rule"] for or_entry in grp_or_rules]
     for rule in itertools.chain(
-        grp_img_num_rules.values(), grp_img_name_rules.values()
+        grp_img_num_rules.values(), grp_img_name_rules.values(), or_rule_values
     ):
         image_type = rule.get("hcp_image_type")
         if image_type is None:

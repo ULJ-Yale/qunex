@@ -1,0 +1,10 @@
+# Session for testing "or" rules with glob patterns
+# Has rfMRI_REST2_AP but no rfMRI_REST1_AP
+session: or_test_4
+subject: OR004
+
+01: T1w_MPRAGE
+02: SpinEchoFieldMap_AP
+03: SpinEchoFieldMap_PA
+04: rfMRI_REST2_AP
+05: tfMRI_WM_AP

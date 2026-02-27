@@ -1,0 +1,9 @@
+# Session with only T1w_LowRes available (fallback alternative)
+session: or_test_2
+subject: OR002
+
+01: T1w_LowRes
+02: T2w_HiRes
+03: SpinEchoFieldMap_AP
+04: SpinEchoFieldMap_PA
+05: rfMRI_REST_AP
