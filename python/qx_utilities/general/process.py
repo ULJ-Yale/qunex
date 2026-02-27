@@ -917,6 +917,7 @@ arglist = [
     ["hcp_fmristats_fmri_names", "", is_none],
     ["hcp_fmristats_tica_component_tcs", "", is_none],
     ["hcp_fmristats_tica_component_noise", "", is_none],
+    ["hcp_fmristats_regname", "", is_none],
     ["# --- hcp_apply_auto_reclean options"],
     ["hcp_autoreclean_model_folder", "", is_none],
     ["hcp_autoreclean_model_to_use", "", is_none],

@@ -14622,10 +14622,10 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             If single-run FIX is used, this list must be exactly 1 element
             long.
 
-        --hcp_icafix_highpass (str, default ''):
+        --hcp_icafix_highpass (str, default '0'):
             The high pass filter value used in ICA+FIX.
 
-        --hcp_regname (str, default 'MSMSulc'):
+        --hcp_fmristats_regname (str, default ''):
             Surface registration name.
 
         --hcp_fmristats_process_volume (str, default ''):
@@ -14672,7 +14672,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             ============================================ ============================
             ``hcp_concat_names``                         ``concat-names``
             ``hcp_icafix_highpass``                      ``high-pass``
-            ``hcp_regname``                              ``reg-name``
+            ``hcp_fmristats_regname``                    ``reg-name``
             ``hcp_fmristats_process_volume``             ``process-volume``
             ``hcp_fmristats_cleanup_effects``            ``cleanup-effects``
             ``hcp_fmristats_procstring``                 ``proc-string``
@@ -14712,22 +14712,17 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
         # --- Base settings
         pc.doOptionsCheck(options, sinfo, "hcp_fmri_stats")
         doHCPOptionsCheck(options, "hcp_fmri_stats")
-        hcp = getHCPPaths(sinfo, options)
 
         # subject
         subject = sinfo["id"] + options["hcp_suffix"]
 
         # --- Mandatory parameters
-
         # hcp_concat_names
         concat_names = options["hcp_concat_names"].replace(",", "@")
 
         # hcp_icafix_highpass
-        highpass = ""
-        if options["hcp_icafix_highpass"] is None:
-            r += "\n---> ERROR: hcp_icafix_highpass is not provided!"
-            run = False
-        else:
+        highpass = 0
+        if options["hcp_icafix_highpass"] is not None:
             highpass = options["hcp_icafix_highpass"]
 
         # --- matlab run mode, compiled=0, interpreted=1, octave=2
@@ -14771,15 +14766,17 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             )
 
             # --- Optional parameters
-
-            # hcp_regname
-            if options["hcp_regname"] is not None and options["hcp_regname"] not in [
-                "MSMSulc",
+            # hcp_fmristats_regname
+            if options["hcp_fmristats_regname"] is not None and options[
+                "hcp_fmristats_regname"
+            ] not in [
                 "NONE",
                 "none",
                 "None",
             ]:
-                comm += '                --reg-name="%s"' % options["hcp_regname"]
+                comm += (
+                    '                --reg-name="%s"' % options["hcp_fmristats_regname"]
+                )
 
             # hcp_fmristats_process_volume
             if options["hcp_fmristats_process_volume"] is not None:
