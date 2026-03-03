@@ -14635,8 +14635,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             Whether to compute cleanup effects metrics, TRUE or FALSE.
 
         --hcp_fmristats_procstring (str, default ''):
-            Processing string suffix for cleaned data (only needed if
-            cleanup_effects is TRUE).
+            Processing string suffix for cleaned data.
 
         --hcp_fmristats_icamode (str, default ''):
             ICA mode: 'sICA' for spatial ICA only, 'sICA+tICA' for combined
@@ -14672,10 +14671,10 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             ============================================ ============================
             ``hcp_concat_names``                         ``concat-names``
             ``hcp_icafix_highpass``                      ``high-pass``
+            ``hcp_fmristats_procstring``                 ``proc-string``
             ``hcp_fmristats_regname``                    ``reg-name``
             ``hcp_fmristats_process_volume``             ``process-volume``
             ``hcp_fmristats_cleanup_effects``            ``cleanup-effects``
-            ``hcp_fmristats_procstring``                 ``proc-string``
             ``hcp_fmristats_icamode``                    ``ica-mode``
             ``hcp_fmristats_fmri_names``                 ``fmri-names``
             ``hcp_fmristats_tica_component_tcs``         ``tica-component-tcs``
@@ -14725,6 +14724,11 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
         if options["hcp_icafix_highpass"] is not None:
             highpass = options["hcp_icafix_highpass"]
 
+        # hcp_fmristats_procstring
+        if options["hcp_fmristats_procstring"] is None:
+            r += "\\nERROR: hcp_fmristats_procstring parameter is not set!\n"
+            run = False
+
         # --- matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
@@ -14752,6 +14756,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
                 --subject="%(subject)s" \
                 --concat-names="%(concat_names)s" \
                 --high-pass="%(highpass)s" \
+                --proc-string="%(proc_string)s" \
                 --matlab-run-mode="%(matlabrunmode)s"'
                 % {
                     "script": os.path.join(
@@ -14761,6 +14766,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
                     "subject": subject,
                     "concat_names": concat_names,
                     "highpass": highpass,
+                    "proc_string": options["hcp_fmristats_procstring"],
                     "matlabrunmode": matlabrunmode,
                 }
             )
@@ -14790,13 +14796,6 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
                 comm += (
                     '                --cleanup-effects="%s"'
                     % options["hcp_fmristats_cleanup_effects"]
-                )
-
-            # hcp_fmristats_procstring
-            if options["hcp_fmristats_procstring"] is not None:
-                comm += (
-                    '                --proc-string="%s"'
-                    % options["hcp_fmristats_procstring"]
                 )
 
             # hcp_fmristats_icamode
