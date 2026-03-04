@@ -393,6 +393,30 @@ def getHCPPaths(sinfo, options):
 
     return d
 
+def handle_hcp_links(groupfolder, sessions, options, remove=False):
+    """
+    Creates/removes soft links to session HCP folders for commands that operate 
+    across multiple sessions
+    """
+
+    if not os.path.exists(groupfolder):
+        os.makedirs(groupfolder)
+
+    abs_sessionsfolder = os.path.abspath(options['sessionsfolder'])
+
+    for session in sessions:
+        session_id = session['id']
+        source_path = os.path.join(abs_sessionsfolder, session_id, 'hcp', session_id)
+        target_path = os.path.join(groupfolder, session_id + options["hcp_suffix"])
+
+        if not remove:
+            os.symlink(source_path, target_path)
+        else:
+            if os.path.exists(target_path):
+                os.unlink(target_path)
+
+    return
+
 
 def doHCPOptionsCheck(options, command):
     if options["hcp_folderstructure"] not in ["hcpya", "hcpls"]:
@@ -12518,8 +12542,8 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
             inputs are:
 
             a) AFI: actual flip angle sequence with two different echo times,
-            requires the following parameters: afi-image, afi-tr-one,afi-tr-two,
-            afi-angle, group-corrected-myelin.
+            requires the following parameters: afi-image, afi-tr-one,afi-tr-two, 
+            and group-corrected-myelin.
 
             b) B1Tx: b1 transmit sequence magnitude/phase pair, requires the
             following parameters: b1tx-magnitude, b1tx-phase, group-corrected-myelin.
@@ -12929,6 +12953,402 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
     # print r
     return (r, (sinfo["id"], report, failed))
 
+
+def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite=True, thread=0):
+    """
+    ``hcp_transmit_bias_group_average_fit [... processing options]``
+
+    Runs the HCP Transmit Bias Pipeline Phase 2, Group Average Fit.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_groupsfolder(str, default 'groups'):
+            The path to the HCP group folder, where group-level data is stored.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            Input registration name.
+
+        --hcp_transmit_mode (str, default ''):
+            What type of transmit bias correction to apply, options and required
+            inputs are:
+
+            a) AFI: actual flip angle sequence with two different echo times,
+            requires the following parameters: afi-image, afi-tr-one,afi-tr-two,
+            afi-angle, group-corrected-myelin.
+
+            b) B1Tx: b1 transmit sequence magnitude/phase pair, requires the
+            following parameters: b1tx-magnitude, b1tx-phase, group-corrected-myelin.
+
+            c) PseudoTransmit: use spin echo fieldmaps, SBRef, and a
+            template transmit-corrected myelin map to derive empirical
+            correction, requires the following parameters: pt-fmri-names,
+            myelin-template, group-uncorrected-myelin, reference-value.
+
+        --hcp_transmit_group_name (str, default ''): 
+            Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)"
+
+        --hcp_group_average_name (str, default 'Results')
+            Output folder inside groups folder
+
+        --hcp_gmwm_template (str, default 'GMWMTemplate.nii.gz')
+            Output file for GM+WM volume ROI
+
+        --hcp_average_myelin (str, default )
+            Output cifti file for group average of uncorrected myelin"
+        --hcp_manual_receive' 'useRCfilesStr' 'TRUE or FALSE' "whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans, default false" 'false'
+        --hcp_all-myelin-out' 'myelinCiftiAll' 'file' "output cifti file for concatenated uncorrected myelin"
+
+        --hcp_afi_tr_one (str, default ''):
+            TR of first AFI frame.
+
+        --hcp_afi_tr_two (str, default ''):
+            TR of second AFI frame.
+
+        --hcp_afi_angle (str, default ''):
+            Target flip angle of AFI sequence.
+
+        --hcp_lowresmesh (int, default 32):
+            Mesh resolution.
+
+        --hcp_grayordinatesres (int, default 2):
+            The size of voxels for the subcortical and cerebellar data in
+            grayordinate space in mm.
+
+    Notes:
+        hcp_transmit_bias_individual parameter mapping:
+
+            ================================== ============================
+            QuNex parameter                    HCPpipelines parameter
+            ================================== ============================
+            ``hcp_regname``                    ``reg-name``
+            ``hcp_transmit_mode``              ``mode``
+            opts_AddMandatory '--group-average-name' 'GroupAverageName' 'name' "output folder (e.g. S900)"
+            opts_AddMandatory '--gmwm-template-out' 'GMWMtemplate' 'file' "output file for GM+WM volume ROI"
+            opts_AddMandatory '--average-myelin-out' 'myelinCiftiAvg' 'file' "output cifti file for group average of uncorrected myelin"
+            opts_AddOptional '--manual-receive' 'useRCfilesStr' 'TRUE or FALSE' "whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans, default false" 'false'
+            opts_AddOptional '--all-myelin-out' 'myelinCiftiAll' 'file' "output cifti file for concatenated uncorrected myelin"
+            ``hcp_transmit_group_name``        ``transmit-group-name``
+            ``hcp_afi_tr_one``                 ``afi-tr-one``
+            ``hcp_afi_tr_two``                 ``afi-tr-two``
+            ``hcp_afi_angle``                  ``afi-angle``
+            ``hcp_lowresmesh``                 ``low-res-mesh``
+            ``hcp_grayordinatesres``           ``grayordinates-res``
+            ================================== ============================
+
+    Examples:
+        Example run::
+
+            qunex hcp_transmit_bias_group_average_fit \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSessions: %s \n[started on %s]" % (
+        sessionids,
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP Transmit Bias Pipeline Phase 2, Group Average Fit [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = "Error"
+
+    try:
+        if options["hcp_groupsfolder"] is None:
+            r += "\n---> hcp_groupsfolder undefined, using default 'groups'"
+            groupsfolder= os.path.join(options['sessionsfolder'],'groups')
+        else:
+            if not os.path.isabs(options['hcp_groupsfolder']):
+                r += f"\n---> WARNING: hcp_groupsfolder is a local path"
+            groupsfolder = os.path.abspath(options['hcp_groupsfolder'])
+            r += f"\n---> hcp_groupsfolder defined as {groupsfolder}"
+            
+        handle_hcp_links(groupsfolder, sessions, options, False)
+        doHCPOptionsCheck(options, "hcp_transmit_bias_group_average_fit")
+
+        if options["hcp_transmit_mode"] is None:
+            r += "\n---> ERROR: the hcp_transmit_mode parameter is mandatory!"
+            run = False
+
+        # build the command
+        if run:
+            comm = (
+                '%(script)s \
+                --study-folder="%(studyfolder)s" \
+                --subject-list="%(subjectlist)s" \
+                --mode="%(mode)s" \
+                --reg-name="%(reg_name)s"'
+                % {
+                    "script": os.path.join(
+                        os.environ["HCPPIPEDIR"], "TransmitBias", "Phase2_GroupAverageFit.sh"
+                    ),
+                    "studyfolder": groupsfolder,
+                    "subjectlist": sessionids.replace(',','@') + options["hcp_suffix"],
+                    "mode": options["hcp_transmit_mode"],
+                    "reg_name": options["hcp_regname"],
+                }
+            )
+
+            # check and set parameters given the mode
+
+            # AFI and B1Tx parameters
+            if (options["hcp_transmit_mode"] == "AFI") or (options["hcp_transmit_mode"] == "B1Tx"):
+
+                if options["hcp_transmit_group_name"]:
+                    comm += f"                --transmit-group-name={options['hcp_transmit_group_name']}"
+                else:
+                    r += "\n---> ERROR: the hcp_transmit_group_name parameter is not provided!"
+                    run = False
+
+            # AFI
+            if options["hcp_transmit_mode"] == "AFI":
+
+                if options["hcp_afi_tr_one"]:
+                    comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
+                    run = False
+
+                if options["hcp_afi_tr_two"]:
+                    comm += f"                --afi-tr-two={options['hcp_afi_tr_two']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
+                    run = False
+
+                if options["hcp_afi_angle"]:
+                    comm += f"                --afi-angle={options['hcp_afi_angle']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
+                    run = False
+
+            # B1Tx
+            elif options["hcp_transmit_mode"] == "B1Tx":
+                if options["hcp_b1tx_magnitude"]:
+                    comm += f"                --b1tx-magnitude={options['hcp_b1tx_magnitude']}"
+                else:
+                    r += "\n---> Setting the hcp_b1tx_magnitude automatically"
+                    if "TB1TFL-Magnitude" in hcp:
+                        comm += f"                --b1tx-magnitude={hcp['TB1TFL-Magnitude']}"
+                    else:
+                        r += "\n---> ERROR: the hcp_b1tx_magnitude parameter is not provided, and QuNex cannot find the b1tx magnitude image in the HCP unprocessed/B1 folder!"
+                        run = False
+
+                if options["hcp_b1tx_phase"]:
+                    comm += f"                --b1tx-phase={options['hcp_b1tx_phase']}"
+                else:
+                    r += "\n---> Setting the hcp_b1tx_phase automatically"
+                    if "TB1TFL-Phase" in hcp:
+                        comm += f"                --b1tx-phase={hcp['TB1TFL-Phase']}"
+                    else:
+                        r += "\n---> ERROR: the hcp_b1tx_phase parameter is not provided, and QuNex cannot find the b1tx phase image in the HCP unprocessed/B1 folder!"
+                        run = False
+
+                # optional B1Tx parameters
+                if options["hcp_b1tx_phase_divisor"]:
+                    comm += f"                --b1tx-phase-divisor={options['hcp_b1tx_phase_divisor']}"
+
+            # PseudoTransmit
+            elif options["hcp_transmit_mode"] == "PseudoTransmit":
+                if options["hcp_pt_fmri_names"]:
+                    pt_fmri_names = options["hcp_pt_fmri_names"].replace(",", "@")
+
+                else:
+                    r += "\n---> Setting the hcp_pt_fmri_names automatically"
+                    # --- Get sorted bold numbers and bold data
+                    bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
+                    pt_fmri_names = []
+                    for boldinfo in bolds:
+                        if (
+                            "filename" in boldinfo
+                            and options["hcp_filename"] == "userdefined"
+                        ):
+                            pt_fmri_names.append(boldinfo["filename"])
+                        else:
+                            pt_fmri_names.append(
+                                f"{options['hcp_bold_prefix']}{boldinfo['bold_number']}"
+                            )
+
+                    if len(pt_fmri_names) == 0:
+                        r += "\n---> ERROR: the hcp_pt_fmri_names parameter is not provided, and QuNex cannot find any BOLDs!"
+                        run = False
+                    else:
+                        pt_fmri_names = "@".join(pt_fmri_names)
+
+                comm += f"                --pt-fmri-names={pt_fmri_names}"
+
+                # optional PseudoTransmit parameters
+                if options["hcp_pt_bbr_threshold"]:
+                    comm += f"                --pt-bbr-threshold={options['hcp_pt_bbr_threshold']}"
+
+            else:
+                r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
+
+            # optional general parameters
+            if options["hcp_unproc_t1w_list"] is not None:
+                if options["hcp_unproc_t1w_list"] == "auto":
+                    r += "\n---> Setting the hcp_unproc_t1w_list automatically"
+                    comm += f"                --unproc-t1w-list={hcp['T1w']}"
+                else:
+                    unproc_t1w_list = options["hcp_unproc_t1w_list"].replace(",", "@")
+                    comm += f"                --unproc-t1w-list={unproc_t1w_list}"
+
+            if options["hcp_unproc_t2w_list"] is not None:
+                if options["hcp_unproc_t2w_list"] == "auto":
+                    r += "\n---> Setting the hcp_unproc_t2w_list automatically"
+                    comm += f"                --unproc-t2w-list={hcp['T2w']}"
+                else:
+                    unproc_t2w_list = options["hcp_unproc_t2w_list"].replace(",", "@")
+                    comm += f"                --unproc-t2w-list={unproc_t2w_list}"
+
+            if options["hcp_receive_bias_body_coil"]:
+                comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
+            else:
+                if "RB1COR-Body" in hcp:
+                    r += "\n---> Setting the hcp_receive_bias_body_coil automatically"
+                    comm += (
+                        f"                --receive-bias-body-coil={hcp['RB1COR-Body']}"
+                    )
+
+            if options["hcp_receive_bias_head_coil"]:
+                comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
+            else:
+                if "RB1COR-Head" in hcp:
+                    r += "\n---> Setting the hcp_receive_bias_head_coil automatically"
+                    comm += (
+                        f"                --receive-bias-head-coil={hcp['RB1COR-Head']}"
+                    )
+
+            if options["hcp_raw_psn_t1w"]:
+                if options["hcp_raw_psn_t1w"] == "auto":
+                    r += "\n---> Setting the hcp_raw_psn_t1w automatically"
+                    comm += f"                --raw-psn-t1w={hcp['hcp_raw_psn_t1w']}"
+                else:
+                    comm += (
+                        f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
+                    )
+
+            if options["hcp_raw_nopsn_t1w"]:
+                if options["hcp_raw_nopsn_t1w"] == "auto":
+                    r += "\n---> Setting the hcp_raw_nopsn_t1w automatically"
+                    comm += (
+                        f"                --raw-nopsn-t1w={hcp['hcp_raw_nopsn_t1w']}"
+                    )
+                else:
+                    comm += f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
+
+            if options["hcp_transmit_res"]:
+                comm += f"                --transmit-res={options['hcp_transmit_res']}"
+
+            if options["hcp_myelin_mapping_fwhm"]:
+                comm += f"                --myelin-mapping-fwhm={options['hcp_myelin_mapping_fwhm']}"
+
+            if options["hcp_old_myelin_mapping"]:
+                comm += f"                --old-myelin-mapping=TRUE"
+
+            if options["hcp_gdcoeffs"]:
+                # lookup gdcoeffs file
+                gdcfile, r, run = check_gdc_coeff_file(
+                    options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
+                )
+                if gdcfile != "NONE":
+                    comm += f"                --scanner-grad-coeffs={gdcfile}"
+
+            if options["hcp_lowresmesh"]:
+                comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
+
+            if options["hcp_grayordinatesres"]:
+                comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
+
+            # -- Report command
+            if run:
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                r, endlog, report, failed = pc.runExternalForFile(
+                    None,
+                    comm,
+                    "Running HCP Transmit Bias Phase 1, Individual Align",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=options["logtag"],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    None,
+                    None,
+                    "HCP Transmit Bias Phase 1, Individual Align",
+                    r,
+                    overwrite=overwrite,
+                )
+                if passed is None:
+                    r += "\n---> HCP Transmit Bias Phase 1, Individual Align can be run"
+                    report = "HCP Transmit Bias Phase 1, Individual Align can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session cannot be processed."
+            report = "HCP Transmit Bias Phase 1, Individual Align cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except Exception as e:
+        r += f"\nERROR: {e}"
+        r += f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
+        failed = 1
+
+    r += (
+        "\n\nHCP Transmit Bias Phase 1, Individual Align Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
 
 def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0):
     """

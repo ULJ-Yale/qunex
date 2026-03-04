@@ -737,6 +737,7 @@ lalist = [
 malist = [
     ["hcp_temporal_ica", process_hcp.hcp_temporal_ica],
     ["hcp_make_average_dataset", process_hcp.hcp_make_average_dataset],
+    ["hcp_transmit_bias_group_average_fit", process_hcp.hcp_transmit_bias_group_average_fit],
 ]
 
 salist = [

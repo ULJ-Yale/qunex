@@ -351,6 +351,11 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.hcp.process_hcp.hcp_transmit_bias_group_average_fit",
+        "Run HCP Transmit Bias pipeline Phase 2, Group Average Fit.",
+        "python",
+    ),
+    (
         "qx_utilities.hcp.process_hcp.hcp_long_transmit_bias",
         "Run HCP Longitudinal Transmit Bias pipeline.",
         "python",
