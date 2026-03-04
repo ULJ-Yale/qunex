@@ -28,6 +28,8 @@ Past contributors to the QuNex code:
 * [QuNex quick start](https://qunex.readthedocs.io/en/latest/wiki/Overview-QuickStart.html)
 * [QuNex container deployment](https://qunex.readthedocs.io/en/latest/wiki/Overview-QuNexContainerUsage.html)
 
+You can submit questions and report issues on the official **[QuNex forum](https://forum.qunex.yale.edu)**.
+
 ## Version
 
 * QuNex: 1.5.0
