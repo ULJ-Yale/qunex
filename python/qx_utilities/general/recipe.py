@@ -378,9 +378,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
     print(f"\n---> Saving the run_recipe runlog to: {logfolder}")
 
     # create comlogfolder if it does not exist
-    if not os.path.exists(comlogfolder):
-        print(f"\n---> Comlog folder does not exist, creating it: {comlogfolder}\n")
-        os.makedirs(comlogfolder)
+    os.makedirs(comlogfolder, exist_ok=True)
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logfilename = f"Log-run_recipe-{logstamp}.log"

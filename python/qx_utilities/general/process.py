@@ -1380,8 +1380,7 @@ def run(command, args):
 
     # --------------------------------------------------------------------------
     #                                                      start writing the log
-    if not os.path.exists(comlogfolder):
-        os.makedirs(comlogfolder)
+    os.makedirs(comlogfolder, exist_ok=True)
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if not options["longitudinal"]:
