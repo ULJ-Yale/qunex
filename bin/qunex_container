@@ -961,7 +961,7 @@ def main(args=None):
         if legacy_logfolder:
             logfolder = os.path.join(studyfolder, "processing", "logs")
         else:
-            logfolder = os.path.join(studyfolder, "logs", f"{timestamp}_{command}")
+            logfolder = os.path.join(studyfolder, "logs", f"{timestamp}_{qx_command}")
 
     # fallback to home
     fallback_logfolder = False
