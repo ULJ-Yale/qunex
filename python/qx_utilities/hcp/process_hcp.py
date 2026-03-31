@@ -4930,6 +4930,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Comma delimited list of numbers which represent TE for each echo
             (unused for single echo).
 
+        --hcp_seechospacing (str, default ''):
+            Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not
+            used. Used when hcp_bold_dcmethod is set to TOPUP_MISMATCHED.
+
+        --hcp_seunwarpdir (str, default ''):
+            Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
+            Used when hcp_bold_dcmethod is set to TOPUP_MISMATCHED.
+
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
@@ -6291,6 +6299,12 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             else:
                 r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 run = False
+
+        if options["hcp_seechospacing"]:
+            elements.append(("seechospacing", options["hcp_seechospacing"]))
+
+        if options["hcp_seunwarpdir"]:
+            elements.append(("seunwarpdir", options["hcp_seunwarpdir"]))
 
         # longitudinal mode
         if options["longitudinal"]:
