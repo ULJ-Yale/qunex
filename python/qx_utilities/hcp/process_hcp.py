@@ -4348,8 +4348,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
                 for ddir in ["pos", "neg"]:
                     if ddir not in dwi_files:
-                        r += "\n---> ERROR: No DWI files found, check the _hcp_dwi_phasepos and _hcp_dwi_phaseneg parameters."
-                        run = False
                         break
 
                     dfiles = dwi_files[ddir].split("@")
@@ -4368,13 +4366,16 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                         run = False
                         break
 
-                # if one dir is missing
+                # if both dirs are missing
                 if "pos" not in dwi_files and "neg" not in dwi_files:
-                    r += (
-                        "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
-                        % ddir
-                    )
+                    r += "\n---> ERROR: No DWI data found, check your batchfile and command parameters!"
                     run = False
+                elif "pos" not in dwi_files:
+                    pos_data = ""
+                    neg_data = dwi_files["neg"]
+                elif "neg" not in dwi_files:
+                    pos_data = dwi_files["pos"]
+                    neg_data = ""
                 else:
                     pos_data = dwi_files["pos"]
                     neg_data = dwi_files["neg"]
@@ -4532,8 +4533,6 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_dwi_selectbestb0"]:
                 comm += "                --select-best-b0"
-            # elif not has_pair:
-            #     comm += "                --select-best-b0"
 
             if options["hcp_dwi_topupconfig"] is not None:
                 comm += (
