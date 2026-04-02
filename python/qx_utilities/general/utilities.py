@@ -362,6 +362,7 @@ def create_study(studyfolder=None, folders=None):
             <studyfolder>
             ├── logs
             ├── processing
+            |   └── scripts
             └── sessions
 
         Creates the base folder at the provided path location and the study folders.
@@ -436,7 +437,7 @@ def create_study(studyfolder=None, folders=None):
 
     if folders is None:
         print("\n---> Creating study folder structure:")
-        for subfolder in ["logs", "processing", "sessions"]:
+        for subfolder in ["logs", "processing/scripts", "sessions"]:
             tfolder = os.path.join(studyfolder, subfolder)
             try:
                 os.makedirs(tfolder)
