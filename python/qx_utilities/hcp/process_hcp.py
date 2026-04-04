@@ -6782,7 +6782,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             r,
             boldimg,
             "\n     ... fMRIVolume preprocessed bold image present",
-            "\n     ... ERROR: fMRIVolume preprocessed bold image missing!",
+            f"\n     ... ERROR: fMRIVolume preprocessed bold image missing {boldimg}!",
             status=boldok,
         )
 
