@@ -2984,6 +2984,9 @@ def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
             The path to the study/sessions folder, where the imaging data is
             supposed to go.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no). Note that
             previous data is deleted before the run, so in the case of a failed
@@ -3006,7 +3009,8 @@ def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
 
             qunex hcp_prep_long \\
                 --sessionsfolder="<path_to_study_folder>/sessions" \\
-                --batchfile="<path_to_study_folder>/processing/batch.txt"
+                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
+                --hcp_longitudinal_template="base"
     """
 
     r = "\n------------------------------------------------------------"
