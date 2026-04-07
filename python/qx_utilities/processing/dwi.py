@@ -621,11 +621,14 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         --noddi_model (str, default 'Watson'):
             Whether to use the Watson or the Bingham NODDI model.
 
+        --diffusion_folder (str, default '<hcp_folder>/T1w/Diffusion'):
+            The path to the diffusion folder.
+
         --cuda_version (str, default '11.3'):
             Which CUDA version to use. Supports 10.2, 11.3 and 12.
 
     Output files:
-        The results of this step will be present in the HCP Diffusion folder::
+        By default, the results of this step will be present in the HCP Diffusion folder::
 
             study
             └─ sessions
@@ -639,6 +642,10 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     └─ session2
                       └─ T1w
                         └─ Diffusion.NODDI_<model>
+
+        If a custom diffusion folder is specified with --diffusion_folder, the
+        results will be stored in the same root folder as the input diffusion
+        data, in a subfolder named Diffusion.NODDI_<model>.
 
     Examples:
         ::
@@ -709,10 +716,21 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         )
 
         # session's diffusion dir
-        t1w_dir = os.path.join(
+        root_dir = os.path.join(
             options["sessionsfolder"], session, "hcp", session, "T1w"
         )
-        diffusion_dir = os.path.join(t1w_dir, "Diffusion")
+        diffusion_dir = os.path.join(root_dir, "Diffusion")
+
+        # if diffusion folder specified, use that instead
+        if "diffusion_folder" in options:
+            diffusion_dir = options["diffusion_folder"]
+            root_dir = os.path.dirname(diffusion_dir)
+
+        # check that diffusion_dir exists
+        if not os.path.exists(diffusion_dir):
+            r += f"\n---> ERROR: Could not find diffusion folder at {diffusion_dir}."
+            report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
+            run = False
 
         # set up the command
         comm = (
@@ -733,7 +751,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
                 # remove previous results if overwrite
                 results_folder = os.path.join(
-                    t1w_dir, "Diffusion.NODDI_" + options["noddi_model"]
+                    root_dir, "Diffusion.NODDI_" + options["noddi_model"]
                 )
 
                 if overwrite:

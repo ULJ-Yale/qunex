@@ -688,6 +688,11 @@ dwi_dtifit() {
         optional_parameters="${optional_parameters}    --gradnonlin='${gradnonlin}'"
     fi
 
+    # diffusion_folder
+    if [[ -n ${diffusion_folder} ]]; then
+        optional_parameters="${optional_parameters}    --diffusion_folder='${diffusion_folder}'"
+    fi
+
     # diffdata
     if [[ -n ${diffdata} ]]; then
         optional_parameters="${optional_parameters}    --diffdata='${diffdata}'"
@@ -718,6 +723,7 @@ dwi_bedpostx_gpu() {
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \
     --sessionsfolder='${SessionsFolder}' \
     --session='${CASE}' \
+    --diffusion_folder='${DiffusionFolder}' \
     --fibers='${Fibers}' \
     --weight='${Weight}' \
     --burnin='${Burnin}' \
@@ -783,7 +789,7 @@ dwi_pre_tractography() {
     # -- Parse general parameters
     RunFolder="${SessionsFolder}/${CASE}/hcp/"
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh ${RunFolder} ${CASE} 0"
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh ${RunFolder} ${CASE} 0 $DiffusionFolder"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -802,6 +808,7 @@ dwi_probtrackx_dense_gpu() {
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \
     --sessionsfolder='${SessionsFolder}' \
     --session='${CASE}' \
+    --diffusion_folder='${DiffusionFolder}' \
     --scriptsfolder='${ScriptsFolder}' \
     --omatrix1='${MatrixOne}' \
     --omatrix3='${MatrixThree}' \
@@ -1491,6 +1498,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
         nogpu="no"
     fi
 
+    # -- General dwi input flags
+    DiffusionFolder=`get_parameters "${setflag}diffusion_folder" $@`
+
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     pedir=`get_parameters "${setflag}pedir" $@`
@@ -1539,7 +1549,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WayTotal=`get_parameters "${setflag}waytotal" $@`
     Lengths=`get_parameters "${setflag}lengths" $@`
 
-    # -- Input flags for  dwi_seed_tractography_dense
+    # -- Input flags for dwi_seed_tractography_dense
     SeedFile=`get_parameters "${setflag}seedfile" $@`
 
     # -- Input flags for dwi_eddy_qc
@@ -2573,6 +2583,7 @@ if [ "$CommandToRun" == "dwi_pre_tractography" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
+    echo "   Diffusion Folder: ${DiffusionFolder}"
     echo "   Study Log Folder: ${LogFolder}"
     echo ""
 
@@ -2642,6 +2653,7 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
+    echo "   Diffusion Folder: ${DiffusionFolder}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler: ${Scheduler}"
     echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"

@@ -33,6 +33,8 @@ Warning:
 
         <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
 
+    You can use the --diffusion_folder parameter to change this if needed.
+
     T1w images need to be in MNINonLinear space here::
 
         <study_folder>/<session>/hcp/<session>/MNINonLinear
@@ -43,6 +45,9 @@ Parameters:
 
     --sessions (str):
         Comma separated list of sessions to run.
+
+    --diffusion_folder (str):
+        Path to the diffusion folder.
 
     --overwrite (str, default 'no'):
         Whether to overwrite existing data (yes) or not (no). Note that
@@ -216,6 +221,7 @@ get_options() {
     unset store_streamlines_length
     unset force_matrix1
     unset nogpu
+    unset DiffusionFolder
 
     # -- Parse arguments
     SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
@@ -230,6 +236,7 @@ get_options() {
     store_streamlines_length=`opts_GetOpt "--storestreamlineslength" $@`
     force_matrix1=`opts_GetOpt "--forcematrix1" $@`
     nogpu=`opts_GetOpt "--nogpu" $@`
+    DiffusionFolder=`opts_GetOpt "--diffusion_folder" $@`
 
     if [[ -z ${SessionsFolder} ]]; then
         echo "ERROR: <sessionsfolder> not specified"
@@ -311,6 +318,7 @@ get_options() {
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Session: ${CASE}"
+    echo "   Diffusion Folder: ${DiffusionFolder}"
     echo "   probtrackX GPU scripts Folder: ${ScriptsFolder}"
     echo "   Compute Matrix1: ${MatrixOne}"
     echo "   Compute Matrix3: ${MatrixThree}"
@@ -389,7 +397,7 @@ main() {
             echo ""
 
             # -- Command to run
-            DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${NSamples} ${distance_correction} ${store_streamlines_length} ${nogpu}"
+            DWIprobtrackxDenseGPUCommand="${ScriptsFolder}/run_matrix${MNum}.sh ${SessionsFolder} ${CASE} ${NSamples} ${distance_correction} ${store_streamlines_length} ${nogpu} ${DiffusionFolder}"
 
             # -- Echo the command
             echo "Running the following probtrackX GPU command: "
