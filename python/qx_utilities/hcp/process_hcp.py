@@ -410,7 +410,7 @@ def handle_hcp_links(groupfolder, sessions, options, remove=False):
         target_path = os.path.join(groupfolder, session_id + options["hcp_suffix"])
 
         if not remove:
-            os.symlink(source_path, target_path)
+            gc.link_or_copy(source_path, target_path, symlink=True)
         else:
             if os.path.exists(target_path):
                 os.unlink(target_path)
@@ -13007,18 +13007,22 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
             myelin-template, group-uncorrected-myelin, reference-value.
 
         --hcp_transmit_group_name (str, default ''): 
-            Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)"
+            Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)
 
-        --hcp_group_average_name (str, default 'Results')
-            Output folder inside groups folder
+        --hcp_group_average_name (str, default '')
+            Output folder inside hcp_groupsfolder folder
 
-        --hcp_gmwm_template (str, default 'GMWMTemplate.nii.gz')
+        --hcp_gmwm_template (str, default '')
             Output file for GM+WM volume ROI
 
-        --hcp_average_myelin (str, default )
-            Output cifti file for group average of uncorrected myelin"
-        --hcp_manual_receive' 'useRCfilesStr' 'TRUE or FALSE' "whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans, default false" 'false'
-        --hcp_all-myelin-out' 'myelinCiftiAll' 'file' "output cifti file for concatenated uncorrected myelin"
+        --hcp_group_uncorrected_myelin (str, default '')
+            Output cifti file for group average of uncorrected myelin
+
+        --hcp_all_uncorrected_myelin (str, default '')
+            Output cifti file for concatenated uncorrected myelin
+
+        --hcp_manual_receive (str, default 'false')
+            Whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans, default false
 
         --hcp_afi_tr_one (str, default ''):
             TR of first AFI frame.
@@ -13029,12 +13033,20 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
         --hcp_afi_angle (str, default ''):
             Target flip angle of AFI sequence.
 
+        --hcp_pt_reference_value_file (str, default '')
+            output text file for PseudoTransmit reference value.
+
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
 
         --hcp_grayordinatesres (int, default 2):
             The size of voxels for the subcortical and cerebellar data in
             grayordinate space in mm.
+
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'compiled' will be used, outside
+            'interpreted' is the default.
 
     Notes:
         hcp_transmit_bias_individual parameter mapping:
@@ -13044,17 +13056,19 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
             ================================== ============================
             ``hcp_regname``                    ``reg-name``
             ``hcp_transmit_mode``              ``mode``
-            opts_AddMandatory '--group-average-name' 'GroupAverageName' 'name' "output folder (e.g. S900)"
-            opts_AddMandatory '--gmwm-template-out' 'GMWMtemplate' 'file' "output file for GM+WM volume ROI"
-            opts_AddMandatory '--average-myelin-out' 'myelinCiftiAvg' 'file' "output cifti file for group average of uncorrected myelin"
-            opts_AddOptional '--manual-receive' 'useRCfilesStr' 'TRUE or FALSE' "whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans, default false" 'false'
-            opts_AddOptional '--all-myelin-out' 'myelinCiftiAll' 'file' "output cifti file for concatenated uncorrected myelin"
+            ``hcp_group_average_name``         ``group-average-name``
+            ``hcp_gmwm_template``              ``gmwm-template-out``
+            ``hcp_group_uncorrected_myelin``   ``average-myelin-out``
+            ``hcp_all_uncorrected_myelin``     ``all-myelin-out``
+            ``hcp_manual_recieve``             ``manual-receive``
             ``hcp_transmit_group_name``        ``transmit-group-name``
             ``hcp_afi_tr_one``                 ``afi-tr-one``
             ``hcp_afi_tr_two``                 ``afi-tr-two``
             ``hcp_afi_angle``                  ``afi-angle``
+            ``hcp_pt_reference_value_file``    ``reference-value-out``
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_grayordinatesres``           ``grayordinates-res``
+            ``hcp_matlab_mode``                ``matlab-run-mode``
             ================================== ============================
 
     Examples:
@@ -13098,12 +13112,31 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
 
         # build the command
         if run:
+
+            matlabrunmode = None
+            if options["hcp_matlab_mode"]:
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    run = False
+            else:
+                matlabrunmode = "0"
+
             comm = (
                 '%(script)s \
                 --study-folder="%(studyfolder)s" \
                 --subject-list="%(subjectlist)s" \
                 --mode="%(mode)s" \
-                --reg-name="%(reg_name)s"'
+                --reg-name="%(reg_name)s" \
+                --group-average-name="%(group_average_name)s" \
+                --gmwm-template-out="%(gmwm_template)s" \
+                --average-myelin-out"%(average_myelin)s" \
+                --matlab-run-mode="%(matlab_run_mode)s"'
                 % {
                     "script": os.path.join(
                         os.environ["HCPPIPEDIR"], "TransmitBias", "Phase2_GroupAverageFit.sh"
@@ -13112,6 +13145,10 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
                     "subjectlist": sessionids.replace(',','@') + options["hcp_suffix"],
                     "mode": options["hcp_transmit_mode"],
                     "reg_name": options["hcp_regname"],
+                    "group_average_name": options["hcp_group_average_name"],
+                    "gmwm_template": options["hcp_gmwm_template"],
+                    "average_myelin": options["hcp_group_uncorrected_myelin"],
+                    "matlab_run_mode": matlabrunmode,
                 }
             )
 
@@ -13147,137 +13184,23 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
                     r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
                     run = False
 
-            # B1Tx
-            elif options["hcp_transmit_mode"] == "B1Tx":
-                if options["hcp_b1tx_magnitude"]:
-                    comm += f"                --b1tx-magnitude={options['hcp_b1tx_magnitude']}"
-                else:
-                    r += "\n---> Setting the hcp_b1tx_magnitude automatically"
-                    if "TB1TFL-Magnitude" in hcp:
-                        comm += f"                --b1tx-magnitude={hcp['TB1TFL-Magnitude']}"
-                    else:
-                        r += "\n---> ERROR: the hcp_b1tx_magnitude parameter is not provided, and QuNex cannot find the b1tx magnitude image in the HCP unprocessed/B1 folder!"
-                        run = False
-
-                if options["hcp_b1tx_phase"]:
-                    comm += f"                --b1tx-phase={options['hcp_b1tx_phase']}"
-                else:
-                    r += "\n---> Setting the hcp_b1tx_phase automatically"
-                    if "TB1TFL-Phase" in hcp:
-                        comm += f"                --b1tx-phase={hcp['TB1TFL-Phase']}"
-                    else:
-                        r += "\n---> ERROR: the hcp_b1tx_phase parameter is not provided, and QuNex cannot find the b1tx phase image in the HCP unprocessed/B1 folder!"
-                        run = False
-
-                # optional B1Tx parameters
-                if options["hcp_b1tx_phase_divisor"]:
-                    comm += f"                --b1tx-phase-divisor={options['hcp_b1tx_phase_divisor']}"
-
             # PseudoTransmit
             elif options["hcp_transmit_mode"] == "PseudoTransmit":
-                if options["hcp_pt_fmri_names"]:
-                    pt_fmri_names = options["hcp_pt_fmri_names"].replace(",", "@")
-
+                if not options["hcp_pt_reference_value_file"]:
+                    r += "\n---> ERROR: the hcp_pt_reference_value_file parameter is not provided!"
+                    run = False
                 else:
-                    r += "\n---> Setting the hcp_pt_fmri_names automatically"
-                    # --- Get sorted bold numbers and bold data
-                    bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
-                    pt_fmri_names = []
-                    for boldinfo in bolds:
-                        if (
-                            "filename" in boldinfo
-                            and options["hcp_filename"] == "userdefined"
-                        ):
-                            pt_fmri_names.append(boldinfo["filename"])
-                        else:
-                            pt_fmri_names.append(
-                                f"{options['hcp_bold_prefix']}{boldinfo['bold_number']}"
-                            )
-
-                    if len(pt_fmri_names) == 0:
-                        r += "\n---> ERROR: the hcp_pt_fmri_names parameter is not provided, and QuNex cannot find any BOLDs!"
-                        run = False
-                    else:
-                        pt_fmri_names = "@".join(pt_fmri_names)
-
-                comm += f"                --pt-fmri-names={pt_fmri_names}"
-
-                # optional PseudoTransmit parameters
-                if options["hcp_pt_bbr_threshold"]:
-                    comm += f"                --pt-bbr-threshold={options['hcp_pt_bbr_threshold']}"
+                    comm += f"                --pt-reference-value-file={options['hcp_pt_reference_value_file']}"
 
             else:
                 r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
 
             # optional general parameters
-            if options["hcp_unproc_t1w_list"] is not None:
-                if options["hcp_unproc_t1w_list"] == "auto":
-                    r += "\n---> Setting the hcp_unproc_t1w_list automatically"
-                    comm += f"                --unproc-t1w-list={hcp['T1w']}"
-                else:
-                    unproc_t1w_list = options["hcp_unproc_t1w_list"].replace(",", "@")
-                    comm += f"                --unproc-t1w-list={unproc_t1w_list}"
+            if options["hcp_manual_recieve"]:
+                comm += f"                --manual-recieve={options['hcp_manual_recieve']}"
 
-            if options["hcp_unproc_t2w_list"] is not None:
-                if options["hcp_unproc_t2w_list"] == "auto":
-                    r += "\n---> Setting the hcp_unproc_t2w_list automatically"
-                    comm += f"                --unproc-t2w-list={hcp['T2w']}"
-                else:
-                    unproc_t2w_list = options["hcp_unproc_t2w_list"].replace(",", "@")
-                    comm += f"                --unproc-t2w-list={unproc_t2w_list}"
-
-            if options["hcp_receive_bias_body_coil"]:
-                comm += f"                --receive-bias-body-coil={options['hcp_receive_bias_body_coil']}"
-            else:
-                if "RB1COR-Body" in hcp:
-                    r += "\n---> Setting the hcp_receive_bias_body_coil automatically"
-                    comm += (
-                        f"                --receive-bias-body-coil={hcp['RB1COR-Body']}"
-                    )
-
-            if options["hcp_receive_bias_head_coil"]:
-                comm += f"                --receive-bias-head-coil={options['hcp_receive_bias_head_coil']}"
-            else:
-                if "RB1COR-Head" in hcp:
-                    r += "\n---> Setting the hcp_receive_bias_head_coil automatically"
-                    comm += (
-                        f"                --receive-bias-head-coil={hcp['RB1COR-Head']}"
-                    )
-
-            if options["hcp_raw_psn_t1w"]:
-                if options["hcp_raw_psn_t1w"] == "auto":
-                    r += "\n---> Setting the hcp_raw_psn_t1w automatically"
-                    comm += f"                --raw-psn-t1w={hcp['hcp_raw_psn_t1w']}"
-                else:
-                    comm += (
-                        f"                --raw-psn-t1w={options['hcp_raw_psn_t1w']}"
-                    )
-
-            if options["hcp_raw_nopsn_t1w"]:
-                if options["hcp_raw_nopsn_t1w"] == "auto":
-                    r += "\n---> Setting the hcp_raw_nopsn_t1w automatically"
-                    comm += (
-                        f"                --raw-nopsn-t1w={hcp['hcp_raw_nopsn_t1w']}"
-                    )
-                else:
-                    comm += f"                --raw-nopsn-t1w={options['hcp_raw_nopsn_t1w']}"
-
-            if options["hcp_transmit_res"]:
-                comm += f"                --transmit-res={options['hcp_transmit_res']}"
-
-            if options["hcp_myelin_mapping_fwhm"]:
-                comm += f"                --myelin-mapping-fwhm={options['hcp_myelin_mapping_fwhm']}"
-
-            if options["hcp_old_myelin_mapping"]:
-                comm += f"                --old-myelin-mapping=TRUE"
-
-            if options["hcp_gdcoeffs"]:
-                # lookup gdcoeffs file
-                gdcfile, r, run = check_gdc_coeff_file(
-                    options["hcp_gdcoeffs"], hcp=hcp, sinfo=sinfo, r=r, run=run
-                )
-                if gdcfile != "NONE":
-                    comm += f"                --scanner-grad-coeffs={gdcfile}"
+            if options["hcp_all_uncorrected_myelin"]:
+                comm += f"                --all-myelin-out={options['hcp_all_uncorrected_myelin']}"
 
             if options["hcp_lowresmesh"]:
                 comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
@@ -13285,6 +13208,7 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
             if options["hcp_grayordinatesres"]:
                 comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
 
+    
             # -- Report command
             if run:
                 r += (
@@ -13300,9 +13224,9 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
                 r, endlog, report, failed = pc.runExternalForFile(
                     None,
                     comm,
-                    "Running HCP Transmit Bias Phase 1, Individual Align",
+                    "Running HCP Transmit Bias Phase 2, Group Average Fit",
                     overwrite=overwrite,
-                    thread=sinfo["id"],
+                    thread=options["hcp_group_average_name"],
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
