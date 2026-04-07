@@ -2976,6 +2976,11 @@ def hcp_prep_long(sinfo, subjectids, options, overwrite=False, thread=0):
     pipelines. Not needed if the starting point is hcp_long_freesurfer as that
     command does the prep work automatically.
 
+    For each subject in the batch file, QuNex will get their sessions and
+    prepare a suitable subject folder by symlinking relevant folders into it. It
+    will symlink both regular session folders and longitudinal sessions folders
+    (defined by hcp_longitudinal_template) if they are present.
+
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
