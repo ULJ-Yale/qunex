@@ -6775,19 +6775,19 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
         boldok = True
 
         # --- check for bold image
-        boldimg = os.path.join(
-            hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
-        )
-        r, boldok = pc.checkForFile2(
-            r,
-            boldimg,
-            "\n     ... fMRIVolume preprocessed bold image present",
-            f"\n     ... ERROR: fMRIVolume preprocessed bold image missing {boldimg}!",
-            status=boldok,
-        )
+        if "longitudinal" not in options or not options["longitudinal"]:
+            boldimg = os.path.join(
+                hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
+            )
+            r, boldok = pc.checkForFile2(
+                r,
+                boldimg,
+                "\n     ... fMRIVolume preprocessed bold image present",
+                f"\n     ... ERROR: fMRIVolume preprocessed bold image missing {boldimg}!",
+                status=boldok,
+            )
 
         # --- Set up the command
-
         comm = (
             os.path.join(
                 hcp["hcp_base"],
