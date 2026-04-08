@@ -4938,11 +4938,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Comma delimited list of numbers which represent TE for each echo
             (unused for single echo).
 
-        --hcp_seechospacing (str, default ''):
+        --hcp_bold_seechospacing (str, default ''):
             Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not
             used. Used when hcp_bold_dcmethod is set to TOPUP_MISMATCHED.
 
-        --hcp_seunwarpdir (str, default ''):
+        --hcp_bold_seunwarpdir (str, default ''):
             Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
             Used when hcp_bold_dcmethod is set to TOPUP_MISMATCHED.
 
@@ -5203,6 +5203,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``hcp_bold_stcorrint``        ``slicetimerparams``
             ``hcp_bold_refreg``           ``fmrirefreg``
             ``hcp_bold_mask``             ``fmrimask``
+            ``hcp_bold_seunwarpdir``      ``seunwarpdir``
+            ``hcp_bold_seechospacing``    ``seechospacing``
             ``wb-resample``               ``hcp_wb_resample``
             ``echoTE``                    ``hcp_echo_te``
             ``matlab-run-mode``           ``hcp_matlab_mode``
@@ -6308,11 +6310,11 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 run = False
 
-        if options["hcp_seechospacing"]:
-            elements.append(("seechospacing", options["hcp_seechospacing"]))
+        if options["hcp_bold_seechospacing"]:
+            elements.append(("seechospacing", options["hcp_bold_seechospacing"]))
 
-        if options["hcp_seunwarpdir"]:
-            elements.append(("seunwarpdir", options["hcp_seunwarpdir"]))
+        if options["hcp_bold_seunwarpdir"]:
+            elements.append(("seunwarpdir", options["hcp_bold_seunwarpdir"]))
 
         # longitudinal mode
         if options["longitudinal"]:
