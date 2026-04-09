@@ -4380,11 +4380,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> ERROR: No DWI data found, check your batchfile and command parameters!"
                     run = False
                 elif "pos" not in dwi_files:
-                    pos_data = ""
+                    pos_data = "EMPTY"
                     neg_data = dwi_files["neg"]
                 elif "neg" not in dwi_files:
                     pos_data = dwi_files["pos"]
-                    neg_data = ""
+                    neg_data = "EMPTY"
                 else:
                     pos_data = dwi_files["pos"]
                     neg_data = dwi_files["neg"]
@@ -4397,7 +4397,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 options["hcp_dwi_posdata"] is None
                 and options["hcp_dwi_negdata"] is not None
             ):
-                r += "\n---> ERROR: When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters."
+                r += "\n---> ERROR: When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters. Set to EMPTY if you do not have data for one of the directions. If there are no pos/neg pairs, also set the --hcp_dwi_combinedata flag."
                 run = False
             else:
                 # pos
