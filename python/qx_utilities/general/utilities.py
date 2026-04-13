@@ -3193,6 +3193,7 @@ def create_session_info(
                 fieldmap_phase       => FM-Phase: fm(1)
                 fieldmap_magnitude1  => FM-Magnitude: fm(1)
                 fieldmap_magnitude2  => FM-Magnitude: fm(1)
+                fieldmap_inhomog     => FM-Inhomogeneity: fm(1)
 
             "Or" patterns are supported using the ``||`` separator on the
             left-hand side of a mapping rule. For each image, the variants

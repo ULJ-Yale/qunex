@@ -20,26 +20,24 @@ The commands are accessible from the terminal using qunex command.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
+import ast
+import glob
+import gzip
+import json
 import os
 import os.path
 import re
 import shutil
-import zipfile
-import tarfile
-import glob
-import gzip
-import ast
-import json
-import yaml
-import sys
 import subprocess
-
-import general.exceptions as ge
-import general.core as gc
-import general.filelock as fl
-import processing.core as pc
-
+import sys
+import tarfile
+import zipfile
 from datetime import datetime
+
+import general.core as gc
+import general.exceptions as ge
+import general.filelock as fl
+import yaml
 
 unwarp = {
     None: "Unknown",
@@ -72,6 +70,7 @@ bids_mri_types = {
     "FM-GE": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fieldmap"},
     "FM-Magnitude": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "magnitude"},
     "FM-Phase": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "phasediff"},
+    "FM-Inhomogeneity": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fmap"},
     "SE-FM-AP": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
     "SE-FM-PA": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
     "SE-FM-LR": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
@@ -152,7 +151,6 @@ def mapToQUNEXBids(
 
     # ---> processing a new session
     elif session not in sessionsList["list"]:
-
         sessionsList["list"].append(session)
 
         # ---> processing study level data
@@ -898,7 +896,6 @@ def import_bids(
 
         # -> we're archiving fully processed inbox folder
         elif processAll:
-
             # -> from bidsinbox
             if os.path.samefile(inbox, bidsinbox):
                 archiveList = glob.glob(os.path.join(inbox, "*"))
@@ -937,7 +934,6 @@ def import_bids(
 
         # -> loop through items
         for archiveItem in archiveList:
-
             # -> delete items
             if archive == "delete":
                 if os.path.isfile(archiveItem):
@@ -1008,7 +1004,6 @@ def import_bids(
     for execute in ["map", "clean"]:
         for session in sessionsList[execute]:
             if session != "bids":
-
                 subject = session.split("_")[0]
                 sessionid = (session.split("_") + [""])[1]
                 info = "subject " + subject
@@ -1213,9 +1208,9 @@ def processBIDS(bfolder):
                         element["tag"] = element["tag"].replace("label-", "")
                         element["tag"] = element["tag"].replace("task-", "")
                         element["imgn"] = imgn
-                        bidsData[session]["images"]["info"][
-                            element["filename"]
-                        ] = element
+                        bidsData[session]["images"]["info"][element["filename"]] = (
+                            element
+                        )
 
     # ---> process fieldmap matching
     for session in bidsData:
@@ -1232,7 +1227,6 @@ def processBIDS(bfolder):
             if basename_no_suffix not in basenames:
                 basenames.append(basename_no_suffix)
             if ".nii" in element["filename"]:
-
                 # ---> is fieldmap a spin-echo type or a "regular" fieldmap?
                 if element["label"] == "epi":
                     fmtype = "se"
@@ -1270,9 +1264,7 @@ def processBIDS(bfolder):
                                 "seq_info"
                             ] = bidsData[session]["images"]["info"][target_file].get(
                                 "seq_info", []
-                            ) + [
-                                tag
-                            ]
+                            ) + [tag]
 
     return bidsData
 
@@ -1656,7 +1648,6 @@ def map_bids2nii(
     all_ok = True
 
     for image in bidsData["images"]["list"]:
-
         imgn = bidsData["images"]["info"][image]["imgn"]
         tfile = os.path.join(nfolder, "%d.nii.gz" % (imgn))
 
@@ -1931,7 +1922,7 @@ def map_nii2bids(
                 if not sessionid.isalnum():
                     [
                         print(
-                            f"... WARNING: session name contains non-alphanumeric characters, skipping",
+                            "... WARNING: session name contains non-alphanumeric characters, skipping",
                             file=output,
                         )
                         for output in [sys.stdout, bout]
@@ -2002,7 +1993,7 @@ def map_nii2bids(
         if dwi_count > 1:
             [
                 print(
-                    f"... WARNING: Multiple DWI images found, set entity run or other relevant entities to ensure that file names are unique.",
+                    "... WARNING: Multiple DWI images found, set entity run or other relevant entities to ensure that file names are unique.",
                     file=output,
                 )
                 for output in [sys.stdout, bout]
