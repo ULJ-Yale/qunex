@@ -590,6 +590,10 @@ arglist = [
     ["hcp_transmit_res", "", isNone],
     ["hcp_myelin_mapping_fwhm", "", isNone],
     ["hcp_old_myelin_mapping", "", flag],
+    ["# --- hcp_transmit_bias_group_average_fit options"],
+    ["hcp_all_uncorrected_myelin", "", isNone],
+    ["hcp_manual_recieve", "", isNone],
+    ["hcp_transmit_group_name", "", isNone],
     ["# --- fsl_feat options"],
     ["feat_file", "", isNone],
     ["# --- fsl_melodic options"],
@@ -737,6 +741,7 @@ lalist = [
 malist = [
     ["hcp_temporal_ica", process_hcp.hcp_temporal_ica],
     ["hcp_make_average_dataset", process_hcp.hcp_make_average_dataset],
+    ["hcp_transmit_bias_group_average_fit", process_hcp.hcp_transmit_bias_group_average_fit],
     ["hcp_transmit_bias_group_average_fit", process_hcp.hcp_transmit_bias_group_average_fit],
 ]
 
