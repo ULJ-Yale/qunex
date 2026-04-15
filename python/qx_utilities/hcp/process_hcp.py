@@ -6837,7 +6837,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             folder, in case hcp_reuse_existing_ica is used.
 
         --hcp_t1wtemplatebrain (str, default ''):
-            Path to the T1w template brain used by pyfix. Not set by default,
+            a to the T1w template brain used by pyfix. Not set by default,
             you can either set a path or set to "auto" to set as
             <HCPPIPEDIR>/global/templates/MNI152_T1_<RES>mm_brain.nii.gz.
 
@@ -12645,7 +12645,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
             ``hcp_afi_image``                  ``afi-image``
             ``hcp_afi_tr_one``                 ``afi-tr-one``
             ``hcp_afi_tr_two``                 ``afi-tr-two``
-            ``hcp_b1tx_magnitude``              ``b1tx-magnitude``
+            ``hcp_b1tx_magnitude``             ``b1tx-magnitude``
             ``hcp_b1tx_phase``                 ``b1tx-phase``
             ``hcp_b1tx_phase_divisor``         ``b1tx-phase-divisor``
             ``hcp_pt_fmri_names``              ``pt-fmri-names``
@@ -12984,9 +12984,6 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
 
-        --hcp_groupsfolder(str, default 'groups'):
-            The path to the HCP group folder, where group-level data is stored.
-
         --hcp_regname (str, default 'MSMSulc'):
             Input registration name.
 
@@ -13009,8 +13006,8 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
         --hcp_transmit_group_name (str, default ''): 
             Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)
 
-        --hcp_group_average_name (str, default '')
-            Output folder inside hcp_groupsfolder folder
+        --hcp_outgroupname (str, default '')
+            Output folder inside studyfolder
 
         --hcp_gmwm_template (str, default '')
             Output file for GM+WM volume ROI
@@ -13056,7 +13053,7 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
             ================================== ============================
             ``hcp_regname``                    ``reg-name``
             ``hcp_transmit_mode``              ``mode``
-            ``hcp_group_average_name``         ``group-average-name``
+            ``hcp_outgroupname``               ``group-average-name``
             ``hcp_gmwm_template``              ``gmwm-template-out``
             ``hcp_group_uncorrected_myelin``   ``average-myelin-out``
             ``hcp_all_uncorrected_myelin``     ``all-myelin-out``
@@ -13094,21 +13091,70 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
     report = "Error"
 
     try:
-        if options["hcp_groupsfolder"] is None:
-            r += "\n---> hcp_groupsfolder undefined, using default 'groups'"
-            groupsfolder= os.path.join(options['sessionsfolder'],'groups')
-        else:
-            if not os.path.isabs(options['hcp_groupsfolder']):
-                r += f"\n---> WARNING: hcp_groupsfolder is a local path"
-            groupsfolder = os.path.abspath(options['hcp_groupsfolder'])
-            r += f"\n---> hcp_groupsfolder defined as {groupsfolder}"
-            
-        handle_hcp_links(groupsfolder, sessions, options, False)
         doHCPOptionsCheck(options, "hcp_transmit_bias_group_average_fit")
+        subject_list = ""
+        
+        for session in sessions:
+            hcp = getHCPPaths(session, options)
+            if "hcp" not in session:
+                r += (
+                    "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                    % (session["id"])
+                )
+                run = False
+
+            # subject_list
+            if subject_list == "":
+                subject_list = session["id"] + options["hcp_suffix"]
+            else:
+                subject_list = (
+                    subject_list + "@" + session["id"] + options["hcp_suffix"]
+                )
+
+        outgroupname = ""
+        if options["hcp_outgroupname"] is None:
+            r += "\n---> ERROR: hcp_outgroupname is not provided!"
+            run = False
+        else:
+            outgroupname = options["hcp_outgroupname"]
+
+        if len(sessions) == 1:
+            r += "\n---> ERROR: hcp_transmit_bias_group_average_fit needs to be ran across several sessions!"
+            run = False
+
+        # multi session
+        else:
+            # set study dir
+            study_dir = os.path.join(
+                options["sessionsfolder"], "transmit_bias"
+            )
+            handle_hcp_links(study_dir, sessions, options, False)
 
         if options["hcp_transmit_mode"] is None:
             r += "\n---> ERROR: the hcp_transmit_mode parameter is mandatory!"
             run = False
+
+        gmwm_template = ""
+        if options["hcp_gmwm_template"] is None:
+            r += "\n---> ERROR: the hcp_gmwm_template parameter is mandatory!"
+            run = False
+        elif not os.path.isabs(options["hcp_gmwm_template"]) and options["hcp_gmwm_template"][0] != "~":
+            r += "\n---> WARNING: hcp_gmwm_template parameter is local"
+            gmwm_template = os.path.join(study_dir, outgroupname, options["hcp_gmwm_template"])
+            r += f"\n--->    hcp_gmwm_template parameter set to {gmwm_template}"
+        else:
+            gmwm_template = options["hcp_gmwm_template"]
+
+        group_uncorrected_myelin = ""
+        if options["hcp_group_uncorrected_myelin"] is None:
+            r += "\n---> ERROR: the hcp_group_uncorrected_myelin parameter is mandatory!"
+            run = False
+        elif not os.path.isabs(options["hcp_group_uncorrected_myelin"]) and options["hcp_group_uncorrected_myelin"][0] != "~":
+            r += "\n---> WARNING: hcp_group_uncorrected_myelin parameter is local"
+            group_uncorrected_myelin = os.path.join(study_dir, outgroupname, options["hcp_group_uncorrected_myelin"])
+            r += f"\n--->    hcp_group_uncorrected_myelin parameter set to {group_uncorrected_myelin}"
+        else:
+            group_uncorrected_myelin = options["hcp_group_uncorrected_myelin"]
 
         # build the command
         if run:
@@ -13135,19 +13181,19 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
                 --reg-name="%(reg_name)s" \
                 --group-average-name="%(group_average_name)s" \
                 --gmwm-template-out="%(gmwm_template)s" \
-                --average-myelin-out"%(average_myelin)s" \
+                --average-myelin-out="%(average_myelin)s" \
                 --matlab-run-mode="%(matlab_run_mode)s"'
                 % {
                     "script": os.path.join(
                         os.environ["HCPPIPEDIR"], "TransmitBias", "Phase2_GroupAverageFit.sh"
                     ),
-                    "studyfolder": groupsfolder,
-                    "subjectlist": sessionids.replace(',','@') + options["hcp_suffix"],
+                    "studyfolder": study_dir,
+                    "subjectlist": subject_list,
                     "mode": options["hcp_transmit_mode"],
                     "reg_name": options["hcp_regname"],
-                    "group_average_name": options["hcp_group_average_name"],
-                    "gmwm_template": options["hcp_gmwm_template"],
-                    "average_myelin": options["hcp_group_uncorrected_myelin"],
+                    "group_average_name": outgroupname,
+                    "gmwm_template": gmwm_template,
+                    "average_myelin": group_uncorrected_myelin,
                     "matlab_run_mode": matlabrunmode,
                 }
             )
@@ -13186,11 +13232,15 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
 
             # PseudoTransmit
             elif options["hcp_transmit_mode"] == "PseudoTransmit":
-                if not options["hcp_pt_reference_value_file"]:
-                    r += "\n---> ERROR: the hcp_pt_reference_value_file parameter is not provided!"
+                if options["hcp_pt_reference_value_file"] is None:
+                    r += "\n---> ERROR: the hcp_group_uncorrected_myelin parameter is mandatory!"
                     run = False
+                elif not os.path.isabs(options["hcp_pt_reference_value_file"]) and options["hcp_pt_reference_value_file"][0] != '~':
+                    r += "\n---> WARNING: hcp_pt_reference_value_file parameter is local"
+                    comm += f"                --reference-value-out={os.path.join(study_dir, outgroupname, options["hcp_pt_reference_value_file"])}"
+                    r += f"\n--->    hcp_pt_reference_value_file parameter set to {os.path.join(study_dir, outgroupname, options["hcp_pt_reference_value_file"])}"
                 else:
-                    comm += f"                --pt-reference-value-file={options['hcp_pt_reference_value_file']}"
+                    comm += f"                --reference-value-out={options['hcp_pt_reference_value_file']}"
 
             else:
                 r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
@@ -13226,7 +13276,7 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
                     comm,
                     "Running HCP Transmit Bias Phase 2, Group Average Fit",
                     overwrite=overwrite,
-                    thread=options["hcp_group_average_name"],
+                    thread=options["hcp_outgroupname"],
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
@@ -13236,23 +13286,26 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
                     r=r,
                 )
 
+                # #Remove soft links
+                # handle_hcp_links(study_dir, sessions, options, True)
+
             # -- just checking
             else:
                 passed, report, r, failed = pc.checkRun(
                     None,
                     None,
-                    "HCP Transmit Bias Phase 1, Individual Align",
+                    "HCP Transmit Bias Phase 2, Group Average Fit",
                     r,
                     overwrite=overwrite,
                 )
                 if passed is None:
-                    r += "\n---> HCP Transmit Bias Phase 1, Individual Align can be run"
-                    report = "HCP Transmit Bias Phase 1, Individual Align can be run"
+                    r += "\n---> HCP Transmit Bias Phase 2, Group Average Fit can be run"
+                    report = "HCP Transmit Bias Phase 2, Group Average Fit can be run"
                     failed = 0
 
         else:
             r += "\n---> Session cannot be processed."
-            report = "HCP Transmit Bias Phase 1, Individual Align cannot be run"
+            report = "HCP Transmit Bias Phase 2, Group Average Fit cannot be run"
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
@@ -13263,8 +13316,11 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
         r += f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         failed = 1
 
+    #Remove soft links to prevent clutter
+    handle_hcp_links(study_dir, sessions, options, True)
+
     r += (
-        "\n\nHCP Transmit Bias Phase 1, Individual Align Preprocessing %s on %s\n------------------------------------------------------------"
+        "\n\nHCP Transmit Bias Phase 2, Group Average Fit Preprocessing %s on %s\n------------------------------------------------------------"
         % (
             pc.action("completed", options["run"]),
             datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -13272,7 +13328,7 @@ def hcp_transmit_bias_group_average_fit(sessions, sessionids, options, overwrite
     )
 
     # print r
-    return (r, (sinfo["id"], report, failed))
+    return (r, (sessionids, report, failed))
 
 def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0):
     """
