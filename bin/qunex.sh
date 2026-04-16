@@ -127,9 +127,9 @@ bash_call_execute() {
         echo "         Consider re-generating QuNex hierarchy..."; echo ""
     fi
 
-    # -- If logfolder flag set then set it and set master log
+    # -- If logfolder flag not set then set it and set master log
     if [[ -z ${LogFolder} ]]; then
-        MasterLogFolder="${StudyFolder}/logs"
+        MasterLogFolder="${StudyFolder}/logs/${CommandToRun}_${TimeStamp}"
     else
         MasterLogFolder="$LogFolder"
     fi
@@ -305,6 +305,7 @@ dwi_legacy_gpu() {
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
     --usefieldmap=${UseFieldmap} \
+    --usesefieldmap=${UseSEFieldmap} \
     --pedir=${pedir} \
     --echospacing=${EchoSpacing} \
     --te=${te} \
@@ -1302,11 +1303,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
          StudyFolderPath=${StudyFolder}
     fi
 
-    # -- If logfolder flag set then set it and set master log
-    if [[ -z ${LogFolder} ]]; then
-        LogFolder="${StudyFolder}/logs"
-    fi
-
     # -- Set additional RunTurnkey flags
     TURNKEY_TYPE=`get_parameters "${setflag}turnkeytype" $@`
     TURNKEY_STEPS=`get_parameters "${setflag}turnkeysteps" $@`
@@ -1510,6 +1506,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
+    UseSEFieldmap=`get_parameters "${setflag}usesefieldmap" $@`
     diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
     extra_eddy_args=`get_parameters "${setflag}extra_eddy_args" $@`
 
@@ -2114,7 +2111,8 @@ fi
 if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then echo "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [[ -z "$UseFieldmap" ]]; then echo "ERROR: UseFieldmap yes/no specification missing"; exit 1; fi
+    if [[ -z "$UseFieldmap" ]] && [[ -z "$UseSEFieldmap" ]]; then echo "ERROR: Either UseFieldmap or UseSEFieldmap yes/no specification required"; exit 1; fi
+    if [[ "$UseFieldmap" == "yes" ]] && [[ "$UseSEFieldmap" == "yes" ]]; then echo "ERROR: UseFieldmap and UseSEFieldmap are mutually exclusive"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then echo "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then echo "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then echo "ERROR: List of sessions missing"; exit 1; fi
@@ -2122,8 +2120,6 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
 
     if [[ ${UseFieldmap} == "yes" ]]; then
         if [[ -z "$te" ]]; then echo "ERROR: TE (--te) value for Fieldmap missing"; exit 1; fi
-    elif [[ ${UseFieldmap} == "no" ]]; then
-        echo "NOTE: Processing without FieldMap (TE option not needed)"
     fi
 
     Cluster="$RunMethod"
@@ -2144,6 +2140,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Using FieldMap: ${UseFieldmap}"
+    echo "   Using SE FieldMap: ${UseSEFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
     echo "   Phase Encoding Direction: ${pedir}"
     echo "   TE value for Fieldmap: ${TE}"

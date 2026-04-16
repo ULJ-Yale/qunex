@@ -4861,11 +4861,29 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             GEHealthCareLegacyFieldMap, PhilipsFieldMap,
             INHOMOGENEITY_FIELDMAP, OnScanner or NONE.
 
-        --hcp_bold_inhomfmap (str, default 'NONE'):
-            Path to the inhomogeneity fieldmap image or NONE if not used.
-            This parameter is used when hcp_bold_dcmethod is set to
+        --hcp_bold_inhomfmap (str, default ''):
+            Path to the inhomogeneity fieldmap image, QuNex tries to
+            automatically set this if left empty and INHOMOGENEITY_FIELDMAP
+            is selected. This parameter is used when hcp_bold_dcmethod is set to
             INHOMOGENEITY_FIELDMAP. Usually this is set automatically based
             on the FM-Inhomogeneity image specified in the batch file.
+
+        --hcp_bold_inhomfmapmag (str, default ''):
+            Path to the magnitude image in the same space as
+            --hcp_bold_inhomfmap (e.g., a b=0 volume from the diffusion
+            acquisition). Used for fieldmap-to-T1w registration. Mutually
+            exclusive with --hcp_bold_inhomfmapdwi. At least one of
+            --hcp_bold_inhomfmapmag or --hcp_bold_inhomfmapdwi is required when
+            --hcp_bold_dcmethod=INHOMOGENEITY_FIELDMAP.
+
+        --hcp_bold_inhomfmapdwi (str, default ''):
+            4D diffusion image in the same space as --hcp_bold_inhomfmap; the
+            first volume (b=0) will be extracted and used for fieldmap-to-T1w
+            registration. Can be either a path to the image or a batch file
+            image number or tag. Mutually exclusive with
+            --hcp_bold_inhomfmapmag. At least one of --hcp_bold_inhomfmapmag or
+            --hcp_bold_inhomfmapdwi is required when
+            --hcp_bold_dcmethod=INHOMOGENEITY_FIELDMAP.
 
         --hcp_bold_echodiff (str):
             Delta TE for BOLD fieldmap images or NONE if not used.
@@ -5233,6 +5251,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``hcp_bold_seunwarpdir``      ``seunwarpdir``
             ``hcp_bold_seechospacing``    ``seechospacing``
             ``hcp_bold_inhomfmap``        ``inhomfmap``
+            ``hcp_bold_inhomfmapmag``     ``inhomfmapmag``
+            ``hcp_bold_inhomfmapdwi``     ``inhomfmapdwi``
             ``wb-resample``               ``hcp_wb_resample``
             ``echoTE``                    ``hcp_echo_te``
             ``matlab-run-mode``           ``hcp_matlab_mode``
@@ -5380,6 +5400,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         fmphase = "NONE"
         fmcombined = "NONE"
         fminhom = "NONE"
+        fminhommag = "NONE"
+        fminhomfmapdwi = "NONE"
 
         # -> Check for SE images
         sepresent = []
@@ -5954,35 +5976,134 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 options["hcp_bold_biascorrection"].lower() != "sebased"
                 and options["hcp_bold_dcmethod"].lower() == "inhomogeneity_fieldmap"
             ):
-                fmnum = boldinfo.get("fm", None)
-                if fmnum is None:
-                    r += (
-                        "\n---> ERROR: No fieldmap number specified for the BOLD image!"
-                    )
-                    run = False
-                else:
-                    fieldok = True
-                    for i, v in hcp["fieldmap"].items():
-                        r, fieldok = pc.checkForFile2(
-                            r,
-                            hcp["fieldmap"][i]["Inhomogeneity"],
-                            "\n     ... Inhomogeneity fieldmap image %d present " % (i),
-                            "\n     ... ERROR: Inhomogeneity fieldmap image %d missing!"
-                            % (i),
-                            status=fieldok,
-                        )
-                        boldok = boldok and fieldok
-                    if not pc.is_number(echospacing):
-                        fieldok = False
+                if options["hcp_bold_inhomfmap"] is not None:
+                    if not os.path.exists(options["hcp_bold_inhomfmap"]):
                         r += (
-                            '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
-                            % (options["hcp_bold_echospacing"])
+                            "\n---> ERROR: Could not find inhomogeneity fieldmap image specified in hcp_bold_inhomfmap parameter: %s."
+                            % (options["hcp_bold_inhomfmap"])
                         )
+                        fieldok = False
+                    else:
+                        r += "\n     ... inhomogeneity fieldmap image present"
+                        fieldok = True
                     boldok = boldok and fieldok
-                    fminhom = hcp["fieldmap"][int(fmnum)]["Inhomogeneity"]
+                    fminhom = options["hcp_bold_inhomfmap"]
                     fmmag = None
                     fmphase = None
                     fmcombined = None
+                else:
+                    fmnum = boldinfo.get("fm", None)
+                    if fmnum is None:
+                        r += "\n---> ERROR: No fieldmap number specified for the BOLD image!"
+                        run = False
+                    else:
+                        fieldok = True
+                        for i, v in hcp["fieldmap"].items():
+                            r, fieldok = pc.checkForFile2(
+                                r,
+                                hcp["fieldmap"][i]["Inhomogeneity"],
+                                "\n     ... Inhomogeneity fieldmap image %d present "
+                                % (i),
+                                "\n     ... ERROR: Inhomogeneity fieldmap image %d missing!"
+                                % (i),
+                                status=fieldok,
+                            )
+                            boldok = boldok and fieldok
+                        if not pc.is_number(echospacing):
+                            fieldok = False
+                            r += (
+                                '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
+                                % (options["hcp_bold_echospacing"])
+                            )
+                        boldok = boldok and fieldok
+                        fminhom = hcp["fieldmap"][int(fmnum)]["Inhomogeneity"]
+                        fmmag = None
+                        fmphase = None
+                        fmcombined = None
+
+                # --- check for inhomfmapmag / inhomfmapdwi (mutually exclusive)
+                if (
+                    options["hcp_bold_inhomfmapmag"] is not None
+                    and options["hcp_bold_inhomfmapdwi"] is not None
+                ):
+                    r += "\n---> ERROR: hcp_bold_inhomfmapmag and hcp_bold_inhomfmapdwi are mutually exclusive! Please specify only one."
+                    boldok = False
+                elif options["hcp_bold_inhomfmapmag"] is not None:
+                    # --- user provided a path to a magnitude image
+                    if os.path.exists(options["hcp_bold_inhomfmapmag"]):
+                        fminhommag = options["hcp_bold_inhomfmapmag"]
+                        r += (
+                            "\n     ... inhomogeneity fieldmap magnitude image present: %s"
+                            % (fminhommag)
+                        )
+                    else:
+                        r += (
+                            "\n---> ERROR: Could not find inhomogeneity fieldmap magnitude image specified in hcp_bold_inhomfmapmag parameter: %s."
+                            % (options["hcp_bold_inhomfmapmag"])
+                        )
+                        boldok = False
+                elif options["hcp_bold_inhomfmapdwi"] is not None:
+                    # --- user provided either a path or an image number/tag from the batch file
+                    dwi_value = options["hcp_bold_inhomfmapdwi"]
+                    if os.path.exists(dwi_value):
+                        # it is a direct path to a DWI image
+                        fminhomfmapdwi = dwi_value
+                        r += (
+                            "\n     ... inhomogeneity fieldmap DWI image present: %s"
+                            % (fminhomfmapdwi)
+                        )
+                    else:
+                        # try to resolve as an image number or tag from the batch file
+                        dwi_resolved = None
+                        for k, v in sinfo.items():
+                            if k.isdigit():
+                                # match by image number
+                                if k == str(dwi_value) or str(k) == str(dwi_value):
+                                    dwi_task = v.get("task", v.get("filename", None))
+                                    if dwi_task:
+                                        dwi_candidates = glob.glob(
+                                            os.path.join(
+                                                hcp["DWI_source"],
+                                                "*%s*.nii.gz" % (dwi_task),
+                                            )
+                                        )
+                                        if dwi_candidates:
+                                            dwi_resolved = dwi_candidates[0]
+                                    break
+                                # match by name tag (e.g. "DWI" with task "dMRI_dir98_AP")
+                                if v.get("name", "") == "DWI" and (
+                                    v.get("task", "") == dwi_value
+                                    or v.get("filename", "") == dwi_value
+                                    or v.get("name", "") + ":" + v.get("task", "")
+                                    == dwi_value
+                                ):
+                                    dwi_task = v.get("task", v.get("filename", None))
+                                    if dwi_task:
+                                        dwi_candidates = glob.glob(
+                                            os.path.join(
+                                                hcp["DWI_source"],
+                                                "*%s*.nii.gz" % (dwi_task),
+                                            )
+                                        )
+                                        if dwi_candidates:
+                                            dwi_resolved = dwi_candidates[0]
+                                    break
+
+                        if dwi_resolved:
+                            fminhomfmapdwi = dwi_resolved
+                            r += (
+                                "\n     ... inhomogeneity fieldmap DWI image resolved from batch file: %s"
+                                % (fminhomfmapdwi)
+                            )
+                        else:
+                            r += (
+                                "\n---> ERROR: Could not resolve hcp_bold_inhomfmapdwi [%s] to a file! "
+                                "Please provide a valid file path or a valid image number/tag from the batch file."
+                                % (dwi_value)
+                            )
+                            boldok = False
+                else:
+                    r += "\n---> WARNING: Neither hcp_bold_inhomfmapmag nor hcp_bold_inhomfmapdwi is set. The HCP pipeline may require one of these for INHOMOGENEITY_FIELDMAP."
 
             # --- NO DC used
             elif options["hcp_bold_dcmethod"].lower() == "none":
@@ -6114,6 +6235,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "fmphase": fmphase,
                 "fmcombined": fmcombined,
                 "fminhom": fminhom,
+                "fminhommag": fminhommag,
+                "fminhomfmapdwi": fminhomfmapdwi,
                 "fmriref": fmriref,
             }
             boldsData.append(b)
@@ -6262,6 +6385,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     fmphase = b["fmphase"]
     fmcombined = b["fmcombined"]
     fminhom = b["fminhom"]
+    fminhommag = b["fminhommag"]
+    fminhomfmapdwi = b["fminhomfmapdwi"]
     fmriref = b["fmriref"]
 
     # prepare return variables
@@ -6339,6 +6464,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             ("fmapphase", fmphase),
             ("fmapcombined", fmcombined),
             ("inhomfmap", fminhom),
+            ("inhomfmapmag", fminhommag),
+            ("inhomfmapdwi", fminhomfmapdwi),
             ("echospacing", echospacing),
             ("echodiff", options["hcp_bold_echodiff"]),
             ("unwarpdir", unwarpdir),
