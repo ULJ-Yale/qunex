@@ -783,10 +783,11 @@ main() {
         echo "Applying the warp for $diffdata to T1w space with fieldmap specification..."; echo ""
         applywarp -i "$difffolder"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
     elif [ "${usesefieldmap}" == "yes" ]; then
-        echo "Applying TOPUP warp + epi_reg transformation for $diffdata to T1w space with SE fieldmap..."; echo ""
-        # -- Combine the TOPUP warp field with the epi_reg affine transform
-        convertwarp --ref="$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" --warp1="$difffolder"/topup/topup_field --postmat="$difffolder"/reg/"$diffdata"_nodif2T1.mat --out="$difffolder"/reg/"$diffdata"_nodif2T1_warp_se --relout
-        applywarp -i "$difffolder"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/reg/"$diffdata"_nodif2T1_warp_se --interp=spline --rel -v
+        echo "Applying TOPUP distortion correction + epi_reg affine for $diffdata to T1w space with SE fieldmap..."; echo ""
+        # -- First apply TOPUP distortion correction to the eddy-corrected data
+        applytopup --imain="$difffolder"/eddy/"$diffdata"_eddy_corrected --topup="$difffolder"/topup/topup_results --datain="$difffolder"/topup/acqparams_topup.txt --inindex=1 --method=jac --out="$difffolder"/eddy/"$diffdata"_eddy_corrected_dc -v
+        # -- Then apply the epi_reg affine transformation to register to T1w space
+        flirt -in "$difffolder"/eddy/"$diffdata"_eddy_corrected_dc -ref "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" -applyxfm -init "$difffolder"/reg/"$diffdata"_nodif2T1.mat -out "$t1wdifffolder"/data -interp spline -v
     else
         echo "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
         epi_reg --epi="$difffolder"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" --t1brain="$t1wdifffolder"/T1w_brain_downsampled2diff_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/T1w_wmsegimage_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
