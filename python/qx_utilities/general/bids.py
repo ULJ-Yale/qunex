@@ -70,7 +70,7 @@ bids_mri_types = {
     "FM-GE": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fieldmap"},
     "FM-Magnitude": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "magnitude"},
     "FM-Phase": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "phasediff"},
-    "FM-Inhomogeneity": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fmap"},
+    "FM-Real": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fmap"},
     "SE-FM-AP": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
     "SE-FM-PA": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
     "SE-FM-LR": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},

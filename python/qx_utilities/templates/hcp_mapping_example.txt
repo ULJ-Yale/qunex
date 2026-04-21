@@ -76,7 +76,7 @@
 #                     correction
 # FM-Phase        ... Field mapping phase image used for distortion
 #                     correction
-# FM-Inhomogeneity ... Field mapping inhomogeneity image used for
+# FM-Real ... Field mapping inhomogeneity image used for
 #                     distortion correction
 # boldref[N]      ... Reference image for the following BOLD image
 # bold[N]         ... BOLD image

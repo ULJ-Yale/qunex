@@ -280,7 +280,7 @@ def getHCPPaths(sinfo, options):
             dc = True
         elif options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap":
             legacy_dc = True
-    inhom_dc = False
+    real_dc = False
     if options["hcp_bold_dcmethod"] is not None:
         if options["hcp_bold_dcmethod"].lower() in [
             "fieldmap",
@@ -290,8 +290,8 @@ def getHCPPaths(sinfo, options):
             dc = True
         elif options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap":
             legacy_dc = True
-        elif options["hcp_bold_dcmethod"].lower() == "inhomogeneity_fieldmap":
-            inhom_dc = True
+        elif options["hcp_bold_dcmethod"].lower() == "realogeneity_fieldmap":
+            real_dc = True
 
     if dc:
         fmapmag = glob.glob(
@@ -347,22 +347,22 @@ def getHCPPaths(sinfo, options):
                 fmnum = int(fmnum.group())
                 d["fieldmap"].update({fmnum: {"GE": imagepath}})
 
-    if inhom_dc:
-        fmapinhom = glob.glob(
+    if real_dc:
+        fmapreal = glob.glob(
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Inhomogeneity.nii.gz",
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Real.nii.gz",
             )
         )
-        for imagepath in fmapinhom:
+        for imagepath in fmapreal:
             fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
             if fmnum:
                 fmnum = int(fmnum.group())
                 if fmnum not in d["fieldmap"]:
-                    d["fieldmap"].update({fmnum: {"Inhomogeneity": imagepath}})
+                    d["fieldmap"].update({fmnum: {"Real": imagepath}})
                 else:
-                    d["fieldmap"][fmnum].update({"Inhomogeneity": imagepath})
+                    d["fieldmap"][fmnum].update({"Real": imagepath})
 
     # B1tx/TB1TFL phase and mag
     tb1tlf_magnitude = glob.glob(
@@ -4859,31 +4859,20 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             BOLD image deformation correction that should be used: TOPUP,
             TOPUP_MISMATCHED, FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
             GEHealthCareLegacyFieldMap, PhilipsFieldMap,
-            INHOMOGENEITY_FIELDMAP, OnScanner or NONE.
+            REAL_FIELDMAP, OnScanner or NONE.
 
-        --hcp_bold_inhomfmap (str, default ''):
-            Path to the inhomogeneity fieldmap image, QuNex tries to
-            automatically set this if left empty and INHOMOGENEITY_FIELDMAP
+        --hcp_bold_realfmap (str, default ''):
+            Path to the realogeneity fieldmap image, QuNex tries to
+            automatically set this if left empty and REAL_FIELDMAP
             is selected. This parameter is used when hcp_bold_dcmethod is set to
-            INHOMOGENEITY_FIELDMAP. Usually this is set automatically based
-            on the FM-Inhomogeneity image specified in the batch file.
+            REAL_FIELDMAP. Usually this is set automatically based
+            on the FM-Real image specified in the batch file.
 
-        --hcp_bold_inhomfmapmag (str, default ''):
+        --hcp_bold_realfmapmag (str, default ''):
             Path to the magnitude image in the same space as
-            --hcp_bold_inhomfmap (e.g., a b=0 volume from the diffusion
-            acquisition). Used for fieldmap-to-T1w registration. Mutually
-            exclusive with --hcp_bold_inhomfmapdwi. At least one of
-            --hcp_bold_inhomfmapmag or --hcp_bold_inhomfmapdwi is required when
-            --hcp_bold_dcmethod=INHOMOGENEITY_FIELDMAP.
-
-        --hcp_bold_inhomfmapdwi (str, default ''):
-            4D diffusion image in the same space as --hcp_bold_inhomfmap; the
-            first volume (b=0) will be extracted and used for fieldmap-to-T1w
-            registration. Can be either a path to the image or a batch file
-            image number or tag. Mutually exclusive with
-            --hcp_bold_inhomfmapmag. At least one of --hcp_bold_inhomfmapmag or
-            --hcp_bold_inhomfmapdwi is required when
-            --hcp_bold_dcmethod=INHOMOGENEITY_FIELDMAP.
+            --hcp_bold_realfmap (e.g., a b=0 volume from the diffusion
+            acquisition). Used for fieldmap-to-T1w registration. Required when
+            --hcp_bold_dcmethod=REAL_FIELDMAP.
 
         --hcp_bold_echodiff (str):
             Delta TE for BOLD fieldmap images or NONE if not used.
@@ -5250,9 +5239,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``hcp_bold_mask``             ``fmrimask``
             ``hcp_bold_seunwarpdir``      ``seunwarpdir``
             ``hcp_bold_seechospacing``    ``seechospacing``
-            ``hcp_bold_inhomfmap``        ``inhomfmap``
-            ``hcp_bold_inhomfmapmag``     ``inhomfmapmag``
-            ``hcp_bold_inhomfmapdwi``     ``inhomfmapdwi``
+            ``hcp_bold_realfmap``         ``realfmap``
+            ``hcp_bold_realfmapmag``      ``realfmapmag``
             ``wb-resample``               ``hcp_wb_resample``
             ``echoTE``                    ``hcp_echo_te``
             ``matlab-run-mode``           ``hcp_matlab_mode``
@@ -5399,9 +5387,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         fmmag = "NONE"
         fmphase = "NONE"
         fmcombined = "NONE"
-        fminhom = "NONE"
-        fminhommag = "NONE"
-        fminhomfmapdwi = "NONE"
+        fmreal = "NONE"
+        fmrealmag = "NONE"
 
         # -> Check for SE images
         sepresent = []
@@ -5421,7 +5408,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "philipsfieldmap",
             "gehealthcarefieldmap",
             "gehealthcarelegacyfieldmap",
-            "inhomogeneity_fieldmap",
+            "real_fieldmap",
             "onscanner",
             "none",
         ]:
@@ -5540,7 +5527,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "philipsfieldmap",
             "gehealthcarefieldmap",
             "gehealthcarelegacyfieldmap",
-            "inhomogeneity_fieldmap",
+            "real_fieldmap",
         ]:
             unwarpdirs = [
                 [f.strip() for f in e.strip().split("=")]
@@ -5593,7 +5580,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "philipsfieldmap",
                 "gehealthcarefieldmap",
                 "gehealthcarelegacyfieldmap",
-                "inhomogeneity_fieldmap",
+                "real_fieldmap",
             ]
 
             # --- set unwarpdir and orient
@@ -5971,23 +5958,23 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
                     fmcombined = None
 
-            # --- check for inhomogeneity fieldmap image
+            # --- check for real fieldmap image
             elif (
                 options["hcp_bold_biascorrection"].lower() != "sebased"
-                and options["hcp_bold_dcmethod"].lower() == "inhomogeneity_fieldmap"
+                and options["hcp_bold_dcmethod"].lower() == "real_fieldmap"
             ):
-                if options["hcp_bold_inhomfmap"] is not None:
-                    if not os.path.exists(options["hcp_bold_inhomfmap"]):
+                if options["hcp_bold_realfmap"] is not None:
+                    if not os.path.exists(options["hcp_bold_realfmap"]):
                         r += (
-                            "\n---> ERROR: Could not find inhomogeneity fieldmap image specified in hcp_bold_inhomfmap parameter: %s."
-                            % (options["hcp_bold_inhomfmap"])
+                            "\n---> ERROR: Could not find real fieldmap image specified in hcp_bold_realfmap parameter: %s."
+                            % (options["hcp_bold_realfmap"])
                         )
                         fieldok = False
                     else:
-                        r += "\n     ... inhomogeneity fieldmap image present"
+                        r += "\n     ... real fieldmap image present"
                         fieldok = True
                     boldok = boldok and fieldok
-                    fminhom = options["hcp_bold_inhomfmap"]
+                    fmreal = options["hcp_bold_realfmap"]
                     fmmag = None
                     fmphase = None
                     fmcombined = None
@@ -6001,10 +5988,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         for i, v in hcp["fieldmap"].items():
                             r, fieldok = pc.checkForFile2(
                                 r,
-                                hcp["fieldmap"][i]["Inhomogeneity"],
-                                "\n     ... Inhomogeneity fieldmap image %d present "
+                                hcp["fieldmap"][i]["Real"],
+                                "\n     ... Real fieldmap image %d present "
                                 % (i),
-                                "\n     ... ERROR: Inhomogeneity fieldmap image %d missing!"
+                                "\n     ... ERROR: Real fieldmap image %d missing!"
                                 % (i),
                                 status=fieldok,
                             )
@@ -6016,94 +6003,28 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                 % (options["hcp_bold_echospacing"])
                             )
                         boldok = boldok and fieldok
-                        fminhom = hcp["fieldmap"][int(fmnum)]["Inhomogeneity"]
+                        fmreal = hcp["fieldmap"][int(fmnum)]["Real"]
                         fmmag = None
                         fmphase = None
                         fmcombined = None
 
-                # --- check for inhomfmapmag / inhomfmapdwi (mutually exclusive)
-                if (
-                    options["hcp_bold_inhomfmapmag"] is not None
-                    and options["hcp_bold_inhomfmapdwi"] is not None
-                ):
-                    r += "\n---> ERROR: hcp_bold_inhomfmapmag and hcp_bold_inhomfmapdwi are mutually exclusive! Please specify only one."
-                    boldok = False
-                elif options["hcp_bold_inhomfmapmag"] is not None:
+                # --- check for realfmapmag
+                if options["hcp_bold_realfmapmag"] is not None:
                     # --- user provided a path to a magnitude image
-                    if os.path.exists(options["hcp_bold_inhomfmapmag"]):
-                        fminhommag = options["hcp_bold_inhomfmapmag"]
+                    if os.path.exists(options["hcp_bold_realfmapmag"]):
+                        fmrealmag = options["hcp_bold_realfmapmag"]
                         r += (
-                            "\n     ... inhomogeneity fieldmap magnitude image present: %s"
-                            % (fminhommag)
+                            "\n     ... real fieldmap magnitude image present: %s"
+                            % (fmrealmag)
                         )
                     else:
                         r += (
-                            "\n---> ERROR: Could not find inhomogeneity fieldmap magnitude image specified in hcp_bold_inhomfmapmag parameter: %s."
-                            % (options["hcp_bold_inhomfmapmag"])
+                            "\n---> ERROR: Could not find real fieldmap magnitude image specified in the hcp_bold_realfmapmag parameter: %s."
+                            % (options["hcp_bold_realfmapmag"])
                         )
                         boldok = False
-                elif options["hcp_bold_inhomfmapdwi"] is not None:
-                    # --- user provided either a path or an image number/tag from the batch file
-                    dwi_value = options["hcp_bold_inhomfmapdwi"]
-                    if os.path.exists(dwi_value):
-                        # it is a direct path to a DWI image
-                        fminhomfmapdwi = dwi_value
-                        r += (
-                            "\n     ... inhomogeneity fieldmap DWI image present: %s"
-                            % (fminhomfmapdwi)
-                        )
-                    else:
-                        # try to resolve as an image number or tag from the batch file
-                        dwi_resolved = None
-                        for k, v in sinfo.items():
-                            if k.isdigit():
-                                # match by image number
-                                if k == str(dwi_value) or str(k) == str(dwi_value):
-                                    dwi_task = v.get("task", v.get("filename", None))
-                                    if dwi_task:
-                                        dwi_candidates = glob.glob(
-                                            os.path.join(
-                                                hcp["DWI_source"],
-                                                "*%s*.nii.gz" % (dwi_task),
-                                            )
-                                        )
-                                        if dwi_candidates:
-                                            dwi_resolved = dwi_candidates[0]
-                                    break
-                                # match by name tag (e.g. "DWI" with task "dMRI_dir98_AP")
-                                if v.get("name", "") == "DWI" and (
-                                    v.get("task", "") == dwi_value
-                                    or v.get("filename", "") == dwi_value
-                                    or v.get("name", "") + ":" + v.get("task", "")
-                                    == dwi_value
-                                ):
-                                    dwi_task = v.get("task", v.get("filename", None))
-                                    if dwi_task:
-                                        dwi_candidates = glob.glob(
-                                            os.path.join(
-                                                hcp["DWI_source"],
-                                                "*%s*.nii.gz" % (dwi_task),
-                                            )
-                                        )
-                                        if dwi_candidates:
-                                            dwi_resolved = dwi_candidates[0]
-                                    break
-
-                        if dwi_resolved:
-                            fminhomfmapdwi = dwi_resolved
-                            r += (
-                                "\n     ... inhomogeneity fieldmap DWI image resolved from batch file: %s"
-                                % (fminhomfmapdwi)
-                            )
-                        else:
-                            r += (
-                                "\n---> ERROR: Could not resolve hcp_bold_inhomfmapdwi [%s] to a file! "
-                                "Please provide a valid file path or a valid image number/tag from the batch file."
-                                % (dwi_value)
-                            )
-                            boldok = False
                 else:
-                    r += "\n---> WARNING: Neither hcp_bold_inhomfmapmag nor hcp_bold_inhomfmapdwi is set. The HCP pipeline may require one of these for INHOMOGENEITY_FIELDMAP."
+                    r += "\n---> WARNING: hcp_bold_realfmapmag is not set. The HCP pipelines require this for REAL_FIELDMAP."
 
             # --- NO DC used
             elif options["hcp_bold_dcmethod"].lower() == "none":
@@ -6234,9 +6155,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "fmmag": fmmag,
                 "fmphase": fmphase,
                 "fmcombined": fmcombined,
-                "fminhom": fminhom,
-                "fminhommag": fminhommag,
-                "fminhomfmapdwi": fminhomfmapdwi,
+                "fmreal": fmreal,
+                "fmrealmag": fmrealmag,
                 "fmriref": fmriref,
             }
             boldsData.append(b)
@@ -6384,9 +6304,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     fmmag = b["fmmag"]
     fmphase = b["fmphase"]
     fmcombined = b["fmcombined"]
-    fminhom = b["fminhom"]
-    fminhommag = b["fminhommag"]
-    fminhomfmapdwi = b["fminhomfmapdwi"]
+    fmreal = b["fmreal"]
+    fmrealmag = b["fmrealmag"]
     fmriref = b["fmriref"]
 
     # prepare return variables
@@ -6463,9 +6382,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
             ("fmapcombined", fmcombined),
-            ("inhomfmap", fminhom),
-            ("inhomfmapmag", fminhommag),
-            ("inhomfmapdwi", fminhomfmapdwi),
+            ("realfmap", fmreal),
+            ("realfmapmag", fmrealmag),
             ("echospacing", echospacing),
             ("echodiff", options["hcp_bold_echodiff"]),
             ("unwarpdir", unwarpdir),
