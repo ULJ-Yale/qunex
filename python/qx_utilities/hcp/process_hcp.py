@@ -12231,7 +12231,16 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
             # check and set parameters given the mode
             # AFI
-    
+            if options["hcp_transmit_mode"] == "AFI":
+                if options["hcp_afi_image"]:
+                    comm += f"                --afi-image={options['hcp_afi_image']}"
+                else:
+                    r += "\n---> Setting the hcp_afi_image automatically"
+                    if "T1w-AFI" in hcp:
+                        comm += f"                --afi-image={hcp['T1w-AFI']}"
+                    else:
+                        r += "\n---> ERROR: the hcp_afi_image parameter is not provided, and QuNex cannot find the T1w AFI image in the HCP unprocessed/T1w folder!"
+                        run = False
 
                 if not options["hcp_afi_tr_two"]:
                     r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
@@ -13416,6 +13425,9 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
+        --hcp_manual_receive (str, default ''):
+            Whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans.
+
     Notes:
         hcp_transmit_bias_individual_adjustment parameter mapping:
 
@@ -13437,6 +13449,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_grayordinatesres``           ``grayordinates-res``
             ``hcp_matlab_mode``                ``matlab-run-mode``
+            ``hcp_manual_receive``             ``manual-receive``
             ================================== ============================
 
     Examples:
@@ -13518,10 +13531,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
                     "matlab_run_mode": matlabrunmode,
                 }
             )
-            if options["hcp_manual_receive"]:
-                comm += f"                --manual-receive=TRUE"
-            else:
-                comm += f"                --manual-receive=FALSE"
+            
 
             # check and set parameters given the mode
             # AFI
@@ -13597,12 +13607,15 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
                 r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
 
             # optional general parameters
+            if options["hcp_manual_receive"]:
+                comm += f"                --manual-receive={options['hcp_manual_receive']}" 
             if options["hcp_transmit_res"]:
                 comm += f"                --transmit-res={options['hcp_transmit_res']}"
             if options["hcp_lowresmesh"]:
                 comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
             if options["hcp_grayordinatesres"]:
                 comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
+            
 
             # -- Report command
             if run:
