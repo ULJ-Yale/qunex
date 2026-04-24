@@ -290,7 +290,10 @@ def getHCPPaths(sinfo, options):
             dc = True
         elif options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap":
             legacy_dc = True
-        elif options["hcp_bold_dcmethod"].lower() == "realogeneity_fieldmap":
+        elif options["hcp_bold_dcmethod"].lower() in [
+            "realogeneity_fieldmap",
+            "real_fieldmap",
+        ]:
             real_dc = True
 
     if dc:
@@ -363,6 +366,22 @@ def getHCPPaths(sinfo, options):
                     d["fieldmap"].update({fmnum: {"Real": imagepath}})
                 else:
                     d["fieldmap"][fmnum].update({"Real": imagepath})
+
+        fmapmag_real = glob.glob(
+            os.path.join(
+                d["source"],
+                "FieldMap*" + options["fmtail"],
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
+            )
+        )
+        for imagepath in fmapmag_real:
+            fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
+            if fmnum:
+                fmnum = int(fmnum.group())
+                if fmnum not in d["fieldmap"]:
+                    d["fieldmap"].update({fmnum: {"Magnitude": imagepath}})
+                else:
+                    d["fieldmap"][fmnum].update({"Magnitude": imagepath})
 
     # B1tx/TB1TFL phase and mag
     tb1tlf_magnitude = glob.glob(
@@ -4871,8 +4890,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_realfmapmag (str, default ''):
             Path to the magnitude image in the same space as
             --hcp_bold_realfmap (e.g., a b=0 volume from the diffusion
-            acquisition). Used for fieldmap-to-T1w registration. Required when
-            --hcp_bold_dcmethod=REAL_FIELDMAP.
+            acquisition). Used for fieldmap-to-T1w registration. This parameter
+            is used when hcp_bold_dcmethod is set to REAL_FIELDMAP.
+            Usually this is set automatically based on the FM-Magnitude image
+            specified in the batch file.
 
         --hcp_bold_echodiff (str):
             Delta TE for BOLD fieldmap images or NONE if not used.
@@ -5989,8 +6010,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             r, fieldok = pc.checkForFile2(
                                 r,
                                 hcp["fieldmap"][i]["Real"],
-                                "\n     ... Real fieldmap image %d present "
-                                % (i),
+                                "\n     ... Real fieldmap image %d present " % (i),
                                 "\n     ... ERROR: Real fieldmap image %d missing!"
                                 % (i),
                                 status=fieldok,
@@ -6013,9 +6033,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     # --- user provided a path to a magnitude image
                     if os.path.exists(options["hcp_bold_realfmapmag"]):
                         fmrealmag = options["hcp_bold_realfmapmag"]
-                        r += (
-                            "\n     ... real fieldmap magnitude image present: %s"
-                            % (fmrealmag)
+                        r += "\n     ... real fieldmap magnitude image present: %s" % (
+                            fmrealmag
                         )
                     else:
                         r += (
@@ -6024,7 +6043,27 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         )
                         boldok = False
                 else:
-                    r += "\n---> WARNING: hcp_bold_realfmapmag is not set. The HCP pipelines require this for REAL_FIELDMAP."
+                    # --- try to auto-detect from fieldmap dict using fm number from bold info
+                    fmnum_mag = boldinfo.get("fm", None)
+                    if (
+                        fmnum_mag is not None
+                        and int(fmnum_mag) in hcp["fieldmap"]
+                        and "Magnitude" in hcp["fieldmap"][int(fmnum_mag)]
+                    ):
+                        auto_realfmapmag = hcp["fieldmap"][int(fmnum_mag)]["Magnitude"]
+                        r, boldok = pc.checkForFile2(
+                            r,
+                            auto_realfmapmag,
+                            "\n     ... real fieldmap magnitude image auto-detected and present: %s"
+                            % (auto_realfmapmag),
+                            "\n---> ERROR: Could not find auto-detected real fieldmap magnitude image: %s."
+                            % (auto_realfmapmag),
+                            status=boldok,
+                        )
+                        if os.path.exists(auto_realfmapmag):
+                            fmrealmag = auto_realfmapmag
+                    else:
+                        r += "\n---> WARNING: hcp_bold_realfmapmag is not set and could not be auto-detected. The HCP pipelines require this for REAL_FIELDMAP."
 
             # --- NO DC used
             elif options["hcp_bold_dcmethod"].lower() == "none":

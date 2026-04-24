@@ -183,11 +183,11 @@ def setup_hcp(
             --FM-GE
                 Gradient echo field map image used for distortion correction
             --FM-Magnitude
-                Field mapping magnitude image used for distortion correction
+                Fieldmap magnitude image used for distortion correction
             --FM-Phase
-                Field mapping phase image used for distortion correction
+                Fieldmap phase image used for distortion correction
             --FM-Real
-                Field mapping inhomogeneity image used for distortion correction
+                Real fieldmap image used for distortion correction
             --boldref
                 Reference image for the following BOLD image, N should be added
                 to the end of the boldref (boldref<N>)
@@ -550,7 +550,7 @@ def setup_hcp(
                 tfile = sid + "_" + v["filename"] + ".nii.gz"
                 tfold = v["filename"] + fmnum + fmtail
             else:
-                tfile = sid + "_FieldMap_Inhomogeneity.nii.gz"
+                tfile = sid + "_FieldMap_Real.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
         elif "boldref" in v["name"]:
