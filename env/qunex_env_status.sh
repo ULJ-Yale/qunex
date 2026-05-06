@@ -119,7 +119,6 @@ if [[ "$1" == "--envstatus" ]] || [[ "$1" == "--envreport" ]] || [[ "$1" == "--e
     echo "               FSLCONFDIR : $FSLCONFDIR";           if [[ -z $FSLCONFDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLCONFDIR"; fi
     echo "                FSLBINDIR : $FSLBINDIR";            if [[ -z $FSLBINDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FSLBINDIR"; fi
     echo "          FREESURFER_HOME : $FREESURFER_HOME";      if [[ -z $FREESURFER_HOME ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FREESURFER_HOME"; fi
-    echo "     FREESURFER_SCHEDULER : $FREESURFER_SCHEDULER"; if [[ -z $FREESURFER_SCHEDULER ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport FREESURFER_SCHEDULER"; fi
     echo "             WORKBENCHDIR : $WORKBENCHDIR";         if [[ -z $WORKBENCHDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport WORKBENCHDIR"; fi
     echo "                CARET7DIR : $CARET7DIR";            if [[ -z $CARET7DIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport CARET7DIR"; fi
     echo "                  AFNIDIR : $AFNIDIR";              if [[ -z $AFNIDIR ]]; then EnvError="yes"; EnvErrorReport="$EnvErrorReport AFNIDIR"; fi
