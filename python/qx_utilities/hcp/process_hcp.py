@@ -413,7 +413,6 @@ def getHCPPaths(sinfo, options):
     if len(t1w_afi) != 0:
         d["T1w-AFI"] = t1w_afi[0]
     else:
-        print(os.path.join(d["T1w_source"], sinfo["id"] + "*_AFI.nii.gz"))
         t1w_afi = glob.glob(os.path.join(d["T1w_source"], sinfo["id"] + "*AFI.nii.gz"))
         if len(t1w_afi) != 0:
             d["T1w-AFI"] = t1w_afi[0]
@@ -2039,7 +2038,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_high_myelin (float):
             The high myelin threshold for the FreeSurfer recon-all command.
 
-        --hcp_nogpu (flag, optional):
+        --*_AFI.nii.gz (flag, optional):
             If specified, use the non-GPU-enabled version of FreeSurfer.
 
     Output files:
