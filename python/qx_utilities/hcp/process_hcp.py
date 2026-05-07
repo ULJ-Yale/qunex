@@ -2359,9 +2359,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("high-myelin", options["hcp_high_myelin"]))
 
         # gpu mode or not
-        # uncommment this for FS8
-        # if not options["hcp_nogpu"]:
-        #    elements.append(("gpu", "True"))
+        if options["hcp_nogpu"]:
+            elements.append(("gpu", "False"))
 
         # ---> Pull all together
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
