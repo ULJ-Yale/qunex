@@ -129,7 +129,7 @@ bash_call_execute() {
 
     # -- If logfolder flag not set then set it and set master log
     if [[ -z ${LogFolder} ]]; then
-        MasterLogFolder="${StudyFolder}/logs/${CommandToRun}_${TimeStamp}"
+        MasterLogFolder="${StudyFolder}/logs/${TimeStamp}_${CommandToRun}"
     else
         MasterLogFolder="$LogFolder"
     fi
@@ -168,12 +168,12 @@ bash_call_execute() {
     else
         # log tag
         if [[ ${CommandToRun} == "compute_bold_fc" ]]; then
-            logtag="${CommandToRun}_${Calculation}_${CASE}_${TimeStamp}"
+            logtag="${TimeStamp}_${CommandToRun}_${Calculation}_${CASE}"
         elif [[ ${CommandToRun} != "run_qc" ]]; then
-            logtag="${CommandToRun}_${CASE}_${TimeStamp}"
+            logtag="${TimeStamp}_${CommandToRun}_${CASE}"
         else
             if [[ -z ${Modality} ]]; then
-                logtag="${CommandToRun}_${CASE}_${TimeStamp}"
+                logtag="${TimeStamp}_${CommandToRun}_${CASE}"
             else
                 modality_lower=$(echo "${Modality}" | tr '[:upper:]' '[:lower:]')
 
@@ -184,7 +184,7 @@ bash_call_execute() {
                     fi
                 fi
 
-                logtag="${CommandToRun}_${modality_lower}_${CASE}_${TimeStamp}"
+                logtag="${TimeStamp}_${CommandToRun}_${modality_lower}_${CASE}"
             fi
         fi
 
@@ -195,9 +195,9 @@ bash_call_execute() {
         ComlogTmp="${MasterComlogFolder}/tmp_${logtag}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
         ComRun="${ComRunFolder}/Run_${logtag}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
         ComlogDone="${MasterComlogFolder}/done_${logtag}.log"
-        CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
+        CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${TimeStamp}_${CommandToRun}.Pass"
         ComlogError="${MasterComlogFolder}/error_${logtag}.log"
-        CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Fail"
+        CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${TimeStamp}_${CommandToRun}.Fail"
 
         # -- Batchlog
         # --   <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
