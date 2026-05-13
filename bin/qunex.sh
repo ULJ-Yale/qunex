@@ -1436,7 +1436,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     QCPlotMasks=`get_parameters "${setflag}qcplotmasks" $@`
 
     # -- Path options for FreeSurfer or QuNex
-    FreeSurferHome=`get_parameters "${setflag}hcp_freesurfer_home" $@`
     QuNexVersion=`get_parameters "${setflag}version" $@`
 
     # -- Input flags for create_list

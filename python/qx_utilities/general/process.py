@@ -565,11 +565,6 @@ arglist = [
         str,
     ],
     [
-        "hcp_freesurfer_home",
-        "",
-        str,
-    ],
-    [
         "hcp_freesurfer_module",
         "",
         str,

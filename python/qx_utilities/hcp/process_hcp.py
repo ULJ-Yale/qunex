@@ -2028,13 +2028,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             (Please note, that this setting will only be used when
             LegacyStyleData processing mode is specified!)
 
-        --hcp_freesurfer_home (str, default ''):
-            Path for FreeSurfer home folder can be manually specified to
-            override default environment variable to ensure backwards
-            compatiblity and hcp_freesurfer customization.
-            (Please note, that this setting will only be used when
-            LegacyStyleData processing mode is specified!)
-
         --hcp_high_myelin (float):
             The high myelin threshold for the FreeSurfer recon-all command.
 
@@ -2137,7 +2130,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="sessions" \\
                 --parsessions="10" \\
                 --overwrite="no" \\
-                --hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
                 --scheduler="SLURM,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=week"
 
         Run with FreeSurfer edits applied and present in inbox/FS-edits::
@@ -2184,8 +2176,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
-                --hcp_t2=NONE \\
-                --hcp_freesurfer_home=<absolute_path_to_freesurfer_binary>
+                --hcp_t2=NONE
     """
 
     r = "\n------------------------------------------------------------"
