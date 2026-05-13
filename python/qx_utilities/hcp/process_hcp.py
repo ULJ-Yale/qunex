@@ -3209,8 +3209,15 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         --hcp_no_t2w:
             Set this flag to process without T2w. Disabled by default.
 
+        --hcp_nogpu:
+            Set this flag to disable GPU usage for longitudinal FreeSurfer.
+            Disabled by default.
+
         --hcp_seed (int):
             The recon-all seed value.
+
+        --hcp_high_myelin (float):
+            The high myelin threshold for the FreeSurfer recon-all command.
 
         --hcp_parallel_mode (str, default "BUILTIN"):
             Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
@@ -3244,7 +3251,9 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             =================================== ===========================
             ``hcp_longitudinal_template``       ``longitudinal-template``
             ``hcp_no_t2w``                      ``use-T2w``
+            ``hcp_nogpu``                       ``gpu``
             ``hcp_fs_seed``                     ``seed``
+            ``hcp_high_myelin``                 ``high-myelin``
             ``hcp_parallel_mode``               ``parallel-mode``
             ``hcp_fslsub_queue``                ``fslsub-queue``
             ``hcp_max_jobs``                    ``max-jobs``
@@ -3405,8 +3414,14 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         if options["hcp_no_t2w"]:
             comm += "                --use-T2w=0"
 
+        if options["hcp_nogpu"]:
+            comm += "                --gpu=False"
+
         if options["hcp_seed"]:
             comm += f"                --seed={options['hcp_seed']}"
+
+        if options["hcp_high_myelin"]:
+            comm += f"                --high-myelin={options['hcp_high_myelin']}"
 
         if options["hcp_fslsub_queue"]:
             comm += f"                --fslsub-queue={options['hcp_fslsub_queue']}"
