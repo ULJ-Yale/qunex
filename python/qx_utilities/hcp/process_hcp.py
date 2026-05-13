@@ -2031,7 +2031,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_high_myelin (float):
             The high myelin threshold for the FreeSurfer recon-all command.
 
-        --*_AFI.nii.gz (flag, optional):
+        --hcp_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of FreeSurfer.
 
     Output files:
