@@ -3352,13 +3352,21 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
     # main long folder
     longitudinal_template = options["hcp_longitudinal_template"]
     long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
+    long_dir_exists = os.path.lexists(long_dir)
     # exit if overwrite is not set, else cleanup
-    if not overwrite and os.path.exists(long_dir):
+    if not overwrite and long_dir_exists:
         r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
         run = False
     else:
-        if os.path.exists(long_dir):
-            shutil.rmtree(long_dir)
+        if long_dir_exists:
+            if os.path.islink(long_dir):
+                # Remove symlink first, then clean up the directory it points to.
+                long_dir_target = os.path.realpath(long_dir)
+                os.unlink(long_dir)
+                if os.path.isdir(long_dir_target):
+                    shutil.rmtree(long_dir_target)
+            else:
+                shutil.rmtree(long_dir)
 
     # logdir
     logdir = os.path.join(
