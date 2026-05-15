@@ -154,6 +154,19 @@ def matchAll(pattern, string):
         return False
 
 
+def _safe_rmtree(path):
+    """
+    Best-effort recursive folder removal.
+
+    Some filesystems can leave transient files behind during cleanup, which can
+    cause shutil.rmtree to raise. This helper logs and continues.
+    """
+    try:
+        shutil.rmtree(path)
+    except Exception as e:
+        print(f"WARNING unable to remove folder {path}: {e}")
+
+
 def readPARInfo(filename):
     """
     ``readPARInfo(filename)``
@@ -2054,7 +2067,7 @@ def _zip_dicom(gzip, dicom_folder):
                 )
 
             os.rename(dicom_folder_zip_tmp, dicom_folder_zip)
-            shutil.rmtree(dicom_folder)
+            _safe_rmtree(dicom_folder)
 
         elif gzip == "file":
             p = subprocess.run(["gzip", "-r", dicom_folder])
@@ -2694,10 +2707,10 @@ def clean_dicom(
                 (0x0018, 0x1060),  # TriggerTime
             ]
             ds = pydicom.filereader.dcmread(
-                path, 
+                path,
                 stop_before_pixels=True,
                 specific_tags=specific_tags,
-                force=False  # Don't force reading invalid DICOM files
+                force=False,  # Don't force reading invalid DICOM files
             )
             return ds
         except Exception:
@@ -2802,7 +2815,7 @@ def clean_dicom(
 
     def _process_sequence_folder(seq_folder, seq_name, removed_dir, non_image_dir):
         """Process a single sequence folder for incomplete volumes."""
-        
+
         # Collect all files in sequence folder (use scandir for speed)
         # Pre-filter by extension to avoid reading non-DICOM files
         all_paths = []
@@ -2812,10 +2825,13 @@ def clean_dicom(
                     if entry.is_file():
                         # Only process files that look like DICOMs
                         name_lower = entry.name.lower()
-                        if (name_lower.endswith('.dcm') or 
-                            name_lower.endswith('.dcm.gz') or
-                            '.' not in entry.name or  # DICOM files often have no extension
-                            name_lower.endswith('.ima')):
+                        if (
+                            name_lower.endswith(".dcm")
+                            or name_lower.endswith(".dcm.gz")
+                            or "."
+                            not in entry.name  # DICOM files often have no extension
+                            or name_lower.endswith(".ima")
+                        ):
                             all_paths.append(entry.path)
         except Exception:
             # Fallback to os.walk if scandir fails
@@ -2828,29 +2844,40 @@ def clean_dicom(
 
         # Print early progress indication
         if verbose:
-            print(f"---> Inspecting sequence {seq_name} (evaluating {len(all_paths)} files):")
+            print(
+                f"---> Inspecting sequence {seq_name} (evaluating {len(all_paths)} files):"
+            )
 
         # Batch read files into memory first (one sequential pass - faster on spinning disk)
         # Read first 64KB of each file (DICOM headers typically <16KB, 64KB provides safety margin)
         from io import BytesIO
+
         file_data = {}
         for p in all_paths:
             try:
-                with open(p, 'rb') as f:
+                with open(p, "rb") as f:
                     file_data[p] = f.read(65536)  # 64KB
             except Exception:
                 pass
-        
+
         # Read headers and classify files (parsing from memory is faster)
         items = []
         non_images = []
         unreadable = 0
-        
+
         specific_tags = [
-            (0x0020, 0x0032), (0x0020, 0x0037), (0x0020, 0x1041),
-            (0x0020, 0x0100), (0x0020, 0x0012), (0x0028, 0x0010),
-            (0x0028, 0x0011), (0x0020, 0x000E), (0x0008, 0x0018),
-            (0x0020, 0x0013), (0x0008, 0x0032), (0x0018, 0x1060),
+            (0x0020, 0x0032),
+            (0x0020, 0x0037),
+            (0x0020, 0x1041),
+            (0x0020, 0x0100),
+            (0x0020, 0x0012),
+            (0x0028, 0x0010),
+            (0x0028, 0x0011),
+            (0x0020, 0x000E),
+            (0x0008, 0x0018),
+            (0x0020, 0x0013),
+            (0x0008, 0x0032),
+            (0x0018, 0x1060),
         ]
 
         for p, data in file_data.items():
@@ -2859,12 +2886,12 @@ def clean_dicom(
                     BytesIO(data),
                     stop_before_pixels=True,
                     specific_tags=specific_tags,
-                    force=False
+                    force=False,
                 )
             except Exception:
                 unreadable += 1
                 continue
-                
+
             if not _is_image_dicom(ds):
                 non_images.append(p)
                 continue
@@ -2874,18 +2901,22 @@ def clean_dicom(
             sc = _slice_coordinate(ds)
             tk = _choose_time_key(ds)
 
-            items.append({
-                "path": p,
-                "series": ser,
-                "sop": sop,
-                "slice_coord": sc,
-                "time_key": tk,
-            })
+            items.append(
+                {
+                    "path": p,
+                    "series": ser,
+                    "sop": sop,
+                    "slice_coord": sc,
+                    "time_key": tk,
+                }
+            )
 
         # Skip if too few image files
         if len(items) < min_files:
             if verbose:
-                print(f"     Sequence {seq_name}: only {len(items)} image files, skipping (< {min_files})")
+                print(
+                    f"     Sequence {seq_name}: only {len(items)} image files, skipping (< {min_files})"
+                )
                 print()
             return
 
@@ -2903,7 +2934,9 @@ def clean_dicom(
 
             if not centers:
                 if verbose:
-                    print(f"     Sequence {seq_name}: cannot cluster slice positions (missing/invalid IPP/IOP), skipping")
+                    print(
+                        f"     Sequence {seq_name}: cannot cluster slice positions (missing/invalid IPP/IOP), skipping"
+                    )
                     print()
                 continue
 
@@ -2927,7 +2960,9 @@ def clean_dicom(
                 vols[it["time_key"]].append(it)
 
             # Determine mode of z-count across volumes (more robust)
-            z_counts = [len(set(it["z_center"] for it in vitems)) for vitems in vols.values()]
+            z_counts = [
+                len(set(it["z_center"] for it in vitems)) for vitems in vols.values()
+            ]
             if z_counts:
                 mode_z = Counter(z_counts).most_common(1)[0][0]
             else:
@@ -2948,9 +2983,11 @@ def clean_dicom(
                 # Re-read the full header to check more thoroughly
                 ds = _read_header(it["path"])
                 # Check if this is truly an image by looking for additional image attributes
-                if ds and (not hasattr(ds, "ImagePositionPatient") or 
-                          not hasattr(ds, "ImageOrientationPatient") or
-                          not hasattr(ds, "SliceLocation")):
+                if ds and (
+                    not hasattr(ds, "ImagePositionPatient")
+                    or not hasattr(ds, "ImageOrientationPatient")
+                    or not hasattr(ds, "SliceLocation")
+                ):
                     # Missing critical image geometry - likely non-image
                     unmapped_non_image.append(it["path"])
                 else:
@@ -2963,12 +3000,18 @@ def clean_dicom(
             # Report if verbose
             if verbose:
                 bad_tks = sorted(set(it["time_key"] for it in flagged))
-                print(f"     Files (image): {len(series_items)} (valid: {len(valid)}, unmapped: {len(unmapped)})")
-                print(f"     Slice clusters: {expected_z} (mode across volumes: {mode_z})")
+                print(
+                    f"     Files (image): {len(series_items)} (valid: {len(valid)}, unmapped: {len(unmapped)})"
+                )
+                print(
+                    f"     Slice clusters: {expected_z} (mode across volumes: {mode_z})"
+                )
                 print(f"     Timepoints detected: {len(vols)}")
                 print(f"     Incomplete timepoints flagged: {len(bad_tks)}")
                 if unmapped_non_image:
-                    print(f"     Unmapped files reclassified as non-image: {len(unmapped_non_image)}")
+                    print(
+                        f"     Unmapped files reclassified as non-image: {len(unmapped_non_image)}"
+                    )
 
             # Add only truly incomplete unmapped files to removal list
             for p in unmapped_incomplete:
@@ -3020,9 +3063,9 @@ def clean_dicom(
     print("Running clean_dicom\n==================")
 
     verbose = true_or_false(verbose)
-    
+
     dicom_folder = os.path.join(folder, "dicom")
-    
+
     if not os.path.exists(dicom_folder):
         print(f"---> DICOM folder not found: {dicom_folder}")
         print("---> Skipping clean_dicom")
@@ -3045,7 +3088,7 @@ def clean_dicom(
         return
 
     sequence_folders.sort(key=lambda x: int(x[0]))
-    
+
     if verbose:
         print(f"---> Found {len(sequence_folders)} sequence folder(s) to process")
 
@@ -3331,7 +3374,7 @@ def import_dicom(
 
         --clean_dicom (bool, default False):
             If set to True, after sorting dicom files into sequence folders, the
-            dicom files will be inspected and any dicom files that do not 
+            dicom files will be inspected and any dicom files that do not
             contain image data, or that do not constitute a full volume (e.g.,
             in the case of interrupted scans) will be set aside before
             conversion to NIfTI.
@@ -4208,9 +4251,13 @@ def import_dicom(
 
             if tag == "exist":
                 if overwrite:
-                   print(" ... Since overwrite is set the folders will be removed and replaced")
+                    print(
+                        " ... Since overwrite is set the folders will be removed and replaced"
+                    )
                 else:
-                   print(" ... To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
+                    print(
+                        " ... To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'"
+                    )
 
     nToProcess = len(packets["ok"])
     if overwrite:
@@ -4272,12 +4319,12 @@ def import_dicom(
                 if masterinbox:
                     ifolder = os.path.join(sfolder, "inbox")
                     if os.path.exists(ifolder):
-                        shutil.rmtree(ifolder)
+                        _safe_rmtree(ifolder)
                 nfolder = os.path.join(sfolder, "nii")
                 dfolder = os.path.join(sfolder, "dicom")
                 for rmfolder in [nfolder, dfolder]:
                     if os.path.exists(rmfolder):
-                        shutil.rmtree(rmfolder)
+                        _safe_rmtree(rmfolder)
 
         packets["ok"] += packets["exist"]
 
@@ -4444,7 +4491,7 @@ def import_dicom(
                     elif archive == "delete":
                         print("...  deleting packet [%s]" % (os.path.basename(p)))
                         if ptype == "folder":
-                            shutil.rmtree(p)
+                            _safe_rmtree(p)
                         else:
                             os.remove(p)
 

@@ -71,6 +71,31 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.general.snapshots.record_snapshot",
+        "Creates a hierarchical text snapshot of a folder with file names, timestamps, sizes, and optional MD5 hashes.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.compare_snapshots",
+        "Compares two snapshots or a snapshot against a live folder and reports added, deleted, and modified files.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.rollback_snapshot",
+        "Analyzes snapshot differences to find added files and optionally deletes them in check or delete mode.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.backup_files",
+        "Backs up selected files from a source folder to a target folder with sequential prefixes and a file_list manifest.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.restore_files",
+        "Restores files from a backup to original or specified locations with support for original, gzip, and zip backup formats.",
+        "python",
+    ),
+    (
         "qx_utilities.general.palm.create_ws_palm_design",
         "Prepares the design file.",
         "python",
