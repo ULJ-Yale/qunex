@@ -358,17 +358,23 @@ all_qunex_commands = [
 
     # Add command catalog for Phase 3
     (
-        "qx_utilies.hcp.process_hcp.hcp_transmit_bias_individual_adjustment",
+        "qx_utilities.hcp.process_hcp.hcp_transmit_bias_individual_adjustment",
         "Run HCP Transmit Bias pipeline Phase 3, Individual Adjustment",
         "python",
     ),
 
-
+    # Add command catalog for Phase 4
+    (
+        "qx_utilities.hcp.process_hcp.hcp_transmit_bias_group_average_corrected_maps",
+        "Run HCP Transmit Bias pipeline Phase 4, Group Average Corrected Maps",
+        "python",
+    ),
     (
         "qx_utilities.hcp.process_hcp.hcp_long_transmit_bias",
         "Run HCP Longitudinal Transmit Bias pipeline.",
         "python",
     ),
+
     (
         "qx_utilities.general.bids.import_bids",
         "Maps a BIDS dataset to the QuNex Suite file structure.",

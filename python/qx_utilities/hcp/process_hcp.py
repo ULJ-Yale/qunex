@@ -529,7 +529,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
 
 
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
-    r"""
+    """
     ``hcp_pre_freesurfer [... processing options]``
 
     Runs the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
@@ -543,8 +543,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         for folders and files::
 
-            T1w/\*T1w_MPR[N]\*
-            T2w/\*T2w_MPR[N]\*
+            T1w/*T1w_MPR[N]*
+            T2w/*T2w_MPR[N]*
 
         There has to be at least one T1w image present. If there are more than
         one T1w or T2w images, they will all be used and averaged together.
@@ -13682,7 +13682,407 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
     # print r
     return (r, (sinfo["id"], report, failed))
 
+#helper function to automatically generate voltages file
+def create_transmit_bias_voltages_file(sessions, options, voltages_file, r):
+    """
+    Creates a text file with one TxRefAmp value per session for Phase 4
+    transmit bias group average corrected maps.
 
+    The output file order matches the order of the supplied sessions.
+    """
+
+    import json
+
+    values = []
+
+    for session in sessions:
+        subject = session["id"] + options["hcp_suffix"]
+
+        json_file = os.path.join(
+            options["sessionsfolder"],
+            session["id"],
+            "hcp",
+            subject,
+            "unprocessed",
+            "rfMRI_REST1_AP",
+            f"{subject}_rfMRI_REST1_AP.json",
+        )
+
+        if not os.path.exists(json_file):
+            r += f"\n---> ERROR: Cannot create hcp_voltages file. JSON file not found for session {session['id']}: {json_file}"
+            return r, False
+
+        try:
+            with open(json_file, "r") as f:
+                metadata = json.load(f)
+        except Exception as e:
+            r += f"\n---> ERROR: Cannot create hcp_voltages file. Failed to read JSON file for session {session['id']}: {json_file}. Error: {e}"
+            return r, False
+
+        if "TxRefAmp" not in metadata:
+            r += f"\n---> ERROR: Cannot create hcp_voltages file. TxRefAmp not found for session {session['id']} in JSON file: {json_file}"
+            return r, False
+
+        values.append(str(metadata["TxRefAmp"]))
+
+    output_dir = os.path.dirname(voltages_file)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
+    try:
+        with open(voltages_file, "w") as f:
+            for value in values:
+                f.write(value + "\n")
+    except Exception as e:
+        r += f"\n---> ERROR: Cannot write hcp_voltages file: {voltages_file}. Error: {e}"
+        return r, False
+
+    r += f"\n---> Created hcp_voltages file: {voltages_file}"
+    return r, True
+
+def hcp_transmit_bias_group_average_corrected_maps(sessions, sessionids, options, overwrite=True, thread=0):
+    """
+    ``hcp_transmit_bias_group_average_corrected_maps [... processing options]``
+
+    Runs the HCP Transmit Bias Pipeline Phase 4, Group Average Corrected Maps.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no). Note that
+            previous data is deleted before the run, so in the case of a failed
+            command run, previous results are lost.
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
+
+        --hcp_regname (str, default 'MSMSulc'):
+            Input registration name.
+
+        --hcp_transmit_mode (str, default ''):
+            What type of transmit bias correction to apply, options and required
+            inputs are:
+
+            a) AFI: actual flip angle sequence with two different echo times,
+            requires the following parameters: afi-tr-one,afi-tr-two,
+            afi-angle, transmit-group-name.
+
+            b) B1Tx: b1 transmit sequence magnitude/phase pair, requires the
+            following parameters: transmit-group-name.
+
+            c) PseudoTransmit: use spin echo fieldmaps, SBRef, and a
+            template transmit-corrected myelin map to derive empirical
+            correction, requires the following parameters: average-myelin, group-average-name, voltages
+
+        --hcp_transmit_group_name (str, default ''): 
+            Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)
+
+        --hcp_average_myelin (str, default ''):
+            CIFTI file of group average uncorrected myelin.
+
+        --hcp_outgroupname (str, default '')
+            Output folder inside studyfolder
+
+        --hcp_voltages (str, default ''):
+            Text file of scanner calibrated transmit voltages for each subject. If the file does not exist, QuNex will attempt to create it by extracting TxrefAmp from 
+            each session's JSON metadata file. 
+
+        --hcp_afi_tr_one (str, default ''):
+            TR of first AFI frame.
+
+        --hcp_afi_tr_two (str, default ''):
+            TR of second AFI frame.
+
+        --hcp_afi_angle (str, default ''):
+            Target flip angle of AFI sequence.
+
+        --hcp_lowresmesh (int, default 32):
+            Mesh resolution.
+
+        --hcp_matlab_mode (str, default default detailed below):
+            Specifies the Matlab version, can be 'interpreted', 'compiled' or
+            'octave'. Inside the container 'compiled' will be used, outside
+            'interpreted' is the default.
+
+    Notes:
+        hcp_transmit_bias_group_average_corrected_maps parameter mapping:
+
+            ================================== ============================
+            QuNex parameter                    HCPpipelines parameter
+            ================================== ============================
+            ``sessionsfolder``                 ``study-folder``
+            ``sessions`` / session list        ``subject-list``
+            ``hcp_regname``                    ``reg-name``
+            ``hcp_transmit_mode``              ``mode``
+            ``hcp_outgroupname``               ``group-average-name``
+            ``hcp_transmit_group_name``        ``transmit-group-name``
+            ``hcp_voltages``                   ``voltages``
+            ``hcp_afi_tr_one``                 ``afi-tr-one``
+            ``hcp_afi_tr_two``                 ``afi-tr-two``
+            ``hcp_afi_angle``                  ``afi-angle``
+            ``hcp_average_myelin``             ``average-myelin``
+            ``hcp_lowresmesh``                 ``low-res-mesh``
+            ``hcp_matlab_mode``                ``matlab-run-mode``
+            ================================== ============================
+
+    Examples:
+        Example run::
+
+            qunex hcp_transmit_bias_group_average_corrected_maps \\
+                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"
+
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSessions: %s \n[started on %s]" % (
+        sessionids,
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP Transmit Bias Pipeline Phase 4, Group Average Corrected Maps [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = "Error"
+
+    try:
+        doHCPOptionsCheck(options, "hcp_transmit_bias_group_average_corrected_maps")
+        subject_list = ""
+        
+        for session in sessions:
+            hcp = getHCPPaths(session, options)
+            if "hcp" not in session:
+                r += (
+                    "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                    % (session["id"])
+                )
+                run = False
+
+            # subject_list
+            if subject_list == "":
+                subject_list = session["id"] + options["hcp_suffix"]
+            else:
+                subject_list = (
+                    subject_list + "@" + session["id"] + options["hcp_suffix"]
+                )
+
+        outgroupname = ""
+        if options["hcp_outgroupname"] is None:
+            r += "\n---> ERROR: hcp_outgroupname is not provided!"
+            run = False
+        else:
+            outgroupname = options["hcp_outgroupname"]
+
+        if len(sessions) == 1:
+            r += "\n---> ERROR: hcp_transmit_bias_group_average_corrected_maps needs to be ran across several sessions!"
+            run = False
+
+        # multi session
+        else:
+            # set study dir
+            study_dir = os.path.join(
+                options["sessionsfolder"], "transmit_bias"
+            )
+            handle_hcp_links(study_dir, sessions, options, False)
+
+        if options["hcp_transmit_mode"] is None:
+            r += "\n---> ERROR: the hcp_transmit_mode parameter is mandatory!"
+            run = False
+
+        
+        voltages_file = ""
+
+        if not options["hcp_voltages"]:
+            r += "\n---> ERROR: the hcp_voltages parameter is mandatory!"
+            run = False
+        else:
+            voltages_file = options["hcp_voltages"]
+
+            if os.path.exists(voltages_file):
+                r += f"\n---> Using existing hcp_voltages file: {voltages_file}"
+            else:
+                r += f"\n---> hcp_voltages file does not exist. Creating it: {voltages_file}"
+                r, run = create_transmit_bias_voltages_file(
+                    sessions, options, voltages_file, r
+                )
+
+        # build the command
+        if run:
+
+            matlabrunmode = None
+            if options["hcp_matlab_mode"]:
+                if options["hcp_matlab_mode"] == "compiled":
+                    matlabrunmode = "0"
+                elif options["hcp_matlab_mode"] == "interpreted":
+                    matlabrunmode = "1"
+                elif options["hcp_matlab_mode"] == "octave":
+                    matlabrunmode = "2"
+                else:
+                    r += "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                    run = False
+            else:
+                matlabrunmode = "0"
+
+            
+            comm = (
+                '%(script)s \
+                --study-folder="%(studyfolder)s" \
+                --subject-list="%(subjectlist)s" \
+                --mode="%(mode)s" \
+                --reg-name="%(reg_name)s" \
+                --group-average-name="%(group_average_name)s" \
+                --voltages="%(voltages)s" \
+                --matlab-run-mode="%(matlab_run_mode)s"'
+                % {
+                    "script": os.path.join(
+                        os.environ["HCPPIPEDIR"], "TransmitBias", "Phase4_GroupAverageCorrectedMaps.sh"
+                    ),
+                    "studyfolder": study_dir,
+                    "subjectlist": subject_list,
+                    "mode": options["hcp_transmit_mode"],
+                    "reg_name": options["hcp_regname"],
+                    "group_average_name": outgroupname,
+                    "voltages": voltages_file,
+                    "matlab_run_mode": matlabrunmode,
+                }
+            )
+
+            # check and set parameters given the mode
+        
+            
+            # AFI and B1Tx parameters
+            if (options["hcp_transmit_mode"] == "AFI") or (options["hcp_transmit_mode"] == "B1Tx"):
+
+                if options["hcp_transmit_group_name"]:
+                    comm += f"                --transmit-group-name={options['hcp_transmit_group_name']}"
+                else:
+                    r += "\n---> ERROR: the hcp_transmit_group_name parameter is not provided!"
+                    run = False
+
+            # AFI
+            if options["hcp_transmit_mode"] == "AFI":
+
+                if options["hcp_afi_tr_one"]:
+                    comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_tr_one parameter is not provided!"
+                    run = False
+
+                if options["hcp_afi_tr_two"]:
+                    comm += f"                --afi-tr-two={options['hcp_afi_tr_two']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_tr_two parameter is not provided!"
+                    run = False
+
+                if options["hcp_afi_angle"]:
+                    comm += f"                --afi-angle={options['hcp_afi_angle']}"
+                else:
+                    r += "\n---> ERROR: the hcp_afi_angle parameter is not provided!"
+                    run = False
+
+
+            # PseudoTransmit
+            elif options["hcp_transmit_mode"] == "PseudoTransmit":
+                if options["hcp_average_myelin"]:
+                    comm += f"                --average-myelin={options['hcp_average_myelin']}"
+                else:
+                    r += "\n---> ERROR: the hcp_average_myelin parameter is not provided!"
+                    run = False
+            else:
+                r += "\n---> ERROR: Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!"
+    
+
+            # optional general parameters
+            if options["hcp_lowresmesh"]:
+                comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
+
+    
+            # -- Report command
+            if run:
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
+                r += "Running HCP Pipelines command via QuNex:\n\n"
+                r += comm.replace("                --", "\n    --")
+                r += "\n------------------------------------------------------------\n"
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                r, endlog, report, failed = pc.runExternalForFile(
+                    None,
+                    comm,
+                    "Running HCP Transmit Bias Phase 4, Group Average Corrected Maps",
+                    overwrite=overwrite,
+                    thread=options["hcp_outgroupname"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=options["logtag"],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+                # #Remove soft links
+                # handle_hcp_links(study_dir, sessions, options, True)
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    None,
+                    None,
+                    "HCP Transmit Bias Phase 4, Group Average Corrected Maps",
+                    r,
+                    overwrite=overwrite,
+                )
+                if passed is None:
+                    r += "\n---> HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run"
+                    report = "HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session cannot be processed."
+            report = "HCP Transmit Bias Phase 4, Group Average Corrected Maps cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except Exception as e:
+        r += f"\nERROR: {e}"
+        r += f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
+        failed = 1
+
+    #Remove soft links to prevent clutter
+    #handle_hcp_links(study_dir, sessions, options, True)
+
+    r += (
+        "\n\nHCP Transmit Bias Phase 4, Group Average Corrected Maps Preprocessing %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (sessionids, report, failed))
 
 
 def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0):

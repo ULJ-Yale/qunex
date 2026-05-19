@@ -595,6 +595,10 @@ arglist = [
     ["hcp_all_uncorrected_myelin", "", isNone],
     ["hcp_manual_recieve", "", isNone],
     ["hcp_transmit_group_name", "", isNone],
+    ["# --- hcp_transmit_bias_group_average_corrected_maps options"],
+    ["hcp_average_myelin", "", isNone],
+    ["hcp_voltages", "", isNone],
+    ["hcp_transmit_group_name", "", isNone],
     ["# --- fsl_feat options"],
     ["feat_file", "", isNone],
     ["# --- fsl_melodic options"],
@@ -744,7 +748,10 @@ malist = [
     ["hcp_make_average_dataset", process_hcp.hcp_make_average_dataset],
     ["hcp_transmit_bias_group_average_fit", process_hcp.hcp_transmit_bias_group_average_fit],
     ["hcp_transmit_bias_group_average_fit", process_hcp.hcp_transmit_bias_group_average_fit],
+    ["hcp_transmit_bias_group_average_corrected_maps", process_hcp.hcp_transmit_bias_group_average_corrected_maps],
+
 ]
+
 
 salist = [
     ["create_bold_list", simple.create_bold_list],
