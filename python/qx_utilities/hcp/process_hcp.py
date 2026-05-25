@@ -2029,7 +2029,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             LegacyStyleData processing mode is specified!)
 
         --hcp_high_myelin (float):
-            The high myelin threshold for the FreeSurfer recon-all command.
+            The high myelin threshold for the FreeSurfer recon-all command. Set automatically by default.
 
         --hcp_nogpu (flag, optional):
             If specified, use the non-GPU-enabled version of FreeSurfer.
@@ -2346,7 +2346,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
 
         # high myelin
-        if options["hcp_high_myelin"]:
+        if options["hcp_high_myelin"].lower() != "auto":
             elements.append(("high-myelin", options["hcp_high_myelin"]))
 
         # gpu mode or not
@@ -3217,7 +3217,7 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             The recon-all seed value.
 
         --hcp_high_myelin (float):
-            The high myelin threshold for the FreeSurfer recon-all command.
+            The high myelin threshold for the FreeSurfer recon-all command. Set automatically by default.
 
         --hcp_parallel_mode (str, default "BUILTIN"):
             Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
@@ -3420,7 +3420,7 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         if options["hcp_seed"]:
             comm += f"                --seed={options['hcp_seed']}"
 
-        if options["hcp_high_myelin"]:
+        if options["hcp_high_myelin"].lower() != "auto":
             comm += f"                --high-myelin={options['hcp_high_myelin']}"
 
         if options["hcp_fslsub_queue"]:

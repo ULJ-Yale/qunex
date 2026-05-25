@@ -764,7 +764,7 @@ arglist = [
     ["hcp_dwi_extraeddyarg", "", is_none],
     ["hcp_dwi_name", "", is_none],
     ["hcp_nogpu", None, flag],
-    ["hcp_high_myelin", "", is_none],
+    ["hcp_high_myelin", "auto", str],
     ["hcp_dwi_selectbestb0", None, flag],
     ["hcp_dwi_even_slices", None, flag],
     ["hcp_dwi_topupconfig", "", is_none],
