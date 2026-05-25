@@ -2346,6 +2346,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
 
         # high myelin
+        if options["hcp_high_myelin"] is None:
+            options["hcp_high_myelin"] = ""
         if options["hcp_high_myelin"].lower() != "auto":
             elements.append(("high-myelin", options["hcp_high_myelin"]))
 
@@ -3420,6 +3422,8 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         if options["hcp_seed"]:
             comm += f"                --seed={options['hcp_seed']}"
 
+        if options["hcp_high_myelin"] is None:
+            options["hcp_high_myelin"] = ""
         if options["hcp_high_myelin"].lower() != "auto":
             comm += f"                --high-myelin={options['hcp_high_myelin']}"
 
