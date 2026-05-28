@@ -2031,9 +2031,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_high_myelin (float):
             The high myelin threshold for the FreeSurfer recon-all command. Set automatically by default.
 
-        --hcp_nogpu (flag, optional):
-            If specified, use the non-GPU-enabled version of FreeSurfer.
-
     Output files:
         The results of this step will be present in the above mentioned T1w
         folder as well as MNINonLinear folder in the sessions's root hcp
@@ -2061,7 +2058,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             ``hcp_fs_extra_reconall``    ``extra-reconall-arg``
             ``hcp_fs_no_conf2hires``     ``no-conf2hires``
             ``hcp_fs_flair``             ``flair``
-            ``hcp_nogpu``                ``gpu``
             ============================ =======================
 
         Running FreeSurfer again after PostFreeSurfer:
@@ -2350,10 +2346,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             options["hcp_high_myelin"] = ""
         if options["hcp_high_myelin"].lower() != "auto":
             elements.append(("high-myelin", options["hcp_high_myelin"]))
-
-        # gpu mode or not
-        if options["hcp_nogpu"]:
-            elements.append(("gpu", "False"))
 
         # ---> Pull all together
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
@@ -3211,10 +3203,6 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
         --hcp_no_t2w:
             Set this flag to process without T2w. Disabled by default.
 
-        --hcp_nogpu:
-            Set this flag to disable GPU usage for longitudinal FreeSurfer.
-            Disabled by default.
-
         --hcp_seed (int):
             The recon-all seed value.
 
@@ -3253,7 +3241,6 @@ def hcp_long_freesurfer(sinfo, subjectids, options, overwrite=False, thread=0):
             =================================== ===========================
             ``hcp_longitudinal_template``       ``longitudinal-template``
             ``hcp_no_t2w``                      ``use-T2w``
-            ``hcp_nogpu``                       ``gpu``
             ``hcp_fs_seed``                     ``seed``
             ``hcp_high_myelin``                 ``high-myelin``
             ``hcp_parallel_mode``               ``parallel-mode``
@@ -3415,9 +3402,6 @@ def _execute_hcp_long_freesurfer(options, overwrite, run, hcp_dir, subject):
         # -- Optional parameters
         if options["hcp_no_t2w"]:
             comm += "                --use-T2w=0"
-
-        if options["hcp_nogpu"]:
-            comm += "                --gpu=False"
 
         if options["hcp_seed"]:
             comm += f"                --seed={options['hcp_seed']}"
