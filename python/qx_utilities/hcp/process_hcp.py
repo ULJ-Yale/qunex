@@ -2007,11 +2007,11 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
 
-        --hcp_fs_conf2hires (str, 'TRUE'):
+        --hcp_conf2hires (str, 'TRUE'):
             Whether to use the conf2hires flag in recon-all. If set to 'TRUE',
             the flag will be used, if set to 'FALSE' it will not be used.
 
-        --hcp_fs_hires (str, 'FALSE'):
+        --hcp_hires (str, 'FALSE'):
             Whether to use the hires flag in recon-all. If set to 'TRUE',
             the flag will be used, if set to 'FALSE' it will not be used.
 
@@ -2056,8 +2056,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             ``hcp_processing_mode``      ``processing-mode``
             ``hcp_fs_existing_session``  ``existing-subject``
             ``hcp_fs_extra_reconall``    ``extra-reconall-arg``
-            ``hcp_fs_conf2hires``        ``conf2hires``
-            ``hcp_fs_hires``             ``hires``
+            ``hcp_conf2hires``        ``conf2hires``
+            ``hcp_hires``             ``hires``
             ``hcp_fs_flair``             ``flair``
             ============================ =======================
 
@@ -2349,9 +2349,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("high-myelin", options["hcp_high_myelin"]))
 
         # -> conf2hires and hires flags
-        if options["hcp_fs_conf2hires"].lower() == "true":
+        if options["hcp_conf2hires"] and options["hcp_conf2hires"].lower() == "true":
             elements.append(("conf2hires", "TRUE"))
-        if options["hcp_fs_hires"].lower() == "true":
+        if options["hcp_hires"] and options["hcp_hires"].lower() == "true":
             elements.append(("hires", "TRUE"))
 
         # ---> Pull all together
