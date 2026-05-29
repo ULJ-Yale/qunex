@@ -291,8 +291,7 @@ def getHCPPaths(sinfo, options):
         elif options["hcp_bold_dcmethod"].lower() == "gehealthcarelegacyfieldmap":
             legacy_dc = True
         elif options["hcp_bold_dcmethod"].lower() in [
-            "realogeneity_fieldmap",
-            "real_fieldmap",
+            "precomputed_fieldmap",
         ]:
             real_dc = True
 
@@ -4885,20 +4884,20 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             BOLD image deformation correction that should be used: TOPUP,
             TOPUP_MISMATCHED, FIELDMAP / SiemensFieldMap, GEHealthCareFieldMap,
             GEHealthCareLegacyFieldMap, PhilipsFieldMap,
-            REAL_FIELDMAP, OnScanner or NONE.
+            PRECOMPUTED_FIELDMAP, OnScanner or NONE.
 
-        --hcp_bold_realfmap (str, default ''):
-            Path to the realogeneity fieldmap image, QuNex tries to
-            automatically set this if left empty and REAL_FIELDMAP
+        --hcp_bold_precomputedfmap (str, default ''):
+            Path to the precomputed fieldmap image, QuNex tries to
+            automatically set this if left empty and PRECOMPUTED_FIELDMAP
             is selected. This parameter is used when hcp_bold_dcmethod is set to
-            REAL_FIELDMAP. Usually this is set automatically based
+            PRECOMPUTED_FIELDMAP. Usually this is set automatically based
             on the FM-Real image specified in the batch file.
 
-        --hcp_bold_realfmapmag (str, default ''):
+        --hcp_bold_precomputedfmapmag (str, default ''):
             Path to the magnitude image in the same space as
-            --hcp_bold_realfmap (e.g., a b=0 volume from the diffusion
+            --hcp_bold_precomputedfmap (e.g., a b=0 volume from the diffusion
             acquisition). Used for fieldmap-to-T1w registration. This parameter
-            is used when hcp_bold_dcmethod is set to REAL_FIELDMAP.
+            is used when hcp_bold_dcmethod is set to PRECOMPUTED_FIELDMAP.
             Usually this is set automatically based on the FM-Magnitude image
             specified in the batch file.
 
@@ -5241,40 +5240,40 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         hcp_fmri_volume parameter mapping:
 
-            ============================= =======================
-            QuNex parameter               HCPpipelines parameter
-            ============================= =======================
-            ``hcp_bold_res``              ``fmrires``
-            ``hcp_bold_biascorrection``   ``biascorrection``
-            ``hcp_bold_echodiff``         ``echodiff``
-            ``hcp_gdcoeffs``              ``gdcoeffs``
-            ``hcp_bold_dcmethod``         ``dcmethod``
-            ``hcp_bold_echospacing``      ``echospacing``
-            ``hcp_bold_unwarpdir``        ``unwarpdir``
-            ``hcp_bold_topupconfig``      ``topupconfig``
-            ``hcp_bold_dof``              ``dof``
-            ``hcp_printcom``              ``printcom``
-            ``hcp_bold_usejacobian``      ``usejacobian``
-            ``hcp_bold_movreg``           ``mctype``
-            ``hcp_bold_preregistertool``  ``preregistertool``
-            ``hcp_processing_mode``       ``processing-mode``
-            ``hcp_bold_doslicetime``      ``slicetimerparams``
-            ``hcp_bold_slicetimerparams`` ``slicetimerparams``
-            ``hcp_bold_slicetimingfile``  ``slicetimerparams``
-            ``hcp_bold_stcorrdir``        ``slicetimerparams``
-            ``hcp_bold_stcorrint``        ``slicetimerparams``
-            ``hcp_bold_refreg``           ``fmrirefreg``
-            ``hcp_bold_mask``             ``fmrimask``
-            ``hcp_bold_seunwarpdir``      ``seunwarpdir``
-            ``hcp_bold_seechospacing``    ``seechospacing``
-            ``hcp_bold_realfmap``         ``realfmap``
-            ``hcp_bold_realfmapmag``      ``realfmapmag``
-            ``wb-resample``               ``hcp_wb_resample``
-            ``echoTE``                    ``hcp_echo_te``
-            ``matlab-run-mode``           ``hcp_matlab_mode``
-            ``hcp_longitudinal_template`` ``longitudinal-template``
-            ``longitudinal``              ``is-longitudinal``
-            ============================= =======================
+            =============================== =======================
+            QuNex parameter                 HCPpipelines parameter
+            =============================== =======================
+            ``hcp_bold_res``                ``fmrires``
+            ``hcp_bold_biascorrection``     ``biascorrection``
+            ``hcp_bold_echodiff``           ``echodiff``
+            ``hcp_gdcoeffs``                ``gdcoeffs``
+            ``hcp_bold_dcmethod``           ``dcmethod``
+            ``hcp_bold_echospacing``        ``echospacing``
+            ``hcp_bold_unwarpdir``          ``unwarpdir``
+            ``hcp_bold_topupconfig``        ``topupconfig``
+            ``hcp_bold_dof``                ``dof``
+            ``hcp_printcom``                ``printcom``
+            ``hcp_bold_usejacobian``        ``usejacobian``
+            ``hcp_bold_movreg``             ``mctype``
+            ``hcp_bold_preregistertool``    ``preregistertool``
+            ``hcp_processing_mode``         ``processing-mode``
+            ``hcp_bold_doslicetime``        ``slicetimerparams``
+            ``hcp_bold_slicetimerparams``   ``slicetimerparams``
+            ``hcp_bold_slicetimingfile``    ``slicetimerparams``
+            ``hcp_bold_stcorrdir``          ``slicetimerparams``
+            ``hcp_bold_stcorrint``          ``slicetimerparams``
+            ``hcp_bold_refreg``             ``fmrirefreg``
+            ``hcp_bold_mask``               ``fmrimask``
+            ``hcp_bold_seunwarpdir``        ``seunwarpdir``
+            ``hcp_bold_seechospacing``      ``seechospacing``
+            ``hcp_bold_precomputedfmap``    ``precomputedfmap``
+            ``hcp_bold_precomputedfmapmag`` ``precomputedfmapmag``
+            ``wb-resample``                 ``hcp_wb_resample``
+            ``echoTE``                      ``hcp_echo_te``
+            ``matlab-run-mode``             ``hcp_matlab_mode``
+            ``hcp_longitudinal_template``   ``longitudinal-template``
+            ``longitudinal``                ``is-longitudinal``
+            =============================== =======================
 
     Examples:
         Example run from the base study folder with test flag::
@@ -5415,8 +5414,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         fmmag = "NONE"
         fmphase = "NONE"
         fmcombined = "NONE"
-        fmreal = "NONE"
-        fmrealmag = "NONE"
+        fmprecomputed = "NONE"
+        fmprecomputedmag = "NONE"
 
         # -> Check for SE images
         sepresent = []
@@ -5436,7 +5435,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "philipsfieldmap",
             "gehealthcarefieldmap",
             "gehealthcarelegacyfieldmap",
-            "real_fieldmap",
+            "precomputed_fieldmap",
             "onscanner",
             "none",
         ]:
@@ -5555,7 +5554,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             "philipsfieldmap",
             "gehealthcarefieldmap",
             "gehealthcarelegacyfieldmap",
-            "real_fieldmap",
+            "precomputed_fieldmap",
         ]:
             unwarpdirs = [
                 [f.strip() for f in e.strip().split("=")]
@@ -5608,7 +5607,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "philipsfieldmap",
                 "gehealthcarefieldmap",
                 "gehealthcarelegacyfieldmap",
-                "real_fieldmap",
+                "precomputed_fieldmap",
             ]
 
             # --- set unwarpdir and orient
@@ -5989,20 +5988,20 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- check for real fieldmap image
             elif (
                 options["hcp_bold_biascorrection"].lower() != "sebased"
-                and options["hcp_bold_dcmethod"].lower() == "real_fieldmap"
+                and options["hcp_bold_dcmethod"].lower() == "precomputed_fieldmap"
             ):
-                if options["hcp_bold_realfmap"] is not None:
-                    if not os.path.exists(options["hcp_bold_realfmap"]):
+                if options["hcp_bold_precomputedfmap"] is not None:
+                    if not os.path.exists(options["hcp_bold_precomputedfmap"]):
                         r += (
-                            "\n---> ERROR: Could not find real fieldmap image specified in hcp_bold_realfmap parameter: %s."
-                            % (options["hcp_bold_realfmap"])
+                            "\n---> ERROR: Could not find precomputed fieldmap image specified in hcp_bold_precomputedfmap parameter: %s."
+                            % (options["hcp_bold_precomputedfmap"])
                         )
                         fieldok = False
                     else:
                         r += "\n     ... real fieldmap image present"
                         fieldok = True
                     boldok = boldok and fieldok
-                    fmreal = options["hcp_bold_realfmap"]
+                    fmprecomputed = options["hcp_bold_precomputedfmap"]
                     fmmag = None
                     fmphase = None
                     fmcombined = None
@@ -6030,23 +6029,24 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                 % (options["hcp_bold_echospacing"])
                             )
                         boldok = boldok and fieldok
-                        fmreal = hcp["fieldmap"][int(fmnum)]["Real"]
+                        fmprecomputed = hcp["fieldmap"][int(fmnum)]["Real"]
                         fmmag = None
                         fmphase = None
                         fmcombined = None
 
-                # --- check for realfmapmag
-                if options["hcp_bold_realfmapmag"] is not None:
+                # --- check for precomputedfmapmag
+                if options["hcp_bold_precomputedfmapmag"] is not None:
                     # --- user provided a path to a magnitude image
-                    if os.path.exists(options["hcp_bold_realfmapmag"]):
-                        fmrealmag = options["hcp_bold_realfmapmag"]
-                        r += "\n     ... real fieldmap magnitude image present: %s" % (
-                            fmrealmag
+                    if os.path.exists(options["hcp_bold_precomputedfmapmag"]):
+                        fmprecomputedmag = options["hcp_bold_precomputedfmapmag"]
+                        r += (
+                            "\n     ... precomputed fieldmap magnitude image present: %s"
+                            % (fmprecomputedmag)
                         )
                     else:
                         r += (
-                            "\n---> ERROR: Could not find real fieldmap magnitude image specified in the hcp_bold_realfmapmag parameter: %s."
-                            % (options["hcp_bold_realfmapmag"])
+                            "\n---> ERROR: Could not find precomputed fieldmap magnitude image specified in the hcp_bold_precomputedfmapmag parameter: %s."
+                            % (options["hcp_bold_precomputedfmapmag"])
                         )
                         boldok = False
                 else:
@@ -6057,20 +6057,22 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         and int(fmnum_mag) in hcp["fieldmap"]
                         and "Magnitude" in hcp["fieldmap"][int(fmnum_mag)]
                     ):
-                        auto_realfmapmag = hcp["fieldmap"][int(fmnum_mag)]["Magnitude"]
+                        auto_precomputedfmapmag = hcp["fieldmap"][int(fmnum_mag)][
+                            "Magnitude"
+                        ]
                         r, boldok = pc.checkForFile2(
                             r,
-                            auto_realfmapmag,
-                            "\n     ... real fieldmap magnitude image auto-detected and present: %s"
-                            % (auto_realfmapmag),
-                            "\n---> ERROR: Could not find auto-detected real fieldmap magnitude image: %s."
-                            % (auto_realfmapmag),
+                            auto_precomputedfmapmag,
+                            "\n     ... precomputed fieldmap magnitude image auto-detected and present: %s"
+                            % (auto_precomputedfmapmag),
+                            "\n---> ERROR: Could not find auto-detected precomputed fieldmap magnitude image: %s."
+                            % (auto_precomputedfmapmag),
                             status=boldok,
                         )
-                        if os.path.exists(auto_realfmapmag):
-                            fmrealmag = auto_realfmapmag
+                        if os.path.exists(auto_precomputedfmapmag):
+                            fmprecomputedmag = auto_precomputedfmapmag
                     else:
-                        r += "\n---> WARNING: hcp_bold_realfmapmag is not set and could not be auto-detected. The HCP pipelines require this for REAL_FIELDMAP."
+                        r += "\n---> WARNING: hcp_bold_precomputedfmapmag is not set and could not be auto-detected. The HCP pipelines require this for PRECOMPUTED_FIELDMAP."
 
             # --- NO DC used
             elif options["hcp_bold_dcmethod"].lower() == "none":
@@ -6201,8 +6203,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "fmmag": fmmag,
                 "fmphase": fmphase,
                 "fmcombined": fmcombined,
-                "fmreal": fmreal,
-                "fmrealmag": fmrealmag,
+                "fmprecomputed": fmprecomputed,
+                "fmprecomputedmag": fmprecomputedmag,
                 "fmriref": fmriref,
             }
             boldsData.append(b)
@@ -6350,8 +6352,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     fmmag = b["fmmag"]
     fmphase = b["fmphase"]
     fmcombined = b["fmcombined"]
-    fmreal = b["fmreal"]
-    fmrealmag = b["fmrealmag"]
+    fmprecomputed = b["fmprecomputed"]
+    fmprecomputedmag = b["fmprecomputedmag"]
     fmriref = b["fmriref"]
 
     # prepare return variables
@@ -6428,8 +6430,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             ("fmapmag", fmmag),
             ("fmapphase", fmphase),
             ("fmapcombined", fmcombined),
-            ("realfmap", fmreal),
-            ("realfmapmag", fmrealmag),
+            ("precomputedfmap", fmprecomputed),
+            ("precomputedfmapmag", fmprecomputedmag),
             ("echospacing", echospacing),
             ("echodiff", options["hcp_bold_echodiff"]),
             ("unwarpdir", unwarpdir),
