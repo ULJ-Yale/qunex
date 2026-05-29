@@ -2349,10 +2349,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("high-myelin", options["hcp_high_myelin"]))
 
         # -> conf2hires and hires flags
-        if options["hcp_conf2hires"] and options["hcp_conf2hires"].lower() == "true":
-            elements.append(("conf2hires", "TRUE"))
-        if options["hcp_hires"] and options["hcp_hires"].lower() == "true":
-            elements.append(("hires", "TRUE"))
+        if options["hcp_conf2hires"]:
+            elements.append(("conf2hires", options["hcp_conf2hires"]))
+        if options["hcp_hires"]:
+            elements.append(("hires", options["hcp_hires"]))
 
         # ---> Pull all together
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
