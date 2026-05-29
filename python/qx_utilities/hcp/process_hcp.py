@@ -2008,12 +2008,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             (Please note that it will only be used when HCP Pipelines are
             used. It is not implemented in hcpmodified!)
 
-        --hcp_fs_no_conf2hires (str, default 'FALSE'):
-            Indicates that (most commonly due to low resolution—1mm or less—of
-            structural image(s), high-resolution steps of recon-all should be
-            excluded. Accepted values are 'TRUE' or 'FALSE'.
-            (Please note that it will only be used when HCP Pipelines are
-            used. It is not implemented in hcpmodified!)
+        --hcp_fs_conf2hires (str, 'TRUE'):
+            Whether to use the conf2hires flag in recon-all. If set to 'TRUE',
+            the flag will be used, if set to 'FALSE' it will not be used.
+
+        --hcp_fs_hires (str, 'FALSE'):
+            Whether to use the hires flag in recon-all. If set to 'TRUE',
+            the flag will be used, if set to 'FALSE' it will not be used.
 
         --hcp_t2 (str, default 't2'):
             'NONE' if no T2w image is available and the preprocessing should be
@@ -2056,7 +2057,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             ``hcp_processing_mode``      ``processing-mode``
             ``hcp_fs_existing_session``  ``existing-subject``
             ``hcp_fs_extra_reconall``    ``extra-reconall-arg``
-            ``hcp_fs_no_conf2hires``     ``no-conf2hires``
+            ``hcp_fs_conf2hires``        ``conf2hires``
+            ``hcp_fs_hires``             ``hires``
             ``hcp_fs_flair``             ``flair``
             ============================ =======================
 
@@ -2347,6 +2349,12 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_high_myelin"].lower() != "auto":
             elements.append(("high-myelin", options["hcp_high_myelin"]))
 
+        # -> conf2hires and hires flags
+        if options["hcp_fs_conf2hires"].lower() == "true":
+            elements.append(("conf2hires", "TRUE"))
+        if options["hcp_fs_hires"].lower() == "true":
+            elements.append(("hires", "TRUE"))
+
         # ---> Pull all together
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
@@ -2354,7 +2362,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         for optionName, flag in [
             ("hcp_fs_flair", "--flair"),
             ("hcp_fs_existing_session", "--existing-subject"),
-            ("hcp_fs_no_conf2hires", "--no-conf2hires"),
         ]:
             if options[optionName]:
                 comm += " %s" % (flag)
