@@ -2056,8 +2056,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             ``hcp_processing_mode``      ``processing-mode``
             ``hcp_fs_existing_session``  ``existing-subject``
             ``hcp_fs_extra_reconall``    ``extra-reconall-arg``
-            ``hcp_conf2hires``        ``conf2hires``
-            ``hcp_hires``             ``hires``
+            ``hcp_conf2hires``           ``conf2hires``
+            ``hcp_hires``                ``hires``
             ``hcp_fs_flair``             ``flair``
             ============================ =======================
 
