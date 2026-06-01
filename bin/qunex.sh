@@ -17,6 +17,8 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
+TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
+
 qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # version
@@ -95,7 +97,6 @@ bash_call_execute() {
     # -- Set platform info
     Platform="Platform Information: `uname -a`"
     # -- Set the time stamp for given job
-    TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
     if [[ ${CommandToRun} == "run_turnkey" ]]; then
         unset qxutil_command_to_run
         if ( [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] || [[ ${TURNKEY_TYPE} == 'xnat' ]] ) && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
@@ -1616,7 +1617,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     BOLDPrefix=`get_parameters "${setflag}boldprefix" $@`
     SkipFrames=`get_parameters "${setflag}skipframes" $@`
     SNROnly=`get_parameters "${setflag}snronly" $@`
-    TimeStamp=`get_parameters "${setflag}timestamp" $@`
     Suffix=`get_parameters "${setflag}suffix" $@`
     SceneZip=`get_parameters "${setflag}scenezip" $@`
 
