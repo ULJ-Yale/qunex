@@ -121,6 +121,51 @@ def _append_sorted_logdir_to_log(log_file, logdir):
         print(content, file=log_file)
 
 
+def _get_postfreesurfer_snapshot_paths(hcp):
+    """Return the snapshot artifacts used to roll back PostFreeSurfer outputs."""
+
+    return {
+        "start": os.path.join(hcp["snapshots"], "postfreesurfer_start.txt"),
+        "diff": os.path.join(hcp["snapshots"], "postfreesurfer_diff.txt"),
+        "backup": os.path.join(hcp["snapshots"], "postfreesurfer_backup"),
+    }
+
+
+def _prepare_postfreesurfer_snapshot_state(hcp):
+    """Refresh rollback metadata used before rerunning FreeSurfer after PostFS."""
+
+    paths = _get_postfreesurfer_snapshot_paths(hcp)
+
+    gs.record_snapshot(
+        targetfolder=hcp["base"],
+        outfile=paths["start"],
+        exclude=hcp["snapshots"],
+    )
+
+    gs.backup_files(
+        source=hcp["base"],
+        target=paths["backup"],
+        filelist=[
+            "MNINonLinear/T1w.nii.gz",
+            "MNINonLinear/T1w_restore.nii.gz",
+            "MNINonLinear/T1w_restore_brain.nii.gz",
+            "MNINonLinear/T2w.nii.gz",
+            "MNINonLinear/T2w_restore.nii.gz",
+            "MNINonLinear/T2w_restore_brain.nii.gz",
+            "MNINonLinear/xfms/NonlinearRegJacobians.nii.gz",
+            "T1w/T1w_acpc_dc.nii.gz",
+            "T1w/T1w_acpc_dc_restore.nii.gz",
+            "T1w/T1w_acpc_dc_restore_brain.nii.gz",
+            "T1w/T2w_acpc_dc.nii.gz",
+            "T1w/T2w_acpc_dc_restore.nii.gz",
+            "T1w/T2w_acpc_dc_restore_brain.nii.gz",
+        ],
+        overwrite=True,
+    )
+
+    return paths
+
+
 # -------------------------------------------------------------------
 #
 #                       HCP Pipeline Scripts
@@ -2372,6 +2417,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             + options["hcp_suffix"]
             + ".corrThickness.164k_fs_LR.dscalar.nii",
         )
+        postfs_snapshot_paths = _get_postfreesurfer_snapshot_paths(hcp)
 
         if os.path.exists(post_fs_tfile) and not (
             overwrite or options["hcp_fs_existing_session"]
@@ -2444,19 +2490,37 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         post_fs_tfile
                     )
                     r += "\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ..."
-                    gs.rollback_snapshot(
-                        diff=os.path.join(hcp["snapshots"], "postfreesurfer_diff.txt"),
-                        action="delete",
-                        exclude=hcp["snapshots"],
-                    )
+                    have_postfs_diff = os.path.exists(postfs_snapshot_paths["diff"])
+                    have_postfs_backup = os.path.exists(postfs_snapshot_paths["backup"])
 
-                    # -> restore backup
-                    r += "\n     Restoring FreeSurfer backup ..."
-                    gs.restore_files(
-                        source=os.path.join(hcp["snapshots"], "postfreesurfer_backup"),
-                        target=hcp["base"],
-                        overwrite=True,
-                    )
+                    if have_postfs_diff and have_postfs_backup:
+                        gs.rollback_snapshot(
+                            diff=postfs_snapshot_paths["diff"],
+                            action="delete",
+                            exclude=hcp["snapshots"],
+                        )
+
+                        # -> restore backup
+                        r += "\n     Restoring FreeSurfer backup ..."
+                        gs.restore_files(
+                            source=postfs_snapshot_paths["backup"],
+                            target=hcp["base"],
+                            overwrite=True,
+                        )
+                    elif have_postfs_diff or have_postfs_backup:
+                        raise ge.CommandFailed(
+                            "hcp_freesurfer",
+                            "PostFreeSurfer rollback metadata is incomplete.",
+                            "Expected both postfreesurfer_diff.txt and postfreesurfer_backup in the snapshots folder.",
+                            "Please repair the study state before rerunning FreeSurfer after PostFreeSurfer.",
+                        )
+                    else:
+                        raise ge.CommandFailed(
+                            "hcp_freesurfer",
+                            "PostFreeSurfer results are present, but rollback metadata is missing.",
+                            "Safe FreeSurfer rerun after PostFreeSurfer requires postfreesurfer_diff.txt and postfreesurfer_backup in the snapshots folder.",
+                            "Re-run PostFreeSurfer once with current QuNex to seed rollback metadata, or rerun the study from PreFreeSurfer.",
+                        )
 
                 # --> record freesurfer_start_snapshot
                 r += "\n---> Recording FreeSurfer start snapshot ..."
@@ -2524,12 +2588,18 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     # -- take freesurfer_end_snapshot
     if options["run"] == "run" and failed == 0:
-        gs.compare_snapshots(
-            before=os.path.join(hcp["snapshots"], "freesurfer_start.txt"),
-            after=os.path.join(hcp["base"]),
-            outfile=os.path.join(hcp["snapshots"], "freesurfer_diff.txt"),
-            exclude=hcp["snapshots"],
+        freesurfer_start_snapshot = os.path.join(
+            hcp["snapshots"], "freesurfer_start.txt"
         )
+        if os.path.exists(freesurfer_start_snapshot):
+            gs.compare_snapshots(
+                before=freesurfer_start_snapshot,
+                after=os.path.join(hcp["base"]),
+                outfile=os.path.join(hcp["snapshots"], "freesurfer_diff.txt"),
+                exclude=hcp["snapshots"],
+            )
+        else:
+            r += "\n---> WARNING: FreeSurfer start snapshot missing, skipping diff generation."
 
     # print r
     return (r, (sinfo["id"], report, failed))
@@ -2859,37 +2929,10 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         # -- run
         if run:
             if options["run"] == "run":
-                if not os.path.exists(tfile):
-                    # ---> record pre freesurfer snapshot
-                    gs.record_snapshot(
-                        targetfolder=hcp["base"],
-                        outfile=os.path.join(
-                            hcp["snapshots"], "postfreesurfer_start.txt"
-                        ),
-                        exclude=hcp["snapshots"],
-                    )
-
-                    # ---> prepare freesurfer backup
-                    gs.backup_files(
-                        source=hcp["base"],
-                        target=os.path.join(hcp["snapshots"], "postfreesurfer_backup"),
-                        filelist=[
-                            "MNINonLinear/T1w.nii.gz",
-                            "MNINonLinear/T1w_restore.nii.gz",
-                            "MNINonLinear/T1w_restore_brain.nii.gz",
-                            "MNINonLinear/T2w.nii.gz",
-                            "MNINonLinear/T2w_restore.nii.gz",
-                            "MNINonLinear/T2w_restore_brain.nii.gz",
-                            "MNINonLinear/xfms/NonlinearRegJacobians.nii.gz",
-                            "T1w/T1w_acpc_dc.nii.gz",
-                            "T1w/T1w_acpc_dc_restore.nii.gz",
-                            "T1w/T1w_acpc_dc_restore_brain.nii.gz",
-                            "T1w/T2w_acpc_dc.nii.gz",
-                            "T1w/T2w_acpc_dc_restore.nii.gz",
-                            "T1w/T2w_acpc_dc_restore_brain.nii.gz",
-                        ],
-                        overwrite=overwrite,
-                    )
+                postfs_snapshot_paths = None
+                if overwrite or not os.path.exists(tfile):
+                    r += "\n---> Recording pre-PostFreeSurfer snapshot ..."
+                    postfs_snapshot_paths = _prepare_postfreesurfer_snapshot_state(hcp)
 
                 # ---> clean up test file if overwrite
                 if overwrite and os.path.exists(tfile):
@@ -2952,12 +2995,18 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     # -- take freesurfer_end_snapshot
     if options["run"] == "run" and failed == 0:
-        gs.compare_snapshots(
-            before=os.path.join(hcp["snapshots"], "postfreesurfer_start.txt"),
-            after=os.path.join(hcp["base"]),
-            outfile=os.path.join(hcp["snapshots"], "postfreesurfer_diff.txt"),
-            exclude=hcp["snapshots"],
+        postfs_start_snapshot = os.path.join(
+            hcp["snapshots"], "postfreesurfer_start.txt"
         )
+        if os.path.exists(postfs_start_snapshot):
+            gs.compare_snapshots(
+                before=postfs_start_snapshot,
+                after=os.path.join(hcp["base"]),
+                outfile=os.path.join(hcp["snapshots"], "postfreesurfer_diff.txt"),
+                exclude=hcp["snapshots"],
+            )
+        else:
+            r += "\n---> WARNING: PostFreeSurfer start snapshot missing, skipping diff generation."
 
     # print r
     return (r, (sinfo["id"], report, failed))
