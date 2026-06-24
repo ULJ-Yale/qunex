@@ -39,6 +39,12 @@ If hard caps are exceeded, call it out and justify.
 - Avoid hidden side effects and global state changes.
 - Keep imports clean and grouped.
 
+## Comment style
+
+- Use `#` for inline comments and `"""` for docstrings.
+- Use lowercase text for inline comments.
+- Use plain comment start, no dashes (# -) or arrows (# --->) unless part of a structured message.
+
 ## Linting and Validation
 
 Ruff is the default linter for Python.

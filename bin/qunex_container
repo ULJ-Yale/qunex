@@ -1183,6 +1183,7 @@ def main(args=None):
             array_commands = [
                 "hcp_pre_freesurfer",
                 "hcp_freesurfer",
+                "hcp_nhp_freesurfer",
                 "hcp_post_freesurfer",
                 "hcp_fmri_volume",
                 "hcp_fmri_surface",

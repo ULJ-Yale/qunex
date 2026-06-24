@@ -303,6 +303,11 @@ all_qunex_commands = [
         "Runs HCP FreeSurfer pipeline.",
         "python",
     ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_nhp_freesurfer",
+        "Runs HCP NHP FreeSurfer pipeline.",
+        "python",
+    ),
     ("qx_utilities.hcp.process_hcp.hcp_icafix", "Runs HCP ICAFix pipeline.", "python"),
     (
         "qx_utilities.hcp.process_hcp.hcp_make_average_dataset",

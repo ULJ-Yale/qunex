@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 1.5.0
 
+* Added `hcp_nhp_freesurfer`, the NHP (non-human primate) variant of `hcp_freesurfer`, interfacing the HCP `FreeSurferPipelineNHP.sh` script.
 * Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
 * QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
 
