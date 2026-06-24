@@ -2008,8 +2008,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         --hcp_fs_seed (str, default ''):
             Recon-all seed value. If not specified, none will be used.
-            (Please note that it will only be used when HCP Pipelines are
-            used. It is not implemented in hcpmodified!)
 
         --hcp_fs_edits (str, default 'FALSE'):
             Indicates whether manual edits are to be applied to the FreeSurfer
@@ -2360,7 +2358,6 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         elements = [
             ("session-dir", hcp["T1w_folder"]),
             ("session", sinfo["id"] + options["hcp_suffix"]),
-            ("seed", options["hcp_fs_seed"]),
             ("processing-mode", options["hcp_processing_mode"]),
         ]
 
@@ -2387,6 +2384,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("extra-reconall-arg", "-expert"))
             elements.append(("extra-reconall-arg", options["hcp_expert_file"]))
 
+        # seed
+        if options["hcp_fs_seed"]:
+            elements.append(("seed", options["hcp_fs_seed"]))
+
         # high myelin
         if options["hcp_high_myelin"] is None:
             options["hcp_high_myelin"] = ""
@@ -2400,7 +2401,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("hires", options["hcp_hires"]))
 
         # ---> Pull all together
-        comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+        comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements])
 
         # ---> Add flags
         for optionName, flag in [
