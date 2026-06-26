@@ -3319,6 +3319,32 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             Wwhether to use the updated curvature-thickness regression, set to
             'OLD', 'NEW' or 'BOTH', defaults to 'BOTH'.
 
+        --hcp_species (str, default 'Human'):
+            Target species for processing. When set to anything other than
+            'Human' (case-insensitive), the non-human primate (NHP) variant of
+            PostFreeSurfer processing is engaged and the species-specific
+            parameters below are passed to the pipeline.
+
+        --hcp_myelin_volume_fwhm (float, default detected):
+            Myelin mapping volume smoothing FWHM. Only relevant for non-human
+            species (when hcp_species is not 'Human'). When unset the HCP
+            pipeline default is used.
+
+        --hcp_myelin_surface_fwhm (float, default detected):
+            Myelin mapping surface smoothing FWHM. Only relevant for non-human
+            species (when hcp_species is not 'Human'). When unset the HCP
+            pipeline default is used.
+
+        --hcp_msmsulc_conf (str, default detected):
+            MSMSulc configuration. Only relevant for non-human species (when
+            hcp_species is not 'Human'). When unset the HCP pipeline default
+            is used.
+
+        --hcp_flatmap_root_name (str, default detected):
+            Flat map root name. Only relevant for non-human species (when
+            hcp_species is not 'Human'). When unset the HCP pipeline default
+            is used.
+
     Output files:
         The results of this step will be present in the MNINonLinear folder
         in the sessions's root hcp folder.
@@ -3349,7 +3375,16 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             ``hcp_fs_ind_mean``          ``use-ind-mean``
             ``hcp_processing_mode``      ``processing-mode``
             ``hcp_thickness_regression`` ``thickness-regression``
+            ``hcp_species``              ``species``
+            ``hcp_myelin_volume_fwhm``   ``myelin-volume-fwhm``
+            ``hcp_myelin_surface_fwhm``  ``myelin-surface-fwhm``
+            ``hcp_msmsulc_conf``         ``msmsulc-conf``
+            ``hcp_flatmap_root_name``    ``flatmap-root-name``
             ============================ ========================
+
+        The ``hcp_species`` parameter and the four species-specific parameters
+        below it are only passed to PostFreeSurferPipeline.sh when
+        ``hcp_species`` is set to a non-human species (case-insensitive).
 
     Examples:
         Example run from the base study folder with test flag::
@@ -3387,6 +3422,15 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 --overwrite=no \\
                 --parsessions=10 \\
                 --hcp_t2=NONE
+
+        Example run for a non-human primate (NHP) species::
+
+            qunex hcp_post_freesurfer \\
+                --batchfile="processing/batch.txt" \\
+                --sessionsfolder="sessions" \\
+                --parsessions="4" \\
+                --hcp_species="MacaqueRhesus" \\
+                --overwrite="yes"
     """
 
     r = "\n------------------------------------------------------------"
@@ -3502,6 +3546,22 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(
                 ("thickness-regression", options["hcp_thickness_regression"])
             )
+
+        # species-specific (NHP) parameters, only relevant for non-human species
+        # the four tuning parameters are optional; when unset they are not
+        # passed and the HCP pipeline applies its own defaults
+        species = options["hcp_species"]
+        if species and species.lower() != "human":
+            elements.append(("species", species))
+            optional_species_params = [
+                ("myelin-volume-fwhm", options["hcp_myelin_volume_fwhm"]),
+                ("myelin-surface-fwhm", options["hcp_myelin_surface_fwhm"]),
+                ("msmsulc-conf", options["hcp_msmsulc_conf"]),
+                ("flatmap-root-name", options["hcp_flatmap_root_name"]),
+            ]
+            for k, v in optional_species_params:
+                if v is not None:
+                    elements.append((k, v))
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
