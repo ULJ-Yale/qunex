@@ -293,6 +293,30 @@ def test_mapping_glob_conflict():
     assert "rfMRI_REST_AP_SBRef" in error_msg
 
 
+def test_mapping_phenc_in_source_and_rule_agree():
+    """phenc defined in both source and mapping with the same value is allowed.
+
+    once the source session file carries auto-detected phenc tags, a mapping
+    rule repeating the same phenc must not be treated as a conflict.
+    """
+    t, _ = _run_mapping_test("session_phenc_dup.txt", "mapping_phenc_dup.txt")
+    images = t["images"]
+    # image 04 (boldref) and 05 (bold) both define phenc(AP) on both sides
+    assert images[(4,)]["phenc"] == "AP"
+    assert images[(5,)]["phenc"] == "AP"
+
+
+def test_mapping_phenc_in_source_and_rule_conflict():
+    """phenc defined in both source and mapping with different values errors."""
+    with pytest.raises(SpecFileSyntaxError) as exc_info:
+        _run_mapping_test("session_phenc_dup.txt", "mapping_phenc_conflict.txt")
+
+    error_msg = str(exc_info.value.error)
+    print(error_msg)
+    assert "phenc" in error_msg.lower()
+    assert "AP" in error_msg and "PA" in error_msg
+
+
 # ---- "or" rule tests (|| variants) ----
 
 

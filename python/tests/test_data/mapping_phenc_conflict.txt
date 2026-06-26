@@ -1,0 +1,6 @@
+# Mapping file whose phenc tag disagrees with the source file (image 04: AP vs PA)
+T1w                     => T1w
+epi dir-AP acq-SEField2 => SE-FM-AP
+epi dir-PA acq-SEField2 => SE-FM-PA
+sbref rest dir-AP       => boldref:rest:phenc(PA)
+bold rest dir-AP        => bold:rest:phenc(AP)

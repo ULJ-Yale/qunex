@@ -3677,9 +3677,15 @@ def _apply_image_rule(img_info, rule):
     if "fm" in img_info:
         new_img_info["fm"] = img_info["fm"]
     for i in pass_through_tags:
-        if i in img_info and i in rule:
+        # a tag may be defined in the source session file, in the mapping rule,
+        # or in both. a conflict only exists when both define it with different
+        # values; identical definitions (a common case once the source file
+        # already carries auto-detected tags such as phenc) are harmless.
+        if i in img_info and i in rule and img_info[i] != rule[i]:
             raise ge.SpecFileSyntaxError(
-                error=f"""Multiple definitions of tag {i} for image {img_info["image_number"]}"""
+                error=f"""Conflicting definitions of tag {i} for image {img_info["raw_image_number"]}: """
+                f"""source session file has {i}({img_info[i]}) but the mapping rule has {i}({rule[i]}). """
+                f"""Remove the {i} tag from the source session file or the mapping file, or make them match."""
             )
 
         if i in img_info:

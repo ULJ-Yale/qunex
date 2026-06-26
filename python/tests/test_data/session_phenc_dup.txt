@@ -1,0 +1,9 @@
+# Source session file where images already carry auto-detected phenc tags
+session: phenc_test
+subject: PH001
+
+01: T1w
+02: epi dir-AP acq-SEField2 :se(5) :phenc(AP)
+03: epi dir-PA acq-SEField2 :se(5) :phenc(PA)
+04: sbref rest dir-AP :se(5) :phenc(AP)
+05: bold rest dir-AP :se(5) :phenc(AP)
