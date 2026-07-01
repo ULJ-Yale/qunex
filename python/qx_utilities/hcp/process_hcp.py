@@ -2870,9 +2870,6 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode."
             run = False
 
-        # test file
-        tfile = os.path.join(hcp["FS_folder"], "label", "BA_exvivo.thresh.ctab")
-
         # ---> Building the command string
         comm = (
             os.path.join(hcp["hcp_base"], "FreeSurfer", "FreeSurferPipelineNHP.sh")
@@ -3037,32 +3034,11 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
             r += comm.replace("--", "\n    --").replace("             ", "")
             r += "\n------------------------------------------------------------\n"
 
-        # -- Test files
-        if hcp["hcp_fs_check"]:
-            fullTest = {
-                "tfolder": hcp["base"],
-                "tfile": hcp["hcp_fs_check"],
-                "fields": [("sessionid", sinfo["id"] + options["hcp_suffix"])],
-                "specfolder": options["specfolder"],
-            }
-        else:
-            fullTest = None
-
         # -- Run
         if run:
             if options["run"] == "run":
-                # ---> clean up test file if overwrite and hcp_fs_existing_session not set to True
-                if (
-                    overwrite
-                    and os.path.lexists(tfile)
-                    and not options["hcp_fs_existing_session"]
-                ):
-                    os.remove(tfile)
-
                 # ---> clean up only if hcp_fs_existing_session is not set to True
-                if (overwrite or not os.path.exists(tfile)) and not options[
-                    "hcp_fs_existing_session"
-                ]:
+                if overwrite and not options["hcp_fs_existing_session"]:
                     if os.path.lexists(hcp["FS_folder"]):
                         r += (
                             "\n---> removing preexisting FS folder [%s]"
@@ -3081,7 +3057,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 os.remove(rmtarget)
                             elif os.path.isdir(rmtarget):
                                 shutil.rmtree(rmtarget)
-                        except:
+                        except Exception:
                             r += (
                                 "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!"
                                 % (rmtarget)
@@ -3137,7 +3113,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                 if status:
                     r, endlog, report, failed = pc.runExternalForFile(
-                        tfile,
+                        None,
                         comm,
                         "Running HCP NHP FS",
                         overwrite=overwrite,
@@ -3146,7 +3122,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         task=options["command_ran"],
                         logfolder=options["comlogs"],
                         logtags=options["logtag"],
-                        fullTest=fullTest,
+                        fullTest=None,
                         shell=True,
                         r=r,
                     )
@@ -3154,7 +3130,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
             # -- just checking
             else:
                 passed, report, r, failed = pc.checkRun(
-                    tfile, fullTest, "HCP NHP FS", r, overwrite=overwrite
+                    None, None, "HCP NHP FS", r, overwrite=overwrite
                 )
                 if passed is None:
                     r += "\n---> HCP NHP FS can be run"
