@@ -8,8 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 1.5.0
 
-* Added `hcp_nhp_freesurfer`, the NHP (non-human primate) variant of `hcp_freesurfer`, interfacing the HCP `FreeSurferPipelineNHP.sh` script.
-* Added NHP/species support to `hcp_post_freesurfer` via the new `hcp_species`, `hcp_myelin_volume_fwhm`, `hcp_myelin_surface_fwhm`, `hcp_msmsulc_conf` and `hcp_flatmap_root_name` parameters.
+* Added NHP (non-human primate) support to all HCP commands that now support it. This is mainly accessible through the `hcp_species` parameter, while there is a completely new command for HCP FreeSurfer (`hcp_nhp_freesurfer`).
 * Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
 * QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
 

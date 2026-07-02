@@ -635,6 +635,35 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
     return gdcfile, r, run
 
 
+def resolve_session_relative_image(value, hcp_base):
+    """
+    Resolve an image path that may be provided in a session flexible way.
+
+    Checks, in order:
+      1. the value as an absolute path,
+      2. a path relative to the session's root hcp folder,
+      3. a path relative to the session's T2w folder.
+
+    Images are passed to FSL without an extension, so ``.nii.gz`` and ``.nii``
+    are also probed when testing for existence. Returns a ``(path, found)``
+    tuple, where ``path`` is the first existing candidate (without appended
+    extension) or the T2w fallback when none exist.
+    """
+
+    candidates = [
+        value,
+        os.path.join(hcp_base, value),
+        os.path.join(hcp_base, "T2w", value),
+    ]
+
+    for candidate in candidates:
+        # test for a file (not a directory, e.g. the T2w folder itself)
+        if any(os.path.isfile(candidate + ext) for ext in ("", ".nii.gz", ".nii")):
+            return candidate, True
+
+    return candidates[-1], False
+
+
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     r"""
     ``hcp_pre_freesurfer [... processing options]``
@@ -5698,6 +5727,68 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Phase encoding direction of the Spin Echo Field Map (x, y or NONE).
             Used when hcp_bold_dcmethod is set to TOPUP_MISMATCHED.
 
+        --hcp_species (str, default ''):
+            Species label (Human, Macaque, Marmoset, etc.). When unset the HCP
+            pipeline default (Human) is used. Only relevant for non-human
+            species.
+
+        --hcp_scale_factor (str, default ''):
+            Brain scale factor for motion correction (e.g. 1 for human). Passed
+            to the HCP pipeline as ``brainscalefactor``. Only relevant for
+            non-human species.
+
+        --hcp_runmode (str, default ''):
+            Specify from which step to resume the processing instead of
+            starting from the beginning. Value must be one of: Default,
+            DistortionCorrection, OneStepResampling (default: Default).
+
+        --hcp_truepatientposition (str, default ''):
+            True patient position, e.g. HFS, FFS, HFSx, FFSx (default: HFS).
+            Only relevant for non-human species.
+
+        --hcp_scannerpatientposition (str, default ''):
+            Scanner patient position, e.g. HFS, FFS (default: HFS). Only
+            relevant for non-human species.
+
+        --hcp_bold_bbrcontrast (str, default ''):
+            BBR contrast to use for EPI to T1w registration: T2w, T1w or NONE
+            (default: T2w). Ignored when hcp_species is Human.
+
+        --hcp_bold_wmprojabs (str, default ''):
+            FreeSurfer wm-proj-abs value (default: 2). Only relevant for
+            non-human species.
+
+        --hcp_bold_initworldmat (str, default ''):
+            Initial world matrix to apply to sform (optional). Only relevant
+            for non-human species.
+
+        --hcp_bold_sephaseneg2 (str, default ''):
+            Label of the second negative polarity SE-EPI image. Together with
+            hcp_bold_sephasepos2 and hcp_senum2 it is used to locate the second
+            spin echo pair in the SpinEchoFieldMap[hcp_senum2] folder (mirroring
+            hcp_pre_freesurfer). An existing absolute path can also be provided
+            directly. Only relevant for non-human species.
+
+        --hcp_bold_sephasepos2 (str, default ''):
+            Label of the second positive polarity SE-EPI image. See
+            hcp_bold_sephaseneg2. Only relevant for non-human species.
+
+        --hcp_bold_sephasezero (str, default ''):
+            Zero-phase SE-EPI image (for NHP this is typically the T2w image).
+            The value is resolved by checking, in order: an absolute path, a
+            path relative to the session's root hcp folder, and a path relative
+            to the session's T2w folder (e.g. 'T2w'). This lets a single command
+            call work across many sessions. If provided but none of the three
+            candidates exist, processing is aborted. Only relevant for non-human
+            species.
+
+        --hcp_bold_sephasezerofsbrainmask (str, default ''):
+            FS brainmask for hcp_bold_sephasezero (for NHP this is typically
+            'T2w_brainmask_fs'). Resolved the same way as hcp_bold_sephasezero
+            (absolute, then relative to the session's hcp folder, then relative
+            to the T2w folder) and aborts processing if provided but none of the
+            candidates exist. Only relevant for non-human species.
+
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
@@ -5931,40 +6022,53 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         hcp_fmri_volume parameter mapping:
 
-            =============================== =======================
-            QuNex parameter                 HCPpipelines parameter
-            =============================== =======================
-            ``hcp_bold_res``                ``fmrires``
-            ``hcp_bold_biascorrection``     ``biascorrection``
-            ``hcp_bold_echodiff``           ``echodiff``
-            ``hcp_gdcoeffs``                ``gdcoeffs``
-            ``hcp_bold_dcmethod``           ``dcmethod``
-            ``hcp_bold_echospacing``        ``echospacing``
-            ``hcp_bold_unwarpdir``          ``unwarpdir``
-            ``hcp_bold_topupconfig``        ``topupconfig``
-            ``hcp_bold_dof``                ``dof``
-            ``hcp_printcom``                ``printcom``
-            ``hcp_bold_usejacobian``        ``usejacobian``
-            ``hcp_bold_movreg``             ``mctype``
-            ``hcp_bold_preregistertool``    ``preregistertool``
-            ``hcp_processing_mode``         ``processing-mode``
-            ``hcp_bold_doslicetime``        ``slicetimerparams``
-            ``hcp_bold_slicetimerparams``   ``slicetimerparams``
-            ``hcp_bold_slicetimingfile``    ``slicetimerparams``
-            ``hcp_bold_stcorrdir``          ``slicetimerparams``
-            ``hcp_bold_stcorrint``          ``slicetimerparams``
-            ``hcp_bold_refreg``             ``fmrirefreg``
-            ``hcp_bold_mask``               ``fmrimask``
-            ``hcp_bold_seunwarpdir``        ``seunwarpdir``
-            ``hcp_bold_seechospacing``      ``seechospacing``
-            ``hcp_bold_precomputedfmap``    ``precomputedfmap``
-            ``hcp_bold_precomputedfmapmag`` ``precomputedfmapmag``
-            ``wb-resample``                 ``hcp_wb_resample``
-            ``echoTE``                      ``hcp_echo_te``
-            ``matlab-run-mode``             ``hcp_matlab_mode``
-            ``hcp_longitudinal_template``   ``longitudinal-template``
-            ``longitudinal``                ``is-longitudinal``
-            =============================== =======================
+            =================================== =======================
+            QuNex parameter                     HCPpipelines parameter
+            =================================== =======================
+            ``hcp_bold_res``                    ``fmrires``
+            ``hcp_bold_biascorrection``         ``biascorrection``
+            ``hcp_bold_echodiff``               ``echodiff``
+            ``hcp_gdcoeffs``                    ``gdcoeffs``
+            ``hcp_bold_dcmethod``               ``dcmethod``
+            ``hcp_bold_echospacing``            ``echospacing``
+            ``hcp_bold_unwarpdir``              ``unwarpdir``
+            ``hcp_bold_topupconfig``            ``topupconfig``
+            ``hcp_bold_dof``                    ``dof``
+            ``hcp_printcom``                    ``printcom``
+            ``hcp_bold_usejacobian``            ``usejacobian``
+            ``hcp_bold_movreg``                 ``mctype``
+            ``hcp_bold_preregistertool``        ``preregistertool``
+            ``hcp_processing_mode``             ``processing-mode``
+            ``hcp_bold_doslicetime``            ``slicetimerparams``
+            ``hcp_bold_slicetimerparams``       ``slicetimerparams``
+            ``hcp_bold_slicetimingfile``        ``slicetimerparams``
+            ``hcp_bold_stcorrdir``              ``slicetimerparams``
+            ``hcp_bold_stcorrint``              ``slicetimerparams``
+            ``hcp_bold_refreg``                 ``fmrirefreg``
+            ``hcp_bold_mask``                   ``fmrimask``
+            ``hcp_bold_seunwarpdir``            ``seunwarpdir``
+            ``hcp_bold_seechospacing``          ``seechospacing``
+            ``hcp_bold_precomputedfmap``        ``precomputedfmap``
+            ``hcp_bold_precomputedfmapmag``     ``precomputedfmapmag``
+            ``hcp_species``                     ``species``
+            ``hcp_scale_factor``                ``brainscalefactor``
+            ``hcp_runmode``                     ``runmode``
+            ``hcp_truepatientposition``         ``truepatientposition``
+            ``hcp_scannerpatientposition``      ``scannerpatientposition``
+            ``hcp_bold_bbrcontrast``            ``bbr-contrast``
+            ``hcp_bold_wmprojabs``              ``wmprojabs``
+            ``hcp_bold_initworldmat``           ``initworldmat``
+            ``hcp_bold_sephaseneg2``            ``SEPhaseNeg2``
+            ``hcp_bold_sephasepos2``            ``SEPhasePos2``
+            ``hcp_senum2``                      (folder lookup for SEPhase*2)
+            ``hcp_bold_sephasezero``            ``SEPhaseZero``
+            ``hcp_bold_sephasezerofsbrainmask`` ``SEPhaseZeroFSBrainmask``
+            ``wb-resample``                     ``hcp_wb_resample``
+            ``echoTE``                          ``hcp_echo_te``
+            ``matlab-run-mode``                 ``hcp_matlab_mode``
+            ``hcp_longitudinal_template``       ``longitudinal-template``
+            ``longitudinal``                    ``is-longitudinal``
+            =================================== =========================
 
     Examples:
         Example run from the base study folder with test flag::
@@ -6109,6 +6213,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         fmprecomputed = "NONE"
         fmprecomputedmag = "NONE"
 
+        # -> NHP/species specific images (resolved below, empty for humans)
+        sepos2 = ""
+        seneg2 = ""
+        sezero = ""
+        sezerobrainmask = ""
+
         # -> Check for SE images
         sepresent = []
         sepairs = {}
@@ -6236,6 +6346,84 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... TOPUP configuration file present"
             else:
                 topupconfig = ""
+
+            # ---> second spin-echo pair (NHP), resolved through hcp_senum2
+            # the labels hcp_bold_sephasepos2/hcp_bold_sephaseneg2 are matched
+            # against the files in the SpinEchoFieldMap[hcp_senum2] folder, or
+            # existing absolute paths can be provided directly
+            if options["hcp_bold_sephasepos2"] and options["hcp_bold_sephaseneg2"]:
+                if os.path.exists(options["hcp_bold_sephasepos2"]) and os.path.exists(
+                    options["hcp_bold_sephaseneg2"]
+                ):
+                    sepos2 = options["hcp_bold_sephasepos2"]
+                    seneg2 = options["hcp_bold_sephaseneg2"]
+                    r += "\n---> Second Spin-Echo pair of images present. [%s, %s]" % (
+                        os.path.basename(sepos2),
+                        os.path.basename(seneg2),
+                    )
+                elif options["hcp_senum2"]:
+                    tufolder2 = os.path.join(
+                        hcp["source"],
+                        "SpinEchoFieldMap%s%s"
+                        % (options["hcp_senum2"], options["fctail"]),
+                    )
+                    try:
+                        sepos2 = glob.glob(
+                            os.path.join(
+                                tufolder2,
+                                "*_" + options["hcp_bold_sephasepos2"] + "*.nii.gz",
+                            )
+                        )[0]
+                        seneg2 = glob.glob(
+                            os.path.join(
+                                tufolder2,
+                                "*_" + options["hcp_bold_sephaseneg2"] + "*.nii.gz",
+                            )
+                        )[0]
+                        r += "\n---> Second Spin-Echo pair of images present. [%s]" % (
+                            os.path.basename(tufolder2)
+                        )
+                    except IndexError:
+                        r += (
+                            "\n---> ERROR: Could not find the relevant second Spin-Echo files! [%s]"
+                            % (tufolder2)
+                        )
+                        run = False
+                else:
+                    r += "\n---> ERROR: Could not find the relevant second Spin-Echo files! Provide existing hcp_bold_sephasepos2/hcp_bold_sephaseneg2 paths or set hcp_senum2."
+                    run = False
+
+        # --- NHP zero-phase SE image (typically the T2w) and its FS brainmask.
+        # each value is resolved by checking, in order, an absolute path, a path
+        # relative to the session's root hcp folder, and a path relative to the
+        # session's T2w folder, so that a single command call works across many
+        # sessions. if a value is set but none of the candidates exist,
+        # processing is aborted.
+        if options["hcp_bold_sephasezero"]:
+            sezero, sezero_found = resolve_session_relative_image(
+                options["hcp_bold_sephasezero"], hcp["base"]
+            )
+            if sezero_found:
+                r += "\n---> Zero-phase SE image: %s" % (sezero)
+            else:
+                r += (
+                    "\n---> ERROR: Could not find the zero-phase SE image for hcp_bold_sephasezero [%s]! Checked as an absolute path, relative to the session's hcp folder, and relative to the T2w folder."
+                    % (options["hcp_bold_sephasezero"])
+                )
+                run = False
+
+        if options["hcp_bold_sephasezerofsbrainmask"]:
+            sezerobrainmask, sezerobrainmask_found = resolve_session_relative_image(
+                options["hcp_bold_sephasezerofsbrainmask"], hcp["base"]
+            )
+            if sezerobrainmask_found:
+                r += "\n---> Zero-phase SE FS brainmask: %s" % (sezerobrainmask)
+            else:
+                r += (
+                    "\n---> ERROR: Could not find the zero-phase SE FS brainmask for hcp_bold_sephasezerofsbrainmask [%s]! Checked as an absolute path, relative to the session's hcp folder, and relative to the T2w folder."
+                    % (options["hcp_bold_sephasezerofsbrainmask"])
+                )
+                run = False
 
         # --- Process unwarp direction
         if options["hcp_bold_dcmethod"].lower() in [
@@ -6891,6 +7079,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "echospacing": echospacing,
                 "spinNeg": spinNeg,
                 "spinPos": spinPos,
+                "sepos2": sepos2,
+                "seneg2": seneg2,
+                "sezero": sezero,
+                "sezerobrainmask": sezerobrainmask,
                 "topupconfig": topupconfig,
                 "fmmag": fmmag,
                 "fmphase": fmphase,
@@ -7040,6 +7232,10 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     echospacing = b["echospacing"]
     spinNeg = b["spinNeg"]
     spinPos = b["spinPos"]
+    sepos2 = b["sepos2"]
+    seneg2 = b["seneg2"]
+    sezero = b["sezero"]
+    sezerobrainmask = b["sezerobrainmask"]
     topupconfig = b["topupconfig"]
     fmmag = b["fmmag"]
     fmphase = b["fmphase"]
@@ -7170,6 +7366,49 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         if options["hcp_bold_seunwarpdir"]:
             elements.append(("seunwarpdir", options["hcp_bold_seunwarpdir"]))
+
+        # optional species / NHP parameters
+        # these are only relevant for non-human species, when unset the HCP
+        # pipeline defaults (Human) are used
+        if options["hcp_species"]:
+            elements.append(("species", options["hcp_species"]))
+
+        if options["hcp_scale_factor"]:
+            elements.append(("brainscalefactor", options["hcp_scale_factor"]))
+
+        if options["hcp_runmode"]:
+            elements.append(("runmode", options["hcp_runmode"]))
+
+        if options["hcp_truepatientposition"]:
+            elements.append(("truepatientposition", options["hcp_truepatientposition"]))
+
+        if options["hcp_scannerpatientposition"]:
+            elements.append(
+                ("scannerpatientposition", options["hcp_scannerpatientposition"])
+            )
+
+        if options["hcp_bold_bbrcontrast"]:
+            elements.append(("bbr-contrast", options["hcp_bold_bbrcontrast"]))
+
+        if options["hcp_bold_wmprojabs"]:
+            elements.append(("wmprojabs", options["hcp_bold_wmprojabs"]))
+
+        if options["hcp_bold_initworldmat"]:
+            elements.append(("initworldmat", options["hcp_bold_initworldmat"]))
+
+        # second spin-echo pair and zero-phase SE images (NHP), resolved in the
+        # main body and passed in via the bold data dictionary
+        if seneg2:
+            elements.append(("SEPhaseNeg2", seneg2))
+
+        if sepos2:
+            elements.append(("SEPhasePos2", sepos2))
+
+        if sezero:
+            elements.append(("SEPhaseZero", sezero))
+
+        if sezerobrainmask:
+            elements.append(("SEPhaseZeroFSBrainmask", sezerobrainmask))
 
         # longitudinal mode
         if options["longitudinal"]:
