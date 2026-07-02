@@ -916,8 +916,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             Label for the negative image of the second Spin Echo Field Map pair.
 
         --hcp_senum2 (str, default ''):
-            Number of the second Spin Echo Field Map pair to use. QuNex will
-            use the files in the SpinEchoFieldMap[N] folder from the HCP
+            Number of the second Spin Echo Field Map pair to use for SE2. QuNex
+            will use the files in the SpinEchoFieldMap[N] folder from the HCP
             unprocessed folder.
 
         --hcp_species (str, default ''):
@@ -1764,7 +1764,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
                     if all([sepos2, seneg2]):
                         r += "\n---> Spin-Echo pair of images present. [%s]" % (
-                            os.path.basename(tufolder)
+                            os.path.basename(tufolder2)
                         )
                     else:
                         r += (
@@ -1779,8 +1779,24 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     )
                     run = False
             else:
-                r += "\n---> ERROR: Could not find the relevant second Spin-Echo files!"
-                run = False
+                sepos2, sepos2_found = resolve_session_relative_image(
+                    options["hcp_sephasepos2"], hcp["base"]
+                )
+                seneg2, seneg2_found = resolve_session_relative_image(
+                    options["hcp_sephaseneg2"], hcp["base"]
+                )
+
+                if sepos2_found and seneg2_found:
+                    r += "\n---> Second Spin-Echo pair of images present. [%s, %s]" % (
+                        sepos2,
+                        seneg2,
+                    )
+                else:
+                    r += (
+                        "\n---> ERROR: Could not find the relevant second Spin-Echo files for hcp_sephasepos2/hcp_sephaseneg2! "
+                        "Checked each value as an absolute path, relative to the session's hcp folder, and relative to the T2w folder."
+                    )
+                    run = False
 
             elements += [
                 ("SEPhasePos2", sepos2),
@@ -5773,6 +5789,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Label of the second positive polarity SE-EPI image. See
             hcp_bold_sephaseneg2. Only relevant for non-human species.
 
+        --hcp_senum2 (str, default ''):
+            Number of the second Spin Echo Field Map pair to use for SE2. QuNex
+            will use the files in the SpinEchoFieldMap[N] folder from the HCP
+            unprocessed folder.
+
         --hcp_bold_sephasezero (str, default ''):
             Zero-phase SE-EPI image (for NHP this is typically the T2w image).
             The value is resolved by checking, in order: an absolute path, a
@@ -6022,9 +6043,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         hcp_fmri_volume parameter mapping:
 
-            =================================== =======================
+            =================================== ==========================
             QuNex parameter                     HCPpipelines parameter
-            =================================== =======================
+            =================================== ==========================
             ``hcp_bold_res``                    ``fmrires``
             ``hcp_bold_biascorrection``         ``biascorrection``
             ``hcp_bold_echodiff``               ``echodiff``
@@ -6060,7 +6081,6 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``hcp_bold_initworldmat``           ``initworldmat``
             ``hcp_bold_sephaseneg2``            ``SEPhaseNeg2``
             ``hcp_bold_sephasepos2``            ``SEPhasePos2``
-            ``hcp_senum2``                      (folder lookup for SEPhase*2)
             ``hcp_bold_sephasezero``            ``SEPhaseZero``
             ``hcp_bold_sephasezerofsbrainmask`` ``SEPhaseZeroFSBrainmask``
             ``wb-resample``                     ``hcp_wb_resample``
@@ -6068,7 +6088,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ``matlab-run-mode``                 ``hcp_matlab_mode``
             ``hcp_longitudinal_template``       ``longitudinal-template``
             ``longitudinal``                    ``is-longitudinal``
-            =================================== =========================
+            =================================== ==========================
 
     Examples:
         Example run from the base study folder with test flag::
@@ -6390,8 +6410,27 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         )
                         run = False
                 else:
-                    r += "\n---> ERROR: Could not find the relevant second Spin-Echo files! Provide existing hcp_bold_sephasepos2/hcp_bold_sephaseneg2 paths or set hcp_senum2."
-                    run = False
+                    sepos2, sepos2_found = resolve_session_relative_image(
+                        options["hcp_bold_sephasepos2"], hcp["base"]
+                    )
+                    seneg2, seneg2_found = resolve_session_relative_image(
+                        options["hcp_bold_sephaseneg2"], hcp["base"]
+                    )
+
+                    if sepos2_found and seneg2_found:
+                        r += (
+                            "\n---> Second Spin-Echo pair of images present. [%s, %s]"
+                            % (
+                                sepos2,
+                                seneg2,
+                            )
+                        )
+                    else:
+                        r += (
+                            "\n---> ERROR: Could not find the relevant second Spin-Echo files for hcp_bold_sephasepos2/hcp_bold_sephaseneg2! "
+                            "Checked each value as an absolute path, relative to the session's hcp folder, and relative to the T2w folder."
+                        )
+                        run = False
 
         # --- NHP zero-phase SE image (typically the T2w) and its FS brainmask.
         # each value is resolved by checking, in order, an absolute path, a path
