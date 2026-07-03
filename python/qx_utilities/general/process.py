@@ -786,6 +786,8 @@ arglist = [
     ["hcp_dwi_posdata", "", is_none],
     ["hcp_dwi_negdata", "", is_none],
     ["hcp_dwi_dummy_bval_bvec", None, flag],
+    ["# --- dwi_f99, dwi_xtract and dwi_noddi_gpu options"],
+    ["diffusion_folder", "", is_none],
     [
         "# --- general hcp_icafix, hcp_post_fix, hcp_reapply_fix, hcp_msmall, hcp_dedrift_and_resample options"
     ],

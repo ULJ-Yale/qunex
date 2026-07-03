@@ -73,6 +73,9 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
             The path to the folder where logs are to be stored,
             if other than default.
 
+        --diffusion_folder (str, default '<sessions_folder>/<session>/NHP/dMRI'):
+            The path to the diffusion folder holding the dtifit results.
+
     Output files:
         The results of this step will be present in the dMRI/NHP/F99reg
         folder in the sessions's root::
@@ -127,6 +130,10 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         if not os.path.exists(f99reg_dir):
             os.makedirs(f99reg_dir)
         dtifit_dir = os.path.join(nhp_dir, "dMRI")
+
+        # if diffusion folder specified, use that instead
+        if options["diffusion_folder"]:
+            dtifit_dir = options["diffusion_folder"]
 
         # check dtifit results
         dti_file = os.path.join(dtifit_dir, "dti_FA.nii.gz")
@@ -275,6 +282,12 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             The path to the folder where logs are to be stored,
             if other than default.
 
+        --diffusion_folder (str, default detailed below):
+            The path to the diffusion folder. The bedpostx folder is derived
+            from it by appending '.bedpostX'. By default the diffusion folder
+            is set to dMRI for macaques and T1w/Diffusion for humans. If
+            --xtract_bpx is provided, it takes precedence over this parameter.
+
         --species (str, default 'human'):
             Species: human or macaque.
 
@@ -416,6 +429,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         # create output dir if it does not exist
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
+
+        # if diffusion folder specified, derive bedpostx dir from it
+        if options["diffusion_folder"]:
+            bedpostx_dir = options["diffusion_folder"] + ".bedpostX"
 
         # custom bedpostx dir
         if "xtract_bpx" in options:
@@ -722,7 +739,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         diffusion_dir = os.path.join(root_dir, "Diffusion")
 
         # if diffusion folder specified, use that instead
-        if "diffusion_folder" in options:
+        if options["diffusion_folder"]:
             diffusion_dir = options["diffusion_folder"]
             root_dir = os.path.dirname(diffusion_dir)
 

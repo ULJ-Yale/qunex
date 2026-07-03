@@ -7705,6 +7705,11 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         --hcp_regname (str, default 'MSMSulc'):
             The name of the registration used.
 
+        --hcp_species (str, default ''):
+            Species label (Human, Macaque, Marmoset, etc.). When unset the HCP
+            pipeline default (Human) is used. Only relevant for non-human
+            species.
+
         --hcp_longitudinal_template (str, default 'base'):
             Name of the longitudinal template.
 
@@ -7741,6 +7746,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             ``hcp_bold_smoothFWHM``       ``smoothingFWHM``
             ``hcp_grayordinatesres``      ``grayordinatesres``
             ``hcp_regname``               ``regname``
+            ``hcp_species``               ``species``
             ``hcp_printcom``              ``printcom``
             ``hcp_longitudinal_template`` ``longitudinal-template``
             ``longitudinal``              ``is-longitudinal``
@@ -7966,6 +7972,11 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldinfo):
             ("regname", options["hcp_regname"]),
             ("printcom", options["hcp_printcom"]),
         ]
+
+        # optional species / NHP parameter, only relevant for non-human
+        # species, when unset the HCP pipeline default (Human) is used
+        if options["hcp_species"]:
+            elements.append(("species", options["hcp_species"]))
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
