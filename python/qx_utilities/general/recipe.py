@@ -467,6 +467,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, logfolder=None, eargs=
             load_summary = gx.xnat_load_checkpoint(file_path)
             print(load_summary, file=log)
 
+    # track command failures across the loop (stays defined even if commands is empty)
+    error = False
+
     for com in commands:
         if isinstance(com, dict):
             command_name = list(com.keys())[0]
