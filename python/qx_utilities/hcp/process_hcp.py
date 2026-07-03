@@ -793,7 +793,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             - 'TOPUP' (average any repeats and use spin echo field map for
               readout correction).
 
-        --hcp_unwarpdir (str, default 'z'):
+        --hcp_unwarpdir (str, default ''):
             Readout direction of the T1w and T2w images (x, y, z or NONE); used
             with either a regular field map or a spin echo field map.
 
@@ -845,12 +845,17 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             to use the imaging data to set a sensible default value. It will
             notify you about which setting it used, you should pay attention to
             this piece of information and manually overwrite the default if
-            something is off.
+            something is off. For non-human species (hcp_species other than
+            'Human') this parameter cannot be inferred automatically and must
+            be set explicitly, as it also selects the species-specific template
+            (e.g. 0.5, 0.3 or 0.25 for a macaque).
 
         --hcp_prefs_t1template (str):
             Path to the T1 template to be used by PreFreeSurfer. By default the
             used template is determined through the resolution provided by the
-            hcp_prefs_template_res parameter.
+            hcp_prefs_template_res parameter. For non-human species (hcp_species
+            other than 'Human') the default is taken from the species-specific
+            NHP_NNP template folder instead of the human MNI152 templates.
 
         --hcp_prefs_t1templatebrain (str):
             Path to the T1 brain template to be used by PreFreeSurfer. By
@@ -921,7 +926,11 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             unprocessed folder.
 
         --hcp_species (str, default ''):
-            Species (default: Human).
+            Species (default: Human). When set to a non-human species QuNex
+            switches to the species-specific NHP templates (from the NHP_NNP
+            template folder) and requires hcp_prefs_template_res to be set
+            explicitly. Recognized non-human species are: Chimp, MacaqueCyno,
+            MacaqueRhesus, MacaqueSnow, MacaqueMac30BS, Marmoset, NightMonkey.
 
         --hcp_runmode (str, default ''):
             Specify from which step to resume the processing instead of
@@ -1121,8 +1130,11 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         "\n---> T1w image specific EchoSpacing: %s s"
                         % (options["hcp_t1samplespacing"])
                     )
-                if "UnwarpDir" in T1w and checkInlineParameterUse(
-                    "T1w", "UnwarpDir", options
+
+                if (
+                    options["hcp_unwarpdir"] is None
+                    and "UnwarpDir" in T1w
+                    and checkInlineParameterUse("T1w", "UnwarpDir", options)
                 ):
                     options["hcp_unwarpdir"] = T1w["UnwarpDir"]
                     r += (
@@ -1584,49 +1596,95 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     r += "\n                %s" % tfile
 
         # -- Prepare templates
-        # try to set hcp_prefs_template_res automatically if not set yet
-        if not options["hcp_prefs_template_res"]:
-            r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
-            t1w = hcp["T1w"].split("@")[0]
-            resolution, res_report = _set_hcp_prefs_template_res(t1w)
-            r += res_report
-            if resolution == 0:
-                run = False
-                r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
-            else:
-                options["hcp_prefs_template_res"] = resolution
+        # non-human species use species-specific templates from a different
+        # folder (NHP_NNP) with a different naming convention, see the
+        # _nhp_template_paths helper and HCPpipelines SetUpSPECIES.sh
+        species = options["hcp_species"]
+        is_human = not species or species.lower() == "human"
 
-        # if hcp_prefs_template_res cannot be converted to a number something went wrong
-        try:
-            float(options["hcp_prefs_template_res"])
-        except:
+        # resolve the template resolution
+        if is_human:
+            # try to set hcp_prefs_template_res automatically if not set yet
+            if not options["hcp_prefs_template_res"]:
+                r += "\n---> Trying to set the hcp_prefs_template_res parameter automatically."
+                t1w = hcp["T1w"].split("@")[0]
+                resolution, res_report = _set_hcp_prefs_template_res(t1w)
+                r += res_report
+                if resolution == 0:
+                    run = False
+                    r += "\n     ... ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!"
+                else:
+                    options["hcp_prefs_template_res"] = resolution
+        elif not options["hcp_prefs_template_res"]:
+            # non-human resolution cannot be inferred and selects the
+            # species-specific template, so it has to be set explicitly
             r += (
-                "\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
-                % (options["hcp_prefs_template_res"])
+                "\n---> ERROR: hcp_prefs_template_res must be set explicitly for non-human species '%s'; QuNex cannot infer it from the data."
+                % (species)
             )
             run = False
 
+        # if hcp_prefs_template_res cannot be converted to a number something went wrong
+        if options["hcp_prefs_template_res"]:
+            try:
+                float(options["hcp_prefs_template_res"])
+            except:
+                r += (
+                    "\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
+                    % (options["hcp_prefs_template_res"])
+                )
+                run = False
+
+        # default structural template paths; human templates live in the
+        # MNI152 space, non-human ones in the species-specific NHP_NNP folder
+        if is_human:
+            res = options["hcp_prefs_template_res"]
+            tdir = hcp["hcp_Templates"]
+            tpl = {
+                "t1template": os.path.join(tdir, "MNI152_T1_%smm.nii.gz" % res),
+                "t1templatebrain": os.path.join(
+                    tdir, "MNI152_T1_%smm_brain.nii.gz" % res
+                ),
+                "t1template2mm": os.path.join(tdir, "MNI152_T1_2mm.nii.gz"),
+                "t2template": os.path.join(tdir, "MNI152_T2_%smm.nii.gz" % res),
+                "t2templatebrain": os.path.join(
+                    tdir, "MNI152_T2_%smm_brain.nii.gz" % res
+                ),
+                "t2template2mm": os.path.join(tdir, "MNI152_T2_2mm.nii.gz"),
+                "templatemask": os.path.join(
+                    tdir, "MNI152_T1_%smm_brain_mask.nii.gz" % res
+                ),
+                "template2mmmask": os.path.join(
+                    tdir, "MNI152_T1_2mm_brain_mask_dil.nii.gz"
+                ),
+            }
+        else:
+            tpl = _nhp_template_paths(
+                hcp["hcp_Templates"], species, options["hcp_prefs_template_res"]
+            )
+            if tpl is None:
+                tpl = {}
+                r += (
+                    "\n---> NOTE: species '%s' is not in QuNex's built-in NHP template map; "
+                    "the structural template paths have to be provided explicitly via "
+                    "hcp_prefs_t1template and the related parameters." % (species)
+                )
+
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:
-            t1template = os.path.join(
-                hcp["hcp_Templates"],
-                "MNI152_T1_%smm.nii.gz" % (options["hcp_prefs_template_res"]),
-            )
+            t1template = tpl.get("t1template")
         else:
             t1template = options["hcp_prefs_t1template"]
 
         # hcp_prefs_t1templatebrain
         if options["hcp_prefs_t1templatebrain"] is None:
-            t1templatebrain = os.path.join(
-                hcp["hcp_Templates"],
-                "MNI152_T1_%smm_brain.nii.gz" % (options["hcp_prefs_template_res"]),
-            )
+            t1templatebrain = tpl.get("t1templatebrain")
         else:
             t1templatebrain = options["hcp_prefs_t1templatebrain"]
 
         # hcp_prefs_t1template2mm
         if options["hcp_prefs_t1template2mm"] is None:
-            t1template2mm = os.path.join(hcp["hcp_Templates"], "MNI152_T1_2mm.nii.gz")
+            t1template2mm = tpl.get("t1template2mm")
         else:
             t1template2mm = options["hcp_prefs_t1template2mm"]
 
@@ -1634,10 +1692,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_t2"] == "NONE":
             t2template = "NONE"
         elif options["hcp_prefs_t2template"] is None:
-            t2template = os.path.join(
-                hcp["hcp_Templates"],
-                "MNI152_T2_%smm.nii.gz" % (options["hcp_prefs_template_res"]),
-            )
+            t2template = tpl.get("t2template")
         else:
             t2template = options["hcp_prefs_t2template"]
 
@@ -1645,10 +1700,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_t2"] == "NONE":
             t2templatebrain = "NONE"
         elif options["hcp_prefs_t2templatebrain"] is None:
-            t2templatebrain = os.path.join(
-                hcp["hcp_Templates"],
-                "MNI152_T2_%smm_brain.nii.gz" % (options["hcp_prefs_template_res"]),
-            )
+            t2templatebrain = tpl.get("t2templatebrain")
         else:
             t2templatebrain = options["hcp_prefs_t2templatebrain"]
 
@@ -1656,31 +1708,51 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_t2"] == "NONE":
             t2template2mm = "NONE"
         elif options["hcp_prefs_t2template2mm"] is None:
-            t2template2mm = os.path.join(hcp["hcp_Templates"], "MNI152_T2_2mm.nii.gz")
+            t2template2mm = tpl.get("t2template2mm")
         else:
             t2template2mm = options["hcp_prefs_t2template2mm"]
 
         # hcp_prefs_templatemask
         if options["hcp_prefs_templatemask"] is None:
-            templatemask = os.path.join(
-                hcp["hcp_Templates"],
-                "MNI152_T1_%smm_brain_mask.nii.gz"
-                % (options["hcp_prefs_template_res"]),
-            )
+            templatemask = tpl.get("templatemask")
         else:
             templatemask = options["hcp_prefs_templatemask"]
 
         # hcp_prefs_template2mmmask
         if options["hcp_prefs_template2mmmask"] is None:
-            template2mmmask = os.path.join(
-                hcp["hcp_Templates"], "MNI152_T1_2mm_brain_mask_dil.nii.gz"
-            )
+            template2mmmask = tpl.get("template2mmmask")
         else:
             template2mmmask = options["hcp_prefs_template2mmmask"]
 
+        # for non-human species make sure the required templates got resolved
+        if not is_human:
+            required = [
+                ("hcp_prefs_t1template", t1template),
+                ("hcp_prefs_t1templatebrain", t1templatebrain),
+                ("hcp_prefs_t1template2mm", t1template2mm),
+                ("hcp_prefs_templatemask", templatemask),
+                ("hcp_prefs_template2mmmask", template2mmmask),
+            ]
+            for pname, pvalue in required:
+                if not pvalue:
+                    r += (
+                        "\n---> ERROR: could not determine %s for species '%s', please set it manually."
+                        % (pname, species)
+                    )
+                    run = False
+
         # hcp_prefs_fnirtconfig
         if options["hcp_prefs_fnirtconfig"] is None:
-            fnirtconfig = os.path.join(hcp["hcp_Config"], "T1_2_MNI152_2mm.cnf")
+            if is_human:
+                fnirtconfig = os.path.join(hcp["hcp_Config"], "T1_2_MNI152_2mm.cnf")
+            elif species.lower() == "marmoset":
+                fnirtconfig = os.path.join(
+                    hcp["hcp_Config"], "T1_2_NHP_NNP_Marmoset_0.4mm.cnf"
+                )
+            elif "macaque" in species.lower():
+                fnirtconfig = os.path.join(
+                    hcp["hcp_Config"], "T1_2_NHP_NNP_Macaque_1mm.cnf"
+                )
         else:
             fnirtconfig = options["hcp_prefs_fnirtconfig"]
 
@@ -1989,6 +2061,71 @@ def _set_hcp_prefs_template_res(image):
         else:
             r = f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the associated parameters manually!"
             return (0, r)
+
+
+# non-human primate (NHP) structural template configuration
+# each entry maps a token (matched case-insensitively as a substring of
+# hcp_species) to its BrainTemplate folder/prefix, the low resolution used for
+# the coarse ("2mm equivalent") atlas registration, whether the template file
+# names carry the "restore" tag, and the suffix of the low-res template mask
+# mirrors HCPpipelines Examples/Scripts/SetUpSPECIES.sh
+# order matters, more specific tokens (e.g. mac30bs) come before broader ones
+_NHP_TEMPLATES = [
+    # (token, brain_template, lowres, restore, template2mmmask_suffix)
+    ("mac30bs", "Mac30BS", "1.0", True, "_brain_mask"),
+    ("cyno", "Mac25Cyno", "1.0", True, "_brain_mask"),
+    ("rhesus", "Mac25Rhesus", "1.0", True, "_brain_mask"),
+    ("snow", "Mac6Snow", "1.0", True, "_brain_mask"),
+    ("marmoset", "MarmosetRIKEN25", "0.4", True, "_brain_mask_dilM"),
+    ("nightmonkey", "NightMonkey9", "0.5", True, "_brain_mask"),
+    ("chimp", "ChimpYerkes29", "1.6", False, "_brain_mask"),
+]
+
+
+def _nhp_template_paths(templates_dir, species, res):
+    """
+    Build the PreFreeSurfer structural template paths for a non-human primate
+    species, mirroring HCPpipelines Examples/Scripts/SetUpSPECIES.sh.
+
+    Parameters:
+        templates_dir: the HCP global templates folder (hcp["hcp_Templates"]).
+        species: the hcp_species value (matched against _NHP_TEMPLATES).
+        res: the structural resolution (hcp_prefs_template_res), in mm.
+
+    Returns:
+        A dict with the eight PreFreeSurfer template paths, or None if the
+        species is not recognized.
+    """
+
+    match = None
+    species_l = species.lower()
+    for token, brain_template, lowres, restore, mask2mm_suffix in _NHP_TEMPLATES:
+        if token in species_l:
+            match = (brain_template, lowres, restore, mask2mm_suffix)
+            break
+
+    if match is None:
+        return None
+
+    brain_template, lowres, restore, mask2mm_suffix = match
+    base = os.path.join(templates_dir, "NHP_NNP", brain_template, "MNINonLinear")
+    tag = "restore_" if restore else ""
+
+    def _t(modality, resolution, suffix=""):
+        return os.path.join(
+            base, f"{brain_template}_{modality}_{tag}{resolution}mm{suffix}.nii.gz"
+        )
+
+    return {
+        "t1template": _t("T1w", res),
+        "t1templatebrain": _t("T1w", res, "_brain"),
+        "t1template2mm": _t("T1w", lowres),
+        "t2template": _t("T2w", res),
+        "t2templatebrain": _t("T2w", res, "_brain"),
+        "t2template2mm": _t("T2w", lowres),
+        "templatemask": _t("T1w", res, "_brain_mask"),
+        "template2mmmask": _t("T1w", lowres, mask2mm_suffix),
+    }
 
 
 def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):

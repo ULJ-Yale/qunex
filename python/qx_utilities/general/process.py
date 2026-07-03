@@ -676,7 +676,7 @@ arglist = [
     ["hcp_gdcoeffs", "", str],
     ["hcp_bfsigma", "", str],
     ["hcp_avgrdcmethod", "", is_none],
-    ["hcp_unwarpdir", "z", str],
+    ["hcp_unwarpdir", "", is_none],
     ["hcp_echodiff", "", is_none],
     ["hcp_topupconfig", "NONE", str],
     ["hcp_prefs_custombrain", "", str],
