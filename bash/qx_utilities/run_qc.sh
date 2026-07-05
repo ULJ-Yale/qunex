@@ -1415,7 +1415,7 @@ runscene_BOLDfc() {
     PNGNameBOLDfc="${WorkingSceneFile}.${TimeStamp}.png"
     ComRunBoldPNGNameBOLDfc="sed -i -e 's|DUMMYPNGNAME|$PNGNameBOLDfc|g' ${OutPath}/${WorkingSceneFile}"
     # -- Output image of the scene
-    ComRunBoldfc6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1920 1080"
+    ComRunBoldfc6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 2560 1080"
     # -- Clean temp scene
     ComRunBoldfc7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
     # -- Generate Scene Zip File if set to YES
@@ -1462,8 +1462,8 @@ runscene_BOLD() {
     ComRunBoldPngNameGSMap="sed -i -e 's|DUMMYPNGNAMEGSMAP|$PNGNameGSMap|g' ${OutPath}/${WorkingSceneFile}"
     ComRunBoldPngNameGStimeseries="sed -i -e 's|DUMMYPNGNAMEGSTIME|$PNGNameGStimeseries|g' ${OutPath}/${WorkingSceneFile}"
     # -- Output image of the scene
-    ComRunBold7="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.GSmap.QC.wb.png 1920 1080"
-    ComRunBold8="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 2 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.GStimeseries.QC.wb.png 1920 1080"
+    ComRunBold7="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.GSmap.QC.wb.png 2560 1080"
+    ComRunBold8="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 2 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.GStimeseries.QC.wb.png 2560 1080"
     # -- Clean temp scene
     ComRunBold9="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
     # -- Generate Scene Zip File if set to YES
@@ -1544,7 +1544,7 @@ main() {
             if [[ -f "${SessionsFolder}/${CASE}/${SessAcqInfoFile}" ]]; then
                 echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} found. Proceeding ..."
             else
-                echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your data and inputs."
+                echo "${SessionsFolder}/${CASE}/${SessAcqInfoFile} NOT found. Check your data and inputs. If the name of your session or subject file is different than the default session_hcp.txt or subject_hcp.txt please provide it using --sourcefile parameter."
                 echo ""
                 exit 1
             fi
@@ -2141,7 +2141,7 @@ main() {
                     ComRunPngName="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingSceneFile}"
                     Com4="$Com4; $ComRunPngName"
                     # -- Output image of the scene
-                    Com5="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1920 1080 > /dev/null 2>&1"
+                    Com5="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 2560 1080 > /dev/null 2>&1"
                     echo ""
                     echo "---> Running PNG extraction using the following command..."
                     echo "      $Com5"
@@ -2152,7 +2152,7 @@ main() {
                         Com4a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingDTISceneFile}"
                         PNGNameDtiFit="${WorkingDTISceneFile}.png"
                         ComRunPngNameDtiFit="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingDTISceneFile}"
-                        Com4b="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.png 1920 1080 > /dev/null 2>&1"
+                        Com4b="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.png 2560 1080 > /dev/null 2>&1"
                         Com4="$Com4; $ComRunPngNameDtiFit; $Com4a; $Com4b"
                     fi
                     # -- Check of bedpostx QC is requested
@@ -2160,7 +2160,7 @@ main() {
                         Com4c="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingBedpostXSceneFile}"
                         PNGNameBedpostX="${WorkingDTISceneFile}.png"
                         ComRunPngNameBedpostX="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingDTISceneFile}"
-                        Com4d="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.png 1920 1080 > /dev/null 2>&1"
+                        Com4d="wb_command -show-scene ${OutPath}/${CASEName}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.png 2560 1080 > /dev/null 2>&1"
                         Com4="$Com4; $ComRunPngNameBedpostX; $Com4c; $Com4d"
                     fi
 
@@ -2306,7 +2306,7 @@ main() {
                         PNGName="${WorkingSceneFile}.pzwng"
                         ComRunBoldPngNameGSMap="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingSceneFile}"
                         # -- Output image of the scene
-                        RunQCCustom6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1920 1080"
+                        RunQCCustom6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 2560 1080"
                         # -- Clean templates and files for next session
                         RunQCCustom7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
                         RunQCCustom9="rm -f ${OutPath}/data_split*"
@@ -2357,7 +2357,7 @@ main() {
                     PNGName="${WorkingSceneFile}.png"
                     ComRunBoldPngNameGSMap="sed -i -e 's|DUMMYPNGNAME|$PNGName|g' ${OutPath}/${WorkingSceneFile}"
                     # -- Output image of the scene
-                    RunQCUser6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1920 1080"
+                    RunQCUser6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 2560 1080"
                     # -- Clean templates and files for next session
                     RunQCUser7="rm ${OutPath}/${WorkingSceneFile}-e &> /dev/null"
                     RunQCUser9="rm -f ${OutPath}/data_split*"

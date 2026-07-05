@@ -1,13 +1,15 @@
 from .utils import get_test_data_path
 from qx_utilities.general.parser import (
+    _parse_session_file_lines,
     read_generic_session_file,
     read_hcp_session_file,
     read_mapping_file,
-    _parse_session_file_lines,
 )
 from qx_utilities.general.utilities import (
     _reserved_bold_numbers,
+    _match_or_rule,
     _process_pipeline_hcp_mapping,
+    _reserved_bold_numbers,
     _serialize_session,
     _simple_glob_match,
 )
@@ -290,3 +292,153 @@ def test_mapping_glob_conflict():
     assert "conflicting" in error_msg.lower()
     assert "rfMRI_REST_AP_SBRef" in error_msg
 
+
+def test_mapping_phenc_in_source_and_rule_agree():
+    """phenc defined in both source and mapping with the same value is allowed.
+
+    once the source session file carries auto-detected phenc tags, a mapping
+    rule repeating the same phenc must not be treated as a conflict.
+    """
+    t, _ = _run_mapping_test("session_phenc_dup.txt", "mapping_phenc_dup.txt")
+    images = t["images"]
+    # image 04 (boldref) and 05 (bold) both define phenc(AP) on both sides
+    assert images[(4,)]["phenc"] == "AP"
+    assert images[(5,)]["phenc"] == "AP"
+
+
+def test_mapping_phenc_in_source_and_rule_conflict():
+    """phenc defined in both source and mapping with different values errors."""
+    with pytest.raises(SpecFileSyntaxError) as exc_info:
+        _run_mapping_test("session_phenc_dup.txt", "mapping_phenc_conflict.txt")
+
+    error_msg = str(exc_info.value.error)
+    print(error_msg)
+    assert "phenc" in error_msg.lower()
+    assert "AP" in error_msg and "PA" in error_msg
+
+
+# ---- "or" rule tests (|| variants) ----
+
+
+def test_mapping_or_first_variant():
+    """When the first variant exists, it is used."""
+    _, lines = _run_mapping_test("session_or1.txt", "mapping_or1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or1_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_or_fallback_variant():
+    """When the first variant is missing, the second is used."""
+    _, lines = _run_mapping_test("session_or2.txt", "mapping_or1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or2_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_or_no_match():
+    """When none of the variants exist, no rule is applied."""
+    _, lines = _run_mapping_test("session_or3.txt", "mapping_or1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or3_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_or_glob_variants():
+    """Or-rules with glob patterns: second glob variant matches."""
+    _, lines = _run_mapping_test("session_or4.txt", "mapping_or2.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or4_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_or_rule_parsing():
+    """Verify that the parser stores or-rules correctly."""
+    mapping_file = get_test_data_path("mapping_or1.txt")
+    m = read_mapping_file(mapping_file)
+
+    or_rules = m["group_rules"]["or"]
+    assert len(or_rules) == 2
+
+    # first or-rule: T1w_HiRes || T1w_LowRes => T1w
+    assert or_rules[0]["variants"] == ["T1w_HiRes", "T1w_LowRes"]
+    assert or_rules[0]["rule"]["hcp_image_type"] == ("T1w",)
+
+    # second or-rule: T2w_HiRes || T2w_LowRes => T2w
+    assert or_rules[1]["variants"] == ["T2w_HiRes", "T2w_LowRes"]
+    assert or_rules[1]["rule"]["hcp_image_type"] == ("T2w",)
+
+    # regular rules should not be affected
+    assert "SpinEchoFieldMap_AP" in m["group_rules"]["name"]
+    assert len(m["group_rules"]["or"]) == 2
+
+
+def test_or_rule_parsing_with_globs():
+    """Verify that or-rules with glob patterns are parsed correctly."""
+    mapping_file = get_test_data_path("mapping_or2.txt")
+    m = read_mapping_file(mapping_file)
+
+    or_rules = m["group_rules"]["or"]
+    assert len(or_rules) == 1
+    assert or_rules[0]["variants"] == ["rfMRI_REST1*", "rfMRI_REST2*", "tfMRI*"]
+    assert or_rules[0]["rule"]["hcp_image_type"] == ("bold", None, "rest")
+
+
+def test_match_or_rule_exact_name():
+    """_match_or_rule matches exact-name variants per image."""
+    or_rules = [
+        {"variants": ["T1w_HiRes", "T1w_LowRes"], "rule": {"hcp_image_type": ("T1w",)}},
+    ]
+    # first variant matches
+    assert _match_or_rule("T1w_HiRes", or_rules) == {"hcp_image_type": ("T1w",)}
+    # second variant matches
+    assert _match_or_rule("T1w_LowRes", or_rules) == {"hcp_image_type": ("T1w",)}
+    # neither matches
+    assert _match_or_rule("SomethingElse", or_rules) is None
+
+
+def test_match_or_rule_glob():
+    """_match_or_rule handles glob-pattern variants per image."""
+    or_rules = [
+        {
+            "variants": ["rfMRI_REST1*", "rfMRI_REST2*"],
+            "rule": {"hcp_image_type": ("bold", None, "rest")},
+        },
+    ]
+    # first glob matches
+    assert _match_or_rule("rfMRI_REST1_AP", or_rules) == {
+        "hcp_image_type": ("bold", None, "rest")
+    }
+    # second glob matches
+    assert _match_or_rule("rfMRI_REST2_AP", or_rules) == {
+        "hcp_image_type": ("bold", None, "rest")
+    }
+    # no match
+    assert _match_or_rule("tfMRI_WM_AP", or_rules) is None
+
+
+def test_match_or_rule_priority():
+    """Earlier variants take priority for the same image name."""
+    rule_a = {"hcp_image_type": ("T1w",), "additional_tags": []}
+    rule_b = {"hcp_image_type": ("T2w",), "additional_tags": []}
+    or_rules = [
+        {"variants": ["T1w*", "T1w_LowRes"], "rule": rule_a},
+        {"variants": ["T1w_LowRes"], "rule": rule_b},
+    ]
+    # first or-rule's first alt matches via glob
+    assert _match_or_rule("T1w_LowRes", or_rules) is rule_a
+
+
+def test_or_rule_parser_rejects_empty_variant():
+    """Parser should reject or-rules with an empty variant."""
+    from general.parser import _parse_mapping_file_lines
+
+    with pytest.raises(SpecFileSyntaxError):
+        _parse_mapping_file_lines(["T1w_HiRes ||  => T1w"])
+
+    with pytest.raises(SpecFileSyntaxError):
+        _parse_mapping_file_lines([" || T1w_LowRes => T1w"])

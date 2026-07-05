@@ -621,6 +621,7 @@ def runThroughScheduler(
             array_commands = [
                 "hcp_pre_freesurfer",
                 "hcp_freesurfer",
+                "hcp_nhp_freesurfer",
                 "hcp_post_freesurfer",
                 "hcp_fmri_volume",
                 "hcp_fmri_surface",
@@ -629,7 +630,7 @@ def runThroughScheduler(
             if qx_command not in array_commands:
                 raise ge.CommandError(
                     qx_command,
-                    "SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines: hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.",
+                    "SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines: hcp_pre_freesurfer, hcp_freesurfer, hcp_nhp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.",
                 )
 
         settings["jobname"] = settings.get("jobname", command)

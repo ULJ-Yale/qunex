@@ -55,8 +55,11 @@ Parameters:
     --bvals (str, default 'T1w/Diffusion/bvals'):
         b values file.
 
-    --diffdata (str, default '/T1w/Diffusion/data.nii.gz'):
-        Diffusion data file.
+    --diffusion_folder (str):
+        Path to the diffusion folder.
+
+    --diffdata (str, default 'data.nii.gz'):
+        Diffusion data file inside the diffusion folder.
 
     --cni (str):
         Input confound regressors [not set by default].
@@ -101,46 +104,10 @@ Parameters:
     --gradnonlin (str):
         Gradient nonlinearity tensor file [not set by default].
 
-    --scheduler (str):
-        A string for the cluster scheduler (e.g. PBS or SLURM) followed by
-        relevant options; e.g. for SLURM the string would look like this::
-
-            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
-
 Examples:
-    Run directly via::
-
-        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_dtifit.sh \\
-            --<parameter1> \\
-            --<parameter2> \\
-            --<parameter3> ... \\
-            --<parameterN>
-
-    NOTE: --scheduler is not available via direct script call.
-
-    Run via::
-
-        qunex dwi_dtifit \\
-            --<parameter1> \\
-            --<parameter2> ... \\
-            --<parameterN>
-
-    NOTE: scheduler is available via qunex call.
-
-    --scheduler
-        A string for the cluster scheduler (e.g. PBS or SLURM) followed by
-        relevant options.
-
-    For SLURM scheduler the string would look like this via the qunex call::
-
-     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
-
-    ::
-
         qunex dwi_dtifit \\
             --sessionsfolder='<path_to_study_sessionsfolder>' \\
             --sessions='<session_id>' \\
-            --scheduler='<name_of_scheduler_and_options>' \\
             --overwrite='yes'
 
 EOF
@@ -212,6 +179,7 @@ get_options() {
     xmin=`opts_getopt "--xmin" $@`
     xmax=`opts_getopt "--xmax" $@`
     gradnonlin=`opts_getopt "--gradnonlin" $@`
+    diffusion_folder=`opts_getopt "--diffusion_folder" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then echo "Error: sessionsfolder missing"; exit 1; fi
@@ -229,7 +197,7 @@ get_options() {
     echo "   Sessions Folder: ${sessionsfolder}"
     echo "   Session: ${session}"
     echo "   Study Log Folder: ${LogFolder}"
-    echo "   overwrite prior run: ${overwrite}"
+    echo "   Overwrite prior run: ${overwrite}"
 
     # Report species if not default
     if [[ -n ${species} ]]; then
@@ -237,10 +205,12 @@ get_options() {
     fi
 
     # -- Set paths
-    if [[ ${species} == "macaque" ]]; then
-        diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
-    else
-        diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
+    if [[ -z ${diffusion_folder} ]]; then
+        if [[ ${species} == "macaque" ]]; then
+            diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
+        else
+            diffusion_folder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
+        fi
     fi
     in_file="${diffusion_folder}/data"
     if [[ -n ${diffdata} ]]; then

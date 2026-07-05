@@ -336,7 +336,7 @@ Notes:
     Tracking progress:
         Progress can be tracked by keeping track of the standard out and by log files generated in:
 
-        ``${WORK_DIR}/${STUDY_NAME}/processing/logs/runlogs/``
+        ``${WORK_DIR}/${STUDY_NAME}/processing/logs/``
 
         ``${WORK_DIR}/${STUDY_NAME}/processing/logs/comlogs/``
 
@@ -1663,7 +1663,7 @@ fi
         fi
 
         # -- Define specific logs
-        mapRawData_Runlog="${QuNexMasterLogFolder}/runlogs/Log-map_raw_data_${TimeStamp}.log"; touch ${mapRawData_Runlog}; chmod 777 ${mapRawData_Runlog}
+        mapRawData_Runlog="${QuNexMasterLogFolder}/Log-map_raw_data_${TimeStamp}.log"; touch ${mapRawData_Runlog}; chmod 777 ${mapRawData_Runlog}
         mapRawData_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_map_raw_data_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
         mapRawData_ComlogError="${QuNexMasterLogFolder}/comlogs/error_map_raw_data_${CASE}_${TimeStamp}.log"
         mapRawData_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_map_raw_data_${CASE}_${TimeStamp}.log"
@@ -2533,7 +2533,7 @@ fi
     turnkey_general_plot_bold_timeseries() {
         echo ""; echo " ---> RUNNING run_turnkey step ~~~ general_plot_bold_timeseries QC plotting"; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
-        general_plot_bold_timeseries_Runlog="${QuNexMasterLogFolder}/runlogs/Log-general_plot_bold_timeseries_${TimeStamp}.log"
+        general_plot_bold_timeseries_Runlog="${QuNexMasterLogFolder}/Log-general_plot_bold_timeseries_${TimeStamp}.log"
         general_plot_bold_timeseries_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"; touch ${general_plot_bold_timeseries_ComlogTmp}; chmod 777 ${general_plot_bold_timeseries_ComlogTmp}
         general_plot_bold_timeseries_ComlogError="${QuNexMasterLogFolder}/comlogs/error_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"
         general_plot_bold_timeseries_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_general_plot_bold_timeseries_${CASE}_${TimeStamp}.log"
@@ -3048,7 +3048,7 @@ if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     echo " ---> Appears some run_turnkey steps have failed."
     echo ""
     echo "       Check ${QuNexMasterLogFolder}/comlogs"
-    echo "       Check ${QuNexMasterLogFolder}/runlogs"
+    echo "       Check ${QuNexMasterLogFolder}/"
     echo ""
     exit 1
 else

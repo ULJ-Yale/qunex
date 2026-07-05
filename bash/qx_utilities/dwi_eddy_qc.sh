@@ -26,6 +26,9 @@ Warning:
 
         <folder_with_sessions>/<session>/hcp/<session>/Diffusion/eddy/
 
+    This can be changed with the --eddypath argument, in this case eddypath should
+    point to the folder that contains the eddy subfolder.
+
 ..  qx_command:
     type: processing.session
     language: bash    
@@ -177,7 +180,7 @@ exit 0
 # ------------------------------------------------------------------------------
 
 if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
-	usage
+    usage
 fi
 
 ################# CHECK eddy_squad and eddy_squad INSTALL ################################
@@ -187,7 +190,7 @@ EddySquadCheck=`which eddy_squad`
 EddyQuadCheck=`which eddy_quad`
 
 if [ -z ${EddySquadCheck} ] || [ -z ${EddySquadCheck} ]; then
-	echo ""
+    echo ""
     echo " -- ERROR: EDDY QC does not seem to be installed on this system."
     echo ""
     exit 1
@@ -197,7 +200,7 @@ fi
 #  -- Check if command line arguments are specified
 # ------------------------------------------------------------------------------
 
-########################################## INPUTS ########################################## 
+########################################## INPUTS ##########################################
 
 # -- eddy-cleaned DWI Data
 
@@ -283,7 +286,7 @@ while [ ${index} -lt ${numArgs} ]; do
          --bvalsfile=*)
             BvalsFile=${argument/*=/""}
             index=$(( index + 1 ))
-            ;; 
+            ;;
         --outputdir=*)
             OutputDir=${argument/*=/""}
             index=$(( index + 1 ))
@@ -295,23 +298,23 @@ while [ ${index} -lt ${numArgs} ]; do
         --update=*)
             Update=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                
+            ;;
         --groupvar=*)
             GroupVar=${argument/*=/""}
             index=$(( index + 1 ))
-            ;; 
+            ;;
         --overwrite=*)
             Overwrite=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;      
+            ;;
         --bvecsfile=*)
             BvecsFile=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;   
+            ;;
         *)
             usage
             echo "ERROR: Unrecognized Option: ${argument}"
-    		echo ""
+            echo ""
             exit 1
             ;;
     esac
@@ -331,51 +334,51 @@ if [ -z ${Report} ]; then
     exit 1
 fi
 if [ ${Report} == "individual" ]; then
-	# -- Check each individual parameter
-	if [ -z ${CASE} ]; then
-		usage
-		echo "ERROR: <session-id> not specified>"
-		echo ""
-		exit 1
-	fi
-	if [ -z ${EddyBase} ]; then
-		usage
-		echo "ERROR: <eddy_base_name> not specified>"
-		echo ""
-		exit 1
-	fi
-	if [ -z ${BvalsFile} ]; then
-		usage
-		echo "ERROR: <bvals_file> not specified>"
-		echo ""
-		exit 1
-	fi
-	if [ -z ${EddyIdx} ]; then
-		usage
-		echo "ERROR: <eddy_index> file not specified>"
-		echo ""
-		exit 1
-	fi
-	if [ -z ${EddyParams} ]; then
-		usage
-		echo "ERROR: <eddy_params> file not specified>"
-		echo ""
-		exit 1
-	fi
-	if [ -z ${Mask} ]; then
-		usage
-		echo "ERROR: <mask> file not specified>"
-		echo ""
-		exit 1
-	fi
+    # -- Check each individual parameter
+    if [ -z ${CASE} ]; then
+        usage
+        echo "ERROR: <session-id> not specified>"
+        echo ""
+        exit 1
+    fi
+    if [ -z ${EddyBase} ]; then
+        usage
+        echo "ERROR: <eddy_base_name> not specified>"
+        echo ""
+        exit 1
+    fi
+    if [ -z ${BvalsFile} ]; then
+        usage
+        echo "ERROR: <bvals_file> not specified>"
+        echo ""
+        exit 1
+    fi
+    if [ -z ${EddyIdx} ]; then
+        usage
+        echo "ERROR: <eddy_index> file not specified>"
+        echo ""
+        exit 1
+    fi
+    if [ -z ${EddyParams} ]; then
+        usage
+        echo "ERROR: <eddy_params> file not specified>"
+        echo ""
+        exit 1
+    fi
+    if [ -z ${Mask} ]; then
+        usage
+        echo "ERROR: <mask> file not specified>"
+        echo ""
+        exit 1
+    fi
 fi
 if [ ${Report} == "group" ]; then
-	if [ -z ${List} ]; then
-    	usage
-    	echo "ERROR: <group_list_input> no specified>"
-    	echo ""
-    	exit 1
-	fi
+    if [ -z ${List} ]; then
+        usage
+        echo "ERROR: <group_list_input> no specified>"
+        echo ""
+        exit 1
+    fi
 fi
 
 # -- Check optional parameters
@@ -387,7 +390,7 @@ if [ -z ${EddyPath} ]; then
     echo $EddyPath
 fi
 if [ -z ${GroupVar} ]; then
-	GroupVar=""
+    GroupVar=""
 fi
 if [ -z ${OutputDir} ]; then
     OutputDir="${EddyPath}/${EddyBase}.qc"
@@ -458,71 +461,71 @@ echo ""
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-	echo "--- Deleting prior QC runs for $CASE..."
-	echo ""
-	rm -rf ${EddyQCOut}> /dev/null 2>&1
+    echo "--- Deleting prior QC runs for $CASE..."
+    echo ""
+    rm -rf ${EddyQCOut}> /dev/null 2>&1
 fi
 
 # -- Check if prior run exists
 echo "--- Checking if QC was completed..."
 echo ""
 if [ -d ${EddyQCOut} ]; then
-	echo "   ---> DWI EDDY QC folder found: ${EddyQCOut}"
-	echo ""
-	echo "   Use --overwrite='yes' if you want to re-run"
-	echo ""
-	exit 1
+    echo "   ---> DWI EDDY QC folder found: ${EddyQCOut}"
+    echo ""
+    echo "   Use --overwrite='yes' if you want to re-run"
+    echo ""
+    exit 1
 else
-	echo "DWI EDDY QC folder not found."
-	echo ""
-	echo "Computing DWI EDDY QC using specified parameters..."
-	echo ""
-	# -- Check if individual run was selected
-	if [ ${Report} == "individual" ]; then
-		echo "Computing individual QC run on ${EddyQCIn} "
-		EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -idx ${EddyIdx} -par ${EddyParams} -m ${Mask} -b ${BvalsFile} -g ${BvecsFile} -o ${EddyQCOut}"
-		echo ""
-		echo $EddyCommand
-		echo ""
-		eval $EddyCommand
-		echo ""
-		cat ${EddyQCOut}/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${EddyQCOut}/${CASE}_qc_mot_abs.txt
-	fi
-	echo ""
-	# -- Check if group run was selected
-	if [ ${Report} == "group" ]; then
-		echo "Computing group QC run on ${EddyQCIn} "
-		EddyCommand="eddy_squad ${EddyQCIn}/${EddyBase} -list ${List} -var ${GroupVar} -upd ${Update} -o {$EddyQCOut}"
-		echo ""
-		echo $EddyCommand
-		echo ""
-		eval $EddyCommand
-		echo ""
-	fi
-	echo ""
+    echo "DWI EDDY QC folder not found."
+    echo ""
+    echo "Computing DWI EDDY QC using specified parameters..."
+    echo ""
+    # -- Check if individual run was selected
+    if [ ${Report} == "individual" ]; then
+        echo "Computing individual QC run on ${EddyQCIn} "
+        EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -idx ${EddyIdx} -par ${EddyParams} -m ${Mask} -b ${BvalsFile} -g ${BvecsFile} -o ${EddyQCOut}"
+        echo ""
+        echo $EddyCommand
+        echo ""
+        eval $EddyCommand
+        echo ""
+        cat ${EddyQCOut}/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${EddyQCOut}/${CASE}_qc_mot_abs.txt
+    fi
+    echo ""
+    # -- Check if group run was selected
+    if [ ${Report} == "group" ]; then
+        echo "Computing group QC run on ${EddyQCIn} "
+        EddyCommand="eddy_squad ${EddyQCIn}/${EddyBase} -list ${List} -var ${GroupVar} -upd ${Update} -o {$EddyQCOut}"
+        echo ""
+        echo $EddyCommand
+        echo ""
+        eval $EddyCommand
+        echo ""
+    fi
+    echo ""
 fi
 
 # -- Perform completion checks
 echo "--- Checking DWI EDDY QC outputs..."
 echo ""
 if [ -f ${EddyQCOut}/qc.json ]; then
-	OutFile="${EddyQCOut}/qc.json"
-	echo "QC output file found:           $OutFile"
-	echo ""
+    OutFile="${EddyQCOut}/qc.json"
+    echo "QC output file found:           $OutFile"
+    echo ""
 else
-	echo "QC output file ${EddyQCOut}/qc.json missing. Something went wrong."
-	echo ""
-	exit 1
+    echo "QC output file ${EddyQCOut}/qc.json missing. Something went wrong."
+    echo ""
+    exit 1
 fi
 
 if [ -f ${EddyQCOut}/${CASE}_qc_mot_abs.txt ]; then
-	OutFile="${EddyQCOut}/${CASE}_qc_mot_abs.txt"
-	echo "QC absolute motion value file found:           $OutFile"
-	echo ""
+    OutFile="${EddyQCOut}/${CASE}_qc_mot_abs.txt"
+    echo "QC absolute motion value file found:           $OutFile"
+    echo ""
 else
-	echo "QC absolute motion value file ${EddyQCOut}/${CASE}_qc_mot_abs.txt is missing. Something went wrong."
-	echo ""
-	exit 1
+    echo "QC absolute motion value file ${EddyQCOut}/${CASE}_qc_mot_abs.txt is missing. Something went wrong."
+    echo ""
+    exit 1
 fi
 
 echo "--- DWI EDDY QC successfully completed"

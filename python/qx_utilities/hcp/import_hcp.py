@@ -21,6 +21,9 @@ All rights reserved.
 """
 
 
+import ast
+import glob
+import json
 import os
 import os.path
 import re
@@ -29,11 +32,9 @@ import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
 import zipfile
 import tarfile
-import glob
-import json
-import yaml
-import ast
+import zipfile
 from datetime import datetime
+import yaml
 
 unwarp = {
     None: "Unknown",
@@ -485,13 +486,14 @@ def import_hcp(
     errors = ""
 
     # ---> Check for folders
-    if not os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS")):
-        os.makedirs(os.path.join(sessionsfolder, "inbox", "HCPLS"))
-        print("---> creating inbox HCPLS folder")
+    # if not os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS")):
+    #     os.makedirs(os.path.join(sessionsfolder, "inbox", "HCPLS"))
+    #     print("---> creating inbox HCPLS folder")
 
-    if not os.path.exists(os.path.join(sessionsfolder, "archive", "HCPLS")):
-        os.makedirs(os.path.join(sessionsfolder, "archive", "HCPLS"))
-        print("---> creating archive HCPLS folder")
+    if archive in ["move", "copy"]:
+        if not os.path.exists(os.path.join(sessionsfolder, "archive", "HCPLS")):
+            os.makedirs(os.path.join(sessionsfolder, "archive", "HCPLS"))
+            print("---> creating archive HCPLS folder")
 
     # ---> identification of files
     if sessions:
@@ -598,8 +600,11 @@ def import_hcp(
             )
             print(errors)
         else:
-            if os.path.isfile(inbox) or not os.path.samefile(
-                inbox, os.path.join(sessionsfolder, "inbox", "HCPLS")
+            if os.path.isfile(inbox) or (
+                os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS"))
+                and not os.path.samefile(
+                    inbox, os.path.join(sessionsfolder, "inbox", "HCPLS")
+                )
             ):
                 try:
                     if archive == "move":
@@ -657,7 +662,6 @@ def import_hcp(
         for execute in ["map", "clean"]:
             for session in sessionsList[execute]:
                 if session != "hcpls":
-
                     sparts = session.split("_")
                     subjectid = sparts.pop(0)
                     sessionid = "_".join([e for e in sparts + [""] if e])
@@ -841,7 +845,7 @@ def import_hcp(
             session_file = os.path.join(session_folder, "session.txt")
             shutil.copyfile(session_hcp_file, session_file)
 
-            report.append(f"{session} onboarded successfully with {ix-1} images.")
+            report.append(f"{session} onboarded successfully with {ix - 1} images.")
 
     print("\nFinal report\n============")
     for line in report:
@@ -1041,7 +1045,9 @@ def processHCPLS(sessionfolder, filesort):
                 (
                     "SpinEchoFieldMap"
                     if "SpinEchoFieldMap" in e
-                    else "DistortionMap" if "DistortionMap" in e else e
+                    else "DistortionMap"
+                    if "DistortionMap" in e
+                    else e
                 )
                 for e in fileParts
             ]
@@ -1191,9 +1197,9 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
 
-        --report (str, default '<basefolder>/info/hcpls/parameters.txt'):
+        --report (str, default None):
             The path to the file that will hold the information about the images
-            that are relevant for HCP Pipelines.
+            that are relevant for HCP Pipelines. Will not write it by default.
 
         --filesort (str, default 'name_type_se'):
             An optional parameter that specifies how the files should
@@ -1342,15 +1348,9 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
 
     # --- report file
     if report is None:
-        study = gc.deduceFolders({"sourcefolder": sfolder})
-        basefolder = study.get("basefolder")
-        if basefolder:
-            report = os.path.join(basefolder, "info", "hcpls", "parameters.txt")
-
-    if report:
-        rout = open(report, "a")
-    else:
         rout = open(os.devnull, "w")
+    else:
+        rout = open(report, "a")
 
     # --- session info
     session = os.path.basename(sfolder)
@@ -1514,8 +1514,9 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
                     if fileInfo["json"].get("ReadoutDirection", None):
-                        out = ": UnwarpDir(%s)" % (
-                            unwarp[fileInfo["json"].get("ReadoutDirection")]
+                        out = (
+                            ": UnwarpDir(%s)"
+                            % (unwarp[fileInfo["json"].get("ReadoutDirection")])
                         )
                         print(out, end=" ", file=sout)
                         print(out, end=" ", file=sout_hcp)
@@ -1945,7 +1946,7 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
             status = True
             if (
                 "dMRI" in fileInfo["parts"] or "DWI" in fileInfo["parts"]
-            ) and not "SBRef" in fileInfo["parts"]:
+            ) and "SBRef" not in fileInfo["parts"]:
                 statusA = gc.moveLinkOrCopy(
                     fileInfo["path"].replace(".nii.gz", ".bvec"),
                     tfile.replace(".nii.gz", ".bvec"),

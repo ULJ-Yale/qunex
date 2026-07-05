@@ -17,6 +17,8 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
+TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
+
 qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # version
@@ -95,7 +97,6 @@ bash_call_execute() {
     # -- Set platform info
     Platform="Platform Information: `uname -a`"
     # -- Set the time stamp for given job
-    TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
     if [[ ${CommandToRun} == "run_turnkey" ]]; then
         unset qxutil_command_to_run
         if ( [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] || [[ ${TURNKEY_TYPE} == 'xnat' ]] ) && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
@@ -127,34 +128,14 @@ bash_call_execute() {
         echo "         Consider re-generating QuNex hierarchy..."; echo ""
     fi
 
-    # -- Added checks for study folder generation
-    if [[ -z ${QuNexMatlabCall} ]] && [[ -d ${StudyFolder}/sessions ]] && [[ ${SessionsFolder} != "sessions" ]] && [[ -f ${StudyFolder}/.qunexstudy ]]; then
-        # -- Add check in case the sessions folder is distinct from the default name
-        # -- Eventually use the template file to replace hard-coded values
-        QuNexSessionsSubFolders=`cat $TOOLS/$QUNEXREPO/python/qx_utilities/templates/study_folders_default.txt | tr -d '\r'`
-        QuNexSessionsFolders="${SessionsFolder}/inbox/MR ${SessionsFolder}/inbox/EEG ${SessionsFolder}/inbox/BIDS ${SessionsFolder}/inbox/HCPLS ${SessionsFolder}/inbox/behavior ${SessionsFolder}/inbox/concs ${SessionsFolder}/inbox/events ${SessionsFolder}/archive/MR ${SessionsFolder}/archive/EEG ${SessionsFolder}/archive/BIDS ${SessionsFolder}/archive/HCPLS ${SessionsFolder}/archive/behavior ${SessionsFolder}/specs ${SessionsFolder}/QC"
-        for QuNexSessionsFolder in ${QuNexSessionsFolders}; do
-            if [[ ! -d ${QuNexSessionsFolder} ]]; then
-                echo "QuNex folder ${QuNexSessionsFolder} not found. Generating now..."; echo ""
-                mkdir -p ${QuNexSessionsFolder} &> /dev/null
-            fi
-        done
-    fi
-
-    # -- If logfolder flag set then set it and set master log
+    # -- If logfolder flag not set then set it and set master log
     if [[ -z ${LogFolder} ]]; then
-        MasterLogFolder="${StudyFolder}/processing/logs"
+        MasterLogFolder="${StudyFolder}/logs/${TimeStamp}_${CommandToRun}"
     else
         MasterLogFolder="$LogFolder"
     fi
     if [[ ! -d ${MasterLogFolder} ]]; then
         mkdir ${MasterLogFolder} &> /dev/null
-    fi
-
-    # -- Set and generate runlogs folder
-    MasterRunLogFolder="${MasterLogFolder}/runlogs"
-    if [[ ! -d ${MasterRunLogFolder} ]]; then
-        mkdir ${MasterRunLogFolder} &> /dev/null
     fi
 
     # -- Set and generate comlogs folder
@@ -169,8 +150,8 @@ bash_call_execute() {
         mkdir ${RunChecksFolder} &> /dev/null
     fi
 
-    # -- Set and generate temp run_turnkey unit tests folder
-    ComRunFolder="${StudyFolder}/processing/scripts/run_turnkey"
+    # -- Set and generate temp run folder
+    ComRunFolder="${StudyFolder}/processing/scripts/tmp"
     if [[ ! -d ${ComRunFolder} ]]; then
         mkdir ${ComRunFolder} &> /dev/null
     fi
@@ -188,12 +169,12 @@ bash_call_execute() {
     else
         # log tag
         if [[ ${CommandToRun} == "compute_bold_fc" ]]; then
-            logtag="${CommandToRun}_${Calculation}_${CASE}_${TimeStamp}"
+            logtag="${TimeStamp}_${CommandToRun}_${Calculation}_${CASE}"
         elif [[ ${CommandToRun} != "run_qc" ]]; then
-            logtag="${CommandToRun}_${CASE}_${TimeStamp}"
+            logtag="${TimeStamp}_${CommandToRun}_${CASE}"
         else
             if [[ -z ${Modality} ]]; then
-                logtag="${CommandToRun}_${CASE}_${TimeStamp}"
+                logtag="${TimeStamp}_${CommandToRun}_${CASE}"
             else
                 modality_lower=$(echo "${Modality}" | tr '[:upper:]' '[:lower:]')
 
@@ -204,20 +185,20 @@ bash_call_execute() {
                     fi
                 fi
 
-                logtag="${CommandToRun}_${modality_lower}_${CASE}_${TimeStamp}"
+                logtag="${TimeStamp}_${CommandToRun}_${modality_lower}_${CASE}"
             fi
         fi
 
         # runlog
-        Runlog="${MasterRunLogFolder}/Log-${logtag}.log"
+        Runlog="${MasterLogFolder}/Log-${logtag}.log"
 
         # comlog
         ComlogTmp="${MasterComlogFolder}/tmp_${logtag}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
         ComRun="${ComRunFolder}/Run_${logtag}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
         ComlogDone="${MasterComlogFolder}/done_${logtag}.log"
-        CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
+        CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${TimeStamp}_${CommandToRun}.Pass"
         ComlogError="${MasterComlogFolder}/error_${logtag}.log"
-        CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Fail"
+        CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${TimeStamp}_${CommandToRun}.Fail"
 
         # -- Batchlog
         # --   <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
@@ -264,7 +245,7 @@ bash_call_execute() {
         # -- Run the commands locally
         if [[ ${Cluster} == 1 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; rm -rf ${ComRunFolder}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
             echo "--------------------------------------------------------------"
@@ -281,10 +262,10 @@ bash_call_execute() {
         # -- Run the commands via scheduler
         if [[ ${Cluster} == 2 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; rm -rf ${ComRunFolder}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
+            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
             # -- Combine final string of commands
             ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
-            cd ${MasterRunLogFolder}
+            cd ${MasterLogFolder}
             gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
             echo "--------------------------------------------------------------"
             echo ""
@@ -325,6 +306,7 @@ dwi_legacy_gpu() {
     --sessionsfolder=${SessionsFolder} \
     --session=${CASE} \
     --usefieldmap=${UseFieldmap} \
+    --usesefieldmap=${UseSEFieldmap} \
     --pedir=${pedir} \
     --echospacing=${EchoSpacing} \
     --te=${te} \
@@ -708,6 +690,11 @@ dwi_dtifit() {
         optional_parameters="${optional_parameters}    --gradnonlin='${gradnonlin}'"
     fi
 
+    # diffusion_folder
+    if [[ -n ${diffusion_folder} ]]; then
+        optional_parameters="${optional_parameters}    --diffusion_folder='${diffusion_folder}'"
+    fi
+
     # diffdata
     if [[ -n ${diffdata} ]]; then
         optional_parameters="${optional_parameters}    --diffdata='${diffdata}'"
@@ -738,6 +725,7 @@ dwi_bedpostx_gpu() {
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_bedpostx_gpu.sh \
     --sessionsfolder='${SessionsFolder}' \
     --session='${CASE}' \
+    --diffusion_folder='${DiffusionFolder}' \
     --fibers='${Fibers}' \
     --weight='${Weight}' \
     --burnin='${Burnin}' \
@@ -803,7 +791,7 @@ dwi_pre_tractography() {
     # -- Parse general parameters
     RunFolder="${SessionsFolder}/${CASE}/hcp/"
     # -- Specify command variable
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh ${RunFolder} ${CASE} 0"
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_pre_tractography.sh ${RunFolder} ${CASE} 0 $DiffusionFolder"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -822,6 +810,7 @@ dwi_probtrackx_dense_gpu() {
     QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/dwi_probtrackx_dense_gpu.sh \
     --sessionsfolder='${SessionsFolder}' \
     --session='${CASE}' \
+    --diffusion_folder='${DiffusionFolder}' \
     --scriptsfolder='${ScriptsFolder}' \
     --omatrix1='${MatrixOne}' \
     --omatrix3='${MatrixThree}' \
@@ -1315,11 +1304,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
          StudyFolderPath=${StudyFolder}
     fi
 
-    # -- If logfolder flag set then set it and set master log
-    if [[ -z ${LogFolder} ]]; then
-        LogFolder="${StudyFolder}/processing/logs"
-    fi
-
     # -- Set additional RunTurnkey flags
     TURNKEY_TYPE=`get_parameters "${setflag}turnkeytype" $@`
     TURNKEY_STEPS=`get_parameters "${setflag}turnkeysteps" $@`
@@ -1333,7 +1317,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     OVERWRITE_PROJECT=`get_parameters "${setflag}overwriteproject" $@`
     OVERWRITE_PROJECT_FORCE=`get_parameters "${setflag}overwriteprojectforce" $@`
     OVERWRITE_PROJECT_XNAT=`get_parameters "${setflag}overwriteprojectxnat" $@`
-    LOCAL_BATCH_FILE=`get_parameters "${setflag}local_batchfile" $@`
     BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`get_parameters "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`get_parameters "${setflag}xnataccsessionid" $@`
@@ -1454,7 +1437,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     QCPlotMasks=`get_parameters "${setflag}qcplotmasks" $@`
 
     # -- Path options for FreeSurfer or QuNex
-    FreeSurferHome=`get_parameters "${setflag}hcp_freesurfer_home" $@`
     QuNexVersion=`get_parameters "${setflag}version" $@`
 
     # -- Input flags for create_list
@@ -1512,6 +1494,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
         nogpu="no"
     fi
 
+    # -- General dwi input flags
+    DiffusionFolder=`get_parameters "${setflag}diffusion_folder" $@`
+
     # -- Input flags for dwi_legacy_gpu
     EchoSpacing=`get_parameters "${setflag}echospacing" $@`
     pedir=`get_parameters "${setflag}pedir" $@`
@@ -1521,6 +1506,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     te=`get_parameters "${setflag}te" $@`
     UnwarpDir=`get_parameters "${setflag}unwarpdir" $@`
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
+    UseSEFieldmap=`get_parameters "${setflag}usesefieldmap" $@`
     diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
     extra_eddy_args=`get_parameters "${setflag}extra_eddy_args" $@`
 
@@ -1560,7 +1546,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     WayTotal=`get_parameters "${setflag}waytotal" $@`
     Lengths=`get_parameters "${setflag}lengths" $@`
 
-    # -- Input flags for  dwi_seed_tractography_dense
+    # -- Input flags for dwi_seed_tractography_dense
     SeedFile=`get_parameters "${setflag}seedfile" $@`
 
     # -- Input flags for dwi_eddy_qc
@@ -1631,7 +1617,6 @@ if [[ ${setflag} =~ .*-.* ]]; then
     BOLDPrefix=`get_parameters "${setflag}boldprefix" $@`
     SkipFrames=`get_parameters "${setflag}skipframes" $@`
     SNROnly=`get_parameters "${setflag}snronly" $@`
-    TimeStamp=`get_parameters "${setflag}timestamp" $@`
     Suffix=`get_parameters "${setflag}suffix" $@`
     SceneZip=`get_parameters "${setflag}scenezip" $@`
 
@@ -1643,9 +1628,15 @@ if [[ ${setflag} =~ .*-.* ]]; then
         echo ""
         echo "Using $CASES for input."
         echo ""
-        CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
         if [[ -z $CASES ]]; then
-            CASES=`cat ${BATCH_FILE} | grep "session:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+            CASES=`cat ${BATCH_FILE} | grep "session :" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        fi
+        if [[ -z $CASES ]]; then
+            CASES=`cat ${BATCH_FILE} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
+        fi
+        if [[ -z $CASES ]]; then
+            CASES=`cat ${BATCH_FILE} | grep "id :" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
         fi
         # convert to space separated insted of new line
         CASES=`echo $CASES | sed 's/\n/ /g'`
@@ -2119,7 +2110,8 @@ fi
 if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then echo "ERROR: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
-    if [[ -z "$UseFieldmap" ]]; then echo "ERROR: UseFieldmap yes/no specification missing"; exit 1; fi
+    if [[ -z "$UseFieldmap" ]] && [[ -z "$UseSEFieldmap" ]]; then echo "ERROR: Either UseFieldmap or UseSEFieldmap yes/no specification required"; exit 1; fi
+    if [[ "$UseFieldmap" == "yes" ]] && [[ "$UseSEFieldmap" == "yes" ]]; then echo "ERROR: UseFieldmap and UseSEFieldmap are mutually exclusive"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then echo "ERROR: Study folder missing"; exit 1; fi
     if [[ -z ${SessionsFolder} ]]; then echo "ERROR: Sessions folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then echo "ERROR: List of sessions missing"; exit 1; fi
@@ -2127,8 +2119,6 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
 
     if [[ ${UseFieldmap} == "yes" ]]; then
         if [[ -z "$te" ]]; then echo "ERROR: TE (--te) value for Fieldmap missing"; exit 1; fi
-    elif [[ ${UseFieldmap} == "no" ]]; then
-        echo "NOTE: Processing without FieldMap (TE option not needed)"
     fi
 
     Cluster="$RunMethod"
@@ -2149,6 +2139,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Sessions: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Using FieldMap: ${UseFieldmap}"
+    echo "   Using SE FieldMap: ${UseSEFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
     echo "   Phase Encoding Direction: ${pedir}"
     echo "   TE value for Fieldmap: ${TE}"
@@ -2588,6 +2579,7 @@ if [ "$CommandToRun" == "dwi_pre_tractography" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
+    echo "   Diffusion Folder: ${DiffusionFolder}"
     echo "   Study Log Folder: ${LogFolder}"
     echo ""
 
@@ -2657,6 +2649,7 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
+    echo "   Diffusion Folder: ${DiffusionFolder}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler: ${Scheduler}"
     echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"

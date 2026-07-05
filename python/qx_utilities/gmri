@@ -22,12 +22,11 @@ sys.path[:] = [p for p in sys.path if p and Path(p).resolve() != BAD.resolve()]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# --- continnue with imports
+# --- continue with imports
 
+import copy
 import os
 import os.path
-import copy
-
 from datetime import datetime
 from qx_utilities.general import scheduler as gs
 from qx_utilities.general import utilities as gu
@@ -37,8 +36,6 @@ from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
 from qx_registry import build_qx_registry, load_qx_registry, qx_commands
-
-
 
 
 help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
@@ -71,10 +68,9 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 
 
 def runCommand(command, args):
-    folders = gc.deduceFolders(args)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
-    if folders["basefolder"]:
-        gu.check_study(folders["basefolder"])
+    folders = gc.deduce_folders(args, command, timestamp)
 
     # --- check if command is deprecated
     if command != "check_deprecated_commands":
@@ -246,16 +242,15 @@ def runCommand(command, args):
                 if not os.path.isdir(run_recipe_folder):
                     os.makedirs(run_recipe_folder)
 
-                run_recipe_folder = os.path.join(run_recipe_folder, "batchlogs")
+                run_recipe_folder = os.path.join(run_recipe_folder)
 
                 # create folder if it does not exist
                 if not os.path.isdir(run_recipe_folder):
                     os.makedirs(run_recipe_folder)
 
-                logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
                 logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
                     "run_recipe",
-                    logstamp,
+                    timestamp,
                 )
 
                 gs.runThroughScheduler(
@@ -317,9 +312,9 @@ def runCommand(command, args):
 
                 # createstudy exception
                 if command == "create_study" and "studyfolder" in args:
-                    folders["logfolder"] = args["studyfolder"] + "/processing/logs"
+                    folders["logfolder"] = args["studyfolder"] + "/logs"
                 elif command == "create_study":
-                    folders["logfolder"] = "./processing/logs"
+                    folders["logfolder"] = "./logs"
 
             suffix = ""
             if "sessionids" in args:

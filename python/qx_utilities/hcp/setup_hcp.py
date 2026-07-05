@@ -21,11 +21,14 @@ Copyright (c) Grega Repovs and Jure Demsar.
 All rights reserved.
 """
 
-import os
-import shutil
 import collections
-import os.path
 import json
+import os
+import os.path
+import shutil
+
+import general.core as gc
+import general.exceptions as ge
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
@@ -187,9 +190,11 @@ def setup_hcp(
             --FM-GE
                 Gradient echo field map image used for distortion correction
             --FM-Magnitude
-                Field mapping magnitude image used for distortion correction
+                Fieldmap magnitude image used for distortion correction
             --FM-Phase
-                Field mapping phase image used for distortion correction
+                Fieldmap phase image used for distortion correction
+            --FM-Real
+                Real fieldmap image used for distortion correction
             --boldref
                 Reference image for the following BOLD image, N should be added
                 to the end of the boldref (boldref<N>)
@@ -541,6 +546,20 @@ def setup_hcp(
                 tfile = sid + "_FieldMap_Phase.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
+        elif v["name"] == "FM-Real":
+            if "fm" in v:
+                fmnum = v["fm"]
+            else:
+                fmnum = boldn
+            sfile = k + ".nii.gz"
+
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfold = v["filename"] + fmnum + fmtail
+            else:
+                tfile = sid + "_FieldMap_Real.nii.gz"
+                tfold = "FieldMap" + fmnum + fmtail
+
         elif "boldref" in v["name"]:
             boldn = v["name"][7:]
             sfile = k + ".nii.gz"
@@ -660,7 +679,6 @@ def setup_hcp(
             "RB1COR-Body",
             "RB1map",
         ]:
-
             sfile = k + ".nii.gz"
 
             if filename and "filename" in v:

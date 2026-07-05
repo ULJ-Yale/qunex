@@ -31,6 +31,7 @@
 #
 # * The necessary input files are DWI data from previous processing
 # * These data are stored in: "$SessionsFolder/sessions/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/
+# * This can be changed via the --diffusion_folder parameter (the last parameter).
 #
 #~ND~END~
 
@@ -70,6 +71,9 @@ fi
 # -- nogpu
 nogpu=$6
 
+# -- diffusion folder
+DiffusionFolder=$7
+
 # Out name
 OutFileName="Conn3.dconn.nii"
 
@@ -82,7 +86,12 @@ if [ ! -e ${ResultsFolder} ] ; then
 fi
 
 # -- Use BedpostX samples
-BedpostxFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/T1w/Diffusion.bedpostX
+# -- Use BedpostX samples
+if [ -n "$DiffusionFolder" ]; then
+    BedpostxFolder="$DiffusionFolder"
+else
+    BedpostxFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/T1w/Diffusion.bedpostX
+fi
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 # -- Clean prior results

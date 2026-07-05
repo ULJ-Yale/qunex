@@ -16,10 +16,10 @@
 #
 #  Wrapper for RunMatrix1 GPU without scheduler specification
 #
-# ## Description 
-#   
+# ## Description
+#
 # This script, run_matrix1ents gpu-based probtracX
-# 
+#
 # ## Prerequisite Installed Software
 #
 # * FSL with GPU binaries
@@ -28,9 +28,10 @@
 #
 #
 # ### Expected Previous Processing
-# 
+#
 # * The necessary input files are DWI data from previous processing
-# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/ 
+# * These data are stored in: "$SessionsFolder/$CASE/hcp/$CASE/T1w/Diffusion.bedpostX/
+# * This can be changed via the --diffusion_folder parameter (the last parameter).
 #
 #~ND~END~
 
@@ -70,6 +71,9 @@ fi
 # -- nogpu
 nogpu=$6
 
+# -- diffusion folder
+DiffusionFolder=$7
+
 # Out name
 OutFileName="Conn1.dconn.nii"
 
@@ -82,7 +86,11 @@ if [ ! -e ${ResultsFolder} ] ; then
 fi
 
 # -- Use BedpostX samples
-BedpostxFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/T1w/Diffusion.bedpostX
+if [ -n "$DiffusionFolder" ]; then
+    BedpostxFolder="$DiffusionFolder"
+else
+    BedpostxFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/T1w/Diffusion.bedpostX
+fi
 DtiMask=$BedpostxFolder/nodif_brain_mask
 
 # -- Clean prior results
@@ -147,7 +155,7 @@ echo $ResultsFolder/CIFTI_STRUCTURE_THALAMUS_RIGHT >> $ResultsFolder/wtstop
 echo $ResultsFolder/white.L.asc >> $ResultsFolder/wtstop
 echo $ResultsFolder/white.R.asc >> $ResultsFolder/wtstop
 o=" $o --stop=${ResultsFolder}/stop --wtstop=$ResultsFolder/wtstop --forcefirststep"  # -- Should we include an exclusion along the midsagittal plane (without the CC and the commisures)?
-o=" $o --waypoints=${ROIsFolder}/Whole_Brain_Trajectory_ROI_2"       # -- Use a waypoint to exclude streamlines that go through CSF 
+o=" $o --waypoints=${ROIsFolder}/Whole_Brain_Trajectory_ROI_2"       # -- Use a waypoint to exclude streamlines that go through CSF
 
 # -- Define Targets
 o=" $o --omatrix1"
@@ -185,7 +193,7 @@ bash ${ResultsFolder}/commands_Mat1.sh ########## <<< commands_Mat1.sh
 
 # -- Create CIFTI file=Mat1+Mat1_transp (~1.5 hours, 50GB RAM)
 echo ""
-echo "-- Queueing Post-Matrix 1 Calls" 
+echo "-- Queueing Post-Matrix 1 Calls"
 echo ""
 
 # -- Clean prior results, specify commands and make executable

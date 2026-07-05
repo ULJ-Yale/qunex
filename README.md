@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 The Quantitative Neuroimaging Environment & ToolboX (QuNex) integrates a number of scripts and functions written in several programming languages that support a flexible and extensible framework for data organization, preprocessing, quality assurance, and various analytics across neuroimaging modalities. The QuNex suite is designed to be flexible and can be developed by adding functions developed around its component tools.
 
-**By using the QuNex container you agree with all QuNex licenses and licenses of all tools included in the container. See [QuNex access](https://qunex.yale.edu/registration) for details. For commercial use of the QuNex container, please contact [grega.repovs@ff.uni-lj.si](mailto:grega.repovs@ff.uni-lj.si) or [youngson.cho@yale.edu](mailto:youngson.cho@yale.edu).**
+**By using the QuNex container you agree with all QuNex licenses and licenses of all tools included in the container. See [QuNex access](https://qunex.yale.edu/registration) for details. For commercial use of the QuNex container, please contact [grega.repovs@ff.uni-lj.si](mailto:grega.repovs@ff.uni-lj.si) or [youngsun.cho@yale.edu](mailto:youngsun.cho@yale.edu).**
 
 The QuNex code is co-developed and co-maintained by the:
 
@@ -28,14 +28,18 @@ Past contributors to the QuNex code:
 * [QuNex quick start](https://qunex.readthedocs.io/en/latest/wiki/Overview-QuickStart.html)
 * [QuNex container deployment](https://qunex.readthedocs.io/en/latest/wiki/Overview-QuNexContainerUsage.html)
 
+You can submit questions and report issues on the official **[QuNex forum](https://forum.qunex.yale.edu)**.
+
 ## Version
 
-* QuNex: 1.4.2
-* qx_library: 1.4.1
+* QuNex: 1.5.0
+* qx_library: 1.5.0
 
 ## References
 
 Jie Lisa Ji, Jure Demšar, Clara Fonteneau, Zailyn Tamayo, Lining Pan, Aleksij Kraljič, Andraž Matkovič, Nina Purg, Markus Helmer, Shaun Warrington, Anderson Winkler, Valerio Zerbi, Timothy S. Coalson, Matthew F. Glasser, Michael P. Harms, Stamatios N. Sotiropoulos, John D. Murray, Alan Anticevic, Grega Repovš; QuNex—An integrative platform for reproducible neuroimaging analytics. Frontiers in neuroinformatics 17 (2023). <https://www.frontiersin.org/articles/10.3389/fninf.2023.1104508>.
+
+Jure Demšar, Aleksij Kraljič, Andraž Matkovič, Samuel Brege, Lining Pan, Zailyn Tamayo, Clara Fonteneau, Markus Helmer, Jie Lisa Ji, Alan Anticevic, Cole Korponay, Melissa Salavrakos, Daniel Drucker, Matthew F. Glasser, Lisa D. Nickerson, Youngsun T. Cho, Grega Repovš; QuNex recipes: Executable, human-readable workflows for reproducible neuroimaging research. Imaging Neuroscience (2026) 4: IMAG.a.1274. <https://direct.mit.edu/imag/article/doi/10.1162/IMAG.a.1274/136907/QuNex-recipes-Executable-human-readable-workflows>
 
 ## GPL licenses
 

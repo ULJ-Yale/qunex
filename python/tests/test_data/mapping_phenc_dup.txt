@@ -1,0 +1,6 @@
+# Mapping file that also specifies phenc tags matching the source file
+T1w                     => T1w
+epi dir-AP acq-SEField2 => SE-FM-AP
+epi dir-PA acq-SEField2 => SE-FM-PA
+sbref rest dir-AP       => boldref:rest:phenc(AP)
+bold rest dir-AP        => bold:rest:phenc(AP)
