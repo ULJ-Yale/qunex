@@ -5,21 +5,20 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import copy
 import os
 import os.path
 import sys
-import copy
-
 from datetime import datetime
-from general import scheduler as gs
-from general import utilities as gu
-from general import process as gp
-from general import matlab as gm
-from general import core as gc
-from general import exceptions as ge
+
 from general import all_commands as gac
 from general import commands as gcom
 from general import commands_support as gcs
+from general import core as gc
+from general import exceptions as ge
+from general import matlab as gm
+from general import process as gp
+from general import scheduler as gs
 
 help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 (qx_utilities) commands can be invoked via the "qunex <command>" call.
@@ -51,10 +50,9 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 
 
 def runCommand(command, args):
-    folders = gc.deduceFolders(args)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
-    if folders["basefolder"]:
-        gu.check_study(folders["basefolder"])
+    folders = gc.deduce_folders(args, command, timestamp)
 
     # --- check if command is deprecated
     if command != "check_deprecated_commands":
@@ -221,16 +219,15 @@ def runCommand(command, args):
                 if not os.path.isdir(run_recipe_folder):
                     os.makedirs(run_recipe_folder)
 
-                run_recipe_folder = os.path.join(run_recipe_folder, "batchlogs")
+                run_recipe_folder = os.path.join(run_recipe_folder)
 
                 # create folder if it does not exist
                 if not os.path.isdir(run_recipe_folder):
                     os.makedirs(run_recipe_folder)
 
-                logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
                 logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
                     "run_recipe",
-                    logstamp,
+                    timestamp,
                 )
 
                 gs.runThroughScheduler(
@@ -292,9 +289,9 @@ def runCommand(command, args):
 
                 # createstudy exception
                 if command == "create_study" and "studyfolder" in args:
-                    folders["logfolder"] = args["studyfolder"] + "/processing/logs"
+                    folders["logfolder"] = args["studyfolder"] + "/logs"
                 elif command == "create_study":
-                    folders["logfolder"] = "./processing/logs"
+                    folders["logfolder"] = "./logs"
 
             suffix = ""
             if "sessionids" in args:
@@ -307,12 +304,14 @@ def runCommand(command, args):
             # remove logs for exceptions
             if command in gcs.logskip_commands:
                 # remove non-command args
-                args = {k: v for k, v in args.items() if k in gcom.commands[command]["args"]}
+                args = {
+                    k: v for k, v in args.items() if k in gcom.commands[command]["args"]
+                }
                 # execute
                 gcom.commands[command]["com"](**args)
             # run with log
             else:
-                _, result, _, _ = gc.runWithLog(
+                _, result, _, _ = gc.run_with_log(
                     gcom.commands[command]["com"], args=args, logfile=logfile
                 )
 

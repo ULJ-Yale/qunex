@@ -32,20 +32,20 @@ Copyright (c) Grega Repovs. All rights reserved.
 """
 
 import os
-import shutil
 import re
-import traceback
+import shutil
 import time
-from datetime import datetime
+import traceback
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 from functools import partial
 
-import processing.core as pc
+import general.core as gc
 import general.exceptions as ge
 import general.filelock as fl
-import general.meltmovfidl as gm
 import general.img as gi
-import general.core as gc
+import general.meltmovfidl as gm
+import processing.core as pc
 
 if "QUNEXMCOMMAND" not in os.environ:
     print(
@@ -237,7 +237,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
             multiple parallel workflows. Empty if not used.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
     Notes:
@@ -360,12 +360,12 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
     r = ""
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    r += "\n\nWorking on: " + boldinfo['name']
+    r += "\n\nWorking on: " + boldinfo["name"]
 
     try:
         # --- filenames
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo["name"], options))
 
         # template file
         templatefile = f["bold_template"]
@@ -424,9 +424,13 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
                 overwrite=overwrite,
                 remove=options["log"] == "remove",
                 thread=sinfo["id"],
-                task="FlipFormat" % (boldinfo['bold_number']),
+                task="FlipFormat" % (boldinfo["bold_number"]),
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+                logtags=[
+                    options["bold_variant"],
+                    options["logtag"],
+                    "B%d" % boldinfo["bold_number"],
+                ],
                 r=r,
                 verbose=False,
             )
@@ -444,7 +448,11 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
                 remove=options["log"] == "remove",
                 thread=sinfo["id"],
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+                logtags=[
+                    options["bold_variant"],
+                    options["logtag"],
+                    "B%d" % boldinfo["bold_number"],
+                ],
                 r=r,
                 verbose=False,
             )
@@ -468,7 +476,11 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
                 thread=sinfo["id"],
                 task="bet",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+                logtags=[
+                    options["bold_variant"],
+                    options["logtag"],
+                    "B%d" % boldinfo["bold_number"],
+                ],
                 r=r,
                 verbose=False,
             )
@@ -489,7 +501,11 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
                 thread=sinfo["id"],
                 task="gunzip",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+                logtags=[
+                    options["bold_variant"],
+                    options["logtag"],
+                    "B%d" % boldinfo["bold_number"],
+                ],
                 r=r,
                 verbose=False,
             )
@@ -507,7 +523,11 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
                 thread=sinfo["id"],
                 task="gunzip",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+                logtags=[
+                    options["bold_variant"],
+                    options["logtag"],
+                    "B%d" % boldinfo["bold_number"],
+                ],
                 r=r,
                 verbose=False,
             )
@@ -526,7 +546,11 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
                 thread=sinfo["id"],
                 task="FlipFormat",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+                logtags=[
+                    options["bold_variant"],
+                    options["logtag"],
+                    "B%d" % boldinfo["bold_number"],
+                ],
                 r=r,
                 verbose=False,
             )
@@ -545,7 +569,11 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
                 thread=sinfo["id"],
                 task="FlipFormat",
                 logfolder=options["comlogs"],
-                logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+                logtags=[
+                    options["bold_variant"],
+                    options["logtag"],
+                    "B%d" % boldinfo["bold_number"],
+                ],
                 r=r,
                 verbose=False,
             )
@@ -622,7 +650,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     logname = "%s_create_bold_brain_masks_B%s_%s_%s.log" % (
         log_prefix,
-        boldinfo['bold_number'],
+        boldinfo["bold_number"],
         sinfo["id"],
         logstamp,
     )
@@ -695,7 +723,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             multiple parallel workflows. Empty if not used.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --mov_radius (int, default 50):
@@ -943,13 +971,13 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldinfo):
     r = ""
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    r += "\n\nWorking on: " + boldinfo['name'] + " ..."
+    r += "\n\nWorking on: " + boldinfo["name"] + " ..."
 
     try:
         # --- filenames
 
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo["name"], options))
         d = pc.getSessionFolders(sinfo, options)
 
         # --- check for data availability
@@ -1014,7 +1042,11 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldinfo):
             remove=options["log"] == "remove",
             task=options["command_ran"],
             logfolder=options["comlogs"],
-            logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+            logtags=[
+                options["bold_variant"],
+                options["logtag"],
+                "B%d" % boldinfo["bold_number"],
+            ],
             r=r,
             shell=True,
         )
@@ -1086,7 +1118,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             multiple parallel workflows. Empty if not used.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --mov_radius (int, default 50):
@@ -1347,12 +1379,12 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         bolds, bskip, preport["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
 
         for boldinfo in bolds:
-            r += "\n\nWorking on: " + boldinfo['name'] + " ..."
+            r += "\n\nWorking on: " + boldinfo["name"] + " ..."
 
             try:
                 # --- filenames
                 f = pc.getFileNames(sinfo, options)
-                f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
+                f.update(pc.getBOLDFileNames(sinfo, boldinfo["name"], options))
 
                 # --- check for data availability
 
@@ -1393,7 +1425,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
                 # --- check
                 if status:
-                    procbolds.append(boldinfo['bold_number'])
+                    procbolds.append(boldinfo["bold_number"])
                     preport["boldok"] += 1
                 else:
                     r += "\n---> ERROR: Files missing, skipping this bold run!"
@@ -1620,7 +1652,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             multiple parallel workflows. Empty if not used.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --wbmask (str, default ''):
@@ -1836,12 +1868,12 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldinfo):
     r = ""
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    r += "\n\nWorking on: " + boldinfo['name'] + " ..."
+    r += "\n\nWorking on: " + boldinfo["name"] + " ..."
 
     try:
         # --- filenames
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo["name"], options))
         d = pc.getSessionFolders(sinfo, options)
 
         # --- check for data availability
@@ -1930,7 +1962,11 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldinfo):
             remove=options["log"] == "remove",
             task=options["command_ran"],
             logfolder=options["comlogs"],
-            logtags=[options["bold_variant"], options["logtag"], "B%d" % boldinfo['bold_number']],
+            logtags=[
+                options["bold_variant"],
+                options["logtag"],
+                "B%d" % boldinfo["bold_number"],
+            ],
             r=r,
             shell=True,
         )
@@ -1963,8 +1999,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     """
     ``preprocess_bold [... processing options]``
 
-    Prepares BOLD files for further analysis. It performs spatial smoothing, 
-    temporal filtering, removal of nuisance signals and complex modeling of 
+    Prepares BOLD files for further analysis. It performs spatial smoothing,
+    temporal filtering, removal of nuisance signals and complex modeling of
     events. It is to be used when processing individual bold files. When
     processing multiple bold files from a session for task-related analysis,
     please use the ``preprocess_conc`` command instead.
@@ -2010,7 +2046,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             or 'ptseries'.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --log (str, default 'study'):
@@ -2551,7 +2587,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     }
 
     bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo, options, r)
-    report["skipped"] = [str(binfo['bold_number']) for binfo in bskip]
+    report["skipped"] = [str(binfo["bold_number"]) for binfo in bskip]
 
     parelements = options["parelements"]
     r += "\nProcessing %d BOLDs in parallel" % (parelements)
@@ -2635,9 +2671,9 @@ def executePreprocessBold(sinfo, options, overwrite, boldinfo):
     r = ""
     report = {"done": [], "processed": [], "failed": [], "ready": [], "not ready": []}
 
-    boldnum = str(boldinfo['bold_number'])
+    boldnum = str(boldinfo["bold_number"])
 
-    r += "\n\nWorking on: " + boldinfo['name'] + " ..."
+    r += "\n\nWorking on: " + boldinfo["name"] + " ..."
 
     try:
         # --- define the tail
@@ -2649,7 +2685,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldinfo):
         # --- filenames and folders
 
         f = pc.getFileNames(sinfo, options)
-        f.update(pc.getBOLDFileNames(sinfo, boldinfo['name'], options))
+        f.update(pc.getBOLDFileNames(sinfo, boldinfo["name"], options))
         d = pc.getSessionFolders(sinfo, options)
 
         # --- check for data availability
@@ -2890,7 +2926,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             or 'ptseries'.
 
         --logfolder (str, default ''):
-            The path to the folder where runlogs and comlogs are to be stored,
+            The path to the folder where logs are to be stored,
             if other than default.
 
         --log (str, default 'study'):

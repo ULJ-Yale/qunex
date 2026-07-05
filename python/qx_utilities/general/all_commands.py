@@ -71,6 +71,31 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.general.snapshots.record_snapshot",
+        "Creates a hierarchical text snapshot of a folder with file names, timestamps, sizes, and optional MD5 hashes.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.compare_snapshots",
+        "Compares two snapshots or a snapshot against a live folder and reports added, deleted, and modified files.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.rollback_snapshot",
+        "Analyzes snapshot differences to find added files and optionally deletes them in check or delete mode.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.backup_files",
+        "Backs up selected files from a source folder to a target folder with sequential prefixes and a file_list manifest.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.snapshots.restore_files",
+        "Restores files from a backup to original or specified locations with support for original, gzip, and zip backup formats.",
+        "python",
+    ),
+    (
         "qx_utilities.general.palm.create_ws_palm_design",
         "Prepares the design file.",
         "python",
@@ -278,6 +303,11 @@ all_qunex_commands = [
         "Runs HCP FreeSurfer pipeline.",
         "python",
     ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_nhp_freesurfer",
+        "Runs HCP NHP FreeSurfer pipeline.",
+        "python",
+    ),
     ("qx_utilities.hcp.process_hcp.hcp_icafix", "Runs HCP ICAFix pipeline.", "python"),
     (
         "qx_utilities.hcp.process_hcp.hcp_make_average_dataset",
@@ -333,6 +363,11 @@ all_qunex_commands = [
     (
         "qx_utilities.hcp.process_hcp.hcp_temporal_ica",
         "Runs HCP temporal ICA pipeline.",
+        "python",
+    ),
+    (
+        "qx_utilities.hcp.process_hcp.hcp_fmri_stats",
+        "Runs HCP fMRI statistics pipeline.",
         "python",
     ),
     (
@@ -413,7 +448,7 @@ all_qunex_commands = [
     ),
     ("qx_utilities.qa.run_qa.run_qa", "QuNex quality assurance pipeline.", "python"),
     (
-        "qx_utilities.general.utilities.run_recipe",
+        "qx_utilities.general.recipe.run_recipe",
         "Executes a QuNex recipe that contains a chain of QuNex commands.",
         "python",
     ),
@@ -470,6 +505,16 @@ all_qunex_commands = [
     (
         "qx_utilities.general.bids.map_nii2bids",
         "Maps images from the sessions's nii folder to BIDS structure.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.sessions.merge_session",
+        "Join sessions.",
+        "python",
+    ),
+    (
+        "qx_utilities.general.sessions.merge_sessions_list",
+        "Join sessions specified in a list file.",
         "python",
     ),
 ]

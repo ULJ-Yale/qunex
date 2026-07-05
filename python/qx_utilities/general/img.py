@@ -16,11 +16,35 @@ import re
 import gzip
 import os.path
 import shutil
+import hashlib
+import difflib
 
 import general.exceptions as ge
 
-niftiDataTypes = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
-niftiBytesPerVoxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
+nifti_data_types = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
+nifti_bytes_per_voxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
+nifti_extension_names = {
+    0: "Unknown private",
+    2: "DICOM",
+    4: "AFNI group",
+    6: "Comment",
+    8: "XCEDE",
+    10: "Jiffy XML",
+    18: "MIND_IDENT",
+    20: "B_VALUE",
+    22: "SPHERICAL_DIRECTION",
+    24: "DT_COMPONENT",
+    26: "SHC_DEGREEORDER",
+    28: "VOXBO",
+    30: "CARET",
+    32: "CIFTI",
+    34: "VARIABLE_FRAME_TIMING",
+    36: "MATLAB workspace",
+    38: "QUANTIPHYSE",
+    40: "MRS",
+    42: "PYTHON pickle",
+    64: "QuNex"
+}
 
 
 class Usage(Exception):
@@ -245,30 +269,6 @@ def print_nifti_metadata(filename, info='list'):
             code_filter = None
             info_label = "List"
 
-    # Extension code names for display
-    ecode_names = {
-        0: "Unknown private",
-        2: "DICOM",
-        4: "AFNI group",
-        6: "Comment",
-        8: "XCEDE",
-        10: "Jiffy XML",
-        18: "MIND_IDENT",
-        20: "B_VALUE",
-        22: "SPHERICAL_DIRECTION",
-        24: "DT_COMPONENT",
-        26: "SHC_DEGREEORDER",
-        28: "VOXBO",
-        30: "CARET",
-        32: "CIFTI",
-        34: "VARIABLE_FRAME_TIMING",
-        36: "MATLAB workspace",
-        38: "QUANTIPHYSE",
-        40: "MRS",
-        42: "PYTHON pickle",
-        64: "QuNex"
-    }
-
     # Read the NIfTI header and metadata
     hdr = niftihdr(filename)
 
@@ -295,7 +295,7 @@ def print_nifti_metadata(filename, info='list'):
                 mcode = mcode[0]
 
             # Get the extension name
-            ecode_name = ecode_names.get(mcode, "Unknown")
+            ecode_name = nifti_extension_names.get(mcode, "Unknown")
 
             print("  Block #%d: Code %d (%s), Size %d bytes" % (idx, mcode, ecode_name, msize))
 
@@ -318,7 +318,7 @@ def print_nifti_metadata(filename, info='list'):
             found_count += 1
 
             # Get the extension name
-            ecode_name = ecode_names.get(mcode, "Unknown")
+            ecode_name = nifti_extension_names.get(mcode, "Unknown")
 
             print("--------------------------------")
             print("Metadata Block #%d (of %d total)" % (idx, total_count))
@@ -599,8 +599,6 @@ class fidl:
         fout.close()
 
 
-
-
 class ifhhdr:
 
     def __init__(self, filename=False):
@@ -627,7 +625,6 @@ class ifhhdr:
             self.readHeader(filename)
         else:
             self.hdr = self.packHdr()
-
 
     def packHdr(self):
         d = dict(self.ifh)
@@ -780,7 +777,7 @@ class niftihdr:
         self.hdr         = False
         self.filename    = False
 
-        self.dType      = niftiDataTypes[self.data_type]
+        self.dType      = nifti_data_types[self.data_type]
         self.meta       = []
 
         if filename:
@@ -1081,13 +1078,12 @@ class niftihdr:
         self.magic           = s.read(sc * 4).decode("utf-8")          # char[4]   - magic word and zero char
         self.ext             = s.read(sc * 4).decode("utf-8")          # char[4]   - extension
 
-        self.dType           = niftiDataTypes[self.data_type]
+        self.dType           = nifti_data_types[self.data_type]
 
         t = self.xyzt_units
         self.xyz_unit = t % 8
         t = t - (t % 8)
         self.t_unit = t % 64
-
 
         # --- Read extensions
 
@@ -1187,7 +1183,7 @@ class niftihdr:
 
         # Set magic for NIfTI-2
         self.magic = magic
-        self.dType = niftiDataTypes[self.data_type]
+        self.dType = nifti_data_types[self.data_type]
 
         t = self.xyzt_units
         self.xyz_unit = t % 8
@@ -1431,7 +1427,6 @@ def slice_image(sourcefile, targetfile, frames=1):
         slice4dfp(sourcefile, targetfile, frames)
 
 
-
 def slice4dfp(sourcefile, targetfile, frames=1):
     hdr = ifhhdr(sourcefile.replace('.img', '.ifh'))
     x = int(hdr.ifh['matrix size [1]'])
@@ -1486,10 +1481,415 @@ def sliceNIfTI(sourcefile, targetfile, frames=1):
     sf.close
 
 
+def compare_nifti_images(file1, file2, ndifflines=10):
+    """
+    ``compare_nifti_images file1=<path to first NIFTI file> file2=<path to second NIFTI file> [ndifflines=10]``
+
+    Performs a detailed comparison of two NIFTI image files, analyzing their
+    headers, extensions, and data arrays. The comparison is presented in a 
+    structured, tabular format highlighting differences.
+
+    Parameters:
+        --file1 (str):
+            The path to the first NIFTI file to compare. Can be .nii or .nii.gz
+            format. Supports both NIfTI-1 and NIfTI-2 formats.
+
+        --file2 (str):
+            The path to the second NIFTI file to compare. Can be .nii or .nii.gz
+            format. Supports both NIfTI-1 and NIfTI-2 formats.
+        
+        --ndifflines (int, default 10):
+            Maximum number of diff lines to display when comparing textual
+            extensions. If set to -1, all diff lines are printed. This helps
+            manage output length when extensions have many differences.
+
+    Comparison Process:
+        The function performs comparison in the following order:
+        
+        1. **File Hash Comparison**:
+           - Computes SHA-256 hash of both complete files
+           - If hashes match, files are identical and comparison stops
+           - If hashes differ, proceeds with detailed analysis
+        
+        2. **Header Comparison**:
+           - Opens both files and reads NIfTI headers
+           - Compares each header field individually
+           - Reports field name, value from file1, and value from file2 for
+             any fields that differ
+           - Handles both NIfTI-1 (348 byte) and NIfTI-2 (540 byte) headers
+        
+        3. **Extension Comparison**:
+           - Compares the number of extensions in each file
+           - Identifies extensions present in one file but not the other
+           - For matching extension codes:
+             * Compares extension hashes (SHA-256)
+             * If hashes match, reports extensions as identical
+             * If hashes differ and extension is text:
+               - Performs line-by-line diff
+               - Displays rows that differ between files (limited by ndifflines)
+             * If hashes differ and extension is binary:
+               - Reports that extensions differ
+               - Lists the size of each extension
+        
+        4. **Data Comparison**:
+           - Checks if data dimensionality matches (shape of arrays)
+           - If dimensions differ, reports the difference
+           - If dimensions match:
+             * Computes SHA-256 hash over the data arrays
+             * Reports whether data is identical or different
+             * Does not load entire data into memory for large files
+
+    Output Format:
+        Results are displayed in structured tables using separators and alignment:
+        
+        - Section headers clearly mark each comparison stage
+        - Differences are shown in columnar format with field names
+        - Extension comparisons show code, type, and content differences
+        - Visual separators improve readability
+        
+    Returns:
+        None. Results are printed to standard output.
+
+    Notes:
+        - Supports both compressed (.nii.gz) and uncompressed (.nii) files
+        - Handles both NIfTI-1 and NIfTI-2 formats automatically
+        - Extension text detection uses UTF-8 decoding; binary extensions
+          are those that cannot be decoded as UTF-8
+        - File hashing is performed in chunks to handle large files efficiently
+        - Data hashing is also performed in chunks without loading entire
+          arrays into memory
+
+    Example Use:
+        ::
+
+            from qx_utilities.general.img import compare_nifti_images
+            compare_nifti_images('subject1_bold.nii.gz', 'subject2_bold.nii.gz')
+            
+        ::
+
+            compare_nifti_images(
+                file1='/data/orig/T1w.nii',
+                file2='/data/processed/T1w.nii'
+            )
+            
+        ::
+
+            # Show all diff lines for text extensions
+            compare_nifti_images(
+                file1='file1.nii',
+                file2='file2.nii',
+                ndifflines=-1
+            )
+    """
+
+    def _compute_file_hash(filename):
+        """Compute SHA-256 hash of a file."""
+        sha256_hash = hashlib.sha256()
+        with open(filename, "rb") as f:
+            # Read in chunks to handle large files
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+
+    def _compute_data_hash(data):
+        """Compute SHA-256 hash of data (bytes)."""
+        sha256_hash = hashlib.sha256()
+        sha256_hash.update(data)
+        return sha256_hash.hexdigest()
+    
+    def _compare_headers(hdr1, hdr2):
+        """Compare two NIFTI headers field by field."""
+        
+        # Define header fields to compare
+        header_fields = [
+            'nifti_version', 'dim_info', 'ndimensions', 'sizex', 'sizey', 'sizez',
+            'frames', 'size_5', 'size_6', 'size_7', 'intention1', 'intention2',
+            'intention3', 'intent_code', 'data_type', 'bitpix', 'slice_start',
+            'pixdim_0', 'pixdim_x', 'pixdim_y', 'pixdim_z', 'pixdim_t',
+            'pixdim_5', 'pixdim_6', 'pixdim_7', 'vox_offset', 'scl_slope',
+            'scl_inter', 'slice_end', 'slice_code', 'xyzt_units', 'cal_max',
+            'cal_min', 'slice_duration', 'toffset', 'descrip', 'aux_file',
+            'qform_code', 'sform_code', 'quatern_b', 'quatern_c', 'quatern_d',
+            'qoffset_x', 'qoffset_y', 'qoffset_z', 'srow_x', 'srow_y', 'srow_z',
+            'intent_name', 'magic', 'xyz_unit', 't_unit', 's_unit'
+        ]
+        
+        differences = []
+        for field in header_fields:
+            val1 = getattr(hdr1, field, None)
+            val2 = getattr(hdr2, field, None)
+            
+            if val1 != val2:
+                differences.append((field, val1, val2))
+        
+        if not differences:
+            print("✓ Headers are identical")
+        else:
+            print(f"✗ Found {len(differences)} difference(s) in header fields:\n")
+            print(f"{'Field':<25} {'File 1 Value':<30} {'File 2 Value':<30}")
+            print("-" * 85)
+            for field, val1, val2 in differences:
+                # Format values for display
+                val1_str = _format_value(val1)
+                val2_str = _format_value(val2)
+                print(f"{field:<25} {val1_str:<30} {val2_str:<30}")
+
+    def _format_value(val):
+        """Format a value for display in comparison table."""
+        if isinstance(val, float):
+            return f"{val:.6f}"
+        elif isinstance(val, list):
+            return str([f"{v:.6f}" if isinstance(v, float) else v for v in val])
+        elif isinstance(val, bytes):
+            try:
+                return val.decode('utf-8').strip()
+            except:
+                return f"<binary: {len(val)} bytes>"
+        elif isinstance(val, str):
+            return val.strip()
+        else:
+            return str(val)
+        
+    def _compare_extensions(hdr1, hdr2, file1, file2, ndifflines=10):
+        """Compare extensions between two NIFTI files."""
+        
+        n_ext1 = len(hdr1.meta)
+        n_ext2 = len(hdr2.meta)
+        
+        print(f"File 1 has {n_ext1} extension(s)")
+        print(f"File 2 has {n_ext2} extension(s)")
+        
+        if n_ext1 == 0 and n_ext2 == 0:
+            print("✓ Neither file has extensions")
+            return
+        
+        # Build dictionaries of extensions by code
+        ext1_dict = {ext[1]: ext for ext in hdr1.meta}
+        ext2_dict = {ext[1]: ext for ext in hdr2.meta}
+        
+        codes1 = set(ext1_dict.keys())
+        codes2 = set(ext2_dict.keys())
+        
+        # Check for extensions in one file but not the other
+        only_in_1 = codes1 - codes2
+        only_in_2 = codes2 - codes1
+        common = codes1 & codes2
+        
+        if only_in_1:
+            print(f"\n✗ Extension(s) only in File 1:")
+            for code in sorted(only_in_1):
+                ext_size = ext1_dict[code][0]
+                ext_name = nifti_extension_names.get(code, "Unknown")
+                print(f"   - Code {code} ({ext_name}): size {ext_size} bytes")
+        
+        if only_in_2:
+            print(f"\n✗ Extension(s) only in File 2:")
+            for code in sorted(only_in_2):
+                ext_size = ext2_dict[code][0]
+                ext_name = nifti_extension_names.get(code, "Unknown")
+                print(f"   - Code {code} ({ext_name}): size {ext_size} bytes")
+        
+        # Compare common extensions
+        if common:
+            print(f"\n{len(common)} common extension code(s) found:")
+            for code in sorted(common):
+                ext1_size, ext1_code, ext1_data = ext1_dict[code]
+                ext2_size, ext2_code, ext2_data = ext2_dict[code]
+                ext_name = nifti_extension_names.get(code, "Unknown")
+                
+                print(f"\n  Extension Code {code} ({ext_name}):")
+                print(f"    File 1 size: {ext1_size} bytes")
+                print(f"    File 2 size: {ext2_size} bytes")
+                
+                # Compare hashes
+                hash1 = _compute_data_hash(ext1_data)
+                hash2 = _compute_data_hash(ext2_data)
+                
+                if hash1 == hash2:
+                    print(f"    ✓ Extensions are identical (hash: {hash1[:16]}...)")
+                else:
+                    print(f"    ✗ Extensions differ")
+                    
+                    # Try to decode as text
+                    try:
+                        text1 = ext1_data.decode('utf-8')
+                        text2 = ext2_data.decode('utf-8')
+                        is_text = True
+                    except:
+                        is_text = False
+                    
+                    if is_text:
+                        print(f"    Extension is textual - showing diff:")
+                        _show_text_diff(text1, text2, "    ", ndifflines)
+                    else:
+                        print(f"    Extension is binary")
+                        print(f"    File 1 hash: {hash1}")
+                        print(f"    File 2 hash: {hash2}")
+
+    def _show_text_diff(text1, text2, indent="", ndifflines=10):
+        """Show line-by-line diff of two text strings.
+        
+        Args:
+            text1: First text string
+            text2: Second text string
+            indent: Indentation prefix for output lines
+            ndifflines: Maximum number of diff lines to show. -1 for unlimited.
+        """
+        lines1 = text1.splitlines(keepends=True)
+        lines2 = text2.splitlines(keepends=True)
+        
+        diff = list(difflib.unified_diff(lines1, lines2, lineterm='', 
+                                        fromfile='File 1', tofile='File 2'))
+        
+        if diff:
+            print(f"{indent}Differences:")
+            
+            # Determine how many lines to show
+            if ndifflines == -1:
+                lines_to_show = diff
+                show_truncation = False
+            else:
+                lines_to_show = diff[:ndifflines]
+                show_truncation = len(diff) > ndifflines
+            
+            for line in lines_to_show:
+                # Clean up the line for display
+                line = line.rstrip()
+                if line:
+                    print(f"{indent}{line}")
+            
+            if show_truncation:
+                print(f"{indent}... ({len(diff) - ndifflines} more lines of diff)")
+        else:
+            print(f"{indent}✓ Text content is identical")
+
+    def _compare_data(hdr1, hdr2, file1, file2):
+        """Compare data arrays between two NIFTI files."""
+        
+        # Check dimensionality
+        dims1 = (hdr1.sizex, hdr1.sizey, hdr1.sizez, hdr1.frames, 
+                hdr1.size_5, hdr1.size_6, hdr1.size_7)
+        dims2 = (hdr2.sizex, hdr2.sizey, hdr2.sizez, hdr2.frames,
+                hdr2.size_5, hdr2.size_6, hdr2.size_7)
+        
+        # Trim trailing zeros/ones from dimension comparison
+        dims1_trimmed = tuple([d for d in dims1[:hdr1.ndimensions]])
+        dims2_trimmed = tuple([d for d in dims2[:hdr2.ndimensions]])
+        
+        print(f"File 1 dimensions: {dims1_trimmed}")
+        print(f"File 2 dimensions: {dims2_trimmed}")
+        
+        if dims1_trimmed != dims2_trimmed:
+            print("\n✗ Data dimensions differ")
+            print(f"   File 1: {dims1_trimmed}")
+            print(f"   File 2: {dims2_trimmed}")
+            return
+        
+        print("\n✓ Data dimensions match")
+        
+        # Calculate data size
+        nvox1 = hdr1.sizex * hdr1.sizey * hdr1.sizez * hdr1.frames
+        if hdr1.size_5 > 0:
+            nvox1 *= hdr1.size_5
+        if hdr1.size_6 > 0:
+            nvox1 *= hdr1.size_6
+        if hdr1.size_7 > 0:
+            nvox1 *= hdr1.size_7
+        
+        bytes_per_vox = hdr1.bitpix // 8
+        data_size = nvox1 * bytes_per_vox
+        
+        print(f"Data size: {data_size} bytes ({data_size / (1024**2):.2f} MB)")
+        
+        # Compare data hashes
+        print("\nComputing data hashes...")
+        data_hash1 = _compute_data_section_hash(file1, hdr1)
+        data_hash2 = _compute_data_section_hash(file2, hdr2)
+        
+        print(f"File 1 data hash: {data_hash1}")
+        print(f"File 2 data hash: {data_hash2}")
+        
+        if data_hash1 == data_hash2:
+            print("\n✓ Data arrays are identical")
+        else:
+            print("\n✗ Data arrays differ")
+
+    def _compute_data_section_hash(filename, hdr):
+        """Compute hash of the data section of a NIFTI file."""
+        sform = getImgFormat(filename)
+        
+        if sform == '.nii.gz':
+            f = gzip.open(filename, 'rb')
+        else:
+            f = open(filename, 'rb')
+        
+        # Seek to data start
+        f.seek(int(hdr.vox_offset))
+        
+        # Compute hash in chunks
+        sha256_hash = hashlib.sha256()
+        while True:
+            chunk = f.read(4096)
+            if not chunk:
+                break
+            sha256_hash.update(chunk)
+        
+        f.close()
+        return sha256_hash.hexdigest()
+    
+    print("\n" + "=" * 80)
+    print("NIFTI IMAGE COMPARISON")
+    print("=" * 80)
+    print(f"File 1: {file1}")
+    print(f"File 2: {file2}")
+    print("=" * 80)
+    
+    # Step 1: Compare file hashes
+    print("\n[1] FILE HASH COMPARISON")
+    print("-" * 80)
+    
+    hash1 = _compute_file_hash(file1)
+    hash2 = _compute_file_hash(file2)
+    
+    print(f"File 1 SHA-256: {hash1}")
+    print(f"File 2 SHA-256: {hash2}")
+    
+    if hash1 == hash2:
+        print("\n✓ FILES ARE IDENTICAL (hashes match)")
+        print("=" * 80 + "\n")
+        return
+    else:
+        print("\n✗ Files differ - proceeding with detailed comparison")
+    
+    # Step 2: Open files and compare headers
+    print("\n[2] HEADER COMPARISON")
+    print("-" * 80)
+    
+    hdr1 = niftihdr(file1)
+    hdr2 = niftihdr(file2)
+    
+    _compare_headers(hdr1, hdr2)
+    
+    # Step 3: Compare extensions
+    print("\n[3] EXTENSION COMPARISON")
+    print("-" * 80)
+    
+    _compare_extensions(hdr1, hdr2, file1, file2, ndifflines)
+    
+    # Step 4: Compare data
+    print("\n[4] DATA COMPARISON")
+    print("-" * 80)
+    
+    _compare_data(hdr1, hdr2, file1, file2)
+    
+    print("\n" + "=" * 80)
+    print("COMPARISON COMPLETE")
+    print("=" * 80 + "\n")
+
+
 def main():
     pass
 
 
 if __name__ == '__main__':
     main()
-

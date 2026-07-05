@@ -6,6 +6,25 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.0
+
+* Added NHP (non-human primate) support to all HCP commands that now support it. This is mainly accessible through the `hcp_species` parameter, while there is a completely new command for HCP FreeSurfer (`hcp_nhp_freesurfer`).
+* Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
+* QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
+
+## 1.4.4
+
+* QC scene optimizations.
+* `dwi_xtract` outputs organization improvements.
+
+## 1.4.3
+
+* Fixed a bug in longitudinal pipelines were some log contents were overwritten by others.
+* Fixed a bug with the `OnScanner` distortion correction method in `hcp_fmri_volume`.
+* Fixed an issue that popped up when `run_qc` was executed in a massively parallel way.
+* Fixed the CUDA version so it is compatible with the FSL's new default (11.0).
+* Optimized symlinking subject and session folders for longitudinal commands.
+
 ## 1.4.2
 
 * Fixed a bug where `hcp_fmri_volume` did not work under some configurations with SE-FM corrections.

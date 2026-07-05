@@ -1,0 +1,9 @@
+# Session with T1w_HiRes available (first alternative matches)
+session: or_test_1
+subject: OR001
+
+01: T1w_HiRes
+02: T2w_HiRes
+03: SpinEchoFieldMap_AP
+04: SpinEchoFieldMap_PA
+05: rfMRI_REST_AP

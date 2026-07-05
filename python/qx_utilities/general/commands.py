@@ -28,6 +28,9 @@ from general import (
     commands_support,
     bruker,
     extensions,
+    snapshots,
+    recipe,
+    sessions
 )
 
 # pipeline imports
@@ -45,6 +48,7 @@ commands = {
         "com": dicom.sort_dicom,
         "args": ("folder", "out_dir", "files", "copy"),
     },
+    "clean_dicom": {"com": dicom.clean_dicom, "args": ("folder", "verbose", "tol_mm", "min_files", "move_non_image", "move_incomplete")},
     "dicom2nii": {
         "com": dicom.dicom2nii,
         "args": ("folder", "clean", "unzip", "gzip", "verbose", "parelements", "debug"),
@@ -86,6 +90,7 @@ commands = {
             "overwrite",
             "test",
             "existing_structure",
+            "clean_dicom_folders"
         ),
     },
     "get_dicom_info": {"com": dicom.get_dicom_info, "args": ("dicomfile", "scanner")},
@@ -182,6 +187,10 @@ commands = {
         "com": img.print_nifti_metadata,
         "args": ("filename", "info"),
     },
+    "compare_nifti_images": {
+        "com": img.compare_nifti_images,
+        "args": ("file1", "file2", "ndifflines"),
+    },
     "modniftihdr": {"com": qximg.modniftihdr, "args": ("filename", "s")},
     "create_batch": {
         "com": utilities.create_batch,
@@ -215,6 +224,55 @@ commands = {
             "subjects",
             "batchfile",
             "filter",
+        ),
+    },
+    "record_snapshot": {
+        "com": snapshots.record_snapshot,
+        "args": (
+            "targetfolder",
+            "outfile",
+            "includehash",
+            "exclude",
+        ),
+    },
+    "backup_files": {
+        "com": snapshots.backup_files,
+        "args": (
+            "source",
+            "target",
+            "filelist",
+            "store",
+            "overwrite",
+        ),
+    },
+    "restore_files": {
+        "com": snapshots.restore_files,
+        "args": (
+            "source",
+            "target",
+            "filelist",
+            "overwrite",
+        ),
+    },
+    "compare_snapshots": {
+        "com": snapshots.compare_snapshots,
+        "args": (
+            "before",
+            "after",
+            "outfile",
+            "includehash",
+            "exclude",
+        ),
+    },
+    "rollback_snapshot": {
+        "com": snapshots.rollback_snapshot,
+        "args": (
+            "diff",
+            "before",
+            "after",
+            "action",
+            "exclude",
+            "includehash",
         ),
     },
     "create_list": {
@@ -384,7 +442,7 @@ commands = {
         ),
     },
     "run_recipe": {
-        "com": utilities.run_recipe,
+        "com": recipe.run_recipe,
         "args": ("recipe_file", "recipe", "steps", "logfolder", "verbose", "eargs"),
     },
     "import_nhp": {
@@ -417,8 +475,16 @@ commands = {
             "tag",
         ),
     },
+    "merge_session": {
+        "com": sessions.merge_session,
+        "args": ("source", "target", "studyfolder", "overwrite", "raw_data", "original_sessions"),
+    },
+    "merge_sessions_list": {
+        "com": sessions.merge_sessions_list,
+        "args": ("studyfolder", "session_list", "source_folder", "target_folder", "overwrite", "raw_data", "original_sessions"),
+    },
 }
 
 # -- update commands list with information from extensions
-commands.update(extensions.compile_dict("commands"))
+commands.update(extensions.compile_dict("commands"))    
 commands.update(extensions.commands)

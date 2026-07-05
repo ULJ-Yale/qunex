@@ -1,0 +1,7 @@
+# Mapping file with "or" rules
+# T1w_HiRes is preferred, T1w_LowRes is fallback
+T1w_HiRes || T1w_LowRes => T1w
+T2w_HiRes || T2w_LowRes => T2w
+SpinEchoFieldMap_AP => SE-FM-AP
+SpinEchoFieldMap_PA => SE-FM-PA
+rfMRI_REST_AP => bold:rest

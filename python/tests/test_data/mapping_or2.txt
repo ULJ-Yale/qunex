@@ -1,0 +1,6 @@
+# Mapping with "or" rule using glob patterns
+# Try rfMRI_REST1* first, fallback to rfMRI_REST2*, fallback to tfMRI*
+T1w_MPRAGE => T1w
+SpinEchoFieldMap_AP => SE-FM-AP
+SpinEchoFieldMap_PA => SE-FM-PA
+rfMRI_REST1* || rfMRI_REST2* || tfMRI* => bold:rest

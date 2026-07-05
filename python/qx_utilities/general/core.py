@@ -13,25 +13,24 @@ preprocessing and analysis. The functions are for internal use
 and can not be called externally.
 """
 
+import glob
+import gzip
 import inspect
-import re
-import os.path
+import multiprocessing
 import os
+import os.path
+import re
 import shutil
 import subprocess
-import time
-import multiprocessing
-import glob
 import sys
-import types
+import time
 import traceback
-import gzip
-from datetime import datetime
+import types
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 
-import general.filelock as fl
 import general.exceptions as ge
-import general.commands_support as gcs
+import general.filelock as fl
 
 
 def print_qunex_header(timestamp=None, file=None):
@@ -377,9 +376,9 @@ def get_sessions_list(
     return slist, gpref
 
 
-def deduceFolders(args):
+def deduce_folders(args, command=None, timestamp=None):
     """
-    ``deduceFolders(args)``
+    ``deduce_folders(args)``
 
     Tries to deduce the location of study specific folders based on the provided
     arguments. For internal use only.
@@ -416,10 +415,20 @@ def deduceFolders(args):
                             basefolder = f
                             break
 
-    if logfolder is None:
-        logfolder = os.path.abspath(".")
+    if logfolder is None and timestamp and command:
+        if basefolder:
+            logfolder = os.path.join(basefolder, "logs", f"{timestamp}_{command}")
+        else:
+            logfolder = os.path.join(os.path.abspath("."), f"{timestamp}_{command}")
+    elif logfolder == "legacy" or (not timestamp and not command):
         if basefolder:
             logfolder = os.path.join(basefolder, "processing", "logs")
+        else:
+            logfolder = os.path.abspath(".")
+
+    if logfolder is None:
+        homedir = os.path.expanduser("~")
+        logfolder = os.path.join(homedir, "qunex")
 
     return {
         "basefolder": basefolder,
@@ -662,16 +671,15 @@ class Logger(object):
         pass
 
 
-def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
+def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
     """
-    ``runWithLog(function, args=None, logfile=None, name=None)``
+    ``run_with_log(function, args=None, logfile=None, name=None)``
 
     Runs a function with the arguments by redirecting standard output and
     standard error to the specified log file.
 
     For internal use only.
     """
-
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if name is None:
@@ -733,6 +741,11 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         ):
             del args["logfolder"]
         result = function(**args)
+    except ge.CommandError as e:
+        with lock:
+            print(ge.reportCommandError(name, e))
+            print
+        result = e
     except ge.CommandNull as e:
         with lock:
             print(ge.reportCommandNull(name, e))
@@ -776,18 +789,8 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         os.rename(os.path.join(logfolder, "tmp_" + logname), comlogname)
 
         # create runlog
-        if "comlog" in logfolder:
-            logfolder = logfolder.replace("comlog", "runlog")
-
-            if not os.path.exists(logfolder):
-                try:
-                    os.makedirs(logfolder)
-                except:
-                    r = "\n\nERROR: Could not create folder for logfile [%s]!" % (
-                        logfolder
-                    )
-                    print(r)
-                    raise ge.CommandFailed(function="runWithLog", error=r)
+        if "comlogs" in logfolder:
+            logfolder = logfolder.replace("comlogs", "")
 
         # runlog file
         runlogname = "Log-" + logname
@@ -808,9 +811,13 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
             print("session: %s\n" % split[1])
 
         # print command name
-        lf.write("qunex %s\n" % split[0])
-        for k, v in args.items():
-            lf.write('  --%s="%s"\n' % (k, v))
+        lf.write("qunex %s \\\n" % split[0])
+        arg_items = list(args.items())
+        for i, (k, v) in enumerate(arg_items):
+            if i < len(arg_items) - 1:
+                lf.write('  --%s="%s" \\\n' % (k, v))
+            else:
+                lf.write('  --%s="%s"\n' % (k, v))
 
         # print final status
         if result:
@@ -870,7 +877,7 @@ def runInParallel(calls, cores=None, prepend=""):
     with ProcessPoolExecutor(max_workers=cores) as executor:
         for call in calls:
             future = executor.submit(
-                runWithLog,
+                run_with_log,
                 call["function"],
                 call["args"],
                 call["logfile"],
@@ -1074,7 +1081,7 @@ def getLogFile(folders=None, tags=None):
 
     """
 
-    folders = deduceFolders(folders)
+    folders = deduce_folders(folders)
 
     if "logfolder" not in folders:
         raise ge.CommandFailed(

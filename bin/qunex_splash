@@ -28,7 +28,7 @@ qx_echo "        \___███\  \______/      ║     \__|  \__| \_______\__/  
 qx_echo "            \___|               ║                                     "
 echo ""
 echo ""
-qx_echo "                            $QuNexVer"
+qx_echo "                              $QuNexVer"
 echo ""
 qx_echo "                      DEVELOPED & MAINTAINED BY:"
 echo ""

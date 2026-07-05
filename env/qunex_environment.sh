@@ -33,57 +33,11 @@
 #
 #~ND~END~
 
-# -- Set general options functions
-opts_GetOpt() {
-sopt="$1"
-shift 1
-for fn in "$@" ; do
-    if [ `echo ${fn} | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-        echo "${fn}" | sed "s/^${sopt}=//"
-        return 0
-    fi
-done
-}
-
-# ------------------------------------------------------------------------------
-# -- General help usage function
-# ------------------------------------------------------------------------------
-
-usage() {
- echo ""
- echo "This script implements the global environment setup for the QuNex Suite."
- echo ""
- echo "Configure the environment script by adding the following lines to the "
- echo ".bash_profile::"
- echo ""
- echo " TOOLS=<path_to_folder_with_qunex_software> "
- echo " export TOOLS "
- echo " source <path_to_folder_with_qunex_software>/env/qunex_environment.sh "
- echo ""
- echo "Permissions of this file need to be set to 770."
- echo ""
- echo "REQUIRED DEPENDENCIES"
- echo "====================="
- echo ""
- echo "The QuNex Suite assumes a set default folder names for dependencies if "
- echo "undefined by user environment. These are defined relative to the "
- echo "${TOOLS} folder which should be set as a global system variable."
- echo ""
- echo "For details about required dependencies consult the QuNex documentation."
- echo "**For full environment report run 'qunex environment'.**"
- echo ""
- exit 0
-}
-
-if [ "$1" == "--help" ] || [ "$1" == "-help" ] || [ "$1" == "help" ] || [ "$1" == "?help" ] || [ "$1" == "--usage" ] || [ "$1" == "-usage" ] || [ "$1" == "usage" ] || [ "$1" == "?usage" ]; then
-    usage
-fi
-
 # ------------------------------------------------------------------------------
 #  Environment clear and check functions
 # ------------------------------------------------------------------------------
 
-ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXEXTENSIONS QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_BINDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLBINDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_FS_CUSTOM HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder USEOCTAVE QUNEXENV MAMBADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT ANTSDIR CUDIMOT'
+ENVVARIABLES='PATH MATLABPATH PYTHONPATH QUNEXVer TOOLS QUNEXREPO QUNEXPATH QUNEXEXTENSIONS QUNEXLIBRARY QUNEXLIBRARYETC TemplateFolder FSL_BINDIR FSL_FIXDIR FREESURFERDIR FREESURFER_HOME FREESURFER_SCHEDULER FreeSurferSchedulerDIR WORKBENCHDIR DCMNIIDIR DICMNIIDIR MATLABDIR MATLABBINDIR OCTAVEDIR OCTAVEPKGDIR OCTAVEBINDIR RDIR HCPWBDIR AFNIDIR PYLIBDIR FSLDIR FSLBINDIR PALMDIR QUNEXMCOMMAND HCPPIPEDIR CARET7DIR GRADUNWARPDIR HCPPIPEDIR_Templates HCPPIPEDIR_Bin HCPPIPEDIR_Config HCPPIPEDIR_PreFS HCPPIPEDIR_FS HCPPIPEDIR_FS_CUSTOM HCPPIPEDIR_PostFS HCPPIPEDIR_fMRISurf HCPPIPEDIR_fMRIVol HCPPIPEDIR_tfMRI HCPPIPEDIR_dMRI HCPPIPEDIR_dMRITract HCPPIPEDIR_Global HCPPIPEDIR_tfMRIAnalysis HCPCIFTIRWDIR MSMBin HCPPIPEDIR_dMRITractFull HCPPIPEDIR_dMRILegacy AutoPtxFolder USEOCTAVE QUNEXENV MAMBADIR MSMBINDIR MSMCONFIGDIR R_LIBS FSL_FIX_CIFTIRW FSFAST_HOME SUBJECTS_DIR MINC_BIN_DIR MNI_DIR MINC_LIB_DIR MNI_DATAPATH FSF_OUTPUT_FORMAT ANTSDIR CUDIMOT'
 export ENVVARIABLES
 
 # -- Check if inside the container and reset the environment on first setup
@@ -93,7 +47,7 @@ if [[ -e /opt/.container ]]; then
         export QUNEX_SOURCED="TRUE"
     else
         # -- Already sourced outside, so exit
-        return
+        return 0 2>/dev/null || exit 0
     fi
 
     # -- First unset all conflicting variables in the environment
@@ -196,7 +150,8 @@ fi
 # -- Check if folders for dependencies are set in the global path
 if [[ -z ${FSLDIR} ]]; then FSLDIR="${TOOLS}/fsl/fsl"; export FSLDIR; fi
 if [[ -z ${FSLCONFDIR} ]]; then FSLCONFDIR="${FSLDIR}/config"; export FSLCONFDIR; fi
-if [[ -z ${FSL_BINDIR} ]]; then FSL_BINDIR="${TOOLS}/fsl/bin"; fi
+if [[ -z ${FSL_BINDIR} ]]; then FSL_BINDIR="${TOOLS}/fsl/fsl/bin"; fi
+if [[ -z ${FSL_FIXDIR} ]]; then FSL_FIXDIR="${TOOLS}/fsl/fsl/bin"; fi
 if [[ -z ${FREESURFERDIR} ]]; then FREESURFERDIR="${TOOLS}/freesurfer/freesurfer"; export FREESURFERDIR; fi
 if [[ -z ${FreeSurferSchedulerDIR} ]]; then FreeSurferSchedulerDIR="${TOOLS}/freesurfer/FreeSurferScheduler"; export FreeSurferSchedulerDIR; fi
 if [[ -z ${HCPWBDIR} ]]; then HCPWBDIR="${TOOLS}/workbench/workbench"; export HCPWBDIR; fi
@@ -571,7 +526,7 @@ export HCPPIPEDIR_dMRITract=${QUNEXPATH}/bash/qx_utilities/diffusion_tractograph
 export HCPPIPEDIR_dMRITractFull=${QUNEXPATH}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
 export HCPPIPEDIR_dMRILegacy=${QUNEXPATH}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
-export DEFAULT_CUDA_VERSION="11";
+export DEFAULT_CUDA_VERSION="11.0";
 export DEFAULT_CUDA_VERSION_CUDIMOT="11.3";
 
 # ------------------------------------------------------------------------------

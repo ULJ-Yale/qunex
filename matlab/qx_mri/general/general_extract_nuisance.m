@@ -97,7 +97,7 @@ img.data(isnan(img.data)) = 0;
 if isempty(bmimg)
     if verbose, fprintf('\n---> Computing bold brain mask'); end
     bmimg = img.zeroframes(1);
-    bimg.data = min(img.data, [], 2) > brainthreshold;
+    bmimg.data = min(img.data, [], 2) > brainthreshold;
 else
     if verbose, verbose = '\n---> Reading bold brain mask [%s]'; end
     bmimg = getImage(bmimg, [], verbose);
@@ -151,7 +151,7 @@ if ~isempty(sessionroi) && ischar(sessionroi)
     if strcmp(sessionroi, 'aseg')
         sessionroi = fsimg;
     elseif strcmp(sessionroi, 'wb')
-        sessionroi = bimg;
+        sessionroi = bmimg;
     end
 end
 
