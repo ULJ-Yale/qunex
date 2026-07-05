@@ -36,7 +36,6 @@ import qx_utilities.processing.core as gpc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.filelock as fl
 import qx_utilities.general.parser as parser
-from qx_registry import qx_commands
 
 
 parameterTemplateHeader = """#  Parameters file
@@ -496,6 +495,50 @@ def create_study(studyfolder=None, folders=None):
         manage_study(
             studyfolder=studyfolder, action="create", folders=folders, verbose=True
         )
+
+
+def check_study(startfolder=".", folders=None):
+    """
+    ``check_study startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
+
+    Identify and report the study base folder.
+
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --startfolder (str, default '.'):
+            The folder from which to start looking for the study folder.
+
+        --folders (str, default '$TOOLS/python/qx_utilities/templates/study_folders_default.txt'):
+            Path to the file which defines the study folder structure.
+
+    Notes:
+        The function looks for the path to the study folder in the hierarchy
+        starting from the provided startfolder. If found it checks that all the
+        standard folders are present and creates any missing ones. It returns
+        the path to the study folder. If the study folder can not be identified,
+        it returns None.
+
+        ---
+        Written by Grega Repovš, 2018-11-14
+    """
+
+    studyfolder = None
+    testfolder = os.path.abspath(startfolder)
+
+    while os.path.dirname(testfolder) and os.path.dirname(testfolder) != "/":
+        if os.path.exists(os.path.join(testfolder, ".qunexstudy")) or os.path.exists(
+            os.path.join(testfolder, ".mnapstudy")
+        ):
+            studyfolder = testfolder
+            break
+        testfolder = os.path.dirname(testfolder)
+
+    if studyfolder:
+        manage_study(studyfolder=studyfolder, action="check", folders=folders)
+
+    return studyfolder
 
 
 def copy_study(

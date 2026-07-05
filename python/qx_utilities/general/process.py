@@ -31,7 +31,6 @@ import qx_utilities.general.commands_support as gcs
 from qx_utilities.processing import fs, simple, workflow, dwi, fsl, rapidtide
 from qx_utilities.general.bids import map_nii2bids
 from qx_utilities.general import extensions
-from qx_registry import qx_commands
 
 # pipelines imports
 from qx_utilities.hcp import process_hcp

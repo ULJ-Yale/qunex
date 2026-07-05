@@ -105,8 +105,8 @@ def runCommand(command, args):
     # -- is this a bash command?
     if qx_command.language != "python":
         print(f"ERROR: Commands in {qx_command.language} are not yet supported through gmri command line interface. Please see QuNex documentation for usage instructions.")
-        return
-    
+        sys.exit(1)
+
     # -- continue with regular python command
     
     # -- sort arguments
@@ -205,6 +205,7 @@ def runCommand(command, args):
                         "recipe_file",
                         "recipe",
                         "steps",
+                        "startwith",
                         "xnat",
                         "logfolder",
                         "verbose",
@@ -227,7 +228,7 @@ def runCommand(command, args):
                     calls.append(
                         {
                             "name": "run_recipe_%d" % (c),
-                            "function": qx_commands[command]["com"],
+                            "function": qx_command.load_callable(),
                             "args": recipe_args,
                             "logfile": None,
                         }

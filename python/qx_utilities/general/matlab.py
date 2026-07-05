@@ -21,7 +21,6 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import subprocess
-from qx_registry import qx_commands
 
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -60,29 +59,31 @@ def run(qx_command, args):
         if arg.name not in args:
             args[arg.name] = ''
 
-        if any([arg.type.startswith(s) for s in ['string', 'str']]):
-            if len(args[arg.name]) > 1 and args[arg.name][0] in ['[', '{']:
-                arglist.append("%s" % (args[arg.name]))
-            else:
-                arglist.append("'%s'" % (args[arg.name]))
-        
-        elif any([arg.type.startswith(s) for s in ['int', 'integer', 'float', 'numeric', 'vector', 'matrix']]):
-            if args[arg.name] == '':
-                arglist.append("[]")
-            else:
-                arglist.append("%s" % (args[arg.name]))
+        # matlab args are positional, so every arg must append exactly one token,
+        # else all following args shift; type may be None if not documented
+        argtype = arg.type or ''
+        value = args[arg.name]
 
-        elif arg.type.startswith('cell'):
-            if args[arg.name] == '':
-                arglist.append("{}")
+        if argtype.startswith(('string', 'str')):
+            if len(value) > 1 and value[0] in ['[', '{']:
+                arglist.append("%s" % (value))
             else:
-                arglist.append("%s" % (args[arg.name]))
-        
-        elif arg.type.startswith('bool'):
-            if args[arg.name] == '':
-                arglist.append("[]")
-            else:
-                arglist.append("%s" % (args[arg.name]))
+                arglist.append("'%s'" % (value))
+
+        elif argtype.startswith(('int', 'integer', 'float', 'numeric', 'vector', 'matrix')):
+            arglist.append("[]" if value == '' else "%s" % (value))
+
+        elif argtype.startswith('cell'):
+            arglist.append("{}" if value == '' else "%s" % (value))
+
+        elif argtype.startswith('bool'):
+            arglist.append("[]" if value == '' else "%s" % (value))
+
+        else:
+            # unknown or undocumented type: pass through (empty -> []), never drop the arg
+            if not argtype:
+                print(f"    ... WARNING: argument '{arg.name}' of {qx_command.name} has no documented type; passing value as-is")
+            arglist.append("[]" if value == '' else "%s" % (value))
 
     # -- compose command string
 

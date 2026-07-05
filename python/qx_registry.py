@@ -960,6 +960,21 @@ def index_matlab_commands(matlab_root: Path, *, source_id: str) -> List[CommandI
 # ==============================================================================
 #                                                                     VALIDATION
 
+def validate_command_types(commands: List[CommandInfo]) -> List[CommandInfo]:
+    """Drop commands lacking a 'type:' in their qx block; warn on each.
+
+    Runtime dispatch (gmri, scheduler) assumes every registered command has a
+    type, so enforce that invariant at build time rather than crash later.
+    """
+    valid: List[CommandInfo] = []
+    for c in commands:
+        if not c.type:
+            _warn(f"{c.path}: command '{c.name}' has no 'type:' in its qx block; command excluded")
+            continue
+        valid.append(c)
+    return valid
+
+
 def validate_unique_tokens(commands: List[CommandInfo]) -> None:
     used: Dict[str, CommandInfo] = {}
 
@@ -1048,10 +1063,14 @@ def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
 
     try:
         import yaml  # type: ignore
-        text = yaml.safe_dump(obj,sort_keys=False, allow_unicode=True, width=120, indent=4)
-        path.write_text(text, encoding="utf-8")
-    except Exception:
+    except ImportError:
         path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        return
+
+    # only the import falls back to JSON; a serialization error must surface, not
+    # silently write JSON into a .yaml file
+    text = yaml.safe_dump(obj, sort_keys=False, allow_unicode=True, width=120, indent=4)
+    path.write_text(text, encoding="utf-8")
 
 
 def read_registry_file(path: Path) -> Dict[str, Any]:
@@ -1059,9 +1078,12 @@ def read_registry_file(path: Path) -> Dict[str, Any]:
     data = path.read_text(encoding="utf-8")
     try:
         import yaml  # type: ignore
-        return yaml.safe_load(data)
-    except Exception:
+    except ImportError:
         return json.loads(data)
+
+    # only the import falls back to JSON; a YAML syntax error must surface as a
+    # YAML error rather than a confusing JSON one
+    return yaml.safe_load(data)
     
 
 def load_registry_yaml(path: str | Path) -> Registry:
@@ -1245,6 +1267,7 @@ def _get_qunexpath() -> Path:
 
 
 def build_registry_yaml(commands: List[CommandInfo], *, out: Path, source_id: str) -> Registry:
+    commands = validate_command_types(commands)
     validate_unique_tokens(commands)
     obj = registry_to_obj(commands, source_id=source_id)
     write_registry_file(out, obj)
@@ -1465,7 +1488,7 @@ class CommandRegistry:
                 names.extend(list(c.aliases))
         return sorted(set(names))
 
-    def search(self, text: str, *, language: Optional[str] = None, limit: int = 50) -> List[CommandInfo]:
+    def search(self, text: str, *, language: Optional[str] = None, limit: int = 50) -> List[Command]:
         """
         Simple substring search over name/aliases/description/call/path.
         """
@@ -1495,14 +1518,14 @@ class CommandRegistry:
     # export helpers
     # -------------------------
 
-    def gmri_commands(self) -> List[Tuple[str, str, str]]:
+    def gmri_commands(self) -> List[str]:
         """
         A list of all gmri command names (python, matlab)
         """
         return [c.name for c in self.iter() if c.language in ("python", "matlab")]
 
 
-    def to_qunex_list(self) -> List[Tuple[str, Optional[str], str]]:
+    def to_qunex_list(self) -> List[Tuple[str, str, Optional[str], str]]:
         """
         Similar to your old all_qunex_commands:
           (name, path, description, language)

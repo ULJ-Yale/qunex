@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-01-08T12:45:54.754976+00:00'
+generated_at: '2026-07-05T12:42:20.431405+00:00'
 source:
     id: core
 commands:
@@ -350,7 +350,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: mov_radius
         type: int
         default: '50'
@@ -463,6 +463,7 @@ commands:
         type: str
         default: <sessionsfolder>/specs/parameters.txt
         description: The path to the parameter file header to be used. If not explicitly provided it defaults to <sessionsfolder>/specs/parameters.txt.
+            If that does not exist it will not use it.
     options: []
     returns: []
     origin: core
@@ -534,7 +535,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     returns: []
     origin: core
 -   name: create_bold_list
@@ -888,7 +889,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: mov_radius
         type: int
         default: '50'
@@ -968,8 +969,9 @@ commands:
         description: The path to the study folder to be generated.
     -   name: folders
         type: str
-        default: $TOOLS/python/python/qx_utilities/templates/study_folders_default.txt
-        description: Path to the file which defines the subfolder structure.
+        default: None
+        description: Path to the file which defines the subfolder structure. Set to "legacy" to use the legacy folder structure.
+            By default, QuNex will create a very limited set of folders.
     options: []
     returns: []
     origin: core
@@ -1114,6 +1116,10 @@ commands:
         type: str
         default: null
         description: Comma separated list of sessions to run.
+    -   name: diffusion_folder
+        type: str
+        default: null
+        description: Path to the diffusion folder.
     -   name: fibers
         type: str
         default: '3'
@@ -1203,10 +1209,14 @@ commands:
         type: str
         default: T1w/Diffusion/bvals
         description: b values file.
+    -   name: diffusion_folder
+        type: str
+        default: null
+        description: Path to the diffusion folder.
     -   name: diffdata
         type: str
-        default: /T1w/Diffusion/data.nii.gz
-        description: Diffusion data file.
+        default: data.nii.gz
+        description: Diffusion data file inside the diffusion folder.
     -   name: cni
         type: str
         default: null
@@ -1263,11 +1273,6 @@ commands:
         type: str
         default: null
         description: Gradient nonlinearity tensor file [not set by default].
-    -   name: scheduler
-        type: str
-        default: null
-        description: 'A string for the cluster scheduler (e.g. PBS or SLURM) followed by relevant options; e.g. for SLURM
-            the string would look like this::'
     returns: []
     origin: core
 -   name: dwi_eddy_qc
@@ -1390,7 +1395,11 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: diffusion_folder
+        type: str
+        default: <sessions_folder>/<session>/NHP/dMRI
+        description: The path to the diffusion folder holding the dtifit results.
     returns: []
     origin: core
 -   name: dwi_legacy_gpu
@@ -1426,8 +1435,12 @@ commands:
     -   name: usefieldmap
         type: str
         default: null
-        description: Whether to use the standard field map ('yes' | 'no'). If set to <yes> then the parameter --te becomes
-            mandatory.
+        description: 'Whether to use the standard field map (''yes'' | ''no''). The field map images are expected in::'
+    -   name: usesefieldmap
+        type: str
+        default: null
+        description: 'Whether to use a Spin Echo (SE) field map pair for distortion correction (''yes'' | ''no''). The SE
+            field map images are expected in::'
     -   name: diffdatasuffix
         type: str
         default: null
@@ -1501,11 +1514,15 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: noddi_model
         type: str
         default: Watson
         description: Whether to use the Watson or the Bingham NODDI model.
+    -   name: diffusion_folder
+        type: str
+        default: <hcp_folder>/T1w/Diffusion
+        description: The path to the diffusion folder.
     -   name: cuda_version
         type: str
         default: '11.3'
@@ -1569,11 +1586,10 @@ commands:
         type: str
         default: null
         description: Comma separated list of sessions to run.
-    -   name: scheduler
+    -   name: diffusion_folder
         type: str
         default: null
-        description: 'A string for the cluster scheduler (e.g. PBS or SLURM) followed by relevant options e.g. for SLURM the
-            string would look like this::'
+        description: Path to the diffusion folder.
     returns: []
     origin: core
 -   name: dwi_probtrackx_dense_gpu
@@ -1594,6 +1610,10 @@ commands:
         type: str
         default: null
         description: Comma separated list of sessions to run.
+    -   name: diffusion_folder
+        type: str
+        default: null
+        description: Path to the diffusion folder.
     -   name: overwrite
         type: str
         default: 'no'
@@ -1708,7 +1728,13 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: diffusion_folder
+        type: str
+        default: detailed below
+        description: The path to the diffusion folder. The bedpostx folder is derived from it by appending '.bedpostX'. By
+            default the diffusion folder is set to dMRI for macaques and T1w/Diffusion for humans. If --xtract_bpx is provided,
+            it takes precedence over this parameter.
     -   name: species
         type: str
         default: human
@@ -1744,15 +1770,24 @@ commands:
         default: detailed below
         description: Pass extra probtrackx2 options as a text file to override defaults (e.g. --steplength=0.2). For humans
             it defaults to '', for macaques it defaults to '$TOOLS/python/qx_utilities/templates/nhp/ptx_options'.
-    -   name: xtract_native
+    -   name: xtract_mni
         type: flag
         default: null
-        description: Run tractography in native (diffusion) space. This flag is not set by default.
+        description: Run tractography in MNI (diffusion) and not native space. This flag is not set by default.
     -   name: xtract_ref
         type: str
         default: ''
         description: Reference image ("<refimage> <diff2ref> <ref2diff>") for running tractography in reference space, Diff2Reference
             and Reference2Diff transforms.
+    -   name: xtract_out
+        type: str
+        default: detailed below
+        description: Output folder for XTRACT results. By default it is set to dMRI/NHP/xtract for macaques and hcp/session/T1w/xtract
+            for humans.
+    -   name: xtract_bpx
+        type: str
+        default: detailed below
+        description: Bedpostx folder. By default it is set to dMRI.bedpostX for macaques and T1w/Diffusion.bedpostX for humans.
     returns: []
     origin: core
 -   name: export_hcp
@@ -1876,7 +1911,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: wbmask
         type: str
         default: ''
@@ -2781,7 +2816,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: feat_file
         type: str
         default: ''
@@ -2829,7 +2864,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: input_files
         type: str
         default: ''
@@ -3704,7 +3739,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_icafix_bolds
         type: str
         default: ''
@@ -3802,7 +3837,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_gdcoeffs
         type: str
         default: null
@@ -3978,7 +4013,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_icafix_bolds
         type: str
         default: ''
@@ -4123,7 +4158,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_dwi_echospacing
         type: str
         default: detailed below
@@ -4308,7 +4343,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_folderstructure
         type: str
         default: hcpls
@@ -4347,6 +4382,11 @@ commands:
         type: str
         default: MSMSulc
         description: The name of the registration used.
+    -   name: hcp_species
+        type: str
+        default: ''
+        description: Species label (Human, Macaque, Marmoset, etc.). When unset the HCP pipeline default (Human) is used.
+            Only relevant for non-human species.
     -   name: hcp_longitudinal_template
         type: str
         default: base
@@ -4407,7 +4447,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_processing_mode
         type: str
         default: HCPStyleData
@@ -4458,7 +4498,20 @@ commands:
         type: str
         default: null
         description: 'BOLD image deformation correction that should be used: TOPUP, TOPUP_MISMATCHED, FIELDMAP / SiemensFieldMap,
-            GEHealthCareFieldMap, GEHealthCareLegacyFieldMap, PhilipsFieldMap, OnScanner or NONE.'
+            GEHealthCareFieldMap, GEHealthCareLegacyFieldMap, PhilipsFieldMap, PRECOMPUTED_FIELDMAP, OnScanner or NONE.'
+    -   name: hcp_bold_precomputedfmap
+        type: str
+        default: ''
+        description: Path to the precomputed fieldmap image, QuNex tries to automatically set this if left empty and PRECOMPUTED_FIELDMAP
+            is selected. This parameter is used when hcp_bold_dcmethod is set to PRECOMPUTED_FIELDMAP. Usually this is set
+            automatically based on the FM-Real image specified in the batch file.
+    -   name: hcp_bold_precomputedfmapmag
+        type: str
+        default: ''
+        description: Path to the magnitude image in the same space as --hcp_bold_precomputedfmap (e.g., a b=0 volume from
+            the diffusion acquisition). Used for fieldmap-to-T1w registration. This parameter is used when hcp_bold_dcmethod
+            is set to PRECOMPUTED_FIELDMAP. Usually this is set automatically based on the FM-Magnitude image specified in
+            the batch file.
     -   name: hcp_bold_echodiff
         type: str
         default: null
@@ -4545,6 +4598,81 @@ commands:
         type: str
         default: ''
         description: Comma delimited list of numbers which represent TE for each echo (unused for single echo).
+    -   name: hcp_bold_seechospacing
+        type: str
+        default: ''
+        description: Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not used. Used when hcp_bold_dcmethod
+            is set to TOPUP_MISMATCHED.
+    -   name: hcp_bold_seunwarpdir
+        type: str
+        default: ''
+        description: Phase encoding direction of the Spin Echo Field Map (x, y or NONE). Used when hcp_bold_dcmethod is set
+            to TOPUP_MISMATCHED.
+    -   name: hcp_species
+        type: str
+        default: ''
+        description: Species label (Human, Macaque, Marmoset, etc.). When unset the HCP pipeline default (Human) is used.
+            Only relevant for non-human species.
+    -   name: hcp_scale_factor
+        type: str
+        default: ''
+        description: Brain scale factor for motion correction (e.g. 1 for human). Passed to the HCP pipeline as ``brainscalefactor``.
+            Only relevant for non-human species.
+    -   name: hcp_runmode
+        type: str
+        default: ''
+        description: 'Specify from which step to resume the processing instead of starting from the beginning. Value must
+            be one of: Default, DistortionCorrection, OneStepResampling (default: Default).'
+    -   name: hcp_truepatientposition
+        type: str
+        default: ''
+        description: 'True patient position, e.g. HFS, FFS, HFSx, FFSx (default: HFS). Only relevant for non-human species.'
+    -   name: hcp_scannerpatientposition
+        type: str
+        default: ''
+        description: 'Scanner patient position, e.g. HFS, FFS (default: HFS). Only relevant for non-human species.'
+    -   name: hcp_bold_bbrcontrast
+        type: str
+        default: ''
+        description: 'BBR contrast to use for EPI to T1w registration: T2w, T1w or NONE (default: T2w). Ignored when hcp_species
+            is Human.'
+    -   name: hcp_bold_wmprojabs
+        type: str
+        default: ''
+        description: 'FreeSurfer wm-proj-abs value (default: 2). Only relevant for non-human species.'
+    -   name: hcp_bold_initworldmat
+        type: str
+        default: ''
+        description: Initial world matrix to apply to sform (optional). Only relevant for non-human species.
+    -   name: hcp_bold_sephaseneg2
+        type: str
+        default: ''
+        description: Label of the second negative polarity SE-EPI image. Together with hcp_bold_sephasepos2 and hcp_senum2
+            it is used to locate the second spin echo pair in the SpinEchoFieldMap[hcp_senum2] folder (mirroring hcp_pre_freesurfer).
+            An existing absolute path can also be provided directly. Only relevant for non-human species.
+    -   name: hcp_bold_sephasepos2
+        type: str
+        default: ''
+        description: Label of the second positive polarity SE-EPI image. See hcp_bold_sephaseneg2. Only relevant for non-human
+            species.
+    -   name: hcp_senum2
+        type: str
+        default: ''
+        description: Number of the second Spin Echo Field Map pair to use for SE2. QuNex will use the files in the SpinEchoFieldMap[N]
+            folder from the HCP unprocessed folder.
+    -   name: hcp_bold_sephasezero
+        type: str
+        default: ''
+        description: 'Zero-phase SE-EPI image (for NHP this is typically the T2w image). The value is resolved by checking,
+            in order: an absolute path, a path relative to the session''s root hcp folder, and a path relative to the session''s
+            T2w folder (e.g. ''T2w''). This lets a single command call work across many sessions. If provided but none of
+            the three candidates exist, processing is aborted. Only relevant for non-human species.'
+    -   name: hcp_bold_sephasezerofsbrainmask
+        type: str
+        default: ''
+        description: FS brainmask for hcp_bold_sephasezero (for NHP this is typically 'T2w_brainmask_fs'). Resolved the same
+            way as hcp_bold_sephasezero (absolute, then relative to the session's hcp folder, then relative to the T2w folder)
+            and aborts processing if provided but none of the candidates exist. Only relevant for non-human species.
     -   name: hcp_matlab_mode
         type: str
         default: default detailed below
@@ -4609,7 +4737,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_processing_mode
         type: str
         default: HCPStyleData
@@ -4633,8 +4761,18 @@ commands:
     -   name: hcp_fs_seed
         type: str
         default: ''
-        description: Recon-all seed value. If not specified, none will be used. (Please note that it will only be used when
-            HCP Pipelines are used. It is not implemented in hcpmodified!)
+        description: Recon-all seed value. If not specified, none will be used.
+    -   name: hcp_fs_edits
+        type: str
+        default: 'FALSE'
+        description: 'Indicates whether manual edits are to be applied to the FreeSurfer outputs. If set to ''TRUE'', the
+            user needs to either place the edited files in <sessions folder>/inbox/FS_edits and prepend ''<session id>_''
+            to identify them, or place them in the standard FreeSurfer location themselves. The ''existing_session'' parameter
+            will be set to TRUE, and ''extra_reconall'' parameters will be set as well to only run the necessary steps to
+            incorporate the edits, depending on the edits present and/or specified. This option can be used for edits to control.dat,
+            aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted values are ''FALSE'', ''TRUE'', or a comma-separated list
+            of edits to apply: ''control'', ''aseg'', ''wm'', ''brainmask''. If edits are not specified explicitly, they will
+            be determined based on the files found in the FS_edits folder.'
     -   name: hcp_fs_existing_session
         type: str
         default: 'FALSE'
@@ -4655,12 +4793,16 @@ commands:
         description: If set to 'TRUE' indicates that recon-all is to be run with the -FLAIR/-FLAIRpial options (rather than
             the -T2/-T2pial options). The FLAIR input image itself should be provided as a regular T2w image. (Please note
             that it will only be used when HCP Pipelines are used. It is not implemented in hcpmodified!)
-    -   name: hcp_fs_no_conf2hires
+    -   name: hcp_conf2hires
         type: str
-        default: 'FALSE'
-        description: Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution
-            steps of recon-all should be excluded. Accepted values are 'TRUE' or 'FALSE'. (Please note that it will only be
-            used when HCP Pipelines are used. It is not implemented in hcpmodified!)
+        default: null
+        description: Whether to use the conf2hires flag in recon-all. If set to 'TRUE', the flag will be used, if set to 'FALSE'
+            it will not be used.
+    -   name: hcp_hires
+        type: str
+        default: null
+        description: Whether to use the hires flag in recon-all. If set to 'TRUE', the flag will be used, if set to 'FALSE'
+            it will not be used.
     -   name: hcp_t2
         type: str
         default: t2
@@ -4672,20 +4814,10 @@ commands:
         default: ''
         description: Path to the read-in expert options file for FreeSurfer if one is prepared and should be used empty otherwise.
             (Please note, that this setting will only be used when LegacyStyleData processing mode is specified!)
-    -   name: hcp_freesurfer_home
-        type: str
-        default: ''
-        description: Path for FreeSurfer home folder can be manually specified to override default environment variable to
-            ensure backwards compatiblity and hcp_freesurfer customization. (Please note, that this setting will only be used
-            when LegacyStyleData processing mode is specified!)
     -   name: hcp_high_myelin
         type: float
         default: null
-        description: The high myelin threshold for the FreeSurfer recon-all command.
-    -   name: hcp_nogpu
-        type: flag
-        default: null
-        description: If specified, use the non-GPU-enabled version of FreeSurfer.
+        description: The high myelin threshold for the FreeSurfer recon-all command. Set automatically by default.
     returns: []
     origin: core
 -   name: hcp_icafix
@@ -4737,7 +4869,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_icafix_bolds
         type: str
         default: ''
@@ -4767,7 +4899,7 @@ commands:
         default: detailed below
         description: Which model to use for classification. Can be one of the pre-trained models shpipped with FSL or a custom
             model as `somefile.RData`, `somefile.pyfix_model`, or a pyfix built-in model without extension. You can provide
-            a full path to a file or just a filename if the file is in the ${FSL_FIXDIR}/training_files folder. [HCP_hp<high-pass>.RData]
+            a full path to a file or just a filename if the file is in the FSL training_files folder. [HCP_hp<high-pass>.RData]
             for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for multi-run HCP ICAFix.
     -   name: hcp_icafix_threshold
         type: int
@@ -4894,7 +5026,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_longitudinal_template
         type: str
         default: base
@@ -4907,6 +5039,10 @@ commands:
         type: int
         default: null
         description: The recon-all seed value.
+    -   name: hcp_high_myelin
+        type: float
+        default: null
+        description: The high myelin threshold for the FreeSurfer recon-all command. Set automatically by default.
     -   name: hcp_parallel_mode
         type: str
         default: BUILTIN
@@ -4974,7 +5110,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_icafix_bolds
         type: str
         default: ''
@@ -5082,7 +5218,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_longitudinal_template
         type: str
         default: base
@@ -5241,7 +5377,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_longitudinal_template
         type: str
         default: base
@@ -5380,7 +5516,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_surface_atlas_dir
         type: str
         default: ${HCPPIPEDIR}/global/templates/standard_mesh_atlases
@@ -5483,7 +5619,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_icafix_bolds
         type: str
         default: ''
@@ -5710,7 +5846,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_icafix_bolds
         type: str
         default: ''
@@ -5789,7 +5925,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_processing_mode
         type: str
         default: HCPStyleData
@@ -5865,6 +6001,32 @@ commands:
         default: BOTH
         description: Wwhether to use the updated curvature-thickness regression, set to 'OLD', 'NEW' or 'BOTH', defaults to
             'BOTH'.
+    -   name: hcp_species
+        type: str
+        default: Human
+        description: Target species for processing. When set to anything other than 'Human' (case-insensitive), the non-human
+            primate (NHP) variant of PostFreeSurfer processing is engaged and the species-specific parameters below are passed
+            to the pipeline.
+    -   name: hcp_myelin_volume_fwhm
+        type: float
+        default: detected
+        description: Myelin mapping volume smoothing FWHM. Only relevant for non-human species (when hcp_species is not 'Human').
+            When unset the HCP pipeline default is used.
+    -   name: hcp_myelin_surface_fwhm
+        type: float
+        default: detected
+        description: Myelin mapping surface smoothing FWHM. Only relevant for non-human species (when hcp_species is not 'Human').
+            When unset the HCP pipeline default is used.
+    -   name: hcp_msmsulc_conf
+        type: str
+        default: detected
+        description: MSMSulc configuration. Only relevant for non-human species (when hcp_species is not 'Human'). When unset
+            the HCP pipeline default is used.
+    -   name: hcp_flatmap_root_name
+        type: str
+        default: detected
+        description: Flat map root name. Only relevant for non-human species (when hcp_species is not 'Human'). When unset
+            the HCP pipeline default is used.
     returns: []
     origin: core
 -   name: hcp_pre_freesurfer
@@ -5912,7 +6074,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_processing_mode
         type: str
         default: HCPStyleData
@@ -5966,7 +6128,7 @@ commands:
         description: 'Averaging and readout distortion correction method. Can take the following values:'
     -   name: hcp_unwarpdir
         type: str
-        default: z
+        default: ''
         description: Readout direction of the T1w and T2w images (x, y, z or NONE); used with either a regular field map or
             a spin echo field map.
     -   name: hcp_echodiff
@@ -5985,6 +6147,11 @@ commands:
         type: str
         default: ''
         description: Label for the negative image of the Spin Echo Field Map pair.
+    -   name: hcp_senum
+        type: str
+        default: ''
+        description: Number of the Spin Echo Field Map pair to use, will be set automatically based on the batch/session file.
+            If set, QuNex will use the files in the SpinEchoFieldMap[N] folder from the HCP unprocessed folder.
     -   name: hcp_seunwarpdir
         type: str
         default: ''
@@ -6006,12 +6173,15 @@ commands:
         description: 'The resolution (in mm) of the structural images templates to use in the preFS step. Note: it should
             match the resolution of the acquired structural images. If no value is provided, QuNex will try to use the imaging
             data to set a sensible default value. It will notify you about which setting it used, you should pay attention
-            to this piece of information and manually overwrite the default if something is off.'
+            to this piece of information and manually overwrite the default if something is off. For non-human species (hcp_species
+            other than ''Human'') this parameter cannot be inferred automatically and must be set explicitly, as it also selects
+            the species-specific template (e.g. 0.5, 0.3 or 0.25 for a macaque).'
     -   name: hcp_prefs_t1template
         type: str
         default: null
         description: Path to the T1 template to be used by PreFreeSurfer. By default the used template is determined through
-            the resolution provided by the hcp_prefs_template_res parameter.
+            the resolution provided by the hcp_prefs_template_res parameter. For non-human species (hcp_species other than
+            'Human') the default is taken from the species-specific NHP_NNP template folder instead of the human MNI152 templates.
     -   name: hcp_prefs_t1templatebrain
         type: str
         default: null
@@ -6054,6 +6224,72 @@ commands:
         default: all
         description: A pipe, comma or space separated list of inline sequence information to use in preprocessing of specific
             image modalities.
+    -   name: hcp_sephasepos2
+        type: str
+        default: ''
+        description: Label for the positive image of the second Spin Echo Field Map pair.
+    -   name: hcp_sephaseneg2
+        type: str
+        default: ''
+        description: Label for the negative image of the second Spin Echo Field Map pair.
+    -   name: hcp_senum2
+        type: str
+        default: ''
+        description: Number of the second Spin Echo Field Map pair to use for SE2. QuNex will use the files in the SpinEchoFieldMap[N]
+            folder from the HCP unprocessed folder.
+    -   name: hcp_species
+        type: str
+        default: ''
+        description: 'Species (default: Human). When set to a non-human species QuNex switches to the species-specific NHP
+            templates (from the NHP_NNP template folder) and requires hcp_prefs_template_res to be set explicitly. Recognized
+            non-human species are: Chimp, MacaqueCyno, MacaqueRhesus, MacaqueSnow, MacaqueMac30BS, Marmoset, NightMonkey.'
+    -   name: hcp_runmode
+        type: str
+        default: ''
+        description: 'Specify from which step to resume the processing instead of starting from the beginning. Value must
+            be one of: Default, ACPCAlignment, BrainExtraction, T2wToT1wRegAndBiasCorrection, AtlasRegistration (default:
+            Default).'
+    -   name: hcp_truepatientposition
+        type: str
+        default: ''
+        description: 'True patient position (default: HFS).'
+    -   name: hcp_scannerpatientposition
+        type: str
+        default: ''
+        description: 'Scanner patient position (default: HFS).'
+    -   name: hcp_betcenter
+        type: str
+        default: ''
+        description: 'Center coordinates for BET (default: 45,55,39).'
+    -   name: hcp_betradius
+        type: str
+        default: ''
+        description: 'Radius for BET (default: 75).'
+    -   name: hcp_betfraction
+        type: str
+        default: ''
+        description: 'Fraction for BET (default: 0.3).'
+    -   name: hcp_bettop2center
+        type: str
+        default: ''
+        description: 'Distance from top to center for BET (default: 86).'
+    -   name: hcp_brainextract
+        type: str
+        default: ''
+        description: 'Brain extraction method (default: INVIVO).'
+    -   name: hcp_use_t2w_phase_zero
+        type: str
+        default: ''
+        description: Indicates whether to add T2-weighted image as a phase zero volume, for bright-CSF T2w contrast acquisition
+            types (e.g., not FLAIR). Accepted values are 'TRUE' and 'FALSE'.
+    -   name: hcp_bias_field_sigma_no_t2w
+        type: str
+        default: ''
+        description: 'Bias Field Smoothing Sigma for Bias Field Correction using T1w image only (only for NHP, default: 20).'
+    -   name: hcp_betbiasfieldcor
+        type: str
+        default: ''
+        description: 'Indicates whether to correct bias field for BET (default: FALSE). Accepted values are ''TRUE'' and ''FALSE''.'
     returns: []
     origin: core
 -   name: hcp_prep_long
@@ -6091,6 +6327,10 @@ commands:
         type: str
         default: .
         description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: hcp_longitudinal_template
+        type: str
+        default: base
+        description: Name of the longitudinal template.
     -   name: hcp_suffix
         type: str
         default: ''
@@ -6098,7 +6338,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     returns: []
     origin: core
 -   name: hcp_reapply_fix
@@ -6149,7 +6389,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_icafix_bolds
         type: str
         default: ''
@@ -6316,7 +6556,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_task_lvl1tasks
         type: str
         default: ''
@@ -6444,7 +6684,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_tica_studyfolder
         type: str
         default: ''
@@ -6589,6 +6829,14 @@ commands:
         default: default detailed below
         description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
             will be used, outside 'interpreted' is the default.
+    -   name: hcp_longitudinal_template
+        type: str
+        default: base
+        description: Name of the longitudinal template.
+    -   name: hcp_tica_longitudinal_extract_all
+        type: str
+        default: ''
+        description: Extract all runs specified in hcp_tica_bolds, with output name matching the one from hcp_tica_mrfix_concat_name.
     returns: []
     origin: core
 -   name: hcp_transmit_bias_individual
@@ -6636,7 +6884,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: hcp_gmwm_template
         type: str
         default: ''
@@ -6838,7 +7086,7 @@ commands:
     language: python
     call: import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"]
         [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""]
-        [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False]
+        [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]
     description: Process sessions's DICOM or PAR/REC files and generate NIfTI files.
     type: utility
     args:
@@ -6925,6 +7173,10 @@ commands:
         type: bool
         default: 'False'
         description: If the images are preorganized in folders, set this to True so QuNex will not try to reorganize them.
+    -   name: clean_dicom_folders
+        type: null
+        default: null
+        description: null
     -   name: test
         type: null
         default: null
@@ -7401,8 +7653,9 @@ commands:
             so in the case of a failed command run, previous results are lost.
     -   name: report
         type: str
-        default: <basefolder>/info/hcpls/parameters.txt
+        default: None
         description: The path to the file that will hold the information about the images that are relevant for HCP Pipelines.
+            Will not write it by default.
     -   name: filesort
         type: str
         default: name_type_se
@@ -7678,7 +7931,9 @@ commands:
     path: qx_utilities.processing.workflow.preprocess_bold
     language: python
     call: preprocess_bold [... processing options]
-    description: Preprocesses single BOLD images
+    description: Prepares BOLD files for further analysis. It performs spatial smoothing, temporal filtering, removal of nuisance
+        signals and complex modeling of events. It is to be used when processing individual bold files. When processing multiple
+        bold files from a session for task-related analysis, please use the ``preprocess_conc`` command instead.
     type: processing.session
     args:
     -   name: sinfo
@@ -7722,7 +7977,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: log
         type: str
         default: study
@@ -7814,7 +8069,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: log
         type: str
         default: study
@@ -7989,7 +8244,7 @@ commands:
     -   name: logfolder
         type: str
         default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+        description: The path to the folder where logs are to be stored, if other than default.
     -   name: bolds
         type: str
         default: rest
@@ -8582,10 +8837,10 @@ commands:
     origin: core
 -   name: run_recipe
     aliases: []
-    path: qx_utilities.general.utilities.run_recipe
+    path: qx_utilities.general.recipe.run_recipe
     language: python
     call: run_recipe [recipe_file=None] [recipe=None] [steps=None] [startwith=None] [logfolder=None] [<extra arguments>]
-    description: Run a chain of multiple commands through recipe files and recipes.
+    description: A command for chaining multiple commands through recipe files and recipes.
     type: utility
     args:
     -   name: recipe_file

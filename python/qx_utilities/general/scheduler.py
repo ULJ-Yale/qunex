@@ -654,7 +654,8 @@ def runThroughScheduler(
             parjobs = chunks
 
         # do not create multiple jobs if running a multi-session command (registered commands only)
-        if qx_commands.get(qx_command) and any([e in qx_commands.get(qx_command).type for e in ["processing.study"]]):
+        sched_command = qx_commands.get(qx_command)
+        if sched_command and "processing.study" in sched_command.type:
             parjobs = 1
 
         # init queues
