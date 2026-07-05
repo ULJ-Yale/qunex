@@ -11,7 +11,7 @@ import os
 import re
 import shutil
 from typing import List, Tuple, Dict, Set
-import general.exceptions as ge
+import qx_utilities.general.exceptions as ge
 
 
 def merge_session(

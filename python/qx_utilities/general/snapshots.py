@@ -28,8 +28,8 @@ import os
 import os.path
 from datetime import datetime
 
-import general.exceptions as ge
-from general.parsing import true_or_false
+import qx_utilities.general.exceptions as ge
+from qx_utilities.general.parsing import true_or_false
 
 
 def _is_path_excluded(rel_path, exclude_list):

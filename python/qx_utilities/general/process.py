@@ -38,8 +38,8 @@ from qx_utilities.hcp import process_hcp
 # qx_mice
 import qx_mice.process_mice
 import qx_mice.setup_mice
-from general.parsing import flag, is_none
-from general.parsing import true_or_false as torf
+from qx_utilities.general.parsing import flag, is_none
+from qx_utilities.general.parsing import true_or_false as torf
 
 
 # =======================================================================

@@ -21,10 +21,10 @@ import shutil
 import subprocess
 from datetime import datetime
 
-import general.commands_support as gcs
-import general.core as gc
-import general.exceptions as ge
-import general.xnat as gx
+import qx_utilities.general.commands_support as gcs
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.xnat as gx
 import yaml
 from qx_registry import qx_commands
 

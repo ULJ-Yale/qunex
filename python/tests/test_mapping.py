@@ -435,7 +435,7 @@ def test_match_or_rule_priority():
 
 def test_or_rule_parser_rejects_empty_variant():
     """Parser should reject or-rules with an empty variant."""
-    from general.parser import _parse_mapping_file_lines
+    from qx_utilities.general.parser import _parse_mapping_file_lines
 
     with pytest.raises(SpecFileSyntaxError):
         _parse_mapping_file_lines(["T1w_HiRes ||  => T1w"])

@@ -27,9 +27,6 @@ import os
 import os.path
 import shutil
 
-import general.core as gc
-import general.exceptions as ge
-
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
 

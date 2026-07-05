@@ -182,7 +182,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     """
 
     # load gu
-    import general.utilities as gu
+    import qx_utilities.general.utilities as gu
 
     verbose   = verbose.lower() == 'yes'
 

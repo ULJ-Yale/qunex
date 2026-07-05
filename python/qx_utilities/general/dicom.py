@@ -49,7 +49,7 @@ import qx_utilities.general.img as gi
 import qx_utilities.general.nifti as gn
 import qx_utilities.general.qximg as qxi
 import qx_utilities.general.exceptions as ge
-from general.parsing import true_or_false
+from qx_utilities.general.parsing import true_or_false
 
 from datetime import datetime
 
