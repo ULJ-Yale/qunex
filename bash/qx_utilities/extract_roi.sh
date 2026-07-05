@@ -20,6 +20,10 @@ the ROI input and the data input (i.e. both NIFTI or CIFTI). It assumes that
 the template ROI file indicates each ROI in a single volume via unique scalar
 values.
 
+..  qx_command:
+    type: processing.session
+    language: bash
+
 Parameters:
     --roifile (str):
         Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per

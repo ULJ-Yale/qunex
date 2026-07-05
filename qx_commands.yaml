@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-05T13:59:46.050411+00:00'
+generated_at: '2026-07-05T19:12:08.630513+00:00'
 source:
     id: core
 commands:
@@ -1686,6 +1686,48 @@ commands:
         description: Generic parameter set by default (will be parameterized in the future).
     returns: []
     origin: core
+-   name: dwi_seed_tractography_dense
+    aliases: []
+    path: qx_utilities/dwi_seed_tractography_dense.sh
+    language: bash
+    call: dwi_seed_tractography_dense
+    description: This function implements reduction on the DWI dense connectomes using a given 'seed' structure (e.g. thalamus).
+    type: processing.session
+    args: []
+    options:
+    -   name: sessionsfolder
+        type: str
+        default: null
+        description: Path to study folder that contains sessions.
+    -   name: sessions
+        type: str
+        default: null
+        description: Comma separated list of sessions to run.
+    -   name: matrixversion
+        type: str
+        default: null
+        description: Matrix solution version to run parcellation on; e.g. 1 or 3.
+    -   name: seedfile
+        type: str
+        default: null
+        description: 'Specify the absolute path of the seed file you want to use as a seed for dconn reduction (e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz).
+            Note: If you specify --seedfile=''gbc'' then the function computes an average across all streamlines from every
+            greyordinate to all other greyordinates.'
+    -   name: outname
+        type: str
+        default: null
+        description: Specify the suffix output name of the dscalar file.
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: waytotal
+        type: str
+        default: none
+        description: 'Use the waytotal normalized version of the DWI dense connectome. Default:'
+    returns: []
+    origin: core
 -   name: dwi_xtract
     aliases:
     - fslx
@@ -1933,6 +1975,35 @@ commands:
         type: str
         default: 'true'
         description: A string specifying whether to shrink ('true') the whole brain and white matter masks or not ('false').
+    returns: []
+    origin: core
+-   name: extract_roi
+    aliases: []
+    path: qx_utilities/extract_roi.sh
+    language: bash
+    call: extract_roi
+    description: This function calls img_roi_extract.m and extracts data from an input file for every ROI in a given template
+        file. The function needs a matching file type for the ROI input and the data input (i.e. both NIFTI or CIFTI). It
+        assumes that the template ROI file indicates each ROI in a single volume via unique scalar values.
+    type: processing.session
+    args: []
+    options:
+    -   name: roifile
+        type: str
+        default: null
+        description: Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI).
+    -   name: inputfile
+        type: str
+        default: null
+        description: Path to input file to be read that is of the same type as --roifile (i.e. CIFTI or NIFTI).
+    -   name: outpath
+        type: str
+        default: null
+        description: New or existing directory to save outputs in.
+    -   name: outname
+        type: str
+        default: null
+        description: Output file base-name (to be appended with 'ROIn').
     returns: []
     origin: core
 -   name: fc_compute_ab_corr
@@ -5223,6 +5294,11 @@ commands:
         type: str
         default: base
         description: Name of the longitudinal template.
+    -   name: hcp_t2
+        type: str
+        default: t2
+        description: '''NONE'' if no T2w image is available and the preprocessing should be run without them, anything else
+            otherwise. ''NONE'' is only valid if ''LegacyStyleData'' processing mode was specified.'
     -   name: hcp_prefs_template_res
         type: float
         default: set from imaging data
@@ -5382,6 +5458,16 @@ commands:
         type: str
         default: base
         description: Name of the longitudinal template.
+    -   name: hcp_parallel_mode
+        type: str
+        default: BUILTIN
+        description: Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
+    -   name: hcp_filename
+        type: str
+        default: automated
+        description: How to name the BOLD files once mapped into the hcp input folder structure. The default ('automated')
+            will automatically name each file by their number (e.g. BOLD_1). The alternative ('userdefined') is to use the
+            file names, which can be defined by the user prior to mapping (e.g. rfMRI_REST1_AP).
     -   name: hcp_gmwm_template
         type: str
         default: ''
@@ -8921,6 +9007,175 @@ commands:
         type: str
         default: ''
         description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+    returns: []
+    origin: core
+-   name: run_turnkey
+    aliases: []
+    path: qx_utilities/run_turnkey.sh
+    language: bash
+    call: run_turnkey
+    description: This function implements QuNex Suite workflows as a turnkey function. It operates on a local server or cluster
+        or within the XNAT Docker engine.
+    type: processing.session
+    args: []
+    options:
+    -   name: turnkeytype
+        type: str
+        default: xnat
+        description: 'Specify type turnkey run. Options are: ''local'' or ''xnat''.'
+    -   name: path
+        type: str
+        default: /output/xnatprojectid
+        description: Path where study folder is located. If empty default is for XNAT run.
+    -   name: sessions
+        type: str
+        default: null
+        description: Sessions to run locally on the file system if not an XNAT run.
+    -   name: sessionids
+        type: str
+        default: null
+        description: Comma separated list of session IDs to select for a run via gMRI engine from the batch file.
+    -   name: turnkeysteps
+        type: str
+        default: null
+        description: Specify specific turnkey steps you wish to run.
+    -   name: turnkeycleanstep
+        type: str
+        default: null
+        description: Specify specific turnkey steps you wish to clean up intermediate files for.
+    -   name: paramfile
+        type: str
+        default: null
+        description: File with pre-configured header specifying processing parameters.
+    -   name: mappingfile
+        type: str
+        default: null
+        description: File for mapping NIFTI files into the desired QuNex file structure (e.g. 'hcp', 'fMRIPrep' etc.)
+    -   name: acceptancetest
+        type: str
+        default: 'no'
+        description: Specify if you wish to run a final acceptance test after each unit of processing.
+    -   name: xnathost
+        type: str
+        default: null
+        description: Specify the XNAT site hostname URL to push data to.
+    -   name: xnatprojectid
+        type: str
+        default: null
+        description: Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title.
+    -   name: xnatuser
+        type: str
+        default: null
+        description: Specify XNAT username.
+    -   name: xnatpass
+        type: str
+        default: null
+        description: Specify XNAT password.
+    -   name: xnatsubjectid
+        type: str
+        default: null
+        description: ID for subject across the entire XNAT database. Required or --xnatsubjectlabel needs to be set.
+    -   name: xnatsubjectlabel
+        type: str
+        default: null
+        description: Label for subject within a project for the XNAT database. Required or --xnatsubjectid needs to be set.
+    -   name: xnataccsessionid
+        type: str
+        default: null
+        description: ID for subject-specific session within the XNAT project. Derived from XNAT but can be set manually.
+    -   name: xnatsessionlabel
+        type: str
+        default: null
+        description: 'Label for session within XNAT project. Note: may be general across multiple subjects (e.g. rest). Required.'
+    -   name: xnatstudyinputpath
+        type: str
+        default: input/RESOURCES/qunex_study
+        description: The path to the previously generated session data as mounted for the container.
+    -   name: dataformat
+        type: str
+        default: DICOM
+        description: 'Specify the format in which the data is. Acceptable values are:'
+    -   name: hcp_filename
+        type: str
+        default: null
+        description: 'Specify how files and folders should be named using HCP processing:'
+    -   name: bidsformat
+        type: str
+        default: 'no'
+        description: 'Note: this parameter is deprecated and is kept for backward compatibility.'
+    -   name: bidsname
+        type: str
+        default: detailed below
+        description: The name of the BIDS dataset. The dataset level information that does not pertain to a specific session
+            will be stored in <projectname>/info/bids/<bidsname>. If bidsname is not provided, it will be deduced from the
+            name of the folder in which the BIDS database is stored or from the zip package name.
+    -   name: rawdatainput
+        type: str
+        default: ''
+        description: If --turnkeytype is not XNAT then specify location of raw data on the file system for a session. Default
+            is '' for the XNAT type run as host is used to pull data.
+    -   name: workingdir
+        type: str
+        default: /output
+        description: Specify where the study folder is to be created or resides.
+    -   name: projectname
+        type: str
+        default: null
+        description: Specify name of the project on local file system if XNAT is not specified.
+    -   name: overwritestep
+        type: str
+        default: 'no'
+        description: Specify 'yes' or 'no' for delete of prior workflow step.
+    -   name: overwritesession
+        type: str
+        default: 'no'
+        description: Specify 'yes' or 'no' for delete of prior session run.
+    -   name: overwriteproject
+        type: str
+        default: 'no'
+        description: Specify 'yes' or 'no' for delete of entire project prior to run.
+    -   name: overwriteprojectxnat
+        type: str
+        default: 'no'
+        description: Specify 'yes' or 'no' for delete of entire XNAT project folder prior to run.
+    -   name: cleanupsession
+        type: str
+        default: 'no'
+        description: Specify 'yes' or 'no' for cleanup of session folder after steps are done.
+    -   name: cleanupproject
+        type: str
+        default: 'no'
+        description: Specify 'yes' or 'no' for cleanup of entire project after steps are done.
+    -   name: cleanupoldfiles
+        type: str
+        default: 'no'
+        description: Specify <yes> or <no> for cleanup of files that are older than start of run (XNAT run only).
+    -   name: bolds
+        type: str
+        default: all
+        description: For commands that work with BOLD images this flag specifies which specific BOLD images to process. The
+            list of BOLDS has to be specified as a comma or pipe '|' separated string of bold numbers or bold tags as they
+            are specified in the session_hcp.txt or batch.txt file.
+    -   name: customqc
+        type: str
+        default: 'no'
+        description: 'Either ''yes'' or ''no''. If set to ''yes'' then the script ooks into: ~/<study_path>/processing/scenes/QC/
+            for additional custom QC scenes.'
+    -   name: qcplotimages
+        type: str
+        default: null
+        description: Absolute path to images for general_plot_bold_timeseries. See 'qunex general_plot_bold_timeseries' for
+            help.
+    -   name: qcplotmasks
+        type: str
+        default: null
+        description: Absolute path to one or multiple masks to use for extracting BOLD data. See 'qunex general_plot_bold_timeseries'
+            for help.
+    -   name: qcplotelements
+        type: str
+        default: null
+        description: Plot element specifications for general_plot_bold_timeseries. See 'qunex general_plot_bold_timeseries'
+            for help.
     returns: []
     origin: core
 -   name: schedule

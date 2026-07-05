@@ -32,6 +32,7 @@ from qx_utilities.general import scheduler as gs
 from qx_utilities.general import utilities as gu
 from qx_utilities.general import process as gp
 from qx_utilities.general import matlab as gm
+from qx_utilities.general import run_bash as gb
 from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
@@ -103,6 +104,16 @@ def runCommand(command, args):
         return
     
     # -- is this a bash command?
+    if qx_command.language == "bash":
+        if "scheduler" in args:
+            gs.runThroughScheduler(
+                command, sessions=None, args=args, logfolder=folders["logfolder"]
+            )
+        else:
+            gb.run(qx_command, args)
+        return
+
+    # -- any other (unsupported) language
     if qx_command.language != "python":
         print(f"ERROR: Commands in {qx_command.language} are not yet supported through gmri command line interface. Please see QuNex documentation for usage instructions.")
         sys.exit(1)
@@ -390,6 +401,32 @@ def runCommand(command, args):
             print(f"\n---> Successful completion of task at {datetime.now()}")
 
 
+def print_bash_help(cmd):
+    # Print the command's usage() heredoc, i.e. the exact text the author wrote
+    # (this is the same text the registry parsed the doc from). Mirrors the
+    # python path, which prints the raw docstring.
+    qunexpath = os.environ.get("QUNEXPATH", "").strip()
+    script = Path(qunexpath) / "bash" / cmd.path if qunexpath else Path(cmd.path)
+    doc = None
+    try:
+        from qx_registry_build import _bash_usage_heredoc
+        doc = _bash_usage_heredoc(script.read_text(encoding="utf-8"))
+    except Exception:
+        doc = None
+
+    if doc:
+        print("\nqunex", doc.strip(), "\n")
+        return
+
+    # fallback: reconstruct from the registry fields
+    print(f"\nqunex {cmd.call or cmd.name}\n")
+    if cmd.description:
+        print(f"{cmd.description}\n")
+    for o in cmd.options:
+        print(f"  --{o.name}: {o.description or ''}")
+    print()
+
+
 def print_help(com):
 
     # --- print list of available commands, required for qunex.sh checks
@@ -412,9 +449,9 @@ def print_help(com):
         elif cmd and cmd.language == "matlab":
             gm.help(com)
 
-        # --- print error
+        # --- print help for bash commands
         elif cmd and cmd.language == "bash":
-            print(f"\nBash command help is not yet supported through gmri command line interface.\n")
+            print_bash_help(cmd)
 
         else:
             print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")

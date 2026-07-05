@@ -49,6 +49,10 @@ usage() {
 This function implements QuNex Suite workflows as a turnkey function.
 It operates on a local server or cluster or within the XNAT Docker engine.
 
+..  qx_command:
+    type: processing.session
+    language: bash
+
 Parameters:
     --turnkeytype (str, default 'xnat'):
         Specify type turnkey run. Options are: 'local' or 'xnat'.
