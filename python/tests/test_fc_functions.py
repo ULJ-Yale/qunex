@@ -1,5 +1,6 @@
 #'octave -q --eval'
 
+import getpass
 import os
 import tempfile
 import nibabel as nib
@@ -24,7 +25,7 @@ if PREPARE_REF_DATA:
     OUTPUT_DIR = REF_DATA_DIR
 else:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    OUTPUT_DIR = os.path.join(tempfile.gettempdir(), 'fc_tests', timestamp)
+    OUTPUT_DIR = os.path.join(tempfile.gettempdir(), f'fc_tests_{getpass.getuser()}', timestamp)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
