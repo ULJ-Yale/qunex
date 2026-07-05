@@ -3993,7 +3993,7 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
                 r += f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!"
                 result["failed"] = session["id"]
 
-            target_dir = os.path.join(study_folder, session)
+            target_dir = os.path.join(study_folder, session["id"])
             gc.link_or_copy(source_dir, target_dir, symlink=True)
             result["done"] = session["id"]
 
@@ -4166,12 +4166,19 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
 
         # exit if overwrite is not set, else cleanup
-        if not overwrite and os.path.exists(long_dir):
+        long_dir_exists = os.path.lexists(long_dir)
+        if not overwrite and long_dir_exists:
             r += f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!"
             run = False
         else:
-            if os.path.exists(long_dir):
-                shutil.rmtree(long_dir)
+            if long_dir_exists:
+                if os.path.islink(long_dir):
+                    long_dir_target = os.path.realpath(long_dir)
+                    os.unlink(long_dir)
+                    if os.path.isdir(long_dir_target):
+                        shutil.rmtree(long_dir_target)
+                else:
+                    shutil.rmtree(long_dir)
 
         # symlink sessions
         for session in sinfo:
@@ -4223,6 +4230,11 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_seed"]:
                 comm += f"                --seed={options['hcp_seed']}"
+
+            if options["hcp_high_myelin"] is None:
+                options["hcp_high_myelin"] = ""
+            if options["hcp_high_myelin"].lower() != "auto":
+                comm += f"                --high-myelin={options['hcp_high_myelin']}"
 
             if options["hcp_fslsub_queue"]:
                 comm += f"                --fslsub-queue={options['hcp_fslsub_queue']}"
@@ -4279,18 +4291,8 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                     report = "processing failed"
 
                 # read and print all files in logdir
-                with open(endlog, "w") as log_file:
-                    for filename in os.listdir(logdir):
-                        file_path = os.path.join(logdir, filename)
-
-                        with open(file_path, "r") as file:
-                            content = file.read()
-                            print(file=log_file)
-                            print("----------------------------------------", file=log_file)
-                            print(f"Contents of {filename}:", file=log_file)
-                            print("----------------------------------------", file=log_file)
-                            print(content, file=log_file)
-
+                with open(endlog, "a", encoding="utf-8") as log_file:
+                    _append_sorted_logdir_to_log(log_file, logdir)
                     # print succesful completion
                     print(f"\n---> Successful completion of task at {datetime.now()}", file=log_file)
 
@@ -4388,6 +4390,11 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         --hcp_longitudinal_template (str, default "base"):
             Name of the longitudinal template.
+
+        --hcp_t2 (str, default 't2'):
+            'NONE' if no T2w image is available and the preprocessing should be
+            run without them, anything else otherwise. 'NONE' is only valid if
+            'LegacyStyleData' processing mode was specified.
 
         --hcp_prefs_template_res (float, default set from imaging data):
             The resolution (in mm) of the structural images templates to use in
@@ -4823,18 +4830,8 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                     report = "processing failed"
 
                 # read and print all files in logdir
-                with open(endlog, "w") as log_file:
-                    for filename in os.listdir(logdir):
-                        file_path = os.path.join(logdir, filename)
-
-                        with open(file_path, "r") as file:
-                            content = file.read()
-                            print(file=log_file)
-                            print("----------------------------------------", file=log_file)
-                            print(f"Contents of {filename}:", file=log_file)
-                            print("----------------------------------------", file=log_file)
-                            print(content, file=log_file)
-
+                with open(endlog, "a", encoding="utf-8") as log_file:
+                    _append_sorted_logdir_to_log(log_file, logdir)
                     # print succesful completion
                     print(f"\n---> Successful completion of task at {datetime.now()}", file=log_file)
 
@@ -14256,6 +14253,16 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
         --hcp_longitudinal_template (str, default 'base'):
             Name of the longitudinal template.
 
+        --hcp_parallel_mode (str, default "BUILTIN"):
+            Parallelization execution mode, one of FSLSUB, BUILTIN, NONE.
+
+        --hcp_filename (str, default 'automated'):
+            How to name the BOLD files once mapped into the hcp input folder
+            structure. The default ('automated') will automatically name each
+            file by their number (e.g. BOLD_1). The alternative ('userdefined')
+            is to use the file names, which can be defined by the user prior to
+            mapping (e.g. rfMRI_REST1_AP).
+
         --hcp_gmwm_template (str, default ''):
             Location of the GMWMtemplate, the file containing GM+WM volume ROI.
 
@@ -14629,18 +14636,8 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                     report = "processing failed"
 
                 # read and print all files in logdir
-                with open(endlog, "w", encoding="UTF-8") as log_file:
-                    for filename in os.listdir(logdir):
-                        file_path = os.path.join(logdir, filename)
-
-                        with open(file_path, "r", encoding="UTF-8") as file:
-                            content = file.read()
-                            print(file=log_file)
-                            print("----------------------------------------", file=log_file)
-                            print(f"Contents of {filename}:", file=log_file)
-                            print("----------------------------------------", file=log_file)
-                            print(content, file=log_file)
-
+                with open(endlog, "a", encoding="utf-8") as log_file:
+                    _append_sorted_logdir_to_log(log_file, logdir)
                     # print succesful completion
                     print(f"\n---> Successful completion of task at {datetime.now()}", file=log_file)
 
