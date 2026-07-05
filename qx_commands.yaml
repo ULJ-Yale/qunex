@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-05T12:42:20.431405+00:00'
+generated_at: '2026-07-05T13:59:46.050411+00:00'
 source:
     id: core
 commands:
@@ -75,7 +75,7 @@ commands:
     origin: core
 -   name: build_qx_registry
     aliases: []
-    path: qx_registry.build_qx_registry
+    path: qx_registry_build.build_qx_registry
     language: python
     call: build_qx_registry()
     description: Build core registry at $QUNEXPATH/qx_commands.yaml (python + matlab + bash for core), and build each extension

@@ -11,7 +11,7 @@ from inspect import signature, Parameter
 module_names = []
 modules      = {}
 
-commands = {}  # decorator `qx` puts simple commands in here, it is then read out in `general.commands` 
+commands = {}  # legacy: the `qx` decorator populates this; the old `general.commands` reader was retired in favor of qx_registry
 arglist = []
 calist = []
 lalist = []

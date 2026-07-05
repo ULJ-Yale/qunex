@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
 
 from pathlib import Path
 
-import qx_registry
+import qx_registry_build
 
 
 def test_index_bash_commands_from_usage_heredoc(tmp_path: Path):
@@ -50,7 +50,7 @@ fi
         encoding="utf-8",
     )
 
-    cmds = qx_registry.index_bash_commands(bash_root, source_id="core")
+    cmds = qx_registry_build.index_bash_commands(bash_root, source_id="core")
     assert len(cmds) == 1
 
     c = cmds[0]
