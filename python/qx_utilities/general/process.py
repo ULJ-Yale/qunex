@@ -1204,6 +1204,7 @@ calist = [
     [],
     ["hcp_diffusion", process_hcp.hcp_diffusion],
     ["hcp_fmri_stats", process_hcp.hcp_fmri_stats],
+    ["hcp_corr_thick", process_hcp.hcp_corr_thick],
     ["hcp_apply_auto_reclean", process_hcp.hcp_apply_auto_reclean],
     ["hcp_asl", process_hcp.hcp_asl],
     ["hcp_transmit_bias_individual", process_hcp.hcp_transmit_bias_individual],
