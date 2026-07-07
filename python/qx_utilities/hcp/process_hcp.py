@@ -3614,7 +3614,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> FS results, check only for human
-        if "hcp_species" not in options or options["hcp_species"].lower() == "human":
+        if options["hcp_species"] is None or options["hcp_species"].lower() == "human":
             if os.path.exists(os.path.join(hcp["FS_folder"], "mri", "aparc+aseg.mgz")):
                 r += "\n---> FS results present."
             else:
@@ -6327,7 +6327,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         # -> FS results
         tfolder = hcp["FS_folder"]
 
-        if "hcp_species" not in options or options["hcp_species"].lower() == "human":
+        if options["hcp_species"] is None or options["hcp_species"].lower() == "human":
             if os.path.exists(os.path.join(tfolder, "mri", "aparc+aseg.mgz")):
                 r += "\n---> FS results present."
             else:
