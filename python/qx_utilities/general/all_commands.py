@@ -371,6 +371,11 @@ all_qunex_commands = [
         "python",
     ),
     (
+        "qx_utilities.hcp.process_hcp.hcp_corr_thick",
+        "Runs HCP curvature-corrected cortical thickness pipeline.",
+        "python",
+    ),
+    (
         "qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean",
         "Runs HCP apply auto reclean pipeline.",
         "python",

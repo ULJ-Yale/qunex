@@ -543,17 +543,15 @@ def doHCPOptionsCheck(options, command):
 
 
 def checkInlineParameterUse(modality, parameter, options):
-    return any(
-        [
-            e in options["use_sequence_info"]
-            for e in [
-                "all",
-                parameter,
-                "%s:all" % (modality),
-                "%s:%s" % (modality, parameter),
-            ]
+    return any([
+        e in options["use_sequence_info"]
+        for e in [
+            "all",
+            parameter,
+            "%s:all" % (modality),
+            "%s:%s" % (modality, parameter),
         ]
-    )
+    ])
 
 
 def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
@@ -1266,7 +1264,8 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         os.path.join(hcp["source"], "SpinEchoFieldMap*")
                     )[0]
                     senum = int(
-                        os.path.basename(tufolder)
+                        os.path
+                        .basename(tufolder)
                         .replace("SpinEchoFieldMap", "")
                         .replace("_fncb", "")
                     )
@@ -1886,9 +1885,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("truepatientposition", options["hcp_truepatientposition"]))
 
         if options["hcp_scannerpatientposition"]:
-            elements.append(
-                ("scannerpatientposition", options["hcp_scannerpatientposition"])
-            )
+            elements.append((
+                "scannerpatientposition",
+                options["hcp_scannerpatientposition"],
+            ))
 
         if options["hcp_betcenter"]:
             elements.append(("betcenter", options["hcp_betcenter"]))
@@ -1909,12 +1909,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("use-t2w-phase-zero", options["hcp_use_t2w_phase_zero"]))
 
         if options["hcp_bias_field_sigma_no_t2w"]:
-            elements.append(
-                (
-                    "bias-field-sigma-no-T2w",
-                    options["hcp_bias_field_sigma_no_t2w"],
-                )
-            )
+            elements.append((
+                "bias-field-sigma-no-T2w",
+                options["hcp_bias_field_sigma_no_t2w"],
+            ))
 
         if options["hcp_betbiasfieldcor"]:
             elements.append(("betbiasfieldcor", options["hcp_betbiasfieldcor"]))
@@ -2545,15 +2543,14 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # add t1, t1brain and t2 only if options['hcp_fs_existing_session'] is FALSE
         if not options["hcp_fs_existing_session"]:
-            elements.append(
-                ("t1", os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore.nii.gz"))
-            )
-            elements.append(
-                (
-                    "t1brain",
-                    os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore_brain.nii.gz"),
-                )
-            )
+            elements.append((
+                "t1",
+                os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore.nii.gz"),
+            ))
+            elements.append((
+                "t1brain",
+                os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore_brain.nii.gz"),
+            ))
             elements.append(("t2", t2w))
 
         # additional, reconall parameters
@@ -3153,15 +3150,14 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # -> add t1, t1brain and t2 only if options['hcp_fs_existing_session'] is FALSE
         if not options["hcp_fs_existing_session"]:
-            elements.append(
-                ("t1", os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore.nii.gz"))
-            )
-            elements.append(
-                (
-                    "t1brain",
-                    os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore_brain.nii.gz"),
-                )
-            )
+            elements.append((
+                "t1",
+                os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore.nii.gz"),
+            ))
+            elements.append((
+                "t1brain",
+                os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore_brain.nii.gz"),
+            ))
             elements.append(("t2", t2w))
 
         # -> Additional, reconall parameters
@@ -3702,9 +3698,10 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             elements.append(("use-ind-mean", options["hcp_fs_ind_mean"]))
 
         if options["hcp_thickness_regression"] is not None:
-            elements.append(
-                ("thickness-regression", options["hcp_thickness_regression"])
-            )
+            elements.append((
+                "thickness-regression",
+                options["hcp_thickness_regression"],
+            ))
 
         # species-specific (NHP) parameters, only relevant for non-human species
         # the four tuning parameters are optional; when unset they are not
@@ -7559,9 +7556,10 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
             elements.append(("truepatientposition", options["hcp_truepatientposition"]))
 
         if options["hcp_scannerpatientposition"]:
-            elements.append(
-                ("scannerpatientposition", options["hcp_scannerpatientposition"])
-            )
+            elements.append((
+                "scannerpatientposition",
+                options["hcp_scannerpatientposition"],
+            ))
 
         if options["hcp_bold_bbrcontrast"]:
             elements.append(("bbr-contrast", options["hcp_bold_bbrcontrast"]))
@@ -7598,12 +7596,10 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 os.path.join(studyfolder, "subjects", sinfo["subject"]),
             )
             elements.append(("is-longitudinal", "1"))
-            elements.append(
-                (
-                    "longitudinal-session",
-                    f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}",
-                )
-            )
+            elements.append((
+                "longitudinal-session",
+                f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}",
+            ))
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
@@ -15971,9 +15967,9 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
     Notes:
         hcp_fmri_stats parameter mapping:
 
-            ============================================ ============================
+            ============================================ ========================
             QuNex parameter                              HCPpipelines parameter
-            ============================================ ============================
+            ============================================ ========================
             ``hcp_concat_names``                         ``concat-names``
             ``hcp_icafix_highpass``                      ``high-pass``
             ``hcp_fmristats_procstring``                 ``proc-string``
@@ -15985,7 +15981,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             ``hcp_fmristats_tica_component_tcs``         ``tica-component-tcs``
             ``hcp_fmristats_tica_component_noise``       ``tica-component-noise``
             ``hcp_matlab_mode``                          ``matlab-run-mode``
-            ============================================ ============================
+            ============================================ ========================
 
     Examples:
         ::
@@ -16182,6 +16178,237 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
 
     r += (
         "\n\nHCP fMRI Stats %s on %s\n------------------------------------------------------------"
+        % (
+            pc.action("completed", options["run"]),
+            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+        )
+    )
+
+    # print r
+    return (r, (sinfo["id"], report, failed))
+
+
+def hcp_corr_thick(sinfo, options, overwrite=False, thread=0):
+    """
+    ``hcp_corr_thick [... processing options]``
+
+    Runs the curvature-corrected (folding-compensated) cortical thickness step
+    of HCP Pipeline (CorrThick.sh). Computes and saves curvature-corrected
+    thickness, curvatures, regression coefficients, and resampled outputs.
+
+    Warning:
+        The code expects the input images to be named and present in the QuNex
+        folder structure. The function will look into folder::
+
+            <session id>/hcp/<session id>
+
+        for data.
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder, where the imaging data is
+            supposed to go.
+
+        --parsessions (int, default 1):
+            How many sessions to run in parallel.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+
+        --hcp_suffix (str, default ''):
+            Specifies a suffix to the session id if multiple variants are run,
+            empty otherwise.
+
+        --logfolder (str, default ''):
+            The path to the folder where logs are to be stored,
+            if other than default.
+
+        --log (str, default 'keep'):
+            Whether to keep ('keep') or remove ('remove') the temporary logs.
+
+        --hcp_corrthick_regnames (str, default 'MSMSulc'):
+            The desired registration name(s) separated by @, e.g.
+            'RegName@RegName@RegName@...'.
+
+        --hcp_corrthick_hemi (str, default 'B'):
+            Hemisphere for regression calculation, L=Left, R=Right, or B=Both.
+
+        --hcp_corrthick_surf (str, default 'midthickness'):
+            Surface for regression calculation, white or midthickness.
+
+        --hcp_corrthick_patch_size (str, default '6'):
+            Patch kernel size in millimeters FWHM for regression.
+
+        --hcp_corrthick_surf_smooth (str, default '2.14'):
+            Surface smoothing in millimeters FWHM.
+
+        --hcp_corrthick_metric_smooth (str, default '2.52'):
+            Metric smoothing in millimeters FWHM.
+
+        --hcp_corrthick_skip_computation (str, default 'NO'):
+            Whether to skip computing the curvature-corrected thickness (YES),
+            if it is already available, and just resample it to 164k and 32k,
+            or to compute it (NO).
+
+    Output files:
+        The results of this step will be generated and populated in the
+        MNINonLinear folder inside the same session's root hcp folder.
+
+    Notes:
+        hcp_corr_thick parameter mapping:
+
+            ============================================ ======================
+            QuNex parameter                              HCPpipelines parameter
+            ============================================ ======================
+            ``hcp_corrthick_regnames``                   ``regnames``
+            ``hcp_corrthick_hemi``                       ``hemi``
+            ``hcp_corrthick_surf``                       ``surf``
+            ``hcp_corrthick_patch_size``                 ``patch-size``
+            ``hcp_corrthick_surf_smooth``                ``surf-smooth``
+            ``hcp_corrthick_metric_smooth``              ``metric-smooth``
+            ``hcp_corrthick_skip_computation``           ``skip-computation``
+            ============================================ ======================
+
+    Examples:
+        ::
+
+            qunex hcp_corr_thick \\
+                --batchfile=processing/batch.txt \\
+                --sessionsfolder=sessions \\
+                --hcp_corrthick_hemi="B" \\
+                --hcp_corrthick_surf="midthickness"
+    """
+
+    r = "\n------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (
+        sinfo["id"],
+        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
+    )
+    r += "\n%s HCP CorrThick pipeline [%s] ..." % (
+        pc.action("Running", options["run"]),
+        options["hcp_processing_mode"],
+    )
+
+    run = True
+    report = "HCP CorrThick"
+    failed = 0
+
+    try:
+        # --- Base settings
+        pc.doOptionsCheck(options, sinfo, "hcp_corr_thick")
+        doHCPOptionsCheck(options, "hcp_corr_thick")
+
+        # subject
+        subject = sinfo["id"] + options["hcp_suffix"]
+
+        # --- Build the command
+        comm = (
+            '%(script)s \
+            --subject-dir="%(subjectdir)s" \
+            --subject="%(subject)s"'
+            % {
+                "script": os.path.join(
+                    os.environ["HCPPIPEDIR"], "global", "scripts", "CorrThick.sh"
+                ),
+                "subjectdir": sinfo["hcp"],
+                "subject": subject,
+            }
+        )
+
+        # --- Optional parameters
+        # hcp_corrthick_regnames
+        if options["hcp_corrthick_regnames"] is not None:
+            comm += '            --regnames="%s"' % options["hcp_corrthick_regnames"]
+
+        # hcp_corrthick_hemi
+        if options["hcp_corrthick_hemi"] is not None:
+            comm += '            --hemi="%s"' % options["hcp_corrthick_hemi"]
+
+        # hcp_corrthick_surf
+        if options["hcp_corrthick_surf"] is not None:
+            comm += '            --surf="%s"' % options["hcp_corrthick_surf"]
+
+        # hcp_corrthick_patch_size
+        if options["hcp_corrthick_patch_size"] is not None:
+            comm += (
+                '            --patch-size="%s"' % options["hcp_corrthick_patch_size"]
+            )
+
+        # hcp_corrthick_surf_smooth
+        if options["hcp_corrthick_surf_smooth"] is not None:
+            comm += (
+                '            --surf-smooth="%s"' % options["hcp_corrthick_surf_smooth"]
+            )
+
+        # hcp_corrthick_metric_smooth
+        if options["hcp_corrthick_metric_smooth"] is not None:
+            comm += (
+                '            --metric-smooth="%s"'
+                % options["hcp_corrthick_metric_smooth"]
+            )
+
+        # hcp_corrthick_skip_computation
+        if options["hcp_corrthick_skip_computation"] is not None:
+            comm += (
+                '            --skip-computation="%s"'
+                % options["hcp_corrthick_skip_computation"]
+            )
+
+        # -- Report command
+        if run:
+            r += "\n\n------------------------------------------------------------\n"
+            r += "Running HCP Pipelines command via QuNex:\n\n"
+            r += comm.replace("            --", "\n    --")
+            r += "\n------------------------------------------------------------\n"
+
+        # -- Run
+        if run:
+            if options["run"] == "run":
+                r, endlog, report, failed = pc.runExternalForFile(
+                    None,
+                    comm,
+                    "Running HCP CorrThick",
+                    overwrite=overwrite,
+                    thread=sinfo["id"],
+                    remove=options["log"] == "remove",
+                    task=options["command_ran"],
+                    logfolder=options["comlogs"],
+                    logtags=options["logtag"],
+                    fullTest=None,
+                    shell=True,
+                    r=r,
+                )
+
+            # -- just checking
+            else:
+                passed, report, r, failed = pc.checkRun(
+                    None, None, "HCP CorrThick", r, overwrite=overwrite
+                )
+                if passed is None:
+                    r += "\n---> HCP CorrThick can be run"
+                    report = "HCP CorrThick can be run"
+                    failed = 0
+
+        else:
+            r += "\n---> Session cannot be processed."
+            report = "HCP CorrThick cannot be run"
+            failed = 1
+
+    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+        r = str(errormessage)
+        failed = 1
+    except:
+        r += (
+            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+            % (traceback.format_exc())
+        )
+        failed = 1
+
+    r += (
+        "\n\nHCP CorrThick %s on %s\n------------------------------------------------------------"
         % (
             pc.action("completed", options["run"]),
             datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -17067,15 +17294,13 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             additional_bolds = options["additional_bolds"].split(",")
             boldnum = len(bolds) + 1
             for ab in additional_bolds:
-                bolds.append(
-                    {
-                        "bold": ab,
-                        "filename": ab,
-                        "bold_number": boldnum,
-                        "name": ab,
-                        "task": "additional_bold",
-                    }
-                )
+                bolds.append({
+                    "bold": ab,
+                    "filename": ab,
+                    "bold_number": boldnum,
+                    "name": ab,
+                    "task": "additional_bold",
+                })
                 boldnum += 1
 
         for boldinfo in bolds:
