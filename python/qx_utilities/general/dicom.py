@@ -3355,6 +3355,7 @@ def import_dicom(
             What to do with a processed package. 
             
             Options are:
+
             - 'move'   ... move the package to the default archive folder
             - 'copy'   ... copy the package to the default archive folder
             - 'leave'  ... keep the package in the session or master inbox

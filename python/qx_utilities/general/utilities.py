@@ -2249,7 +2249,7 @@ def batch_tag2namekey(
         
         --prefix (str):
             The default prefix to use if a filename is not specified in the batch file.
-            Default is 'BOLD_'.
+            Default is ``BOLD_``.
 
 
     Notes:

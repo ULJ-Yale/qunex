@@ -17952,7 +17952,7 @@ def hcp_parcellate_anat(sinfo, options, overwrite=False, thread=0):
     ``hcp_parcellate_anat [... processing options]``
 
     Parcellate an anatomical dense scalar (e.g. corrThickness, MyelinMap_BC)
-    using a whole-brain parcellation (*.dlabel.nii).
+    using a whole-brain parcellation (``*.dlabel.nii``).
 
     This is the session-processing equivalent of the legacy bash
     ``parcellate_anat`` utility.
@@ -18187,7 +18187,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         --bolds (str, default 'all'):
             Which BOLDs to run QC for (reuses pc.use_or_skip_bold selection rules).
 
-        --hcp_bold_prefix (str, default 'BOLD_'):
+        --hcp_bold_prefix (str, default ``'BOLD_'``):
             Prefix used for HCP BOLD names (e.g. BOLD_1). If running with
             ``hcp_filename=userdefined``, the filename from batch.txt is used.
 

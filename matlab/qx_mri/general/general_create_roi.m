@@ -23,7 +23,7 @@ function [roi] = general_create_roi(targetf, roi, mask, options)
 %       --mask (str|integer|nimage, default ''):
 %           See nimage.img_prep_roi documentation for details.
 %
-%       --options (str, default 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:'):
+%       --options (str, default 'check:warning\|volumes:\|maps:\|rois:\|roinames:\|standardize:no\|threshold:'):
 %           See nimage.img_prep_roi documentation for details.
 %
 %   Results:

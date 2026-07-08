@@ -103,7 +103,7 @@ function [] = general_find_peaks(fin, fout, mins, maxs, val, t, presmooth, proje
 %           A pipe-separated list of <key>:<value> pairs specifying additional
 %           options.
 %
-%           The available options are::
+%           The available options are:
 %
 %           - frames
 %               for the number of frames to be analized:

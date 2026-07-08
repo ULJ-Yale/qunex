@@ -48,7 +48,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         value, time delay, and width of the similarity function to determine when
         and how strongly that probe signal appears in each voxel.
 
-         See (https://rapidtide.readthedocs.io/en/latest/usage_rapidtide.html) for
+        See (https://rapidtide.readthedocs.io/en/latest/usage_rapidtide.html) for
         additional details.
 
     ..  qx_command:

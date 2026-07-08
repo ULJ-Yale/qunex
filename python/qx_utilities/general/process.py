@@ -1306,7 +1306,8 @@ def run(qx_command, args):
             #                                        subject processing commands
             elif processing_type == "subject":
                 for subject in subjects:
-                    message = f"\nProcessing subject {subject[0]['subject']} with sessions {", ".join([s['id'] for s in subject])} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                    session_ids = ", ".join([s["id"] for s in subject])
+                    message = f"\nProcessing subject {subject[0]['subject']} with sessions {session_ids} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
                     consoleLog += message
                     print(message)
 
