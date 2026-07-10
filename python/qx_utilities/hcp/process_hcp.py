@@ -5887,26 +5887,25 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             to the HCP pipeline as ``brainscalefactor``. Only relevant for
             non-human species.
 
-        --hcp_runmode (str, default ''):
+        --hcp_runmode (str, default 'Default'):
             Specify from which step to resume the processing instead of
             starting from the beginning. Value must be one of: Default,
-            DistortionCorrection, OneStepResampling (default: Default).
+            DistortionCorrection, OneStepResampling.
 
-        --hcp_truepatientposition (str, default ''):
-            True patient position, e.g. HFS, FFS, HFSx, FFSx (default: HFS).
-            Only relevant for non-human species.
-
-        --hcp_scannerpatientposition (str, default ''):
-            Scanner patient position, e.g. HFS, FFS (default: HFS). Only
-            relevant for non-human species.
-
-        --hcp_bold_bbrcontrast (str, default ''):
-            BBR contrast to use for EPI to T1w registration: T2w, T1w or NONE
-            (default: T2w). Ignored when hcp_species is Human.
-
-        --hcp_bold_wmprojabs (str, default ''):
-            FreeSurfer wm-proj-abs value (default: 2). Only relevant for
+        --hcp_truepatientposition (str, default 'HFS'):
+            True patient position, e.g. HFS, FFS, HFSx, FFSx Only relevant for
             non-human species.
+
+        --hcp_scannerpatientposition (str, default 'HFS'):
+            Scanner patient position, e.g. HFS, FFS. Only relevant for non-human
+            species.
+
+        --hcp_bold_bbrcontrast (str, default 'T2w'):
+            BBR contrast to use for EPI to T1w registration: T2w, T1w or NONE
+            Ignored when hcp_species is Human.
+
+        --hcp_bold_wmprojabs (str, default '2'):
+            FreeSurfer wm-proj-abs value. Only relevant for non-human species.
 
         --hcp_bold_initworldmat (str, default ''):
             Initial world matrix to apply to sform (optional). Only relevant
