@@ -344,7 +344,7 @@ def runCommand(command, args):
                 qx_commands.get(command).load_callable()(**args)
             # run with log
             else:
-                _, result, _, _ = gc.runWithLog(
+                _, result, _, _ = gc.run_with_log(
                     qx_commands.get(command).load_callable(), args=args, logfile=logfile
                 )
 
