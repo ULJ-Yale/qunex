@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-13T13:19:19.522578+00:00'
+generated_at: '2026-07-13T13:38:32.172159+00:00'
 source:
     id: core
 commands:
@@ -3830,7 +3830,7 @@ commands:
         default: '2'
         description: Resolution of data.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Mesh resolution.
     -   name: hcp_grayordinatesres
@@ -4619,7 +4619,7 @@ commands:
         default: BOLD
         description: The prefix to use when generating BOLD names (see 'hcp_filename') for BOLD working folders and results.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: The number of vertices to be used in the low-resolution grayordinate mesh (in thousands).
     -   name: hcp_bold_res
@@ -5404,7 +5404,7 @@ commands:
         default: '164'
         description: High resolution mesh node count.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Low resolution mesh node count.
     -   name: hcp_regname
@@ -5561,9 +5561,10 @@ commands:
         default: '164'
         description: The number of vertices for the high resolution mesh of each hemisphere (in thousands).
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
-        description: The number of vertices for the low resolution mesh of each hemisphere (in thousands).
+        description: 'The number of vertices for the low resolution mesh of each hemisphere (in thousands). Provide a comma
+            separated list of numbers to generate multiple low resolution meshes, for example: 32,10.'
     -   name: hcp_regname
         type: str
         default: MSMSulc
@@ -5731,7 +5732,7 @@ commands:
         default: MSMSulc
         description: The name of the registration used.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Mesh resolution.
     -   name: hcp_grayordinatesres
@@ -5928,7 +5929,7 @@ commands:
         default: '164'
         description: High resolution mesh node count.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Low resolution mesh node count.
     -   name: hcp_regname
@@ -6224,7 +6225,8 @@ commands:
     -   name: hcp_surfatlasdir
         type: str
         default: null
-        description: Surface atlas directory.
+        description: Surface atlas directory. For non-human species (hcp_species other than 'Human') the default is the species-specific
+            surface atlas folder inside HCP's NHP_NNP templates folder.
     -   name: hcp_grayordinatesres
         type: str
         default: '2'
@@ -6232,7 +6234,9 @@ commands:
     -   name: hcp_grayordinatesdir
         type: str
         default: HCP "91282_Greyordinates"
-        description: Grayordinates space directory.
+        description: Grayordinates space directory. For non-human species (hcp_species other than 'Human') the default is
+            the species-specific surface atlas folder inside HCP's NHP_NNP templates folder, which also holds the grayordinates
+            data.
     -   name: hcp_subcortgraylabels
         type: str
         default: HCP "FreeSurferSubcorticalLabelTableLut.txt"
@@ -6240,15 +6244,17 @@ commands:
     -   name: hcp_refmyelinmaps
         type: str
         default: HCP "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"
-        description: Group myelin map to use for bias correction.
+        description: Group myelin map to use for bias correction. For non-human species (hcp_species other than 'Human') the
+            default is the species-specific group myelin map inside HCP's NHP_NNP templates folder.
     -   name: hcp_hiresmesh
         type: int
         default: '164'
         description: The number of vertices for the high resolution mesh of each hemisphere (in thousands).
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
-        description: The number of vertices for the low resolution mesh of each hemisphere (in thousands).
+        description: 'The number of vertices for the low resolution mesh of each hemisphere (in thousands). Provide a comma
+            separated list of numbers to generate multiple low resolution meshes, for example: 32,10.'
     -   name: hcp_regname
         type: str
         default: MSMSulc
@@ -6694,7 +6700,7 @@ commands:
         default: NONE
         description: Specifies surface registration name. If 'NONE' MSMSulc will be used.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Specifies the low res mesh number.
     -   name: hcp_longitudinal_template
@@ -6977,7 +6983,7 @@ commands:
         default: '2'
         description: Value (in mm) that matches value in 'Atlas_ROIs' filename.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Value (in mm) that matches surface resolution for fMRI data.
     -   name: hcp_task_vba
@@ -7082,7 +7088,7 @@ commands:
         default: ''
         description: How many wisharts to use in icaDim.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Mesh resolution.
     -   name: hcp_tica_mrfix_concat_name
@@ -7355,7 +7361,7 @@ commands:
         default: MSMSulc
         description: The name of the registration used.
     -   name: hcp_lowresmesh
-        type: int
+        type: str
         default: '32'
         description: Mesh resolution.
     -   name: hcp_grayordinatesres
