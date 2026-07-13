@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-13T11:31:51.314559+00:00'
+generated_at: '2026-07-13T13:19:19.522578+00:00'
 source:
     id: core
 commands:
@@ -3834,11 +3834,11 @@ commands:
         default: '32'
         description: Mesh resolution.
     -   name: hcp_grayordinatesres
-        type: int
+        type: str
         default: '2'
         description: The size of voxels for the subcortical and cerebellar data in grayordinate space in mm.
     -   name: hcp_bold_smoothFWHM
-        type: int
+        type: str
         default: '2'
         description: Smoothing FWHM that matches what was used in the fMRISurface pipeline.
     -   name: hcp_autoreclean_model_folder
@@ -4040,6 +4040,87 @@ commands:
         description: The path to the folder where runlogs and comlogs are to be stored.
     returns: []
     origin: core
+-   name: hcp_corr_thick
+    aliases: []
+    path: qx_utilities.hcp.process_hcp.hcp_corr_thick
+    language: python
+    call: hcp_corr_thick [... processing options]
+    description: Runs the curvature-corrected (folding-compensated) cortical thickness step of HCP Pipeline (CorrThick.sh).
+        Computes and saves curvature-corrected thickness, curvatures, regression coefficients, and resampled outputs.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no).
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: log
+        type: str
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs.
+    -   name: hcp_corrthick_regnames
+        type: str
+        default: MSMSulc
+        description: The desired registration name(s) separated by @, e.g. 'RegName@RegName@RegName@...'.
+    -   name: hcp_corrthick_hemi
+        type: str
+        default: B
+        description: Hemisphere for regression calculation, L=Left, R=Right, or B=Both.
+    -   name: hcp_corrthick_surf
+        type: str
+        default: midthickness
+        description: Surface for regression calculation, white or midthickness.
+    -   name: hcp_corrthick_patch_size
+        type: str
+        default: '6'
+        description: Patch kernel size in millimeters FWHM for regression.
+    -   name: hcp_corrthick_surf_smooth
+        type: str
+        default: '2.14'
+        description: Surface smoothing in millimeters FWHM.
+    -   name: hcp_corrthick_metric_smooth
+        type: str
+        default: '2.52'
+        description: Metric smoothing in millimeters FWHM.
+    -   name: hcp_corrthick_skip_computation
+        type: str
+        default: 'NO'
+        description: Whether to skip computing the curvature-corrected thickness (YES), if it is already available, and just
+            resample it to 164k and 32k, or to compute it (NO).
+    returns: []
+    origin: core
 -   name: hcp_dedrift_and_resample
     aliases: []
     path: qx_utilities.hcp.process_hcp.hcp_dedrift_and_resample
@@ -4130,7 +4211,7 @@ commands:
         default: MyelinMap,SmoothedMyelinMap
         description: Comma separated paths to myelin maps.
     -   name: hcp_bold_smoothFWHM
-        type: int
+        type: str
         default: '2'
         description: Smoothing FWHM that matches what was used in the fMRISurface pipeline.
     -   name: hcp_matlab_mode
@@ -4286,6 +4367,11 @@ commands:
         type: flag
         default: null
         description: If specified, use the non-GPU-enabled version of eddy. The flag is not set by default.
+    -   name: hcp_cuda_version
+        type: str
+        default: '11'
+        description: The version of CUDA to use for GPU-enabled processing. This depends on the version of installed FSL and
+            its CUDA support.
     -   name: hcp_dwi_even_slices
         type: flag
         default: null
@@ -4358,6 +4444,105 @@ commands:
         type: str
         default: ''
         description: The path to the folder where runlogs and comlogs are to be stored.
+    returns: []
+    origin: core
+-   name: hcp_fmri_stats
+    aliases: []
+    path: qx_utilities.hcp.process_hcp.hcp_fmri_stats
+    language: python
+    call: hcp_fmri_stats [... processing options]
+    description: Runs the fMRI Statistics step of HCP Pipeline (fMRIStats.sh). Computes fMRI statistics including mTSNR, fCNR,
+        and percent BOLD.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no).
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: log
+        type: str
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs.
+    -   name: hcp_concat_names
+        type: str
+        default: fMRI_CONCAT_ALL
+        description: A comma separated list of fMRI concat names (e.g. tfMRI_ALLTASKS). If single-run FIX is used, this list
+            must be exactly 1 element long.
+    -   name: hcp_icafix_highpass
+        type: str
+        default: '0'
+        description: The high pass filter value used in ICA+FIX.
+    -   name: hcp_fmristats_regname
+        type: str
+        default: ''
+        description: Surface registration name.
+    -   name: hcp_fmristats_process_volume
+        type: str
+        default: ''
+        description: Whether to process volume data, TRUE or FALSE.
+    -   name: hcp_fmristats_cleanup_effects
+        type: str
+        default: ''
+        description: Whether to compute cleanup effects metrics, TRUE or FALSE.
+    -   name: hcp_fmristats_procstring
+        type: str
+        default: ''
+        description: Processing string suffix for cleaned data.
+    -   name: hcp_fmristats_icamode
+        type: str
+        default: ''
+        description: 'ICA mode: ''sICA'' for spatial ICA only, ''sICA+tICA'' for combined spatial+temporal ICA.'
+    -   name: hcp_fmristats_fmri_names
+        type: str
+        default: ''
+        description: A comma separated list of fMRI single run names (only required if data was processed with single-run
+            FIX, must be in order and complete).
+    -   name: hcp_fmristats_tica_component_tcs
+        type: str
+        default: ''
+        description: Path to tICA timecourse CIFTI (required if tica_icamode is sICA+tICA).
+    -   name: hcp_fmristats_tica_component_noise
+        type: str
+        default: ''
+        description: Path to tICA component noise indices text file (required if tica_icamode is sICA+tICA).
+    -   name: hcp_matlab_mode
+        type: str
+        default: default detailed below
+        description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
+            will be used, outside 'interpreted' is the default.
     returns: []
     origin: core
 -   name: hcp_fmri_surface
@@ -4442,11 +4627,11 @@ commands:
         default: '2'
         description: The resolution of the BOLD volume data in mm.
     -   name: hcp_grayordinatesres
-        type: int
+        type: str
         default: '2'
         description: The size of voxels for the subcortical and cerebellar data in grayordinate space in mm.
     -   name: hcp_bold_smoothFWHM
-        type: int
+        type: str
         default: '2'
         description: The size of the smoothing kernel (in mm).
     -   name: hcp_regname
@@ -4691,26 +4876,25 @@ commands:
             Only relevant for non-human species.
     -   name: hcp_runmode
         type: str
-        default: ''
+        default: Default
         description: 'Specify from which step to resume the processing instead of starting from the beginning. Value must
-            be one of: Default, DistortionCorrection, OneStepResampling (default: Default).'
+            be one of: Default, DistortionCorrection, OneStepResampling.'
     -   name: hcp_truepatientposition
         type: str
-        default: ''
-        description: 'True patient position, e.g. HFS, FFS, HFSx, FFSx (default: HFS). Only relevant for non-human species.'
+        default: HFS
+        description: True patient position, e.g. HFS, FFS, HFSx, FFSx Only relevant for non-human species.
     -   name: hcp_scannerpatientposition
         type: str
-        default: ''
-        description: 'Scanner patient position, e.g. HFS, FFS (default: HFS). Only relevant for non-human species.'
+        default: HFS
+        description: Scanner patient position, e.g. HFS, FFS. Only relevant for non-human species.
     -   name: hcp_bold_bbrcontrast
         type: str
-        default: ''
-        description: 'BBR contrast to use for EPI to T1w registration: T2w, T1w or NONE (default: T2w). Ignored when hcp_species
-            is Human.'
+        default: T2w
+        description: 'BBR contrast to use for EPI to T1w registration: T2w, T1w or NONE Ignored when hcp_species is Human.'
     -   name: hcp_bold_wmprojabs
         type: str
-        default: ''
-        description: 'FreeSurfer wm-proj-abs value (default: 2). Only relevant for non-human species.'
+        default: '2'
+        description: FreeSurfer wm-proj-abs value. Only relevant for non-human species.
     -   name: hcp_bold_initworldmat
         type: str
         default: ''
@@ -5357,7 +5541,7 @@ commands:
         default: null
         description: Surface atlas directory.
     -   name: hcp_grayordinatesres
-        type: int
+        type: str
         default: '2'
         description: The resolution of the volume part of the grayordinate representation in mm.
     -   name: hcp_grayordinatesdir
@@ -5551,7 +5735,7 @@ commands:
         default: '32'
         description: Mesh resolution.
     -   name: hcp_grayordinatesres
-        type: int
+        type: str
         default: '2'
         description: The size of voxels for the subcortical and cerebellar data in grayordinate space in mm.
     -   name: hcp_matlab_mode
@@ -6042,7 +6226,7 @@ commands:
         default: null
         description: Surface atlas directory.
     -   name: hcp_grayordinatesres
-        type: int
+        type: str
         default: '2'
         description: The resolution of the volume part of the grayordinate representation in mm.
     -   name: hcp_grayordinatesdir
@@ -6760,7 +6944,7 @@ commands:
         default: NONE
         description: Confound matrix text filename (e.g., output of fsl_motion_outliers). Assumes file is in <SubjectID>/MNINonLinear/Results/<ScanName>.
     -   name: hcp_bold_smoothFWHM
-        type: int
+        type: str
         default: '2'
         description: Smoothing FWHM that matches what was used in the fMRISurface pipeline.
     -   name: hcp_bold_final_smoothFWHM
@@ -6789,7 +6973,7 @@ commands:
         default: MSMSulc
         description: Name of surface registration technique.
     -   name: hcp_grayordinatesres
-        type: int
+        type: str
         default: '2'
         description: Value (in mm) that matches value in 'Atlas_ROIs' filename.
     -   name: hcp_lowresmesh
@@ -7175,7 +7359,7 @@ commands:
         default: '32'
         description: Mesh resolution.
     -   name: hcp_grayordinatesres
-        type: int
+        type: str
         default: '2'
         description: The size of voxels for the subcortical and cerebellar data in grayordinate space in mm.
     -   name: hcp_matlab_mode
