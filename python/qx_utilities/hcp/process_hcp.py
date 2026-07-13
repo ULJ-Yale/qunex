@@ -5025,6 +5025,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             If specified, use the non-GPU-enabled version of eddy. The
             flag is not set by default.
 
+        --hcp_cuda_version (str, default '11'):
+            The version of CUDA to use for GPU-enabled processing. This depends
+            on the version of installed FSL and its CUDA support.
+
         --hcp_dwi_even_slices (flag, optional):
             If set will ensure the input images to FSL's topup and eddy
             have an even number of slices by removing one slice if
@@ -5471,7 +5475,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 comm += "                --gpu=False"
             else:
                 comm += "                --gpu=True"
-                comm += "                --cuda-version=11.0"
+                comm += f"                --cuda-version={options['hcp_cuda_version']}"
 
             # create dummy bvals and bvecs if demanded
             if options["hcp_dwi_dummy_bval_bvec"]:
