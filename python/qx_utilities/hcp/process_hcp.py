@@ -2061,23 +2061,120 @@ def _set_hcp_prefs_template_res(image):
             return (0, r)
 
 
-# non-human primate (NHP) structural template configuration
+# non-human primate (NHP) template configuration
 # each entry maps a token (matched case-insensitively as a substring of
-# hcp_species) to its BrainTemplate folder/prefix, the low resolution used for
-# the coarse ("2mm equivalent") atlas registration, whether the template file
-# names carry the "restore" tag, and the suffix of the low-res template mask
+# hcp_species) to its species-specific template settings:
+#   brain_template  the BrainTemplate folder / file name prefix in NHP_NNP
+#   lowres          the low resolution used for the coarse ("2mm equivalent")
+#                   atlas registration in PreFreeSurfer
+#   restore         whether the structural template file names carry the
+#                   "restore" tag
+#   mask2mm_suffix  the suffix of the low-res structural template mask
+#   atlas_dir       the surface atlas / grayordinates folder, note that
+#                   ChimpYerkes29 ships it as "standard_mesh_atlas" (singular)
+#   myelin_map      the reference myelin map inside atlas_dir
 # mirrors HCPpipelines Examples/Scripts/SetUpSPECIES.sh
 # order matters, more specific tokens (e.g. mac30bs) come before broader ones
 _NHP_TEMPLATES = [
-    # (token, brain_template, lowres, restore, template2mmmask_suffix)
-    ("mac30bs", "Mac30BS", "1.0", True, "_brain_mask"),
-    ("cyno", "Mac25Cyno", "1.0", True, "_brain_mask"),
-    ("rhesus", "Mac25Rhesus", "1.0", True, "_brain_mask"),
-    ("snow", "Mac6Snow", "1.0", True, "_brain_mask"),
-    ("marmoset", "MarmosetRIKEN25", "0.4", True, "_brain_mask_dilM"),
-    ("nightmonkey", "NightMonkey9", "0.5", True, "_brain_mask"),
-    ("chimp", "ChimpYerkes29", "1.6", False, "_brain_mask"),
+    (
+        "mac30bs",
+        {
+            "brain_template": "Mac30BS",
+            "lowres": "1.0",
+            "restore": True,
+            "mask2mm_suffix": "_brain_mask",
+            "atlas_dir": "standard_mesh_atlases",
+            "myelin_map": "MacaqueRIKEN16.Parial.MyelinMap_GroupCorr.164k_fs_LR.dscalar.nii",
+        },
+    ),
+    (
+        "cyno",
+        {
+            "brain_template": "Mac25Cyno",
+            "lowres": "1.0",
+            "restore": True,
+            "mask2mm_suffix": "_brain_mask",
+            "atlas_dir": "standard_mesh_atlases",
+            "myelin_map": "Mac25Cyno_v3.Partial.MyelinMap_GroupCorr.164k_fs_LR.dscalar.nii",
+        },
+    ),
+    (
+        "rhesus",
+        {
+            "brain_template": "Mac25Rhesus",
+            "lowres": "1.0",
+            "restore": True,
+            "mask2mm_suffix": "_brain_mask",
+            "atlas_dir": "standard_mesh_atlases",
+            "myelin_map": "Mac25Rhesus_v5.Partial.MyelinMap_GroupCorr.164k_fs_LR.dscalar.nii",
+        },
+    ),
+    (
+        "snow",
+        {
+            "brain_template": "Mac6Snow",
+            "lowres": "1.0",
+            "restore": True,
+            "mask2mm_suffix": "_brain_mask",
+            "atlas_dir": "standard_mesh_atlases",
+            "myelin_map": "MacaqueRIKEN16.Parial.MyelinMap_GroupCorr.164k_fs_LR.dscalar.nii",
+        },
+    ),
+    (
+        "marmoset",
+        {
+            "brain_template": "MarmosetRIKEN25",
+            "lowres": "0.4",
+            "restore": True,
+            "mask2mm_suffix": "_brain_mask_dilM",
+            "atlas_dir": "standard_mesh_atlases",
+            "myelin_map": "MyelinMap_B0B1TxBC.164k_fs_LR.dscalar.nii",
+        },
+    ),
+    (
+        "nightmonkey",
+        {
+            "brain_template": "NightMonkey9",
+            "lowres": "0.5",
+            "restore": True,
+            "mask2mm_suffix": "_brain_mask",
+            "atlas_dir": "standard_mesh_atlases",
+            "myelin_map": "MyelinMap_BC.164k_fs_LR.dscalar.nii",
+        },
+    ),
+    (
+        "chimp",
+        {
+            "brain_template": "ChimpYerkes29",
+            "lowres": "1.6",
+            "restore": False,
+            "mask2mm_suffix": "_brain_mask",
+            "atlas_dir": "standard_mesh_atlas",
+            "myelin_map": "ChimpYerkes29.MyelinMap_BC.164k_fs_LR.dscalar.nii",
+        },
+    ),
 ]
+
+
+def _nhp_species_config(species):
+    """
+    Look up the NHP template configuration for a species.
+
+    Parameters:
+        species: the hcp_species value, matched case-insensitively against the
+            tokens in _NHP_TEMPLATES.
+
+    Returns:
+        The matching configuration dict, or None if the species is not
+        recognized.
+    """
+
+    species_l = species.lower()
+    for token, config in _NHP_TEMPLATES:
+        if token in species_l:
+            return config
+
+    return None
 
 
 def _nhp_template_paths(templates_dir, species, res):
@@ -2095,19 +2192,14 @@ def _nhp_template_paths(templates_dir, species, res):
         species is not recognized.
     """
 
-    match = None
-    species_l = species.lower()
-    for token, brain_template, lowres, restore, mask2mm_suffix in _NHP_TEMPLATES:
-        if token in species_l:
-            match = (brain_template, lowres, restore, mask2mm_suffix)
-            break
-
-    if match is None:
+    config = _nhp_species_config(species)
+    if config is None:
         return None
 
-    brain_template, lowres, restore, mask2mm_suffix = match
+    brain_template = config["brain_template"]
+    lowres = config["lowres"]
     base = os.path.join(templates_dir, "NHP_NNP", brain_template, "MNINonLinear")
-    tag = "restore_" if restore else ""
+    tag = "restore_" if config["restore"] else ""
 
     def _t(modality, resolution, suffix=""):
         return os.path.join(
@@ -2122,7 +2214,38 @@ def _nhp_template_paths(templates_dir, species, res):
         "t2templatebrain": _t("T2w", res, "_brain"),
         "t2template2mm": _t("T2w", lowres),
         "templatemask": _t("T1w", res, "_brain_mask"),
-        "template2mmmask": _t("T1w", lowres, mask2mm_suffix),
+        "template2mmmask": _t("T1w", lowres, config["mask2mm_suffix"]),
+    }
+
+
+def _nhp_postfs_paths(templates_dir, species):
+    """
+    Build the PostFreeSurfer surface atlas, grayordinates and reference myelin
+    map paths for a non-human primate species, mirroring HCPpipelines
+    Examples/Scripts/SetUpSPECIES.sh.
+
+    Parameters:
+        templates_dir: the HCP global templates folder (hcp["hcp_Templates"]).
+        species: the hcp_species value (matched against _NHP_TEMPLATES).
+
+    Returns:
+        A dict with the surfatlasdir, grayordinatesdir and refmyelinmaps paths,
+        or None if the species is not recognized. For NHP species the surface
+        atlas and the grayordinates folder are one and the same.
+    """
+
+    config = _nhp_species_config(species)
+    if config is None:
+        return None
+
+    atlas_dir = os.path.join(
+        templates_dir, "NHP_NNP", config["brain_template"], config["atlas_dir"]
+    )
+
+    return {
+        "surfatlasdir": atlas_dir,
+        "grayordinatesdir": atlas_dir,
+        "refmyelinmaps": os.path.join(atlas_dir, config["myelin_map"]),
     }
 
 
@@ -3430,20 +3553,27 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             only valid if 'LegacyStyleData' processing mode was specified.
 
         --hcp_surfatlasdir (str, HCP "standard_mesh_atlases"):
-            Surface atlas directory.
+            Surface atlas directory. For non-human species (hcp_species other
+            than 'Human') the default is the species-specific surface atlas
+            folder inside HCP's NHP_NNP templates folder.
 
         --hcp_grayordinatesres (str, default '2'):
             The resolution of the volume part of the grayordinate representation
             in mm.
 
         --hcp_grayordinatesdir (str, default HCP "91282_Greyordinates"):
-            Grayordinates space directory.
+            Grayordinates space directory. For non-human species (hcp_species
+            other than 'Human') the default is the species-specific surface
+            atlas folder inside HCP's NHP_NNP templates folder, which also holds
+            the grayordinates data.
 
         --hcp_subcortgraylabels (str, default HCP "FreeSurferSubcorticalLabelTableLut.txt"):
             The location of FreeSurferSubcorticalLabelTableLut.txt.
 
         --hcp_refmyelinmaps (str, default HCP "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"):
-            Group myelin map to use for bias correction.
+            Group myelin map to use for bias correction. For non-human species
+            (hcp_species other than 'Human') the default is the species-specific
+            group myelin map inside HCP's NHP_NNP templates folder.
 
         --hcp_hiresmesh (int, default 164):
             The number of vertices for the high resolution mesh of each
@@ -3605,6 +3735,9 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         doHCPOptionsCheck(options, "hcp_post_freesurfer")
         hcp = getHCPPaths(sinfo, options)
 
+        species = options["hcp_species"]
+        is_human = not species or species.lower() == "human"
+
         # --- run checks
         if "hcp" not in sinfo:
             r += (
@@ -3614,7 +3747,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> FS results, check only for human
-        if options["hcp_species"] is None or options["hcp_species"].lower() == "human":
+        if is_human:
             if os.path.exists(os.path.join(hcp["FS_folder"], "mri", "aparc+aseg.mgz")):
                 r += "\n---> FS results present."
             else:
@@ -3636,17 +3769,43 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             freesurferlabels = options["hcp_freesurfer_labels"]
 
+        # default surface atlas, grayordinates and reference myelin map paths
+        # human ones live directly in the HCP templates folder, non-human ones
+        # in the species-specific NHP_NNP folder
+        if is_human:
+            tpl = {
+                "surfatlasdir": os.path.join(
+                    hcp["hcp_Templates"], "standard_mesh_atlases"
+                ),
+                "grayordinatesdir": os.path.join(
+                    hcp["hcp_Templates"], "91282_Greyordinates"
+                ),
+                "refmyelinmaps": os.path.join(
+                    hcp["hcp_Templates"],
+                    "standard_mesh_atlases",
+                    "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
+                ),
+            }
+        else:
+            tpl = _nhp_postfs_paths(hcp["hcp_Templates"], species)
+            if tpl is None:
+                tpl = {}
+                r += (
+                    "\n---> NOTE: species '%s' is not in QuNex's built-in NHP template map; "
+                    "the surface atlas, grayordinates and reference myelin map paths have to "
+                    "be provided explicitly via hcp_surfatlasdir, hcp_grayordinatesdir and "
+                    "hcp_refmyelinmaps." % (species)
+                )
+
         # hcp_surfatlasdir
-        surfatlasdir = ""
         if options["hcp_surfatlasdir"] is None:
-            surfatlasdir = os.path.join(hcp["hcp_Templates"], "standard_mesh_atlases")
+            surfatlasdir = tpl.get("surfatlasdir")
         else:
             surfatlasdir = options["hcp_surfatlasdir"]
 
         # hcp_grayordinatesdir
-        grayordinatesdir = ""
         if options["hcp_grayordinatesdir"] is None:
-            grayordinatesdir = os.path.join(hcp["hcp_Templates"], "91282_Greyordinates")
+            grayordinatesdir = tpl.get("grayordinatesdir")
         else:
             grayordinatesdir = options["hcp_grayordinatesdir"]
 
@@ -3660,13 +3819,8 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             subcortgraylabels = options["hcp_subcortgraylabels"]
 
         # hcp_refmyelinmaps
-        refmyelinmaps = ""
         if options["hcp_refmyelinmaps"] is None:
-            refmyelinmaps = os.path.join(
-                hcp["hcp_Templates"],
-                "standard_mesh_atlases",
-                "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii",
-            )
+            refmyelinmaps = tpl.get("refmyelinmaps")
         else:
             refmyelinmaps = options["hcp_refmyelinmaps"]
 
@@ -3706,8 +3860,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         # species-specific (NHP) parameters, only relevant for non-human species
         # the four tuning parameters are optional; when unset they are not
         # passed and the HCP pipeline applies its own defaults
-        species = options["hcp_species"]
-        if species and species.lower() != "human":
+        if not is_human:
             elements.append(("species", species))
             optional_species_params = [
                 ("myelin-volume-fwhm", options["hcp_myelin_volume_fwhm"]),
