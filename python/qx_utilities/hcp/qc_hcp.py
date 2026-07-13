@@ -270,8 +270,9 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             deleted before a run; ``--overwrite`` governs per-file recomputation.
 
         rawNII:
-            - Generates: ``<session>.RawNII.QC.zip`` (all slicesdir PNGs and the
-              original index.html) and ``<session>.RawNII.QC.html`` -- a single
+            - Generates: ``<session>.RawNII.QC.<timestamp>.zip`` (all slicesdir PNGs
+              and the original index.html) and
+              ``<session>.RawNII.QC.<timestamp>.html`` -- a single
               self-contained HTML report with the PNGs embedded and, per raw
               sequence, its name and key parameters (TR, TE, resolution,
               dimensions x/y/z, number of volumes/directions) read from the JSON
@@ -1254,8 +1255,8 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
     try:
         case = sinfo["id"]
         nii_dir = os.path.join(options["sessionsfolder"], case, "nii")
-        zip_out = os.path.join(outpath, "%s.RawNII.QC.zip" % case)
-        html_out = os.path.join(outpath, "%s.RawNII.QC.html" % case)
+        zip_out = os.path.join(outpath, "%s.RawNII.QC.%s.zip" % (case, timestamp))
+        html_out = os.path.join(outpath, "%s.RawNII.QC.%s.html" % (case, timestamp))
 
         skip, rr = _apply_on_existing(
             on_existing,

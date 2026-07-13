@@ -491,17 +491,15 @@ def get_sessions_list(
 
     elif (
         re.match(r".*\.txt$", listString) or "/" in listString
-    ) and sessionids is None:
+    ) and not sessionids:
         raise ValueError(
             f"ERROR: The specified session file is not found and sessionids are not provided! [{listString}]!"
         )
 
     else:
         if (
-            re.match(r".*\.txt$", listString)
-            or "/" in listString
-            and sessionids is not None
-        ):
+            re.match(r".*\.txt$", listString) or "/" in listString
+        ) and sessionids:
             listString = sessionids
 
         slist = [e.strip() for e in re.split(r" +|,|\|", listString)]

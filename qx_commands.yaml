@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-13T13:38:32.172159+00:00'
+generated_at: '2026-07-13T14:11:03.919561+00:00'
 source:
     id: core
 commands:
@@ -6800,7 +6800,7 @@ commands:
     -   name: hcp_bold_prefix
         type: str
         default: ''
-        description: Prefix used for HCP BOLD names (e.g. 'BOLD_' for BOLD_1). With ``hcp_filename=userdefined`` the filename
+        description: Prefix used for HCP BOLD names (e.g. ``BOLD_`` for BOLD_1). With ``hcp_filename=userdefined`` the filename
             from the batch file is used.
     -   name: hcp_cifti_tail
         type: str
