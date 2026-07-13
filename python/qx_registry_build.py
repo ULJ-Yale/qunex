@@ -534,7 +534,16 @@ def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
             if not meta:
                 continue  # not a command
 
-            func_name = node.name            
+            # Skip python doc-stubs that document a non-python (e.g. bash) command:
+            # those are registered from their real source (.sh/.m). Registering them
+            # here too would force language="python" and collide on the command name.
+            declared_lang = (meta.get("language") or "python").strip().lower()
+            if declared_lang != "python":
+                if DEBUG:
+                    print(f"    -> skipping {mod_name}.{node.name} (declares language: {declared_lang})")
+                continue
+
+            func_name = node.name
 
             try:
                 call, desc, qx_meta, doc_params, doc_returns = parse_command_docstring(

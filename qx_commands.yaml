@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-05T19:12:08.630513+00:00'
+generated_at: '2026-07-13T11:31:51.314559+00:00'
 source:
     id: core
 commands:
@@ -34,7 +34,7 @@ commands:
     -   name: prefix
         type: str
         default: null
-        description: The default prefix to use if a filename is not specified in the batch file. Default is 'BOLD_'.
+        description: The default prefix to use if a filename is not specified in the batch file. Default is ``BOLD_``.
     options: []
     returns: []
     origin: core
@@ -3178,7 +3178,7 @@ commands:
         description: See nimage.img_prep_roi documentation for details.
     -   name: options
         type: str
-        default: 'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:'
+        default: 'check:warning\|volumes:\|maps:\|rois:\|roinames:\|standardize:no\|threshold:'
         description: See nimage.img_prep_roi documentation for details.
     options: []
     returns:
@@ -5842,7 +5842,7 @@ commands:
     language: python
     call: hcp_parcellate_anat [... processing options]
     description: Parcellate an anatomical dense scalar (e.g. corrThickness, MyelinMap_BC) using a whole-brain parcellation
-        (*.dlabel.nii).
+        (``*.dlabel.nii``).
     type: processing.session
     args:
     -   name: sinfo
@@ -6521,7 +6521,7 @@ commands:
     origin: core
 -   name: hcp_run_qc
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_run_qc
+    path: qx_utilities.hcp.qc_hcp.hcp_run_qc
     language: python
     call: hcp_run_qc [... processing options]
     description: Run visual QC for a session.
@@ -6547,55 +6547,140 @@ commands:
     -   name: qc_modality
         type: str
         default: BOLD
-        description: 'One or more modalities to run QC for. Can be a comma-separated list, e.g. ''BOLD,T1w''. Implemented:
-            ''BOLD'', ''T1w'', ''T2w'', ''myelin'', ''general''.'
+        description: 'One or more modalities to run QC for, as a comma-separated list (e.g. ''BOLD,T1w,DWI''). Supported:
+            ''rawNII'', ''BOLD'', ''BOLD_FC'', ''T1w'', ''T2w'', ''myelin'', ''general'', ''DWI''. Modalities (and, within
+            BOLD/BOLD_FC, the individual runs) are processed in parallel (see Notes).'
     -   name: qc_outpath
         type: str
         default: <sessionsfolder>/QC/<modality>
-        description: Output folder for QC artifacts.
+        description: Output folder for QC artifacts. With multiple modalities and an explicit path, a per-modality subfolder
+            is used.
     -   name: qc_scenetemplatefolder
         type: str
         default: <QUNEXPATH>/qx_library/data/scenes/qc
-        description: Folder containing Workbench scene templates.
+        description: Folder containing the Workbench scene templates.
     -   name: qc_scenezip
         type: str
         default: 'yes'
-        description: If 'yes', also create a Workbench scene zip in <hcp>/qc/.
+        description: If 'yes', also create a self-contained Workbench scene zip and copy it into <hcp>/qc/ (or the session's
+            qc/ folder for the 'general' modality).
     -   name: timestamp
         type: str
         default: now
-        description: Timestamp suffix for outputs.
-    -   name: bolds
-        type: str
-        default: all
-        description: Which BOLDs to run QC for (reuses pc.use_or_skip_bold selection rules).
-    -   name: hcp_bold_prefix
-        type: str
-        default: BOLD_
-        description: Prefix used for HCP BOLD names (e.g. BOLD_1). If running with ``hcp_filename=userdefined``, the filename
-            from batch.txt is used.
-    -   name: hcp_cifti_tail
-        type: str
-        default: _Atlas
-        description: CIFTI tail used in .dtseries naming. Typically starts with an underscore (e.g. ``_Atlas``). If empty,
-            code will attempt to infer it by globbing.
-    -   name: qc_bold_skipframes
-        type: int
-        default: '0'
-        description: Number of initial frames to omit from GS plot range computations.
-    -   name: qc_bold_snronly
-        type: str
-        default: 'no'
-        description: If 'yes', compute TSNR report only and skip scene/png.
+        description: Timestamp suffix for the generated outputs.
     -   name: parelements
         type: int
         default: '1'
-        description: Number of QC jobs to process in parallel within a session. A job is either a single non-BOLD modality
-            (e.g. T1w) or a single BOLD run.
+        description: Number of QC jobs to run in parallel within a session (see Notes). A job is a single non-BOLD modality,
+            a single BOLD run, or a single BOLD_FC run/type.
     -   name: hcp_suffix
         type: str
         default: ''
-        description: Optional suffix for HCP folder naming (matches bash --hcp_suffix).
+        description: Optional suffix for HCP folder naming (matches the bash --hcp_suffix).
+    -   name: on_existing
+        type: str
+        default: leave
+        description: 'Policy for pre-existing QC outputs of the requested modalities:'
+    -   name: qc_omitdefaults
+        type: str
+        default: 'no'
+        description: If 'yes', skip the default template scene(s) for the requested modalities and only render user/custom
+            scenes (see --qc_userscenefile / --qc_processcustom).
+    -   name: qc_userscenefile
+        type: str
+        default: ''
+        description: A user-supplied scene template to render (in addition to the defaults). May be an absolute path or a
+            bare name resolved against --qc_userscenepath (or the template folder). Non-BOLD user scenes are rendered with
+            the common DUMMYPATH/DUMMYCASE/DUMMYTIMESTAMP/DUMMYPNGNAME substitutions; BOLD user scenes are rendered as full
+            BOLD QC (with TSNR).
+    -   name: qc_userscenepath
+        type: str
+        default: ''
+        description: Folder for --qc_userscenefile when it is given as a bare name.
+    -   name: qc_processcustom
+        type: str
+        default: 'no'
+        description: If 'yes', also render every ``*.scene`` under <studyfolder>/processing/scenes/QC/<modality> for each
+            requested modality.
+    -   name: bolds
+        type: str
+        default: all
+        description: Which BOLDs to run QC for (BOLD and BOLD_FC modalities). Follows the standard selection rules; may be
+            numbers, tags, or 'all'.
+    -   name: hcp_bold_prefix
+        type: str
+        default: ''
+        description: Prefix used for HCP BOLD names (e.g. 'BOLD_' for BOLD_1). With ``hcp_filename=userdefined`` the filename
+            from the batch file is used.
+    -   name: hcp_cifti_tail
+        type: str
+        default: ''
+        description: CIFTI tail used in .dtseries naming (e.g. '_Atlas'). If empty, the code attempts to infer it by globbing
+            (BOLD modality).
+    -   name: qc_bold_skipframes
+        type: int
+        default: '0'
+        description: Number of initial frames to omit from the GS plot range (BOLD modality).
+    -   name: qc_bold_snronly
+        type: str
+        default: 'no'
+        description: If 'yes', compute the TSNR report only and skip scene/png (BOLD modality).
+    -   name: qc_boldfc
+        type: str
+        default: pscalar,pconn
+        description: 'Which BOLD FC map type(s) to QC for the BOLD_FC modality: ''pscalar'', ''pconn'', or both (comma-separated,
+            or ''both''). The two are not mutually exclusive. Only used when ''BOLD_FC'' is in --qc_modality.'
+    -   name: qc_boldfcinput
+        type: str
+        default: ''
+        description: Generic FC input file name after the 'bold<N>_' prefix, e.g. 'Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii'.
+            Used for a requested FC type unless a type-specific input is provided below.
+    -   name: qc_boldfcpscalarinput
+        type: str
+        default: ''
+        description: FC input file name (after 'bold<N>_') for the 'pscalar' type. Overrides --qc_boldfcinput for pscalar;
+            required when running both types.
+    -   name: qc_boldfcpconninput
+        type: str
+        default: ''
+        description: FC input file name (after 'bold<N>_') for the 'pconn' type. Overrides --qc_boldfcinput for pconn; required
+            when running both types.
+    -   name: qc_boldfcpath
+        type: str
+        default: <sessionsfolder>/<session>/images/functional
+        description: Folder holding the FC input file(s) (BOLD_FC modality).
+    -   name: qc_datapath
+        type: str
+        default: ''
+        description: 'For the ''general'' modality: path, relative to <sessionsfolder>/<session>, of the folder holding the
+            image to visualise. Required for ''general''.'
+    -   name: qc_datafile
+        type: str
+        default: ''
+        description: 'For the ''general'' modality: file name of the image to visualise (found under --qc_datapath). Required
+            for ''general''.'
+    -   name: qc_dwi_path
+        type: str
+        default: Diffusion
+        description: DWI input folder under <hcp>/T1w (DWI modality).
+    -   name: qc_dwi_data
+        type: str
+        default: data
+        description: DWI data file name (without extension) under --qc_dwi_path (DWI modality).
+    -   name: qc_dwi_dtifit
+        type: str
+        default: 'no'
+        description: If 'yes', also render a dtifit (FA/L3) variant scene; requires that FSL dtifit has run (dti_FA.nii.gz
+            present).
+    -   name: qc_dwi_bedpostx
+        type: str
+        default: 'no'
+        description: If 'yes', also render a BedpostX variant scene; requires a complete Diffusion.bedpostX output.
+    -   name: qc_dwi_eddyqcstats
+        type: str
+        default: 'no'
+        description: If 'yes', hard-link the FSL EDDY qc.pdf into the QC folder and record qc_mot_abs motion into an EddyQCReport
+            file; requires EDDY QC output.
     returns: []
     origin: core
 -   name: hcp_task_fmri_analysis
