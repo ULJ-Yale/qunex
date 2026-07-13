@@ -617,7 +617,7 @@ arglist = [
     [
         "hcp_grayordinatesres",
         "2",
-        int,
+        str,
     ],
     [
         "hcp_surfatlasdir",
@@ -689,7 +689,7 @@ arglist = [
     ["hcp_senum2", "", is_none],
     ["hcp_seechospacing", "", is_none],
     ["hcp_seunwarpdir", "", is_none],
-    ["hcp_bold_smoothFWHM", "2", int],
+    ["hcp_bold_smoothFWHM", "2", str],
     ["hcp_prefs_t1template", "", is_none],
     ["hcp_prefs_t1templatebrain", "", is_none],
     ["hcp_prefs_t1template2mm", "", is_none],

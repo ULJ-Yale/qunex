@@ -3432,7 +3432,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_surfatlasdir (str, HCP "standard_mesh_atlases"):
             Surface atlas directory.
 
-        --hcp_grayordinatesres (int, default 2):
+        --hcp_grayordinatesres (str, default '2'):
             The resolution of the volume part of the grayordinate representation
             in mm.
 
@@ -4453,7 +4453,7 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
         --hcp_surfatlasdir (str, HCP "standard_mesh_atlases"):
             Surface atlas directory.
 
-        --hcp_grayordinatesres (int, default 2):
+        --hcp_grayordinatesres (str, default '2'):
             The resolution of the volume part of the grayordinate representation
             in mm.
 
@@ -7827,11 +7827,11 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_res (str, default '2'):
             The resolution of the BOLD volume data in mm.
 
-        --hcp_grayordinatesres (int, default 2):
+        --hcp_grayordinatesres (str, default '2'):
             The size of voxels for the subcortical and cerebellar data in
             grayordinate space in mm.
 
-        --hcp_bold_smoothFWHM (int, default 2):
+        --hcp_bold_smoothFWHM (str, default '2'):
             The size of the smoothing kernel (in mm).
 
         --hcp_regname (str, default 'MSMSulc'):
@@ -12338,7 +12338,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_myelinmaps (str, default 'MyelinMap,SmoothedMyelinMap'):
             Comma separated paths to myelin maps.
 
-        --hcp_bold_smoothFWHM (int, default 2):
+        --hcp_bold_smoothFWHM (str, default '2'):
             Smoothing FWHM that matches what was used in the fMRISurface
             pipeline.
 
@@ -13839,7 +13839,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
 
-        --hcp_grayordinatesres (int, default 2):
+        --hcp_grayordinatesres (str, default '2'):
             The size of voxels for the subcortical and cerebellar data in
             grayordinate space in mm.
 
@@ -14353,7 +14353,7 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
 
-        --hcp_grayordinatesres (int, default 2):
+        --hcp_grayordinatesres (str, default '2'):
             The size of voxels for the subcortical and cerebellar data in
             grayordinate space in mm.
 
@@ -16481,11 +16481,11 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
 
-        --hcp_grayordinatesres (int, default 2):
+        --hcp_grayordinatesres (str, default '2'):
             The size of voxels for the subcortical and cerebellar data in
             grayordinate space in mm.
 
-        --hcp_bold_smoothFWHM (int, default 2):
+        --hcp_bold_smoothFWHM (str, default '2'):
             Smoothing FWHM that matches what was used in the fMRISurface
             pipeline.
 
@@ -17563,7 +17563,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             Confound matrix text filename (e.g., output of fsl_motion_outliers).
             Assumes file is in <SubjectID>/MNINonLinear/Results/<ScanName>.
 
-        --hcp_bold_smoothFWHM (int, default 2):
+        --hcp_bold_smoothFWHM (str, default '2'):
             Smoothing FWHM that matches what was used in the fMRISurface
             pipeline.
 
@@ -17594,7 +17594,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         --hcp_regname (str, default 'MSMSulc'):
             Name of surface registration technique.
 
-        --hcp_grayordinatesres (int, default 2):
+        --hcp_grayordinatesres (str, default '2'):
             Value (in mm) that matches value in 'Atlas_ROIs' filename.
 
         --hcp_lowresmesh (int, default 32):
@@ -17800,10 +17800,10 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             # grayordinatesres
             if (
                 options["hcp_grayordinatesres"] is not None
-                and options["hcp_grayordinatesres"] != 2
+                and options["hcp_grayordinatesres"] != "2"
             ):
                 comm += (
-                    '                --grayordinatesres="%d"'
+                    '                --grayordinatesres="%s"'
                     % options["hcp_grayordinatesres"]
                 )
 
