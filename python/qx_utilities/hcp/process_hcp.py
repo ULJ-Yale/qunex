@@ -3579,9 +3579,10 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             The number of vertices for the high resolution mesh of each
             hemisphere (in thousands).
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             The number of vertices for the low resolution mesh of each
-            hemisphere (in thousands).
+            hemisphere (in thousands). Provide a comma separated list of numbers
+            to generate multiple low resolution meshes, for example: 32,10.
 
         --hcp_regname (str, default 'MSMSulc'):
             The registration used, FS or MSMSulc.
@@ -3837,7 +3838,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             ("grayordinatesdir", grayordinatesdir),
             ("grayordinatesres", options["hcp_grayordinatesres"]),
             ("hiresmesh", options["hcp_hiresmesh"]),
-            ("lowresmesh", options["hcp_lowresmesh"]),
+            ("lowresmesh", options["hcp_lowresmesh"].replace(",", "@")),
             ("subcortgraylabels", subcortgraylabels),
             ("freesurferlabels", freesurferlabels),
             ("refmyelinmaps", refmyelinmaps),
@@ -4623,9 +4624,10 @@ def hcp_long_post_freesurfer(sinfo, subjectids, options, overwrite=False, thread
             The number of vertices for the high resolution mesh of each
             hemisphere (in thousands).
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             The number of vertices for the low resolution mesh of each
-            hemisphere (in thousands).
+            hemisphere (in thousands). Provide a comma separated list of numbers
+            to generate multiple low resolution meshes, for example: 32,10.
 
         --hcp_regname (str, default "MSMSulc"):
             The registration used, FS or MSMSulc.
@@ -4985,7 +4987,7 @@ def _execute_hcp_long_post_freesurfer(options, overwrite, run, hcp, subject):
                 "grayordinatesres": options["hcp_grayordinatesres"],
                 "grayordinatesdir": grayordinatesdir,
                 "hiresmesh": options["hcp_hiresmesh"],
-                "lowresmesh": options["hcp_lowresmesh"],
+                "lowresmesh": options["hcp_lowresmesh"].replace(",", "@"),
                 "subcortgraylabels": subcortgraylabels,
                 "refmyelinmaps": refmyelinmaps,
                 "regname": options["hcp_regname"],
@@ -7977,7 +7979,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             The prefix to use when generating BOLD names (see 'hcp_filename')
             for BOLD working folders and results.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             The number of vertices to be used in the low-resolution grayordinate
             mesh (in thousands).
 
@@ -9958,7 +9960,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         --hcp_icafix_regname (str, default 'NONE'):
             Specifies surface registration name. If 'NONE' MSMSulc will be used.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Specifies the low res mesh number.
 
         --hcp_longitudinal_template (str, default 'base'):
@@ -10903,7 +10905,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         --hcp_hiresmesh (int, default 164):
             High resolution mesh node count.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Low resolution mesh node count.
 
         --hcp_regname (str, default 'MSMSulc'):
@@ -11902,7 +11904,7 @@ def hcp_long_msmall(sinfo, subjectids, options, overwrite=False, thread=0):
         --hcp_hiresmesh (int, default 164):
             High resolution mesh node count.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Low resolution mesh node count.
 
         --hcp_regname (str, default 'MSMSulc'):
@@ -13993,7 +13995,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         --hcp_regname (str, default 'MSMSulc'):
             The name of the registration used.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Mesh resolution.
 
         --hcp_grayordinatesres (str, default '2'):
@@ -14507,7 +14509,7 @@ def hcp_long_transmit_bias(sinfo, subjectids, options, overwrite=False, thread=0
         --hcp_regname (str, default 'MSMSulc'):
             The name of the registration used.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Mesh resolution.
 
         --hcp_grayordinatesres (str, default '2'):
@@ -14948,7 +14950,7 @@ def hcp_temporal_ica(sessions, sessionids, options, overwrite=True, thread=0):
         --hcp_tica_num_wishart (str, default ''):
             How many wisharts to use in icaDim.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Mesh resolution.
 
         --hcp_tica_mrfix_concat_name (str, default ''):
@@ -16635,7 +16637,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_res (str, default '2'):
             Resolution of data.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Mesh resolution.
 
         --hcp_grayordinatesres (str, default '2'):
@@ -17754,7 +17756,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         --hcp_grayordinatesres (str, default '2'):
             Value (in mm) that matches value in 'Atlas_ROIs' filename.
 
-        --hcp_lowresmesh (int, default 32):
+        --hcp_lowresmesh (str, default '32'):
             Value (in mm) that matches surface resolution for fMRI data.
 
         --hcp_task_vba (flag, optional):
