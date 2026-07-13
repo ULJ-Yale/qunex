@@ -192,7 +192,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             standard selection rules; may be numbers, tags, or 'all'.
 
         --hcp_bold_prefix (str, default ''):
-            Prefix used for HCP BOLD names (e.g. 'BOLD_' for BOLD_1). With
+            Prefix used for HCP BOLD names (e.g. ``BOLD_`` for BOLD_1). With
             ``hcp_filename=userdefined`` the filename from the batch file is used.
 
         --hcp_cifti_tail (str, default ''):
