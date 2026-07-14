@@ -23,7 +23,7 @@ import functools
 import struct
 import shutil
 
-import general.exceptions as ge
+import qx_utilities.general.exceptions as ge
 
 try:
     import pydicom
@@ -111,6 +111,7 @@ def get_dicom_name(opened_dicom, extension="dcm"):
         extension=extension)
 
     return filename
+
 
 def discover_dicom(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file=""):
     """
@@ -394,7 +395,11 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     """
     ``get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]``
 
-    Returns an overview of DICOM fields across all the DICOM files.
+    Return an overview of DICOM fields across all the DICOM files in the 
+    specified folder.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --folder (str, default '.'):
@@ -463,18 +468,23 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
-
 def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
     """
     ``change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``
 
-    Changes all the dicom files in the specified folder according to the
-    directions provided in the `paramfile`. The command is used to change all
-    the dicom files in the specified folder according to directions provided in
-    the `paramfile`. The values to be archived are saved (appended) to
-    `archivefile` as a comma separated values formatted file. The dicom files
-    can be either changed in place or saved to the specified `outputfolder` and
-    optionally renamed by adding the specified `extension`. 
+    Change all the dicom files in the specified folder according the `paramfile`.
+
+    ..  qx_command:
+        type: utility
+
+    Description:
+        Changes all the dicom files in the specified folder according to the
+        directions provided in the `paramfile`. The command is used to change all
+        the dicom files in the specified folder according to directions provided in
+        the `paramfile`. The values to be archived are saved (appended) to
+        `archivefile` as a comma separated values formatted file. The dicom files
+        can be either changed in place or saved to the specified `outputfolder` and
+        optionally renamed by adding the specified `extension`. 
 
     Parameters:
         --folder (str, default '.'):

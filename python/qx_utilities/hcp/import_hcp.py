@@ -28,12 +28,12 @@ import os
 import os.path
 import re
 import shutil
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import zipfile
 import tarfile
 import zipfile
 from datetime import datetime
-
-import general.core as gc
-import general.exceptions as ge
 import yaml
 
 unwarp = {
@@ -151,6 +151,7 @@ def mapToQUNEXcpls(
     return tfile
 
 
+
 def import_hcp(
     sessionsfolder=None,
     inbox=None,
@@ -167,7 +168,10 @@ def import_hcp(
     """
     ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=leave] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>] [hcp_dataset=<HCP dataset name>]``
 
-    Maps HCPLS data to the QuNex Suite file structure.
+    Map HCPLS data to the QuNex Suite file structure.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -199,6 +203,7 @@ def import_hcp(
 
         --action (str, default 'link'):
             How to map the files to QuNex structure.
+
             The following actions are supported:
 
             - 'link' ... files will be mapped by creating hard links if
@@ -213,6 +218,7 @@ def import_hcp(
 
         --archive (str, default 'move'):
             What to do with the files after they were mapped.
+
             Options are:
 
             - 'leave' ... leave the specified archive where it is
@@ -235,8 +241,9 @@ def import_hcp(
         --nameformat (str, default '(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'):
             An optional parameter that contains a regular expression pattern
             with named fields used to extract the subject and session
-            information based on the file paths and names. The pattern has to
-            return the groups named:
+            information based on the file paths and names. 
+            
+            The pattern has to return the groups named:
 
             - 'subject_id'   ... the id of the subject
             - 'session_name' ... the name of the session
@@ -247,6 +254,7 @@ def import_hcp(
             An optional parameter that specifies how the files should be sorted
             before mapping to `nii` folder and inclusion in `session_hcp.txt`.
             The sorting is specified by a string of sort keys separated by '_'.
+            
             The available sort keys are:
 
             - 'name' ... sort by the name of the file
@@ -1159,12 +1167,15 @@ def processHCPLS(sessionfolder, filesort):
     return checkedFolders
 
 
+
 def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
     """
     ``map_hcpls2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``
 
-    Maps data organized according to HCPLS specification to `nii` folder
-    structure as expected by QuNex functions.
+    Map HCPLS organized data to `nii` folder structure.
+
+    ..  qx_command:
+        type: utility
 
     Warning:
         .bvec and .bval files:
@@ -1194,7 +1205,9 @@ def map_hcpls2nii(sourcefolder=".", overwrite="no", report=None, filesort=None):
             An optional parameter that specifies how the files should
             be sorted before mapping to `nii` folder and inclusion in
             `session_hcp.txt`. The sorting is specified by a string of
-            sort keys separated by '_'. The available sort keys are:
+            sort keys separated by '_'. 
+            
+            The available sort keys are:
 
             - 'name' ... sort by the name of the file
             - 'type' ... sort by the type of the file (T1w, T2w, rfMRI, tfMRI,

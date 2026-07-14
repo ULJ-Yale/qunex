@@ -1,8 +1,11 @@
 function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, options)
 
-%function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, options)
+%``fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, options)``
 %
 %   Extract ROI timeseries for group or individual subject / session.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -28,8 +31,10 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %           A path to the names file specifying group based ROI for which to
 %           extract timeseries for. 
 %
-%       --frames (cell array | int | str, default ''):
-%           The definition of which frames to extract, specifically
+%       --frames (str | cell array | int, default ''):
+%           The definition of which frames to extract.
+%
+%           Specifically:
 %
 %           - a numeric array mask defining which frames to use (1) and
 %             which not (0), or
@@ -224,7 +229,7 @@ function [tsset] = fc_extract_roi_timeseries(flist, roiinfo, frames, targetf, op
 %               Defauts to 'false'.
 %
 %   Returns:
-%       tsmat
+%       --tsset(struct array):
 %           A structure array with the following fields for each specified
 %           data extraction:
 %

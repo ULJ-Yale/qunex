@@ -30,10 +30,11 @@ import sys
 import traceback
 import multiprocessing
 from datetime import datetime
-import general.exceptions as ge
-import general.core as gc
-from general.img import *
-from general.meltmovfidl import *
+
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+from qx_utilities.general.img import *
+from qx_utilities.general.meltmovfidl import *
 
 
 def is_number(s):
@@ -1023,7 +1024,7 @@ def runExternalForFile(
 
         # --- End
         if status and status == "done":
-            print("\n\n---> Successful completion of task\n", file=nf)
+            print(f"\n\n---> Successful completion of task at {datetime.now()}\n", file=nf)
             endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
         else:
             if status and status == "incomplete":
@@ -1106,7 +1107,7 @@ def runScriptThroughShell(
         endlog = errlogfile
         raise ExternalFailed(r)
     else:
-        print("\n\n---> Successful completion of task\n", file=nf)
+        print(f"\n\n---> Successful completion of task at {datetime.now()}\n", file=nf)
         nf.close()
         if remove:
             os.remove(tmplogfile)

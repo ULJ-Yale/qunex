@@ -20,8 +20,8 @@ import os
 import glob
 import subprocess
 from datetime import datetime
-import general.exceptions as ge
-import general.utilities as gu
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.utilities as gu
 
 def xnat_run_cmd(cmd):
     """

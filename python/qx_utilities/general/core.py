@@ -16,6 +16,9 @@ and can not be called externally.
 import glob
 import gzip
 import inspect
+import re
+import fnmatch
+import os.path
 import multiprocessing
 import os
 import os.path
@@ -29,8 +32,12 @@ import types
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 
-import general.exceptions as ge
-import general.filelock as fl
+from collections import UserList
+from copy import deepcopy
+
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.commands_support as gcs
 
 
 def print_qunex_header(timestamp=None, file=None):
@@ -52,6 +59,189 @@ def print_qunex_header(timestamp=None, file=None):
         print(header, file=file)
 
     return header
+
+
+# ==============================================================================
+#                                              SESSION AND SUBJECT LIST HANDLING
+
+# ------------------------------------------------------------------------------
+#                                                              SessionList class
+
+class SessionList(UserList):
+    """
+    ``SessionList``
+    
+    A list subclass for session and subject data.
+    """
+    def __init__(self, initialdata=None):
+        if initialdata is None:
+            initialdata = []
+        super().__init__(initialdata)
+
+    def copy(self):
+        """
+        ``copy()``
+
+        Returns a deep copy of the SessionList.
+        """
+        return SessionList(deepcopy(self.data))
+    
+
+    def filter_by_key(self, key, value):
+        """
+        ``filter_by_key(key, value)``
+
+        Filter the SessionList by key and value.
+        - If value is a list, matches any of the values.
+        - Values may be glob patterns (*, ?, [a-z]).
+        """
+        def matches(item_value, pattern):
+            # Exact match for non-strings
+            if not isinstance(item_value, str):
+                return item_value == pattern
+
+            # Glob match for strings
+            return item_value == pattern or fnmatch.fnmatchcase(item_value, pattern)
+
+        # Normalize value to list
+        if isinstance(value, str):
+            if "," in value:
+                values = [e.strip() for e in value.split(",")] 
+            else:
+                values = [value]
+        # values = value if isinstance(value, list) else [value]
+
+        return SessionList([
+            deepcopy(e)
+            for e in self.data
+            if isinstance(e, dict)
+            and key in e
+            and any(matches(e[key], v) for v in values)
+        ])
+
+    def filter_by_string(self, filter):
+        """
+        Filter the SessionList by a filter string.
+
+        - Use '|' between <key>:<value> pairs for OR
+        Example: "group:pat*|task:rest"
+
+        - Use '&' between <key>:<value> pairs for AND
+        Example: "group:pat*&task:r?st"
+
+        Values are treated as globs (fnmatch):
+        * matches any chars, ? matches one char, [abc] matches one char in set.
+
+        Only one operator type may be used.
+        """
+        if filter is None or filter.strip() == "":
+            return SessionList([])  # or return a copy of self, if you prefer
+
+        fstr = filter.strip()
+
+        has_or = "|" in fstr
+        has_and = "&" in fstr
+        if has_or and has_and:
+            raise ge.CommandFailed(
+                "SessionList.filter_by_string",
+                "Invalid filter parameter",
+                "The provided filter parameter is invalid: '%s'" % (filter),
+                "Use either '|' (OR) or '&' (AND), but not both.",
+                "Please adjust the parameter!",
+            )
+
+        op = "|" if has_or else ("&" if has_and else None)
+        parts = [fstr] if op is None else fstr.split(op)
+
+        try:
+            filters = [[p.strip() for p in e.split(":", 1)] for e in parts]
+        except Exception:
+            filters = []
+
+        if any(len(e) != 2 or e[0] == "" or e[1] == "" for e in filters):
+            raise ge.CommandFailed(
+                "SessionList.filter_by_string",
+                "Invalid filter parameter",
+                "The provided filter parameter is invalid: '%s'" % (filter),
+                "The parameter should be a '%s' separated string of <key>:<value> pairs!"
+                % (op if op else "(single)"),
+                "Please adjust the parameter!",
+            )
+
+        def matches(item, key, pattern):
+            if not (isinstance(item, dict) and key in item):
+                return False
+
+            v = item[key]
+
+            # Exact match for non-strings
+            if not isinstance(v, str):
+                return v == pattern
+
+            # For strings: exact OR glob match
+            # (fnmatchcase is case-sensitive and does not depend on OS)
+            return v == pattern or fnmatch.fnmatchcase(v, pattern)
+
+        filtered_data = []
+        for s in self.data:
+            if op == "&":
+                ok = all(matches(s, key, pattern) for key, pattern in filters)
+            else:
+                ok = any(matches(s, key, pattern) for key, pattern in filters)
+
+            if ok:
+                filtered_data.append(deepcopy(s))
+
+        return SessionList(filtered_data)
+
+    def get_list_by_key(self, key, sep=","):
+        """
+        ``get_list_by_key(key, sep=",")``
+
+        Compile a list of unique values for the specified key. By default it returns
+        a comma separated string. If sep is None or empty string, it returns a list.
+        """
+        if sep is None or sep == "":
+            return list(dict.fromkeys(str(item[key]) for item in self.data if key in item))
+        else:
+            return sep.join(list(dict.fromkeys(str(item[key]) for item in self.data if key in item)))
+        
+    def group_by_key(self, key):
+        """
+        ``group_by_key(key)``
+
+        Groups the SessionList by the specified key. Returns a list of SessionLists.
+        """
+        groups = {}
+
+        for item in self.data:
+            if isinstance(item, dict) and key in item:
+                group_value = item[key]
+                groups.setdefault(group_value, []).append(deepcopy(item))
+
+        return [SessionList(items) for items in groups.values()]
+
+    def dont_have_key(self, key):
+        """
+        ``dont_have_key(key)``
+
+        Reports the items that do not have the specified key or have it as None or empty.
+        Returns list of such items.
+        """
+        return SessionList([item for item in self.data if not (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
+    
+    def have_key(self, key):
+        """
+        ``have_key(key)``
+
+        Returns all the items that have the specified key with a value that is not None or empty.
+        Returns list of such items.
+        """
+        return SessionList([item for item in self.data if (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
+    
+
+# ------------------------------------------------------------------------------
+#                           Read session data from batch.txt or session.txt file
 
 
 def read_session_data(filename, verbose=False):
@@ -212,6 +402,9 @@ def read_session_data(filename, verbose=False):
 
     return slist, gpref
 
+# ------------------------------------------------------------------------------
+#                                              Read session data from .list file
+
 
 def read_list(filename, verbose=False):
     """
@@ -245,6 +438,9 @@ def read_list(filename, verbose=False):
                         session[line[0]] = [line[1]]
         slist.append(session)
     return slist
+
+# ------------------------------------------------------------------------------
+#                                       Compile session list from various inputs
 
 
 def get_sessions_list(
@@ -295,17 +491,15 @@ def get_sessions_list(
 
     elif (
         re.match(r".*\.txt$", listString) or "/" in listString
-    ) and sessionids is None:
+    ) and not sessionids:
         raise ValueError(
             f"ERROR: The specified session file is not found and sessionids are not provided! [{listString}]!"
         )
 
     else:
         if (
-            re.match(r".*\.txt$", listString)
-            or "/" in listString
-            and sessionids is not None
-        ):
+            re.match(r".*\.txt$", listString) or "/" in listString
+        ) and sessionids:
             listString = sessionids
 
         slist = [e.strip() for e in re.split(r" +|,|\|", listString)]
@@ -319,48 +513,15 @@ def get_sessions_list(
                 nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{"id": os.path.basename(e)} for e in nlist]
 
-    # filter with sessionids
-    if sessionids is not None and sessionids.strip() != "":
-        sessionids = re.split(r" +|,|\|", sessionids)
-        filtered_slist = []
-        for s in slist:
-            if "id" in s and s["id"] in sessionids:
-                filtered_slist.append(s)
-            elif "session" in s and s["session"] in sessionids:
-                filtered_slist.append(s)
+    slist = SessionList(slist)
 
-        slist = filtered_slist
+    verbose=True
+
+    # filter with sessionids
+    slist = slist.filter_by_key("id", sessionids) if sessionids is not None and sessionids.strip() != "" else slist
 
     # filter with filter
-    if filter is not None and filter.strip() != "":
-        try:
-            filters = [[f.strip() for f in e.split(":")] for e in filter.split("|")]
-        except:
-            raise ge.CommandFailed(
-                "get_sessions_list",
-                "Invalid filter parameter",
-                "The provided filter parameter is invalid: '%s'" % (filter),
-                "The parameter should be a '|' separated  string of <key>:<value> pairs!",
-                "Please adjust the parameter!",
-            )
-
-        if any([len(e) != 2 for e in filters]):
-            raise ge.CommandFailed(
-                "get_sessions_list",
-                "Invalid filter parameter",
-                "The provided filter parameter is invalid: '%s'" % (filter),
-                "The parameter should be a '|' separated  string of <key>:<value> pairs!",
-                "Please adjust the parameter!",
-            )
-
-        filtered_slist = []
-        for s in slist:
-            for key, value in filters:
-                if key in s and (s[key] == value or re.match(value, s[key])):
-                    filtered_slist.append(s)
-                    break
-
-        slist = filtered_slist
+    slist = slist.filter_by_string(filter) if filter is not None and filter.strip() != "" else slist
 
     # are we inside a SLURM job array?
     if "SLURM_ARRAY_TASK_ID" in os.environ:
@@ -375,6 +536,10 @@ def get_sessions_list(
 
     return slist, gpref
 
+    
+
+# ==============================================================================
+#                                                          EXECUTION AND LOGGING
 
 def deduce_folders(args, command=None, timestamp=None):
     """
@@ -773,7 +938,7 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
         result = False
 
     if not result:
-        print("\n---> Successful completion of task")
+        print(f"\n---> Successful completion of task at {datetime.now()}")
 
     if logfile:
         sys.stdout.close()
@@ -823,7 +988,7 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
         if result:
             lf.write("\nERROR running %s\n" % name)
         else:
-            lf.write("\n---> Successful completion of task\n")
+            lf.write(f"\n---> Successful completion of task at {datetime.now()}\n")
 
         lf.close()
     else:

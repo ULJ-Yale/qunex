@@ -14,19 +14,24 @@ usage() {
     cat << EOF
 ``dwi_eddy_qc``
 
-This function is based on FSL's eddy to perform quality control on diffusion MRI
-(dMRI) datasets. It explicitly assumes the that eddy has been run and that EDDY
-QC by Matteo Bastiani, FMRIB has been installed.
+Run quality control on diffusion MRI (dMRI) datasets based on FSL's eddy.
 
-For full documentation of the EDDY QC please examine the README file.
+Warning:
+    The command  assumes that eddy has been run and that EDDY QC by Matteo Bastiani,
+    FMRIB has been installed.
 
-By default, the function assumes that eddy outputs are saved in the following
-folder::
+    For full documentation of the EDDY QC please examine the README file.
 
-    <folder_with_sessions>/<session>/hcp/<session>/Diffusion/eddy/
+    The function assumes that eddy outputs are saved in the following folder::
 
-This can be changed with the --eddypath argument, in this case eddypath should
-point to the folder that contains the eddy subfolder.
+        <folder_with_sessions>/<session>/hcp/<session>/Diffusion/eddy/
+
+    This can be changed with the --eddypath argument, in this case eddypath should
+    point to the folder that contains the eddy subfolder.
+
+..  qx_command:
+    type: processing.session
+    language: bash    
 
 Parameters:
     --sessionsfolder (str):

@@ -22,13 +22,15 @@ import nibabel as nib
 import json
 import yaml
 import pandas as pd
-import general.core as gc
-import general.parser as parser
-import general.exceptions as ge
-import qa.config as config
-import re
 from fnmatch import fnmatch
 from difflib import SequenceMatcher
+
+import qx_utilities.general.core as gc
+import qx_utilities.general.parser as parser
+import qx_utilities.general.exceptions as ge
+import qx_utilities.qa.config as config
+import re
+
 
 class QA:
     """

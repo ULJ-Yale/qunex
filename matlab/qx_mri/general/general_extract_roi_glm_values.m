@@ -2,8 +2,11 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 
 %``general_extract_roi_glm_values(flist, roif, outf, effects, frames, values, tformat, verbose)``
 %
-%   Extracts per ROI estimates of specified effects from a volume or cifti GLM
+%   Extract per ROI estimates of specified effects from a volume or cifti GLM
 %   files as specified in the file list.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -35,7 +38,9 @@ function [data] = general_extract_roi_glm_values(flist, roif, outf, effects, fra
 %
 %       --tformat (str, default 'wide,long,mat'):
 %           A comma separated string specifying in what format the data is to be
-%           extracted. It can be a combination of:
+%           extracted. 
+%
+%           It can be a combination of:
 %
 %           - 'mat'  ... a matlab file,
 %           - 'wide' ... wide format txt file with one line per session

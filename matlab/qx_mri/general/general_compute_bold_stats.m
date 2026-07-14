@@ -2,7 +2,10 @@ function [] = general_compute_bold_stats(img, mask, target, store, scrub, verbos
 
 %``general_compute_bold_stats(img, mask, target, store, scrub, verbose)``
 %
-%   Computes BOLD run per frame statistics and scrubbing information.
+%   Compute BOLD run per frame statistics and scrubbing information.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --img (str | matrix | cell | nimage):

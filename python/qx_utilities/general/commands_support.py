@@ -11,7 +11,7 @@
 Helper code for perarations of commands and their parameters
 """
 
-from general import extensions
+from qx_utilities.general import extensions
 
 # ==============================================================================
 #                                                            COMMAND DEPRECATION
@@ -173,12 +173,26 @@ deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
 # the function for checking whether a command is deprecated or not
 
-
+# @register_command(
+#     description="Checks for deprecated commands, remaps deprecated ones, and notifies the user.",
+#     type="utility")
 def check_deprecated_commands(command):
     """
-    check_deprecated_commands(options, deprecatedCommands)
-    Checks for deprecated commands, remaps deprecated ones
-    and notifies the user.
+    ``check_deprecated_commands command``
+
+    Check for deprecated commands, print a warning if needed and
+    return the updated command name.
+
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --command (str):
+        The command to check for deprecation.
+    
+    Returns:
+        --new_command (str):
+        The updated command name if it was deprecated, otherwise the original command name.
     """
 
     # store the command
@@ -258,6 +272,12 @@ deprecated_parameters = {
     "PEdir": "pedir",
     "sequenceinfo": "add_json_info",
     "hcp_icafix_traindata": "hcp_icafix_model",
+
+    # parcellate_anat -> hcp_parcellate_anat (legacy parameter name mapping)
+    "inputdatatype": "hcp_parcellate_input_type",
+    "parcellationfile": "hcp_parcellate_dlabel",
+    "outname": "hcp_parcellate_output_name",
+    "extractdata": "hcp_parcellate_extract_data",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

@@ -20,11 +20,13 @@ import os.path
 import time
 import re
 
-import general.exceptions as ge
-import general.core as gc
-import general.process as gp
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.process as gp
+from qx_registry import qx_commands
 
 from datetime import datetime
+
 
 
 def schedule(
@@ -40,201 +42,189 @@ def schedule(
     parelements=1,
 ):
     """
-    ::
+    ``schedule [command=<command string>] [script=<path to script>] settings=<settings string> [replace=<"key:value|key:value" string>] [workdir=<path to working directory>] [environment=<path to environment setup script>] [output=<string specifying how to process output>]``
 
-        schedule [command=<command string>] [script=<path to script>] \\
-                 settings=<settings string> \\
-                 [replace=<"key:value|key:value" string>] \\
-                 [workdir=<path to working directory>] \\
-                 [environment=<path to environment setup script>] \\
-                 [output=<string specifying how to process output>]
+    Schedule the provided command.
 
-    Schedules the provided command.
+    ..  qx_command:
+        type: utility
 
-    INPUTS
-    ======
+    Parameters:
+        --command (str):
+            The command string to be executed by the scheduler.
 
-    Required parameters
-    -------------------
+        --script (str):
+            The path to a script to be executed by the scheduler.
 
-    To run successfully, one of the following has to be provided:
+        --settings (str):
+            A string specifying the scheduler to be used and the additional
+            settings for it.
 
-    --command   The string to be executed. It can be a single command or a
-                complex multiline script.
-    --script    The path to a script to be executed.
+            Settings string should be a comma separated list of parameters. The first
+            parameter has to be the scheduler name (PBS, SLURM or GridEngine), the rest
+            of the parameters are key-value pairs that are to be passed as settings to
+            the scheduler.
 
-    The settings need to be specified by:
+            Example settings strings::
 
-    --settings  A string specifying the scheduler to be used and the additional
-                settings for it.
+                "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
+        
+        --replace (str):
+            A string of key-value pairs that specify the specific values
+            to be imputed into the script or command.
 
-    Settings string should be a comma separated list of parameters. The first
-    parameter has to be the scheduler name (PBS, SLURM or GridEngine), the rest
-    of the parameters are key-value pairs that are to be passed as settings to
-    the scheduler.
+        --workdir (str):
+            A path to the working directory in which the command or
+            script is to be executed.
 
-    Example settings strings::
+        --environment (str):
+            A path to a script to be executed before all other commands
+            to set up the environment for execution.
 
-        "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
+        --output (str):
+            A string specifying whether to return or redirect the
+            standard output and error. See "REDIRECTING OUTPUT" for
+            details
 
-    Optional parameters
-    -------------------
+        --bash (str):
+            Used if any additional commands have to be run in the
+            compute node before the execution of the QuNex command
+            itself. Use a semicolon separated list to chain multiple
+            commands.
 
-    --replace       A string of key-value pairs that specify the specific values
-                    to be imputed into the script or command.
-    --workdir       A path to the working directory in which the command or
-                    script is to be executed.
-    --environment   A path to a script to be executed before all other commands
-                    to set up the environment for execution.
-    --output        A string specifying whether to return or redirect the
-                    standard output and error. See "REDIRECTING OUTPUT" for
-                    details
-    --bash          Used if any additional commands have to be run in the
-                    compute node before the execution of the QuNex command
-                    itself. Use a semicolon separated list to chain multiple
-                    commands. ['']
+    Notes:
 
-    If the optional parameters are not specified, they will not be used.
+        Schedules the provided command the referenced script to be run by the
+        specified scheduler (PBS, SLURM and GridEngine are currently supported).
 
-    VALUE EMBEDDING
-    ---------------
+        command, script and settings are required parameters. If the optional 
+        parameters are not specified, they will not be used.
 
-    If replace parameter is set, all instances of {{key}} in the command or
-    script will be replaced with the provided value. The key/value pairs need
-    to be separated by the pipe character, whereas key and value need to be
-    separated by a colon. An example replacement string::
+        Value substitution in command or script
+    
+        If replace parameter is set, all instances of {{key}} in the command or
+        script will be replaced with the provided value. The key/value pairs need
+        to be separated by the pipe character, whereas key and value need to be
+        separated by a colon. An example replacement string::
 
-        "session:AP23791|folder:/studies/WM/sessions/AP23791"
+            "session:AP23791|folder:/studies/WM/sessions/AP23791"
 
-    REDIRECTING OUTPUT
-    ------------------
+        Redirecting output
+    
+        If no output is specified, the job's standard output and error (stdout,
+        stderr) are left as is and processed by the scheduler, and the result of
+        submitting the job is printed to standard output. Output string can specify
+        four different directives provided by "<key>:<value>" strings separated by
+        pipe:
 
-    If no output is specified, the job's standard output and error (stdout,
-    stderr) are left as is and processed by the scheduler, and the result of
-    submitting the job is printed to standard output. Output string can specify
-    four different directives provided by "<key>:<value>" strings separated by
-    pipe:
+        - stdout  (specifies a path to a log file that should store standard output
+          of the submitted job.)
+        - stderr  (specified a path to a log file that should store error output
+          of the submitted job.)
+        - both    (specifies a path to a log file that should store joint standard
+          and error outputs of the submitted job.)
+        - return  (specifies whether standard output ('stdout'), error outpout
+          ('stderr'), both ('both') or none ('none') should be returned as
+          a string from the job submission call.)
 
-    - stdout  (specifies a path to a log file that should store standard output
-      of the submitted job.)
-    - stderr  (specified a path to a log file that should store error output
-      of the submitted job.)
-    - both    (specifies a path to a log file that should store joint standard
-      and error outputs of the submitted job.)
-    - return  (specifies whether standard output ('stdout'), error outpout
-      ('stderr'), both ('both') or none ('none') should be returned as
-      a string from the job submission call.)
+        Specify "return" value only when schedule is used as a function called from
+        another python script or function to process the result.
 
-    Specify "return" value only when schedule is used as a function called from
-    another python script or function to process the result.
+        Examples:
 
-    Examples
-    ~~~~~~~~
+        ::
 
-    ::
+            "stdout:processing.log"
 
-        "stdout:processing.log"
+        ::
 
-    ::
+            "stdout:processing.output.log|stderr:processing.error.log"
 
-        "stdout:processing.output.log|stderr:processing.error.log"
+        ::
 
-    ::
+            "both:processing.log|return:true"
 
-        "both:processing.log|return:true"
+        Do not specify error and standard outputs both using --output parameter and
+        scheduler specific options within settings string.
 
-    Do not specify error and standard outputs both using --output parameter and
-    scheduler specific options within settings string.
+        Scheduler specifics:
 
-    SCHEDULER SPECIFICS
-    -------------------
+            Each of the supported scheduler systems has a somewhat different way of
+            specifying job parameters. Please see documentation for each of the
+            supported schedulers to provide the correct settings. Below are the
+            information for each of the schedulers on how to specify --settings.
 
-    Each of the supported scheduler systems has a somewhat different way of
-    specifying job parameters. Please see documentation for each of the
-    supported schedulers to provide the correct settings. Below are the
-    information for each of the schedulers on how to specify --settings.
+            PBS settings:
 
-    PBS settings
-    ~~~~~~~~~~~~
+                PBS uses various flags to specify parameters. Be careful that the settings
+                string includes only comma separated 'key=value' pairs. Scheduler will then
+                do its best to use the right flags. Specifically:
 
-    PBS uses various flags to specify parameters. Be careful that the settings
-    string includes only comma separated 'key=value' pairs. Scheduler will then
-    do its best to use the right flags. Specifically:
+                Keys: mem, walltime, software, file, procs, pmem, feature, host,
+                naccesspolicy, epilogue, prologue will be submitted using::
 
-    Keys: mem, walltime, software, file, procs, pmem, feature, host,
-    naccesspolicy, epilogue, prologue will be submitted using::
+                    "#PBS -l <key>=<value>"
 
-        "#PBS -l <key>=<value>"
+                Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using::
 
-    Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using::
+                    "#PBS -<key> <value>"
 
-        "#PBS -<key> <value>"
+                Key: depend will be submitted using::
 
-    Key: depend will be submitted using::
+                    "#PBS -W depend=<value>"
 
-        "#PBS -W depend=<value>"
+                Key: umask will be submitted using::
 
-    Key: umask will be submitted using::
+                    "#PBS -W umask=<value>"
 
-        "#PBS -W umask=<value>"
+                Key: nodes is a special case. It will be submitted as::
 
-    Key: nodes is a special case. It will be submitted as::
+                    "#PBS -l <value>"
 
-        "#PBS -l <value>"
+            SLURM settings:            
 
-    SLURM settings
-    ~~~~~~~~~~~~~~
+                For SLURM any provided key/value pair will be passed in the form::
 
-    For SLURM any provided key/value pair will be passed in the form::
+                    "#SBATCH --<key>=<value>"
 
-        "#SBATCH --<key>=<value>"
+                Some of the possible parameters to set are:
 
-    Some of the possible parameters to set are:
+                - partition        (The partition (queue) to use.)
+                - nodes            (Total number of nodes to run on.)
+                - cpus-per-task    (Number of cores per task.)
+                - time             (Maximum wall time DD-HH:MM:SS.)
+                - constraint       (Specific node architecture.)
+                - mem-per-cpu      (Memory requested per CPU in MB.)
+                - mail-user        (Email address to send notifications to.)
+                - mail-type        (On what events to send emails.)
 
-    - partition        (The partition (queue) to use.)
-    - nodes            (Total number of nodes to run on.)
-    - cpus-per-task    (Number of cores per task.)
-    - time             (Maximum wall time DD-HH:MM:SS.)
-    - constraint       (Specific node architecture.)
-    - mem-per-cpu      (Memory requested per CPU in MB.)
-    - mail-user        (Email address to send notifications to.)
-    - mail-type        (On what events to send emails.)
+            GridEngine settings:
 
-    GridEngine settings
-    ~~~~~~~~~~~~~~~~~~~
+                For GridEngine the comma separated list of settings will be unwrapped and
+                each setting will be passed to the scheduler "as is". For example:
 
-    For GridEngine the comma separated list of settings will be unwrapped and
-    each setting will be passed to the scheduler "as is". For example:
+                    ---scheduler="GridEngine,N example_job,l h_rt=24:00:00,pe smp 1,l mem_free=32G"
 
-        ---scheduler="GridEngine,N example_job,l h_rt=24:00:00,pe smp 1,l mem_free=32G"
+                Will be converted to the following GridEngine header:
 
-    Will be converted to the following GridEngine header:
+                    #$ -N example_job
+                    #$ -l h_rt=24:00:00
+                    #$ -pe smp 1
+                    #$ -l mem_free=32G
 
-        #$ -N example_job
-        #$ -l h_rt=24:00:00
-        #$ -pe smp 1
-        #$ -l mem_free=32G
+    Examples:
 
-    USE
-    ===
+        ::
 
-    Schedules the provided command the referenced script to be run by the
-    specified scheduler (PBS, SLURM and GridEngine are currently supported).
+            qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
+                           settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
 
-    EXAMPLE USE
-    ===========
+        ::
 
-    ::
-
-        qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
-
-    ::
-
-        qunex schedule command="bet {{in}} {{out}}" \\
-                       replace="in:t1.nii.gz|out:brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week" \\
-                       workdir="/studies/WM/sessions/AP23791/images/structural"
+            qunex schedule command="bet {{in}} {{out}}" \\
+                           replace="in:t1.nii.gz|out:brain.nii.gz" \\
+                           settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week" \\
+                           workdir="/studies/WM/sessions/AP23791/images/structural"
     """
 
     # --- check inputs
@@ -625,8 +615,8 @@ def runThroughScheduler(
                     settings[s.strip()] = None
 
         # only allow HCP MPP commands with job array
+        qx_command = command.split(" ")[0]
         if slurm_array:
-            qx_command = command.split(" ")[0]
 
             array_commands = [
                 "hcp_pre_freesurfer",
@@ -663,8 +653,9 @@ def runThroughScheduler(
         if chunks < parjobs:
             parjobs = chunks
 
-        # do not create multiple jobs if running a multi-session command
-        if command in gp.mactions or command in gp.lactions:
+        # do not create multiple jobs if running a multi-session command (registered commands only)
+        sched_command = qx_commands.get(qx_command)
+        if sched_command and "processing.study" in sched_command.type:
             parjobs = 1
 
         # init queues

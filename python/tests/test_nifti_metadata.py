@@ -10,12 +10,7 @@ import os
 import tempfile
 import struct
 
-# Add the parent directory to the path to import qx_utilities
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, parent_dir)
-sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
-
-from general.img import niftihdr, print_nifti_metadata, compare_nifti_images
+from qx_utilities.general.img import niftihdr, print_nifti_metadata, compare_nifti_images
 
 
 def create_nifti_with_metadata(filename, add_cifti=False, add_qunex=False):

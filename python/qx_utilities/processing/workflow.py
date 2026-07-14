@@ -40,12 +40,13 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from functools import partial
 
-import general.core as gc
-import general.exceptions as ge
-import general.filelock as fl
-import general.img as gi
-import general.meltmovfidl as gm
-import processing.core as pc
+import qx_utilities.processing.core as pc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.meltmovfidl as gm
+import qx_utilities.general.img as gi
+import qx_utilities.general.core as gc
+
 
 if "QUNEXMCOMMAND" not in os.environ:
     print(
@@ -56,9 +57,32 @@ else:
     mcommand = os.environ["QUNEXMCOMMAND"]
 
 
+
 def get_bold_data(sinfo, options, overwrite=False, thread=0):
     """
-    get_bold_data - documentation not yet available.
+    ``get_bold_data [... processing options]``
+
+    Map NIL preprocessed data into the session's images folder.
+
+    ..  qx_command:
+        type: processing.session
+
+    Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the session information.
+
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --sessionsfolder (str, default '.'):
+            The path to the study/sessions folder.
+
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
+
+        --logfolder (str, default ''):
+            The path to the folder where runlogs and comlogs are to be stored,
+            if other than default.
     """
     bsearch = re.compile(r"bold([0-9]+)")
 
@@ -191,11 +215,16 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     return r
 
 
+
+
 def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     """
     ``create_bold_brain_masks [... processing options]``
 
-    Extracts the brain and creates a brain mask for each BOLD image.
+    Extract the brain and create a brain mask for each BOLD image.
+
+    ..  qx_command:
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -644,7 +673,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
         log_prefix = "error"
     elif not overwrite and final_log == "":
         final_log = "Previous results present, overwrite set to no.\n\n"
-        final_log = final_log + "---> Successful completion of task"
+        final_log = final_log + f"---> Successful completion of task at {datetime.now()}"
 
     # print to log file
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -678,11 +707,16 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldinfo):
     return {"r": r, "report": report}
 
 
+
+
 def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     """
     ``compute_bold_stats [... processing options]``
 
-    Processes specified BOLD files and saves images/function/movement files.
+    Process specified BOLD files and save images/function/movement files.
+
+    ..  qx_command:
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -1075,12 +1109,16 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldinfo):
     return {"r": r, "report": report}
 
 
+
 def create_stats_report(sinfo, options, overwrite=False, thread=0):
     """
-    ``create_stats_report(sinfo, options, overwrite=False, thread=0)``
+    ``create_stats_report [... processing options]``
 
-    Processes movement correction parameters and computed BOLD statistics to
+    Process movement correction parameters and computed BOLD statistics to
     create per session plots and fidl snippets and group reports.
+
+    ..  qx_command:
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -1607,11 +1645,17 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     )
 
 
+# -> @register_command(
+#        description="Extract nuisance signal from BOLD images.",
+#         type="processing.session")
 def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     """
     ``extract_nuisance_signal [... processing options]``
 
-    Extracts nuisance signal from volume BOLD files.
+    Extract nuisance signal from volume BOLD files.
+
+    ..  qx_command:
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -1995,6 +2039,10 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldinfo):
     return {"r": r, "report": report}
 
 
+
+# -> @register_command(
+#        description="Preprocesses single BOLD images.",
+#         type="processing.session")
 def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     """
     ``preprocess_bold [... processing options]``
@@ -2005,22 +2053,32 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     processing multiple bold files from a session for task-related analysis,
     please use the ``preprocess_conc`` command instead.
 
-    preprocess_bold is a complex general purpose command implementing spatial
-    and temporal filtering, and multiple regression (GLM) to enable both
-    preprocessing and denoising of BOLD files for further analysis, as well as
-    complex activation modeling that creates GLM files for second-level
-    analyses. The function enables the following actions:
+    Description:
+        Prepares BOLD files for further analysis. It performs spatial smoothing, 
+        temporal filtering, removal of nuisance signals and complex modeling of 
+        events. It is to be used when processing individual bold files. When
+        processing multiple bold files from a session for task-related analysis,
+        please use the ``preprocess_conc`` command instead.
 
-    - spatial smoothing (3D or 2D for cifti files)
-    - temporal filtering (high-pass, low-pass)
-    - removal of nuisance signal
-    - complex modeling of events.
+        preprocess_bold is a complex general purpose command implementing spatial
+        and temporal filtering, and multiple regression (GLM) to enable both
+        preprocessing and denoising of BOLD files for further analysis, as well as
+        complex activation modeling that creates GLM files for second-level
+        analyses. The function enables the following actions:
 
-    The function makes use of a number of files and accepts a long list of
-    arguments that make it very powerful and flexible but also require care in
-    its use. What follows is a detailed documentation of its actions and
-    parameters organized by actions in the order they would be most commonly
-    done. Use and parameter description will be intertwined.
+        - spatial smoothing (3D or 2D for cifti files)
+        - temporal filtering (high-pass, low-pass)
+        - removal of nuisance signal
+        - complex modeling of events.
+
+        The function makes use of a number of files and accepts a long list of
+        arguments that make it very powerful and flexible but also require care in
+        its use. What follows is a detailed documentation of its actions and
+        parameters organized by actions in the order they would be most commonly
+        done. Use and parameter description will be intertwined.
+
+    ..  qx_command:
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -2882,25 +2940,33 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     r"""
     ``preprocess_conc [... processing options]``
 
-    Performs spatial smoothing, temporal filtering, removal of nuisance signals
-    and complex modeling of events.
+    Preproces conc bundles of BOLD images.
 
-    preprocess_conc is a complex general purpose command implementing spatial
-    and temporal filtering, and multiple regression (GLM) to enable both
-    preprocessing and denoising of BOLD files for further analysis, as well as
-    complex activation modeling that creates GLM files for second-level
-    analyses. The function enables the following actions:
+    Description:
+        Performs spatial smoothing, temporal filtering, removal of nuisance signals
+        and complex modeling of events.
 
-    - spatial smoothing (3D or 2D for cifti files)
-    - temporal filtering (high-pass, low-pass)
-    - removal of nuisance signal
-    - complex modeling of events.
+        preprocess_conc is a complex general purpose command implementing spatial
+        and temporal filtering, and multiple regression (GLM) to enable both
+        preprocessing and denoising of BOLD files for further analysis, as well as
+        complex activation modeling that creates GLM files for second-level
+        analyses. The function enables the following actions:
 
-    The function makes use of a number of files and accepts a long list of
-    arguments that make it very powerful and flexible but also require care in
-    its use. What follows is a detailed documentation of its actions and
-    parameters organized by actions in the order they would be most commonly
-    done. Use and parameter description will be intertwined.
+        - spatial smoothing (3D or 2D for cifti files)
+        - temporal filtering (high-pass, low-pass)
+        - removal of nuisance signal
+        - complex modeling of events.
+
+        The function makes use of a number of files and accepts a long list of
+        arguments that make it very powerful and flexible but also require care in
+        its use. What follows is a detailed documentation of its actions and
+        parameters organized by actions in the order they would be most commonly
+        done. Use and parameter description will be intertwined.
+
+    ..  qx_command:
+        type: processing.session
+
+    
 
     Parameters:
         --batchfile (str, default ''):
@@ -3832,3 +3898,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (sinfo["id"], report, failed))
+
+
+

@@ -2,30 +2,32 @@ function [roi] = general_create_roi(targetf, roi, mask, options)
 
 %``general_create_roi(targetf, roi, mask, options)``
 %
-% Creates an image file with regions of interest masks(s) based on the provided
-% ROI specification. This is a wrapper function that calls nimage.img_prep_roi
-% method. Please refer to the documentation of the latter for more details.
+%   Create an image file with regions of interest masks(s) based on the provided
+%   ROI specification. This is a wrapper function that calls nimage.img_prep_roi
+%   method. Please refer to the documentation of the latter for more details.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
-%       -- targetf: (str)
+%       --targetf (str):
 %           Path to the target image file that should be created. The path can
 %           include the full file name including the extension. If the extension
 %           is not provided or does not match the file format, the function will
 %           create the appropriate extension. The default extension for volume
 %           images is '.nii.gz' and for cifti images '.dlabel.nii'.
 %
-%       -- roi: (str or nimage object):
+%       --roi (str|nimage object):
 %           See nimage.img_prep_roi documentation for details.
 %
-%       --mask (str, integer, or nimage object, default ''):
+%       --mask (str|integer|nimage, default ''):
 %           See nimage.img_prep_roi documentation for details.
 %
-%       --options (str, default ``'check:warning|volumes:|maps:|rois:|roinames:|standardize:no|threshold:'``):
+%       --options (str, default 'check:warning\|volumes:\|maps:\|rois:\|roinames:\|standardize:no\|threshold:'):
 %           See nimage.img_prep_roi documentation for details.
 %
-%   Output:
-%
-%       img
+%   Results:
+%       --img (nimage):
 %           A nimage object with an `roi` structure array defining the ROI.
 %           See nimage.img_prep_roi documentation for details.
 

@@ -14,14 +14,18 @@ usage() {
     cat << EOF
 ``dwi_bedpostx_gpu``
 
-This function runs the FSL bedpostx command, by default it will facilitate
-GPUs to speed the processing.
+Run FSL bedpostx command wile making use of GPUs to speed up the processing.
 
-It explicitly assumes the Human Connectome Project folder structure for
-preprocessing and completed diffusion processing. By default DWI data is
-expected to be in the following folder::
+..  qx_command:
+    type: processing.session
+    language: bash
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+Warning:
+    The command explicitly assumes the Human Connectome Project folder structure 
+    for preprocessing and completed diffusion processing. DWI data is expected to
+    be in the following folder::
+
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
 
 This can be changed with the --diffusion_folder parameter.
 

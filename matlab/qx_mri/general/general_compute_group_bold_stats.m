@@ -2,7 +2,10 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 
 %``general_compute_group_bold_stats(flist, tfile, stats, inmask, ignore)``
 %
-%   A command for extraction of image statistics over the whole group.
+%   Extract of image statistics over the whole group.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -20,7 +23,9 @@ function [] = general_compute_group_bold_stats(flist, tfile, stats, inmask, igno
 %           frames to use.
 %
 %       --ignore (str, default 'no'):
-%           Do we omit frames to be ignored:
+%           What to do with the frames marked as bad.
+%
+%           Options are:
 %
 %           'no'
 %               do not ignore any additional frames

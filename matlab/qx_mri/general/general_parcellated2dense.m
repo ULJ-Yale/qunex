@@ -4,11 +4,14 @@ function [img] = general_parcellated2dense(inimg, outimg, verbose, missingvalues
 %
 %   Expands the parcelated file to a dense file
 %
+%   .. qx_command:
+%       type: matlab
+%
 %   Parameters:
 %       --inimg (str):
 %           A path to the image to expand.
 %
-%       --outimg (str, default inimg):
+%       --outimg (str):
 %           An optional path where the expanded image is to be saved. If not
 %           provided, the specified inimg path is used.
 %

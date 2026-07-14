@@ -14,26 +14,31 @@ usage() {
     cat << EOF
 ``dwi_legacy_gpu``
 
-This function runs the DWI preprocessing using the FUGUE method for legacy data
-that are not TOPUP compatible.
+Run DWI preprocessing using the FUGUE method for legacy data that are not TOPUP 
+compatible.
 
-It explicitly assumes the the Human Connectome Project folder structure for
-preprocessing.
+..  qx_command:
+    type: processing.session
+    language: bash
 
-DWI data needs to be in the following folder::
+Warning: 
+    The command assumes the Human Connectome Project folder structure for
+    preprocessing.
 
-    <study_folder>/<session>/hcp/<session>/unprocessed/Diffusion
+    DWI data needs to be in the following folder::
 
-T1w data needs to be in the following folder::
+        <study_folder>/<session>/hcp/<session>/unprocessed/Diffusion
 
-    <study_folder>/<session>/hcp/<session>/T1w
+    T1w data needs to be in the following folder::
 
-Warning:
-    - If PreFreeSurfer component of the HCP Pipelines was run the function will
-      make use of the T1w data [Results will be better due to superior brain
-      stripping].
-    - If PreFreeSurfer component of the HCP Pipelines was NOT run the
-      function will start from raw T1w data [Results may be less optimal]. -
+        <study_folder>/<session>/hcp/<session>/T1w
+
+    If PreFreeSurfer component of the HCP Pipelines was run the function will
+    make use of the T1w data [Results will be better due to superior brain
+    stripping].
+
+    If PreFreeSurfer component of the HCP Pipelines was NOT run the
+    function will start from raw T1w data [Results may be less optimal].
 
 Parameters:
     --sessionsfolder (str, default '.'):

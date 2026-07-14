@@ -27,8 +27,8 @@ import os
 import os.path
 import shutil
 
-import general.core as gc
-import general.exceptions as ge
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
 
 # ---- some definitions
 unwarp = {
@@ -67,6 +67,7 @@ def checkInlineParameterUse(modality, parameter, options):
     )
 
 
+
 def setup_hcp(
     sourcefolder=".",
     targetfolder="hcp",
@@ -82,9 +83,11 @@ def setup_hcp(
     """
     ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""] [use_sequence_info=all] [slice_timing_info=no]``
 
-    The command maps images from the sessions's nii folder into a folder
-    structure that conforms to the naming conventions used in the HCP minimal
+    Map session data into a folder structure compliant with HCP minimal 
     preprocessing workflow.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -114,6 +117,7 @@ def setup_hcp(
 
         --existing (str, default 'add'):
             What to do if the hcp folder already exists.
+
             Options are:
 
             - 'abort'  ... abort setting up hcp folder,
@@ -158,7 +162,7 @@ def setup_hcp(
             specification (e.g. `all`) implies all more specific cases (e.g.
             `T1w:all`).
 
-        --slice_timing_info (str, default 'no')
+        --slice_timing_info (str, default 'no'):
             Whether to prepare ('yes') a file for each bold image with the
             slice timing information for fsl slicetimer or not ('no').
 
@@ -747,16 +751,21 @@ def setup_hcp(
     return
 
 
+
 def prepare_slice_timing(jsonfile, slicetimingfile):
     """
     ``prepare_slice_timing jsonfile=<path to json file> slicetimingfile=<path to slice timing file>``
 
-    The command reads the JSON sidecart file for slice timing information and
-    prepares a slice timing txt file compatible with fsl slicetimer.
+    Read the JSON sidecar file for slice timing information and
+    prepare a slice timing txt file compatible with fsl slicetimer.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
-        --json (str):
+        --jsonfile (str):
             A path to the JSON file that contains the slice timing information.
+
         --slicetimingfile (str):
             A path to the slice timing file to be created.
 

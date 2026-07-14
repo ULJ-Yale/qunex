@@ -14,14 +14,18 @@ usage() {
     cat << EOF
 ``dwi_parcellate``
 
-This function implements parcellation on the DWI dense connectomes using a
-whole-brain parcellation (e.g. Glasser parcellation with subcortical labels
-included).
+Parcellate DWI dense connectome using a whole-brain parcellation (e.g. Glasser 
+parcellation with subcortical labels included).
 
-It explicitly assumes the the Human Connectome Project folder structure for
-preprocessing. Dense Connectome DWI data needs to be in the following folder::
+Warning:
+    The command assumes Human Connectome Project folder structure for
+    preprocessing. Dense Connectome DWI data needs to be in the following folder::
 
-    <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/
+        <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/
+
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Parameters:
     --sessionsfolder (str):

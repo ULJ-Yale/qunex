@@ -33,18 +33,24 @@ import shutil
 import traceback
 from datetime import datetime
 
-import processing.core as pc
+import qx_utilities.processing.core as pc
+
 
 
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_f99 [... processing options]``
 
-    ``f99 [... processing options]``
+    Run FSL's F99 registration for macaque diffusion/structural data.
 
-    This command executes FSL's F99 script for registering your own diffusion
-    or structural data to the F99 atlas. This atlas is used when processing
-    macaque data.
+    ..  qx_command:
+        type: processing.session
+        aliases: f99
+
+    Description:
+        This command runs FSL's F99 script for registering your own diffusion
+        or structural data to the F99 atlas. This atlas is used when processing
+        macaque data.
 
     Warning:
         To use this command, successful completion of FSL's dtifit processing
@@ -249,13 +255,17 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_xtract [... processing options]``
 
-    ``fslx [... processing options]``
+    Run FSL's XTRACT (cross-species tractography) command.
 
-    This command executes FSL's XTRACT (cross-species tractography) command.
-    It can be used to automatically extract a set of carefully dissected tracts
-    in humans and macaques. It can also be used to define one's own tractography
-    protocols where all the user needs to do is to define a set of masks in
-    standard space (e.g. MNI152).
+    ..  qx_command:
+        type: processing.session
+        aliases: fslx
+
+    Description:
+        The command can be used to automatically extract a set of carefully dissected tracts
+        in humans and macaques. It can also be used to define one's own tractography
+        protocols where all the user needs to do is to define a set of masks in
+        standard space (e.g. MNI152).
 
     Warning:
         Successful completion of FSL's bedpostx processing (dwi_bedpostx_gpu
@@ -596,17 +606,26 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
+
+# -> @register_command(
+#        description="Run CUDIMOT's NODDI microstructure modelling using GPU acceleration.",
+#         type="processing.session.dwi")
 def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_noddi_gpu [... processing options]``
 
-    ``noddi [... processing options]``
+    Run CUDIMOT NODDI microstructure modelling using GPU acceleration.
 
-    This command executes CUDIMOT's NODDI microstructure modelling. It uses
-    precompiled CUDA (GPU) binaries and therefore requires a CUDA capable GPU to
-    run. Currently supported CUDA version are 10.2, 11.3 and 12. The command can
-    use two different models: Watson and Bingham. The Watson model is used by
-    default.
+    ..  qx_command:
+        type: processing.session
+        aliases: noddi
+
+    Description:
+        This command runs CUDIMOT's NODDI microstructure modelling. It uses
+        precompiled CUDA (GPU) binaries and therefore requires a CUDA capable GPU to
+        run. Currently supported CUDA version are 10.2, 11.3 and 12. The command can
+        use two different models: Watson and Bingham. The Watson model is used by
+        default.
 
     Warning:
         To use this command, successful completion of hcp_diffusion or

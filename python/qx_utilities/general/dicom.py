@@ -44,12 +44,13 @@ import csv
 import json
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import general.core as gc
-import general.img as gi
-import general.nifti as gn
-import general.qximg as qxi
-import general.exceptions as ge
-from general.parsing import true_or_false
+import qx_utilities.general.core as gc
+import qx_utilities.general.img as gi
+import qx_utilities.general.nifti as gn
+import qx_utilities.general.qximg as qxi
+import qx_utilities.general.exceptions as ge
+from qx_utilities.general.parsing import true_or_false
+
 from datetime import datetime
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -478,6 +479,7 @@ def getTRTE(info):
     return float(TR), float(TE)
 
 
+
 def dicom2nii(
     folder=".",
     clean="no",
@@ -490,7 +492,10 @@ def dicom2nii(
     """
     ``dicom2nii [folder=.] [clean=no] [unzip=ask] [gzip=folder] [verbose=True] [parelements=1]``
 
-    Converts MR images from DICOM to NIfTI format.
+    Process sessions's DICOM or PAR/REC files and generate NIfTI files using dcm2niix.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --folder (str, default '.'):
@@ -512,12 +517,12 @@ def dicom2nii(
             'folder', 'file', 'no'.
 
         --verbose (bool, default True):
-             Whether to be report on the progress (True) or not (False).
+            Whether to report on the progress (True) or not (False).
 
         --parelements (int | str, default 1):
-              How many parallel processes to run dcm2nii conversion with. The
-              number is 1 by default, if specified as 'all', all available
-              resources are utilized.
+            How many parallel processes to run dcm2nii conversion with. The
+            number is 1 by default, if specified as 'all', all available
+            resources are utilized.
 
     Output files:
         After running, the command will place all the generated NIfTI files
@@ -1140,7 +1145,10 @@ def dicom2niix(
     """
     ``dicom2niix [folder=.] [clean=no] [unzip=yes] [gzip=folder] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [add_image_type=0] [add_json_info=""]``
 
-    Converts MR images from DICOM and PAR/REC files to NIfTI format.
+    Process sessions's DICOM or PAR/REC files and generate NIfTI files using dcm2niix.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --folder (str, default '.'):
@@ -1161,14 +1169,14 @@ def dicom2niix(
             ('folder'), or leave them ungzipped ('no'). Valid options are
             'folder', 'file', 'no'.
 
-        --sessionid (str, default extracted from dicom files):
+        --sessionid (str, default ''):
             The id code to use for this session. If not provided, the session id
-            is extracted from dicom files.
+            is extracted from dicom files. 
 
         --verbose (bool, default True):
-            Whether to be report on the progress (True) or not (False).
+            Whether to report on the progress (True) or not (False).
 
-        --parelements (int | str, default 1):
+        --parelements (str, default '1'):
             How many parallel processes to run dcm2nii conversion with. The
             number is one by defaults, if specified as 'all', all available
             resources are utilized.
@@ -2300,11 +2308,15 @@ def _unzip_dicom(dicom_root_folder, parelements):
             raise ge.CommandError("_unzip_dicom", "Unable to unzip one or more files")
 
 
-def sort_dicom(folder=".", **kwargs):
+
+def sort_dicom(folder=".", copy='move', outdir=None, files=None):
     """
     ``sort_dicom [folder=.]``
 
-    Sorts DICOM files.
+    Sort DICOM files from the specified folder.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --folder (str, default '.'):
@@ -2372,21 +2384,24 @@ def sort_dicom(folder=".", **kwargs):
 
     print("Running sort_dicom\n=================")
 
-    should_copy = kwargs.get("copy", False)
-    if should_copy:
-        from shutil import copy
+    if copy is None:
+        copy = 'move'
 
+    if copy == 'copy':
+        from shutil import copy
         doFile = copy
     else:
         doFile = os.rename
 
     # --- establish target folder
 
-    dcmf = os.path.join(kwargs.get("out_dir", folder), "dicom")
+    if outdir is None:
+        dcmf = os.path.join(folder, "dicom")
+    else:
+        dcmf = os.path.join(outdir, "dicom")
 
     # --- get list of files
 
-    files = kwargs.get("files", None)
     if files is None:
         inbox = os.path.join(folder, "inbox")
         if not os.path.exists(inbox):
@@ -3104,8 +3119,10 @@ def list_dicom(folder=None):
     """
     ``list_dicom [folder=inbox]``
 
-    Inspects a folder for dicom files and prints a detailed report of the
-    results.
+    Identify all DICOM files in a folder and print a detailed report.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --folder (str, default 'inbox'):
@@ -3170,11 +3187,15 @@ def list_dicom(folder=None):
     return
 
 
+
 def split_dicom(folder=None):
     """
     ``split_dicom [folder=inbox]``
 
-    Sorts out DICOM images from different sessions.
+    Sort out DICOM images from different sessions.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --folder (str, default 'inbox'):
@@ -3263,8 +3284,10 @@ def import_dicom(
     r"""
     ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]``
 
-    Automatically processes packets with individual sessions' DICOM or PAR/REC
-    files all the way to, and including, generation of NIfTI files.
+    Process sessions's DICOM or PAR/REC files and generate NIfTI files.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -3281,7 +3304,7 @@ def import_dicom(
             the list specifies the session folders to process, and it can
             include glob patterns.
 
-        --masterinbox (str, default <sessionsfolder>/inbox/MR):
+        --masterinbox (str, default '<sessionsfolder>/inbox/MR'):
             The master inbox folder with packages to process. By default
             masterinbox is in sessions folder: <sessionsfolder>/inbox/MR. If
             the packages are elsewhere, the location can be specified here. If
@@ -3291,8 +3314,9 @@ def import_dicom(
 
         --check (str, default 'any'):
             The type of check to perform when packages or session folders are
-            identified. The possible values are:
-
+            identified. 
+            
+            The possible values are:
             - 'no'  ... report and continue w/o additional checks
             - 'any' ... continue if any packages are ready to process report error otherwise.
 
@@ -3305,8 +3329,9 @@ def import_dicom(
             session name from the session or packet name.
 
         --tool (str, default 'auto'):
-            What tool to use for the conversion. It can be one of:
-
+            What tool to use for the conversion. 
+            
+            It can be one of:
             - 'auto' (determine best tool based on heuristics)
             - 'dcm2niix'
             - 'dcm2nii'
@@ -3327,7 +3352,9 @@ def import_dicom(
             information>]"``.
 
         --archive (str, default 'leave'):
-            What to do with a processed package. Options are:
+            What to do with a processed package. 
+            
+            Options are:
 
             - 'move'   ... move the package to the default archive folder
             - 'copy'   ... copy the package to the default archive folder
@@ -4528,43 +4555,43 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
     """
     ``get_dicom_info dicomfile=<dicom_file> [scanner=siemens]``
 
-    Inspects the specified DICOM file.
+    Inspect the specified DICOM file.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --dicomfile      The path to the DICOM file to be inspected.
-    --scanner        The scanner on which the data was acquired, currently only
-                     "siemens" and "philips" are supported. [siemens]
+    Parameters:
+        --dicomfile (str, ''):
+            The path to the DICOM file to be inspected.
 
-    USE
-    ===
+        --scanner (str, 'siemens'):
+            The scanner on which the data was acquired, currently only
+            "siemens" and "philips" are supported. 
 
-    The command inspects the specified DICOM file (dicomfile) for information
-    that is relevant for HCP preprocessing and prints out the report.
-    Specifically it looks for and reports the following information:
+    Notes:
+        The command inspects the specified DICOM file (dicomfile) for information
+        that is relevant for HCP preprocessing and prints out the report.
+        Specifically it looks for and reports the following information:
 
-    - Institution
-    - Scanner
-    - Sequence
-    - Session ID
-    - Sample spacing
-    - Bandwidth
-    - Acquisition Matrix
-    - Dwell Time
-    - Slice Acquisition Order
+        - Institution
+        - Scanner
+        - Sequence
+        - Session ID
+        - Sample spacing
+        - Bandwidth
+        - Acquisition Matrix
+        - Dwell Time
+        - Slice Acquisition Order
 
-    If the information can not be found or computed it is listed as 'undefined'.
+        If the information can not be found or computed it is listed as 'undefined'.
 
-    Currently only DICOM files generated by Siemens and Philips scanners are
-    supported.
+        Currently only DICOM files generated by Siemens and Philips scanners are
+        supported.
 
-    EXAMPLE USE
-    ===========
+    Examples:
+        ::
 
-    ::
-
-        qunex get_dicom_info dicomfile=ap308e727bxehd2.372.2342.42566.dcm
+            qunex get_dicom_info dicomfile=ap308e727bxehd2.372.2342.42566.dcm
     """
 
     if dicomfile is None:

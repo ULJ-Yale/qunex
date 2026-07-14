@@ -2,8 +2,11 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 
 %``fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, targetf, options)``
 %
-%   Computes seed based functional connectivity maps for group and/or
+%   Compute seed based functional connectivity maps for group and/or
 %   individual subjects / sessions.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -131,7 +134,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           img_prep_roi method. If empty GBC will be computed over all
 %           grayordinates or voxels.
 %
-%       --frames (matrix | int | str, default ''):
+%       --frames (str | matrix | int, default ''):
 %           The definition of which frames to extract, specifically:
 %
 %           - a numeric array mask defining which frames to use (1) and
@@ -366,7 +369,7 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %               Defauts to 'false'.
 %
 %   Returns:
-%       gbcmaps
+%       --gbcmaps (struct array):
 %           A structure array for all the computed GBC commands with the
 %           following fields:
 %

@@ -2,7 +2,10 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 
 %``fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)``
 %
-%   A command for fcMRI preprocessing and GLM analysis a set of BOLD files.
+%   Perform fcMRI preprocessing and GLM analysis on a set of BOLD files.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --sessionf (str):
@@ -58,7 +61,7 @@ function [] = fc_preprocess_conc(sessionf, bolds, doIt, tr, omit, rgss, task, ef
 %           - 't'     ... task
 %           - 'e'     ... events.
 %
-%       --task (matrix, default ''):
+%       --task (string | matrix, default ''):
 %           A matrix of custom regressors to be entered in GLM.
 %
 %       --efile (str, default ''):

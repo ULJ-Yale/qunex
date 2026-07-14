@@ -21,8 +21,10 @@ pragmatic, focused improvements over strict rewrites.**
   - `general/` — core utilities, parsing, sessions, DICOM/BIDS/NIfTI, scheduler, `gmri` driver.
   - `processing/` — preprocessing workflows (`workflow.py`, `dwi.py`, `fs.py`, `fsl.py`, ...).
   - `hcp/`, `nhp/`, `qa/`, `templates/` — HCP pipelines, non-human-primate, QA, templates.
-  - `general/all_commands.py` — registry mapping `qunex` command names to implementations
-    (`(full_name, description, language)`). Add new commands here.
+  - `qx_registry.py` / `qx_registry_build.py` — the command registry. Commands are discovered
+    automatically from `.. qx_command:` blocks in python/matlab/bash docstrings; there is no
+    hand-maintained command list. Add a command by writing its docstring block, then rebuild
+    with `qunex build_qx_registry` (which regenerates `qx_commands.yaml`).
 - `python/tests/` — pytest suite (`test_data/` holds fixtures).
 - `bash/qx_utilities/` — Bash implementations (DWI, FC, QC, turnkey, XNAT, ...).
 - `matlab/` — `qx_mri`, `qx_utilities`, `qx_mice` (MATLAB/Octave functions).

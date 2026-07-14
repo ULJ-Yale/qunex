@@ -2,12 +2,16 @@ function [data] = fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targe
 
 %``fc_extract_roi_timeseries_masked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)``
 %
-%   Extracts and saves region timeseries defined by provided roiinfo file
+%   Extract and save region timeseries defined by provided roiinfo file
 %
-%   NOTE: Please, note that fc_extract_roi_timeseries_masked function is being 
-%         deprecated. The function will no longer be developed and will be 
-%         removed in future releases of QuNex. Instead, consider using 
-%         fc_extract_roi_timeseries, which offers additional functionality.
+%   NOTE: 
+%       Please, note that fc_extract_roi_timeseries_masked function is being 
+%       deprecated. The function will no longer be developed and will be 
+%       removed in future releases of QuNex. Instead, consider using 
+%       fc_extract_roi_timeseries, which offers additional functionality.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):

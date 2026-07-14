@@ -29,15 +29,19 @@ import os
 import traceback
 from datetime import datetime
 
-import processing.core as pc
+import qx_utilities.processing.core as pc
+
 
 
 def fsl_feat(sinfo, options, overwrite=False, thread=0):
     """
     ``fsl_feat [... processing options]``
 
-    This command executes FSL's feat software tool for high quality model-based
+    Execute FSL's feat software tool for high quality model-based
     FMRI data analysis.
+
+    ..  qx_command:
+        type: processing.session
 
     Parameters:
         --batchfile (str, default ''):
@@ -193,11 +197,15 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     return (r, report)
 
 
+
 def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
     """
     ``fsl_melodic [... processing options]``
 
-    This command executes FSL's melodic command line tool for ICA decomposition.
+    Execute FSL's melodic command line tool for ICA decomposition.
+
+    ..  qx_command:
+        type: processing.subject
 
     Parameters:
         --batchfile (str, default ''):

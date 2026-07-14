@@ -18,25 +18,29 @@ None of the code is run directly from the terminal interface.
 """
 
 # imports
+from copy import deepcopy
 import os
 import os.path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
-import general.commands_support as gcs
-import general.core as gc
-import general.exceptions as ge
-import general.scheduler as gs
-import qx_mice.process_mice
-import qx_mice.setup_mice
-from general import extensions
-from general.bids import map_nii2bids
-from general.parsing import flag, is_none
-from general.parsing import true_or_false as torf
+import qx_utilities.general.scheduler as gs
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.commands_support as gcs
+from qx_utilities.processing import fs, simple, workflow, dwi, fsl, rapidtide
+from qx_utilities.general.bids import map_nii2bids
+from qx_utilities.general import extensions
 
 # pipelines imports
-from hcp import process_hcp
-from processing import dwi, fs, fsl, rapidtide, simple, workflow
+from qx_utilities.hcp import process_hcp
+
+# qx_mice
+import qx_mice.process_mice
+import qx_mice.setup_mice
+from qx_utilities.general.parsing import flag, is_none
+from qx_utilities.general.parsing import true_or_false as torf
+
 
 # =======================================================================
 #                                                                 GLOBALS
@@ -554,121 +558,35 @@ arglist = [
         float,
     ],
     ["# --- general HCP options"],
-    [
-        "hcp_processing_mode",
-        "HCPStyleData",
-        str,
-    ],
-    [
-        "hcp_folderstructure",
-        "hcpls",
-        str,
-    ],
-    [
-        "hcp_freesurfer_module",
-        "",
-        str,
-    ],
-    [
-        "hcp_suffix",
-        "",
-        str,
-    ],
-    [
-        "hcp_t2",
-        "t2",
-        str,
-    ],
-    [
-        "hcp_printcom",
-        "",
-        str,
-    ],
-    [
-        "hcp_bold_prefix",
-        "BOLD_",
-        str,
-    ],
-    [
-        "hcp_filename",
-        "automated",
-        str,
-    ],
-    [
-        "hcp_lowresmesh",
-        "32",
-        str,
-    ],
-    [
-        "hcp_lowresmeshes",
-        "32",
-        str,
-    ],
-    [
-        "hcp_hiresmesh",
-        "164",
-        int,
-    ],
-    [
-        "hcp_bold_res",
-        "2",
-        str,
-    ],
-    [
-        "hcp_grayordinatesres",
-        "2",
-        str,
-    ],
-    [
-        "hcp_surfatlasdir",
-        "",
-        is_none,
-    ],
-    [
-        "hcp_grayordinatesdir",
-        "",
-        is_none,
-    ],
-    [
-        "hcp_subcortgraylabels",
-        "",
-        is_none,
-    ],
-    [
-        "hcp_refmyelinmaps",
-        "",
-        is_none,
-    ],
-    [
-        "hcp_regname",
-        "MSMSulc",
-        str,
-    ],
-    [
-        "hcp_cifti_tail",
-        "_Atlas",
-        str,
-    ],
-    [
-        "hcp_bold_variant",
-        "",
-        str,
-    ],
-    [
-        "additional_bolds",
-        "",
-        is_none,
-    ],
-    [
-        "hcp_nifti_tail",
-        "",
-        str,
-    ],
-    [
-        "hcp_config",
-        "",
-        is_none,
-    ],
+    ["hcp_processing_mode", "HCPStyleData", str,],
+    ["hcp_folderstructure", "hcpls", str,],
+    ["hcp_freesurfer_home", "", str,],
+    ["hcp_freesurfer_module", "", str,],
+    ["hcp_suffix", "", str,],
+    ["hcp_t2", "t2", str,],
+    ["hcp_printcom", "", str,],
+    ["hcp_bold_prefix", "BOLD_", str,],
+    ["hcp_filename", "automated", str,],
+    ["hcp_lowresmesh", "32", str,],
+    ["hcp_lowresmeshes", "32", str,],
+    ["hcp_hiresmesh", "164", int,],
+    ["hcp_bold_res", "2", str,],
+    ["hcp_grayordinatesres", "2", str,],
+    ["hcp_surfatlasdir", "", is_none,],
+    ["hcp_grayordinatesdir", "", is_none,],
+    ["hcp_subcortgraylabels", "", is_none,],
+    ["hcp_refmyelinmaps", "", is_none,],
+    ["hcp_regname", "MSMSulc", str,],
+    ["hcp_cifti_tail", "_Atlas", str,],
+    ["hcp_bold_variant", "", str,],
+    ["additional_bolds", "", is_none,],
+    ["hcp_nifti_tail", "", str,],
+    ["hcp_config", "", is_none,],
+    ["# --- hcp_parcellate_anat options"],
+    ["hcp_parcellate_input_type", "", str,],
+    ["hcp_parcellate_dlabel", "", str,],
+    ["hcp_parcellate_output_name", "", str,],
+    ["hcp_parcellate_extract_data", "False", torf,],
     ["# --- hcp_pre_freesurfer options"],
     ["hcp_brainsize", "150", int],
     ["hcp_t1samplespacing", "NONE", str],
@@ -1156,139 +1074,6 @@ flaglist += extensions.compile_list("flaglist")
 #   The options dictionary
 options = {}
 
-
-# ==============================================================================
-#                                                                   COMMAND LIST
-#
-#   Commands are specified in the calist and salist lists. calist specifies
-#   commands that can be run in parallel, one instance per subeject. salist
-#   specifies commands that need to be run as a single process across all the
-#   sessions. Both are a list of commands in which each command is specified
-#   as list of four values:
-#
-#   1/ command long name
-#   2/ the actual function ran for the command
-#
-#   Empty lists denote there should be a blank line when printing out a command
-#   list.
-# processing commands
-calist = [
-    ["map_hcp_data", process_hcp.map_hcp_data],
-    [],
-    ["get_bold_data", workflow.get_bold_data],
-    ["create_bold_brain_masks", workflow.create_bold_brain_masks],
-    [],
-    ["run_basic_segmentation", fs.runBasicStructuralSegmentation],
-    ["get_fs_data", fs.checkForFreeSurferData],
-    ["run_subcortical_fs", fs.runFreeSurferSubcorticalSegmentation],
-    ["run_full_fs", fs.runFreeSurferFullSegmentation],
-    [],
-    ["compute_bold_stats", workflow.compute_bold_stats],
-    ["create_stats_report", workflow.create_stats_report],
-    ["extract_nuisance_signal", workflow.extract_nuisance_signal],
-    [],
-    ["preprocess_bold", workflow.preprocess_bold],
-    ["preprocess_conc", workflow.preprocess_conc],
-    [],
-    ["hcp_pre_freesurfer", process_hcp.hcp_pre_freesurfer],
-    ["hcp_freesurfer", process_hcp.hcp_freesurfer],
-    ["hcp_nhp_freesurfer", process_hcp.hcp_nhp_freesurfer],
-    ["hcp_post_freesurfer", process_hcp.hcp_post_freesurfer],
-    ["hcp_fmri_volume", process_hcp.hcp_fmri_volume],
-    ["hcp_fmri_surface", process_hcp.hcp_fmri_surface],
-    ["hcp_icafix", process_hcp.hcp_icafix],
-    ["hcp_post_fix", process_hcp.hcp_post_fix],
-    ["hcp_reapply_fix", process_hcp.hcp_reapply_fix],
-    ["hcp_msmall", process_hcp.hcp_msmall],
-    ["hcp_dedrift_and_resample", process_hcp.hcp_dedrift_and_resample],
-    ["hcp_task_fmri_analysis", process_hcp.hcp_task_fmri_analysis],
-    [],
-    ["hcp_diffusion", process_hcp.hcp_diffusion],
-    ["hcp_fmri_stats", process_hcp.hcp_fmri_stats],
-    ["hcp_corr_thick", process_hcp.hcp_corr_thick],
-    ["hcp_apply_auto_reclean", process_hcp.hcp_apply_auto_reclean],
-    ["hcp_asl", process_hcp.hcp_asl],
-    ["hcp_transmit_bias_individual", process_hcp.hcp_transmit_bias_individual],
-    [],
-    ["run_shell_script", simple.run_shell_script],
-    [],
-    ["dwi_f99", dwi.dwi_f99],
-    ["dwi_xtract", dwi.dwi_xtract],
-    ["dwi_noddi_gpu", dwi.dwi_noddi_gpu],
-    [],
-    ["setup_mice", qx_mice.setup_mice.setup_mice],
-    ["preprocess_mice", qx_mice.process_mice.preprocess_mice],
-    ["map_mice_data", qx_mice.process_mice.map_mice_data],
-    [],
-    ["fsl_feat", fsl.fsl_feat],
-    ["rapidtide", rapidtide.rapidtide],
-]
-
-# longitudinal commands
-lalist = [
-    ["hcp_prep_long", process_hcp.hcp_prep_long],
-    ["hcp_long_freesurfer", process_hcp.hcp_long_freesurfer],
-    ["hcp_long_post_freesurfer", process_hcp.hcp_long_post_freesurfer],
-    ["hcp_long_msmall", process_hcp.hcp_long_msmall],
-    ["hcp_long_transmit_bias", process_hcp.hcp_long_transmit_bias],
-    ["fsl_melodic", fsl.fsl_melodic],
-]
-
-# multi-session commands
-malist = [
-    ["hcp_temporal_ica", process_hcp.hcp_temporal_ica],
-    ["hcp_make_average_dataset", process_hcp.hcp_make_average_dataset],
-]
-
-salist = [
-    ["create_bold_list", simple.create_bold_list],
-    ["create_conc_list", simple.create_conc_list],
-    ["list_session_info", simple.list_session_info],
-    ["map_nii2bids", map_nii2bids],
-]
-
-# Add command lists used in extensions
-calist += extensions.compile_list("calist")
-lalist += extensions.compile_list("lalist")
-malist += extensions.compile_list("malist")
-salist += extensions.compile_list("salist")
-
-calist += extensions.calist
-lalist += extensions.lalist
-malist += extensions.malist
-salist += extensions.salist
-
-#   -------------------------------------------------------- COMMAND DICTIONARY
-#   Code that transcribes the comand specifications into a dictionary for
-#   calling the relevant command when specified.
-
-pactions = {}
-for line in calist:
-    if len(line) == 2:
-        pactions[line[0]] = line[1]
-
-lactions = {}
-for line in lalist:
-    if len(line) == 2:
-        lactions[line[0]] = line[1]
-
-mactions = {}
-for line in malist:
-    if len(line) == 2:
-        mactions[line[0]] = line[1]
-
-sactions = {}
-for line in salist:
-    if len(line) == 2:
-        sactions[line[0]] = line[1]
-
-# all actions
-allactions = {}
-allactions.update(pactions.copy())
-allactions.update(lactions.copy())
-allactions.update(mactions.copy())
-allactions.update(sactions.copy())
-
 flist = {}
 for line in flaglist:
     if len(line) == 2:
@@ -1300,7 +1085,7 @@ for line in flaglist:
 # ==============================================================================
 #                                                               RUNNING COMMANDS
 #
-def run(command, args):
+def run(qx_command, args):
     global log
     global stati
     global logname
@@ -1309,7 +1094,7 @@ def run(command, args):
     #                                                            Parsing options
 
     # set command
-    options = {"command_ran": command}
+    options = {"command_ran": qx_command.name}
 
     # setup default options
     for line in arglist:
@@ -1331,25 +1116,30 @@ def run(command, args):
         verbose=False,
     )
 
-    # check if all sessions have subjects for longitudinal
-    if command in lactions:
-        subject_list = []
-        if sessions is not None:
-            for session in sessions:
-                if "subject" not in session:
-                    raise ge.CommandFailed(
-                        command,
-                        "Missing subject information",
-                        f"No subject information provided for session id: {session['id']}.",
-                        "Please check the batch file!",
-                        "Aborting processing!",
-                    )
-                if session["subject"] not in subject_list:
-                    subject_list.append(session["subject"])
+    processing_type = "session"
+    if 'subject' in qx_command.type:
+        processing_type = "subject"
+    elif 'study' in qx_command.type:
+        processing_type = "study"
+
+    # -- do we need a list of subjects?
+    subjects = []
+    if processing_type == "subject":
+        # check if all sessions have subjects for longitudinal
+        missing_subjects = sessions.dont_have_key("subject")
+        if missing_subjects:
+            missing_list = missing_subjects.get_list_by_key("id")
+            raise ge.CommandFailed(
+                qx_command.name,
+                "Missing subject information",
+                "No subject information provided for session ids: %s." % (missing_list),
+                "Please check the batch file!",
+                "Aborting processing!",
+            )
+        subjects = sessions.group_by_key("subject")
 
     # take parameters from batch file
-    batch_args = gcs.check_deprecated_parameters(gpref, command)
-
+    batch_args = gcs.check_deprecated_parameters(gpref, qx_command.name)
     for k, v in batch_args.items():
         options[k] = v
 
@@ -1375,7 +1165,7 @@ def run(command, args):
                 options[line[0]] = line[2](options[line[0]])
             except:
                 raise ge.CommandError(
-                    command,
+                    qx_command.name,
                     "Invalid parameter value!",
                     "Parameter `%s` is specified but is set to an invalid value:"
                     % (line[0]),
@@ -1384,17 +1174,18 @@ def run(command, args):
                 )
 
     # impute unspecified parameters
-    options = gcs.impute_parameters(options, command)
+    options = gcs.impute_parameters(options, qx_command.name)
 
     # set key parameters
     overwrite = options["overwrite"]
     parsessions = options["parsessions"]
+    parsubjects = options["parsubjects"]    
     nprocess = options["nprocess"]
     printinfo = options["datainfo"]
     printoptions = options["printoptions"]
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    studyfolders = gc.deduce_folders(options, command, timestamp)
+    studyfolders = gc.deduce_folders(options, qx_command.name, timestamp)
     logfolder = studyfolders["logfolder"]
     comlogfolder = os.path.join(logfolder, "comlogs")
     specfolder = os.path.join(studyfolders["sessionsfolder"], "specs")
@@ -1409,16 +1200,16 @@ def run(command, args):
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if not options["longitudinal"]:
-        logname = os.path.join(logfolder, "Log-%s-%s.log") % (command, logstamp)
+        logname = os.path.join(logfolder, "Log-%s-%s.log") % (qx_command.name, logstamp)
     else:
-        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (command, logstamp)
+        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (qx_command.name, logstamp)
 
     log = []
     stati = []
     sout = gc.print_qunex_header()
     sout += "#\n"
     sout += "=================================================================\n"
-    sout += "qunex " + command + " \\"
+    sout += "qunex " + qx_command.name + " \\"
 
     arg_items = list(args.items())
     for i, (k, v) in enumerate(arg_items):
@@ -1429,23 +1220,24 @@ def run(command, args):
 
     sout += "\n=================================================================\n"
 
-    # no parsessions for longitudinal and multi-session commands
-    if (command in lactions) or (command in mactions):
+    # no parsessions for subject and multi-session commands
+    if processing_type in ["subject", "study"]:
         if parsessions > 1:
-            sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a longitudinal or a multi-session command!\n"
+            sout += f"\nWARNING: parsessions [{parsessions}] will be set to 1 because you are running a multi-session command!\n"
             parsessions = 1
 
+    parprocesses = parsubjects if processing_type == "subject" else parsessions
+
     # check if there are no sessions
-    if not sessions:
-        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
+    if not sessions or processing_type == "subject" and not subjects:
+        sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
         print(sout)
         writelog(sout)
         exit()
-
-    elif options["run"] == "run":
+    
+    elif options["run"] == "run":        
         sout += (
-            "\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n"
-            % (options["sessions"], parsessions)
+            f"\nStarting multiprocessing {processing_type}s in {options['sessions']} with a pool of {parprocesses} concurrent processes\n"
         )
 
     else:
@@ -1467,7 +1259,10 @@ def run(command, args):
     # -----------------------------------------------------------------------
     #                                                              print info
     if printinfo:
-        print(sessions)
+        if processing_type == "subject":
+            print(subjects)
+        else:
+            print(sessions)
 
     # =======================================================================
     #                                               RUN BY SESSION PROCESSING
@@ -1483,31 +1278,71 @@ def run(command, args):
     if options["scheduler"] == "local":
         consoleLog = ""
 
+        # testing or processing
+        action = "testing" if options["run"] == "test" else "processing"
+        pending_actions = qx_command.load_callable()
+
         c = 0
-        if parsessions == 1 or options["run"] == "test":
-            # processing commands
-            if command in pactions:
-                pending_actions = pactions[command]
+        if parprocesses == 1 or options["run"] == "test":
+
+            # ------------------------------------------------------------------
+            #                                          study processing commands
+            if processing_type == "study":
+                sessionid_list = sessions.get_list_by_key("id")
+
+                # update options and prepare the all sessions string for labeling
+                # TODO: soptions may be invalid here!
+                for session in sessions:
+                    soptions = update_options(session, options)
+
+                message = f"\nStarting {action} of sessions {sessionid_list} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                consoleLog += message
+                print(message)
+
+                # process
+                r, status = procResponse(
+                    pending_actions(sessions, soptions, overwrite, c + 1)
+                )
+
+                # write log
+                writelog(r)
+                consoleLog += r
+                print(r)
+                stati.append(status)
+
+
+            # ------------------------------------------------------------------
+            #                                        subject processing commands
+            elif processing_type == "subject":
+                for subject in subjects:
+                    session_ids = ", ".join([s["id"] for s in subject])
+                    message = f"\nProcessing subject {subject[0]['subject']} with sessions {session_ids} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                    consoleLog += message
+                    print(message)
+
+                    r, status = procResponse(
+                        pending_actions(subject, options, overwrite, c + 1)
+                    )
+                    writelog(r)
+                    consoleLog += r
+                    print(r)
+                    stati.append(status)
+                    c += 1
+                    if nprocess and c >= nprocess:
+                        break
+
+
+            # ------------------------------------------------------------------
+            #                                        session processing commands
+            else:
                 for session in sessions:
                     if len(session["id"]) > 1:
-                        if options["run"] == "test":
-                            action = "testing"
-                        else:
-                            action = "processing"
+                        message = f"\nStarting {action} of session {session['id']} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                        consoleLog += message
+                        print(message)
+
                         soptions = update_options(session, options)
-                        consoleLog += "\nStarting %s of sessions %s at %s" % (
-                            action,
-                            session["id"],
-                            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                        )
-                        print(
-                            "\nStarting %s of sessions %s at %s"
-                            % (
-                                action,
-                                session["id"],
-                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                            )
-                        )
+
                         r, status = procResponse(
                             pending_actions(session, soptions, overwrite, c + 1)
                         )
@@ -1519,125 +1354,39 @@ def run(command, args):
                         if nprocess and c >= nprocess:
                             break
 
-            # multi-session commands
-            elif command in mactions:
-                pending_actions = mactions[command]
-
-                # test or processing
-                if options["run"] == "test":
-                    action = "testing"
-                else:
-                    action = "processing"
-
-                # update options and prepare the all sessions string for labeling
-                sessionids = ""
-                for session in sessions:
-                    soptions = update_options(session, options)
-
-                    if sessionids == "":
-                        sessionids = session["id"]
-                    else:
-                        sessionids = sessionids + "," + session["id"]
-
-                # log
-                consoleLog += "\nStarting %s of sessions %s at %s" % (
-                    action,
-                    sessionids,
-                    datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                )
-                print(
-                    "\nStarting %s of sessions %s at %s"
-                    % (
-                        action,
-                        sessionids,
-                        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                    )
-                )
-
-                # process
-                r, status = procResponse(
-                    pending_actions(sessions, sessionids, soptions, overwrite, c + 1)
-                )
-
-                # write log
-                writelog(r)
-                consoleLog += r
-                print(r)
-                stati.append(status)
-
-            # longitudinal commands
-            elif command in lactions:
-                pending_actions = lactions[command]
-
-                # test or processing
-                if options["run"] == "test":
-                    action = "testing"
-                else:
-                    action = "processing"
-
-                # update options and prepare the all subjects string for labeling
-                for session in sessions:
-                    soptions = update_options(session, options)
-
-                subjectids = ",".join(subject_list)
-
-                # log
-                consoleLog += "\nStarting %s of subjects %s at %s" % (
-                    action,
-                    subjectids,
-                    datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                )
-                print(
-                    "\nStarting %s of subjects %s at %s"
-                    % (
-                        action,
-                        subjectids,
-                        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                    )
-                )
-
-                # process
-                r, status = procResponse(
-                    pending_actions(sessions, subjectids, soptions, overwrite, c + 1)
-                )
-
-                # write log
-                writelog(r)
-                consoleLog += r
-                print(r)
-                stati.append(status)
-
-            # simple processing commands
-            elif command in sactions:
-                pending_actions = sactions[command]
-                for session in sessions:
-                    soptions = update_options(session, options)
-                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
-                writelog(r)
-
         else:
             c = 0
-            processPoolExecutor = ProcessPoolExecutor(parsessions)
+            processPoolExecutor = ProcessPoolExecutor(parprocesses)
             futures = []
-            if command in pactions:
-                pending_actions = pactions[command]
+
+            # ------------------------------------------------------------------
+            #                                        subject processing commands
+
+            if processing_type == "subject":
+                for subject in subjects:
+                    message = f"\nAdding processing of subject {subject[0]['subject']} with sessions {', '.join([s['id'] for s in subject])} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                    consoleLog += message
+                    print(message)
+
+                    future = processPoolExecutor.submit(
+                        pending_actions, subject, options, overwrite, c + 1
+                    )
+                    futures.append(future)
+                    c += 1
+                    if nprocess and c >= nprocess:
+                        break
+
+            # ------------------------------------------------------------------
+            #                                        session processing commands
+
+            if processing_type == "session":
                 for session in sessions:
                     if len(session["id"]) > 1:
                         soptions = update_options(session, options)
-                        consoleLog += (
-                            "\nAdding processing of session %s to the pool at %s"
-                            % (
-                                session["id"],
-                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                            )
-                        )
-                        print(
-                            "\nAdding processing of session %s to the pool at %s"
-                            % (
-                                session["id"],
-                                datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-                            )
-                        )
+                        message = f"\nAdding processing of session {session['id']} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
+                        consoleLog += message
+                        print(message)
+
                         future = processPoolExecutor.submit(
                             pending_actions, session, soptions, overwrite, c + 1
                         )
@@ -1646,17 +1395,11 @@ def run(command, args):
                         if nprocess and c >= nprocess:
                             break
 
-                for future in as_completed(futures):
-                    result = future.result()
-                    writelog(result)
-                    consoleLog += result[0]
-                    print(result[0])
-
-            elif command in sactions:
-                pending_actions = sactions[command]
-                soptions = update_options(session, options)
-                r, status = procResponse(pending_actions(sessions, soptions, overwrite))
-                writelog(r)
+            for future in as_completed(futures):
+                result = future.result()
+                writelog(result)
+                consoleLog += result[0]
+                print(result[0])
 
         # print(console log)
         # print(consoleLog)
@@ -1694,17 +1437,19 @@ def run(command, args):
             print("---> Not all tasks completed fully!")
             print("---> Not all tasks completed fully!", file=f)
         else:
-            print("---> Successful completion of all tasks")
-            print("---> Successful completion of all tasks", file=f)
+            print(f"---> Successful completion of all tasks at {datetime.now()}")
+            print(f"---> Successful completion of all tasks at {datetime.now()}", file=f)
 
         f.close()
 
     # -----------------------------------------------------------------------
     #                                                  general scheduler code
+    #
+    # TODO: adapt for subject and study level processing
     else:
         # schedule
         gs.runThroughScheduler(
-            command,
+            qx_command.name,
             sessions=sessions,
             args=args,
             parsessions=parsessions,

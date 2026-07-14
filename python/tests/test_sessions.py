@@ -15,8 +15,8 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, parent_dir)
 sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
 
-from general.sessions import merge_session, merge_sessions_list
-from general.exceptions import CommandError, CommandFailed
+from qx_utilities.general.sessions import merge_session, merge_sessions_list
+from qx_utilities.general.exceptions import CommandError, CommandFailed
 import pytest
 
 

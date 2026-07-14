@@ -1,20 +1,20 @@
-import pytest
-from general.exceptions import CommandError, SpecFileSyntaxError
-from general.parser import (
+from .utils import get_test_data_path
+from qx_utilities.general.parser import (
     _parse_session_file_lines,
     read_generic_session_file,
     read_hcp_session_file,
     read_mapping_file,
 )
-from general.utilities import (
+from qx_utilities.general.utilities import (
+    _reserved_bold_numbers,
     _match_or_rule,
     _process_pipeline_hcp_mapping,
     _reserved_bold_numbers,
     _serialize_session,
     _simple_glob_match,
 )
-
-from .utils import get_test_data_path
+from qx_utilities.general.exceptions import CommandError, SpecFileSyntaxError
+import pytest
 
 
 def _run_mapping_test(sf, mf):
@@ -435,7 +435,7 @@ def test_match_or_rule_priority():
 
 def test_or_rule_parser_rejects_empty_variant():
     """Parser should reject or-rules with an empty variant."""
-    from general.parser import _parse_mapping_file_lines
+    from qx_utilities.general.parser import _parse_mapping_file_lines
 
     with pytest.raises(SpecFileSyntaxError):
         _parse_mapping_file_lines(["T1w_HiRes ||  => T1w"])

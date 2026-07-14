@@ -19,7 +19,7 @@ import shutil
 import hashlib
 import difflib
 
-import general.exceptions as ge
+import qx_utilities.general.exceptions as ge
 
 nifti_data_types = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
 nifti_bytes_per_voxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
@@ -160,9 +160,17 @@ def printniftihdr(filename=None):
     """
     ``printniftihdr <image_filename>``
 
-    Prints the header contents of the NIfTI file.
-    """
+    Print the header contents of the NIfTI file.
 
+    ..  qx_command:
+        type: utility
+    
+    Parameters:
+        --filename (str):
+            The path to the NIfTI file (.nii or .nii.gz)    
+    """
+    if filename is None:
+        raise ge.CommandError('printniftihdr', 'No filename provided', 'Please provide a NIfTI filename to inspect!')
     hdr = niftihdr(filename)
     print(hdr)
 
@@ -171,70 +179,74 @@ def print_nifti_metadata(filename, info='list'):
     """
     ``print_nifti_metadata <image_filename> [info=list]``
 
-    Prints metadata extension blocks from a NIfTI file.
+    Print metadata extension blocks from a NIfTI file.
 
-    NIfTI files can contain metadata extension blocks after the header.
-    This function inspects and displays the content of these blocks.
+    ..  qx_command:
+        type: utility
 
-    INPUTS
-    ======
+    Parameters:
+        --filename (str):
+            The path to the NIfTI file (.nii or .nii.gz)
+        --info (str, default 'list'):
+            Which metadata to print.
 
-    filename  Path to the NIfTI file (.nii or .nii.gz)
-    info      Which metadata to print:
-              - 'list': List metadata blocks without content (default)
-              - 'all': Print all metadata blocks with full content
-              - 'cifti': Print CIFTI metadata (ecode 32)
-              - 'qunex' or 'qx': Print QuNex metadata (ecode 64)
-              - Numeric code (e.g., 32, 64, 2, etc.): Print metadata with that code
+            Possible values:
+            - 'list': List metadata blocks without content (default)
+            - 'all': Print all metadata blocks with full content
+            - 'cifti': Print CIFTI metadata (ecode 32)
+            - 'qunex' or 'qx': Print QuNex metadata (ecode 64)
+            - Numeric code (e.g., 32, 64, 2, etc.): Print metadata with that code
 
-    METADATA CODES
-    ==============
+            
+    Notes:
+        NIfTI files can contain metadata extension blocks after the header.
+        This function inspects and displays the content of these blocks.
 
-    Common NIfTI extension codes:
-    - 0: Unknown private format
-    - 2: DICOM format
-    - 4: AFNI group format
-    - 6: Comment
-    - 8: XCEDE format
-    - 10: Jiffy XML format
-    - 12: Unused
-    - 14: Unused
-    - 16: Unused
-    - 18: MIND_IDENT format
-    - 20: B_VALUE extension
-    - 22: SPHERICAL_DIRECTION extension
-    - 24: DT_COMPONENT extension
-    - 26: SHC_DEGREEORDER extension
-    - 28: VOXBO extension
-    - 30: CARET extension
-    - 32: CIFTI extension (XML format)
-    - 34: VARIABLE_FRAME_TIMING extension
-    - 36: MATLAB workspace extension
-    - 38: QUANTIPHYSE extension
-    - 40: MRS extension
-    - 42: PYTHON pickle extension
-    - 64: QuNex extension
+        METADATA CODES:
 
-    EXAMPLE USE
-    ===========
+        Common NIfTI extension codes:
+        - 0: Unknown private format
+        - 2: DICOM format
+        - 4: AFNI group format
+        - 6: Comment
+        - 8: XCEDE format
+        - 10: Jiffy XML format
+        - 12: Unused
+        - 14: Unused
+        - 16: Unused
+        - 18: MIND_IDENT format
+        - 20: B_VALUE extension
+        - 22: SPHERICAL_DIRECTION extension
+        - 24: DT_COMPONENT extension
+        - 26: SHC_DEGREEORDER extension
+        - 28: VOXBO extension
+        - 30: CARET extension
+        - 32: CIFTI extension (XML format)
+        - 34: VARIABLE_FRAME_TIMING extension
+        - 36: MATLAB workspace extension
+        - 38: QUANTIPHYSE extension
+        - 40: MRS extension
+        - 42: PYTHON pickle extension
+        - 64: QuNex extension
 
-    ::
+    Examples:
 
-        # List metadata blocks (default)
-        print_nifti_metadata('bold1.dtseries.nii')
+        ::
+            # List metadata blocks (default)
+            print_nifti_metadata('bold1.dtseries.nii')
 
-        # Print all metadata with full content
-        print_nifti_metadata('bold1.dtseries.nii', info='all')
+            # Print all metadata with full content
+            print_nifti_metadata('bold1.dtseries.nii', info='all')
 
-        # Print only CIFTI metadata
-        print_nifti_metadata('bold1.dtseries.nii', info='cifti')
+            # Print only CIFTI metadata
+            print_nifti_metadata('bold1.dtseries.nii', info='cifti')
 
-        # Print only QuNex metadata
-        print_nifti_metadata('bold1.nii', info='qunex')
+            # Print only QuNex metadata
+            print_nifti_metadata('bold1.nii', info='qunex')
 
-        # Print metadata with specific numeric code
-        print_nifti_metadata('bold1.nii', info=32)  # CIFTI
-        print_nifti_metadata('bold1.nii', info=6)   # Comment
+            # Print metadata with specific numeric code
+            print_nifti_metadata('bold1.nii', info=32)  # CIFTI
+            print_nifti_metadata('bold1.nii', info=6)   # Comment
     """
 
     # Parse the info parameter
@@ -389,38 +401,39 @@ def print_nifti_metadata(filename, info='list'):
     # print("-" * 70)
 
 
+
 def remove_qunex_metadata(infile, outfile=None):
     """
     ``remove_qunex_metadata <infile> [outfile=None]``
 
-    Removes QuNex metadata (extension code 64) from a NIfTI file.
+    Remove QuNex metadata (extension code 64) from a NIfTI file.
 
-    This function inspects a NIfTI file for QuNex metadata extensions.
-    If found, it removes them and saves the file. All other metadata
-    blocks (e.g., CIFTI) are preserved.
+    ..  qx_command:
+        type: utility
 
-    INPUTS
-    ======
+    Parameters:
+        --infile (str):
+            Path to the input NIfTI file (.nii or .nii.gz)
 
-    infile   Path to the input NIfTI file (.nii or .nii.gz)
-    outfile  Path to the output file (optional)
-             If not provided, the input file is replaced.
+        --outfile (str):
+            Path to the output file (optional).
 
-    OUTPUTS
-    =======
+    Notes:
 
-    Returns True if QuNex metadata was found and removed, False otherwise.
+        This function inspects a NIfTI file for QuNex metadata extensions.
+        If found, it removes them and saves the file. All other metadata
+        blocks (e.g., CIFTI) are preserved.
 
-    EXAMPLE USE
-    ===========
+        Returns True if QuNex metadata was found and removed, False otherwise.
 
-    ::
+    Examples:
+        ::
 
-        # Remove QuNex metadata from file (replace original)
-        remove_qunex_metadata('bold1.nii')
+            # Remove QuNex metadata from file (replace original)
+            remove_qunex_metadata('bold1.nii')
 
-        # Remove QuNex metadata and save to new file
-        remove_qunex_metadata('bold1.nii', 'bold1_clean.nii')
+            # Remove QuNex metadata and save to new file
+            remove_qunex_metadata('bold1.nii', 'bold1_clean.nii')
     """
 
     def no_metadata(infile, outfile):
@@ -1402,22 +1415,25 @@ def slice_image(sourcefile, targetfile, frames=1):
     """
     ``slice_image sourcefile=<source image> targetfile=<target image> [frames=1]``
 
-    Takes the source volume image file, removes all but the first N frames, and
-    saves the resulting image to target volume image file.
+    Slice a NIfTI or 4dfp volume image to retain only the first N frames.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --sourcefile  Source volume file (.4dfp, .nii, or .nii.gz).
-    --targetfile  Target volume file of the same format.
-    --frames      Optional number of initial frames to retain. [1]
+    Parameters:
+        --sourcefile (str): 
+            Source volume file (.4dfp, .nii, or .nii.gz).
 
-    EXAMPLE USE
-    ===========
+        --targetfile (str): 
+            Target volume file of the same format.
 
-    ::
+        --frames (int, default 1): 
+            Optional number of initial frames to retain. [1]
 
-        qunex slice_image sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
+    Examples:
+        ::
+
+            qunex slice_image sourcefile=bold1.nii.gz targetfile=bold1_f10.nii.gz frames=10
     """
 
     frames = int(frames)

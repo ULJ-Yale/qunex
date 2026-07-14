@@ -1,10 +1,13 @@
 function [img] = stats_p2z(img, out, tail)
 %``stats_p2z(img, out, tail)``
 %
-%   Converts p to Z values considering one or two tails.
+%   Convert p to Z values considering one or two tails.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
-%       --img (nimage | str):
+%       --img (str | nimage):
 %           A nimage object or a path to an image file.
 %
 %       --out (str, default ''):
@@ -14,7 +17,7 @@ function [img] = stats_p2z(img, out, tail)
 %           Should one ('one') or two ('two') tails be considered.
 %
 %   Returns:
-%       Z
+%       --img (nimage):
 %           A nimage object with results.
 %
 %   Notes:

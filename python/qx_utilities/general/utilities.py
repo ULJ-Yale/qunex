@@ -26,14 +26,17 @@ import re
 import shutil
 import subprocess
 from datetime import datetime
+import traceback
+import itertools
+import yaml
+import qx_utilities.general.commands_support as gcs
+import qx_utilities.general.process as gp
+import qx_utilities.general.core as gc
+import qx_utilities.processing.core as gpc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.parser as parser
 
-import general.all_commands as gac
-import general.core as gc
-import general.exceptions as ge
-import general.filelock as fl
-import general.parser as parser
-import general.process as gp
-import processing.core as gpc
 
 parameterTemplateHeader = """#  Parameters file
 #  =====================
@@ -74,21 +77,34 @@ parameterTemplateHeader = """#  Parameters file
 """
 
 
+
 def manage_study(studyfolder=None, action="create", folders=None, verbose=False):
     """
-    manage_study studyfolder=None action="create"
+    ``manage_study studyfolder=None action="create"``
+    
+    Create or check the base study folder structure.
 
-    A helper function called by create_study and check_study that does the
-    actual checking of the study folder and generating missing content.
+    ..  qx_command:
+        type: utility
 
-    PARAMETERS
-    ==========
+    Parameters:
+        --studyfolder (str):
+            The location of the study folder.
 
-    --studyfolder  the location of the study folder
-    --action       whether to create a new study folder (create) or check an
-                   existing study folder (check)
-    --folders      Path to the file which defines the study folder structure.
-                   [$TOOLS/python/qx_utilities/templates/study_folders_default.txt]
+        --action (str, default 'create'):
+            Whether to create a new study folder ('create') or check an existing
+            study folder ('check').
+
+        --folders (str, default '$TOOLS/python/qx_utilities/templates/study_folders_default.txt'):
+            Path to the file which defines the study folder structure.
+
+        --verbose (bool, default False):
+            Whether to print detailed output during processing.
+
+    Notes:
+        A helper function called by create_study and check_study that does the
+        actual checking of the study folder and generating missing content.
+
     """
 
     # template folder
@@ -286,7 +302,6 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
                     "Please check paths and permissions!",
                 )
 
-
 def create_study_folders(folders_spec):
     """
     create_study_folders folders=None
@@ -341,11 +356,15 @@ def create_study_folders(folders_spec):
     return folder_structure
 
 
+
 def create_study(studyfolder=None, folders=None):
     """
     ``create_study studyfolder=<path to study base folder> [folders=$TOOLS/python/python/qx_utilities/templates/study_folders_default.txt]``
 
-    Creates the base study folder structure.
+    Create the base study folder structure.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --studyfolder (str):
@@ -478,6 +497,50 @@ def create_study(studyfolder=None, folders=None):
         )
 
 
+def check_study(startfolder=".", folders=None):
+    """
+    ``check_study startfolder="." [folders=$TOOLS/python/qx_utilities/templates/study_folders_default.txt]``
+
+    Identify and report the study base folder.
+
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --startfolder (str, default '.'):
+            The folder from which to start looking for the study folder.
+
+        --folders (str, default '$TOOLS/python/qx_utilities/templates/study_folders_default.txt'):
+            Path to the file which defines the study folder structure.
+
+    Notes:
+        The function looks for the path to the study folder in the hierarchy
+        starting from the provided startfolder. If found it checks that all the
+        standard folders are present and creates any missing ones. It returns
+        the path to the study folder. If the study folder can not be identified,
+        it returns None.
+
+        ---
+        Written by Grega Repovš, 2018-11-14
+    """
+
+    studyfolder = None
+    testfolder = os.path.abspath(startfolder)
+
+    while os.path.dirname(testfolder) and os.path.dirname(testfolder) != "/":
+        if os.path.exists(os.path.join(testfolder, ".qunexstudy")) or os.path.exists(
+            os.path.join(testfolder, ".mnapstudy")
+        ):
+            studyfolder = testfolder
+            break
+        testfolder = os.path.dirname(testfolder)
+
+    if studyfolder:
+        manage_study(studyfolder=studyfolder, action="check", folders=folders)
+
+    return studyfolder
+
+
 def copy_study(
     studyfolder,
     existing_study,
@@ -489,7 +552,10 @@ def copy_study(
     """
     ``copy_study studyfolder=<path to study base folder> existing_study=<path to source study base folder> [sessions=None] [subjects=None] [batchfile=None] [filter=None]``
 
-    Copies an existing QuNex study onto a new location.
+    Copy an existing QuNex study to a new location.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --studyfolder (str):
@@ -768,7 +834,10 @@ def create_batch(
     """
     ``create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/parameters.txt]``
 
-    Creates a joint batch file from source files in all session folders.
+    Create a joint batch file from source files in all session folders.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --sessionsfolder (str):
@@ -778,7 +847,7 @@ def create_batch(
             Comma separated names of source files to take from each specified
             session folder and add to batch file.
 
-        --targetfile (str, default <study>/processing/batch.txt):
+        --targetfile (str, default '<study>/processing/batch.txt'):
             The path to the batch file to be generated. By default, it is
             created as <study>/processing/batch.txt.
 
@@ -1242,6 +1311,7 @@ def remove_session_block(file_path, session_id):
         file.write(updated_content)
 
 
+
 def create_list(
     sessionsfolder=".",
     batchfile=None,
@@ -1263,9 +1333,15 @@ def create_list(
     """
     ``create_list [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
-    Creates a .list formatted file that can be used as input to a number of
-    processing and analysis functions. The function is fairly flexible, its
-    output defined using a number of parameters.
+    Create a .list formatted file for the specified sessions
+
+    ..  qx_command:
+        type: utility
+
+    Description:
+        Creates a .list formatted file that can be used as input to a number of
+        processing and analysis functions. The function is fairly flexible, its
+        output defined using a number of parameters.
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -1334,7 +1410,9 @@ def create_list(
             `segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz`.
 
         --overwrite (str, default 'no'):
-            If the specified list file already exists:
+            What to do if the specified list file already exists.
+            
+            Options are:
 
             - 'yes' (overwrite the existing file)
             - 'no' (abort creating a file)
@@ -1342,7 +1420,9 @@ def create_list(
 
         --check (str, default 'yes'):
             Whether to check for existence of files to be included in the list
-            and what to do if they don't exist:
+            and what to do if they don't exist.
+
+            Options are:
 
             - 'yes' (check for presence and abort if the file to be listed is not
               found)
@@ -1764,6 +1844,7 @@ def create_list(
     lfile.close()
 
 
+
 def create_conc(
     sessionsfolder=".",
     sessions=None,
@@ -1782,9 +1863,15 @@ def create_conc(
     """
     ``create_conc [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
-    Creates a set of .conc formated files that can be used as input
-    to a number of processing and analysis functions. The function is fairly
-    flexible, its output defined using a number of parameters.
+    Create .conc files for the specified sessions.
+
+    ..  qx_command:
+        type: utility
+
+    Description:
+        Creates a set of .conc formated files that can be used as input
+        to a number of processing and analysis functions. The function is fairly
+        flexible, its output defined using a number of parameters.
 
     Parameters:
         --sessionsfolder (str):
@@ -1835,7 +1922,9 @@ def create_conc(
             parameter.
 
         --overwrite (str, default 'no'):
-            If the specified list file already exists:
+            What to do if the specified conc file already exists.
+
+            Options are:
 
             - yes    (overwrite the existing file)
             - no     (abort creating a file)
@@ -2129,55 +2218,45 @@ def create_conc(
         )
 
 
-def is_qunex_command(command):
-    """
-    Check if the command is a QuNex command.
-
-    Parameters:
-        command (str): The command to check.
-    """
-    if command in gac.partial_commands:
-        return True
-
-    for full_name, _, _ in gac.all_qunex_commands:
-        full_name = full_name.split(".")[-1]
-        if full_name == command:
-            return True
-
-    return False
-
-
 def batch_tag2namekey(
     filename=None, sessionid=None, bolds=None, output="number", prefix="BOLD_"
 ):
     """
-    batch_tag2namekey \\
-      --filename=<path to batch file> \\
-      --sessionid=<session id> \\
-      --bolds=<bold specification string> \\
-      [--output="number"] \\
-      [--prefix="BOLD_"]
+    ``batch_tag2namekey filename=<path to batch file> sessionid=<session id> bolds=<bold specification string> [output="number"] [prefix="BOLD_"]``
 
-    Reads the batch file, extracts the data for the specified session and
-    returns the list of bold numbers or names that correspond to bolds
-    specified using the `bolds` parameter.
+    Extract the data for the specified session and return the list of bold numbers or names.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --filename          Path to batch.txt file.
-    --sessionid         Session id to look up.
-    --bolds             Which bold images (as they are specified in the
-                        batch.txt file) to process. It can be a single
-                        type (e.g. 'task'), a pipe separated list (e.g.
-                        'WM|Control|rest') or 'all' to process all.
-    --output     ... Whether to output numbers ('number') or bold names
-                        ('name'). In the latter case the name will be extracted
-                        from the 'filename' specification, if provided in the
-                        batch file, or '<prefix>[N]' if 'filename' is not
-                        specified.
-    --prefix     ... The default prefix to use if a filename is not specified
-                        in the batch file.
+    Parameters:
+        --filename (str):
+            Path to batch.txt file.
+        
+        --sessionid (str):
+            Session id to look up.
+        
+        --bolds (str):
+            Which bold images (as they are specified in the batch.txt file) to process. 
+            It can be a single type (e.g. 'task'), a pipe separated list 
+            (e.g. 'WM|Control|rest') or 'all' to process all.
+
+        --output (str):
+            Whether to output numbers ('number') or bold names ('name').
+            In the latter case the name will be extracted from the 'filename'
+            specification, if provided in the batch file, or '<prefix>[N]' if
+            'filename' is not specified. Default is 'number'.
+        
+        --prefix (str):
+            The default prefix to use if a filename is not specified in the batch file.
+            Default is ``BOLD_``.
+
+
+    Notes:
+        Reads the batch file, extracts the data for the specified session and
+        returns the list of bold numbers or names that correspond to bolds
+        specified using the `bolds` parameter.
+
     """
 
     if filename is None:
@@ -2229,17 +2308,34 @@ def batch_tag2namekey(
 
 def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None):
     """
-    get_sessions_for_slurm_array \\
-        --sessions=<a list of sessions, or path to the batch file) \\
-        --sessionids=<a list of session ids to filter out>
+    ``get_sessions_for_slurm_array sessions=<a list of sessions, or path to the batch file) sessionids=<a list of session ids to filter out>``
 
-    Returns the subset of sessions that will be processed
+    Return the subset of sessions that will be processed for a SLURM array job.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --sessions      A list of sessions or path to the batch file.
-    --sessionids    A subset of sessions to filter out.
+    Parameters:
+        --batchfile (str):
+            Path to a batch.txt file.
+
+        --sessions (str):
+            A string with pipe `|` or comma separated list of sessions
+            (sessions ids) to be processed (use of grep patterns is possible),
+            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+            If a batchfile is provided, this parameter will be interpreted as
+            sessionids to filter from the batch file.
+        
+        --sessionids (str):
+            A string with pipe `|` or comma separated list of sessions
+            (sessions ids) to be processed (use of grep patterns is possible),
+            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+    
+    Notes:
+        This command will return the list of session ids that will be processed
+        for a SLURM array job, based on the provided batch file and the
+        sessions/sessionids parameters.
+
     """
 
     # get sessions
@@ -2256,7 +2352,6 @@ def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None)
 
     print(",".join(sarray))
 
-
 def gather_behavior(
     sessionsfolder=".",
     sessions=None,
@@ -2270,153 +2365,149 @@ def gather_behavior(
     """
     ``gather_behavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``
 
-    Gathers specified individual behavioral data from each session's behavior
-    folder and compiles it into a specified group behavioral file.
+    Gather specified individual behavioral data from each session's behavior 
+    folder and compile it into a specified group behavioral file.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
+    
+    Parameters:
+        --sessionsfolder (str, '.'):
+            The base study sessions folder (e.g. WM44/sessions) where the inbox
+            and individual session folders are. If not specified, the current
+            working folder will be taken as the location of the sessionsfolder.
+        
+        --sessions (str, None):
+            Either a string with pipe `|` or comma separated list of sessions
+            (sessions ids) to be processed (use of grep patterns is possible),
+            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+        
+        --filter (str, None):
+            Optional parameter used to filter sessions to include. 
+                        
+            It is specifed as a string in format::
 
-    --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
-                      the inbox and individual session folders are. If not
-                      specified, the current working folder will be taken as
-                      the location of the sessionsfolder. [.]
+                "<key>:<value>|<key>:<value>"
 
-    --batchfile       A path to a `batch.txt` file.
+            Only the sessions for which all the specified keys match the specified
+            values will be included in the list.
 
-    --sessions        Either a string with pipe `|` or comma separated list of
-                      sessions (sessions ids) to be processed (use of grep
-                      patterns is possible), e.g. `"AP128,OP139,ER*"`, or
-                      `*list` file with a list of session ids. [*]
+        --sourcefiles (str, 'behavior.txt'):
+            A file or comma or pipe `|` separated list of files or grep patterns
+            that define, which session specific files from the behavior folder
+            to gather data from.
 
-    --filter          Optional parameter used to filter sessions to include. It
-                      is specifed as a string in format::
+        --targetfile (str, None):
+            The path to the target file, a file that will contain the joined data
+            from all the individual session files.
+        
+        --overwrite (str, 'no'):
+            Whether to overwrite an existing group behavioral file or not.  
 
-                        "<key>:<value>|<key>:<value>"
+        --check (str, 'yes'):
+            Check whether all the identified sessions have data to include in
+            the compiled group file. 
+            
+            The possible options are:
+            - yes  (check and report an error if no behavioral data exists for a session)
+            - warn (warn and list the sessions for which the behavioral data was not found)
+            - no (do not run a check, ignore sessions for which no behavioral data was found
 
-                      Only the sessions for which all the specified keys match
-                      the specified values will be included in the list.
+        --report (str, 'yes'):
+            Whether to include date when file was generated and the final report
+            in the compiled file ('yes') or not ('no'). 
 
-    --sourcefiles     A file or comma or pipe `|` separated list of files or
-                      grep patterns that define, which session specific files
-                      from the behavior folder to gather data from.
-                      [`'behavior.txt'`]
+    Notes:
 
-    --targetfile      The path to the target file, a file that will contain
-                      the joined data from all the individual session files.
-                      [`'<sessionsfolder>/inbox/behavior.txt'`]
+        The command will use the `sessionsfolders`, `sessions` and `filter`
+        parameters to create a list of sessions to process. For each session, the
+        command will use the `sourcefiles` parameter to identify behavioral files from
+        which to compile the data from. If no file is found for a session and the
+        `check` parameter is set to `yes`, the command will exit with an error.
 
-    --overwrite       Whether to overwrite an existing group behavioral file or
-                      not. ['no']
+        Once the files for each session are identified, the command will read all
+        the files and compile the data into a key:value dictionary for that session.
+        Once all the sessions are processed, a group file will be generated for
+        all the values encountered across sessions. If any session is missing data,
+        the missing data will be identified as 'NA'
 
-    --check           Check whether all the identified sessions have data to
-                      include in the compiled group file. The possible options
-                      are:
+        Group data will be saved to a file specified using `targetfile` parameter. If no
+        path is specified, the default location will be used::
 
-                      - yes  (check and report an error if no behavioral
-                        data exists for a session)
-                      - warn (warn and list the sessions for which the
-                        behavioral data was not found)
-                      - no (do not run a check, ignore sessions for which
-                        no behavioral data was found)
+            <sessionsfolder>/inbox/behavior/behavior.txt
 
-    --report          Whether to include date when file was generated and the
-                      final report in the compiled file ('yes') or not ('no').
-                      ['yes']
+        If a target file exists, it will be deleted and replaced, if the `overwrite`
+        parameter is set to 'yes'. If the overwrite parameter is set to 'no', the
+        command will exit with an error.
 
-    USE
-    ===
+        File format:
 
-    The command will use the `sessionsfolders`, `sessions` and `filter`
-    parameters to create a list of sessions to process. For each session, the
-    command will use the `sourcefiles` parameter to identify behavioral files from
-    which to compile the data from. If no file is found for a session and the
-    `check` parameter is set to `yes`, the command will exit with an error.
+            Both the individual and the resulting group data is to be stored using a tab
+            separated value format files. Any line that starts with a hash `#` will be
+            ignored. The first valid line should hold the header, specifying the names
+            of the columns. All the following lines hold the values. Individual session
+            files should have a single line of data. The first column of the group file
+            will hold the session id.
 
-    Once the files for each session are identified, the command will read all
-    the files and compile the data into a key:value dictionary for that session.
-    Once all the sessions are processed, a group file will be generated for
-    all the values encountered across sessions. If any session is missing data,
-    the missing data will be identified as 'NA'
+            In addition, if `report` is set to 'yes' (the default), the resulting file
+            will start with a comment line stating the date of creation, and at the end
+            additional comment lines will list the full report of missing files and
+            errors encounterdd while gathering behavioral data from individual sessions.
 
-    Group data will be saved to a file specified using `targetfile` parameter. If no
-    path is specified, the default location will be used::
+    Examples:
 
-        <sessionsfolder>/inbox/behavior/behavior.txt
+        ::
 
-    If a target file exists, it will be deleted and replaced, if the `overwrite`
-    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the
-    command will exit with an error.
+            qunex gather_behavior sessions="AP*"
 
-    File format
-    -----------
+        The command will compile behavioral data present in `behavior.txt` files
+        present in all `<session id>/behavior` folder that match the "AP*" glob
+        pattern in the current folder.
 
-    Both the individual and the resulting group data is to be stored using a tab
-    separated value format files. Any line that starts with a hash `#` will be
-    ignored. The first valid line should hold the header, specifying the names
-    of the columns. All the following lines hold the values. Individual session
-    files should have a single line of data. The first column of the group file
-    will hold the session id.
+        The resulting file will be save in the default location::
 
-    In addition, if `report` is set to 'yes' (the default), the resulting file
-    will start with a comment line stating the date of creation, and at the end
-    additional comment lines will list the full report of missing files and
-    errors encounterdd while gathering behavioral data from individual sessions.
+            <current folder>/inbox/behavior
 
-    EXAMPLE USE
-    ===========
+        If any of the identified sessions do not include data or if errors are
+        encountered when processing the data, the command will exit with an error.
 
-    ::
+        ::
 
-        qunex gather_behavior sessions="AP*"
+            qunex gather_behavior sessionsfolder="/data/myStudy/sessions" \\
+                    sessions="AP*|OP*" sourcefiles="*test*|*results*" \\
+                    check="warn" overwrite="yes" report="no"
 
-    The command will compile behavioral data present in `behavior.txt` files
-    present in all `<session id>/behavior` folder that match the "AP*" glob
-    pattern in the current folder.
+        The command will find all the session folders within `/data/myStudy/sessions`
+        that have a `behavior` subfolder. It will then look for presence of any
+        files that match "*test*" or "*results*" glob pattern. The compiled data
+        will be saved in the default location. If a file already exists, it will be
+        overwritten. If any errors are encountered, the command will not throw an
+        error, however it also won't report a successful completion of the task.
+        The resulting file will not have information on file generation or
+        processing report.
 
-    The resulting file will be save in the default location::
+        ::
 
-        <current folder>/inbox/behavior
+            qunex gather_behavior sessionsfolder="/data/myStudy/sessions" \\
+                    sessions="/data/myStudy/processing/batch.txt" \\
+                    filter="group:controls|behavioral:yes" \\
+                    sourcefiles="*test*|*results*" \\
+                    targetfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
+                    check="no" overwrite="yes"
 
-    If any of the identified sessions do not include data or if errors are
-    encountered when processing the data, the command will exit with an error.
+        The command will read the session information from the provided batch.txt
+        file. It will then process only those sessions that have the following
+        lines in their description::
 
-    ::
+            group: control
+            behavioral: yes
 
-        qunex gather_behavior sessionsfolder="/data/myStudy/sessions" \\
-                sessions="AP*|OP*" sourcefiles="*test*|*results*" \\
-                check="warn" overwrite="yes" report="no"
-
-    The command will find all the session folders within `/data/myStudy/sessions`
-    that have a `behavior` subfolder. It will then look for presence of any
-    files that match "*test*" or "*results*" glob pattern. The compiled data
-    will be saved in the default location. If a file already exists, it will be
-    overwritten. If any errors are encountered, the command will not throw an
-    error, however it also won't report a successful completion of the task.
-    The resulting file will not have information on file generation or
-    processing report.
-
-    ::
-
-        qunex gather_behavior sessionsfolder="/data/myStudy/sessions" \\
-                sessions="/data/myStudy/processing/batch.txt" \\
-                filter="group:controls|behavioral:yes" \\
-                sourcefiles="*test*|*results*" \\
-                targetfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
-                check="no" overwrite="yes"
-
-    The command will read the session information from the provided batch.txt
-    file. It will then process only those sessions that have the following
-    lines in their description::
-
-        group: control
-        behavioral: yes
-
-    For those sessions it will inspect '<session id>/behavior' folder for
-    presence of files that match either '*test*' or '*results*' glob pattern.
-    The compiled data will be saved to the specified target file. If the target
-    file exists, it will be overwritten. The command will print a full report
-    of the processing, however, it will exit with reported success even if
-    missing files or errors were encountered.
+        For those sessions it will inspect '<session id>/behavior' folder for
+        presence of files that match either '*test*' or '*results*' glob pattern.
+        The compiled data will be saved to the specified target file. If the target
+        file exists, it will be overwritten. The command will print a full report
+        of the processing, however, it will exit with reported success even if
+        missing files or errors were encountered.
     """
 
     # --- Support function
@@ -2666,146 +2757,145 @@ def pull_sequence_names(
     """
     ``pull_sequence_names [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
 
-    Gathers a list of all the sequence names across the sessions and saves it
+    Gather a list of all the sequence names across the sessions and save it
     into a specified file.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --sessionsfolder  The base study sessions folder (e.g. WM44/sessions) where
-                      the inbox and individual session folders are. If not
-                      specified, the current working folder will be taken as
-                      the location of the sessionsfolder. [.]
+    Parameters:
+        --sessionsfolder (str, '.'):
+            The base study sessions folder (e.g. WM44/sessions) where the inbox
+            and individual session folders are. If not specified, the current
+            working folder will be taken as the location of the sessionsfolder. 
 
-    --batchfile       A path to a `batch.txt` file.
+        --sessions (str, None):
+            Either a string with pipe `|` or comma separated list of sessions
+            (sessions ids) to be processed (use of grep patterns is possible),
+            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
 
-    --sessions        Either a string with pipe `|` or comma separated list of
-                      sessions (sessions ids) to be processed (use of grep
-                      patterns is possible), e.g. "AP128,OP139,ER*", or
-                      `*list` file with a list of session ids. [*]
+        --filter (str, None):
+            Optional parameter used to filter sessions to include.
 
-    --filter          Optional parameter used to filter sessions to include. It
-                      is specified as a string in format::
+            It is specifed as a string in format::
 
-                        "<key>:<value>|<key>:<value>"
+                "<key>:<value>|<key>:<value>"
 
-                      Only the sessions for which all the specified keys match
-                      the specified values will be included in the list.
+            Only the sessions for which all the specified keys match the specified
+            values will be included in the list.    
 
-    --sourcefiles     A file or comma or pipe `|` separated list of files or
-                      grep patterns that define, which session description
-                      files to check. ['session.txt']
+        --sourcefiles (str, 'session.txt'):
+            A file or comma or pipe `|` separated list of files or grep patterns
+            that define, which session description files to check.  
 
-    --targetfile      The path to the target file, a file that will contain
-                      the list of all the session names from all the individual
-                      session information files.
-                      ['<sessionsfolder>/inbox/MR/sequences.txt']
+        --targetfile (str, None):
+            The path to the target file, a file that will contain the list of all
+            the session names from all the individual session information files.    
 
-    --overwrite       Whether to overwrite an existing file or not. ['no']
+        --overwrite (str, 'no'):
+            Whether to overwrite an existing file or not.   
 
-    --check           Check whether all the identified sessions have the
-                      specified information files. The possible options:
-                      are:
+        --check (str, 'yes'):
+            Check whether all the identified sessions have the specified
+            information files.
 
-                      - yes  (check and report an error if no information
-                        exists for a session)
-                      - warn (warn and list the sessions for which the
-                        neuroimaging information was not found)
-                      - no   (do not run a check, ignore sessions for which
-                        no imaging data was found)
+            The possible options are:
 
-    --report          Whether to include date when file was generated and the
-                      final report in the compiled file ('yes') or not ('no').
-                      ['yes']
+            - yes   check and report an error if no information exists for a session
+            - warn  warn and list the sessions for which the neuroimaging 
+                    information was not found
+            - no    do not run a check, ignore sessions for which no imaging 
+                    data was found
 
-    USE
-    ===
+        --report (str, 'yes'):
+            Whether to include date when file was generated and the final report
+            in the compiled file ('yes') or not ('no').
 
-    The command will use the `sessionsfolders`, `sessions` and `filter`
-    parameters to create a list of sessions to process. For each session, the
-    command will use the `sourcefiles` parameter to identify neuroimaging
-    information files from which to generate the list from. If no file is found
-    for a session and the `check` parameter is set to `yes`, the command will
-    exit with an error.
 
-    Once the files for each session are identified, the command will inspect the
-    files for imaging data and create a list of sequence names across all
-    sessions. The list will be saved to a file specified using `targetfile`
-    parameter. If no path is specified, the default location will be used::
+    Notes:
+        The command will use the `sessionsfolders`, `sessions` and `filter`
+        parameters to create a list of sessions to process. For each session, the
+        command will use the `sourcefiles` parameter to identify neuroimaging
+        information files from which to generate the list from. If no file is found
+        for a session and the `check` parameter is set to `yes`, the command will
+        exit with an error.
 
-        <sessionsfolder>/inbox/MR/sequences.txt
+        Once the files for each session are identified, the command will inspect the
+        files for imaging data and create a list of sequence names across all
+        sessions. The list will be saved to a file specified using `targetfile`
+        parameter. If no path is specified, the default location will be used::
 
-    If a target file exists, it will be deleted and replaced, if the `overwrite`
-    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the
-    command will exit with an error.
+            <sessionsfolder>/inbox/MR/sequences.txt
 
-    File formats
-    ------------
+        If a target file exists, it will be deleted and replaced, if the `overwrite`
+        parameter is set to 'yes'. If the overwrite parameter is set to 'no', the
+        command will exit with an error.
 
-    The command expects the neuroimaging data to be present in the standard
-    'session.txt' files. Please see online documentation for details.
-    Specifically, it will extract the first information following the sequence
-    name.
+        File format:        
 
-    The resulting file will be a simple text file, with one sequence name per
-    line. In addition, if `report` is set to 'yes' (the default), the resulting
-    file  will start with a comment line stating the date of creation, and at
-    the end additional comment lines will list the full report of missing files
-    and errors encountered while gathering behavioral data from individual
-    sessions.
+            The command expects the neuroimaging data to be present in the standard
+            'session.txt' files. Please see online documentation for details.
+            Specifically, it will extract the first information following the sequence
+            name.
 
-    EXAMPLE USE
-    ===========
+            The resulting file will be a simple text file, with one sequence name per
+            line. In addition, if `report` is set to 'yes' (the default), the resulting
+            file  will start with a comment line stating the date of creation, and at
+            the end additional comment lines will list the full report of missing files
+            and errors encountered while gathering behavioral data from individual
+            sessions.
 
-    ::
+    Examples:
 
-        qunex pull_sequence_names sessions="AP*"
+        ::
 
-    The command will compile sequence names present in `session.txt` files
-    present in all `<session id>` folders that match the "AP*" glob
-    pattern in the current working directory.
+            qunex pull_sequence_names sessions="AP*"
 
-    The resulting file will be save in the default location::
+        The command will compile sequence names present in `session.txt` files
+        present in all `<session id>` folders that match the "AP*" glob
+        pattern in the current working directory.
 
-        <current folder>/inbox/MR/sequences.txt
+        The resulting file will be save in the default location::
 
-    If any of the identified sessions do not include data or if errors are
-    encountered when processing the data, the command will exit with an error.
+            <current folder>/inbox/MR/sequences.txt
 
-        qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
-                sessions="AP*|OP*" sourcefiles="session.txt|subject.txt" \\
-                check="warn" overwrite="yes" report="no"
+        If any of the identified sessions do not include data or if errors are
+        encountered when processing the data, the command will exit with an error.
 
-    The command will find all the session folders within `/data/myStudy/sessions`
-    It will then look for presence of either session.txt or subject.txt files.
-    The compiled data from the found files will be saved in the default
-    location. If a file already exists, it will be overwritten. If any errors
-    are encountered, the command will not throw an error, however it also won't
-    report a successful completion of the task. The resulting file will not have
-    information on file generation or processing report.
+            qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
+                    sessions="AP*|OP*" sourcefiles="session.txt|subject.txt" \\
+                    check="warn" overwrite="yes" report="no"
 
-    ::
+        The command will find all the session folders within `/data/myStudy/sessions`
+        It will then look for presence of either session.txt or subject.txt files.
+        The compiled data from the found files will be saved in the default
+        location. If a file already exists, it will be overwritten. If any errors
+        are encountered, the command will not throw an error, however it also won't
+        report a successful completion of the task. The resulting file will not have
+        information on file generation or processing report.
 
-        qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
-                sessions="/data/myStudy/processing/batch.txt" \\
-                filter="group:controls|behavioral:yes" \\
-                sourcefiles="*.txt" \\
-                targetfile="/data/myStudy/sessions/specs/hcp_mapping.txt" \\
-                check="no" overwrite="yes"
+        ::
 
-    The command will read the session information from the provided batch.txt
-    file. It will then process only those sessions that have the following
-    lines in their description::
+            qunex pull_sequence_names sessionsfolder="/data/myStudy/sessions" \\
+                    sessions="/data/myStudy/processing/batch.txt" \\
+                    filter="group:controls|behavioral:yes" \\
+                    sourcefiles="*.txt" \\
+                    targetfile="/data/myStudy/sessions/specs/hcp_mapping.txt" \\
+                    check="no" overwrite="yes"
 
-        group: control
-        behavioral: yes
+        The command will read the session information from the provided batch.txt
+        file. It will then process only those sessions that have the following
+        lines in their description::
 
-    For those sessions it will find any files that end with `.txt` and process
-    them for presence of neuroimaging information. The compiled data will be
-    saved to the specified target file. If the target file exists, it will be
-    overwritten. The command will print a full report of the processing,
-    however, it will exit with reported success even if missing files or errors
-    were encountered.
+            group: control
+            behavioral: yes
+
+        For those sessions it will find any files that end with `.txt` and process
+        them for presence of neuroimaging information. The compiled data will be
+        saved to the specified target file. If the target file exists, it will be
+        overwritten. The command will print a full report of the processing,
+        however, it will exit with reported success even if missing files or errors
+        were encountered.
     """
 
     # --- Support function
@@ -3074,7 +3164,6 @@ def exportPrep(commandName, sessionsfolder, mapto, mapaction, mapexclude):
 
     return sessionsfolder, mapto, mapexclude
 
-
 def create_session_info(
     sessions=None,
     pipelines="hcp",
@@ -3088,8 +3177,10 @@ def create_session_info(
     """
     ``create_session_info sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]``
 
-    Creates session.txt files that hold the information necessary for correct
-    mapping to a folder structure supporting specific pipeline processing.
+    Create session info files for specified sessions and pipeline.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --batchfile (str, default ''):

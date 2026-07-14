@@ -25,187 +25,164 @@ import os.path
 import os
 import time
 import shutil
-import general.core as gc
-import general.exceptions as ge
-import re
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+
+
 
 def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
 
     """
     ``export_hcp [sessionsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]`` 
 
-    Maps HCP style data out of QuNex Suite file strucutre.
+    Export HCP style data out of the QuNex Suite file structure.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --sessionsfolder  Specifies the base study sessions folder within the QuNex
-                      folder structure to or from which the data are to be 
-                      mapped. If not specified explicitly, the current working 
-                      folder will be taken as the location of the
-                      sessionsfolder. [.]
-    
-    --batchfile       A path to a batch.txt file.
+    Parameters:
+        --sessionsfolder (str, default '.'): 
+            The base study sessions folder within the QuNex
+            folder structure to or from which the data are to be 
+            mapped. If not specified explicitly, the current working 
+            folder will be taken as the location of the
+            sessionsfolder.
 
-    --sessions        Either a string with pipe `|` or comma separatedlist of
-                      sessions (sessions ids) to be processed (use of grep
-                      patterns is possible), e.g. `"OP128,OP139,ER*"` or `*list`
-                      file with a list of session ids.
+        --batchfile (str, default ''):
+            A path to a batch.txt file.
 
-    --filter          And optional parameter used in combination with a 
-                      batch.txt file used to filter sessions to include in the 
-                      mapping. It is specified as a string in format:
-    
-                      ``"<key>:<value>|<key>:<value>"``
+        --sessions (str, default ''):
+            A list of sessions to map (comma/pipe-separated, patterns allowed).
 
-                      The keys and values refer to information provided by the
-                      batch.txt file referenced in the `sessions` parameter. 
-                      Only the sessions for which all the specified keys match
-                      the specified values will be mapped. []
+        --filter (str, default ''):
+            Optional filter applied when `sessions` references a batch file.
 
-    --mapaction       How to map the data. ['link'] The following actions are 
-                      supported:
+        --sessionids (str, default ''):
+            Optional explicit session id selector (patterns allowed).
 
-                      - 'copy' (the data is copied from source to target)
-                      - 'link' (if possible, hard links are created for the 
-                        files, if not, the data is copied)
-                      - 'move' (the data is moved from source to target 
-                        location)
+        --mapaction (str, default 'link'):
+            How to map the data: copy, link, or move.
 
-    --mapto           The external target of the mapping when starting with the 
-                      QuNex. This flag is optional and only has to be specified 
-                      when mapping out of the QuNex folder structure. []
+        --mapto (str, default ''):
+            Target location to map to when exporting.
 
-    --overwrite       Whether existing files at the target location should be
-                      overwritten ['no']. Note that previous data is deleted
-                      before the run if overwrite is enabled, so in the case of
-                      a failed command run, previous results are lost. Possible
-                      options are:
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing files at the target, skip them, or abort.
 
-                      - yes (any existing files should be replaced)
-                      - no (no existing files should be replaced and the
-                        mapping should be aborted if any are found)
-                      - skip (skip files that already exist, process others)
+        --mapexclude (str, default ''):
+            Comma separated list of regex patterns that match files to exclude from mapping.
 
-    --mapexclude      A comma separated list of regular expression patterns that
-                      specify, which files should be excluded from mapping. The
-                      regular expression patterns are matched against the full
-                      path of the source files. []
+        --hcp_suffix (str, default ''):
+            Optional suffix appended to session id under the hcp folder.
 
-    --hcp_suffix      An optional suffix to append to session id when mapping  
-                      data from a hcp session folder. The path from which the 
-                      data will be mapped from each session will be:
-                      ``<sessionsfolder>/<session id>/hcp/<session id><hcp_suffix>``.
-                      []
+        --verbose (str, default 'no'):
+            Report details while running.
 
-    --verbose         Report details while running function ['no']
 
-    USE
-    ===
 
-    The function maps HCP style data out of QuNex data structure. How to do the 
-    mapping (move, copy, link) is specified by the `mapaction` parameter. The
-    `overwrite` parameter specifies whether to replace any existing data at the
-    target location if it already exist. The target location has to be provided
-    by the `mapto` parameter.
+    Notes:
+        The function maps HCP style data out of QuNex data structure. How to do the 
+        mapping (move, copy, link) is specified by the `mapaction` parameter. The
+        `overwrite` parameter specifies whether to replace any existing data at the
+        target location if it already exist. The target location has to be provided
+        by the `mapto` parameter.
 
-    The function first prepares the mapping. Next it checks that the mapping can
-    be conducted as specified by the parameters given. If the check identifies 
-    any potential issues, no mapping is conducted to avoid an incomplete 
-    mapping. Do note that the check only investigates the presence of source 
-    and target files, it does not check, whether the user has permission on the 
-    file system to execute the actions.
+        The function first prepares the mapping. Next it checks that the mapping can
+        be conducted as specified by the parameters given. If the check identifies 
+        any potential issues, no mapping is conducted to avoid an incomplete 
+        mapping. Do note that the check only investigates the presence of source 
+        and target files, it does not check, whether the user has permission on the 
+        file system to execute the actions.
 
-    This mapping supports the data preprocessed using the HCP Pipelines
-    following the Life Span (LS) convention. The processed derivatives from the 
-    HCP pipelines are mapped into the specified target location on the file 
-    system to comply with the HCPLS output expectations. The mapping expects 
-    that HCPLS folder structure was used for the processing. The function will 
-    map all the content of the session's hcp directory to a corresponding 
-    session directory in the indicated target location. If any part of the 
-    unprocessed data or the results are not to be mapped, they can be specified 
-    using the `mapexclude` parameter.
+        This mapping supports the data preprocessed using the HCP Pipelines
+        following the Life Span (LS) convention. The processed derivatives from the 
+        HCP pipelines are mapped into the specified target location on the file 
+        system to comply with the HCPLS output expectations. The mapping expects 
+        that HCPLS folder structure was used for the processing. The function will 
+        map all the content of the session's hcp directory to a corresponding 
+        session directory in the indicated target location. If any part of the 
+        unprocessed data or the results are not to be mapped, they can be specified 
+        using the `mapexclude` parameter.
 
-    EXAMPLE CALLS
-    =============
+    Examples:
+        
+        We will assume the following:
 
-    We will assume the following:
-    
-    - data to be mapped is located in the folder 
-      ``/data/studies/myStudy/sessions``
-    - a batch file exists in the location 
-      ``/data/studies/myStudy/processing/batch.txt``
-    - we would like to map the data to location 
-      ``/data/outbox/hcp_formatted/myStudy``
-    
-    given the above assumptions the following example commands can be run::
-    
-        qunex export_hcp \\
-            --sessionsfolder=/data/studies/myStudy/sessions \\
-            --batchfile=/data/studies/myStudy/processing/batch.txt \\
-            --mapto=/data/outbox/hcp_formatted/myStudy \\
-            --mapexclude=unprocessed \\
-            --mapaction=link \\
-            --overwrite=skip
+        - data to be mapped is located in the folder 
+          ``/data/studies/myStudy/sessions``
+        - a batch file exists in the location 
+          ``/data/studies/myStudy/processing/batch.txt``
+        - we would like to map the data to location 
+          ``/data/outbox/hcp_formatted/myStudy``
 
-    Using the above commands the data found in the 
-    ``/data/studies/myStudy/sessions/<session id>/hcp/<session id>`` folders, 
-    excluding the `unprocessed` folder would be mapped to the 
-    ``/data/outbox/hcp_formatted/myStudy/<session id>`` folder for all the 
-    sessions listed in the batch.txt file. Specifically, folders would be 
-    recreated as needed and hard-links would be created for all the files to be 
-    mapped. If any target files already exist, they would be skipped, but 
-    the processing of other files would take place anyway.
-    
-    ::
+        given the above assumptions the following example commands can be run::
 
-        qunex export_hcp \\
-            --sessionsfolder=/data/studies/myStudy/sessions \\
-            --batchfile=/data/studies/myStudy/processing/batch.txt \\
-            --mapto=/data/outbox/hcp_formatted/myStudy \\
-            --filter="group:controls|institution:Yale" \\
-            --mapaction="copy" \\
-            --overwrite=no
+            qunex export_hcp \\
+                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --batchfile=/data/studies/myStudy/processing/batch.txt \\
+                --mapto=/data/outbox/hcp_formatted/myStudy \\
+                --mapexclude=unprocessed \\
+                --mapaction=link \\
+                --overwrite=skip
 
-    Using the above commands, only data from the sessions that are marked in the
-    batch.txt file to be from the control group and acquired at Yale would be 
-    mapped. In this case, the files would be copied and if any files would 
-    already exist in the target location, the mapping would be aborted 
-    altogether.
-    
-    ::
+        Using the above commands the data found in the 
+        ``/data/studies/myStudy/sessions/<session id>/hcp/<session id>`` folders, 
+        excluding the `unprocessed` folder would be mapped to the 
+        ``/data/outbox/hcp_formatted/myStudy/<session id>`` folder for all the 
+        sessions listed in the batch.txt file. Specifically, folders would be 
+        recreated as needed and hard-links would be created for all the files to be 
+        mapped. If any target files already exist, they would be skipped, but 
+        the processing of other files would take place anyway.
 
-        qunex export_hcp \\
-            --sessionsfolder=/data/studies/myStudy/sessions \\
-            --batchfile=/data/studies/myStudy/processing/batch.txt \\
-            --mapto=/data/outbox/hcp_formatted/myStudy \\
-            --sessionids="AP*,HQ*" \\
-            --mapaction="move" \\
-            --overwrite=yes
-    
+        ::
 
-    Using the above commands, only the sessions that start with either "AP" or 
-    "HQ" would be mapped, the files would be moved and any existing files at the 
-    target location would be overwritten.
-    
-    ::
+            qunex export_hcp \\
+                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --batchfile=/data/studies/myStudy/processing/batch.txt \\
+                --mapto=/data/outbox/hcp_formatted/myStudy \\
+                --filter="group:controls|institution:Yale" \\
+                --mapaction="copy" \\
+                --overwrite=no
 
-        qunex export_hcp \\
-            --sessionsfolder=/data/studies/myStudy/sessions \\
-            --batchfile=/data/studies/myStudy/processing/batch.txt \\
-            --mapto=/data/outbox/hcp_formatted/myStudy \\
-            --mapaction="link" \\
-            --mapexclude="unprocessed,MotionMatrices,MotionCorrection" \\
-            --overwrite=skip
-    
-    Using the above commands, all the sessions specified in the batch.txt would 
-    be processed, files would be linked, files that already exist would be 
-    skipped, and any files for which the path include 'unprocessed', '
-    MotionMatrices' or 'MotionCorrection' would be excluded from the mapping.
+        Using the above commands, only data from the sessions that are marked in the
+        batch.txt file to be from the control group and acquired at Yale would be 
+        mapped. In this case, the files would be copied and if any files would 
+        already exist in the target location, the mapping would be aborted 
+        altogether.
+
+        ::
+
+            qunex export_hcp \\
+                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --batchfile=/data/studies/myStudy/processing/batch.txt \\
+                --mapto=/data/outbox/hcp_formatted/myStudy \\
+                --sessionids="AP*,HQ*" \\
+                --mapaction="move" \\
+                --overwrite=yes
+
+
+        Using the above commands, only the sessions that start with either "AP" or 
+        "HQ" would be mapped, the files would be moved and any existing files at the 
+        target location would be overwritten.
+
+        ::
+
+            qunex export_hcp \\
+                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --batchfile=/data/studies/myStudy/processing/batch.txt \\
+                --mapto=/data/outbox/hcp_formatted/myStudy \\
+                --mapaction="link" \\
+                --mapexclude="unprocessed,MotionMatrices,MotionCorrection" \\
+                --overwrite=skip
+
+        Using the above commands, all the sessions specified in the batch.txt would 
+        be processed, files would be linked, files that already exist would be 
+        skipped, and any files for which the path include 'unprocessed', '
+        MotionMatrices' or 'MotionCorrection' would be excluded from the mapping.
     """
 
     # load gu
-    import general.utilities as gu
+    import qx_utilities.general.utilities as gu
 
     verbose   = verbose.lower() == 'yes'
 

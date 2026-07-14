@@ -14,14 +14,21 @@ usage() {
     cat << EOF
 ``dwi_dtifit``
 
-This function runs the FSL dtifit processing locally or via a scheduler.
-It explicitly assumes the Human Connectome Project folder structure for
-preprocessing and completed diffusion processing.
+Run FSL's dtifit to fit a diffusion tensor model at each voxel.
 
-The DWI data is expected to be in the following folder, to use different data,
-you can use the diffdata parameter::
+..  qx_command:
+    type: processing.session
+    language: bash
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+Note:
+    This function runs the FSL dtifit processing locally or via a scheduler.
+    It explicitly assumes the Human Connectome Project folder structure for
+    preprocessing and completed diffusion processing.
+
+    The DWI data is expected to be in the following folder, to use different data,
+    you can use the diffdata parameter::
+
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
 
 Parameters:
     --sessionsfolder (str):

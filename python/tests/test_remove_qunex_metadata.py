@@ -11,12 +11,7 @@ import tempfile
 import shutil
 import struct
 
-# Add the parent directory to the path to import qx_utilities
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, parent_dir)
-sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
-
-from general.img import niftihdr, remove_qunex_metadata, print_nifti_metadata
+from qx_utilities.general.img import niftihdr, remove_qunex_metadata, print_nifti_metadata
 
 
 def create_test_file(filename, add_cifti=False, add_qunex=False):

@@ -15,8 +15,7 @@ A collection of parses for qunex file formats
 Created by Lining Pan on 2022-05-19.
 """
 import re
-
-import general.exceptions as ge
+import qx_utilities.general.exceptions as ge
 
 # compile once but might slow down start up time
 # RE_IMAGE_NUM = re.compile(r"^\d+$")

@@ -1028,7 +1028,7 @@ def main(args=None):
 
             # nv
             if nv:
-                container_command += ["--nv "]
+                container_command += ["--nv"]
 
             container_command += [container.strip(), "bash", "-c"]
 

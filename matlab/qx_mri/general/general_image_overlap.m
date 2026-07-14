@@ -2,14 +2,16 @@ function [] = general_image_overlap(af, bf, tf, v)
 
 %``general_image_overlap(af, bf, tf, v)``
 %
-%   Function that prints the overlap of two images, one in red, another in
-%   green.
+%   Print the overlap of two images, one in red, another in green.
+%
+%   .. qx_command:
+%      type: matlab
 %
 %   Parameters:
-%       --af (nimage | str):
+%       --af ( str | nimage):
 %           Either a nimage object or the path to the first image file.
 %
-%       --bf (nimage | str):
+%       --bf ( str | nimage):
 %           Either a nimage object or the path to the second image file.
 %
 %       --tf (str):

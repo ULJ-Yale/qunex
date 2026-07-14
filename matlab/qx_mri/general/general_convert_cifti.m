@@ -1,9 +1,12 @@
 function [] = general_convert_cifti(fin, fout, output_format, atlas, parcel_method, verbose)
 
-%``general_find_peaks(fin, fout, output_format, parcel_img, parcel_method, verbose)``
+%``general_convert_cifti(fin, fout, output_format, atlas, parcel_method, verbose)``
 %
-%   Performs smoothing using img_smooth() method and uses img_find_peaks method
+%   Perform smoothing using img_smooth() method and use img_find_peaks method
 %   to define peak ROI using a watershed algorithm to grow regions from peaks.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --fin (str):
@@ -24,7 +27,9 @@ function [] = general_convert_cifti(fin, fout, output_format, atlas, parcel_meth
 %           Only required for dense to parcellated conversion.
 %
 %       --parcel_method (str, default 'mean'):
-%           The parcellation method:
+%           The metod to use to compute the values for parcels.
+%
+%           Options are:
 %
 %           - 'mean'      ... average value of the ROI
 %           - 'median'    ... median value across the ROI

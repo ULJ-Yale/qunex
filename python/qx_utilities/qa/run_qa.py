@@ -18,13 +18,16 @@ Created by Samuel Brege on 2024-03-19.
 import os
 import yaml
 import numpy as np
-import general.exceptions as ge
-import general.core as gc
-import general.filelock as fl
-import general.parser as parser
-import qa.core as qa
-import qa.config as config
 import pprint
+
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.parser as parser
+import qx_utilities.qa.core as qa
+import qx_utilities.qa.config as config
+
+
 
 def run_qa(
     datatype=None,
@@ -38,7 +41,10 @@ def run_qa(
     """
     ``run_qa [datatype=None] [sessionsfolder=.] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
 
-    Runs Quality Assurance on a QuNex study, based off data-type and a user-defined config.
+    Run Quality Assurance on a QuNex study, based off data-type and a user-defined config.
+
+    ..  qx_command:
+        type: qa
 
     Parameters:
         --datatype (str):
