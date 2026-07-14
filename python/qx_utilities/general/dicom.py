@@ -44,6 +44,7 @@ import csv
 import json
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
+<<<<<<< HEAD
 import qx_utilities.general.core as gc
 import qx_utilities.general.img as gi
 import qx_utilities.general.nifti as gn
@@ -51,6 +52,16 @@ import qx_utilities.general.qximg as qxi
 import qx_utilities.general.exceptions as ge
 from qx_utilities.general.parsing import true_or_false
 
+=======
+import general.core as gc
+import general.img as gi
+import general.nifti as gn
+import general.qximg as qxi
+import general.exceptions as ge
+import general.dicom_sort as gds
+import general.dicom_report as gdr
+from general.parsing import true_or_false
+>>>>>>> fb5c81fc (feat: initial implementation of improved import_dicom)
 from datetime import datetime
 
 if "QUNEXMCOMMAND" not in os.environ:
@@ -233,9 +244,9 @@ def readPARInfo(filename):
     return info
 
 
-def readDICOMInfo(filename):
+def readDICOMInfo(filename, extended=False):
     """
-    ``readDICOMInfo(filename)``
+    ``readDICOMInfo(filename, extended=False)``
 
     Reads basic information from DICOM files.
 
@@ -243,6 +254,11 @@ def readDICOMInfo(filename):
     =====
 
     --filename      The name of the `DICOM` file.
+    --extended      If True, also read per-frame functional groups and populate
+                    the extended geometry/temporal/acceleration/HCP keys used by
+                    the single-pass sort engine (see below). Default: False, in
+                    which case the fast partial read and the original key set are
+                    used, unchanged.
 
     OUTPUT
     ======
@@ -261,13 +277,32 @@ def readDICOMInfo(filename):
     - volumes
     - slices
     - datetime
+
+    When ``extended`` is True the dictionary additionally carries per-instance
+    and per-sequence fields consumed by ``dicom_sort`` (SeriesInstanceUID,
+    manufacturer/model, is_imaging, is_mosaic, rows/cols, number_of_frames/
+    slices/temporal_positions, images_in_acq, pixel_spacing, slice_thickness,
+    spacing_between_slices, instance_number, temporal_position,
+    acquisition_number, in_stack_position, image_position, acq_datetime,
+    sense_factor, multiband_factor, phase_encoding_direction,
+    enhanced_volume_map, hint_tags).
     """
 
     if not os.path.exists(filename):
         raise ValueError("DICOM file %s does not exist!" % (filename))
 
-    d = readDICOMBase(filename)
+    d = _read_deep(filename) if extended else readDICOMBase(filename)
+    fileid, _ = os.path.splitext(os.path.basename(filename))
+    return _dicom_info_from_dataset(d, fileid, extended)
 
+
+def _dicom_info_from_dataset(d, fileid, extended=False):
+    """
+    Build the ``readDICOMInfo`` dictionary from an already-read pydicom dataset.
+
+    Shared by ``readDICOMInfo`` (file path) and the single-pass sort engine
+    (in-memory bytes), so both parse identically without staging files to disk.
+    """
     info = vdict(__keys__=dcm_info_list)
 
     info["sessionid"] = getID(d)
@@ -295,28 +330,10 @@ def readDICOMInfo(filename):
         if info["seriesDescription"].lower() != "anonymous":
             break
 
-    # --- TR, TE
+    # --- TR, TE (robust extraction shared with the sort engine)
 
-    TR, TE = 0.0, 0.0
-    try:
-        TR = d.RepetitionTime
-    except:
-        try:
-            TR = float(d[0x2005, 0x1030].value)
-        except:
-            try:
-                TR = d[0x2005, 0x1030].value[0]
-            except:
-                pass
-    try:
-        TE = d.EchoTime
-    except:
-        try:
-            TE = float(d[0x2001, 0x1025].value)
-        except:
-            pass
-
-    info["TR"], info["TE"] = float(TR), float(TE)
+    tr, te = gds.extract_tr_te(d)
+    info["TR"], info["TE"] = float(tr or 0.0), float(te or 0.0)
 
     # --- Frames
 
@@ -373,7 +390,7 @@ def readDICOMInfo(filename):
 
     # --- fileid
 
-    info["fileid"], _ = os.path.splitext(os.path.basename(filename))
+    info["fileid"] = fileid
 
     # ---> institution name
     if [0x0008, 0x0080] in d:
@@ -387,7 +404,108 @@ def readDICOMInfo(filename):
     if MR:
         info["device"] = "|".join(MR)
 
+    if extended:
+        _augment_extended(info, d)
+
     return info
+
+
+def _read_deep(filename):
+    """
+    Read a DICOM header including per-frame functional groups, stopping before
+    pixel data. Needed for enhanced multi-frame files where the volume/slice
+    layout lives in the per-frame groups (which the fast partial read in
+    ``readDICOMBase`` deliberately skips). Handles gzipped files.
+    """
+
+    def stop(tag, VR, length):
+        return tag == (0x7FE0, 0x0010)
+
+    f = None
+    try:
+        f = gz.open(filename, "rb") if ".gz" in filename else open(filename, "rb")
+        return dfr.read_partial(f, stop_when=stop)
+    except Exception:
+        try:
+            return dfr.read_file(filename, stop_before_pixels=True)
+        except Exception:
+            return None
+    finally:
+        if f is not None and not f.closed:
+            f.close()
+
+
+def _augment_extended(info, d):
+    """
+    Populate the extended keys consumed by the single-pass sort engine. Called
+    only when ``readDICOMInfo(extended=True)``; the original keys are untouched.
+    """
+    if d is None:
+        return
+
+    info["SeriesInstanceUID"] = str(getattr(d, "SeriesInstanceUID", "") or "")
+    info["modality"] = gds.fmt(getattr(d, "Modality", None))
+    info["manufacturer"] = gds.fmt(getattr(d, "Manufacturer", None))
+    info["model"] = gds.fmt(getattr(d, "ManufacturerModelName", None))
+
+    info["is_imaging"] = gds.is_imaging_ds(d)
+    info["is_mosaic"] = gds.is_mosaic_ds(d)
+
+    info["rows"] = gds.to_int(getattr(d, "Rows", None))
+    info["cols"] = gds.to_int(getattr(d, "Columns", None))
+    info["number_of_frames"] = gds.to_int(getattr(d, "NumberOfFrames", None))
+    info["number_of_slices"] = gds.to_int(getattr(d, "NumberOfSlices", None))
+    info["images_in_acq"] = gds.to_int(getattr(d, "ImagesInAcquisition", None))
+    info["number_of_temporal_positions"] = gds.to_int(
+        getattr(d, "NumberOfTemporalPositions", None)
+    )
+
+    px, st, sbs = gds.get_shared_pixel_measures(d)
+    info["pixel_spacing"] = px
+    info["slice_thickness"] = st
+    info["spacing_between_slices"] = sbs
+
+    info["instance_number"] = gds.to_int(getattr(d, "InstanceNumber", None))
+    info["temporal_position"] = gds.to_int(getattr(d, "TemporalPositionIdentifier", None))
+    info["acquisition_number"] = gds.to_int(getattr(d, "AcquisitionNumber", None))
+    info["in_stack_position"] = gds.to_int(getattr(d, "InStackPositionNumber", None))
+
+    ipp = getattr(d, "ImagePositionPatient", None)
+    info["image_position"] = None
+    if ipp is not None and len(ipp) >= 3:
+        try:
+            info["image_position"] = (float(ipp[0]), float(ipp[1]), float(ipp[2]))
+        except (TypeError, ValueError):
+            info["image_position"] = None
+
+    info["acq_datetime"] = gds.parse_dt(d)
+    info["sense_factor"] = gds.extract_sense_factor(d)
+    info["multiband_factor"] = gds.extract_mb_factor(d)
+    info["phase_encoding_direction"] = gds.extract_phase_encoding_direction(
+        d, info["seriesDescription"]
+    )
+
+    frames = info["number_of_frames"] or 0
+    info["enhanced_volume_map"] = (
+        gds.extract_enhanced_volume_map(d) if frames > 1 else {}
+    )
+
+    info["hint_tags"] = {
+        "EffectiveEchoSpacing": getattr(d, "EffectiveEchoSpacing", None),
+        "BandwidthPerPixelPhaseEncode": getattr(d, "BandwidthPerPixelPhaseEncode", None),
+        "PixelBandwidth": getattr(d, "PixelBandwidth", None),
+        "EchoTrainLength": getattr(d, "EchoTrainLength", None),
+        "InPlanePhaseEncodingDirection": getattr(d, "InPlanePhaseEncodingDirection", None),
+        "PrivateEchoSpacing": gds._first_numeric(
+            gds._iter_values_for_tag(d, (0x2005, 0x1492))
+        ),
+        "PrivateAcqDurationSec": gds._first_numeric(
+            gds._iter_values_for_tag(d, (0x2005, 0x1033))
+        ),
+        "StackRadialAxis": gds._first_axis(
+            gds._iter_values_for_tag(d, (0x2001, 0x1033))
+        ),
+    }
 
 
 # fcount = 0
@@ -456,27 +574,9 @@ def getID(info):
 
 
 def getTRTE(info):
-    TR, TE = 0, 0
-    try:
-        TR = info.RepetitionTime
-    except:
-        try:
-            TR = float(info[0x2005, 0x1030].value)
-            # TR = d[0x5200,0x9229][0][0x0018,0x9112][0][0x0018,0x0080].value
-        except:
-            try:
-                TR = info[0x2005, 0x1030].value[0]
-            except:
-                pass
-    try:
-        TE = info.EchoTime
-    except:
-        try:
-            TE = float(info[0x2001, 0x1025].value)
-            # TE = d[0x5200,0x9230][0][0x0018,0x9114][0][0x0018,0x9082].value
-        except:
-            pass
-    return float(TR), float(TE)
+    # delegates to the shared robust extractor; info is a pydicom dataset
+    tr, te = gds.extract_tr_te(info)
+    return float(tr or 0.0), float(te or 0.0)
 
 
 
@@ -2308,9 +2408,10 @@ def _unzip_dicom(dicom_root_folder, parelements):
             raise ge.CommandError("_unzip_dicom", "Unable to unzip one or more files")
 
 
-
-def sort_dicom(folder=".", copy='move', outdir=None, files=None):
+def _sort_dicom_legacy(folder=".", **kwargs):
     """
+    Legacy ``sort_dicom`` implementation retained for ``import_dicom_old``.
+
     ``sort_dicom [folder=.]``
 
     Sort DICOM files from the specified folder.
@@ -2524,7 +2625,7 @@ def sort_dicom(folder=".", copy='move', outdir=None, files=None):
     return
 
 
-def clean_dicom(
+def _clean_dicom_legacy(
     folder=".",
     tol_mm=0.2,
     min_files=10,
@@ -2533,6 +2634,8 @@ def clean_dicom(
     move_incomplete=True,
 ):
     r"""
+    Legacy ``clean_dicom`` implementation retained for ``import_dicom_old``.
+
     ``clean_dicom [folder=.] [tol_mm=0.2] [min_files=10] [verbose=yes] [move_non_image=True] [move_incomplete=True]``
 
     Inspects DICOM files within sequence subfolders and identifies DICOM files
@@ -3260,7 +3363,576 @@ def split_dicom(folder=None):
     return
 
 
-def import_dicom(
+# regexes identifying compressed package types for the member-source iterator
+_RE_ZIP = re.compile(r"\.zip$", re.IGNORECASE)
+_RE_TAR = re.compile(r"(\.tar$|\.tar\.gz$|\.tar\.bz2$|\.tarz$|\.tar\.bzip2$|\.tgz$)", re.IGNORECASE)
+
+
+def _iter_stream_members(name, data):
+    """
+    Yield ``(name, bytes)`` for a member whose content is already in memory.
+
+    If the member is itself a (nested) zip or tar archive it is expanded
+    recursively; otherwise the member is yielded as-is. Gzipped single files
+    (e.g. ``*.dcm.gz``) keep their raw gzipped bytes and ``.gz`` name — the
+    reader/writer decompress as needed.
+    """
+    if _RE_ZIP.search(name):
+        with zipfile.ZipFile(io.BytesIO(data), "r") as z:
+            for info in z.infolist():
+                if info.is_dir() or info.file_size == 0:
+                    continue
+                with z.open(info, "r") as f:
+                    yield from _iter_stream_members(info.filename, f.read())
+    elif _RE_TAR.search(name):
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r:*") as tar:
+            for member in tar:
+                if not member.isfile():
+                    continue
+                handle = tar.extractfile(member)
+                if handle is None:
+                    continue
+                yield from _iter_stream_members(member.name, handle.read())
+    else:
+        yield name, data
+
+
+def iter_import_members(source):
+    """
+    Yield ``(relname, raw_bytes)`` for every file in an import ``source``.
+
+    ``source`` is a path to a zip archive, a tar archive (``.tar``,
+    ``.tar.gz``, ``.tar.bz2``, ``.tgz``, ...), a folder (walked recursively),
+    or a single loose file. Members that are themselves archives are expanded
+    recursively. The top-level container is streamed member-by-member so a large
+    archive or folder is never slurped whole; only nested archive members are
+    buffered in memory.
+
+    This replaces the old inbox-staging copy: instead of writing every file into
+    ``<session>/inbox`` before sorting, callers consume the members directly and
+    write each file once to its final ``dicom`` location.
+
+    Re-iterable: calling the function again yields a fresh pass over the source.
+    """
+    if os.path.isdir(source):
+        for root, _, files in os.walk(source):
+            for fn in sorted(files):
+                path = os.path.join(root, fn)
+                rel = os.path.relpath(path, source)
+                with open(path, "rb") as f:
+                    yield from _iter_stream_members(rel, f.read())
+    elif os.path.isfile(source):
+        if _RE_ZIP.search(source):
+            with zipfile.ZipFile(source, "r") as z:
+                for info in z.infolist():
+                    if info.is_dir() or info.file_size == 0:
+                        continue
+                    with z.open(info, "r") as f:
+                        yield from _iter_stream_members(info.filename, f.read())
+        elif _RE_TAR.search(source):
+            with tarfile.open(source, "r:*") as tar:
+                for member in tar:
+                    if not member.isfile():
+                        continue
+                    handle = tar.extractfile(member)
+                    if handle is None:
+                        continue
+                    yield from _iter_stream_members(member.name, handle.read())
+        else:
+            with open(source, "rb") as f:
+                yield from _iter_stream_members(os.path.basename(source), f.read())
+    # a nonexistent source simply yields nothing
+
+
+def _parse_member_dataset(data):
+    """Parse in-memory bytes as a DICOM header, or return None if not DICOM."""
+    try:
+        d = pydicom.dcmread(
+            io.BytesIO(data), stop_before_pixels=True, force=True, defer_size="1 KB"
+        )
+    except Exception:
+        return None
+    if not (
+        getattr(d, "SOPInstanceUID", None)
+        or getattr(d, "SeriesInstanceUID", None)
+        or getattr(d, "Modality", None)
+        or "SeriesNumber" in d
+    ):
+        return None
+    return d
+
+
+def _sequence_record_from_info(info, key):
+    """Create a SequenceRecord from an extended readDICOMInfo dictionary."""
+    sid = info["seriesNumber"]
+    return gds.SequenceRecord(
+        key=key,
+        sequence_id=str(sid) if sid is not None else "unknown",
+        sequence_name=info["seriesDescription"],
+        modality=info.get("modality", "unknown"),
+        manufacturer=info.get("manufacturer", "unknown"),
+        is_mosaic=info.get("is_mosaic", False),
+        tr_ms=info["TR"] or None,
+        te_ms=info["TE"] or None,
+        rows=info.get("rows"),
+        cols=info.get("cols"),
+        pixel_spacing=info.get("pixel_spacing"),
+        slice_thickness=info.get("slice_thickness"),
+        spacing_between_slices=info.get("spacing_between_slices"),
+        number_of_slices=info.get("number_of_slices"),
+        images_in_acq=info.get("images_in_acq"),
+        number_of_temporal_positions=info.get("number_of_temporal_positions"),
+        number_of_frames=info.get("number_of_frames"),
+        tags_for_hints=dict(info.get("hint_tags", {})),
+        non_evaluable=gds.should_skip_sequence(info["seriesDescription"]),
+        phase_encoding_direction=info.get("phase_encoding_direction", "unknown"),
+        sense_factor=info.get("sense_factor"),
+        multiband_factor=info.get("multiband_factor"),
+    )
+
+
+def _update_sequence_record(seq, info):
+    """Fill still-unknown sequence fields from a later instance of the sequence."""
+    for attr, key in (
+        ("tr_ms", "TR"),
+        ("te_ms", "TE"),
+    ):
+        if getattr(seq, attr) is None and info[key]:
+            setattr(seq, attr, info[key])
+    for attr in (
+        "rows",
+        "cols",
+        "pixel_spacing",
+        "slice_thickness",
+        "spacing_between_slices",
+        "number_of_slices",
+        "images_in_acq",
+        "number_of_temporal_positions",
+        "sense_factor",
+        "multiband_factor",
+    ):
+        if getattr(seq, attr) is None and info.get(attr) is not None:
+            setattr(seq, attr, info.get(attr))
+    frames = info.get("number_of_frames")
+    if frames and (seq.number_of_frames is None or frames > seq.number_of_frames):
+        seq.number_of_frames = frames
+    if seq.phase_encoding_direction == "unknown":
+        seq.phase_encoding_direction = info.get("phase_encoding_direction", "unknown")
+
+
+def _instance_record_from_info(info, member_name):
+    return gds.InstanceRecord(
+        member_name=member_name,
+        sop_uid=info["SOPInstanceUID"] or "unknown",
+        instance_number=info.get("instance_number"),
+        temporal_position=info.get("temporal_position"),
+        acquisition_number=info.get("acquisition_number"),
+        in_stack_position=info.get("in_stack_position"),
+        image_position=info.get("image_position"),
+        dt=info.get("acq_datetime"),
+        echo_time_ms=info["TE"] or None,
+        is_imaging=info.get("is_imaging", False),
+        frame_count=info.get("number_of_frames") or 1,
+    )
+
+
+def _write_bytes(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(data)
+
+
+def _unique_name(base, used):
+    """Return `base` (or `base` with a numeric suffix) not present in `used`."""
+    name = base
+    stem, ext = os.path.splitext(base)
+    i = 1
+    while name in used:
+        i += 1
+        name = f"{stem}-{i}{ext}"
+    used.add(name)
+    return name
+
+
+def _place_par_rec(par_members, dicom_dir, session_id, verbose):
+    """Sort buffered PAR/REC pairs into their sequence folders using readPARInfo."""
+    for base, parts in par_members.items():
+        if "PAR" not in parts:
+            continue
+        tmp = tempfile.NamedTemporaryFile(prefix="import_par_", suffix=".PAR", delete=False)
+        try:
+            tmp.write(parts["PAR"])
+            tmp.close()
+            info = readPARInfo(tmp.name)
+        except Exception:
+            os.remove(tmp.name)
+            continue
+        os.remove(tmp.name)
+
+        if info["seriesNumber"] is None:
+            continue
+        sqid = str(info["seriesNumber"] * 10)
+        seq_dir = os.path.join(dicom_dir, sqid)
+        stem = "%s-%s-%s" % (cleanName(session_id), sqid, cleanName(base))
+        _write_bytes(os.path.join(seq_dir, stem + ".PAR"), parts["PAR"])
+        if "REC" in parts:
+            _write_bytes(os.path.join(seq_dir, stem + ".REC"), parts["REC"])
+        elif verbose:
+            print("---> Warning: no REC file found for %s" % (base))
+
+
+def _scan_and_sort_session(
+    sources,
+    dicom_dir,
+    session_id,
+    tr_abs_ms=100.0,
+    tr_rel_pct=5.0,
+    min_images=4,
+    verbose=True,
+):
+    """
+    Single read pass over ``sources`` that sorts and analyses a session's files.
+
+    ``sources`` is one path or a list of paths (a session inbox may hold several
+    packages). Each member is read once and written once: imaging DICOMs go to
+    ``dicom/<seriesNumber*10>``, non-image DICOMs to ``dicom/non-image``, PAR/REC
+    pairs to their sequence folders, and ``.log`` files to ``dicom/log``. Per
+    sequence records are built during the pass; afterwards completeness is
+    analysed (scanner-aware, decision D1) and orphaned incomplete-volume files
+    are moved to ``dicom/orphans`` with a cheap rename (no re-read).
+
+    Returns a ``dicom_sort.PackageSummary`` describing the session.
+    """
+    if isinstance(sources, (str, bytes, os.PathLike)):
+        sources = [sources]
+
+    os.makedirs(dicom_dir, exist_ok=True)
+    non_image_dir = os.path.join(dicom_dir, "non-image")
+    orphans_dir = os.path.join(dicom_dir, "orphans")
+    log_dir = os.path.join(dicom_dir, "log")
+
+    pkg = gds.PackageSummary(
+        package_name=os.path.basename(str(sources[0])) if sources else session_id,
+        session_id=session_id,
+    )
+    sequence_map = {}
+    written_path = {}
+    par_members = {}
+    used_names = set()
+    dcmn = 0
+
+    for source in sources:
+        for name, data in iter_import_members(source):
+            bn = os.path.basename(name)
+            if bn[:4] in ("XX_0", "PS_0"):
+                continue
+            if bn.lower().endswith(".gz"):
+                try:
+                    data = gz.decompress(data)
+                except Exception:
+                    pass
+                bn = bn[:-3]
+            ext = bn.rsplit(".", 1)[-1].lower() if "." in bn else ""
+
+            if ext == "log":
+                _write_bytes(os.path.join(log_dir, bn), data)
+                continue
+            if ext in ("par", "rec"):
+                par_members.setdefault(bn[:-4], {})[ext.upper()] = data
+                continue
+
+            pkg.total_members += 1
+            d = _parse_member_dataset(data)
+            if d is None:
+                pkg.parse_errors += 1
+                continue
+            info = _dicom_info_from_dataset(d, os.path.splitext(bn)[0], extended=True)
+
+            sid = info["seriesNumber"]
+            if sid is None:
+                if verbose:
+                    print("---> Skipping file with no series number: %s" % (name))
+                continue
+
+            pkg.total_dicom += 1
+            _update_package_metadata(pkg, d)
+
+            key = str(sid)
+            if key not in sequence_map:
+                sequence_map[key] = _sequence_record_from_info(info, key)
+            seq = sequence_map[key]
+            _update_sequence_record(seq, info)
+
+            inst = _instance_record_from_info(info, name)
+            seq.instances.append(inst)
+            if inst.is_imaging:
+                seq.imaging_dicom_count += 1
+            else:
+                seq.non_imaging_dicom_count += 1
+            if inst.is_imaging and (info.get("number_of_frames") or 0) > 1 and info.get("enhanced_volume_map"):
+                for vidx, slices in info["enhanced_volume_map"].items():
+                    seq.enhanced_volume_to_slices.setdefault(vidx, set()).update(slices)
+
+            dcmn += 1
+            sop = info["SOPInstanceUID"] or "%010d" % dcmn
+            sqid = str(sid * 10)
+            fname = _unique_name(
+                "%s-%s-%s.dcm" % (cleanName(session_id), sqid, cleanName(sop)), used_names
+            )
+            dest_dir = os.path.join(dicom_dir, sqid) if inst.is_imaging else non_image_dir
+            dest = os.path.join(dest_dir, fname)
+            _write_bytes(dest, data)
+            written_path[name] = dest
+
+    _place_par_rec(par_members, dicom_dir, session_id, verbose)
+
+    _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms, tr_rel_pct, min_images, verbose)
+    return pkg
+
+
+def _update_package_metadata(pkg, d):
+    """Fill still-unknown package-level metadata from a DICOM dataset."""
+    def pick(current, value):
+        return current if current != "unknown" else gds.fmt(value)
+
+    pkg.participant_name = pick(pkg.participant_name, getattr(d, "PatientName", None))
+    pkg.participant_code = pick(pkg.participant_code, getattr(d, "PatientID", None))
+    pkg.study_date = pick(pkg.study_date, getattr(d, "StudyDate", None))
+    pkg.study_time = pick(pkg.study_time, getattr(d, "StudyTime", None))
+    pkg.scanner_manufacturer = pick(pkg.scanner_manufacturer, getattr(d, "Manufacturer", None))
+    pkg.scanner_model = pick(pkg.scanner_model, getattr(d, "ManufacturerModelName", None))
+    pkg.scanner_field_strength = pick(pkg.scanner_field_strength, getattr(d, "MagneticFieldStrength", None))
+    pkg.location = pick(
+        pkg.location, getattr(d, "InstitutionName", None) or getattr(d, "StationName", None)
+    )
+
+
+def _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms, tr_rel_pct, min_images, verbose):
+    """Analyse completeness, relocate orphaned files, and tally the verdict."""
+    pkg.sequences = sorted(
+        sequence_map.values(),
+        key=lambda s: (
+            gds.to_int(s.sequence_id) if gds.to_int(s.sequence_id) is not None else float("inf"),
+            s.sequence_name,
+        ),
+    )
+    gds.infer_missing_phase_polarity(pkg.sequences)
+
+    mr_sequences = [s for s in pkg.sequences if s.modality.upper() == "MR" and s.imaging_dicom_count > 0]
+    pkg.no_data_sequences = sum(
+        1 for s in pkg.sequences if s.modality.upper() == "MR" and s.imaging_dicom_count == 0
+    )
+
+    for seq in mr_sequences:
+        if seq.non_evaluable:
+            seq.status = "SKIP"
+            continue
+        gds.validate_sequence(seq, tr_abs_ms=tr_abs_ms, tr_rel_pct=tr_rel_pct)
+        _, _, orphaned = gds.classify_sequence_files(seq, min_images=min_images)
+        for member_name in orphaned:
+            src = written_path.get(member_name)
+            if src and os.path.exists(src):
+                dst = os.path.join(orphans_dir, os.path.basename(src))
+                os.makedirs(orphans_dir, exist_ok=True)
+                os.rename(src, dst)
+        if orphaned and verbose:
+            print("---> Sequence %s: moved %d orphaned file(s) to orphans/" % (seq.sequence_id, len(orphaned)))
+
+    eval_sequences = [s for s in mr_sequences if not s.non_evaluable]
+    statuses = Counter(s.status for s in eval_sequences)
+    if statuses.get("FAIL", 0):
+        pkg.verdict = "FAIL"
+    elif statuses.get("WARN", 0):
+        pkg.verdict = "WARN"
+    elif not mr_sequences:
+        pkg.verdict = "NOT_MR"
+    else:
+        pkg.verdict = "PASS"
+    pkg.good_sequences = sum(1 for s in eval_sequences if s.status == "PASS")
+    pkg.incomplete_sequences = sum(1 for s in eval_sequences if s.status == "WARN")
+    pkg.error_sequences = sum(1 for s in eval_sequences if s.status == "FAIL")
+
+
+def sort_dicom(folder=".", **kwargs):
+    """
+    ``sort_dicom [folder=.] [out_dir=<folder>] [files=<comma-separated list>]``
+
+    Sorts DICOM (and PAR/REC) files into per-sequence ``dicom`` subfolders.
+
+    Parameters:
+        --folder (str, default '.'):
+            The base session folder that contains the ``inbox`` subfolder with
+            the unsorted DICOM files.
+
+        --out_dir (str, default `folder`):
+            Optional directory in which the ``dicom`` folder is created.
+
+        --files (str, default detailed below):
+            Optional comma separated list of files to sort. Defaults to the
+            contents of ``<folder>/inbox``.
+
+    Notes:
+        This is a thin wrapper over the single-pass import engine. In one read
+        pass it sorts imaging DICOMs into ``dicom/<seriesNumber*10>``, sets aside
+        non-image DICOMs (``dicom/non-image``) and incomplete-volume/orphan
+        slices (``dicom/orphans``) using scanner-aware heuristics, places PAR/REC
+        pairs in their sequence folders and log files in ``dicom/log``. Unlike
+        the legacy command it copies rather than moves, so the ``inbox`` is left
+        intact; the ``copy`` argument is therefore accepted but ignored.
+
+    Examples:
+        ::
+
+            qunex sort_dicom --folder=OP667
+    """
+    print("Running sort_dicom\n=================")
+    out_dir = kwargs.get("out_dir") or folder
+    dicom_dir = os.path.join(out_dir, "dicom")
+    files = kwargs.get("files")
+    if files:
+        sources = [e.strip() for e in files.split(",")]
+    else:
+        sources = [os.path.join(folder, "inbox")]
+    session_id = os.path.basename(os.path.abspath(folder))
+    pkg = _scan_and_sort_session(sources, dicom_dir, session_id, verbose=True)
+    print("---> Done")
+    return pkg
+
+
+def _move_files(paths, dest_dir):
+    """Move ``paths`` into ``dest_dir``, adding a suffix on filename collisions."""
+    if not paths:
+        return 0
+    os.makedirs(dest_dir, exist_ok=True)
+    moved = 0
+    for p in paths:
+        if not os.path.exists(p):
+            continue
+        dst = os.path.join(dest_dir, os.path.basename(p))
+        if os.path.exists(dst):
+            base, ext = os.path.splitext(os.path.basename(p))
+            i = 1
+            while os.path.exists(dst):
+                dst = os.path.join(dest_dir, f"{base}__dup{i}{ext}")
+                i += 1
+        os.rename(p, dst)
+        moved += 1
+    return moved
+
+
+def _clean_sorted_dicom(folder, min_images, move_non_image, move_incomplete, verbose):
+    """Inspect already-sorted ``dicom/<seq>`` folders and set aside non-image and
+    orphaned incomplete-volume files, reusing the shared classifier."""
+    dicom_dir = os.path.join(folder, "dicom")
+    if not os.path.isdir(dicom_dir):
+        print("---> DICOM folder not found: %s" % (dicom_dir))
+        print("---> Skipping clean_dicom")
+        return
+
+    non_image_dir = os.path.join(dicom_dir, "non-image")
+    orphans_dir = os.path.join(dicom_dir, "orphans")
+    seq_ids = sorted(
+        (d for d in os.listdir(dicom_dir) if d.isdigit() and os.path.isdir(os.path.join(dicom_dir, d))),
+        key=int,
+    )
+    for sqid in seq_ids:
+        seq_dir = os.path.join(dicom_dir, sqid)
+        seq = None
+        for fn in sorted(os.listdir(seq_dir)):
+            fp = os.path.join(seq_dir, fn)
+            if not os.path.isfile(fp):
+                continue
+            try:
+                info = readDICOMInfo(fp, extended=True)
+            except Exception:
+                continue
+            if info["seriesNumber"] is None:
+                continue
+            if seq is None:
+                seq = _sequence_record_from_info(info, sqid)
+            _update_sequence_record(seq, info)
+            inst = _instance_record_from_info(info, fp)
+            seq.instances.append(inst)
+            if inst.is_imaging:
+                seq.imaging_dicom_count += 1
+            else:
+                seq.non_imaging_dicom_count += 1
+            if inst.is_imaging and (info.get("number_of_frames") or 0) > 1 and info.get("enhanced_volume_map"):
+                for vidx, slices in info["enhanced_volume_map"].items():
+                    seq.enhanced_volume_to_slices.setdefault(vidx, set()).update(slices)
+        if seq is None:
+            continue
+        gds.validate_sequence(seq, tr_abs_ms=100.0, tr_rel_pct=5.0)
+        _, non_image, orphaned = gds.classify_sequence_files(seq, min_images=min_images)
+        n_ni = _move_files(non_image, non_image_dir) if move_non_image else 0
+        n_or = _move_files(orphaned, orphans_dir) if move_incomplete else 0
+        if verbose:
+            print(
+                "---> Sequence %s: %d image, moved %d non-image, %d orphaned"
+                % (sqid, seq.imaging_dicom_count, n_ni, n_or)
+            )
+
+
+def clean_dicom(
+    folder=".",
+    tol_mm=0.2,
+    min_files=10,
+    verbose="yes",
+    move_non_image=True,
+    move_incomplete=True,
+):
+    r"""
+    ``clean_dicom [folder=.] [min_files=10] [verbose=yes] [move_non_image=True] [move_incomplete=True]``
+
+    Inspects already-sorted ``dicom/<seq>`` folders and sets aside DICOM files
+    that hold no imaging data (to ``dicom/non-image``) or that belong to an
+    incomplete volume (to ``dicom/orphans``), preventing conversion errors.
+
+    Parameters:
+        --folder (str, default '.'):
+            The base session folder containing the ``dicom`` subfolder with
+            sorted, numbered sequence subfolders.
+
+        --min_files (int, default 10):
+            Minimum number of imaging files a sequence must have for
+            orphan-slice detection to run (shorter sequences are left intact).
+
+        --verbose (str, default 'yes'):
+            Whether to report per-sequence statistics.
+
+        --move_non_image (bool, default True):
+            Whether to move non-image DICOM files to ``dicom/non-image``.
+
+        --move_incomplete (bool, default True):
+            Whether to move incomplete-volume/orphan files to ``dicom/orphans``.
+
+    Notes:
+        This is a thin, robust re-implementation over the shared single-pass
+        classifier. Detection is scanner-aware (decision D1): mosaic
+        acquisitions and sequences whose slice geometry cannot be inferred are
+        reported but never pruned. The ``tol_mm`` argument from the previous
+        implementation is accepted for backward compatibility but no longer
+        used (slice membership is derived from per-slice geometry keys, not mm
+        clustering). Orphan files now go to ``dicom/orphans`` (previously
+        ``dicom/_REMOVED``).
+    """
+    print("Running clean_dicom\n==================")
+    verbose_b = true_or_false(verbose)
+    try:
+        min_images = int(min_files)
+    except (TypeError, ValueError):
+        min_images = 10
+    _clean_sorted_dicom(
+        folder,
+        min_images,
+        true_or_false(move_non_image),
+        true_or_false(move_incomplete),
+        verbose_b,
+    )
+    print("---> Done")
+
+
+def import_dicom_old(
     sessionsfolder=None,
     sessions=None,
     masterinbox=None,
@@ -4444,12 +5116,12 @@ def import_dicom(
 
             # ---> run sort dicom
             print()
-            sort_dicom(folder=sfolder)
+            _sort_dicom_legacy(folder=sfolder)
 
             # ---> run clean dicom
             if clean_dicom_folders:
                 print()
-                clean_dicom(folder=sfolder, verbose=verbose)
+                _clean_dicom_legacy(folder=sfolder, verbose=verbose)
 
             # ---> run dicom to nii
             print()
@@ -4549,6 +5221,429 @@ def import_dicom(
         )
 
     return
+
+
+def _import_parse_logfile(logfile):
+    """Parse the ``logfile`` specification into a packet_name -> session map."""
+    if logfile is None or logfile == "":
+        return None
+
+    log = dict([[f.strip() for f in e.split(":")] for e in logfile.split("|")])
+    if not all(e in log for e in ["path", "subject_id", "packet_name"]):
+        raise ge.CommandFailed(
+            "import_dicom",
+            "Missing information in logfile",
+            "Please provide all information in the logfile specification! [%s]" % (logfile),
+        )
+    try:
+        for key in [e for e in log if e in ["packet_name", "subject_id", "session_name"]]:
+            log[key] = int(log[key]) - 1
+    except:
+        raise ge.CommandFailed(
+            "import_dicom",
+            "Invalid logfile specification",
+            "Please create a valid logfile specification! [%s]" % (logfile),
+        )
+    if not os.path.exists(log["path"]):
+        raise ge.CommandFailed(
+            "import_dicom",
+            "Logfile does not exist",
+            "The specified logfile does not exist:",
+            log["path"],
+            "Please check your paths!",
+        )
+
+    has_session = "session_name" in log
+    print("---> Reading acquisition log [%s]." % (log["path"]))
+    sessions_info = {}
+    with open(log["path"]) as f:
+        delimiter = "," if log["path"].split(".")[-1] == "csv" else "\t"
+        reader = csv.reader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE if delimiter == "\t" else csv.QUOTE_MINIMAL)
+        for line in reader:
+            try:
+                subj = line[log["subject_id"]]
+                sname = line[log["session_name"]] if has_session else None
+                sessions_info[line[log["packet_name"]]] = {
+                    "subjectid": subj,
+                    "sessionname": sname,
+                    "sessionid": "%s_%s" % (subj, sname) if has_session else subj,
+                    "packetname": line[log["packet_name"]],
+                }
+            except:
+                pass
+    return sessions_info
+
+
+def _import_has_results(sessionsfolder, sessionid):
+    sf = os.path.join(sessionsfolder, sessionid)
+    return os.path.exists(os.path.join(sf, "dicom")) or os.path.exists(os.path.join(sf, "nii"))
+
+
+def _import_extract_session(pname, getid, empty):
+    """Extract subject/session from a packet name using the nameformat regex."""
+    ms = getid.search(pname)
+    if not (ms and ms.groupdict().get("subject_id")):
+        return None
+    subj = ms.group("subject_id")
+    sname = ms.group("session_name") if ms.groupdict().get("session_name") else None
+    session = dict(empty)
+    session.update(
+        {
+            "subjectid": subj,
+            "sessionname": sname,
+            "sessionid": "%s_%s" % (subj, sname) if sname else subj,
+            "packetname": pname,
+        }
+    )
+    return session
+
+
+def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info):
+    """Identify packets/session folders to process and bucket them for reporting."""
+    packets = {"ok": [], "nolog": [], "bad": [], "exist": [], "skip": [], "invalid": []}
+    empty = {"subjectid": None, "sessionname": None, "sessionid": None, "packetname": None}
+
+    if masterinbox:
+        report_set = [
+            ("ok", "---> Found the following packets to process:"),
+            ("nolog", "---> These packets do not match with the log and they won't be processed"),
+            ("bad", "---> For these packets a packet name could not be identified and they won't be processed:"),
+            ("invalid", "---> For these packets the packet name could not parsed and they won't be processed:"),
+            ("exist", "---> The session folder for these packages already has results:"),
+            ("skip", "---> These packages do not match list of sessions and will be skipped:"),
+        ]
+        if not os.path.exists(masterinbox):
+            raise ge.CommandFailed("import_dicom", "Master inbox does not exist", f"A folder {masterinbox} does not exist.", "Please check your path!")
+        if not os.path.isdir(masterinbox):
+            raise ge.CommandFailed("import_dicom", "Master inbox is not a folder", f"{masterinbox} is not a folder.", "Please check your path!")
+
+        print(
+            "---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'"
+            % (os.path.abspath(masterinbox), pattern, nameformat)
+        )
+        try:
+            getop = re.compile(pattern)
+        except:
+            raise ge.CommandFailed("import_dicom", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
+        try:
+            getid = re.compile(nameformat)
+        except:
+            raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
+
+        for afile in glob.glob(os.path.join(masterinbox, "*")):
+            m = getop.search(os.path.basename(afile))
+            if not m:
+                continue
+            if not ("packet_name" in m.groupdict() and m.group("packet_name")):
+                packets["bad"].append((afile, dict(empty)))
+                continue
+            pname = m.group("packet_name")
+
+            if sessions_info is not None:
+                if pname not in sessions_info:
+                    session = dict(empty)
+                    session["packetname"] = pname
+                    packets["nolog"].append((afile, session))
+                    continue
+                session = dict(sessions_info[pname])
+            else:
+                session = _import_extract_session(pname, getid, empty)
+                if session is None:
+                    session = dict(empty)
+                    session["packetname"] = pname
+                    packets["invalid"].append((afile, session))
+                    continue
+
+            if sessions_list and not any(matchAll(e, session["sessionid"]) for e in sessions_list):
+                packets["skip"].append((afile, session))
+                continue
+            if _import_has_results(sessionsfolder, session["sessionid"]):
+                packets["exist"].append((afile, session))
+                continue
+            packets["ok"].append((afile, session))
+
+    else:
+        report_set = [
+            ("ok", "---> Found the following folders to process:"),
+            ("invalid", "---> For these folders the folder name could not parsed and they won't be processed:"),
+            ("exist", "---> These folders have existing results:"),
+        ]
+        print("---> Checking for folders to process in '%s'" % (os.path.abspath(sessionsfolder)))
+        getid = re.compile(nameformat)
+
+        sfolders = []
+        for sessionid in sessions_list or []:
+            sfolders += glob.glob(os.path.join(sessionsfolder, sessionid))
+        for sfolder in sorted(set(sfolders)):
+            pname = os.path.basename(sfolder)
+            session = _import_extract_session(pname, getid, empty)
+            if session is None:
+                session = dict(empty)
+                session["packetname"] = pname
+                packets["invalid"].append((sfolder, session))
+                continue
+            session["sessionid"] = pname  # folder name is authoritative in session mode
+            archives = []
+            for tarchive in ["*.zip", "*.tar", "*.tar.*", "*.tgz"]:
+                archives += glob.glob(os.path.join(sfolder, "inbox", tarchive))
+            session["archives"] = list(archives)
+
+            if os.path.exists(os.path.join(sfolder, "dicom")) or os.path.exists(os.path.join(sfolder, "nii")):
+                packets["exist"].append((sfolder, session))
+                continue
+            packets["ok"].append((sfolder, session))
+
+    return packets, report_set
+
+
+def _import_report_packets(packets, report_set, overwrite):
+    """Print the discovery report for each packet bucket."""
+    for tag, message in report_set:
+        if not packets[tag]:
+            continue
+        print(f"\n{message}")
+        for afile, session in packets[tag]:
+            base = os.path.basename(afile)
+            if session["sessionname"]:
+                print("     subject: %s, session: %s ... %s <= %s <- %s" % (session["subjectid"], session["sessionname"], session["sessionid"], session["packetname"], base))
+            elif session["subjectid"]:
+                print("     subject: %s ... %s <= %s <- %s" % (session["subjectid"], session["sessionid"], session["packetname"], base))
+            elif session["sessionid"]:
+                print("     %s <= %s <- %s" % (session["sessionid"], session["packetname"], base))
+            elif session["packetname"]:
+                print("     %s <= %s <- %s" % ("????", session["packetname"], base))
+            else:
+                print("     %s <= %s <- %s" % ("????", "????", base))
+        if tag == "exist":
+            if overwrite:
+                print(" ... Since overwrite is set the folders will be removed and replaced")
+            else:
+                print(" ... To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
+
+
+def _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite, test):
+    """Apply the check/test/overwrite rules and return the packets to process.
+
+    Returns None when the command should stop without processing (test mode).
+    Raises CommandFailed/CommandNull when nothing is found, per ``check``.
+    """
+    n_to_process = len(packets["ok"]) + (len(packets["exist"]) if overwrite else 0)
+
+    if n_to_process and test:
+        print("\n---> To process them, remove the --test option!")
+        return None
+
+    if not n_to_process:
+        where = ("master inbox [%s]" % os.path.abspath(masterinbox)) if masterinbox else ("session folder [%s]" % os.path.abspath(sessionsfolder))
+        what = "packets" if masterinbox else "sessions"
+        if check.lower() == "any":
+            raise ge.CommandFailed("import_dicom", "No %s found to process" % what, "No %s were found to be processed in the %s!" % (what, where), "Please check your data!")
+        raise ge.CommandNull("import_dicom", "No %s found to process" % what, "No %s were found to be processed in the %s!" % (what, where))
+
+    if overwrite and packets["exist"]:
+        print("---> Cleaning existing data in folders:")
+        for afile, session in packets["exist"]:
+            sfolder = os.path.join(sessionsfolder, session["sessionid"])
+            print(" ... %s" % (sfolder))
+            for sub in ("nii", "dicom"):
+                rmfolder = os.path.join(sfolder, sub)
+                if os.path.exists(rmfolder):
+                    _safe_rmtree(rmfolder)
+        packets["ok"] += packets["exist"]
+
+    return packets["ok"]
+
+
+def _resolve_packet_sources(afile, session, masterinbox, sfolder):
+    """Return the source path(s) the engine should read for a packet."""
+    if masterinbox:
+        return [afile]
+    if session.get("archives"):
+        return list(session["archives"])
+    return [os.path.join(sfolder, "inbox")]
+
+
+def _archive_packet(sources, afolder, archive, masterinbox, verbose):
+    """Move/copy/delete processed packages per the ``archive`` setting."""
+    notes = []
+    if archive == "leave":
+        return notes
+
+    for p in sources:
+        is_archive = bool(_RE_ZIP.search(p) or _RE_TAR.search(p))
+        if not (masterinbox or is_archive):
+            continue
+        ptype = "folder" if os.path.isdir(p) else "archive"
+        target = os.path.join(afolder, os.path.basename(p))
+
+        if archive == "move":
+            if os.path.exists(target):
+                notes.append("WARNING: %s already exists in archive and it was not moved!" % os.path.basename(p))
+                print("...  WARNING: %s already exists in archive and it will not be moved!" % os.path.basename(p))
+            else:
+                print("...  moving %s to archive" % os.path.basename(p))
+                shutil.move(p, target)
+        elif archive == "copy":
+            if os.path.exists(target):
+                notes.append("WARNING: %s already exists in archive and it was not copied!" % os.path.basename(p))
+                print("...  WARNING: %s already exists in archive and it will not be copied!" % os.path.basename(p))
+            else:
+                print("...  copying %s to archive" % os.path.basename(p))
+                if ptype == "folder":
+                    shutil.copytree(p, target)
+                else:
+                    shutil.copy2(p, afolder)
+        elif archive == "delete":
+            print("...  deleting packet [%s]" % os.path.basename(p))
+            if ptype == "folder":
+                _safe_rmtree(p)
+            else:
+                os.remove(p)
+    return notes
+
+
+def _import_normalize_args(sessionsfolder, sessions, masterinbox, pattern, nameformat, tool, add_image_type, verbose, overwrite):
+    """Validate and normalise import_dicom arguments; returns a normalised tuple."""
+    if tool not in ["auto", "dcm2niix", "dcm2nii", "dicm2nii"]:
+        raise ge.CommandError("import_dicom", "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
+
+    verbose_b = verbose.lower() == "yes" if isinstance(verbose, str) else bool(verbose)
+    overwrite_b = overwrite if isinstance(overwrite, bool) else overwrite.lower() == "yes"
+
+    if sessionsfolder is None:
+        sessionsfolder = "."
+    if masterinbox is None:
+        masterinbox = os.path.join(sessionsfolder, "inbox", "MR")
+    if isinstance(masterinbox, str) and masterinbox.lower() == "none":
+        masterinbox = None
+        if not sessions:
+            raise ge.CommandError("import_dicom", "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
+
+    if pattern is None:
+        pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
+    if nameformat is None:
+        nameformat = r"(?P<subject_id>.*)"
+
+    try:
+        add_image_type = 0 if add_image_type in (None, "") else int(add_image_type)
+    except:
+        raise ge.CommandError("import_dicom", "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
+
+    sessions_list = re.split(r", *", sessions) if sessions else None
+    return sessionsfolder, masterinbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b
+
+
+def import_dicom(
+    sessionsfolder=None,
+    sessions=None,
+    masterinbox=None,
+    check="any",
+    pattern=None,
+    nameformat=None,
+    tool="auto",
+    parelements=1,
+    logfile=None,
+    archive="leave",
+    add_image_type=0,
+    add_json_info="all",
+    unzip="yes",
+    gzip="folder",
+    verbose="yes",
+    overwrite="no",
+    existing_structure=False,
+    clean_dicom_folders=False,
+    test=False,
+):
+    existing_structure = true_or_false(existing_structure)  # accepted; behavioural no-op in the single-pass engine
+    clean_dicom_folders = true_or_false(clean_dicom_folders)  # accepted; the engine always sets aside non-image/orphan files (D1)
+
+    print("Running import_dicom\n====================")
+
+    (sessionsfolder, masterinbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b) = _import_normalize_args(
+        sessionsfolder, sessions, masterinbox, pattern, nameformat, tool, add_image_type, verbose, overwrite
+    )
+    sessions_info = _import_parse_logfile(logfile)
+
+    packets, report_set = _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info)
+    _import_report_packets(packets, report_set, overwrite_b)
+
+    to_process = _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite_b, test)
+    if to_process is None:
+        return
+
+    afolder = os.path.join(sessionsfolder, "archive", "MR")
+    if not os.path.exists(afolder):
+        os.makedirs(afolder)
+        print("---> Created Archive folder for processed packages.")
+
+    report = {"failed": [], "ok": []}
+    print("---> Starting to process %d packets ..." % (len(to_process)))
+
+    for afile, session in to_process:
+        note = []
+        try:
+            sfolder = os.path.join(sessionsfolder, session["sessionid"])
+            dicom_dir = os.path.join(sfolder, "dicom")
+            print("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
+
+            sources = _resolve_packet_sources(afile, session, masterinbox, sfolder)
+
+            # single read-once/write-once pass: scan, sort, set aside non-image/orphan files, report
+            pkg = _scan_and_sort_session(sources, dicom_dir, session["sessionid"], verbose=verbose_b)
+            gdr.write_report(pkg, os.path.join(dicom_dir, "%s_import_report.md" % (session["sessionid"])))
+            print()
+            print(gdr.render_console_summary(pkg))
+            print("---> Package verdict: %s" % (pkg.verdict))
+
+            # convert to NIfTI (still writes session.txt and DICOM-Report.txt)
+            print()
+            dicom2niix(
+                folder=sfolder,
+                clean="no",
+                unzip=unzip,
+                gzip=gzip,
+                sessionid=session["sessionid"],
+                tool=tool,
+                parelements=parelements,
+                add_image_type=add_image_type,
+                add_json_info=add_json_info,
+                verbose=True,
+            )
+
+            if archive != "leave":
+                s = "Processing packages: " + archive
+                print("\n" + s)
+                print("=" * len(s))
+            note += _archive_packet(sources, afolder, archive, masterinbox, verbose_b)
+
+            report["ok"].append((afile, dict(session), note))
+
+        except ge.CommandFailed as e:
+            report["failed"].append((afile, dict(session), ["%s: %s" % (e.function, e.error)]))
+
+    _import_final_report(report)
+
+
+def _import_final_report(report):
+    """Print the final success/failure report and raise if any packet failed."""
+    print("\nFinal report\n============")
+    if report["ok"]:
+        print("\nSuccessfully processed:")
+        for afile, session, notes in report["ok"]:
+            print("... %s [%s]" % (session["sessionid"], afile))
+            for note in notes:
+                print("    %s" % (note))
+    if report["failed"]:
+        print("\nFailed to process:")
+        for afile, session, notes in report["failed"]:
+            print("... %s [%s]" % (session["sessionid"], afile))
+            for note in notes:
+                print("    %s" % (note))
+        raise ge.CommandFailed("import_dicom", "Some packages failed to process", "Please check report!")
+
+
+# keep the full command help on the public command while the rework is in flight (S11 updates it)
+import_dicom.__doc__ = import_dicom_old.__doc__
 
 
 def get_dicom_info(dicomfile=None, scanner="siemens"):
