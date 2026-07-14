@@ -44,7 +44,6 @@ import csv
 import json
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
-<<<<<<< HEAD
 import qx_utilities.general.core as gc
 import qx_utilities.general.img as gi
 import qx_utilities.general.nifti as gn
@@ -52,16 +51,6 @@ import qx_utilities.general.qximg as qxi
 import qx_utilities.general.exceptions as ge
 from qx_utilities.general.parsing import true_or_false
 
-=======
-import general.core as gc
-import general.img as gi
-import general.nifti as gn
-import general.qximg as qxi
-import general.exceptions as ge
-import general.dicom_sort as gds
-import general.dicom_report as gdr
-from general.parsing import true_or_false
->>>>>>> fb5c81fc (feat: initial implementation of improved import_dicom)
 from datetime import datetime
 
 if "QUNEXMCOMMAND" not in os.environ:
