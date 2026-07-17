@@ -912,8 +912,8 @@ get_parameters() {
     sopt="$1"
     shift 1
     for fn in "$@" ; do
-        if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-            echo $fn | sed "s/^${sopt}=//"
+        if [ `echo "$fn" | grep -c -- "^${sopt}="` -gt 0 ]; then
+            echo "$fn" | sed "s/^${sopt}=//"
             return 0
         fi
     done
@@ -1508,7 +1508,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
     UseSEFieldmap=`get_parameters "${setflag}usesefieldmap" $@`
     diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
-    extra_eddy_args=`get_parameters "${setflag}extra_eddy_args" $@`
+    extra_eddy_args=`get_parameters "${setflag}extra_eddy_args" "$@"`
 
     # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`
@@ -2126,7 +2126,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
         if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
 
-    if [ -z ${extra_eddy_args} ]; then
+    if [ -z "${extra_eddy_args}" ]; then
         extra_eddy_args="--fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --data_is_shelled --repol --cnr_maps"
     fi
 
