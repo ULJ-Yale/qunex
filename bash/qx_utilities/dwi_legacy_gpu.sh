@@ -14,14 +14,14 @@ usage() {
     cat << EOF
 ``dwi_legacy_gpu``
 
-Run DWI preprocessing using the FUGUE method for legacy data that are not TOPUP 
+Run DWI preprocessing using the FUGUE method for legacy data that are not TOPUP
 compatible.
 
 ..  qx_command:
     type: processing.session
     language: bash
 
-Warning: 
+Warning:
     The command assumes the Human Connectome Project folder structure for
     preprocessing.
 
