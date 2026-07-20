@@ -4040,11 +4040,11 @@ commands:
         description: The path to the folder where runlogs and comlogs are to be stored.
     returns: []
     origin: core
--   name: hcp_corr_thick
+-   name: hcp_cortical_thickness
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_corr_thick
+    path: qx_utilities.hcp.process_hcp.hcp_cortical_thickness
     language: python
-    call: hcp_corr_thick [... processing options]
+    call: hcp_cortical_thickness [... processing options]
     description: Runs the curvature-corrected (folding-compensated) cortical thickness step of HCP Pipeline (CorrThick.sh).
         Computes and saves curvature-corrected thickness, curvatures, regression coefficients, and resampled outputs.
     type: processing.session

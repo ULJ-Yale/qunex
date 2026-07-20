@@ -19,15 +19,8 @@ All rights reserved.
 import concurrent.futures
 import glob
 import json
-import errno
-
-import nibabel as nib
-import glob
-import subprocess
-
 import os
 import os.path
-
 import pprint
 import re
 import shutil
@@ -37,11 +30,12 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from functools import partial
 
+import nibabel as nib
+
 import qx_utilities.general.core as gc
-import qx_utilities.processing.core as pc
-import qx_utilities.general.img as gi
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.snapshots as gs
+import qx_utilities.processing.core as pc
 
 unwarp = {
     None: "Unknown",
@@ -89,12 +83,15 @@ def _check_hcp_info(sinfo, options):
     missing_hcp = sinfo.dont_have_key("hcp")
     if len(missing_hcp) > 0:
         failed += len(missing_hcp)
-        raise ge.CommandFailed("hcp_prep_long", 
-                                "missing hcp info", 
-                                f"Sessions: {', '.join([s['id'] for s in missing_hcp])} are missing hcp info.")
+        raise ge.CommandFailed(
+            "hcp_prep_long",
+            "missing hcp info",
+            f"Sessions: {', '.join([s['id'] for s in missing_hcp])} are missing hcp info.",
+        )
 
     hcp = getHCPPaths(sinfo[0], options)
     return hcp
+
 
 def _append_sorted_logdir_to_log(log_file, logdir):
     """Append the contents of all files in a log directory into a single log.
@@ -3514,7 +3511,6 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-
 def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_post_freesurfer [... processing options]``
@@ -4051,7 +4047,6 @@ def _get_subjects_from_batch(sinfo, hcp, run):
     return run, subjects_list
 
 
-
 def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_prep_long [... processing options]``
@@ -4059,7 +4054,7 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
     Prepare the data for longitudinal processing with HCP longitudinal
     pipelines. Not needed if the starting point is hcp_long_freesurfer as that
     command does the prep work automatically.
-    
+
     For each subject in the batch file, QuNex will get their sessions and
     prepare a suitable subject folder by symlinking relevant folders into it. It
     will symlink both regular session folders and longitudinal sessions folders
@@ -4127,7 +4122,7 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         pc.doOptionsCheck(options, sinfo[0], "hcp_prep_long")
         doHCPOptionsCheck(options, "hcp_prep_long")
         hcp = _check_hcp_info(sinfo, options)
-        
+
         # sort out the folder structure
         sessionsfolder = options["sessionsfolder"]
         subjectsfolder = sessionsfolder.replace("sessions", "subjects")
@@ -4314,7 +4309,9 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             os.makedirs(study_folder)
 
         longitudinal_template = options["hcp_longitudinal_template"]
-        long_dir = os.path.join(study_folder, f"{subject_id}.long.{longitudinal_template}")
+        long_dir = os.path.join(
+            study_folder, f"{subject_id}.long.{longitudinal_template}"
+        )
 
         # exit if overwrite is not set, else cleanup
         long_dir_exists = os.path.lexists(long_dir)
@@ -4364,11 +4361,13 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                 --logdir="%(logdir)s"'
                 % {
                     "script": os.path.join(
-                        hcp["hcp_base"], "FreeSurfer", "LongitudinalFreeSurferPipeline.sh"
+                        hcp["hcp_base"],
+                        "FreeSurfer",
+                        "LongitudinalFreeSurferPipeline.sh",
                     ),
                     "studyfolder": study_folder,
                     "subject": subject_id,
-                    "sessions": "@".join([session['id'] for session in sinfo]),
+                    "sessions": "@".join([session["id"] for session in sinfo]),
                     "longitudinal_template": longitudinal_template,
                     "parallel_mode": options["hcp_parallel_mode"],
                     "logdir": logdir,
@@ -4399,10 +4398,11 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             if options["hcp_end_stage"]:
                 comm += f"                --end-stage={options['hcp_end_stage']}"
 
-
             # -- Report command
             if run:
-                r += "\n\n------------------------------------------------------------\n"
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
                 r += "Running HCP Pipelines command via QuNex:\n\n"
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
@@ -4435,7 +4435,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                     shell=True,
                     r=r,
                 )
-            
+
                 if failed == 0:
                     report = "processing completed"
                 else:
@@ -4445,7 +4445,10 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                 with open(endlog, "a", encoding="utf-8") as log_file:
                     _append_sorted_logdir_to_log(log_file, logdir)
                     # print succesful completion
-                    print(f"\n---> Successful completion of task at {datetime.now()}", file=log_file)
+                    print(
+                        f"\n---> Successful completion of task at {datetime.now()}",
+                        file=log_file,
+                    )
 
                 # remove the directory and its contents
                 shutil.rmtree(logdir)
@@ -4465,7 +4468,6 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             r += "\n---> Subject cannot be processed."
             report = "not ready"
-
 
     except ge.CommandFailed as e:
         r += "\n" + ge.reportCommandFailed("hcp_long_freesurer", e)
@@ -4499,14 +4501,13 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
     return (r, (subject_id, report, failed))
 
 
-
 def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_long_post_freesurfer [... processing options]``
 
     Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
 
-    ..  qx_command: 
+    ..  qx_command:
         type: processing.subject
         aliases: hcp_lpfs
 
@@ -4802,7 +4803,8 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         if options["hcp_prefs_templatemask"] is None:
             templatemask = os.path.join(
                 hcp["hcp_Templates"],
-                "MNI152_T1_%smm_brain_mask.nii.gz" % (options["hcp_prefs_template_res"]),
+                "MNI152_T1_%smm_brain_mask.nii.gz"
+                % (options["hcp_prefs_template_res"]),
             )
         else:
             templatemask = options["hcp_prefs_templatemask"]
@@ -4913,7 +4915,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                     ),
                     "studyfolder": studyfolder,
                     "subject": subject_id,
-                    "sessions": "@".join([session['id'] for session in sinfo]),
+                    "sessions": "@".join([session["id"] for session in sinfo]),
                     "longitudinal_template": options["hcp_longitudinal_template"],
                     "t1template": t1template,
                     "t1templatebrain": t1templatebrain,
@@ -4952,7 +4954,9 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             # -- Report command
             if run:
-                r += "\n\n------------------------------------------------------------\n"
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
                 r += "Running HCP Pipelines command via QuNex:\n\n"
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
@@ -4985,7 +4989,10 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 with open(endlog, "a", encoding="utf-8") as log_file:
                     _append_sorted_logdir_to_log(log_file, logdir)
                     # print succesful completion
-                    print(f"\n---> Successful completion of task at {datetime.now()}", file=log_file)
+                    print(
+                        f"\n---> Successful completion of task at {datetime.now()}",
+                        file=log_file,
+                    )
 
                 # remove the directory and its contents
                 shutil.rmtree(logdir)
@@ -5769,14 +5776,13 @@ def _check_dwi_echospacing(echospacing):
     )
 
 
-
 def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_volume [... processing options]``
 
     Run the fMRI Volume (GenericfMRIVolumeProcessingPipeline.sh) step of HCP
-    Pipeline. 
-    
+    Pipeline.
+
     Description:
         The command preprocesses BOLD images and linearly and nonlinearly
         registers them to the MNI atlas. It makes use of the PreFS and FS steps of
@@ -7892,7 +7898,6 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     return {"r": r, "report": report}
 
 
-
 def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_surface [... processing options]``
@@ -8584,7 +8589,6 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
         hcpBolds = specifiedBolds
 
     return (singleFix, hcpBolds, hcpGroups, boldsOK, r)
-
 
 
 def hcp_icafix(sinfo, options, overwrite=False, thread=0):
@@ -9441,7 +9445,6 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
     return {"r": r, "report": report}
 
 
-
 def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_post_fix [... processing options]``
@@ -9876,7 +9879,6 @@ def executeHCPPostFix(sinfo, options, hcp, run, singleFix, boldinfo):
         report["failed"].append(printbold)
 
     return {"r": r, "report": report}
-
 
 
 def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
@@ -10823,8 +10825,6 @@ def parse_msmall_bolds(options, bolds, r):
         msmall_groups.append(icafix_group)
 
     return (msmall_groups, single_run, pars_ok, r)
-
-
 
 
 def hcp_msmall(sinfo, options, overwrite=True, thread=0):
@@ -12013,7 +12013,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         pc.doOptionsCheck(options, sinfo[0], "hcp_long_msmall")
         doHCPOptionsCheck(options, "hcp_long_msmall")
         hcp = _check_hcp_info(sinfo, options)
-        
+
         sessions_long = []
         for session in sinfo.get_list_by_key("id", sep=None):
             sessions_long.append(f"{session}{options['hcp_suffix']}")
@@ -12021,7 +12021,9 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         #
         # WARNING: Only BOLDS from the first session are identified!
-        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(sinfo[0], options, r)
+        bolds, bskip, report["boldskipped"], r = pc.use_or_skip_bold(
+            sinfo[0], options, r
+        )
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
@@ -12227,7 +12229,9 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             failed = False
 
                             if failed:
-                                report["failed"].append(f"msmall_{subject_id}_{groupname}")
+                                report["failed"].append(
+                                    f"msmall_{subject_id}_{groupname}"
+                                )
                             else:
                                 # run dedrift and resample across long timepoints
                                 sinfo_long = sinfo[0].copy()
@@ -12254,7 +12258,9 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                             group,
                                         )
                                         futures[future] = sl  # map future to sl
-                                    for future in concurrent.futures.as_completed(futures):
+                                    for future in concurrent.futures.as_completed(
+                                        futures
+                                    ):
                                         sl = futures[
                                             future
                                         ]  # get the correct sl for this future
@@ -12273,7 +12279,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                             report["not ready"].append(
                                                 f"dedrift_{sl}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
                                             )
-                                            
+
                                 # run dedrift and resample on the template
                                 sinfo_template = sinfo[0].copy()
                                 # fix path
@@ -12331,8 +12337,9 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             r += "\n---> ERROR: something missing, this group would be skipped!"
 
                 except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-                    r += "\n\n\n --- Failed during processing of group %s with error:\n" % (
-                        f"{subject_id}_{groupname}"
+                    r += (
+                        "\n\n\n --- Failed during processing of group %s with error:\n"
+                        % (f"{subject_id}_{groupname}")
                     )
                     r += str(errormessage)
                     report["failed"].append(f"{subject_id}_{groupname}")
@@ -12373,7 +12380,10 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
     for check in ["failed", "not ready", "skipped"]:
         failed += len(report[check])
 
-    report = ", ".join([f"{item}: {len(report[item])} [{', '.join(report[item])}]" for item in ["done", "ready", "skipped", "not ready", "failed"]])
+    report = ", ".join([
+        f"{item}: {len(report[item])} [{', '.join(report[item])}]"
+        for item in ["done", "ready", "skipped", "not ready", "failed"]
+    ])
 
     # print r
     return (r, (subject_id, report, failed))
@@ -13822,7 +13832,6 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-
 def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_transmit_bias_individual [... processing options]``
@@ -14626,7 +14635,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                     ),
                     "studyfolder": study_folder,
                     "subject": subject_id,
-                    "sessions": sinfo.get_list_by_key('id', sep="@"),
+                    "sessions": sinfo.get_list_by_key("id", sep="@"),
                     "longitudinal_template": options["hcp_longitudinal_template"],
                     "mode": options["hcp_transmit_mode"],
                     "gmwm_template": options["hcp_gmwm_template"],
@@ -14755,13 +14764,13 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                 comm += f"                --low-res-mesh={options['hcp_lowresmesh']}"
 
             if options["hcp_grayordinatesres"]:
-                comm += (
-                    f"                --grayordinates-res={options['hcp_grayordinatesres']}"
-                )
+                comm += f"                --grayordinates-res={options['hcp_grayordinatesres']}"
 
             # -- Report command
             if run:
-                r += "\n\n------------------------------------------------------------\n"
+                r += (
+                    "\n\n------------------------------------------------------------\n"
+                )
                 r += "Running HCP Pipelines command via QuNex:\n\n"
                 r += comm.replace("                --", "\n    --")
                 r += "\n------------------------------------------------------------\n"
@@ -14792,7 +14801,10 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                 with open(endlog, "a", encoding="utf-8") as log_file:
                     _append_sorted_logdir_to_log(log_file, logdir)
                     # print succesful completion
-                    print(f"\n---> Successful completion of task at {datetime.now()}", file=log_file)
+                    print(
+                        f"\n---> Successful completion of task at {datetime.now()}",
+                        file=log_file,
+                    )
 
                 # remove the directory and its contents
                 shutil.rmtree(logdir)
@@ -14843,7 +14855,6 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return (r, (subject_id, report, failed))
-
 
 
 def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
@@ -15188,7 +15199,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                 --hcp_matlab_mode="interpreted"
 
     """
-    sessionid_list = sessions.get_list_by_key('id', sep=",")
+    sessionid_list = sessions.get_list_by_key("id", sep=",")
     r = "\n------------------------------------------------------------"
     r += "\nSession ids: %s \n[started on %s]" % (
         sessionid_list,
@@ -15684,7 +15695,6 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
     return (r, (sessionid_list, report, failed))
 
 
-
 def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
     """
     ``hcp_make_average_dataset [... processing options]``
@@ -15792,7 +15802,7 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
                 --hcp_outgroupname="hcp_group"
 
     """
-    sessionid_list = sessions.get_list_by_key('id', sep=",")
+    sessionid_list = sessions.get_list_by_key("id", sep=",")
     r = "\n------------------------------------------------------------"
     r += "\nSession ids: %s \n[started on %s]" % (
         sessionid_list,
@@ -15998,7 +16008,6 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
 
     # print r
     return (r, (sessionid_list, report, failed))
-
 
 
 def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
@@ -16314,9 +16323,9 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-def hcp_corr_thick(sinfo, options, overwrite=False, thread=0):
+def hcp_cortical_thickness(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_corr_thick [... processing options]``
+    ``hcp_cortical_thickness [... processing options]``
 
     Runs the curvature-corrected (folding-compensated) cortical thickness step
     of HCP Pipeline (CorrThick.sh). Computes and saves curvature-corrected
@@ -16387,7 +16396,7 @@ def hcp_corr_thick(sinfo, options, overwrite=False, thread=0):
         MNINonLinear folder inside the same session's root hcp folder.
 
     Notes:
-        hcp_corr_thick parameter mapping:
+        hcp_cortical_thickness parameter mapping:
 
             ============================================ ======================
             QuNex parameter                              HCPpipelines parameter
@@ -16404,7 +16413,7 @@ def hcp_corr_thick(sinfo, options, overwrite=False, thread=0):
     Examples:
         ::
 
-            qunex hcp_corr_thick \\
+            qunex hcp_cortical_thickness \\
                 --batchfile=processing/batch.txt \\
                 --sessionsfolder=sessions \\
                 --hcp_corrthick_hemi="B" \\
@@ -16427,8 +16436,8 @@ def hcp_corr_thick(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        pc.doOptionsCheck(options, sinfo, "hcp_corr_thick")
-        doHCPOptionsCheck(options, "hcp_corr_thick")
+        pc.doOptionsCheck(options, sinfo, "hcp_cortical_thickness")
+        doHCPOptionsCheck(options, "hcp_cortical_thickness")
 
         # subject
         subject = sinfo["id"] + options["hcp_suffix"]
@@ -17007,7 +17016,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
     return {"r": r, "report": report}
 
 
-
 def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_dtifit [... processing options]``
@@ -17053,8 +17061,9 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -17150,7 +17159,6 @@ def hcp_dtifit(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-
 def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_bedpostx [... processing options]``
@@ -17196,8 +17204,9 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if "hcp" not in sinfo:
-            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
+            r += (
+                "---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
             )
             run = False
 
@@ -17297,8 +17306,6 @@ def hcp_bedpostx(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-
-
 def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     """
     ``map_hcp_data [... processing options]``
@@ -17308,7 +17315,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     ..  qx_command:
         type: processing.session
 
-    
+
     Description:
         This function maps the results of the HCP preprocessing into the QuNex
         folder structure. The following files are mapped:
@@ -17934,8 +17941,6 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], rstatus, failed))
 
 
-
-
 def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_task_fmri_analysis [... processing options]``
@@ -18334,7 +18339,6 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     return (r, (sinfo["id"], report, failed))
 
 
-
 def hcp_parcellate_anat(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_parcellate_anat [... processing options]``
@@ -18539,4 +18543,3 @@ def hcp_parcellate_anat(sinfo, options, overwrite=False, thread=0):
     )
 
     return (r, (sinfo["id"], report, failed))
-

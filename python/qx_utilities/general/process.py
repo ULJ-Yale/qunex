@@ -18,29 +18,21 @@ None of the code is run directly from the terminal interface.
 """
 
 # imports
-from copy import deepcopy
 import os
 import os.path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
-import qx_utilities.general.scheduler as gs
+import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
-import qx_utilities.general.commands_support as gcs
-from qx_utilities.processing import fs, simple, workflow, dwi, fsl, rapidtide
-from qx_utilities.general.bids import map_nii2bids
+import qx_utilities.general.scheduler as gs
 from qx_utilities.general import extensions
 
 # pipelines imports
-from qx_utilities.hcp import process_hcp
-
 # qx_mice
-import qx_mice.process_mice
-import qx_mice.setup_mice
 from qx_utilities.general.parsing import flag, is_none
 from qx_utilities.general.parsing import true_or_false as torf
-
 
 # =======================================================================
 #                                                                 GLOBALS
@@ -558,35 +550,147 @@ arglist = [
         float,
     ],
     ["# --- general HCP options"],
-    ["hcp_processing_mode", "HCPStyleData", str,],
-    ["hcp_folderstructure", "hcpls", str,],
-    ["hcp_freesurfer_home", "", str,],
-    ["hcp_freesurfer_module", "", str,],
-    ["hcp_suffix", "", str,],
-    ["hcp_t2", "t2", str,],
-    ["hcp_printcom", "", str,],
-    ["hcp_bold_prefix", "BOLD_", str,],
-    ["hcp_filename", "automated", str,],
-    ["hcp_lowresmesh", "32", str,],
-    ["hcp_lowresmeshes", "32", str,],
-    ["hcp_hiresmesh", "164", int,],
-    ["hcp_bold_res", "2", str,],
-    ["hcp_grayordinatesres", "2", str,],
-    ["hcp_surfatlasdir", "", is_none,],
-    ["hcp_grayordinatesdir", "", is_none,],
-    ["hcp_subcortgraylabels", "", is_none,],
-    ["hcp_refmyelinmaps", "", is_none,],
-    ["hcp_regname", "MSMSulc", str,],
-    ["hcp_cifti_tail", "_Atlas", str,],
-    ["hcp_bold_variant", "", str,],
-    ["additional_bolds", "", is_none,],
-    ["hcp_nifti_tail", "", str,],
-    ["hcp_config", "", is_none,],
+    [
+        "hcp_processing_mode",
+        "HCPStyleData",
+        str,
+    ],
+    [
+        "hcp_folderstructure",
+        "hcpls",
+        str,
+    ],
+    [
+        "hcp_freesurfer_home",
+        "",
+        str,
+    ],
+    [
+        "hcp_freesurfer_module",
+        "",
+        str,
+    ],
+    [
+        "hcp_suffix",
+        "",
+        str,
+    ],
+    [
+        "hcp_t2",
+        "t2",
+        str,
+    ],
+    [
+        "hcp_printcom",
+        "",
+        str,
+    ],
+    [
+        "hcp_bold_prefix",
+        "BOLD_",
+        str,
+    ],
+    [
+        "hcp_filename",
+        "automated",
+        str,
+    ],
+    [
+        "hcp_lowresmesh",
+        "32",
+        str,
+    ],
+    [
+        "hcp_lowresmeshes",
+        "32",
+        str,
+    ],
+    [
+        "hcp_hiresmesh",
+        "164",
+        int,
+    ],
+    [
+        "hcp_bold_res",
+        "2",
+        str,
+    ],
+    [
+        "hcp_grayordinatesres",
+        "2",
+        str,
+    ],
+    [
+        "hcp_surfatlasdir",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_grayordinatesdir",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_subcortgraylabels",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_refmyelinmaps",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_regname",
+        "MSMSulc",
+        str,
+    ],
+    [
+        "hcp_cifti_tail",
+        "_Atlas",
+        str,
+    ],
+    [
+        "hcp_bold_variant",
+        "",
+        str,
+    ],
+    [
+        "additional_bolds",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_nifti_tail",
+        "",
+        str,
+    ],
+    [
+        "hcp_config",
+        "",
+        is_none,
+    ],
     ["# --- hcp_parcellate_anat options"],
-    ["hcp_parcellate_input_type", "", str,],
-    ["hcp_parcellate_dlabel", "", str,],
-    ["hcp_parcellate_output_name", "", str,],
-    ["hcp_parcellate_extract_data", "False", torf,],
+    [
+        "hcp_parcellate_input_type",
+        "",
+        str,
+    ],
+    [
+        "hcp_parcellate_dlabel",
+        "",
+        str,
+    ],
+    [
+        "hcp_parcellate_output_name",
+        "",
+        str,
+    ],
+    [
+        "hcp_parcellate_extract_data",
+        "False",
+        torf,
+    ],
     ["# --- hcp_pre_freesurfer options"],
     ["hcp_brainsize", "150", int],
     ["hcp_t1samplespacing", "NONE", str],
@@ -851,7 +955,7 @@ arglist = [
     ["hcp_fmristats_tica_component_tcs", "", is_none],
     ["hcp_fmristats_tica_component_noise", "", is_none],
     ["hcp_fmristats_regname", "", is_none],
-    ["# --- hcp_corr_thick options"],
+    ["# --- hcp_cortical_thickness options"],
     ["hcp_corrthick_regnames", "", is_none],
     ["hcp_corrthick_hemi", "", is_none],
     ["hcp_corrthick_surf", "", is_none],
@@ -1117,9 +1221,9 @@ def run(qx_command, args):
     )
 
     processing_type = "session"
-    if 'subject' in qx_command.type:
+    if "subject" in qx_command.type:
         processing_type = "subject"
-    elif 'study' in qx_command.type:
+    elif "study" in qx_command.type:
         processing_type = "study"
 
     # -- do we need a list of subjects?
@@ -1179,7 +1283,7 @@ def run(qx_command, args):
     # set key parameters
     overwrite = options["overwrite"]
     parsessions = options["parsessions"]
-    parsubjects = options["parsubjects"]    
+    parsubjects = options["parsubjects"]
     nprocess = options["nprocess"]
     printinfo = options["datainfo"]
     printoptions = options["printoptions"]
@@ -1202,7 +1306,10 @@ def run(qx_command, args):
     if not options["longitudinal"]:
         logname = os.path.join(logfolder, "Log-%s-%s.log") % (qx_command.name, logstamp)
     else:
-        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (qx_command.name, logstamp)
+        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (
+            qx_command.name,
+            logstamp,
+        )
 
     log = []
     stati = []
@@ -1234,11 +1341,9 @@ def run(qx_command, args):
         print(sout)
         writelog(sout)
         exit()
-    
-    elif options["run"] == "run":        
-        sout += (
-            f"\nStarting multiprocessing {processing_type}s in {options['sessions']} with a pool of {parprocesses} concurrent processes\n"
-        )
+
+    elif options["run"] == "run":
+        sout += f"\nStarting multiprocessing {processing_type}s in {options['sessions']} with a pool of {parprocesses} concurrent processes\n"
 
     else:
         sout += "\nRunning test on %s ...\n" % (options["sessions"])
@@ -1284,7 +1389,6 @@ def run(qx_command, args):
 
         c = 0
         if parprocesses == 1 or options["run"] == "test":
-
             # ------------------------------------------------------------------
             #                                          study processing commands
             if processing_type == "study":
@@ -1310,7 +1414,6 @@ def run(qx_command, args):
                 print(r)
                 stati.append(status)
 
-
             # ------------------------------------------------------------------
             #                                        subject processing commands
             elif processing_type == "subject":
@@ -1330,7 +1433,6 @@ def run(qx_command, args):
                     c += 1
                     if nprocess and c >= nprocess:
                         break
-
 
             # ------------------------------------------------------------------
             #                                        session processing commands
@@ -1438,7 +1540,9 @@ def run(qx_command, args):
             print("---> Not all tasks completed fully!", file=f)
         else:
             print(f"---> Successful completion of all tasks at {datetime.now()}")
-            print(f"---> Successful completion of all tasks at {datetime.now()}", file=f)
+            print(
+                f"---> Successful completion of all tasks at {datetime.now()}", file=f
+            )
 
         f.close()
 
