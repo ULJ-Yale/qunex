@@ -607,9 +607,29 @@ export MAMBADIR PATH
 # activate
 if [[ -e /opt/.container ]]; then
     eval "$(micromamba shell hook --shell bash 2>/dev/null)"
-    micromamba activate /opt/env/qunex
-    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][QuNex Container \W]\$\[\e[0m\] "
-else
-    source activate $QUNEXENV 2> /dev/null
-    PS1="($(basename $CONDA_DEFAULT_ENV)) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "
+    micromamba activate /opt/env/qunex 2>/dev/null
 fi
+
+# -- Set up prompt via PROMPT_COMMAND to ensure it displays in all contexts (especially Singularity)
+# This is more reliable than PS1 alone for non-interactive edge cases
+PROMPT_COMMAND='
+if [[ -e /opt/.container ]]; then
+    if [[ -n "${CONDA_DEFAULT_ENV}" ]] && [[ $(basename ${CONDA_DEFAULT_ENV}) == "qunex" ]]; then
+        PS1="($(basename ${CONDA_DEFAULT_ENV}_container)) \[\e[0;36m\][\W]\$\[\e[0m\] "
+    elif [[ -n "${CONDA_DEFAULT_ENV}" ]]; then
+        PS1="($(basename ${CONDA_DEFAULT_ENV})) \[\e[0;36m\][\W]\$\[\e[0m\] "
+    else
+        PS1="\[\e[0;36m\][QuNex \W]\$\[\e[0m\] "
+    fi
+else
+    if [[ -n "${CONDA_DEFAULT_ENV}" ]]; then
+        PS1="($(basename ${CONDA_DEFAULT_ENV})) \[\e[0;36m\][${HOSTNAME%%.*} \W]\$\[\e[0m\] "
+    else
+        PS1="\[\e[0;36m\][QuNex \W]\$\[\e[0m\] "
+    fi
+fi
+history -a
+'
+
+export PS1="\[\e[0;36m\][QuNex \W]\$\[\e[0m\] "
+export PROMPT_COMMAND
