@@ -210,7 +210,7 @@ def schedule(
     # parse settings
     try:
         jobname = scheduler_params.pop("jobname", "qunex_job")
-    except:
+    except Exception:
         raise CommandError(
             "schedule",
             "Misspecified parameter",
@@ -1362,9 +1362,9 @@ def main(args=None):
                         ]
                         # pass variables into the Singularity/Apptainer container
                         container_command += "--env "
-                        container_command += ",".join(
-                            [f"{p}=${p}" for p in slurm_array_params]
-                        )
+                        container_command += ",".join([
+                            f"{p}=${p}" for p in slurm_array_params
+                        ])
                         # add trailing space
                         container_command += " "
 

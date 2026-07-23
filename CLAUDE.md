@@ -16,7 +16,10 @@ pragmatic, focused improvements over strict rewrites.**
 ## Repository layout
 
 - `bin/` — front-end launchers. `bin/qunex` (bash) is the main CLI entry point; it dispatches
-  to language-specific implementations and to the Python `gmri` driver.
+  to language-specific implementations and to the Python `gmri` driver. Note: several Python
+  entry points have **no `.py` extension** — `python/qx_utilities/gmri` and `bin/qunex*container*`.
+  A codebase-wide rename or symbol sweep that globs `*.py` will silently miss them (and `.py`
+  files outside `python/qx_utilities` such as `python/qx_registry*.py`); include them explicitly.
 - `python/qx_utilities/` — Python implementation, the bulk of active development:
   - `general/` — core utilities, parsing, sessions, DICOM/BIDS/NIfTI, scheduler, `gmri` driver,
     and `log.py` (the suite-wide runlog; see **Command logging** below).

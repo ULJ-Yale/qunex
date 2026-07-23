@@ -941,7 +941,7 @@ def process_hcpls(sessionfolder, filesort):
 
     if not os.path.exists(sessionfolder):
         raise ge.CommandFailed(
-            "processHCPLS",
+            "process_hcpls",
             "No hcpls folder present!",
             "There is no hcpls data in session folder %s" % (sessionfolder),
             "Please import HCPLS data first!",
@@ -959,7 +959,7 @@ def process_hcpls(sessionfolder, filesort):
 
     if not os.path.exists(hcpls_structure):
         raise ge.CommandFailed(
-            "processHCPLS",
+            "process_hcpls",
             "No HCPLS structure file present!",
             "There is no HCPLS structure file %s" % (hcpls_structure),
             "Please check your QuNex installation",
