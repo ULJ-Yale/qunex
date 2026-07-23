@@ -28,8 +28,9 @@ import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import pe_dir_map, get_hcp_paths
-from qx_utilities.hcp.hcp_log import SessionLog, ReportLog
+from qx_utilities.general.log import SessionLog, ReportLog
 from qx_utilities.hcp.hcp_utils import (
+    check_gdc_coeff_file,
     _build_skipped_report,
     check_inline_parameter_use,
     do_hcp_options_check,
@@ -744,7 +745,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # -> lookup gdcoeffs file if needed
-        gdcfile, run = log.check_gdc_coeff_file(options["hcp_bold_gdcoeffs"], hcp, sinfo, run)
+        gdcfile, run = check_gdc_coeff_file(options["hcp_bold_gdcoeffs"], hcp, sinfo, log, run)
 
         # -> default parameter values
         spin_p = 0

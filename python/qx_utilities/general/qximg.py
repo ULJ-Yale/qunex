@@ -13,10 +13,8 @@ for internal use and not called directly. It also implements the modniftihdr
 command.
 """
 
-"""
-Created by Grega Repovs on 2013-04-13.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2013-04-13.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import numpy as np
 import gzip
@@ -86,7 +84,7 @@ class qximg(object):
     def saveimage(self, filename=None, frames=None, extra=None):
         """Calls the appropriate save function based on the image format."""
 
-        if filename == None:
+        if filename is None:
             filename = self.filename
 
         if self.imageformat == ".4dfp.img":
@@ -117,7 +115,7 @@ class qximg(object):
         nihdr.unpack_hdr(sf)
         data_type = np.dtype(nihdr.e + nihdr.dType)
 
-        if frames != None:
+        if frames is not None:
             nihdr.frames = frames
 
         self.hdrnifti    = nihdr
@@ -183,7 +181,7 @@ class qximg(object):
 
     def save_nifti(self, filename=None, frames=None, extra=None):
 
-        if filename == None:
+        if filename is None:
             filename = self.filename
 
         tform = gi.get_img_format(filename)
@@ -194,7 +192,7 @@ class qximg(object):
 
         # ---> check if image has to be trimmed
 
-        if frames == None:
+        if frames is None:
             data = self.data
         else:
             data = self.data[0:frames,:,:,:]

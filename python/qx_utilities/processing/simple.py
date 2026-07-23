@@ -21,17 +21,16 @@ the command line using `qunex` command. Help is available through:
 - `qunex ?<command>` for command specific help
 """
 
-"""
-Created by Grega Repovs on 2016-12-17.
-Code split from dofcMRIp_core gCodeP/preprocess codebase.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2016-12-17.
+# Code split from dofcMRIp_core gCodeP/preprocess codebase.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import re
 from datetime import datetime
 
 import qx_utilities.processing.core as pc
+from qx_utilities.general.log import ReportLog
 
 
 def create_bold_list(sinfo, options, overwrite=False, thread=0):
@@ -124,7 +123,7 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
                 print("    fidl:%s" % (f_fidl), file=bfile)
                 print("    file:%s" % (f_conc), file=bfile)
 
-            except:
+            except Exception:
                 print("ERROR processing session %s!" % (session['id']))
                 raise
 
@@ -231,11 +230,12 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
             qunex run_shell_script sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
                   overwrite=no script=fcMRI/processdata.sh
     """
+    log = ReportLog()
 
-    r = "\n---------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nRunning script %s" % (options['script'])
-    r += "\n........................................................\n"
+    log.capture("\n---------------------------------------------------------")
+    log.raw("\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw("\nRunning script %s" % (options['script']))
+    log.raw("\n........................................................\n")
 
     try:
         assert (options['script'] is not None), "ERROR: No script was referenced!"
@@ -261,34 +261,34 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         nonplaced = re.findall("{{.*?}}", script)
 
         if nonplaced:
-            r += "\nWARNING: the following tags were not filled:"
+            log.raw("\nWARNING: the following tags were not filled:")
             for n in nonplaced:
-                r += "\n ... " + n
+                log.raw("\n ... " + n)
 
         # --- execute script
 
         description = "run_shell_script: %s" % (options['script'])
         task = "run_shell_script-%s" % (options['script'])
 
-        r += pc.run_script_through_shell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
+        log.raw(pc.run_script_through_shell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs']))
 
     except AssertionError as message:
-        r += str(message) + "\n---------------------------------------------------------"
-        print(r)
-        return (r, (sinfo['id'], message, 1))
+        log.raw(str(message) + "\n---------------------------------------------------------")
+        print(log.text)
+        return (log.text, (sinfo['id'], message, 1))
 
     except pc.ExternalFailed as errormessage:
-        r += str(errormessage) + "\n---------------------------------------------------------"
-        print(r)
-        return (r, (sinfo['id'], "Failed: " + str(errormessage), 1))
+        log.raw(str(errormessage) + "\n---------------------------------------------------------")
+        print(log.text)
+        return (log.text, (sinfo['id'], "Failed: " + str(errormessage), 1))
 
-    except:
+    except Exception:
         message = 'ERROR: Error in parsing or executing script %s' % (options['script'])
-        r += "\n" + message + "\n---------------------------------------------------------"
-        print(r)
+        log.raw("\n" + message + "\n---------------------------------------------------------")
+        print(log.text)
         raise
-        return (r, (sinfo['id'], message, 1))
+        return (log.text, (sinfo['id'], message, 1))
 
-    r += "\n\nrun_shell_script %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    print(r)
-    return (r, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))
+    log.raw("\n\nrun_shell_script %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    print(log.text)
+    return (log.text, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))

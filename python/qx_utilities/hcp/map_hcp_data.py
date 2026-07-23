@@ -24,7 +24,7 @@ from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_log import ReportLog
+from qx_utilities.general.log import ReportLog
 from qx_utilities.hcp.hcp_utils import session_report_header
 
 

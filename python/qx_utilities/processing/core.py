@@ -13,11 +13,9 @@ preprocessing and analysis. The functions are for internal use
 and can not be called externally.
 """
 
-"""
-Created by Grega Repovs on 2016-12-17.
-Code split from dofcMRIp_core gCodeP/preprocess codebase.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2016-12-17.
+# Code split from dofcMRIp_core gCodeP/preprocess codebase.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 
 import os
@@ -26,15 +24,11 @@ import shutil
 import re
 import subprocess
 import glob
-import sys
-import traceback
 import multiprocessing
 from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
-from qx_utilities.general.img import *
-from qx_utilities.general.meltmovfidl import *
 
 
 def is_number(s):
@@ -43,43 +37,6 @@ def is_number(s):
         return True
     except ValueError:
         return False
-
-
-def print_exc_plus():
-    """
-    Print the usual traceback information, followed by a listing of all the
-    local variables in each frame.
-    """
-    tb = sys.exc_info()[2]
-    while 1:
-        if not tb.tb_next:
-            break
-        tb = tb.tb_next
-    stack = []
-    f = tb.tb_frame
-    while f:
-        stack.append(f)
-        f = f.f_back
-    stack.reverse()
-    traceback.print_exc()
-    print("Locals by frame, innermost last")
-    for frame in stack:
-        print
-        print(
-            "Frame %s in %s at line %s"
-            % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno)
-        )
-        for key, value in frame.f_locals.items():
-            print("\t%20s = " % key, end=" ")
-            # We have to be careful not to cause a new error in our error
-            # printer! Calling str() on an unknown object could cause an
-            # error we don't want.
-            try:
-                print(value)
-            except:
-                print("<ERROR WHILE PRINTING VALUE>")
-
-
 class ExternalFailed(Exception):
     def __init__(self, value="Got lost :-("):
         self.parameter = value
@@ -257,7 +214,18 @@ def get_exact_file(candidate):
 
 def get_file_names(sinfo, options):
     """
-    get_file_names - documentation not yet available.
+    Build the dictionary of QuNex file names for a session's data.
+
+    Resolves the structural, segmentation, BOLD and derived file paths a
+    processing command reads and writes, based on the session folders and the
+    naming options (tails, variants, glm/conc names).
+
+    Parameters:
+        sinfo (dict): session information; ``id`` is used.
+        options (dict): command options controlling naming and targets.
+
+    Returns:
+        dict: mapping of file keys to absolute paths for this session.
     """
 
     d = get_session_folders(sinfo, options)
@@ -413,7 +381,16 @@ def get_file_names(sinfo, options):
 
 def get_bold_file_names(sinfo, boldname, options):
     """
-    get_bold_file_names - documentation not yet available.
+    Build the file names for a single BOLD run of a session.
+
+    Parameters:
+        sinfo (dict): session information; ``id`` is used.
+        boldname (str): the BOLD name (e.g. ``bold1``); its trailing number
+            selects the run.
+        options (dict): command options controlling naming and image target.
+
+    Returns:
+        dict: mapping of file keys to absolute paths for this BOLD run.
     """
     d = get_session_folders(sinfo, options)
     f = {}
@@ -629,7 +606,19 @@ def get_bold_file_names(sinfo, boldname, options):
 
 def find_file(sinfo, options, fname):
     """
-    find_file - documentation not yet available.
+    Locate a session file by trying the known QuNex source locations.
+
+    Searches the session inbox (and its ``events``/``concs`` subfolders for conc
+    and fidl files) and the structural source folder, with and without the
+    session-id prefix.
+
+    Parameters:
+        sinfo (dict): session information; ``id`` is used.
+        options (dict): command options used to resolve the session folders.
+        fname (str): the file name to look for.
+
+    Returns:
+        str | bool: the first existing path found, or False if none exist.
     """
     d = get_session_folders(sinfo, options)
 
@@ -661,7 +650,17 @@ def find_file(sinfo, options, fname):
 
 def get_session_folders(sinfo, options):
     """
-    get_session_folders - documentation not yet available.
+    Build the dictionary of a session's folder locations.
+
+    Resolves the source, images, structural, segmentation, BOLD and related
+    working folders from the session information and options.
+
+    Parameters:
+        sinfo (dict): session information; ``id``, ``hcp``/``data`` are used.
+        options (dict): command options controlling folder naming and variants.
+
+    Returns:
+        dict: mapping of folder keys to absolute paths for this session.
     """
     d = {"s_source": None}
 
@@ -706,7 +705,7 @@ def get_session_folders(sinfo, options):
                         # Check again inside the lock to ensure no other process created the folder
                         if not os.path.exists(fpath):
                             os.makedirs(fpath)
-                    except:
+                    except Exception:
                         print(
                             f"WARNING: Could not create folder {fpath}! Please check paths and permissions!"
                         )
@@ -788,7 +787,7 @@ def check_run(
                 passed = "incomplete"
                 failed = 1
 
-            except:
+            except Exception:
                 report += ", full file check could not be completed"
                 passed = "incomplete"
                 failed = 1
@@ -845,7 +844,7 @@ def close_log(logfile, logname, logfolders, status, remove, r):
         try:
             gc.link_or_copy(tfile, nfile)
             r += "\n---> logfile: %s" % (nfile)
-        except:
+        except Exception:
             r += "\n---> WARNING: could not map logfile to: %s" % (nfile)
 
     return tfile, r
@@ -959,7 +958,7 @@ def run_external_for_file(
         if not os.path.exists(logfolder):
             try:
                 os.makedirs(logfolder)
-            except:
+            except Exception:
                 r += "\n\nERROR: Could not create folder for logfile [%s]!" % (
                     logfolder
                 )
@@ -994,7 +993,7 @@ def run_external_for_file(
                 )
             else:
                 process = subprocess.run(run, stdout=nf, stderr=nf, check=False)
-        except:
+        except Exception:
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
             r += comm
             endlog, r = close_log(nf, tmplogfile, logfolders, "error", remove, r)
@@ -1074,7 +1073,23 @@ def run_script_through_shell(
     run, description, thread="0", remove=True, task=None, logfolder="", logtags=""
 ):
     """
-    run_script_through_shell - documentation not yet available.
+    Run a command through the shell, capturing its output to a comlog.
+
+    Writes the command's stdout/stderr to a temporary comlog which is renamed to
+    a ``done_`` or ``error_`` log depending on the exit status.
+
+    Parameters:
+        run (str): the shell command to run.
+        description (str): human readable description used in the report and log.
+        thread (str): identifier used in the log file name.
+        remove (bool): whether to remove the done log on success.
+        task (str): task name used in the log file name.
+        logfolder (str): folder to write the comlog into.
+        logtags (str | list): tag(s) used in the log file name.
+
+    Returns:
+        tuple: ``(r, endlog, status, failed)`` -- report text, path to the final
+        log, run status and failed count.
     """
 
     r = "\n\n%s" % (description)
@@ -1120,19 +1135,23 @@ def run_script_through_shell(
     return r, endlog
 
 
-def check_for_file(r, checkfile, message, status=True):
+def check_for_file(r, checkfile, ok="", bad="", status=True):
     """
-    check_for_file - documentation not yet available.
-    """
-    if not os.path.exists(checkfile):
-        status = False
-        r = r + "\n... %s" % (message)
-    return r, status
+    Note the presence or absence of a single file in the report.
 
+    Appends ``ok`` to the report when ``checkfile`` exists and ``bad`` when it
+    does not; a missing file also drops ``status`` to False.
 
-def check_for_file2(r, checkfile, ok, bad, status=True):
-    """
-    check_for_file2 - documentation not yet available.
+    Parameters:
+        r (str): the report so far.
+        checkfile (str): path to test for.
+        ok (str): text appended when the file is present.
+        bad (str): text appended when the file is missing.
+        status (bool): the running status, carried through and set False on a
+            missing file.
+
+    Returns:
+        tuple: ``(r, status)`` -- the extended report and the running status.
     """
     if os.path.exists(checkfile):
         r += ok

@@ -139,7 +139,7 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     for s in do:
         try:
             run_nil(s, overwrite, sourcefile)
-        except:
+        except Exception:
             print("---> Failed running NIL preprocessing on", s)
 
     print("\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder))
@@ -236,7 +236,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         if os.path.exists(os.path.join(folder, "dicom", "DICOM-Report.txt")):
             with open(os.path.join(folder, "dicom", "DICOM-Report.txt")) as f:
                 for line in f:
-                    if ("BOLD" in line and not "C-BOLD" in line) or ("bold" in line):
+                    if ("BOLD" in line and "C-BOLD" not in line) or ("bold" in line):
                         m = re.search(r"TR +([0-9.]+),", line)
                         if m:
                             tr = m.group(1)
@@ -433,7 +433,7 @@ def map2hcp(volume, method="trilinear"):
         templates.
     """
 
-    if not "HCPATLAS" in os.environ:
+    if "HCPATLAS" not in os.environ:
         raise ge.CommandError(
             "map2hcp",
             "HCPATLAS environment variable not set.",

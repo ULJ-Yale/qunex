@@ -15,10 +15,8 @@ Functions for importing non-human primate (NHP) data into QuNex:
 The commands are accessible from the terminal using the gmri utility.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar.
-All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar.
+# All rights reserved.
 
 # general imports
 import os
@@ -45,7 +43,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
     try:
         if sessionsfolder[-1] == "/":
             sessionsfolder = sessionsfolder[:-1]
-    except:
+    except Exception:
         pass
 
     # find separator
@@ -70,7 +68,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
 
             # store data
             data_file = file_split[-1]
-    except:
+    except Exception:
         print("ERROR: Could not parse file:", file)
         return False
 
@@ -281,14 +279,14 @@ def import_nhp(
                             fout.close()
 
                             # append mapped file
-                            if not result[0] in report:
+                            if result[0] not in report:
                                 report[result[0]] = [tfile]
                             else:
                                 report[result[0]].append(tfile)
                 z.close()
 
                 print("        ---> done!")
-            except:
+            except Exception:
                 print(
                     "           ERROR: Processing of zip package failed. Please check the package!"
                 )
@@ -316,14 +314,14 @@ def import_nhp(
                             fout.close()
 
                             # append mapped file
-                            if not result[0] in report:
+                            if result[0] not in report:
                                 report[result[0]] = [tfile]
                             else:
                                 report[result[0]].append(tfile)
                 tar.close()
 
                 print("        ---> done!")
-            except:
+            except Exception:
                 print(
                     "           ERROR: Processing of tar package failed. Please check the package!"
                 )
@@ -342,7 +340,7 @@ def import_nhp(
                     errors += msg
                 else:
                     # append mapped file
-                    if not result[0] in report:
+                    if result[0] not in report:
                         report[result[0]] = [tfile]
                     else:
                         report[result[0]].append(tfile)
@@ -368,7 +366,7 @@ def import_nhp(
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
-            except:
+            except Exception:
                 print("---> %s failed!" % (archive))
         else:
             files = glob.glob(os.path.join(inbox, "*"))
@@ -390,7 +388,7 @@ def import_nhp(
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
-                except:
+                except Exception:
                     print("---> %s of %s failed!" % (archive, file))
 
     if not all_ok:

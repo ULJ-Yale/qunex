@@ -23,7 +23,7 @@ from functools import partial
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
-from qx_utilities.hcp.hcp_log import SessionLog, ReportLog
+from qx_utilities.general.log import SessionLog, ReportLog
 from qx_utilities.hcp.hcp_utils import (
     _build_skipped_report,
     do_hcp_options_check,

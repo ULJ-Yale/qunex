@@ -27,12 +27,12 @@ import qx_utilities.general.exceptions as ge
 
 try:
     import pydicom
-except:
+except Exception:
     import dicom as pydicom
 
 try:
     import pydicom.filereader as dfr
-except:
+except Exception:
     import dicom.filereader as dfr
 
 #######################
@@ -60,7 +60,7 @@ def read_dicom_base(filename):
         d = dfr.read_partial(f, stop_when=_at_frame)
         f.close()
         return d, gz
-    except:
+    except Exception:
         return None, None
     finally:
         if f is not None and not f.closed:
@@ -79,7 +79,7 @@ def read_dicom_full(filename):
         d = dfr.read_file(f)
         f.close()
         return d, gz
-    except:
+    except Exception:
         return None, None
     finally:
         if f is not None and not f.closed:
@@ -105,7 +105,7 @@ def get_dicom_name(opened_dicom, extension="dcm"):
 
     try:
         sop = opened_dicom.SOPInstanceUID
-    except:
+    except Exception:
         sop = "%010d" % dicom_counter
 
     filename = "{s_id}-{sequence_id}-{sop}.{extension}".format(
@@ -205,7 +205,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                         gzfile.close()
                     file.close()
 
-            except Exception as e:
+            except Exception:
                 pass  # file was not a dicom
 
             if opened_dicom is None:
@@ -241,7 +241,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     shutil.rmtree(temp_directory)
                     shutil.rmtree(temp_out_directory)
 
-                except:
+                except Exception:
                     pass  # File was not a zip archive
 
             if opened_dicom is None:
@@ -280,7 +280,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     shutil.rmtree(temp_directory)
                     shutil.rmtree(temp_out_directory)
 
-                except:
+                except Exception:
                     pass  # File was not a tar archive
 
             if opened_dicom is None:
@@ -458,10 +458,10 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     try:
         f = open(targetfile, "w")
         f.close()
-    except:
+    except Exception:
         raise ge.CommandFailed("get_dicom_fields", "Could not create target file", "The specifed target file could not be created:", "%s" % (targetfile), "Please check your paths and permissions!")
 
-    field_dict = {}
+    _ = {}
 
     discover_dicom(folder, dicom_scan, save=False, archive_file="")
     write_field_dict(targetfile, limit)
@@ -619,7 +619,7 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
     try:
         f = open(archivefile, "a")
         f.close()
-    except:
+    except Exception:
         raise ge.CommandFailed("change_dicom_files", "Could not create archive file", "The specifed archive file could not be created:", "%s" % (archivefile), "Please check your paths and permissions!")
 
     if outputfolder is not None and not os.path.exists(outputfolder):
@@ -762,25 +762,6 @@ def read_spec_file(spec_file):
         action_dict[key] = [e for e in action_order if e in action_dict[key]]
 
     return action_dict, replace_map
-
-
-def action_resolver(key, action, action_dict, replace_map):
-    action_set = action_dict.get(key, set())
-
-    if action == "archive":
-        action_set.add(action)
-    elif action == "delete":
-        action_set.add(action)
-    elif action.startswith("replace:"):
-        action_set.add("replace")
-        replace_value = ":".join(action.split(":")[1:])
-        replace_map[key] = replace_value
-    else:
-        raise RuntimeError(action + " is not a valid action.")
-
-    action_dict[key] = action_set
-
-
 def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
     """
     ``archive(target_dicom, tag, field_id, filename, archive_csv_writer)``

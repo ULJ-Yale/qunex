@@ -11,10 +11,8 @@
 Miscellaneous utilities for file processing.
 """
 
-"""
-Created by Grega Repovs on 2017-09-17.
-Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
-"""
+# Created by Grega Repovs on 2017-09-17.
+# Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import errno
 import getpass
@@ -258,12 +256,12 @@ def manage_study(studyfolder=None, action="create", folders=None, verbose=False)
             try:
                 shutil.copystat(os.path.join(studyfolder, ".mnapstudy"), mark_file)
                 os.unlink(os.path.join(studyfolder, ".mnapstudy"))
-            except:
+            except Exception:
                 pass
 
         try:
             username = getpass.getuser()
-        except:
+        except Exception:
             username = "unknown user"
 
         try:
@@ -764,20 +762,6 @@ def copy_study(
                 batchfile = os.path.join(processing_folder, item)
                 print(f" ... processing {batchfile}")
                 filter_batch(batchfile, sessions, subjects)
-
-
-def _remove_folder(folder):
-    """
-    A helper function that removes a folder and all its content.
-    """
-    if len(os.listdir(folder)) == 0:
-        print(f" ... removing folder {folder}")
-        os.rmdir(folder)
-    else:
-        print(f" ... removing folder {folder}")
-        shutil.rmtree(folder)
-
-
 def filter_batch(batchfile, sessions=None, subjects=None):
     """
     A helper function that removes all unused sessions from a batch file.
@@ -1258,7 +1242,7 @@ def create_batch(
         jfile.close()
         fl.unlock(targetfile)
 
-    except:
+    except Exception:
         if jfile:
             jfile.close()
             fl.unlock(targetfile)
@@ -1750,7 +1734,7 @@ def create_list(
                 else:
                     bolds = [n for n, b, t in bolds]
                 bolds.sort()
-            except:
+            except Exception:
                 pass
             for boldnum in bolds:
                 tfile = os.path.join(
@@ -2151,7 +2135,7 @@ def create_conc(
                 else:
                     bolds = [n for n, b, t in bolds]
                 bolds.sort()
-            except:
+            except Exception:
                 pass
             for boldnum in bolds:
                 tfile = os.path.join(
@@ -2566,7 +2550,7 @@ def gather_behavior(
         if overwrite:
             try:
                 os.remove(targetfile)
-            except:
+            except Exception:
                 raise ge.CommandFailed(
                     "gather_behavior",
                     "Could not remove target file",
@@ -2652,7 +2636,7 @@ def gather_behavior(
 
     try:
         fout = open(targetfile, "w")
-    except:
+    except Exception:
         raise ge.CommandFailed(
             "gather_behavior",
             "Could not create target file",
@@ -2900,7 +2884,7 @@ def pull_sequence_names(
 
         try:
             f = open(file, "r")
-        except:
+        except Exception:
             return "Could not open %s for reading!" % (file)
 
         for line in f:
@@ -2950,7 +2934,7 @@ def pull_sequence_names(
         if overwrite:
             try:
                 os.remove(targetfile)
-            except:
+            except Exception:
                 raise ge.CommandFailed(
                     "pull_sequence_names",
                     "Could not remove target file",
@@ -3031,7 +3015,7 @@ def pull_sequence_names(
 
     try:
         fout = open(targetfile, "w")
-    except:
+    except Exception:
         raise ge.CommandFailed(
             "pull_sequence_names",
             "Could not create target file",
@@ -3148,7 +3132,7 @@ def export_prep(command_name, sessionsfolder, mapto, mapaction, mapexclude):
         for e in patterns:
             try:
                 mapexclude.append(re.compile(e))
-            except:
+            except Exception:
                 raise ge.CommandFailed(
                     command_name,
                     "Invalid exclusion",

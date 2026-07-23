@@ -38,7 +38,7 @@ def flag(f):
     Converts a flag (f) passed as a string to a boolean.
     """
 
-    if type(f) == bool:
+    if type(f) is bool:
         return f
     elif f in ["True", "true", "TRUE", "yes", "Yes", "YES"]:
         return True

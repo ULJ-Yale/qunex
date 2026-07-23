@@ -561,8 +561,8 @@ def merge_session(
 
         # Handle raw data (dicom, bids, inbox, hcpls) based on raw_data parameter
         if raw_data != "leave":
-            transfer_func = shutil.move if raw_data == "move" else shutil.copytree
-            transfer_file_func = shutil.move if raw_data == "move" else shutil.copy2
+            _ = shutil.move if raw_data == "move" else shutil.copytree
+            _ = shutil.move if raw_data == "move" else shutil.copy2
 
             # Determine target subfolder name for nesting
             # If source ID is like "A_B" and target ID is "A", use "B" as subfolder

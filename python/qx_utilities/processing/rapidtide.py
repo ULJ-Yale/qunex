@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-``fsl.py``
+``rapidtide.py``
 
 This file holds code for running FSL commands. It
 consists of functions:
@@ -33,6 +33,7 @@ from functools import partial
 
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
+from qx_utilities.general.log import ReportLog
 
 
 def rapidtide(sinfo, options, overwrite=False, thread=0):
@@ -205,15 +206,16 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         rest bolds in the batch file. The second one uses a sensible setup for
         HCP style acquisition data.
     """
+    log = ReportLog()
 
     # get session id
     session = sinfo["id"]
 
-    r = "\n------------------------------------------------------------"
+    log.capture("\n------------------------------------------------------------")
     timestamp = datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
-    r += f"\nSession id: {sinfo['id']} \n[started on {timestamp}]"
+    log.raw(f"\nSession id: {sinfo['id']} \n[started on {timestamp}]")
     action = pc.action("Running", options["run"])
-    r += f"\n{action} rapidtide [{session}] ..."
+    log.raw(f"\n{action} rapidtide [{session}] ...")
 
     # status variables
     run = True
@@ -225,7 +227,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         # check if we have the session
         session_folder = os.path.join(options["sessionsfolder"], session)
         if not os.path.exists(session_folder):
-            r += f"\n\n---> Session folder {session_folder} does not exist, cannot run rapidtide."
+            log.raw(f"\n\n---> Session folder {session_folder} does not exist, cannot run rapidtide.")
             run = False
 
         # hcp paths
@@ -235,21 +237,21 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            r += f"\n---> ERROR: There is no hcp info for session {sinfo['id']} in batch.txt"
+            log.raw(f"\n---> ERROR: There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # get bolds
         if not options["bolds"]:
             options["bolds"] = "rest"
-        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
+        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
 
         if len(bolds) == 0:
             # default was used
             if options["bolds"] == "rest":
-                r += f"\n---> ERROR: No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file."
+                log.raw(f"\n---> ERROR: No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file.")
                 run = False
             else:
-                r += "\n---> Automatic BOLD identification did not find any bolds using the --bolds parameter as is."
+                log.step("Automatic BOLD identification did not find any bolds using the --bolds parameter as is.")
                 boldtargets = options["bolds"].split(",")
 
         boldtargets = []
@@ -266,13 +268,13 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         }
 
         if len(boldtargets) == 0:
-            r += f"\n---> ERROR: No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file."
+            log.raw(f"\n---> ERROR: No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file.")
             report["failed"].append("no bolds found")
             run = False
         else:
-            r += f"\n---> Found {len(boldtargets)} bolds:"
+            log.raw(f"\n---> Found {len(boldtargets)} bolds:")
             for boldtarget in boldtargets:
-                r += f"\n  - {boldtarget}"
+                log.raw(f"\n  - {boldtarget}")
 
         # run in parallel
         if run:
@@ -292,7 +294,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
             # merge r and report
             for result in results:
-                r += result["r"]
+                log.raw(result["r"])
                 run_report = result["report"]
                 if run_report["done"]:
                     report["done"].extend(run_report["done"])
@@ -327,22 +329,23 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
         # rapidtide ------------------------------------------------------------
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = f"\n\n\n --- Failed during processing of session {session} with error:\n"
-        r += str(errormessage)
+        log.capture(f"\n\n\n --- Failed during processing of session {session} with error:\n")
+        log.raw(str(errormessage))
         report = (sinfo["id"], "rapidtide failed", 1)
 
-    except:
-        r += f"\n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n"
+    except Exception:
+        log.raw(f"\n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "rapidtide failed", 1)
 
-    return (r, report)
+    return (log.text, report)
 
 
 def _execute_rapidtide(
     options, sinfo, overwrite, run, hcp_folders, rapidtide_folder, boldtarget
 ):
     # prepare return variables
-    r = f"\n\n\n---> Working on bold {boldtarget}"
+    log = ReportLog()
+    log.capture(f"\n\n\n---> Working on bold {boldtarget}")
     report = {
         "done": [],
         "failed": [],
@@ -357,29 +360,29 @@ def _execute_rapidtide(
     rapidtide_out = os.path.join(rapidtide_folder, boldtarget)
     if os.path.exists(rapidtide_out):
         if not overwrite:
-            r += f"\n---> Skipping rapidtide for {boldtarget}, output folder already exists, and overwrite is not set: {rapidtide_out}"
+            log.raw(f"\n---> Skipping rapidtide for {boldtarget}, output folder already exists, and overwrite is not set: {rapidtide_out}")
             report["skipped"].append(boldtarget)
-            return {"r": r, "report": report}
+            return {"r": log.text, "report": report}
         else:
-            r += f"\n---> Removing existing results in {rapidtide_out}"
+            log.raw(f"\n---> Removing existing results in {rapidtide_out}")
             shutil.rmtree(rapidtide_out, ignore_errors=True)
     os.makedirs(rapidtide_out)
 
     # flirt ------------------------------------------------------------
     # run flirt to create masks if parameters are not provided
     if options["graymattermask"] is None and options["whitemattermask"] is None:
-        r += f"\n\n---> Running FSL flirt to create gray or white matter masks for {boldtarget}"
+        log.raw(f"\n\n---> Running FSL flirt to create gray or white matter masks for {boldtarget}")
         # in
         in_path = os.path.join(hcp_folders["hcp_nonlin"], "aparc+aseg.nii.gz")
         if not os.path.exists(in_path):
-            r += f"\n---> ERROR: Cannot find aparc+aseg.nii.gz at {in_path}"
+            log.raw(f"\n---> ERROR: Cannot find aparc+aseg.nii.gz at {in_path}")
 
         # ref
         ref_path = os.path.join(
             hcp_folders["hcp_nonlin"], "Results", boldtarget, "brainmask_fs.2.nii.gz"
         )
         if not os.path.exists(ref_path):
-            r += f"\n---> ERROR: Cannot find brainmask_fs.2.nii.gz at {ref_path}"
+            log.raw(f"\n---> ERROR: Cannot find brainmask_fs.2.nii.gz at {ref_path}")
             run = False
 
         # init
@@ -407,17 +410,17 @@ def _execute_rapidtide(
         )
 
         # report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running FSL flirt command via QuNex:\n\n"
-        r += flirt_comm.replace("                ", "")
-        r += "\n------------------------------------------------------------\n"
+        log.raw("\n\n------------------------------------------------------------\n")
+        log.raw("Running FSL flirt command via QuNex:\n\n")
+        log.raw(flirt_comm.replace("                ", ""))
+        log.raw("\n------------------------------------------------------------\n")
 
         # run
         if run:
             # run
             if options["run"] == "run":
                 # execute
-                r, _, _, failed = pc.run_external_for_file(
+                _, _, failed = log.run_external(
                     out_path,
                     flirt_comm,
                     "Running FSL flirt",
@@ -429,34 +432,33 @@ def _execute_rapidtide(
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
-                    r=r,
                 )
                 if failed:
-                    r += f"\n---> FSL flirt processing for session {session} failed"
+                    log.raw(f"\n---> FSL flirt processing for session {session} failed")
                     report["failed"].append(boldtarget)
                 else:
-                    r += f"\n---> FSL flirt processing for session {session} completed"
+                    log.raw(f"\n---> FSL flirt processing for session {session} completed")
                     report["done"].append(boldtarget)
 
             # just checking
             else:
-                passed, _, r, failed = pc.check_run(
-                    out_path, None, "FSL flirt " + session, r, overwrite=overwrite
+                passed, _, failed = log.check_run(
+                    out_path, None, "FSL flirt " + session, overwrite=overwrite
                 )
 
                 if passed is None:
-                    r += "\n---> FSL flirt can be run"
+                    log.step("FSL flirt can be run")
                     report["ready"].append(boldtarget)
                 else:
-                    r += f"\n---> FSL flirt processing for bold {boldtarget} would be skipped"
+                    log.raw(f"\n---> FSL flirt processing for bold {boldtarget} would be skipped")
                     report["skipped"].append(boldtarget)
 
     # rapidtide --------------------------------------------------------
-    r += f"\n\n---> Running rapidtide for {boldtarget}"
+    log.raw(f"\n\n---> Running rapidtide for {boldtarget}")
     boldname = f"{boldtarget}{options['nifti_tail']}.nii.gz"
     bold = os.path.join(hcp_folders["hcp_nonlin"], "Results", boldtarget, boldname)
     if not os.path.exists(bold):
-        r += f"\n---> ERROR: Cannot find BOLD image {bold} for session {session}"
+        log.raw(f"\n---> ERROR: Cannot find BOLD image {bold} for session {session}")
         report["failed"].append(boldtarget)
         run = False
 
@@ -516,7 +518,7 @@ def _execute_rapidtide(
                     "brainmask_fs.2.nii.gz",
                 )
                 if not os.path.exists(brainmask):
-                    r += f"\n---> ERROR: Cannot find the default --brainmask: brainmask_fs.2.nii.gz at {brainmask}"
+                    log.raw(f"\n---> ERROR: Cannot find the default --brainmask: brainmask_fs.2.nii.gz at {brainmask}")
                     run = False
                 else:
                     rapidtide_comm += f"                --brainmask {brainmask}"
@@ -531,7 +533,7 @@ def _execute_rapidtide(
                 )
             elif options["graymattermask"] is None:
                 if not os.path.exists(default_mask):
-                    r += "\n---> ERROR: Cannot find the default --graymattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
+                    log.error("Cannot find the default --graymattermask: aparc+aseg_res-2.nii.gz at {default_mask}")
                     run = False
                 else:
                     rapidtide_comm += (
@@ -547,7 +549,7 @@ def _execute_rapidtide(
                 )
             elif options["whitemattermask"] is None:
                 if not os.path.exists(default_mask):
-                    r += "\n---> ERROR: Cannot find the default --whitemattermask: aparc+aseg_res-2.nii.gz at {default_mask}"
+                    log.error("Cannot find the default --whitemattermask: aparc+aseg_res-2.nii.gz at {default_mask}")
                     run = False
                 else:
                     rapidtide_comm += (
@@ -569,13 +571,13 @@ def _execute_rapidtide(
                     f"{boldtarget}_dropouts.nii.gz",
                 )
                 if not os.path.exists(refineexclude):
-                    r += f"\n---> ERROR: Cannot find the default --refineexclude: {refineexclude}"
+                    log.raw(f"\n---> ERROR: Cannot find the default --refineexclude: {refineexclude}")
                     run = False
                 else:
                     rapidtide_comm += f"                --refineexclude {refineexclude}"
 
             # execute
-            r, _, _, failed = pc.run_external_for_file(
+            _, _, failed = log.run_external(
                 None,
                 rapidtide_comm,
                 "Running rapidtide",
@@ -587,24 +589,23 @@ def _execute_rapidtide(
                 logtags=[options["logtag"]],
                 full_test=None,
                 shell=True,
-                r=r,
             )
             if failed:
-                r += f"\n---> rapidtide processing for bold {boldtarget} failed"
+                log.raw(f"\n---> rapidtide processing for bold {boldtarget} failed")
                 report["failed"].append(boldtarget)
             else:
-                r += f"\n---> rapidtide processing for session {boldtarget} completed"
+                log.raw(f"\n---> rapidtide processing for session {boldtarget} completed")
 
         # just checking
         else:
-            passed, _, r, failed = pc.check_run(
-                None, None, "rapidtide " + session, r, overwrite=overwrite
+            passed, _, failed = log.check_run(
+                None, None, "rapidtide " + session, overwrite=overwrite
             )
             if passed == "done":
-                r += "\n---> rapidtide can be run"
+                log.step("rapidtide can be run")
                 report["ready"].append(boldtarget)
             else:
-                r += f"\n---> rapidtide processing for bold {boldtarget} would be skipped"
+                log.raw(f"\n---> rapidtide processing for bold {boldtarget} would be skipped")
                 report["skipped"].append(boldtarget)
 
-    return {"r": r, "report": report}
+    return {"r": log.text, "report": report}

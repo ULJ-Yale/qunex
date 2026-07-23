@@ -21,10 +21,8 @@ and concatenation. The specific commands implemented here are:
 The functions are to be run using the gmri terminal command.
 """
 
-"""
-Created by Grega Repovs on 2016-08-30.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2016-08-30.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import os.path
@@ -325,7 +323,7 @@ def run_palm(
     print("Running PALM\n============")
     print(" ---> checking environment")
 
-    if not "QUNEXPATH" in os.environ:
+    if "QUNEXPATH" not in os.environ:
         raise ge.CommandError(
             "run_palm",
             "QUNEXPATH environment variable not set.",
@@ -1017,7 +1015,7 @@ def run_palm(
                             else:
                                 print("... ops! File was not created!")
 
-    except:
+    except Exception:
         if cleanup == "yes":
             for f in toclean:
                 if os.path.exists(f):
@@ -1498,11 +1496,11 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
                             i234 = [i * j * k for i in f2l for j in f3l for k in f4l]
 
                             i1234 = [
-                                i * j * k * l
+                                i * j * k * ln
                                 for i in f1l
                                 for j in f2l
                                 for k in f3l
-                                for l in f3l
+                                for ln in f3l
                             ]
 
                             line += (
@@ -1533,7 +1531,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
     ebf = open(root + "_eb.csv", "w")
     for s in range(nsubjects):
-        for l in range(nlevels):
+        for ln in range(nlevels):
             print(s + 1, file=ebf)
 
     # -------------------------------------------------------------
@@ -1574,9 +1572,9 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     # --- open and save t-contralst file
     tf = open(root + "_t.csv", "w")
 
-    for l in range(ndvars):
+    for ln in range(ndvars):
         line = [0 for e in range(ndvars + nsubjects)]
-        line[l] = 1
+        line[ln] = 1
         print(",".join([str(e) for e in line]), file=tf)
     tf.close()
 
@@ -1587,7 +1585,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     code = {True: 1, False: 0}
 
     ff = open(root + "_f.csv", "w")
-    for l in range(nfac):
-        line = [code[l == e] for e in range(nfac) for i in range(tlen[e])]
+    for ln in range(nfac):
+        line = [code[ln == e] for e in range(nfac) for i in range(tlen[e])]
         print(",".join([str(e) for e in line]), file=ff)
     ff.close()

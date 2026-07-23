@@ -23,9 +23,7 @@ Functions for processing dicom images and converting them to NIfTI format:
 The commands are accessible from the terminal using gmri utility.
 """
 
-"""
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Copyright (c) Grega Repovs. All rights reserved.
 
 
 import os
@@ -61,7 +59,7 @@ else:
 try:
     import pydicom.filereader as dfr
     import pydicom
-except:
+except Exception:
     import dicom.filereader as dfr
     import dicom as pydicom
 
@@ -285,7 +283,7 @@ def read_dicom_info(filename):
 
     try:
         info["seriesNumber"] = int(d.SeriesNumber)
-    except:
+    except Exception:
         info["seriesNumber"] = None
 
     # --- seriesDescription -- multiple possibilities
@@ -300,20 +298,20 @@ def read_dicom_info(filename):
     tr, TE = 0.0, 0.0
     try:
         tr = d.RepetitionTime
-    except:
+    except Exception:
         try:
             tr = float(d[0x2005, 0x1030].value)
-        except:
+        except Exception:
             try:
                 tr = d[0x2005, 0x1030].value[0]
-            except:
+            except Exception:
                 pass
     try:
         TE = d.EchoTime
-    except:
+    except Exception:
         try:
             TE = float(d[0x2001, 0x1025].value)
-        except:
+        except Exception:
             pass
 
     info["TR"], info["TE"] = float(tr), float(TE)
@@ -323,7 +321,7 @@ def read_dicom_info(filename):
     info["volumes"] = 0
     try:
         info["volumes"] = int(d[0x2001, 0x1081].value)
-    except:
+    except Exception:
         info["volumes"] = 0
 
     info["frames"] = info["volumes"]
@@ -333,10 +331,10 @@ def read_dicom_info(filename):
 
     try:
         info["slices"] = int(d[0x2001, 0x1018].value)
-    except:
+    except Exception:
         try:
             info["slices"] = int(d[0x0019, 0x100A].value)
-        except:
+        except Exception:
             info["slices"] = 0
 
     # --- datetime
@@ -345,26 +343,26 @@ def read_dicom_info(filename):
         info["datetime"] = datetime.strptime(
             str(int(float(d.StudyDate + d.ContentTime))), "%Y%m%d%H%M%S"
         ).strftime("%Y-%m-%d %H:%M:%S")
-    except:
+    except Exception:
         try:
             info["datetime"] = datetime.strptime(
                 str(int(float(d.StudyDate + d.StudyTime))), "%Y%m%d%H%M%S"
             ).strftime("%Y-%m-%d %H:%M:%S")
-        except:
+        except Exception:
             info["datetime"] = ""
 
     # --- SOPInstanceUID
 
     try:
         info["SOPInstanceUID"] = d.SOPInstanceUID
-    except:
+    except Exception:
         info["SOPInstanceUID"] = None
 
     # --- ImageType
 
     try:
         info["ImageType"] = d[0x0008, 0x0008].value
-    except:
+    except Exception:
         info["ImageType"] = ""
 
     # --- dicom header
@@ -416,13 +414,13 @@ def read_dicom_base(filename):
         d = dfr.read_partial(f, stop_when=_at_frame)
         f.close()
         return d
-    except:
+    except Exception:
         # return None
         # print(" ---> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename))
         try:
             d = dfr.read_file(filename, stop_before_pixels=True)
             return d
-        except:
+        except Exception:
             # print(" ---> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename))
             return None
     finally:
@@ -435,12 +433,12 @@ def get_dicom_time(info):
         time = datetime.strptime(
             str(int(float(info.StudyDate + info.ContentTime))), "%Y%m%d%H%M%S"
         ).strftime("%Y-%m-%d %H:%M:%S")
-    except:
+    except Exception:
         try:
             time = datetime.strptime(
                 str(int(float(info.StudyDate + info.StudyTime))), "%Y%m%d%H%M%S"
             ).strftime("%Y-%m-%d %H:%M:%S")
-        except:
+        except Exception:
             time = ""
     return time
 
@@ -459,22 +457,22 @@ def get_tr_te(info):
     tr, TE = 0, 0
     try:
         tr = info.RepetitionTime
-    except:
+    except Exception:
         try:
             tr = float(info[0x2005, 0x1030].value)
             # TR = d[0x5200,0x9229][0][0x0018,0x9112][0][0x0018,0x0080].value
-        except:
+        except Exception:
             try:
                 tr = info[0x2005, 0x1030].value[0]
-            except:
+            except Exception:
                 pass
     try:
         TE = info.EchoTime
-    except:
+    except Exception:
         try:
             TE = float(info[0x2001, 0x1025].value)
             # TE = d[0x5200,0x9230][0][0x0018,0x9114][0][0x0018,0x9082].value
-        except:
+        except Exception:
             pass
     return float(tr), float(TE)
 
@@ -659,7 +657,7 @@ def dicom2nii(
     # parse parelements
     try:
         parelements = int(parelements)
-    except:
+    except Exception:
         parelements = 1
 
     # check if dicom folder existis
@@ -788,27 +786,27 @@ def dicom2nii(
 
         try:
             series_description = d.SeriesDescription
-        except:
+        except Exception:
             try:
                 series_description = d.ProtocolName
-            except:
+            except Exception:
                 series_description = "None"
 
         try:
             time = datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
-        except:
+        except Exception:
             try:
                 time = datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime(
                     "%H:%M:%S"
                 )
-            except:
+            except Exception:
                 time = ""
 
         tr, TE = get_tr_te(d)
 
         try:
             nslices = d[0x2001, 0x1018].value
-        except:
+        except Exception:
             nslices = 0
 
         recenter, dofz2zf, fz, reorder = False, False, "", False
@@ -825,7 +823,7 @@ def dicom2nii(
                 recenter, fz = d.SpacingBetweenSlices, "  (recentered)"
             # if d.Manufacturer == 'SIEMENS' and d.InstitutionName == 'Univerisity North Carolina' and d.AcquisitionMatrix == [0, 64, 64, 0]:
             #    reorder, fz = True, " (reordered slices)"
-        except:
+        except Exception:
             pass
 
         # --- Special nii naming for Philips
@@ -834,7 +832,7 @@ def dicom2nii(
         try:
             if d.Manufacturer == "Philips Medical Systems":
                 niinum = (d.SeriesNumber - 1) / 100
-        except:
+        except Exception:
             pass
 
         try:
@@ -867,7 +865,7 @@ def dicom2nii(
                     fz,
                 )
             )
-        except:
+        except Exception:
             nframes = 0
             logs.append(
                 "%4d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s"
@@ -911,7 +909,7 @@ def dicom2nii(
         )
         files.append([niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices])
 
-    done = gc.run_external_parallel(calls, cores=parelements, prepend=" ... ")
+    _ = gc.run_external_parallel(calls, cores=parelements, prepend=" ... ")
 
     for niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices in files:
         print(logs.pop(0), file=r)
@@ -1360,11 +1358,11 @@ def dicom2niix(
     imgf = os.path.join(folder, "nii")
 
     try:
-        if add_image_type == None or add_image_type == "":
+        if add_image_type is None or add_image_type == "":
             add_image_type = 0
         else:
             add_image_type = int(add_image_type)
-    except:
+    except Exception:
         raise ge.CommandError(
             "dicom2niix",
             "Misspecified add_image_type",
@@ -1375,7 +1373,7 @@ def dicom2niix(
     # parse parelements
     try:
         parelements = int(parelements)
-    except:
+    except Exception:
         parelements = 1
 
     if "," in add_json_info:
@@ -1484,10 +1482,10 @@ def dicom2niix(
                     da, db, ta, tb = 0, 0, 0, 0
                     try:
                         da = info["dicom"][0x0020, 0x0012].value
-                    except:
+                    except Exception:
                         try:
                             db = info["dicom"][0x0020, 0x0013].value
-                        except:
+                        except Exception:
                             pass
                     if da > 0:
                         ta, tb = 0x0020, 0x0012
@@ -1503,7 +1501,7 @@ def dicom2niix(
 
                     info["frames"] = info["volumes"]
                     info["directions"] = info["volumes"]
-            except:
+            except Exception:
                 print(
                     "# WARNING: Could not read dicom file! Skipping folder %s"
                     % (folder),
@@ -1893,7 +1891,7 @@ def dicom2niix(
                                 jsoninfo += ": ReadoutDirection(%s)" % (
                                     jinf["ReadoutDirection"].strip()
                                 )
-                        except:
+                        except Exception:
                             print(
                                 "     WARNING: Could not parse the JSON file [%s]!"
                                 % (jsonsrc),
@@ -2109,7 +2107,7 @@ def _get_zip_file_content_iterator(packet_name):
                 fobj = z.open(f, "rb")
                 yield f.filename, fobj
                 fobj.close()
-        except:
+        except Exception:
             e = sys.exc_info()[0]
             raise ge.CommandFailed(
                 "_get_zip_file_content_iterator",
@@ -2132,7 +2130,7 @@ def _get_zip_file_content_iterator(packet_name):
                     fobj = tar.extractfile(tarinfo)
                     yield tarinfo.name, fobj
                     fobj.close()
-        except:
+        except Exception:
             pass
         finally:
             if fobj is not None:
@@ -2456,7 +2454,7 @@ def sort_dicom(folder=".", copy='move', outdir=None, files=None):
         else:
             try:
                 info = read_dicom_info(dcm)
-            except:
+            except Exception:
                 continue
 
         if show_session_info:
@@ -3174,12 +3172,12 @@ def list_dicom(folder=None):
                     "---> %s - %-6s %6d - %-30s scanned on %s"
                     % (dcm, get_id(d), d.SeriesNumber, d.SeriesDescription, time)
                 )
-            except:
+            except Exception:
                 print(
                     "---> %s - %-6s %6d - %-30s scanned on %s"
                     % (dcm, get_id(d), d.SeriesNumber, d.ProtocolName, time)
                 )
-        except:
+        except Exception:
             pass
 
     return
@@ -3251,7 +3249,7 @@ def split_dicom(folder=None):
                 % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
             )
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
-        except:
+        except Exception:
             pass
 
     return
@@ -3820,7 +3818,7 @@ def import_dicom(
         # -- open packet
         try:
             z = zipfile.ZipFile(packet, "r")
-        except:
+        except Exception:
             e = sys.exc_info()[0]
             raise ge.CommandFailed(
                 "import_dicom",
@@ -3852,7 +3850,7 @@ def import_dicom(
                 tar = tarfile.open(fileobj=packet, mode="r")
             else:
                 tar = tarfile.open(packet, "r")
-        except:
+        except Exception:
             e = sys.exc_info()[0]
             raise ge.CommandFailed(
                 "import_dicom",
@@ -3922,11 +3920,11 @@ def import_dicom(
         nameformat = r"(?P<subject_id>.*)"
 
     try:
-        if add_image_type == None or add_image_type == "":
+        if add_image_type is None or add_image_type == "":
             add_image_type = 0
         else:
             add_image_type = int(add_image_type)
-    except:
+    except Exception:
         raise ge.CommandError(
             "import_dicom",
             "Misspecified add_image_type",
@@ -3959,7 +3957,7 @@ def import_dicom(
                 if e in ["packet_name", "subject_id", "session_name"]
             ]:
                 log[key] = int(log[key]) - 1
-        except:
+        except Exception:
             raise ge.CommandFailed(
                 "import_dicom",
                 "Invalid logfile specification",
@@ -4001,7 +3999,7 @@ def import_dicom(
                             "sessionid": line[log["subject_id"]],
                             "packetname": line[log["packet_name"]],
                         }
-                except:
+                except Exception:
                     pass
 
     # ---- set up lists
@@ -4063,7 +4061,7 @@ def import_dicom(
         files = glob.glob(os.path.join(masterinbox, "*"))
         try:
             getop = re.compile(pattern)
-        except:
+        except Exception:
             raise ge.CommandFailed(
                 "import_dicom",
                 "Invalid pattern",
@@ -4073,7 +4071,7 @@ def import_dicom(
             )
         try:
             getid = re.compile(nameformat)
-        except:
+        except Exception:
             raise ge.CommandFailed(
                 "import_dicom",
                 "Invalid nameformat",
@@ -4107,7 +4105,7 @@ def import_dicom(
                             and "subject_id" in ms.groupdict()
                             and ms.group("subject_id")
                         ):
-                            sid = ms.group("subject_id")
+                            _ = ms.group("subject_id")
                             if "session_name" in ms.groupdict() and ms.group(
                                 "session_name"
                             ):
@@ -4188,7 +4186,7 @@ def import_dicom(
             session = dict(emptysession)
             pname = os.path.basename(sfolder)
             session["packetname"] = pname
-            sid = pname.split("_")
+            _ = pname.split("_")
 
             archives = []
             for tarchive in ["*.zip", "*.tar", "*.tar.*", "*.tgz"]:
@@ -4197,7 +4195,7 @@ def import_dicom(
 
             ms = getid.search(pname)
             if ms and "subject_id" in ms.groupdict() and ms.group("subject_id"):
-                sid = ms.group("subject_id")
+                _ = ms.group("subject_id")
                 if "session_name" in ms.groupdict() and ms.group("session_name"):
                     session.update(
                         {
@@ -4617,43 +4615,43 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
 
     try:
         print("            Institution:", d[0x0008, 0x0080].value)
-    except:
+    except Exception:
         print("            Institution: undefined")
 
     try:
         print(
             "                Scanner:", d[0x0008, 0x0070].value, d[0x0008, 0x1090].value
         )
-    except:
+    except Exception:
         print("                Scanner: undefined")
 
     try:
         print("Magnetic field strength:", d[0x0018, 0x0087].value)
         tesla = float(d[0x0018, 0x0087].value)
-    except:
+    except Exception:
         print("Magnetic field strength: unknown")
         tesla = None
 
     try:
         print("               Sequence:", d[0x0008, 0x103E].value)
-    except:
+    except Exception:
         print("               Sequence: undefined")
 
     try:
         print("             Session ID:", d[0x0010, 0x0020].value)
-    except:
+    except Exception:
         print("             Session ID: undefined")
 
     if scanner == "siemens":
         try:
             print("         Sample spacing:", d[0x0019, 0x1018].value)
-        except:
+        except Exception:
             print("         Sample spacing: undefined")
 
         try:
             bw = d[0x0019, 0x1028].value
             print("               Bandwith:", bw)
-        except:
+        except Exception:
             print("               Bandwith: undefined")
             ok = False
 
@@ -4661,7 +4659,7 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
             am = d[0x0051, 0x100B].value
             print("     Acquisition Matrix:", am)
             am = float(am.split("*")[0].replace("p", ""))
-        except:
+        except Exception:
             print("     Acquisition Matrix: undefined")
             ok = False
 
@@ -4674,16 +4672,16 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
         try:
             sinfo = d[0x0029, 0x1020].value
             sinfo = sinfo.split("\n")
-            for l in sinfo:
-                if "sSliceArray.ucMode" in l:
+            for ln in sinfo:
+                if "sSliceArray.ucMode" in ln:
                     for k, v in [
                         ("0x1", "Sequential Ascending"),
                         ("0x2", "Sequential Ascending"),
                         ("0x4", "Interleaved"),
                     ]:
-                        if k in l:
+                        if k in ln:
                             print("Slice Acquisition Order: %s" % (v))
-        except:
+        except Exception:
             print("Slice Acquisition Order: Unknown")
 
     # --- Philips data
@@ -4691,54 +4689,54 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
     if scanner == "philips":
         try:
             print("        Repetition Time: %.2f" % (float(d[0x0018, 0x0080].value)))
-        except:
+        except Exception:
             try:
                 print("        Repetition Time:", d[0x2005, 0x1030].value[0])
-            except:
+            except Exception:
                 print("        Repetition Time: undefined")
 
         try:
             print("             Flip Angle:", d[0x2001, 0x1023].value)
-        except:
+        except Exception:
             print("             Flip Angle: undefined")
 
         try:
             print("       Number of Echoes:", d[0x2001, 0x1014].value)
-        except:
+        except Exception:
             print("       Number of Echoes: undefined")
 
         try:
             print("   Phase Encoding Steps:", d[0x0018, 0x0089].value)
-        except:
+        except Exception:
             print("   Phase Encoding Steps: undefined")
 
         try:
             print("      Echo Train Length:", d[0x0018, 0x0091].value)
             etl = float(d[0x0018, 0x0091].value)
-        except:
+        except Exception:
             print("      Echo Train Length: undefined")
             etl = None
 
         try:
             print("             EPI Factor:", d[0x2001, 0x1013].value)
-        except:
+        except Exception:
             print("             EPI Factor: undefined")
 
         try:
             print("        Water Fat Shift:", d[0x2001, 0x1022].value)
             wfs = float(d[0x2001, 0x1022].value)
-        except:
+        except Exception:
             print("        Water Fat Shift: undefined")
             wfs = None
 
         try:
             print("        Pixel Bandwidth:", d[0x0018, 0x0095].value)
-        except:
+        except Exception:
             print("        Pixel Bandwidth: undefined")
 
         try:
             print("   Acquisition Duration:", d[0x0018, 0x9073].value)
-        except:
+        except Exception:
             print("   Acquisition Duration: undefined")
 
         try:
@@ -4753,9 +4751,9 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
                             d[0x0018, 0x9155].value,
                         )
                     )
-                except:
+                except Exception:
                     print("                 Factor: undefined")
-        except:
+        except Exception:
             print("   Parallel Acquisition: undefined")
 
         try:
@@ -4767,7 +4765,7 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
                     d[0x2001, 0x1018].value,
                 )
             )
-        except:
+        except Exception:
             print("                 Matrix: undefined")
 
         try:
@@ -4779,7 +4777,7 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
                     d[0x2005, 0x1075].value,
                 )
             )
-        except:
+        except Exception:
             print("          Field of View: undefined")
 
         try:
@@ -4789,7 +4787,7 @@ def get_dicom_info(dicomfile=None, scanner="siemens"):
                 dwelltime = 1 / (tesla * wfdiff * resfreq / wfs * etl)
                 print("   Parallel Acquisition: undefined")
                 print("    Estimated dwelltime: %.8f" % (dwelltime))
-        except:
+        except Exception:
             print("    Estimated dwelltime: unknown")
 
     # --- look for slice ordering info

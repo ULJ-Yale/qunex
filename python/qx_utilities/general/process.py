@@ -1229,7 +1229,7 @@ def run(qx_command, args):
     # parse command line options
     for k, v in args.items():
         if k in flist:
-            if v != True:
+            if v is not True:
                 options[flist[k][0]] = v
             else:
                 options[flist[k][0]] = flist[k][1]
@@ -1246,7 +1246,7 @@ def run(qx_command, args):
         if len(line) == 3:
             try:
                 options[line[0]] = line[2](options[line[0]])
-            except:
+            except Exception:
                 raise ge.CommandError(
                     qx_command.name,
                     "Invalid parameter value!",

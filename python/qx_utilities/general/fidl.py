@@ -9,11 +9,9 @@
 ``fidl.py``
 """
 
-"""
-Created by Grega Repovs on 2013-10-07.
-Adapted from previous join fidl python script
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2013-10-07.
+# Adapted from previous join fidl python script
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import re
 import os
@@ -30,17 +28,6 @@ ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
-
-
-def read_lines(filename):
-    file = open(filename, 'r')
-    s = file.read()
-    s = s.replace("\r", "\n")
-    s = s.replace("\n\n", "\n")
-    s = s.split("\n")
-    return s
-
-
 def bold_info(boldfile):
     if ".4dfp.img" in boldfile:
         ifhfile = boldfile.replace('.img', '.ifh')
@@ -55,7 +42,7 @@ def bold_info(boldfile):
 
 
 def read_fidl(fidlf):
-    s = read_lines(fidlf)
+    s = gi.read_text_file_to_lines(fidlf)
 
     header = s.pop(0)
     tr = float(header.split()[0])
@@ -67,7 +54,7 @@ def read_fidl(fidlf):
 
 
 def read_conc(concf, tr):
-    s = read_lines(concf)
+    s = gi.read_text_file_to_lines(concf)
     nfiles = int(s[0].split(":")[1])
     print(" ... %d bolds:" % (nfiles), end=" ")
     s = [e for e in s if "file:" in e]
@@ -139,7 +126,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     fidldata = [read_fidl(f) for f in fidlf]
     try:
         tr = fidldata[0]['TR']
-    except:
+    except Exception:
         if len(fidldata) == 0:
             raise ge.CommandFailed("join_fidl", "No fidl files", "No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
         else:
@@ -197,8 +184,8 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     out = open(jointfile, 'w')
     print(sfidl['header'], file=out)
 
-    for l in tfidl:
-        print("%g\t%s" % (l[0], "\t".join(l[1:])), file=out)
+    for ln in tfidl:
+        print("%g\t%s" % (ln[0], "\t".join(ln[1:])), file=out)
 
     out.close()
     return
@@ -296,7 +283,7 @@ def split_fidl(concfile, fidlfile, outfolder=None):
     fidldata = read_fidl(fidlfile)
     try:
         tr = fidldata['TR']
-    except:
+    except Exception:
         if len(fidldata) == 0:
             raise ge.CommandFailed("split_fidl", "No fidl file", "No fidl files correspond to %s!" % (concfile))
         else:
@@ -327,9 +314,9 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
         # ---> print contents
 
-        for l in fidldata['events']:
-            if l[0] >= bstart and l[0] < bend:
-                print("%.2f\t%s" % (l[0] - bstart, "\t".join(l[1:])), file=ffile)
+        for ln in fidldata['events']:
+            if ln[0] >= bstart and ln[0] < bend:
+                print("%.2f\t%s" % (ln[0] - bstart, "\t".join(ln[1:])), file=ffile)
 
         # ---> close fidl file
 

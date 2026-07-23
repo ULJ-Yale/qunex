@@ -16,9 +16,7 @@ Functions for importing and exporting BIDS data to QuNex file structure.
 The commands are accessible from the terminal using qunex command.
 """
 
-"""
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import ast
 import glob
@@ -91,7 +89,7 @@ def map_to_qunex_bids(
     try:
         if sessionsfolder[-1] == "/":
             sessionsfolder = sessionsfolder[:-1]
-    except:
+    except Exception:
         pass
 
     folder = bidsfolder
@@ -620,7 +618,7 @@ def import_bids(
 
     bids_file = open(bids_structure)
     content = bids_file.read()
-    bids = ast.literal_eval(content)
+    _ = ast.literal_eval(content)
 
     # ---> identification of files
     print("---> identifying files in %s" % (inbox))
@@ -811,7 +809,7 @@ def import_bids(
                                 fl.unlock(target_file)
                 z.close()
                 print("        -> done!")
-            except:
+            except Exception:
                 print(
                     "        => Error: Processing of zip package failed. Please check the package!"
                 )
@@ -851,7 +849,7 @@ def import_bids(
                                 fl.unlock(target_file)
                 tar.close()
                 print("        -> done!")
-            except:
+            except Exception:
                 print(
                     "        => Error: Processing of tar package failed. Please check the package!"
                 )
@@ -980,7 +978,7 @@ def import_bids(
                             if os.path.exists(archive_target):
                                 shutil.rmtree(archive_target)
                             shutil.copytree(archive_item, archive_target)
-                except:
+                except Exception:
                     print(
                         "    WARNING: Could not %s %s. Please check permissions!"
                         % (archive, archive_item)

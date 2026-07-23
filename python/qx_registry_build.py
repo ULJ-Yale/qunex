@@ -582,13 +582,15 @@ def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
                 if has_options:
                     options.extend(extras)
                     # _warn(f"{pyfile}:{func_name}: doc Parameters not in signature routed to 'options': {[a.name for a in extras]}")
-                    if DEBUG: print(f"       adding options: {[a.name for a in extras]}")
+                    if DEBUG:
+                        print(f"       adding options: {[a.name for a in extras]}")
                 else:
                     _warn(f"{pyfile}:{func_name}: doc Parameters not in signature ignored (no 'options' arg): {[a.name for a in extras]}")
 
             impl_path = f"{mod_name}.{func_name}"
 
-            if DEBUG: print(f"    -> registering {impl_path}")
+            if DEBUG:
+                print(f"    -> registering {impl_path}")
 
             out.append(
                 CommandInfo(
@@ -799,7 +801,8 @@ def index_matlab_commands(matlab_root: Path, *, source_id: str) -> List[CommandI
 
         rel_path = mfile.relative_to(matlab_root).as_posix()
 
-        if DEBUG: print(f"    -> registering {rel_path}")
+        if DEBUG:
+            print(f"    -> registering {rel_path}")
 
         out.append(
             CommandInfo(
@@ -1002,7 +1005,7 @@ def build_qx_registry(
 
     built = sorted(built_exts.items(), key=lambda x: x[0])
 
-    print(f"\n----------------------------------------------------------------\nRegistry built!")
+    print("\n----------------------------------------------------------------\nRegistry built!")
 
     if built:
         print(f"\n--> In addition to core, built {len(built)} extension registries:")

@@ -23,7 +23,7 @@ import qx_utilities.general.exceptions as ge
 import qx_utilities.general.snapshots as gs
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
-from qx_utilities.hcp.hcp_log import SessionLog
+from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
     _get_postfreesurfer_snapshot_paths,
     do_hcp_options_check,

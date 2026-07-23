@@ -11,9 +11,7 @@
 Wrapper functions for Quality Assurance, run under the main function 'run_qa'.
 """
 
-"""
-Created by Samuel Brege on 2024-03-19.
-"""
+# Created by Samuel Brege on 2024-03-19.
 
 import os
 import yaml
@@ -310,7 +308,7 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
             print(f"Sessions folder {sessionsfolder} found.")
 
     if datatype == "raw_data":
-        if configfile == None:
+        if configfile is None:
             print("WARNING: No config file set, only minimal QA will run")
         else:
             if not os.path.exists(configfile):
@@ -324,7 +322,7 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
     if not os.path.exists(out_dir):
         raise ge.CommandError(
                 "run_qa",
-                f"ERROR: Processing folder does not exist! Check your paths!"
+                "ERROR: Processing folder does not exist! Check your paths!"
         )
 
     if not os.path.exists(f'{out_dir}/lists'):
@@ -333,10 +331,10 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
     if not os.path.exists(f'{out_dir}/reports'):
         os.makedirs(f'{out_dir}/reports')
 
-    if tag == None:
+    if tag is None:
         print("No tag specified...")
         print("   Trying config file name...")
-        if configfile != None:
+        if configfile is not None:
             tag = '_' + os.path.basename(configfile).split('.')[0]
         else:
             print("   No configfile set, leaving tag empty.")
@@ -376,10 +374,10 @@ def create_list_file(sessions, outname):
     """
     Helper function for run_qa output. Formats and re-writes slist into a QuNex style sessions .list.
     """
-    l = ""
+    ln = ""
     for session in sessions:
-        l += f"session id: {session['id']}\n"
-    fl.safe_write(l,outname)
+        ln += f"session id: {session['id']}\n"
+    fl.safe_write(ln,outname)
 
 
 def slist2yaml(slist):

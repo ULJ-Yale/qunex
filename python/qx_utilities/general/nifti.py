@@ -18,10 +18,8 @@ implemented here are:
 These functions are primarily intended for internal use by other gmri commands.
 """
 
-"""
-Created by Grega Repovs on 2013-04-08.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2013-04-08.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import numpy as np
 import gzip

@@ -11,9 +11,7 @@
 Run recipe framework.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
@@ -264,7 +262,7 @@ def xnat_load_checkpoint(file_path):
     ]
     try:
         files = [line.rstrip() for line in open(file_path)]
-    except:
+    except Exception:
         raise ge.CommandFailed(
             "run_recipe",
             "Cannot open checkpoint",

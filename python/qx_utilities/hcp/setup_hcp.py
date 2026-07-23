@@ -27,6 +27,7 @@ import shutil
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
+from qx_utilities.hcp.hcp_utils import check_inline_parameter_use
 
 # ---- some definitions
 unwarp = {
@@ -49,22 +50,6 @@ pe_dir_map = {
     "i-": "LR",
 }
 se_dir_map = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
-
-
-def check_inline_parameter_use(modality, parameter, options):
-    return any(
-        [
-            e in options["use_sequence_info"]
-            for e in [
-                "all",
-                parameter,
-                "%s:all" % (modality),
-                "%s:%s" % (modality, parameter),
-            ]
-        ]
-    )
-
-
 def setup_hcp(
     sourcefolder=".",
     targetfolder="hcp",

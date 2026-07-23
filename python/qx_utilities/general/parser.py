@@ -11,9 +11,7 @@
 A collection of parses for qunex file formats
 """
 
-"""
-Created by Lining Pan on 2022-05-19.
-"""
+# Created by Lining Pan on 2022-05-19.
 import re
 import qx_utilities.general.exceptions as ge
 
@@ -144,10 +142,10 @@ def read_mapping_file(mapping_file_path):
     with open(mapping_file_path) as f:
         lines = f.readlines()
         # remove comments
-        lines = [l.split("#")[0] for l in lines]
-        lines = [l.strip() for l in lines]
+        lines = [ln.split("#")[0] for ln in lines]
+        lines = [ln.strip() for ln in lines]
         # remove empty lines
-        lines = [l for l in lines if l]
+        lines = [ln for ln in lines if ln]
 
     # convert to a proper data structure
     try:
@@ -166,8 +164,8 @@ def _read_session_file(session_file_path, session_file_type):
     with open(session_file_path) as f:
         lines = f.readlines()
         # remove comments
-        lines = [l.split("#")[0] for l in lines]
-        lines = [l.strip() for l in lines]
+        lines = [ln.split("#")[0] for ln in lines]
+        lines = [ln.strip() for ln in lines]
 
     # convert to a proper data structure
     try:
@@ -191,8 +189,8 @@ def _parse_session_file_lines(lines, session_file_type):
         "images": {},
         "custom_tags": {},
     }
-    for l in lines:
-        tokens = [e.strip() for e in l.split(":")]
+    for ln in lines:
+        tokens = [e.strip() for e in ln.split(":")]
         if len(tokens) == 1 and tokens[0] == "":
             continue
 
@@ -223,7 +221,7 @@ def _parse_session_file_lines(lines, session_file_type):
             session["images"][img["image_number"]] = img
 
         else:
-            session["custom_tags"][tokens[0]] = l.split(":", 1)[1].strip()
+            session["custom_tags"][tokens[0]] = ln.split(":", 1)[1].strip()
 
     return session
 
@@ -245,10 +243,10 @@ def _parse_mapping_file_lines(lines):
     """
 
     result = {"group_rules": {"image_number": {}, "name": {}, "glob": {}, "or": []}}
-    for l in lines:
-        if l == "":
+    for ln in lines:
+        if ln == "":
             continue
-        tokens = [e.strip() for e in l.split("=>")]
+        tokens = [e.strip() for e in ln.split("=>")]
         if len(tokens) != 2:
             raise ge.SpecFileSyntaxError(error="invalid mapping rule")
 

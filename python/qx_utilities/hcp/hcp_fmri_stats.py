@@ -18,7 +18,7 @@ import os
 import os.path
 
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_log import SessionLog
+from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
     do_hcp_options_check,
 )

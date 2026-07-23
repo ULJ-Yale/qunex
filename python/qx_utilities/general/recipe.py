@@ -11,9 +11,7 @@
 Run recipe framework.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os
 import os.path
@@ -407,7 +405,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
     try:
         log = open(logname, "w", encoding="utf-8")
-    except:
+    except Exception:
         raise ge.CommandFailed(
             "run_recipe",
             "Cannot open log",

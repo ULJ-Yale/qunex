@@ -21,8 +21,9 @@ import os.path
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
-from qx_utilities.hcp.hcp_log import SessionLog
+from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
+    check_gdc_coeff_file,
     _check_dwi_echospacing,
     check_inline_parameter_use,
     do_hcp_options_check,
@@ -455,7 +456,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 neg_data = "@".join(neg_paths)
 
         # --- lookup gdcoeffs file if needed
-        gdcfile, run = log.check_gdc_coeff_file(options["hcp_dwi_gdcoeffs"], hcp, sinfo, run)
+        gdcfile, run = check_gdc_coeff_file(options["hcp_dwi_gdcoeffs"], hcp, sinfo, log, run)
 
         # -- check for DWI data
         dwi_found = False

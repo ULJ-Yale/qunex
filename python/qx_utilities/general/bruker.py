@@ -24,10 +24,8 @@ There are additional support functions that are not to be used
 directly.
 """
 
-'''
-Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
-All rights reserved.
-'''
+# Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
+# All rights reserved.
 
 # general imports
 import os

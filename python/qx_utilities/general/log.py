@@ -6,9 +6,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-``hcp_log.py``
+``log.py``
 
-The report text built by every HCP processing command.
+The per-session report built by QuNex processing commands.
 
 QuNex keeps two layers of logs. This module owns the outer one, the **runlog**:
 the human readable summary of what a command did to one session, which
@@ -22,12 +22,16 @@ text instead, so code states *what happened* and this module decides how it is
 spelled:
 
 - :class:`ReportLog` is a plain accumulator with the level vocabulary
-  (``step``/``detail``/``warning``/``error``) and the external-call wrappers.
-  Per-BOLD / per-group executors use it: they have report text but no
+  (``step``/``detail``/``warning``/``error``) and wrappers around the
+  ``processing.core`` / ``general.core`` helpers that used to thread the report
+  string. Per-BOLD / per-group executors use it: they have report text but no
   session header of their own.
 - :class:`SessionLog` adds the per-session header and :meth:`SessionLog.finish`,
   which closes the report and builds the ``(text, status)`` value a command
   returns to ``general.process``.
+
+The ``processing.core`` / ``general.core`` helpers are imported lazily inside
+the wrapper methods so this module stays importable from those packages.
 """
 
 import traceback
@@ -35,7 +39,6 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
-import qx_utilities.processing.core as pc
 
 # separator used to frame the per-session reports
 REPORT_RULE = "------------------------------------------------------------"
@@ -133,21 +136,23 @@ class ReportLog:
         finally:
             self._parts.append("\n%s\n" % REPORT_RULE)
 
-    def pipeline_command(self, command: str, marker: str = "--") -> None:
+    def pipeline_command(self, command: str, marker: str = "--",
+                         title: str = "Running HCP Pipelines command via QuNex:"):
         """
-        Show the HCP pipeline command QuNex is about to run, one flag per line.
+        Show the pipeline command QuNex is about to run, one flag per line.
 
         Parameters:
             command: the assembled command line.
             marker: the flag separator as it appears in ``command``. Commands
                 that pad their flags for readability pass that padding along
                 with the dashes.
+            title: the section title placed above the command.
         """
         body = command.replace(marker, "\n    --")
         if marker == "--":
             # commands assembled with line continuations carry alignment padding
             body = body.replace("             ", "")
-        with self.section("Running HCP Pipelines command via QuNex:"):
+        with self.section(title):
             self.raw(body)
 
     # ---------------------------------------------------------------- errors
@@ -177,79 +182,53 @@ class ReportLog:
 
     def run_external(self, checkfile, command, description, **kwargs):
         """
-        Run an external pipeline command, threading the runlog through it.
+        Run an external command, threading the runlog through it.
 
-        Wraps ``pc.run_external_for_file`` so the caller neither passes nor
-        reassigns the report text.
+        Wraps ``processing.core.run_external_for_file`` so the caller neither
+        passes nor reassigns the report text.
 
         Returns:
             ``(endlog, report, failed)`` from the underlying call.
         """
+        import qx_utilities.processing.core as pc
+
         text, endlog, report, failed = pc.run_external_for_file(
             checkfile, command, description, r=self.text, **kwargs
         )
         self.capture(text)
         return endlog, report, failed
 
-    def check_gdc_coeff_file(self, gdcstring, hcp, sinfo, run=True):
+    def check_run(self, checkfile, full_test, description, overwrite=False):
         """
-        Resolve the gradient distortion coefficient file for this session.
+        Report what a run would do, without running it (the ``--test`` path).
 
-        Wraps ``hcp_utils.check_gdc_coeff_file`` so the caller neither passes nor
+        Wraps ``processing.core.check_run`` so the caller neither passes nor
         reassigns the report text.
 
         Returns:
-            ``(gdcfile, run)`` from the underlying call.
+            ``(passed, report, failed)`` from the underlying call.
         """
-        from qx_utilities.hcp import hcp_utils
+        import qx_utilities.processing.core as pc
 
-        gdcfile, text, run = hcp_utils.check_gdc_coeff_file(
-            gdcstring, hcp, sinfo, self.text, run
+        passed, report, text, failed = pc.check_run(
+            checkfile, full_test, description, self.text, overwrite=overwrite
         )
         self.capture(text)
-        return gdcfile, run
+        return passed, report, failed
 
-    def parse_icafix_bolds(self, options, bolds, msmall=False):
-        """
-        Group BOLDs for ICAFix, threading the report through the parser.
-
-        Returns:
-            ``(single_fix, icafix_bolds, icafix_groups, bolds_ok)``.
-        """
-        from qx_utilities.hcp import hcp_utils
-
-        single_fix, icafix_bolds, icafix_groups, bolds_ok, text = (
-            hcp_utils.parse_icafix_bolds(options, bolds, self.text, msmall)
-        )
-        self.capture(text)
-        return single_fix, icafix_bolds, icafix_groups, bolds_ok
-
-    def parse_msmall_bolds(self, options, bolds):
-        """
-        Group BOLDs for MSMAll, threading the report through the parser.
-
-        Returns:
-            ``(msmall_groups, single_run, pars_ok)``.
-        """
-        from qx_utilities.hcp import hcp_utils
-
-        msmall_groups, single_run, pars_ok, text = hcp_utils.parse_msmall_bolds(
-            options, bolds, self.text
-        )
-        self.capture(text)
-        return msmall_groups, single_run, pars_ok
-
-    def check_for_file(self, checkfile, ok, bad, status=True):
+    def check_for_file(self, checkfile, ok="", bad="", status=True):
         """
         Note the presence or absence of a file, appending ``ok`` or ``bad``.
 
-        Wraps ``pc.check_for_file2`` so the caller neither passes nor reassigns
-        the report text.
+        Wraps ``processing.core.check_for_file`` so the caller neither passes nor
+        reassigns the report text.
 
         Returns:
             the running status (True while every checked file has been present).
         """
-        text, status = pc.check_for_file2(self.text, checkfile, ok, bad, status)
+        import qx_utilities.processing.core as pc
+
+        text, status = pc.check_for_file(self.text, checkfile, ok, bad, status)
         self.capture(text)
         return status
 
@@ -257,12 +236,14 @@ class ReportLog:
         """
         Note the presence of one or all of ``checkfiles``.
 
-        Wraps ``pc.check_for_files`` so the caller neither passes nor reassigns
-        the report text.
+        Wraps ``processing.core.check_for_files`` so the caller neither passes
+        nor reassigns the report text.
 
         Returns:
             ``(status, found_file)`` from the underlying call.
         """
+        import qx_utilities.processing.core as pc
+
         text, status, found = pc.check_for_files(
             self.text, checkfiles, ok, bad, all, status
         )
@@ -274,13 +255,13 @@ class ReportLog:
         """
         Link or copy a file, appending the mapping outcome to the report.
 
-        Wraps ``gc.link_or_copy`` so the caller neither passes nor reassigns the
-        report text.
+        Wraps ``general.core.link_or_copy`` so the caller neither passes nor
+        reassigns the report text.
 
         Returns:
             the running status from the underlying call.
         """
-        from qx_utilities.general import core as gc
+        import qx_utilities.general.core as gc
 
         status, text = gc.link_or_copy(
             source, target, self.text, status, name, prefix, symlink
@@ -292,33 +273,19 @@ class ReportLog:
         """
         Resolve which BOLDs to use and which to skip for this session.
 
-        Wraps ``pc.use_or_skip_bold`` so the caller neither passes nor reassigns
-        the report text.
+        Wraps ``processing.core.use_or_skip_bold`` so the caller neither passes
+        nor reassigns the report text.
 
         Returns:
             ``(bolds, skipped, n_skipped)`` from the underlying call.
         """
+        import qx_utilities.processing.core as pc
+
         bolds, skipped, n_skipped, text = pc.use_or_skip_bold(
             sinfo, options, self.text
         )
         self.capture(text)
         return bolds, skipped, n_skipped
-
-    def check_run(self, checkfile, full_test, description, overwrite=False):
-        """
-        Report what a run would do, without running it (the ``--test`` path).
-
-        Wraps ``pc.check_run`` so the caller neither passes nor reassigns the
-        report text.
-
-        Returns:
-            ``(passed, report, failed)`` from the underlying call.
-        """
-        passed, report, text, failed = pc.check_run(
-            checkfile, full_test, description, self.text, overwrite=overwrite
-        )
-        self.capture(text)
-        return passed, report, failed
 
 
 class SessionLog(ReportLog):
@@ -357,6 +324,8 @@ class SessionLog(ReportLog):
             label: how the processed unit is named; subject level commands
                 pass ``"Subject"``.
         """
+        import qx_utilities.processing.core as pc
+
         super().__init__()
         self._options = options
         self._pipeline = pipeline
@@ -383,8 +352,8 @@ class SessionLog(ReportLog):
         """
         Close the report and build the value the command returns.
 
-        Every HCP command returns ``(report_text, (session_id, summary, failed))``
-        -- a three-field status ``general.process`` unpacks as
+        Every command returns ``(report_text, (session_id, summary, failed))`` --
+        a three-field status ``general.process`` unpacks as
         ``(sid, report, failed)``. This method builds exactly that, so a command
         can never return the malformed two-field status that made a whole run
         print "success status not reported".
@@ -415,6 +384,8 @@ class SessionLog(ReportLog):
             pipeline: name for the closing line; defaults to the opening one.
             lead: newlines separating the footer from the preceding text.
         """
+        import qx_utilities.processing.core as pc
+
         name = pipeline if pipeline is not None else self._pipeline
         self._parts.append("%s%s %s on %s\n%s" % (
             lead,
@@ -433,7 +404,7 @@ class SessionLog(ReportLog):
         if isinstance(report, tuple):
             if len(report) != 3:
                 raise ValueError(
-                    "HCP command status must be a 3-field "
+                    "command status must be a 3-field "
                     "(session_id, summary, failed) tuple, got %d fields: %r"
                     % (len(report), report)
                 )

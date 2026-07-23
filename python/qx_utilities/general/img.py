@@ -105,7 +105,7 @@ def read_conc(filename, boldname=None, check=False):
         f = []
         nfiles = int(s[0].split(":")[1])
         boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles + 1]]
-    except:
+    except Exception:
         raise ge.CommandFailed("read_conc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
 
     if check:
@@ -123,7 +123,7 @@ def read_conc(filename, boldname=None, check=False):
         for boldfile in boldfiles:
             bnum = m.match(boldfile.split('/')[-1]).group(1)
             f.append((boldfile, bnum))
-    except:
+    except Exception:
         raise ge.CommandFailed("read_conc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
 
     return f
@@ -567,7 +567,7 @@ class fidl:
         self.TR     = float(hdr[0])
         self.codes  = hdr[1:]
         self.events = [e.split() for e in s[1:]]
-        self.events = [[float(e) for e in l] for l in self.events if len(l) > 1]
+        self.events = [[float(e) for e in ln] for ln in self.events if len(ln) > 1]
 
     # ---> adjust times for delta
 
@@ -656,11 +656,11 @@ class ifhhdr:
         self.ifh = {}
         self.vlist = []
 
-        for l in s:
-            l = l.split(":=")
-            if len(l) == 2:
-                k = l[0].strip()
-                v = l[1].strip()
+        for ln in s:
+            ln = ln.split(":=")
+            if len(ln) == 2:
+                k = ln[0].strip()
+                v = ln[1].strip()
                 self.ifh[k] = v
                 self.vlist.append(k)
 
@@ -981,11 +981,11 @@ class niftihdr:
     def unpack_hdr(self, s):
 
         si = struct.calcsize('i')
-        sc = struct.calcsize('c')
-        sh = struct.calcsize('h')
-        sf = struct.calcsize('f')
-        sq = struct.calcsize('q')
-        sd = struct.calcsize('d')
+        _ = struct.calcsize('c')
+        _ = struct.calcsize('h')
+        _ = struct.calcsize('f')
+        _ = struct.calcsize('q')
+        _ = struct.calcsize('d')
 
         # Detect NIfTI version by reading the first 4 bytes
         header_size, = struct.unpack(">i", s.read(si))
@@ -1122,7 +1122,7 @@ class niftihdr:
         si = struct.calcsize('i')
         sc = struct.calcsize('c')
         sh = struct.calcsize('h')
-        sf = struct.calcsize('f')
+        _ = struct.calcsize('f')
         sq = struct.calcsize('q')
         sd = struct.calcsize('d')
 
@@ -1447,7 +1447,7 @@ def slice4dfp(sourcefile, targetfile, frames=1):
     x = int(hdr.ifh['matrix size [1]'])
     y = int(hdr.ifh['matrix size [2]'])
     z = int(hdr.ifh['matrix size [3]'])
-    t = int(hdr.ifh['matrix size [4]'])
+    _ = int(hdr.ifh['matrix size [4]'])
     voxels = x * y * z
 
     hdr.ifh['matrix size [4]'] = str(frames)
@@ -1658,7 +1658,7 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         elif isinstance(val, bytes):
             try:
                 return val.decode('utf-8').strip()
-            except:
+            except Exception:
                 return f"<binary: {len(val)} bytes>"
         elif isinstance(val, str):
             return val.strip()
@@ -1691,14 +1691,14 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         common = codes1 & codes2
 
         if only_in_1:
-            print(f"\n✗ Extension(s) only in File 1:")
+            print("\n✗ Extension(s) only in File 1:")
             for code in sorted(only_in_1):
                 ext_size = ext1_dict[code][0]
                 ext_name = nifti_extension_names.get(code, "Unknown")
                 print(f"   - Code {code} ({ext_name}): size {ext_size} bytes")
 
         if only_in_2:
-            print(f"\n✗ Extension(s) only in File 2:")
+            print("\n✗ Extension(s) only in File 2:")
             for code in sorted(only_in_2):
                 ext_size = ext2_dict[code][0]
                 ext_name = nifti_extension_names.get(code, "Unknown")
@@ -1723,21 +1723,21 @@ def compare_nifti_images(file1, file2, ndifflines=10):
                 if hash1 == hash2:
                     print(f"    ✓ Extensions are identical (hash: {hash1[:16]}...)")
                 else:
-                    print(f"    ✗ Extensions differ")
+                    print("    ✗ Extensions differ")
 
                     # Try to decode as text
                     try:
                         text1 = ext1_data.decode('utf-8')
                         text2 = ext2_data.decode('utf-8')
                         is_text = True
-                    except:
+                    except Exception:
                         is_text = False
 
                     if is_text:
-                        print(f"    Extension is textual - showing diff:")
+                        print("    Extension is textual - showing diff:")
                         _show_text_diff(text1, text2, "    ", ndifflines)
                     else:
-                        print(f"    Extension is binary")
+                        print("    Extension is binary")
                         print(f"    File 1 hash: {hash1}")
                         print(f"    File 2 hash: {hash2}")
 

@@ -20,8 +20,9 @@ from functools import partial
 import qx_utilities.general.exceptions as ge
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
-from qx_utilities.hcp.hcp_log import SessionLog
+from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
+    parse_icafix_bolds,
     _build_skipped_report,
     do_hcp_options_check,
 )
@@ -240,7 +241,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        single_run, _, dedrift_groups, pars_ok = log.parse_icafix_bolds(options, bolds, True)
+        single_run, _, dedrift_groups, pars_ok = parse_icafix_bolds(options, bolds, log, True)
 
         if not pars_ok:
             raise ge.CommandFailed(

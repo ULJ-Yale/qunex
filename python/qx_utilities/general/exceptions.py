@@ -105,10 +105,6 @@ def report_command_null(comm, e):
     else:
         e_string =  "\nWhen running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
     return e_string
-
-
-def report_syntax_error(comm, e):
-    pass
     # if e.filename == comm:
     #     eString = "\nWhen running %s:\n%s" % (comm, "\n".join(e.report))
     # else:

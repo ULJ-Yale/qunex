@@ -276,7 +276,7 @@ def schedule(
 
         comname = settings_dict.pop("comname", "")
         jobnum = settings_dict.pop("jobnum", "")
-    except:
+    except Exception:
         raise ge.CommandError(
             "schedule",
             "Misspecified parameter",

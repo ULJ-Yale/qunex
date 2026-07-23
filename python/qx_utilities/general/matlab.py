@@ -14,10 +14,8 @@ QuNex/matlab code.
 None of the code is run directly from the terminal interface.
 """
 
-"""
-Created by Grega Repovs on 2017-09-16.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2017-09-16.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import subprocess

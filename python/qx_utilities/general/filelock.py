@@ -29,7 +29,7 @@ def lock(filename, delay=0.5, identifier="Python process"):
         if time.time() - os.stat(lock_file).st_mtime > 1800:
             try:
                 os.remove(lock_file)
-            except:
+            except Exception:
                 pass
 
     # wait while file exists
@@ -58,7 +58,7 @@ def unlock(filename):
     if os.path.isfile(lock_file):
         try:
             os.unlink(lock_file)
-        except:
+        except Exception:
             pass
 
     # remove from storage
@@ -117,7 +117,7 @@ def write_status(filename, status="", mode="w"):
     try:
         open(filename, mode).write(status)
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -139,14 +139,6 @@ def wait_status(filename, status, delay=0.5):
 
 
 # remove status file
-def remove_status(filename):
-    try:
-        os.unlink(filename)
-        return True
-    except:
-        return False
-
-
 # ==================  Safe creation functions
 
 # create folders

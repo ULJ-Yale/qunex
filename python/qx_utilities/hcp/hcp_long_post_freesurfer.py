@@ -21,7 +21,7 @@ from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_log import SessionLog
+from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
     _append_sorted_logdir_to_log,
     _check_hcp_info,

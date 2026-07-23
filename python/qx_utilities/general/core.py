@@ -390,7 +390,7 @@ def read_session_data(filename, verbose=False):
             # done with the parameters block
             first = False
 
-    except:
+    except Exception:
         print(
             "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n"
             % (c, line)
@@ -634,12 +634,12 @@ def run_external_parallel(calls, cores=None, prepend=""):
     if cores is None or cores in ["all", "All", "ALL"]:
         try:
             cores = len(os.sched_getaffinity(0))
-        except:
+        except Exception:
             cores = multiprocessing.cpu_count()
     else:
         try:
             cores = int(cores)
-        except:
+        except Exception:
             cores = 1
 
     running = []
@@ -710,7 +710,7 @@ def run_external_parallel(calls, cores=None, prepend=""):
                             + "started running %s at %s"
                             % (call["name"], str(datetime.now()).split(".")[0])
                         )
-                except:
+                except Exception:
                     print(
                         prepend
                         + "ERROR: failed to start running %s. Please check your environment!"
@@ -1031,7 +1031,7 @@ def run_in_parallel(calls, cores=None, prepend=""):
     else:
         try:
             cores = int(cores)
-        except:
+        except Exception:
             cores = 1
 
     results = []
@@ -1076,7 +1076,7 @@ def check_files(test_folder, spec_file, fields=None, report=None, append=False):
                     rout = open(report, "a")
                 else:
                     rout = open(report, "w")
-            except:
+            except Exception:
                 raise ge.CommandFailed(
                     "check_files",
                     "Report file could not be opened",
@@ -1320,7 +1320,21 @@ def link_or_copy(
     source, target, r=None, status=None, name=None, prefix=None, symlink=False
 ):
     """
-    link_or_copy - documentation not yet available.
+    Hard-link a file, falling back to a copy, and report the outcome.
+
+    Parameters:
+        source (str): path to the file to map.
+        target (str): destination path.
+        r (str | None): report so far; when given, the mapping outcome is
+            appended and returned alongside the status.
+        status (bool | None): running status carried through (defaults True).
+        name (str | None): human readable name used in the report message.
+        prefix (str | None): prefix for the report message (defaults ``"\n ... "``).
+        symlink (bool): create a symbolic link instead of a hard link.
+
+    Returns:
+        bool | tuple: the status when ``r`` is None, otherwise
+        ``(status, report_with_outcome_appended)``.
     """
     if status is None:
         status = True
@@ -1353,14 +1367,14 @@ def link_or_copy(
             else:
                 return (status and True, "%s%s%s mapped" % (r, prefix, name))
 
-        except:
+        except Exception:
             try:
                 shutil.copy2(source, target)
                 if r is None:
                     return status and True
                 else:
                     return (status and True, "%s%s%s copied" % (r, prefix, name))
-            except:
+            except Exception:
                 if r is None:
                     return False
                 else:
@@ -1385,7 +1399,25 @@ def move_link_or_copy(
     source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False
 ):
     """
-    move_link_or_copy - documentation not yet available.
+    Map a file into place by moving, hard-linking or copying it.
+
+    Parameters:
+        source (str): path to the file to map.
+        target (str): destination path.
+        action (str | None): one of ``"move"``, ``"link"`` or ``"copy"``
+            (defaults ``"link"``).
+        r (str | None): report so far; when given, the outcome is appended and
+            returned alongside the status.
+        status (bool | None): running status carried through (defaults True).
+        name (str | None): human readable name used in the report message
+            (defaults to ``source``).
+        prefix (str | None): prefix for the report message.
+        lock (bool): serialise the mapping with a file lock to make it safe for
+            concurrent callers.
+
+    Returns:
+        bool | tuple: the status when ``r`` is None, otherwise
+        ``(status, report_with_outcome_appended)``.
     """
     if action is None:
         action = "link"
@@ -1446,7 +1478,7 @@ def move_link_or_copy(
             try:
                 shutil.copy2(source, target)
                 return report(status, "%s copied" % (name))
-            except:
+            except Exception:
                 return report(
                     False, "ERROR: %s could not be copied, check permissions! " % (name)
                 )
@@ -1455,7 +1487,7 @@ def move_link_or_copy(
             try:
                 shutil.move(source, target)
                 return report(status, "%s moved" % (name))
-            except:
+            except Exception:
                 return report(
                     False, "ERROR: %s could not be moved, check permissions! " % (name)
                 )
@@ -1465,7 +1497,7 @@ def move_link_or_copy(
                 with open(source, "rb") as f_in, gzip.open(target, "wb") as f_out:
                     shutil.copyfileobj(f_in, f_out)
                 return report(status, "%s copied and gzipped" % (name))
-            except:
+            except Exception:
                 return report(
                     False,
                     "ERROR: %s could not be copied and gzipped, check permissions! "

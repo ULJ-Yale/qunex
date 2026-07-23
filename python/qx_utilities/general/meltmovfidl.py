@@ -9,10 +9,8 @@
 ``meltmovfidl``
 """
 
-"""
-Created by Grega Repovs on 2011-07-30
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2011-07-30
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import sys
 import getopt

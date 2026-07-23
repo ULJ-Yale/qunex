@@ -17,7 +17,7 @@ non-human primate template configuration, and the executors that several
 denoising commands drive.
 
 Path resolution lives in ``hcp_paths``; the structured runlog lives in
-``hcp_log``.
+``general.log``.
 """
 
 import os
@@ -31,7 +31,7 @@ import nibabel as nib
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.snapshots as gs
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_log import ReportLog
+from qx_utilities.general.log import ReportLog
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
 
 
@@ -215,12 +215,10 @@ def check_inline_parameter_use(modality, parameter, options):
     ])
 
 
-def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
+def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
     """
     Function that extract the information on the correct gdc file to be used and tests for its presence;
     """
-    log = ReportLog()
-    log.capture(r)
 
     if gdcstring not in ["", "NONE"]:
         if any([e in gdcstring for e in ["|", "default"]]):
@@ -287,7 +285,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, r="", run=True):
     else:
         gdcfile = "NONE"
 
-    return gdcfile, log.text, run
+    return gdcfile, run
 
 
 def resolve_session_relative_image(value, hcp_base):
@@ -595,9 +593,7 @@ def _nhp_postfs_paths(templates_dir, species):
 #                                                      Shared denoising helpers
 
 
-def parse_icafix_bolds(options, bolds, r, msmall=False):
-    log = ReportLog()
-    log.capture(r)
+def parse_icafix_bolds(options, bolds, log, msmall=False):
     # --- Use hcp_icafix parameter to determine if a single fix or a multi fix should be used
     single_fix = True
 
@@ -821,17 +817,14 @@ def parse_icafix_bolds(options, bolds, r, msmall=False):
         # bolds
         hcp_bolds = specified_bolds
 
-    return (single_fix, hcp_bolds, hcp_groups, bolds_ok, log.text)
+    return (single_fix, hcp_bolds, hcp_groups, bolds_ok)
 
 
-def parse_msmall_bolds(options, bolds, r):
-    log = ReportLog()
-    log.capture(r)
+def parse_msmall_bolds(options, bolds, log):
     # parse the same way as with icafix first
-    single_run, _, icafix_groups, pars_ok, _text = parse_icafix_bolds(
-        options, bolds, log.text, True
+    single_run, _, icafix_groups, pars_ok = parse_icafix_bolds(
+        options, bolds, log, True
     )
-    log.capture(_text)
 
     msmall_groups = []
 
@@ -888,7 +881,7 @@ def parse_msmall_bolds(options, bolds, r):
 
         msmall_groups.append(icafix_group)
 
-    return (msmall_groups, single_run, pars_ok, log.text)
+    return (msmall_groups, single_run, pars_ok)
 
 
 def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):

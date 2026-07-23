@@ -23,8 +23,9 @@ from concurrent.futures import ProcessPoolExecutor
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_log import SessionLog
+from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
+    parse_msmall_bolds,
     _build_skipped_report,
     _check_hcp_info,
     do_hcp_options_check,
@@ -220,7 +221,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        msmall_groups, _, pars_ok = log.parse_msmall_bolds(options, bolds)
+        msmall_groups, _, pars_ok = parse_msmall_bolds(options, bolds, log)
 
         if not pars_ok:
             raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")

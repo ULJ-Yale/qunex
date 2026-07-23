@@ -42,7 +42,7 @@ def load_extensions():
                             try:
                                 modules[module_name] = importlib.import_module(module_name)
                                 module_names.append(module_name)
-                            except:
+                            except Exception:
                                 print(f"WARNING: There was an error when trying to import extension module: {extensions_path}/{module_name}!")
 
         # -- load the modules
@@ -114,15 +114,15 @@ def qx_process(command_type="parallel", short_name=None, long_name=None, descrip
             first_arg = list(f_signature.parameters.keys())[0]
             print(f"First argument of QuNex processing command must be 'sinfo', but got {first_arg}. Not registering {f.__name__}")
             return f
-        if not 'overwrite' in f_signature.parameters:
+        if 'overwrite' not in f_signature.parameters:
             print('A QuNex extension function must have a keyword argument "overwrite". Not registering {f.__name__}')
             return f
-        if not 'thread' in f_signature.parameters:
+        if 'thread' not in f_signature.parameters:
             print('A QuNex extension function must have a keyword argument "thread". Not registering {f.__name__}')
             return f
 
         def f_decorated(sinfo, options, overwrite, thread):
-            kwargs = {k: options[k] for k in f_signature.parameters if not k in ['sinfo', 'options', 'overwrite', 'thread']}
+            kwargs = {k: options[k] for k in f_signature.parameters if k not in ['sinfo', 'options', 'overwrite', 'thread']}
             return f(sinfo, options, overwrite=overwrite, thread=thread, **kwargs)
 
         f_decorated.__doc__ = f.__doc__
@@ -143,7 +143,7 @@ def qx_process(command_type="parallel", short_name=None, long_name=None, descrip
         arglist += [
             [arg, _check_default(param.default), _check_annotation(param.annotation), ""]
             for arg, param in f_signature.parameters.items()
-            if not arg in ['sinfo', 'overwrite', 'thread']
+            if arg not in ['sinfo', 'overwrite', 'thread']
         ]
 
         # --- add function to qunex command list ---

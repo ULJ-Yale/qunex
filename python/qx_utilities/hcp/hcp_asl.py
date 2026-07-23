@@ -21,8 +21,9 @@ import os.path
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
-from qx_utilities.hcp.hcp_log import SessionLog
+from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
+    check_gdc_coeff_file,
     do_hcp_options_check,
 )
 
@@ -366,7 +367,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             # -- Optional parameters
             # grads
-            gdcfile, run = log.check_gdc_coeff_file(options["hcp_gdcoeffs"], hcp, sinfo, run)
+            gdcfile, run = check_gdc_coeff_file(options["hcp_gdcoeffs"], hcp, sinfo, log, run)
             if gdcfile != "NONE":
                 comm += f"                --grads {gdcfile}"
 

@@ -51,7 +51,20 @@ se_dir_map = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
 
 def get_hcp_paths(sinfo, options):
     """
-    getHCPPaths - documentation not yet available.
+    Build the dictionary of HCP folder and file paths for a session.
+
+    Resolves the HCP Pipelines locations, the session's hcp working folders and
+    the expected structural / functional file names from ``sinfo`` and the given
+    ``options``.
+
+    Parameters:
+        sinfo (dict): session information; ``id`` and ``hcp`` are used.
+        options (dict): command options controlling the folder structure and
+            file naming.
+
+    Returns:
+        dict: mapping of path keys (e.g. ``base``, ``T1w_folder``,
+        ``hcp_nonlin``) to absolute paths for this session.
     """
     d = {}
 
