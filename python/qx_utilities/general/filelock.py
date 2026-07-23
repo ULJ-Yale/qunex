@@ -19,6 +19,7 @@ import time
 import atexit
 import random
 
+
 # create a lock file for a file
 def lock(filename, delay=0.5, identifier="Python process"):
     lock_file = filename + ".lock"
@@ -122,7 +123,7 @@ def write_status(filename, status="", mode="w"):
 
 # wait for status to be done
 def wait_status(filename, status, delay=0.5):
-    
+
     while True:
         try:
             # check content
@@ -156,6 +157,7 @@ def makedirs(folder):
     except (OSError, IOError) as e:
         return e.strerror
 
+
 # create hardlink
 def link(source, target):
     try:
@@ -164,6 +166,7 @@ def link(source, target):
     except (OSError, IOError) as e:
         return e.strerror
 
+
 # remove folders
 def rmtree(folder):
     try:
@@ -171,6 +174,7 @@ def rmtree(folder):
         return None
     except (OSError, IOError) as e:
         return e.strerror
+
 
 # remove file
 def remove(filename):

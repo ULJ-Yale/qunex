@@ -29,7 +29,10 @@ All rights reserved.
 """
 
 import os
+import traceback
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
+from functools import partial
 
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
@@ -139,7 +142,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "preprocess_mice")
+        pc.do_options_check(options, sinfo, "preprocess_mice")
 
         # get bolds
         bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
@@ -157,27 +160,27 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
                 r += result["r"]
 
                 # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                temp_report = result["report"]
+                report["done"] += temp_report["done"]
+                report["failed"] += temp_report["failed"]
+                report["ready"] += temp_report["ready"]
+                report["not ready"] += temp_report["not ready"]
 
         else:  # parallel execution
             # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parelements)
+            process_pool_executor = ProcessPoolExecutor(parelements)
             # process
             f = partial(_execute_preprocess_mice, sinfo, options, overwrite)
-            results = processPoolExecutor.map(f, bolds)
+            results = process_pool_executor.map(f, bolds)
 
             # merge r and report
             for result in results:
                 r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                temp_report = result["report"]
+                report["done"] += temp_report["done"]
+                report["failed"] += temp_report["failed"]
+                report["ready"] += temp_report["ready"]
+                report["not ready"] += temp_report["not ready"]
 
         rep = []
         for k in ["done", "failed", "ready", "not ready"]:
@@ -218,7 +221,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
 
     # --- check for bold image
     boldimg = os.path.join(work_dir, f"{boldinfo['name']}_DS.nii.gz")
-    r, boldok = pc.checkForFile2(
+    r, boldok = pc.check_for_file2(
         r,
         boldimg,
         "\n     ... preprocess_mice bold image present",
@@ -286,7 +289,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                     os.remove(test_file)
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running preprocess_mice",
@@ -296,7 +299,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=None,
+                    full_test=None,
                     shell=True,
                     r=r,
                 )
@@ -392,7 +395,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "map_mice_data")
+        pc.do_options_check(options, sinfo, "map_mice_data")
 
         # get bolds
         bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)

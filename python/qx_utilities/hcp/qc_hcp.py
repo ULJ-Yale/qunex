@@ -9,7 +9,8 @@
 ``qc_hcp.py``
 
 This file holds code for running visual QC (``hcp_run_qc``) for HCP-processed data.
-It was split out of ``process_hcp.py``; the QC command and all its helpers live here.
+The QC command and all its helpers live here; the pipeline wrappers themselves are
+split by command group across the other ``*_hcp.py`` modules.
 """
 
 import os
@@ -30,7 +31,8 @@ import nibabel as nib
 
 import qx_utilities.processing.core as pc
 import qx_utilities.general.exceptions as ge
-from qx_utilities.hcp.process_hcp import getHCPPaths, doHCPOptionsCheck
+from qx_utilities.hcp.hcp_paths import get_hcp_paths
+from qx_utilities.hcp.hcp_utils import do_hcp_options_check
 
 
 # scene render resolution for `wb_command -show-scene` (width height)
@@ -444,9 +446,9 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
     r += "\nRunning QC for: %s" % ", ".join(modalities_canon)
 
     # --- Base settings
-    pc.doOptionsCheck(options, sinfo, "hcp_run_qc")
-    doHCPOptionsCheck(options, "hcp_run_qc")
-    hcp = getHCPPaths(sinfo, options)
+    pc.do_options_check(options, sinfo, "hcp_run_qc")
+    do_hcp_options_check(options, "hcp_run_qc")
+    hcp = get_hcp_paths(sinfo, options)
 
     sessionsfolder = options["sessionsfolder"]
 
@@ -858,8 +860,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
     else:
         max_workers = max(1, min(int(options.get("parelements") or 1), len(jobs)))
         r += "\n\n%s %d QC jobs in parallel" % (pc.action("Running", options["run"]), max_workers)
-        with ProcessPoolExecutor(max_workers) as processPoolExecutor:
-            results = processPoolExecutor.map(_run_qc_executor, jobs)
+        with ProcessPoolExecutor(max_workers) as process_pool_executor:
+            results = process_pool_executor.map(_run_qc_executor, jobs)
 
         for result in results:
             r += result["r"]
@@ -1033,7 +1035,7 @@ def _write_qc_scene(template_scene: str, working_scene: str, substitutions: dict
 def _show_scene_png(working_scene, png_out, qclog, thread, logtags, overwrite, desc, rr):
     """Render scene index 1 of ``working_scene`` to ``png_out`` at QC_SCENE_RES."""
 
-    rr, _endlog, _status, _failed = pc.runExternalForFile(
+    rr, _endlog, _status, _failed = pc.run_external_for_file(
         png_out,
         "wb_command -show-scene %s 1 %s %s" % (working_scene, png_out, QC_SCENE_RES),
         desc,
@@ -1083,7 +1085,7 @@ def _zip_qc_scene(
         outpath, "%s.%s.zip" % (os.path.basename(working_scene), timestamp)
     )
     try:
-        rr, _endlog, _status, _failed = pc.runExternalForFile(
+        rr, _endlog, _status, _failed = pc.run_external_for_file(
             zip_out,
             "cd %s && wb_command -zip-scene-file %s %s.%s %s -base-dir %s"
             % (
@@ -1276,7 +1278,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
         slicesdir = os.path.join(nii_dir, "slicesdir")
         index_html = os.path.join(slicesdir, "index.html")
 
-        rr, _endlog, _status, _failed = pc.runExternalForFile(
+        rr, _endlog, _status, _failed = pc.run_external_for_file(
             index_html,
             "cd %s && slicesdir *.nii*" % nii_dir,
             "    ... running slicesdir on raw NIFTIs",
@@ -1573,7 +1575,7 @@ def _run_qc_dwi_prep(dwidir, dwi_data, dwi_nii, mask, qclog, thread, overwrite, 
         split_prefix, mask, frame10[:-7],
         split_prefix,
     )
-    rr, _e, _s, _f = pc.runExternalForFile(
+    rr, _e, _s, _f = pc.run_external_for_file(
         frame10,
         prep_cmd,
         "    ... preparing DWI QC frames",
@@ -1727,7 +1729,7 @@ def _zip_bold_fc_scene(
         outpath, "%s.%s.zip" % (os.path.basename(working_scene), timestamp)
     )
     try:
-        rr, _e, _s, _f = pc.runExternalForFile(
+        rr, _e, _s, _f = pc.run_external_for_file(
             zip_out,
             "cd %s && wb_command -zip-scene-file %s %s.%s %s -base-dir %s"
             % (
@@ -1956,7 +1958,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             hcp["hcp_nonlin"], "Results", bold_name, f"{dtstem}_GS.sdseries.nii"
         )
 
-        rr, endlog, status, failed = pc.runExternalForFile(
+        rr, endlog, status, failed = pc.run_external_for_file(
             tsnr_dscalar,
             "wb_command -cifti-reduce %s TSNR %s -exclude-outliers 4 4" % (dtseries, tsnr_dscalar),
             "    ... computing TSNR for %s" % (dtstem),
@@ -1971,7 +1973,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
 
         tsnr_mean = _run_capture("wb_command -cifti-stats %s -reduce MEAN" % tsnr_dscalar)
 
-        rr, endlog, status, failed = pc.runExternalForFile(
+        rr, endlog, status, failed = pc.run_external_for_file(
             gs_dtseries,
             "wb_command -cifti-reduce %s MEAN %s -direction COLUMN" % (dtseries, gs_dtseries),
             "    ... computing global-signal dtseries",
@@ -1984,7 +1986,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             shell=True,
         )
 
-        rr, endlog, status, failed = pc.runExternalForFile(
+        rr, endlog, status, failed = pc.run_external_for_file(
             gs_txt,
             "wb_command -cifti-stats %s -reduce MEAN > %s" % (gs_dtseries, gs_txt),
             "    ... writing global-signal txt",
@@ -2021,7 +2023,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         ymin = min(vals) if vals else 0.0
         ymax = max(vals) if vals else 1.0
 
-        rr, endlog, status, failed = pc.runExternalForFile(
+        rr, endlog, status, failed = pc.run_external_for_file(
             gs_sdseries,
             "wb_command -cifti-create-scalar-series %s %s -transpose -series SECOND 0 %s"
             % (gs_txt, gs_sdseries, tr_sec),
@@ -2080,7 +2082,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         png_gsmap = os.path.join(outpath, png_gsmap_name)
         png_gstime = os.path.join(outpath, png_gstime_name)
 
-        rr, endlog, status, failed = pc.runExternalForFile(
+        rr, endlog, status, failed = pc.run_external_for_file(
             png_gsmap,
             "wb_command -show-scene %s 1 %s %s" % (working_scene, png_gsmap, QC_SCENE_RES),
             "    ... rendering GS map png",
@@ -2092,7 +2094,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             r=rr,
             shell=True,
         )
-        rr, endlog, status, failed = pc.runExternalForFile(
+        rr, endlog, status, failed = pc.run_external_for_file(
             png_gstime,
             "wb_command -show-scene %s 2 %s %s" % (working_scene, png_gstime, QC_SCENE_RES),
             "    ... rendering GS timeseries png",

@@ -34,7 +34,7 @@ try:
     import pydicom.filereader as dfr
 except:
     import dicom.filereader as dfr
-    
+
 #######################
 
 # Discovery
@@ -43,10 +43,12 @@ except:
 
 dicom_counter = 0
 
-def _at_frame(tag, VR, length):
+
+def _at_frame(tag, vr, length):
     return tag == (0x5200, 0x9230)
 
-def readDICOMBase(filename):
+
+def read_dicom_base(filename):
     # try partial read
     gz = False
     try:
@@ -64,7 +66,8 @@ def readDICOMBase(filename):
         if f is not None and not f.closed:
             f.close()
 
-def readDICOMFull(filename):
+
+def read_dicom_full(filename):
     # read the full dicom file
     try:
         if '.gz' in filename:
@@ -81,6 +84,7 @@ def readDICOMFull(filename):
     finally:
         if f is not None and not f.closed:
             f.close()
+
 
 def get_dicom_name(opened_dicom, extension="dcm"):
     global dicom_counter
@@ -151,9 +155,9 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
             try:
                 # opened_dicom = pydicom.dcmread(full_filename, stop_before_pixels=True)
                 if save:
-                    opened_dicom, gz = readDICOMFull(full_filename)
-                else:    
-                    opened_dicom, gz = readDICOMBase(full_filename)
+                    opened_dicom, gz = read_dicom_full(full_filename)
+                else:
+                    opened_dicom, gz = read_dicom_base(full_filename)
 
                 if opened_dicom:
                     print(" ... read as dicom")
@@ -187,7 +191,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                             output_file = os.path.join(output_folder, relative_filepath)
 
                     if gz:
-                        file = tempfile.TemporaryFile()                        
+                        file = tempfile.TemporaryFile()
                     else:
                         file = open(output_file, mode='wb')
 
@@ -222,7 +226,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                         if output_folder:
                             relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
-                        
+
                         print("---> zipping to", target_file)
                         file = zipfile.ZipFile(target_file, mode='w')
 
@@ -265,7 +269,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                             target_file = os.path.join(output_folder, relative_filepath)
 
                         print("---> archiving to", target_file)
-                        file = tarfile.open(target_file, mode2)                                                
+                        file = tarfile.open(target_file, mode2)
 
                         for item in glob.glob(os.path.join(temp_out_directory, '*')):
                             relative_filepath = os.path.relpath(item, temp_out_directory)
@@ -293,11 +297,12 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
 
 field_dict = {}
 
+
 def field_dict_modifier(node_id, node_path, node):
     """
     ``field_dict_modifier(node_id, node_path, node)``
 
-    Adds the node_id node_element pair to field_dict with the provided 
+    Adds the node_id node_element pair to field_dict with the provided
     DataElement.
 
     INPUTS
@@ -317,6 +322,7 @@ def field_dict_modifier(node_id, node_path, node):
         value_list.add(str(node.value))
     field_dict[(node_id, node_path)] = value_list
 
+
 def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=False):
     """
     ``recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=False)``
@@ -325,7 +331,7 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
     on each DataElement found with its id and path.
 
     --dataset      The current level of the dicom.
-    --node_func    The function to call on each node, which takes the node_id, 
+    --node_func    The function to call on each node, which takes the node_id,
                    node_path and dataElement as arguments.
     --parent_id    The id (like 0x0194db21/0x238983d92) of the parent or None if
                    this is the whole dicom.
@@ -375,10 +381,12 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
     if debug:
         print(" ... end recursing")
 
+
 def dicom_scan(opened_dicom, filename=""):
     recurse_tree(opened_dicom, field_dict_modifier)
     recurse_tree(opened_dicom.file_meta, field_dict_modifier)
     return opened_dicom
+
 
 def write_field_dict(output_file, limit):
     with open(output_file, "w") as f:
@@ -395,7 +403,7 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     """
     ``get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]``
 
-    Return an overview of DICOM fields across all the DICOM files in the 
+    Return an overview of DICOM fields across all the DICOM files in the
     specified folder.
 
     ..  qx_command:
@@ -416,7 +424,7 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
 
     Output files:
         After running, the command will inspect all the valid DICOM files
-        (including gzip compressed ones) in the specified folder and its 
+        (including gzip compressed ones) in the specified folder and its
         subfolders. It will generate a report file that will list all the DICOM
         fields found across all the DICOM files. For each of the fields, the
         command will list example values up to the specified limit. The list
@@ -453,7 +461,6 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
     except:
         raise ge.CommandFailed("get_dicom_fields", "Could not create target file", "The specifed target file could not be created:", "%s" % (targetfile), "Please check your paths and permissions!")
 
-
     field_dict = {}
 
     discover_dicom(folder, dicom_scan, save=False, archive_file="")
@@ -467,6 +474,7 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
 #######################
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
+
 
 def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
     """
@@ -484,7 +492,7 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
         the `paramfile`. The values to be archived are saved (appended) to
         `archivefile` as a comma separated values formatted file. The dicom files
         can be either changed in place or saved to the specified `outputfolder` and
-        optionally renamed by adding the specified `extension`. 
+        optionally renamed by adding the specified `extension`.
 
     Parameters:
         --folder (str, default '.'):
@@ -535,7 +543,7 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
             - archive (archive the original value in the archive file)
             - replace (replace the original value with the specified value)
             - delete (delete the field from the dicom file)
-            
+
             If multiple actions are specified, they are carried out in the above
             order (archive,replace, delete). Lines in the parameter file that
             start with '#' or do not specify a mapping (i.e. lack '>') are
@@ -555,7 +563,7 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
                 randomly generated date or the date specified by the
                 `replacementdate` parameter. Any occurrence ofthe date in any of
                 the other fields in dicom is also replaced by the same randomly
-                generated or specified date. Please note that any other dates 
+                generated or specified date. Please note that any other dates
                 (e.g. participant's birth date) are not automatically replaced.
                 These need to be either deleted or replaced explicitly.
 
@@ -620,6 +628,7 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
     manipulate_file = functools.partial(deid_and_date_removal, param_file=paramfile, archive_file=archivefile, replacement_date=replacementdate)
     discover_dicom(folder, manipulate_file, outputfolder, renamefiles, extension, save=True, archive_file=archivefile)
 
+
 def date_removal_func(node_id, node_path, node, target_date, replace_date):
     """
     ``date_removal_func(node_id, node_path, node, target_date, replace_date)``
@@ -635,6 +644,7 @@ def date_removal_func(node_id, node_path, node, target_date, replace_date):
     """
     if isinstance(node.value, str):
         node.value = node.value.replace(target_date, replace_date)
+
 
 def strip_dates(dicom_file, replacement_date=None):
     """
@@ -675,22 +685,23 @@ def strip_dates(dicom_file, replacement_date=None):
     recurse_tree(dicom_file, modified_removal_func)
     recurse_tree(dicom_file.file_meta, modified_removal_func)
 
+
 def read_spec_file(spec_file):
     """
     ``read_spec_file(spec_file)``
-    
+
     Reads the spec file that specifies what actions to take with specific tags.
 
     INPUT
     =====
 
     --spec_file  the path to the spec file
-    
+
     OUTPUT
     ======
 
     --action_dict  Action_dict is a mapping of keys to a set of actions.
-    --replace_map  Replace_map is a mapping of keys to the value to replace 
+    --replace_map  Replace_map is a mapping of keys to the value to replace
                    their value with.
 
     USE
@@ -715,15 +726,15 @@ def read_spec_file(spec_file):
     ignored.
     """
 
-    actionOrder = ['archive', 'replace', 'delete']
+    action_order = ['archive', 'replace', 'delete']
 
     action_dict = {}
     replace_map = {}
-    lineNumber  = 0
+    line_number  = 0
 
     with open(spec_file, 'r') as f:
         for line in f:
-            lineNumber += 1
+            line_number += 1
             line = line.strip()
             if len(line) > 0:
                 if line[0] != "#" and ">" in line:
@@ -734,7 +745,7 @@ def read_spec_file(spec_file):
                     if key not in action_dict:
                         action_dict[key] = []
                     else:
-                        print("---> Warning, actions for tag %s specified more than once! [line: %d]" % (key, lineNumber))
+                        print("---> Warning, actions for tag %s specified more than once! [line: %d]" % (key, line_number))
 
                     for action in actions:
                         if "replace" in action:
@@ -743,14 +754,15 @@ def read_spec_file(spec_file):
                                 action, replacement = parts
                                 replace_map[key] = replacement
                             else:
-                                print("---> Warning, no replacement specified, skipping replacement! [line %d: %s]" % (lineNumber, action))
+                                print("---> Warning, no replacement specified, skipping replacement! [line %d: %s]" % (line_number, action))
 
                         action_dict[key].append(action)
 
     for key in action_dict:
-        action_dict[key] = [e for e in actionOrder if e in action_dict[key]]
+        action_dict[key] = [e for e in action_order if e in action_dict[key]]
 
     return action_dict, replace_map
+
 
 def action_resolver(key, action, action_dict, replace_map):
     action_set = action_dict.get(key, set())
@@ -767,6 +779,7 @@ def action_resolver(key, action, action_dict, replace_map):
         raise RuntimeError(action + " is not a valid action.")
 
     action_dict[key] = action_set
+
 
 def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
     """
@@ -789,6 +802,7 @@ def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
     if isinstance(target_dicom, pydicom.Dataset):
         value = str(target_dicom.get(tag))
         archive_csv_writer.writerow([filename, field_id, value])
+
 
 def replace(target_dicom, tag, field_id, filename, replace_map):
     """
@@ -815,6 +829,7 @@ def replace(target_dicom, tag, field_id, filename, replace_map):
         if isinstance(target_dicom, pydicom.Dataset) and tag in target_dicom:
             target_dicom[tag].value = replace_result_string
 
+
 def delete(target_dicom, tag, field_id, filename):
     """
     ``delete(target_dicom, tag, field_id, filename)``
@@ -824,7 +839,7 @@ def delete(target_dicom, tag, field_id, filename):
     INPUTS
     ======
 
-    --target_dicom  The dicom dataset one level above the element to apply this 
+    --target_dicom  The dicom dataset one level above the element to apply this
                     action to.
     --tag           The tag to the data element is located at in target_dicom.
     --field_id      The full id (like /0x0194db21/0x238983d92) of the element.
@@ -833,12 +848,13 @@ def delete(target_dicom, tag, field_id, filename):
     if isinstance(target_dicom, pydicom.Dataset):
         target_dicom.pop(tag, None)
 
+
 def get_group(full_id):
     """
     ``get_group(full_id)``
 
     Gets the group from the full id of a DataElement.
-    
+
     INPUT
     =====
 
@@ -856,18 +872,19 @@ def get_group(full_id):
     except TypeError as e:
         raise e
 
+
 def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
     """
     ``apply_action_from_field_id(opened_dicom, field_id, apply_func, filename)``
 
-    Apply the apply_func to the data element/s at the field id specified in the 
+    Apply the apply_func to the data element/s at the field id specified in the
     dicom provided.
 
     INPUTS
     ======
-    
+
     --opened_dicom  The opened dicom file.
-    --field_id      The id (like /0x0194db21/0x238983d92) to apply the function 
+    --field_id      The id (like /0x0194db21/0x238983d92) to apply the function
                     to.
     --apply_func    The function to apply.
     """
@@ -896,6 +913,7 @@ def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
     for target in targets:
         apply_func(target, field_path_int[-1], field_id, filename)
 
+
 def deid(opened_dicom, param_file="", archive_file="", filename=""):
     action_dict, replace_map = read_spec_file(param_file)
 
@@ -918,10 +936,12 @@ def deid(opened_dicom, param_file="", archive_file="", filename=""):
                 apply_action_from_field_id(opened_dicom, key, apply_func, filename)
     return opened_dicom
 
+
 def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None, filename=""):
     deid(opened_dicom, param_file, archive_file, filename)
     strip_dates(opened_dicom, replacement_date)
     return opened_dicom
+
 
 def from_tag(tag_value):
     """
@@ -931,15 +951,16 @@ def from_tag(tag_value):
 
     INPUT
     =====
-    
+
     --tag_value  The integer tag value.
-    
+
     OUTPUT
     ======
 
     Returns the tag hex string (like 0xd73829b1).
     """
     return hex(tag_value)
+
 
 def get_tag(tag_string):
     """

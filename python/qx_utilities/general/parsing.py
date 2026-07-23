@@ -17,7 +17,6 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 """
 
 
-
 def true_or_false(s):
     """
     ``true_or_false(s)``

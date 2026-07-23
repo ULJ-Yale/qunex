@@ -6,7 +6,6 @@ from qx_utilities.general.parser import (
     read_mapping_file,
 )
 from qx_utilities.general.utilities import (
-    _reserved_bold_numbers,
     _match_or_rule,
     _process_pipeline_hcp_mapping,
     _reserved_bold_numbers,
@@ -235,33 +234,33 @@ def test_mapping_manual_se_fm():
 def test_glob_match_patterns():
     """Test the _simple_glob_match function with various patterns"""
     # Test exact match
-    assert _simple_glob_match("T1w", "T1w") == True
-    assert _simple_glob_match("T1w", "T2w") == False
+    assert _simple_glob_match("T1w", "T1w") is True
+    assert _simple_glob_match("T1w", "T2w") is False
 
     # Test * at the beginning
-    assert _simple_glob_match("rfMRI_REST_AP", "*_AP") == True
-    assert _simple_glob_match("rfMRI_REST_PA", "*_AP") == False
-    assert _simple_glob_match("BOLD_Task", "*BOLD_Task") == True
+    assert _simple_glob_match("rfMRI_REST_AP", "*_AP") is True
+    assert _simple_glob_match("rfMRI_REST_PA", "*_AP") is False
+    assert _simple_glob_match("BOLD_Task", "*BOLD_Task") is True
 
     # Test * at the end
-    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*") == True
-    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*") == True
-    assert _simple_glob_match("tfMRI_REST_AP", "rfMRI_*") == False
+    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*") is True
+    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*") is True
+    assert _simple_glob_match("tfMRI_REST_AP", "rfMRI_*") is False
 
     # Test * in the middle
-    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*_AP") == True
-    assert _simple_glob_match("rfMRI_TASK_AP", "rfMRI_*_AP") == True
-    assert _simple_glob_match("rfMRI_REST_PA", "rfMRI_*_AP") == False
+    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*_AP") is True
+    assert _simple_glob_match("rfMRI_TASK_AP", "rfMRI_*_AP") is True
+    assert _simple_glob_match("rfMRI_REST_PA", "rfMRI_*_AP") is False
 
     # Test multiple *
-    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*_AP_*") == True
-    assert _simple_glob_match("rfMRI_TASK_AP_Run1", "rfMRI_*_AP_*") == True
-    assert _simple_glob_match("rfMRI_REST_PA_SBRef", "rfMRI_*_AP_*") == False
+    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*_AP_*") is True
+    assert _simple_glob_match("rfMRI_TASK_AP_Run1", "rfMRI_*_AP_*") is True
+    assert _simple_glob_match("rfMRI_REST_PA_SBRef", "rfMRI_*_AP_*") is False
 
     # Test * at both ends
-    assert _simple_glob_match("prefix_middle_suffix", "*middle*") == True
-    assert _simple_glob_match("just_middle", "*middle*") == True
-    assert _simple_glob_match("no_match", "*middle*") == False
+    assert _simple_glob_match("prefix_middle_suffix", "*middle*") is True
+    assert _simple_glob_match("just_middle", "*middle*") is True
+    assert _simple_glob_match("no_match", "*middle*") is False
 
 
 def test_mapping_glob_basic():

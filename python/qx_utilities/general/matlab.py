@@ -33,6 +33,7 @@ else:
 #                                                                     PRINT HELP
 #
 
+
 def help(command):
     """
     Prints help for the command using Matlab.
@@ -89,7 +90,6 @@ def run(qx_command, args):
 
     mcom = "%s(%s)" % (qx_command.name, ", ".join(arglist))
     com = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcommand, mcom)
-
 
     # --- parse output options
 

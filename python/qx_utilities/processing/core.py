@@ -96,7 +96,7 @@ class NoSourceFolder(Exception):
         return self.parameter  # repr(self.parameter)
 
 
-def getExtension(filetype):
+def get_extension(filetype):
     extensions = {
         "4dfp": ".4dfp.img",
         "nifti": ".nii.gz",
@@ -213,15 +213,16 @@ def get_bold_names(boldinfo, options):
 
     return printbold, boldtarget, boldsource
 
-def doOptionsCheck(options, sinfo, command):
+
+def do_options_check(options, sinfo, command):
     # logs
     logs = [e.strip() for e in re.split(r" +|\||, *", options["log"])]
-    studyComlogs = options["comlogs"]
+    study_comlogs = options["comlogs"]
     comlogs = []
 
     for log in logs:
         if log in ["keep", "study"]:
-            comlogs.append(studyComlogs)
+            comlogs.append(study_comlogs)
         elif log == "session":
             comlogs.append(
                 os.path.join(options["sessionsfolder"], sinfo["id"], "logs", "comlogs")
@@ -242,7 +243,7 @@ def doOptionsCheck(options, sinfo, command):
     options["comlogs"] = comlogs
 
 
-def getExactFile(candidate):
+def get_exact_file(candidate):
     g = glob.glob(candidate)
     if len(g) == 1:
         return g[0]
@@ -254,12 +255,12 @@ def getExactFile(candidate):
         return ""
 
 
-def getFileNames(sinfo, options):
+def get_file_names(sinfo, options):
     """
-    getFileNames - documentation not yet available.
+    get_file_names - documentation not yet available.
     """
 
-    d = getSessionFolders(sinfo, options)
+    d = get_session_folders(sinfo, options)
 
     rgss = options["bold_nuisance"]
     rgss = rgss.translate(str.maketrans("", "", " ,;|")) + options["glm_name"]
@@ -282,9 +283,9 @@ def getFileNames(sinfo, options):
     if d["s_source"] is None:
         f["t1_source"] = None
     else:
-        f["t1_source"] = getExactFile(os.path.join(d["s_source"], options["path_t1"]))
+        f["t1_source"] = get_exact_file(os.path.join(d["s_source"], options["path_t1"]))
 
-    ext = getExtension(options["image_target"].replace("cifti", "nifti"))
+    ext = get_extension(options["image_target"].replace("cifti", "nifti"))
 
     f["t1"] = os.path.join(d["s_struc"], "T1" + ext)
 
@@ -410,11 +411,11 @@ def getFileNames(sinfo, options):
     return f
 
 
-def getBOLDFileNames(sinfo, boldname, options):
+def get_bold_file_names(sinfo, boldname, options):
     """
-    getBOLDFileNames - documentation not yet available.
+    get_bold_file_names - documentation not yet available.
     """
-    d = getSessionFolders(sinfo, options)
+    d = get_session_folders(sinfo, options)
     f = {}
 
     # identify bold_tail based on the type of image
@@ -428,7 +429,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     boldnumber = re.search(r"\d+$", boldname).group()
 
-    ext = getExtension(options["image_target"])
+    ext = get_extension(options["image_target"])
 
     rgss = options["bold_nuisance"]
     rgss = rgss.translate(str.maketrans("", "", " ,;|"))
@@ -437,16 +438,16 @@ def getBOLDFileNames(sinfo, boldname, options):
         f["bold_source"] = None
     else:
         if "path_" + boldname in options:
-            f["bold_source"] = getExactFile(
+            f["bold_source"] = get_exact_file(
                 os.path.join(d["s_source"], options["path_" + boldname])
             )
         else:
             btarget = options["path_bold"].replace("[N]", boldnumber)
-            f["bold_source"] = getExactFile(os.path.join(d["s_source"], btarget))
+            f["bold_source"] = get_exact_file(os.path.join(d["s_source"], btarget))
 
         if f["bold_source"] == "" and options["image_target"] == "4dfp":
             # print("Searching in the atlas folder ...")
-            f["bold_source"] = getExactFile(
+            f["bold_source"] = get_exact_file(
                 os.path.join(
                     d["s_source"],
                     "atlas",
@@ -515,12 +516,12 @@ def getBOLDFileNames(sinfo, boldname, options):
         f["bold_mov_o"] = None
     else:
         if "path_" + movname in options:
-            f["bold_mov_o"] = getExactFile(
+            f["bold_mov_o"] = get_exact_file(
                 os.path.join(d["s_source"], options["path_" + movname])
             )
         else:
             mtarget = options["path_mov"].replace("[N]", boldnumber)
-            f["bold_mov_o"] = getExactFile(os.path.join(d["s_source"], mtarget))
+            f["bold_mov_o"] = get_exact_file(os.path.join(d["s_source"], mtarget))
 
     f["bold_mov"] = os.path.join(
         d["s_bold_mov"], options["boldname"] + boldnumber + "_mov.dat"
@@ -626,11 +627,11 @@ def getBOLDFileNames(sinfo, boldname, options):
     return f
 
 
-def findFile(sinfo, options, fname):
+def find_file(sinfo, options, fname):
     """
-    findFile - documentation not yet available.
+    find_file - documentation not yet available.
     """
-    d = getSessionFolders(sinfo, options)
+    d = get_session_folders(sinfo, options)
 
     tfile = os.path.join(d["inbox"], "%s_%s" % (sinfo["id"], fname))
     if os.path.exists(tfile):
@@ -658,9 +659,9 @@ def findFile(sinfo, options, fname):
     return False
 
 
-def getSessionFolders(sinfo, options):
+def get_session_folders(sinfo, options):
     """
-    getSessionFolders - documentation not yet available.
+    get_session_folders - documentation not yet available.
     """
     d = {"s_source": None}
 
@@ -713,7 +714,7 @@ def getSessionFolders(sinfo, options):
     return d
 
 
-def missingReport(missing, message, prefix):
+def missing_report(missing, message, prefix):
     """
     Takes a list of missing files and prepares a list report.
     """
@@ -725,17 +726,17 @@ def missingReport(missing, message, prefix):
     return r
 
 
-def checkRun(
+def check_run(
     tfile,
-    fullTest=None,
+    full_test=None,
     command=None,
     r="",
-    logFile=None,
+    log_file=None,
     verbose=True,
     overwrite=False,
 ):
     """
-    ``checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True, overwrite=False)``
+    ``check_run(tfile, full_test=None, command=None, r="", log_file=None, verbose=True, overwrite=False)``
 
     The function checks the presence of a test file.
     If specified it runs also full test.
@@ -749,9 +750,9 @@ def checkRun(
                   files were present as well
     """
 
-    if fullTest and "specfolder" in fullTest:
-        if os.path.exists(os.path.join(fullTest["specfolder"], fullTest["tfile"])):
-            fullTest["tfile"] = os.path.join(fullTest["specfolder"], fullTest["tfile"])
+    if full_test and "specfolder" in full_test:
+        if os.path.exists(os.path.join(full_test["specfolder"], full_test["tfile"])):
+            full_test["tfile"] = os.path.join(full_test["specfolder"], full_test["tfile"])
 
     if tfile is not None and os.path.exists(tfile) and not overwrite:
         if verbose:
@@ -760,17 +761,17 @@ def checkRun(
         passed = "done"
         failed = 0
 
-        if fullTest:
+        if full_test:
             try:
-                filestatus, filespresent, filesmissing = gc.checkFiles(
-                    fullTest["tfolder"],
-                    fullTest["tfile"],
-                    fields=fullTest["fields"],
-                    report=logFile,
+                filestatus, filespresent, filesmissing = gc.check_files(
+                    full_test["tfolder"],
+                    full_test["tfile"],
+                    fields=full_test["fields"],
+                    report=log_file,
                 )
                 if filesmissing:
                     if verbose:
-                        r += missingReport(
+                        r += missing_report(
                             filesmissing,
                             "\n---> Full file check revealed that the following files were not created:",
                             "            ",
@@ -798,8 +799,8 @@ def checkRun(
         failed = 0
 
         # check log contents for errors
-        if logFile is not None:
-            log = open(logFile, "r")
+        if log_file is not None:
+            log = open(log_file, "r")
             lines = log.readlines()
 
             for line in lines:
@@ -819,7 +820,7 @@ def checkRun(
     return passed, report, r, failed
 
 
-def closeLog(logfile, logname, logfolders, status, remove, r):
+def close_log(logfile, logname, logfolders, status, remove, r):
     # -- close the log
     if logfile:
         logfile.close()
@@ -850,7 +851,7 @@ def closeLog(logfile, logname, logfolders, status, remove, r):
     return tfile, r
 
 
-def runExternalForFile(
+def run_external_for_file(
     checkfile,
     run,
     description,
@@ -860,16 +861,16 @@ def runExternalForFile(
     task=None,
     logfolder="",
     logtags="",
-    fullTest=None,
+    full_test=None,
     shell=True,
     r="",
     verbose=True,
 ):
     """
-    ``runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True)``
+    ``run_external_for_file(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=False, r="", verbose=True)``
 
     Runs the specified command and checks whether it was executed against a
-    checkfile, and if provided a full list of files as specified in fullTest.
+    checkfile, and if provided a full list of files as specified in full_test.
 
     INPUTS
     ======
@@ -884,7 +885,7 @@ def runExternalForFile(
     --task             A short name of the task to run
     --logfolder        A folder or a list of folders in which to place the log
     --logtags          An array of tags used to create a log name
-    --fullTest         A dictionary describing how to check against a full list
+    --full_test         A dictionary describing how to check against a full list
                        of files:
 
                        - tfolder    (a target folder with the results)
@@ -915,28 +916,28 @@ def runExternalForFile(
 
     # -- Report command
     # header
-    printComm = gc.print_qunex_header(timestamp=logstamp)
-    printComm += "#\n"
+    print_comm = gc.print_qunex_header(timestamp=logstamp)
+    print_comm += "#\n"
     # external command info
-    printComm += "------------------------------------------------------------\n"
-    printComm += "Running external command via QuNex:\n\n"
+    print_comm += "------------------------------------------------------------\n"
+    print_comm += "Running external command via QuNex:\n\n"
 
     comm = run + "\n"
     comm = re.sub(r"( +--)", r" \\\n  --", comm)
     comm = re.sub(r"( +-)(?!-)", r" \\\n  -", comm)
     comm = re.sub(r"(  +)(?!-)", r" \\\n  ", comm)
 
-    printComm += comm
+    print_comm += comm
 
     if checkfile is not None and checkfile != "":
-        printComm += "\nTest file: \n%s\n" % checkfile
-    printComm += "------------------------------------------------------------"
+        print_comm += "\nTest file: \n%s\n" % checkfile
+    print_comm += "------------------------------------------------------------"
 
     # report for local runs
-    print("Running external command: %s" % printComm)
+    print("Running external command: %s" % print_comm)
 
     # add an empty line for log purposes
-    printComm += "\n"
+    print_comm += "\n"
 
     if overwrite or checkfile is None or not os.path.exists(checkfile):
         r += "\n\n%s" % (description)
@@ -984,7 +985,7 @@ def runExternalForFile(
                 raise ExternalFailed(r)
 
             # add command call to start of the log
-            print(printComm, file=nf)
+            print(print_comm, file=nf)
             nf.flush()
 
             if shell:
@@ -996,7 +997,7 @@ def runExternalForFile(
         except:
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
             r += comm
-            endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
+            endlog, r = close_log(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
         # --- check results
@@ -1006,15 +1007,15 @@ def runExternalForFile(
                 process.stderr.decode() if process.stderr else "Unknown error",
             )
             r += comm
-            endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
+            endlog, r = close_log(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
 
-        status, _, r, failed = checkRun(
+        status, _, r, failed = check_run(
             checkfile,
-            fullTest=fullTest,
+            full_test=full_test,
             command=task,
             r=r,
-            logFile=tmplogfile,
+            log_file=tmplogfile,
             verbose=verbose,
         )
 
@@ -1025,18 +1026,18 @@ def runExternalForFile(
         # --- End
         if status and status == "done":
             print(f"\n\n---> Successful completion of task at {datetime.now()}\n", file=nf)
-            endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
+            endlog, r = close_log(nf, tmplogfile, logfolders, "done", remove, r)
         else:
             if status and status == "incomplete":
-                endlog, r = closeLog(
+                endlog, r = close_log(
                     nf, tmplogfile, logfolders, "incomplete", remove, r
                 )
             else:
-                endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
+                endlog, r = close_log(nf, tmplogfile, logfolders, "error", remove, r)
 
     else:
         if os.path.getsize(checkfile) < 100:
-            r, endlog, status, failed = runExternalForFile(
+            r, endlog, status, failed = run_external_for_file(
                 checkfile,
                 run,
                 description,
@@ -1045,12 +1046,12 @@ def runExternalForFile(
                 task=task,
                 logfolder=logfolder,
                 logtags=logtags,
-                fullTest=fullTest,
+                full_test=full_test,
                 shell=shell,
                 r=r,
             )
         else:
-            status, _, _, failed = checkRun(checkfile, fullTest)
+            status, _, _, failed = check_run(checkfile, full_test)
             if status in ["full", "done"]:
                 r += "\n%s --- already completed" % (description)
             else:
@@ -1069,11 +1070,11 @@ def runExternalForFile(
     return r, endlog, status, failed
 
 
-def runScriptThroughShell(
+def run_script_through_shell(
     run, description, thread="0", remove=True, task=None, logfolder="", logtags=""
 ):
     """
-    runScriptThroughShell - documentation not yet available.
+    run_script_through_shell - documentation not yet available.
     """
 
     r = "\n\n%s" % (description)
@@ -1119,9 +1120,9 @@ def runScriptThroughShell(
     return r, endlog
 
 
-def checkForFile(r, checkfile, message, status=True):
+def check_for_file(r, checkfile, message, status=True):
     """
-    checkForFile - documentation not yet available.
+    check_for_file - documentation not yet available.
     """
     if not os.path.exists(checkfile):
         status = False
@@ -1129,9 +1130,9 @@ def checkForFile(r, checkfile, message, status=True):
     return r, status
 
 
-def checkForFile2(r, checkfile, ok, bad, status=True):
+def check_for_file2(r, checkfile, ok, bad, status=True):
     """
-    checkForFile2 - documentation not yet available.
+    check_for_file2 - documentation not yet available.
     """
     if os.path.exists(checkfile):
         r += ok
@@ -1141,9 +1142,9 @@ def checkForFile2(r, checkfile, ok, bad, status=True):
         return r, False
 
 
-def checkForFiles(r, checkfiles, ok, bad, all=False, status=True):
+def check_for_files(r, checkfiles, ok, bad, all=False, status=True):
     """
-    checkForFiles - checks if any of the files in the checkfiles list exists
+    check_for_files - checks if any of the files in the checkfiles list exists
 
     If all parameter is set to True, returns True only if all files exist,
     if all parameter is False it returns the first found file.

@@ -22,7 +22,6 @@ import os.path
 import multiprocessing
 import os
 import os.path
-import re
 import shutil
 import subprocess
 import sys
@@ -37,7 +36,6 @@ from copy import deepcopy
 
 import qx_utilities.general.filelock as fl
 import qx_utilities.general.exceptions as ge
-import qx_utilities.general.commands_support as gcs
 
 
 def print_qunex_header(timestamp=None, file=None):
@@ -70,7 +68,7 @@ def print_qunex_header(timestamp=None, file=None):
 class SessionList(UserList):
     """
     ``SessionList``
-    
+
     A list subclass for session and subject data.
     """
     def __init__(self, initialdata=None):
@@ -85,7 +83,6 @@ class SessionList(UserList):
         Returns a deep copy of the SessionList.
         """
         return SessionList(deepcopy(self.data))
-    
 
     def filter_by_key(self, key, value):
         """
@@ -106,7 +103,7 @@ class SessionList(UserList):
         # Normalize value to list
         if isinstance(value, str):
             if "," in value:
-                values = [e.strip() for e in value.split(",")] 
+                values = [e.strip() for e in value.split(",")]
             else:
                 values = [value]
         # values = value if isinstance(value, list) else [value]
@@ -205,7 +202,7 @@ class SessionList(UserList):
             return list(dict.fromkeys(str(item[key]) for item in self.data if key in item))
         else:
             return sep.join(list(dict.fromkeys(str(item[key]) for item in self.data if key in item)))
-        
+
     def group_by_key(self, key):
         """
         ``group_by_key(key)``
@@ -229,7 +226,7 @@ class SessionList(UserList):
         Returns list of such items.
         """
         return SessionList([item for item in self.data if not (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
-    
+
     def have_key(self, key):
         """
         ``have_key(key)``
@@ -238,7 +235,7 @@ class SessionList(UserList):
         Returns list of such items.
         """
         return SessionList([item for item in self.data if (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
-    
+
 
 # ------------------------------------------------------------------------------
 #                           Read session data from batch.txt or session.txt file
@@ -444,10 +441,10 @@ def read_list(filename, verbose=False):
 
 
 def get_sessions_list(
-    listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False
+    list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False
 ):
     """
-    ``get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
+    ``get_sessions_list(list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
 
     Gets a list of sessions as an array of dictionaries.
 
@@ -459,7 +456,7 @@ def get_sessions_list(
 
         [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}]
 
-    The provided listString can be:
+    The provided list_string can be:
 
     - a comma, space or pipe separated list of session id codes,
     - a path to a batch file (identified by .txt extension),
@@ -474,35 +471,35 @@ def get_sessions_list(
     If filter is provided (not None), only sessions that match the filter will
     be returned. If sessionids is provided (not None), only sessions with
     matching id will be returned. If sessionsfolder is provided (not None),
-    sessions from a listString will be treated as glob patterns and all folders
+    sessions from a list_string will be treated as glob patterns and all folders
     that match the pattern in the sessionsfolder will be returned as session
     ids.
     """
 
     gpref = {}
 
-    listString = listString.strip()
+    list_string = list_string.strip()
 
-    if re.match(r".*\.list$", listString):
-        slist = read_list(listString, verbose=verbose)
+    if re.match(r".*\.list$", list_string):
+        slist = read_list(list_string, verbose=verbose)
 
-    elif os.path.isfile(listString):
-        slist, gpref = read_session_data(listString, verbose=verbose)
+    elif os.path.isfile(list_string):
+        slist, gpref = read_session_data(list_string, verbose=verbose)
 
     elif (
-        re.match(r".*\.txt$", listString) or "/" in listString
+        re.match(r".*\.txt$", list_string) or "/" in list_string
     ) and not sessionids:
         raise ValueError(
-            f"ERROR: The specified session file is not found and sessionids are not provided! [{listString}]!"
+            f"ERROR: The specified session file is not found and sessionids are not provided! [{list_string}]!"
         )
 
     else:
         if (
-            re.match(r".*\.txt$", listString) or "/" in listString
+            re.match(r".*\.txt$", list_string) or "/" in list_string
         ) and sessionids:
-            listString = sessionids
+            list_string = sessionids
 
-        slist = [e.strip() for e in re.split(r" +|,|\|", listString)]
+        slist = [e.strip() for e in re.split(r" +|,|\|", list_string)]
 
         if sessionsfolder is None:
             slist = [{"id": e} for e in slist]
@@ -536,7 +533,6 @@ def get_sessions_list(
 
     return slist, gpref
 
-    
 
 # ==============================================================================
 #                                                          EXECUTION AND LOGGING
@@ -602,9 +598,9 @@ def deduce_folders(args, command=None, timestamp=None):
     }
 
 
-def runExternalParallel(calls, cores=None, prepend=""):
+def run_external_parallel(calls, cores=None, prepend=""):
     """
-    ``runExternalParallel(calls, cores=None, prepend='')``
+    ``run_external_parallel(calls, cores=None, prepend='')``
 
     Runs external commands specified in 'calls' in parallel utilizing all the
     available or the number of cores specified in 'cores'.
@@ -631,7 +627,7 @@ def runExternalParallel(calls, cores=None, prepend=""):
     Examples:
         ::
 
-            runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
+            run_external_parallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
             cores=1, prepend=' ... ')
     """
 
@@ -796,9 +792,9 @@ def record(response):
     results.append(response)
 
     with lock:
-        name, result, targetLog, prepend = response
-        if targetLog:
-            see = " [log: %s]." % (targetLog)
+        name, result, target_log, prepend = response
+        if target_log:
+            see = " [log: %s]." % (target_log)
         else:
             see = "."
 
@@ -908,17 +904,17 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
         result = function(**args)
     except ge.CommandError as e:
         with lock:
-            print(ge.reportCommandError(name, e))
+            print(ge.report_command_error(name, e))
             print
         result = e
     except ge.CommandNull as e:
         with lock:
-            print(ge.reportCommandNull(name, e))
+            print(ge.report_command_null(name, e))
             print
         result = e
     except ge.CommandFailed as e:
         with lock:
-            print(ge.reportCommandFailed(name, e))
+            print(ge.report_command_failed(name, e))
             print
         result = e
     except Exception as e:
@@ -997,9 +993,9 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
     return name, result, comlogname, prepend
 
 
-def runInParallel(calls, cores=None, prepend=""):
+def run_in_parallel(calls, cores=None, prepend=""):
     """
-    ``runInParallel(calls, cores=None, prepend="")``
+    ``run_in_parallel(calls, cores=None, prepend="")``
 
     Runs functions specified in 'calls' in parallel utilizing all the available
     or the number of cores specified in 'cores'.
@@ -1025,7 +1021,7 @@ def runInParallel(calls, cores=None, prepend=""):
 
     ::
 
-        runInParallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'sout': 'sort_dicom.log'}, cores=1, prepend=' ... ')
+        run_in_parallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'sout': 'sort_dicom.log'}, cores=1, prepend=' ... ')
     """
 
     global results
@@ -1054,11 +1050,11 @@ def runInParallel(calls, cores=None, prepend=""):
     return results
 
 
-def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
+def check_files(test_folder, spec_file, fields=None, report=None, append=False):
     """
-    ``checkFiles(testFolder, specFile, fields=None, report=None, append=False)``
+    ``check_files(test_folder, spec_file, fields=None, report=None, append=False)``
 
-    Check the testFolder for presence of files as specified in specFile, which
+    Check the test_folder for presence of files as specified in spec_file, which
     lists files one per line with space delimited paths. Additionally an array
     of key-value pairs can be provided. If present every instance of {<key>}
     will be replaced by <value>. If report is specified, a report will be
@@ -1072,9 +1068,9 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     if report:
         if type(report) is types.FileType:
             rout = report
-            fileClose = False
+            file_close = False
         else:
-            fileClose = True
+            file_close = True
             try:
                 if append:
                     rout = open(report, "a")
@@ -1082,7 +1078,7 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
                     rout = open(report, "w")
             except:
                 raise ge.CommandFailed(
-                    "checkFiles",
+                    "check_files",
                     "Report file could not be opened",
                     "Failed to open a report file for writing: %s" % (report),
                     "Please check your settings and paths!",
@@ -1094,48 +1090,48 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
 
     # --- initial tests
 
-    if not os.path.exists(testFolder):
+    if not os.path.exists(test_folder):
         print(
             "The folder to be tested does not exist: %s \nPlease check your settings and paths!"
-            % (testFolder),
+            % (test_folder),
             file=rout,
         )
         print(
             "\n#-----------------=== End Full File Report ===----------------------",
             file=rout,
         )
-        if fileClose:
+        if file_close:
             rout.close()
         raise ge.CommandFailed(
-            "checkFiles",
+            "check_files",
             "Folder to test does not exist",
-            "The folder to be tested does not exist: %s" % (testFolder),
+            "The folder to be tested does not exist: %s" % (test_folder),
             "Please check your settings and paths!",
         )
 
-    if not os.path.exists(specFile):
+    if not os.path.exists(spec_file):
         print(
             "The specification file to test folder against does not exist: %s\nPlease check your settings and paths!"
-            % (specFile),
+            % (spec_file),
             file=rout,
         )
         print(
             "\n#-----------------=== End Full File Report ===----------------------",
             file=rout,
         )
-        if fileClose:
+        if file_close:
             rout.close()
         raise ge.CommandFailed(
-            "checkFiles",
+            "check_files",
             "Specification file does not exist",
             "The specification file to test folder against does not exist: %s"
-            % (specFile),
+            % (spec_file),
             "Please check your settings and paths!",
         )
 
     # --- read the spec
 
-    files = open(specFile, "r").read()
+    files = open(spec_file, "r").read()
 
     if fields:
         for key, value in fields:
@@ -1152,17 +1148,17 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     present = []
     missing = []
     for testfiles in files:
-        fileMissing = True
+        file_missing = True
         for testfile in testfiles:
-            test = [testFolder] + testfile
+            test = [test_folder] + testfile
             tfile = os.path.join(*test)
             if os.path.exists(tfile):
                 present.append(tfile)
-                fileMissing = False
+                file_missing = False
                 if report:
                     print(". " + tfile, file=rout)
                 break
-        if fileMissing:
+        if file_missing:
             missing.append(tfile)
             if report:
                 print("X " + tfile, file=rout)
@@ -1172,7 +1168,7 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
             "\n#-----------------=== End Full File Report ===----------------------",
             file=rout,
         )
-        if fileClose:
+        if file_close:
             rout.close()
 
     status = len(missing) == 0
@@ -1180,9 +1176,9 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     return status, present, missing
 
 
-def printAndLog(*args, **kwargs):
+def print_and_log(*args, **kwargs):
     """
-    ``printAndLog(*args, **kwargs)``
+    ``print_and_log(*args, **kwargs)``
 
     Prints all that is given as nonpositional argument to the standard output.
 
@@ -1219,9 +1215,9 @@ def printAndLog(*args, **kwargs):
             toclose.close()
 
 
-def getLogFile(folders=None, tags=None):
+def get_log_file(folders=None, tags=None):
     """
-    ``getLogFile(folders=None, tags=None)``
+    ``get_log_file(folders=None, tags=None)``
 
     Creates a log file in the comlogs folder.
 
@@ -1250,7 +1246,7 @@ def getLogFile(folders=None, tags=None):
 
     if "logfolder" not in folders:
         raise ge.CommandFailed(
-            "getLogFile",
+            "get_log_file",
             "Logfolder not found",
             "Could not deduce the location of the log folder based on the provided information!",
         )
@@ -1269,9 +1265,9 @@ def getLogFile(folders=None, tags=None):
     return logname, logfile
 
 
-def closeLogFile(logfile=None, logname=None, status="done"):
+def close_log_file(logfile=None, logname=None, status="done"):
     """
-    ``closeLogFile(logfile=None, logname=None, status="done")``
+    ``close_log_file(logfile=None, logname=None, status="done")``
 
     Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at
     the start of the logname to the provided status.
@@ -1385,11 +1381,11 @@ def link_or_copy(
             )
 
 
-def moveLinkOrCopy(
+def move_link_or_copy(
     source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False
 ):
     """
-    moveLinkOrCopy - documentation not yet available.
+    move_link_or_copy - documentation not yet available.
     """
     if action is None:
         action = "link"
@@ -1484,9 +1480,9 @@ def moveLinkOrCopy(
         )
 
 
-def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
+def create_session_file(command, sfolder, session, subject, overwrite, prefix=""):
     """
-    ``createSessionFile(command, sfolder, session, subject, overwrite, prefix)``
+    ``create_session_file(command, sfolder, session, subject, overwrite, prefix)``
 
     Creates the generic, non pipeline specific, session file.
     """

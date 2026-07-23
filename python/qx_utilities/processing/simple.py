@@ -31,9 +31,7 @@ import os
 import re
 from datetime import datetime
 
-import qx_utilities.general.img as gi
 import qx_utilities.processing.core as pc
-
 
 
 def create_bold_list(sinfo, options, overwrite=False, thread=0):
@@ -46,7 +44,7 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
         type: processing.study
 
     Parameters:
-        --sessionsfolder (str, default '.'): 
+        --sessionsfolder (str, default '.'):
             The path to the study/sessions folder.
 
         --bold_prefix (str, default ''):
@@ -67,15 +65,14 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
                     if v['task'] in options['bolds'].split("|"):
                         bolds.append(v['name'])
         if len(bolds) > 0:
-            f = pc.getFileNames(session, options)
+            f = pc.get_file_names(session, options)
             print("    session id:%s" % (session['id']), file=bfile)
             print("    roi:%s" % (os.path.abspath(f['fs_aparc_bold'])), file=bfile)
             for bold in bolds:
-                f = pc.getBOLDFileNames(session, boldname=bold, options=options)
+                f = pc.get_bold_file_names(session, boldname=bold, options=options)
                 print("    file:%s" % (os.path.abspath(f['bold_final'])), file=bfile)
 
     bfile.close()
-
 
 
 def create_conc_list(sinfo, options, overwrite=False, thread=0):
@@ -113,8 +110,8 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
     else:
         for session in sinfo:
             try:
-                f = pc.getFileNames(session, options)
-                d = pc.getSessionFolders(session, options)
+                f = pc.get_file_names(session, options)
+                d = pc.get_session_folders(session, options)
 
                 print("session id:%s" % (session['id']), file=bfile)
                 print("    roi:%s" % (f['fs_aparc_bold']), file=bfile)
@@ -134,7 +131,6 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
     bfile.close()
 
 
-
 def list_session_info(sinfo, options, overwrite=False, thread=0):
     """
     ``list_session_info [... processing options]``
@@ -145,7 +141,7 @@ def list_session_info(sinfo, options, overwrite=False, thread=0):
         type: processing.study
 
     Parameters:
-        --sessionsfolder (str, default '.'): 
+        --sessionsfolder (str, default '.'):
             The path to the study/sessions folder.
     """
     bfile = open(os.path.join(options['sessionsfolder'], 'session_info.txt'), 'w')
@@ -154,7 +150,6 @@ def list_session_info(sinfo, options, overwrite=False, thread=0):
         print("session: %s, group: %s" % (session['id'], session['group']), file=bfile)
 
     bfile.close()
-
 
 
 def run_shell_script(sinfo, options, overwrite=False, thread=0):
@@ -230,7 +225,7 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
             echo "{{nothing}}"
 
     Examples:
-    
+
         ::
 
             qunex run_shell_script sessions=fcMRI/session_hcp.txt sessionsfolder=sessions \\
@@ -275,7 +270,7 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         description = "run_shell_script: %s" % (options['script'])
         task = "run_shell_script-%s" % (options['script'])
 
-        r += pc.runScriptThroughShell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
+        r += pc.run_script_through_shell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
 
     except AssertionError as message:
         r += str(message) + "\n---------------------------------------------------------"

@@ -9,7 +9,7 @@ NHP zero-phase SE image and its FS brainmask in a session-flexible way.
 
 import os
 
-from qx_utilities.hcp.process_hcp import resolve_session_relative_image
+from qx_utilities.hcp.hcp_utils import resolve_session_relative_image
 
 
 def _touch(path):

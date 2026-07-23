@@ -32,8 +32,7 @@ from datetime import datetime
 from functools import partial
 
 import qx_utilities.processing.core as pc
-import qx_utilities.hcp.process_hcp as hcp
-
+from qx_utilities.hcp.hcp_paths import get_hcp_paths
 
 
 def rapidtide(sinfo, options, overwrite=False, thread=0):
@@ -54,7 +53,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
     ..  qx_command:
         type: processing.session
 
-   
+
 
     Parameters:
         --batchfile (str, default ''):
@@ -221,7 +220,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "rapidtide")
+        pc.do_options_check(options, sinfo, "rapidtide")
 
         # check if we have the session
         session_folder = os.path.join(options["sessionsfolder"], session)
@@ -230,7 +229,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # hcp paths
-        hcp_folders = hcp.getHCPPaths(sinfo, options)
+        hcp_folders = get_hcp_paths(sinfo, options)
         rapidtide_folder = os.path.join(session_folder, "rapidtide")
         os.makedirs(rapidtide_folder, exist_ok=True)
 
@@ -418,7 +417,7 @@ def _execute_rapidtide(
             # run
             if options["run"] == "run":
                 # execute
-                r, _, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.run_external_for_file(
                     out_path,
                     flirt_comm,
                     "Running FSL flirt",
@@ -428,7 +427,7 @@ def _execute_rapidtide(
                     task="rapidtide_flirt",
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=None,
+                    full_test=None,
                     shell=True,
                     r=r,
                 )
@@ -441,7 +440,7 @@ def _execute_rapidtide(
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
+                passed, _, r, failed = pc.check_run(
                     out_path, None, "FSL flirt " + session, r, overwrite=overwrite
                 )
 
@@ -576,7 +575,7 @@ def _execute_rapidtide(
                     rapidtide_comm += f"                --refineexclude {refineexclude}"
 
             # execute
-            r, _, _, failed = pc.runExternalForFile(
+            r, _, _, failed = pc.run_external_for_file(
                 None,
                 rapidtide_comm,
                 "Running rapidtide",
@@ -586,7 +585,7 @@ def _execute_rapidtide(
                 task="rapidtide",
                 logfolder=options["comlogs"],
                 logtags=[options["logtag"]],
-                fullTest=None,
+                full_test=None,
                 shell=True,
                 r=r,
             )
@@ -598,7 +597,7 @@ def _execute_rapidtide(
 
         # just checking
         else:
-            passed, _, r, failed = pc.checkRun(
+            passed, _, r, failed = pc.check_run(
                 None, None, "rapidtide " + session, r, overwrite=overwrite
             )
             if passed == "done":

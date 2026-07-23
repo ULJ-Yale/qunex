@@ -171,6 +171,7 @@ deprecated_commands = {
 # Add information provided in extensions
 deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
+
 # the function for checking whether a command is deprecated or not
 
 # @register_command(
@@ -189,7 +190,7 @@ def check_deprecated_commands(command):
     Parameters:
         --command (str):
         The command to check for deprecation.
-    
+
     Returns:
         --new_command (str):
         The updated command name if it was deprecated, otherwise the original command name.
@@ -272,12 +273,6 @@ deprecated_parameters = {
     "PEdir": "pedir",
     "sequenceinfo": "add_json_info",
     "hcp_icafix_traindata": "hcp_icafix_model",
-
-    # parcellate_anat -> hcp_parcellate_anat (legacy parameter name mapping)
-    "inputdatatype": "hcp_parcellate_input_type",
-    "parcellationfile": "hcp_parcellate_dlabel",
-    "outname": "hcp_parcellate_output_name",
-    "extractdata": "hcp_parcellate_extract_data",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values

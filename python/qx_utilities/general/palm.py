@@ -158,9 +158,9 @@ def run_palm(
             instead.
 
         --palm_args (str, default 'n:100|zstat'):
-            Additional arguments to palm specified as a pipe-separated list of 
+            Additional arguments to palm specified as a pipe-separated list of
             arguments and optional values.
-             
+
             The format of the string is::
 
                 '<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>'.
@@ -215,24 +215,24 @@ def run_palm(
 
             --T2DHEC (str, default '2:1:26'):
                 Sets H, E and C parameters for 2D part of analysis.
-    
+
                 Sometimes it is desired to specify TFCE parameters that differ from
                 the default values. As the function allows combined surface/volume
                 processing of cifti files, it is useful to be able to set them
                 separately for 2D and 3D analysis. All three values need to be
                 provided when the parameter is specified, for example::
-    
+
                     palm_args='T2HEC:2:0.5:26'
-    
+
                 Defaults to H=2, E=1, C=26.
-    
+
             --T3DHEC (str):
                 Sets H, E and C parameters for 3D part of analysis.
-    
+
                 Defaults to H=2, E=0.5 (C value is not listed in PALM
                 documentation). All three values need to be provided when the
                 parameter is specified, for example::
-    
+
                     palm_args='T3DHEC:4:1:6'
 
         --surface (str, default 'no'):
@@ -249,16 +249,16 @@ def run_palm(
 
         --parelements (int | str, default 'all'):
             Number of elements to run in parallel for grayordinate
-            decomposition. 
-            
+            decomposition.
+
             If specified as None or 'all', all available elements
             (3 max for left surface, right surface and volume files) will be
             used. One element per CPU core is processed at a time.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no). 
-            
-            Note that previous data is deleted before the run, so in the case of 
+            Whether to overwrite existing data (yes) or not (no).
+
+            Note that previous data is deleted before the run, so in the case of
             a failed command run, previous results are lost.
 
         --cleanup (str, default 'yes'):
@@ -694,7 +694,7 @@ def run_palm(
         # --- run PALM
         if iformat == "nifti":
             print(" ---> running PALM for NIfTI input")
-            infiles = setInFiles(root, "volume.nii", nimages)
+            infiles = set_in_files(root, "volume.nii", nimages)
             inargs = ["-m", mask_volume]
             command = (
                 ["palm"] + infiles + inargs + dargs + sargs + ["-o", root + "_volume"]
@@ -709,7 +709,7 @@ def run_palm(
 
         elif not recombine:
             print(" ---> running PALM for ptseries CIFTI input")
-            infiles = setInFiles(root, "cifti" + ext, nimages)
+            infiles = set_in_files(root, "cifti" + ext, nimages)
             if mask_cifti:
                 inargs = ["-m", mask_cifti]
             else:
@@ -729,7 +729,7 @@ def run_palm(
 
             if not surface:
                 print("     ... Volume")
-                infiles = setInFiles(root, "volume.nii", nimages)
+                infiles = set_in_files(root, "volume.nii", nimages)
                 inargs = ["-m", mask_volume]
                 command = (
                     ["palm"]
@@ -750,7 +750,7 @@ def run_palm(
                     command += [t3set]
 
             print("     ... Left Surface")
-            infiles = setInFiles(root, "left.func.gii", nimages)
+            infiles = set_in_files(root, "left.func.gii", nimages)
             inargs = [
                 "-m",
                 mask_left,
@@ -771,7 +771,7 @@ def run_palm(
             )
 
             print("     ... Right Surface")
-            infiles = setInFiles(root, "right.func.gii", nimages)
+            infiles = set_in_files(root, "right.func.gii", nimages)
             inargs = [
                 "-m",
                 mask_right,
@@ -793,7 +793,7 @@ def run_palm(
 
             print(" ---> running PALM for CIFTI input")
 
-            completed = gc.runExternalParallel(
+            completed = gc.run_external_parallel(
                 calls, cores=parelements, prepend="     ... "
             )
 
@@ -861,20 +861,20 @@ def run_palm(
                     "zmv_tsqstat",
                     "zmv_hotellingtsq",
                 ]:
-                    for volumeUnit, surfaceUnit, unitKind in [
+                    for volume_unit, surface_unit, unit_kind in [
                         ("vox", "dpv", "reg"),
                         ("tfce", "tfce", "tfce"),
                         ("clustere", "clustere", "clustere"),
                         ("clusterm", "clusterm", "clusterm"),
                     ]:
                         rvolumes = glob.glob(
-                            "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval)
+                            "%s_volume_%s_%s%s*.nii" % (root, volume_unit, stat, pval)
                         )
                         rleftsurfaces = glob.glob(
-                            "%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval)
+                            "%s_L_%s_%s%s*.gii" % (root, surface_unit, stat, pval)
                         )
                         rrightsurfaces = glob.glob(
-                            "%s_R_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval)
+                            "%s_R_%s_%s%s*.gii" % (root, surface_unit, stat, pval)
                         )
                         # print("     ... testing for: ", "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval), "found:", len(rvolumes))
 
@@ -922,7 +922,7 @@ def run_palm(
                             # --- compile target name
                             targetfile = "%s_%s_%s%s%s_C%s.dscalar.nii" % (
                                 root,
-                                unitKind,
+                                unit_kind,
                                 stat,
                                 pval,
                                 M,
@@ -1031,7 +1031,7 @@ def run_palm(
                 os.remove(f)
 
 
-def setInFiles(root, tail, nimages):
+def set_in_files(root, tail, nimages):
     out = []
     for n in range(nimages):
         out += ["-i", "%s_i%d_%s" % (root, n + 1, tail)]
@@ -1060,7 +1060,7 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
             appended.
 
         --minv (str, default None):
-            The minimum threshold value.    
+            The minimum threshold value.
 
         --maxv (str, default None):
             The maximum threshold value.
@@ -1075,7 +1075,7 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
         the individual masks (logical OR).
 
         Thresholds
-    
+
         At least minv or maxv needs to be specified.
 
         - If only minv is given, images will be masked with: ``mask >= minv``.
@@ -1312,7 +1312,7 @@ def join_maps(images=None, output=None, names=None, originals=None):
 
 
 #
-def fNuissance(n):
+def f_nuissance(n):
     """
     Support function for create_ws_palm_design function.
     """
@@ -1326,7 +1326,6 @@ def fNuissance(n):
             t[e - 1] = 1
             block.append(t)
     return block
-
 
 
 def create_ws_palm_design(factors=None, nsubjects=None, root=None):
@@ -1414,7 +1413,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     nlevels = reduce(lambda x, y: x * y, factors)
 
     for n in factors:
-        blocks.append(fNuissance(n))
+        blocks.append(f_nuissance(n))
 
     # -------------------------------------------------------------
     #                                            create design file

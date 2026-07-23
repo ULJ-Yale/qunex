@@ -61,14 +61,14 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     """
     ``run_nil_folder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
 
-    Run run_nil on all the subfolders that match the pattern. 
+    Run run_nil on all the subfolders that match the pattern.
 
     ..  qx_command:
         type: utility
 
     Parameters:
         --folder (str, default '.'):
-            The base study sessions folder (e.g. WM44/sessions) where OP folders 
+            The base study sessions folder (e.g. WM44/sessions) where OP folders
             and the inbox folder with the new packages from the scanner reside.
 
         --pattern (str, default 'OP*'):
@@ -232,23 +232,23 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
         # ---- check for dicom and TR
 
-        TR = None
+        tr = None
         if os.path.exists(os.path.join(folder, "dicom", "DICOM-Report.txt")):
             with open(os.path.join(folder, "dicom", "DICOM-Report.txt")) as f:
                 for line in f:
                     if ("BOLD" in line and not "C-BOLD" in line) or ("bold" in line):
                         m = re.search(r"TR +([0-9.]+),", line)
                         if m:
-                            TR = m.group(1)
-                            TR = float(TR) / 1000
+                            tr = m.group(1)
+                            tr = float(tr) / 1000
                             print(
                                 "...  Extracted TR info from DICOM-Report, using TR of",
-                                TR,
+                                tr,
                             )
                             break
-        if TR is None or TR == 0.0:
+        if tr is None or tr == 0.0:
             "...  No DICOM-Report, assuming TR of 2.49836"
-            TR = 2.49836
+            tr = 2.49836
 
         # ---- create params content
 
@@ -257,7 +257,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         params = params.replace("{{data}}", data)
         params = params.replace("{{inpath}}", raw)
         params = params.replace("{{patid}}", sid)
-        params = params.replace("{{TR}}", str(TR))
+        params = params.replace("{{TR}}", str(tr))
         if t1:
             params = params.replace("{{t1}}", t1 + "-o.nii.gz")
         if t2:
@@ -333,7 +333,6 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         print("...  preproc_NIL_nifti finished successfully")
 
 
-
 def map2pals(volume, metric, atlas="711-2C", method="interpolated", mapping="afm"):
     """
     ``map2pals volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]``
@@ -360,7 +359,7 @@ def map2pals(volume, metric, atlas="711-2C", method="interpolated", mapping="afm
 
         --mapping (str, default 'afm'):
             A single mapping option or a space separated list in quotes.
-            
+
             The options are:
             - afm (average fiducial mapping)
             - mfm (average of mapping to all PALS cases (multifiducial mapping))

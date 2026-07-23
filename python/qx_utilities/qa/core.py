@@ -8,7 +8,7 @@
 """
 ``core.py``
 
-Main internal functions for 'run_qa' Quality Assurance. 
+Main internal functions for 'run_qa' Quality Assurance.
 """
 
 """
@@ -56,7 +56,7 @@ class QA:
                 slist
                     The 'working' list. Each element is a dict pertaining to a session. This dict contains
                     useful info and keys are shared across elements (eg. the 'id' key always refers to the session id).
-                    This list contains sessions that have not yet QA, upon failure they are moved to 'failQA'. 
+                    This list contains sessions that have not yet QA, upon failure they are moved to 'failQA'.
                     Built in the 'build_slist' function.
 
                 failQA
@@ -85,14 +85,12 @@ class QA:
         self.report += "\n              QA report"
         self.report += "\n=========================================="
 
-        
         #List of dictionaries, basically QA slist. Stores sessions that haven't failed QA.
         self.slist = self.build_slist(sessions)
         #dicts in fail QA must have ID and reason/datatype they failed
         self.failQA = []
 
         self.config = config.parse_config(configfile)
-
 
         return
 
@@ -103,7 +101,7 @@ class QA:
         specified but not defined as subfolders of sessionsfolder, they will fail QA.
         """
         #directories that may be found in a sessionsfolder but are not sessions
-        #currently manually defined here but not ideal 
+        #currently manually defined here but not ideal
         non_sessions = ['specs','QC','inbox','archive']
         session_dirs = glob.glob(f"{self.sessionsfolder}/*/")
         #All sessions (None specified)
@@ -126,7 +124,7 @@ class QA:
                 for dn in session_dirs:
                     if s['id'] == dn.split("/")[-2]:
                         s['QA_sessionfolder'] = dn[:-1]
-                
+
                 #QA fail
                 if 'QA_sessionfolder' not in s.keys():
                     print(f"WARNING: Session {s['id']} not found in {self.sessionsfolder}! Removing from --sessions...")
@@ -134,14 +132,14 @@ class QA:
                     self.fail(s, "Session folder import", f"Session folder {s['id']} missing in {self.sessionsfolder}",
                               f"Check import_dicom log for this session. Are scans present in inbox folder?")
         return slist
-    
+
     def fail(self, session, datatype, reason, action):
         """
         Handles sessions that have failed QA. Removes them from slist, adds diagnositc info, appends to failQA.
 
         --session (str)
             dict from slist for session that has failed QA
-        
+
         --datatype (str)
             datatype which session failed to pass
 
@@ -163,11 +161,11 @@ class QA:
         self.report += f"\nCause: {reason}\nFix: {action}"
         self.report += f"\n=================================================================="
         return
-    
-    def QA_raw_data(self):
+
+    def qa_raw_data(self):
         """
         Designed to be run after import_dicom/bids but before create_session_info. The goal is to
-        identify sessions that: 
+        identify sessions that:
 
         > Are missing required acquisitions
         > Have poor acquisitions (Through quantitative means, eg. frame count)
@@ -183,15 +181,15 @@ class QA:
         print(f"Running on sessions: {sessions}")
 
         if self.config == None:
-            minimalQA = True
+            minimal_qa = True
             print("No config file supplied, running only minimal QA")
         else:
             if 'raw_data' not in self.config.keys():
-                minimalQA = True
+                minimal_qa = True
                 print("Config file supplied, but no settings for raw_data detected")
                 print("Running with only minimal QA")
             else:
-                minimalQA = False
+                minimal_qa = False
                 print("Config file supplied, settings for raw_data found")
                 print("Running with full QA")
 
@@ -211,11 +209,11 @@ class QA:
                 sfile = parser.read_generic_session_file(s['QA_sessiontxt'])
             else:
                 s['QA_sessiontxt'] = None
-                self.fail(s,'raw_data',  
+                self.fail(s,'raw_data',
                             f"Session file session.txt not found in {s['QA_sessionfolder']}",
                             f"Check data import log for this session (eg. import_dicom). Perhaps it was interrupted?")
                 continue
-    
+
             #session id check, currently does not check subject
             if sfile['session'] != s['id']:
                 self.fail(s,'raw_data',
@@ -226,17 +224,17 @@ class QA:
                 i_log += f"\n      session: {sfile['session']} valid"
 
             #Check if paths are pointing to the right folder (in case of study move/copy)
-            pathFail=False
+            path_fail=False
             for pkey in sfile['paths'].keys():
                 if os.path.dirname(sfile['paths'][pkey]) != s['QA_sessionfolder']:
-                    pathFail=True
+                    path_fail=True
                     self.fail(s,'raw_data',
                                 f"{pkey} path in {s['QA_sessiontxt']} does not match {s['QA_sessionfolder']}",
                                 f"Ensure the paths are pointing to folders inside the session folder. Did the study get moved or renamed?")
                     break
                 else:
                     i_log += f"\n      {pkey}: {sfile['paths'][pkey]} valid"
-            if pathFail:
+            if path_fail:
                 continue
 
             #check nii folder exists and add
@@ -248,8 +246,8 @@ class QA:
                                 f"{niifolder} does not exist!",
                                 f"Check the folder for {s['id']}. Did the study get moved or copied? Was something deleted?")
                 continue
-            
-            if minimalQA:
+
+            if minimal_qa:
                 print('No --config supplied, skipping image QA...')
                 continue
 
@@ -301,7 +299,7 @@ class QA:
                     #allows unix pattern matching
                     found_images = s_images[np.vectorize(fnmatch)(s_images[:,1],id_str)]
                     rel_images.append(found_images)
-                
+
                 rel_images = np.vstack(rel_images)
 
                 num_images = rel_images.shape[0]
@@ -322,11 +320,11 @@ class QA:
                     if image['required']:
                         s['QA_image_fail'][image_id] = "missing"
                     continue
-                
+
                 i_log += f"\n      {num_images} images found"
                 i_log += f"\n      {image['n_items']} configs found"
 
-                #Holds actual scan values, first row is whether scan has NOT been identified to a config 
+                #Holds actual scan values, first row is whether scan has NOT been identified to a config
                 s['QA_image'][image_id]['scan_list'] = [['True'] * num_images]
                 #Holds image config values to compare against scan_list
                 s['QA_image'][image_id]['im_list'] = [['True'] * image['n_items']]
@@ -337,7 +335,7 @@ class QA:
                 #will still run remaining QA so that matching occurs and user gets a summary of the found images vs. config
                 if image['session']['image_count'] != None and image['session']['image_count'] != num_images:
                     s['QA_image_fail'][image_id] = "image_count"
-                
+
                 #session QA
 
                 #if scan_index is supplied then image order is considered for matching
@@ -426,7 +424,7 @@ class QA:
                         if other['required']:
                             s['QA_image_fail'][other_id] = 'missing'
                         continue
-                    
+
                     #If values unspecified, will only check if file exists
                     if 'values' not in other.keys():
                         i_log += f"\n      No values specified to QA, continuing..."
@@ -443,7 +441,7 @@ class QA:
                         except:
                             i_log += f"\n        WARNING: No file-extension found! Parsing as '.txt'"
                             extension = '.txt'
-                    
+
                     #Check if data is deliminated
                     if other['deliminator']:
                         delim = other['deliminator']
@@ -461,11 +459,10 @@ class QA:
 
                         if other['index_column']:
                             other_data = other_data.set_index(other['index_column'])
-                        
+
                         if other['data_column']:
                             other_data = other_data[other['data_column']]
-                    
-                       
+
                     else:
                         with open(file_path, 'r') as f:
                             #Dict
@@ -502,7 +499,7 @@ class QA:
                         s['QA_image'][other_id]['key_list'].append(key)
                         #Actual check
                         s['QA_image'][other_id]['fail_keys'].append(s['QA_image'][other_id]['scan_list'][-1] != s['QA_image'][other_id]['im_list'][-1])
-                    
+
                     if True in s['QA_image'][other_id]['fail_keys']:
                         s['QA_image_fail'][other_id] = 'other_mismatch'
 
@@ -520,7 +517,7 @@ class QA:
         if self.report_empty:
             self.report += "\n\nAll session(s) passed QA!"
         return
-    
+
     def nifti_qa(self, s, image_id, scans, config):
         """
         Runs raw_data QA on .nii files. Runs key-value validation on the header, except for data_shape
@@ -551,7 +548,7 @@ class QA:
         #if nifti QA is run, config will always require that nifti files can be loaded
         s['QA_image'][image_id]['im_list'].append([True]*config['n_items'])
         s['QA_image'][image_id]['key_list'].append('nifti_file')
-            
+
         for key, value in config['nifti'].items():
             #If config key has a valid defined value
             if value != None:
@@ -584,10 +581,10 @@ class QA:
                                 n_list.append(n[key])
                         except:
                             n_list.append("Missing!") #Fail if missing
-                        
+
                     s['QA_image'][image_id]['scan_list'].append(n_list)
-        return 
-    
+        return
+
     def json_qa(self, s, image_id, scans, config):
         """
         Runs raw_data QA on sidercar .json files. Runs key-value validation, except for normalized.
@@ -610,12 +607,12 @@ class QA:
                     j_list.append(True)
             except:
                 jsons.append("missing_file")
-                j_list.append("Missing!") 
+                j_list.append("Missing!")
 
         s['QA_image'][image_id]['scan_list'].append(j_list)
         s['QA_image'][image_id]['im_list'].append([True]*config['n_items'])
         s['QA_image'][image_id]['key_list'].append('json_file')
-            
+
         for key, value in config['json'].items():
             if value != None:
                 #params that are a list of vals for each image
@@ -630,8 +627,8 @@ class QA:
                             try:
                                 j_list.append(j[key][i])
                             except:
-                                j_list.append("Missing!") 
-                            
+                                j_list.append("Missing!")
+
                         s['QA_image'][image_id]['scan_list'].append(j_list)
                 else:
                     s['QA_image'][image_id]['key_list'].append(key)
@@ -645,12 +642,12 @@ class QA:
                             else:
                                 j_list.append(j[key])
                         except:
-                            j_list.append("Missing!") 
-                        
+                            j_list.append("Missing!")
+
                     s['QA_image'][image_id]['scan_list'].append(j_list)
 
-        return 
-    
+        return
+
     def get_dicoms(self, s, scans):
         """
         Loads dicom logs and gets the number of DICOM files. Similar to data_shape but may be more
@@ -674,11 +671,11 @@ class QA:
                 with open(os.path.join(s['QA_dicomfolder'],f"dcm2niix_{str(scan[0])[:-1]}0.log"), 'r') as file:
                     log = file.read()
                 dicoms.append(re.search('Found (.*) DICOM file', log).group(1))
-                
+
             except:
                 dicoms.append(False)
         return dicoms
-    
+
     def update_report(self, s):
         """
         Updates report with diagnostic and QA info in a human-readable table for a failed session.
@@ -688,7 +685,7 @@ class QA:
         """
 
         self.report_empty = False
-        
+
         for image_id, fail in s['QA_image_fail'].items():
             self.report+= f"\n   - {image_id}"
 
@@ -701,7 +698,7 @@ class QA:
                 self.report+= f"\n      Incorrect number of scans specified! image_count: {image_count} specified in config, but {found_count} found. If as expected, change or remove image_count in config"
             elif fail in ['mismatch', 'other_mismatch']:
                 self.report+= "\n      Config Key mismatch with scan! Suspected incorrect parameters are emphasized with *"
-            
+
             if fail in ['mismatch', 'image_count']:
                 self.report+=f"\n      Attempted to match {s['QA_image'][image_id]['n_configs']} config(s) to {s['QA_image'][image_id]['n_scans']} scan(s)"
                 #Set up columns

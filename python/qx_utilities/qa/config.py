@@ -8,7 +8,7 @@
 """
 ``config.py``
 
-Config related functions for 'run_qa' Quality Assurance. 
+Config related functions for 'run_qa' Quality Assurance.
 """
 
 """
@@ -29,9 +29,9 @@ default - Unused for types dict, Required otherwise.
     Default value for this parameter. If of type dict, this is not used.
 
 accept_list - Unused for types dict, Required otherwise.
-    Whether it will accept a list of values (so long as they are of the defined type) as input. However, it does not 
+    Whether it will accept a list of values (so long as they are of the defined type) as input. However, it does not
     require input to be a list.
-    eg. 
+    eg.
         accept_list:True and type:[int], the input [1, 2, 3] is accepted.
         accept_list:True and type:[str], the input "T1w" is accepted.
         accept_list:False and type:[bool], the input [True, False] is NOT accepted.
@@ -43,7 +43,7 @@ only_valid - Required for types dict, unused otherwise.
         json has only_valid:False, because sub-parameters are matched against the loaded file and not checked.
 
 type - Required
-    The expected type of the input. This is defined in a list, allowing multiple types to be specified, though this is 
+    The expected type of the input. This is defined in a list, allowing multiple types to be specified, though this is
     not currently used. When used with accept_list:True, it will ensure all values in the list are of correct type.
 
 required - Required
@@ -120,11 +120,11 @@ config_template = {"datatypes": {"default":None, "accept_list":False, "only_vali
                             },
                             "description":"Actual parameters to check in data, using rules defined under '- other'"
                             }
-                            
+
 
                         },
                         "description":"Parameters for validation of user-defined files, highly customizable."
-                        }  
+                        }
                     },
                     "description":"run after import_datatype, it allows for QA and mapping validation"},
                     "config":{"default":None, "accept_list":False, "only_valid":False, "type":[dict], "required":False,
@@ -138,11 +138,12 @@ config_template = {"datatypes": {"default":None, "accept_list":False, "only_vali
                 "description":"run_qa datatype parameters"}
             }
 
+
 def print_template():
     """
     Print template dict in a human readable format.
     """
-    
+
     #This is similar information to the doc above, but with dev related info removed
     out="Config key descriptions:\n"\
         "Input is validated against a template, consisting of nesting dicts. Each parameter has the follow keys:\n"\
@@ -182,7 +183,7 @@ def print_template():
         "description\n"\
         "    Description of the parameter, self-explanatory. Also printed to log when config parse fails.\n\n"\
         "Template Config Parameters:\n"
-    
+
     def rec_print(template, padding):
         """
         Recursively prints out the template in a more readable format than pprint
@@ -203,10 +204,11 @@ def print_template():
                     out += f"{padding}{key}: {template[key]}\n"
 
         return out
-    
+
     out += rec_print(config_template, "")
     print(out)
     return
+
 
 def parse_config(config_file):
     """
@@ -229,6 +231,7 @@ def parse_config(config_file):
     parsed_config = recursive_parse('datatypes', config_template['datatypes'], config['datatypes'])
 
     return parsed_config
+
 
 def recursive_parse(name, template, config):
     """
@@ -306,7 +309,7 @@ def recursive_parse(name, template, config):
                     config = [config]
 
         return config
-    
+
     #keys in template that haven't been parsed
     remaining_keys = set(template['parameters'].keys()).difference(set(p_config.keys()))
     for r_key in remaining_keys:
@@ -327,6 +330,7 @@ def recursive_parse(name, template, config):
             else:
                 p_config[r_key] = template['parameters'][r_key]['default']
     return p_config
+
 
 def check_lengths(dictionary):
     """
@@ -370,6 +374,7 @@ def check_lengths(dictionary):
                     )
     return length
 
+
 #Once list lengths are checked, set them to length n_items
 def set_lengths(dictionary, n_items):
     """
@@ -384,6 +389,7 @@ def set_lengths(dictionary, n_items):
 
     return dictionary
 
+
 def check_type(value, type_list, accept_list):
     """
     Helper function for parsing config, checks wether param type matches accepted type
@@ -391,7 +397,7 @@ def check_type(value, type_list, accept_list):
 
     bad_val = None
     error = None
- 
+
     #If data is meant to be a list for each scan (eg. data_shape)
     if type_list[0] == list:
         if type(value) == list:
@@ -401,7 +407,7 @@ def check_type(value, type_list, accept_list):
                         return bad_val, error
         else:
             return value, "Param value must be a list!"
-        
+
     else:
         if type(value) == list:
             if accept_list:
@@ -415,8 +421,9 @@ def check_type(value, type_list, accept_list):
         else:
             if type(value) != type_list[0]:
                 return value, f"Param value must be {str(type_list[0])}!"
-            
+
     return bad_val, error
+
 
 def check_nested(val_list):
     """

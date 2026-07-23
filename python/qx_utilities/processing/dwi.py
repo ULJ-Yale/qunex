@@ -36,7 +36,6 @@ from datetime import datetime
 import qx_utilities.processing.core as pc
 
 
-
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
     ``dwi_f99 [... processing options]``
@@ -125,7 +124,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "dwi_f99")
+        pc.do_options_check(options, sinfo, "dwi_f99")
 
         # construct dirs
         dwi_f99_dir = os.path.join(
@@ -176,7 +175,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
         # check for existing F99 results
         target_file = os.path.join(f99reg_dir, "F99_anat_to_F99.nii.gz")
-        fullTest = None
+        full_test = None
 
         # run
         if run:
@@ -196,7 +195,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 comm = comm_pre + comm + comm_post
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(
+                r, endlog, _, failed = pc.run_external_for_file(
                     target_file,
                     comm,
                     "Running FSL F99",
@@ -206,7 +205,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=fullTest,
+                    full_test=full_test,
                     shell=True,
                     r=r,
                 )
@@ -220,7 +219,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
+                passed, _, r, failed = pc.check_run(
                     target_file, None, "FSL F99 " + session, r, overwrite=overwrite
                 )
 
@@ -397,7 +396,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "dwi_xtract")
+        pc.do_options_check(options, sinfo, "dwi_xtract")
 
         # get species
         species = "HUMAN"
@@ -533,7 +532,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
         # check for existing XTRACT results
         target_file = os.path.join(output_dir, "tracts", "vof_r", "density.nii.gz")
-        fullTest = None
+        full_test = None
 
         # run
         if run:
@@ -544,7 +543,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     os.remove(target_file)
 
                 # execute
-                r, _, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.run_external_for_file(
                     target_file,
                     comm,
                     "Running FSL XTRACT",
@@ -554,7 +553,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=fullTest,
+                    full_test=full_test,
                     shell=True,
                     r=r,
                 )
@@ -575,7 +574,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
+                passed, _, r, failed = pc.check_run(
                     target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite
                 )
 
@@ -604,7 +603,6 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "FSL XTRACT failed", 1)
 
     return (r, report)
-
 
 
 # -> @register_command(
@@ -717,7 +715,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "dwi_noddi_gpu")
+        pc.do_options_check(options, sinfo, "dwi_noddi_gpu")
 
         # script location
         cudimot_dir = ""
@@ -799,7 +797,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "CUDIMOT NODDI results already exist", 0)
                 else:
                     # execute
-                    r, _, _, failed = pc.runExternalForFile(
+                    r, _, _, failed = pc.run_external_for_file(
                         None,
                         comm,
                         "Running CUDIMOT NODDI modelling",
@@ -809,7 +807,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                         task=options["command_ran"],
                         logfolder=options["comlogs"],
                         logtags=[options["logtag"]],
-                        fullTest=None,
+                        full_test=None,
                         shell=True,
                         r=r,
                     )
@@ -829,7 +827,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
+                passed, _, r, failed = pc.check_run(
                     None, None, "CUDIMOT NODDI " + session, r, overwrite=overwrite
                 )
 

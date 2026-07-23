@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-13T14:11:03.919561+00:00'
+generated_at: '2026-07-23T13:02:13.673755+00:00'
 source:
     id: core
 commands:
@@ -158,11 +158,58 @@ commands:
     options: []
     returns: []
     origin: core
--   name: checkForFreeSurferData
+-   name: check_deprecated_commands
     aliases: []
-    path: qx_utilities.processing.fs.checkForFreeSurferData
+    path: qx_utilities.general.commands_support.check_deprecated_commands
     language: python
-    call: checkForFreeSurferData [... processing options]
+    call: check_deprecated_commands command
+    description: Check for deprecated commands, print a warning if needed and return the updated command name.
+    type: utility
+    args:
+    -   name: command
+        type: str
+        default: null
+        description: The command to check for deprecation.
+    options: []
+    returns:
+    -   name: new_command
+        type: str
+        default: null
+        description: The updated command name if it was deprecated, otherwise the original command name.
+    origin: core
+-   name: check_fidl
+    aliases: []
+    path: qx_utilities.general.fidl.check_fidl
+    language: python
+    call: check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
+    description: Print figures showing fidl events and their duration.
+    type: utility
+    args:
+    -   name: fidlfile
+        type: str
+        default: null
+        description: The path to the fidl file to plot. By default all the fidl files in the folder if none specified.
+    -   name: fidlfolder
+        type: str
+        default: .
+        description: The folder from which to plot the fidl files.
+    -   name: plotfile
+        type: str
+        default: null
+        description: The name of the file to save the plot to. Only makes sense if fidlfile is specified.
+    -   name: allcodes
+        type: bool
+        default: 'False'
+        description: Whether to plot line for all fidl codes even if no event has a particular code.
+    options: []
+    returns: []
+    origin: core
+-   name: check_for_freesurfer_data
+    aliases:
+    - checkForFreeSurferData
+    path: qx_utilities.processing.fs.check_for_freesurfer_data
+    language: python
+    call: check_for_freesurfer_data [... processing options]
     description: Check for (and optionally copy) existing FreeSurfer outputs into the session folder.
     type: processing.session
     args:
@@ -215,52 +262,6 @@ commands:
         type: str
         default: ''
         description: Path template to an aparc+aseg segmentation in T1 space.
-    returns: []
-    origin: core
--   name: check_deprecated_commands
-    aliases: []
-    path: qx_utilities.general.commands_support.check_deprecated_commands
-    language: python
-    call: check_deprecated_commands command
-    description: Check for deprecated commands, print a warning if needed and return the updated command name.
-    type: utility
-    args:
-    -   name: command
-        type: str
-        default: null
-        description: The command to check for deprecation.
-    options: []
-    returns:
-    -   name: new_command
-        type: str
-        default: null
-        description: The updated command name if it was deprecated, otherwise the original command name.
-    origin: core
--   name: check_fidl
-    aliases: []
-    path: qx_utilities.general.fidl.check_fidl
-    language: python
-    call: check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
-    description: Print figures showing fidl events and their duration.
-    type: utility
-    args:
-    -   name: fidlfile
-        type: str
-        default: null
-        description: The path to the fidl file to plot. By default all the fidl files in the folder if none specified.
-    -   name: fidlfolder
-        type: str
-        default: .
-        description: The folder from which to plot the fidl files.
-    -   name: plotfile
-        type: str
-        default: null
-        description: The name of the file to save the plot to. Only makes sense if fidlfile is specified.
-    -   name: allcodes
-        type: bool
-        default: 'False'
-        description: Whether to plot line for all fidl codes even if no event has a particular code.
-    options: []
     returns: []
     origin: core
 -   name: check_study
@@ -3764,7 +3765,7 @@ commands:
     origin: core
 -   name: hcp_apply_auto_reclean
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_apply_auto_reclean
+    path: qx_utilities.hcp.hcp_apply_auto_reclean.hcp_apply_auto_reclean
     language: python
     call: hcp_apply_auto_reclean [... processing options]
     description: Run the ApplyAutoRecleanPipeline step of HCP Pipeline (ApplyAutoRecleanPipeline.sh).
@@ -3865,7 +3866,7 @@ commands:
 -   name: hcp_asl
     aliases:
     - hcpa
-    path: qx_utilities.hcp.process_hcp.hcp_asl
+    path: qx_utilities.hcp.hcp_asl.hcp_asl
     language: python
     call: hcp_asl [... processing options]
     description: Run the HCP ASL Pipeline (https://github.com/physimals/hcp-asl).
@@ -3993,56 +3994,9 @@ commands:
         description: Name of the longitudinal template.
     returns: []
     origin: core
--   name: hcp_bedpostx
-    aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_bedpostx
-    language: python
-    call: hcp_bedpostx [... processing options]
-    description: Run the BedpostX GPU step on HCP diffusion outputs using `fslbedpostx_gpu`.
-    type: processing.session
-    args:
-    -   name: sinfo
-        type: null
-        default: null
-        description: null
-    -   name: options
-        type: null
-        default: null
-        description: null
-    -   name: overwrite
-        type: str
-        default: 'no'
-        description: Whether to overwrite existing data (yes) or not (no).
-    -   name: thread
-        type: null
-        default: null
-        description: null
-    options:
-    -   name: batchfile
-        type: str
-        default: ''
-        description: The batch.txt file with all the sessions information.
-    -   name: sessionsfolder
-        type: str
-        default: .
-        description: The path to the study/sessions folder.
-    -   name: parsessions
-        type: int
-        default: '1'
-        description: How many sessions to run in parallel.
-    -   name: hcp_suffix
-        type: str
-        default: ''
-        description: Specifies a suffix to the session id if multiple variants are run.
-    -   name: logfolder
-        type: str
-        default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored.
-    returns: []
-    origin: core
 -   name: hcp_cortical_thickness
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_cortical_thickness
+    path: qx_utilities.hcp.hcp_cortical_thickness.hcp_cortical_thickness
     language: python
     call: hcp_cortical_thickness [... processing options]
     description: Runs the curvature-corrected (folding-compensated) cortical thickness step of HCP Pipeline (CorrThick.sh).
@@ -4123,7 +4077,7 @@ commands:
     origin: core
 -   name: hcp_dedrift_and_resample
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_dedrift_and_resample
+    path: qx_utilities.hcp.hcp_dedrift_and_resample.hcp_dedrift_and_resample
     language: python
     call: hcp_dedrift_and_resample [... processing options]
     description: Run the DeDriftAndResample step of the HCP Pipeline.
@@ -4265,7 +4219,7 @@ commands:
     origin: core
 -   name: hcp_diffusion
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_diffusion
+    path: qx_utilities.hcp.hcp_diffusion.hcp_diffusion
     language: python
     call: hcp_diffusion [... processing options]
     description: Run the Diffusion step of HCP Pipeline (DiffPreprocPipeline.sh). This command uses GPUs by default so CUDA
@@ -4399,56 +4353,9 @@ commands:
         description: Name of the longitudinal template.
     returns: []
     origin: core
--   name: hcp_dtifit
-    aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_dtifit
-    language: python
-    call: hcp_dtifit [... processing options]
-    description: Run the DTI fitting step on HCP diffusion outputs using FSL `dtifit`.
-    type: processing.session
-    args:
-    -   name: sinfo
-        type: null
-        default: null
-        description: null
-    -   name: options
-        type: null
-        default: null
-        description: null
-    -   name: overwrite
-        type: str
-        default: 'no'
-        description: Whether to overwrite existing data (yes) or not (no).
-    -   name: thread
-        type: null
-        default: null
-        description: null
-    options:
-    -   name: batchfile
-        type: str
-        default: ''
-        description: The batch.txt file with all the sessions information.
-    -   name: sessionsfolder
-        type: str
-        default: .
-        description: The path to the study/sessions folder.
-    -   name: parsessions
-        type: int
-        default: '1'
-        description: How many sessions to run in parallel.
-    -   name: hcp_suffix
-        type: str
-        default: ''
-        description: Specifies a suffix to the session id if multiple variants are run.
-    -   name: logfolder
-        type: str
-        default: ''
-        description: The path to the folder where runlogs and comlogs are to be stored.
-    returns: []
-    origin: core
 -   name: hcp_fmri_stats
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_fmri_stats
+    path: qx_utilities.hcp.hcp_fmri_stats.hcp_fmri_stats
     language: python
     call: hcp_fmri_stats [... processing options]
     description: Runs the fMRI Statistics step of HCP Pipeline (fMRIStats.sh). Computes fMRI statistics including mTSNR, fCNR,
@@ -4547,7 +4454,7 @@ commands:
     origin: core
 -   name: hcp_fmri_surface
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_fmri_surface
+    path: qx_utilities.hcp.hcp_fmri_surface.hcp_fmri_surface
     language: python
     call: hcp_fmri_surface [... processing options]
     description: Run the fMRI Surface (GenericfMRISurfaceProcessingPipeline.sh) step of the HCP Pipeline .
@@ -4651,7 +4558,7 @@ commands:
     origin: core
 -   name: hcp_fmri_volume
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_fmri_volume
+    path: qx_utilities.hcp.hcp_fmri_volume.hcp_fmri_volume
     language: python
     call: hcp_fmri_volume [... processing options]
     description: Run the fMRI Volume (GenericfMRIVolumeProcessingPipeline.sh) step of HCP Pipeline.
@@ -4949,7 +4856,7 @@ commands:
     origin: core
 -   name: hcp_freesurfer
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_freesurfer
+    path: qx_utilities.hcp.hcp_freesurfer.hcp_freesurfer
     language: python
     call: hcp_freesurfer [... processing options]
     description: Run the FS step of the HCP Pipeline (FreeSurferPipeline.sh).
@@ -5077,7 +4984,7 @@ commands:
     origin: core
 -   name: hcp_icafix
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_icafix
+    path: qx_utilities.hcp.hcp_icafix.hcp_icafix
     language: python
     call: hcp_icafix [... processing options]
     description: Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
@@ -5238,7 +5145,7 @@ commands:
 -   name: hcp_long_freesurfer
     aliases:
     - hcp_lfs
-    path: qx_utilities.hcp.process_hcp.hcp_long_freesurfer
+    path: qx_utilities.hcp.hcp_long_freesurfer.hcp_long_freesurfer
     language: python
     call: hcp_long_freesurfer [... processing options]
     description: Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
@@ -5323,7 +5230,7 @@ commands:
 -   name: hcp_long_msmall
     aliases:
     - hcp_lmsm
-    path: qx_utilities.hcp.process_hcp.hcp_long_msmall
+    path: qx_utilities.hcp.hcp_long_msmall.hcp_long_msmall
     language: python
     call: hcp_long_msmall [... processing options]
     description: Run the HCP Longitudinal MSMAll Pipeline (MSMAllPipeline.sh with the longitudinal setup).
@@ -5430,7 +5337,7 @@ commands:
 -   name: hcp_long_post_freesurfer
     aliases:
     - hcp_lpfs
-    path: qx_utilities.hcp.process_hcp.hcp_long_post_freesurfer
+    path: qx_utilities.hcp.hcp_long_post_freesurfer.hcp_long_post_freesurfer
     language: python
     call: hcp_long_post_freesurfer [... processing options]
     description: Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
@@ -5595,7 +5502,7 @@ commands:
     origin: core
 -   name: hcp_long_transmit_bias
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_long_transmit_bias
+    path: qx_utilities.hcp.hcp_long_transmit_bias.hcp_long_transmit_bias
     language: python
     call: hcp_long_transmit_bias [... processing options]
     description: Run the HCP Longitudinal Transmit Bias Pipeline.
@@ -5749,7 +5656,7 @@ commands:
 -   name: hcp_make_average_dataset
     aliases:
     - hcp_mad
-    path: qx_utilities.hcp.process_hcp.hcp_make_average_dataset
+    path: qx_utilities.hcp.hcp_make_average_dataset.hcp_make_average_dataset
     language: python
     call: hcp_make_average_dataset [... processing options]
     description: Run the HCP make average dataset pipeline (MakeAverageDataset.sh).
@@ -5844,7 +5751,7 @@ commands:
     origin: core
 -   name: hcp_msmall
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_msmall
+    path: qx_utilities.hcp.hcp_msmall.hcp_msmall
     language: python
     call: hcp_msmall [... processing options]
     description: Run the MSMAll step of the HCP Pipeline (MSMAllPipeline.sh).
@@ -6021,57 +5928,9 @@ commands:
         description: The ending frame to choose from each fMRI run (inclusive), only applied for single runs.
     returns: []
     origin: core
--   name: hcp_parcellate_anat
-    aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_parcellate_anat
-    language: python
-    call: hcp_parcellate_anat [... processing options]
-    description: Parcellate an anatomical dense scalar (e.g. corrThickness, MyelinMap_BC) using a whole-brain parcellation
-        (``*.dlabel.nii``).
-    type: processing.session
-    args:
-    -   name: sinfo
-        type: null
-        default: null
-        description: null
-    -   name: options
-        type: null
-        default: null
-        description: null
-    -   name: overwrite
-        type: null
-        default: null
-        description: null
-    -   name: thread
-        type: null
-        default: null
-        description: null
-    options:
-    -   name: hcp_parcellate_input_type
-        type: str
-        default: null
-        description: Dense scalar type (e.g. ``MyelinMap_BC`` or ``corrThickness``).
-    -   name: hcp_parcellate_dlabel
-        type: str
-        default: null
-        description: Absolute path to the parcellation ``*.dlabel.nii`` file.
-    -   name: hcp_parcellate_output_name
-        type: str
-        default: null
-        description: Suffix name to append in the output filename.
-    -   name: hcp_parcellate_extract_data
-        type: flag
-        default: 'False'
-        description: If set, also write a ``.csv`` with the parcellated values.
-    -   name: hcp_suffix
-        type: str
-        default: ''
-        description: Optional suffix to the session id when multiple variants are run.
-    returns: []
-    origin: core
 -   name: hcp_post_fix
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_post_fix
+    path: qx_utilities.hcp.hcp_post_fix.hcp_post_fix
     language: python
     call: hcp_post_fix [... processing options]
     description: Run the PostFix step of HCP Pipeline (PostFix.sh).
@@ -6153,7 +6012,7 @@ commands:
     origin: core
 -   name: hcp_post_freesurfer
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_post_freesurfer
+    path: qx_utilities.hcp.hcp_post_freesurfer.hcp_post_freesurfer
     language: python
     call: hcp_post_freesurfer [... processing options]
     description: Run the PostFS step of the HCP Pipeline (PostFreeSurferPipeline.sh).
@@ -6307,7 +6166,7 @@ commands:
     origin: core
 -   name: hcp_pre_freesurfer
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_pre_freesurfer
+    path: qx_utilities.hcp.hcp_pre_freesurfer.hcp_pre_freesurfer
     language: python
     call: hcp_pre_freesurfer [... processing options]
     description: Run the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
@@ -6570,7 +6429,7 @@ commands:
     origin: core
 -   name: hcp_prep_long
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_prep_long
+    path: qx_utilities.hcp.hcp_prep_long.hcp_prep_long
     language: python
     call: hcp_prep_long [... processing options]
     description: Prepare the data for longitudinal processing with HCP longitudinal pipelines. Not needed if the starting
@@ -6619,7 +6478,7 @@ commands:
     origin: core
 -   name: hcp_reapply_fix
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_reapply_fix
+    path: qx_utilities.hcp.hcp_reapply_fix.hcp_reapply_fix
     language: python
     call: hcp_reapply_fix [... processing options]
     description: Run the ReApplyFix step of HCP Pipeline (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
@@ -6875,7 +6734,7 @@ commands:
     origin: core
 -   name: hcp_task_fmri_analysis
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_task_fmri_analysis
+    path: qx_utilities.hcp.hcp_task_fmri_analysis.hcp_task_fmri_analysis
     language: python
     call: hcp_task_fmri_analysis [... processing options]
     description: Run the Task fMRI analysis step of the HCP Pipeline (TaskfMRIAnalysis.sh).
@@ -7007,7 +6866,7 @@ commands:
 -   name: hcp_temporal_ica
     aliases:
     - hcp_tica
-    path: qx_utilities.hcp.process_hcp.hcp_temporal_ica
+    path: qx_utilities.hcp.hcp_temporal_ica.hcp_temporal_ica
     language: python
     call: hcp_temporal_ica [... processing options]
     description: Run the HCP temporal ICA pipeline (tICAPipeline.sh).
@@ -7202,7 +7061,7 @@ commands:
     origin: core
 -   name: hcp_transmit_bias_individual
     aliases: []
-    path: qx_utilities.hcp.process_hcp.hcp_transmit_bias_individual
+    path: qx_utilities.hcp.hcp_transmit_bias_individual.hcp_transmit_bias_individual
     language: python
     call: hcp_transmit_bias_individual [... processing options]
     description: Run the HCP Transmit Bias Individual Only Pipeline.
@@ -7906,7 +7765,7 @@ commands:
     origin: core
 -   name: map_hcp_data
     aliases: []
-    path: qx_utilities.hcp.process_hcp.map_hcp_data
+    path: qx_utilities.hcp.map_hcp_data.map_hcp_data
     language: python
     call: map_hcp_data [... processing options]
     description: Map the results of the HCP preprocessing to the QuNex folder structure.
@@ -8761,11 +8620,12 @@ commands:
     options: []
     returns: []
     origin: core
--   name: runBasicStructuralSegmentation
-    aliases: []
-    path: qx_utilities.processing.fs.runBasicStructuralSegmentation
+-   name: run_basic_structural_segmentation
+    aliases:
+    - runBasicStructuralSegmentation
+    path: qx_utilities.processing.fs.run_basic_structural_segmentation
     language: python
-    call: runBasicStructuralSegmentation [... processing options]
+    call: run_basic_structural_segmentation [... processing options]
     description: Run basic structural segmentation (BET + FAST) on NIL preprocessed images.
     type: processing.session
     args:
@@ -8812,11 +8672,12 @@ commands:
         description: Options passed to FSL FAST.
     returns: []
     origin: core
--   name: runFreeSurferFullSegmentation
-    aliases: []
-    path: qx_utilities.processing.fs.runFreeSurferFullSegmentation
+-   name: run_freesurfer_full_segmentation
+    aliases:
+    - runFreeSurferFullSegmentation
+    path: qx_utilities.processing.fs.run_freesurfer_full_segmentation
     language: python
-    call: runFreeSurferFullSegmentation [... processing options]
+    call: run_freesurfer_full_segmentation [... processing options]
     description: Run full FreeSurfer segmentation on NIL preprocessed images.
     type: processing.session
     args:
@@ -8855,11 +8716,12 @@ commands:
         description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
     returns: []
     origin: core
--   name: runFreeSurferSubcorticalSegmentation
-    aliases: []
-    path: qx_utilities.processing.fs.runFreeSurferSubcorticalSegmentation
+-   name: run_freesurfer_subcortical_segmentation
+    aliases:
+    - runFreeSurferSubcorticalSegmentation
+    path: qx_utilities.processing.fs.run_freesurfer_subcortical_segmentation
     language: python
-    call: runFreeSurferSubcorticalSegmentation [... processing options]
+    call: run_freesurfer_subcortical_segmentation [... processing options]
     description: Run subcortical-only FreeSurfer segmentation on NIL preprocessed images.
     type: processing.session
     args:

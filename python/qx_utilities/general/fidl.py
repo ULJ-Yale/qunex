@@ -32,7 +32,7 @@ class Usage(Exception):
         self.msg = msg
 
 
-def readLines(filename):
+def read_lines(filename):
     file = open(filename, 'r')
     s = file.read()
     s = s.replace("\r", "\n")
@@ -41,11 +41,11 @@ def readLines(filename):
     return s
 
 
-def boldInfo(boldfile):
+def bold_info(boldfile):
     if ".4dfp.img" in boldfile:
         ifhfile = boldfile.replace('.img', '.ifh')
         ifh = gi.ifhhdr(ifhfile)
-        hdr = ifh.toNIfTI()
+        hdr = ifh.to_nifti()
     elif ".nii" in boldfile:
         hdr = gi.niftihdr(boldfile)
     else:
@@ -54,20 +54,20 @@ def boldInfo(boldfile):
     return hdr
 
 
-def readFidl(fidlf):
-    s = readLines(fidlf)
+def read_fidl(fidlf):
+    s = read_lines(fidlf)
 
     header = s.pop(0)
-    TR = float(header.split()[0])
+    tr = float(header.split()[0])
 
     s = [e.split() for e in s]
     s = [[float(e[0])] + e[1:] for e in s if len(e) > 1]
 
-    return {'header': header, 'TR': TR, 'events': s, 'source': fidlf}
+    return {'header': header, 'TR': tr, 'events': s, 'source': fidlf}
 
 
-def readConc(concf, TR):
-    s = readLines(concf)
+def read_conc(concf, tr):
+    s = read_lines(concf)
     nfiles = int(s[0].split(":")[1])
     print(" ... %d bolds:" % (nfiles), end=" ")
     s = [e for e in s if "file:" in e]
@@ -91,7 +91,7 @@ def readConc(concf, TR):
     for boldfile in boldfiles:
         boldname = m.match(boldfile).group(1)
         print(boldname, end=" ")
-        length = boldInfo(boldfile).volumes * TR
+        length = bold_info(boldfile).volumes * tr
         bolds.append([boldname, start, length, boldfile])
         start += length
 
@@ -136,9 +136,9 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     fidlf = glob.glob(fidlroot + '*.fidl')
     fidlf.sort()
-    fidldata = [readFidl(f) for f in fidlf]
+    fidldata = [read_fidl(f) for f in fidlf]
     try:
-        TR = fidldata[0]['TR']
+        tr = fidldata[0]['TR']
     except:
         if len(fidldata) == 0:
             raise ge.CommandFailed("join_fidl", "No fidl files", "No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
@@ -148,7 +148,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     # ---> read the conc file, check if the number matches
 
     print("\n---> reading %s" % (os.path.basename(concfile)))
-    bolddata = readConc(concfile, TR)
+    bolddata = read_conc(concfile, tr)
 
     if len(fidldata) != len(bolddata):
         print("\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata])))
@@ -168,7 +168,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
             if len(sfidl['events'][-1]) > 2:
                 levent = sfidl['events'][-1][0] + float(sfidl['events'][-1][2])
             else:
-                levent = sfidl['events'][-1][0] - float(sfidl['events'][-1][1]) * TR
+                levent = sfidl['events'][-1][0] - float(sfidl['events'][-1][1]) * tr
         else:
             levent = 0
             w = "WARNING: Empty fidl file [%s]!" % (sfidl['source'])
@@ -266,7 +266,7 @@ def split_fidl(concfile, fidlfile, outfolder=None):
     """
     ``split_fidl concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
 
-    Splits a multi-bold fidl file into run specific bold files based on the 
+    Splits a multi-bold fidl file into run specific bold files based on the
     sequence of bold files in conc file and their lengths.
 
     ..  qx_command:
@@ -293,16 +293,16 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
     # ---> read the fidl and conc info
 
-    fidldata = readFidl(fidlfile)
+    fidldata = read_fidl(fidlfile)
     try:
-        TR = fidldata['TR']
+        tr = fidldata['TR']
     except:
         if len(fidldata) == 0:
             raise ge.CommandFailed("split_fidl", "No fidl file", "No fidl files correspond to %s!" % (concfile))
         else:
             raise ge.CommandFailed("split_fidl", "Processing error", "Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile))
 
-    bolddata = readConc(concfile, TR)
+    bolddata = read_conc(concfile, tr)
 
     # ---> start the split loop
 
@@ -393,5 +393,3 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
         raise ge.CommandFailed("check_fidl", "Running check_fidl.R failed", "Call: %s" % (" ".join(command)))
 
     return
-
-

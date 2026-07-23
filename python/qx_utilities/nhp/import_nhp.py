@@ -27,7 +27,6 @@ import zipfile
 import tarfile
 import glob
 import re
-from datetime import datetime
 
 # qx imports
 import qx_utilities.general.exceptions as ge
@@ -91,7 +90,6 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
     return [session, tfile]
 
 
-
 def import_nhp(
     sessionsfolder=None,
     inbox=None,
@@ -109,25 +107,25 @@ def import_nhp(
         type: utility
 
     Parameters:
-        --sessionsfolder (str, default '.'): 
+        --sessionsfolder (str, default '.'):
             The sessions folder where all the sessions are to be mapped to.
             It should be a folder within the <study folder>.
 
         --inbox (str, default '<sessionsfolder>/inbox/NHP'):
             The location of the NHP dataset or a dataset archive. It can be a folder
-            that contains the NHP datasets or compressed `.zip`  or `.tar.gz` 
-            packages that contain a single session or a multi-session dataset. 
-            For instance the user can specify "<path>/<nhp_file>.zip" or "<path>" 
-            to a folder that contains multiple packages. 
+            that contains the NHP datasets or compressed `.zip`  or `.tar.gz`
+            packages that contain a single session or a multi-session dataset.
+            For instance the user can specify "<path>/<nhp_file>.zip" or "<path>"
+            to a folder that contains multiple packages.
 
         --sessions (str, default ''):
-            An optional parameter that specifies a comma or pipe separated list 
-            of sessions from the inbox folder to be processed. Regular expression 
-            patterns can be used. If provided, only packets or folders within 
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Regular expression
+            patterns can be used. If provided, only packets or folders within
             the inbox that match the list of sessions will be processed. If `
-            inbox` is a file `sessions` will not be applied. Note: the session 
-            will match if the string is found within the package name or the 
-            session id. So "NHP" with match any zip file that contains string 
+            inbox` is a file `sessions` will not be applied. Note: the session
+            will match if the string is found within the package name or the
+            session id. So "NHP" with match any zip file that contains string
             "NHP" or any session id that contains "NHP"!
 
         --action (str, default 'link'):
@@ -146,8 +144,8 @@ def import_nhp(
             - copy (copy the specified archive to `<sessionsfolder>/archive/NHP`)
             - delete (delete the archive after processing if no errors were identified)
 
-            Please note that there can be an interaction with the `action` 
-            parameter. If files are moved during action, they will be missing if 
+            Please note that there can be an interaction with the `action`
+            parameter. If files are moved during action, they will be missing if
             `archive` is set to "move" or "copy.
 
 
@@ -336,7 +334,7 @@ def import_nhp(
             result = map_to_qunex(file, sessionsfolder, sessions, overwrite)
             if result:
                 tfile = result[1]
-                status, msg = gc.moveLinkOrCopy(
+                status, msg = gc.move_link_or_copy(
                     file, tfile, action, r="", prefix="    .. "
                 )
                 all_ok = all_ok and status
@@ -414,7 +412,7 @@ def import_nhp(
             subjectid = s.split("_")[0]
 
             # create session.txt
-            sout = gc.createSessionFile(
+            sout = gc.create_session_file(
                 "import_nhp", sfolder, s, subjectid, overwrite, prefix="    "
             )
 

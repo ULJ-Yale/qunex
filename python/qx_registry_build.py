@@ -505,7 +505,7 @@ def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
     root = root.resolve()
     out: List[CommandInfo] = []
 
-    for pyfile in iter_files(root, ".py"):        
+    for pyfile in iter_files(root, ".py"):
         try:
             source = pyfile.read_text(encoding="utf-8")
         except UnicodeDecodeError:
@@ -707,7 +707,7 @@ def index_matlab_commands(matlab_root: Path, *, source_id: str) -> List[CommandI
     matlab_root = matlab_root.resolve()
     out: List[CommandInfo] = []
 
-    for mfile in iter_files(matlab_root, ".m"):        
+    for mfile in iter_files(matlab_root, ".m"):
         try:
             text = mfile.read_text(encoding="utf-8")
         except UnicodeDecodeError:
@@ -841,7 +841,7 @@ def validate_unique_tokens(commands: List[CommandInfo]) -> None:
     def claim(token: str, cmd: CommandInfo, kind: str) -> None:
         if token in used:
             prev = used[token]
-            raise ge.CommandFailed('validate_unique_tokens', 
+            raise ge.CommandFailed('validate_unique_tokens',
                 f"Duplicate command token '{token}' ({kind}).\n"
                 f"Already used by: {prev.name} ({prev.language}, {prev.origin}, {prev.path})\n"
                 f"Conflicts with:  {cmd.name} ({cmd.language}, {cmd.origin}, {cmd.path})")
@@ -930,7 +930,7 @@ def build_qx_registry(
 
     Returns:
         --registry (tuple):
-            A tuple with elements: (core_registry, built_extensions) where 
+            A tuple with elements: (core_registry, built_extensions) where
             built_extensions = [(extension_id, registry_yaml_path), ...]
     """
     qunex_root = _get_qunexpath()
@@ -1003,7 +1003,7 @@ def build_qx_registry(
     built = sorted(built_exts.items(), key=lambda x: x[0])
 
     print(f"\n----------------------------------------------------------------\nRegistry built!")
-    
+
     if built:
         print(f"\n--> In addition to core, built {len(built)} extension registries:")
         for ext_id, path in built:
@@ -1014,4 +1014,3 @@ def build_qx_registry(
             print(f"    => {msg}")
 
     return core_reg, built
-

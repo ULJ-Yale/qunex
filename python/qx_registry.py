@@ -378,7 +378,6 @@ class CommandRegistry:
         """
         return [c.name for c in self.iter() if c.language in ("python", "matlab")]
 
-
     def to_qunex_list(self) -> List[Tuple[str, str, Optional[str], str]]:
         """
         List of (name, path, description, language) for every command.
@@ -488,4 +487,3 @@ class _RegistryProxy:
 
 
 qx_commands = _RegistryProxy()
-

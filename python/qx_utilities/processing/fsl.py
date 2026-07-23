@@ -32,7 +32,6 @@ from datetime import datetime
 import qx_utilities.processing.core as pc
 
 
-
 def fsl_feat(sinfo, options, overwrite=False, thread=0):
     """
     ``fsl_feat [... processing options]``
@@ -98,7 +97,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "fsl_feat")
+        pc.do_options_check(options, sinfo, "fsl_feat")
 
         # get feat file
         feat_file = None
@@ -143,7 +142,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             # run
             if options["run"] == "run":
                 # execute
-                r, _, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running FSL feat",
@@ -153,7 +152,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=None,
+                    full_test=None,
                     shell=True,
                     r=r,
                 )
@@ -166,7 +165,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
+                passed, _, r, failed = pc.check_run(
                     None, None, "FSL feat " + session, r, overwrite=overwrite
                 )
 
@@ -195,7 +194,6 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "FSL feat failed", 1)
 
     return (r, report)
-
 
 
 def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
@@ -263,7 +261,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sessions, "fsl_melodic")
+        pc.do_options_check(options, sessions, "fsl_melodic")
 
         # get input files
         input_files = []
@@ -369,7 +367,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
             # run
             if options["run"] == "run":
                 # execute
-                r, _, _, failed = pc.runExternalForFile(
+                r, _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running FSL melodic",
@@ -379,7 +377,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=None,
+                    full_test=None,
                     shell=True,
                     r=r,
                 )
@@ -392,7 +390,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
+                passed, _, r, failed = pc.check_run(
                     None, None, "FSL melodic " + sessions, r, overwrite=overwrite
                 )
 
