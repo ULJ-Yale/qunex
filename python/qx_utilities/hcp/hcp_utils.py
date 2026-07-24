@@ -20,6 +20,7 @@ Path resolution lives in ``hcp_paths``; the structured runlog lives in
 ``general.log``.
 """
 
+import json
 import os
 import os.path
 import re
@@ -28,6 +29,7 @@ from datetime import datetime
 
 import nibabel as nib
 
+import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.snapshots as gs
 import qx_utilities.processing.core as pc
@@ -1658,3 +1660,86 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         report["failed"].append(grouptargets)
 
     return {"r": log.text, "report": report}
+
+
+def handle_hcp_links(groupfolder, sessions, options, remove=False):
+    """
+    Creates/removes soft links to session HCP folders for commands that operate 
+    across multiple sessions
+    """
+
+    if not os.path.exists(groupfolder):
+        os.makedirs(groupfolder)
+
+    abs_sessionsfolder = os.path.abspath(options['sessionsfolder'])
+
+    for session in sessions:
+        session_id = session['id']
+        source_path = os.path.join(abs_sessionsfolder, session_id, 'hcp', session_id)
+        target_path = os.path.join(groupfolder, session_id + options["hcp_suffix"])
+
+        if not remove:
+            gc.link_or_copy(source_path, target_path, symlink=True)
+        else:
+            if os.path.exists(target_path):
+                os.unlink(target_path)
+
+    return
+
+
+def write_transmit_bias_voltages(sessions, options, voltages_file, log):
+    """
+    Write one TxRefAmp value per session into ``voltages_file``.
+
+    Used by hcp_transmit_bias_group_average_corrected_maps (phase 4) and by
+    the create_transmit_bias_voltages_file command.
+
+    The output file order matches the order of the supplied sessions.
+    """
+
+    values = []
+
+    for session in sessions:
+        subject = session["id"] + options["hcp_suffix"]
+
+        json_file = os.path.join(
+            options["sessionsfolder"],
+            session["id"],
+            "hcp",
+            subject,
+            "unprocessed",
+            "rfMRI_REST1_AP",
+            f"{subject}_rfMRI_REST1_AP.json",
+        )
+
+        if not os.path.exists(json_file):
+            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. JSON file not found for session {session['id']}: {json_file}")
+            return False
+
+        try:
+            with open(json_file, "r") as f:
+                metadata = json.load(f)
+        except Exception as e:
+            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. Failed to read JSON file for session {session['id']}: {json_file}. Error: {e}")
+            return False
+
+        if "TxRefAmp" not in metadata:
+            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. TxRefAmp not found for session {session['id']} in JSON file: {json_file}")
+            return False
+
+        values.append(str(metadata["TxRefAmp"]))
+
+    output_dir = os.path.dirname(voltages_file)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
+    try:
+        with open(voltages_file, "w") as f:
+            for value in values:
+                f.write(value + "\n")
+    except Exception as e:
+        log.raw(f"\n---> ERROR: Cannot write hcp_voltages file: {voltages_file}. Error: {e}")
+        return False
+
+    log.raw(f"\n---> Created hcp_voltages file: {voltages_file}")
+    return True

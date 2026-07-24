@@ -1109,6 +1109,8 @@ def main(args=None):
         "hcp_make_average_dataset",
         "fsl_melodic",
         "hcp_long_transmit_bias",
+        "hcp_transmit_bias_group_average_fit",
+        "hcp_transmit_bias_group_average_corrected_maps",
     ]
     if any(c in command for c in multi_commands):
         multi_session_command = True

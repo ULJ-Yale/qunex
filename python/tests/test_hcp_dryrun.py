@@ -46,6 +46,21 @@ from qx_utilities.hcp.hcp_reapply_fix import hcp_reapply_fix
 from qx_utilities.hcp.hcp_task_fmri_analysis import hcp_task_fmri_analysis
 from qx_utilities.hcp.hcp_temporal_ica import hcp_temporal_ica
 from qx_utilities.hcp.hcp_transmit_bias_individual import hcp_transmit_bias_individual
+from qx_utilities.hcp.hcp_transmit_bias_individual_align import (
+    hcp_transmit_bias_individual_align,
+)
+from qx_utilities.hcp.hcp_transmit_bias_individual_adjustment import (
+    hcp_transmit_bias_individual_adjustment,
+)
+from qx_utilities.hcp.hcp_transmit_bias_group_average_fit import (
+    hcp_transmit_bias_group_average_fit,
+)
+from qx_utilities.hcp.hcp_transmit_bias_group_average_corrected_maps import (
+    hcp_transmit_bias_group_average_corrected_maps,
+)
+from qx_utilities.hcp.create_transmit_bias_voltages_file import (
+    create_transmit_bias_voltages_file,
+)
 from qx_utilities.hcp.map_hcp_data import map_hcp_data
 
 from .utils import build_hcp_session, default_options
@@ -283,3 +298,54 @@ def test_long_transmit_bias_dry_run(session):
     report, status = hcp_long_transmit_bias(sinfo, options)
     _check_contract(report, status, sid="subj-01")
     assert "Transmit Bias" in report or "FS Pipeline" in report
+
+
+# ------------------------------------------------- transmit bias phases 1 - 4
+
+
+def test_transmit_bias_individual_align_dry_run(session):
+    sinfo, options = session()
+    report, status = hcp_transmit_bias_individual_align(sinfo, options)
+    _check_contract(report, status)
+    assert "Individual Align" in report
+
+
+def test_transmit_bias_group_average_fit_dry_run(session):
+    sinfo, options = session(multisession=True)
+    report, status = hcp_transmit_bias_group_average_fit(sinfo, options)
+    _check_contract(report, status)
+    assert "Group Average Fit" in report
+
+
+def test_transmit_bias_individual_adjustment_dry_run(session):
+    sinfo, options = session()
+    report, status = hcp_transmit_bias_individual_adjustment(sinfo, options)
+    _check_contract(report, status)
+    assert "Individual Adjustment" in report
+
+
+def test_transmit_bias_group_average_corrected_maps_dry_run(session):
+    sinfo, options = session(multisession=True)
+    report, status = hcp_transmit_bias_group_average_corrected_maps(sinfo, options)
+    _check_contract(report, status)
+    assert "Corrected Maps" in report
+
+
+def test_create_transmit_bias_voltages_file_requires_hcp_voltages(session):
+    """The voltages path is mandatory; without it the command must fail loudly."""
+    sinfo, options = session(multisession=True)
+    report, status = create_transmit_bias_voltages_file(sinfo, options)
+    _check_contract(report, status)
+    assert "hcp_voltages parameter is mandatory" in report
+    assert status[2] == 1
+
+
+def test_create_transmit_bias_voltages_file_dry_run(session, tmp_path):
+    """With --test the command reports the file it would create, and creates none."""
+    target = tmp_path / "voltages.txt"
+    sinfo, options = session(multisession=True, hcp_voltages=str(target))
+    report, status = create_transmit_bias_voltages_file(sinfo, options)
+    _check_contract(report, status)
+    assert str(target) in report
+    assert status[2] == 0
+    assert not target.exists()

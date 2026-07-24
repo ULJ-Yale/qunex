@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-23T17:12:11.497262+00:00'
+generated_at: '2026-07-24T11:22:39.352372+00:00'
 source:
     id: core
 commands:
@@ -974,6 +974,53 @@ commands:
         description: Path to the file which defines the subfolder structure. Set to "legacy" to use the legacy folder structure.
             By default, QuNex will create a very limited set of folders.
     options: []
+    returns: []
+    origin: core
+-   name: create_transmit_bias_voltages_file
+    aliases: []
+    path: qx_utilities.hcp.create_transmit_bias_voltages_file.create_transmit_bias_voltages_file
+    language: python
+    call: create_transmit_bias_voltages_file [... processing options]
+    description: Create the transmit bias voltages file for a group of sessions.
+    type: processing.study
+    args:
+    -   name: sessions
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: null
+        default: null
+        description: null
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: hcp_voltages
+        type: str
+        default: ''
+        description: Path of the voltages file to create. Mandatory.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
     returns: []
     origin: core
 -   name: create_ws_palm_design
@@ -7059,6 +7106,209 @@ commands:
         description: Extract all runs specified in hcp_tica_bolds, with output name matching the one from hcp_tica_mrfix_concat_name.
     returns: []
     origin: core
+-   name: hcp_transmit_bias_group_average_corrected_maps
+    aliases: []
+    path: qx_utilities.hcp.hcp_transmit_bias_group_average_corrected_maps.hcp_transmit_bias_group_average_corrected_maps
+    language: python
+    call: hcp_transmit_bias_group_average_corrected_maps [... processing options]
+    description: Runs the HCP Transmit Bias Pipeline Phase 4, Group Average Corrected Maps.
+    type: processing.study
+    args:
+    -   name: sessions
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+    -   name: hcp_regname
+        type: str
+        default: MSMSulc
+        description: Input registration name.
+    -   name: hcp_transmit_mode
+        type: str
+        default: ''
+        description: 'What type of transmit bias correction to apply, options and required inputs are:'
+    -   name: hcp_transmit_group_name
+        type: str
+        default: ''
+        description: Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)
+    -   name: hcp_average_myelin
+        type: str
+        default: ''
+        description: CIFTI file of group average uncorrected myelin.
+    -   name: hcp_outgroupname
+        type: str
+        default: ''
+        description: Output folder inside studyfolder
+    -   name: hcp_voltages
+        type: str
+        default: ''
+        description: Text file of scanner calibrated transmit voltages for each subject. If the file does not exist, QuNex
+            will attempt to create it by extracting TxrefAmp from each session's JSON metadata file.
+    -   name: hcp_afi_tr_one
+        type: str
+        default: ''
+        description: TR of first AFI frame.
+    -   name: hcp_afi_tr_two
+        type: str
+        default: ''
+        description: TR of second AFI frame.
+    -   name: hcp_afi_angle
+        type: str
+        default: ''
+        description: Target flip angle of AFI sequence.
+    -   name: hcp_lowresmesh
+        type: int
+        default: '32'
+        description: Mesh resolution.
+    -   name: hcp_matlab_mode
+        type: str
+        default: default detailed below
+        description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
+            will be used, outside 'interpreted' is the default.
+    returns: []
+    origin: core
+-   name: hcp_transmit_bias_group_average_fit
+    aliases: []
+    path: qx_utilities.hcp.hcp_transmit_bias_group_average_fit.hcp_transmit_bias_group_average_fit
+    language: python
+    call: hcp_transmit_bias_group_average_fit [... processing options]
+    description: Runs the HCP Transmit Bias Pipeline Phase 2, Group Average Fit.
+    type: processing.study
+    args:
+    -   name: sessions
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+    -   name: hcp_regname
+        type: str
+        default: MSMSulc
+        description: Input registration name.
+    -   name: hcp_transmit_mode
+        type: str
+        default: ''
+        description: 'What type of transmit bias correction to apply, options and required inputs are:'
+    -   name: hcp_transmit_group_name
+        type: str
+        default: ''
+        description: Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)
+    -   name: hcp_outgroupname
+        type: str
+        default: ''
+        description: Output folder inside studyfolder
+    -   name: hcp_gmwm_template
+        type: str
+        default: ''
+        description: Output file for GM+WM volume ROI
+    -   name: hcp_group_uncorrected_myelin
+        type: str
+        default: ''
+        description: Output cifti file for group average of uncorrected myelin
+    -   name: hcp_all_uncorrected_myelin
+        type: str
+        default: ''
+        description: Output cifti file for concatenated uncorrected myelin
+    -   name: hcp_manual_receive
+        type: str
+        default: 'false'
+        description: Whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans, default false
+    -   name: hcp_afi_tr_one
+        type: str
+        default: ''
+        description: TR of first AFI frame.
+    -   name: hcp_afi_tr_two
+        type: str
+        default: ''
+        description: TR of second AFI frame.
+    -   name: hcp_afi_angle
+        type: str
+        default: ''
+        description: Target flip angle of AFI sequence.
+    -   name: hcp_pt_reference_value_file
+        type: str
+        default: ''
+        description: output text file for PseudoTransmit reference value.
+    -   name: hcp_lowresmesh
+        type: int
+        default: '32'
+        description: Mesh resolution.
+    -   name: hcp_grayordinatesres
+        type: int
+        default: '2'
+        description: The size of voxels for the subcortical and cerebellar data in grayordinate space in mm.
+    -   name: hcp_matlab_mode
+        type: str
+        default: default detailed below
+        description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
+            will be used, outside 'interpreted' is the default.
+    returns: []
+    origin: core
 -   name: hcp_transmit_bias_individual
     aliases: []
     path: qx_utilities.hcp.hcp_transmit_bias_individual.hcp_transmit_bias_individual
@@ -7232,6 +7482,269 @@ commands:
         default: default detailed below
         description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
             will be used, outside 'interpreted' is the default.
+    returns: []
+    origin: core
+-   name: hcp_transmit_bias_individual_adjustment
+    aliases: []
+    path: qx_utilities.hcp.hcp_transmit_bias_individual_adjustment.hcp_transmit_bias_individual_adjustment
+    language: python
+    call: hcp_transmit_bias_individual_adjustment([... processing options])
+    description: Runs the HCP Transmit Bias Pipeline Phase 3, Individual Adjustment.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+    -   name: hcp_gmwm_template
+        type: str
+        default: ''
+        description: Location of the GMWMtemplate, the file containing GM+WM volume ROI.
+    -   name: hcp_regname
+        type: str
+        default: MSMSulc
+        description: Input registration name.
+    -   name: hcp_transmit_mode
+        type: str
+        default: ''
+        description: 'What type of transmit bias correction to apply, options and required inputs are:'
+    -   name: hcp_group_corrected_myelin
+        type: str
+        default: ''
+        description: The group-corrected myelin file from AFI or B1Tx.
+    -   name: hcp_afi_tr_one
+        type: str
+        default: ''
+        description: TR of first AFI frame.
+    -   name: hcp_afi_tr_two
+        type: str
+        default: ''
+        description: TR of second AFI frame.
+    -   name: hcp_afi_angle
+        type: str
+        default: ''
+        description: Target flip angle of AFI sequence.
+    -   name: hcp_myelin_template
+        type: str
+        default: ''
+        description: Expected transmit-corrected group-average myelin pattern (for testing correction parameters).
+    -   name: hcp_group_uncorrected_myelin
+        type: str
+        default: ''
+        description: The group-average uncorrected myelin file (to set the appropriate scaling of the myelin template).
+    -   name: hcp_pt_reference_value_file
+        type: str
+        default: ''
+        description: Text file containing the value in the pseudotransmit map where the flip angle best matches the intended
+            angle, from the Phase2 group script.
+    -   name: hcp_transmit_res
+        type: str
+        default: ''
+        description: Resolution to use for transmit field, default equal to hcp_grayordinatesres.
+    -   name: hcp_regname
+        type: str
+        default: MSMSulc
+        description: The name of the registration used.
+    -   name: hcp_lowresmesh
+        type: int
+        default: '32'
+        description: Mesh resolution.
+    -   name: hcp_grayordinatesres
+        type: int
+        default: '2'
+        description: The size of voxels for the subcortical and cerebellar data in grayordinate space in mm.
+    -   name: hcp_matlab_mode
+        type: str
+        default: default detailed below
+        description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
+            will be used, outside 'interpreted' is the default.
+    -   name: hcp_manual_receive
+        type: str
+        default: ''
+        description: Whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans.
+    returns: []
+    origin: core
+-   name: hcp_transmit_bias_individual_align
+    aliases: []
+    path: qx_utilities.hcp.hcp_transmit_bias_individual_align.hcp_transmit_bias_individual_align
+    language: python
+    call: hcp_transmit_bias_individual_align [... processing options]
+    description: Runs the HCP Transmit Bias Pipeline Phase 1, Individual Align.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where runlogs and comlogs are to be stored, if other than default.
+    -   name: hcp_regname
+        type: str
+        default: MSMSulc
+        description: Input registration name.
+    -   name: hcp_transmit_mode
+        type: str
+        default: ''
+        description: 'What type of transmit bias correction to apply, options and required inputs are:'
+    -   name: hcp_group_corrected_myelin
+        type: str
+        default: ''
+        description: The group-corrected myelin file from AFI or B1Tx.
+    -   name: hcp_afi_image
+        type: str
+        default: ''
+        description: Two-frame AFI image.
+    -   name: hcp_afi_tr_one
+        type: str
+        default: ''
+        description: TR of first AFI frame.
+    -   name: hcp_afi_tr_two
+        type: str
+        default: ''
+        description: TR of second AFI frame.
+    -   name: hcp_b1tx_magnitude
+        type: str
+        default: ''
+        description: B1Tx magnitude image (for alignment).
+    -   name: hcp_b1tx_phase
+        type: str
+        default: ''
+        description: B1Tx phase image.
+    -   name: hcp_b1tx_phase_divisor
+        type: str
+        default: '800'
+        description: What to divide the phase map by to obtain proportion of intended
+    -   name: hcp_pt_fmri_names
+        type: str
+        default: <list of all BOLDs>
+        description: A comma separated list of fMRI runs to use SE/SBRef files from. Set to a list of all BOLDs by default.
+    -   name: hcp_pt_bbr_threshold
+        type: str
+        default: '0.5'
+        description: Mincost threshold for reinitializing fMRI bbregister with flirt (may need to be increased for aging-related
+            reduction of gray/white contrast).
+    -   name: hcp_unproc_t1w_list
+        type: str
+        default: ''
+        description: A comma separated list of unprocessed T1w images, for correcting non-PSN data. You can set this to "auto"
+            and QuNex will try to fill it automatically.
+    -   name: hcp_unproc_t2w_list
+        type: str
+        default: ''
+        description: A comma separated list of unprocessed T2w images, for correcting non-PSN data. You can set this to "auto"
+            and QuNex will try to fill it automatically.
+    -   name: hcp_receive_bias_body_coil
+        type: str
+        default: ''
+        description: Image acquired with body coil receive, to be used with --hcp_receive_head_body_coil.
+    -   name: hcp_receive_bias_head_coil
+        type: str
+        default: ''
+        description: Matched image acquired with head coil receive.
+    -   name: hcp_raw_psn_t1w
+        type: str
+        default: ''
+        description: The bias-corrected version of the T1w image acquired with pre-scan normalize, which was used to generate
+            the original myelin maps. You can set this to "auto" and QuNex will try to fill it automatically.
+    -   name: hcp_raw_nopsn_t1w
+        type: str
+        default: ''
+        description: The uncorrected version of the --raw-psn-t1w image. You can set this to "auto" and QuNex will try to
+            fill it automatically.
+    -   name: hcp_transmit_res
+        type: str
+        default: ''
+        description: Resolution to use for transmit field, default equal to hcp_grayordinatesres.
+    -   name: hcp_myelin_mapping_fwhm
+        type: str
+        default: '5'
+        description: The fwhm value to use in -myelin-style [5]
+    -   name: hcp_old_myelin_mapping
+        type: flag
+        default: null
+        description: If myelin mapping was done using version 1.2.3 or earlier of wb_command, set this flag.
+    -   name: hcp_gdcoeffs
+        type: str
+        default: ''
+        description: Path to a file containing gradient distortion coefficients.
+    -   name: hcp_regname
+        type: str
+        default: MSMSulc
+        description: The name of the registration used.
+    -   name: hcp_lowresmesh
+        type: int
+        default: '32'
+        description: Mesh resolution.
+    -   name: hcp_grayordinatesres
+        type: int
+        default: '2'
+        description: The size of voxels for the subcortical and cerebellar data in grayordinate space in mm.
     returns: []
     origin: core
 -   name: import_bids
