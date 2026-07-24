@@ -305,8 +305,8 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
                     run = False
                 elif not os.path.isabs(options["hcp_pt_reference_value_file"]) and options["hcp_pt_reference_value_file"][0] != '~':
                     log.warning("hcp_pt_reference_value_file parameter is local")
-                    comm += f"                --reference-value-out={os.path.join(study_dir, outgroupname, options["hcp_pt_reference_value_file"])}"
-                    log.raw(f"\n--->    hcp_pt_reference_value_file parameter set to {os.path.join(study_dir, outgroupname, options["hcp_pt_reference_value_file"])}")
+                    comm += f"                --reference-value-out={os.path.join(study_dir, outgroupname, options['hcp_pt_reference_value_file'])}"
+                    log.raw(f"\n--->    hcp_pt_reference_value_file parameter set to {os.path.join(study_dir, outgroupname, options['hcp_pt_reference_value_file'])}")
                 else:
                     comm += f"                --reference-value-out={options['hcp_pt_reference_value_file']}"
 
