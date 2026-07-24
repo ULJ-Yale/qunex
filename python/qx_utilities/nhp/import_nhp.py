@@ -15,10 +15,8 @@ Functions for importing non-human primate (NHP) data into QuNex:
 The commands are accessible from the terminal using the gmri utility.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar.
-All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar.
+# All rights reserved.
 
 # general imports
 import os
@@ -27,11 +25,10 @@ import zipfile
 import tarfile
 import glob
 import re
-from datetime import datetime
 
 # qx imports
-import general.exceptions as ge
-import general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
 
 
 def map_to_qunex(file, sessionsfolder, sessions, overwrite):
@@ -46,7 +43,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
     try:
         if sessionsfolder[-1] == "/":
             sessionsfolder = sessionsfolder[:-1]
-    except:
+    except Exception:
         pass
 
     # find separator
@@ -71,7 +68,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
 
             # store data
             data_file = file_split[-1]
-    except:
+    except Exception:
         print("ERROR: Could not parse file:", file)
         return False
 
@@ -104,97 +101,76 @@ def import_nhp(
 
     Maps NHP data to the QuNex Suite file structure.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --sessionsfolder    The sessions folder where all the sessions are to be
-                        mapped to. It should be a folder within the
-                        <study folder>. [.]
+    Parameters:
+        --sessionsfolder (str, default '.'):
+            The sessions folder where all the sessions are to be mapped to.
+            It should be a folder within the <study folder>.
 
-    --inbox             The location of the NHP dataset. It can be a folder
-                        that contains the NHP datasets or compressed `.zip`
-                        or `.tar.gz` packages that contain a single
-                        session or a multi-session dataset. For instance the user
-                        can specify "<path>/<nhp_file>.zip" or "<path>" to
-                        a folder that contains multiple packages. The default
-                        location where the command will look for a NHP dataset
-                        is [<sessionsfolder>/inbox/NHP].
+        --inbox (str, default '<sessionsfolder>/inbox/NHP'):
+            The location of the NHP dataset or a dataset archive. It can be a folder
+            that contains the NHP datasets or compressed `.zip`  or `.tar.gz`
+            packages that contain a single session or a multi-session dataset.
+            For instance the user can specify "<path>/<nhp_file>.zip" or "<path>"
+            to a folder that contains multiple packages.
 
-    --sessions          An optional parameter that specifies a comma or pipe
-                        separated list of sessions from the inbox folder to be
-                        processed. Regular expression patterns can be used.
-                        If provided, only packets or folders within the inbox
-                        that match the list of sessions will be processed. If
-                        `inbox` is a file `sessions` will not be applied.
-                        Note: the session will match if the string is found
-                        within the package name or the session id. So
-                        "NHP" with match any zip file that contains string
-                        "NHP" or any session id that contains "NHP"!
+        --sessions (str, default ''):
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Regular expression
+            patterns can be used. If provided, only packets or folders within
+            the inbox that match the list of sessions will be processed. If `
+            inbox` is a file `sessions` will not be applied. Note: the session
+            will match if the string is found within the package name or the
+            session id. So "NHP" with match any zip file that contains string
+            "NHP" or any session id that contains "NHP"!
 
-    --action            How to map the files to QuNex structure. ["link"]
-                        The following actions are supported:
+        --action (str, default 'link'):
+            How to map files: link, copy, or move.
 
-                        - link (files will be mapped by creating hard links if
-                          possible, otherwise they will be copied)
-                        - copy (files will be copied)
-                        - move (files will be moved)
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
 
-    --overwrite         The parameter specifies what should be done with
-                        data that already exists in the locations to which NHP
-                        data would be mapped to ["no"]. Note that if overwrite
-                        is enabled, the previous data is deleted before the run,
-                        so in the case of a failed command run, previous results
-                        are lost. Options are:
+        --archive (str, default 'leave'):
+            What to do with the archive after mapping.
 
-                        - no (do not overwrite the data and skip processing of
-                          the session)
-                        - yes (remove exising files in `nii` folder and redo the
-                          mapping)
+            Options are:
 
-    --archive           What to do with the files after they were mapped.
-                        ["move"] Options are:
+            - leave (leave the specified archive where it is)
+            - move (move the specified archive to `<sessionsfolder>/archive/NHP`)
+            - copy (copy the specified archive to `<sessionsfolder>/archive/NHP`)
+            - delete (delete the archive after processing if no errors were identified)
 
-                        - leave (leave the specified archive where it is)
-                        - move (move the specified archive to
-                          `<sessionsfolder>/archive/NHP`)
-                        - copy (copy the specified archive to
-                          `<sessionsfolder>/archive/NHP`)
-                        - delete (delete the archive after processing if no
-                          errors were identified)
+            Please note that there can be an interaction with the `action`
+            parameter. If files are moved during action, they will be missing if
+            `archive` is set to "move" or "copy.
 
-                        Please note that there can be an
-                        interaction with the `action` parameter. If files are
-                        moved during action, they will be missing if `archive`
-                        is set to "move" or "copy".
 
-    OUTPUTS
-    =======
 
-    After running the `import_nhp` command the NHP dataset will be mapped
-    to the QuNex folder structure and image files will be prepared for further
-    processing along with required metadata.
+    Outputs:
+        After running the `import_nhp` command the NHP dataset will be mapped
+        to the QuNex folder structure and image files will be prepared for further
+        processing along with required metadata.
 
-    - dMRI images for each session will be stored in:
+        - dMRI images for each session will be stored in:
 
-        ``<sessionsfolder>/<session>/dMRI``
+            ``<sessionsfolder>/<session>/dMRI``
 
-    USE
-    ===
+    Notes:
+        The `import_nhp` command first inspects the location of the NHP dataset
+        (specified by the `inbox` parameter) for suitable data. When looking for
+        suitable data QuNex looks for dMRI subfolder inside each of the <session>
+        folders (whether in the `inbox` folder or in archived data). Meaning that
+        the data inside `inbox` folder or achives should be structured as:
 
-    The `import_nhp` command first inspects the location of the NHP dataset
-    (specified by the `inbox` parameter) for suitable data. When looking for
-    suitable data QuNex looks for dMRI subfolder inside each of the <session>
-    folders (whether in the `inbox` folder or in archived data). Meaning that
-    the data inside `inbox` folder or achives should be structured as:
+            ``/<session>/<dMRI>/<image files>``
 
-        ``/<session>/<dMRI>/<image files>``
+    Examples:
 
-    EXAMPLE CALL
-    ============
+        ::
 
-    ::
-
-        qunex import_nhp sessionsfolder=myStudy/sessions inbox=myData/NHP overwrite=yes
+            qunex import_nhp sessionsfolder=myStudy/sessions inbox=myData/NHP overwrite=yes
     """
 
     print("Running import_nhp")
@@ -303,14 +279,14 @@ def import_nhp(
                             fout.close()
 
                             # append mapped file
-                            if not result[0] in report:
+                            if result[0] not in report:
                                 report[result[0]] = [tfile]
                             else:
                                 report[result[0]].append(tfile)
                 z.close()
 
                 print("        ---> done!")
-            except:
+            except Exception:
                 print(
                     "           ERROR: Processing of zip package failed. Please check the package!"
                 )
@@ -338,14 +314,14 @@ def import_nhp(
                             fout.close()
 
                             # append mapped file
-                            if not result[0] in report:
+                            if result[0] not in report:
                                 report[result[0]] = [tfile]
                             else:
                                 report[result[0]].append(tfile)
                 tar.close()
 
                 print("        ---> done!")
-            except:
+            except Exception:
                 print(
                     "           ERROR: Processing of tar package failed. Please check the package!"
                 )
@@ -356,7 +332,7 @@ def import_nhp(
             result = map_to_qunex(file, sessionsfolder, sessions, overwrite)
             if result:
                 tfile = result[1]
-                status, msg = gc.moveLinkOrCopy(
+                status, msg = gc.move_link_or_copy(
                     file, tfile, action, r="", prefix="    .. "
                 )
                 all_ok = all_ok and status
@@ -364,7 +340,7 @@ def import_nhp(
                     errors += msg
                 else:
                     # append mapped file
-                    if not result[0] in report:
+                    if result[0] not in report:
                         report[result[0]] = [tfile]
                     else:
                         report[result[0]].append(tfile)
@@ -390,7 +366,7 @@ def import_nhp(
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
-            except:
+            except Exception:
                 print("---> %s failed!" % (archive))
         else:
             files = glob.glob(os.path.join(inbox, "*"))
@@ -412,7 +388,7 @@ def import_nhp(
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
-                except:
+                except Exception:
                     print("---> %s of %s failed!" % (archive, file))
 
     if not all_ok:
@@ -434,7 +410,7 @@ def import_nhp(
             subjectid = s.split("_")[0]
 
             # create session.txt
-            sout = gc.createSessionFile(
+            sout = gc.create_session_file(
                 "import_nhp", sfolder, s, subjectid, overwrite, prefix="    "
             )
 

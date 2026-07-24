@@ -11,11 +11,11 @@
 #
 # Wrapper to run dwi_pre_tractography function
 #
-# ## DESCRIPTION 
-#   
+# ## DESCRIPTION
+#
 # This script, dwi_pre_tractography.sh, implements ROI extraction
 # using a pre-specified ROI file in NIFTI or CIFTI format
-# 
+#
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
 # * QuNex Suite
@@ -25,7 +25,7 @@
 # See output of usage function: e.g. $./dwi_pre_tractography.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
-# 
+#
 # * The necessary input files are imaging data from previous processing and ROI file
 #
 #~ND~END~
@@ -38,12 +38,15 @@ usage() {
     cat << EOF
 ``dwi_pre_tractography``
 
-This function runs the Pretractography Dense trajectory space generation.
+Run the Pretractography Dense trajectory space generation.
 
-Note that this is a very quick function to run (less than 5min) so no overwrite
-options exist.
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Warning:
+    This is a very quick function to run (less than 5min) so no overwrite
+    options exist.
 
     It explicitly assumes the Human Connectome Project folder structure for
     preprocessing and completed diffusion and bedpostX processing.
@@ -56,6 +59,8 @@ Warning:
 
         <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX
 
+    This can be changed via the --diffusion_folder parameter.
+
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
@@ -63,11 +68,8 @@ Parameters:
     --sessions (str):
         Comma separated list of sessions to run.
 
-    --scheduler (str):
-        A string for the cluster scheduler (e.g. PBS or SLURM) followed by
-        relevant options e.g. for SLURM the string would look like this::
-
-            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+    --diffusion_folder (str):
+        Path to the diffusion folder.
 
 Examples:
     ::
@@ -104,14 +106,18 @@ configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 StudyFolder=$1
 Session=$2
 MSMflag=$3
+DiffusionFolder=$4
 
 WholeBrainTrajectoryLabels=${configdir}/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
-LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt 
+LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt
 RightCerebralTrajectoryLabels=${configdir}/RightCerebralFreeSurferTrajectoryLabelTableLut.txt
 FreeSurferLabels=${configdir}/FreeSurferAllLut.txt
 
-T1wDiffusionFolder="${StudyFolder}/${Session}/T1w/Diffusion"
-DiffusionResolution=`${FSLDIR}/bin/fslval ${T1wDiffusionFolder}/data pixdim1`
+if [[ -z ${DiffusionFolder} ]]; then
+    DiffusionFolder="${StudyFolder}/${Session}/T1w/Diffusion"
+fi
+
+DiffusionResolution=`${FSLDIR}/bin/fslval ${DiffusionFolder}/data pixdim1`
 DiffusionResolution=`printf "%0.2f" ${DiffusionResolution}`
 ResultsFolder="${StudyFolder}/${Session}/MNINonLinear/Results/Tractography"
 LowResMesh=32

@@ -16,18 +16,18 @@ compliant folder structure:
 The commands are accessible from the terminal using the gmri utility.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar.
-All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar.
+# All rights reserved.
 
-import os
-import shutil
 import collections
-import general.exceptions as ge
-import os.path
-import general.core as gc
 import json
+import os
+import os.path
+import shutil
+
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+from qx_utilities.hcp.hcp_utils import check_inline_parameter_use
 
 # ---- some definitions
 unwarp = {
@@ -39,7 +39,7 @@ unwarp = {
     "j-": "y-",
     "k-": "z-",
 }
-PEDirMap = {
+pe_dir_map = {
     "AP": "j-",
     "j-": "AP",
     "PA": "j",
@@ -49,23 +49,7 @@ PEDirMap = {
     "LR": "i-",
     "i-": "LR",
 }
-SEDirMap = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
-
-
-def checkInlineParameterUse(modality, parameter, options):
-    return any(
-        [
-            e in options["use_sequence_info"]
-            for e in [
-                "all",
-                parameter,
-                "%s:all" % (modality),
-                "%s:%s" % (modality, parameter),
-            ]
-        ]
-    )
-
-
+se_dir_map = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
 def setup_hcp(
     sourcefolder=".",
     targetfolder="hcp",
@@ -81,9 +65,11 @@ def setup_hcp(
     """
     ``setup_hcp [sourcefolder=.] [targetfolder=hcp] [sourcefile=session_hcp.txt] [check=yes] [existing=add] [hcp_filename=automated] [hcp_folderstructure=hcpls] [hcp_suffix=""] [use_sequence_info=all] [slice_timing_info=no]``
 
-    The command maps images from the sessions's nii folder into a folder
-    structure that conforms to the naming conventions used in the HCP minimal
+    Map session data into a folder structure compliant with HCP minimal
     preprocessing workflow.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -113,6 +99,7 @@ def setup_hcp(
 
         --existing (str, default 'add'):
             What to do if the hcp folder already exists.
+
             Options are:
 
             - 'abort'  ... abort setting up hcp folder,
@@ -157,7 +144,7 @@ def setup_hcp(
             specification (e.g. `all`) implies all more specific cases (e.g.
             `T1w:all`).
 
-        --slice_timing_info (str, default 'no')
+        --slice_timing_info (str, default 'no'):
             Whether to prepare ('yes') a file for each bold image with the
             slice timing information for fsl slicetimer or not ('no').
 
@@ -182,9 +169,11 @@ def setup_hcp(
             --FM-GE
                 Gradient echo field map image used for distortion correction
             --FM-Magnitude
-                Field mapping magnitude image used for distortion correction
+                Fieldmap magnitude image used for distortion correction
             --FM-Phase
-                Field mapping phase image used for distortion correction
+                Fieldmap phase image used for distortion correction
+            --FM-Real
+                Real fieldmap image used for distortion correction
             --boldref
                 Reference image for the following BOLD image, N should be added
                 to the end of the boldref (boldref<N>)
@@ -321,8 +310,8 @@ def setup_hcp(
         sid = inf["session"]
 
     bolds = collections.defaultdict(dict)
-    nT1w = 0
-    nT2w = 0
+    n_t1w = 0
+    n_t2w = 0
 
     filename = hcp_filename == "userdefined"
 
@@ -435,15 +424,15 @@ def setup_hcp(
         elif "PEDirection" in v and any(
             [
                 "boldref" in v["name"]
-                and checkInlineParameterUse("BOLD", "PEDirection", options),
+                and check_inline_parameter_use("BOLD", "PEDirection", options),
                 "bold" in v["name"]
-                and checkInlineParameterUse("BOLD", "PEDirection", options),
+                and check_inline_parameter_use("BOLD", "PEDirection", options),
                 v["name"] in ["mbPCASLhr", "PCASLhr", "ASL"]
-                and checkInlineParameterUse("ASL", "PEDirection", options),
+                and check_inline_parameter_use("ASL", "PEDirection", options),
             ]
         ):
-            if v["PEDirection"] in PEDirMap:
-                orient = "_" + PEDirMap[v["PEDirection"]]
+            if v["PEDirection"] in pe_dir_map:
+                orient = "_" + pe_dir_map[v["PEDirection"]]
             else:
                 print(
                     "  ... unknown PEDirection %s for %s %s [not using, please check]"
@@ -453,7 +442,7 @@ def setup_hcp(
         else:
             orient = ""
         if v["name"] == "T1w":
-            nT1w += 1
+            n_t1w += 1
             if os.path.exists(os.path.join(rawf, k + ".nii.gz")):
                 sfile = k + ".nii.gz"
             else:
@@ -462,12 +451,12 @@ def setup_hcp(
             if filename and "filename" in v:
                 tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
-                tfile = sid + "_T1w_MPR%d.nii.gz" % (nT1w)
+                tfile = sid + "_T1w_MPR%d.nii.gz" % (n_t1w)
 
             tfold = "T1w"
 
         elif v["name"] == "T2w":
-            nT2w += 1
+            n_t2w += 1
             if os.path.exists(os.path.join(rawf, k + ".nii.gz")):
                 sfile = k + ".nii.gz"
             else:
@@ -476,7 +465,7 @@ def setup_hcp(
             if filename and "filename" in v:
                 tfile = sid + "_" + v["filename"] + ".nii.gz"
             else:
-                tfile = sid + "_T2w_SPC%d.nii.gz" % (nT2w)
+                tfile = sid + "_T2w_SPC%d.nii.gz" % (n_t2w)
 
             tfold = "T2w"
 
@@ -534,6 +523,20 @@ def setup_hcp(
                 tfold = v["filename"] + fmnum + fmtail
             else:
                 tfile = sid + "_FieldMap_Phase.nii.gz"
+                tfold = "FieldMap" + fmnum + fmtail
+
+        elif v["name"] == "FM-Real":
+            if "fm" in v:
+                fmnum = v["fm"]
+            else:
+                fmnum = boldn
+            sfile = k + ".nii.gz"
+
+            if filename and "filename" in v:
+                tfile = sid + "_" + v["filename"] + ".nii.gz"
+                tfold = v["filename"] + fmnum + fmtail
+            else:
+                tfile = sid + "_FieldMap_Real.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
         elif "boldref" in v["name"]:
@@ -655,7 +658,6 @@ def setup_hcp(
             "RB1COR-Body",
             "RB1map",
         ]:
-
             sfile = k + ".nii.gz"
 
             if filename and "filename" in v:
@@ -735,12 +737,16 @@ def prepare_slice_timing(jsonfile, slicetimingfile):
     """
     ``prepare_slice_timing jsonfile=<path to json file> slicetimingfile=<path to slice timing file>``
 
-    The command reads the JSON sidecart file for slice timing information and
-    prepares a slice timing txt file compatible with fsl slicetimer.
+    Read the JSON sidecar file for slice timing information and
+    prepare a slice timing txt file compatible with fsl slicetimer.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
-        --json (str):
+        --jsonfile (str):
             A path to the JSON file that contains the slice timing information.
+
         --slicetimingfile (str):
             A path to the slice timing file to be created.
 
@@ -786,7 +792,7 @@ def prepare_slice_timing(jsonfile, slicetimingfile):
                 "  ... prepared slice timing file [%s]"
                 % (os.path.basename(slicetimingfile))
             )
-    except:
+    except Exception:
         print(
             f"WARNING: Could not write to slice timing file [{slicetimingfile}]. Please check your data and setting"
         )

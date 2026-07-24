@@ -1,8 +1,9 @@
+import getpass
 import os
 import tempfile
 from datetime import datetime
 
-from general.palm import run_palm
+from qx_utilities.general.palm import run_palm
 
 from .utils import get_test_data_path
 
@@ -11,7 +12,7 @@ def test_run_palm():
     """Test run_palm"""
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    temp_dir = os.path.join(tempfile.gettempdir(), 'fc_tests', timestamp)
+    temp_dir = os.path.join(tempfile.gettempdir(), f'fc_tests_{getpass.getuser()}', timestamp)
 
     run_palm(
         image=get_test_data_path("gbc_diff.dscalar.nii"),

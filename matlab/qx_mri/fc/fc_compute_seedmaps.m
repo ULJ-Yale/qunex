@@ -2,8 +2,11 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 
 %``fc_compute_seedmaps(flist, roiinfo, frames, targetf, options)``
 %
-%   Computes seed based functional connectivity maps for group and/or 
+%   Compute seed based functional connectivity maps for group and/or 
 %   individual subjects / sessions.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -29,7 +32,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %           A path to the names file specifying group based ROI for which to
 %           extract timeseries for. 
 %
-%       --frames (matrix | int | str, default ''):
+%       --frames (str | matrix | int, default ''):
 %           The definition of which frames to extract, specifically:
 %
 %           - a numeric array mask defining which frames to use (1) and
@@ -272,7 +275,7 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               Defauts to 'false'.
 %
 %   Returns:
-%       fcmaps
+%       --fcmaps (struct array):
 %           A structure array for all the extractions specified with the
 %           following fields:
 %

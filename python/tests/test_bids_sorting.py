@@ -1,6 +1,6 @@
 from .utils import get_test_data_path
 import json
-from general.bids import _sort_bids_images
+from qx_utilities.general.bids import _sort_bids_images
 import ast
 
 
@@ -14,11 +14,11 @@ def test_bids_sorting_bold_sbref():
         bids = ast.literal_eval(f.read())
 
     with open(orig_f) as f:
-        bidsData = json.load(f)
+        bids_data = json.load(f)
 
     with open(ans_f) as f:
-        bidsData_ans = json.load(f)
+        bids_data_ans = json.load(f)
 
-    _sort_bids_images(bidsData, bids)
-    print(json.dumps(bidsData))
-    assert bidsData == bidsData_ans
+    _sort_bids_images(bids_data, bids)
+    print(json.dumps(bids_data))
+    assert bids_data == bids_data_ans

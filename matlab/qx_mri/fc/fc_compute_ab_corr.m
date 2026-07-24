@@ -2,8 +2,11 @@ function [] = fc_compute_ab_corr(flist, sroi, troi, frames, root, options, verbo
 
 %``fc_compute_ab_corr(flist, sroi, troi, frames, root, options, verbose)``
 %
-%   Computes the correlation of each source ROI voxel with each target ROI
+%   Compute the correlation of each source ROI voxel with each target ROI
 %   voxel.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -31,7 +34,9 @@ function [] = fc_compute_ab_corr(flist, sroi, troi, frames, root, options, verbo
 %
 %       --options (str, default 'save:group|source_roi:1|target_roi:1'):
 %           A pipe separated '<key>:<value>|<key>:<value>' string
-%           specifying further options. The possible options are:
+%           specifying further options. 
+%
+%           The possible options are:
 %
 %           - save : group ('group' | 'individual')
 %               Whether to compute mean correlation across sessions ('group')

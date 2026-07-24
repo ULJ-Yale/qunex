@@ -9,11 +9,9 @@
 ``fidl.py``
 """
 
-"""
-Created by Grega Repovs on 2013-10-07.
-Adapted from previous join fidl python script
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2013-10-07.
+# Adapted from previous join fidl python script
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import re
 import os
@@ -21,8 +19,8 @@ import os.path
 import glob
 import subprocess
 
-import general.img as gi
-import general.exceptions as ge
+import qx_utilities.general.img as gi
+import qx_utilities.general.exceptions as ge
 
 ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
 
@@ -30,22 +28,11 @@ ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
-
-
-def readLines(filename):
-    file = open(filename, 'r')
-    s = file.read()
-    s = s.replace("\r", "\n")
-    s = s.replace("\n\n", "\n")
-    s = s.split("\n")
-    return s
-
-
-def boldInfo(boldfile):
+def bold_info(boldfile):
     if ".4dfp.img" in boldfile:
         ifhfile = boldfile.replace('.img', '.ifh')
         ifh = gi.ifhhdr(ifhfile)
-        hdr = ifh.toNIfTI()
+        hdr = ifh.to_nifti()
     elif ".nii" in boldfile:
         hdr = gi.niftihdr(boldfile)
     else:
@@ -54,20 +41,20 @@ def boldInfo(boldfile):
     return hdr
 
 
-def readFidl(fidlf):
-    s = readLines(fidlf)
+def read_fidl(fidlf):
+    s = gi.read_text_file_to_lines(fidlf)
 
     header = s.pop(0)
-    TR = float(header.split()[0])
+    tr = float(header.split()[0])
 
     s = [e.split() for e in s]
     s = [[float(e[0])] + e[1:] for e in s if len(e) > 1]
 
-    return {'header': header, 'TR': TR, 'events': s, 'source': fidlf}
+    return {'header': header, 'TR': tr, 'events': s, 'source': fidlf}
 
 
-def readConc(concf, TR):
-    s = readLines(concf)
+def read_conc(concf, tr):
+    s = gi.read_text_file_to_lines(concf)
     nfiles = int(s[0].split(":")[1])
     print(" ... %d bolds:" % (nfiles), end=" ")
     s = [e for e in s if "file:" in e]
@@ -91,7 +78,7 @@ def readConc(concf, TR):
     for boldfile in boldfiles:
         boldname = m.match(boldfile).group(1)
         print(boldname, end=" ")
-        length = boldInfo(boldfile).volumes * TR
+        length = bold_info(boldfile).volumes * tr
         bolds.append([boldname, start, length, boldfile])
         start += length
 
@@ -103,9 +90,10 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     """
     ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [outfolder=<output_folder>] [fidlname=<optional fidl name>]``
 
-    Combines all the fidl files matching root based on the information in conc
-    file. To determine the length of each bold file, it reads the bold files
-    specified in the conc file.
+    Combines all the fidl files matching root based on the information in conc file.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --concfile (str):
@@ -135,10 +123,10 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     fidlf = glob.glob(fidlroot + '*.fidl')
     fidlf.sort()
-    fidldata = [readFidl(f) for f in fidlf]
+    fidldata = [read_fidl(f) for f in fidlf]
     try:
-        TR = fidldata[0]['TR']
-    except:
+        tr = fidldata[0]['TR']
+    except Exception:
         if len(fidldata) == 0:
             raise ge.CommandFailed("join_fidl", "No fidl files", "No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
         else:
@@ -147,7 +135,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     # ---> read the conc file, check if the number matches
 
     print("\n---> reading %s" % (os.path.basename(concfile)))
-    bolddata = readConc(concfile, TR)
+    bolddata = read_conc(concfile, tr)
 
     if len(fidldata) != len(bolddata):
         print("\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata])))
@@ -167,7 +155,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
             if len(sfidl['events'][-1]) > 2:
                 levent = sfidl['events'][-1][0] + float(sfidl['events'][-1][2])
             else:
-                levent = sfidl['events'][-1][0] - float(sfidl['events'][-1][1]) * TR
+                levent = sfidl['events'][-1][0] - float(sfidl['events'][-1][1]) * tr
         else:
             levent = 0
             w = "WARNING: Empty fidl file [%s]!" % (sfidl['source'])
@@ -196,8 +184,8 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     out = open(jointfile, 'w')
     print(sfidl['header'], file=out)
 
-    for l in tfidl:
-        print("%g\t%s" % (l[0], "\t".join(l[1:])), file=out)
+    for ln in tfidl:
+        print("%g\t%s" % (ln[0], "\t".join(ln[1:])), file=out)
 
     out.close()
     return
@@ -207,8 +195,10 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
     """
     ``join_fidl_folder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder_in_which_to_save_joint_files>] [fidlname=<folder_with_fidl_files>]``
 
-    Uses join_fidl to join all the fidl files that match the name of each conc
-    file in the concfolder.
+    Join all the fidl files that match the name of each conc file in the concfolder.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --concfolder (str):
@@ -266,6 +256,9 @@ def split_fidl(concfile, fidlfile, outfolder=None):
     Splits a multi-bold fidl file into run specific bold files based on the
     sequence of bold files in conc file and their lengths.
 
+    ..  qx_command:
+        type: utility
+
     Parameters:
         --concfile (str):
             The path to the conc file.
@@ -287,16 +280,16 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
     # ---> read the fidl and conc info
 
-    fidldata = readFidl(fidlfile)
+    fidldata = read_fidl(fidlfile)
     try:
-        TR = fidldata['TR']
-    except:
+        tr = fidldata['TR']
+    except Exception:
         if len(fidldata) == 0:
             raise ge.CommandFailed("split_fidl", "No fidl file", "No fidl files correspond to %s!" % (concfile))
         else:
             raise ge.CommandFailed("split_fidl", "Processing error", "Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile))
 
-    bolddata = readConc(concfile, TR)
+    bolddata = read_conc(concfile, tr)
 
     # ---> start the split loop
 
@@ -321,9 +314,9 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
         # ---> print contents
 
-        for l in fidldata['events']:
-            if l[0] >= bstart and l[0] < bend:
-                print("%.2f\t%s" % (l[0] - bstart, "\t".join(l[1:])), file=ffile)
+        for ln in fidldata['events']:
+            if ln[0] >= bstart and ln[0] < bend:
+                print("%.2f\t%s" % (ln[0] - bstart, "\t".join(ln[1:])), file=ffile)
 
         # ---> close fidl file
 
@@ -338,17 +331,20 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     """
     ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]``
 
-    Prints figures showing fidl events and their duration.
+    Print figures showing fidl events and their duration.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
-        --fidlfile (str, default detailed below):
+        --fidlfile (str):
             The path to the fidl file to plot. By default all the fidl files in
             the folder if none specified.
 
         --fidlfolder (str, default '.'):
             The folder from which to plot the fidl files.
 
-        --plotfile (str, optional):
+        --plotfile (str):
             The name of the file to save the plot to. Only makes sense if
             fidlfile is specified.
 
@@ -384,5 +380,3 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
         raise ge.CommandFailed("check_fidl", "Running check_fidl.R failed", "Call: %s" % (" ".join(command)))
 
     return
-
-

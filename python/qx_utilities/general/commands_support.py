@@ -11,7 +11,7 @@
 Helper code for perarations of commands and their parameters
 """
 
-from general import extensions
+from qx_utilities.general import extensions
 
 # ==============================================================================
 #                                                            COMMAND DEPRECATION
@@ -159,8 +159,6 @@ deprecated_commands = {
     "hcp_msmall": ["hcp_MSMAll"],
     "hcp_dedrift_and_resample": ["hcp_DeDriftAndResample"],
     "hcp_diffusion": ["hcp_Diffusion", "hcpd"],
-    "hcp_dtifit": ["hcp_DTIFit"],
-    "hcp_bedpostx": ["hcp_Bedpostx"],
     "run_shell_script": ["runShellScript"],
     "create_bold_list": ["createBoldList"],
     "create_conc_list": ["createConcList"],
@@ -173,14 +171,29 @@ deprecated_commands = {
 # Add information provided in extensions
 deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
+
 # the function for checking whether a command is deprecated or not
 
-
+# @register_command(
+#     description="Checks for deprecated commands, remaps deprecated ones, and notifies the user.",
+#     type="utility")
 def check_deprecated_commands(command):
     """
-    check_deprecated_commands(options, deprecatedCommands)
-    Checks for deprecated commands, remaps deprecated ones
-    and notifies the user.
+    ``check_deprecated_commands command``
+
+    Check for deprecated commands, print a warning if needed and
+    return the updated command name.
+
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --command (str):
+        The command to check for deprecation.
+
+    Returns:
+        --new_command (str):
+        The updated command name if it was deprecated, otherwise the original command name.
     """
 
     # store the command

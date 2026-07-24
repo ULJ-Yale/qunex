@@ -24,10 +24,8 @@ There are additional support functions that are not to be used
 directly.
 """
 
-'''
-Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
-All rights reserved.
-'''
+# Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
+# All rights reserved.
 
 # general imports
 import os
@@ -35,17 +33,18 @@ import re
 import shutil
 
 # qx imports
-import general.core as gc
-import general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
 
 
 def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='leave', parelements=1):
     """
     ``bruker_to_dicom [... processing options]``
 
-    Converts bruker data into the dicom format which can be then imported into
-    QuNex through the import_dicom command.
+    Convert bruker data into DICOM format for QuNex import.
 
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -153,7 +152,6 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
                 if os.path.exists(log_path):
                     os.remove(log_path)
 
-
                 print(f'... importing to {target_path}')
                 print(f'... import log can be found at {log_path}')
 
@@ -169,7 +167,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
 
     # execute
     print('\n---> running conversions')
-    done = gc.runExternalParallel(calls, cores=parelements, prepend=' ... ')
+    done = gc.run_external_parallel(calls, cores=parelements, prepend=' ... ')
 
     # archive
     print()

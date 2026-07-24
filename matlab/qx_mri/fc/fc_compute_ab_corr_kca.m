@@ -2,8 +2,11 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 
 %``fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)``
 %
-%   Segments the voxels in smask based on their connectivity pattern with tmask 
+%   Segment the voxels in smask based on their connectivity pattern with tmask 
 %   voxels. Uses k-means to group voxels in smask.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -16,7 +19,7 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %       --tmask (str):
 %           Path to .names file for target mask roi definition.
 %
-%       --nc (cell array):
+%       --nc (numeric | cell array):
 %           List of the number(s) of clusters to compute k-means on.
 %
 %       --mask (int | logical | vector, default 0):
@@ -26,7 +29,9 @@ function [] = fc_compute_ab_corr_kca(flist, smask, tmask, nc, mask, root, option
 %           The root of the filename where results are to be saved.
 %
 %       --options (str, default 'g'):
-%           A string with:
+%           Whether to save group (g) or individual (i) results.
+%
+%           Options are:
 %
 %           - 'g' - save results based on group average correlations
 %           - 'i' - save individual sessions' results.

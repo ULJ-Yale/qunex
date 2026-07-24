@@ -5,18 +5,17 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Version 1.3.3 [QIO]
+# Version 1.5.0 [QIO]
 
-from __future__ import print_function, division
-import subprocess
-import os
-import sys
-import re
+from __future__ import division, print_function
+
 import math
-import time
+import os
+import re
 import shlex
-import tempfile
-
+import subprocess
+import sys
+import time
 from datetime import datetime
 
 
@@ -63,8 +62,9 @@ def schedule(
     output=None,
     parsessions=1,
     parelements=1,
-    batchlogsfolder=None,
+    logfolder=None,
     slurm_array=False,
+    timestamp=None,
 ):
     """
     qunex_command scheduler
@@ -210,7 +210,7 @@ def schedule(
     # parse settings
     try:
         jobname = scheduler_params.pop("jobname", "qunex_job")
-    except:
+    except Exception:
         raise CommandError(
             "schedule",
             "Misspecified parameter",
@@ -254,13 +254,11 @@ def schedule(
         for key, value in replace:
             command.replace("{{%s}}" % (key), value)
 
-    # logsfolder
-    if batchlogsfolder is not None:
-        logsfolder = batchlogsfolder
-    else:
-        logsfolder = os.path.join(os.path.expanduser("~"), "qunex")
-        if not os.path.exists(logsfolder):
-            os.makedirs(logsfolder)
+    # logfolder
+    if logfolder is None:
+        logfolder = os.path.join(os.path.expanduser("~"), "qunex")
+        if not os.path.exists(logfolder):
+            os.makedirs(logfolder)
 
     # parse output
     outputs = {"stdout": None, "stderr": None, "both": None, "return": None}
@@ -276,15 +274,13 @@ def schedule(
             outputs[k] = v
     else:
         # log name
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-
         if not slurm_array:
             logname = f"/qunex_container_{timestamp}.txt"
         else:
             logname = f"/qunex_container_job%a_{timestamp}.txt"
 
-        outputs["stdout"] = logsfolder + logname
-        outputs["stderr"] = logsfolder + logname
+        outputs["stdout"] = os.path.join(logfolder, logname)
+        outputs["stderr"] = os.path.join(logfolder, logname.replace(".txt", ".err"))
 
     if outputs["both"] is not None:
         outputs["stderr"] = outputs["both"]
@@ -403,10 +399,7 @@ def schedule(
         sout = subprocess.PIPE
 
     # store command
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    script_path = os.path.join(
-        batchlogsfolder, f"qunex_{scheduler_name}_{timestamp}.sh"
-    )
+    script_path = os.path.join(logfolder, f"qunex_{scheduler_name}_{timestamp}.sh")
     with open(script_path, "w", encoding="UTF-8") as f:
         f.write(s_command)
         f.write("\n")
@@ -576,14 +569,13 @@ def get_sessionids_from_list(filename):
     return sessionids
 
 
-def get_batchlogs_folder(rootfolder):
+def get_logs_folder(rootfolder, command, timestamp, legacy_logfolder):
     """
-    ``get_batchlogs_folder(args)``
+    ``get_logs_folder(args)``
 
-    Tries to deduce the location of study specific folders based on the provided
-    arguments. For internal use only.
+    Tries to deduce the location of study specific logs folder based on the
+    provided arguments.
     """
-
     # extract folder
     f = os.path.abspath(rootfolder)
 
@@ -607,11 +599,14 @@ def get_batchlogs_folder(rootfolder):
                 break
 
     # log folder
-    batchlogsfolder = None
-    if basefolder is not None:
-        batchlogsfolder = os.path.join(basefolder, "processing", "logs", "batchlogs")
+    if basefolder is None:
+        return None
+    elif legacy_logfolder:
+        logfolder = os.path.join(basefolder, "processing", "logs")
+    else:
+        logfolder = os.path.join(basefolder, "logs", f"{timestamp}_{command}")
 
-    return batchlogsfolder
+    return logfolder
 
 
 def main(args=None):
@@ -697,7 +692,9 @@ def main(args=None):
                         relevant parameters (--bind, --cuda, --bash_pre,
                         --bash_post, --nocleanenv, --cuda_path, --nv,
                         --containeropt) will be applied.
-
+    --logsfoder         Where to put the QuNex logs, will be set automatically
+                        to <qunexstudy>/logs if not provided, use "legacy" to
+                        set to the legacy variant <qunexstudy>/processing/logs.
 
     RESULTS
     =======
@@ -803,6 +800,7 @@ def main(args=None):
     sessionsfolder = None
     studyfolder = None
     sessionids = None
+    logfolder = None
     containeropt = ""
     output = None
     parinfo = None
@@ -860,6 +858,10 @@ def main(args=None):
                 k, batchfilter = arg.split("=", 1)
             elif arg.startswith("sessionids="):
                 k, sessionids = arg.split("=", 1)
+            elif arg.startswith("logfolder="):
+                logfolder = arg.split("=", 1)
+                logfolder = logfolder[1]
+                command += f"--logfolder={logfolder} "
             elif arg.startswith("overwrite="):
                 overwrite = arg.split("=", 1)
                 overwrite = overwrite[1]
@@ -890,6 +892,9 @@ def main(args=None):
             command += f"{arg} "
 
     fail = False
+
+    # timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if interactive and env_status:
         print("ERROR: Cannot use interactive mode with env_status!")
@@ -942,17 +947,31 @@ def main(args=None):
         )
         exit(1)
 
-    # logsfolder folder
+    # logfolder folder
     homedir = os.path.expanduser("~")
-    logsfolder = None
-    if sessionsfolder is not None:
-        logsfolder = get_batchlogs_folder(sessionsfolder)
-    elif studyfolder is not None:
-        logsfolder = get_batchlogs_folder(studyfolder)
-    if not logsfolder:
-        logsfolder = os.path.join(homedir, "qunex")
-        if not os.path.exists(logsfolder):
-            os.makedirs(logsfolder)
+    legacy_logfolder = False
+    if logfolder and logfolder == "legacy":
+        legacy_logfolder = True
+
+    if not logfolder and sessionsfolder is not None:
+        logfolder = get_logs_folder(
+            sessionsfolder, qx_command, timestamp, legacy_logfolder
+        )
+    elif not logfolder and studyfolder is not None:
+        if legacy_logfolder:
+            logfolder = os.path.join(studyfolder, "processing", "logs")
+        else:
+            logfolder = os.path.join(studyfolder, "logs", f"{timestamp}_{qx_command}")
+
+    # fallback to home
+    fallback_logfolder = False
+    if not logfolder:
+        fallback_logfolder = True
+        logfolder = os.path.join(homedir, "qunex")
+
+    if not os.path.exists(logfolder):
+        print(f"\n---> Log folder does not exist, creating it: {logfolder}\n")
+        os.makedirs(logfolder)
 
     if container is None:
         print(
@@ -980,7 +999,6 @@ def main(args=None):
     # interactive mode
     if interactive:
         print("\n---> Starting QuNex container in interactive mode...\n")
-
 
         # binds
         if bind is None:
@@ -1010,18 +1028,18 @@ def main(args=None):
 
             # nv
             if nv:
-                container_command += ["--nv "]
+                container_command += ["--nv"]
 
             container_command += [container.strip(), "bash", "-c"]
 
             # prepare startup script
 
             bash_script = "source /opt/qunex/env/qunex_environment.sh\n"
-            bash_script +=  'echo ""\n'
-            bash_script +=  'echo "QuNex environment loaded. You are now in an interactive QuNex container."\n'
-            bash_script +=  'echo ""\n'
-            bash_script +=  'export PS1="($(basename $CONDA_DEFAULT_ENV)) \\[\\e[0;36m\\][QuNex Container \\w]\\$\\[\\e[0m\\] "\n'
-            bash_script +=  "exec bash\n"
+            bash_script += 'echo ""\n'
+            bash_script += 'echo "QuNex environment loaded. You are now in an interactive QuNex container."\n'
+            bash_script += 'echo ""\n'
+            bash_script += 'export PS1="($(basename $CONDA_DEFAULT_ENV)) \\[\\e[0;36m\\][QuNex Container \\w]\\$\\[\\e[0m\\] "\n'
+            bash_script += "exec bash\n"
 
             print(f"Executing: {' '.join(container_command)}\n")
 
@@ -1167,6 +1185,7 @@ def main(args=None):
             array_commands = [
                 "hcp_pre_freesurfer",
                 "hcp_freesurfer",
+                "hcp_nhp_freesurfer",
                 "hcp_post_freesurfer",
                 "hcp_fmri_volume",
                 "hcp_fmri_surface",
@@ -1274,13 +1293,22 @@ def main(args=None):
                     if "run_turnkey" in qx_command:
                         qx_command += f'--sessions="{sessionids_array[i]}" '
 
-            # setup script
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-            # prepare the schedule file
-            script_path = os.path.join(
-                logsfolder, f"qunex_container_command_{timestamp}.sh"
-            )
+            # logs folder
+            if not fallback_logfolder:
+                qx_command += f'--logfolder="{logfolder}" '
 
+            # prepare the schedule file
+            if legacy_logfolder:
+                script_path = os.path.join(
+                    logfolder, "batchlogs", f"qunex_container_command_{timestamp}.sh"
+                )
+            else:
+                script_path = os.path.join(
+                    logfolder, f"qunex_container_command_{timestamp}.sh"
+                )
+
+            if not os.path.exists(os.path.dirname(script_path)):
+                os.makedirs(os.path.dirname(script_path))
             f = open(script_path, "w", encoding="UTF-8")
 
             print("source /opt/qunex/env/qunex_environment.sh", file=f)
@@ -1336,9 +1364,9 @@ def main(args=None):
                         ]
                         # pass variables into the Singularity/Apptainer container
                         container_command += "--env "
-                        container_command += ",".join(
-                            [f"{p}=${p}" for p in slurm_array_params]
-                        )
+                        container_command += ",".join([
+                            f"{p}=${p}" for p in slurm_array_params
+                        ])
                         # add trailing space
                         container_command += " "
 
@@ -1386,8 +1414,9 @@ def main(args=None):
                     output=output,
                     parsessions=parsessions,
                     parelements=parelements,
-                    batchlogsfolder=logsfolder,
+                    logfolder=logfolder,
                     slurm_array=slurm_array,
+                    timestamp=timestamp,
                 )
                 # sleep here for scheduling_delay
                 time.sleep(scheduling_delay)

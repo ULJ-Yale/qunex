@@ -13,25 +13,29 @@ preprocessing and analysis. The functions are for internal use
 and can not be called externally.
 """
 
+import glob
+import gzip
 import inspect
 import re
+import fnmatch
 import os.path
+import multiprocessing
 import os
+import os.path
 import shutil
 import subprocess
-import time
-import multiprocessing
-import glob
 import sys
-import types
+import time
 import traceback
-import gzip
-from datetime import datetime
+import types
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 
-import general.filelock as fl
-import general.exceptions as ge
-import general.commands_support as gcs
+from collections import UserList
+from copy import deepcopy
+
+import qx_utilities.general.filelock as fl
+import qx_utilities.general.exceptions as ge
 
 
 def print_qunex_header(timestamp=None, file=None):
@@ -53,6 +57,188 @@ def print_qunex_header(timestamp=None, file=None):
         print(header, file=file)
 
     return header
+
+
+# ==============================================================================
+#                                              SESSION AND SUBJECT LIST HANDLING
+
+# ------------------------------------------------------------------------------
+#                                                              SessionList class
+
+class SessionList(UserList):
+    """
+    ``SessionList``
+
+    A list subclass for session and subject data.
+    """
+    def __init__(self, initialdata=None):
+        if initialdata is None:
+            initialdata = []
+        super().__init__(initialdata)
+
+    def copy(self):
+        """
+        ``copy()``
+
+        Returns a deep copy of the SessionList.
+        """
+        return SessionList(deepcopy(self.data))
+
+    def filter_by_key(self, key, value):
+        """
+        ``filter_by_key(key, value)``
+
+        Filter the SessionList by key and value.
+        - If value is a list, matches any of the values.
+        - Values may be glob patterns (*, ?, [a-z]).
+        """
+        def matches(item_value, pattern):
+            # Exact match for non-strings
+            if not isinstance(item_value, str):
+                return item_value == pattern
+
+            # Glob match for strings
+            return item_value == pattern or fnmatch.fnmatchcase(item_value, pattern)
+
+        # Normalize value to list
+        if isinstance(value, str):
+            if "," in value:
+                values = [e.strip() for e in value.split(",")]
+            else:
+                values = [value]
+        # values = value if isinstance(value, list) else [value]
+
+        return SessionList([
+            deepcopy(e)
+            for e in self.data
+            if isinstance(e, dict)
+            and key in e
+            and any(matches(e[key], v) for v in values)
+        ])
+
+    def filter_by_string(self, filter):
+        """
+        Filter the SessionList by a filter string.
+
+        - Use '|' between <key>:<value> pairs for OR
+        Example: "group:pat*|task:rest"
+
+        - Use '&' between <key>:<value> pairs for AND
+        Example: "group:pat*&task:r?st"
+
+        Values are treated as globs (fnmatch):
+        * matches any chars, ? matches one char, [abc] matches one char in set.
+
+        Only one operator type may be used.
+        """
+        if filter is None or filter.strip() == "":
+            return SessionList([])  # or return a copy of self, if you prefer
+
+        fstr = filter.strip()
+
+        has_or = "|" in fstr
+        has_and = "&" in fstr
+        if has_or and has_and:
+            raise ge.CommandFailed(
+                "SessionList.filter_by_string",
+                "Invalid filter parameter",
+                "The provided filter parameter is invalid: '%s'" % (filter),
+                "Use either '|' (OR) or '&' (AND), but not both.",
+                "Please adjust the parameter!",
+            )
+
+        op = "|" if has_or else ("&" if has_and else None)
+        parts = [fstr] if op is None else fstr.split(op)
+
+        try:
+            filters = [[p.strip() for p in e.split(":", 1)] for e in parts]
+        except Exception:
+            filters = []
+
+        if any(len(e) != 2 or e[0] == "" or e[1] == "" for e in filters):
+            raise ge.CommandFailed(
+                "SessionList.filter_by_string",
+                "Invalid filter parameter",
+                "The provided filter parameter is invalid: '%s'" % (filter),
+                "The parameter should be a '%s' separated string of <key>:<value> pairs!"
+                % (op if op else "(single)"),
+                "Please adjust the parameter!",
+            )
+
+        def matches(item, key, pattern):
+            if not (isinstance(item, dict) and key in item):
+                return False
+
+            v = item[key]
+
+            # Exact match for non-strings
+            if not isinstance(v, str):
+                return v == pattern
+
+            # For strings: exact OR glob match
+            # (fnmatchcase is case-sensitive and does not depend on OS)
+            return v == pattern or fnmatch.fnmatchcase(v, pattern)
+
+        filtered_data = []
+        for s in self.data:
+            if op == "&":
+                ok = all(matches(s, key, pattern) for key, pattern in filters)
+            else:
+                ok = any(matches(s, key, pattern) for key, pattern in filters)
+
+            if ok:
+                filtered_data.append(deepcopy(s))
+
+        return SessionList(filtered_data)
+
+    def get_list_by_key(self, key, sep=","):
+        """
+        ``get_list_by_key(key, sep=",")``
+
+        Compile a list of unique values for the specified key. By default it returns
+        a comma separated string. If sep is None or empty string, it returns a list.
+        """
+        if sep is None or sep == "":
+            return list(dict.fromkeys(str(item[key]) for item in self.data if key in item))
+        else:
+            return sep.join(list(dict.fromkeys(str(item[key]) for item in self.data if key in item)))
+
+    def group_by_key(self, key):
+        """
+        ``group_by_key(key)``
+
+        Groups the SessionList by the specified key. Returns a list of SessionLists.
+        """
+        groups = {}
+
+        for item in self.data:
+            if isinstance(item, dict) and key in item:
+                group_value = item[key]
+                groups.setdefault(group_value, []).append(deepcopy(item))
+
+        return [SessionList(items) for items in groups.values()]
+
+    def dont_have_key(self, key):
+        """
+        ``dont_have_key(key)``
+
+        Reports the items that do not have the specified key or have it as None or empty.
+        Returns list of such items.
+        """
+        return SessionList([item for item in self.data if not (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
+
+    def have_key(self, key):
+        """
+        ``have_key(key)``
+
+        Returns all the items that have the specified key with a value that is not None or empty.
+        Returns list of such items.
+        """
+        return SessionList([item for item in self.data if (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
+
+
+# ------------------------------------------------------------------------------
+#                           Read session data from batch.txt or session.txt file
 
 
 def read_session_data(filename, verbose=False):
@@ -204,7 +390,7 @@ def read_session_data(filename, verbose=False):
             # done with the parameters block
             first = False
 
-    except:
+    except Exception:
         print(
             "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n"
             % (c, line)
@@ -212,6 +398,9 @@ def read_session_data(filename, verbose=False):
         raise
 
     return slist, gpref
+
+# ------------------------------------------------------------------------------
+#                                              Read session data from .list file
 
 
 def read_list(filename, verbose=False):
@@ -247,12 +436,15 @@ def read_list(filename, verbose=False):
         slist.append(session)
     return slist
 
+# ------------------------------------------------------------------------------
+#                                       Compile session list from various inputs
+
 
 def get_sessions_list(
-    listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False
+    list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False
 ):
     """
-    ``get_sessions_list(listString, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
+    ``get_sessions_list(list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
 
     Gets a list of sessions as an array of dictionaries.
 
@@ -264,7 +456,7 @@ def get_sessions_list(
 
         [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}]
 
-    The provided listString can be:
+    The provided list_string can be:
 
     - a comma, space or pipe separated list of session id codes,
     - a path to a batch file (identified by .txt extension),
@@ -279,37 +471,35 @@ def get_sessions_list(
     If filter is provided (not None), only sessions that match the filter will
     be returned. If sessionids is provided (not None), only sessions with
     matching id will be returned. If sessionsfolder is provided (not None),
-    sessions from a listString will be treated as glob patterns and all folders
+    sessions from a list_string will be treated as glob patterns and all folders
     that match the pattern in the sessionsfolder will be returned as session
     ids.
     """
 
     gpref = {}
 
-    listString = listString.strip()
+    list_string = list_string.strip()
 
-    if re.match(r".*\.list$", listString):
-        slist = read_list(listString, verbose=verbose)
+    if re.match(r".*\.list$", list_string):
+        slist = read_list(list_string, verbose=verbose)
 
-    elif os.path.isfile(listString):
-        slist, gpref = read_session_data(listString, verbose=verbose)
+    elif os.path.isfile(list_string):
+        slist, gpref = read_session_data(list_string, verbose=verbose)
 
     elif (
-        re.match(r".*\.txt$", listString) or "/" in listString
-    ) and sessionids is None:
+        re.match(r".*\.txt$", list_string) or "/" in list_string
+    ) and not sessionids:
         raise ValueError(
-            f"ERROR: The specified session file is not found and sessionids are not provided! [{listString}]!"
+            f"ERROR: The specified session file is not found and sessionids are not provided! [{list_string}]!"
         )
 
     else:
         if (
-            re.match(r".*\.txt$", listString)
-            or "/" in listString
-            and sessionids is not None
-        ):
-            listString = sessionids
+            re.match(r".*\.txt$", list_string) or "/" in list_string
+        ) and sessionids:
+            list_string = sessionids
 
-        slist = [e.strip() for e in re.split(r" +|,|\|", listString)]
+        slist = [e.strip() for e in re.split(r" +|,|\|", list_string)]
 
         if sessionsfolder is None:
             slist = [{"id": e} for e in slist]
@@ -320,48 +510,15 @@ def get_sessions_list(
                 nlist += glob.glob(os.path.join(sessionsfolder, s))
             slist = [{"id": os.path.basename(e)} for e in nlist]
 
-    # filter with sessionids
-    if sessionids is not None and sessionids.strip() != "":
-        sessionids = re.split(r" +|,|\|", sessionids)
-        filtered_slist = []
-        for s in slist:
-            if "id" in s and s["id"] in sessionids:
-                filtered_slist.append(s)
-            elif "session" in s and s["session"] in sessionids:
-                filtered_slist.append(s)
+    slist = SessionList(slist)
 
-        slist = filtered_slist
+    verbose=True
+
+    # filter with sessionids
+    slist = slist.filter_by_key("id", sessionids) if sessionids is not None and sessionids.strip() != "" else slist
 
     # filter with filter
-    if filter is not None and filter.strip() != "":
-        try:
-            filters = [[f.strip() for f in e.split(":")] for e in filter.split("|")]
-        except:
-            raise ge.CommandFailed(
-                "get_sessions_list",
-                "Invalid filter parameter",
-                "The provided filter parameter is invalid: '%s'" % (filter),
-                "The parameter should be a '|' separated  string of <key>:<value> pairs!",
-                "Please adjust the parameter!",
-            )
-
-        if any([len(e) != 2 for e in filters]):
-            raise ge.CommandFailed(
-                "get_sessions_list",
-                "Invalid filter parameter",
-                "The provided filter parameter is invalid: '%s'" % (filter),
-                "The parameter should be a '|' separated  string of <key>:<value> pairs!",
-                "Please adjust the parameter!",
-            )
-
-        filtered_slist = []
-        for s in slist:
-            for key, value in filters:
-                if key in s and (s[key] == value or re.match(value, s[key])):
-                    filtered_slist.append(s)
-                    break
-
-        slist = filtered_slist
+    slist = slist.filter_by_string(filter) if filter is not None and filter.strip() != "" else slist
 
     # are we inside a SLURM job array?
     if "SLURM_ARRAY_TASK_ID" in os.environ:
@@ -377,9 +534,12 @@ def get_sessions_list(
     return slist, gpref
 
 
-def deduceFolders(args):
+# ==============================================================================
+#                                                          EXECUTION AND LOGGING
+
+def deduce_folders(args, command=None, timestamp=None):
     """
-    ``deduceFolders(args)``
+    ``deduce_folders(args)``
 
     Tries to deduce the location of study specific folders based on the provided
     arguments. For internal use only.
@@ -416,10 +576,20 @@ def deduceFolders(args):
                             basefolder = f
                             break
 
-    if logfolder is None:
-        logfolder = os.path.abspath(".")
+    if logfolder is None and timestamp and command:
+        if basefolder:
+            logfolder = os.path.join(basefolder, "logs", f"{timestamp}_{command}")
+        else:
+            logfolder = os.path.join(os.path.abspath("."), f"{timestamp}_{command}")
+    elif logfolder == "legacy" or (not timestamp and not command):
         if basefolder:
             logfolder = os.path.join(basefolder, "processing", "logs")
+        else:
+            logfolder = os.path.abspath(".")
+
+    if logfolder is None:
+        homedir = os.path.expanduser("~")
+        logfolder = os.path.join(homedir, "qunex")
 
     return {
         "basefolder": basefolder,
@@ -428,9 +598,9 @@ def deduceFolders(args):
     }
 
 
-def runExternalParallel(calls, cores=None, prepend=""):
+def run_external_parallel(calls, cores=None, prepend=""):
     """
-    ``runExternalParallel(calls, cores=None, prepend='')``
+    ``run_external_parallel(calls, cores=None, prepend='')``
 
     Runs external commands specified in 'calls' in parallel utilizing all the
     available or the number of cores specified in 'cores'.
@@ -457,19 +627,19 @@ def runExternalParallel(calls, cores=None, prepend=""):
     Examples:
         ::
 
-            runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
+            run_external_parallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
             cores=1, prepend=' ... ')
     """
 
     if cores is None or cores in ["all", "All", "ALL"]:
         try:
             cores = len(os.sched_getaffinity(0))
-        except:
+        except Exception:
             cores = multiprocessing.cpu_count()
     else:
         try:
             cores = int(cores)
-        except:
+        except Exception:
             cores = 1
 
     running = []
@@ -540,7 +710,7 @@ def runExternalParallel(calls, cores=None, prepend=""):
                             + "started running %s at %s"
                             % (call["name"], str(datetime.now()).split(".")[0])
                         )
-                except:
+                except Exception:
                     print(
                         prepend
                         + "ERROR: failed to start running %s. Please check your environment!"
@@ -622,9 +792,9 @@ def record(response):
     results.append(response)
 
     with lock:
-        name, result, targetLog, prepend = response
-        if targetLog:
-            see = " [log: %s]." % (targetLog)
+        name, result, target_log, prepend = response
+        if target_log:
+            see = " [log: %s]." % (target_log)
         else:
             see = "."
 
@@ -662,16 +832,15 @@ class Logger(object):
         pass
 
 
-def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
+def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
     """
-    ``runWithLog(function, args=None, logfile=None, name=None)``
+    ``run_with_log(function, args=None, logfile=None, name=None)``
 
     Runs a function with the arguments by redirecting standard output and
     standard error to the specified log file.
 
     For internal use only.
     """
-
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if name is None:
@@ -733,14 +902,19 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         ):
             del args["logfolder"]
         result = function(**args)
+    except ge.CommandError as e:
+        with lock:
+            print(ge.report_command_error(name, e))
+            print
+        result = e
     except ge.CommandNull as e:
         with lock:
-            print(ge.reportCommandNull(name, e))
+            print(ge.report_command_null(name, e))
             print
         result = e
     except ge.CommandFailed as e:
         with lock:
-            print(ge.reportCommandFailed(name, e))
+            print(ge.report_command_failed(name, e))
             print
         result = e
     except Exception as e:
@@ -760,7 +934,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         result = False
 
     if not result:
-        print("\n---> Successful completion of task")
+        print(f"\n---> Successful completion of task at {datetime.now()}")
 
     if logfile:
         sys.stdout.close()
@@ -776,18 +950,8 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
         os.rename(os.path.join(logfolder, "tmp_" + logname), comlogname)
 
         # create runlog
-        if "comlog" in logfolder:
-            logfolder = logfolder.replace("comlog", "runlog")
-
-            if not os.path.exists(logfolder):
-                try:
-                    os.makedirs(logfolder)
-                except:
-                    r = "\n\nERROR: Could not create folder for logfile [%s]!" % (
-                        logfolder
-                    )
-                    print(r)
-                    raise ge.CommandFailed(function="runWithLog", error=r)
+        if "comlogs" in logfolder:
+            logfolder = logfolder.replace("comlogs", "")
 
         # runlog file
         runlogname = "Log-" + logname
@@ -808,15 +972,19 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
             print("session: %s\n" % split[1])
 
         # print command name
-        lf.write("qunex %s\n" % split[0])
-        for k, v in args.items():
-            lf.write('  --%s="%s"\n' % (k, v))
+        lf.write("qunex %s \\\n" % split[0])
+        arg_items = list(args.items())
+        for i, (k, v) in enumerate(arg_items):
+            if i < len(arg_items) - 1:
+                lf.write('  --%s="%s" \\\n' % (k, v))
+            else:
+                lf.write('  --%s="%s"\n' % (k, v))
 
         # print final status
         if result:
             lf.write("\nERROR running %s\n" % name)
         else:
-            lf.write("\n---> Successful completion of task\n")
+            lf.write(f"\n---> Successful completion of task at {datetime.now()}\n")
 
         lf.close()
     else:
@@ -825,9 +993,9 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=""):
     return name, result, comlogname, prepend
 
 
-def runInParallel(calls, cores=None, prepend=""):
+def run_in_parallel(calls, cores=None, prepend=""):
     """
-    ``runInParallel(calls, cores=None, prepend="")``
+    ``run_in_parallel(calls, cores=None, prepend="")``
 
     Runs functions specified in 'calls' in parallel utilizing all the available
     or the number of cores specified in 'cores'.
@@ -853,7 +1021,7 @@ def runInParallel(calls, cores=None, prepend=""):
 
     ::
 
-        runInParallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'sout': 'sort_dicom.log'}, cores=1, prepend=' ... ')
+        run_in_parallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'sout': 'sort_dicom.log'}, cores=1, prepend=' ... ')
     """
 
     global results
@@ -863,14 +1031,14 @@ def runInParallel(calls, cores=None, prepend=""):
     else:
         try:
             cores = int(cores)
-        except:
+        except Exception:
             cores = 1
 
     results = []
     with ProcessPoolExecutor(max_workers=cores) as executor:
         for call in calls:
             future = executor.submit(
-                runWithLog,
+                run_with_log,
                 call["function"],
                 call["args"],
                 call["logfile"],
@@ -882,11 +1050,11 @@ def runInParallel(calls, cores=None, prepend=""):
     return results
 
 
-def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
+def check_files(test_folder, spec_file, fields=None, report=None, append=False):
     """
-    ``checkFiles(testFolder, specFile, fields=None, report=None, append=False)``
+    ``check_files(test_folder, spec_file, fields=None, report=None, append=False)``
 
-    Check the testFolder for presence of files as specified in specFile, which
+    Check the test_folder for presence of files as specified in spec_file, which
     lists files one per line with space delimited paths. Additionally an array
     of key-value pairs can be provided. If present every instance of {<key>}
     will be replaced by <value>. If report is specified, a report will be
@@ -900,17 +1068,17 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     if report:
         if type(report) is types.FileType:
             rout = report
-            fileClose = False
+            file_close = False
         else:
-            fileClose = True
+            file_close = True
             try:
                 if append:
                     rout = open(report, "a")
                 else:
                     rout = open(report, "w")
-            except:
+            except Exception:
                 raise ge.CommandFailed(
-                    "checkFiles",
+                    "check_files",
                     "Report file could not be opened",
                     "Failed to open a report file for writing: %s" % (report),
                     "Please check your settings and paths!",
@@ -922,48 +1090,48 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
 
     # --- initial tests
 
-    if not os.path.exists(testFolder):
+    if not os.path.exists(test_folder):
         print(
             "The folder to be tested does not exist: %s \nPlease check your settings and paths!"
-            % (testFolder),
+            % (test_folder),
             file=rout,
         )
         print(
             "\n#-----------------=== End Full File Report ===----------------------",
             file=rout,
         )
-        if fileClose:
+        if file_close:
             rout.close()
         raise ge.CommandFailed(
-            "checkFiles",
+            "check_files",
             "Folder to test does not exist",
-            "The folder to be tested does not exist: %s" % (testFolder),
+            "The folder to be tested does not exist: %s" % (test_folder),
             "Please check your settings and paths!",
         )
 
-    if not os.path.exists(specFile):
+    if not os.path.exists(spec_file):
         print(
             "The specification file to test folder against does not exist: %s\nPlease check your settings and paths!"
-            % (specFile),
+            % (spec_file),
             file=rout,
         )
         print(
             "\n#-----------------=== End Full File Report ===----------------------",
             file=rout,
         )
-        if fileClose:
+        if file_close:
             rout.close()
         raise ge.CommandFailed(
-            "checkFiles",
+            "check_files",
             "Specification file does not exist",
             "The specification file to test folder against does not exist: %s"
-            % (specFile),
+            % (spec_file),
             "Please check your settings and paths!",
         )
 
     # --- read the spec
 
-    files = open(specFile, "r").read()
+    files = open(spec_file, "r").read()
 
     if fields:
         for key, value in fields:
@@ -980,17 +1148,17 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     present = []
     missing = []
     for testfiles in files:
-        fileMissing = True
+        file_missing = True
         for testfile in testfiles:
-            test = [testFolder] + testfile
+            test = [test_folder] + testfile
             tfile = os.path.join(*test)
             if os.path.exists(tfile):
                 present.append(tfile)
-                fileMissing = False
+                file_missing = False
                 if report:
                     print(". " + tfile, file=rout)
                 break
-        if fileMissing:
+        if file_missing:
             missing.append(tfile)
             if report:
                 print("X " + tfile, file=rout)
@@ -1000,7 +1168,7 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
             "\n#-----------------=== End Full File Report ===----------------------",
             file=rout,
         )
-        if fileClose:
+        if file_close:
             rout.close()
 
     status = len(missing) == 0
@@ -1008,9 +1176,9 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     return status, present, missing
 
 
-def printAndLog(*args, **kwargs):
+def print_and_log(*args, **kwargs):
     """
-    ``printAndLog(*args, **kwargs)``
+    ``print_and_log(*args, **kwargs)``
 
     Prints all that is given as nonpositional argument to the standard output.
 
@@ -1047,9 +1215,9 @@ def printAndLog(*args, **kwargs):
             toclose.close()
 
 
-def getLogFile(folders=None, tags=None):
+def get_log_file(folders=None, tags=None):
     """
-    ``getLogFile(folders=None, tags=None)``
+    ``get_log_file(folders=None, tags=None)``
 
     Creates a log file in the comlogs folder.
 
@@ -1074,11 +1242,11 @@ def getLogFile(folders=None, tags=None):
 
     """
 
-    folders = deduceFolders(folders)
+    folders = deduce_folders(folders)
 
     if "logfolder" not in folders:
         raise ge.CommandFailed(
-            "getLogFile",
+            "get_log_file",
             "Logfolder not found",
             "Could not deduce the location of the log folder based on the provided information!",
         )
@@ -1097,9 +1265,9 @@ def getLogFile(folders=None, tags=None):
     return logname, logfile
 
 
-def closeLogFile(logfile=None, logname=None, status="done"):
+def close_log_file(logfile=None, logname=None, status="done"):
     """
-    ``closeLogFile(logfile=None, logname=None, status="done")``
+    ``close_log_file(logfile=None, logname=None, status="done")``
 
     Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at
     the start of the logname to the provided status.
@@ -1152,7 +1320,21 @@ def link_or_copy(
     source, target, r=None, status=None, name=None, prefix=None, symlink=False
 ):
     """
-    link_or_copy - documentation not yet available.
+    Hard-link a file, falling back to a copy, and report the outcome.
+
+    Parameters:
+        source (str): path to the file to map.
+        target (str): destination path.
+        r (str | None): report so far; when given, the mapping outcome is
+            appended and returned alongside the status.
+        status (bool | None): running status carried through (defaults True).
+        name (str | None): human readable name used in the report message.
+        prefix (str | None): prefix for the report message (defaults ``"\n ... "``).
+        symlink (bool): create a symbolic link instead of a hard link.
+
+    Returns:
+        bool | tuple: the status when ``r`` is None, otherwise
+        ``(status, report_with_outcome_appended)``.
     """
     if status is None:
         status = True
@@ -1185,14 +1367,14 @@ def link_or_copy(
             else:
                 return (status and True, "%s%s%s mapped" % (r, prefix, name))
 
-        except:
+        except Exception:
             try:
                 shutil.copy2(source, target)
                 if r is None:
                     return status and True
                 else:
                     return (status and True, "%s%s%s copied" % (r, prefix, name))
-            except:
+            except Exception:
                 if r is None:
                     return False
                 else:
@@ -1213,11 +1395,29 @@ def link_or_copy(
             )
 
 
-def moveLinkOrCopy(
+def move_link_or_copy(
     source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False
 ):
     """
-    moveLinkOrCopy - documentation not yet available.
+    Map a file into place by moving, hard-linking or copying it.
+
+    Parameters:
+        source (str): path to the file to map.
+        target (str): destination path.
+        action (str | None): one of ``"move"``, ``"link"`` or ``"copy"``
+            (defaults ``"link"``).
+        r (str | None): report so far; when given, the outcome is appended and
+            returned alongside the status.
+        status (bool | None): running status carried through (defaults True).
+        name (str | None): human readable name used in the report message
+            (defaults to ``source``).
+        prefix (str | None): prefix for the report message.
+        lock (bool): serialise the mapping with a file lock to make it safe for
+            concurrent callers.
+
+    Returns:
+        bool | tuple: the status when ``r`` is None, otherwise
+        ``(status, report_with_outcome_appended)``.
     """
     if action is None:
         action = "link"
@@ -1278,7 +1478,7 @@ def moveLinkOrCopy(
             try:
                 shutil.copy2(source, target)
                 return report(status, "%s copied" % (name))
-            except:
+            except Exception:
                 return report(
                     False, "ERROR: %s could not be copied, check permissions! " % (name)
                 )
@@ -1287,7 +1487,7 @@ def moveLinkOrCopy(
             try:
                 shutil.move(source, target)
                 return report(status, "%s moved" % (name))
-            except:
+            except Exception:
                 return report(
                     False, "ERROR: %s could not be moved, check permissions! " % (name)
                 )
@@ -1297,7 +1497,7 @@ def moveLinkOrCopy(
                 with open(source, "rb") as f_in, gzip.open(target, "wb") as f_out:
                     shutil.copyfileobj(f_in, f_out)
                 return report(status, "%s copied and gzipped" % (name))
-            except:
+            except Exception:
                 return report(
                     False,
                     "ERROR: %s could not be copied and gzipped, check permissions! "
@@ -1312,9 +1512,9 @@ def moveLinkOrCopy(
         )
 
 
-def createSessionFile(command, sfolder, session, subject, overwrite, prefix=""):
+def create_session_file(command, sfolder, session, subject, overwrite, prefix=""):
     """
-    ``createSessionFile(command, sfolder, session, subject, overwrite, prefix)``
+    ``create_session_file(command, sfolder, session, subject, overwrite, prefix)``
 
     Creates the generic, non pipeline specific, session file.
     """

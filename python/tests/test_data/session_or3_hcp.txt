@@ -1,0 +1,13 @@
+# Expected: No T1w match (neither alternative in or-rule exists)
+session: or_test_3
+subject: OR003
+
+
+
+hcpready: true
+
+01  :                :T1w_Other
+02  :T2w             :T2w_HiRes: se(1)
+03  :SE-FM-AP        :SpinEchoFieldMap_AP: se(1)
+04  :SE-FM-PA        :SpinEchoFieldMap_PA: se(1)
+05  :bold1:rest      :rfMRI_REST_AP: se(1)

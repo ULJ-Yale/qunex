@@ -2,8 +2,11 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 
 %``fc_compute_roifc(flist, roiinfo, frames, targetf, options)``
 %
-%   Computes ROI functional connectivity matrices for group and/or
+%   Compute ROI functional connectivity matrices for group and/or
 %   individual subjects / sessions.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -29,7 +32,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %           A path to the names file specifying group based ROI for which to
 %           extract timeseries for.
 %
-%       --frames (cell array | int | str, default ''):
+%       --frames (str | cell array | int, default ''):
 %           The definition of which frames to extract, specifically
 %
 %           - a numeric array mask defining which frames to use (1) and
@@ -272,7 +275,7 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               Defauts to 'false'.
 %
 %   Returns:
-%       fcset
+%       --fcmats (struct array):
 %           - title
 %               The title of the extraction as specifed in the frames string. It
 %               defaults to 'timeseries' if not provided.

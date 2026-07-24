@@ -2,7 +2,10 @@ function [] = stats_ttest_zero(dfile, output, exclude, verbose)
 
 %``stats_ttest_zero(dfile, output, exclude, verbose)``
 %
-%   Computes t-test against zero and saves specified results.
+%   Compute t-test against zero and saves specified results.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --dfile (str):

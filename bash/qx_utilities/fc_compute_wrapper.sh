@@ -10,12 +10,16 @@ usage() {
     cat << EOF
 ``fc_compute_wrapper``
 
-This function implements Global Brain Connectivity (GBC) or seed-based
-functional connectivity (FC) on the dense or parcellated (e.g. Glasser
-parcellation).
+Run Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) 
+on the dense or parcellated (e.g. Glasser parcellation).
 
-For more detailed documentation run <help fc_compute_gbc3>, <help
-nimage.img_compute_gbc> or <help fc_compute_seedmaps_multiple> inside MATLAB.
+Notes:
+    For more detailed documentation run <help fc_compute_gbc3>, <help
+    nimage.img_compute_gbc> or <help fc_compute_seedmaps_multiple> inside MATLAB.
+
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Parameters:
     --calculation (str):

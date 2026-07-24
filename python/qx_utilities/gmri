@@ -5,21 +5,42 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# ruff: noqa: E402
+# The qx_utilities imports below intentionally follow the sys.path surgery in
+# this file's bootstrap block, so they cannot sit at the top of the module.
+
+
+# ------------------------------------------------------------------------------
+#                                              prevent mulitiple path to imports
+#
+# To prevent double imports from both qx_utilities and qx_utilities.general
+# we remove the alias path from sys.path before importing anything from
+# qx_utilities directly.
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+BAD = ROOT / "qx_utilities"
+sys.path[:] = [p for p in sys.path if p and Path(p).resolve() != BAD.resolve()]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+# --- continue with imports
+
+import copy
 import os
 import os.path
-import sys
-import copy
-
 from datetime import datetime
-from general import scheduler as gs
-from general import utilities as gu
-from general import process as gp
-from general import matlab as gm
-from general import core as gc
-from general import exceptions as ge
-from general import all_commands as gac
-from general import commands as gcom
-from general import commands_support as gcs
+from qx_utilities.general import scheduler as gs
+from qx_utilities.general import process as gp
+from qx_utilities.general import matlab as gm
+from qx_utilities.general import run_bash as gb
+from qx_utilities.general import core as gc
+from qx_utilities.general import exceptions as ge
+from qx_utilities.general import commands_support as gcs
+from qx_registry import qx_commands
+
 
 help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 (qx_utilities) commands can be invoked via the "qunex <command>" call.
@@ -51,10 +72,9 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 
 
 def runCommand(command, args):
-    folders = gc.deduceFolders(args)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
-    if folders["basefolder"]:
-        gu.check_study(folders["basefolder"])
+    folders = gc.deduce_folders(args, command, timestamp)
 
     # --- check if command is deprecated
     if command != "check_deprecated_commands":
@@ -63,33 +83,51 @@ def runCommand(command, args):
         # -- remap deprecated arguments
         args = gcs.check_deprecated_parameters(args, command)
 
-    # --- sort commands by type
-    if command in gcom.commands:
-        pass
-    elif command in gp.allactions:
-        gp.run(command, args)
+    qx_command = qx_commands.get(command.strip())
+
+    # -- is this a valid qunex command?
+    if qx_command is None:
+        print(f"ERROR: Command '{command}' not recognized. Please run qunex -l to see list of valid commands.")
+        sys.exit(1)
+
+    
+    # -- is this a processing command?
+    if qx_command.language == "python" and qx_command.type.startswith("processing"):
+        gp.run(qx_command, args)
         return
-    elif command in gm.functions:
+    
+    # -- is this a matlab command?
+    if qx_command.language == "matlab":
         if "scheduler" in args:
-            gs.runThroughScheduler(
+            gs.run_through_scheduler(
                 command, sessions=None, args=args, logfolder=folders["logfolder"]
             )
         else:
-            gm.run(command, args)
+            gm.run(qx_command, args)
         return
-    else:
-        print(
-            "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands."
-            % (command)
-        )
+    
+    # -- is this a bash command?
+    if qx_command.language == "bash":
+        if "scheduler" in args:
+            gs.run_through_scheduler(
+                command, sessions=None, args=args, logfolder=folders["logfolder"]
+            )
+        else:
+            gb.run(qx_command, args)
+        return
+
+    # -- any other (unsupported) language
+    if qx_command.language != "python":
+        print(f"ERROR: Commands in {qx_command.language} are not yet supported through gmri command line interface. Please see QuNex documentation for usage instructions.")
         sys.exit(1)
 
-    # --- process commands
+    # -- continue with regular python command
+    
     # -- sort arguments
     bargs = {}
     eargs = {}
     for k, v in args.items():
-        if k in gcom.commands[command]["args"]:
+        if qx_command.has_arg(k):
             bargs[k] = v
         else:
             eargs[k] = v
@@ -100,10 +138,7 @@ def runCommand(command, args):
         for k, v in eargs.items():
             if k not in gcs.extra_parameters:
                 bad.append(k)
-                print(
-                    "ERROR: Extra argument %s is not valid! Please check your command!"
-                    % (k)
-                )
+                print(f"ERROR: Extra argument {k} is not valid! Please check your command!")
         if bad:
             raise ge.CommandError(
                 "gmri",
@@ -115,7 +150,7 @@ def runCommand(command, args):
     sessions = None
     if "sessions" in eargs:
         if command != "run_recipe" and not any(
-            [e in gcom.commands[command]["args"] for e in ["sourcefolder", "folder"]]
+            [qx_command.has_arg(e) for e in ["sourcefolder", "folder"]]
         ):
             raise ge.CommandError(
                 "gmri",
@@ -153,7 +188,7 @@ def runCommand(command, args):
                     all_sessions.append(session["session"])
 
             if "scheduler" in eargs:
-                gs.runThroughScheduler(
+                gs.run_through_scheduler(
                     command,
                     sessions=sessions,
                     args=args,
@@ -184,6 +219,7 @@ def runCommand(command, args):
                         "recipe_file",
                         "recipe",
                         "steps",
+                        "startwith",
                         "xnat",
                         "logfolder",
                         "verbose",
@@ -206,7 +242,7 @@ def runCommand(command, args):
                     calls.append(
                         {
                             "name": "run_recipe_%d" % (c),
-                            "function": gcom.commands[command]["com"],
+                            "function": qx_command.load_callable(),
                             "args": recipe_args,
                             "logfile": None,
                         }
@@ -221,26 +257,25 @@ def runCommand(command, args):
                 if not os.path.isdir(run_recipe_folder):
                     os.makedirs(run_recipe_folder)
 
-                run_recipe_folder = os.path.join(run_recipe_folder, "batchlogs")
+                run_recipe_folder = os.path.join(run_recipe_folder)
 
                 # create folder if it does not exist
                 if not os.path.isdir(run_recipe_folder):
                     os.makedirs(run_recipe_folder)
 
-                logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
                 logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
                     "run_recipe",
-                    logstamp,
+                    timestamp,
                 )
 
-                gs.runThroughScheduler(
+                gs.run_through_scheduler(
                     command, args=args, logfolder=run_recipe_folder, logname=logname
                 )
 
             else:
                 bargs["eargs"] = eargs
-                gcom.commands[command]["com"](**bargs)
-                print("\n---> Successful completion of task")
+                qx_commands.get(command).load_callable()(**bargs)
+                print(f"\n---> Successful completion of task at {datetime.now()}")
 
     # -- all other commands
     else:
@@ -275,7 +310,7 @@ def runCommand(command, args):
 
         # -- are we using a scheduler
         if "scheduler" in eargs:
-            gs.runThroughScheduler(
+            gs.run_through_scheduler(
                 command,
                 sessions=sessions,
                 args=args,
@@ -292,9 +327,9 @@ def runCommand(command, args):
 
                 # createstudy exception
                 if command == "create_study" and "studyfolder" in args:
-                    folders["logfolder"] = args["studyfolder"] + "/processing/logs"
+                    folders["logfolder"] = args["studyfolder"] + "/logs"
                 elif command == "create_study":
-                    folders["logfolder"] = "./processing/logs"
+                    folders["logfolder"] = "./logs"
 
             suffix = ""
             if "sessionids" in args:
@@ -307,13 +342,13 @@ def runCommand(command, args):
             # remove logs for exceptions
             if command in gcs.logskip_commands:
                 # remove non-command args
-                args = {k: v for k, v in args.items() if k in gcom.commands[command]["args"]}
+                args = {k: v for k, v in args.items() if qx_commands.get(command).has_arg(k)}
                 # execute
-                gcom.commands[command]["com"](**args)
+                qx_commands.get(command).load_callable()(**args)
             # run with log
             else:
-                _, result, _, _ = gc.runWithLog(
-                    gcom.commands[command]["com"], args=args, logfile=logfile
+                _, result, _, _ = gc.run_with_log(
+                    qx_commands.get(command).load_callable(), args=args, logfile=logfile
                 )
 
         # -- sessions loop
@@ -329,13 +364,13 @@ def runCommand(command, args):
                         "%s_%s.log" % (command, session["id"]),
                     )
                 for targ in ["sourcefolder", "folder"]:
-                    if targ in gcom.commands[command]["args"]:
+                    if qx_command.has_arg(targ):
                         targs[targ] = sessionsfolder
 
                 calls.append(
                     {
                         "name": name,
-                        "function": gcom.commands[command]["com"],
+                        "function": qx_command.load_callable(),
                         "args": targs,
                         "logfile": logfile,
                     }
@@ -351,7 +386,7 @@ def runCommand(command, args):
             "\n---> Running %s through %d sessions in parallel" % (command, parsessions)
         )
 
-        results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
+        results = gc.run_in_parallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
         print("\n---> Final report for command", command)
@@ -366,66 +401,67 @@ def runCommand(command, args):
             else:
                 print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
         if ok:
-            print("\n---> Successful completion of task")
+            print(f"\n---> Successful completion of task at {datetime.now()}")
+
+
+def print_bash_help(cmd):
+    # Print the command's usage() heredoc, i.e. the exact text the author wrote
+    # (this is the same text the registry parsed the doc from). Mirrors the
+    # python path, which prints the raw docstring.
+    qunexpath = os.environ.get("QUNEXPATH", "").strip()
+    script = Path(qunexpath) / "bash" / cmd.path if qunexpath else Path(cmd.path)
+    doc = None
+    try:
+        from qx_registry_build import _bash_usage_heredoc
+        doc = _bash_usage_heredoc(script.read_text(encoding="utf-8"))
+    except Exception:
+        doc = None
+
+    if doc:
+        print("\nqunex", doc.strip(), "\n")
+        return
+
+    # fallback: reconstruct from the registry fields
+    print(f"\nqunex {cmd.call or cmd.name}\n")
+    if cmd.description:
+        print(f"{cmd.description}\n")
+    for o in cmd.options:
+        print(f"  --{o.name}: {o.description or ''}")
+    print()
 
 
 def print_help(com):
+
     # --- print list of available commands, required for qunex.sh checks
     if com == "available":
-        available_commands = []
-        # -> gmri commands
-        for c, _ in gcom.commands.items():
-            available_commands.append(c)
-        # -> processing commands
-        for l in gp.calist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> longitudinal processing commands
-        for l in gp.lalist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> multi-sesssion processing commands
-        for l in gp.malist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> simple processing commands
-        for l in gp.salist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> matlab wrapped commands
-        for l in gm.functions.keys():
-            available_commands.append(l)
-
-        # print the commands
-        available_commands.sort()
+        available_commands = qx_commands.gmri_commands()        
         print(" ".join(available_commands))
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
-        for full_name, description, _ in gac.all_qunex_commands:
-            print("- " + full_name.split(".")[-1] + ": " + description)
+        for name, path, description, _ in qx_commands.to_qunex_list():
+            print(f"- {name}: {description}")
 
-    # --- print help for gmri local commands
-    elif com in gcom.commands:
-        print("\nqunex", gcom.commands[com]["com"].__doc__.strip(), "\n")
+    else: 
+        cmd = qx_commands.get(com)
+        # --- print help for python commands
+        if cmd and cmd.language == "python":
+            print("\nqunex", qx_commands.load_callable(com).__doc__.strip(), "\n")
 
-    # --- print help for processing actions
-    elif com in gp.allactions:
-        print("\nqunex", gp.allactions[com].__doc__.strip(), "\n")
+        # --- print help for matlab functions
+        elif cmd and cmd.language == "matlab":
+            gm.help(com)
 
-    # --- print help for matlab functions
-    elif com in gm.functions:
-        gm.help(com)
+        # --- print help for bash commands
+        elif cmd and cmd.language == "bash":
+            print_bash_help(cmd)
 
-    # --- print error
-    else:
-        print(
-            "\nERROR: %s ---> Requested command is not supported. Refer to general QuNex usage.\n"
-            % com
-        )
+        else:
+            print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")
 
 
 def main(args=None):
+
     if args is None:
         args = sys.argv[1:]
 
@@ -439,6 +475,13 @@ def main(args=None):
     opts = dict()
 
     try:
+        if comm == 'build_qx_registry':
+            print("Building command registry...")
+            from qx_registry_build import build_qx_registry
+            build_qx_registry()
+            print("Command registry successfully built!")
+            sys.exit(0)      
+
         help_request = False
         if comm in ["a", "A", "allcommands", "available"]:
             help_request = True
@@ -465,25 +508,22 @@ def main(args=None):
                 comm = gcs.check_deprecated_commands(comm)
                 print_help(comm)
             except:
-                print(
-                    "ERROR: '%s' is not a recognized command!\n-----------------------"
-                    % (comm[1:])
-                )
+                print(f"ERROR: '{comm}' is not a recognized command!\n-----------------------")
                 print(help)
                 raise
         else:
             runCommand(comm, opts)
 
     except ge.CommandNull as e:
-        print(ge.reportCommandNull(comm, e))
+        print(ge.report_command_null(comm, e))
         print()
         sys.exit(0)
     except ge.CommandFailed as e:
-        print(ge.reportCommandFailed(comm, e))
+        print(ge.report_command_failed(comm, e))
         print()
         sys.exit(1)
     except ge.CommandError as e:
-        print(ge.reportCommandError(comm, e))
+        print(ge.report_command_error(comm, e))
         print(
             "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
             % (" \\\n    ".join(oargs))
