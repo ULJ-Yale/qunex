@@ -66,6 +66,64 @@ def session_report_header(sinfo: dict) -> str:
     )
 
 
+# the buckets an executor report is made of, in the order commands summarize them
+REPORT_KEYS = ["done", "incomplete", "failed", "ready", "not ready", "skipped"]
+
+
+def new_report() -> dict:
+    """
+    Build an empty executor report.
+
+    Returns:
+        A report dictionary with an empty list per :data:`REPORT_KEYS` bucket.
+    """
+    return {key: [] for key in REPORT_KEYS}
+
+
+def stage_report(report: dict, stage: str) -> dict:
+    """
+    Name the stage that produced each entry in a report, in place.
+
+    Commands that chain a second pipeline onto the first -- ICAFix into PostFix,
+    MSMAll into DeDriftAndResample -- report both stages against the same BOLD or
+    group name. Without the stage name a failure in the second stage is
+    indistinguishable from a failure in the first, so a run whose comlog says
+    ``done`` still summarizes as ``<group> failed``.
+
+    Parameters:
+        report: the report to tag.
+        stage: the stage name, e.g. ``"ICAFix"``.
+
+    Returns:
+        The same report, tagged.
+    """
+    for key in REPORT_KEYS:
+        report[key] = ["%s (%s)" % (entry, stage) for entry in report[key]]
+    return report
+
+
+def merge_report(report: dict, other: dict, stage: str = None) -> dict:
+    """
+    Merge an executor report into a command report, in place.
+
+    Parameters:
+        report: the report to merge into.
+        other: the executor report to merge.
+        stage: when given, the stage name each merged entry is tagged with; when
+            ``None`` the entries are merged unchanged, which is what a command
+            running a single stage wants.
+
+    Returns:
+        The same report, extended.
+    """
+    for key in REPORT_KEYS:
+        entries = other.get(key, [])
+        if stage is not None:
+            entries = ["%s (%s)" % (entry, stage) for entry in entries]
+        report[key] += entries
+    return report
+
+
 def _build_skipped_report(report, skipped, options):
     """
     Function builds the skipped report based on the skipped list and the
@@ -1025,7 +1083,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
             if options["run"] == "run":
                 endlog, _, failed = log.run_external(
                     checkfile=None,
-                    run=comm,
+                    command=comm,
                     description="Running HCP PostFix",
                     overwrite=False,
                     thread=sinfo["id"],

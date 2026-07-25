@@ -28,6 +28,7 @@ from qx_utilities.hcp.hcp_utils import (
     parse_msmall_bolds,
     _build_skipped_report,
     do_hcp_options_check,
+    merge_report,
 )
 from qx_utilities.hcp.hcp_utils import (
     execute_hcp_multi_dedrift_and_resample,
@@ -346,16 +347,14 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             f = partial(execute_hcp_multi_msmall, sinfo, options, hcp, run)
         results = ppe.map(f, msmall_groups)
 
+        # with DeDriftAndResample chained on, both stages report against the same
+        # units, so name the stage each entry came from
+        msmall_stage = "MSMAll" if options["hcp_msmall_resample"] else None
+
         # merge r and report
         for result in results:
             log.raw(result["r"])
-            temp_report = result["report"]
-            report["done"] += temp_report["done"]
-            report["failed"] += temp_report["failed"]
-            report["incomplete"] += temp_report["incomplete"]
-            report["ready"] += temp_report["ready"]
-            report["not ready"] += temp_report["not ready"]
-            report["skipped"] += temp_report["skipped"]
+            merge_report(report, result["report"], stage=msmall_stage)
 
         # if all ok execute DeDriftAndResample if enabled
         if options["hcp_msmall_resample"]:
@@ -379,13 +378,9 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
                 # merge r and report
                 for result in results:
                     log.raw(result["r"])
-                    temp_report = result["report"]
-                    report["done"] += temp_report["done"]
-                    report["failed"] += temp_report["failed"]
-                    report["incomplete"] += temp_report["incomplete"]
-                    report["ready"] += temp_report["ready"]
-                    report["not ready"] += temp_report["not ready"]
-                    report["skipped"] += temp_report["skipped"]
+                    merge_report(
+                        report, result["report"], stage="DeDriftAndResample"
+                    )
 
         # report
         rep = []

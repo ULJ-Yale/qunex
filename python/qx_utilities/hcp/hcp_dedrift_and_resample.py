@@ -25,6 +25,7 @@ from qx_utilities.hcp.hcp_utils import (
     parse_icafix_bolds,
     _build_skipped_report,
     do_hcp_options_check,
+    merge_report,
 )
 from qx_utilities.hcp.hcp_utils import (
     execute_hcp_multi_dedrift_and_resample,
@@ -259,16 +260,11 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             f = partial(execute_hcp_multi_dedrift_and_resample, sinfo, options, hcp, run)
         results = ppe.map(f, dedrift_groups)
 
-        # merge r and report
+        # merge r and report, this command runs DeDriftAndResample as its only
+        # stage, so the entries need no stage name
         for result in results:
             log.raw(result["r"])
-            temp_report = result["report"]
-            report["done"] += temp_report["done"]
-            report["failed"] += temp_report["failed"]
-            report["incomplete"] += temp_report["incomplete"]
-            report["ready"] += temp_report["ready"]
-            report["not ready"] += temp_report["not ready"]
-            report["skipped"] += temp_report["skipped"]
+            merge_report(report, result["report"])
 
         # report
         rep = []

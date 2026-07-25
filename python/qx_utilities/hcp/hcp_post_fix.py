@@ -25,6 +25,7 @@ from qx_utilities.hcp.hcp_utils import (
     parse_icafix_bolds,
     _build_skipped_report,
     do_hcp_options_check,
+    merge_report,
 )
 from qx_utilities.hcp.hcp_utils import execute_hcp_post_fix
 
@@ -209,16 +210,11 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         f = partial(execute_hcp_post_fix, sinfo, options, hcp, run, single_fix)
         results = process_pool_executor.map(f, icafix_bolds)
 
-        # merge r and report
+        # merge r and report, this command runs PostFix as its only stage, so the
+        # entries need no stage name
         for result in results:
             log.raw(result["r"])
-            temp_report = result["report"]
-            report["done"] += temp_report["done"]
-            report["failed"] += temp_report["failed"]
-            report["incomplete"] += temp_report["incomplete"]
-            report["ready"] += temp_report["ready"]
-            report["not ready"] += temp_report["not ready"]
-            report["skipped"] += temp_report["skipped"]
+            merge_report(report, result["report"])
 
         # report
         rep = []
