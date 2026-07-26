@@ -263,7 +263,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP ApplyAytoReclean failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP ApplyAytoReclean failed", 1)
     except Exception:
         log.unknown_error()
@@ -445,7 +445,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
             groupname
         ))
         log.raw(str(errormessage))

@@ -373,7 +373,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception as e:
         log.raw(f"\nERROR: {e}")

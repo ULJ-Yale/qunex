@@ -232,7 +232,7 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
     """
     log = ReportLog()
 
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
     log.raw("\nRunning script %s" % (options['script']))
     log.raw("\n........................................................\n")
@@ -270,7 +270,7 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         description = "run_shell_script: %s" % (options['script'])
         task = "run_shell_script-%s" % (options['script'])
 
-        log.raw(pc.run_script_through_shell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs']))
+        pc.run_script_through_shell(script, description, log, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
 
     except AssertionError as message:
         log.raw(str(message) + "\n---------------------------------------------------------")

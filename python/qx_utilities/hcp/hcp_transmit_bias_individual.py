@@ -538,7 +538,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception as e:
         log.raw(f"\nERROR: {e}")

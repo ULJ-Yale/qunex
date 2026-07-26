@@ -37,6 +37,21 @@ def is_number(s):
         return True
     except ValueError:
         return False
+
+
+def _note(log, text):
+    """
+    Append verbatim text to the report log, when there is one.
+
+    The helpers below write into the log object they are handed instead of
+    taking and returning a report string. Most of them are also called from
+    places that keep no log (a utility resolving bold names, a recursive
+    retry), so the log stays optional and a missing one drops the text.
+    """
+    if log is not None:
+        log.raw(text)
+
+
 class ExternalFailed(Exception):
     def __init__(self, value="Got lost :-("):
         self.parameter = value
@@ -70,11 +85,13 @@ def root4dfp(filename):
     return filename
 
 
-def use_or_skip_bold(sinfo, options, r=""):
+def use_or_skip_bold(sinfo, options, log=None):
     """
-    ``use_or_skip_bold(sinfo, options, r="")``
+    ``use_or_skip_bold(sinfo, options, log=None)``
 
     Internal function to determine which bolds to use and which to skip.
+
+    The bolds that are skipped are noted in `log`, when one is given.
 
     OUTPUTS
     =======
@@ -82,7 +99,6 @@ def use_or_skip_bold(sinfo, options, r=""):
     --bolds  List of bolds to process.
     --bskip  List of bolds to skip.
     --nskip  Number of bolds to skip.
-    --r      Report.
 
     The two lists contain dictionaries with the original information and additional fields:
 
@@ -128,21 +144,21 @@ def use_or_skip_bold(sinfo, options, r=""):
         # sort and report
         bskip.sort(key=lambda x: x["bold_number"])
         if len(bskip) > 0:
-            r += "\n\nSkipping the following BOLD images:"
+            _note(log, "\n\nSkipping the following BOLD images:")
             for binfo in bskip:
                 if (
                     "filename" in binfo
                     and options.get("hcp_filename", "") == "userdefined"
                 ):
-                    r += "\n...  {filename:<20} [{name:<6} {task}]".format(**binfo)
+                    _note(log, "\n...  {filename:<20} [{name:<6} {task}]".format(**binfo))
                 elif (
                     "boldname" in binfo
                     and options.get("hcp_filename", "") == "userdefined"
                 ):
-                    r += "\n...  {boldname:<20} [{name:<6} {task}]".format(**binfo)
+                    _note(log, "\n...  {boldname:<20} [{name:<6} {task}]".format(**binfo))
                 else:
-                    r += "\n...  {name:<6} [{task}]".format(**binfo)
-            r += "\n"
+                    _note(log, "\n...  {name:<6} [{task}]".format(**binfo))
+            _note(log, "\n")
 
     bolds.sort(key=lambda x: x["bold_number"])
 
@@ -151,7 +167,7 @@ def use_or_skip_bold(sinfo, options, r=""):
         if "filename" not in bolds[b] and "boldname" in bolds[b]:
             bolds[b]["filename"] = bolds[b]["boldname"]
 
-    return bolds, bskip, len(bskip), r
+    return bolds, bskip, len(bskip)
 
 
 def get_bold_names(boldinfo, options):
@@ -729,24 +745,26 @@ def check_run(
     tfile,
     full_test=None,
     command=None,
-    r="",
+    log=None,
     log_file=None,
     verbose=True,
     overwrite=False,
 ):
     """
-    ``check_run(tfile, full_test=None, command=None, r="", log_file=None, verbose=True, overwrite=False)``
+    ``check_run(tfile, full_test=None, command=None, log=None, log_file=None, verbose=True, overwrite=False)``
 
     The function checks the presence of a test file.
     If specified it runs also full test.
 
-    OUTPUTS
-    =======
+    What was checked is noted in `log`, when one is given and `verbose` is set.
 
-    --None        test file is missing
-    --incomplete  test file is present, but full test was incomplete
-    --done        test file is present, and if full test was specified, all
-                  files were present as well
+    Returns:
+        tuple: ``(passed, report, failed)``, where `passed` is
+
+        --None        test file is missing
+        --incomplete  test file is present, but full test was incomplete
+        --done        test file is present, and if full test was specified, all
+                      files were present as well
     """
 
     if full_test and "specfolder" in full_test:
@@ -755,7 +773,11 @@ def check_run(
 
     if tfile is not None and os.path.exists(tfile) and not overwrite:
         if verbose:
-            r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
+            _note(
+                log,
+                "\n---> %s test file [%s] present"
+                % (command, os.path.basename(tfile)),
+            )
         report = "%s finished" % (command)
         passed = "done"
         failed = 0
@@ -770,16 +792,19 @@ def check_run(
                 )
                 if filesmissing:
                     if verbose:
-                        r += missing_report(
-                            filesmissing,
-                            "\n---> Full file check revealed that the following files were not created:",
-                            "            ",
+                        _note(
+                            log,
+                            missing_report(
+                                filesmissing,
+                                "\n---> Full file check revealed that the following files were not created:",
+                                "            ",
+                            ),
                         )
                     report += ", full file check incomplete"
                     passed = "incomplete"
                     failed = 1
                 else:
-                    r += "\n---> Full file check passed"
+                    _note(log, "\n---> Full file check passed")
                     report += ", full file check complete"
 
             except ge.CommandFailed as e:
@@ -811,15 +836,21 @@ def check_run(
 
     else:
         if verbose and tfile is not None:
-            r += "\n---> %s test file missing:\n     %s" % (command, tfile)
+            _note(log, "\n---> %s test file missing:\n     %s" % (command, tfile))
         report = "%s not finished" % (command)
         passed = None
         failed = 1
 
-    return passed, report, r, failed
+    return passed, report, failed
 
 
-def close_log(logfile, logname, logfolders, status, remove, r):
+def close_log(logfile, logname, logfolders, status, remove, log=None):
+    """
+    Close a comlog, rename it to its status and note where it ended up.
+
+    Returns:
+        str | None: the path of the final log file, or None when it was removed.
+    """
     # -- close the log
     if logfile:
         logfile.close()
@@ -827,14 +858,14 @@ def close_log(logfile, logname, logfolders, status, remove, r):
     # -- do we delete it
     if status == "done" and remove:
         os.remove(logname)
-        return None, r
+        return None
 
     # -- rename it
     sfolder, sname = os.path.split(logname)
     tname = re.sub("^tmp", status, sname)
     tfile = os.path.join(sfolder, tname)
     shutil.move(logname, tfile)
-    r += "\n---> logfile: %s" % (tfile)
+    _note(log, "\n---> logfile: %s" % (tfile))
 
     # -- do we have multiple logfolders?
     for logfolder in logfolders:
@@ -843,17 +874,18 @@ def close_log(logfile, logname, logfolders, status, remove, r):
             os.makedirs(logfolder)
         try:
             gc.link_or_copy(tfile, nfile)
-            r += "\n---> logfile: %s" % (nfile)
+            _note(log, "\n---> logfile: %s" % (nfile))
         except Exception:
-            r += "\n---> WARNING: could not map logfile to: %s" % (nfile)
+            _note(log, "\n---> WARNING: could not map logfile to: %s" % (nfile))
 
-    return tfile, r
+    return tfile
 
 
 def run_external_for_file(
     checkfile,
     run,
     description,
+    log=None,
     overwrite=False,
     thread="0",
     remove=True,
@@ -862,14 +894,18 @@ def run_external_for_file(
     logtags="",
     full_test=None,
     shell=True,
-    r="",
     verbose=True,
 ):
     """
-    ``run_external_for_file(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=False, r="", verbose=True)``
+    ``run_external_for_file(checkfile, run, description, log=None, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=True, verbose=True)``
 
     Runs the specified command and checks whether it was executed against a
     checkfile, and if provided a full list of files as specified in full_test.
+
+    What was run and how it ended is noted in `log`. When the command fails an
+    ``ExternalFailed`` is raised carrying *only* the error message -- everything
+    that led up to it is already in the log -- so the caller's handler appends
+    it and the report reads in order.
 
     INPUTS
     ======
@@ -877,6 +913,7 @@ def run_external_for_file(
     --checkfile        The file to run a check against (file path)
     --run              The specific command to run (string)
     --description      A description of the command that will be run (string)
+    --log              The report log to write the report into (ReportLog)
     --overwrite        Whether to overwrite existing data (checkfile present;
                        boolean)
     --thread           Thread count if multiple are run
@@ -896,12 +933,10 @@ def run_external_for_file(
                          be relative to it)
 
     --shell            Whether to run the command in a shell (boolean).
-    --r                A string to which to append the report.
 
     OUTPUTS
     =======
 
-    --r             The report string.
     --endlog        The path to the final log file.
     --status        Description of whether the command failed, is fully done or
                     incomplete based on the test files.
@@ -909,6 +944,7 @@ def run_external_for_file(
     """
 
     endlog = None
+    nf = None
 
     # timestamp
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -939,7 +975,7 @@ def run_external_for_file(
     print_comm += "\n"
 
     if overwrite or checkfile is None or not os.path.exists(checkfile):
-        r += "\n\n%s" % (description)
+        _note(log, "\n\n%s" % (description))
 
         # --- set up parameters
         basestring = (str, bytes)
@@ -959,10 +995,10 @@ def run_external_for_file(
             try:
                 os.makedirs(logfolder)
             except Exception:
-                r += "\n\nERROR: Could not create folder for logfile [%s]!" % (
-                    logfolder
+                raise ExternalFailed(
+                    "\n\nERROR: Could not create folder for logfile [%s]!"
+                    % (logfolder)
                 )
-                raise ExternalFailed(r)
 
         tmplogfile = os.path.join(logfolder, "tmp_%s.log" % (logname))
 
@@ -978,10 +1014,11 @@ def run_external_for_file(
 
             # --- open log file
             if not os.path.exists(tmplogfile):
-                r += "\n\nERROR: Could not create a temporary log file %s!" % (
+                message = "\n\nERROR: Could not create a temporary log file %s!" % (
                     tmplogfile
                 )
-                raise ExternalFailed(r)
+                _note(log, message)
+                raise ExternalFailed(message)
 
             # add command call to start of the log
             print(print_comm, file=nf)
@@ -994,52 +1031,56 @@ def run_external_for_file(
             else:
                 process = subprocess.run(run, stdout=nf, stderr=nf, check=False)
         except Exception:
-            r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
-            r += comm
-            endlog, r = close_log(nf, tmplogfile, logfolders, "error", remove, r)
-            raise ExternalFailed(r)
+            message = (
+                "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
+                + comm
+            )
+            close_log(nf, tmplogfile, logfolders, "error", remove, log)
+            raise ExternalFailed(message)
 
         # --- check results
         if process.returncode != 0:
-            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n" % (
+            message = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n%s" % (
                 description,
                 process.stderr.decode() if process.stderr else "Unknown error",
+                comm,
             )
-            r += comm
-            endlog, r = close_log(nf, tmplogfile, logfolders, "error", remove, r)
-            raise ExternalFailed(r)
+            close_log(nf, tmplogfile, logfolders, "error", remove, log)
+            raise ExternalFailed(message)
 
-        status, _, r, failed = check_run(
+        status, _, failed = check_run(
             checkfile,
             full_test=full_test,
             command=task,
-            r=r,
+            log=log,
             log_file=tmplogfile,
             verbose=verbose,
         )
 
         if status is None:
-            r += "\n\nTry running the command directly for more detailed error information:\n"
-            r += comm
+            _note(
+                log,
+                "\n\nTry running the command directly for more detailed error information:\n"
+                + comm,
+            )
 
         # --- End
         if status and status == "done":
             print(f"\n\n---> Successful completion of task at {datetime.now()}\n", file=nf)
-            endlog, r = close_log(nf, tmplogfile, logfolders, "done", remove, r)
+            endlog = close_log(nf, tmplogfile, logfolders, "done", remove, log)
         else:
             if status and status == "incomplete":
-                endlog, r = close_log(
-                    nf, tmplogfile, logfolders, "incomplete", remove, r
-                )
+                endlog = close_log(nf, tmplogfile, logfolders, "incomplete", remove, log)
             else:
-                endlog, r = close_log(nf, tmplogfile, logfolders, "error", remove, r)
+                endlog = close_log(nf, tmplogfile, logfolders, "error", remove, log)
 
     else:
         if os.path.getsize(checkfile) < 100:
-            r, endlog, status, failed = run_external_for_file(
+            endlog, status, failed = run_external_for_file(
                 checkfile,
                 run,
                 description,
+                log,
                 overwrite=True,
                 thread=thread,
                 task=task,
@@ -1047,14 +1088,13 @@ def run_external_for_file(
                 logtags=logtags,
                 full_test=full_test,
                 shell=shell,
-                r=r,
             )
         else:
-            status, _, _, failed = check_run(checkfile, full_test)
+            status, _, failed = check_run(checkfile, full_test)
             if status in ["full", "done"]:
-                r += "\n%s --- already completed" % (description)
+                _note(log, "\n%s --- already completed" % (description))
             else:
-                r += "\n%s --- already ran, incomplete file check" % (description)
+                _note(log, "\n%s --- already ran, incomplete file check" % (description))
 
     if task:
         task += " "
@@ -1066,11 +1106,18 @@ def run_external_for_file(
     else:
         status = task + status
 
-    return r, endlog, status, failed
+    return endlog, status, failed
 
 
 def run_script_through_shell(
-    run, description, thread="0", remove=True, task=None, logfolder="", logtags=""
+    run,
+    description,
+    log=None,
+    thread="0",
+    remove=True,
+    task=None,
+    logfolder="",
+    logtags="",
 ):
     """
     Run a command through the shell, capturing its output to a comlog.
@@ -1081,6 +1128,7 @@ def run_script_through_shell(
     Parameters:
         run (str): the shell command to run.
         description (str): human readable description used in the report and log.
+        log (ReportLog): the report log to note the run in.
         thread (str): identifier used in the log file name.
         remove (bool): whether to remove the done log on success.
         task (str): task name used in the log file name.
@@ -1088,11 +1136,14 @@ def run_script_through_shell(
         logtags (str | list): tag(s) used in the log file name.
 
     Returns:
-        tuple: ``(r, endlog, status, failed)`` -- report text, path to the final
-        log, run status and failed count.
+        str | None: the path to the final log, when one was kept.
+
+    Raises:
+        ExternalFailed: when the script exits non-zero, carrying the error
+        message alone -- the description is already in the log.
     """
 
-    r = "\n\n%s" % (description)
+    _note(log, "\n\n%s" % (description))
     basestring = (str, bytes)
     if isinstance(logtags, basestring):
         logtags = [logtags]
@@ -1117,11 +1168,9 @@ def run_script_through_shell(
     process = subprocess.Popen(run, shell=True, stdout=nf, stderr=nf)
     ret = process.wait()
     if ret:
-        r += "\n\nERROR: Failed with error %s\n" % (ret)
         nf.close()
         shutil.move(tmplogfile, errlogfile)
-        endlog = errlogfile
-        raise ExternalFailed(r)
+        raise ExternalFailed("\n\nERROR: Failed with error %s\n" % (ret))
     else:
         print(f"\n\n---> Successful completion of task at {datetime.now()}\n", file=nf)
         nf.close()
@@ -1130,62 +1179,66 @@ def run_script_through_shell(
         else:
             shutil.move(tmplogfile, donelogfile)
             endlog = donelogfile
-        r += " --- done"
+        _note(log, " --- done")
 
-    return r, endlog
+    return endlog
 
 
-def check_for_file(r, checkfile, ok="", bad="", status=True):
+def check_for_file(log, checkfile, ok="", bad="", status=True):
     """
     Note the presence or absence of a single file in the report.
 
-    Appends ``ok`` to the report when ``checkfile`` exists and ``bad`` when it
-    does not; a missing file also drops ``status`` to False.
+    Notes ``ok`` in the log when ``checkfile`` exists and ``bad`` when it does
+    not; a missing file also drops ``status`` to False.
 
     Parameters:
-        r (str): the report so far.
+        log (ReportLog): the report log to note the outcome in.
         checkfile (str): path to test for.
-        ok (str): text appended when the file is present.
-        bad (str): text appended when the file is missing.
+        ok (str): text noted when the file is present.
+        bad (str): text noted when the file is missing.
         status (bool): the running status, carried through and set False on a
             missing file.
 
     Returns:
-        tuple: ``(r, status)`` -- the extended report and the running status.
+        bool: the running status.
     """
     if os.path.exists(checkfile):
-        r += ok
-        return r, status
+        _note(log, ok)
+        return status
     else:
-        r += bad
-        return r, False
+        _note(log, bad)
+        return False
 
 
-def check_for_files(r, checkfiles, ok, bad, all=False, status=True):
+def check_for_files(log, checkfiles, ok, bad, all=False, status=True):
     """
     check_for_files - checks if any of the files in the checkfiles list exists
 
     If all parameter is set to True, returns True only if all files exist,
     if all parameter is False it returns the first found file.
+
+    Returns:
+        tuple: ``(status, found)`` -- the running status and the first file
+        found, when searching for any one of them.
     """
 
     for f in checkfiles:
         if os.path.exists(f):
             if not all:
-                r += ok
-                return r, status, f
+                _note(log, ok)
+                return status, f
         else:
             if all:
-                r += bad
-                return r, False, ""
+                _note(log, bad)
+                return False, ""
 
     if not all:
-        r += bad
-        return r, False, ""
+        _note(log, bad)
+        return False, ""
 
     # if we are here all files exist and all is set
-    r += ok
-    return r, status, ""
+    _note(log, ok)
+    return status, ""
 
 
 def action(action, run):

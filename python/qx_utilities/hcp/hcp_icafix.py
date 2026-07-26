@@ -365,7 +365,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP ICAFix failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP ICAFix failed", 1)
     except Exception:
         log.unknown_error()
@@ -521,7 +521,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s\n" % (printbold))
+        log.raw("\n\n\n --- Failed during processing of bold %s\n" % (printbold))
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
@@ -854,7 +854,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                 log.error("images missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(
+        log.raw(
             "\n\n\n --- Failed during processing of group %s with error:\n"
             % (groupname)
         )

@@ -1210,7 +1210,7 @@ def pcslist(s):
 
 
 def link_or_copy(
-    source, target, r=None, status=None, name=None, prefix=None, symlink=False
+    source, target, log=None, status=None, name=None, prefix=None, symlink=False
 ):
     """
     Hard-link a file, falling back to a copy, and report the outcome.
@@ -1218,17 +1218,21 @@ def link_or_copy(
     Parameters:
         source (str): path to the file to map.
         target (str): destination path.
-        r (str | None): report so far; when given, the mapping outcome is
-            appended and returned alongside the status.
+        log (ReportLog | None): report log; when given, the mapping outcome is
+            noted in it.
         status (bool | None): running status carried through (defaults True).
         name (str | None): human readable name used in the report message.
         prefix (str | None): prefix for the report message (defaults ``"\n ... "``).
         symlink (bool): create a symbolic link instead of a hard link.
 
     Returns:
-        bool | tuple: the status when ``r`` is None, otherwise
-        ``(status, report_with_outcome_appended)``.
+        bool: the running status -- False when the file could not be mapped.
     """
+
+    def note(text):
+        if log is not None:
+            log.raw(text)
+
     if status is None:
         status = True
     if name is None:
@@ -1239,13 +1243,8 @@ def link_or_copy(
         try:
             if os.path.exists(target):
                 if os.path.samefile(source, target):
-                    if r is None:
-                        return status and True
-                    else:
-                        return (
-                            status and True,
-                            "%s%s%s already mapped" % (r, prefix, name),
-                        )
+                    note("%s%s already mapped" % (prefix, name))
+                    return status and True
                 else:
                     os.remove(target)
 
@@ -1255,37 +1254,26 @@ def link_or_copy(
             else:
                 os.symlink(source, target)
 
-            if r is None:
-                return status and True
-            else:
-                return (status and True, "%s%s%s mapped" % (r, prefix, name))
+            note("%s%s mapped" % (prefix, name))
+            return status and True
 
         except Exception:
             try:
                 shutil.copy2(source, target)
-                if r is None:
-                    return status and True
-                else:
-                    return (status and True, "%s%s%s copied" % (r, prefix, name))
+                note("%s%s copied" % (prefix, name))
+                return status and True
             except Exception:
-                if r is None:
-                    return False
-                else:
-                    return (
-                        False,
-                        "%s%sERROR: %s could not be copied, check permissions! "
-                        % (r, prefix, name),
-                    )
-        return True
+                note(
+                    "%sERROR: %s could not be copied, check permissions! "
+                    % (prefix, name)
+                )
+                return False
     else:
-        if r is None:
-            return False
-        else:
-            return (
-                False,
-                "%s%sERROR: %s could not be copied, source file does not exist [%s]! "
-                % (r, prefix, name, source),
-            )
+        note(
+            "%sERROR: %s could not be copied, source file does not exist [%s]! "
+            % (prefix, name, source)
+        )
+        return False
 
 
 def move_link_or_copy(

@@ -211,7 +211,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     timestamp = datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
     log.raw(f"\nSession id: {sinfo['id']} \n[started on {timestamp}]")
     action = pc.action("Running", options["run"])
@@ -329,7 +329,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
         # rapidtide ------------------------------------------------------------
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(f"\n\n\n --- Failed during processing of session {session} with error:\n")
+        log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "rapidtide failed", 1)
 
@@ -345,7 +345,7 @@ def _execute_rapidtide(
 ):
     # prepare return variables
     log = ReportLog()
-    log.capture(f"\n\n\n---> Working on bold {boldtarget}")
+    log.raw(f"\n\n\n---> Working on bold {boldtarget}")
     report = {
         "done": [],
         "failed": [],

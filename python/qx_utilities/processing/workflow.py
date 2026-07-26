@@ -85,7 +85,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     log = ReportLog()
     bsearch = re.compile(r"bold([0-9]+)")
 
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -292,7 +292,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         "boldskipped": 0,
     }
 
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -671,8 +671,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
         try:
             os.makedirs(logfolder)
         except Exception:
-            log.raw("\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder))
-            raise pc.ExternalFailed(log.text)
+            raise pc.ExternalFailed(
+                "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
+            )
 
     # print to file and close
     logfile = os.path.join(logfolder, logname)
@@ -890,7 +891,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         "boldskipped": 0,
     }
 
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -1310,7 +1311,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     }
 
     try:
-        log.capture("\n---------------------------------------------------------")
+        log.raw("\n---------------------------------------------------------")
         log.raw("\nSession id: %s \n[started on %s]" % (
             sinfo["id"],
             datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -1759,7 +1760,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         "boldskipped": 0,
     }
 
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -2540,7 +2541,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
 
     pc.do_options_check(options, sinfo, "preprocess_bold")
 
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -3416,7 +3417,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     pc.do_options_check(options, sinfo, "preprocess_conc")
 
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),

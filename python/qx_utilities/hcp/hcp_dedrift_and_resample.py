@@ -282,7 +282,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP DeDriftAndResample failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP DeDriftAndResample failed", 1)
     except Exception:
         log.unknown_error()

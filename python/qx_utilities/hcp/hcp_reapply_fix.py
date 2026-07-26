@@ -275,7 +275,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP ReApplyFix failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP ReApplyFix failed", 1)
     except Exception:
         log.unknown_error()
@@ -460,7 +460,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
             boldok = False
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
@@ -727,7 +727,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             log.raw("\n---> ERROR: Hand reclassification failed for bold: %s!" % printbold)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
             groupname
         ))
         log.raw(str(errormessage))
@@ -865,8 +865,8 @@ def execute_hcp_hand_reclassification(
         log.raw("\n")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
-        log.capture(str(errormessage))
+        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
         log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (

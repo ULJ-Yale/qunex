@@ -1122,7 +1122,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         log.raw("\n\n")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
@@ -1363,7 +1363,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
             "DeDriftAndResample"
         ))
         log.raw(str(errormessage))
@@ -1705,7 +1705,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
             "DeDriftAndResample"
         ))
         log.raw(str(errormessage))

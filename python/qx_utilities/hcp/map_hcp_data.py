@@ -345,7 +345,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     sinfo["id"],
                 )
 
-                _, endlog, _, failedcom = pc.run_external_for_file(
+                endlog, _, failedcom = pc.run_external_for_file(
                     f["fs_aparc_bold"],
                     f"flirt -interp nearestneighbour -ref {os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')} -in {f['fs_aparc_t1']} -out {f['fs_aparc_bold']} -applyisoxfm {options['hcp_bold_res']}",
                     " ... resampling t1 cortical segmentation (%s) to bold space (%s)"
@@ -353,6 +353,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         os.path.basename(f["fs_aparc_t1"]),
                         os.path.basename(f["fs_aparc_bold"]),
                     ),
+                    log,
                     overwrite=overwrite,
                     remove=options["log"] == "remove",
                     logfolder=options["comlogs"],
@@ -600,7 +601,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     failed += 1
 
             except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-                log.capture(str(errormessage))
+                log.raw(str(errormessage))
                 report["boldfail"] += 1
                 failed += 1
             except Exception:

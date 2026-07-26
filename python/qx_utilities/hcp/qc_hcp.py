@@ -1453,7 +1453,7 @@ def _run_qc_custom_scene(sinfo, options, overwrite, hcp, params: dict):
     modality = params["modality_label"]
     template_scene = params["template_scene"]
     template_basename = params["template_basename"]
-    log.capture("\n\nWorking on %s user/custom scene: %s" % (modality, template_basename))
+    log.raw("\n\nWorking on %s user/custom scene: %s" % (modality, template_basename))
     report = {"done": [], "failed": []}
 
     run = params.get("run", True)
@@ -1725,7 +1725,7 @@ def _zip_bold_fc_scene(
 def _run_qc_bold_fc(sinfo, options, overwrite, hcp, params: dict):
     log = ReportLog()
     boldinfo = params["boldinfo"]
-    log.capture("\n\nWorking on BOLD FC: %s" % boldinfo["name"])
+    log.raw("\n\nWorking on BOLD FC: %s" % boldinfo["name"])
     report = {"done": [], "failed": []}
 
     run = params.get("run", True)
@@ -1818,7 +1818,7 @@ def _run_qc_bold_fc(sinfo, options, overwrite, hcp, params: dict):
 def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
     log = ReportLog()
     boldinfo = params["boldinfo"]
-    log.capture("\n\nWorking on: %s" % (boldinfo["name"]))
+    log.raw("\n\nWorking on: %s" % (boldinfo["name"]))
     report = {"done": [], "failed": []}
 
     run = params.get("run", True)

@@ -118,7 +118,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw(f"\n{pc.action('Running', options['run'])} setup_mice {session} ...")
 
@@ -178,7 +178,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(f"\n --- Failed during processing of session {session} with error:\n")
+        log.raw(f"\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "setup_mice failed", 1)
 

@@ -23,9 +23,9 @@ spelled:
 
 - :class:`ReportLog` is a plain accumulator with the level vocabulary
   (``step``/``detail``/``warning``/``error``) and wrappers around the
-  ``processing.core`` / ``general.core`` helpers that used to thread the report
-  string. Per-BOLD / per-group executors use it: they have report text but no
-  session header of their own.
+  ``processing.core`` / ``general.core`` helpers, which are handed the log and
+  write into it. Per-BOLD / per-group executors use it: they have report text
+  but no session header of their own.
 - :class:`SessionLog` adds the per-session header and :meth:`SessionLog.finish`,
   which closes the report and builds the ``(text, status)`` value a command
   returns to ``general.process``.
@@ -37,8 +37,8 @@ Internally the report is a list of ``(depth, severity, message)`` records
 rendered to text on demand, not a list of pre-formatted strings: severity and
 nesting stay recoverable after the fact, so the report can be re-rendered (an
 errors only digest, a machine readable form) without every call site changing.
-Verbatim text -- :meth:`ReportLog.raw`, :meth:`ReportLog.capture`, the framing
-rules -- is held as a ``RAW`` record and emitted untouched.
+Verbatim text -- :meth:`ReportLog.raw`, the framing rules -- is held as a
+``RAW`` record and emitted untouched.
 """
 
 import traceback
@@ -103,20 +103,6 @@ class ReportLog:
     def has_errors(self) -> bool:
         """Whether any error has been recorded on this log."""
         return self._errors > 0
-
-    def capture(self, text: str) -> None:
-        """
-        Adopt a report string returned by a ``processing.core`` helper.
-
-        Those helpers take the report so far and hand back the report with their
-        own output appended, so the returned string replaces the buffer rather
-        than extending it.
-
-        Deprecated: this flattens every record recorded so far into one verbatim
-        block, losing severity and depth. It disappears once the helpers write
-        into the log object instead of round-tripping its text.
-        """
-        self._records = [(0, RAW, text)]
 
     def add(self, other) -> None:
         """Append the text of another report log (e.g. an executor's result)."""
@@ -241,112 +227,95 @@ class ReportLog:
 
     # ------------------------------------------------------- external calls
 
-    def run_external(self, checkfile, command, description, **kwargs):
+    def run_external(self, checkfile, command, description, overwrite=False,
+                     thread="0", remove=True, task=None, logfolder="",
+                     logtags="", full_test=None, shell=True, verbose=True):
         """
-        Run an external command, threading the runlog through it.
+        Run an external command, letting it write into this log.
 
-        Wraps ``processing.core.run_external_for_file`` so the caller neither
-        passes nor reassigns the report text.
+        Calls ``processing.core.run_external_for_file`` with this log; see it
+        for what the parameters mean. The signature is spelled out rather than
+        forwarded as ``**kwargs`` so a mistyped argument is a ``TypeError``
+        here, at the call site, and not somewhere inside the helper.
 
         Returns:
-            ``(endlog, report, failed)`` from the underlying call.
+            ``(endlog, status, failed)`` from the underlying call.
         """
         import qx_utilities.processing.core as pc
 
-        text, endlog, report, failed = pc.run_external_for_file(
-            checkfile, command, description, r=self.text, **kwargs
+        return pc.run_external_for_file(
+            checkfile,
+            command,
+            description,
+            self,
+            overwrite=overwrite,
+            thread=thread,
+            remove=remove,
+            task=task,
+            logfolder=logfolder,
+            logtags=logtags,
+            full_test=full_test,
+            shell=shell,
+            verbose=verbose,
         )
-        self.capture(text)
-        return endlog, report, failed
 
     def check_run(self, checkfile, full_test, description, overwrite=False):
         """
         Report what a run would do, without running it (the ``--test`` path).
 
-        Wraps ``processing.core.check_run`` so the caller neither passes nor
-        reassigns the report text.
-
         Returns:
-            ``(passed, report, failed)`` from the underlying call.
+            ``(passed, report, failed)`` from ``processing.core.check_run``.
         """
         import qx_utilities.processing.core as pc
 
-        passed, report, text, failed = pc.check_run(
-            checkfile, full_test, description, self.text, overwrite=overwrite
+        return pc.check_run(
+            checkfile, full_test, description, self, overwrite=overwrite
         )
-        self.capture(text)
-        return passed, report, failed
 
     def check_for_file(self, checkfile, ok="", bad="", status=True):
         """
-        Note the presence or absence of a file, appending ``ok`` or ``bad``.
-
-        Wraps ``processing.core.check_for_file`` so the caller neither passes nor
-        reassigns the report text.
+        Note the presence or absence of a file, recording ``ok`` or ``bad``.
 
         Returns:
             the running status (True while every checked file has been present).
         """
         import qx_utilities.processing.core as pc
 
-        text, status = pc.check_for_file(self.text, checkfile, ok, bad, status)
-        self.capture(text)
-        return status
+        return pc.check_for_file(self, checkfile, ok, bad, status)
 
     def check_for_files(self, checkfiles, ok, bad, all=False, status=True):
         """
         Note the presence of one or all of ``checkfiles``.
-
-        Wraps ``processing.core.check_for_files`` so the caller neither passes
-        nor reassigns the report text.
 
         Returns:
             ``(status, found_file)`` from the underlying call.
         """
         import qx_utilities.processing.core as pc
 
-        text, status, found = pc.check_for_files(
-            self.text, checkfiles, ok, bad, all, status
-        )
-        self.capture(text)
-        return status, found
+        return pc.check_for_files(self, checkfiles, ok, bad, all, status)
 
     def link_or_copy(self, source, target, status=None, name=None,
                      prefix=None, symlink=False):
         """
-        Link or copy a file, appending the mapping outcome to the report.
-
-        Wraps ``general.core.link_or_copy`` so the caller neither passes nor
-        reassigns the report text.
+        Link or copy a file, recording the mapping outcome in the report.
 
         Returns:
-            the running status from the underlying call.
+            the running status from ``general.core.link_or_copy``.
         """
         import qx_utilities.general.core as gc
 
-        status, text = gc.link_or_copy(
-            source, target, self.text, status, name, prefix, symlink
-        )
-        self.capture(text)
-        return status
+        return gc.link_or_copy(source, target, self, status, name, prefix, symlink)
 
     def use_or_skip_bold(self, sinfo, options):
         """
         Resolve which BOLDs to use and which to skip for this session.
-
-        Wraps ``processing.core.use_or_skip_bold`` so the caller neither passes
-        nor reassigns the report text.
 
         Returns:
             ``(bolds, skipped, n_skipped)`` from the underlying call.
         """
         import qx_utilities.processing.core as pc
 
-        bolds, skipped, n_skipped, text = pc.use_or_skip_bold(
-            sinfo, options, self.text
-        )
-        self.capture(text)
-        return bolds, skipped, n_skipped
+        return pc.use_or_skip_bold(sinfo, options, self)
 
 
 class SessionLog(ReportLog):

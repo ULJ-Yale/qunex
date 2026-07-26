@@ -54,10 +54,12 @@ def stub_external(monkeypatch):
     """Replace the external runner, recording how the wrapper called it."""
     calls = []
 
-    def fake(checkfile, run, description, r="", **kwargs):
+    def fake(checkfile, run, description, log=None, **kwargs):
         calls.append({"checkfile": checkfile, "run": run,
                       "description": description, **kwargs})
-        return r + "\n---> %s ran" % description, "done.log", "done", 0
+        if log is not None:
+            log.raw("\n---> %s ran" % description)
+        return "done.log", "done", 0
 
     monkeypatch.setattr(pc, "run_external_for_file", fake)
     return calls
@@ -119,9 +121,9 @@ def test_chain_names_the_stage_that_failed(postfix_session, monkeypatch):
     options["hcp_icafix_postfix"] = True
     group = _icafix_group(hcp)
 
-    def fake(checkfile, run, description, r="", **kwargs):
+    def fake(checkfile, run, description, log=None, **kwargs):
         failed = 1 if "PostFix" in run else 0
-        return r, "log", None if failed else "done", failed
+        return "log", None if failed else "done", failed
 
     monkeypatch.setattr(pc, "run_external_for_file", fake)
 

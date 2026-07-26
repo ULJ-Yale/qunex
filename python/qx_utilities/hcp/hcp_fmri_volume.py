@@ -1634,7 +1634,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP fMRI Volume failed", 1)
     except Exception:
         log.unknown_error()
@@ -2027,7 +2027,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:

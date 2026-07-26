@@ -134,7 +134,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw(f"\n{pc.action('Running', options['run'])} preprocess_mice {session} ...")
 
@@ -194,7 +194,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(f"\n --- Failed during processing of session {session} with error:\n")
+        log.raw(f"\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "preprocess_mice failed", 1)
 
@@ -385,7 +385,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw(f"\n{pc.action('Running', options['run'])} map_mice_data {session} ...")
 
@@ -508,7 +508,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(f"\n --- Failed during processing of session {session} with error:\n")
+        log.raw(f"\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "map_mice_data failed", 1)
 

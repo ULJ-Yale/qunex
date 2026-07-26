@@ -232,7 +232,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP PostFix failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP PostFix failed", 1)
     except Exception:
         log.unknown_error()

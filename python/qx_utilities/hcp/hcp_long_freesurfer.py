@@ -321,7 +321,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "processing failed"
         failed += 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = "Error"
         failed = 1
     except Exception:

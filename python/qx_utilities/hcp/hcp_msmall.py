@@ -398,7 +398,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP MSMAll failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP MSMAll failed", 1)
     except Exception:
         log.unknown_error()
@@ -688,7 +688,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bolds %s\n" % (msmall_bolds))
+        log.raw("\n\n\n --- Failed during processing of bolds %s\n" % (msmall_bolds))
         log.raw(str(errormessage))
         report["failed"].append(msmall_bolds)
     except Exception:
@@ -982,7 +982,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
             groupname
         ))
         log.raw(str(errormessage))

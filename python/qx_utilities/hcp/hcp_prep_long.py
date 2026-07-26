@@ -124,7 +124,7 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         status = "processing failed"
         failed += 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         status = "Error"
         failed = 1
     except Exception:

@@ -475,7 +475,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "PostFS failed"
         failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception:
         log.unknown_error()

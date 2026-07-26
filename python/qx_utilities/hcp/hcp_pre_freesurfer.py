@@ -1296,7 +1296,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "PreFS failed"
         failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = "PreFS failed"
         failed = 1
     except Exception:

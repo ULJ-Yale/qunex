@@ -689,7 +689,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception:
         log.unknown_error()

@@ -109,7 +109,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -231,7 +231,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "FSL F99 would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of session %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of session %s with error:\n" % (
             session
         ))
         log.raw(str(errormessage))
@@ -382,7 +382,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -582,7 +582,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "FSL XTRACT would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of session %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of session %s with error:\n" % (
             session
         ))
         log.raw(str(errormessage))
@@ -694,7 +694,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -828,7 +828,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "CUDIMOT NODDI would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(f"\n\n\n --- Failed during processing of session {session} with error:\n")
+        log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
 

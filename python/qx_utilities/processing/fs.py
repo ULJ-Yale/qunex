@@ -81,7 +81,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     log = ReportLog()
 
     f = get_file_names(sinfo, options)
-    log.capture("\n---------------------------------------------------------")
+    log.raw("\n---------------------------------------------------------")
     log.raw(
         "\nSession id: %s \n[started on %s]"
         % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -344,7 +344,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
         f = get_file_names(sinfo, options)
 
         if verbose:
-            log.capture("\n---------------------------------------------------------")
+            log.raw("\n---------------------------------------------------------")
             log.raw(
                 "\nSession id: %s \n[started on %s]"
                 % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -486,7 +486,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
     log = ReportLog()
 
     try:
-        log.capture("\n---------------------------------------------------------")
+        log.raw("\n---------------------------------------------------------")
         log.raw(
             "\nSession id: %s \n[started on %s]"
             % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -494,7 +494,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         log.raw("\nRunning Full FreeSurfer segmentation ...")
 
         # check if any data already exists
-        log.capture(
+        log.raw(
             check_for_freesurfer_data(sinfo, options, overwrite, thread, log.text)
         )
 
@@ -821,7 +821,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
     """
     log = ReportLog()
     try:
-        log.capture("\n---------------------------------------------------------")
+        log.raw("\n---------------------------------------------------------")
         log.raw(
             "\nSession id: %s \n[started on %s]"
             % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -829,7 +829,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         log.raw("\nRunning subcortical only FreeSurfer segmentation ...")
 
         # check if any data already exists
-        log.capture(
+        log.raw(
             check_for_freesurfer_data(sinfo, options, overwrite, thread, log.text)
         )
 

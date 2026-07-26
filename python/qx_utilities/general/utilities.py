@@ -2268,7 +2268,7 @@ def batch_tag2namekey(
     session = sessions[0]
     options["bolds"] = bolds
 
-    bolds, _, _, _ = gpc.use_or_skip_bold(session, options)
+    bolds, _, _ = gpc.use_or_skip_bold(session, options)
 
     boldlist = []
     for boldinfo in bolds:

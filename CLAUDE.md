@@ -25,8 +25,9 @@ pragmatic, focused improvements over strict rewrites.**
     and `log.py` (the suite-wide runlog; see **Command logging** below).
   - `processing/` — preprocessing workflows (`workflow.py`, `dwi.py`, `fs.py`, `fsl.py`, ...).
     `processing/core.py` holds the low-level report/run primitives (`run_external_for_file`,
-    `check_run`, `check_for_file`, `check_for_files`, `use_or_skip_bold`) that `general/log.py`
-    wraps — these take/return a report string on purpose; do not "log-ify" them.
+    `check_run`, `check_for_file`, `check_for_files`, `use_or_skip_bold`) that `general/log/`
+    wraps — these take the log object and write into it; they do not take or return a report
+    string.
   - `hcp/`, `nhp/`, `qa/`, `templates/` — HCP pipelines, non-human-primate, QA, templates.
     In `hcp/`, each processing command lives in its own `hcp_<command>.py` file (e.g.
     `hcp_pre_freesurfer.py`, `hcp_fmri_volume.py`); shared code is in `hcp_utils.py` (option
@@ -82,14 +83,17 @@ Quality:
 QuNex keeps two log layers. The **comlog** is the raw stdout/stderr of each external pipeline
 call, written by `processing/core.py`. The **runlog** is the human-readable per-session summary a
 command returns to `general/process.py`, which writes it to `Log-<command>-<timestamp>.log` and
-prints it. `general/log.py` owns the runlog:
+prints it. `general/log/` owns the runlog:
 
 - Build the runlog with a `SessionLog` (session/subject commands) or a `ReportLog` (per-BOLD /
   per-group executors and QC helpers), **not** by threading a local `r` string. Use the level
   methods (`log.step`/`log.detail`/`log.warning`/`log.error`), `log.pipeline_command(cmd)`, and
   the wrappers `log.run_external(...)`, `log.check_run(...)`, `log.check_for_file(...)`,
-  `log.use_or_skip_bold(...)`, `log.link_or_copy(...)` — these delegate to the `core.py`
-  primitives and keep the report inside the object.
+  `log.use_or_skip_bold(...)`, `log.link_or_copy(...)` — these hand the log to the `core.py`
+  primitives, which write into it.
+- `pc.ExternalFailed` carries the **error message alone**; everything that led up to it is
+  already in the log. An `except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:`
+  handler appends it with `log.raw(str(errormessage))` — never re-adopt a whole report.
 - A command returns `(log.text, status)` where `status` is a **three-field**
   `(session_id, summary, failed)` tuple. `SessionLog.finish(report, failed=..., pipeline=...)`
   builds this and rejects a malformed two-field status. A two-field status makes a whole run

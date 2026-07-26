@@ -87,7 +87,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
@@ -179,7 +179,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "FSL feat would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of session %s with error:\n" % (
+        log.raw("\n\n\n --- Failed during processing of session %s with error:\n" % (
             session
         ))
         log.raw(str(errormessage))
@@ -250,7 +250,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
     # list of sessions
     sessions_array = sessions.split(",")
 
-    log.capture("\n------------------------------------------------------------")
+    log.raw("\n------------------------------------------------------------")
     log.raw("\nMelodic: \n[started on %s]" % (
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
     ))
@@ -401,7 +401,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                     report = ("Study", "FSL melodic would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed with error:\n")
+        log.raw("\n\n\n --- Failed with error:\n")
         log.raw(str(errormessage))
         report = ("Study", "FSL melodic failed", 1)
 

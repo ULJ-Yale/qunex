@@ -98,12 +98,13 @@ def test_pipeline_command_breaks_flags_onto_lines():
     assert "Running HCP Pipelines command via QuNex:" in log.text
 
 
-def test_capture_replaces_rather_than_appends():
-    # processing.core helpers hand back the whole report, not just their part
+def test_raw_appends_verbatim():
+    # the processing.core helpers write into the log rather than handing back a
+    # replacement report, so everything recorded before them survives
     log = _log()
     log.step("before")
-    log.capture("REPLACED")
-    assert log.text == "REPLACED"
+    log.raw("APPENDED")
+    assert log.text.endswith("\n---> before" + "APPENDED")
 
 
 def test_finish_builds_the_process_py_contract():
