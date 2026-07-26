@@ -12,8 +12,9 @@ user-facing surface, not an implementation detail.
 
 import pytest
 
+import qx_utilities.general.exceptions as ge
 from qx_utilities.general import log as log_module
-from qx_utilities.general.log import REPORT_RULE, SessionLog
+from qx_utilities.general.log import REPORT_RULE, ReportLog, SessionLog
 
 STAMP = "Monday, 01. January 2024 00:00:00"
 SINFO = {"id": "sess-01"}
@@ -79,9 +80,9 @@ def test_error_without_args_does_not_interpolate():
     assert log.text.endswith("\n---> ERROR: 100% of runs failed")
 
 
-def test_section_frames_content_between_rules():
+def test_framed_frames_content_between_rules():
     log = _log()
-    with log.section("A title:"):
+    with log.framed("A title:"):
         log.raw("body")
 
     assert log.text.endswith(
@@ -151,6 +152,167 @@ def test_finish_rejects_a_two_field_status_tuple():
         _log().finish(("sess-01", "HCP Thing failed"))
 
 
-def test_finish_rejects_a_string_report_without_a_failed_count():
+def test_result_rejects_a_string_report_without_a_failed_count():
+    # finish() derives the count (see the N4 tests below); result() is the raw
+    # contract check and still demands it
     with pytest.raises(ValueError, match="failed count"):
-        _log().finish("HCP Thing failed")
+        _log().result("HCP Thing failed")
+
+
+# ------------------------------------------------------------- depth (N3)
+
+
+def test_indent_nests_subsequent_lines():
+    log = _log()
+    log.step("outer")
+    log.indent()
+    log.step("inner")
+    log.dedent()
+    log.step("outer again")
+
+    assert log.text.endswith(
+        "\n---> outer"
+        "\n     ---> inner"
+        "\n---> outer again"
+    )
+
+
+def test_dedent_is_clamped_at_zero():
+    log = _log()
+    log.dedent()
+    log.dedent()
+    log.step("still flush left")
+
+    assert log.text.endswith("\n---> still flush left")
+
+
+def test_section_records_a_step_and_indents_its_block():
+    log = _log()
+    with log.section("checking %s", "data"):
+        log.step("found it")
+        log.detail("a detail")
+
+    log.step("after")
+
+    assert log.text.endswith(
+        "\n---> checking data"
+        "\n     ---> found it"
+        "\n          ... a detail"
+        "\n---> after"
+    )
+
+
+def test_section_restores_the_depth_when_the_block_raises():
+    log = _log()
+    with pytest.raises(RuntimeError):
+        with log.section("doomed"):
+            raise RuntimeError("boom")
+    log.step("after")
+
+    assert log.text.endswith("\n---> doomed\n---> after")
+
+
+def test_per_line_depth_shifts_only_that_line():
+    log = _log()
+    log.step("shifted", depth=1)
+    log.step("not shifted")
+
+    assert log.text.endswith("\n     ---> shifted\n---> not shifted")
+
+
+def test_detail_stays_at_its_historical_indent():
+    # detail is depth 1 now, but its rendered prefix must not change
+    log = _log()
+    log.detail("unchanged")
+    assert log.text.endswith("\n     ... unchanged")
+
+
+def test_raw_ignores_depth():
+    # raw text is verbatim: no prefix, no indent, no added newline
+    log = ReportLog()
+    log.indent(3)
+    log.raw("verbatim")
+    assert log.text == "verbatim"
+
+
+# --------------------------------------------------- status from severity (N4)
+
+
+def test_finish_derives_failed_from_recorded_errors():
+    log = _log()
+    log.error("could not find the data")
+    _, status = log.finish("HCP Thing failed")
+
+    assert status == ("sess-01", "HCP Thing failed", 1)
+
+
+def test_finish_derives_zero_when_nothing_failed():
+    _, status = _log().finish("all good")
+    assert status == ("sess-01", "all good", 0)
+
+
+def test_explicit_failed_count_still_wins():
+    log = _log()
+    log.error("one error")
+    _, status = log.finish("three bolds failed", failed=3)
+
+    assert status == ("sess-01", "three bolds failed", 3)
+
+
+def test_reporting_no_failure_while_errors_exist_is_flagged():
+    log = _log()
+    log.error("could not find the data")
+    text, status = log.finish("all good", failed=0)
+
+    assert status == ("sess-01", "all good", 0)
+    assert "---> WARNING: 1 error(s) were recorded but the command " \
+           "reports no failures" in text
+
+
+def test_the_flag_is_not_raised_when_the_count_agrees():
+    log = _log()
+    log.error("could not find the data")
+    text, _ = log.finish("failed", failed=1)
+
+    assert "reports no failures" not in text
+
+
+def test_a_status_tuple_reporting_no_failure_is_flagged_too():
+    log = _log()
+    log.error("could not find the data")
+    text, status = log.finish(("sess-01", "all good", 0))
+
+    assert status == ("sess-01", "all good", 0)
+    assert "reports no failures" in text
+
+
+def test_unknown_error_counts_as_a_failure():
+    log = _log()
+    try:
+        raise ValueError("boom")
+    except ValueError:
+        log.unknown_error()
+
+    assert log.has_errors
+    _, status = log.finish("HCP Thing failed")
+    assert status[2] == 1
+
+
+def test_command_failed_counts_as_a_failure():
+    log = _log()
+    log.command_failed(ge.CommandFailed("hcp_thing", "no data"))
+
+    assert log.has_errors
+    _, status = log.finish("HCP Thing failed")
+    assert status[2] == 1
+
+
+def test_add_carries_the_error_state_of_a_sub_log():
+    bold = ReportLog()
+    bold.error("bold 1 failed")
+
+    log = _log()
+    log.add(bold)
+    _, status = log.finish("bold 1 failed")
+
+    assert status[2] == 1

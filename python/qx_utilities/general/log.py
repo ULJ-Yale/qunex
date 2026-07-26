@@ -32,6 +32,13 @@ spelled:
 
 The ``processing.core`` / ``general.core`` helpers are imported lazily inside
 the wrapper methods so this module stays importable from those packages.
+
+Internally the report is a list of ``(depth, severity, message)`` records
+rendered to text on demand, not a list of pre-formatted strings: severity and
+nesting stay recoverable after the fact, so the report can be re-rendered (an
+errors only digest, a machine readable form) without every call site changing.
+Verbatim text -- :meth:`ReportLog.raw`, :meth:`ReportLog.capture`, the framing
+rules -- is held as a ``RAW`` record and emitted untouched.
 """
 
 import traceback
@@ -46,37 +53,56 @@ REPORT_RULE = "------------------------------------------------------------"
 # timestamp format used in the per-session reports
 REPORT_TIME = "%A, %d. %B %Y %H:%M:%S"
 
-# how each severity is spelled in the runlog
+# how each severity is spelled in the runlog, after the depth indent
 PREFIXES = {
     "step": "---> ",
-    "detail": "     ... ",
+    "detail": "... ",
     "warning": "---> WARNING: ",
     "error": "---> ERROR: ",
     "info": "",
 }
+
+# severity of a record holding verbatim text: no newline, no prefix, no indent
+RAW = "raw"
+
+# what one level of nesting costs; `detail` sits at depth 1, which is what
+# spells its historical "     ... " prefix
+INDENT = "     "
 
 
 class ReportLog:
     """
     Accumulating report text, spelled in the QuNex runlog vocabulary.
 
-    Holds the growing report as a list of parts and renders it on demand. This
-    is the piece shared by session-level commands and their per-BOLD / per-group
-    executors; :class:`SessionLog` extends it with the header and footer.
+    Holds the growing report as a list of ``(depth, severity, message)``
+    records and renders it on demand. This is the piece shared by session-level
+    commands and their per-BOLD / per-group executors; :class:`SessionLog`
+    extends it with the header and footer.
     """
 
     def __init__(self):
-        self._parts = []
+        self._records = []
+        self._depth = 0
+        self._errors = 0
 
     # ------------------------------------------------------------------ text
 
     @property
     def text(self) -> str:
         """The report rendered so far."""
-        return "".join(self._parts)
+        return "".join(
+            message if severity == RAW
+            else "\n" + INDENT * depth + PREFIXES[severity] + message
+            for depth, severity, message in self._records
+        )
 
     def __str__(self) -> str:
         return self.text
+
+    @property
+    def has_errors(self) -> bool:
+        """Whether any error has been recorded on this log."""
+        return self._errors > 0
 
     def capture(self, text: str) -> None:
         """
@@ -85,56 +111,89 @@ class ReportLog:
         Those helpers take the report so far and hand back the report with their
         own output appended, so the returned string replaces the buffer rather
         than extending it.
+
+        Deprecated: this flattens every record recorded so far into one verbatim
+        block, losing severity and depth. It disappears once the helpers write
+        into the log object instead of round-tripping its text.
         """
-        self._parts = [text]
+        self._records = [(0, RAW, text)]
 
     def add(self, other) -> None:
         """Append the text of another report log (e.g. an executor's result)."""
-        self._parts.append(other.text if isinstance(other, ReportLog) else other)
+        if isinstance(other, ReportLog):
+            self._records += other._records
+            self._errors += other._errors
+        else:
+            self.raw(other)
 
-    # ---------------------------------------------------------------- levels
+    # ----------------------------------------------------------------- depth
 
-    def _emit(self, level, message, args):
-        if args:
-            message = message % args
-        self._parts.append("\n" + PREFIXES[level] + message)
+    def indent(self, levels: int = 1) -> None:
+        """Nest subsequent lines one (or ``levels``) deeper. Clamped at zero."""
+        self._depth = max(0, self._depth + levels)
 
-    def step(self, message: str, *args) -> None:
-        """Record a processing step: ``---> <message>``."""
-        self._emit("step", message, args)
-
-    def detail(self, message: str, *args) -> None:
-        """Record a sub-detail of the preceding step: ``     ... <message>``."""
-        self._emit("detail", message, args)
-
-    def warning(self, message: str, *args) -> None:
-        """Record a warning: ``---> WARNING: <message>``."""
-        self._emit("warning", message, args)
-
-    def error(self, message: str, *args) -> None:
-        """Record an error: ``---> ERROR: <message>``."""
-        self._emit("error", message, args)
-
-    def info(self, message: str, *args) -> None:
-        """Record an unprefixed line."""
-        self._emit("info", message, args)
-
-    def blank(self, count: int = 1) -> None:
-        """Insert blank lines."""
-        self._parts.append("\n" * count)
-
-    def raw(self, text: str) -> None:
-        """Append text verbatim, with no prefix and no added newline."""
-        self._parts.append(text)
+    def dedent(self, levels: int = 1) -> None:
+        """Undo :meth:`indent`. Clamped at zero."""
+        self.indent(-levels)
 
     @contextmanager
-    def section(self, title: str):
-        """Frame a block of output between report rules."""
-        self._parts.append("\n\n%s\n%s\n\n" % (REPORT_RULE, title))
+    def section(self, title: str, *args):
+        """
+        Record a step and nest everything logged inside the block under it.
+
+        The depth is restored even if the block raises.
+        """
+        self.step(title, *args)
+        self.indent()
         try:
             yield self
         finally:
-            self._parts.append("\n%s\n" % REPORT_RULE)
+            self.dedent()
+
+    # ---------------------------------------------------------------- levels
+
+    def _emit(self, level, message, args, depth=0):
+        if args:
+            message = message % args
+        self._records.append((max(0, self._depth + depth), level, message))
+
+    def step(self, message: str, *args, depth: int = 0) -> None:
+        """Record a processing step: ``---> <message>``."""
+        self._emit("step", message, args, depth)
+
+    def detail(self, message: str, *args, depth: int = 0) -> None:
+        """Record a sub-detail of the preceding step: ``     ... <message>``."""
+        self._emit("detail", message, args, depth + 1)
+
+    def warning(self, message: str, *args, depth: int = 0) -> None:
+        """Record a warning: ``---> WARNING: <message>``."""
+        self._emit("warning", message, args, depth)
+
+    def error(self, message: str, *args, depth: int = 0) -> None:
+        """Record an error: ``---> ERROR: <message>``."""
+        self._errors += 1
+        self._emit("error", message, args, depth)
+
+    def info(self, message: str, *args, depth: int = 0) -> None:
+        """Record an unprefixed line."""
+        self._emit("info", message, args, depth)
+
+    def blank(self, count: int = 1) -> None:
+        """Insert blank lines."""
+        self.raw("\n" * count)
+
+    def raw(self, text: str) -> None:
+        """Append text verbatim, with no prefix, no indent and no added newline."""
+        self._records.append((0, RAW, text))
+
+    @contextmanager
+    def framed(self, title: str):
+        """Frame a block of output between report rules."""
+        self.raw("\n\n%s\n%s\n\n" % (REPORT_RULE, title))
+        try:
+            yield self
+        finally:
+            self.raw("\n%s\n" % REPORT_RULE)
 
     def pipeline_command(self, command: str, marker: str = "--",
                          title: str = "Running HCP Pipelines command via QuNex:"):
@@ -152,28 +211,30 @@ class ReportLog:
         if marker == "--":
             # commands assembled with line continuations carry alignment padding
             body = body.replace("             ", "")
-        with self.section(title):
+        with self.framed(title):
             self.raw(body)
 
     # ---------------------------------------------------------------- errors
 
     def command_failed(self, e: ge.CommandFailed, step: str = None) -> None:
         """Record a ``ge.CommandFailed`` raised inside the command."""
+        self._errors += 1
         details = "\n     ".join(e.report)
         if step is None:
-            self._parts.append(
+            self.raw(
                 "\n\nERROR in completing %s:\n     %s\n" % (e.function, details)
             )
         else:
-            self._parts.append(
+            self.raw(
                 "\n\nERROR in completing %s at %s:\n     %s\n"
                 % (step, e.function, details)
             )
 
     def unknown_error(self) -> None:
         """Record an unexpected exception, including the current traceback."""
+        self._errors += 1
         dots = "." * 35
-        self._parts.append(
+        self.raw(
             "\nERROR: Unknown error occured: \n%s\n%s%s\n"
             % (dots, traceback.format_exc(), dots)
         )
@@ -331,7 +392,7 @@ class SessionLog(ReportLog):
         self._pipeline = pipeline
         self._sid = sinfo["id"]
 
-        self._parts.append("\n%s\n%s: %s \n[started on %s]" % (
+        self.raw("\n%s\n%s: %s \n[started on %s]" % (
             REPORT_RULE,
             label,
             self._sid,
@@ -340,11 +401,11 @@ class SessionLog(ReportLog):
 
         action = pc.action("Running", options["run"])
         if mode:
-            self._parts.append("%s%s %s [%s] ...%s" % (
+            self.raw("%s%s %s [%s] ...%s" % (
                 lead, action, pipeline, options["hcp_processing_mode"], tail,
             ))
         else:
-            self._parts.append("%s%s %s ...%s" % (lead, action, pipeline, tail))
+            self.raw("%s%s %s ...%s" % (lead, action, pipeline, tail))
 
     # ---------------------------------------------------------------- finish
 
@@ -358,17 +419,33 @@ class SessionLog(ReportLog):
         can never return the malformed two-field status that made a whole run
         print "success status not reported".
 
+        The failure count is derived from the log when the caller does not give
+        one: a command that recorded an error reports a failure. An explicit
+        ``failed=`` (or the count inside a status tuple) always wins, but a
+        caller reporting no failures while errors were recorded gets a warning
+        line in the report -- the two disagreeing is a bug in the command, not
+        something to hide or to raise on mid-run.
+
         Parameters:
             report: the per-session summary string, or a ready three-field
                 ``(session_id, summary, failed)`` status tuple.
-            failed: number of failed units; required when ``report`` is a string,
-                ignored when it is a tuple.
+            failed: number of failed units; derived from recorded errors when
+                omitted, ignored when ``report`` is a tuple.
             pipeline: name for the closing line; defaults to the opening one.
             lead: newlines separating the footer from the preceding text.
 
         Returns:
             ``(report_text, (session_id, summary, failed))``.
         """
+        reported = report[2] if isinstance(report, tuple) and len(report) == 3 else failed
+        if reported is None:
+            failed = reported = 1 if self.has_errors else 0
+        if self.has_errors and not reported:
+            self.warning(
+                "%d error(s) were recorded but the command reports no failures"
+                % self._errors
+            )
+
         self.close(pipeline=pipeline, lead=lead)
         return self.result(report, failed)
 
@@ -387,7 +464,7 @@ class SessionLog(ReportLog):
         import qx_utilities.processing.core as pc
 
         name = pipeline if pipeline is not None else self._pipeline
-        self._parts.append("%s%s %s on %s\n%s" % (
+        self.raw("%s%s %s on %s\n%s" % (
             lead,
             name,
             pc.action("completed", self._options["run"]),
@@ -399,7 +476,9 @@ class SessionLog(ReportLog):
         """
         Build the ``(report_text, status)`` value the command returns.
 
-        Enforces the three-field status contract (see :meth:`finish`).
+        Enforces the three-field status contract (see :meth:`finish`). Unlike
+        :meth:`finish` it does not derive ``failed`` -- a direct caller states
+        the count.
         """
         if isinstance(report, tuple):
             if len(report) != 3:

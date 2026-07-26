@@ -46,6 +46,7 @@ WRAPPERS = {
     "use_or_skip_bold": (ReportLog.use_or_skip_bold, None, set()),
     "pipeline_command": (ReportLog.pipeline_command, None, set()),
     "command_failed": (ReportLog.command_failed, None, set()),
+    "framed": (ReportLog.framed, None, set()),
     "section": (ReportLog.section, None, set()),
     "finish": (SessionLog.finish, None, set()),
     "result": (SessionLog.result, None, set()),
