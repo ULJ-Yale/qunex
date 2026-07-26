@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-26T14:13:56.717310+00:00'
+generated_at: '2026-07-26T14:46:14.395137+00:00'
 source:
     id: core
 commands:
@@ -10116,6 +10116,35 @@ commands:
         type: int
         default: '1'
         description: Optional number of initial frames to retain. [1]
+    options: []
+    returns: []
+    origin: core
+-   name: sort_dicom
+    aliases: []
+    path: qx_utilities.general.dicom.sort_dicom
+    language: python
+    call: sort_dicom [folder=.] [outdir=<folder>] [files=<comma-separated list>]
+    description: Sorts DICOM (and PAR/REC) files into per-sequence ``dicom`` subfolders.
+    type: utility
+    args:
+    -   name: folder
+        type: str
+        default: .
+        description: The base session folder that contains the ``inbox`` subfolder with the unsorted DICOM files.
+    -   name: copy
+        type: str
+        default: move
+        description: Accepted for backward compatibility but ignored, the files are always copied and the ``inbox`` folder
+            is left intact.
+    -   name: outdir
+        type: str
+        default: detailed below
+        description: Optional directory in which the ``dicom`` folder is created. Defaults to the `folder` parameter if not
+            set.
+    -   name: files
+        type: str
+        default: detailed below
+        description: Optional comma separated list of files to sort. Defaults to the contents of ``<folder>/inbox``.
     options: []
     returns: []
     origin: core

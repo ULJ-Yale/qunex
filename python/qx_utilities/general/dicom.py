@@ -3823,19 +3823,27 @@ def _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms,
     pkg.error_sequences = sum(1 for s in eval_sequences if s.status == "FAIL")
 
 
-def sort_dicom(folder=".", **kwargs):
+def sort_dicom(folder=".", copy="move", outdir=None, files=None):
     """
-    ``sort_dicom [folder=.] [out_dir=<folder>] [files=<comma-separated list>]``
+    ``sort_dicom [folder=.] [outdir=<folder>] [files=<comma-separated list>]``
 
     Sorts DICOM (and PAR/REC) files into per-sequence ``dicom`` subfolders.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --folder (str, default '.'):
             The base session folder that contains the ``inbox`` subfolder with
             the unsorted DICOM files.
 
-        --out_dir (str, default `folder`):
+        --copy (str, default 'move'):
+            Accepted for backward compatibility but ignored, the files are
+            always copied and the ``inbox`` folder is left intact.
+
+        --outdir (str, default detailed below):
             Optional directory in which the ``dicom`` folder is created.
+            Defaults to the `folder` parameter if not set.
 
         --files (str, default detailed below):
             Optional comma separated list of files to sort. Defaults to the
@@ -3856,9 +3864,7 @@ def sort_dicom(folder=".", **kwargs):
             qunex sort_dicom --folder=OP667
     """
     print("Running sort_dicom\n=================")
-    out_dir = kwargs.get("out_dir") or folder
-    dicom_dir = os.path.join(out_dir, "dicom")
-    files = kwargs.get("files")
+    dicom_dir = os.path.join(outdir or folder, "dicom")
     if files:
         sources = [e.strip() for e in files.split(",")]
     else:
