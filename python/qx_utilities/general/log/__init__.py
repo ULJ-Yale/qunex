@@ -18,6 +18,10 @@ The package is the public surface; the implementation is split by concern:
 - :mod:`~qx_utilities.general.log.settings` -- where logging settings come
   from (user file, study file, the registry ``logging:`` field, ``--logging``)
   and how they are resolved into a :class:`LogSettings`.
+- :mod:`~qx_utilities.general.log.context` -- :class:`RunContext` and
+  :class:`ComContext`, which own the runlog and comlog *files*: where they
+  live, when they are written, and what their names say about how the call
+  ended.
 
 Import the names from here, not from the submodules::
 
@@ -31,6 +35,14 @@ paths run the other way. Where a helper from them is needed, import it
 lazily inside the function.
 """
 
+from qx_utilities.general.log.context import (
+    ComContext,
+    RunContext,
+    call_echo,
+    comlog_folder,
+    comlog_name,
+    log_folder,
+)
 from qx_utilities.general.log.report import (
     INDENT,
     PREFIXES,
@@ -51,14 +63,20 @@ from qx_utilities.general.log.settings import (
 __all__ = [
     "INDENT",
     "LOGGING_MODES",
+    "ComContext",
     "LogSettings",
     "PREFIXES",
     "RAW",
     "REPORT_RULE",
     "REPORT_TIME",
     "ReportLog",
+    "RunContext",
     "SessionLog",
     "USER_SETTINGS_PATHS",
+    "call_echo",
+    "comlog_folder",
+    "comlog_name",
     "load_settings",
+    "log_folder",
     "resolve_logging",
 ]

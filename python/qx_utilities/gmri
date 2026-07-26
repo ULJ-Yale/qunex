@@ -96,10 +96,12 @@ def runCommand(command, args):
         command, args, qx_command=qx_command, studyfolder=folders["basefolder"]
     )
 
-
     # -- is this a processing command?
     if qx_command.language == "python" and qx_command.type.startswith("processing"):
-        gp.run(qx_command, args)
+        # process.run builds its own RunContext: it merges the batch file into
+        # the options first, and that can move the study (and so the log)
+        # folder. The settings resolved above are what it builds it from.
+        gp.run(qx_command, args, log_settings)
         return
     
     # -- is this a matlab command?
@@ -177,6 +179,9 @@ def runCommand(command, args):
 
     logname = eargs.get("logname")
 
+    # -- one runlog per run, shared by every call this invocation makes
+    run = gl.RunContext(command, args, log_settings, folders, timestamp=timestamp)
+
     calls = []
 
     # -- run_recipe specifics
@@ -250,7 +255,6 @@ def runCommand(command, args):
                             "name": "run_recipe_%d" % (c),
                             "function": qx_command.load_callable(),
                             "args": recipe_args,
-                            "logfile": None,
                         }
                     )
 
@@ -327,23 +331,6 @@ def runCommand(command, args):
 
         # -- a basic call
         elif sessions is None:
-            # logfolder
-            if not folders["logfolder"]:
-                folders["logfolder"] = "."
-
-                # createstudy exception
-                if command == "create_study" and "studyfolder" in args:
-                    folders["logfolder"] = args["studyfolder"] + "/logs"
-                elif command == "create_study":
-                    folders["logfolder"] = "./logs"
-
-            suffix = ""
-            if "sessionids" in args:
-                suffix = "_" + args["sessionids"]
-
-            logfile = os.path.join(
-                folders["logfolder"], "comlogs", "%s%s.log" % (command, suffix)
-            )
             # commands that are not logged run bare, without a comlog
             if not log_settings.enabled:
                 # remove non-command args
@@ -352,8 +339,12 @@ def runCommand(command, args):
                 qx_commands.get(command).load_callable()(**args)
             # run with log
             else:
+                run.header()
                 _, result, _, _ = gc.run_with_log(
-                    qx_commands.get(command).load_callable(), args=args, logfile=logfile
+                    qx_commands.get(command).load_callable(),
+                    args=args,
+                    run=run,
+                    tags=[command, args.get("sessionids")],
                 )
 
         # -- sessions loop
@@ -362,12 +353,6 @@ def runCommand(command, args):
                 targs = dict(bargs)
                 name = command + ": " + session["id"]
                 sessionsfolder = os.path.join(folders["sessionsfolder"], session["id"])
-                if folders["logfolder"]:
-                    logfile = os.path.join(
-                        folders["logfolder"],
-                        "comlogs",
-                        "%s_%s.log" % (command, session["id"]),
-                    )
                 for targ in ["sourcefolder", "folder"]:
                     if qx_command.has_arg(targ):
                         targs[targ] = sessionsfolder
@@ -377,12 +362,14 @@ def runCommand(command, args):
                         "name": name,
                         "function": qx_command.load_callable(),
                         "args": targs,
-                        "logfile": logfile,
+                        "tags": [command, session["id"]],
                     }
                 )
 
     # -- Have we set up calls to run in parallel?
     if calls:
+        run.header()
+
         callInfo = "Running %s" % (command)
         callInfo += "\n" + "".join(["=" for e in range(len(callInfo))])
         print(callInfo)
@@ -391,10 +378,12 @@ def runCommand(command, args):
             "\n---> Running %s through %d sessions in parallel" % (command, parsessions)
         )
 
-        results = gc.run_in_parallel(calls, cores=parsessions, prepend="     ... ")
+        results = gc.run_in_parallel(
+            calls, cores=parsessions, prepend="     ... ", run=run
+        )
 
         ok = True
-        print("\n---> Final report for command", command)
+        report = ["\n---> Final report for command %s" % (command)]
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
             if result:
@@ -402,11 +391,15 @@ def runCommand(command, args):
             else:
                 result = "completed"
             if targetLog:
-                print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
+                report.append("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
             else:
-                print("%s %s %s" % (prepend, name, result))
+                report.append("%s %s %s" % (prepend, name, result))
         if ok:
-            print(f"\n---> Successful completion of task at {datetime.now()}")
+            report.append(f"\n---> Successful completion of task at {datetime.now()}")
+
+        report = "\n".join(report)
+        print(report)
+        run.write(report + "\n")
 
 
 def print_bash_help(cmd):

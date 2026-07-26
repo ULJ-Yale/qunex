@@ -13,6 +13,7 @@ preprocessing and analysis. The functions are for internal use
 and can not be called externally.
 """
 
+import contextlib
 import glob
 import gzip
 import inspect
@@ -24,7 +25,6 @@ import os
 import os.path
 import shutil
 import subprocess
-import sys
 import time
 import traceback
 import types
@@ -812,32 +812,51 @@ def record_future(future):
         record(future.result())
 
 
-# Logger class that prints both to stdour and to console
-class Logger(object):
-    def __init__(self, logfile):
-        self.terminal = sys.stdout
-        self.log = open(logfile, "a")
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)
-
-    def close(self):
-        self.log.close()
-
-    def flush(self):
-        # this flush method is needed for python 3 compatibility.
-        # this handles the flush command by doing nothing.
-        # you might want to specify some extra behavior here.
-        pass
-
-
-def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
+def _drop_run_parameters(function, args):
     """
-    ``run_with_log(function, args=None, logfile=None, name=None)``
+    Drop the run-level parameters the command itself does not take.
 
-    Runs a function with the arguments by redirecting standard output and
-    standard error to the specified log file.
+    ``--logging``, ``--logfolder``, ``--scheduler`` and the rest steer how
+    qunex runs a command, not what the command does, so reaching the callable
+    is a TypeError. Functions with a ``**kwargs`` catch-all keep them: for
+    those the pass-through is deliberate (``run_recipe`` threads ``eargs``
+    this way).
+
+    Note that this is never reached on a scheduler run: ``run_through_scheduler``
+    strips ``--scheduler`` from the call it re-issues, and the paths that use it
+    return before this one.
+    """
+    import qx_utilities.general.commands_support as gcs
+
+    accepted = inspect.signature(function).parameters
+    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in accepted.values()):
+        return
+
+    for extra in gcs.extra_parameters:
+        if extra in args and extra not in accepted:
+            del args[extra]
+
+
+def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None):
+    """
+    ``run_with_log(function, args=None, run=None, name=None, prepend="", tags=None)``
+
+    Runs a function, capturing everything it prints into a comlog and
+    recording the call and its outcome in the run's runlog.
+
+    Parameters:
+        --function     The function to run.
+        --args         The arguments to call it with.
+        --run          The RunContext that owns this run's logs. When None the
+                       function runs with its output going to the console only.
+        --name         The name to report the call under [the function name].
+        --prepend      The string to prepend to each line of progress report.
+        --tags         The name parts of the comlog to open. When None no
+                       comlog is opened and the output goes to the console.
+
+    Returns:
+        (name, result, comlog path, prepend). `result` is falsy on success and
+        holds the exception otherwise.
 
     For internal use only.
     """
@@ -846,36 +865,19 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
     if name is None:
         name = function.__name__
 
-    if logfile:
-        logfolder, logname = os.path.split(logfile)
+    comlog = run.comlog(*tags, timestamp=timestamp) if run and tags else None
+    if comlog:
+        comlog.open()
 
-        base_logname, ext_logname = os.path.splitext(logname)
-        logname = base_logname + "_" + timestamp + ext_logname
-
-        # truncate too long lognames
-        max_log_length = 150
-        if len(logname) > max_log_length:
-            logname = logname[:max_log_length] + "(...).log"
-
-        tlogfile = os.path.join(logfolder, "tmp_" + logname)
-
-        if not os.path.exists(logfolder):
-            os.makedirs(logfolder)
+    if comlog and comlog.file:
+        print_qunex_header(timestamp=timestamp, file=comlog.file)
+        comlog.write("#\n")
         with lock:
-            # header
-            with open(tlogfile, "w") as f:
-                print_qunex_header(timestamp=timestamp, file=f)
-                print("#", file=f)
             print(
                 prepend
                 + "started running %s at %s, track progress in %s"
-                % (name, str(datetime.now()).split(".")[0], tlogfile)
+                % (name, str(datetime.now()).split(".")[0], comlog.path)
             )
-
-        sysstdout = sys.stdout
-        sysstderr = sys.stderr
-        sys.stdout = Logger(tlogfile)
-        sys.stderr = sys.stdout
     else:
         with lock:
             print(print_qunex_header(timestamp=timestamp))
@@ -885,120 +887,74 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
                 + "started running %s at %s" % (name, str(datetime.now()).split(".")[0])
             )
 
-    with lock:
-        print(
-            "call: gmri %s %s\n-----------------------------------------"
-            % (
-                function.__name__,
-                " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()]),
+    # everything the command prints from here on is teed into the comlog; the
+    # streams are restored however the block exits
+    with comlog.capture_stdout() if comlog else contextlib.nullcontext():
+        with lock:
+            print(
+                "call: gmri %s %s\n-----------------------------------------"
+                % (
+                    function.__name__,
+                    " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()]),
+                )
             )
+
+        try:
+            _drop_run_parameters(function, args)
+            result = function(**args)
+        except ge.CommandError as e:
+            with lock:
+                print(ge.report_command_error(name, e))
+            result = e
+        except ge.CommandNull as e:
+            with lock:
+                print(ge.report_command_null(name, e))
+            result = e
+        except ge.CommandFailed as e:
+            with lock:
+                print(ge.report_command_failed(name, e))
+            result = e
+        except Exception as e:
+            with lock:
+                print("\n\nERROR")
+                print(traceback.format_exc())
+            result = e
+
+        with lock:
+            print(
+                "\n-----------------------------------------\nFinished at %s"
+                % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            )
+
+        # schedule command fix
+        if name == "schedule":
+            result = False
+
+        if not result:
+            print(f"\n---> Successful completion of task at {datetime.now()}")
+
+    comlogname = comlog.close(status="error" if result else "done") if comlog else None
+
+    # record the call in the run's runlog -- one runlog per run, so this
+    # appends to the file the RunContext opened rather than creating its own
+    if run:
+        import qx_utilities.general.log as gl
+
+        command, _, session = name.partition(": ")
+        # the run's header already spelled the call; only a per-session call
+        # is worth echoing again, since its arguments differ from the run's
+        entry = gl.call_echo(command, args, session) + "\n" if session else name
+        status = (
+            "ERROR running %s" % name
+            if result
+            else f"---> Successful completion of task at {datetime.now()}"
         )
-
-    try:
-        # drop the run-level parameters (--logging, --logfolder, --scheduler,
-        # ...) the command itself does not take: they steer how qunex runs the
-        # command, not what the command does, so reaching it is a TypeError
-        import qx_utilities.general.commands_support as gcs
-
-        accepted = inspect.signature(function).parameters
-        catch_all = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD for p in accepted.values()
-        )
-        if not catch_all:
-            for extra in gcs.extra_parameters:
-                if extra in args and extra not in accepted:
-                    del args[extra]
-        result = function(**args)
-    except ge.CommandError as e:
-        with lock:
-            print(ge.report_command_error(name, e))
-        result = e
-    except ge.CommandNull as e:
-        with lock:
-            print(ge.report_command_null(name, e))
-        result = e
-    except ge.CommandFailed as e:
-        with lock:
-            print(ge.report_command_failed(name, e))
-        result = e
-    except Exception as e:
-        with lock:
-            print("\n\nERROR")
-            print(traceback.format_exc())
-        result = e
-
-    with lock:
-        print(
-            "\n-----------------------------------------\nFinished at %s"
-            % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        )
-
-    # schedule command fix
-    if name == "schedule":
-        result = False
-
-    if not result:
-        print(f"\n---> Successful completion of task at {datetime.now()}")
-
-    if logfile:
-        sys.stdout.close()
-        sys.stdout = sysstdout
-        sys.stderr = sysstderr
-
-        # log prefix
-        log_prefix = "done_"
-        if result:
-            log_prefix = "error_"
-        comlogname = os.path.join(logfolder, log_prefix + logname)
-
-        os.rename(os.path.join(logfolder, "tmp_" + logname), comlogname)
-
-        # create runlog, which sits in the parent of the comlogs folder
-        parent, tail = os.path.split(logfolder.rstrip(os.sep))
-        if tail == "comlogs":
-            logfolder = parent
-
-        # runlog file
-        runlogname = "Log-" + logname
-
-        # print to runlog file and close
-        logfile = os.path.join(logfolder, runlogname)
-        lf = open(logfile, "a")
-
-        # header
-        lf.write("%s\n" % (print_qunex_header(timestamp=timestamp)))
-        lf.write("#\n")
-
-        # split name to command name and session
-        split = name.split(": ")
-
-        # print session if exists
-        if len(split) > 1:
-            lf.write("session: %s\n" % split[1])
-
-        # print command name
-        lf.write("qunex %s \\\n" % split[0])
-        arg_items = list(args.items())
-        for i, (k, v) in enumerate(arg_items):
-            if i < len(arg_items) - 1:
-                lf.write('  --%s="%s" \\\n' % (k, v))
-            else:
-                lf.write('  --%s="%s"\n' % (k, v))
-
-        # print final status
-        if result:
-            lf.write("\nERROR running %s\n" % name)
-        else:
-            lf.write(f"\n---> Successful completion of task at {datetime.now()}\n")
-
-        lf.close()
-    else:
-        comlogname = None
+        run.write("\n%s\n%s\n" % (entry, status))
 
     return name, result, comlogname, prepend
 
 
-def run_in_parallel(calls, cores=None, prepend=""):
+def run_in_parallel(calls, cores=None, prepend="", run=None):
     """
     ``run_in_parallel(calls, cores=None, prepend="")``
 
@@ -1014,19 +970,20 @@ def run_in_parallel(calls, cores=None, prepend=""):
                    - name (the name of the command to run)
                    - function (the function to be run)
                    - args (the arguments to be passed to the function)
-                   - logfile (the path to the log file to which to direct the
-                     standard output from the command ran)
+                   - tags (the name parts of the comlog to write the standard
+                     output of the command to, or None for no comlog)
 
     --cores        The number of cores to utilize. If specified as None or
                    'all', all available cores will be utilized.
     --prepend      The string to prepend to each line of progress report.
+    --run          The RunContext that owns this run's logs.
 
     EXAMPLE USE
     ===========
 
     ::
 
-        run_in_parallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'sout': 'sort_dicom.log'}, cores=1, prepend=' ... ')
+        run_in_parallel({'name': 'Sort dicom files', 'function': dicom.sort_dicom, 'args': {'folder': '.'}, 'tags': ['sort_dicom']}, cores=1, prepend=' ... ')
     """
 
     global results
@@ -1045,10 +1002,11 @@ def run_in_parallel(calls, cores=None, prepend=""):
             future = executor.submit(
                 run_with_log,
                 call["function"],
-                call["args"],
-                call["logfile"],
-                call["name"],
-                prepend,
+                args=call["args"],
+                run=run,
+                name=call["name"],
+                prepend=prepend,
+                tags=call.get("tags"),
             )
             future.add_done_callback(record_future)
 
@@ -1218,80 +1176,6 @@ def print_and_log(*args, **kwargs):
     for toclose in [append, write]:
         if toclose:
             toclose.close()
-
-
-def get_log_file(folders=None, tags=None):
-    """
-    ``get_log_file(folders=None, tags=None)``
-
-    Creates a log file in the comlogs folder.
-
-    INPUTS
-    ======
-
-    --folders      A dictionary with the known paths.
-    --tags         An array of strings to use to create the filename.
-
-    OUTPUTS
-    =======
-
-    --filename         The path to the log file.
-    --file handle      The file handle of the open file.
-
-    USE
-    ===
-
-    Creates a log file in the comlogs folder and returns the name and the file
-    handle. It tries to find the correct location for the log based on the
-    provided folders.
-
-    """
-
-    folders = deduce_folders(folders)
-
-    if "logfolder" not in folders:
-        raise ge.CommandFailed(
-            "get_log_file",
-            "Logfolder not found",
-            "Could not deduce the location of the log folder based on the provided information!",
-        )
-
-    basestring = (str, bytes)
-    if isinstance(tags, basestring) or tags is None:
-        tags = []
-
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = tags + [logstamp]
-    logname = [e for e in logname if e]
-    logname = "_".join(logname)
-    logname = os.path.join(folders["logfolder"], "comlogs", "tmp_%s.log" % (logname))
-    logfile = open(logname, "w")
-
-    return logname, logfile
-
-
-def close_log_file(logfile=None, logname=None, status="done"):
-    """
-    ``close_log_file(logfile=None, logname=None, status="done")``
-
-    Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at
-    the start of the logname to the provided status.
-
-    Returns the path of the renamed log file, or None if no logname was given.
-    """
-
-    newfile = None
-
-    if logfile:
-        logfile.close()
-
-    if logname:
-        logfolder, newname = os.path.split(logname)
-        newname = re.sub("^(tmp_|done_|error_|incomplete_|)", status + "_", newname)
-        newfile = os.path.join(logfolder, newname)
-        os.rename(logname, newfile)
-
-    return newfile
 
 
 def underscore(s):

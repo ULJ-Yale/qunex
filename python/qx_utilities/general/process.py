@@ -26,6 +26,7 @@ from datetime import datetime
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 import qx_utilities.general.scheduler as gs
 from qx_utilities.general import extensions
 
@@ -34,36 +35,26 @@ from qx_utilities.general import extensions
 from qx_utilities.general.parsing import flag, is_none
 from qx_utilities.general.parsing import true_or_false as torf
 
-# =======================================================================
-#                                                                 GLOBALS
-log = []
-stati = []
-logname = ""
-
 
 # =======================================================================
 #                                                       SUPPORT FUNCTIONS
-def writelog(item):
+def writelog(item, run, stati):
     """
-    ``writelog(item)``
+    ``writelog(item, run, stati)``
 
-    Splits the passed item into two parts and appends the first to the
-    global log list, and the second to the global stati list. It also
-    prints the contents to the file specified in the global logname
-    variable.
+    Splits a command's return value into the report text and the status
+    triple, appends the status to `stati` and the report to the run's runlog.
+
+    The report is appended as the session completes, so a long run can be
+    followed by tailing the runlog.
 
     Returns the (report, status) pair, so callers do not have to split the
     item a second time - passing an already split report back in would append
     a spurious "Unknown" status to stati.
     """
-    global logname
-    global log
-    global stati
     r, status = proc_response(item)
-    log.append(r)
     stati.append(status)
-    with open(logname, "a") as f:
-        print(r, file=f)
+    run.write(r + "\n")
     return r, status
 
 
@@ -1180,10 +1171,21 @@ for line in flaglist:
 # ==============================================================================
 #                                                               RUNNING COMMANDS
 #
-def run(qx_command, args):
-    global log
-    global stati
-    global logname
+def run(qx_command, args, log_settings=None):
+    """
+    ``run(qx_command, args, log_settings=None)``
+
+    Runs a processing command over the sessions it was given, locally or
+    through a scheduler, and records what happened in the run's runlog.
+
+    Parameters:
+        --qx_command    The registry entry of the command to run.
+        --args          The parsed command line arguments.
+        --log_settings  The resolved logging settings; defaults to logging
+                        everything.
+    """
+    if log_settings is None:
+        log_settings = gl.LogSettings()
 
     # --------------------------------------------------------------------------
     #                                                            Parsing options
@@ -1281,8 +1283,19 @@ def run(qx_command, args):
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     studyfolders = gc.deduce_folders(options, qx_command.name, timestamp)
-    logfolder = studyfolders["logfolder"]
-    comlogfolder = os.path.join(logfolder, "comlogs")
+
+    # the run's logs: one runlog for the whole invocation, comlogs beside it
+    run_context = gl.RunContext(
+        qx_command.name,
+        args,
+        log_settings,
+        studyfolders,
+        timestamp=timestamp,
+        tag="long" if options["longitudinal"] else None,
+    )
+
+    logfolder = run_context.logfolder
+    comlogfolder = run_context.comlogfolder
     specfolder = os.path.join(studyfolders["sessionsfolder"], "specs")
 
     options["comlogs"] = comlogfolder
@@ -1292,31 +1305,13 @@ def run(qx_command, args):
     # --------------------------------------------------------------------------
     #                                                      start writing the log
     os.makedirs(comlogfolder, exist_ok=True)
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
-    if not options["longitudinal"]:
-        logname = os.path.join(logfolder, "Log-%s-%s.log") % (qx_command.name, logstamp)
-    else:
-        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (
-            qx_command.name,
-            logstamp,
-        )
-
-    log = []
+    # the header goes in first, so a run killed halfway still says what it was
     stati = []
-    sout = gc.print_qunex_header()
-    sout += "#\n"
-    sout += "=================================================================\n"
-    sout += "qunex " + qx_command.name + " \\"
+    header = run_context.header()
 
-    arg_items = list(args.items())
-    for i, (k, v) in enumerate(arg_items):
-        if i < len(arg_items) - 1:
-            sout += '\n  --%s="%s" \\' % (k, v)
-        else:
-            sout += '\n  --%s="%s"' % (k, v)
-
-    sout += "\n=================================================================\n"
+    # `sout` is what follows the header, printed and recorded together
+    sout = ""
 
     # no parsessions for subject and multi-session commands
     if processing_type in ["subject", "study"]:
@@ -1329,8 +1324,8 @@ def run(qx_command, args):
     # check if there are no sessions
     if not sessions or processing_type == "subject" and not subjects:
         sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
-        print(sout)
-        writelog(sout)
+        print(header + "\n" + sout)
+        run_context.write(sout)
         exit()
 
     elif options["run"] == "run":
@@ -1339,18 +1334,18 @@ def run(qx_command, args):
     else:
         sout += "\nRunning test on %s ...\n" % (options["sessions"])
 
-    print(sout)
-    writelog(sout)
+    print(header + "\n" + sout)
+    run_context.write(sout)
 
     # -----------------------------------------------------------------------
     #                                                           print options
     if printoptions:
         print("\nFull list of options:")
-        writelog("\nFull list of options:\n")
+        run_context.write("\nFull list of options:\n")
         for line in arglist:
             if len(line) == 3:
                 print("%-25s :" % (line[0]), options[line[0]])
-                writelog("  %-25s : %s" % (line[0], str(options[line[0]])))
+                run_context.write("  %-25s : %s\n" % (line[0], str(options[line[0]])))
 
     # -----------------------------------------------------------------------
     #                                                              print info
@@ -1395,7 +1390,11 @@ def run(qx_command, args):
                 print(message)
 
                 # process and write log
-                r, _ = writelog(pending_actions(sessions, soptions, overwrite, c + 1))
+                r, _ = writelog(
+                    pending_actions(sessions, soptions, overwrite, c + 1),
+                    run_context,
+                    stati,
+                )
                 console_log += r
                 print(r)
 
@@ -1409,7 +1408,9 @@ def run(qx_command, args):
                     print(message)
 
                     r, _ = writelog(
-                        pending_actions(subject, options, overwrite, c + 1)
+                        pending_actions(subject, options, overwrite, c + 1),
+                        run_context,
+                        stati,
                     )
                     console_log += r
                     print(r)
@@ -1429,7 +1430,9 @@ def run(qx_command, args):
                         soptions = update_options(session, options)
 
                         r, _ = writelog(
-                            pending_actions(session, soptions, overwrite, c + 1)
+                            pending_actions(session, soptions, overwrite, c + 1),
+                            run_context,
+                            stati,
                         )
                         console_log += r
                         print(r)
@@ -1481,52 +1484,16 @@ def run(qx_command, args):
             for future in as_completed(futures):
                 # result[0] is not the report unless result is a tuple, so take
                 # the report writelog split out rather than indexing the result
-                r, _ = writelog(future.result())
+                r, _ = writelog(future.result(), run_context, stati)
                 console_log += r
                 print(r)
 
         # print(console log)
         # print(consoleLog)
 
-        # create log
-        f = open(logname, "w")
-        # header
-        gc.print_qunex_header(file=f)
-        # print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=f)
-        print("#", file=f)
-        print(
-            "\n\n============================= LOG ================================\n",
-            file=f,
-        )
-        for e in log:
-            print(e, file=f)
-
-        print("\n\n---> Final report for command", options["command_ran"])
-        print("\n\n---> Final report for command", options["command_ran"], file=f)
-        failed_total = 0
-
-        for sid, report, failed in stati:
-            if "Unknown" not in sid:
-                print("... %s ---> %s" % (sid, report))
-                print("... %s ---> %s" % (sid, report), file=f)
-                if failed is None:
-                    failed_total = None
-                else:
-                    if failed_total is not None:
-                        failed_total += failed
-        if failed_total is None:
-            print("---> Success status not reported for some or all tasks")
-            print("---> Success status not reported for some or all tasks", file=f)
-        elif failed_total > 0:
-            print("---> Not all tasks completed fully!")
-            print("---> Not all tasks completed fully!", file=f)
-        else:
-            print(f"---> Successful completion of all tasks at {datetime.now()}")
-            print(
-                f"---> Successful completion of all tasks at {datetime.now()}", file=f
-            )
-
-        f.close()
+        # the reports were appended as the sessions completed; all that is
+        # left is the digest
+        run_context.final_report(stati)
 
     # -----------------------------------------------------------------------
     #                                                  general scheduler code
@@ -1540,5 +1507,5 @@ def run(qx_command, args):
             args=args,
             parsessions=parsessions,
             logfolder=os.path.join(logfolder, "batchlogs"),
-            logname=logname,
+            logname=run_context.path,
         )

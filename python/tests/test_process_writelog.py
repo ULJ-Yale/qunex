@@ -13,45 +13,68 @@ status per session, so these pin that one item in equals one status out.
 
 import pytest
 
+import qx_utilities.general.log as gl
 import qx_utilities.general.process as gp
 
 
-@pytest.fixture(autouse=True)
-def clean_globals(tmp_path):
-    """process.py keeps the runlog in module globals; reset them per test."""
-    gp.log = []
-    gp.stati = []
-    gp.logname = str(tmp_path / "Log-test.log")
-    yield
+@pytest.fixture
+def run(tmp_path):
+    """The run that owns the runlog writelog appends to."""
+    return gl.RunContext(
+        "test_command",
+        {},
+        gl.LogSettings(),
+        {"basefolder": str(tmp_path)},
+        timestamp="2026-07-26_12.00.00.000000",
+    )
 
 
-def test_writelog_returns_the_split_it_recorded():
-    r, status = gp.writelog(("report text", ("sess-01", "all good", 0)))
+@pytest.fixture
+def stati():
+    return []
+
+
+def test_writelog_returns_the_split_it_recorded(run, stati):
+    r, status = gp.writelog(("report text", ("sess-01", "all good", 0)), run, stati)
 
     assert r == "report text"
     assert status == ("sess-01", "all good", 0)
 
 
-def test_one_result_yields_exactly_one_status():
-    gp.writelog(("report text", ("sess-01", "all good", 0)))
+def test_one_result_yields_exactly_one_status(run, stati):
+    gp.writelog(("report text", ("sess-01", "all good", 0)), run, stati)
 
-    assert gp.stati == [("sess-01", "all good", 0)]
-    assert gp.log == ["report text"]
+    assert stati == [("sess-01", "all good", 0)]
 
 
-def test_report_is_appended_to_the_runlog_file():
-    gp.writelog(("report text", ("sess-01", "all good", 0)))
-    gp.writelog(("more text", ("sess-02", "all good", 0)))
+def test_report_is_appended_to_the_runlog_file(run, stati):
+    gp.writelog(("report text", ("sess-01", "all good", 0)), run, stati)
+    gp.writelog(("more text", ("sess-02", "all good", 0)), run, stati)
 
-    with open(gp.logname) as f:
+    with open(run.path) as f:
         assert f.read() == "report text\nmore text\n"
 
 
-def test_a_plain_string_is_still_accepted_as_unknown_status():
+def test_a_plain_string_is_still_accepted_as_unknown_status(run, stati):
     # unmigrated commands may return a bare report; it must not crash, but it
     # is what the "Unknown" status is for -- and why writelog must not be
     # handed a report it has already split
-    r, status = gp.writelog("bare report")
+    r, status = gp.writelog("bare report", run, stati)
 
     assert r == "bare report"
     assert status == ("Unknown", "Unknown", None)
+
+
+def test_a_disabled_run_records_stati_but_writes_nothing(tmp_path, stati):
+    run = gl.RunContext(
+        "test_command",
+        {},
+        gl.LogSettings(enabled=False),
+        {"basefolder": str(tmp_path)},
+    )
+
+    gp.writelog(("report text", ("sess-01", "all good", 0)), run, stati)
+
+    assert stati == [("sess-01", "all good", 0)]
+    assert run.path is None
+    assert not list(tmp_path.rglob("Log-*.log"))
