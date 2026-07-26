@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 1.5.0
 
+* Fixed a set of log bookkeeping bugs: the runlog folder is no longer mis-derived for study paths containing `comlogs`, the session id is written to the runlog instead of the console, the final report of a parallel run again shows the log path, and serial runs no longer record a spurious "Unknown" status next to the real one for every session.
 * Added NHP (non-human primate) support to all HCP commands that now support it. This is mainly accessible through the `hcp_species` parameter, while there is a completely new command for HCP FreeSurfer (`hcp_nhp_freesurfer`).
 * Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
 * QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.

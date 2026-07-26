@@ -68,8 +68,10 @@ Quality:
   public functions.
 - Explicit error handling with actionable messages. Avoid hidden side effects and global state.
 - Prefer `except Exception:` over a bare `except:` (a bare except also swallows KeyboardInterrupt).
-- Keep imports clean and grouped. Note: the package uses flat imports (e.g.
-  `from general import core as gc`) — `pythonpath = python/qx_utilities` is set in `pytest.ini`.
+- Keep imports clean and grouped. The package uses absolute `qx_utilities.*` imports
+  (e.g. `import qx_utilities.general.core as gc`), introduced with the command registry —
+  `pythonpath = python` is set in `pytest.ini` at the repository root. Do not add flat
+  imports (`from general import core as gc`); there are none left in the tree.
 - Before deleting a seemingly-unused function, confirm it is not a dynamic/external entrypoint:
   registered commands (a `.. qx_command:` docstring, called via the registry) and the
   `@qx_process` extension decorator in `general/extensions.py` (used by out-of-tree extensions

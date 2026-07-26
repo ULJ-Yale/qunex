@@ -397,9 +397,9 @@ def runCommand(command, args):
             else:
                 result = "completed"
             if targetLog:
-                print("%s %s %s" % (prepend, name, result))
-            else:
                 print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
+            else:
+                print("%s %s %s" % (prepend, name, result))
         if ok:
             print(f"\n---> Successful completion of task at {datetime.now()}")
 
