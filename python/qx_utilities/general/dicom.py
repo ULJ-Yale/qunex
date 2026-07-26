@@ -2470,6 +2470,10 @@ def _sort_dicom_legacy(folder=".", **kwargs):
 
     print("Running sort_dicom\n=================")
 
+    copy = kwargs.get("copy", None)
+    outdir = kwargs.get("outdir", None)
+    files = kwargs.get("files", None)
+
     if copy is None:
         copy = 'move'
 
@@ -3348,6 +3352,9 @@ def split_dicom(folder=None):
 
 
 # regexes identifying compressed package types for the member-source iterator
+# how often the scan reports progress, in DICOM files
+_SCAN_PROGRESS_EVERY = 1000
+
 _RE_ZIP = re.compile(r"\.zip$", re.IGNORECASE)
 _RE_TAR = re.compile(r"(\.tar$|\.tar\.gz$|\.tar\.bz2$|\.tarz$|\.tar\.bzip2$|\.tgz$)", re.IGNORECASE)
 
@@ -3379,6 +3386,33 @@ def _iter_stream_members(name, data):
                 yield from _iter_stream_members(member.name, handle.read())
     else:
         yield name, data
+
+
+def count_import_members(source):
+    """
+    Number of members ``iter_import_members`` will yield, or ``None`` if
+    counting is not cheap.
+
+    Used only to turn scan progress into a percentage, so it must never cost a
+    second pass over the data: a zip is counted from its central directory and a
+    folder from ``os.walk``, both cheap, while a tar returns ``None`` because
+    counting it means decompressing the whole archive. Nested archives are not
+    expanded here either, so for a package that contains them the count is a
+    lower bound -- callers must treat it as approximate.
+    """
+    try:
+        if os.path.isdir(source):
+            return sum(len(files) for _, _, files in os.walk(source))
+        if os.path.isfile(source):
+            if _RE_ZIP.search(source):
+                with zipfile.ZipFile(source, "r") as z:
+                    return sum(1 for i in z.infolist() if not i.is_dir() and i.file_size)
+            if _RE_TAR.search(source):
+                return None
+            return 1
+    except Exception:
+        return None
+    return None
 
 
 def iter_import_members(source):
@@ -3605,8 +3639,44 @@ def _scan_and_sort_session(
     used_names = set()
     dcmn = 0
 
+    # member total drives the progress percentage; None when it is not cheap to
+    # get (a tar), in which case progress falls back to a plain running count
+    total_expected = 0
+    for source in sources:
+        n = count_import_members(source)
+        if n is None:
+            total_expected = None
+            break
+        total_expected += n
+
+    if verbose:
+        print("---> Inspecting and sorting package content for %s" % (session_id), flush=True)
+        for source in sources:
+            print("     ... source: %s" % (source), flush=True)
+        if total_expected:
+            print("     ... %d member(s) to inspect" % (total_expected), flush=True)
+
+    seen = 0
+    step = max(1, (total_expected or 0) // 50)
+
     for source in sources:
         for name, data in iter_import_members(source):
+            seen += 1
+            if verbose:
+                if total_expected:
+                    if seen % step == 0:
+                        print(
+                            "\r     ... scanning %s"
+                            % (gds.format_progress(seen, total_expected)),
+                            end="",
+                            flush=True,
+                        )
+                elif seen % _SCAN_PROGRESS_EVERY == 0:
+                    print(
+                        "     ... %d member(s) scanned, %d sequence(s) so far"
+                        % (seen, len(sequence_map)),
+                        flush=True,
+                    )
             bn = os.path.basename(name)
             if bn[:4] in ("XX_0", "PS_0"):
                 continue
@@ -3667,6 +3737,22 @@ def _scan_and_sort_session(
             dest = os.path.join(dest_dir, fname)
             _write_bytes(dest, data)
             written_path[name] = dest
+
+    if verbose:
+        if total_expected:
+            # close the in-place bar on a full line. `seen` can exceed the count
+            # when the package holds nested archives, so widen the total rather
+            # than render a bar past 100%
+            print(
+                "\r     ... scanning %s"
+                % (gds.format_progress(seen, max(total_expected, seen))),
+                flush=True,
+            )
+        print(
+            "---> Inspected %d file(s): %d DICOM in %d sequence(s), %d unreadable"
+            % (pkg.total_members, pkg.total_dicom, len(sequence_map), pkg.parse_errors),
+            flush=True,
+        )
 
     _place_par_rec(par_members, dicom_dir, session_id, verbose)
 
@@ -3941,12 +4027,24 @@ def import_dicom_old(
     test=False,
 ):
     r"""
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]``
+    ``import_dicom_old [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]``
 
-    Process sessions's DICOM or PAR/REC files and generate NIfTI files.
+    Deprecated. Process sessions's DICOM or PAR/REC files and generate NIfTI
+    files using the pre-1.5.0 two-pass implementation.
 
     ..  qx_command:
         type: utility
+
+    Warning:
+        This command is deprecated and is superseded by `import_dicom`, which
+        reads and writes each file only once, inspects the DICOM files while it
+        sorts them, sets aside non-image and orphaned files, and writes a
+        per-session integrity report. `import_dicom_old` is the frozen
+        pre-1.5.0 implementation, kept only as a fallback in case the new
+        importer misbehaves on a specific dataset. It receives no further
+        development and will be removed in a future release. If you have to use
+        it, please report the reason on the QuNex forum
+        (https://forum.qunex.yale.edu) so that the new importer can be fixed.
 
     Parameters:
         --sessionsfolder (str, default '.'):
@@ -4546,7 +4644,13 @@ def import_dicom_old(
 
         return (fnum, dnum)
 
-    print("Running import_dicom\n====================")
+    print("Running import_dicom_old\n========================")
+    print(
+        "WARNING: import_dicom_old is deprecated and will be removed in a future\n"
+        "         release. It is the frozen pre-1.5.0 importer, kept only as a\n"
+        "         fallback. Please use import_dicom and report the reason you had\n"
+        "         to fall back on https://forum.qunex.yale.edu.\n"
+    )
 
     # check settings
     if tool not in ["auto", "dcm2niix", "dcm2nii", "dicm2nii"]:
@@ -5225,7 +5329,7 @@ def _import_parse_logfile(logfile):
     try:
         for key in [e for e in log if e in ["packet_name", "subject_id", "session_name"]]:
             log[key] = int(log[key]) - 1
-    except:
+    except Exception:
         raise ge.CommandFailed(
             "import_dicom",
             "Invalid logfile specification",
@@ -5256,7 +5360,7 @@ def _import_parse_logfile(logfile):
                     "sessionid": "%s_%s" % (subj, sname) if has_session else subj,
                     "packetname": line[log["packet_name"]],
                 }
-            except:
+            except Exception:
                 pass
     return sessions_info
 
@@ -5310,11 +5414,11 @@ def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, namefo
         )
         try:
             getop = re.compile(pattern)
-        except:
+        except Exception:
             raise ge.CommandFailed("import_dicom", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
         try:
             getid = re.compile(nameformat)
-        except:
+        except Exception:
             raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
 
         for afile in glob.glob(os.path.join(masterinbox, "*")):
@@ -5513,7 +5617,7 @@ def _import_normalize_args(sessionsfolder, sessions, masterinbox, pattern, namef
 
     try:
         add_image_type = 0 if add_image_type in (None, "") else int(add_image_type)
-    except:
+    except Exception:
         raise ge.CommandError("import_dicom", "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
 
     sessions_list = re.split(r", *", sessions) if sessions else None
@@ -5537,12 +5641,14 @@ def import_dicom(
     gzip="folder",
     verbose="yes",
     overwrite="no",
+    min_files=4,
+    tr_abs_ms=100.0,
+    tr_rel_pct=5.0,
     existing_structure=False,
-    clean_dicom_folders=False,
     test=False,
 ):
     r"""
-    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=all] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]``
+    ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=all] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [min_files=4] [tr_abs_ms=100] [tr_rel_pct=5]``
 
     Process sessions's DICOM or PAR/REC files and generate NIfTI files.
 
@@ -5655,16 +5761,28 @@ def import_dicom(
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
 
-        --existing_structure (bool, default False):
-            Retained for backward compatibility. The single-pass importer always
-            sorts the DICOM files by their series number, so this flag no longer
-            changes the behaviour and can be left at its default.
+        --min_files (int, default 4):
+            The minimum number of imaging files a sequence has to hold for the
+            incomplete volume (orphan) detection to run. Shorter sequences
+            (localizers, single volume references) are reported but never
+            pruned. Set it higher to be more conservative.
 
-        --clean_dicom_folders (bool, default False):
-            Retained for backward compatibility. The importer now always
-            inspects the DICOM files and sets aside those that hold no image
-            data or that belong to an incomplete volume (see Notes), so this
-            flag no longer needs to be set.
+        --tr_abs_ms (float, default 100):
+            The absolute tolerance in milliseconds when comparing the observed
+            volume repetition time with the TR reported in the DICOM header. A
+            sequence is only flagged for a TR mismatch when it deviates by more
+            than both `tr_abs_ms` and `tr_rel_pct`.
+
+        --tr_rel_pct (float, default 5):
+            The relative tolerance in percent for the same TR comparison. See
+            `tr_abs_ms`.
+
+        --existing_structure (bool, default False):
+            Deprecated and ignored, a warning is printed when it is set. The
+            single pass importer reads every file in the package and sorts it
+            by its series number, whether or not the package is already
+            organized into per sequence subfolders, so there is nothing left
+            for this flag to switch on.
 
     Notes:
         The command is used to automatically process packets with individual
@@ -5693,7 +5811,10 @@ def import_dicom(
         determined (e.g. Siemens mosaic images, enhanced multi-frame files, or
         sequences with missing geometry information) the files are reported but
         never removed. A per-session DICOM integrity report is written to
-        `dicom/<session id>_import_report.md`.
+        `dicom/<session id>_import_report.md`. The thresholds the inspection
+        uses can be adjusted with the `min_files`, `tr_abs_ms` and `tr_rel_pct`
+        parameters; the defaults are sensible for standard MR protocols and
+        rarely need to be changed.
 
         The next sections will describe the two use cases in more detail.
 
@@ -6050,10 +6171,21 @@ def import_dicom(
             deleted after the successful processing.
     """
 
-    existing_structure = true_or_false(existing_structure)  # accepted; behavioural no-op in the single-pass engine
-    clean_dicom_folders = true_or_false(clean_dicom_folders)  # accepted; the engine always sets aside non-image/orphan files (D1)
-
     print("Running import_dicom\n====================")
+
+    if true_or_false(existing_structure):
+        print(
+            "WARNING: the existing_structure parameter is deprecated and ignored. The\n"
+            "         importer reads and sorts every file in the package by its series\n"
+            "         number, so preorganized packages need no special handling.\n"
+        )
+
+    try:
+        min_images = int(min_files)
+        tr_abs_ms = float(tr_abs_ms)
+        tr_rel_pct = float(tr_rel_pct)
+    except (TypeError, ValueError):
+        raise ge.CommandError("import_dicom", "Misspecified inspection thresholds", "min_files has to be an integer, tr_abs_ms and tr_rel_pct numbers! [%s, %s, %s]" % (min_files, tr_abs_ms, tr_rel_pct), "Please check command instructions!")
 
     (sessionsfolder, masterinbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b) = _import_normalize_args(
         sessionsfolder, sessions, masterinbox, pattern, nameformat, tool, add_image_type, verbose, overwrite
@@ -6085,7 +6217,15 @@ def import_dicom(
             sources = _resolve_packet_sources(afile, session, masterinbox, sfolder)
 
             # single read-once/write-once pass: scan, sort, set aside non-image/orphan files, report
-            pkg = _scan_and_sort_session(sources, dicom_dir, session["sessionid"], verbose=verbose_b)
+            pkg = _scan_and_sort_session(
+                sources,
+                dicom_dir,
+                session["sessionid"],
+                tr_abs_ms=tr_abs_ms,
+                tr_rel_pct=tr_rel_pct,
+                min_images=min_images,
+                verbose=verbose_b,
+            )
             gdr.write_report(pkg, os.path.join(dicom_dir, "%s_import_report.md" % (session["sessionid"])))
             print()
             print(gdr.render_console_summary(pkg))

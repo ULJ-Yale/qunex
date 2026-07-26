@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import re
 import statistics
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Tuple
@@ -280,22 +280,47 @@ def should_skip_sequence(sequence_name: str) -> bool:
     return text in {"survey", "examcard", "exam card"} or text.startswith("survey")
 
 
+def format_progress(current: int, total: int, width: int = 40) -> str:
+    """Render a ``[####----] 42.0% (n/total)`` progress bar."""
+    if total <= 0:
+        return "[%s] 0.0%% (0/0)" % ("-" * width)
+    ratio = max(0.0, min(1.0, current / total))
+    done = int(width * ratio)
+    return "[%s%s] %.1f%% (%d/%d)" % (
+        "#" * done, "-" * (width - done), ratio * 100, current, total
+    )
+
+
 # ---------------------------------------------------------------------------
 # image vs non-image classification
 # ---------------------------------------------------------------------------
 
 
-def has_pixel_data(ds: "pydicom.Dataset") -> bool:
-    return "PixelData" in ds or "FloatPixelData" in ds or "DoubleFloatPixelData" in ds
-
-
 def is_imaging_ds(ds: "pydicom.Dataset") -> bool:
-    if not has_pixel_data(ds):
-        return False
+    """Classify an instance as imaging from the Image Pixel module.
+
+    An image instance carries frame geometry *and* ``BitsAllocated``, which is
+    Type 1 (always present) in the Image Pixel module. Both are tested:
+
+    - geometry alone is not enough. Philips ships a private per-series object
+      (SOP class ``1.3.46.670589.11.0.0.12.2``) that carries Rows/Columns but no
+      pixel data; dcm2niix reports it as ``Skipping non-image DICOM``. There is
+      exactly one per series, so passing it through corrupts the volume tally.
+    - the pixel data element itself is deliberately *not* tested, even though it
+      would also separate the two. Every reader feeding this function truncates
+      the header before (7FE0,0010) for speed, so a pixel-data test would reject
+      every file. ``BitsAllocated`` is (0028,0100), well before that cut, so it
+      is free to read.
+
+    Non-image objects with no geometry at all (structured reports, presentation
+    states, raw data) are rejected by the geometry test.
+    """
     rows = to_int(getattr(ds, "Rows", None))
     cols = to_int(getattr(ds, "Columns", None))
     frames = to_int(getattr(ds, "NumberOfFrames", None))
-    return bool((rows and cols) or frames)
+    if not ((rows and cols) or frames):
+        return False
+    return to_int(getattr(ds, "BitsAllocated", None)) is not None
 
 
 def is_mosaic_ds(ds: "pydicom.Dataset") -> bool:
@@ -317,15 +342,83 @@ def is_mosaic_ds(ds: "pydicom.Dataset") -> bool:
 # ---------------------------------------------------------------------------
 
 
+_TAG_INDEX_ATTR = "_qx_nested_tag_index"
+
+# private/hint tags looked up through _iter_values_for_tag, indexed in one pass
+_HINT_TAGS = frozenset(
+    {
+        (0x0019, 0x100A),  # Siemens NumberOfImagesInMosaic
+        (0x0018, 0x9069),  # ParallelReductionFactorInPlane
+        (0x0018, 0x9155),  # ParallelReductionFactorOutOfPlane
+        (0x0018, 0x9078),  # ParallelAcquisitionTechnique
+        (0x2001, 0x1033),  # Philips stack radial axis
+        (0x2005, 0x107B),  # Philips scan orientation
+        (0x2005, 0x1492),  # Philips echo spacing
+        (0x2001, 0x1025),  # Philips echo time display
+        (0x2005, 0x1033),  # Philips acquisition duration
+    }
+)
+
+
 def _iter_values_for_tag(ds: "pydicom.Dataset", tag: Tuple[int, int]) -> List[object]:
-    out: List[object] = []
+    """Values for ``tag``, looking inside nested sequences when needed.
+
+    Callers only ever take the first value (via ``_first_numeric`` /
+    ``_first_axis``), and the returned order matches what ``iterall()`` would
+    yield, so the first element is the same one the exhaustive walk would find.
+    The *number* of values can be smaller: when the tag is present at the top
+    level this returns just that one and does not go looking for the duplicates
+    that enhanced multi-frame files repeat in their functional groups. Do not
+    use this to count occurrences.
+
+    Three shortcuts, all there because this used to dominate scan time -- it is
+    called once per hint tag (eight times) per file, and a naive implementation
+    walks the whole dataset every time:
+
+    - a top-level hit is an O(1) dict lookup, which covers the common case;
+    - otherwise the nested walk is done *once* and the resulting tag index is
+      memoised on the dataset. Without this, a tag that is simply absent (e.g.
+      the Siemens mosaic tag on Philips data) costs a full walk on every call;
+    - that walk converts only what it needs (see ``_index_nested_tags``).
+    """
     try:
-        for elem in ds.iterall():
-            if (int(elem.tag.group), int(elem.tag.elem)) == tag:
-                out.append(elem.value)
+        if tag in ds:
+            return [ds[tag].value]
+        index = getattr(ds, _TAG_INDEX_ATTR, None)
+        if index is None:
+            index = {}
+            _index_nested_tags(ds, index)
+            setattr(ds, _TAG_INDEX_ATTR, index)
+        if tag in _HINT_TAGS:
+            return index.get(tag, [])
+        # tag outside the indexed set: fall back to the exhaustive walk
+        return [
+            elem.value
+            for elem in ds.iterall()
+            if (int(elem.tag.group), int(elem.tag.elem)) == tag
+        ]
     except Exception:
-        return out
-    return out
+        return []
+
+
+def _index_nested_tags(ds: "pydicom.Dataset", out: dict) -> None:
+    """Collect ``_HINT_TAGS`` values from ``ds`` and its nested sequences.
+
+    Walks ``_dict`` directly rather than using ``iterall()``. ``iterall()``
+    converts every raw element it yields, and only a handful are ever wanted --
+    here only sequences (to recurse into) and the hint tags themselves are
+    converted, which is what makes a per-file nested lookup affordable.
+    """
+    # sorted() to match the order iterall() yields, so the first value found
+    # for a tag is the same one the exhaustive walk would have returned
+    for tag in sorted(ds._dict):
+        raw = ds._dict[tag]
+        key = (int(tag.group), int(tag.elem))
+        if key in _HINT_TAGS:
+            out.setdefault(key, []).append(ds[tag].value)
+        elif getattr(raw, "VR", None) == "SQ":
+            for item in ds[tag].value:
+                _index_nested_tags(item, out)
 
 
 def _first_numeric(values: List[object]) -> Optional[float]:

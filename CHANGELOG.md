@@ -11,6 +11,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Added NHP (non-human primate) support to all HCP commands that now support it. This is mainly accessible through the `hcp_species` parameter, while there is a completely new command for HCP FreeSurfer (`hcp_nhp_freesurfer`).
 * Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
 * QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
+* `import_dicom` was reimplemented: each package is read and written only once (no intermediate `inbox` copy), DICOM files are inspected while they are sorted, files without image data and orphaned slices of incomplete volumes are set aside to `dicom/non-image` and `dicom/orphans`, and a per session DICOM integrity report is written to `dicom/<session id>_import_report.md`. The inspection thresholds are exposed through the new `min_files`, `tr_abs_ms` and `tr_rel_pct` parameters.
+* The previous `import_dicom` implementation is still available as `import_dicom_old`, but it is deprecated and will be removed in a future release. The `clean_dicom_folders` parameter was removed from `import_dicom` (the importer always inspects the data) and `existing_structure` is deprecated and ignored (the single pass importer handles preorganized packages natively).
 
 ## 1.4.4
 
