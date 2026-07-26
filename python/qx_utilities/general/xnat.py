@@ -11,9 +11,7 @@
 Run recipe framework.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
@@ -21,7 +19,7 @@ import glob
 import subprocess
 from datetime import datetime
 import qx_utilities.general.exceptions as ge
-import qx_utilities.general.utilities as gu
+
 
 def xnat_run_cmd(cmd):
     """
@@ -37,13 +35,13 @@ def xnat_run_cmd(cmd):
         --summary (str):
             stdout of the run bash command plus other details to print to a log
     """
-    cmdS = " ".join(cmd)
-    summary = "\nRunning: " + cmdS
-    cmdP = subprocess.Popen(
+    cmd_s = " ".join(cmd)
+    summary = "\nRunning: " + cmd_s
+    cmd_p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
     )
     summary += "\n          --- stdout start --- \n"
-    for line in iter(cmdP.stdout.readline, b""):
+    for line in iter(cmd_p.stdout.readline, b""):
         line = line.decode("utf-8")
         summary += "\n"
         summary += line
@@ -91,10 +89,10 @@ def xnat_make_checkpoint(step, tag="timestamp"):
     else:
         suffix = tag
 
-    outPath = (
+    out_path = (
         os.environ["SESSIONS_FOLDER"] + "/checkpoints/" + step + ":" + suffix + ".txt"
     )
-    with open(outPath, "w") as fp:
+    with open(out_path, "w") as fp:
         fp.write("\n".join(files))
     return
 
@@ -264,7 +262,7 @@ def xnat_load_checkpoint(file_path):
     ]
     try:
         files = [line.rstrip() for line in open(file_path)]
-    except:
+    except Exception:
         raise ge.CommandFailed(
             "run_recipe",
             "Cannot open checkpoint",
@@ -399,11 +397,11 @@ def xnat_import_dicom(prep=True):
 
         summary += "\nCopying SCANS..."
 
-        inPath = "/input/SCANS"
-        outPath = os.path.join(
+        in_path = "/input/SCANS"
+        out_path = os.path.join(
             os.environ["SESSIONS_FOLDER"], os.path.join(os.environ["LABEL"], "inbox")
         )
-        cmd = ["rsync", "-avzh", inPath, outPath]
+        cmd = ["rsync", "-avzh", in_path, out_path]
         summary += xnat_run_cmd(cmd)
 
     else:
@@ -416,8 +414,8 @@ def xnat_import_dicom(prep=True):
         summary += xnat_run_cmd(cmd)
 
         summary += "\n Removing inbox folders..."
-        inPath = os.environ["SESSIONS_FOLDER"] + "/" + os.environ["LABEL"] + "/inbox"
-        cmd = ["rm", "-rf", inPath]
+        in_path = os.environ["SESSIONS_FOLDER"] + "/" + os.environ["LABEL"] + "/inbox"
+        cmd = ["rm", "-rf", in_path]
         summary += xnat_run_cmd(cmd)
 
     summary += "\n\n----==== XNAT IMPORT_DICOM EXECUTION END ====----\n\n"
@@ -449,14 +447,14 @@ def xnat_create_session_info(prep=True):
     if prep:
         summary += "\nGetting Mapping file from project..."
 
-        inPath = (
+        in_path = (
             os.environ["XNAT_HOST"]
             + "/data/projects/"
             + os.environ["XNAT_PROJECT"]
             + "/resources/QUNEX_PROC/files/"
             + os.environ["SCAN_MAPPING_FILENAME"]
         )
-        outPath = os.environ["MAPPING"]
+        out_path = os.environ["MAPPING"]
         cmd = [
             "curl",
             "-k",
@@ -464,9 +462,9 @@ def xnat_create_session_info(prep=True):
             os.environ["XNAT_USER"] + ":" + os.environ["XNAT_PASS"],
             "-X",
             "GET",
-            inPath,
+            in_path,
             "-o",
-            outPath,
+            out_path,
         ]
         summary += xnat_run_cmd(cmd)
 
@@ -499,14 +497,14 @@ def xnat_create_batch(prep=True):
     if prep:
         summary += "\nGetting Parameter file from project..."
 
-        inPath = (
+        in_path = (
             os.environ["XNAT_HOST"]
             + "/data/projects/"
             + os.environ["XNAT_PROJECT"]
             + "/resources/QUNEX_PROC/files/"
             + os.environ["BATCH_PARAMETERS_FILENAME"]
         )
-        outPath = os.environ["INITIAL_PARAMETERS"]
+        out_path = os.environ["INITIAL_PARAMETERS"]
         cmd = [
             "curl",
             "-k",
@@ -514,9 +512,9 @@ def xnat_create_batch(prep=True):
             os.environ["XNAT_USER"] + ":" + os.environ["XNAT_PASS"],
             "-X",
             "GET",
-            inPath,
+            in_path,
             "-o",
-            outPath,
+            out_path,
         ]
         summary += xnat_run_cmd(cmd)
 

@@ -22,11 +22,9 @@ import re
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
-import qx_utilities.general.process as gp
 from qx_registry import qx_commands
 
 from datetime import datetime
-
 
 
 def schedule(
@@ -68,7 +66,7 @@ def schedule(
             Example settings strings::
 
                 "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
-        
+
         --replace (str):
             A string of key-value pairs that specify the specific values
             to be imputed into the script or command.
@@ -97,11 +95,11 @@ def schedule(
         Schedules the provided command the referenced script to be run by the
         specified scheduler (PBS, SLURM and GridEngine are currently supported).
 
-        command, script and settings are required parameters. If the optional 
+        command, script and settings are required parameters. If the optional
         parameters are not specified, they will not be used.
 
         Value substitution in command or script
-    
+
         If replace parameter is set, all instances of {{key}} in the command or
         script will be replaced with the provided value. The key/value pairs need
         to be separated by the pipe character, whereas key and value need to be
@@ -110,7 +108,7 @@ def schedule(
             "session:AP23791|folder:/studies/WM/sessions/AP23791"
 
         Redirecting output
-    
+
         If no output is specified, the job's standard output and error (stdout,
         stderr) are left as is and processed by the scheduler, and the result of
         submitting the job is printed to standard output. Output string can specify
@@ -181,7 +179,7 @@ def schedule(
 
                     "#PBS -l <value>"
 
-            SLURM settings:            
+            SLURM settings:
 
                 For SLURM any provided key/value pair will be passed in the form::
 
@@ -278,7 +276,7 @@ def schedule(
 
         comname = settings_dict.pop("comname", "")
         jobnum = settings_dict.pop("jobnum", "")
-    except:
+    except Exception:
         raise ge.CommandError(
             "schedule",
             "Misspecified parameter",
@@ -490,7 +488,7 @@ def schedule(
 #                                                  general scheduler code
 
 
-def runThroughScheduler(
+def run_through_scheduler(
     command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None
 ):
     jobs = []
@@ -515,7 +513,7 @@ def runThroughScheduler(
     else:
         flog = None
 
-    gc.printAndLog("---> Running scheduler for command %s" % (command), file=flog)
+    gc.print_and_log("---> Running scheduler for command %s" % (command), file=flog)
 
     # ---- setup scheduler options
     settings = args["scheduler"]
@@ -556,16 +554,16 @@ def runThroughScheduler(
             os.makedirs(logfolder)
 
     # ---- construct gmri command
-    cBase = "\ngmri " + command
+    c_base = "\ngmri " + command
 
     for k, v in nopt:
         if k not in ["sessionids", "scheduler"]:
-            cBase += ' --%s="%s"' % (k, v)
+            c_base += ' --%s="%s"' % (k, v)
 
     # ---- if sessions is None
     if sessions is None:
-        gc.printAndLog("\n---> submitting %s" % (command), file=flog)
-        gc.printAndLog(cBase, file=flog)
+        gc.print_and_log("\n---> submitting %s" % (command), file=flog)
+        gc.print_and_log(c_base, file=flog)
 
         if test == "run":
             exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -573,7 +571,7 @@ def runThroughScheduler(
                 logfolder, "%s_%s.%s.log" % (scheduler, command, exectime)
             )
             result, jobid = schedule(
-                command=cBase,
+                command=c_base,
                 settings=settings,
                 workdir=workdir,
                 environment=environment,
@@ -595,13 +593,13 @@ def runThroughScheduler(
         for s in settings_list:
             # parameters with values
             if "=" in s:
-                sSplit = s.split("=", 1)
+                s_split = s.split("=", 1)
 
                 # SLURM job array?
-                if scheduler == "SLURM" and sSplit[0].strip() == "array":
+                if scheduler == "SLURM" and s_split[0].strip() == "array":
                     slurm_array = True
 
-                settings[sSplit[0].strip()] = sSplit[1].strip()
+                settings[s_split[0].strip()] = s_split[1].strip()
             # flags
             else:
                 # SLURM job array?
@@ -710,24 +708,24 @@ def runThroughScheduler(
         if test == "run":
             for i in range(parjobs):
                 # ---- set sessionids
-                cStr = cBase + ' --sessionids="%s"' % sessionids_array[i]
+                c_str = c_base + ' --sessionids="%s"' % sessionids_array[i]
 
                 # ---- set sheduler settings
                 if parjobs > 1:
                     settings["jobnum"] = str(i)
                 if scheduler != "GridEngine":
-                    sString = (
+                    s_string = (
                         scheduler
                         + ","
                         + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
                     )
                 else:
-                    sString = scheduler
+                    s_string = scheduler
                     for k, v in settings.items():
                         if v:
-                            sString = "%s,%s" % (sString, k + "=" + v)
+                            s_string = "%s,%s" % (s_string, k + "=" + v)
                         else:
-                            sString = "%s,%s" % (sString, k)
+                            s_string = "%s,%s" % (s_string, k)
 
                 exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
@@ -745,12 +743,12 @@ def runThroughScheduler(
 
                 jobname = "%s_#%02d" % (command, i)
 
-                gc.printAndLog("\n---> submitting %s" % (jobname), file=flog)
-                gc.printAndLog(cStr, file=flog)
+                gc.print_and_log("\n---> submitting %s" % (jobname), file=flog)
+                gc.print_and_log(c_str, file=flog)
 
                 result, jobid = schedule(
-                    command=cStr,
-                    settings=sString,
+                    command=c_str,
+                    settings=s_string,
                     workdir=workdir,
                     environment=environment,
                     output="both:%s|return:both" % (logfile),
@@ -760,15 +758,15 @@ def runThroughScheduler(
                 )
                 jobs.append((jobid, jobname))
 
-                gc.printAndLog("...\n", result, file=flog)
+                gc.print_and_log("...\n", result, file=flog)
 
                 time.sleep(sleeptime)
 
     # --- print report
     if jobs:
-        gc.printAndLog("\n---> Submitted jobs", file=flog)
+        gc.print_and_log("\n---> Submitted jobs", file=flog)
         for jobid, jobname in jobs:
-            gc.printAndLog("     %s -> %s" % (jobid, jobname), file=flog)
+            gc.print_and_log("     %s -> %s" % (jobid, jobname), file=flog)
 
     # --- close log if specified
     if flog:

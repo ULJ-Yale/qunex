@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import os
-import sys
-
-# Add the parent directory to the path to import qx_registry
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, parent_dir)
-sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
 
 from pathlib import Path
 

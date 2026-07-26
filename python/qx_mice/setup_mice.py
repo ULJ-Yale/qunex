@@ -23,18 +23,18 @@ There are additional support functions that are not to be used
 directly.
 """
 
-"""
-Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
-All rights reserved.
-"""
+# Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
+# All rights reserved.
 
 import os
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from functools import partial
 
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
+from qx_utilities.general.log import ReportLog
 
 
 def setup_mice(sinfo, options, overwrite=False, thread=0):
@@ -113,26 +113,27 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
                 --tr='1'
 
     """
+    log = ReportLog()
 
     # get session id
     session = sinfo["id"]
 
-    r = "\n------------------------------------------------------------"
-    r += f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
-    r += f"\n{pc.action('Running', options['run'])} setup_mice {session} ..."
+    log.capture("\n------------------------------------------------------------")
+    log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.raw(f"\n{pc.action('Running', options['run'])} setup_mice {session} ...")
 
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "setup_mice")
+        pc.do_options_check(options, sinfo, "setup_mice")
 
         # get bolds
-        bolds, _, _, r = pc.use_or_skip_bold(sinfo, options, r)
+        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
 
         # report
         parelements = max(1, min(options["parelements"], len(bolds)))
-        r += f"\n{pc.action('Running', options['run'])} {parelements} BOLD images in parallel"
+        log.raw(f"\n{pc.action('Running', options['run'])} {parelements} BOLD images in parallel")
 
         if parelements == 1:  # serial execution
             for b in bolds:
@@ -140,30 +141,30 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
                 result = _execute_setup_mice(sinfo, options, overwrite, b)
 
                 # merge r
-                r += result["r"]
+                log.raw(result["r"])
 
                 # merge report
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                temp_report = result["report"]
+                report["done"] += temp_report["done"]
+                report["failed"] += temp_report["failed"]
+                report["ready"] += temp_report["ready"]
+                report["not ready"] += temp_report["not ready"]
 
         else:  # parallel execution
             # create a multiprocessing Pool
-            processPoolExecutor = ProcessPoolExecutor(parelements)
+            process_pool_executor = ProcessPoolExecutor(parelements)
             # process
             f = partial(_execute_setup_mice, sinfo, options, overwrite)
-            results = processPoolExecutor.map(f, bolds)
+            results = process_pool_executor.map(f, bolds)
 
             # merge r and report
             for result in results:
-                r += result["r"]
-                tempReport = result["report"]
-                report["done"] += tempReport["done"]
-                report["failed"] += tempReport["failed"]
-                report["ready"] += tempReport["ready"]
-                report["not ready"] += tempReport["not ready"]
+                log.raw(result["r"])
+                temp_report = result["report"]
+                report["done"] += temp_report["done"]
+                report["failed"] += temp_report["failed"]
+                report["ready"] += temp_report["ready"]
+                report["not ready"] += temp_report["not ready"]
 
         rep = []
         for k in ["done", "failed", "ready", "not ready"]:
@@ -177,20 +178,20 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = f"\n --- Failed during processing of session {session} with error:\n"
-        r += str(errormessage)
+        log.capture(f"\n --- Failed during processing of session {session} with error:\n")
+        log.raw(str(errormessage))
         report = (sinfo["id"], "setup_mice failed", 1)
 
-    except:
-        r += f"n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n"
+    except Exception:
+        log.raw(f"n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "setup_mice failed", 1)
 
-    return (r, report)
+    return (log.text, report)
 
 
 def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
     # prepare return variables
-    r = ""
+    log = ReportLog()
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
 
     # script location
@@ -209,24 +210,22 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
 
     # --- check for bold image
     source_bold = os.path.join(nifti_dir, f"{boldinfo['ima']}.nii.gz")
-    r, boldok = pc.checkForFile2(
-        r,
-        source_bold,
+    boldok = log.check_for_file(source_bold,
         "\n     ... setup_mice bold image present",
         "\n     ... ERROR: setup_mice bold image missing!",
     )
 
     # map the image
     target_bold = os.path.join(work_dir, f"{boldinfo['name']}.nii.gz")
-    r += "\n---> mapping the bold image to session's mice pipelines (mice) folder\n"
+    log.step("mapping the bold image to session's mice pipelines (mice) folder\n")
 
     # overwrite and file exists
     if not overwrite and os.path.exists(target_bold):
-        r += f" ... overwrite is disable and target bold [{target_bold}] already exists, skipping this bold.\n"
+        log.raw(f" ... overwrite is disable and target bold [{target_bold}] already exists, skipping this bold.\n")
         report["done"].append(boldinfo["name"])
     else:
         # map
-        r += f" ... mapping {source_bold} => {target_bold}.\n"
+        log.raw(f" ... mapping {source_bold} => {target_bold}.\n")
         gc.link_or_copy(source_bold, target_bold)
 
         if boldok:
@@ -252,10 +251,10 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                 comm += "                --voxel_increase=" + options["voxel_increase"]
 
             # report command
-            r += "\n\n------------------------------------------------------------\n"
-            r += "Running setup_mice bash script through QuNex:\n\n"
-            r += comm.replace("                ", "")
-            r += "\n------------------------------------------------------------\n"
+            log.raw("\n\n------------------------------------------------------------\n")
+            log.raw("Running setup_mice bash script through QuNex:\n\n")
+            log.raw(comm.replace("                ", ""))
+            log.raw("\n------------------------------------------------------------\n")
 
             # run
             if options["run"] == "run":
@@ -264,7 +263,7 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                     os.remove(test_file)
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(
+                endlog, _, failed = log.run_external(
                     test_file,
                     comm,
                     "Running setup_mice",
@@ -274,30 +273,29 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=None,
+                    full_test=None,
                     shell=True,
-                    r=r,
                 )
 
                 if failed:
-                    r += f"\n---> setup_mice processing for BOLD {boldinfo['name']} failed"
+                    log.raw(f"\n---> setup_mice processing for BOLD {boldinfo['name']} failed")
                     report["failed"].append(boldinfo["name"])
                 else:
-                    r += f"\n---> setup_mice processing for BOLD {boldinfo['name']} completed"
+                    log.raw(f"\n---> setup_mice processing for BOLD {boldinfo['name']} completed")
                     report["done"].append(boldinfo["name"])
 
             else:
-                r += f"\n---> BOLD {boldinfo['name']} is ready for setup_mice command"
+                log.raw(f"\n---> BOLD {boldinfo['name']} is ready for setup_mice command")
                 report["ready"].append(boldinfo["name"])
 
         else:
             # run
             if options["run"] == "run":
-                r += f"\n---> setup_mice processing for BOLD {boldinfo['name']} failed"
+                log.raw(f"\n---> setup_mice processing for BOLD {boldinfo['name']} failed")
                 report["failed"].append(boldinfo["name"])
             # just checking
             else:
-                r += f"\n---> BOLD {boldinfo['name']} is not ready for setup_mice command"
+                log.raw(f"\n---> BOLD {boldinfo['name']} is not ready for setup_mice command")
                 report["not ready"].append(boldinfo["name"])
 
-    return {"r": r, "report": report}
+    return {"r": log.text, "report": report}

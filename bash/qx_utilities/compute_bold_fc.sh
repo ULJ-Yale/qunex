@@ -8,9 +8,9 @@
 
 usage() {
     cat << EOF
-``fc_compute_wrapper``
+``compute_bold_fc``
 
-Run Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) 
+Run Global Brain Connectivity (GBC) or seed-based functional connectivity (FC)
 on the dense or parcellated (e.g. Glasser parcellation).
 
 Notes:
@@ -159,7 +159,7 @@ Parameters:
 Examples:
     Run directly via::
 
-        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \\
+        ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_bold_fc.sh \\
             --<parameter1> \\
             --<parameter2> \\
             --<parameter3> ... \\
@@ -169,7 +169,7 @@ Examples:
 
     Run via::
 
-        qunex fc_compute_wrapper \\
+        qunex compute_bold_fc \\
             --<parameter1> \\
             --<parameter2> ... \\
             --<parameterN>
@@ -186,7 +186,7 @@ Examples:
 
     ::
 
-        qunex fc_compute_wrapper \\
+        qunex compute_bold_fc \\
             --sessionsfolder='<folder_with_sessions>' \\
             --calculation='seed' \\
             --runtype='individual' \\
@@ -204,7 +204,7 @@ Examples:
 
     ::
 
-        qunex fc_compute_wrapper \\
+        qunex compute_bold_fc \\
             --sessionsfolder='<folder_with_sessions>' \\
             --runtype='list' \\
             --flist='sessions.list' \\
@@ -220,7 +220,7 @@ Examples:
 
     ::
 
-        qunex fc_compute_wrapper \\
+        qunex compute_bold_fc \\
             --sessionsfolder='<folder_with_sessions>' \\
             --calculation='gbc' \\
             --runtype='individual' \\
@@ -243,7 +243,7 @@ Examples:
 
     ::
 
-        qunex fc_compute_wrapper \\
+        qunex compute_bold_fc \\
             --sessionsfolder='<folder_with_sessions>' \\
             --calculation='gbc' \\
             --runtype='list' \\
@@ -324,7 +324,7 @@ fi
 #  -- Parse arguments
 # ------------------------------------------------------------------------------
 
-########################################## INPUTS ########################################## 
+########################################## INPUTS ##########################################
 
 # BOLD data should be pre-processed and in NIFTI or CIFTI format
 # Mandatory input parameters are defined in the help call
@@ -350,9 +350,9 @@ get_options() {
 #     fi
 # done
 # }
-# 
+#
 # MaskFrames=`opts_GetOpt "--mask" "$@"`
-# 
+#
 # echo "${MaskFrames}"
 
 local scriptName=$(basename ${0})
@@ -365,26 +365,26 @@ unset CASES            # --sessions=
 unset InputFiles       # --inputfile=
 unset InputPath        # --inputpath=
 unset OutName          #  --outname=
-unset OutPath          # --targetf=         
-unset Overwrite        # --overwrite=      
+unset OutPath          # --targetf=
+unset Overwrite        # --overwrite=
 unset ExtractData      # --extractdata=
-unset Calculation      # --calculation=   
-unset RunType          # --runtype=       
-unset FileList         # --flist=         
-unset IgnoreFrames     # --ignore=         
-unset MaskFrames       # --mask=      
-unset Covariance       # --covariance=      
-unset TargetROI        # --target=         
-unset RadiusSmooth     # --rsmooth=      
-unset RadiusDilate     # --rdilate=      
-unset GBCCommand       # --gbc-command=      
-unset Verbose          # --verbose=      
-unset ComputeTime      # --time=         
-unset VoxelStep        # --vstep=         
-unset ROIInfo          # --roinfo=         
-unset FCCommand        # --options=      
-unset Method           # --method=      
-unset MemLimit         # --mem-limit=      
+unset Calculation      # --calculation=
+unset RunType          # --runtype=
+unset FileList         # --flist=
+unset IgnoreFrames     # --ignore=
+unset MaskFrames       # --mask=
+unset Covariance       # --covariance=
+unset TargetROI        # --target=
+unset RadiusSmooth     # --rsmooth=
+unset RadiusDilate     # --rdilate=
+unset GBCCommand       # --gbc-command=
+unset Verbose          # --verbose=
+unset ComputeTime      # --time=
+unset VoxelStep        # --vstep=
+unset ROIInfo          # --roinfo=
+unset FCCommand        # --options=
+unset Method           # --method=
+unset MemLimit         # --mem-limit=
 
 runcmd=""
 
@@ -418,7 +418,7 @@ while [ ${index} -lt ${numArgs} ]; do
         --inputpath=*)
             InputPath=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                   
+            ;;
         --outname=*)
             OutName=${argument/*=/""}
             index=$(( index + 1 ))
@@ -430,15 +430,15 @@ while [ ${index} -lt ${numArgs} ]; do
         --overwrite=*)
             Overwrite=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;      
+            ;;
         --extractdata=*)
             ExtractData=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;    
+            ;;
         --calculation=*)
             Calculation=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;       
+            ;;
         --runtype=*)
             RunType=${argument/*=/""}
             index=$(( index + 1 ))
@@ -470,7 +470,7 @@ while [ ${index} -lt ${numArgs} ]; do
         --rdilate=*)
             RadiusDilate=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;  
+            ;;
         --gbc-command=*)
             GBCCommand=${argument/*=/""}
             index=$(( index + 1 ))
@@ -533,7 +533,7 @@ if [ -z ${RunType} ]; then
     echo "ERROR: <type_of_run> not specified. Check usage."; echo ""
     exit 1
 fi
-    
+
 # -- Check run type (group or individual)
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     # -- Check options for individual run
@@ -751,13 +751,13 @@ if [ ${RunType} == "individual" ]; then
         InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
         if [ ${Calculation} != "dense" ]; then
             # -- Cleanup prior tmp lists
-            rm -rf ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
+            rm -rf ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
             # -- Generate output directories
             mkdir ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
             mkdir ${OutPath} > /dev/null 2>&1
             # -- Generate the temp list
             echo "session id:${INPUTCASE}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-            for InputFile in ${InputFiles}; do 
+            for InputFile in ${InputFiles}; do
                 full_input_path=${SessionsFolder}/${INPUTCASE}/${InputPath}/${InputFile}
                 # check if file exists
                 if [ ! -e "${full_input_path}" ]; then
@@ -775,8 +775,8 @@ if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
     # -- Generate output directories
     mkdir ${OutPath} > /dev/null 2>&1
     # -- Cleanup prior tmp lists
-    rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
-    mkdir ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
+    rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
+    mkdir ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
     for INPUTCASE in $INPUTCASES; do
         # -- Define inputs
         echo "--- Establishing paths for all input and output folders for $INPUTCASE:"
@@ -820,7 +820,7 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$OutPath" ]; then OutPath="/images/functional"; fi
         if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
     if [ ${Calculation} == "seed" ]; then
-        # -- run FC seed command: 
+        # -- run FC seed command:
         # Call to get matlab help ---> ${QUNEXMCOMMAND} "help fc_compute_gbc3,quit()"
         # Full function input ---> fc_compute_seedmaps_multiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
         # Example with string input ---> ${QUNEXMCOMMAND} "fc_compute_seedmaps_multiple('listname:$CASE-$OutName|session id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
@@ -830,7 +830,7 @@ if [ ${Calculation} != "dense" ]; then
     fi
     # -- Check if GBC seed run is specified
     if [ ${Calculation} == "gbc" ]; then
-        # -- run GBC seed command: 
+        # -- run GBC seed command:
         # Call to get matlab help ---> ${QUNEXMCOMMAND} "help fc_compute_gbc3,quit()"
         # Full function input ---> fc_compute_gbc3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
         # Example with string input ---> ${QUNEXMCOMMAND}"fc_compute_gbc3('listname:$CASE-$OutName|session id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
@@ -870,7 +870,7 @@ if [ ${Calculation} == "dense" ]; then
                 echo " ---> Requesting ${InputFile}. This is not a valid .dtseries.nii file"
                 return 1
             fi
-            # -- Parameters for wb_command -cifti-correlation: 
+            # -- Parameters for wb_command -cifti-correlation:
                 #
                 # [-weights] - specify column weights
                 #    <weight-file> - text file containing one weight per column
@@ -901,7 +901,7 @@ if [ ${Calculation} == "dense" ]; then
                 echo ""
             else
                 echo ""
-                echo "ERROR --- Result for ${OutDense} not found" 
+                echo "ERROR --- Result for ${OutDense} not found"
                 echo "    Something went wrong."
                 echo ""
                 RunError="yes"
@@ -911,7 +911,7 @@ if [ ${Calculation} == "dense" ]; then
 fi
 
 # -- Check if data extraction requested
-if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]] && [[ ! `echo ${InputFiles} | grep 'dtseries'` ]]; then 
+if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]] && [[ ! `echo ${InputFiles} | grep 'dtseries'` ]]; then
     echo "--- Saving out the data in a CSV file..."
     # -- Specify pconn file inputs and outputs
     PConnBOLDInputs=`ls ${OutPath}/${OutName}*ptseries.nii`
@@ -920,7 +920,7 @@ if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]] && [[ ! `ech
         echo "WARNING: No parcellated files found for this run."
         echo ""
     else
-        for PConnBOLDInput in ${PConnBOLDInputs}; do 
+        for PConnBOLDInput in ${PConnBOLDInputs}; do
             CSVPConnFileExt=".csv"
             CSVPConnBOLDOutput="${PConnBOLDInput}_${CSVPConnFileExt}"
             rm -f ${CSVPConnBOLDOutput} > /dev/null 2>&1
@@ -957,7 +957,7 @@ if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
         RunError="yes"
     fi
 fi
-if [[ -z ${RunError} ]]; then 
+if [[ -z ${RunError} ]]; then
     echo ""
     echo "------------------------- Successful completion of work --------------------------------"
     echo ""

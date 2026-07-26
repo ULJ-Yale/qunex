@@ -74,7 +74,7 @@ def create_nifti_with_metadata(filename, add_cifti=False, add_qunex=False):
     # Write the file manually with proper metadata extensions
     with open(filename, 'wb') as f:
         # Write header (348 bytes + 4 byte extension flag = 352 bytes for NIfTI-1)
-        header_bytes = hdr.packHdr()
+        header_bytes = hdr.pack_hdr()
         f.write(header_bytes)
 
         # Write metadata blocks
@@ -274,12 +274,12 @@ def test_multiple_metadata():
             os.remove(tmpfile)
 
 
-def create_nifti_with_data(filename, sizex=64, sizey=64, sizez=32, frames=10, 
+def create_nifti_with_data(filename, sizex=64, sizey=64, sizez=32, frames=10,
                           descrip="Test file", add_cifti=False, add_qunex=False,
                           data_pattern=0):
     """Helper function to create a NIfTI file with data and optional metadata"""
     import numpy as np
-    
+
     # Create a basic NIfTI header
     hdr = niftihdr()
     hdr.sizex = sizex
@@ -294,7 +294,7 @@ def create_nifti_with_data(filename, sizex=64, sizey=64, sizez=32, frames=10,
     hdr.meta = []
     if add_cifti or add_qunex:
         hdr.ext = chr(1) + chr(0) + chr(0) + chr(0)
-        
+
         if add_cifti:
             cifti_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <CIFTI Version="2.0">
@@ -351,7 +351,7 @@ def create_nifti_with_data(filename, sizex=64, sizey=64, sizez=32, frames=10,
     # Write the file
     with open(filename, 'wb') as f:
         # Write header
-        header_bytes = hdr.packHdr()
+        header_bytes = hdr.pack_hdr()
         f.write(header_bytes)
 
         # Write metadata blocks
@@ -406,7 +406,7 @@ def test_compare_different_headers():
     try:
         # Create files with different descriptions and voxel sizes
         create_nifti_with_data(tmpfile1, descrip="File 1", data_pattern=0)
-        
+
         # Create second file with different header
         hdr2 = niftihdr()
         hdr2.sizex = 64
@@ -422,13 +422,13 @@ def test_compare_different_headers():
         hdr2.ext = chr(0) * 4
         hdr2.meta = []
         hdr2.vox_offset = 352
-        
+
         import numpy as np
         nvox = 64 * 64 * 32 * 10
         data = np.zeros(nvox, dtype=np.float32)
-        
+
         with open(tmpfile2, 'wb') as f:
-            f.write(hdr2.packHdr())
+            f.write(hdr2.pack_hdr())
             f.write(data.tobytes())
 
         # Compare them
@@ -457,7 +457,7 @@ def test_compare_different_extensions():
     try:
         # Create file with CIFTI extension
         create_nifti_with_data(tmpfile1, data_pattern=0, add_cifti=True)
-        
+
         # Create file with QuNex extension
         create_nifti_with_data(tmpfile2, data_pattern=0, add_qunex=True)
 
@@ -494,7 +494,7 @@ def test_compare_same_extension_different_content():
         hdr1.data_type = 16
         hdr1.bitpix = 32
         hdr1.ext = chr(1) + chr(0) * 3
-        
+
         qunex_text1 = "QuNex Processing: bold1\nSession: session1\nProcessed: 2025-10-28"
         qunex_data1 = qunex_text1.encode('utf-8')
         esize1 = len(qunex_data1) + 8
@@ -502,18 +502,18 @@ def test_compare_same_extension_different_content():
         qunex_data1 = qunex_data1 + b'\x00' * (esize1 - len(qunex_data1) - 8)
         hdr1.meta = [[esize1, 64, qunex_data1]]
         hdr1.vox_offset = 352 + esize1
-        
+
         import numpy as np
         nvox = 64 * 64 * 32 * 10
         data = np.zeros(nvox, dtype=np.float32)
-        
+
         with open(tmpfile1, 'wb') as f:
-            f.write(hdr1.packHdr())
+            f.write(hdr1.pack_hdr())
             f.write(struct.pack(hdr1.e + 'I', esize1))
             f.write(struct.pack(hdr1.e + 'I', 64))
             f.write(qunex_data1)
             f.write(data.tobytes())
-        
+
         # Create second file with different QuNex content
         hdr2 = niftihdr()
         hdr2.sizex = 64
@@ -523,7 +523,7 @@ def test_compare_same_extension_different_content():
         hdr2.data_type = 16
         hdr2.bitpix = 32
         hdr2.ext = chr(1) + chr(0) * 3
-        
+
         qunex_text2 = "QuNex Processing: bold2\nSession: session2\nProcessed: 2025-10-29"  # Different!
         qunex_data2 = qunex_text2.encode('utf-8')
         esize2 = len(qunex_data2) + 8
@@ -531,9 +531,9 @@ def test_compare_same_extension_different_content():
         qunex_data2 = qunex_data2 + b'\x00' * (esize2 - len(qunex_data2) - 8)
         hdr2.meta = [[esize2, 64, qunex_data2]]
         hdr2.vox_offset = 352 + esize2
-        
+
         with open(tmpfile2, 'wb') as f:
-            f.write(hdr2.packHdr())
+            f.write(hdr2.pack_hdr())
             f.write(struct.pack(hdr2.e + 'I', esize2))
             f.write(struct.pack(hdr2.e + 'I', 64))
             f.write(qunex_data2)
@@ -628,7 +628,7 @@ def test_compare_ndifflines_parameter():
         hdr1.data_type = 16
         hdr1.bitpix = 32
         hdr1.ext = chr(1) + chr(0) * 3
-        
+
         # Create a long text extension (15 lines)
         lines1 = [f"Line {i:02d}: Data from file 1 - test iteration {i}" for i in range(15)]
         qunex_text1 = "\n".join(lines1)
@@ -638,19 +638,19 @@ def test_compare_ndifflines_parameter():
         qunex_data1 = qunex_data1 + b'\x00' * (esize1 - len(qunex_data1) - 8)
         hdr1.meta = [[esize1, 64, qunex_data1]]
         hdr1.vox_offset = 352 + esize1
-        
+
         import numpy as np
         nvox = 32 * 32 * 16 * 5
         np.random.seed(42)
         data = np.random.randn(nvox).astype(np.float32)
-        
+
         with open(tmpfile1, 'wb') as f:
-            f.write(hdr1.packHdr())
+            f.write(hdr1.pack_hdr())
             f.write(struct.pack(hdr1.e + 'I', esize1))
             f.write(struct.pack(hdr1.e + 'I', 64))
             f.write(qunex_data1)
             f.write(data.tobytes())
-        
+
         # Create second file with different text (all lines differ)
         hdr2 = niftihdr()
         hdr2.sizex = 32
@@ -660,7 +660,7 @@ def test_compare_ndifflines_parameter():
         hdr2.data_type = 16
         hdr2.bitpix = 32
         hdr2.ext = chr(1) + chr(0) * 3
-        
+
         lines2 = [f"Line {i:02d}: Data from file 2 - test iteration {i}" for i in range(15)]
         qunex_text2 = "\n".join(lines2)
         qunex_data2 = qunex_text2.encode('utf-8')
@@ -669,9 +669,9 @@ def test_compare_ndifflines_parameter():
         qunex_data2 = qunex_data2 + b'\x00' * (esize2 - len(qunex_data2) - 8)
         hdr2.meta = [[esize2, 64, qunex_data2]]
         hdr2.vox_offset = 352 + esize2
-        
+
         with open(tmpfile2, 'wb') as f:
-            f.write(hdr2.packHdr())
+            f.write(hdr2.pack_hdr())
             f.write(struct.pack(hdr2.e + 'I', esize2))
             f.write(struct.pack(hdr2.e + 'I', 64))
             f.write(qunex_data2)
@@ -702,7 +702,7 @@ def main():
         test_numeric_codes()
         test_qunex_metadata()
         test_multiple_metadata()
-        
+
         # New comparison tests
         print("\n" + "=" * 70)
         print("NIfTI Image Comparison Tests")
@@ -732,4 +732,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-

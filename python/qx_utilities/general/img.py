@@ -61,7 +61,7 @@ def sign(x):
         return 0
 
 
-def readTextFileToLines(filename):
+def read_text_file_to_lines(filename):
     file = open(filename, 'r')
     s = file.read()
     s = s.replace('\r', '\n')
@@ -70,7 +70,7 @@ def readTextFileToLines(filename):
     return s
 
 
-def getImgFormat(filename):
+def get_img_format(filename):
     p = filename.split('.')
     if p[-1] == 'nii':
         if ".".join(p[-2:])  == 'dtseries.nii':
@@ -92,11 +92,11 @@ def getImgFormat(filename):
     return 'unknown'
 
 
-def readConc(filename, boldname=None, check=False):
+def read_conc(filename, boldname=None, check=False):
     if os.path.exists(filename):
-        s = readTextFileToLines(filename)
+        s = read_text_file_to_lines(filename)
     else:
-        raise ge.CommandFailed("readConc", "File does not exist", "The specified conc file does not exist:", "[%s]" % (filename), "Please check your data!")
+        raise ge.CommandFailed("read_conc", "File does not exist", "The specified conc file does not exist:", "[%s]" % (filename), "Please check your data!")
 
     if boldname is None:
         boldname = 'bold'
@@ -105,8 +105,8 @@ def readConc(filename, boldname=None, check=False):
         f = []
         nfiles = int(s[0].split(":")[1])
         boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles + 1]]
-    except:
-        raise ge.CommandFailed("readConc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
+    except Exception:
+        raise ge.CommandFailed("read_conc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
 
     if check:
         missing = []
@@ -115,7 +115,7 @@ def readConc(filename, boldname=None, check=False):
                 missing.append(boldfile)
 
         if missing:
-            raise ge.CommandFailed("readConc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
+            raise ge.CommandFailed("read_conc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
 
     m = re.compile(r".*?([0-9]+).*")
 
@@ -123,13 +123,13 @@ def readConc(filename, boldname=None, check=False):
         for boldfile in boldfiles:
             bnum = m.match(boldfile.split('/')[-1]).group(1)
             f.append((boldfile, bnum))
-    except:
-        raise ge.CommandFailed("readConc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
+    except Exception:
+        raise ge.CommandFailed("read_conc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
 
     return f
 
 
-def writeConc(filename, conc):
+def write_conc(filename, conc):
     f = open(filename, 'w')
     nfiles = len(conc)
     print("   number_of_files:  %d" % (nfiles), file=f)
@@ -138,11 +138,11 @@ def writeConc(filename, conc):
     f.close()
 
 
-def readBasicInfo(filename):
-    if getImgFormat(filename) == '.4dfp.img':
+def read_basic_info(filename):
+    if get_img_format(filename) == '.4dfp.img':
         ifht = ifhhdr()
-        ifht.readHeader(filename)
-        hdr = ifht.toNIfTI()
+        ifht.read_header(filename)
+        hdr = ifht.to_nifti()
     else:
         hdr = niftihdr(filename)
 
@@ -164,10 +164,10 @@ def printniftihdr(filename=None):
 
     ..  qx_command:
         type: utility
-    
+
     Parameters:
         --filename (str):
-            The path to the NIfTI file (.nii or .nii.gz)    
+            The path to the NIfTI file (.nii or .nii.gz)
     """
     if filename is None:
         raise ge.CommandError('printniftihdr', 'No filename provided', 'Please provide a NIfTI filename to inspect!')
@@ -197,7 +197,7 @@ def print_nifti_metadata(filename, info='list'):
             - 'qunex' or 'qx': Print QuNex metadata (ecode 64)
             - Numeric code (e.g., 32, 64, 2, etc.): Print metadata with that code
 
-            
+
     Notes:
         NIfTI files can contain metadata extension blocks after the header.
         This function inspects and displays the content of these blocks.
@@ -401,7 +401,6 @@ def print_nifti_metadata(filename, info='list'):
     # print("-" * 70)
 
 
-
 def remove_qunex_metadata(infile, outfile=None):
     """
     ``remove_qunex_metadata <infile> [outfile=None]``
@@ -499,7 +498,7 @@ def remove_qunex_metadata(infile, outfile=None):
         print("-> Writing to new file: %s" % outfile)
 
     # Read the image data from the input file
-    sform = getImgFormat(infile)
+    sform = get_img_format(infile)
     if sform == '.nii.gz':
         inf = gzip.open(infile, 'rb')
     else:
@@ -507,9 +506,9 @@ def remove_qunex_metadata(infile, outfile=None):
 
     # Read the old header to skip it
     old_hdr = niftihdr()
-    old_hdr.unpackHdr(inf)
+    old_hdr.unpack_hdr(inf)
 
-    # The unpackHdr function already reads the header, extension flag, and all extensions
+    # The unpack_hdr function already reads the header, extension flag, and all extensions
     # The file pointer is now at vox_offset, ready to read image data
     # No need to skip anything else
 
@@ -518,17 +517,17 @@ def remove_qunex_metadata(infile, outfile=None):
     inf.close()
 
     # Write the new file
-    tform = getImgFormat(outfile)
+    tform = get_img_format(outfile)
     if tform == '.nii.gz':
         outf = gzip.open(outfile, 'wb')
     else:
         outf = open(outfile, 'wb')
 
     # Write new header (with updated metadata)
-    # Note: packHdr() includes the extension flag at the end
+    # Note: pack_hdr() includes the extension flag at the end
     # For NIfTI-1: 348 bytes header + 4 bytes extension flag = 352 bytes
     # For NIfTI-2: 540 bytes header + 4 bytes extension flag = 544 bytes
-    header_bytes = hdr.packHdr()
+    header_bytes = hdr.pack_hdr()
     outf.write(header_bytes)
 
     # Write metadata blocks (if any)
@@ -563,16 +562,16 @@ class fidl:
 
     def read(self, filename):
         self.filename = filename
-        s = readTextFileToLines(filename)
+        s = read_text_file_to_lines(filename)
         hdr         = s[0].split()
         self.TR     = float(hdr[0])
         self.codes  = hdr[1:]
         self.events = [e.split() for e in s[1:]]
-        self.events = [[float(e) for e in l] for l in self.events if len(l) > 1]
+        self.events = [[float(e) for e in ln] for ln in self.events if len(ln) > 1]
 
     # ---> adjust times for delta
 
-    def adjustTime(self, delta):
+    def adjust_time(self, delta):
         for event in self.events:
             event[0] += delta
 
@@ -635,11 +634,11 @@ class ifhhdr:
         self.vlist = ["INTERFILE", "version of keys", "number format", "number of bytes per pixel", "orientation", "number of dimensions", "matrix size [1]", "matrix size [2]", "matrix size [3]", "matrix size [4]", "scaling factor (mm/pixel) [1]", "scaling factor (mm/pixel) [2]", "scaling factor (mm/pixel) [3]", "center", "mmppix"]
 
         if filename:
-            self.readHeader(filename)
+            self.read_header(filename)
         else:
-            self.hdr = self.packHdr()
+            self.hdr = self.pack_hdr()
 
-    def packHdr(self):
+    def pack_hdr(self):
         d = dict(self.ifh)
         s = ""
         for k in self.vlist:
@@ -650,41 +649,41 @@ class ifhhdr:
 
         return s
 
-    def unpackHdr(self, s):
+    def unpack_hdr(self, s):
         s = s.replace('\r', '\n')
         s = s.replace('\n\n', '\n')
         s = s.split('\n')
         self.ifh = {}
         self.vlist = []
 
-        for l in s:
-            l = l.split(":=")
-            if len(l) == 2:
-                k = l[0].strip()
-                v = l[1].strip()
+        for ln in s:
+            ln = ln.split(":=")
+            if len(ln) == 2:
+                k = ln[0].strip()
+                v = ln[1].strip()
                 self.ifh[k] = v
                 self.vlist.append(k)
 
         return
 
-    def readHeader(self, filename):
+    def read_header(self, filename):
         filename = filename.replace('.img', '.ifh')
         file = open(filename, 'r')
         s = file.read()
-        self.unpackHdr(s)
+        self.unpack_hdr(s)
         self.hdr = s
 
         return
 
-    def writeHeader(self, filename):
+    def write_header(self, filename):
         h = open(filename, 'w')
-        s = self.packHdr()
+        s = self.pack_hdr()
         h.write(s)
         h.close()
 
         return
 
-    def toNIfTI(self):
+    def to_nifti(self):
         nihdr = niftihdr()
         if "center" in self.ifh:
             c  = tuple([float(e) for e in self.ifh["center"].split()])
@@ -794,9 +793,9 @@ class niftihdr:
         self.meta       = []
 
         if filename:
-            self.readHeader(filename)
+            self.read_header(filename)
         else:
-            self.hdr = self.packHdr()
+            self.hdr = self.pack_hdr()
 
     def is_cifti(self):
         """Check if this is a CIFTI file based on metadata or filename."""
@@ -826,14 +825,14 @@ class niftihdr:
         else:
             return self.frames
 
-    def packHdr(self):
+    def pack_hdr(self):
 
         if self.nifti_version == 2:
-            return self._packHdrV2()
+            return self._pack_hdr_v2()
         else:
-            return self._packHdrV1()
+            return self._pack_hdr_v1()
 
-    def _packHdrV1(self):
+    def _pack_hdr_v1(self):
 
         self.vox_offset = 352.0
         for m in self.meta:
@@ -902,7 +901,7 @@ class niftihdr:
 
         return s
 
-    def _packHdrV2(self):
+    def _pack_hdr_v2(self):
         """Pack NIfTI-2 header (540 bytes base)"""
 
         # NIfTI-2 header is 540 bytes, see https://nifti.nimh.nih.gov/pub/dist/src/nifti2.h
@@ -979,14 +978,14 @@ class niftihdr:
 
         return s
 
-    def unpackHdr(self, s):
+    def unpack_hdr(self, s):
 
         si = struct.calcsize('i')
-        sc = struct.calcsize('c')
-        sh = struct.calcsize('h')
-        sf = struct.calcsize('f')
-        sq = struct.calcsize('q')
-        sd = struct.calcsize('d')
+        _ = struct.calcsize('c')
+        _ = struct.calcsize('h')
+        _ = struct.calcsize('f')
+        _ = struct.calcsize('q')
+        _ = struct.calcsize('d')
 
         # Detect NIfTI version by reading the first 4 bytes
         header_size, = struct.unpack(">i", s.read(si))
@@ -995,12 +994,12 @@ class niftihdr:
             # NIfTI-1
             self.nifti_version = 1
             s.seek(0)  # Reset to beginning
-            return self._unpackHdrV1(s)
+            return self._unpack_hdr_v1(s)
         elif header_size == 540:
             # NIfTI-2
             self.nifti_version = 2
             s.seek(0)  # Reset to beginning
-            return self._unpackHdrV2(s)
+            return self._unpack_hdr_v2(s)
         else:
             # Try little endian
             s.seek(0)
@@ -1008,15 +1007,15 @@ class niftihdr:
             if header_size == 348:
                 self.nifti_version = 1
                 s.seek(0)
-                return self._unpackHdrV1(s)
+                return self._unpack_hdr_v1(s)
             elif header_size == 540:
                 self.nifti_version = 2
                 s.seek(0)
-                return self._unpackHdrV2(s)
+                return self._unpack_hdr_v2(s)
             else:
                 raise ValueError(f"Invalid NIfTI header size: {header_size}")
 
-    def _unpackHdrV1(self, s):
+    def _unpack_hdr_v1(self, s):
 
         si = struct.calcsize('i')
         sc = struct.calcsize('c')
@@ -1117,13 +1116,13 @@ class niftihdr:
                     break
         return
 
-    def _unpackHdrV2(self, s):
+    def _unpack_hdr_v2(self, s):
         """Unpack NIfTI-2 header (540 bytes)"""
 
         si = struct.calcsize('i')
         sc = struct.calcsize('c')
         sh = struct.calcsize('h')
-        sf = struct.calcsize('f')
+        _ = struct.calcsize('f')
         sq = struct.calcsize('q')
         sd = struct.calcsize('d')
 
@@ -1221,29 +1220,29 @@ class niftihdr:
                     break
         return
 
-    def readHeader(self, filename):
+    def read_header(self, filename):
 
-        sform = getImgFormat(filename)
+        sform = get_img_format(filename)
         if sform == '.nii.gz':
             h = gzip.open(filename, 'rb')
         else:
             h = open(filename, 'rb')
 
-        self.unpackHdr(h)
+        self.unpack_hdr(h)
         h.close()
 
         return
 
-    def writeHeader(self, filename):
+    def write_header(self, filename):
 
         h = open(filename, "wb")
-        s = self.packHdr()
+        s = self.pack_hdr()
         h.write(s)
         h.close()
 
         return
 
-    def toIFH(self):
+    def to_ifh(self):
 
         ifhdr = ifhhdr()
         ifhdr.ifh = {
@@ -1302,7 +1301,7 @@ class niftihdr:
 
         return ifhdr
 
-    def convertToV1(self):
+    def convert_to_v1(self):
         """Convert NIfTI-2 header to NIfTI-1 format (if possible)"""
         if self.nifti_version == 1:
             return  # Already V1
@@ -1317,7 +1316,7 @@ class niftihdr:
         self.magic = "n+1" + chr(0)
         self.vox_offset = 352.0  # NIfTI-1 default offset
 
-    def convertToV2(self):
+    def convert_to_v2(self):
         """Convert NIfTI-1 header to NIfTI-2 format"""
         if self.nifti_version == 2:
             return  # Already V2
@@ -1341,7 +1340,7 @@ class niftihdr:
 
         return s + "\n# ----------------------------------"
 
-    def modifyHeader(self, s):
+    def modify_header(self, s):
         decodef = {"dim_info":        int,
                    "ndimensions":    int,
                    "sizex":          int,
@@ -1421,13 +1420,13 @@ def slice_image(sourcefile, targetfile, frames=1):
         type: utility
 
     Parameters:
-        --sourcefile (str): 
+        --sourcefile (str):
             Source volume file (.4dfp, .nii, or .nii.gz).
 
-        --targetfile (str): 
+        --targetfile (str):
             Target volume file of the same format.
 
-        --frames (int, default 1): 
+        --frames (int, default 1):
             Optional number of initial frames to retain. [1]
 
     Examples:
@@ -1437,8 +1436,8 @@ def slice_image(sourcefile, targetfile, frames=1):
     """
 
     frames = int(frames)
-    if 'nii' in getImgFormat(sourcefile):
-        sliceNIfTI(sourcefile, targetfile, frames)
+    if 'nii' in get_img_format(sourcefile):
+        slice_nifti(sourcefile, targetfile, frames)
     else:
         slice4dfp(sourcefile, targetfile, frames)
 
@@ -1448,11 +1447,11 @@ def slice4dfp(sourcefile, targetfile, frames=1):
     x = int(hdr.ifh['matrix size [1]'])
     y = int(hdr.ifh['matrix size [2]'])
     z = int(hdr.ifh['matrix size [3]'])
-    t = int(hdr.ifh['matrix size [4]'])
+    _ = int(hdr.ifh['matrix size [4]'])
     voxels = x * y * z
 
     hdr.ifh['matrix size [4]'] = str(frames)
-    hdr.writeHeader(targetfile.replace('.img', '.ifh'))
+    hdr.write_header(targetfile.replace('.img', '.ifh'))
 
     sf = open(sourcefile, 'rb')
     df = open(targetfile, 'wb')
@@ -1465,9 +1464,9 @@ def slice4dfp(sourcefile, targetfile, frames=1):
     df.close
 
 
-def sliceNIfTI(sourcefile, targetfile, frames=1):
-    sform = getImgFormat(sourcefile)
-    tform = getImgFormat(targetfile)
+def slice_nifti(sourcefile, targetfile, frames=1):
+    sform = get_img_format(sourcefile)
+    tform = get_img_format(targetfile)
 
     if sform == '.nii.gz':
         sf = gzip.open(sourcefile, 'rb')
@@ -1480,7 +1479,7 @@ def sliceNIfTI(sourcefile, targetfile, frames=1):
         tf = open(targetfile, 'wb')
 
     hdr = niftihdr()
-    hdr.unpackHdr(sf)
+    hdr.unpack_hdr(sf)
     nvox = hdr.sizex * hdr.sizey * hdr.sizez
     hdr.frames = frames
 
@@ -1488,7 +1487,7 @@ def sliceNIfTI(sourcefile, targetfile, frames=1):
     header_base_size = 540 if hdr.nifti_version == 2 else 352
     tocopy = int(hdr.vox_offset - header_base_size + nvox * (hdr.bitpix / 8) * frames)
 
-    tf.write(hdr.packHdr())
+    tf.write(hdr.pack_hdr())
     tf.write(sf.read(tocopy))
 
     tf.flush()
@@ -1502,7 +1501,7 @@ def compare_nifti_images(file1, file2, ndifflines=10):
     ``compare_nifti_images file1=<path to first NIFTI file> file2=<path to second NIFTI file> [ndifflines=10]``
 
     Performs a detailed comparison of two NIFTI image files, analyzing their
-    headers, extensions, and data arrays. The comparison is presented in a 
+    headers, extensions, and data arrays. The comparison is presented in a
     structured, tabular format highlighting differences.
 
     Parameters:
@@ -1513,7 +1512,7 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         --file2 (str):
             The path to the second NIFTI file to compare. Can be .nii or .nii.gz
             format. Supports both NIfTI-1 and NIfTI-2 formats.
-        
+
         --ndifflines (int, default 10):
             Maximum number of diff lines to display when comparing textual
             extensions. If set to -1, all diff lines are printed. This helps
@@ -1521,19 +1520,19 @@ def compare_nifti_images(file1, file2, ndifflines=10):
 
     Comparison Process:
         The function performs comparison in the following order:
-        
+
         1. **File Hash Comparison**:
            - Computes SHA-256 hash of both complete files
            - If hashes match, files are identical and comparison stops
            - If hashes differ, proceeds with detailed analysis
-        
+
         2. **Header Comparison**:
            - Opens both files and reads NIfTI headers
            - Compares each header field individually
            - Reports field name, value from file1, and value from file2 for
              any fields that differ
            - Handles both NIfTI-1 (348 byte) and NIfTI-2 (540 byte) headers
-        
+
         3. **Extension Comparison**:
            - Compares the number of extensions in each file
            - Identifies extensions present in one file but not the other
@@ -1546,7 +1545,7 @@ def compare_nifti_images(file1, file2, ndifflines=10):
              * If hashes differ and extension is binary:
                - Reports that extensions differ
                - Lists the size of each extension
-        
+
         4. **Data Comparison**:
            - Checks if data dimensionality matches (shape of arrays)
            - If dimensions differ, reports the difference
@@ -1557,12 +1556,12 @@ def compare_nifti_images(file1, file2, ndifflines=10):
 
     Output Format:
         Results are displayed in structured tables using separators and alignment:
-        
+
         - Section headers clearly mark each comparison stage
         - Differences are shown in columnar format with field names
         - Extension comparisons show code, type, and content differences
         - Visual separators improve readability
-        
+
     Returns:
         None. Results are printed to standard output.
 
@@ -1580,14 +1579,14 @@ def compare_nifti_images(file1, file2, ndifflines=10):
 
             from qx_utilities.general.img import compare_nifti_images
             compare_nifti_images('subject1_bold.nii.gz', 'subject2_bold.nii.gz')
-            
+
         ::
 
             compare_nifti_images(
                 file1='/data/orig/T1w.nii',
                 file2='/data/processed/T1w.nii'
             )
-            
+
         ::
 
             # Show all diff lines for text extensions
@@ -1612,10 +1611,10 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         sha256_hash = hashlib.sha256()
         sha256_hash.update(data)
         return sha256_hash.hexdigest()
-    
+
     def _compare_headers(hdr1, hdr2):
         """Compare two NIFTI headers field by field."""
-        
+
         # Define header fields to compare
         header_fields = [
             'nifti_version', 'dim_info', 'ndimensions', 'sizex', 'sizey', 'sizez',
@@ -1629,15 +1628,15 @@ def compare_nifti_images(file1, file2, ndifflines=10):
             'qoffset_x', 'qoffset_y', 'qoffset_z', 'srow_x', 'srow_y', 'srow_z',
             'intent_name', 'magic', 'xyz_unit', 't_unit', 's_unit'
         ]
-        
+
         differences = []
         for field in header_fields:
             val1 = getattr(hdr1, field, None)
             val2 = getattr(hdr2, field, None)
-            
+
             if val1 != val2:
                 differences.append((field, val1, val2))
-        
+
         if not differences:
             print("✓ Headers are identical")
         else:
@@ -1659,52 +1658,52 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         elif isinstance(val, bytes):
             try:
                 return val.decode('utf-8').strip()
-            except:
+            except Exception:
                 return f"<binary: {len(val)} bytes>"
         elif isinstance(val, str):
             return val.strip()
         else:
             return str(val)
-        
+
     def _compare_extensions(hdr1, hdr2, file1, file2, ndifflines=10):
         """Compare extensions between two NIFTI files."""
-        
+
         n_ext1 = len(hdr1.meta)
         n_ext2 = len(hdr2.meta)
-        
+
         print(f"File 1 has {n_ext1} extension(s)")
         print(f"File 2 has {n_ext2} extension(s)")
-        
+
         if n_ext1 == 0 and n_ext2 == 0:
             print("✓ Neither file has extensions")
             return
-        
+
         # Build dictionaries of extensions by code
         ext1_dict = {ext[1]: ext for ext in hdr1.meta}
         ext2_dict = {ext[1]: ext for ext in hdr2.meta}
-        
+
         codes1 = set(ext1_dict.keys())
         codes2 = set(ext2_dict.keys())
-        
+
         # Check for extensions in one file but not the other
         only_in_1 = codes1 - codes2
         only_in_2 = codes2 - codes1
         common = codes1 & codes2
-        
+
         if only_in_1:
-            print(f"\n✗ Extension(s) only in File 1:")
+            print("\n✗ Extension(s) only in File 1:")
             for code in sorted(only_in_1):
                 ext_size = ext1_dict[code][0]
                 ext_name = nifti_extension_names.get(code, "Unknown")
                 print(f"   - Code {code} ({ext_name}): size {ext_size} bytes")
-        
+
         if only_in_2:
-            print(f"\n✗ Extension(s) only in File 2:")
+            print("\n✗ Extension(s) only in File 2:")
             for code in sorted(only_in_2):
                 ext_size = ext2_dict[code][0]
                 ext_name = nifti_extension_names.get(code, "Unknown")
                 print(f"   - Code {code} ({ext_name}): size {ext_size} bytes")
-        
+
         # Compare common extensions
         if common:
             print(f"\n{len(common)} common extension code(s) found:")
@@ -1712,39 +1711,39 @@ def compare_nifti_images(file1, file2, ndifflines=10):
                 ext1_size, ext1_code, ext1_data = ext1_dict[code]
                 ext2_size, ext2_code, ext2_data = ext2_dict[code]
                 ext_name = nifti_extension_names.get(code, "Unknown")
-                
+
                 print(f"\n  Extension Code {code} ({ext_name}):")
                 print(f"    File 1 size: {ext1_size} bytes")
                 print(f"    File 2 size: {ext2_size} bytes")
-                
+
                 # Compare hashes
                 hash1 = _compute_data_hash(ext1_data)
                 hash2 = _compute_data_hash(ext2_data)
-                
+
                 if hash1 == hash2:
                     print(f"    ✓ Extensions are identical (hash: {hash1[:16]}...)")
                 else:
-                    print(f"    ✗ Extensions differ")
-                    
+                    print("    ✗ Extensions differ")
+
                     # Try to decode as text
                     try:
                         text1 = ext1_data.decode('utf-8')
                         text2 = ext2_data.decode('utf-8')
                         is_text = True
-                    except:
+                    except Exception:
                         is_text = False
-                    
+
                     if is_text:
-                        print(f"    Extension is textual - showing diff:")
+                        print("    Extension is textual - showing diff:")
                         _show_text_diff(text1, text2, "    ", ndifflines)
                     else:
-                        print(f"    Extension is binary")
+                        print("    Extension is binary")
                         print(f"    File 1 hash: {hash1}")
                         print(f"    File 2 hash: {hash2}")
 
     def _show_text_diff(text1, text2, indent="", ndifflines=10):
         """Show line-by-line diff of two text strings.
-        
+
         Args:
             text1: First text string
             text2: Second text string
@@ -1753,13 +1752,13 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         """
         lines1 = text1.splitlines(keepends=True)
         lines2 = text2.splitlines(keepends=True)
-        
-        diff = list(difflib.unified_diff(lines1, lines2, lineterm='', 
+
+        diff = list(difflib.unified_diff(lines1, lines2, lineterm='',
                                         fromfile='File 1', tofile='File 2'))
-        
+
         if diff:
             print(f"{indent}Differences:")
-            
+
             # Determine how many lines to show
             if ndifflines == -1:
                 lines_to_show = diff
@@ -1767,13 +1766,13 @@ def compare_nifti_images(file1, file2, ndifflines=10):
             else:
                 lines_to_show = diff[:ndifflines]
                 show_truncation = len(diff) > ndifflines
-            
+
             for line in lines_to_show:
                 # Clean up the line for display
                 line = line.rstrip()
                 if line:
                     print(f"{indent}{line}")
-            
+
             if show_truncation:
                 print(f"{indent}... ({len(diff) - ndifflines} more lines of diff)")
         else:
@@ -1781,28 +1780,28 @@ def compare_nifti_images(file1, file2, ndifflines=10):
 
     def _compare_data(hdr1, hdr2, file1, file2):
         """Compare data arrays between two NIFTI files."""
-        
+
         # Check dimensionality
-        dims1 = (hdr1.sizex, hdr1.sizey, hdr1.sizez, hdr1.frames, 
+        dims1 = (hdr1.sizex, hdr1.sizey, hdr1.sizez, hdr1.frames,
                 hdr1.size_5, hdr1.size_6, hdr1.size_7)
         dims2 = (hdr2.sizex, hdr2.sizey, hdr2.sizez, hdr2.frames,
                 hdr2.size_5, hdr2.size_6, hdr2.size_7)
-        
+
         # Trim trailing zeros/ones from dimension comparison
         dims1_trimmed = tuple([d for d in dims1[:hdr1.ndimensions]])
         dims2_trimmed = tuple([d for d in dims2[:hdr2.ndimensions]])
-        
+
         print(f"File 1 dimensions: {dims1_trimmed}")
         print(f"File 2 dimensions: {dims2_trimmed}")
-        
+
         if dims1_trimmed != dims2_trimmed:
             print("\n✗ Data dimensions differ")
             print(f"   File 1: {dims1_trimmed}")
             print(f"   File 2: {dims2_trimmed}")
             return
-        
+
         print("\n✓ Data dimensions match")
-        
+
         # Calculate data size
         nvox1 = hdr1.sizex * hdr1.sizey * hdr1.sizez * hdr1.frames
         if hdr1.size_5 > 0:
@@ -1811,20 +1810,20 @@ def compare_nifti_images(file1, file2, ndifflines=10):
             nvox1 *= hdr1.size_6
         if hdr1.size_7 > 0:
             nvox1 *= hdr1.size_7
-        
+
         bytes_per_vox = hdr1.bitpix // 8
         data_size = nvox1 * bytes_per_vox
-        
+
         print(f"Data size: {data_size} bytes ({data_size / (1024**2):.2f} MB)")
-        
+
         # Compare data hashes
         print("\nComputing data hashes...")
         data_hash1 = _compute_data_section_hash(file1, hdr1)
         data_hash2 = _compute_data_section_hash(file2, hdr2)
-        
+
         print(f"File 1 data hash: {data_hash1}")
         print(f"File 2 data hash: {data_hash2}")
-        
+
         if data_hash1 == data_hash2:
             print("\n✓ Data arrays are identical")
         else:
@@ -1832,16 +1831,16 @@ def compare_nifti_images(file1, file2, ndifflines=10):
 
     def _compute_data_section_hash(filename, hdr):
         """Compute hash of the data section of a NIFTI file."""
-        sform = getImgFormat(filename)
-        
+        sform = get_img_format(filename)
+
         if sform == '.nii.gz':
             f = gzip.open(filename, 'rb')
         else:
             f = open(filename, 'rb')
-        
+
         # Seek to data start
         f.seek(int(hdr.vox_offset))
-        
+
         # Compute hash in chunks
         sha256_hash = hashlib.sha256()
         while True:
@@ -1849,55 +1848,55 @@ def compare_nifti_images(file1, file2, ndifflines=10):
             if not chunk:
                 break
             sha256_hash.update(chunk)
-        
+
         f.close()
         return sha256_hash.hexdigest()
-    
+
     print("\n" + "=" * 80)
     print("NIFTI IMAGE COMPARISON")
     print("=" * 80)
     print(f"File 1: {file1}")
     print(f"File 2: {file2}")
     print("=" * 80)
-    
+
     # Step 1: Compare file hashes
     print("\n[1] FILE HASH COMPARISON")
     print("-" * 80)
-    
+
     hash1 = _compute_file_hash(file1)
     hash2 = _compute_file_hash(file2)
-    
+
     print(f"File 1 SHA-256: {hash1}")
     print(f"File 2 SHA-256: {hash2}")
-    
+
     if hash1 == hash2:
         print("\n✓ FILES ARE IDENTICAL (hashes match)")
         print("=" * 80 + "\n")
         return
     else:
         print("\n✗ Files differ - proceeding with detailed comparison")
-    
+
     # Step 2: Open files and compare headers
     print("\n[2] HEADER COMPARISON")
     print("-" * 80)
-    
+
     hdr1 = niftihdr(file1)
     hdr2 = niftihdr(file2)
-    
+
     _compare_headers(hdr1, hdr2)
-    
+
     # Step 3: Compare extensions
     print("\n[3] EXTENSION COMPARISON")
     print("-" * 80)
-    
+
     _compare_extensions(hdr1, hdr2, file1, file2, ndifflines)
-    
+
     # Step 4: Compare data
     print("\n[4] DATA COMPARISON")
     print("-" * 80)
-    
+
     _compare_data(hdr1, hdr2, file1, file2)
-    
+
     print("\n" + "=" * 80)
     print("COMPARISON COMPLETE")
     print("=" * 80 + "\n")

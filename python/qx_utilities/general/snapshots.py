@@ -18,10 +18,8 @@ Function for creating and restoring file backups:
 - restore_backup(): Restore files from backup
 """
 
-"""
-Created by Grega Repovs on 2026-02-01.
-Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
-"""
+# Created by Grega Repovs on 2026-02-01.
+# Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 
 import os
@@ -723,7 +721,7 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
         if temp_after_file:
             try:
                 os.unlink(temp_after_file.name)
-            except:
+            except Exception:
                 pass
 
 
@@ -1354,7 +1352,7 @@ def rollback_snapshot(
         if temp_diff_file:
             try:
                 os.unlink(temp_diff_file.name)
-            except:
+            except Exception:
                 pass
 
 
@@ -1393,7 +1391,7 @@ def backup_files(source, target, filelist, store="original", overwrite=False):
     ``backup_files source=<source folder path> target=<target folder path> filelist=<file list> [store=original] [overwrite=False]``
 
     Creates a backup of specified files from a source folder to a target location.
-    Files are stored with sequential backup prefixes (b001\_, b002\_, etc.) and a
+    Files are stored with sequential backup prefixes (b001\\_, b002\\_, etc.) and a
     file_list.txt manifest is created to track the original locations.
 
     Parameters:
@@ -1440,9 +1438,9 @@ def backup_files(source, target, filelist, store="original", overwrite=False):
 
     File Naming:
         Each backed up file receives a sequential prefix:
-        - b001\_<filename> for the first file
-        - b002\_<filename> for the second file
-        - b003\_<filename> for the third file
+        - b001\\_<filename> for the first file
+        - b002\\_<filename> for the second file
+        - b003\\_<filename> for the third file
         - And so on...
 
         For gzip mode, non-compressed files also get .gz extension:
@@ -1851,7 +1849,7 @@ def restore_files(source, target=None, overwrite=False, filelist=None):
 
     Notes:
         - The function preserves the original directory structure from file_list.txt
-        - Backup file prefixes (b001\_, b002\_, etc.) are automatically removed
+        - Backup file prefixes (b001\\_, b002\\_, etc.) are automatically removed
         - With overwrite="skip", partial restoration is supported
         - For gzip backups, only files that need decompression are unzipped
         - The restore operation is atomic when overwrite=False (all or nothing)

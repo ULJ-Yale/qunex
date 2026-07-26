@@ -24,10 +24,8 @@ There are additional support functions that are not to be used
 directly.
 """
 
-'''
-Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
-All rights reserved.
-'''
+# Copyright (c) Jure Demsar, Jie Lisa Ji and Valerio Zerbi
+# All rights reserved.
 
 # general imports
 import os
@@ -154,7 +152,6 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
                 if os.path.exists(log_path):
                     os.remove(log_path)
 
-
                 print(f'... importing to {target_path}')
                 print(f'... import log can be found at {log_path}')
 
@@ -170,7 +167,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
 
     # execute
     print('\n---> running conversions')
-    done = gc.runExternalParallel(calls, cores=parelements, prepend=' ... ')
+    done = gc.run_external_parallel(calls, cores=parelements, prepend=' ... ')
 
     # archive
     print()

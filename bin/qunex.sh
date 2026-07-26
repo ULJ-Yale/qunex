@@ -19,7 +19,7 @@
 
 TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
 
-qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc fc_compute_wrapper parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
+qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc compute_bold_fc parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
 
 # version
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
@@ -410,7 +410,7 @@ show_usage_dwi_seed_tractography_dense() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (fc_compute_wrapper.sh) via the QuNex bash wrapper
+# -- compute_bold_fc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (compute_bold_fc.sh) via the QuNex bash wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 compute_bold_fc() {
@@ -431,7 +431,7 @@ compute_bold_fc() {
     if [[ ${Calculation} == "seed" ]]; then
         echo ""
         # -- Specify command variable
-        QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
+        QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_bold_fc.sh \
         --sessionsfolder=${SessionsFolder} \
         --calculation=${Calculation} \
         --runtype=${RunType} \
@@ -456,7 +456,7 @@ compute_bold_fc() {
     if [[ ${Calculation} == "gbc" ]]; then
         echo ""
         # -- Specify command variable
-        QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
+        QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_bold_fc.sh \
         --sessionsfolder=${SessionsFolder} \
         --calculation=${Calculation} \
         --runtype=${RunType} \
@@ -485,7 +485,7 @@ compute_bold_fc() {
     if [[ ${Calculation} == "dense" ]]; then
         echo ""
         # -- Specify command variable
-        QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh \
+        QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_bold_fc.sh \
         --sessionsfolder=${SessionsFolder} \
         --calculation=${Calculation} \
         --runtype=${RunType} \
@@ -504,7 +504,7 @@ compute_bold_fc() {
 
 show_usage_compute_bold_fc() {
     echo ""; echo "qunex ${usage_input}"
-    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/fc_compute_wrapper.sh
+    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/compute_bold_fc.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -912,8 +912,8 @@ get_parameters() {
     sopt="$1"
     shift 1
     for fn in "$@" ; do
-        if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-            echo $fn | sed "s/^${sopt}=//"
+        if [ `echo "$fn" | grep -c -- "^${sopt}="` -gt 0 ]; then
+            echo "$fn" | sed "s/^${sopt}=//"
             return 0
         fi
     done
@@ -1508,7 +1508,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     UseFieldmap=`get_parameters "${setflag}usefieldmap" $@`
     UseSEFieldmap=`get_parameters "${setflag}usesefieldmap" $@`
     diffdatasuffix=`get_parameters "${setflag}diffdatasuffix" $@`
-    extra_eddy_args=`get_parameters "${setflag}extra_eddy_args" $@`
+    extra_eddy_args=`get_parameters "${setflag}extra_eddy_args" "$@"`
 
     # -- Input flags for dwi_bedpostx_gpu
     Fibers=`get_parameters "${setflag}fibers" $@`
@@ -2126,7 +2126,7 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
         if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
 
-    if [ -z ${extra_eddy_args} ]; then
+    if [ -z "${extra_eddy_args}" ]; then
         extra_eddy_args="--fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --data_is_shelled --repol --cnr_maps"
     fi
 
@@ -2198,10 +2198,10 @@ if [ "$CommandToRun" == "parcellate_anat" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# -- fc_compute_wrapper
+# -- compute_bold_fc
 # ------------------------------------------------------------------------------
 
-if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "fc_compute_wrapper" ]; then
+if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "compute_bold_fc" ]; then
     CommandToRun="compute_bold_fc"
 
     # -- Check all the user-defined parameters:

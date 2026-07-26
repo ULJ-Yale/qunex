@@ -14,10 +14,8 @@ QuNex/matlab code.
 None of the code is run directly from the terminal interface.
 """
 
-"""
-Created by Grega Repovs on 2017-09-16.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2017-09-16.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import subprocess
@@ -32,6 +30,7 @@ else:
 # ==============================================================================
 #                                                                     PRINT HELP
 #
+
 
 def help(command):
     """
@@ -89,7 +88,6 @@ def run(qx_command, args):
 
     mcom = "%s(%s)" % (qx_command.name, ", ".join(arglist))
     com = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcommand, mcom)
-
 
     # --- parse output options
 

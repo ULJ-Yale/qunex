@@ -17,7 +17,6 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 """
 
 
-
 def true_or_false(s):
     """
     ``true_or_false(s)``
@@ -39,7 +38,7 @@ def flag(f):
     Converts a flag (f) passed as a string to a boolean.
     """
 
-    if type(f) == bool:
+    if type(f) is bool:
         return f
     elif f in ["True", "true", "TRUE", "yes", "Yes", "YES"]:
         return True

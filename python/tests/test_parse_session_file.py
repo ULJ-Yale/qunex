@@ -20,9 +20,9 @@ def test_read_generic_session_file():
 
 def test_read_generic_session_file_with_id():
     """Reading a session file uses id instead of session
-    
+
     This test cases ensures that a session file uses
-    "id" old format instead of "session" can be parsed by 
+    "id" old format instead of "session" can be parsed by
     the parser
     """
     filename = get_test_data_path("session1_id.txt")

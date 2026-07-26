@@ -18,29 +18,21 @@ None of the code is run directly from the terminal interface.
 """
 
 # imports
-from copy import deepcopy
 import os
 import os.path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
-import qx_utilities.general.scheduler as gs
+import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
-import qx_utilities.general.commands_support as gcs
-from qx_utilities.processing import fs, simple, workflow, dwi, fsl, rapidtide
-from qx_utilities.general.bids import map_nii2bids
+import qx_utilities.general.scheduler as gs
 from qx_utilities.general import extensions
 
 # pipelines imports
-from qx_utilities.hcp import process_hcp
-
 # qx_mice
-import qx_mice.process_mice
-import qx_mice.setup_mice
 from qx_utilities.general.parsing import flag, is_none
 from qx_utilities.general.parsing import true_or_false as torf
-
 
 # =======================================================================
 #                                                                 GLOBALS
@@ -63,7 +55,7 @@ def writelog(item):
     global logname
     global log
     global stati
-    r, status = procResponse(item)
+    r, status = proc_response(item)
     log.append(r)
     stati.append(status)
     f = open(logname, "a")
@@ -71,9 +63,9 @@ def writelog(item):
     f.close()
 
 
-def procResponse(r):
+def proc_response(r):
     """
-    ``procResponse(r)``
+    ``proc_response(r)``
 
     It processes the response returned from the utilities functions
     called. It splits it into the report string and status tuple. If
@@ -558,35 +550,126 @@ arglist = [
         float,
     ],
     ["# --- general HCP options"],
-    ["hcp_processing_mode", "HCPStyleData", str,],
-    ["hcp_folderstructure", "hcpls", str,],
-    ["hcp_freesurfer_home", "", str,],
-    ["hcp_freesurfer_module", "", str,],
-    ["hcp_suffix", "", str,],
-    ["hcp_t2", "t2", str,],
-    ["hcp_printcom", "", str,],
-    ["hcp_bold_prefix", "BOLD_", str,],
-    ["hcp_filename", "automated", str,],
-    ["hcp_lowresmesh", "32", str,],
-    ["hcp_lowresmeshes", "32", str,],
-    ["hcp_hiresmesh", "164", int,],
-    ["hcp_bold_res", "2", str,],
-    ["hcp_grayordinatesres", "2", str,],
-    ["hcp_surfatlasdir", "", is_none,],
-    ["hcp_grayordinatesdir", "", is_none,],
-    ["hcp_subcortgraylabels", "", is_none,],
-    ["hcp_refmyelinmaps", "", is_none,],
-    ["hcp_regname", "MSMSulc", str,],
-    ["hcp_cifti_tail", "_Atlas", str,],
-    ["hcp_bold_variant", "", str,],
-    ["additional_bolds", "", is_none,],
-    ["hcp_nifti_tail", "", str,],
-    ["hcp_config", "", is_none,],
-    ["# --- hcp_parcellate_anat options"],
-    ["hcp_parcellate_input_type", "", str,],
-    ["hcp_parcellate_dlabel", "", str,],
-    ["hcp_parcellate_output_name", "", str,],
-    ["hcp_parcellate_extract_data", "False", torf,],
+    [
+        "hcp_processing_mode",
+        "HCPStyleData",
+        str,
+    ],
+    [
+        "hcp_folderstructure",
+        "hcpls",
+        str,
+    ],
+    [
+        "hcp_freesurfer_home",
+        "",
+        str,
+    ],
+    [
+        "hcp_freesurfer_module",
+        "",
+        str,
+    ],
+    [
+        "hcp_suffix",
+        "",
+        str,
+    ],
+    [
+        "hcp_t2",
+        "t2",
+        str,
+    ],
+    [
+        "hcp_printcom",
+        "",
+        str,
+    ],
+    [
+        "hcp_bold_prefix",
+        "BOLD_",
+        str,
+    ],
+    [
+        "hcp_filename",
+        "automated",
+        str,
+    ],
+    [
+        "hcp_lowresmesh",
+        "32",
+        str,
+    ],
+    [
+        "hcp_lowresmeshes",
+        "32",
+        str,
+    ],
+    [
+        "hcp_hiresmesh",
+        "164",
+        int,
+    ],
+    [
+        "hcp_bold_res",
+        "2",
+        str,
+    ],
+    [
+        "hcp_grayordinatesres",
+        "2",
+        str,
+    ],
+    [
+        "hcp_surfatlasdir",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_grayordinatesdir",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_subcortgraylabels",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_refmyelinmaps",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_regname",
+        "MSMSulc",
+        str,
+    ],
+    [
+        "hcp_cifti_tail",
+        "_Atlas",
+        str,
+    ],
+    [
+        "hcp_bold_variant",
+        "",
+        str,
+    ],
+    [
+        "additional_bolds",
+        "",
+        is_none,
+    ],
+    [
+        "hcp_nifti_tail",
+        "",
+        str,
+    ],
+    [
+        "hcp_config",
+        "",
+        is_none,
+    ],
     ["# --- hcp_pre_freesurfer options"],
     ["hcp_brainsize", "150", int],
     ["hcp_t1samplespacing", "NONE", str],
@@ -851,7 +934,7 @@ arglist = [
     ["hcp_fmristats_tica_component_tcs", "", is_none],
     ["hcp_fmristats_tica_component_noise", "", is_none],
     ["hcp_fmristats_regname", "", is_none],
-    ["# --- hcp_corr_thick options"],
+    ["# --- hcp_cortical_thickness options"],
     ["hcp_corrthick_regnames", "", is_none],
     ["hcp_corrthick_hemi", "", is_none],
     ["hcp_corrthick_surf", "", is_none],
@@ -943,6 +1026,14 @@ arglist = [
     ["hcp_transmit_res", "", is_none],
     ["hcp_myelin_mapping_fwhm", "", is_none],
     ["hcp_old_myelin_mapping", "", flag],
+    ["# --- hcp_transmit_bias_individual_align options"],
+    ["hcp_manual_receive", "False", torf],
+    ["# --- hcp_transmit_bias_group_average_fit options"],
+    ["hcp_all_uncorrected_myelin", "", is_none],
+    ["hcp_transmit_group_name", "", is_none],
+    ["# --- hcp_transmit_bias_group_average_corrected_maps options"],
+    ["hcp_average_myelin", "", is_none],
+    ["hcp_voltages", "", is_none],
     ["# --- fsl_feat options"],
     ["feat_file", "", is_none],
     ["# --- fsl_melodic options"],
@@ -1117,9 +1208,9 @@ def run(qx_command, args):
     )
 
     processing_type = "session"
-    if 'subject' in qx_command.type:
+    if "subject" in qx_command.type:
         processing_type = "subject"
-    elif 'study' in qx_command.type:
+    elif "study" in qx_command.type:
         processing_type = "study"
 
     # -- do we need a list of subjects?
@@ -1146,7 +1237,7 @@ def run(qx_command, args):
     # parse command line options
     for k, v in args.items():
         if k in flist:
-            if v != True:
+            if v is not True:
                 options[flist[k][0]] = v
             else:
                 options[flist[k][0]] = flist[k][1]
@@ -1163,7 +1254,7 @@ def run(qx_command, args):
         if len(line) == 3:
             try:
                 options[line[0]] = line[2](options[line[0]])
-            except:
+            except Exception:
                 raise ge.CommandError(
                     qx_command.name,
                     "Invalid parameter value!",
@@ -1179,7 +1270,7 @@ def run(qx_command, args):
     # set key parameters
     overwrite = options["overwrite"]
     parsessions = options["parsessions"]
-    parsubjects = options["parsubjects"]    
+    parsubjects = options["parsubjects"]
     nprocess = options["nprocess"]
     printinfo = options["datainfo"]
     printoptions = options["printoptions"]
@@ -1202,7 +1293,10 @@ def run(qx_command, args):
     if not options["longitudinal"]:
         logname = os.path.join(logfolder, "Log-%s-%s.log") % (qx_command.name, logstamp)
     else:
-        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (qx_command.name, logstamp)
+        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (
+            qx_command.name,
+            logstamp,
+        )
 
     log = []
     stati = []
@@ -1234,11 +1328,9 @@ def run(qx_command, args):
         print(sout)
         writelog(sout)
         exit()
-    
-    elif options["run"] == "run":        
-        sout += (
-            f"\nStarting multiprocessing {processing_type}s in {options['sessions']} with a pool of {parprocesses} concurrent processes\n"
-        )
+
+    elif options["run"] == "run":
+        sout += f"\nStarting multiprocessing {processing_type}s in {options['sessions']} with a pool of {parprocesses} concurrent processes\n"
 
     else:
         sout += "\nRunning test on %s ...\n" % (options["sessions"])
@@ -1276,7 +1368,7 @@ def run(qx_command, args):
     # -----------------------------------------------------------------------
     #                                                             local queue
     if options["scheduler"] == "local":
-        consoleLog = ""
+        console_log = ""
 
         # testing or processing
         action = "testing" if options["run"] == "test" else "processing"
@@ -1284,7 +1376,6 @@ def run(qx_command, args):
 
         c = 0
         if parprocesses == 1 or options["run"] == "test":
-
             # ------------------------------------------------------------------
             #                                          study processing commands
             if processing_type == "study":
@@ -1296,20 +1387,19 @@ def run(qx_command, args):
                     soptions = update_options(session, options)
 
                 message = f"\nStarting {action} of sessions {sessionid_list} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                consoleLog += message
+                console_log += message
                 print(message)
 
                 # process
-                r, status = procResponse(
+                r, status = proc_response(
                     pending_actions(sessions, soptions, overwrite, c + 1)
                 )
 
                 # write log
                 writelog(r)
-                consoleLog += r
+                console_log += r
                 print(r)
                 stati.append(status)
-
 
             # ------------------------------------------------------------------
             #                                        subject processing commands
@@ -1317,20 +1407,19 @@ def run(qx_command, args):
                 for subject in subjects:
                     session_ids = ", ".join([s["id"] for s in subject])
                     message = f"\nProcessing subject {subject[0]['subject']} with sessions {session_ids} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                    consoleLog += message
+                    console_log += message
                     print(message)
 
-                    r, status = procResponse(
+                    r, status = proc_response(
                         pending_actions(subject, options, overwrite, c + 1)
                     )
                     writelog(r)
-                    consoleLog += r
+                    console_log += r
                     print(r)
                     stati.append(status)
                     c += 1
                     if nprocess and c >= nprocess:
                         break
-
 
             # ------------------------------------------------------------------
             #                                        session processing commands
@@ -1338,16 +1427,16 @@ def run(qx_command, args):
                 for session in sessions:
                     if len(session["id"]) > 1:
                         message = f"\nStarting {action} of session {session['id']} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                        consoleLog += message
+                        console_log += message
                         print(message)
 
                         soptions = update_options(session, options)
 
-                        r, status = procResponse(
+                        r, status = proc_response(
                             pending_actions(session, soptions, overwrite, c + 1)
                         )
                         writelog(r)
-                        consoleLog += r
+                        console_log += r
                         print(r)
                         stati.append(status)
                         c += 1
@@ -1356,7 +1445,7 @@ def run(qx_command, args):
 
         else:
             c = 0
-            processPoolExecutor = ProcessPoolExecutor(parprocesses)
+            process_pool_executor = ProcessPoolExecutor(parprocesses)
             futures = []
 
             # ------------------------------------------------------------------
@@ -1365,10 +1454,10 @@ def run(qx_command, args):
             if processing_type == "subject":
                 for subject in subjects:
                     message = f"\nAdding processing of subject {subject[0]['subject']} with sessions {', '.join([s['id'] for s in subject])} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                    consoleLog += message
+                    console_log += message
                     print(message)
 
-                    future = processPoolExecutor.submit(
+                    future = process_pool_executor.submit(
                         pending_actions, subject, options, overwrite, c + 1
                     )
                     futures.append(future)
@@ -1384,10 +1473,10 @@ def run(qx_command, args):
                     if len(session["id"]) > 1:
                         soptions = update_options(session, options)
                         message = f"\nAdding processing of session {session['id']} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                        consoleLog += message
+                        console_log += message
                         print(message)
 
-                        future = processPoolExecutor.submit(
+                        future = process_pool_executor.submit(
                             pending_actions, session, soptions, overwrite, c + 1
                         )
                         futures.append(future)
@@ -1398,7 +1487,7 @@ def run(qx_command, args):
             for future in as_completed(futures):
                 result = future.result()
                 writelog(result)
-                consoleLog += result[0]
+                console_log += result[0]
                 print(result[0])
 
         # print(console log)
@@ -1419,26 +1508,28 @@ def run(qx_command, args):
 
         print("\n\n---> Final report for command", options["command_ran"])
         print("\n\n---> Final report for command", options["command_ran"], file=f)
-        failedTotal = 0
+        failed_total = 0
 
         for sid, report, failed in stati:
             if "Unknown" not in sid:
                 print("... %s ---> %s" % (sid, report))
                 print("... %s ---> %s" % (sid, report), file=f)
                 if failed is None:
-                    failedTotal = None
+                    failed_total = None
                 else:
-                    if failedTotal is not None:
-                        failedTotal += failed
-        if failedTotal is None:
+                    if failed_total is not None:
+                        failed_total += failed
+        if failed_total is None:
             print("---> Success status not reported for some or all tasks")
             print("---> Success status not reported for some or all tasks", file=f)
-        elif failedTotal > 0:
+        elif failed_total > 0:
             print("---> Not all tasks completed fully!")
             print("---> Not all tasks completed fully!", file=f)
         else:
             print(f"---> Successful completion of all tasks at {datetime.now()}")
-            print(f"---> Successful completion of all tasks at {datetime.now()}", file=f)
+            print(
+                f"---> Successful completion of all tasks at {datetime.now()}", file=f
+            )
 
         f.close()
 
@@ -1448,7 +1539,7 @@ def run(qx_command, args):
     # TODO: adapt for subject and study level processing
     else:
         # schedule
-        gs.runThroughScheduler(
+        gs.run_through_scheduler(
             qx_command.name,
             sessions=sessions,
             args=args,

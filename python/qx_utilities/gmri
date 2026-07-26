@@ -5,6 +5,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# ruff: noqa: E402
+# The qx_utilities imports below intentionally follow the sys.path surgery in
+# this file's bootstrap block, so they cannot sit at the top of the module.
+
 
 # ------------------------------------------------------------------------------
 #                                              prevent mulitiple path to imports
@@ -29,7 +33,6 @@ import os
 import os.path
 from datetime import datetime
 from qx_utilities.general import scheduler as gs
-from qx_utilities.general import utilities as gu
 from qx_utilities.general import process as gp
 from qx_utilities.general import matlab as gm
 from qx_utilities.general import run_bash as gb
@@ -96,7 +99,7 @@ def runCommand(command, args):
     # -- is this a matlab command?
     if qx_command.language == "matlab":
         if "scheduler" in args:
-            gs.runThroughScheduler(
+            gs.run_through_scheduler(
                 command, sessions=None, args=args, logfolder=folders["logfolder"]
             )
         else:
@@ -106,7 +109,7 @@ def runCommand(command, args):
     # -- is this a bash command?
     if qx_command.language == "bash":
         if "scheduler" in args:
-            gs.runThroughScheduler(
+            gs.run_through_scheduler(
                 command, sessions=None, args=args, logfolder=folders["logfolder"]
             )
         else:
@@ -185,7 +188,7 @@ def runCommand(command, args):
                     all_sessions.append(session["session"])
 
             if "scheduler" in eargs:
-                gs.runThroughScheduler(
+                gs.run_through_scheduler(
                     command,
                     sessions=sessions,
                     args=args,
@@ -265,7 +268,7 @@ def runCommand(command, args):
                     timestamp,
                 )
 
-                gs.runThroughScheduler(
+                gs.run_through_scheduler(
                     command, args=args, logfolder=run_recipe_folder, logname=logname
                 )
 
@@ -307,7 +310,7 @@ def runCommand(command, args):
 
         # -- are we using a scheduler
         if "scheduler" in eargs:
-            gs.runThroughScheduler(
+            gs.run_through_scheduler(
                 command,
                 sessions=sessions,
                 args=args,
@@ -383,7 +386,7 @@ def runCommand(command, args):
             "\n---> Running %s through %d sessions in parallel" % (command, parsessions)
         )
 
-        results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
+        results = gc.run_in_parallel(calls, cores=parsessions, prepend="     ... ")
 
         ok = True
         print("\n---> Final report for command", command)
@@ -512,15 +515,15 @@ def main(args=None):
             runCommand(comm, opts)
 
     except ge.CommandNull as e:
-        print(ge.reportCommandNull(comm, e))
+        print(ge.report_command_null(comm, e))
         print()
         sys.exit(0)
     except ge.CommandFailed as e:
-        print(ge.reportCommandFailed(comm, e))
+        print(ge.report_command_failed(comm, e))
         print()
         sys.exit(1)
     except ge.CommandError as e:
-        print(ge.reportCommandError(comm, e))
+        print(ge.report_command_error(comm, e))
         print(
             "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
             % (" \\\n    ".join(oargs))

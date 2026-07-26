@@ -23,10 +23,8 @@ There are additional support functions that are not to be used
 directly.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar.
-All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar.
+# All rights reserved.
 
 import os
 import shutil
@@ -34,7 +32,7 @@ import traceback
 from datetime import datetime
 
 import qx_utilities.processing.core as pc
-
+from qx_utilities.general.log import ReportLog
 
 
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
@@ -106,26 +104,27 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 --overwrite=no \\
                 --parsessions=2
     """
+    log = ReportLog()
 
     # get session id
     session = sinfo["id"]
 
-    r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (
+    log.capture("\n------------------------------------------------------------")
+    log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    )
-    r += "\n%s FSL F99 registration [%s] ..." % (
+    ))
+    log.raw("\n%s FSL F99 registration [%s] ..." % (
         pc.action("Running", options["run"]),
         session,
-    )
+    ))
 
     # status variables
     run = True
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "dwi_f99")
+        pc.do_options_check(options, sinfo, "dwi_f99")
 
         # construct dirs
         dwi_f99_dir = os.path.join(
@@ -144,9 +143,9 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         # check dtifit results
         dti_file = os.path.join(dtifit_dir, "dti_FA.nii.gz")
         if os.path.exists(dti_file):
-            r += "\n---> dtifit results present."
+            log.step("dtifit results present.")
         else:
-            r += "\n---> ERROR: Could not find dtifit results."
+            log.error("Could not find dtifit results.")
             report = (sinfo["id"], "Not ready for FSL F99", 1)
             run = False
 
@@ -169,14 +168,14 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         )
 
         # report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running FSL F99 command via QuNex:\n\n"
-        r += comm.replace("                ", "")
-        r += "\n------------------------------------------------------------\n"
+        log.raw("\n\n------------------------------------------------------------\n")
+        log.raw("Running FSL F99 command via QuNex:\n\n")
+        log.raw(comm.replace("                ", ""))
+        log.raw("\n------------------------------------------------------------\n")
 
         # check for existing F99 results
         target_file = os.path.join(f99reg_dir, "F99_anat_to_F99.nii.gz")
-        fullTest = None
+        full_test = None
 
         # run
         if run:
@@ -196,7 +195,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 comm = comm_pre + comm + comm_post
 
                 # execute
-                r, endlog, _, failed = pc.runExternalForFile(
+                endlog, _, failed = log.run_external(
                     target_file,
                     comm,
                     "Running FSL F99",
@@ -206,49 +205,46 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=fullTest,
+                    full_test=full_test,
                     shell=True,
-                    r=r,
                 )
 
                 if failed:
-                    r += "\n---> FSL F99 processing for session %s failed" % session
+                    log.raw("\n---> FSL F99 processing for session %s failed" % session)
                     report = (sinfo["id"], "FSL F99 failed", 1)
                 else:
-                    r += "\n---> FSL F99 processing for session %s completed" % session
+                    log.raw("\n---> FSL F99 processing for session %s completed" % session)
                     report = (sinfo["id"], "FSL F99 completed", 0)
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
-                    target_file, None, "FSL F99 " + session, r, overwrite=overwrite
+                passed, _, failed = log.check_run(
+                    target_file, None, "FSL F99 " + session, overwrite=overwrite
                 )
 
                 if passed is None:
-                    r += "\n---> FSL F99 can be run"
+                    log.step("FSL F99 can be run")
                     report = (sinfo["id"], "FSL F99 ready", 0)
                 else:
-                    r += (
-                        "\n---> FSL F99 processing for session %s would be skipped"
-                        % session
-                    )
+                    log.raw("\n---> FSL F99 processing for session %s would be skipped"
+                        % session)
                     report = (sinfo["id"], "FSL F99 would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = "\n\n\n --- Failed during processing of session %s with error:\n" % (
+        log.capture("\n\n\n --- Failed during processing of session %s with error:\n" % (
             session
-        )
-        r += str(errormessage)
+        ))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "FSL F99 failed", 1)
 
-    except:
-        r += "\n --- Failed during processing of session %s with error:\n %s\n" % (
+    except Exception:
+        log.raw("\n --- Failed during processing of session %s with error:\n %s\n" % (
             session,
             traceback.format_exc(),
-        )
+        ))
         report = (sinfo["id"], "FSL F99 failed", 1)
 
-    return (r, report)
+    return (log.text, report)
 
 
 def dwi_xtract(sinfo, options, overwrite=False, thread=0):
@@ -381,23 +377,24 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                 --parsessions=2
 
     """
+    log = ReportLog()
 
     # get session id
     session = sinfo["id"]
 
-    r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (
+    log.capture("\n------------------------------------------------------------")
+    log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    )
-    r += "\n%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session)
+    ))
+    log.raw("\n%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session))
 
     # status variables
     run = True
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "dwi_xtract")
+        pc.do_options_check(options, sinfo, "dwi_xtract")
 
         # get species
         species = "HUMAN"
@@ -455,9 +452,9 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_file = os.path.join(bedpostx_dir, "mean_fsumsamples.nii.gz")
 
         if os.path.exists(bedpostx_file):
-            r += "\n---> f results present."
+            log.step("f results present.")
         else:
-            r += "\n---> ERROR: Could not find bedpostx results."
+            log.error("Could not find bedpostx results.")
             report = (sinfo["id"], "Not ready for XTRACT", 1)
             run = False
 
@@ -526,14 +523,14 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             comm = comm + " -ref %s" % options["xtract_ref"]
 
         # report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running FSL F99 command via QuNex:\n\n"
-        r += comm.replace("                ", "")
-        r += "\n------------------------------------------------------------\n"
+        log.raw("\n\n------------------------------------------------------------\n")
+        log.raw("Running FSL F99 command via QuNex:\n\n")
+        log.raw(comm.replace("                ", ""))
+        log.raw("\n------------------------------------------------------------\n")
 
         # check for existing XTRACT results
         target_file = os.path.join(output_dir, "tracts", "vof_r", "density.nii.gz")
-        fullTest = None
+        full_test = None
 
         # run
         if run:
@@ -544,7 +541,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     os.remove(target_file)
 
                 # execute
-                r, _, _, failed = pc.runExternalForFile(
+                _, _, failed = log.run_external(
                     target_file,
                     comm,
                     "Running FSL XTRACT",
@@ -554,57 +551,51 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
                     logtags=[options["logtag"]],
-                    fullTest=fullTest,
+                    full_test=full_test,
                     shell=True,
-                    r=r,
                 )
 
-                r += "\n---> Processing details can be found in %s" % (
+                log.raw("\n---> Processing details can be found in %s" % (
                     os.path.join(output_dir, "logs")
-                )
+                ))
 
                 if failed:
-                    r += "\n---> FSL XTRACT processing for session %s failed" % session
+                    log.raw("\n---> FSL XTRACT processing for session %s failed" % session)
                     report = (sinfo["id"], "FSL XTRACT failed", 1)
                 else:
-                    r += (
-                        "\n---> FSL XTRACT processing for session %s completed"
-                        % session
-                    )
+                    log.raw("\n---> FSL XTRACT processing for session %s completed"
+                        % session)
                     report = (sinfo["id"], "FSL XTRACT completed", 0)
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
-                    target_file, None, "FSL XTRACT " + session, r, overwrite=overwrite
+                passed, _, failed = log.check_run(
+                    target_file, None, "FSL XTRACT " + session, overwrite=overwrite
                 )
 
                 if passed is None:
-                    r += "\n---> FSL XTRACT can be run"
+                    log.step("FSL XTRACT can be run")
                     report = (sinfo["id"], "FSL XTRACT ready", 0)
                 else:
-                    r += (
-                        "\n---> FSL XTRACT processing for session %s would be skipped"
-                        % session
-                    )
+                    log.raw("\n---> FSL XTRACT processing for session %s would be skipped"
+                        % session)
                     report = (sinfo["id"], "FSL XTRACT would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = "\n\n\n --- Failed during processing of session %s with error:\n" % (
+        log.capture("\n\n\n --- Failed during processing of session %s with error:\n" % (
             session
-        )
-        r += str(errormessage)
+        ))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "FSL XTRACT failed", 1)
 
-    except:
-        r += "\n --- Failed during processing of session %s with error:\n %s\n" % (
+    except Exception:
+        log.raw("\n --- Failed during processing of session %s with error:\n %s\n" % (
             session,
             traceback.format_exc(),
-        )
+        ))
         report = (sinfo["id"], "FSL XTRACT failed", 1)
 
-    return (r, report)
-
+    return (log.text, report)
 
 
 # -> @register_command(
@@ -698,32 +689,33 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                 --overwrite=no \\
                 --parsessions=2
     """
+    log = ReportLog()
 
     # get session id
     session = sinfo["id"]
 
-    r = "\n------------------------------------------------------------"
-    r += "\nSession id: %s \n[started on %s]" % (
+    log.capture("\n------------------------------------------------------------")
+    log.raw("\nSession id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    )
-    r += "\n%s CUDIMOT NODDI modelling [%s] ..." % (
+    ))
+    log.raw("\n%s CUDIMOT NODDI modelling [%s] ..." % (
         pc.action("Running", options["run"]),
         session,
-    )
+    ))
 
     # status variables
     run = True
 
     try:
         # check base settings
-        pc.doOptionsCheck(options, sinfo, "dwi_noddi_gpu")
+        pc.do_options_check(options, sinfo, "dwi_noddi_gpu")
 
         # script location
         cudimot_dir = ""
         if "cuda_version" in options:
             if "QUNEXLIBRARY" not in os.environ:
-                r += "\n---> ERROR: Variable QUNEXLIBRARY not found in environment, check your QuNex setup."
+                log.error("Variable QUNEXLIBRARY not found in environment, check your QuNex setup.")
                 report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
                 run = False
             else:
@@ -743,7 +735,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
         # check validity
         if options["noddi_model"] not in ["Watson", "Bingham"]:
-            r += f"\n---> ERROR: Invalid NODDI model [{options['noddi_model']}], needs to be Watson or Bingham."
+            log.raw(f"\n---> ERROR: Invalid NODDI model [{options['noddi_model']}], needs to be Watson or Bingham.")
             report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
             run = False
 
@@ -764,7 +756,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
         # check that diffusion_dir exists
         if not os.path.exists(diffusion_dir):
-            r += f"\n---> ERROR: Could not find diffusion folder at {diffusion_dir}."
+            log.raw(f"\n---> ERROR: Could not find diffusion folder at {diffusion_dir}.")
             report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
             run = False
 
@@ -776,10 +768,10 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         )
 
         # report command
-        r += "\n\n------------------------------------------------------------\n"
-        r += "Running CUDIMOT NODDI modelling via QuNex:\n\n"
-        r += comm.replace("                ", "")
-        r += "\n------------------------------------------------------------\n"
+        log.raw("\n\n------------------------------------------------------------\n")
+        log.raw("Running CUDIMOT NODDI modelling via QuNex:\n\n")
+        log.raw(comm.replace("                ", ""))
+        log.raw("\n------------------------------------------------------------\n")
 
         # run
         if run:
@@ -795,11 +787,11 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                         shutil.rmtree(results_folder)
 
                 if os.path.exists(results_folder):
-                    r += f"\n---> Results already exits and overwrite not set, skipping session {session}."
+                    log.raw(f"\n---> Results already exits and overwrite not set, skipping session {session}.")
                     report = (sinfo["id"], "CUDIMOT NODDI results already exist", 0)
                 else:
                     # execute
-                    r, _, _, failed = pc.runExternalForFile(
+                    _, _, failed = log.run_external(
                         None,
                         comm,
                         "Running CUDIMOT NODDI modelling",
@@ -809,44 +801,39 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                         task=options["command_ran"],
                         logfolder=options["comlogs"],
                         logtags=[options["logtag"]],
-                        fullTest=None,
+                        full_test=None,
                         shell=True,
-                        r=r,
                     )
 
                     if failed:
-                        r += (
-                            "\n---> CUDIMOT NODDI processing for session %s failed"
-                            % session
-                        )
+                        log.raw("\n---> CUDIMOT NODDI processing for session %s failed"
+                            % session)
                         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
                     else:
-                        r += (
-                            "\n---> CUDIMOT NODDI processing for session %s completed"
-                            % session
-                        )
+                        log.raw("\n---> CUDIMOT NODDI processing for session %s completed"
+                            % session)
                         report = (sinfo["id"], "CUDIMOT NODDI completed", 0)
 
             # just checking
             else:
-                passed, _, r, failed = pc.checkRun(
-                    None, None, "CUDIMOT NODDI " + session, r, overwrite=overwrite
+                passed, _, failed = log.check_run(
+                    None, None, "CUDIMOT NODDI " + session, overwrite=overwrite
                 )
 
                 if passed is None:
-                    r += "\n---> CUDIMOT NODDI can be run"
+                    log.step("CUDIMOT NODDI can be run")
                     report = (sinfo["id"], "CUDIMOT NODDI ready", 0)
                 else:
-                    r += f"\n---> CUDIMOT NODDI processing for session {session} would be skipped"
+                    log.raw(f"\n---> CUDIMOT NODDI processing for session {session} would be skipped")
                     report = (sinfo["id"], "CUDIMOT NODDI would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        r = f"\n\n\n --- Failed during processing of session {session} with error:\n"
-        r += str(errormessage)
+        log.capture(f"\n\n\n --- Failed during processing of session {session} with error:\n")
+        log.raw(str(errormessage))
         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
 
-    except:
-        r += f"\n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n"
+    except Exception:
+        log.raw(f"\n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
 
-    return (r, report)
+    return (log.text, report)

@@ -210,7 +210,7 @@ def schedule(
     # parse settings
     try:
         jobname = scheduler_params.pop("jobname", "qunex_job")
-    except:
+    except Exception:
         raise CommandError(
             "schedule",
             "Misspecified parameter",
@@ -1109,6 +1109,8 @@ def main(args=None):
         "hcp_make_average_dataset",
         "fsl_melodic",
         "hcp_long_transmit_bias",
+        "hcp_transmit_bias_group_average_fit",
+        "hcp_transmit_bias_group_average_corrected_maps",
     ]
     if any(c in command for c in multi_commands):
         multi_session_command = True
@@ -1362,9 +1364,9 @@ def main(args=None):
                         ]
                         # pass variables into the Singularity/Apptainer container
                         container_command += "--env "
-                        container_command += ",".join(
-                            [f"{p}=${p}" for p in slurm_array_params]
-                        )
+                        container_command += ",".join([
+                            f"{p}=${p}" for p in slurm_array_params
+                        ])
                         # add trailing space
                         container_command += " "
 

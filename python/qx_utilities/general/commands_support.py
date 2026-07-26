@@ -61,7 +61,12 @@ deprecated_commands = {
     "stats_ttest_zero": ["s_TTestZero"],
     "run_qc": ["runQC", "RunQC", "QCPreproc"],
     "parcellate_anat": ["ANATparcellate", "anat_parcellate"],
-    "fc_compute_wrapper": ["BOLDcomputeFC", "bold_compute_fc", "compute_fc_bold"],
+    "compute_bold_fc": [
+        "BOLDcomputeFC",
+        "bold_compute_fc",
+        "compute_fc_bold",
+        "fc_compute_wrapper",
+    ],
     "parcellate_bold": ["BOLDparcellate", "bold_parcellate", "bold_parcellation"],
     "data_sync": ["DataSync"],
     "run_qc_dwi_eddy": ["runQC_DWIeddyQC"],
@@ -171,7 +176,9 @@ deprecated_commands = {
 # Add information provided in extensions
 deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
+
 # the function for checking whether a command is deprecated or not
+
 
 # @register_command(
 #     description="Checks for deprecated commands, remaps deprecated ones, and notifies the user.",
@@ -189,7 +196,7 @@ def check_deprecated_commands(command):
     Parameters:
         --command (str):
         The command to check for deprecation.
-    
+
     Returns:
         --new_command (str):
         The updated command name if it was deprecated, otherwise the original command name.
@@ -272,12 +279,6 @@ deprecated_parameters = {
     "PEdir": "pedir",
     "sequenceinfo": "add_json_info",
     "hcp_icafix_traindata": "hcp_icafix_model",
-
-    # parcellate_anat -> hcp_parcellate_anat (legacy parameter name mapping)
-    "inputdatatype": "hcp_parcellate_input_type",
-    "parcellationfile": "hcp_parcellate_dlabel",
-    "outname": "hcp_parcellate_output_name",
-    "extractdata": "hcp_parcellate_extract_data",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
