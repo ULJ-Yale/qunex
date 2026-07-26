@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import List
 
-import general.dicom_sort as gds
+import qx_utilities.general.dicom_sort as gds
 
 
 def _planned(seq) -> str:
