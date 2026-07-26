@@ -66,6 +66,7 @@ deprecated_commands = {
         "bold_compute_fc",
         "compute_fc_bold",
         "fc_compute_wrapper",
+        "computeBOLDfc",
     ],
     "parcellate_bold": ["BOLDparcellate", "bold_parcellate", "bold_parcellation"],
     "data_sync": ["DataSync"],
@@ -102,7 +103,6 @@ deprecated_commands = {
     "aws_hcp_sync": ["AWSHCPsync"],
     "map_hcp_files": ["mapHCPFiles"],
     "auto_ptx": ["autoPtx"],
-    "compute_bold_fc": ["computeBOLDfc"],
     "compute_bold_fc_gbc": ["computeBOLDfcGBC"],
     "compute_bold_fc_seed": ["computeBOLDfcSeed"],
     "list_dicom": ["listDicom"],
@@ -484,6 +484,7 @@ extra_parameters = [
     "scheduler_workdir",
     "scheduler_sleep",
     "nprocess",
+    "logging",
     "logfolder",
     "basefolder",
     "sessionsfolder",
@@ -498,6 +499,9 @@ extra_parameters = [
 # ==============================================================================
 #                                                SKIP LOGGING FOR THESE COMMANDS
 #
+# Legacy fallback, consulted by `general.log.resolve_logging` only for commands
+# that do not state `logging:` in their `.. qx_command:` block. Annotate the
+# command instead of extending this list; it goes away once all three are.
 
 logskip_commands = [
     "batch_tag2namekey",

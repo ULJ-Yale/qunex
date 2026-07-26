@@ -13,7 +13,7 @@ user-facing surface, not an implementation detail.
 import pytest
 
 import qx_utilities.general.exceptions as ge
-from qx_utilities.general import log as log_module
+from qx_utilities.general.log import report as log_module
 from qx_utilities.general.log import REPORT_RULE, ReportLog, SessionLog
 
 STAMP = "Monday, 01. January 2024 00:00:00"

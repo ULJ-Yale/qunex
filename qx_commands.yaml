@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-24T11:22:39.352372+00:00'
+generated_at: '2026-07-26T21:05:40.007467+00:00'
 source:
     id: core
 commands:
@@ -281,6 +281,116 @@ commands:
         default: $TOOLS/python/qx_utilities/templates/study_folders_default.txt
         description: Path to the file which defines the study folder structure.
     options: []
+    returns: []
+    origin: core
+-   name: compute_bold_fc
+    aliases: []
+    path: qx_utilities/compute_bold_fc.sh
+    language: bash
+    call: compute_bold_fc
+    description: Run Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated
+        (e.g. Glasser parcellation).
+    type: processing.session
+    args: []
+    options:
+    -   name: calculation
+        type: str
+        default: null
+        description: Run <seed>, <gbc> or <dense> calculation for functional connectivity.
+    -   name: runtype
+        type: str
+        default: null
+        description: Run calculation on a <list> (requires a list input), on 'individual' sessions (requires manual specification)
+            or a 'group' of individual sessions (equivalent to a list, but with manual specification).
+    -   name: targetf
+        type: str
+        default: null
+        description: Specify the absolute path for output folder. If using --runtype='individual' and left empty the output
+            will default to --inputpath location for each session.
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: covariance
+        type: str
+        default: 'false'
+        description: Whether to compute covariances instead of correlations ('true' / 'false').
+    -   name: flist
+        type: str
+        default: null
+        description: Specify ∗.list file of session information. If specified then --sessionsfolder, --inputfile, --session
+            and --outname are omitted.
+    -   name: sessionsfolder
+        type: str
+        default: null
+        description: Path to study sessions folder.
+    -   name: sessions
+        type: str
+        default: null
+        description: Comma separated list of sessions to run.
+    -   name: inputfiles
+        type: str
+        default: null
+        description: Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii).
+    -   name: inputpath
+        type: str
+        default: null
+        description: Specify path of the file you want to use relative to the master study folder and session directory (e.g.
+            '/images/functional/').
+    -   name: outname
+        type: str
+        default: null
+        description: Specify the suffix name of the output file name.
+    -   name: target
+        type: str
+        default: detailed below
+        description: Array of ROI codes that define target ROI. Defaults to FreeSurfer cortex codes.
+    -   name: rsmooth
+        type: str
+        default: ''
+        description: Radius for smoothing (no smoothing if empty).
+    -   name: rdilate
+        type: str
+        default: ''
+        description: Radius for dilating mask (no dilation if empty).
+    -   name: verbose
+        type: str
+        default: 'false'
+        description: Report what is going on.
+    -   name: time
+        type: str
+        default: 'false'
+        description: Whether to print timing information.
+    -   name: vstep
+        type: str
+        default: '1200'
+        description: How many voxels to process in a single step.
+    -   name: roinfo
+        type: str
+        default: null
+        description: An ROI file for the seed connectivity.
+    -   name: method
+        type: str
+        default: mean
+        description: Method for extracting timeseries - 'mean' or 'pca'.
+    -   name: options
+        type: str
+        default: all
+        description: 'A string defining which session files to save. Default assumes all:'
+    -   name: extractdata
+        type: str
+        default: null
+        description: Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries).
+    -   name: ignore
+        type: str
+        default: ''
+        description: The column in ∗_scrub.txt file that matches bold file to be used for ignore mask. All if empty.
+    -   name: mask
+        type: str
+        default: null
+        description: An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified
+            then this number of frames is skipped.
     returns: []
     origin: core
 -   name: compute_bold_stats
@@ -2453,116 +2563,6 @@ commands:
         default: 'false'
         description: Whether covariances should be computed instead of correlations.
     options: []
-    returns: []
-    origin: core
--   name: compute_bold_fc
-    aliases: []
-    path: qx_utilities/compute_bold_fc.sh
-    language: bash
-    call: compute_bold_fc
-    description: Run Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated
-        (e.g. Glasser parcellation).
-    type: processing.session
-    args: []
-    options:
-    -   name: calculation
-        type: str
-        default: null
-        description: Run <seed>, <gbc> or <dense> calculation for functional connectivity.
-    -   name: runtype
-        type: str
-        default: null
-        description: Run calculation on a <list> (requires a list input), on 'individual' sessions (requires manual specification)
-            or a 'group' of individual sessions (equivalent to a list, but with manual specification).
-    -   name: targetf
-        type: str
-        default: null
-        description: Specify the absolute path for output folder. If using --runtype='individual' and left empty the output
-            will default to --inputpath location for each session.
-    -   name: overwrite
-        type: str
-        default: 'no'
-        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
-            so in the case of a failed command run, previous results are lost.
-    -   name: covariance
-        type: str
-        default: 'false'
-        description: Whether to compute covariances instead of correlations ('true' / 'false').
-    -   name: flist
-        type: str
-        default: null
-        description: Specify ∗.list file of session information. If specified then --sessionsfolder, --inputfile, --session
-            and --outname are omitted.
-    -   name: sessionsfolder
-        type: str
-        default: null
-        description: Path to study sessions folder.
-    -   name: sessions
-        type: str
-        default: null
-        description: Comma separated list of sessions to run.
-    -   name: inputfiles
-        type: str
-        default: null
-        description: Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii).
-    -   name: inputpath
-        type: str
-        default: null
-        description: Specify path of the file you want to use relative to the master study folder and session directory (e.g.
-            '/images/functional/').
-    -   name: outname
-        type: str
-        default: null
-        description: Specify the suffix name of the output file name.
-    -   name: target
-        type: str
-        default: detailed below
-        description: Array of ROI codes that define target ROI. Defaults to FreeSurfer cortex codes.
-    -   name: rsmooth
-        type: str
-        default: ''
-        description: Radius for smoothing (no smoothing if empty).
-    -   name: rdilate
-        type: str
-        default: ''
-        description: Radius for dilating mask (no dilation if empty).
-    -   name: verbose
-        type: str
-        default: 'false'
-        description: Report what is going on.
-    -   name: time
-        type: str
-        default: 'false'
-        description: Whether to print timing information.
-    -   name: vstep
-        type: str
-        default: '1200'
-        description: How many voxels to process in a single step.
-    -   name: roinfo
-        type: str
-        default: null
-        description: An ROI file for the seed connectivity.
-    -   name: method
-        type: str
-        default: mean
-        description: Method for extracting timeseries - 'mean' or 'pca'.
-    -   name: options
-        type: str
-        default: all
-        description: 'A string defining which session files to save. Default assumes all:'
-    -   name: extractdata
-        type: str
-        default: null
-        description: Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries).
-    -   name: ignore
-        type: str
-        default: ''
-        description: The column in ∗_scrub.txt file that matches bold file to be used for ignore mask. All if empty.
-    -   name: mask
-        type: str
-        default: null
-        description: An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified
-            then this number of frames is skipped.
     returns: []
     origin: core
 -   name: fc_extract_roi_timeseries

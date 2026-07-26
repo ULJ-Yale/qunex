@@ -21,8 +21,10 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 try:
     from qx_utilities.general import exceptions as ge
+    from qx_utilities.general.log import LOGGING_MODES
 except ModuleNotFoundError:
     from general import exceptions as ge
+    from general.log import LOGGING_MODES
 from qx_registry import (
     ArgInfo,
     CommandInfo,
@@ -476,6 +478,7 @@ def index_bash_commands(bash_root: Path, *, source_id: str) -> List[CommandInfo]
         cmd_name = (qx_meta.get("name") or call_token or func_name).strip()
         aliases = parse_aliases(qx_meta.get("aliases"))
         cmd_type = qx_meta.get("type")
+        cmd_logging = parse_logging(qx_meta.get("logging"), f"{shfile}:{func_name}")
 
         rel_path = shfile.relative_to(bash_root).as_posix()
 
@@ -495,6 +498,7 @@ def index_bash_commands(bash_root: Path, *, source_id: str) -> List[CommandInfo]
                 options=tuple(doc_params),
                 returns=tuple(doc_returns),
                 origin=source_id,
+                logging=cmd_logging,
             )
         )
 
@@ -556,6 +560,7 @@ def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
             cmd_name = (qx_meta.get("name") or func_name).strip()  # still optional if you ever add it
             aliases = parse_aliases(qx_meta.get("aliases"))
             cmd_type = qx_meta.get("type")
+            cmd_logging = parse_logging(qx_meta.get("logging"), f"{pyfile}:{func_name}")
 
             # Signature args (ordered) + annotations
             sig_args = python_function_args(node)  # (name, ann_str)
@@ -605,6 +610,7 @@ def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
                     options=tuple(options),
                     returns=tuple(doc_returns),
                     origin=source_id,
+                    logging=cmd_logging,
                 )
             )
 
@@ -757,6 +763,7 @@ def index_matlab_commands(matlab_root: Path, *, source_id: str) -> List[CommandI
         cmd_name = (qx_meta.get("name") or func_name).strip()
         aliases = parse_aliases(qx_meta.get("aliases"))
         cmd_type = qx_meta.get("type")
+        cmd_logging = parse_logging(qx_meta.get("logging"), f"{mfile}:{func_name}")
 
         # Map doc params/returns by name
         doc_param_map: Dict[str, ArgInfo] = {a.name: a for a in doc_params}
@@ -817,10 +824,27 @@ def index_matlab_commands(matlab_root: Path, *, source_id: str) -> List[CommandI
                 options=tuple(),          # matlab has no 'options' routing
                 returns=tuple(returns),
                 origin=source_id,
+                logging=cmd_logging,
             )
         )
 
     return out
+
+
+def parse_logging(value: Optional[str], where: str) -> Optional[str]:
+    """Read the optional `logging:` field of a qx_command block.
+
+    Values match --logging: none | comlog | runlog | both. An unrecognised
+    value is dropped with a warning rather than silently disabling a
+    command's logs at runtime.
+    """
+    if not value:
+        return None
+    mode = value.strip().lower()
+    if mode not in LOGGING_MODES:
+        _warn(f"{where}: invalid 'logging: {value}' in qx block; expected one of {', '.join(sorted(LOGGING_MODES))}; ignored")
+        return None
+    return mode
 
 
 def validate_command_types(commands: List[CommandInfo]) -> List[CommandInfo]:
@@ -856,27 +880,33 @@ def validate_unique_tokens(commands: List[CommandInfo]) -> None:
             claim(a, c, "alias")
 
 
+def command_to_obj(c: CommandInfo) -> Dict[str, Any]:
+    obj = {
+        "name": c.name,
+        "aliases": list(c.aliases),
+        "path": c.path,
+        "language": c.language,
+        "call": c.call,
+        "description": c.description,
+        "type": c.type,
+        "args": [{"name": a.name, "type": a.type, "default": a.default, "description": normalize_text_one_line(a.description)} for a in c.args],
+        "options": [{"name": a.name, "type": a.type, "default": a.default, "description": normalize_text_one_line(a.description)} for a in c.options],
+        "returns": [{"name": r.name, "type": r.type, "default": r.default, "description": normalize_text_one_line(r.description)} for r in c.returns],
+        "origin": c.origin,
+    }
+    # emitted only when the command states one: a `logging: null` on each of the
+    # ~160 commands would swamp every future diff of the registry
+    if c.logging:
+        obj["logging"] = c.logging
+    return obj
+
+
 def registry_to_obj(commands: List[CommandInfo], *, source_id: str) -> Dict[str, Any]:
     return {
         "version": 1,
         "generated_at": _now_utc_iso(),
         "source": {"id": source_id},
-        "commands": [
-            {
-                "name": c.name,
-                "aliases": list(c.aliases),
-                "path": c.path,
-                "language": c.language,
-                "call": c.call,
-                "description": c.description,
-                "type": c.type,
-                "args": [{"name": a.name, "type": a.type, "default": a.default, "description": normalize_text_one_line(a.description)} for a in c.args],
-                "options": [{"name": a.name, "type": a.type, "default": a.default, "description": normalize_text_one_line(a.description)} for a in c.options],
-                "returns": [{"name": r.name, "type": r.type, "default": r.default, "description": normalize_text_one_line(r.description)} for r in c.returns],
-                "origin": c.origin,
-            }
-            for c in sorted(commands, key=lambda x: x.name)
-        ],
+        "commands": [command_to_obj(c) for c in sorted(commands, key=lambda x: x.name)],
     }
 
 

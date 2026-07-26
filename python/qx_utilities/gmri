@@ -39,6 +39,7 @@ from qx_utilities.general import run_bash as gb
 from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
+from qx_utilities.general import log as gl
 from qx_registry import qx_commands
 
 
@@ -90,7 +91,12 @@ def runCommand(command, args):
         print(f"ERROR: Command '{command}' not recognized. Please run qunex -l to see list of valid commands.")
         sys.exit(1)
 
-    
+    # -- how, and whether, this run is logged
+    log_settings = gl.resolve_logging(
+        command, args, qx_command=qx_command, studyfolder=folders["basefolder"]
+    )
+
+
     # -- is this a processing command?
     if qx_command.language == "python" and qx_command.type.startswith("processing"):
         gp.run(qx_command, args)
@@ -338,9 +344,8 @@ def runCommand(command, args):
             logfile = os.path.join(
                 folders["logfolder"], "comlogs", "%s%s.log" % (command, suffix)
             )
-            # run without log for exceptions
-            # remove logs for exceptions
-            if command in gcs.logskip_commands:
+            # commands that are not logged run bare, without a comlog
+            if not log_settings.enabled:
                 # remove non-command args
                 args = {k: v for k, v in args.items() if qx_commands.get(command).has_arg(k)}
                 # execute

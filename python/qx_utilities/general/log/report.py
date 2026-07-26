@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-``log.py``
+``general.log.report``
 
 The per-session report built by QuNex processing commands.
 

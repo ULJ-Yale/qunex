@@ -895,12 +895,19 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
         )
 
     try:
-        # remove logfolder from args if it is not in function's footprint
-        if (
-            "logfolder" in args
-            and "logfolder" not in inspect.signature(function).parameters
-        ):
-            del args["logfolder"]
+        # drop the run-level parameters (--logging, --logfolder, --scheduler,
+        # ...) the command itself does not take: they steer how qunex runs the
+        # command, not what the command does, so reaching it is a TypeError
+        import qx_utilities.general.commands_support as gcs
+
+        accepted = inspect.signature(function).parameters
+        catch_all = any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in accepted.values()
+        )
+        if not catch_all:
+            for extra in gcs.extra_parameters:
+                if extra in args and extra not in accepted:
+                    del args[extra]
         result = function(**args)
     except ge.CommandError as e:
         with lock:
