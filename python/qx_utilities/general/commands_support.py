@@ -61,7 +61,7 @@ deprecated_commands = {
     "stats_ttest_zero": ["s_TTestZero"],
     "run_qc": ["runQC", "RunQC", "QCPreproc"],
     "parcellate_anat": ["ANATparcellate", "anat_parcellate"],
-    "fc_compute_wrapper": ["BOLDcomputeFC", "bold_compute_fc", "compute_fc_bold"],
+    "compute_bold_fc": ["BOLDcomputeFC", "bold_compute_fc", "compute_fc_bold"],
     "parcellate_bold": ["BOLDparcellate", "bold_parcellate", "bold_parcellation"],
     "data_sync": ["DataSync"],
     "run_qc_dwi_eddy": ["runQC_DWIeddyQC"],
@@ -173,6 +173,7 @@ deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
 
 # the function for checking whether a command is deprecated or not
+
 
 # @register_command(
 #     description="Checks for deprecated commands, remaps deprecated ones, and notifies the user.",

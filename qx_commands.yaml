@@ -2455,11 +2455,11 @@ commands:
     options: []
     returns: []
     origin: core
--   name: fc_compute_wrapper
+-   name: compute_bold_fc
     aliases: []
-    path: qx_utilities/fc_compute_wrapper.sh
+    path: qx_utilities/compute_bold_fc.sh
     language: bash
-    call: fc_compute_wrapper
+    call: compute_bold_fc
     description: Run Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated
         (e.g. Glasser parcellation).
     type: processing.session

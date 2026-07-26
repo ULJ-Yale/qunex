@@ -241,7 +241,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.99.0
 
-* `fc_compute_wrapper` now checks if input files exist.
+* `compute_bold_fc` now checks if input files exist.
 * Removed some race conditions in parallel runs.
 * Added better reporting in case FM numbers are missing in the batch file.
 * Allowed custom setup of POS/NEG pairs in `hcp_diffusion`.
