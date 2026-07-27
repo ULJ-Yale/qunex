@@ -1308,25 +1308,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
     TURNKEY_TYPE=`get_parameters "${setflag}turnkeytype" $@`
     TURNKEY_STEPS=`get_parameters "${setflag}turnkeysteps" $@`
     WORKDIR=`get_parameters "${setflag}workingdir" $@`
-    PROJECT_NAME=`get_parameters "${setflag}projectname" $@`
-    CleanupSession=`get_parameters "${setflag}cleanupsession" $@`
-    CleanupProject=`get_parameters "${setflag}cleanupproject" $@`
-    RawDataInputPath=`get_parameters "${setflag}rawdatainput" $@`
-    OVERWRITE_SESSION=`get_parameters "${setflag}overwritesession" $@`
-    OVERWRITE_STEP=`get_parameters "${setflag}overwritestep" $@`
-    OVERWRITE_PROJECT=`get_parameters "${setflag}overwriteproject" $@`
-    OVERWRITE_PROJECT_FORCE=`get_parameters "${setflag}overwriteprojectforce" $@`
-    OVERWRITE_PROJECT_XNAT=`get_parameters "${setflag}overwriteprojectxnat" $@`
     BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
-    SCAN_MAPPING_FILENAME=`get_parameters "${setflag}mappingfile" $@`
-    XNAT_ACCSESSION_ID=`get_parameters "${setflag}xnataccsessionid" $@`
     XNAT_SESSION_LABELS=`get_parameters "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
     XNAT_PROJECT_ID=`get_parameters "${setflag}xnatprojectid" $@`
-    XNAT_SUBJECT_ID=`get_parameters "${setflag}xnatsubjectid" $@`
-    XNAT_HOST_NAME=`get_parameters "${setflag}xnathost" $@`
-    XNAT_USER_NAME=`get_parameters "${setflag}xnatuser" $@`
-    XNAT_PASSWORD=`get_parameters "${setflag}xnatpass" $@`
-    XNAT_STUDY_INPUT_PATH=`get_parameters "${setflag}xnatstudyinputpath" $@`
 
     # -- Get sessions from batchfile?
     if [[ -n ${BATCH_FILE} ]]; then

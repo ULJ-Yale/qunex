@@ -18,7 +18,7 @@ usage() {
 
 Run QC preprocessing for a specified modality / processing step.
 
-Notes: 
+Notes:
     Currently Supported modalities: ${SupportedQC}
 
     This function is compatible with both legacy data [without T2w scans] and
@@ -514,7 +514,6 @@ Examples:
     BOLD FC QC [pscalar or pconn]::
 
         qunex run_qc \\
-            --overwritestep='yes' \\
             --sessionsfolder='<path_to_study_sessions_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --modality='BOLD' \\

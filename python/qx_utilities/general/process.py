@@ -509,11 +509,6 @@ arglist = [
         str,
     ],
     [
-        "omp_threads",
-        "",
-        is_none,
-    ],
-    [
         "framework_path",
         "",
         str,

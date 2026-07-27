@@ -102,7 +102,6 @@ deprecated_commands = {
     "aws_hcp_sync": ["AWSHCPsync"],
     "map_hcp_files": ["mapHCPFiles"],
     "auto_ptx": ["autoPtx"],
-    "compute_bold_fc": ["computeBOLDfc"],
     "compute_bold_fc_gbc": ["computeBOLDfcGBC"],
     "compute_bold_fc_seed": ["computeBOLDfcSeed"],
     "list_dicom": ["listDicom"],
@@ -178,8 +177,6 @@ deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
 
 # the function for checking whether a command is deprecated or not
-
-
 # @register_command(
 #     description="Checks for deprecated commands, remaps deprecated ones, and notifies the user.",
 #     type="utility")
@@ -222,7 +219,6 @@ def check_deprecated_commands(command):
 # ==============================================================================
 #                                                          PARAMETER DEPRECATION
 #
-
 # The "deprecated_parameters" dictionary specifies what is mapped to what
 # If the mapping is 1:1 use 'old_value': 'new_value'
 # If the mapping is 1:n (an old value was split to several new ones) then
@@ -303,7 +299,6 @@ deprecated_values = {
 # string in the pair identifies the target option (the option to check) and the second string
 # identifies the source option (the option from which to take the value to impute). Please note
 # that the imputation will follow the order in which tuples are listed.
-
 to_impute = [
     ("qx_cifti_tail", "hcp_cifti_tail"),
     ("qx_nifti_tail", "hcp_nifti_tail"),
@@ -344,8 +339,6 @@ towarn_parameters.update(extensions.compile_dict("towarn_parameters"))
 # ==============================================================================
 #                                                  MAPPING DEPRECATED PARAMETERS
 #
-
-
 def check_deprecated_parameters(options, command):
     """
     ``check_deprecated_parameters(options, command)``
@@ -451,8 +444,6 @@ def check_deprecated_parameters(options, command):
 # ==============================================================================
 #                                                IMPUTING UNSPECIFIED PARAMETERS
 #
-
-
 def impute_parameters(options, command):
     """
     ``impute_parameters(options, command)``
@@ -471,7 +462,6 @@ def impute_parameters(options, command):
 # ==============================================================================
 #                                                               EXTRA PARAMETERS
 #
-
 extra_parameters = [
     "batchfile",
     "sessions",
@@ -498,13 +488,11 @@ extra_parameters = [
 # ==============================================================================
 #                                                SKIP LOGGING FOR THESE COMMANDS
 #
-
 logskip_commands = [
     "batch_tag2namekey",
     "check_deprecated_commands",
     "get_sessions_for_slurm_array",
 ]
-
 
 # Add information from in extensions
 extra_parameters += extensions.compile_list("extra_parameters")
