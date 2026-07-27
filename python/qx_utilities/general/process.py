@@ -51,6 +51,10 @@ def writelog(item):
     global log list, and the second to the global stati list. It also
     prints the contents to the file specified in the global logname
     variable.
+
+    Returns the (report, status) pair, so callers do not have to split the
+    item a second time - passing an already split report back in would append
+    a spurious "Unknown" status to stati.
     """
     global logname
     global log
@@ -58,9 +62,9 @@ def writelog(item):
     r, status = proc_response(item)
     log.append(r)
     stati.append(status)
-    f = open(logname, "a")
-    print(r, file=f)
-    f.close()
+    with open(logname, "a") as f:
+        print(r, file=f)
+    return r, status
 
 
 def proc_response(r):
@@ -1385,16 +1389,10 @@ def run(qx_command, args):
                 console_log += message
                 print(message)
 
-                # process
-                r, status = proc_response(
-                    pending_actions(sessions, soptions, overwrite, c + 1)
-                )
-
-                # write log
-                writelog(r)
+                # process and write log
+                r, _ = writelog(pending_actions(sessions, soptions, overwrite, c + 1))
                 console_log += r
                 print(r)
-                stati.append(status)
 
             # ------------------------------------------------------------------
             #                                        subject processing commands
@@ -1405,13 +1403,11 @@ def run(qx_command, args):
                     console_log += message
                     print(message)
 
-                    r, status = proc_response(
+                    r, _ = writelog(
                         pending_actions(subject, options, overwrite, c + 1)
                     )
-                    writelog(r)
                     console_log += r
                     print(r)
-                    stati.append(status)
                     c += 1
                     if nprocess and c >= nprocess:
                         break
@@ -1427,13 +1423,11 @@ def run(qx_command, args):
 
                         soptions = update_options(session, options)
 
-                        r, status = proc_response(
+                        r, _ = writelog(
                             pending_actions(session, soptions, overwrite, c + 1)
                         )
-                        writelog(r)
                         console_log += r
                         print(r)
-                        stati.append(status)
                         c += 1
                         if nprocess and c >= nprocess:
                             break
@@ -1480,10 +1474,11 @@ def run(qx_command, args):
                             break
 
             for future in as_completed(futures):
-                result = future.result()
-                writelog(result)
-                console_log += result[0]
-                print(result[0])
+                # result[0] is not the report unless result is a tuple, so take
+                # the report writelog split out rather than indexing the result
+                r, _ = writelog(future.result())
+                console_log += r
+                print(r)
 
         # print(console log)
         # print(consoleLog)

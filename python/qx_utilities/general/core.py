@@ -905,17 +905,14 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
     except ge.CommandError as e:
         with lock:
             print(ge.report_command_error(name, e))
-            print
         result = e
     except ge.CommandNull as e:
         with lock:
             print(ge.report_command_null(name, e))
-            print
         result = e
     except ge.CommandFailed as e:
         with lock:
             print(ge.report_command_failed(name, e))
-            print
         result = e
     except Exception as e:
         with lock:
@@ -949,9 +946,10 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
 
         os.rename(os.path.join(logfolder, "tmp_" + logname), comlogname)
 
-        # create runlog
-        if "comlogs" in logfolder:
-            logfolder = logfolder.replace("comlogs", "")
+        # create runlog, which sits in the parent of the comlogs folder
+        parent, tail = os.path.split(logfolder.rstrip(os.sep))
+        if tail == "comlogs":
+            logfolder = parent
 
         # runlog file
         runlogname = "Log-" + logname
@@ -969,7 +967,7 @@ def run_with_log(function, args=None, logfile=None, name=None, prepend=""):
 
         # print session if exists
         if len(split) > 1:
-            print("session: %s\n" % split[1])
+            lf.write("session: %s\n" % split[1])
 
         # print command name
         lf.write("qunex %s \\\n" % split[0])
@@ -1271,7 +1269,11 @@ def close_log_file(logfile=None, logname=None, status="done"):
 
     Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at
     the start of the logname to the provided status.
+
+    Returns the path of the renamed log file, or None if no logname was given.
     """
+
+    newfile = None
 
     if logfile:
         logfile.close()
