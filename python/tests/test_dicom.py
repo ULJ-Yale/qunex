@@ -11,6 +11,7 @@ import tempfile
 import shutil
 import pytest
 import numpy as np
+from types import SimpleNamespace
 from unittest.mock import patch
 
 # Add parent directory to path for imports
@@ -305,32 +306,51 @@ class TestCleanDicomIntegration:
         assert len(os.listdir(seq_folder)) == 5
 
     def test_verbose_output_format(self):
-        """Test that verbose output contains expected information"""
+        """Test that verbose output reports the per-sequence tally.
+
+        clean_dicom is now a thin wrapper over the shared engine, which reports
+        one line per sequence instead of the legacy "Inspecting sequence" +
+        "evaluating" pair.
+        """
+        import io
+        import pydicom
+        from contextlib import redirect_stdout
+        from qx_utilities.general.dicom import _dicom_info_from_dataset
+
         seq_folder = os.path.join(self.dicom_dir, "2010")
         os.makedirs(seq_folder)
 
-        # Create test files
         for i in range(12):
             with open(os.path.join(seq_folder, f"file{i}.dcm"), "w") as f:
                 f.write("dummy")
 
-        with patch('qx_utilities.general.dicom.pydicom') as mock_pydicom:
-            mock_ds = MockDicomDataset()
-            mock_pydicom.filereader.read_file.return_value = mock_ds
+        def fake_read_dicom_info(filename, extended=False):
+            """A complete single-frame MR instance, one slice per file."""
+            idx = int(os.path.basename(filename)[4:-4])
+            ds = pydicom.Dataset()
+            ds.SeriesNumber = 201
+            ds.SeriesDescription = "TEST_SEQ"
+            ds.Modality = "MR"
+            ds.Manufacturer = "TESTVENDOR"
+            ds.Rows, ds.Columns = 64, 64
+            ds.BitsAllocated = 16
+            ds.SOPInstanceUID = "1.2.3.%d" % (idx)
+            ds.InstanceNumber = idx + 1
+            ds.ImagePositionPatient = [0, 0, float(idx)]
+            ds.RepetitionTime = 2000
+            ds.EchoTime = 30
+            return _dicom_info_from_dataset(ds, os.path.basename(filename), extended=extended)
 
-            # Capture output
-            import io
-            from contextlib import redirect_stdout
-
+        with patch('qx_utilities.general.dicom.read_dicom_info', fake_read_dicom_info):
             f = io.StringIO()
             with redirect_stdout(f):
                 clean_dicom(folder=self.session_dir, verbose="yes")
             output = f.getvalue()
 
-            # Check for expected format
-            assert "---> Inspecting sequence 2010" in output
-            assert "evaluating" in output
-            assert "files):" in output
+        assert "---> Sequence 2010:" in output
+        assert "12 image" in output
+        assert "moved 0 non-image" in output
+        assert "0 orphaned" in output
 
 
 class TestCleanDicomEdgeCases:
@@ -418,6 +438,119 @@ def test_clean_dicom_default_values():
     assert sig.parameters['verbose'].default == 'yes'
     assert sig.parameters['move_non_image'].default is True
     assert sig.parameters['move_incomplete'].default is True
+
+
+def test_is_imaging_ds_without_pixel_data():
+    """An MR instance read with stop_before_pixels must still classify as imaging.
+
+    Every reader in dicom.py truncates the header before (7FE0,0010), so the
+    classifier must key off the Image Pixel module rather than the pixel data
+    element itself.
+    """
+    import pydicom
+    from qx_utilities.general import dicom_sort as gds
+
+    # single-frame image, no PixelData (as returned by a truncated read)
+    ds = pydicom.Dataset()
+    ds.Rows, ds.Columns = 96, 96
+    ds.BitsAllocated = 16
+    assert gds.is_imaging_ds(ds) is True
+
+    # enhanced multi-frame image, geometry only in NumberOfFrames
+    ds = pydicom.Dataset()
+    ds.NumberOfFrames = 240
+    ds.BitsAllocated = 16
+    assert gds.is_imaging_ds(ds) is True
+
+    # Philips private per-series object (SOP class 1.3.46.670589.11.0.0.12.2):
+    # carries Rows/Columns but no pixel data, and dcm2niix skips it. Geometry
+    # alone would wrongly accept it -- BitsAllocated is what rejects it.
+    ds = pydicom.Dataset()
+    ds.Rows, ds.Columns = 96, 96
+    assert gds.is_imaging_ds(ds) is False
+
+    # non-image object (e.g. structured report): no geometry at all
+    ds = pydicom.Dataset()
+    ds.Modality = "SR"
+    assert gds.is_imaging_ds(ds) is False
+
+
+def test_iter_values_for_tag_finds_nested_private_tags():
+    """Hint tags must be found at top level and inside nested sequences.
+
+    The lookup skips pydicom's iterall() and walks _dict directly for speed, so
+    it has to keep finding tags that only appear inside a sequence -- on Philips
+    data most of the hint tags live there.
+    """
+    import pydicom
+    from qx_utilities.general import dicom_sort as gds
+
+    echo_spacing = (0x2005, 0x1492)  # Philips echo spacing, one of _HINT_TAGS
+
+    # top level
+    ds = pydicom.Dataset()
+    ds.add_new(echo_spacing, "FL", 0.72)
+    assert gds._iter_values_for_tag(ds, echo_spacing) == [0.72]
+
+    # nested one sequence deep
+    inner = pydicom.Dataset()
+    inner.add_new(echo_spacing, "FL", 0.51)
+    outer = pydicom.Dataset()
+    outer.Rows = 96
+    outer[(0x5200, 0x9230)] = pydicom.DataElement((0x5200, 0x9230), "SQ", [inner])
+    assert gds._iter_values_for_tag(outer, echo_spacing) == [0.51]
+    # repeat call uses the memoised index and must return the same thing
+    assert gds._iter_values_for_tag(outer, echo_spacing) == [0.51]
+
+    # absent everywhere
+    empty = pydicom.Dataset()
+    empty.Rows = 96
+    assert gds._iter_values_for_tag(empty, echo_spacing) == []
+
+
+def test_import_dicom_inspection_thresholds_reach_the_engine(tmp_path, capsys):
+    """import_dicom forwards the (string) CLI thresholds to the scan engine."""
+    from qx_utilities.general import dicom as gd
+
+    (tmp_path / "S1" / "inbox").mkdir(parents=True)
+    seen = {}
+
+    def fake_scan(sources, dicom_dir, session_id, **kwargs):
+        seen.update(kwargs)
+        return SimpleNamespace(verdict="PASS")
+
+    with patch.object(gd, "_scan_and_sort_session", fake_scan), \
+         patch.object(gd.gdr, "write_report", lambda pkg, path: ""), \
+         patch.object(gd.gdr, "render_console_summary", lambda pkg: ""), \
+         patch.object(gd, "dicom2niix", lambda **kwargs: None):
+        gd.import_dicom(
+            sessionsfolder=str(tmp_path),
+            sessions="S1",
+            masterinbox="none",
+            min_files="6",
+            tr_abs_ms="250",
+            tr_rel_pct="7.5",
+            existing_structure="yes",
+        )
+
+    assert seen["min_images"] == 6
+    assert seen["tr_abs_ms"] == 250.0
+    assert seen["tr_rel_pct"] == 7.5
+    # deprecated parameter is warned about, not silently ignored
+    assert "existing_structure parameter is deprecated" in capsys.readouterr().out
+
+
+def test_import_dicom_signature():
+    """clean_dicom_folders is gone, the threshold knobs are exposed."""
+    import inspect
+    from qx_utilities.general.dicom import import_dicom
+
+    params = inspect.signature(import_dicom).parameters
+    assert "clean_dicom_folders" not in params
+    assert params["min_files"].default == 4
+    assert params["tr_abs_ms"].default == 100.0
+    assert params["tr_rel_pct"].default == 5.0
+    assert params["existing_structure"].default is False
 
 
 if __name__ == "__main__":
