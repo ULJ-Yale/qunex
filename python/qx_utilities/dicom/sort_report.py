@@ -6,22 +6,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-``dicom_report.py``
+``sort_report.py``
 
-Renders the DICOM integrity report produced by the single-pass sort engine.
+Renders the DICOM integrity report produced by the single pass sort engine.
 
-Given a ``dicom_sort.PackageSummary`` it produces a per-session markdown report
-(basic information, a sequence summary table, a detailed per-sequence section,
-and the package verdict) plus a compact console summary table. This is the
-richer report emitted alongside the ``session.txt`` and ``DICOM-Report.txt``
-files that ``dicom2niix`` still writes (decision D3).
+Given a ``sort_records.PackageSummary`` it produces a per session markdown
+report (basic information, a sequence summary table, a detailed per
+sequence section and the package verdict) plus a compact console summary
+table.
 """
 
 from __future__ import annotations
 
 from typing import List
 
-import qx_utilities.general.dicom_sort as gds
+import qx_utilities.dicom.sort_records as gds_records
+import qx_utilities.dicom.sort_tags as gds_tags
+import qx_utilities.dicom.sort_validate as gds_validate
 
 
 def _planned(seq) -> str:
@@ -29,13 +30,13 @@ def _planned(seq) -> str:
 
 
 def _sense(seq) -> str:
-    return gds.fmt_summary_value(
+    return gds_records.fmt_summary_value(
         f"{seq.sense_factor:.2f}" if seq.sense_factor is not None else None
     )
 
 
 def _mb(seq) -> str:
-    return gds.fmt_summary_value(
+    return gds_records.fmt_summary_value(
         str(seq.multiband_factor) if seq.multiband_factor is not None else None
     )
 
@@ -56,8 +57,8 @@ def render_console_summary(pkg) -> str:
         [
             seq.sequence_id,
             seq.sequence_name,
-            gds.fmt_ms(seq.tr_ms),
-            gds.fmt_ms(seq.te_ms),
+            gds_records.fmt_ms(seq.tr_ms),
+            gds_records.fmt_ms(seq.te_ms),
             _sense(seq),
             _mb(seq),
             seq.phase_encoding_direction,
@@ -66,7 +67,7 @@ def render_console_summary(pkg) -> str:
         ]
         for seq in pkg.sequences
     ]
-    return gds.render_table(headers, rows)
+    return gds_validate.render_table(headers, rows)
 
 
 def _basic_information(pkg) -> List[str]:
@@ -76,7 +77,7 @@ def _basic_information(pkg) -> List[str]:
         f"- Inspection date/time: {pkg.inspection_dt.strftime('%Y-%m-%d, %H:%M:%S')}",
         f"- Participant name: {pkg.participant_name}",
         f"- Participant code: {pkg.participant_code}",
-        f"- Recording date/time: {gds.format_study_dt(pkg.study_date, pkg.study_time)}",
+        f"- Recording date/time: {gds_records.format_study_dt(pkg.study_date, pkg.study_time)}",
         f"- Scanner manufacturer: {pkg.scanner_manufacturer}",
         f"- Scanner model: {pkg.scanner_model}",
         f"- Field strength: {pkg.scanner_field_strength}",
@@ -113,8 +114,8 @@ def _summary_table(pkg) -> List[str]:
             [
                 seq.sequence_id,
                 seq.sequence_name,
-                gds.fmt_ms(seq.tr_ms),
-                gds.fmt_ms(seq.te_ms),
+                gds_records.fmt_ms(seq.tr_ms),
+                gds_records.fmt_ms(seq.te_ms),
                 _sense(seq),
                 _mb(seq),
                 seq.phase_encoding_direction,
@@ -124,7 +125,7 @@ def _summary_table(pkg) -> List[str]:
         )
     if not rows:
         rows = [["n/a", "No MR imaging sequence detected"] + ["n/a"] * 6 + ["NOT_MR"]]
-    return ["## Sequence summary overview", gds.render_table(headers, rows, markdown=True), ""]
+    return ["## Sequence summary overview", gds_validate.render_table(headers, rows, markdown=True), ""]
 
 
 def _hcp_fields(seq, stype) -> str:
@@ -152,17 +153,17 @@ def _render_sequence_detail(seq) -> List[str]:
     lines = [
         f"### Sequence {seq.sequence_id}: {seq.sequence_name}",
         f"- Sequence status: {seq.status}",
-        f"- Time of acquisition: {gds.format_dt(seq.acq_start)}",
-        f"- Duration of acquisition: {gds.format_duration(seq.acq_start, seq.acq_end)}",
+        f"- Time of acquisition: {gds_records.format_dt(seq.acq_start)}",
+        f"- Duration of acquisition: {gds_records.format_duration(seq.acq_start, seq.acq_end)}",
     ]
     if seq.non_evaluable:
         lines.append("- Sequence details: non-evaluable sequence (ExamCard/Survey).")
         lines.append("")
         return lines
 
-    stype = gds.sequence_type(seq.sequence_name)
-    seq.echo_spacing_ms, seq.sample_spacing_ms, seq.echodiff_ms, seq.unwarpdir = gds.compute_hcp_metrics(seq)
-    geometry, resolution = gds.geometry_and_resolution(seq)
+    stype = gds_records.sequence_type(seq.sequence_name)
+    seq.echo_spacing_ms, seq.sample_spacing_ms, seq.echodiff_ms, seq.unwarpdir = gds_tags.compute_hcp_metrics(seq)
+    geometry, resolution = gds_validate.geometry_and_resolution(seq)
     sense = f"{seq.sense_factor:.2f}" if seq.sense_factor is not None else "unknown"
     mb = str(seq.multiband_factor) if seq.multiband_factor is not None else "unknown"
     volume_issue = (
@@ -171,7 +172,7 @@ def _render_sequence_detail(seq) -> List[str]:
     tr_mismatch = any("TR mismatch" in issue.message for issue in seq.issues)
 
     lines += [
-        f"- Sequence details: type={stype}, TR={gds.fmt_ms(seq.tr_ms)} ms, TE={gds.fmt_ms(seq.te_ms)} ms",
+        f"- Sequence details: type={stype}, TR={gds_records.fmt_ms(seq.tr_ms)} ms, TE={gds_records.fmt_ms(seq.te_ms)} ms",
         f"- Acceleration: in-plane={sense}, multiband={mb}",
         f"- Phase encoding direction: {seq.phase_encoding_direction}",
         f"- Geometry: {geometry}",
@@ -182,7 +183,7 @@ def _render_sequence_detail(seq) -> List[str]:
         f"- HCP processing fields: {_hcp_fields(seq, stype)}",
         f"- DICOM files: non-image={seq.non_imaging_dicom_count}, image={seq.imaging_dicom_count}",
         ("- **TR comparison:** " if tr_mismatch else "- TR comparison: ")
-        + f"metadata={gds.fmt_ms(seq.tr_ms)} ms, observed={gds.fmt_ms(seq.observed_tr_ms)} ms",
+        + f"metadata={gds_records.fmt_ms(seq.tr_ms)} ms, observed={gds_records.fmt_ms(seq.observed_tr_ms)} ms",
     ]
     if seq.issues:
         lines.append("- Identified issues:")
@@ -237,14 +238,14 @@ def write_report(pkg, path) -> str:
 def _demo() -> None:
     from datetime import datetime, timedelta
 
-    pkg = gds.PackageSummary(package_name="OP1174_2_EH", session_id="OP1174_2")
+    pkg = gds_records.PackageSummary(package_name="OP1174_2_EH", session_id="OP1174_2")
     pkg.participant_code = "OP1174"
     pkg.study_date, pkg.study_time = "20260413", "183254"
     pkg.scanner_manufacturer = "Philips"
     pkg.total_dicom = 9
     pkg.verdict = "WARN"
 
-    seq = gds.SequenceRecord(
+    seq = gds_records.SequenceRecord(
         key="7", sequence_id="7", sequence_name="BOLD_AP", modality="MR",
         tr_ms=2000.0, te_ms=30.0, rows=64, cols=64, pixel_spacing=(3.0, 3.0),
         spacing_between_slices=3.0, sense_factor=1.90, multiband_factor=4,
@@ -253,7 +254,7 @@ def _demo() -> None:
     )
     seq.acq_start = datetime(2026, 4, 13, 18, 32, 54)
     seq.acq_end = seq.acq_start + timedelta(seconds=4)
-    seq.issues = [gds.Issue("WARN", "Possible early stop: planned volumes 3, good volumes 2, partial trailing volume with 2 slices.")]
+    seq.issues = [gds_records.Issue("WARN", "Possible early stop: planned volumes 3, good volumes 2, partial trailing volume with 2 slices.")]
     pkg.sequences = [seq]
     pkg.incomplete_sequences = 1
 
@@ -270,11 +271,11 @@ def _demo() -> None:
     assert "Seq ID" in console and "BOLD_AP" in console and "3/2" in console and "|" not in console
 
     # NOT_MR: no sequences -> summary shows the placeholder row, verdict section
-    empty = gds.PackageSummary(package_name="EEG", session_id="EEG", verdict="NOT_MR")
+    empty = gds_records.PackageSummary(package_name="EEG", session_id="EEG", verdict="NOT_MR")
     r2 = render_report(empty)
     assert "No MR imaging sequence detected" in r2 and "**NOT_MR**" in r2
 
-    print("dicom_report self-check OK")
+    print("sort_report self-check OK")
 
 
 if __name__ == "__main__":

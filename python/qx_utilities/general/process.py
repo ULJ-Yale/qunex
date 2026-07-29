@@ -779,7 +779,7 @@ arglist = [
     ["hcp_dwi_extraeddyarg", "", is_none],
     ["hcp_dwi_name", "", is_none],
     ["hcp_nogpu", None, flag],
-    ["hcp_cuda_version", "11", str],
+    ["hcp_cuda_version", "", is_none],
     ["hcp_high_myelin", "auto", str],
     ["hcp_dwi_selectbestb0", None, flag],
     ["hcp_dwi_even_slices", None, flag],
@@ -1403,9 +1403,7 @@ def run(qx_command, args):
                     console_log += message
                     print(message)
 
-                    r, _ = writelog(
-                        pending_actions(subject, options, overwrite, c + 1)
-                    )
+                    r, _ = writelog(pending_actions(subject, options, overwrite, c + 1))
                     console_log += r
                     print(r)
                     c += 1

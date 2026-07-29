@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-26T14:46:14.395137+00:00'
+generated_at: '2026-07-29T09:02:40.662646+00:00'
 source:
     id: core
 commands:
@@ -120,7 +120,7 @@ commands:
     origin: core
 -   name: change_dicom_files
     aliases: []
-    path: qx_utilities.general.dicomdeid.change_dicom_files
+    path: qx_utilities.dicom.change_dicom_files.change_dicom_files
     language: python
     call: change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""]
         [replacementdate=]
@@ -285,7 +285,7 @@ commands:
     origin: core
 -   name: clean_dicom
     aliases: []
-    path: qx_utilities.general.dicom.clean_dicom
+    path: qx_utilities.dicom.clean_dicom.clean_dicom
     language: python
     call: clean_dicom [folder=.] [min_files=10] [verbose=yes] [move_non_image=True] [move_incomplete=True]
     description: Inspects already-sorted ``dicom/<seq>`` folders and sets aside DICOM files that hold no imaging data (to
@@ -1195,7 +1195,7 @@ commands:
     origin: core
 -   name: dicom2nii
     aliases: []
-    path: qx_utilities.general.dicom.dicom2nii
+    path: qx_utilities.dicom.legacy.dicom2nii.dicom2nii
     language: python
     call: dicom2nii [folder=.] [clean=no] [unzip=ask] [gzip=folder] [verbose=True] [parelements=1]
     description: Process sessions's DICOM or PAR/REC files and generate NIfTI files using dcm2niix.
@@ -1236,7 +1236,7 @@ commands:
     origin: core
 -   name: dicom2niix
     aliases: []
-    path: qx_utilities.general.dicom.dicom2niix
+    path: qx_utilities.dicom.dicom2niix.dicom2niix
     language: python
     call: dicom2niix [folder=.] [clean=no] [unzip=yes] [gzip=folder] [sessionid=None] [verbose=True] [parelements=1] [tool='auto']
         [add_image_type=0] [add_json_info=""]
@@ -3779,7 +3779,7 @@ commands:
     origin: core
 -   name: get_dicom_fields
     aliases: []
-    path: qx_utilities.general.dicomdeid.get_dicom_fields
+    path: qx_utilities.dicom.get_dicom_fields.get_dicom_fields
     language: python
     call: get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]
     description: Return an overview of DICOM fields across all the DICOM files in the specified folder.
@@ -3803,7 +3803,7 @@ commands:
     origin: core
 -   name: get_dicom_info
     aliases: []
-    path: qx_utilities.general.dicom.get_dicom_info
+    path: qx_utilities.dicom.get_dicom_info.get_dicom_info
     language: python
     call: get_dicom_info dicomfile=<dicom_file> [scanner=siemens]
     description: Inspect the specified DICOM file.
@@ -4407,9 +4407,9 @@ commands:
         description: If specified, use the non-GPU-enabled version of eddy. The flag is not set by default.
     -   name: hcp_cuda_version
         type: str
-        default: '11'
+        default: ''
         description: The version of CUDA to use for GPU-enabled processing. This depends on the version of installed FSL and
-            its CUDA support.
+            its CUDA support. Latest FSL versions do not have a version suffix, so this is empty by default.
     -   name: hcp_dwi_even_slices
         type: flag
         default: null
@@ -7852,7 +7852,7 @@ commands:
     origin: core
 -   name: import_dicom
     aliases: []
-    path: qx_utilities.general.dicom.import_dicom
+    path: qx_utilities.dicom.import_dicom.import_dicom
     language: python
     call: import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"]
         [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=all]
@@ -7970,7 +7970,7 @@ commands:
     origin: core
 -   name: import_dicom_old
     aliases: []
-    path: qx_utilities.general.dicom.import_dicom_old
+    path: qx_utilities.dicom.legacy.import_dicom_old.import_dicom_old
     language: python
     call: import_dicom_old [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"]
         [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""]
@@ -8276,7 +8276,7 @@ commands:
     origin: core
 -   name: list_dicom
     aliases: []
-    path: qx_utilities.general.dicom.list_dicom
+    path: qx_utilities.dicom.list_dicom.list_dicom
     language: python
     call: list_dicom [folder=inbox]
     description: Identify all DICOM files in a folder and print a detailed report.
@@ -10121,7 +10121,7 @@ commands:
     origin: core
 -   name: sort_dicom
     aliases: []
-    path: qx_utilities.general.dicom.sort_dicom
+    path: qx_utilities.dicom.sort_dicom.sort_dicom
     language: python
     call: sort_dicom [folder=.] [outdir=<folder>] [files=<comma-separated list>]
     description: Sorts DICOM (and PAR/REC) files into per-sequence ``dicom`` subfolders.
@@ -10150,7 +10150,7 @@ commands:
     origin: core
 -   name: split_dicom
     aliases: []
-    path: qx_utilities.general.dicom.split_dicom
+    path: qx_utilities.dicom.split_dicom.split_dicom
     language: python
     call: split_dicom [folder=inbox]
     description: Sort out DICOM images from different sessions.

@@ -17,7 +17,7 @@ from unittest.mock import patch
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from qx_utilities.general.dicom import clean_dicom
+from qx_utilities.dicom.clean_dicom import clean_dicom
 
 
 class MockDicomDataset:
@@ -152,10 +152,10 @@ class TestCleanDicomBasicFunctionality:
             f.write("dummy")
 
         # Mock the file processing to trigger directory creation
-        with patch('qx_utilities.general.dicom.pydicom') as mock_pydicom:
+        with patch('qx_utilities.dicom.dicom_info.dfr') as mock_dfr:
             # Mock to make it look like a non-image file
             mock_ds = MockDicomDataset(has_rows=False)
-            mock_pydicom.filereader.read_file.return_value = mock_ds
+            mock_dfr.read_file.return_value = mock_ds
 
             clean_dicom(folder=self.session_dir, verbose="no", move_non_image=True)
 
@@ -295,9 +295,9 @@ class TestCleanDicomIntegration:
             with open(os.path.join(seq_folder, f"file{i}.dcm"), "w") as f:
                 f.write("dummy")
 
-        with patch('qx_utilities.general.dicom.pydicom') as mock_pydicom:
+        with patch('qx_utilities.dicom.dicom_info.dfr') as mock_dfr:
             mock_ds = MockDicomDataset()
-            mock_pydicom.filereader.read_file.return_value = mock_ds
+            mock_dfr.read_file.return_value = mock_ds
 
             # Should skip this sequence
             clean_dicom(folder=self.session_dir, min_files=10, verbose="no")
@@ -315,7 +315,7 @@ class TestCleanDicomIntegration:
         import io
         import pydicom
         from contextlib import redirect_stdout
-        from qx_utilities.general.dicom import _dicom_info_from_dataset
+        from qx_utilities.dicom.dicom_info import _dicom_info_from_dataset
 
         seq_folder = os.path.join(self.dicom_dir, "2010")
         os.makedirs(seq_folder)
@@ -341,7 +341,7 @@ class TestCleanDicomIntegration:
             ds.EchoTime = 30
             return _dicom_info_from_dataset(ds, os.path.basename(filename), extended=extended)
 
-        with patch('qx_utilities.general.dicom.read_dicom_info', fake_read_dicom_info):
+        with patch('qx_utilities.dicom.clean_dicom.read_dicom_info', fake_read_dicom_info):
             f = io.StringIO()
             with redirect_stdout(f):
                 clean_dicom(folder=self.session_dir, verbose="yes")
@@ -375,9 +375,9 @@ class TestCleanDicomEdgeCases:
                 with open(os.path.join(seq_folder, f"bad{i}.dcm"), "wb") as f:
                     f.write(b"not a valid DICOM file")
 
-            with patch('qx_utilities.general.dicom.pydicom') as mock_pydicom:
+            with patch('qx_utilities.dicom.dicom_info.dfr') as mock_dfr:
                 # Simulate read failure
-                mock_pydicom.filereader.read_file.return_value = None
+                mock_dfr.read_file.return_value = None
 
                 # Should handle gracefully
                 clean_dicom(folder=session_dir, verbose="no")
@@ -408,14 +408,14 @@ class TestCleanDicomEdgeCases:
 
 def test_clean_dicom_function_exists():
     """Test that clean_dicom function is importable"""
-    from qx_utilities.general.dicom import clean_dicom
+    from qx_utilities.dicom.clean_dicom import clean_dicom
     assert callable(clean_dicom)
 
 
 def test_clean_dicom_function_signature():
     """Test clean_dicom function has correct signature"""
     import inspect
-    from qx_utilities.general.dicom import clean_dicom
+    from qx_utilities.dicom.clean_dicom import clean_dicom
 
     sig = inspect.signature(clean_dicom)
     params = list(sig.parameters.keys())
@@ -428,7 +428,7 @@ def test_clean_dicom_function_signature():
 def test_clean_dicom_default_values():
     """Test clean_dicom function has correct default values"""
     import inspect
-    from qx_utilities.general.dicom import clean_dicom
+    from qx_utilities.dicom.clean_dicom import clean_dicom
 
     sig = inspect.signature(clean_dicom)
 
@@ -443,12 +443,12 @@ def test_clean_dicom_default_values():
 def test_is_imaging_ds_without_pixel_data():
     """An MR instance read with stop_before_pixels must still classify as imaging.
 
-    Every reader in dicom.py truncates the header before (7FE0,0010), so the
+    Every reader in dicom_info.py truncates the header before (7FE0,0010), so the
     classifier must key off the Image Pixel module rather than the pixel data
     element itself.
     """
     import pydicom
-    from qx_utilities.general import dicom_sort as gds
+    from qx_utilities.dicom import sort_tags as gds
 
     # single-frame image, no PixelData (as returned by a truncated read)
     ds = pydicom.Dataset()
@@ -483,7 +483,7 @@ def test_iter_values_for_tag_finds_nested_private_tags():
     data most of the hint tags live there.
     """
     import pydicom
-    from qx_utilities.general import dicom_sort as gds
+    from qx_utilities.dicom import sort_tags as gds
 
     echo_spacing = (0x2005, 0x1492)  # Philips echo spacing, one of _HINT_TAGS
 
@@ -510,7 +510,7 @@ def test_iter_values_for_tag_finds_nested_private_tags():
 
 def test_import_dicom_inspection_thresholds_reach_the_engine(tmp_path, capsys):
     """import_dicom forwards the (string) CLI thresholds to the scan engine."""
-    from qx_utilities.general import dicom as gd
+    from qx_utilities.dicom import import_dicom as gd
 
     (tmp_path / "S1" / "inbox").mkdir(parents=True)
     seen = {}
@@ -543,7 +543,7 @@ def test_import_dicom_inspection_thresholds_reach_the_engine(tmp_path, capsys):
 def test_import_dicom_signature():
     """clean_dicom_folders is gone, the threshold knobs are exposed."""
     import inspect
-    from qx_utilities.general.dicom import import_dicom
+    from qx_utilities.dicom.import_dicom import import_dicom
 
     params = inspect.signature(import_dicom).parameters
     assert "clean_dicom_folders" not in params

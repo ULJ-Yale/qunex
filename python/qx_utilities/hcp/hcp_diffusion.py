@@ -20,11 +20,11 @@ import os.path
 
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog
+from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.hcp.hcp_utils import (
-    check_gdc_coeff_file,
     _check_dwi_echospacing,
+    check_gdc_coeff_file,
     check_inline_parameter_use,
     do_hcp_options_check,
 )
@@ -158,9 +158,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             If specified, use the non-GPU-enabled version of eddy. The
             flag is not set by default.
 
-        --hcp_cuda_version (str, default '11'):
+        --hcp_cuda_version (str, default ''):
             The version of CUDA to use for GPU-enabled processing. This depends
-            on the version of installed FSL and its CUDA support.
+            on the version of installed FSL and its CUDA support. Latest FSL
+            versions do not have a version suffix, so this is empty by default.
 
         --hcp_dwi_even_slices (flag, optional):
             If set will ensure the input images to FSL's topup and eddy
@@ -305,15 +306,21 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.raw(
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
+            )
             run = False
 
         # --- using a legacy parameter?
         if "hcp_dwi_pedir" in options:
-            log.warning("you are still providing the hcp_dwi_pedir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it.")
-            log.raw("\n---> hcp_dwi_phasepos is currently set to %s."
-                % options["hcp_dwi_phasepos"])
+            log.warning(
+                "you are still providing the hcp_dwi_pedir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it."
+            )
+            log.raw(
+                "\n---> hcp_dwi_phasepos is currently set to %s."
+                % options["hcp_dwi_phasepos"]
+            )
 
         # --- set up data
         direction = None
@@ -331,8 +338,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             direction = {"pos": "RL", "neg": "LR"}
             pe_dir = 1
         else:
-            log.raw("\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]"
-                % options["hcp_dwi_phasepos"])
+            log.raw(
+                "\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]"
+                % options["hcp_dwi_phasepos"]
+            )
             run = False
 
         if run:
@@ -400,20 +409,25 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     dfiles = dwi_files[ddir].split("@")
 
                     if dfiles and dfiles != [""] and dfiles != "EMPTY":
-                        log.raw("\n---> The following %s direction files were found:" % (
-                            ddir
-                        ))
+                        log.raw(
+                            "\n---> The following %s direction files were found:"
+                            % (ddir)
+                        )
                         for dfile in dfiles:
                             log.raw("\n     %s" % (os.path.basename(dfile)))
                     else:
-                        log.raw("\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
-                            % ddir)
+                        log.raw(
+                            "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
+                            % ddir
+                        )
                         run = False
                         break
 
                 # if both dirs are missing
                 if "pos" not in dwi_files and "neg" not in dwi_files:
-                    log.error("No DWI data found, check your batchfile and command parameters!")
+                    log.error(
+                        "No DWI data found, check your batchfile and command parameters!"
+                    )
                     run = False
                 elif "pos" not in dwi_files:
                     pos_data = "EMPTY"
@@ -433,7 +447,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 options["hcp_dwi_posdata"] is None
                 and options["hcp_dwi_negdata"] is not None
             ):
-                log.error("When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters. Set to EMPTY if you do not have data for one of the directions. If there are no pos/neg pairs, also set the --hcp_dwi_combinedata flag.")
+                log.error(
+                    "When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters. Set to EMPTY if you do not have data for one of the directions. If there are no pos/neg pairs, also set the --hcp_dwi_combinedata flag."
+                )
                 run = False
             else:
                 # pos
@@ -456,7 +472,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 neg_data = "@".join(neg_paths)
 
         # --- lookup gdcoeffs file if needed
-        gdcfile, run = check_gdc_coeff_file(options["hcp_dwi_gdcoeffs"], hcp, sinfo, log, run)
+        gdcfile, run = check_gdc_coeff_file(
+            options["hcp_dwi_gdcoeffs"], hcp, sinfo, log, run
+        )
 
         # -- check for DWI data
         dwi_found = False
@@ -496,7 +514,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- check echospacing
             if not echospacing:
-                log.error("QuNex was unable to acquire echospacing from the data and the parameter is not set!")
+                log.error(
+                    "QuNex was unable to acquire echospacing from the data and the parameter is not set!"
+                )
                 run = False
 
         # path
@@ -506,7 +526,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         if options["longitudinal"]:
             studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
-                log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                log.raw(
+                    "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
+                )
                 run = False
             # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])
@@ -590,7 +612,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 comm += "                --gpu=False"
             else:
                 comm += "                --gpu=True"
-                comm += f"                --cuda-version={options['hcp_cuda_version']}"
+                if options["hcp_cuda_version"] is not None:
+                    comm += (
+                        f"               --cuda-version={options['hcp_cuda_version']}"
+                    )
 
             # create dummy bvals and bvecs if demanded
             if options["hcp_dwi_dummy_bval_bvec"]:
@@ -630,10 +655,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- Report command
             if run:
-                log.raw("\n\n------------------------------------------------------------\n")
+                log.raw(
+                    "\n\n------------------------------------------------------------\n"
+                )
                 log.raw("Running HCP Pipelines command via QuNex:\n\n")
                 log.raw(comm.replace("                --", "\n    --"))
-                log.raw("\n------------------------------------------------------------\n")
+                log.raw(
+                    "\n------------------------------------------------------------\n"
+                )
 
             # -- Test files
             tfile = None
