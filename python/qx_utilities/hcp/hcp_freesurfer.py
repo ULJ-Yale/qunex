@@ -22,8 +22,8 @@ import shutil
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.snapshots as gs
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog
+from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.hcp.hcp_utils import (
     _get_postfreesurfer_snapshot_paths,
     do_hcp_options_check,
@@ -320,8 +320,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # run checks
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.raw(
+                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                % (sinfo["id"])
+            )
             run = False
 
         # pre FS results
@@ -340,7 +342,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             t2w = os.path.join(hcp["T1w_folder"], "T2w_acpc_dc_restore.nii.gz")
 
         if t2w == "NONE" and options["hcp_processing_mode"] == "HCPStyleData":
-            log.error("The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode.")
+            log.error(
+                "The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode."
+            )
             run = False
 
         # test file
@@ -364,8 +368,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if e.strip() not in ["aseg", "wm", "brainmask", "yes", "true"]
             ]
             if extra:
-                log.raw("\n---> ERROR: Invalid edits specified in hcp_fs_edits: '%s' ['%s']"
-                    % (",".join(extra), options["hcp_fs_edits"]))
+                log.raw(
+                    "\n---> ERROR: Invalid edits specified in hcp_fs_edits: '%s' ['%s']"
+                    % (",".join(extra), options["hcp_fs_edits"])
+                )
                 run = False
 
             else:
@@ -413,8 +419,12 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     add_extra = ["-autorecon-pial"]
                 else:
                     log.error("No edits specified and no edited files found!")
-                    log.raw("\n            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits.")
-                    log.raw("\n            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters.")
+                    log.raw(
+                        "\n            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits."
+                    )
+                    log.raw(
+                        "\n            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters."
+                    )
                     run = False
                     add_extra = []
 
@@ -497,7 +507,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         if os.path.exists(post_fs_tfile) and not (
             overwrite or options["hcp_fs_existing_session"]
         ):
-            log.error("PostFreeSurfer results already present! Set overwrite to true or hcp_fs_existing_session to true to reprocess FreeSurfer!")
+            log.error(
+                "PostFreeSurfer results already present! Set overwrite to true or hcp_fs_existing_session to true to reprocess FreeSurfer!"
+            )
             run = False
 
         # report command
@@ -531,8 +543,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     "hcp_fs_existing_session"
                 ]:
                     if os.path.lexists(hcp["FS_folder"]):
-                        log.raw("\n---> removing preexisting FS folder [%s]"
-                            % (hcp["FS_folder"]))
+                        log.raw(
+                            "\n---> removing preexisting FS folder [%s]"
+                            % (hcp["FS_folder"])
+                        )
                         shutil.rmtree(hcp["FS_folder"], ignore_errors=True)
                     for toremove in [
                         "fsaverage",
@@ -547,17 +561,21 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                             elif os.path.isdir(rmtarget):
                                 shutil.rmtree(rmtarget)
                         except Exception:
-                            log.raw("\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!"
-                                % (rmtarget))
+                            log.raw(
+                                "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!"
+                                % (rmtarget)
+                            )
                             status = False
 
                 if os.path.exists(post_fs_tfile):
                     log.warning("PostFreeSurfer results already present!")
                     # cleanup postfs
-                    log.raw("\n     Found PostFreeSurfer results file: %s" % (
-                        post_fs_tfile
-                    ))
-                    log.raw("\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ...")
+                    log.raw(
+                        "\n     Found PostFreeSurfer results file: %s" % (post_fs_tfile)
+                    )
+                    log.raw(
+                        "\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ..."
+                    )
                     have_postfs_diff = os.path.exists(postfs_snapshot_paths["diff"])
                     have_postfs_backup = os.path.exists(postfs_snapshot_paths["backup"])
 
