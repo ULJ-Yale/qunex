@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-29T09:02:40.662646+00:00'
+generated_at: '2026-08-05T09:24:34.729164+00:00'
 source:
     id: core
 commands:
@@ -4431,6 +4431,31 @@ commands:
         default: null
         description: QuNex will create dummy bval and bvec files if they do not yet exist. Mainly useful when using distortion
             maps as part of the input data.
+    -   name: hcp_species
+        type: str
+        default: ''
+        description: Species label (Human, Chimp, Macaque, Marmoset or NightMonkey). When unset the HCP pipeline default (Human)
+            is used. Only relevant for non-human species.
+    -   name: hcp_truepatientposition
+        type: str
+        default: ''
+        description: True patient position, e.g. HFS, FFS, HFSx, FFSx. Only relevant for non-human species.
+    -   name: hcp_scannerpatientposition
+        type: str
+        default: ''
+        description: Scanner patient position, e.g. HFS, FFS. Only relevant for non-human species.
+    -   name: hcp_dwi_wmprojabs
+        type: str
+        default: '2'
+        description: White matter projection absolute depth. Only relevant for non-human species.
+    -   name: hcp_dwi_resamp
+        type: str
+        default: ''
+        description: The resamp value to pass to the eddy binary. When unset, no --resamp option is passed to eddy.
+    -   name: hcp_dwi_usephasezero
+        type: flag
+        default: null
+        description: If set, phase zero is used. Only relevant for non-human species. The flag is not set by default.
     -   name: hcp_longitudinal_template
         type: str
         default: base

@@ -184,6 +184,31 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             exist. Mainly useful when using distortion maps as part of the
             input data.
 
+        --hcp_species (str, default ''):
+            Species label (Human, Chimp, Macaque, Marmoset or NightMonkey).
+            When unset the HCP pipeline default (Human) is used. Only relevant
+            for non-human species.
+
+        --hcp_truepatientposition (str, default ''):
+            True patient position, e.g. HFS, FFS, HFSx, FFSx. Only relevant for
+            non-human species.
+
+        --hcp_scannerpatientposition (str, default ''):
+            Scanner patient position, e.g. HFS, FFS. Only relevant for
+            non-human species.
+
+        --hcp_dwi_wmprojabs (str, default '2'):
+            White matter projection absolute depth. Only relevant for non-human
+            species.
+
+        --hcp_dwi_resamp (str, default ''):
+            The resamp value to pass to the eddy binary. When unset, no
+            --resamp option is passed to eddy.
+
+        --hcp_dwi_usephasezero (flag, optional):
+            If set, phase zero is used. Only relevant for non-human species.
+            The flag is not set by default.
+
         --hcp_longitudinal_template (str, default 'base'):
             Name of the longitudinal template.
 
@@ -231,27 +256,33 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Below is a detailed specification about how QuNex parameters are
             mapped onto the HCP Pipelines parameters.
 
-            ============================= ======================================
-            QuNex parameter               HCPpipelines parameter
-            ============================= ======================================
-            ``hcp_dwi_phasepos``          ``posData``, ``negData`` and ``PEdir``
-            ``hcp_dwi_echospacing``       ``echospacing``
-            ``hcp_dwi_gdcoeffs``          ``gdcoeffs``
-            ``hcp_dwi_dof``               ``dof``
-            ``hcp_dwi_b0maxbval``         ``b0maxbval``
-            ``hcp_dwi_combinedata``       ``combine-data-flag``
-            ``hcp_printcom``              ``printcom``
-            ``hcp_dwi_extraeddyarg``      ``extra-eddy-arg``
-            ``hcp_dwi_name``              ``dwiname``
-            ``hcp_dwi_selectbestb0``      ``select-best-b0``
-            ``hcp_dwi_topupconfig``       ``topup-config-file``
-            ``hcp_dwi_even_slices``       ``ensure-even-slices``
-            ``hcp_dwi_posdata``           ``posData``
-            ``hcp_dwi_negdata``           ``negData``
-            ``hcp_nogpu``                 ``gpu``
-            ``hcp_longitudinal_template`` ``longitudinal-template``
-            ``longitudinal``              ``is-longitudinal``
-            ============================= ======================================
+            ============================== =====================================
+            QuNex parameter                HCPpipelines parameter
+            ============================== =====================================
+            ``hcp_dwi_phasepos``           ``posData``, ``negData``, ``PEdir``
+            ``hcp_dwi_echospacing``        ``echospacing``
+            ``hcp_dwi_gdcoeffs``           ``gdcoeffs``
+            ``hcp_dwi_dof``                ``dof``
+            ``hcp_dwi_b0maxbval``          ``b0maxbval``
+            ``hcp_dwi_combinedata``        ``combine-data-flag``
+            ``hcp_printcom``               ``printcom``
+            ``hcp_dwi_extraeddyarg``       ``extra-eddy-arg``
+            ``hcp_dwi_name``               ``dwiname``
+            ``hcp_dwi_selectbestb0``       ``select-best-b0``
+            ``hcp_dwi_topupconfig``        ``topup-config-file``
+            ``hcp_dwi_even_slices``        ``ensure-even-slices``
+            ``hcp_dwi_posdata``            ``posData``
+            ``hcp_dwi_negdata``            ``negData``
+            ``hcp_nogpu``                  ``gpu``
+            ``hcp_longitudinal_template``  ``longitudinal-template``
+            ``longitudinal``               ``is-longitudinal``
+            ``hcp_species``                ``species``
+            ``hcp_truepatientposition``    ``truepatientposition``
+            ``hcp_scannerpatientposition`` ``scannerpatientposition``
+            ``hcp_dwi_wmprojabs``          ``wmprojabs``
+            ``hcp_dwi_resamp``             ``resamp``
+            ``hcp_dwi_usephasezero``       ``usephasezero``
+            ============================== =====================================
 
         Use:
             Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion
@@ -607,6 +638,33 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             if options["hcp_dwi_even_slices"]:
                 comm += "                --ensure-even-slices"
+
+            # optional species / NHP parameters, these are only relevant for
+            # non-human species, when unset the HCP pipeline defaults (Human)
+            # are used
+            if options["hcp_species"]:
+                comm += "                --species=" + options["hcp_species"]
+
+            if options["hcp_truepatientposition"]:
+                comm += (
+                    "                --truepatientposition="
+                    + options["hcp_truepatientposition"]
+                )
+
+            if options["hcp_scannerpatientposition"]:
+                comm += (
+                    "                --scannerpatientposition="
+                    + options["hcp_scannerpatientposition"]
+                )
+
+            if options["hcp_dwi_wmprojabs"]:
+                comm += "                --wmprojabs=" + options["hcp_dwi_wmprojabs"]
+
+            if options["hcp_dwi_resamp"]:
+                comm += "                --resamp=" + options["hcp_dwi_resamp"]
+
+            if options["hcp_dwi_usephasezero"]:
+                comm += "                --usephasezero=True"
 
             if options["hcp_nogpu"]:
                 comm += "                --gpu=False"

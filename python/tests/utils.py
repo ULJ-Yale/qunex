@@ -6,7 +6,7 @@ def get_test_data_path(path):
     return os.path.join(dir, "test_data", path)
 
 
-def build_hcp_session(root, bolds=False, session_id="sess-01"):
+def build_hcp_session(root, bolds=False, dwi=False, session_id="sess-01"):
     """
     Create a minimal session tree with an HCP folder for dry-run tests.
 
@@ -16,6 +16,7 @@ def build_hcp_session(root, bolds=False, session_id="sess-01"):
     Parameters:
         root: base directory to build under (e.g. a pytest tmp_path).
         bolds: also add two BOLD entries to sinfo.
+        dwi: also add an unprocessed AP/PA DWI pair and its sinfo entries.
         session_id: the session id to use.
 
     Returns:
@@ -38,6 +39,17 @@ def build_hcp_session(root, bolds=False, session_id="sess-01"):
                       "bold_number": "1", "filename": "BOLD_1"}
         sinfo["4"] = {"name": "bold", "task": "rest", "boldname": "BOLD_2",
                       "bold_number": "2", "filename": "BOLD_2"}
+    if dwi:
+        dwi_source = os.path.join(base, "unprocessed", "Diffusion")
+        os.makedirs(dwi_source, exist_ok=True)
+        next_key = len([k for k in sinfo if k.isdigit()]) + 1
+        for pe in ["PA", "AP"]:
+            name = "DWI_dir99_%s" % pe
+            open(os.path.join(dwi_source, "%s.nii.gz" % name), "w").close()
+            sinfo[str(next_key)] = {
+                "name": "DWI", "task": name, "EchoSpacing": "0.00069",
+            }
+            next_key += 1
     return sinfo, sessionsfolder
 
 
