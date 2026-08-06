@@ -467,7 +467,7 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="<path_to_studyfolder>/sessions"
 
             If the processing should continue automatically if packages to process
@@ -475,7 +475,7 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
                     --check="any"
 
@@ -484,7 +484,7 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
                     --sessions="AP.*,HQ.*" \\
                     --check="any"
@@ -495,7 +495,7 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
                     --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
@@ -507,7 +507,7 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
                     --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
@@ -523,7 +523,7 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="<path_to_studyfolder>/sessions" \\
                     --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
                     --sessions="AP.*,HQ.*" \\
@@ -544,7 +544,7 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="/studies/myStudy/sessions" \\
                     --masterinbox="none" \\
                     --sessions="S*"
@@ -553,7 +553,7 @@ def import_dicom_old(
             be extracted and (by default) moved to
             `/studies/myStudy/sessions/archive/MR`::
 
-                qunex import_dicom \\
+                qunex import_dicom_old \\
                     --sessionsfolder="/studies/myStudy/sessions" \\
                     --masterinbox="none" \\
                     --sessions="*baseline" \\

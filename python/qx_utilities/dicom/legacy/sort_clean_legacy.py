@@ -36,23 +36,22 @@ def _sort_dicom_legacy(folder=".", **kwargs):
     """
     Legacy ``sort_dicom`` implementation retained for ``import_dicom_old``.
 
-    ``sort_dicom [folder=.]``
-
-    Sort DICOM files from the specified folder.
+    Sort DICOM files from the specified folder. This is an internal helper, not
+    a registered QuNex command — the user facing command is ``sort_dicom``.
 
     Parameters:
-        --folder (str, default '.'):
+        folder (str, default '.'):
             The base session folder that contains the inbox subfolder with the
             unsorted DICOM files.
 
-        --copy (str, default 'move'):
+        copy (str, default 'move'):
             Should we 'copy' or 'move'.
 
-        --outdir (str, default detailed below):
+        outdir (str, default detailed below):
             Optional directory where the sorted files are to be saved. Defaults
             to `folder` parameter if not set.
 
-        --files (str, default detailed below):
+        files (str, default detailed below):
             Comma separated list of files to sort. Defaults to files in `folder`.
 
     Notes:
@@ -65,41 +64,22 @@ def _sort_dicom_legacy(folder=".", **kwargs):
         PAR/REC extensions are uppercase and changes them if necessary. If log
         files are found, they are placed in a separate `log` subfolder.
 
-        Multiple sessions and scheduling:
-            The command can be run for multiple sessions by specifying
-            `sessions` and optionally `sessionsfolder` and `parelements`
-            parameters. In this case the command will be run for each of the
-            specified sessions in the sessionsfolder (current directory by
-            default). Optional `filter` and `sessionids` parameters can be used
-            to filter sessions or limit them to just specified id codes. (for
-            more information see online documentation). `sfolder` will be
-            filled in automatically as each session's folder. Commands will
-            run in parallel by utilizing the specified number of parelements (1
-            by default).
-
-            If `scheduler` parameter is set, the command will be run using the
-            specified scheduler settings (see `qunex ?schedule` for more
-            information). If set in combination with `sessions` parameter,
-            sessions will be processed over multiple nodes, `core` parameter
-            specifying how many sessions to run per node. Optional
-            `scheduler_environment`, `scheduler_workdir`, `scheduler_sleep`,
-            and `nprocess` parameters can be set.
-
-            Set optional ``logfolder`` parameter to specify where the processing
-            logs should be stored. Otherwise, the processor will make best
-            guess, where the logs should go.
+        Multi-session iteration and scheduling are handled by the command layer
+        around the registered ``sort_dicom`` command, not by this helper, which
+        always operates on a single folder.
 
     Examples:
-        Single sessions example::
+        Single session example::
 
-            qunex sort_dicom \\
-                --folder=OP667
+            _sort_dicom_legacy(folder="OP667")
 
-        Multiple sessions example::
+        Sorting an explicit list of files into a chosen output folder::
 
-            qunex sort_dicom \\
-                  --sessionsfolders="/data/my_study/sessions" \\
-                  --sessions="OP*"
+            _sort_dicom_legacy(
+                folder="OP667",
+                outdir="/data/my_study/sessions/OP667/dicom",
+                files="a.dcm,b.dcm",
+            )
     """
 
     # --- should we copy or move

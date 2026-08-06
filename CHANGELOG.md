@@ -24,7 +24,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Several diffusion commands now have the optional `--diffusion_folder` parameter, which can be used to configure the input data that will be used.
 * Fixed a bug in longitudinal `hcp_fmri_surface` that looked for the presence of irrelevant files before running.
 * `dwi_legacy_gpu` now supports SE based distortion correction.
-* Implemented a number of utility commands for making output folder/file backups and tracking changes through time, these commands are `record_snapshot`, `compare_snapshot`, `rollback_snapshot`, `backup_files`, `restore_files`. Consult the official documentation for details about their usage.
+* Implemented a number of internal utilities for making output folder/file backups and tracking changes through time (`record_snapshot`, `compare_snapshots`, `rollback_snapshot`, `backup_files`, `restore_files`). These are used by the processing pipelines and are not invocable as `qunex` commands.
 * Fixed a set of log bookkeeping bugs: the runlog folder is no longer mis-derived for study paths containing `comlogs`, the session id is written to the runlog instead of the console, the final report of a parallel run again shows the log path, and serial runs no longer record a spurious "Unknown" status next to the real one for every session.
 * Added NHP (non-human primate) support to all HCP commands that now support it. This is mainly accessible through the `hcp_species` parameter, while there is a completely new command for HCP FreeSurfer (`hcp_nhp_freesurfer`).
 * Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.

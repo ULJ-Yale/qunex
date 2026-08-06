@@ -1,13 +1,33 @@
 import getpass
 import os
+import shutil
 import tempfile
 from datetime import datetime
+
+import pytest
 
 from qx_utilities.general.palm import run_palm
 
 from .utils import get_test_data_path
 
+# run_palm shells out to palm and wb_command and reads the HCP templates under
+# QUNEXPATH, none of which exist outside a QuNex install, so skip rather than
+# fail there (this is what keeps the test out of the way on a CI runner)
+_missing = [
+    name
+    for name in ("palm", "wb_command")
+    if shutil.which(name) is None
+]
+if "QUNEXPATH" not in os.environ:
+    _missing.append("QUNEXPATH")
 
+requires_palm = pytest.mark.skipif(
+    bool(_missing),
+    reason=f"run_palm needs {', '.join(_missing)}",
+)
+
+
+@requires_palm
 def test_run_palm():
     """Test run_palm"""
 

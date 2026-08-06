@@ -47,10 +47,10 @@ Output files:
 Examples:
     ::
 
-        qunex roi_extract \\
+        qunex extract_roi \\
             --roifile='<path_to_roifile>' \\
             --inputfile='<path_to_inputfile>' \\
-            --outdir='<path_to_outdir>' \\
+            --outpath='<path_to_outpath>' \\
             --outname='<output_name>'
 
 EOF

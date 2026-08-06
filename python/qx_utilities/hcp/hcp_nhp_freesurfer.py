@@ -37,6 +37,9 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
     Runs the NHP (non-human primate) variant of the FS step of the HCP
     Pipeline (FreeSurferPipelineNHP.sh).
 
+    ..  qx_command:
+        type: processing.session
+
     Warning:
         The code expects the previous step (hcp_pre_freesurfer) to have run
         successfully and checks for presence of a few key files and folders. Due

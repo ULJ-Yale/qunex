@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-05T09:24:34.729164+00:00'
+generated_at: '2026-08-06T08:01:00.840046+00:00'
 source:
     id: core
 commands:
@@ -2303,7 +2303,7 @@ commands:
     path: qx_mri/fc/fc_compute_gbc.m
     language: matlab
     call: fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, targetf, options)
-    description: Compute seed based functional connectivity maps for group and/or individual subjects / sessions.
+    description: Compute global brain connectivity (GBC) maps for group and/or individual subjects / sessions.
     type: matlab
     args:
     -   name: flist
@@ -6037,6 +6037,141 @@ commands:
         description: The ending frame to choose from each fMRI run (inclusive), only applied for single runs.
     returns: []
     origin: core
+-   name: hcp_nhp_freesurfer
+    aliases: []
+    path: qx_utilities.hcp.hcp_nhp_freesurfer.hcp_nhp_freesurfer
+    language: python
+    call: hcp_nhp_freesurfer [... processing options]
+    description: Runs the NHP (non-human primate) variant of the FS step of the HCP Pipeline (FreeSurferPipelineNHP.sh).
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: hcp_processing_mode
+        type: str
+        default: HCPStyleData
+        description: Controls whether the HCP acquisition and processing guidelines should be treated as requirements ('HCPStyleData')
+            or if additional processing functionality is allowed ('LegacyStyleData'). In this case running processing w/o
+            a T2w image.
+    -   name: hcp_folderstructure
+        type: str
+        default: hcpls
+        description: If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically,
+            the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders
+            and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study
+            is used. Specifically, the source files are all stored within their individual subfolders located in the joint
+            'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder.
+    -   name: hcp_filename
+        type: str
+        default: automated
+        description: How to name the BOLD files once mapped intothe hcp input folder structure. The default ('automated')
+            will automatically name each file by their number (e.g. BOLD_1). The alternative ('userdefined') is to use the
+            file names, which can be defined by the user prior to mapping (e.g. rfMRI_REST1_AP).
+    -   name: hcp_species
+        type: str
+        default: ''
+        description: 'Species type (required). Controls species-specific processing parameters. One of: Human, Chimp, MacaqueCyno,
+            MacaqueRhesus, MacaqueSnow, NightMonkey, Marmoset.'
+    -   name: hcp_scale_factor
+        type: str
+        default: ''
+        description: Brain scale factor for NHP processing (required). Controls volume rescaling for FreeSurfer and some derived
+            parameters. The recommended value is the BrainScaleFactor defined in the species' SetUp script.
+    -   name: hcp_runmode
+        type: str
+        default: ''
+        description: 'Specify from which step to resume the processing instead of starting from the beginning. Value must
+            be one of: Default, FSinit, FSbrainseg, FSsurfinit, FShires, FSFinish (default: Default).'
+    -   name: hcp_fs_seed
+        type: str
+        default: ''
+        description: Recon-all seed value. If not specified, none will be used.
+    -   name: hcp_fs_edits
+        type: str
+        default: 'FALSE'
+        description: 'Indicates whether manual edits are to be applied to the FreeSurfer outputs. If set to ''TRUE'', the
+            user needs to either place the edited files in <sessions folder>/inbox/FS_edits and prepend ''<session id>_''
+            to identify them, or place them in the standard FreeSurfer location themselves. The ''existing_session'' parameter
+            will be set to TRUE, and ''extra_reconall'' parameters will be set as well to only run the necessary steps to
+            incorporate the edits, depending on the edits present and/or specified. This option can be used for edits to control.dat,
+            aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted values are ''FALSE'', ''TRUE'', or a comma-separated list
+            of edits to apply: ''control'', ''aseg'', ''wm'', ''brainmask''. If edits are not specified explicitly, they will
+            be determined based on the files found in the FS_edits folder.'
+    -   name: hcp_fs_existing_session
+        type: str
+        default: 'FALSE'
+        description: Indicates that the command is to be run on top of an already existing analysis/subject. This excludes
+            the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run
+            using the --hcp_fs_extra_reconall parameter. Accepted values are 'TRUE' and 'FALSE'.
+    -   name: hcp_fs_extra_reconall
+        type: str
+        default: ''
+        description: 'A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed
+            in a pipe (''|'') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters
+            3` to reconall, the string has to be: "-norm3diters|3".'
+    -   name: hcp_fs_flair
+        type: str
+        default: 'FALSE'
+        description: If set to 'TRUE' indicates that recon-all is to be run with the -FLAIR/-FLAIRpial options (rather than
+            the -T2/-T2pial options). The FLAIR input image itself should be provided as a regular T2w image.
+    -   name: hcp_fs_t1wdivflair
+        type: str
+        default: 'FALSE'
+        description: 'If set to ''TRUE'' indicates that recon-all is to be run with the -T1wDivFLAIR/-T1wDivFLAIRpial options
+            (rather than the -T2/-T2pial options). The T1w/FLAIR input image itself should be provided as a regular T2w image.
+            NOTE: This is experimental.'
+    -   name: hcp_conf2hires
+        type: str
+        default: null
+        description: Whether to use the conf2hires flag in recon-all. If set to 'TRUE', the flag will be used, if set to 'FALSE'
+            it will not be used.
+    -   name: hcp_t2
+        type: str
+        default: t2
+        description: '''NONE'' if no T2w image is available and the preprocessing should be run without them, anything else
+            otherwise. ''NONE'' is only valid if ''LegacyStyleData'' processing mode was specified.'
+    -   name: hcp_expert_file
+        type: str
+        default: ''
+        description: Path to the read-in expert options file for FreeSurfer if one is prepared and should be used empty otherwise.
+    returns: []
+    origin: core
 -   name: hcp_post_fix
     aliases: []
     path: qx_utilities.hcp.hcp_post_fix.hcp_post_fix
@@ -8578,6 +8713,58 @@ commands:
     options: []
     returns: []
     origin: core
+-   name: map_mice_data
+    aliases: []
+    path: qx_mice.process_mice.map_mice_data
+    language: python
+    call: map_mice_data [... processing options]
+    description: Maps preprocessed mice data to the sessions' image folder.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite target files that already exist (yes) or not (no).
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: bolds
+        type: str
+        default: ''
+        description: Which bold images to process. You can select bolds through their number, name or task (e.g. rest), you
+            can chain multiple conditions together by providing a comma separated list.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: How many elements (e.g. bolds) to run in parallel.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    returns: []
+    origin: core
 -   name: map_nii2bids
     aliases: []
     path: qx_utilities.general.bids.map_nii2bids
@@ -9024,6 +9211,91 @@ commands:
         default: ''
         description: Specifies a suffix for 'images' folder to enable support for multiple parallel workflows. Empty if not
             used.
+    returns: []
+    origin: core
+-   name: preprocess_mice
+    aliases: []
+    path: qx_mice.process_mice.preprocess_mice
+    language: python
+    call: preprocess_mice [... processing options]
+    description: Runs the QuNex mice preprocessing command.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: bolds
+        type: str
+        default: ''
+        description: Which bold images to process. You can select bolds through their number, name or task (e.g. rest), you
+            can chain multiple conditions together by providing a comma separated list.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: How many elements (e.g. bolds) to run in parallel.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: bias_field_correction
+        type: str
+        default: 'yes'
+        description: Whether to perform bias field correction, yes/no.
+    -   name: melodic_anatfile
+        type: str
+        default: qx_library/etc/mice_pipelines/EPI_braine
+        description: Path to the melodic anat file, without the extension, e.g. without .nii.gz.
+    -   name: fix_rdata
+        type: str
+        default: qx_library/etc/mice_pipelines/zerbi_2015_neuroimage.RData
+        description: Path to the RData file used by fix.
+    -   name: fix_threshold
+        type: int
+        default: '2'
+        description: Fix ICA treshold.
+    -   name: mice_highpass
+        type: float
+        default: '0.01'
+        description: The value of the highpass filter.
+    -   name: mice_lowpass
+        type: float
+        default: '0.25'
+        description: The value of the lowpass filter.
+    -   name: mice_volumes
+        type: int
+        default: '900'
+        description: Number of volumes.
+    -   name: flirt_ref
+        type: str
+        default: qx_library/etc/mice_pipelines/EPI_template.nii.gz
+        description: Path to the template file.
     returns: []
     origin: core
 -   name: print_nifti_metadata
@@ -10119,6 +10391,71 @@ commands:
         description: Whether to prepare ('yes') a file for each bold image with the slice timing information for fsl slicetimer
             or not ('no').
     options: []
+    returns: []
+    origin: core
+-   name: setup_mice
+    aliases: []
+    path: qx_mice.setup_mice.setup_mice
+    language: python
+    call: setup_mice [... processing options]
+    description: Runs the command to prepare a QuNex study for mice preprocessing.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: bolds
+        type: str
+        default: ''
+        description: Which bold images to process. You can select bolds through their number, name or task (e.g. rest), you
+            can chain multiple conditions together by providing a comma separated list.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: How many elements (e.g. bolds) to run in parallel.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: tr
+        type: float
+        default: '2.5'
+        description: TR of the bold data.
+    -   name: voxel_increase
+        type: int
+        default: null
+        description: The factor by which to increase voxel size. If not provided QuNex will not increase the voxel size.
+    -   name: orienatation
+        type: str
+        default: x -y z
+        description: A string depicting how to fix the orientation. Set to "" to leave orientation as is.
     returns: []
     origin: core
 -   name: slice_image
