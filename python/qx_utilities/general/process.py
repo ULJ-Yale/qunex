@@ -1500,6 +1500,9 @@ def run(qx_command, args, log_settings=None):
         # left is the digest
         run_context.final_report(stati)
 
+        # and, when a parent process asked for it, the same digest as data
+        run_context.write_status(stati)
+
         # a failed session makes the command fail: the caller -- a shell, CI,
         # or run_recipe -- learns it from the exit code rather than by reading
         # the report

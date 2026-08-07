@@ -566,15 +566,17 @@ def deduce_folders(args, command=None, timestamp=None):
                 for e in [logfolder, sourcefolder, folder, reference, "."]
                 if e
             ]:
+                # the starting folder is tested first: a command run from the
+                # study root is still being run inside a study
                 if f and not basefolder:
-                    while os.path.dirname(f) and os.path.dirname(f) != "/":
+                    while f and f != "/":
+                        if any(
+                            os.path.exists(os.path.join(f, marker))
+                            for marker in [".qunexstudy", ".mnapstudy"]
+                        ):
+                            basefolder = f
+                            break
                         f = os.path.dirname(f)
-                        if os.path.exists(os.path.join(f, ".qunexstudy")):
-                            basefolder = f
-                            break
-                        elif os.path.exists(os.path.join(f, ".mnapstudy")):
-                            basefolder = f
-                            break
 
     if logfolder is None and timestamp and command:
         if basefolder:
@@ -1149,33 +1151,19 @@ def print_and_log(*args, **kwargs):
     ======
 
     --file         Prints to the file.
-    --write        Creates a file and writes to it.
-    --append       Opens a file and appends to it.
     --silent       Whether to not print to stdout.
     --end          How to end ['\n'].
     """
 
     silent = kwargs.get("silent", False)
     file = kwargs.get("file", None)
-    write = kwargs.get("write", None)
-    append = kwargs.get("append", None)
     end = kwargs.get("end", "\n")
-
-    if write:
-        write = open(write, "w")
-    if append:
-        append = open(append, "a")
 
     for element in args + (end,):
         if not silent:
             print(element, end=" ")
-        for out in [append, write, file]:
-            if out:
-                print(element, end=" ", file=out)
-
-    for toclose in [append, write]:
-        if toclose:
-            toclose.close()
+        if file:
+            print(element, end=" ", file=file)
 
 
 def underscore(s):

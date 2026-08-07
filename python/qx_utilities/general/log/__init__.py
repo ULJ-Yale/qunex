@@ -41,7 +41,9 @@ from qx_utilities.general.log.context import (
     call_echo,
     comlog_folder,
     comlog_name,
+    digest,
     log_folder,
+    read_status,
     run_and_log,
 )
 from qx_utilities.general.log.report import (
@@ -57,6 +59,7 @@ from qx_utilities.general.log.settings import (
     LOGGING_MODES,
     USER_SETTINGS_PATHS,
     LogSettings,
+    apply_study_settings,
     load_settings,
     resolve_logging,
 )
@@ -74,11 +77,14 @@ __all__ = [
     "RunContext",
     "SessionLog",
     "USER_SETTINGS_PATHS",
+    "apply_study_settings",
     "call_echo",
     "comlog_folder",
     "comlog_name",
+    "digest",
     "load_settings",
     "log_folder",
+    "read_status",
     "resolve_logging",
     "run_and_log",
 ]

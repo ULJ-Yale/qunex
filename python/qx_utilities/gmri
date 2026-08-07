@@ -237,6 +237,13 @@ def runCommand(command, args):
 
                     recipe_args["eargs"] = recipe_eargs
 
+                    # the recipe builds its own RunContext from these -- the
+                    # recipe file can move the study -- but every parallel
+                    # recipe of one invocation logs into one folder
+                    recipe_args["log_settings"] = log_settings
+                    if not recipe_args.get("logfolder"):
+                        recipe_args["logfolder"] = run.logfolder
+
                     # disable within recipe parallelism
                     recipe_eargs["parsessions"] = 1
 
@@ -256,6 +263,7 @@ def runCommand(command, args):
 
             else:
                 bargs["eargs"] = eargs
+                bargs["log_settings"] = log_settings
                 qx_commands.get(command).load_callable()(**bargs)
                 print(f"\n---> Successful completion of task at {datetime.now()}")
 
@@ -370,6 +378,7 @@ def runCommand(command, args):
             for name, result, comlog, _ in sorted(results, key=lambda x: x[0])
         ]
         run.final_report(stati)
+        run.write_status(stati)
 
         if any(failed for _, _, failed in stati):
             raise ge.CommandFailed(

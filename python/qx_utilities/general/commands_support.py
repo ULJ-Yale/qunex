@@ -488,6 +488,7 @@ extra_parameters = [
     "nprocess",
     "logging",
     "logfolder",
+    "logstatus",
     "basefolder",
     "sessionsfolder",
     "sperlist",

@@ -20,6 +20,7 @@ questions the log machinery asks before it writes anything::
         comlog: true             # write the per-call raw output logs
         outside_study: home      # home | cwd | <path>, for runs with no study
         layout: default          # default | legacy (<study>/processing/logs)
+                                 #          | nested (a folder per recipe step)
         skip_commands: []        # never log these commands
         log_commands: []         # always log these, whatever else says
         skip_types: []           # skip by registry command type, e.g. [utility]
@@ -79,7 +80,7 @@ LOGGING_MODES = {
 OUTSIDE_STUDY = ["home", "cwd"]
 
 # recognised log folder layouts
-LAYOUTS = ["default", "legacy"]
+LAYOUTS = ["default", "legacy", "nested"]
 
 
 @dataclass(frozen=True)
@@ -93,8 +94,10 @@ class LogSettings:
         comlog: write the per-call raw output logs.
         outside_study: where to log when the run has no study folder --
             ``home`` (``~/qunex_logs``), ``cwd``, or an explicit path.
-        layout: ``default`` (``<study>/logs/<stamp>_<command>``) or
-            ``legacy`` (``<study>/processing/logs``).
+        layout: ``default`` (``<study>/logs/<stamp>_<command>``),
+            ``legacy`` (``<study>/processing/logs``), or ``nested``, which is
+            ``default`` plus a subfolder per ``run_recipe`` step so each step
+            keeps its own runlog and comlogs.
     """
 
     enabled: bool = True
@@ -265,6 +268,38 @@ def apply_mode(settings, mode, source):
 
     enabled, runlog, comlog = LOGGING_MODES[key]
     return replace(settings, enabled=enabled, runlog=runlog, comlog=comlog)
+
+
+def apply_study_settings(settings, studyfolder, args):
+    """
+    Layer a study's ``logging:`` section over already resolved settings.
+
+    For the caller that learns which study it is in only *after* its settings
+    were resolved: ``run_recipe``, whose recipe file can name a study the
+    command line never mentioned. Only the keys that study actually states are
+    taken -- the rest of the resolution stands -- and ``--logging`` is applied
+    again on top, so the command line still wins over the file.
+
+    Parameters:
+        settings: the settings resolved without knowing the study.
+        studyfolder: the study folder, or None.
+        args: the parsed arguments; ``logging`` is read from them.
+
+    Returns:
+        the resulting :class:`LogSettings`.
+    """
+    section = (load_settings(studyfolder).get("logging") or {}) if studyfolder else {}
+    if not section:
+        return settings
+
+    stated = settings_to_log_settings(section)
+    overrides = {
+        field: getattr(stated, field)
+        for field in ("enabled", "runlog", "comlog", "outside_study", "layout")
+        if field in section
+    }
+
+    return apply_mode(replace(settings, **overrides), args.get("logging"), "--logging")
 
 
 def _legacy_skip(command, declared):

@@ -25,6 +25,12 @@ QuNex writes two kinds of log file:
 Both no-op when the resolved :class:`~qx_utilities.general.log.LogSettings`
 turn them off, so callers never have to ask whether logging is on.
 
+There is a third file, written only when it is asked for: the **status
+record**. A parent process that runs QuNex as a subprocess -- ``run_recipe``
+-- passes ``--logstatus=<path>``, and :meth:`RunContext.write_status` puts the
+run's report there as data. It is how a report crosses a process boundary
+without anyone grepping stdout.
+
 Note the import direction: nothing here may import ``general.core`` at module
 level -- ``general.core`` is a consumer of this package. The one helper needed
 from it, ``print_qunex_header``, is imported inside :meth:`RunContext.header`.
@@ -38,6 +44,8 @@ import re
 import subprocess
 import sys
 from datetime import datetime
+
+import yaml
 
 # the timestamp both file names and headers are stamped with
 TIMESTAMP = "%Y-%m-%d_%H.%M.%S.%f"
@@ -58,6 +66,30 @@ _lock = multiprocessing.Lock()
 
 # frames the call echo at the top of a runlog
 RULE = "================================================================="
+
+
+def digest(stati):
+    """
+    Split the collected statuses into what gets reported and the failure count.
+
+    Triples whose id is ``Unknown`` -- the commands that do not report a status
+    yet -- have nothing to say, so they are left out.
+
+    Parameters:
+        stati: the ``(session_id, report, failed)`` triples of a run.
+
+    Returns:
+        the ``(reported, failed)`` pair, where `failed` is the total number of
+        failures, or None when any reported session did not say.
+    """
+    reported = [
+        (sid, report, failed) for sid, report, failed in stati if "Unknown" not in sid
+    ]
+
+    if any(failed is None for _, _, failed in reported):
+        return reported, None
+
+    return reported, sum(failed for _, _, failed in reported)
 
 
 def comlog_name(*parts):
@@ -482,17 +514,11 @@ class RunContext:
         Returns:
             the report text.
         """
-        lines = ["\n\n---> Final report for command %s" % self.command]
+        reported, failed_total = digest(stati)
 
-        failed_total = 0
-        for sid, report, failed in stati:
-            if "Unknown" in sid:
-                continue
+        lines = ["\n\n---> Final report for command %s" % self.command]
+        for sid, report, _ in reported:
             lines.append("... %s ---> %s" % (sid, report))
-            if failed is None:
-                failed_total = None
-            elif failed_total is not None:
-                failed_total += failed
 
         if failed_total is None:
             lines.append("---> Success status not reported for some or all tasks")
@@ -507,3 +533,63 @@ class RunContext:
         print(text)
         self.write(text + "\n")
         return text
+
+    def write_status(self, stati):
+        """
+        Write the run's status record, when the caller asked for one.
+
+        ``--logstatus=<path>`` is how a parent process -- ``run_recipe``
+        today, a batch driver or CI tomorrow -- asks this run to say what it
+        did somewhere the parent can read it. The record carries the same
+        ``finish()`` triples :meth:`final_report` renders, so the contract
+        that holds inside the process is the one that crosses out of it, and
+        the parent has no reason to parse stdout.
+
+        Parameters:
+            stati: the ``(session_id, report, failed)`` triples of this run.
+
+        Returns:
+            the path written, or None when no status path was asked for.
+        """
+        path = self.args.get("logstatus")
+        if not path:
+            return None
+
+        reported, failed_total = digest(stati)
+
+        record = {
+            "command": self.command,
+            "timestamp": self.timestamp,
+            "runlog": self.path,
+            "failed": failed_total,
+            "sessions": [
+                {"id": sid, "summary": report, "failed": failed}
+                for sid, report, failed in reported
+            ],
+        }
+
+        folder = os.path.dirname(path)
+        if folder:
+            os.makedirs(folder, exist_ok=True)
+        with open(path, "w") as status:
+            yaml.safe_dump(record, status, sort_keys=False, default_flow_style=False)
+
+        return path
+
+
+def read_status(path):
+    """
+    Read a status record written by :meth:`RunContext.write_status`.
+
+    Parameters:
+        path: the file the record was asked for at.
+
+    Returns:
+        the record as a dict, or None when the run wrote none -- a command
+        that reports no status, or one that died before it could.
+    """
+    try:
+        with open(path) as status:
+            return yaml.safe_load(status)
+    except (OSError, yaml.YAMLError):
+        return None

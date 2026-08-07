@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-07-26T21:05:40.007467+00:00'
+generated_at: '2026-08-07T22:46:21.534638+00:00'
 source:
     id: core
 commands:
@@ -9602,6 +9602,10 @@ commands:
         default: ''
         description: The folder within which to save the log.
     -   name: eargs
+        type: null
+        default: null
+        description: null
+    -   name: log_settings
         type: null
         default: null
         description: null

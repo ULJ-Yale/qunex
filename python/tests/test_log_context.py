@@ -17,6 +17,7 @@ import subprocess
 
 import pytest
 
+import qx_utilities.general.core as gc
 import qx_utilities.general.log as gl
 
 STAMP = "2026-07-26_12.00.00.000000"
@@ -186,6 +187,70 @@ def test_the_final_report_ignores_unknown_but_reports_the_gap(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "Unknown" not in out
     assert "Successful completion of all tasks" in out
+
+
+# --------------------------------------------------------- finding the study
+
+
+@pytest.mark.parametrize("start", [".", "sessions", "sessions/S01"])
+def test_the_study_is_found_from_its_own_root_as_well_as_from_below(
+    tmp_path, monkeypatch, start
+):
+    """The walk up used to skip the folder it started in."""
+    (tmp_path / "sessions" / "S01").mkdir(parents=True)
+    (tmp_path / ".qunexstudy").write_text("")
+
+    monkeypatch.chdir(tmp_path / start)
+
+    assert gc.deduce_folders({})["basefolder"] == str(tmp_path)
+
+
+def test_a_folder_outside_any_study_still_deduces_none(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    assert gc.deduce_folders({})["basefolder"] is None
+
+
+# ---------------------------------------------------------- the status record
+
+
+def test_no_status_is_written_unless_a_path_was_asked_for(tmp_path):
+    run = context(tmp_path)
+
+    assert run.write_status([("S01", "done", 0)]) is None
+    assert not list(tmp_path.rglob("*.yaml"))
+
+
+def test_the_status_record_carries_the_triples_and_the_failure_count(tmp_path):
+    status = tmp_path / "status" / "01_hcp_pre_freesurfer.yaml"
+    run = context(tmp_path, args={"logstatus": str(status)})
+
+    run.write_status([("S01", "PreFS completed", 0), ("S02", "PreFS failed", 1)])
+
+    record = gl.read_status(str(status))
+    assert record["command"] == "test_command"
+    assert record["timestamp"] == STAMP
+    assert record["runlog"] == run.path
+    assert record["failed"] == 1
+    assert record["sessions"] == [
+        {"id": "S01", "summary": "PreFS completed", "failed": 0},
+        {"id": "S02", "summary": "PreFS failed", "failed": 1},
+    ]
+
+
+def test_a_command_that_reports_no_status_says_so_in_the_record(tmp_path):
+    status = tmp_path / "status.yaml"
+    run = context(tmp_path, args={"logstatus": str(status)})
+
+    run.write_status([("Unknown", "Unknown", None)])
+
+    record = gl.read_status(str(status))
+    assert record["sessions"] == []
+    assert record["failed"] == 0
+
+
+def test_reading_a_record_that_was_never_written_is_not_an_error(tmp_path):
+    assert gl.read_status(str(tmp_path / "missing.yaml")) is None
 
 
 # ------------------------------------------------------------------ comlogs
