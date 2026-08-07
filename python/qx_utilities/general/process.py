@@ -69,6 +69,11 @@ def proc_response(r):
     0.
     """
 
+    if r is None:
+        # a command that returns nothing at all -- the report is empty rather
+        # than None, so appending it to the log does not raise
+        return ("", ("Unknown", "Unknown", None))
+
     if type(r) is tuple:
         if len(r) == 2:
             if len(r[1]) == 2:
@@ -1495,6 +1500,16 @@ def run(qx_command, args, log_settings=None):
         # left is the digest
         run_context.final_report(stati)
 
+        # a failed session makes the command fail: the caller -- a shell, CI,
+        # or run_recipe -- learns it from the exit code rather than by reading
+        # the report
+        if any(failed for _, _, failed in stati):
+            raise ge.CommandFailed(
+                qx_command.name,
+                "Not all tasks completed fully",
+                "Please check the logs in %s" % (logfolder),
+            )
+
     # -----------------------------------------------------------------------
     #                                                  general scheduler code
     #
@@ -1506,6 +1521,5 @@ def run(qx_command, args, log_settings=None):
             sessions=sessions,
             args=args,
             parsessions=parsessions,
-            logfolder=os.path.join(logfolder, "batchlogs"),
-            logname=run_context.path,
+            run=run_context,
         )

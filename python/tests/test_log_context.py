@@ -309,6 +309,49 @@ def test_a_disabled_comlog_writes_nothing_and_still_works(tmp_path, kwargs):
     assert not list(tmp_path.rglob("*.log"))
 
 
+# -------------------------------------------- external commands (matlab, bash)
+
+
+def test_tee_writes_the_output_to_the_console_and_the_comlog(tmp_path, capfd):
+    run = context(tmp_path)
+
+    with run.comlog("teed", timestamp=STAMP) as comlog:
+        assert comlog.tee("echo out; echo err 1>&2") == 0
+
+    assert "out" in capfd.readouterr().out
+    with open(comlog.path) as f:
+        output = f.read()
+    assert "out" in output and "err" in output
+
+
+def test_run_and_log_names_the_comlog_by_the_exit_status(tmp_path):
+    run = context(tmp_path)
+
+    assert gl.run_and_log("exit 3", "a_matlab_command", run=run) == 3
+
+    assert [f.startswith("error_a_matlab_command") for f in os.listdir(run.comlogfolder)]
+    with open(run.path) as f:
+        assert "ERROR running a_matlab_command" in f.read()
+
+
+def test_run_and_log_records_a_successful_call_in_the_runlog(tmp_path):
+    run = context(tmp_path)
+
+    assert gl.run_and_log("echo hello", "a_bash_command", run=run) == 0
+
+    with open(run.path) as f:
+        runlog = f.read()
+    assert "Successful completion of task" in runlog
+    assert "done_a_bash_command" in runlog
+
+
+def test_run_and_log_still_runs_the_command_without_a_run(tmp_path, capfd):
+    assert gl.run_and_log("echo bare", "a_bash_command") == 0
+
+    assert "bare" in capfd.readouterr().out
+    assert not list(tmp_path.rglob("*.log"))
+
+
 def test_comlog_folder_is_deduced_for_callers_without_a_run(tmp_path):
     sessionsfolder = tmp_path / "sessions"
     sessionsfolder.mkdir()

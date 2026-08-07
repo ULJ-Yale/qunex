@@ -35,6 +35,7 @@ import multiprocessing
 import os
 import os.path
 import re
+import subprocess
 import sys
 from datetime import datetime
 
@@ -260,6 +261,38 @@ class ComContext:
         with contextlib.redirect_stdout(tee), contextlib.redirect_stderr(tee):
             yield self
 
+    def tee(self, command, shell=True):
+        """
+        Run `command`, writing its output to the console and the comlog at once.
+
+        A subprocess writes to the inherited descriptor, which
+        :meth:`capture_stdout` cannot see, and handing it :attr:`file` directly
+        would leave the user watching nothing. So the output is read line by
+        line and written to both.
+
+        Parameters:
+            command: the command to run, as a string or an argument list.
+            shell: whether to run it through a shell.
+
+        Returns:
+            the command's exit code.
+        """
+        process = subprocess.Popen(
+            command,
+            shell=shell,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+
+        for line in process.stdout:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            self.write(line)
+
+        process.stdout.close()
+        return process.wait()
+
     def close(self, status="done", remove=False):
         """
         Close the comlog and rename it to reflect how the call ended.
@@ -296,6 +329,40 @@ class ComContext:
     def __exit__(self, exc_type, exc, tb):
         self.close(status="done" if exc_type is None else "error")
         return False
+
+
+def run_and_log(command, name, run=None, shell=True):
+    """
+    Run an external command, keeping its output and recording its outcome.
+
+    The output goes to the console and to a comlog of this run, which is
+    renamed ``done_`` or ``error_`` by the exit status; the runlog gets the
+    one-line record. This is the matlab and bash equivalent of what
+    ``general.core.run_with_log`` does for a python command.
+
+    Parameters:
+        command: the command to run, as a string or an argument list.
+        name: what to call it in the logs.
+        run: the :class:`RunContext` that owns this run's logs, when there is
+            one; without it the command runs with no comlog and no record.
+        shell: whether to run it through a shell.
+
+    Returns:
+        the command's exit code.
+    """
+    comlog = (run.comlog(name) if run else ComContext(None, name)).open()
+    code = comlog.tee(command, shell=shell)
+    path = comlog.close(status="error" if code else "done")
+
+    if run:
+        status = (
+            "ERROR running %s" % name
+            if code
+            else "---> Successful completion of task at %s" % (datetime.now())
+        )
+        run.write("\n%s%s\n%s\n" % (name, " [log: %s]" % path if path else "", status))
+
+    return code
 
 
 class RunContext:

@@ -65,6 +65,15 @@ def test_a_plain_string_is_still_accepted_as_unknown_status(run, stati):
     assert status == ("Unknown", "Unknown", None)
 
 
+def test_a_command_that_returns_nothing_does_not_crash_the_run(run, stati):
+    # the four commands that print into a file and return None -- until they
+    # report a status, an empty report is what the runlog gets
+    r, status = gp.writelog(None, run, stati)
+
+    assert r == ""
+    assert status == ("Unknown", "Unknown", None)
+
+
 def test_a_disabled_run_records_stati_but_writes_nothing(tmp_path, stati):
     run = gl.RunContext(
         "test_command",

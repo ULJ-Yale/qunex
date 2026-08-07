@@ -103,25 +103,20 @@ def runCommand(command, args):
         # folder. The settings resolved above are what it builds it from.
         gp.run(qx_command, args, log_settings)
         return
-    
-    # -- is this a matlab command?
-    if qx_command.language == "matlab":
+
+    # -- one runlog per run, shared by every call this invocation makes; built
+    #    before any dispatch, so the matlab, bash and scheduler paths get it too
+    run = gl.RunContext(command, args, log_settings, folders, timestamp=timestamp)
+
+    # -- is this a matlab or a bash command?
+    if qx_command.language in ["matlab", "bash"]:
+        run.header()
         if "scheduler" in args:
-            gs.run_through_scheduler(
-                command, sessions=None, args=args, logfolder=folders["logfolder"]
-            )
+            gs.run_through_scheduler(command, sessions=None, args=args, run=run)
+        elif qx_command.language == "matlab":
+            gm.run(qx_command, args, run=run)
         else:
-            gm.run(qx_command, args)
-        return
-    
-    # -- is this a bash command?
-    if qx_command.language == "bash":
-        if "scheduler" in args:
-            gs.run_through_scheduler(
-                command, sessions=None, args=args, logfolder=folders["logfolder"]
-            )
-        else:
-            gb.run(qx_command, args)
+            gb.run(qx_command, args, run=run)
         return
 
     # -- any other (unsupported) language
@@ -177,11 +172,6 @@ def runCommand(command, args):
             verbose=False,
         )
 
-    logname = eargs.get("logname")
-
-    # -- one runlog per run, shared by every call this invocation makes
-    run = gl.RunContext(command, args, log_settings, folders, timestamp=timestamp)
-
     calls = []
 
     # -- run_recipe specifics
@@ -199,13 +189,13 @@ def runCommand(command, args):
                     all_sessions.append(session["session"])
 
             if "scheduler" in eargs:
+                run.header()
                 gs.run_through_scheduler(
                     command,
                     sessions=sessions,
                     args=args,
                     parsessions=parsessions,
-                    logfolder=folders["logfolder"],
-                    logname=logname,
+                    run=run,
                 )
 
             else:
@@ -261,26 +251,8 @@ def runCommand(command, args):
         else:
             # -- if using a scheduler schedule the whole run_recipe commmand
             if "scheduler" in eargs:
-                run_recipe_folder = folders["logfolder"]
-
-                # create folder if it does not exist
-                if not os.path.isdir(run_recipe_folder):
-                    os.makedirs(run_recipe_folder)
-
-                run_recipe_folder = os.path.join(run_recipe_folder)
-
-                # create folder if it does not exist
-                if not os.path.isdir(run_recipe_folder):
-                    os.makedirs(run_recipe_folder)
-
-                logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
-                    "run_recipe",
-                    timestamp,
-                )
-
-                gs.run_through_scheduler(
-                    command, args=args, logfolder=run_recipe_folder, logname=logname
-                )
+                run.header()
+                gs.run_through_scheduler(command, args=args, run=run)
 
             else:
                 bargs["eargs"] = eargs
@@ -320,23 +292,24 @@ def runCommand(command, args):
 
         # -- are we using a scheduler
         if "scheduler" in eargs:
+            run.header()
             gs.run_through_scheduler(
                 command,
                 sessions=sessions,
                 args=args,
                 parsessions=parsessions,
-                logfolder=folders["logfolder"],
-                logname=logname,
+                run=run,
             )
 
         # -- a basic call
         elif sessions is None:
             # commands that are not logged run bare, without a comlog
             if not log_settings.enabled:
-                # remove non-command args
-                args = {k: v for k, v in args.items() if qx_commands.get(command).has_arg(k)}
+                # drop the run-level parameters the command itself does not take
+                callable = qx_commands.get(command).load_callable()
+                gc._drop_run_parameters(callable, args)
                 # execute
-                qx_commands.get(command).load_callable()(**args)
+                callable(**args)
             # run with log
             else:
                 run.header()
@@ -382,24 +355,28 @@ def runCommand(command, args):
             calls, cores=parsessions, prepend="     ... ", run=run
         )
 
-        ok = True
-        report = ["\n---> Final report for command %s" % (command)]
-        results.sort(key=lambda x: x[0])
-        for name, result, targetLog, prepend in results:
-            if result:
-                ok = False
-            else:
-                result = "completed"
-            if targetLog:
-                report.append("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
-            else:
-                report.append("%s %s %s" % (prepend, name, result))
-        if ok:
-            report.append(f"\n---> Successful completion of task at {datetime.now()}")
+        # the same digest a processing command produces, from the same method:
+        # the results are adapted to the (id, summary, failed) contract, with
+        # the comlog path folded into the summary. This is a bridge -- when
+        # utility commands that run over sessions become processing commands
+        # they go through `gp.run` and this whole path is deleted.
+        stati = [
+            (
+                name,
+                "%s%s" % (result if result else "completed",
+                          " [log: %s]" % comlog if comlog else ""),
+                1 if result else 0,
+            )
+            for name, result, comlog, _ in sorted(results, key=lambda x: x[0])
+        ]
+        run.final_report(stati)
 
-        report = "\n".join(report)
-        print(report)
-        run.write(report + "\n")
+        if any(failed for _, _, failed in stati):
+            raise ge.CommandFailed(
+                command,
+                "Not all tasks completed fully",
+                "Please check the logs in %s" % (run.logfolder),
+            )
 
 
 def print_bash_help(cmd):

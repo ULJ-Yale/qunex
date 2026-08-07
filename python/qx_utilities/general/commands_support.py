@@ -480,6 +480,8 @@ extra_parameters = [
     "sessionid",
     "scheduler",
     "parelements",
+    "parsessions",
+    "parjobs",
     "scheduler_environment",
     "scheduler_workdir",
     "scheduler_sleep",

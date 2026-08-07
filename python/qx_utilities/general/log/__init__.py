@@ -42,6 +42,7 @@ from qx_utilities.general.log.context import (
     comlog_folder,
     comlog_name,
     log_folder,
+    run_and_log,
 )
 from qx_utilities.general.log.report import (
     INDENT,
@@ -79,4 +80,5 @@ __all__ = [
     "load_settings",
     "log_folder",
     "resolve_logging",
+    "run_and_log",
 ]
