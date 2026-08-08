@@ -59,9 +59,11 @@ from qx_utilities.general.log.settings import (
     LOGGING_MODES,
     USER_SETTINGS_PATHS,
     LogSettings,
+    active,
     apply_study_settings,
     load_settings,
     resolve_logging,
+    set_active,
 )
 
 __all__ = [
@@ -77,6 +79,7 @@ __all__ = [
     "RunContext",
     "SessionLog",
     "USER_SETTINGS_PATHS",
+    "active",
     "apply_study_settings",
     "call_echo",
     "comlog_folder",
@@ -87,4 +90,5 @@ __all__ = [
     "read_status",
     "resolve_logging",
     "run_and_log",
+    "set_active",
 ]

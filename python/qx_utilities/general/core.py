@@ -27,7 +27,6 @@ import shutil
 import subprocess
 import time
 import traceback
-import types
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 
@@ -1015,58 +1014,45 @@ def run_in_parallel(calls, cores=None, prepend="", run=None):
     return results
 
 
-def check_files(test_folder, spec_file, fields=None, report=None, append=False):
+def check_files(test_folder, spec_file, fields=None, report=None):
     """
-    ``check_files(test_folder, spec_file, fields=None, report=None, append=False)``
+    ``check_files(test_folder, spec_file, fields=None, report=None)``
 
     Check the test_folder for presence of files as specified in spec_file, which
     lists files one per line with space delimited paths. Additionally an array
     of key-value pairs can be provided. If present every instance of {<key>}
-    will be replaced by <value>. If report is specified, a report will be
-    written to that file. Where there might be two alternative options of results
-    e.g. difference because of AP/PA direction, then the alternative is to
-    be provided in the same line separated by a pipe '|'
+    will be replaced by <value>. Where there might be two alternative options of
+    results e.g. difference because of AP/PA direction, then the alternative is
+    to be provided in the same line separated by a pipe '|'
+
+    `report` is an open file handle -- the comlog of the call being checked --
+    or None. It used to accept a path as well, and told the two apart with the
+    Python 2 name ``types.FileType``; the only caller that ever passed one
+    passed the path of a comlog it did not hold open, so the path form and its
+    ``append`` companion are gone with it.
     """
 
-    # --- open the report if needed:
+    # --- the report goes to the caller's handle, when there is one
 
     if report:
-        if type(report) is types.FileType:
-            rout = report
-            file_close = False
-        else:
-            file_close = True
-            try:
-                if append:
-                    rout = open(report, "a")
-                else:
-                    rout = open(report, "w")
-            except Exception:
-                raise ge.CommandFailed(
-                    "check_files",
-                    "Report file could not be opened",
-                    "Failed to open a report file for writing: %s" % (report),
-                    "Please check your settings and paths!",
-                )
         print(
             "\n#-----------------------------------------\n# Full file check report\n# . denotes file present\n# X denotes file absent\n",
-            file=rout,
+            file=report,
         )
 
     # --- initial tests
 
     if not os.path.exists(test_folder):
-        print(
-            "The folder to be tested does not exist: %s \nPlease check your settings and paths!"
-            % (test_folder),
-            file=rout,
-        )
-        print(
-            "\n#-----------------=== End Full File Report ===----------------------",
-            file=rout,
-        )
-        if file_close:
-            rout.close()
+        if report:
+            print(
+                "The folder to be tested does not exist: %s \nPlease check your settings and paths!"
+                % (test_folder),
+                file=report,
+            )
+            print(
+                "\n#-----------------=== End Full File Report ===----------------------",
+                file=report,
+            )
         raise ge.CommandFailed(
             "check_files",
             "Folder to test does not exist",
@@ -1075,17 +1061,16 @@ def check_files(test_folder, spec_file, fields=None, report=None, append=False):
         )
 
     if not os.path.exists(spec_file):
-        print(
-            "The specification file to test folder against does not exist: %s\nPlease check your settings and paths!"
-            % (spec_file),
-            file=rout,
-        )
-        print(
-            "\n#-----------------=== End Full File Report ===----------------------",
-            file=rout,
-        )
-        if file_close:
-            rout.close()
+        if report:
+            print(
+                "The specification file to test folder against does not exist: %s\nPlease check your settings and paths!"
+                % (spec_file),
+                file=report,
+            )
+            print(
+                "\n#-----------------=== End Full File Report ===----------------------",
+                file=report,
+            )
         raise ge.CommandFailed(
             "check_files",
             "Specification file does not exist",
@@ -1096,7 +1081,8 @@ def check_files(test_folder, spec_file, fields=None, report=None, append=False):
 
     # --- read the spec
 
-    files = open(spec_file, "r").read()
+    with open(spec_file, "r") as spec:
+        files = spec.read()
 
     if fields:
         for key, value in fields:
@@ -1121,20 +1107,18 @@ def check_files(test_folder, spec_file, fields=None, report=None, append=False):
                 present.append(tfile)
                 file_missing = False
                 if report:
-                    print(". " + tfile, file=rout)
+                    print(". " + tfile, file=report)
                 break
         if file_missing:
             missing.append(tfile)
             if report:
-                print("X " + tfile, file=rout)
+                print("X " + tfile, file=report)
 
     if report:
         print(
             "\n#-----------------=== End Full File Report ===----------------------",
-            file=rout,
+            file=report,
         )
-        if file_close:
-            rout.close()
 
     status = len(missing) == 0
 

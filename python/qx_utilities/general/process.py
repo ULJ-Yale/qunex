@@ -1299,6 +1299,10 @@ def run(qx_command, args, log_settings=None):
         tag="long" if options["longitudinal"] else None,
     )
 
+    # the batch file can move the study, so the settings this run logs by are
+    # the context's, not necessarily the ones `gmri` resolved
+    gl.set_active(run_context.settings)
+
     logfolder = run_context.logfolder
     comlogfolder = run_context.comlogfolder
     specfolder = os.path.join(studyfolders["sessionsfolder"], "specs")

@@ -13,8 +13,10 @@ The per-session report built by QuNex processing commands.
 QuNex keeps two layers of logs. This module owns the outer one, the **runlog**:
 the human readable summary of what a command did to one session, which
 ``general.process`` writes to ``Log-<command>-<timestamp>.log`` and prints to
-the console. The inner layer, the **comlog**, is the raw stdout/stderr of each
-external pipeline call and is written separately by ``processing.core``.
+the console. The inner layer, the **comlog**, holds one external pipeline
+call's raw stdout/stderr and is written by ``processing.core``; while one is
+attached (:meth:`ReportLog.stream_to`) it also receives everything recorded
+here, so it reads as a complete record of that call.
 
 Commands used to build the runlog by appending to a local string named ``r``
 and passing it into (and back out of) every helper. The classes here hold that
@@ -70,6 +72,13 @@ RAW = "raw"
 INDENT = "     "
 
 
+def _render(depth, severity, message):
+    """Spell one record the way the runlog reads it."""
+    if severity == RAW:
+        return message
+    return "\n" + INDENT * depth + PREFIXES[severity] + message
+
+
 class ReportLog:
     """
     Accumulating report text, spelled in the QuNex runlog vocabulary.
@@ -84,20 +93,57 @@ class ReportLog:
         self._records = []
         self._depth = 0
         self._errors = 0
+        self._comlog = None
 
     # ------------------------------------------------------------------ text
 
     @property
     def text(self) -> str:
         """The report rendered so far."""
-        return "".join(
-            message if severity == RAW
-            else "\n" + INDENT * depth + PREFIXES[severity] + message
-            for depth, severity, message in self._records
-        )
+        return "".join(_render(*record) for record in self._records)
 
     def __str__(self) -> str:
         return self.text
+
+    def _record(self, depth, severity, message) -> None:
+        """Keep one record, and echo it into the attached comlog."""
+        self._records.append((depth, severity, message))
+        self.trace(_render(depth, severity, message))
+
+    # --------------------------------------------------------- the comlog
+
+    def trace(self, text) -> None:
+        """
+        Write `text` verbatim to the attached comlog and nowhere else.
+
+        The comlog's counterpart to :meth:`raw`: text that belongs in the raw
+        record of one external call but not in the run's report. Dropped when
+        no comlog is attached -- including when comlogs are switched off.
+        """
+        if self._comlog is not None:
+            self._comlog.write(text)
+
+    @contextmanager
+    def stream_to(self, comlog):
+        """
+        Attach `comlog` for the duration of the block.
+
+        :meth:`trace` goes to it, and everything recorded inside is echoed
+        into it as it is recorded, so the comlog reads as a complete record of
+        the call rather than only the tool's raw output. A ``ReportLog``
+        outlives any single comlog -- one report spans one comlog per external
+        call -- so the attachment is scoped rather than owned: outside a block
+        :meth:`trace` drops and every other method behaves as it always has.
+
+        Any outer attachment is restored on the way out, however the block
+        exits, so nesting and exceptions are safe.
+        """
+        outer = self._comlog
+        self._comlog = comlog
+        try:
+            yield self
+        finally:
+            self._comlog = outer
 
     @property
     def has_errors(self) -> bool:
@@ -109,6 +155,7 @@ class ReportLog:
         if isinstance(other, ReportLog):
             self._records += other._records
             self._errors += other._errors
+            self.trace(other.text)
         else:
             self.raw(other)
 
@@ -141,7 +188,7 @@ class ReportLog:
     def _emit(self, level, message, args, depth=0):
         if args:
             message = message % args
-        self._records.append((max(0, self._depth + depth), level, message))
+        self._record(max(0, self._depth + depth), level, message)
 
     def step(self, message: str, *args, depth: int = 0) -> None:
         """Record a processing step: ``---> <message>``."""
@@ -170,7 +217,7 @@ class ReportLog:
 
     def raw(self, text: str) -> None:
         """Append text verbatim, with no prefix, no indent and no added newline."""
-        self._records.append((0, RAW, text))
+        self._record(0, RAW, text)
 
     @contextmanager
     def framed(self, title: str):

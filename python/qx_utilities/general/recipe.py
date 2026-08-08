@@ -393,6 +393,10 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
         run_command, hints, log_settings, folders, timestamp=timestamp
     )
 
+    # the recipe's study may have restated them, so the deep helpers have to be
+    # told again what this run resolved to
+    gl.set_active(log_settings)
+
     print(f"\n---> Saving the run_recipe runlog to: {run.logfolder}")
 
     # a recipe that cannot log is a recipe that fails, as documented above --

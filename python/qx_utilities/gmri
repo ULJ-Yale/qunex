@@ -96,6 +96,10 @@ def runCommand(command, args):
         command, args, qx_command=qx_command, studyfolder=folders["basefolder"]
     )
 
+    # the helpers at the bottom of `processing.core` hold no context; this is
+    # the only way the answer reaches them
+    gl.set_active(log_settings)
+
     # -- is this a processing command?
     if qx_command.language == "python" and qx_command.type.startswith("processing"):
         # process.run builds its own RunContext: it merges the batch file into

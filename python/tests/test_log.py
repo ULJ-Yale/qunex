@@ -317,3 +317,66 @@ def test_add_carries_the_error_state_of_a_sub_log():
     _, status = log.finish("bold 1 failed")
 
     assert status[2] == 1
+
+
+# ---------------------------------------------------- the second stream
+
+
+class _Comlog:
+    """A ComContext stand-in: all `trace` and the echo need is `write`."""
+
+    def __init__(self):
+        self.written = ""
+
+    def write(self, text):
+        self.written += text
+
+
+def test_trace_is_dropped_without_an_attachment():
+    log = ReportLog()
+    log.trace("raw output nobody is listening for")
+
+    assert log.text == ""
+
+
+def test_trace_reaches_the_attached_comlog_and_not_the_report():
+    log = ReportLog()
+    comlog = _Comlog()
+
+    with log.stream_to(comlog):
+        log.trace("the tool's own output\n")
+
+    assert comlog.written == "the tool's own output\n"
+    assert log.text == ""
+
+
+def test_the_report_is_echoed_into_the_attached_comlog():
+    log = ReportLog()
+    comlog = _Comlog()
+
+    log.step("before the call")
+    with log.stream_to(comlog):
+        log.step("running the tool")
+        log.detail("with a detail")
+    log.step("after the call")
+
+    # what was recorded inside the block, spelled exactly as the runlog has it
+    assert comlog.written == "\n---> running the tool\n     ... with a detail"
+    # and the report itself is untouched by the attachment
+    assert "before the call" in log.text and "after the call" in log.text
+
+
+def test_the_attachment_is_restored_even_when_the_block_raises():
+    log = ReportLog()
+    outer, inner = _Comlog(), _Comlog()
+
+    with log.stream_to(outer):
+        with pytest.raises(ValueError):
+            with log.stream_to(inner):
+                log.step("nested")
+                raise ValueError("the call failed")
+        log.step("back outside")
+
+    assert inner.written == "\n---> nested"
+    assert outer.written == "\n---> back outside"
+    assert log._comlog is None

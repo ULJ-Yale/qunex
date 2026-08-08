@@ -42,6 +42,11 @@ Two tiers named in the design are not implemented here: batch file and recipe
 settings sit between the study file and the command line, and there is no
 carrier for them until the merged-options model exists. They belong in
 :func:`resolve_logging`, between steps 3 and 6, and nowhere else.
+
+The result is handed down through the drivers, but the helpers at the bottom
+of ``processing.core`` are reached by 110 call sites that pass a folder and no
+context at all. :func:`set_active` and :func:`active` are how the answer
+reaches them without those call sites moving.
 """
 
 import os
@@ -300,6 +305,47 @@ def apply_study_settings(settings, studyfolder, args):
     }
 
     return apply_mode(replace(settings, **overrides), args.get("logging"), "--logging")
+
+
+# The settings this process resolved. A module-level value models exactly what
+# this is: one QuNex invocation per process, resolved once before any dispatch
+# and never changed afterwards. It exists for the deep helpers in
+# `processing.core`, which hold no context and cannot be handed one without
+# moving 110 call sites.
+_active = None
+
+
+def set_active(settings):
+    """
+    Record the settings this process resolved.
+
+    Called once per invocation, immediately after the settings are known:
+    ``gmri`` after :func:`resolve_logging`, ``process.run`` after it has built
+    its context from them, and ``run_recipe`` after
+    :func:`apply_study_settings`.
+
+    Parameters:
+        settings: the resolved :class:`LogSettings`.
+    """
+    global _active
+    _active = settings
+
+
+def active():
+    """
+    The settings this process resolved, for helpers that hold no context.
+
+    Returns:
+        the :class:`LogSettings` :func:`set_active` was given, or the defaults
+        -- everything on -- when nothing set them. So a path that never sets
+        them (a unit test, a direct import) behaves as the tree did before,
+        and the failure mode is "logs too much", never "logs nothing".
+
+    Processing workers come from a ``ProcessPoolExecutor``, which forks on
+    Linux, so they inherit the value; scheduler jobs re-enter ``gmri`` and
+    re-resolve. A spawn-start platform would fall back to the defaults.
+    """
+    return _active if _active is not None else LogSettings()
 
 
 def _legacy_skip(command, declared):

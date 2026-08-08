@@ -18,9 +18,9 @@ and can not be called externally.
 # Copyright (c) Grega Repovs. All rights reserved.
 
 
+import contextlib
 import os
 import os.path
-import shutil
 import re
 import subprocess
 import glob
@@ -29,6 +29,7 @@ from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
+import qx_utilities.general.log as gl
 
 
 def is_number(s):
@@ -50,6 +51,31 @@ def _note(log, text):
     """
     if log is not None:
         log.raw(text)
+
+
+@contextlib.contextmanager
+def _streaming(log, comlog):
+    """
+    Attach `comlog` to the report log for the block, when there is one.
+
+    Everything recorded inside is echoed into the comlog as well, so the
+    comlog reads as a complete record of the call rather than only the tool's
+    raw output. `log` is optional here for the same reason it is in
+    :func:`_note`.
+    """
+    if log is None:
+        yield
+    else:
+        with log.stream_to(comlog):
+            yield
+
+
+def _trace(log, comlog, text):
+    """Write verbatim text to the comlog, through `log` when there is one."""
+    if log is not None:
+        log.trace(text)
+    else:
+        comlog.write(text)
 
 
 class ExternalFailed(Exception):
@@ -746,17 +772,20 @@ def check_run(
     full_test=None,
     command=None,
     log=None,
-    log_file=None,
+    comlog=None,
     verbose=True,
     overwrite=False,
 ):
     """
-    ``check_run(tfile, full_test=None, command=None, log=None, log_file=None, verbose=True, overwrite=False)``
+    ``check_run(tfile, full_test=None, command=None, log=None, comlog=None, verbose=True, overwrite=False)``
 
     The function checks the presence of a test file.
     If specified it runs also full test.
 
     What was checked is noted in `log`, when one is given and `verbose` is set.
+    `comlog` is the ``ComContext`` of the call being checked, when the caller
+    holds one: the full file check writes its report into it, and a call with
+    no test file is judged by what it left in it.
 
     Returns:
         tuple: ``(passed, report, failed)``, where `passed` is
@@ -788,7 +817,7 @@ def check_run(
                     full_test["tfolder"],
                     full_test["tfile"],
                     fields=full_test["fields"],
-                    report=log_file,
+                    report=comlog.file if comlog else None,
                 )
                 if filesmissing:
                     if verbose:
@@ -822,17 +851,18 @@ def check_run(
         passed = "done"
         failed = 0
 
-        # check log contents for errors
-        if log_file is not None:
-            log = open(log_file, "r")
-            lines = log.readlines()
-
-            for line in lines:
-                if any(err in line for err in ["Error ", "Error:", "ERROR ", "ERROR:"]):
-                    report = "%s not finished" % (command)
-                    passed = None
-                    failed = 1
-                    break
+        # check comlog contents for errors
+        if comlog is not None and comlog.path:
+            with open(comlog.path, "r") as written:
+                for line in written:
+                    if any(
+                        err in line
+                        for err in ["Error ", "Error:", "ERROR ", "ERROR:"]
+                    ):
+                        report = "%s not finished" % (command)
+                        passed = None
+                        failed = 1
+                        break
 
     else:
         if verbose and tfile is not None:
@@ -844,35 +874,85 @@ def check_run(
     return passed, report, failed
 
 
-def close_log(logfile, logname, logfolders, status, remove, log=None):
+def _open_comlog(logfolder, task, logtags, thread, timestamp):
     """
-    Close a comlog, rename it to its status and note where it ended up.
+    Open the comlog for one external call, and say where the copies go.
+
+    `logfolder` is one folder or the list of them ``do_options_check`` builds:
+    the first is where the comlog is written, the rest are where
+    :func:`close_log` maps it once it is finished.
+
+    Whether a file is opened at all is the resolved settings' call -- with
+    comlogs switched off nothing is created, :attr:`ComContext.file` stays
+    None, and the child process inherits the console.
 
     Returns:
-        str | None: the path of the final log file, or None when it was removed.
+        tuple: ``(comlog, logfolders)`` -- the open ``ComContext`` and the
+        extra folders to map it into.
     """
-    # -- close the log
-    if logfile:
-        logfile.close()
+    if type(logfolder) in [list, set, tuple]:
+        logfolders = list(logfolder)
+    else:
+        logfolders = [logfolder]
+    folder = logfolders.pop(0) if logfolders else ""
 
-    # -- do we delete it
-    if status == "done" and remove:
-        os.remove(logname)
+    if isinstance(logtags, (str, bytes)) or logtags is None:
+        logtags = [logtags]
+
+    settings = gl.active()
+    comlog = gl.ComContext(
+        folder,
+        task,
+        *logtags,
+        thread=thread,
+        timestamp=timestamp,
+        enabled=settings.enabled and settings.comlog,
+    )
+
+    try:
+        comlog.open()
+    except OSError:
+        raise ExternalFailed(
+            "\n\nERROR: Could not create folder for logfile [%s]!" % (folder)
+        )
+
+    return comlog, logfolders
+
+
+def close_log(comlog, logfolders, status, remove, log=None):
+    """
+    Close a comlog by status and map it into the extra folders.
+
+    The lifecycle -- the ``tmp_`` to ``done_``/``error_``/``incomplete_``
+    rename, and the removal -- belongs to the ``ComContext`` that owns the
+    file. What stays here is the fan-out into `logfolders`, because each
+    destination and each failure has to be noted in the report log, and a
+    ``ComContext`` deliberately knows nothing about report logs: the bash and
+    matlab runners hold one with no log at all.
+
+    Parameters:
+        comlog (ComContext): the comlog to close.
+        logfolders (list): extra folders to map the finished comlog into.
+        status (str): ``done``, ``error`` or ``incomplete``.
+        remove (bool): whether to delete a comlog that finished cleanly.
+        log (ReportLog): the report log to note the outcome in.
+
+    Returns:
+        str | None: the path of the final log file, or None when it was
+        removed or no comlog was written.
+    """
+    tfile = comlog.close(status=status, remove=status == "done" and remove)
+    if tfile is None:
         return None
 
-    # -- rename it
-    sfolder, sname = os.path.split(logname)
-    tname = re.sub("^tmp", status, sname)
-    tfile = os.path.join(sfolder, tname)
-    shutil.move(logname, tfile)
     _note(log, "\n---> logfile: %s" % (tfile))
 
     # -- do we have multiple logfolders?
+    tname = os.path.basename(tfile)
     for logfolder in logfolders:
         nfile = os.path.join(logfolder, tname)
-        if not os.path.exists(logfolder):
-            os.makedirs(logfolder)
         try:
+            os.makedirs(logfolder, exist_ok=True)
             gc.link_or_copy(tfile, nfile)
             _note(log, "\n---> logfile: %s" % (nfile))
         except Exception:
@@ -944,7 +1024,6 @@ def run_external_for_file(
     """
 
     endlog = None
-    nf = None
 
     # timestamp
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -977,102 +1056,79 @@ def run_external_for_file(
     if overwrite or checkfile is None or not os.path.exists(checkfile):
         _note(log, "\n\n%s" % (description))
 
-        # --- set up parameters
-        basestring = (str, bytes)
-        if isinstance(logtags, basestring) or logtags is None:
-            logtags = [logtags]
-
-        logname = [task] + logtags + [thread, logstamp]
-        logname = [e for e in logname if e]
-        logname = "_".join(logname)
-
-        logfolders = []
-        if type(logfolder) in [list, set, tuple]:
-            logfolders = list(logfolder)
-            logfolder = logfolders.pop(0)
-
-        if not os.path.exists(logfolder):
-            try:
-                os.makedirs(logfolder)
-            except Exception:
-                raise ExternalFailed(
-                    "\n\nERROR: Could not create folder for logfile [%s]!"
-                    % (logfolder)
-                )
-
-        tmplogfile = os.path.join(logfolder, "tmp_%s.log" % (logname))
+        comlog, logfolders = _open_comlog(logfolder, task, logtags, thread, logstamp)
 
         # --- report
-        print("You can follow command's progress in:")
-        print(tmplogfile)
-        print("------------------------------------------------------------")
+        if comlog.path:
+            print("You can follow command's progress in:")
+            print(comlog.path)
+            print("------------------------------------------------------------")
 
-        # --- run command
-        try:
-            # append mode
-            nf = open(tmplogfile, "a")
+        with _streaming(log, comlog):
+            # add command call to start of the log
+            _trace(log, comlog, print_comm + "\n")
 
-            # --- open log file
-            if not os.path.exists(tmplogfile):
-                message = "\n\nERROR: Could not create a temporary log file %s!" % (
-                    tmplogfile
+            # --- run command
+            try:
+                if shell:
+                    process = subprocess.run(
+                        run,
+                        shell=True,
+                        stdout=comlog.file,
+                        stderr=comlog.file,
+                        check=False,
+                    )
+                else:
+                    process = subprocess.run(
+                        run, stdout=comlog.file, stderr=comlog.file, check=False
+                    )
+            except Exception:
+                message = (
+                    "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
+                    + comm
                 )
-                _note(log, message)
+                close_log(comlog, logfolders, "error", remove, log)
                 raise ExternalFailed(message)
 
-            # add command call to start of the log
-            print(print_comm, file=nf)
-            nf.flush()
-
-            if shell:
-                process = subprocess.run(
-                    run, shell=True, stdout=nf, stderr=nf, check=False
+            # --- check results
+            if process.returncode != 0:
+                message = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n%s" % (
+                    description,
+                    process.stderr.decode() if process.stderr else "Unknown error",
+                    comm,
                 )
+                close_log(comlog, logfolders, "error", remove, log)
+                raise ExternalFailed(message)
+
+            status, _, failed = check_run(
+                checkfile,
+                full_test=full_test,
+                command=task,
+                log=log,
+                comlog=comlog,
+                verbose=verbose,
+            )
+
+            if status is None:
+                _note(
+                    log,
+                    "\n\nTry running the command directly for more detailed error information:\n"
+                    + comm,
+                )
+
+            # --- End
+            if status and status == "done":
+                _trace(
+                    log,
+                    comlog,
+                    "\n\n---> Successful completion of task at %s\n\n"
+                    % (datetime.now()),
+                )
+                endlog = close_log(comlog, logfolders, "done", remove, log)
+            elif status and status == "incomplete":
+                endlog = close_log(comlog, logfolders, "incomplete", remove, log)
             else:
-                process = subprocess.run(run, stdout=nf, stderr=nf, check=False)
-        except Exception:
-            message = (
-                "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
-                + comm
-            )
-            close_log(nf, tmplogfile, logfolders, "error", remove, log)
-            raise ExternalFailed(message)
-
-        # --- check results
-        if process.returncode != 0:
-            message = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n%s" % (
-                description,
-                process.stderr.decode() if process.stderr else "Unknown error",
-                comm,
-            )
-            close_log(nf, tmplogfile, logfolders, "error", remove, log)
-            raise ExternalFailed(message)
-
-        status, _, failed = check_run(
-            checkfile,
-            full_test=full_test,
-            command=task,
-            log=log,
-            log_file=tmplogfile,
-            verbose=verbose,
-        )
-
-        if status is None:
-            _note(
-                log,
-                "\n\nTry running the command directly for more detailed error information:\n"
-                + comm,
-            )
-
-        # --- End
-        if status and status == "done":
-            print(f"\n\n---> Successful completion of task at {datetime.now()}\n", file=nf)
-            endlog = close_log(nf, tmplogfile, logfolders, "done", remove, log)
-        else:
-            if status and status == "incomplete":
-                endlog = close_log(nf, tmplogfile, logfolders, "incomplete", remove, log)
-            else:
-                endlog = close_log(nf, tmplogfile, logfolders, "error", remove, log)
+                endlog = close_log(comlog, logfolders, "error", remove, log)
 
     else:
         if os.path.getsize(checkfile) < 100:
@@ -1083,11 +1139,13 @@ def run_external_for_file(
                 log,
                 overwrite=True,
                 thread=thread,
+                remove=remove,
                 task=task,
                 logfolder=logfolder,
                 logtags=logtags,
                 full_test=full_test,
                 shell=shell,
+                verbose=verbose,
             )
         else:
             status, _, failed = check_run(checkfile, full_test)
@@ -1123,7 +1181,9 @@ def run_script_through_shell(
     Run a command through the shell, capturing its output to a comlog.
 
     Writes the command's stdout/stderr to a temporary comlog which is renamed to
-    a ``done_`` or ``error_`` log depending on the exit status.
+    a ``done_`` or ``error_`` log depending on the exit status. With comlogs
+    switched off no file is written and the command's output is left on the
+    console.
 
     Parameters:
         run (str): the shell command to run.
@@ -1132,7 +1192,8 @@ def run_script_through_shell(
         thread (str): identifier used in the log file name.
         remove (bool): whether to remove the done log on success.
         task (str): task name used in the log file name.
-        logfolder (str): folder to write the comlog into.
+        logfolder (str | list): folder to write the comlog into, or the list of
+            folders to write it into and map it to; created when missing.
         logtags (str | list): tag(s) used in the log file name.
 
     Returns:
@@ -1144,41 +1205,33 @@ def run_script_through_shell(
     """
 
     _note(log, "\n\n%s" % (description))
-    basestring = (str, bytes)
-    if isinstance(logtags, basestring):
-        logtags = [logtags]
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logname = [task] + logtags + [thread, logstamp]
-    logname = [e for e in logname if e]
-    logname = "_".join(logname)
+    comlog, logfolders = _open_comlog(logfolder, task, logtags, thread, logstamp)
 
-    tmplogfile = os.path.join(logfolder, "tmp_%s.log" % (logname))
-    donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
-    errlogfile = os.path.join(logfolder, "error_%s.log" % (logname))
-    endlog = None
+    with _streaming(log, comlog):
+        _trace(
+            log,
+            comlog,
+            "\n#-------------------------------\n# Running: %s\n"
+            "#-------------------------------\n" % (description),
+        )
 
-    nf = open(tmplogfile, "w")
-    print(
-        "\n#-------------------------------\n# Running: %s\n#-------------------------------"
-        % (description),
-        file=nf,
-    )
+        with subprocess.Popen(
+            run, shell=True, stdout=comlog.file, stderr=comlog.file
+        ) as process:
+            ret = process.wait()
 
-    process = subprocess.Popen(run, shell=True, stdout=nf, stderr=nf)
-    ret = process.wait()
-    if ret:
-        nf.close()
-        shutil.move(tmplogfile, errlogfile)
-        raise ExternalFailed("\n\nERROR: Failed with error %s\n" % (ret))
-    else:
-        print(f"\n\n---> Successful completion of task at {datetime.now()}\n", file=nf)
-        nf.close()
-        if remove:
-            os.remove(tmplogfile)
-        else:
-            shutil.move(tmplogfile, donelogfile)
-            endlog = donelogfile
+        if ret:
+            close_log(comlog, logfolders, "error", remove, log)
+            raise ExternalFailed("\n\nERROR: Failed with error %s\n" % (ret))
+
+        _trace(
+            log,
+            comlog,
+            "\n\n---> Successful completion of task at %s\n\n" % (datetime.now()),
+        )
+        endlog = close_log(comlog, logfolders, "done", remove, log)
         _note(log, " --- done")
 
     return endlog

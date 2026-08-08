@@ -21,6 +21,8 @@ import os
 import pytest
 
 import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import ReportLog
 
@@ -186,3 +188,218 @@ def test_run_external_skips_a_completed_check_file(tmp_path, log):
 
     assert (endlog, status, failed) == (None, "skip done", 0)
     assert log.text.endswith("\n... would run --- already completed")
+
+
+# ----------------------------------------------------- the full file check
+
+
+def _full_test(tmp_path, *files):
+    """A `full_test` spec listing `files`, and the folder they are checked in."""
+    target = tmp_path / "results"
+    target.mkdir(exist_ok=True)
+    spec = tmp_path / "spec.txt"
+    spec.write_text("# what a finished run leaves behind\n" + "\n".join(files) + "\n")
+    return {"tfolder": str(target), "tfile": str(spec), "fields": None}, target
+
+
+def test_check_files_writes_its_report_into_an_open_handle(tmp_path):
+    """
+    `check_files` is handed the comlog the call it is checking wrote into.
+
+    It used to accept either a handle or a path and tell them apart with
+    ``types.FileType`` -- a Python 2 name that has raised ``AttributeError``
+    for every truthy `report` since the tree moved to Python 3 in 2019.
+    """
+    full_test, target = _full_test(tmp_path, "there.nii.gz", "missing.nii.gz")
+    (target / "there.nii.gz").write_text("x")
+
+    with open(tmp_path / "comlog.log", "w") as comlog:
+        status, present, missing = gc.check_files(
+            full_test["tfolder"], full_test["tfile"], report=comlog
+        )
+
+    assert (status, len(present), len(missing)) == (False, 1, 1)
+
+    written = (tmp_path / "comlog.log").read_text()
+    assert "Full file check report" in written
+    assert ". " + os.path.join(str(target), "there.nii.gz") in written
+    assert "X " + os.path.join(str(target), "missing.nii.gz") in written
+
+
+def test_check_files_needs_no_report_at_all(tmp_path):
+    """A disabled comlog hands no handle down; the check still runs."""
+    full_test, target = _full_test(tmp_path, "gone.nii.gz")
+
+    with pytest.raises(ge.CommandFailed):
+        gc.check_files(str(tmp_path / "nowhere"), full_test["tfile"])
+
+
+def test_check_run_completes_a_passing_full_file_check(tmp_path, log):
+    """
+    The opt-in full file check works -- and says so.
+
+    Before this it raised inside `check_files`, was swallowed by `check_run`'s
+    ``except Exception``, and reported ``incomplete`` with a failure for every
+    user who turned it on.
+    """
+    tfile = tmp_path / "done.nii.gz"
+    tfile.write_text("x")
+    full_test, target = _full_test(tmp_path, "one.nii.gz", "two.nii.gz")
+    (target / "one.nii.gz").write_text("x")
+    (target / "two.nii.gz").write_text("x")
+
+    comlog = gl.ComContext(str(tmp_path / "comlogs"), "check").open()
+    passed, report, failed = pc.check_run(
+        str(tfile), full_test=full_test, command="HCP Test", log=log, comlog=comlog
+    )
+    path = comlog.close()
+
+    assert (passed, failed) == ("done", 0)
+    assert report == "HCP Test finished, full file check complete"
+    assert "Full file check passed" in log.text
+    with open(path) as written:
+        assert "Full file check report" in written.read()
+
+
+def test_check_run_reports_an_incomplete_full_file_check(tmp_path, log):
+    """A missing file is `incomplete`, and the report names it."""
+    tfile = tmp_path / "done.nii.gz"
+    tfile.write_text("x")
+    full_test, target = _full_test(tmp_path, "one.nii.gz", "two.nii.gz")
+    (target / "one.nii.gz").write_text("x")
+
+    comlog = gl.ComContext(str(tmp_path / "comlogs"), "check").open()
+    passed, report, failed = pc.check_run(
+        str(tfile), full_test=full_test, command="HCP Test", log=log, comlog=comlog
+    )
+    path = comlog.close()
+
+    assert (passed, failed) == ("incomplete", 1)
+    assert report == "HCP Test finished, full file check incomplete"
+    assert "two.nii.gz" in log.text
+    with open(path) as written:
+        assert "X " + os.path.join(str(target), "two.nii.gz") in written.read()
+
+
+# ------------------------------------------------- the ported comlog lifecycle
+
+
+@pytest.fixture
+def default_settings():
+    """Leave the process-wide settings as they were found."""
+    yield
+    gl.set_active(None)
+
+
+def test_run_external_maps_the_comlog_into_the_extra_folders(tmp_path, log):
+    """
+    The fan-out stays in `close_log`, around the ComContext.
+
+    Each destination is noted in the report -- and a destination that cannot be
+    written is a warning, not a failure: the comlog itself is already safe.
+    """
+    checkfile = tmp_path / "made.txt"
+    blocked = tmp_path / "blocked"
+    blocked.write_text("not a folder")
+
+    endlog, status, failed = pc.run_external_for_file(
+        str(checkfile),
+        "touch %s" % checkfile,
+        "... making a file",
+        log,
+        task="touch",
+        logfolder=[str(tmp_path / "comlogs"), str(tmp_path / "session"), str(blocked)],
+        remove=False,
+    )
+
+    assert (status, failed) == ("touch done", 0)
+    assert os.path.exists(os.path.join(str(tmp_path / "session"), os.path.basename(endlog)))
+    assert "---> logfile: %s" % endlog in log.text
+    assert "could not map logfile to: %s" % os.path.join(str(blocked), os.path.basename(endlog)) in log.text
+
+
+def test_run_external_writes_the_report_into_the_comlog(tmp_path, log):
+    """The comlog holds the call, the tool's output and the report around it."""
+    checkfile = tmp_path / "made.txt"
+
+    endlog, _, _ = pc.run_external_for_file(
+        str(checkfile),
+        "echo hello && touch %s" % checkfile,
+        "... making a file",
+        log,
+        task="touch",
+        logfolder=str(tmp_path / "comlogs"),
+        remove=False,
+    )
+
+    with open(endlog) as written:
+        comlog = written.read()
+
+    # the call echo, the child's own output, and the report `check_run` recorded
+    assert "Running external command via QuNex" in comlog
+    assert "hello" in comlog
+    assert "---> touch test file [made.txt] present" in comlog
+    assert "Successful completion of task" in comlog
+
+
+def test_comlogs_off_writes_no_file_and_leaves_the_child_on_the_console(
+    tmp_path, capfd, log, default_settings
+):
+    """
+    `logging: comlog: false` is honoured here for the first time.
+
+    The child's output is not thrown away with it: ``--logging=runlog`` means
+    "write no comlog files", so `stdout` stays inherited rather than going to
+    ``DEVNULL``.
+    """
+    gl.set_active(gl.LogSettings(comlog=False))
+    checkfile = tmp_path / "made.txt"
+    comlogs = tmp_path / "comlogs"
+
+    endlog, status, failed = pc.run_external_for_file(
+        str(checkfile),
+        "echo the-child-spoke && touch %s" % checkfile,
+        "... making a file",
+        log,
+        task="touch",
+        logfolder=str(comlogs),
+        remove=False,
+    )
+
+    assert (endlog, status, failed) == (None, "touch done", 0)
+    assert not os.path.exists(comlogs)
+    assert "the-child-spoke" in capfd.readouterr().out
+    assert "---> logfile: " not in log.text
+
+
+def test_run_script_through_shell_takes_a_folder_list_and_creates_it(tmp_path, log):
+    """
+    It could take neither before the port: `os.path.join` raised on a list, and
+    the folder had to exist. Its one call site never passes a list, which is
+    why nobody hit it.
+    """
+    comlogs = tmp_path / "comlogs"
+
+    endlog = pc.run_script_through_shell(
+        "echo working", "... running a script", log,
+        task="script", logfolder=[str(comlogs), str(tmp_path / "session")],
+        remove=False,
+    )
+
+    assert os.path.basename(endlog).startswith("done_")
+    assert os.path.exists(os.path.join(str(tmp_path / "session"), os.path.basename(endlog)))
+    with open(endlog) as written:
+        assert "working" in written.read()
+    assert log.text.endswith(" --- done")
+
+
+def test_run_script_through_shell_marks_a_failure_and_keeps_the_comlog(tmp_path, log):
+    comlogs = tmp_path / "comlogs"
+
+    with pytest.raises(pc.ExternalFailed):
+        pc.run_script_through_shell(
+            "exit 4", "... failing on purpose", log,
+            task="script", logfolder=str(comlogs), remove=True,
+        )
+
+    assert [f for f in os.listdir(comlogs) if f.startswith("error_")]
