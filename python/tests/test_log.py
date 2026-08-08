@@ -318,17 +318,6 @@ def test_command_failed_counts_as_a_failure():
     assert status[2] == 1
 
 
-def test_add_carries_the_error_state_of_a_sub_log():
-    bold = ReportLog()
-    bold.error("bold 1 failed")
-
-    log = _log()
-    log.add(bold)
-    _, status = log.finish("bold 1 failed")
-
-    assert status[2] == 1
-
-
 # ---------------------------------------------------- the second stream
 
 

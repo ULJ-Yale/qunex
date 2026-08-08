@@ -150,15 +150,6 @@ class ReportLog:
         """Whether any error has been recorded on this log."""
         return self._errors > 0
 
-    def add(self, other) -> None:
-        """Append the text of another report log (e.g. an executor's result)."""
-        if isinstance(other, ReportLog):
-            self._records += other._records
-            self._errors += other._errors
-            self.trace(other.text)
-        else:
-            self.raw(other)
-
     # ----------------------------------------------------------------- depth
 
     def indent(self, levels: int = 1) -> None:
