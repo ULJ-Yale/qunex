@@ -21,6 +21,8 @@ questions the log machinery asks before it writes anything::
         outside_study: home      # home | cwd | <path>, for runs with no study
         layout: default          # default | legacy (<study>/processing/logs)
                                  #          | nested (a folder per recipe step)
+        keep_comlogs: false      # never delete a comlog, whatever a caller asks
+        comlog_folders: [study]  # study | session | hcp | <path>, one or more
         skip_commands: []        # never log these commands
         log_commands: []         # always log these, whatever else says
         skip_types: []           # skip by registry command type, e.g. [utility]
@@ -36,7 +38,12 @@ this order, each layer overriding the one before it:
 5. ``skip_types`` then ``skip_commands``, then ``log_commands``, which wins
    over both -- and, for commands not yet carrying a ``logging:`` field, the
    legacy ``commands_support.logskip_commands`` list,
-6. ``--logging=<none|comlog|runlog|full>`` on the command line.
+6. ``--logging=<none|comlog|runlog|full>`` and ``--keep_comlogs`` on the
+   command line.
+
+``comlog_folders`` is the destination half of what ``--log`` used to answer;
+``--log`` kept the retention half. A command's own ``--comlog_folders``
+overrides the settings value, and ``do_options_check`` is where the two meet.
 
 Two tiers named in the design are not implemented here: batch file and recipe
 settings sit between the study file and the command line, and there is no
@@ -56,6 +63,7 @@ from dataclasses import dataclass, replace
 import yaml
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.parsing as gp
 
 # the user settings file is accepted in exactly these locations; finding it in
 # more than one is an error rather than a silent pick, since the loser would
@@ -103,6 +111,12 @@ class LogSettings:
             ``legacy`` (``<study>/processing/logs``), or ``nested``, which is
             ``default`` plus a subfolder per ``run_recipe`` step so each step
             keeps its own runlog and comlogs.
+        keep_comlogs: the run-level override -- when True no comlog is ever
+            deleted, whatever a call site's ``remove=`` or ``--log=remove``
+            asks for.
+        comlog_folders: where each comlog goes -- ``study``, ``session``,
+            ``hcp`` or a path. The first is where it is written, the rest are
+            where it is mapped. A tuple, because the dataclass is frozen.
     """
 
     enabled: bool = True
@@ -110,6 +124,8 @@ class LogSettings:
     comlog: bool = True
     outside_study: str = "home"
     layout: str = "default"
+    keep_comlogs: bool = False
+    comlog_folders: tuple = ("study",)
 
 
 def user_settings_file():
@@ -244,6 +260,8 @@ def settings_to_log_settings(section):
             section, "outside_study", "home", OUTSIDE_STUDY, free_form=True
         ),
         layout=_choice(section, "layout", "default", LAYOUTS),
+        keep_comlogs=_flag(section, "keep_comlogs", False),
+        comlog_folders=tuple(_as_list(section.get("comlog_folders")) or ["study"]),
     )
 
 
@@ -275,6 +293,36 @@ def apply_mode(settings, mode, source):
     return replace(settings, enabled=enabled, runlog=runlog, comlog=comlog)
 
 
+def apply_keep_comlogs(settings, value):
+    """
+    Apply ``--keep_comlogs`` to `settings`.
+
+    Parameters:
+        settings: the settings to override.
+        value: the bare flag (``True``), ``yes|no|true|false|on|off|1|0``, or
+            None, which leaves `settings` untouched.
+
+    Returns:
+        the resulting :class:`LogSettings`.
+
+    Raises:
+        ge.CommandError: on a value that is neither.
+    """
+    if value is None:
+        return settings
+
+    keep = gp.as_bool(value)
+    if keep is None:
+        raise ge.CommandError(
+            "qunex settings",
+            "Invalid keep_comlogs value",
+            "--keep_comlogs must be given bare or as one of [%s], got: %r"
+            % (", ".join(gp.TRUE_VALUES + gp.FALSE_VALUES), value),
+        )
+
+    return replace(settings, keep_comlogs=keep)
+
+
 def apply_study_settings(settings, studyfolder, args):
     """
     Layer a study's ``logging:`` section over already resolved settings.
@@ -300,11 +348,22 @@ def apply_study_settings(settings, studyfolder, args):
     stated = settings_to_log_settings(section)
     overrides = {
         field: getattr(stated, field)
-        for field in ("enabled", "runlog", "comlog", "outside_study", "layout")
+        for field in (
+            "enabled",
+            "runlog",
+            "comlog",
+            "outside_study",
+            "layout",
+            "keep_comlogs",
+            "comlog_folders",
+        )
         if field in section
     }
 
-    return apply_mode(replace(settings, **overrides), args.get("logging"), "--logging")
+    settings = apply_mode(
+        replace(settings, **overrides), args.get("logging"), "--logging"
+    )
+    return apply_keep_comlogs(settings, args.get("keep_comlogs"))
 
 
 # The settings this process resolved. A module-level value models exactly what
@@ -398,4 +457,5 @@ def resolve_logging(command, args, qx_command=None, studyfolder=None):
     elif _legacy_skip(command, declared):
         settings = replace(settings, enabled=False)
 
-    return apply_mode(settings, args.get("logging"), "--logging")
+    settings = apply_mode(settings, args.get("logging"), "--logging")
+    return apply_keep_comlogs(settings, args.get("keep_comlogs"))

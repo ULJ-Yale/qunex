@@ -214,8 +214,9 @@ def get_bold_names(boldinfo, options):
 
 
 def do_options_check(options, sinfo, command):
-    # logs
-    logs = [e.strip() for e in re.split(r" +|\||, *", options["log"])]
+    # logs -- an empty --comlog_folders means "take the settings value"
+    folders = options.get("comlog_folders") or ",".join(gl.active().comlog_folders)
+    logs = [e.strip() for e in re.split(r" +|\||, *", folders)]
     study_comlogs = options["comlogs"]
     comlogs = []
 
@@ -767,6 +768,33 @@ def missing_report(missing, message, prefix):
     return r
 
 
+# the spellings a comlog is scanned for. Deliberately narrow: a wider net
+# ("Traceback", "Segmentation fault") turns the deletion veto below into "never
+# delete anything", which is what `keep_comlogs` already spells
+ERROR_TOKENS = ["Error ", "Error:", "ERROR ", "ERROR:"]
+
+
+def log_has_errors(path):
+    """
+    Whether a comlog holds any of the four error spellings.
+
+    Read line by line rather than into memory: comlogs can be large. Used both
+    to judge a call with no test file and to veto the deletion of a comlog that
+    finished cleanly -- in doubt, keep.
+
+    Parameters:
+        path (str | None): the comlog's path; None or missing reads as clean.
+
+    Returns:
+        bool: whether an error line was found.
+    """
+    if not path or not os.path.exists(path):
+        return False
+
+    with open(path, "r", errors="replace") as written:
+        return any(any(e in line for e in ERROR_TOKENS) for line in written)
+
+
 def check_run(
     tfile,
     full_test=None,
@@ -851,18 +879,11 @@ def check_run(
         passed = "done"
         failed = 0
 
-        # check comlog contents for errors
-        if comlog is not None and comlog.path:
-            with open(comlog.path, "r") as written:
-                for line in written:
-                    if any(
-                        err in line
-                        for err in ["Error ", "Error:", "ERROR ", "ERROR:"]
-                    ):
-                        report = "%s not finished" % (command)
-                        passed = None
-                        failed = 1
-                        break
+        # nothing to check against, so the comlog's contents are the evidence
+        if comlog is not None and log_has_errors(comlog.path):
+            report = "%s not finished" % (command)
+            passed = None
+            failed = 1
 
     else:
         if verbose and tfile is not None:
@@ -924,11 +945,19 @@ def close_log(comlog, logfolders, status, remove, log=None):
     Close a comlog by status and map it into the extra folders.
 
     The lifecycle -- the ``tmp_`` to ``done_``/``error_``/``incomplete_``
-    rename, and the removal -- belongs to the ``ComContext`` that owns the
-    file. What stays here is the fan-out into `logfolders`, because each
-    destination and each failure has to be noted in the report log, and a
-    ``ComContext`` deliberately knows nothing about report logs: the bash and
-    matlab runners hold one with no log at all.
+    rename -- belongs to the ``ComContext`` that owns the file. What stays here
+    is the fan-out into `logfolders` and the retention rules below, because
+    each destination, each failure and each removal has to be noted in the
+    report log, and a ``ComContext`` deliberately knows nothing about report
+    logs: the bash and matlab runners hold one with no log at all.
+
+    Two rules guard the deletion, and both live here because this is the only
+    place a comlog is deleted, so all 110 call sites get them. A removed comlog
+    still leaves its completion status in the report log -- that record is the
+    one artifact that has to survive the file. And a comlog holding an error is
+    kept whatever was asked for, including an explicit ``--log=remove``: the
+    guard exists precisely for the case where the caller's belief that the call
+    succeeded is the thing in doubt. ``keep_comlogs`` short-circuits both.
 
     Parameters:
         comlog (ComContext): the comlog to close.
@@ -941,9 +970,17 @@ def close_log(comlog, logfolders, status, remove, log=None):
         str | None: the path of the final log file, or None when it was
         removed or no comlog was written.
     """
-    tfile = comlog.close(status=status, remove=status == "done" and remove)
+    tfile = comlog.close(status=status)
     if tfile is None:
         return None
+
+    if status == "done" and remove and not gl.active().keep_comlogs:
+        if log_has_errors(tfile):
+            _note(log, "\n---> completed, comlog kept -- it reports errors: %s" % (tfile))
+        else:
+            os.remove(tfile)
+            _note(log, "\n---> completed [%s], comlog removed" % (status))
+            return None
 
     _note(log, "\n---> logfile: %s" % (tfile))
 

@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-07T22:46:21.534638+00:00'
+generated_at: '2026-08-08T14:48:23.476267+00:00'
 source:
     id: core
 commands:
@@ -8713,10 +8713,15 @@ commands:
         description: The path to the folder where logs are to be stored, if other than default.
     -   name: log
         type: str
-        default: study
-        description: 'Whether to keep (''keep'') or remove (''remove'') the temporary logs once jobs are completed. When a
-            comma or pipe (''|'') separated list is given, the log will be created at the first provided location and then
-            linked or copied to other locations. The valid locations are:'
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed. A comlog that
+            recorded an error is kept whichever is asked for, and a removed one still leaves its completion status in the
+            run log.
+    -   name: comlog_folders
+        type: str
+        default: ''
+        description: 'A comma or pipe (''|'') separated list of locations the comlogs are placed in. The comlog is created
+            at the first provided location and then linked or copied to the others. The valid locations are:'
     -   name: bolds
         type: str
         default: all
@@ -8805,10 +8810,15 @@ commands:
         description: The path to the folder where logs are to be stored, if other than default.
     -   name: log
         type: str
-        default: study
-        description: 'Whether to keep (''keep'') or remove (''remove'') the temporary logs once jobs are completed. When a
-            comma or pipe (''|'') separated list is given, the log will be created at the first provided location and then
-            linked or copied to other locations. The valid locations are:'
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed. A comlog that
+            recorded an error is kept whichever is asked for, and a removed one still leaves its completion status in the
+            run log.
+    -   name: comlog_folders
+        type: str
+        default: ''
+        description: 'A comma or pipe (''|'') separated list of locations the comlogs are placed in. The comlog is created
+            at the first provided location and then linked or copied to the others. The valid locations are:'
     -   name: bolds
         type: str
         default: all

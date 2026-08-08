@@ -23,6 +23,25 @@ from the command line using `gmri` command. Help is available through:
 - `gmri -o` for a list of relevant arguments and options
 """
 
+# TODO -- this file opts out of `do_options_check`, and nobody has decided
+# whether that is deliberate.
+#
+# Its 41 external call sites all pass `logfolder=options["comlogs"]`, but no
+# function here calls `processing.core.do_options_check`, so `options["comlogs"]`
+# is still the single study folder `process.py` set. The consequences:
+#
+# - `--comlog_folders=session|hcp|<path>` is silently ignored by these four
+#   commands; every other processing command honours it.
+# - all 41 sites also leave `remove=` at its default of True, so their comlogs
+#   are deleted on success -- now with a runlog record and an error-scan veto
+#   (`processing.core.close_log`), but still deleted.
+#
+# Both are the same judgement -- which commands opt into the mechanism -- and it
+# is a decision about these four commands, not about the logging machinery, so
+# it was deliberately left open rather than settled by the rework that exposed
+# it. Calling `do_options_check` in the four entry points is the whole fix if
+# the answer is "they should opt in".
+
 # Created by Grega Repovs on 2016-12-17.
 # Code split from dofcMRIp_core gCodeP/preprocess codebase.
 # Copyright (c) Grega Repovs. All rights reserved.

@@ -403,3 +403,137 @@ def test_run_script_through_shell_marks_a_failure_and_keeps_the_comlog(tmp_path,
         )
 
     assert [f for f in os.listdir(comlogs) if f.startswith("error_")]
+
+
+# ---------------------------------------------------- the retention rules
+
+
+def test_a_removed_comlog_still_leaves_its_status_in_the_report(tmp_path, log):
+    """
+    The record that the step ran and how it ended is the one artifact that has
+    to survive the deletion -- it is what makes removal a reasonable default
+    rather than a hole.
+    """
+    checkfile = tmp_path / "made.txt"
+    comlogs = tmp_path / "comlogs"
+
+    endlog, status, failed = pc.run_external_for_file(
+        str(checkfile),
+        "touch %s" % checkfile,
+        "... making a file",
+        log,
+        task="touch",
+        logfolder=str(comlogs),
+        remove=True,
+    )
+
+    assert (endlog, status, failed) == (None, "touch done", 0)
+    assert os.listdir(comlogs) == []
+    assert "---> completed [done], comlog removed" in log.text
+
+
+def test_an_error_in_the_comlog_vetoes_its_deletion(tmp_path, log):
+    """
+    The case the scan exists for: a tool that exits 0, writes its check file,
+    and logs errors anyway. In doubt, keep.
+    """
+    checkfile = tmp_path / "made.txt"
+    comlogs = tmp_path / "comlogs"
+
+    endlog, status, failed = pc.run_external_for_file(
+        str(checkfile),
+        "echo 'ERROR: it went wrong' && touch %s" % checkfile,
+        "... making a file",
+        log,
+        task="touch",
+        logfolder=str(comlogs),
+        remove=True,
+    )
+
+    assert endlog is not None and os.path.exists(endlog)
+    assert os.path.basename(endlog).startswith("done_")
+    assert "comlog kept -- it reports errors" in log.text
+
+
+def test_keep_comlogs_beats_a_call_site_remove(tmp_path, log, default_settings):
+    """The run-level override, which `--log=remove` cannot argue with either."""
+    gl.set_active(gl.LogSettings(keep_comlogs=True))
+    checkfile = tmp_path / "made.txt"
+    comlogs = tmp_path / "comlogs"
+
+    endlog, _, _ = pc.run_external_for_file(
+        str(checkfile),
+        "touch %s" % checkfile,
+        "... making a file",
+        log,
+        task="touch",
+        logfolder=str(comlogs),
+        remove=True,
+    )
+
+    assert os.path.exists(endlog)
+    assert "---> logfile: %s" % endlog in log.text
+
+
+def test_the_error_scan_reads_the_four_spellings_and_nothing_else(tmp_path):
+    clean = tmp_path / "clean.log"
+    clean.write_text("all fine\nno errors here\nmy_error_handler ran\n")
+    assert pc.log_has_errors(str(clean)) is False
+
+    for spelling in ["Error ", "Error:", "ERROR ", "ERROR:"]:
+        noisy = tmp_path / "noisy.log"
+        noisy.write_text("fine\n%ssomething\n" % spelling)
+        assert pc.log_has_errors(str(noisy)) is True
+
+    assert pc.log_has_errors(None) is False
+    assert pc.log_has_errors(str(tmp_path / "gone.log")) is False
+
+
+def test_check_run_judges_a_call_with_no_test_file_by_the_same_scan(tmp_path, log):
+    """`check_run` shares the helper, so its status and the veto cannot drift."""
+    comlogs = tmp_path / "comlogs"
+
+    endlog, status, failed = pc.run_external_for_file(
+        None,
+        "echo 'ERROR: it went wrong'",
+        "... running a check-free command",
+        log,
+        task="noop",
+        logfolder=str(comlogs),
+        remove=True,
+    )
+
+    assert (status, failed) == ("noop failed", 1)
+    assert os.path.basename(endlog).startswith("error_")
+
+
+# --------------------------------------------------- comlog destinations
+
+
+def test_do_options_check_falls_back_to_the_settings_comlog_folders(default_settings):
+    gl.set_active(gl.LogSettings(comlog_folders=("study", "session")))
+    options = {
+        "comlog_folders": "",
+        "comlogs": "/study/logs/comlogs",
+        "sessionsfolder": "/study/sessions",
+    }
+
+    pc.do_options_check(options, {"id": "s01"}, "some_command")
+
+    assert options["comlogs"] == [
+        "/study/logs/comlogs",
+        os.path.join("/study/sessions", "s01", "logs", "comlogs"),
+    ]
+
+
+def test_a_command_line_comlog_folders_overrides_the_settings(default_settings):
+    gl.set_active(gl.LogSettings(comlog_folders=("session",)))
+    options = {
+        "comlog_folders": "study|/elsewhere",
+        "comlogs": "/study/logs/comlogs",
+        "sessionsfolder": "/study/sessions",
+    }
+
+    pc.do_options_check(options, {"id": "s01"}, "some_command")
+
+    assert options["comlogs"] == ["/study/logs/comlogs", "/elsewhere"]

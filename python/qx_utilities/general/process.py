@@ -978,6 +978,9 @@ arglist = [
     ["# --- Processing options"],
     ["run", "run", str],
     ["log", "keep", str],
+    # empty means "take the settings value", so a per-command
+    # --comlog_folders overrides the policy and the policy supplies the default
+    ["comlog_folders", "", str],
     ["# --- mice pipelines"],
     ["voxel_increase", "", is_none],
     ["orientation", "x -y z", str],

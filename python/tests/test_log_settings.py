@@ -286,3 +286,100 @@ def test_an_invalid_registry_logging_value_is_dropped_with_a_warning():
     assert build.parse_logging("None ", "where") == "none"
     assert build.parse_logging("sometimes", "where") is None
     assert build.parse_logging(None, "where") is None
+
+
+# ----------------------------------------------------- the `--log` split
+
+
+def test_comlog_folders_defaults_to_the_study_folder():
+    assert resolve_logging("some_command", {}).comlog_folders == ("study",)
+
+
+def test_comlog_folders_and_keep_comlogs_come_from_the_settings_file(
+    tmp_path, monkeypatch
+):
+    user = write(
+        tmp_path / "user" / "qunex_settings.yaml",
+        "logging:\n  keep_comlogs: true\n  comlog_folders: [session, hcp]\n",
+    )
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+
+    settings = resolve_logging("some_command", {})
+    assert settings.keep_comlogs is True
+    assert settings.comlog_folders == ("session", "hcp")
+
+
+def test_a_comma_separated_comlog_folders_string_is_a_list_too(tmp_path, monkeypatch):
+    user = write(
+        tmp_path / "user" / "qunex_settings.yaml",
+        "logging:\n  comlog_folders: session, /tmp/logs\n",
+    )
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+
+    assert resolve_logging("c", {}).comlog_folders == ("session", "/tmp/logs")
+
+
+def test_keep_comlogs_takes_the_bare_flag_and_yes_no():
+    assert resolve_logging("c", {"keep_comlogs": True}).keep_comlogs is True
+    assert resolve_logging("c", {"keep_comlogs": "yes"}).keep_comlogs is True
+    assert resolve_logging("c", {"keep_comlogs": "no"}).keep_comlogs is False
+    assert resolve_logging("c", {"keep_comlogs": "FALSE"}).keep_comlogs is False
+
+
+def test_keep_comlogs_rejects_anything_else():
+    with pytest.raises(ge.CommandError):
+        resolve_logging("c", {"keep_comlogs": "sometimes"})
+
+
+def test_the_command_line_keep_comlogs_beats_the_settings_file(tmp_path, monkeypatch):
+    user = write(
+        tmp_path / "user" / "qunex_settings.yaml", "logging:\n  keep_comlogs: true\n"
+    )
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+
+    assert resolve_logging("c", {"keep_comlogs": "no"}).keep_comlogs is False
+
+
+def test_a_study_may_state_keep_comlogs_and_comlog_folders(tmp_path):
+    write(
+        tmp_path / "study" / "qunex_settings.yaml",
+        "logging:\n  keep_comlogs: true\n  comlog_folders: [session]\n",
+    )
+
+    settings = ls.apply_study_settings(LogSettings(), str(tmp_path / "study"), {})
+    assert settings.keep_comlogs is True
+    assert settings.comlog_folders == ("session",)
+
+
+# --------------------------------------------- the --log deprecation remap
+
+
+def test_log_destinations_are_remapped_to_comlog_folders(capsys):
+    import qx_utilities.general.commands_support as gcs
+
+    options = gcs.check_deprecated_parameters({"log": "session|hcp"}, "preprocess_bold")
+
+    assert options["comlog_folders"] == "session,hcp"
+    assert options["log"] == "keep"
+    assert "comlog_folders" in capsys.readouterr().out
+
+
+def test_log_retention_values_are_left_alone(capsys):
+    import qx_utilities.general.commands_support as gcs
+
+    for value in ["keep", "remove"]:
+        options = gcs.check_deprecated_parameters({"log": value}, "preprocess_bold")
+        assert options["log"] == value
+        assert "comlog_folders" not in options
+        assert "comlog_folders" not in capsys.readouterr().out
+
+
+def test_an_explicit_comlog_folders_is_not_overwritten_by_the_remap():
+    import qx_utilities.general.commands_support as gcs
+
+    options = gcs.check_deprecated_parameters(
+        {"log": "session", "comlog_folders": "study"}, "preprocess_bold"
+    )
+
+    assert options["comlog_folders"] == "study"
+    assert options["log"] == "session"

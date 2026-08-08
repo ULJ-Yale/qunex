@@ -11,6 +11,8 @@
 Helper code for perarations of commands and their parameters
 """
 
+import re
+
 from qx_utilities.general import extensions
 
 # ==============================================================================
@@ -413,6 +415,27 @@ def check_deprecated_parameters(options, command):
             new_options["sessions"] = new_options["batchfile"]
             del new_options["batchfile"]
 
+    # custom remapping for log: it used to answer two questions -- whether to
+    # keep a comlog and where to put it. The destinations moved to
+    # comlog_folders, retention kept the name. Neither the declarative
+    # mechanisms above can express a value moving to another parameter.
+    if "log" in new_options and "comlog_folders" not in new_options:
+        folders = [
+            e.strip()
+            for e in re.split(r" +|\||, *", str(new_options["log"]))
+            if e.strip() and e.strip() not in ["keep", "remove"]
+        ]
+        if folders:
+            print("\nWARNING: Use of deprecated parameter value(s)!")
+            print(
+                "         --log no longer says where a comlog goes, only whether it\n"
+                "         is kept ('keep' or 'remove'). The destinations [%s] were\n"
+                "         read as --comlog_folders=%s; please pass them that way."
+                % (", ".join(folders), ",".join(folders))
+            )
+            new_options["comlog_folders"] = ",".join(folders)
+            new_options["log"] = "keep"
+
     if deprecated:
         print("\nWARNING: Use of deprecated parameters!")
         print("         The following parameters are no longer used:")
@@ -487,6 +510,7 @@ extra_parameters = [
     "scheduler_sleep",
     "nprocess",
     "logging",
+    "keep_comlogs",
     "logfolder",
     "logstatus",
     "basefolder",

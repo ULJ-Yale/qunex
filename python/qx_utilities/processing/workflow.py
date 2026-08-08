@@ -2026,18 +2026,25 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             The path to the folder where logs are to be stored,
             if other than default.
 
-        --log (str, default 'study'):
+        --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed. When a comma or pipe ('|') separated list
-            is given, the log will be created at the first provided location
-            and then linked or copied to other locations. The valid locations
-            are:
+            once jobs are completed. A comlog that recorded an error is kept
+            whichever is asked for, and a removed one still leaves its
+            completion status in the run log.
+
+        --comlog_folders (str, default ''):
+            A comma or pipe ('|') separated list of locations the comlogs are
+            placed in. The comlog is created at the first provided location and
+            then linked or copied to the others. The valid locations are:
 
             - 'study'   (for the default:
               ``<study>/processing/logs/comlogs`` location)
             - 'session' (for ``<sessionid>/logs/comlogs``)
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
+
+            When empty, the value from the settings file is used, which
+            defaults to 'study'.
 
         --bolds (str, default 'all'):
             A pipe ('|') separated list of bold names to process.
@@ -2895,18 +2902,25 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             The path to the folder where logs are to be stored,
             if other than default.
 
-        --log (str, default 'study'):
+        --log (str, default 'keep'):
             Whether to keep ('keep') or remove ('remove') the temporary logs
-            once jobs are completed. When a comma or pipe ('|') separated list
-            is given, the log will be created at the first provided location
-            and then linked or copied to other locations. The valid locations
-            are:
+            once jobs are completed. A comlog that recorded an error is kept
+            whichever is asked for, and a removed one still leaves its
+            completion status in the run log.
+
+        --comlog_folders (str, default ''):
+            A comma or pipe ('|') separated list of locations the comlogs are
+            placed in. The comlog is created at the first provided location and
+            then linked or copied to the others. The valid locations are:
 
             - 'study'   (for the default:
               ``<study>/processing/logs/comlogs`` location)
             - 'session' (for ``<sessionid>/logs/comlogs``)
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
+
+            When empty, the value from the settings file is used, which
+            defaults to 'study'.
 
         --bolds (str, default 'all'):
             A pipe ('|') separated list of conc names to process.
