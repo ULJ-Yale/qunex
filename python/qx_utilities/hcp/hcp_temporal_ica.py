@@ -393,7 +393,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             # check sessions
             for session in sessions:
                 if "hcp" not in session:
-                    log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                    log.error("There is no hcp info for session %s in batch.txt"
                         % (session["id"]))
                     run = False
 
@@ -549,7 +549,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                     outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii",
                 )
                 if not os.path.exists(mad_file):
-                    log.raw("\n---> ERROR: %s does not exist!" % mad_file)
+                    log.error("%s does not exist!" % mad_file)
                     log.error("You need to run hcp_make_average_dataset before running hcp_temporal_ica!")
                     run = False
 
@@ -578,7 +578,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 run = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -590,7 +590,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 run = False
 
         # build the command

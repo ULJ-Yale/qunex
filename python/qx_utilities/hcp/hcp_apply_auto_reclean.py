@@ -203,7 +203,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 pars_ok = False
         else:
             if options["hcp_matlab_mode"] == "compiled":
@@ -213,7 +213,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             elif options["hcp_matlab_mode"] == "octave":
                 os.environ["FSL_FIX_MATLAB_MODE"] = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 pars_ok = False
 
         if not pars_ok:
@@ -297,7 +297,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s group %s" % (pc.action("Processing", options["run"]), groupname))
+        log.step("%s group %s" % (pc.action("Processing", options["run"]), groupname))
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -348,7 +348,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 run = False
         else:
             if options["hcp_matlab_mode"] == "compiled":
@@ -358,7 +358,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             elif options["hcp_matlab_mode"] == "octave":
                 os.environ["FSL_FIX_MATLAB_MODE"] = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 run = False
 
         matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]

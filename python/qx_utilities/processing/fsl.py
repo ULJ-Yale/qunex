@@ -113,20 +113,20 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             feat_path = os.path.join(
                 options["sessionsfolder"], session, options["feat_file"]
             )
-            log.raw("\n---> Checking for feat file at %s" % feat_path)
+            log.step("Checking for feat file at %s" % feat_path)
             if os.path.exists(feat_path):
                 log.raw("\n    ... Feat file found")
                 feat_file = feat_path
 
         # if feat_file is still none, try absolute path
         if feat_file is None and run:
-            log.raw(f"\n---> Checking for feat file at {options['feat_file']}")
+            log.step(f"Checking for feat file at {options['feat_file']}")
             if os.path.exists(options["feat_file"]):
                 log.raw("\n    ... Feat file found")
                 feat_file = options["feat_file"]
 
         if feat_file is None and run:
-            log.raw(f"\n---> ERROR: Could not find the feat file [{options['feat_file']}].")
+            log.error(f"Could not find the feat file [{options['feat_file']}].")
             report = (sinfo["id"], "Not ready for FSL feat", 1)
             run = False
 
@@ -158,10 +158,10 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
                     shell=True,
                 )
                 if failed:
-                    log.raw("\n---> FSL feat processing for session %s failed" % session)
+                    log.step("FSL feat processing for session %s failed" % session)
                     report = (sinfo["id"], "FSL feat failed", 1)
                 else:
-                    log.raw("\n---> FSL feat processing for session %s completed" % session)
+                    log.step("FSL feat processing for session %s completed" % session)
                     report = (sinfo["id"], "FSL feat completed", 0)
 
             # just checking
@@ -174,7 +174,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
                     log.step("FSL feat can be run")
                     report = (sinfo["id"], "FSL feat ready", 0)
                 else:
-                    log.raw("\n---> FSL feat processing for session %s would be skipped"
+                    log.step("FSL feat processing for session %s would be skipped"
                         % session)
                     report = (sinfo["id"], "FSL feat would be skipped", 1)
 
@@ -277,7 +277,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
         if len(sessions_array) > 0:
             log.step("Multiple sessions provided. Will iterate over sessions.")
             for session in sessions_array:
-                log.raw(f"\n---> Working on session {session}")
+                log.step(f"Working on session {session}")
 
                 for path in input_paths:
                     log.raw(f"\n    ... checking {path}")
@@ -326,7 +326,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
         else:
             log.step("No sessions provided. Will use absolute paths.")
             for path in input_paths:
-                log.raw(f"\n---> Working on path {path}")
+                log.step(f"Working on path {path}")
                 if not os.path.exists(path):
                     log.raw(f"\n    ... ERROR: Could not find {path}.")
                     input_files.append(path)

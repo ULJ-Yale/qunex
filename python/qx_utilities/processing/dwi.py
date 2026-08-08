@@ -210,10 +210,10 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 )
 
                 if failed:
-                    log.raw("\n---> FSL F99 processing for session %s failed" % session)
+                    log.step("FSL F99 processing for session %s failed" % session)
                     report = (sinfo["id"], "FSL F99 failed", 1)
                 else:
-                    log.raw("\n---> FSL F99 processing for session %s completed" % session)
+                    log.step("FSL F99 processing for session %s completed" % session)
                     report = (sinfo["id"], "FSL F99 completed", 0)
 
             # just checking
@@ -226,7 +226,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     log.step("FSL F99 can be run")
                     report = (sinfo["id"], "FSL F99 ready", 0)
                 else:
-                    log.raw("\n---> FSL F99 processing for session %s would be skipped"
+                    log.step("FSL F99 processing for session %s would be skipped"
                         % session)
                     report = (sinfo["id"], "FSL F99 would be skipped", 1)
 
@@ -555,15 +555,15 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     shell=True,
                 )
 
-                log.raw("\n---> Processing details can be found in %s" % (
+                log.step("Processing details can be found in %s" % (
                     os.path.join(output_dir, "logs")
                 ))
 
                 if failed:
-                    log.raw("\n---> FSL XTRACT processing for session %s failed" % session)
+                    log.step("FSL XTRACT processing for session %s failed" % session)
                     report = (sinfo["id"], "FSL XTRACT failed", 1)
                 else:
-                    log.raw("\n---> FSL XTRACT processing for session %s completed"
+                    log.step("FSL XTRACT processing for session %s completed"
                         % session)
                     report = (sinfo["id"], "FSL XTRACT completed", 0)
 
@@ -577,7 +577,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     log.step("FSL XTRACT can be run")
                     report = (sinfo["id"], "FSL XTRACT ready", 0)
                 else:
-                    log.raw("\n---> FSL XTRACT processing for session %s would be skipped"
+                    log.step("FSL XTRACT processing for session %s would be skipped"
                         % session)
                     report = (sinfo["id"], "FSL XTRACT would be skipped", 1)
 
@@ -735,7 +735,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
         # check validity
         if options["noddi_model"] not in ["Watson", "Bingham"]:
-            log.raw(f"\n---> ERROR: Invalid NODDI model [{options['noddi_model']}], needs to be Watson or Bingham.")
+            log.error(f"Invalid NODDI model [{options['noddi_model']}], needs to be Watson or Bingham.")
             report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
             run = False
 
@@ -756,7 +756,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
         # check that diffusion_dir exists
         if not os.path.exists(diffusion_dir):
-            log.raw(f"\n---> ERROR: Could not find diffusion folder at {diffusion_dir}.")
+            log.error(f"Could not find diffusion folder at {diffusion_dir}.")
             report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
             run = False
 
@@ -787,7 +787,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                         shutil.rmtree(results_folder)
 
                 if os.path.exists(results_folder):
-                    log.raw(f"\n---> Results already exits and overwrite not set, skipping session {session}.")
+                    log.step(f"Results already exits and overwrite not set, skipping session {session}.")
                     report = (sinfo["id"], "CUDIMOT NODDI results already exist", 0)
                 else:
                     # execute
@@ -806,11 +806,11 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     )
 
                     if failed:
-                        log.raw("\n---> CUDIMOT NODDI processing for session %s failed"
+                        log.step("CUDIMOT NODDI processing for session %s failed"
                             % session)
                         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
                     else:
-                        log.raw("\n---> CUDIMOT NODDI processing for session %s completed"
+                        log.step("CUDIMOT NODDI processing for session %s completed"
                             % session)
                         report = (sinfo["id"], "CUDIMOT NODDI completed", 0)
 
@@ -824,7 +824,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     log.step("CUDIMOT NODDI can be run")
                     report = (sinfo["id"], "CUDIMOT NODDI ready", 0)
                 else:
-                    log.raw(f"\n---> CUDIMOT NODDI processing for session {session} would be skipped")
+                    log.step(f"CUDIMOT NODDI processing for session {session} would be skipped")
                     report = (sinfo["id"], "CUDIMOT NODDI would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:

@@ -302,8 +302,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw(
-                    "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                log.error(
+                    "hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
                 )
                 pars_ok = False
         else:
@@ -314,8 +314,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             elif options["hcp_matlab_mode"] == "octave":
                 os.environ["FSL_FIX_MATLAB_MODE"] = "2"
             else:
-                log.raw(
-                    "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                log.error(
+                    "unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 )
                 pars_ok = False
 
@@ -388,8 +388,8 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw(
-            "\n---> %s BOLD image %s"
+        log.step(
+            "%s BOLD image %s"
             % (
                 pc.action("Processing", options["run"]),
                 printbold,
@@ -558,8 +558,8 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw(
-            "\n---> %s group %s" % (pc.action("Processing", options["run"]), groupname)
+        log.step(
+            "%s group %s" % (pc.action("Processing", options["run"]), groupname)
         )
         groupok = True
 
@@ -610,8 +610,8 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw(
-                    "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                log.error(
+                    "hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
                 )
                 groupok = False
             else:
@@ -624,8 +624,8 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw(
-                    "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                log.error(
+                    "unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 )
                 groupok = False
 
@@ -726,38 +726,38 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                         or abs(pixdim1 - pixdim3) > epsilon
                     ):
                         run = False
-                        log.raw(
-                            f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_t1wtemplatebrain manually!"
-                        )
+                        log.error(
+                            f"T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_t1wtemplatebrain manually!"
+                        , depth=1)
                     else:
                         # upscale slightly and use the closest that matches
                         pixdim = pixdim1 * 1.05
 
                         if pixdim > 2:
                             run = False
-                            log.raw(
-                                f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
-                            )
+                            log.error(
+                                f"weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+                            , depth=1)
                         elif pixdim > 1:
-                            log.raw(
-                                f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 1.0!"
+                            log.detail(
+                                f"Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 1.0!"
                             )
                             resolution = 1.0
                         elif pixdim > 0.8:
-                            log.raw(
-                                f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 0.8!"
+                            log.detail(
+                                f"Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 0.8!"
                             )
                             resolution = 0.8
                         elif pixdim > 0.65:
-                            log.raw(
-                                f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to to 0.7!"
+                            log.detail(
+                                f"Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to to 0.7!"
                             )
                             resolution = 0.7
                         else:
                             run = False
-                            log.raw(
-                                f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
-                            )
+                            log.error(
+                                f"weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+                            , depth=1)
 
                     if resolution is not None:
                         t1wtemplatebrain = os.path.join(

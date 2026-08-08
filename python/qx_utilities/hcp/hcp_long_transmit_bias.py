@@ -252,7 +252,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     run = False
             else:
                 matlabrunmode = "0"

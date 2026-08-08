@@ -493,9 +493,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 )
 
                 if not os.path.exists(hcp_bold_path):
-                    log.raw("\n     ... ERROR: source folder does not exist [%s]!" % (
+                    log.error("source folder does not exist [%s]!" % (
                         hcp_bold_path
-                    ))
+                    ), depth=1)
                     status = False
 
                 else:
@@ -504,7 +504,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     elif boldinfo["task"] == "additional_bold" and not os.path.exists(
                         hcp_bold_path
                     ):
-                        log.raw(f"\n     ... WARNING: additional bold source does not exist: {f['bold_vol']}")
+                        log.warning(f"additional bold source does not exist: {f['bold_vol']}", depth=1)
                     else:
                         status = log.link_or_copy(
                             os.path.join(
@@ -546,7 +546,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 os.path.join(hcp_bold_path, movement_regressors_volume)
                             ):
                                 movement_regressors = movement_regressors_volume
-                                log.detail("WARNING: using movement regressors from jcp_fmri_volume, hcp_icafix movement regressors not found")
+                                log.warning("using movement regressors from jcp_fmri_volume, hcp_icafix movement regressors not found", depth=1)
                         if movement_regressors:
                             mdata = [
                                 line.strip().split()
@@ -570,7 +570,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                             mfile.close()
                             log.detail("movement data prepared")
                         elif boldinfo["task"] == "additional_bold":
-                            log.raw("\n     ... WARNING: could not prepare movement data for the additional bold, source does not exist: [%s or %s]"
+                            log.warning("could not prepare movement data for the additional bold, source does not exist: [%s or %s]"
                                 % (
                                     os.path.join(
                                         hcp_bold_path, movement_regressors_icafix
@@ -578,9 +578,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                     os.path.join(
                                         hcp_bold_path, movement_regressors_volume
                                     ),
-                                ))
+                                ), depth=1)
                         else:
-                            log.raw("\n     ... ERROR: could not prepare movement data, source does not exist: [%s or %s]"
+                            log.error("could not prepare movement data, source does not exist: [%s or %s]"
                                 % (
                                     os.path.join(
                                         hcp_bold_path, movement_regressors_icafix
@@ -588,7 +588,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                     os.path.join(
                                         hcp_bold_path, movement_regressors_volume
                                     ),
-                                ))
+                                ), depth=1)
                             failed += 1
                             status = False
 

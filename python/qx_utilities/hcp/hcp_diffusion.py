@@ -305,14 +305,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
+            log.error("There is no hcp info for session %s in batch.txt"
                 % (sinfo["id"]))
             run = False
 
         # --- using a legacy parameter?
         if "hcp_dwi_pedir" in options:
             log.warning("you are still providing the hcp_dwi_pedir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it.")
-            log.raw("\n---> hcp_dwi_phasepos is currently set to %s."
+            log.step("hcp_dwi_phasepos is currently set to %s."
                 % options["hcp_dwi_phasepos"])
 
         # --- set up data
@@ -331,7 +331,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             direction = {"pos": "RL", "neg": "LR"}
             pe_dir = 1
         else:
-            log.raw("\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]"
+            log.error("Invalid value of the hcp_dwi_phasepos parameter [%s]"
                 % options["hcp_dwi_phasepos"])
             run = False
 
@@ -400,13 +400,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     dfiles = dwi_files[ddir].split("@")
 
                     if dfiles and dfiles != [""] and dfiles != "EMPTY":
-                        log.raw("\n---> The following %s direction files were found:" % (
+                        log.step("The following %s direction files were found:" % (
                             ddir
                         ))
                         for dfile in dfiles:
                             log.raw("\n     %s" % (os.path.basename(dfile)))
                     else:
-                        log.raw("\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
+                        log.error("No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
                             % ddir)
                         run = False
                         break
@@ -479,7 +479,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             ):
                 # echospacing read from image data
                 echospacing = dwiinfo["EchoSpacing"]
-                log.raw(f"\n---> Using image specific EchoSpacing: {echospacing} s")
+                log.step(f"Using image specific EchoSpacing: {echospacing} s")
 
                 # check validity
                 echospacing, message = _check_dwi_echospacing(echospacing)
@@ -488,7 +488,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             # if echospacing is none, set from parameter
             if not echospacing and "hcp_dwi_echospacing" in options:
                 echospacing = options["hcp_dwi_echospacing"]
-                log.raw(f"\n---> Using study general EchoSpacing: {echospacing} s")
+                log.step(f"Using study general EchoSpacing: {echospacing} s")
 
                 # check validity
                 echospacing, message = _check_dwi_echospacing(echospacing)
@@ -600,14 +600,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     # bval
                     bval = pos.replace(".nii.gz", ".bval")
                     if not os.path.isfile(bval):
-                        log.raw(f"\n---> Creating dummy bval file for [{pos}].")
+                        log.step(f"Creating dummy bval file for [{pos}].")
                         with open(bval, "w") as f:
                             f.write("0\n")
 
                     # bvec
                     bvec = pos.replace(".nii.gz", ".bvec")
                     if not os.path.isfile(bvec):
-                        log.raw(f"\n---> Creating dummy bvec file for [{pos}].")
+                        log.step(f"Creating dummy bvec file for [{pos}].")
                         with open(bvec, "w") as f:
                             f.write("0\n0\n0\n")
 
@@ -617,14 +617,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     # bval
                     bval = neg.replace(".nii.gz", ".bval")
                     if not os.path.isfile(bval):
-                        log.raw(f"\n---> Creating dummy bval file for [{pos}].")
+                        log.step(f"Creating dummy bval file for [{pos}].")
                         with open(bval, "w") as f:
                             f.write("0\n")
 
                     # bvec
                     bvec = neg.replace(".nii.gz", ".bvec")
                     if not os.path.isfile(bvec):
-                        log.raw(f"\n---> Creating dummy bvec file for [{pos}].")
+                        log.step(f"Creating dummy bvec file for [{pos}].")
                         with open(bvec, "w") as f:
                             f.write("0\n0\n0\n")
 

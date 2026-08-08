@@ -162,7 +162,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         # exit if overwrite is not set, else cleanup
         long_dir_exists = os.path.lexists(long_dir)
         if not overwrite and long_dir_exists:
-            log.raw(f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!")
+            log.error(f"{long_dir} already exists and overwrite is set to no!")
             run = False
         else:
             if long_dir_exists:
@@ -179,7 +179,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             source_dir = os.path.join(session["hcp"], session["id"])
             # check that source exists
             if not os.path.exists(source_dir):
-                log.raw(f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!")
+                log.error(f"{source_dir} does not exists, cannot map into longutidinal folder structure!")
                 run = False
 
             target_dir = os.path.join(study_folder, session["id"])

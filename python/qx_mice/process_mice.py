@@ -302,24 +302,24 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                 )
 
                 if failed:
-                    log.raw(f"\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed")
+                    log.step(f"preprocess_mice processing for BOLD {boldinfo['name']} failed")
                     report["failed"].append(boldinfo["name"])
                 else:
-                    log.raw(f"\n---> preprocess_mice processing for BOLD {boldinfo['name']} completed")
+                    log.step(f"preprocess_mice processing for BOLD {boldinfo['name']} completed")
                     report["done"].append(boldinfo["name"])
 
             else:
-                log.raw(f"\n---> BOLD {boldinfo['name']} is ready for preprocess_mice command")
+                log.step(f"BOLD {boldinfo['name']} is ready for preprocess_mice command")
                 report["ready"].append(boldinfo["name"])
 
         else:
             # run
             if options["run"] == "run":
-                log.raw(f"\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed")
+                log.step(f"preprocess_mice processing for BOLD {boldinfo['name']} failed")
                 report["failed"].append(boldinfo["name"])
             # just checking
             else:
-                log.raw(f"\n---> BOLD {boldinfo['name']} is not ready for preprocess_mice command")
+                log.step(f"BOLD {boldinfo['name']} is not ready for preprocess_mice command")
                 report["not ready"].append(boldinfo["name"])
 
         return {"r": log.text, "report": report}
@@ -407,7 +407,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             os.makedirs(func_dir)
 
         for boldinfo in bolds:
-            log.raw(f"\n---> Mapping {boldinfo['name']}")
+            log.step(f"Mapping {boldinfo['name']}")
 
             # files
             # original

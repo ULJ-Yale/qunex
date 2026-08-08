@@ -154,7 +154,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             # resolves and validates the session HCP paths
             get_hcp_paths(session, options)
             if "hcp" not in session:
-                log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
+                log.error("There is no hcp info for session %s in batch.txt"
                     % (session["id"]))
                 run = False
 
@@ -199,9 +199,9 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             voltages_file = options["hcp_voltages"]
 
             if os.path.exists(voltages_file):
-                log.raw(f"\n---> Using existing hcp_voltages file: {voltages_file}")
+                log.step(f"Using existing hcp_voltages file: {voltages_file}")
             else:
-                log.raw(f"\n---> hcp_voltages file does not exist. Creating it: {voltages_file}")
+                log.step(f"hcp_voltages file does not exist. Creating it: {voltages_file}")
                 run = write_transmit_bias_voltages(
                     sessions, options, voltages_file, log
                 )
@@ -218,7 +218,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     run = False
             else:
                 matlabrunmode = "0"

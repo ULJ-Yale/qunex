@@ -237,7 +237,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     outfmriname = options["hcp_msmall_outfmriname"]
 
                     log.raw("\n\n------------------------------------------------------------")
-                    log.raw("\n---> %s MSMAll %s" % (
+                    log.step("%s MSMAll %s" % (
                         pc.action("Processing", options["run"]),
                         outfmriname,
                     ))
@@ -321,7 +321,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     matlabrunmode = None
                     if options["hcp_matlab_mode"] is None:
                         if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                            log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                            log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                             boldok = False
                         else:
                             matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -333,7 +333,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                         elif options["hcp_matlab_mode"] == "octave":
                             matlabrunmode = "2"
                         else:
-                            log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                            log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                             boldok = False
 
                     # fix names to use

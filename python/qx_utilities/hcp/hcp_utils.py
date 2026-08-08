@@ -292,7 +292,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                     device["model"] = dmodel
                     device["serial"] = dserial
                 except Exception:
-                    log.raw("\n---> WARNING: device information for this session is malformed: %s"
+                    log.warning("device information for this session is malformed: %s"
                         % (sinfo.get("device", "---")))
                     raise
 
@@ -315,7 +315,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                             gdcfileused = "%s: %s" % (ginfo, gwhat)
                             break
             except Exception:
-                log.raw("\n---> ERROR: malformed specification of gdcoeffs: %s!" % (
+                log.error("malformed specification of gdcoeffs: %s!" % (
                     gdcstring
                 ))
                 run = False
@@ -325,7 +325,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                 log.warning("Specific gradient distortion coefficients file could not be identified! None will be used.")
                 gdcfile = "NONE"
             else:
-                log.raw("\n---> Specific gradient distortion coefficients file identified (%s):\n     %s"
+                log.step("Specific gradient distortion coefficients file identified (%s):\n     %s"
                     % (gdcfileused, gdcfile))
 
         else:
@@ -335,7 +335,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
             if not os.path.exists(gdcfile):
                 gdcoeffs = os.path.join(hcp["hcp_Config"], gdcfile)
                 if not os.path.exists(gdcoeffs):
-                    log.raw("\n---> ERROR: Could not find gradient distortion coefficients file: %s."
+                    log.error("Could not find gradient distortion coefficients file: %s."
                         % (gdcfile))
                     run = False
                 else:
@@ -919,7 +919,7 @@ def parse_msmall_bolds(options, bolds, log):
                             break
 
                 if hmb is None:
-                    log.raw(f"\n---> ERROR: bold {mb} used in hcp_msmall_bolds but not found in hcp_icafix_bolds!")
+                    log.error(f"bold {mb} used in hcp_msmall_bolds but not found in hcp_icafix_bolds!")
                     pars_ok = False
                     break
                 else:
@@ -971,7 +971,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.raw("\n---> %s bold ICA %s" % (
+        log.step("%s bold ICA %s" % (
             pc.action("Processing", options["run"]),
             printica,
         ))
@@ -989,7 +989,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.raw("\n---> %s group ICA %s" % (
+        log.step("%s group ICA %s" % (
             pc.action("Processing", options["run"]),
             printica,
         ))
@@ -1030,7 +1030,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 boldok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -1042,7 +1042,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 boldok = False
 
         # subject/session
@@ -1156,7 +1156,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         bolds = group["bolds"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s DeDriftAndResample" % (pc.action("Processing", options["run"])))
+        log.step("%s DeDriftAndResample" % (pc.action("Processing", options["run"])))
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -1234,7 +1234,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -1245,7 +1245,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 boldsok = False
 
         comm = (
@@ -1392,7 +1392,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s DeDriftAndResample" % (pc.action("Processing", options["run"])))
+        log.step("%s DeDriftAndResample" % (pc.action("Processing", options["run"])))
 
         # --- check for bold images and prepare targets parameter
         group_list = []
@@ -1500,7 +1500,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 runok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -1512,7 +1512,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 runok = False
 
         comm = (
@@ -1615,7 +1615,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                         # extract fixname name ok?
                         if fn not in bold_list:
                             runok = False
-                            log.raw("\n---> ERROR: extract fix name [%s], not found in provided fix names!"
+                            log.error("extract fix name [%s], not found in provided fix names!"
                                 % fn)
 
                     if len(en_split) > 0:
@@ -1651,7 +1651,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
             # check value
             if extractvolume != "TRUE" and extractvolume != "FALSE":
                 runok = False
-                log.raw("\n---> ERROR: invalid extractvolume parameter [%s], expecting TRUE or FALSE!"
+                log.error("invalid extractvolume parameter [%s], expecting TRUE or FALSE!"
                     % extractvolume)
 
             # append to command
@@ -1771,18 +1771,18 @@ def write_transmit_bias_voltages(sessions, options, voltages_file, log):
         )
 
         if not os.path.exists(json_file):
-            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. JSON file not found for session {session['id']}: {json_file}")
+            log.error(f"Cannot create hcp_voltages file. JSON file not found for session {session['id']}: {json_file}")
             return False
 
         try:
             with open(json_file, "r") as f:
                 metadata = json.load(f)
         except Exception as e:
-            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. Failed to read JSON file for session {session['id']}: {json_file}. Error: {e}")
+            log.error(f"Cannot create hcp_voltages file. Failed to read JSON file for session {session['id']}: {json_file}. Error: {e}")
             return False
 
         if "TxRefAmp" not in metadata:
-            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. TxRefAmp not found for session {session['id']} in JSON file: {json_file}")
+            log.error(f"Cannot create hcp_voltages file. TxRefAmp not found for session {session['id']} in JSON file: {json_file}")
             return False
 
         values.append(str(metadata["TxRefAmp"]))
@@ -1796,8 +1796,8 @@ def write_transmit_bias_voltages(sessions, options, voltages_file, log):
             for value in values:
                 f.write(value + "\n")
     except Exception as e:
-        log.raw(f"\n---> ERROR: Cannot write hcp_voltages file: {voltages_file}. Error: {e}")
+        log.error(f"Cannot write hcp_voltages file: {voltages_file}. Error: {e}")
         return False
 
-    log.raw(f"\n---> Created hcp_voltages file: {voltages_file}")
+    log.step(f"Created hcp_voltages file: {voltages_file}")
     return True

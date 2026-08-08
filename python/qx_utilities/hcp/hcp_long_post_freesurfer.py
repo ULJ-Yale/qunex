@@ -252,7 +252,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             log.raw(res_report)
             if resolution == 0:
                 run = False
-                log.detail("ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!")
+                log.error("unable to set hcp_prefs_template_res automatically, please set it manually!", depth=1)
             else:
                 options["hcp_prefs_template_res"] = resolution
 
@@ -260,7 +260,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         try:
             float(options["hcp_prefs_template_res"])
         except Exception:
-            log.raw("\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
+            log.error("hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
                 % (options["hcp_prefs_template_res"]))
             run = False
 

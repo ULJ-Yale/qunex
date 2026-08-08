@@ -170,7 +170,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
+            log.error("There is no hcp info for session %s in batch.txt" % (
                 sinfo["id"]
             ))
             run = False
@@ -194,7 +194,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     run = False
             else:
                 matlabrunmode = "0"

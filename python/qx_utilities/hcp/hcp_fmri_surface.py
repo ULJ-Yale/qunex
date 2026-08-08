@@ -221,7 +221,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
+            log.error("There is no hcp info for session %s in batch.txt"
                 % (sinfo["id"]))
             run = False
 
@@ -241,7 +241,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers
         bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
         if len(bolds) == 0:
-            log.raw("\n---> ERROR: No BOLD images found for session %s! Check your data or the contents of the batch file."
+            log.error("No BOLD images found for session %s! Check your data or the contents of the batch file."
                 % (sinfo["id"]))
             run = False
 

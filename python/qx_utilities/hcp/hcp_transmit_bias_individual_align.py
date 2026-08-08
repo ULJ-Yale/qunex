@@ -210,7 +210,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
+            log.error("There is no hcp info for session %s in batch.txt" % (
                 sinfo["id"]
             ))
             run = False

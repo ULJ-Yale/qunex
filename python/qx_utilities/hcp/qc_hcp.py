@@ -64,7 +64,7 @@ def _apply_on_existing(on_existing, patterns, label, log):
         return False
 
     if on_existing == "skip":
-        log.raw("\n---> on_existing=skip: found %d existing %s output(s), skipping." % (
+        log.step("on_existing=skip: found %d existing %s output(s), skipping." % (
             len(existing),
             label,
         ))
@@ -73,7 +73,7 @@ def _apply_on_existing(on_existing, patterns, label, log):
     if on_existing == "delete":
         for f in existing:
             _safe_unlink(f)
-        log.raw("\n---> on_existing=delete: removed %d existing %s output(s) before running." % (
+        log.step("on_existing=delete: removed %d existing %s output(s) before running." % (
             len(existing),
             label,
         ))
@@ -89,11 +89,11 @@ def _dummy_variable_check(template_scene, tokens, log):
         with open(template_scene, "r", encoding="utf-8", errors="ignore") as f:
             txt = f.read()
     except OSError as e:
-        log.raw("\n---> ERROR: cannot read scene template %s (%s)" % (template_scene, e))
+        log.error("cannot read scene template %s (%s)" % (template_scene, e))
         return False
     missing = [t for t in tokens if t not in txt]
     if missing:
-        log.raw("\n---> ERROR: scene %s missing required tokens: %s" % (
+        log.error("scene %s missing required tokens: %s" % (
             template_scene,
             ", ".join(missing),
         ))
@@ -565,7 +565,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             run_bold = True
             bolds, bskip, report_skipped = log.use_or_skip_bold(sinfo, options)
             if len(bolds) == 0:
-                log.raw("\n---> ERROR: No BOLD images found for session %s!" % (sinfo["id"]))
+                log.error("No BOLD images found for session %s!" % (sinfo["id"]))
                 run_bold = False
 
             for boldinfo in bolds:
@@ -632,7 +632,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             run_bold = True
             bolds, bskip, report_skipped = log.use_or_skip_bold(sinfo, options)
             if len(bolds) == 0:
-                log.raw("\n---> ERROR: No BOLD images found for session %s!" % (sinfo["id"]))
+                log.error("No BOLD images found for session %s!" % (sinfo["id"]))
                 run_bold = False
 
             fc_template = {
@@ -1249,7 +1249,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
             return {"r": log.text, "report": report}
 
         if not os.path.isdir(nii_dir):
-            log.raw("\n---> ERROR: raw NIFTI folder not found: %s" % nii_dir)
+            log.error("raw NIFTI folder not found: %s" % nii_dir)
             report["failed"].append("rawNII")
             return {"r": log.text, "report": report}
 
@@ -1269,7 +1269,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
         )
 
         if not os.path.exists(index_html):
-            log.raw("\n---> ERROR: slicesdir did not produce %s" % index_html)
+            log.error("slicesdir did not produce %s" % index_html)
             report["failed"].append("rawNII")
             return {"r": log.text, "report": report}
 
@@ -1419,7 +1419,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
     eddy_qc = os.path.join(hcp["base"], "Diffusion", "eddy", "eddy_unwarped_images.qc")
     qc_pdf = os.path.join(eddy_qc, "qc.pdf")
     if not os.path.exists(qc_pdf):
-        log.raw("\n---> WARNING: EDDY QC outputs missing (%s); skipping EDDY QC." % qc_pdf)
+        log.warning("EDDY QC outputs missing (%s); skipping EDDY QC." % qc_pdf)
         return
 
     mot_abs = os.path.join(eddy_qc, "%s_qc_mot_abs.txt" % case_name)
@@ -1430,7 +1430,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
             with open(mot_abs, "w") as f:
                 f.write("%s\n" % val)
         except Exception:
-            log.raw("\n---> WARNING: could not regenerate %s" % mot_abs)
+            log.warning("could not regenerate %s" % mot_abs)
 
     eddy_pdf_dst = os.path.join(outpath, "%s.DWI.eddy.QC.pdf" % case_name)
     _safe_unlink(eddy_pdf_dst)
@@ -1472,7 +1472,7 @@ def _run_qc_custom_scene(sinfo, options, overwrite, hcp, params: dict):
     try:
         case_name = "%s%s" % (sinfo["id"], options["hcp_suffix"])
         if not os.path.exists(template_scene):
-            log.raw("\n---> ERROR: scene template not found: %s" % template_scene)
+            log.error("scene template not found: %s" % template_scene)
             report["failed"].append(label)
             return {"r": log.text, "report": report}
 
@@ -1636,7 +1636,7 @@ def _run_qc_dwi(sinfo, options, overwrite, hcp, params: dict):
             return {"r": log.text, "report": report}
 
         if not os.path.exists(dwi_nii):
-            log.raw("\n---> ERROR: Preprocessed DWI data not found: %s" % dwi_nii)
+            log.error("Preprocessed DWI data not found: %s" % dwi_nii)
             report["failed"].append("DWI")
             return {"r": log.text, "report": report}
 
@@ -1770,7 +1770,7 @@ def _run_qc_bold_fc(sinfo, options, overwrite, hcp, params: dict):
             return {"r": log.text, "report": report}
 
         if not os.path.exists(fc_src):
-            log.raw("\n---> ERROR: BOLD FC input not found: %s" % fc_src)
+            log.error("BOLD FC input not found: %s" % fc_src)
             report["failed"].append(report_label)
             return {"r": log.text, "report": report}
 
@@ -1908,7 +1908,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         )
 
         if not os.path.exists(dtseries):
-            log.raw("\n---> ERROR: missing dtseries: %s" % (dtseries))
+            log.error("missing dtseries: %s" % (dtseries))
             report["failed"].append(report_label)
             return {"r": log.text, "report": report}
 
@@ -2125,7 +2125,7 @@ def _run_qc_t1w(sinfo, options, overwrite, hcp, params: dict):
 
         t1w_restore = os.path.join(hcp["hcp_nonlin"], "T1w_restore.nii.gz")
         if not os.path.exists(t1w_restore):
-            log.raw("\n---> ERROR: Preprocessed T1w data not found: %s" % t1w_restore)
+            log.error("Preprocessed T1w data not found: %s" % t1w_restore)
             report["failed"].append("T1w")
             return {"r": log.text, "report": report}
 
@@ -2209,7 +2209,7 @@ def _run_qc_t2w(sinfo, options, overwrite, hcp, params: dict):
 
         t2w_restore = os.path.join(hcp["hcp_nonlin"], "T2w_restore.nii.gz")
         if not os.path.exists(t2w_restore):
-            log.raw("\n---> ERROR: Preprocessed T2w data not found: %s" % t2w_restore)
+            log.error("Preprocessed T2w data not found: %s" % t2w_restore)
             report["failed"].append("T2w")
             return {"r": log.text, "report": report}
 
@@ -2298,7 +2298,7 @@ def _run_qc_myelin(sinfo, options, overwrite, hcp, params: dict):
             hcp["hcp_nonlin"], f"{case_name}.R.SmoothedMyelinMap.164k_fs_LR.func.gii"
         )
         if not (os.path.exists(myelin_l) and os.path.exists(myelin_r)):
-            log.raw("\n---> ERROR: Preprocessed Smoothed Myelin data not found: %s.*.SmoothedMyelinMap.164k_fs_LR.func.gii" % (
+            log.error("Preprocessed Smoothed Myelin data not found: %s.*.SmoothedMyelinMap.164k_fs_LR.func.gii" % (
                 os.path.join(hcp["hcp_nonlin"], case_name)
             ))
             report["failed"].append("Myelin")
@@ -2388,7 +2388,7 @@ def _run_qc_general(sinfo, options, overwrite, hcp, params: dict):
         data_path_check = os.path.join(session_path, datapath, datafile)
 
         if not os.path.exists(data_path_check):
-            log.raw("\n---> ERROR: Data requested not found: %s" % data_path_check)
+            log.error("Data requested not found: %s" % data_path_check)
             report["failed"].append("general")
             return {"r": log.text, "report": report}
 

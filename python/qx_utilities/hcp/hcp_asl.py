@@ -225,7 +225,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
+            log.error("There is no hcp info for session %s in batch.txt"
                 % (sinfo["id"]))
             run = False
 
@@ -257,14 +257,14 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         else:
             asl_files = glob.glob(os.path.join(hcp["ASL_source"], "*.nii.gz"))
             if len(asl_files) == 0:
-                log.raw(f"\n---> ERROR: No .nii.gz files found in {hcp['ASL_source']}!")
+                log.error(f"No .nii.gz files found in {hcp['ASL_source']}!")
                 run = False
             else:
                 asl_file = asl_files[0]
 
         # file exists?
         if not os.path.exists(asl_file):
-            log.raw("\n---> ERROR: ASL acquistion data not found [%s]" % asl_file)
+            log.error("ASL acquistion data not found [%s]" % asl_file)
             run = False
 
         # AP and PA fieldmaps for use in distortion correction
@@ -287,7 +287,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                                 )
                             )
                             if len(fmap_ap_file) == 0:
-                                log.raw("\n---> ERROR: SE AP file not found in [%s]"
+                                log.error("SE AP file not found in [%s]"
                                     % hcp["ASL_source"])
                                 run = False
                             else:
@@ -305,7 +305,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                                 )
                             )
                             if len(fmap_pa_file) == 0:
-                                log.raw("\n---> ERROR: SE PA file not found in [%s]"
+                                log.error("SE PA file not found in [%s]"
                                     % hcp["ASL_source"])
                                 run = False
                             else:
@@ -335,10 +335,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             run = False
         else:
             if not os.path.exists(fmap_ap_file):
-                log.raw("\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file)
+                log.error("AP fieldmap not found [%s]" % fmap_ap_file)
                 run = False
             if not os.path.exists(fmap_ap_file):
-                log.raw("\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file)
+                log.error("PA fieldmap not found [%s]" % fmap_pa_file)
                 run = False
 
         # get library path

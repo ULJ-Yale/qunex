@@ -304,7 +304,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
     try:
         # run HCP hand reclassification
         log.raw("\n------------------------------------------------------------")
-        log.raw("\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold)
+        log.step("Executing HCP Hand reclassification for bold: %s\n" % printbold)
         result = execute_hcp_hand_reclassification(
             sinfo, options, hcp, run, True, boldtarget, printbold
         )
@@ -332,7 +332,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
             matlabrunmode = None
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                    log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                    log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                     boldok = False
                 else:
                     matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -344,7 +344,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     boldok = False
 
             comm = (
@@ -455,7 +455,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                 log.raw("\n\n")
 
         else:
-            log.raw("\n---> ERROR: Hand reclassification failed for bold: %s!" % printbold)
+            log.error("Hand reclassification failed for bold: %s!" % printbold)
             report["failed"].append(printbold)
             boldok = False
 
@@ -491,7 +491,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n------------------------------------------------------------")
-        log.raw("\n---> %s group %s" % (pc.action("Processing", options["run"]), groupname))
+        log.step("%s group %s" % (pc.action("Processing", options["run"]), groupname))
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -526,7 +526,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
         # run HCP hand reclassification if not longitudinal
         if not options["longitudinal"]:
-            log.raw("\n---> Executing HCP Hand reclassification for group: %s\n" % groupname)
+            log.step("Executing HCP Hand reclassification for group: %s\n" % groupname)
             result = execute_hcp_hand_reclassification(
                 sinfo, options, hcp, run, False, groupname, groupname
             )
@@ -550,7 +550,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             matlabrunmode = None
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                    log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                    log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 else:
                     matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
             else:
@@ -561,7 +561,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     groupok = False
 
             # highpass
@@ -724,7 +724,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 log.raw("\n\n")
 
         else:
-            log.raw("\n---> ERROR: Hand reclassification failed for bold: %s!" % printbold)
+            log.error("Hand reclassification failed for bold: %s!" % printbold)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
@@ -757,7 +757,7 @@ def execute_hcp_hand_reclassification(
     }
 
     try:
-        log.raw("\n---> %s ICA %s" % (pc.action("Processing", options["run"]), printbold))
+        log.step("%s ICA %s" % (pc.action("Processing", options["run"]), printbold))
         boldok = True
 
         # load parameters or use default values

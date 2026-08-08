@@ -278,24 +278,24 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                 )
 
                 if failed:
-                    log.raw(f"\n---> setup_mice processing for BOLD {boldinfo['name']} failed")
+                    log.step(f"setup_mice processing for BOLD {boldinfo['name']} failed")
                     report["failed"].append(boldinfo["name"])
                 else:
-                    log.raw(f"\n---> setup_mice processing for BOLD {boldinfo['name']} completed")
+                    log.step(f"setup_mice processing for BOLD {boldinfo['name']} completed")
                     report["done"].append(boldinfo["name"])
 
             else:
-                log.raw(f"\n---> BOLD {boldinfo['name']} is ready for setup_mice command")
+                log.step(f"BOLD {boldinfo['name']} is ready for setup_mice command")
                 report["ready"].append(boldinfo["name"])
 
         else:
             # run
             if options["run"] == "run":
-                log.raw(f"\n---> setup_mice processing for BOLD {boldinfo['name']} failed")
+                log.step(f"setup_mice processing for BOLD {boldinfo['name']} failed")
                 report["failed"].append(boldinfo["name"])
             # just checking
             else:
-                log.raw(f"\n---> BOLD {boldinfo['name']} is not ready for setup_mice command")
+                log.step(f"BOLD {boldinfo['name']} is not ready for setup_mice command")
                 report["not ready"].append(boldinfo["name"])
 
     return {"r": log.text, "report": report}
