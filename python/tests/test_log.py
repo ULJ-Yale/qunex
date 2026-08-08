@@ -62,7 +62,7 @@ def test_levels_render_with_their_prefixes():
     log.step("doing a thing")
     log.detail("with a detail")
     log.warning("something looks off")
-    log.error("could not find %s", "a file")
+    log.error("could not find %s" % "a file")
     log.info("plain line")
 
     assert log.text.endswith(
@@ -74,10 +74,20 @@ def test_levels_render_with_their_prefixes():
     )
 
 
-def test_error_without_args_does_not_interpolate():
+def test_a_percent_in_a_message_is_never_interpolated():
+    # the level methods take one already-formatted message; nothing they are
+    # handed is a format string, so a literal % is just a per cent sign
     log = _log()
     log.error("100% of runs failed")
     assert log.text.endswith("\n---> ERROR: 100% of runs failed")
+
+
+def test_a_second_positional_argument_is_rejected():
+    # the lazy-% footgun: `log.step("50% done", x)` used to raise inside the
+    # log at run time, now it does not type-check at the call site
+    log = _log()
+    with pytest.raises(TypeError):
+        log.step("50% done", "extra")
 
 
 def test_framed_frames_content_between_rules():
@@ -189,7 +199,7 @@ def test_dedent_is_clamped_at_zero():
 
 def test_section_records_a_step_and_indents_its_block():
     log = _log()
-    with log.section("checking %s", "data"):
+    with log.section("checking %s" % "data"):
         log.step("found it")
         log.detail("a detail")
 

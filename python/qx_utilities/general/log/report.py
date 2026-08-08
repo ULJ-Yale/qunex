@@ -170,13 +170,13 @@ class ReportLog:
         self.indent(-levels)
 
     @contextmanager
-    def section(self, title: str, *args):
+    def section(self, title: str):
         """
         Record a step and nest everything logged inside the block under it.
 
         The depth is restored even if the block raises.
         """
-        self.step(title, *args)
+        self.step(title)
         self.indent()
         try:
             yield self
@@ -185,31 +185,29 @@ class ReportLog:
 
     # ---------------------------------------------------------------- levels
 
-    def _emit(self, level, message, args, depth=0):
-        if args:
-            message = message % args
+    def _emit(self, level, message, depth=0):
         self._record(max(0, self._depth + depth), level, message)
 
-    def step(self, message: str, *args, depth: int = 0) -> None:
+    def step(self, message: str, *, depth: int = 0) -> None:
         """Record a processing step: ``---> <message>``."""
-        self._emit("step", message, args, depth)
+        self._emit("step", message, depth)
 
-    def detail(self, message: str, *args, depth: int = 0) -> None:
+    def detail(self, message: str, *, depth: int = 0) -> None:
         """Record a sub-detail of the preceding step: ``     ... <message>``."""
-        self._emit("detail", message, args, depth + 1)
+        self._emit("detail", message, depth + 1)
 
-    def warning(self, message: str, *args, depth: int = 0) -> None:
+    def warning(self, message: str, *, depth: int = 0) -> None:
         """Record a warning: ``---> WARNING: <message>``."""
-        self._emit("warning", message, args, depth)
+        self._emit("warning", message, depth)
 
-    def error(self, message: str, *args, depth: int = 0) -> None:
+    def error(self, message: str, *, depth: int = 0) -> None:
         """Record an error: ``---> ERROR: <message>``."""
         self._errors += 1
-        self._emit("error", message, args, depth)
+        self._emit("error", message, depth)
 
-    def info(self, message: str, *args, depth: int = 0) -> None:
+    def info(self, message: str, *, depth: int = 0) -> None:
         """Record an unprefixed line."""
-        self._emit("info", message, args, depth)
+        self._emit("info", message, depth)
 
     def blank(self, count: int = 1) -> None:
         """Insert blank lines."""
@@ -376,7 +374,7 @@ class SessionLog(ReportLog):
 
         log = SessionLog(sinfo, options, "HCP DTI Fit pipeline")
         log.step("checking for data")
-        log.error("bvals file not found: %s", path)
+        log.error("bvals file not found: %s" % path)
         return log.finish("HCP DTIFit failed", failed=1)
     """
 
