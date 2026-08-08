@@ -262,8 +262,9 @@ def read_session_data(filename, verbose=False):
         )
         raise ValueError("ERROR: Batch file not found: %s" % (filename))
 
-    file = open(filename, "r")
-    s = file.read()
+    with open(filename, "r") as file:
+        s = file.read()
+
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")
     s = re.sub("^#.*?\n", "", s)
