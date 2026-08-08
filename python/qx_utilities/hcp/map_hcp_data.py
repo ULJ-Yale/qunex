@@ -228,18 +228,18 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     log = ReportLog()
     log.raw(session_report_header(sinfo))
-    log.raw("\nMapping HCP data ... \n")
-    log.raw("\n   The command will map the results of the HCP preprocessing from sessions's hcp\n   to sessions's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_nifti_tail and --hcp_cifti_tail specifiy which kind of the nifti and cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameters are not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' nifti tail will be used\n    * '%s' cifti tail will be used."
+    log.info("Mapping HCP data ... \n")
+    log.info("   The command will map the results of the HCP preprocessing from sessions's hcp\n   to sessions's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_nifti_tail and --hcp_cifti_tail specifiy which kind of the nifti and cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameters are not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' nifti tail will be used\n    * '%s' cifti tail will be used."
         % (
             ", ".join(options["bolds"].split("|")),
             options["hcp_nifti_tail"],
             options["hcp_cifti_tail"],
         ))
     if any([options["hcp_suffix"], options["img_suffix"]]):
-        log.raw("\n   Based on --hcp_suffix and --img_suffix parameters, the files will be mapped from hcp/%s%s/MNINonLinear to 'images%s' folder!"
+        log.info("   Based on --hcp_suffix and --img_suffix parameters, the files will be mapped from hcp/%s%s/MNINonLinear to 'images%s' folder!"
             % (sinfo["id"], options["hcp_suffix"], options["img_suffix"]))
     if any([options["hcp_bold_variant"], options["bold_variant"]]):
-        log.raw("\n   Based on --hcp_bold_variant and --bold_variant parameters, the files will be mapped from MNINonLinear/Results%s to 'images%s/functional%s folder!"
+        log.info("   Based on --hcp_bold_variant and --bold_variant parameters, the files will be mapped from MNINonLinear/Results%s to 'images%s/functional%s folder!"
             % (
                 options["hcp_bold_variant"],
                 options["img_suffix"],
@@ -301,7 +301,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         rstatus = f"Mapping {sinfo['id']} failed, check your batch file and session processing!"
     else:
         log.raw("\n\nSource folder: " + d["hcp"])
-        log.raw("\nTarget folder: " + d["s_images"])
+        log.info("Target folder: " + d["s_images"])
 
         log.raw("\n\nStructural data: ...")
         status = True
@@ -395,19 +395,19 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         tf = open(tfile, "w")
                         print(s, file=tf)
                         tf.close()
-                        log.raw("\n     -> updated .spec file [%s]" % (sid))
+                        log.info("     -> updated .spec file [%s]" % (sid))
                         ncp += 1
                         continue
                     if gc.link_or_copy(sfile, tfile):
                         ncp += 1
                     else:
-                        log.raw("\n     -> ERROR: could not map or copy %s" % (sfile))
+                        log.info("     -> ERROR: could not map or copy %s" % (sfile))
                         report["surface"] = "error"
                         failed += 1
             if npre:
-                log.raw("\n     -> %d files already copied" % (npre))
+                log.info("     -> %d files already copied" % (npre))
             if ncp:
-                log.raw("\n     -> copied %d surface files" % (ncp))
+                log.info("     -> copied %d surface files" % (ncp))
         else:
             log.error("missing folder: %s!" % (
                 os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k")
@@ -593,10 +593,10 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                             status = False
 
                 if status:
-                    log.raw("\n     ---> Data ready!\n")
+                    log.step("Data ready!\n", depth=1)
                     report["boldok"] += 1
                 else:
-                    log.raw("\n     ---> ERROR: Data missing, please check source!\n")
+                    log.error("Data missing, please check source!\n", depth=1)
                     report["boldfail"] += 1
                     failed += 1
 
@@ -610,7 +610,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 failed += 1
 
         if len(skipped) > 0:
-            log.raw("\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n"
+            log.info("The following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n"
                 % (options["bolds"]))
             for boldinfo in skipped:
                 if "filename" in boldinfo and options["hcp_filename"] == "userdefined":

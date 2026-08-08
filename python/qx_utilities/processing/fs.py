@@ -101,11 +101,11 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 
     f = get_file_names(sinfo, options)
     log.raw("\n---------------------------------------------------------")
-    log.raw(
-        "\nSession id: %s \n[started on %s]"
+    log.info(
+        "Session id: %s \n[started on %s]"
         % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     )
-    log.raw("\nRunning basic structural segmentation ...")
+    log.info("Running basic structural segmentation ...")
 
     try:
         # --- copy structurals over
@@ -270,8 +270,8 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 
     except (ExternalFailed, NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
-        log.raw(
-            "\nBasic structural segmentation failed on %s\n---------------------------------------------------------"
+        log.info(
+            "Basic structural segmentation failed on %s\n---------------------------------------------------------"
             % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         )
         print(log.text)
@@ -285,8 +285,8 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
         print(log.text)
         return log.text
 
-    log.raw(
-        "\nBasic structural segmentation completed on %s\n---------------------------------------------------------"
+    log.info(
+        "Basic structural segmentation completed on %s\n---------------------------------------------------------"
         % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     )
 
@@ -364,11 +364,11 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
 
         if verbose:
             log.raw("\n---------------------------------------------------------")
-            log.raw(
-                "\nSession id: %s \n[started on %s]"
+            log.info(
+                "Session id: %s \n[started on %s]"
                 % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
             )
-            log.raw("\nChecking for existing freesurfer data ...")
+            log.info("Checking for existing freesurfer data ...")
 
         # check for freesurfer folder
         if not os.path.exists(f["fs_aseg_mgz"]) or overwrite:
@@ -460,8 +460,8 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
         return log.text
 
     if verbose:
-        log.raw(
-            "\nCheck completed on %s\n---------------------------------------------------------"
+        log.info(
+            "Check completed on %s\n---------------------------------------------------------"
             % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         )
         print(log.text)
@@ -506,11 +506,11 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
 
     try:
         log.raw("\n---------------------------------------------------------")
-        log.raw(
-            "\nSession id: %s \n[started on %s]"
+        log.info(
+            "Session id: %s \n[started on %s]"
             % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         )
-        log.raw("\nRunning Full FreeSurfer segmentation ...")
+        log.info("Running Full FreeSurfer segmentation ...")
 
         # check if any data already exists
         log.raw(
@@ -787,8 +787,8 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
 
     except (ExternalFailed, NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
-        log.raw(
-            "\nFreeSurfer segmentation failed on %s\n---------------------------------------------------------"
+        log.info(
+            "FreeSurfer segmentation failed on %s\n---------------------------------------------------------"
             % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         )
         print(log.text)
@@ -802,8 +802,8 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         print(log.text)
         return log.text
 
-    log.raw(
-        "\nFreeSurfer segmentation completed on %s\n---------------------------------------------------------"
+    log.info(
+        "FreeSurfer segmentation completed on %s\n---------------------------------------------------------"
         % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     )
 
@@ -841,11 +841,11 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
     log = ReportLog()
     try:
         log.raw("\n---------------------------------------------------------")
-        log.raw(
-            "\nSession id: %s \n[started on %s]"
+        log.info(
+            "Session id: %s \n[started on %s]"
             % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         )
-        log.raw("\nRunning subcortical only FreeSurfer segmentation ...")
+        log.info("Running subcortical only FreeSurfer segmentation ...")
 
         # check if any data already exists
         log.raw(
@@ -1013,8 +1013,8 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
 
     except (ExternalFailed, NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
-        log.raw(
-            "\nFreeSurfer segmentation failed on %s\n---------------------------------------------------------"
+        log.info(
+            "FreeSurfer segmentation failed on %s\n---------------------------------------------------------"
             % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         )
         print(log.text)
@@ -1028,8 +1028,8 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         print(log.text)
         return log.text
 
-    log.raw(
-        "\nFreeSurfer segmentation completed on %s\n---------------------------------------------------------"
+    log.info(
+        "FreeSurfer segmentation completed on %s\n---------------------------------------------------------"
         % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     )
 

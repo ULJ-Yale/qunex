@@ -248,7 +248,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         _build_skipped_report(report, bskip, options)
 
         parelements = max(1, min(options["parelements"], len(bolds)))
-        log.raw("\n%s %d BOLD images in parallel" % (
+        log.info("%s %d BOLD images in parallel" % (
             pc.action("Running", options["run"]),
             parelements,
         ))
@@ -452,7 +452,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
             printbold,
             traceback.format_exc(),
         ))

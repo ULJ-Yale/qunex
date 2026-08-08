@@ -443,11 +443,11 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
     log = ReportLog()
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\nRunning QC for: %s" % ", ".join(modalities_canon))
+    log.info("Running QC for: %s" % ", ".join(modalities_canon))
 
     # --- Base settings
     pc.do_options_check(options, sinfo, "hcp_run_qc")
@@ -518,8 +518,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
     qc_report = {"done": [], "failed": []}
 
-    log.raw("\nHCP folder: %s" % (hcp["base"]))
-    log.raw("\nTemplate folder: %s" % (scenetemplatefolder))
+    log.info("HCP folder: %s" % (hcp["base"]))
+    log.info("Template folder: %s" % (scenetemplatefolder))
 
     # Build a single list of QC jobs (across modalities) and run them in one executor.
     jobs = []
@@ -532,8 +532,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         os.makedirs(qclog, exist_ok=True)
 
         if modality == "rawNII":
-            log.raw("\n- rawNII: FSL slicesdir on raw NIFTIs")
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- rawNII: FSL slicesdir on raw NIFTIs")
+            log.info("  Output folder: %s" % (outpath))
             jobs.append(
                 {
                     "modality": "rawNII",
@@ -556,8 +556,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
 
-            log.raw("\n- BOLD: using template %s" % (template_scene))
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- BOLD: using template %s" % (template_scene))
+            log.info("  Output folder: %s" % (outpath))
 
             if "bolds" not in options or not options["bolds"]:
                 options["bolds"] = "all"
@@ -598,7 +598,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 "BOLD", scenetemplatefolder, studyfolder,
                 userscenefile, userscenepath, processcustom,
             ):
-                log.raw("\n- BOLD user/custom scene: %s" % (tmpl_base))
+                log.info("- BOLD user/custom scene: %s" % (tmpl_base))
                 for boldinfo in bolds:
                     jobs.append(
                         {
@@ -639,8 +639,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 "pscalar": "template_scalar_bold_qc.wb.scene",
                 "pconn": "template_pconn_bold_qc.wb.scene",
             }
-            log.raw("\n- BOLD_FC: types %s" % ", ".join(bold_fc_types))
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- BOLD_FC: types %s" % ", ".join(bold_fc_types))
+            log.info("  Output folder: %s" % (outpath))
 
             for fctype in bold_fc_types:
                 fcinput = bold_fc_type_input.get(fctype, "")
@@ -653,7 +653,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 template_scene = os.path.join(scenetemplatefolder, fc_template[fctype])
                 if not os.path.exists(template_scene):
                     raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-                log.raw("\n  - %s: using template %s" % (fctype, template_scene))
+                log.info("  - %s: using template %s" % (fctype, template_scene))
                 for boldinfo in bolds:
                     jobs.append(
                         {
@@ -683,8 +683,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_t1w_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.raw("\n- T1w: using template %s" % (template_scene))
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- T1w: using template %s" % (template_scene))
+            log.info("  Output folder: %s" % (outpath))
             jobs.append(
                 {
                     "modality": "T1w",
@@ -708,8 +708,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_t2w_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.raw("\n- T2w: using template %s" % (template_scene))
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- T2w: using template %s" % (template_scene))
+            log.info("  Output folder: %s" % (outpath))
             jobs.append(
                 {
                     "modality": "T2w",
@@ -733,8 +733,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_myelin_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.raw("\n- Myelin: using template %s" % (template_scene))
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- Myelin: using template %s" % (template_scene))
+            log.info("  Output folder: %s" % (outpath))
             jobs.append(
                 {
                     "modality": "Myelin",
@@ -767,8 +767,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                     "general modality requires --qc_datapath and --qc_datafile (or legacy --datapath/--datafile).",
                 )
 
-            log.raw("\n- general: using template %s" % (template_scene))
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- general: using template %s" % (template_scene))
+            log.info("  Output folder: %s" % (outpath))
             jobs.append(
                 {
                     "modality": "general",
@@ -794,8 +794,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_dwi_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.raw("\n- DWI: using template %s" % (template_scene))
-            log.raw("\n  Output folder: %s" % (outpath))
+            log.info("- DWI: using template %s" % (template_scene))
+            log.info("  Output folder: %s" % (outpath))
             jobs.append(
                 {
                     "modality": "DWI",
@@ -826,7 +826,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 modality, scenetemplatefolder, studyfolder,
                 userscenefile, userscenepath, processcustom,
             ):
-                log.raw("\n- %s user/custom scene: %s" % (modality, tmpl_base))
+                log.info("- %s user/custom scene: %s" % (modality, tmpl_base))
                 jobs.append(
                     {
                         "modality": "CUSTOM_SCENE",

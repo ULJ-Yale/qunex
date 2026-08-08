@@ -451,7 +451,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
             groupname,
             traceback.format_exc(),
         ))

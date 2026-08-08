@@ -88,11 +88,11 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\n%s FSL feat [%s] ..." % (pc.action("Running", options["run"]), session))
+    log.info("%s FSL feat [%s] ..." % (pc.action("Running", options["run"]), session))
 
     # status variables
     run = True
@@ -186,7 +186,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "FSL feat failed", 1)
 
     except Exception:
-        log.raw("\n --- Failed during processing of session %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of session %s with error:\n %s\n" % (
             session,
             traceback.format_exc(),
         ))
@@ -251,10 +251,10 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
     sessions_array = sessions.split(",")
 
     log.raw("\n------------------------------------------------------------")
-    log.raw("\nMelodic: \n[started on %s]" % (
+    log.info("Melodic: \n[started on %s]" % (
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
     ))
-    log.raw("\n%s FSL melodic ..." % (pc.action("Running", options["run"])))
+    log.info("%s FSL melodic ..." % (pc.action("Running", options["run"])))
 
     # status variables
     run = True
@@ -406,7 +406,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
         report = ("Study", "FSL melodic failed", 1)
 
     except Exception:
-        log.raw("\n --- Failed with error:\n %s\n" % (traceback.format_exc()))
+        log.info(" --- Failed with error:\n %s\n" % (traceback.format_exc()))
         report = ("Study", "FSL melodic failed", 1)
 
     return (log.text, report)

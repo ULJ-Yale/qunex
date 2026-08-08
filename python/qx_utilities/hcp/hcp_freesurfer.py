@@ -413,8 +413,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     add_extra = ["-autorecon-pial"]
                 else:
                     log.error("No edits specified and no edited files found!")
-                    log.raw("\n            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits.")
-                    log.raw("\n            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters.")
+                    log.info("            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits.")
+                    log.info("            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters.")
                     run = False
                     add_extra = []
 
@@ -554,10 +554,10 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(post_fs_tfile):
                     log.warning("PostFreeSurfer results already present!")
                     # cleanup postfs
-                    log.raw("\n     Found PostFreeSurfer results file: %s" % (
+                    log.info("     Found PostFreeSurfer results file: %s" % (
                         post_fs_tfile
                     ))
-                    log.raw("\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ...")
+                    log.info("     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ...")
                     have_postfs_diff = os.path.exists(postfs_snapshot_paths["diff"])
                     have_postfs_backup = os.path.exists(postfs_snapshot_paths["backup"])
 
@@ -569,7 +569,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         )
 
                         # restore backup
-                        log.raw("\n     Restoring FreeSurfer backup ...")
+                        log.info("     Restoring FreeSurfer backup ...")
                         gs.restore_files(
                             source=postfs_snapshot_paths["backup"],
                             target=hcp["base"],

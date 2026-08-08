@@ -86,13 +86,13 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     bsearch = re.compile(r"bold([0-9]+)")
 
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\nCopying imaging data ...")
+    log.info("Copying imaging data ...")
 
-    log.raw("\nStructural data ...")
+    log.info("Structural data ...")
     pc.do_options_check(options, sinfo, "get_bold_data")
     f = pc.get_file_names(sinfo, options)
 
@@ -293,20 +293,20 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     }
 
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\nCreating masks for bold runs ... \n")
+    log.info("Creating masks for bold runs ... \n")
     log.raw("\n\n   Files in 'images%s/functional%s will be processed." % (
         options["img_suffix"],
         options["bold_variant"],
     ))
-    log.raw("\n   Masks will be saved in 'images%s/boldmasks.%s." % (
+    log.info("   Masks will be saved in 'images%s/boldmasks.%s." % (
         options["img_suffix"],
         options["bold_variant"],
     ))
-    log.raw("\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bolds parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed.")
+    log.info("   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bolds parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed.")
     log.raw("\n\n........................................................")
 
     pc.do_options_check(options, sinfo, "create_bold_brain_masks")
@@ -318,17 +318,17 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         ostatus = "will not"
 
     log.raw("\n\nWorking on BOLD images in: " + d["s_images"])
-    log.raw("\nResulting masks will be in: " + d["s_boldmasks"])
+    log.info("Resulting masks will be in: " + d["s_boldmasks"])
     log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (
         ", ".join(options["bolds"].split("|"))
     ))
-    log.raw("\nIf already present, existing masks %s be overwritten (see --overwrite).\n"
+    log.info("If already present, existing masks %s be overwritten (see --overwrite).\n"
         % (ostatus))
 
     bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
 
     parelements = options["parelements"]
-    log.raw("\nProcessing %d BOLDs in parallel" % (parelements))
+    log.info("Processing %d BOLDs in parallel" % (parelements))
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -394,7 +394,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             status=True,
         )
         if not status:
-            log.raw("\nLooked for:" + f["bold_vol"])
+            log.info("Looked for:" + f["bold_vol"])
             report["boldmissing"] += 1
             return {"r": log.text, "report": report}
 
@@ -892,7 +892,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     }
 
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
@@ -916,17 +916,17 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         ostatus = "will not"
 
     log.raw("\n\nWorking on BOLD images in: " + d["s_bold"])
-    log.raw("\nResulting files will be in: " + d["s_bold_mov"])
+    log.info("Resulting files will be in: " + d["s_bold_mov"])
     log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (
         ", ".join(options["bolds"].split("|"))
     ))
-    log.raw("\nIf already present, existing statistics %s be overwritten (see --overwrite)."
+    log.info("If already present, existing statistics %s be overwritten (see --overwrite)."
         % (ostatus))
 
     bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
 
     parelements = options["parelements"]
-    log.raw("\nProcessing %d BOLDs in parallel" % (parelements))
+    log.info("Processing %d BOLDs in parallel" % (parelements))
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -1312,7 +1312,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
     try:
         log.raw("\n---------------------------------------------------------")
-        log.raw("\nSession id: %s \n[started on %s]" % (
+        log.info("Session id: %s \n[started on %s]" % (
             sinfo["id"],
             datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
         ))
@@ -1335,11 +1335,11 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             ostatus = "will not"
 
         log.raw("\n\nWorking on BOLD information images in: " + d["s_bold_mov"])
-        log.raw("\nResulting plots will be saved in: " + d["s_bold_mov"])
+        log.info("Resulting plots will be saved in: " + d["s_bold_mov"])
 
         log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)."
             % (", ".join(options["bolds"].split("|"))))
-        log.raw("\nIf already present, existing results %s be overwritten (see --overwrite)."
+        log.info("If already present, existing results %s be overwritten (see --overwrite)."
             % (ostatus))
 
         procbolds = []
@@ -1555,11 +1555,11 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
-        log.raw("\nBOLD statistics and movement report failed on %s\n---------------------------------------------------------"
+        log.info("BOLD statistics and movement report failed on %s\n---------------------------------------------------------"
             % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
         preport["procok"] = "failed"
     except Exception:
-        log.raw("\nBOLD statistics and movement report failed with and unknown error: \n...................................\n%s...................................\n"
+        log.info("BOLD statistics and movement report failed with and unknown error: \n...................................\n%s...................................\n"
             % (traceback.format_exc()))
         preport["procok"] = "failed"
 
@@ -1761,7 +1761,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     }
 
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
@@ -1786,17 +1786,17 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         ostatus = "will not"
 
     log.raw("\n\nWorking on BOLD images in: " + d["s_bold"])
-    log.raw("\nResulting files will be in: " + d["s_bold_mov"])
+    log.info("Resulting files will be in: " + d["s_bold_mov"])
     log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (
         ", ".join(options["bolds"].split("|"))
     ))
-    log.raw("\nIf already present, existing nuisance files %s be overwritten (see --overwrite)."
+    log.info("If already present, existing nuisance files %s be overwritten (see --overwrite)."
         % (ostatus))
 
     bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
 
     parelements = options["parelements"]
-    log.raw("\nProcessing %d BOLDs in parallel" % (parelements))
+    log.info("Processing %d BOLDs in parallel" % (parelements))
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -2549,18 +2549,18 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     pc.do_options_check(options, sinfo, "preprocess_bold")
 
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\nPreprocessing %s BOLD files as specified in --bolds." % (
+    log.info("Preprocessing %s BOLD files as specified in --bolds." % (
         ", ".join(options["bolds"].split("|"))
     ))
-    log.raw("\nFiles in 'images%s/functional%s will be processed." % (
+    log.info("Files in 'images%s/functional%s will be processed." % (
         options["img_suffix"],
         options["bold_variant"],
     ))
-    log.raw("\n%s Preprocessing bold runs ..." % (pc.action("Running", options["run"])))
+    log.info("%s Preprocessing bold runs ..." % (pc.action("Running", options["run"])))
 
     report = {
         "done": [],
@@ -2575,7 +2575,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     report["skipped"] = [str(binfo["bold_number"]) for binfo in bskip]
 
     parelements = options["parelements"]
-    log.raw("\nProcessing %d BOLDs in parallel" % (parelements))
+    log.info("Processing %d BOLDs in parallel" % (parelements))
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -3432,12 +3432,12 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     pc.do_options_check(options, sinfo, "preprocess_conc")
 
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\n%s Preprocessing conc bundles ..." % (pc.action("Running", options["run"])))
-    log.raw("\nFiles in 'images%s/functional%s will be processed." % (
+    log.info("%s Preprocessing conc bundles ..." % (pc.action("Running", options["run"])))
+    log.info("Files in 'images%s/functional%s will be processed." % (
         options["img_suffix"],
         options["bold_variant"],
     ))

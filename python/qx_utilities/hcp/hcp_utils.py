@@ -770,7 +770,7 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
         # create specified bolds
         specified_bolds = boldtargets
 
-        log.raw("\nConcatenating all bolds\n")
+        log.info("Concatenating all bolds\n")
 
     # --- Get hcp_icafix data from bolds
     # variable for storing skipped bolds
@@ -862,9 +862,9 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
 
     # --- Report single fix or multi fix
     if single_fix:
-        log.raw("\nSingle-run HCP ICAFix on %d bolds" % len(hcp_bolds))
+        log.info("Single-run HCP ICAFix on %d bolds" % len(hcp_bolds))
     else:
-        log.raw("\nMulti-run HCP ICAFix on %d groups" % len(hcp_groups))
+        log.info("Multi-run HCP ICAFix on %d groups" % len(hcp_groups))
 
     # different output for msmall and singlefix
     if msmall and single_fix:
@@ -1129,7 +1129,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
             printbold,
             traceback.format_exc(),
         ))
@@ -1372,7 +1372,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         log.raw(str(errormessage))
         report["failed"].append(regname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
             "DeDriftAndResample",
             traceback.format_exc(),
         ))
@@ -1714,7 +1714,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         log.raw(str(errormessage))
         report["failed"].append(grouptargets)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
             "DeDriftAndResample",
             traceback.format_exc(),
         ))

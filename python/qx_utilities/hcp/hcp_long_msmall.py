@@ -527,7 +527,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     log.raw(str(errormessage))
                     report["failed"].append(f"{subject_id}_{groupname}")
                 except Exception:
-                    log.raw("\n --- Failed during processing of group %s with error:\n %s\n"
+                    log.info(" --- Failed during processing of group %s with error:\n %s\n"
                         % (
                             f"{subject_id}_{groupname}",
                             traceback.format_exc(),

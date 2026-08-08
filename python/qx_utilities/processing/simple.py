@@ -233,8 +233,8 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
     log = ReportLog()
 
     log.raw("\n---------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
-    log.raw("\nRunning script %s" % (options['script']))
+    log.info("Session id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.info("Running script %s" % (options['script']))
     log.raw("\n........................................................\n")
 
     try:

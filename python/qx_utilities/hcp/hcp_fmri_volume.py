@@ -1162,10 +1162,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     spin_neg = sepairs[spin_n]["spinNeg"]
                     spin_pos = sepairs[spin_n]["spinPos"]
                     log.detail("using spin echo fieldmap set %d" % (spin_n))
-                    log.raw("\n         -> SE Positive image : %s" % (
+                    log.info("         -> SE Positive image : %s" % (
                         os.path.basename(spin_pos)
                     ))
-                    log.raw("\n         -> SE Negative image : %s" % (
+                    log.info("         -> SE Negative image : %s" % (
                         os.path.basename(spin_neg)
                     ))
 
@@ -2031,7 +2031,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
             printbold,
             traceback.format_exc(),
         ))

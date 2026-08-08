@@ -135,7 +135,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw(f"\n{pc.action('Running', options['run'])} preprocess_mice {session} ...")
 
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -194,12 +194,12 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw(f"\n --- Failed during processing of session {session} with error:\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "preprocess_mice failed", 1)
 
     except Exception:
-        log.raw(f"n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "preprocess_mice failed", 1)
 
     return (log.text, report)
@@ -386,7 +386,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw(f"\n{pc.action('Running', options['run'])} map_mice_data {session} ...")
 
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -508,12 +508,12 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw(f"\n --- Failed during processing of session {session} with error:\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "map_mice_data failed", 1)
 
     except Exception:
-        log.raw(f"n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "map_mice_data failed", 1)
 
     return (log.text, report)

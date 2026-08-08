@@ -692,7 +692,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         log.raw(str(errormessage))
         report["failed"].append(msmall_bolds)
     except Exception:
-        log.raw("\n --- Failed during processing of bolds %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of bolds %s with error:\n %s\n" % (
             msmall_bolds,
             traceback.format_exc(),
         ))
@@ -988,7 +988,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
             groupname,
             traceback.format_exc(),
         ))

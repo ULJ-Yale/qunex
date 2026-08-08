@@ -525,8 +525,8 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw(
-            "\n --- Failed during processing of bold %s with error:\n %s\n"
+        log.info(
+            " --- Failed during processing of bold %s with error:\n %s\n"
             % (
                 printbold,
                 traceback.format_exc(),
@@ -861,8 +861,8 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw(
-            "\n --- Failed during processing of group %s with error:\n %s\n"
+        log.info(
+            " --- Failed during processing of group %s with error:\n %s\n"
             % (
                 groupname,
                 traceback.format_exc(),

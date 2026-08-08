@@ -110,11 +110,11 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\n%s FSL F99 registration [%s] ..." % (
+    log.info("%s FSL F99 registration [%s] ..." % (
         pc.action("Running", options["run"]),
         session,
     ))
@@ -238,7 +238,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "FSL F99 failed", 1)
 
     except Exception:
-        log.raw("\n --- Failed during processing of session %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of session %s with error:\n %s\n" % (
             session,
             traceback.format_exc(),
         ))
@@ -383,11 +383,11 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\n%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session))
+    log.info("%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session))
 
     # status variables
     run = True
@@ -589,7 +589,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "FSL XTRACT failed", 1)
 
     except Exception:
-        log.raw("\n --- Failed during processing of session %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of session %s with error:\n %s\n" % (
             session,
             traceback.format_exc(),
         ))
@@ -695,11 +695,11 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
+    log.info("Session id: %s \n[started on %s]" % (
         sinfo["id"],
         datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
     ))
-    log.raw("\n%s CUDIMOT NODDI modelling [%s] ..." % (
+    log.info("%s CUDIMOT NODDI modelling [%s] ..." % (
         pc.action("Running", options["run"]),
         session,
     ))
@@ -833,7 +833,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
 
     except Exception:
-        log.raw(f"\n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
 
     return (log.text, report)

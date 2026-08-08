@@ -404,7 +404,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                             ddir
                         ))
                         for dfile in dfiles:
-                            log.raw("\n     %s" % (os.path.basename(dfile)))
+                            log.info("     %s" % (os.path.basename(dfile)))
                     else:
                         log.error("No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
                             % ddir)

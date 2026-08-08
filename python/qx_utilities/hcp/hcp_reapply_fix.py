@@ -464,7 +464,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
             printbold,
             traceback.format_exc(),
         ))
@@ -733,7 +733,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
             groupname,
             traceback.format_exc(),
         ))
@@ -869,7 +869,7 @@ def execute_hcp_hand_reclassification(
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
+        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
             printbold,
             traceback.format_exc(),
         ))

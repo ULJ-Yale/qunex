@@ -509,7 +509,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 options["hcp_t1samplespacing"] = (
                                     f"{float(sidecar_data['DwellTime']):.10f}"
                                 )
-                                log.raw(f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}")
+                                log.info(f"       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}")
 
         if hcp["T2w"] in ["", "NONE"]:
             if options["hcp_processing_mode"] == "HCPStyleData":
@@ -554,7 +554,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                     options["hcp_t2samplespacing"] = (
                                         f"{float(sidecar_data['DwellTime']):.10f}"
                                     )
-                                    log.raw(f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}")
+                                    log.info(f"       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}")
 
                 else:
                     log.error("Could not find T2w image file. [%s]" % (tfile))
@@ -641,7 +641,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 options["hcp_seechospacing"] = (
                                     f"{float(sidecar_data['EffectiveEchoSpacing']):.10f}"
                                 )
-                                log.raw(f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}")
+                                log.info(f"       - hcp_seechospacing set to {options['hcp_seechospacing']}")
 
             # -- spin echo settings
             sesettings = True
@@ -842,7 +842,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                     et1 = float(sidecar_data["EchoTime1"])
                                     echodiff = (et2 - et1) * 1000
                                     echodiff = f"{echodiff:.10f}"
-                                    log.raw(f"\n       - hcp_echodiff set to {echodiff}")
+                                    log.info(f"       - hcp_echodiff set to {echodiff}")
                         else:
                             log.step("hcp_echodiff not provided and not found in the JSON sidecar, setting it to 'NONE'.")
                             echodiff = "NONE"
@@ -910,7 +910,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 log.error("The following brain files are missing in %s:"
                     % (hcp["T1w_folder"]), depth=1)
                 for tfile in missingfiles:
-                    log.raw("\n                %s" % tfile)
+                    log.info("                %s" % tfile)
 
         # -- Prepare templates
         # non-human species use species-specific templates from a different

@@ -213,7 +213,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     timestamp = datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
-    log.raw(f"\nSession id: {sinfo['id']} \n[started on {timestamp}]")
+    log.info(f"Session id: {sinfo['id']} \n[started on {timestamp}]")
     action = pc.action("Running", options["run"])
     log.raw(f"\n{action} rapidtide [{session}] ...")
 
@@ -334,7 +334,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         report = (sinfo["id"], "rapidtide failed", 1)
 
     except Exception:
-        log.raw(f"\n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "rapidtide failed", 1)
 
     return (log.text, report)
