@@ -247,7 +247,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
                             )
                             break
         if tr is None or tr == 0.0:
-            "...  No DICOM-Report, assuming TR of 2.49836"
+            print("...  No DICOM-Report, assuming TR of 2.49836")
             tr = 2.49836
 
         # ---- create params content

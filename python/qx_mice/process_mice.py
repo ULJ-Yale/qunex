@@ -431,7 +431,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 log.raw(f"\n ... mapping {bold_original}")
                 if os.path.exists(source_original):
                     if os.path.exists(target_original) and not overwrite:
-                        f"\n ... {bold_original} already exists and overwrite is set to no, skipping this file"
+                        log.raw(f"\n ... {bold_original} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_original, target_original)
                     report["done"].append(bold_original)
@@ -443,7 +443,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 log.raw(f"\n ... mapping {bold_epi}")
                 if os.path.exists(source_epi):
                     if os.path.exists(target_epi) and not overwrite:
-                        f"\n ... {bold_epi} already exists and overwrite is set to no, skipping this file"
+                        log.raw(f"\n ... {bold_epi} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_epi, target_epi)
                     report["done"].append(bold_epi)
@@ -455,7 +455,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 log.raw(f"\n ... mapping {bold_abi}")
                 if os.path.exists(source_abi):
                     if os.path.exists(target_abi) and not overwrite:
-                        f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file"
+                        log.raw(f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_abi, target_abi)
                     report["done"].append(bold_abi)
@@ -468,7 +468,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 log.raw(f"\n ... checking {bold_original}")
                 if os.path.exists(source_original):
                     if os.path.exists(target_original) and not overwrite:
-                        f"\n ... {bold_original} already exists and overwrite is set to no, this file would be skipped"
+                        log.raw(f"\n ... {bold_original} already exists and overwrite is set to no, this file would be skipped")
                     report["ready"].append(bold_original)
                 else:
                     log.raw(f"\n ... WARNING: {bold_original} does not exist, rerun the preprocess_mice step")
@@ -478,7 +478,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 log.raw(f"\n ... checking {bold_epi}")
                 if os.path.exists(source_epi):
                     if os.path.exists(target_epi) and not overwrite:
-                        f"\n ... {bold_epi} already exists and overwrite is set to no, this file would be skipped"
+                        log.raw(f"\n ... {bold_epi} already exists and overwrite is set to no, this file would be skipped")
                     report["ready"].append(bold_epi)
                 else:
                     log.raw(f"\n ... WARNING: {bold_epi} does not exist, rerun the preprocess_mice step")
@@ -488,7 +488,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 log.raw(f"\n ... checking {bold_abi}")
                 if os.path.exists(source_abi):
                     if os.path.exists(target_abi) and not overwrite:
-                        f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file"
+                        log.raw(f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file")
                     report["ready"].append(bold_abi)
                 else:
                     log.raw(f"\n ... WARNING: {bold_abi} does not exist, rerun the preprocess_mice step")
