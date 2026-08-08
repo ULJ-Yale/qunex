@@ -22,7 +22,6 @@ import re
 
 import qx_utilities.general.exceptions as ge
 
-
 unwarp = {
     None: "Unknown",
     "i": "x",
@@ -215,7 +214,7 @@ def get_hcp_paths(sinfo, options):
             dc = True
         elif options["hcp_avgrdcmethod"].lower() == "gehealthcarelegacyfieldmap":
             legacy_dc = True
-    real_dc = False
+    precomputed_dc = False
     if options["hcp_bold_dcmethod"] is not None:
         if options["hcp_bold_dcmethod"].lower() in [
             "fieldmap",
@@ -228,7 +227,7 @@ def get_hcp_paths(sinfo, options):
         elif options["hcp_bold_dcmethod"].lower() in [
             "precomputed_fieldmap",
         ]:
-            real_dc = True
+            precomputed_dc = True
 
     if dc:
         fmapmag = glob.glob(
@@ -284,31 +283,31 @@ def get_hcp_paths(sinfo, options):
                 fmnum = int(fmnum.group())
                 d["fieldmap"].update({fmnum: {"GE": imagepath}})
 
-    if real_dc:
-        fmapreal = glob.glob(
+    if precomputed_dc:
+        fmapprecomputed = glob.glob(
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Real.nii.gz",
+                sinfo["id"] + options["fmtail"] + "*_FieldMap_Precomputed.nii.gz",
             )
         )
-        for imagepath in fmapreal:
+        for imagepath in fmapprecomputed:
             fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
             if fmnum:
                 fmnum = int(fmnum.group())
                 if fmnum not in d["fieldmap"]:
-                    d["fieldmap"].update({fmnum: {"Real": imagepath}})
+                    d["fieldmap"].update({fmnum: {"Precomputed": imagepath}})
                 else:
-                    d["fieldmap"][fmnum].update({"Real": imagepath})
+                    d["fieldmap"][fmnum].update({"Precomputed": imagepath})
 
-        fmapmag_real = glob.glob(
+        fmapmag_precomputed = glob.glob(
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
                 sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
             )
         )
-        for imagepath in fmapmag_real:
+        for imagepath in fmapmag_precomputed:
             fmnum = re.search(r"(?<=FieldMap)[0-9]{1,2}", imagepath)
             if fmnum:
                 fmnum = int(fmnum.group())

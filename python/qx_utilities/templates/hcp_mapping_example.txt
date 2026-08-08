@@ -74,7 +74,8 @@
 #                     correction
 # FM-Magnitude    ... Fieldmap magnitude image used for distortion correction
 # FM-Phase        ... Fieldmap phase image used for distortion correction
-# FM-Real         ... Real fieldmap image used for distortion correction
+# FM-Precomputed  ... Precomputed fieldmap image used for distortion
+#                     correction
 # boldref[N]      ... Reference image for the following BOLD image
 # bold[N]         ... BOLD image
 # SE-FM-AP        ... Spin-echo fieldmap image recorded using the A-to-P

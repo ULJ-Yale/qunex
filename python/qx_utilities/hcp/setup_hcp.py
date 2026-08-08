@@ -25,8 +25,8 @@ import os
 import os.path
 import shutil
 
-import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
 from qx_utilities.hcp.hcp_utils import check_inline_parameter_use
 
 # ---- some definitions
@@ -50,6 +50,8 @@ pe_dir_map = {
     "i-": "LR",
 }
 se_dir_map = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
+
+
 def setup_hcp(
     sourcefolder=".",
     targetfolder="hcp",
@@ -172,8 +174,8 @@ def setup_hcp(
                 Fieldmap magnitude image used for distortion correction
             --FM-Phase
                 Fieldmap phase image used for distortion correction
-            --FM-Real
-                Real fieldmap image used for distortion correction
+            --FM-Precomputed
+                Precomputed fieldmap image used for distortion correction
             --boldref
                 Reference image for the following BOLD image, N should be added
                 to the end of the boldref (boldref<N>)
@@ -421,16 +423,14 @@ def setup_hcp(
             orient = "_" + v["phenc"]
         #        elif 'PEDirection' in v:
         #            orient = "_" + PEDirMap[v['PEDirection']]
-        elif "PEDirection" in v and any(
-            [
-                "boldref" in v["name"]
-                and check_inline_parameter_use("BOLD", "PEDirection", options),
-                "bold" in v["name"]
-                and check_inline_parameter_use("BOLD", "PEDirection", options),
-                v["name"] in ["mbPCASLhr", "PCASLhr", "ASL"]
-                and check_inline_parameter_use("ASL", "PEDirection", options),
-            ]
-        ):
+        elif "PEDirection" in v and any([
+            "boldref" in v["name"]
+            and check_inline_parameter_use("BOLD", "PEDirection", options),
+            "bold" in v["name"]
+            and check_inline_parameter_use("BOLD", "PEDirection", options),
+            v["name"] in ["mbPCASLhr", "PCASLhr", "ASL"]
+            and check_inline_parameter_use("ASL", "PEDirection", options),
+        ]):
             if v["PEDirection"] in pe_dir_map:
                 orient = "_" + pe_dir_map[v["PEDirection"]]
             else:
@@ -525,7 +525,7 @@ def setup_hcp(
                 tfile = sid + "_FieldMap_Phase.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
-        elif v["name"] == "FM-Real":
+        elif v["name"] == "FM-Precomputed":
             if "fm" in v:
                 fmnum = v["fm"]
             else:
@@ -536,7 +536,7 @@ def setup_hcp(
                 tfile = sid + "_" + v["filename"] + ".nii.gz"
                 tfold = v["filename"] + fmnum + fmtail
             else:
-                tfile = sid + "_FieldMap_Real.nii.gz"
+                tfile = sid + "_FieldMap_Precomputed.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
         elif "boldref" in v["name"]:

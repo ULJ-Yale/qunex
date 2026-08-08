@@ -169,7 +169,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             automatically set this if left empty and PRECOMPUTED_FIELDMAP
             is selected. This parameter is used when hcp_bold_dcmethod is set to
             PRECOMPUTED_FIELDMAP. Usually this is set automatically based
-            on the FM-Real image specified in the batch file.
+            on the FM-Precomputed image specified in the batch file.
 
         --hcp_bold_precomputedfmapmag (str, default ''):
             Path to the magnitude image in the same space as
@@ -1369,7 +1369,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
                     fmcombined = None
 
-            # --- check for real fieldmap image
+            # --- check for precomputed fieldmap image
             elif (
                 options["hcp_bold_biascorrection"].lower() != "sebased"
                 and options["hcp_bold_dcmethod"].lower() == "precomputed_fieldmap"
@@ -1380,7 +1380,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             % (options["hcp_bold_precomputedfmap"]))
                         fieldok = False
                     else:
-                        log.detail("real fieldmap image present")
+                        log.detail("precomputed fieldmap image present")
                         fieldok = True
                     boldok = boldok and fieldok
                     fmprecomputed = options["hcp_bold_precomputedfmap"]
@@ -1395,9 +1395,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     else:
                         fieldok = True
                         for i, v in hcp["fieldmap"].items():
-                            fieldok = log.check_for_file(hcp["fieldmap"][i]["Real"],
-                                "\n     ... Real fieldmap image %d present " % (i),
-                                "\n     ... ERROR: Real fieldmap image %d missing!"
+                            fieldok = log.check_for_file(
+                                hcp["fieldmap"][i]["Precomputed"],
+                                "\n     ... precomputed fieldmap image %d present " % (i),
+                                "\n     ... ERROR: precomputed fieldmap image %d missing!"
                                 % (i),
                                 status=fieldok,
                             )
@@ -1407,7 +1408,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             log.raw('\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!'
                                 % (options["hcp_bold_echospacing"]))
                         boldok = boldok and fieldok
-                        fmprecomputed = hcp["fieldmap"][int(fmnum)]["Real"]
+                        fmprecomputed = hcp["fieldmap"][int(fmnum)]["Precomputed"]
                         fmmag = None
                         fmphase = None
                         fmcombined = None

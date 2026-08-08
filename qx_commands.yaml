@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-06T08:01:00.840046+00:00'
+generated_at: '2026-08-08T09:19:07.576030+00:00'
 source:
     id: core
 commands:
@@ -4776,7 +4776,7 @@ commands:
         default: ''
         description: Path to the precomputed fieldmap image, QuNex tries to automatically set this if left empty and PRECOMPUTED_FIELDMAP
             is selected. This parameter is used when hcp_bold_dcmethod is set to PRECOMPUTED_FIELDMAP. Usually this is set
-            automatically based on the FM-Real image specified in the batch file.
+            automatically based on the FM-Precomputed image specified in the batch file.
     -   name: hcp_bold_precomputedfmapmag
         type: str
         default: ''

@@ -32,11 +32,11 @@ import tarfile
 import zipfile
 from datetime import datetime
 
-import qx_utilities.general.exceptions as ge
-import qx_utilities.general.core as gc
-import qx_utilities.general.filelock as fl
 import yaml
 
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.filelock as fl
 
 unwarp = {
     None: "Unknown",
@@ -69,7 +69,7 @@ bids_mri_types = {
     "FM-GE": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fieldmap"},
     "FM-Magnitude": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "magnitude"},
     "FM-Phase": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "phasediff"},
-    "FM-Real": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fmap"},
+    "FM-Precomputed": {"folder": "fmap", "subtype": "fieldmaps", "suffix": "fmap"},
     "SE-FM-AP": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
     "SE-FM-PA": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
     "SE-FM-LR": {"folder": "fmap", "subtype": "pepolar", "suffix": "epi"},
@@ -1161,14 +1161,12 @@ def process_bids(bfolder):
                 )
             )
             info.update(
-                dict(
-                    [
-                        (i, part.split("-")[1])
-                        for part in parts
-                        for i in bids[modality]["info"]
-                        if "-" in part and i == part.split("-")[0]
-                    ]
-                )
+                dict([
+                    (i, part.split("-")[1])
+                    for part in parts
+                    for i in bids[modality]["info"]
+                    if "-" in part and i == part.split("-")[0]
+                ])
             )
             info["filepath"] = sfile
             info["filename"] = filename
@@ -1200,13 +1198,11 @@ def process_bids(bfolder):
                     if ".nii" in element["filename"]:
                         imgn += 1
                         bids_data[session]["images"]["list"].append(element["filename"])
-                        element["tag"] = " ".join(
-                            [
-                                "%s-%s" % (e, element[e])
-                                for e in bids[modality]["tag"]
-                                if element[e]
-                            ]
-                        )
+                        element["tag"] = " ".join([
+                            "%s-%s" % (e, element[e])
+                            for e in bids[modality]["tag"]
+                            if element[e]
+                        ])
                         element["tag"] = element["tag"].replace("label-", "")
                         element["tag"] = element["tag"].replace("task-", "")
                         element["imgn"] = imgn
@@ -1240,12 +1236,11 @@ def process_bids(bfolder):
                 tag = f"{fmtype}({fmindex})"
 
                 # ---> add a tag to the fieldmap image
-                bids_data[session]["images"]["info"][element["filename"]]["seq_info"] = (
-                    bids_data[session]["images"]["info"][element["filename"]].get(
-                        "seq_info", []
-                    )
-                    + [tag]
-                )
+                bids_data[session]["images"]["info"][element["filename"]][
+                    "seq_info"
+                ] = bids_data[session]["images"]["info"][element["filename"]].get(
+                    "seq_info", []
+                ) + [tag]
                 if (
                     "json_info" in element
                     and element["json_info"]
@@ -1997,9 +1992,9 @@ def map_nii2bids(
         # --- map files to BIDS
         images_ids = [i for i in session_info.keys() if i.isdigit()]
 
-        dwi_count = len(
-            [i for i in images_ids if session_info[i]["name"] in ["dwi", "DWI"]]
-        )
+        dwi_count = len([
+            i for i in images_ids if session_info[i]["name"] in ["dwi", "DWI"]
+        ])
         if dwi_count > 1:
             [
                 print(

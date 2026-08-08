@@ -441,3 +441,23 @@ def test_or_rule_parser_rejects_empty_variant():
 
     with pytest.raises(SpecFileSyntaxError):
         _parse_mapping_file_lines([" || T1w_LowRes => T1w"])
+
+
+def test_fm_precomputed_image_type():
+    """FM-Precomputed is parsed as the Precomputed fieldmap subtype."""
+    lines = [
+        "session: TEST001",
+        "51  :FM-Precomputed  :Test Precomputed: fm(1)",
+    ]
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    assert result["images"][(51,)]["hcp_image_type"] == ("FM", "Precomputed")
+
+
+def test_fm_real_no_longer_supported():
+    """FM-Real was renamed to FM-Precomputed and is no longer a valid label."""
+    lines = [
+        "session: TEST001",
+        "51  :FM-Real         :Test Precomputed: fm(1)",
+    ]
+    with pytest.raises(SpecFileSyntaxError):
+        _parse_session_file_lines(lines, "pipeline:hcp")
