@@ -541,7 +541,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
+        log.error(f"{e}")
         log.unknown_error()
         failed = 1
 

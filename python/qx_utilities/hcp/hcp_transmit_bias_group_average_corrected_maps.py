@@ -346,8 +346,8 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
         log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
-        log.raw(f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
+        log.error(f"{e}")
+        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
         failed = 1
 
     #Remove soft links to prevent clutter

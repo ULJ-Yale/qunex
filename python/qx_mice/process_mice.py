@@ -428,70 +428,70 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             # running or testing
             if options["run"] == "run":
                 # original
-                log.raw(f"\n ... mapping {bold_original}")
+                log.detail(f"mapping {bold_original}")
                 if os.path.exists(source_original):
                     if os.path.exists(target_original) and not overwrite:
-                        log.raw(f"\n ... {bold_original} already exists and overwrite is set to no, skipping this file")
+                        log.detail(f"{bold_original} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_original, target_original)
                     report["done"].append(bold_original)
                 else:
-                    log.raw(f"\n ... ERROR: {bold_original} does not exist, rerun the preprocess_mice step")
+                    log.error(f"{bold_original} does not exist, rerun the preprocess_mice step", depth=1)
                     report["failed"].append(bold_original)
 
                 # EPI
-                log.raw(f"\n ... mapping {bold_epi}")
+                log.detail(f"mapping {bold_epi}")
                 if os.path.exists(source_epi):
                     if os.path.exists(target_epi) and not overwrite:
-                        log.raw(f"\n ... {bold_epi} already exists and overwrite is set to no, skipping this file")
+                        log.detail(f"{bold_epi} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_epi, target_epi)
                     report["done"].append(bold_epi)
                 else:
-                    log.raw(f"\n ... ERROR: {bold_epi} does not exist, rerun the preprocess_mice step")
+                    log.error(f"{bold_epi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["failed"].append(bold_epi)
 
                 # ABI
-                log.raw(f"\n ... mapping {bold_abi}")
+                log.detail(f"mapping {bold_abi}")
                 if os.path.exists(source_abi):
                     if os.path.exists(target_abi) and not overwrite:
-                        log.raw(f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file")
+                        log.detail(f"{bold_abi} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_abi, target_abi)
                     report["done"].append(bold_abi)
                 else:
-                    log.raw(f"\n ... ERROR: {bold_abi} does not exist, rerun the preprocess_mice step")
+                    log.error(f"{bold_abi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["failed"].append(bold_abi)
 
             else:
                 # original
-                log.raw(f"\n ... checking {bold_original}")
+                log.detail(f"checking {bold_original}")
                 if os.path.exists(source_original):
                     if os.path.exists(target_original) and not overwrite:
-                        log.raw(f"\n ... {bold_original} already exists and overwrite is set to no, this file would be skipped")
+                        log.detail(f"{bold_original} already exists and overwrite is set to no, this file would be skipped")
                     report["ready"].append(bold_original)
                 else:
-                    log.raw(f"\n ... WARNING: {bold_original} does not exist, rerun the preprocess_mice step")
+                    log.warning(f"{bold_original} does not exist, rerun the preprocess_mice step", depth=1)
                     report["not ready"].append(bold_original)
 
                 # EPI
-                log.raw(f"\n ... checking {bold_epi}")
+                log.detail(f"checking {bold_epi}")
                 if os.path.exists(source_epi):
                     if os.path.exists(target_epi) and not overwrite:
-                        log.raw(f"\n ... {bold_epi} already exists and overwrite is set to no, this file would be skipped")
+                        log.detail(f"{bold_epi} already exists and overwrite is set to no, this file would be skipped")
                     report["ready"].append(bold_epi)
                 else:
-                    log.raw(f"\n ... WARNING: {bold_epi} does not exist, rerun the preprocess_mice step")
+                    log.warning(f"{bold_epi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["not ready"].append(bold_epi)
 
                 # ABI
-                log.raw(f"\n ... checking {bold_abi}")
+                log.detail(f"checking {bold_abi}")
                 if os.path.exists(source_abi):
                     if os.path.exists(target_abi) and not overwrite:
-                        log.raw(f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file")
+                        log.detail(f"{bold_abi} already exists and overwrite is set to no, skipping this file")
                     report["ready"].append(bold_abi)
                 else:
-                    log.raw(f"\n ... WARNING: {bold_abi} does not exist, rerun the preprocess_mice step")
+                    log.warning(f"{bold_abi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["not ready"].append(bold_abi)
 
             log.raw("\n")

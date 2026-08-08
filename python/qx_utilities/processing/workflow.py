@@ -106,7 +106,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                 raise pc.NoSourceFolder(
                     "ERROR: Data source folder is not set. Please check your paths!"
                 )
-            log.raw("\n... copying %s" % (f["t1_source"]))
+            log.detail("copying %s" % (f["t1_source"]))
             if options["image_target"] == "4dfp":
                 if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
                     gc.link_or_copy(f["t1_source"], f["t1"])
@@ -167,9 +167,9 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                         gc.link_or_copy(f["t1_source"], f["t1"])
 
         else:
-            log.raw("\n... %s present" % (f["t1"]))
+            log.detail("%s present" % (f["t1"]))
     except Exception:
-        log.raw("\n... ERROR getting the data! Please check paths and files!")
+        log.error("getting the data failed! Please check paths and files!", depth=1)
 
     btargets = options["bolds"].split("|")
 
@@ -196,7 +196,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
                         log.raw(str(errormessage))
                     except Exception:
-                        log.raw("\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+                        log.error("Unknown error occured: \n...................................\n%s...................................\n"
                             % (traceback.format_exc()))
                         time.sleep(3)
 
@@ -402,17 +402,17 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
         if not os.path.exists(f["bold1"]) or overwrite:
             gi.slice_image(f["bold_vol"], f["bold1"], 1)
             if os.path.exists(f["bold1"]):
-                log.raw("\n    ... sliced first frame from %s" % (
+                log.detail("sliced first frame from %s" % (
                     os.path.basename(f["bold_vol"])
                 ))
             else:
-                log.raw("\n    ... WARNING: failed slicing first frame from %s" % (
+                log.warning("failed slicing first frame from %s" % (
                     os.path.basename(f["bold_vol"])
-                ))
+                ), depth=1)
                 report["boldfail"] += 1
                 return {"r": log.text, "report": report}
         else:
-            log.raw("\n    ... first %s frame already present" % (
+            log.detail("first %s frame already present" % (
                 os.path.basename(f["bold_vol"])
             ))
 
@@ -474,7 +474,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
 
         # --- run BET
         if os.path.exists(bbtarget) and not overwrite:
-            log.raw("\n    ... bet on %s already run" % (os.path.basename(bsource)))
+            log.detail("bet on %s already run" % (os.path.basename(bsource)))
             report["bolddone"] += 1
         else:
             # run BET
@@ -614,7 +614,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             fl.unlock(templatefile)
 
         report["boldfail"] += 1
-        log.raw("\nERROR: Unknown error occured: \n...................................\n%s\n%s...................................\n"
+        log.error("Unknown error occured: \n...................................\n%s\n%s...................................\n"
             % (e, traceback.format_exc()))
         time.sleep(1)
 
@@ -986,7 +986,7 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
 
         # --- check for data availability
 
-        log.raw("\n... checking for data")
+        log.detail("checking for data")
         status = True
 
         # --- movement
@@ -1063,7 +1063,7 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
         log.raw(str(errormessage))
         report["boldfail"] += 1
     except Exception:
-        log.raw("\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+        log.error("Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc()))
         report["boldfail"] += 1
 
@@ -1357,7 +1357,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 )
                 and not overwrite
             ):
-                log.raw("\n... Movement plots already exists! Please use option --overwrite=yes to redo them!")
+                log.detail("Movement plots already exists! Please use option --overwrite=yes to redo them!")
                 preport["plotdone"] = "old"
                 plot = ""
             else:
@@ -1407,7 +1407,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                         status=status,
                     )
                 else:
-                    log.raw("\n    ... folder does not exist!")
+                    log.detail("folder does not exist!")
                     status = False
 
                 # --- check
@@ -1421,7 +1421,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
                 log.raw(str(errormessage))
             except Exception:
-                log.raw("\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+                log.error("Unknown error occured: \n...................................\n%s...................................\n"
                     % (traceback.format_exc()))
 
         # run the R script
@@ -1525,7 +1525,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                     os.path.join(d["s_bold_mov"], froot),
                     os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
                 )
-                log.raw("\n... copying %s to %s" % (
+                log.detail("copying %s to %s" % (
                     os.path.join(d["s_bold_mov"], froot),
                     os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
                 ))
@@ -1544,14 +1544,14 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 try:
                     gm.meltmovfidl(concf, ipatt, fidlf, fidlf.replace(".fidl", ipatt))
                 except Exception:
-                    log.raw("\nWARNING: Failed to create a melted fidl file!")
+                    log.warning("Failed to create a melted fidl file!")
                     print(
                         "\nWARNING: Failed to create a melted fidl file! (%s)"
                         % (sinfo["id"])
                     )
                     raise
             else:
-                log.raw("\nWARNING: Files missing, failed to create a melted fidl file!")
+                log.warning("Files missing, failed to create a melted fidl file!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
@@ -1855,7 +1855,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
 
         # --- check for data availability
 
-        log.raw("\n... checking for data")
+        log.detail("checking for data")
         status = True
 
         # --- bold mask
@@ -1952,7 +1952,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         log.raw(str(errormessage))
         report["boldfail"] += 1
     except Exception:
-        log.raw("\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+        log.error("Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc()))
         report["boldfail"] += 1
 
@@ -2673,7 +2673,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
 
         # --- check for data availability
 
-        log.raw("\n... checking for data")
+        log.detail("checking for data")
         status = True
 
         # --- movement
@@ -2835,7 +2835,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         log.raw(str(errormessage))
         report["failed"].append(boldnum)
     except Exception:
-        log.raw("\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+        log.error("Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc()))
         time.sleep(5)
         report["failed"].append(boldnum)
@@ -3463,7 +3463,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     failed = 0
     if len(concs) != len(fidls):
-        log.raw("\nERROR: Number of conc files (%d) does not match number of event files (%d), processing aborted!"
+        log.error("Number of conc files (%d) does not match number of event files (%d), processing aborted!"
             % (len(concs), len(fidls)))
 
     else:
@@ -3491,18 +3491,18 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 if overwrite or not os.path.exists(f_conc):
                     tf = pc.find_file(sinfo, options, tconc + ".conc")
                     if tf:
-                        log.raw("\n... getting conc data from %s" % (tf))
+                        log.detail("getting conc data from %s" % (tf))
                         if os.path.exists(f_conc):
                             os.remove(f_conc)
                         shutil.copy2(tf, f_conc)
 
                     else:
-                        log.raw("\n... ERROR: Conc data file (%s) does not exist in the expected locations! Skipping this conc bundle."
-                            % (tconc))
+                        log.error("Conc data file (%s) does not exist in the expected locations! Skipping this conc bundle."
+                            % (tconc), depth=1)
                         failed += 1
                         continue
                 else:
-                    log.raw("\n... conc data present")
+                    log.detail("conc data present")
 
                 # --- find fidl data
 
@@ -3510,19 +3510,19 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     if overwrite or not os.path.exists(f_fidl):
                         tf = pc.find_file(sinfo, options, tfidl + ".fidl")
                         if tf:
-                            log.raw("\n... getting event data from %s" % (tf))
+                            log.detail("getting event data from %s" % (tf))
                             if os.path.exists(f_fidl):
                                 os.remove(f_fidl)
                             shutil.copy2(tf, f_fidl)
                         else:
-                            log.raw("\n... ERROR: Event data file (%s) does not exist in the expected locations! Skipping this conc bundle."
-                                % (tfidl))
+                            log.error("Event data file (%s) does not exist in the expected locations! Skipping this conc bundle."
+                                % (tfidl), depth=1)
                             failed += 1
                             continue
                     else:
-                        log.raw("\n... event data present")
+                        log.detail("event data present")
                 else:
-                    log.raw("\n... event data not needed (e not specified in --bold_nuisance) %s"
+                    log.detail("event data not needed (e not specified in --bold_nuisance) %s"
                         % (options["bold_nuisance"]))
 
                 # --- loop through bold files
@@ -3534,8 +3534,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 check = {"ok": [], "bad": []}
 
                 if len(conc) == 0:
-                    log.raw("\n... ERROR: No valid image files in conc file (%s)! Skipping this conc bundle."
-                        % (f_conc))
+                    log.error("No valid image files in conc file (%s)! Skipping this conc bundle."
+                        % (f_conc), depth=1)
                     failed += 1
                     continue
 
@@ -3651,7 +3651,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     report += "0 bolds not ok"
 
                 if not rstatus:
-                    log.raw("\nERROR: Due to missing data we are skipping this conc bundle!")
+                    log.error("Due to missing data we are skipping this conc bundle!")
                     report += " => missing data"
                     failed += 1
                     continue
@@ -3774,7 +3774,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 failed += 1
             except Exception:
                 report += " => processing failed"
-                log.raw("\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+                log.error("Unknown error occured: \n...................................\n%s...................................\n"
                     % (traceback.format_exc()))
                 time.sleep(5)
                 failed += 1

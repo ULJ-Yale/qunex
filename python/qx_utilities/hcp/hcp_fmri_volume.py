@@ -801,7 +801,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "hcp_bold_sephasepos",
             ]:
                 if not options[p]:
-                    log.raw(f"\nERROR: {p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
+                    log.error(f"{p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
                     boldok = False
                     sesettings = False
                     run = False
@@ -1886,7 +1886,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
         if options["longitudinal"]:
             studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
-                log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                 run = False
             # replace path (elements[0])
             elements[0] = (

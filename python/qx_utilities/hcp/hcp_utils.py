@@ -714,7 +714,8 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                                 if sb == boldtargets[i] or sb == boldtags[i]:
                                     if sb in hcp_bolds:
                                         bolds_ok = False
-                                        log.raw("\n\nERROR: the bold [%s] is specified twice!"
+                                        log.blank()
+                                        log.error("the bold [%s] is specified twice!"
                                             % b)
                                     else:
                                         group_bolds.append(b)
@@ -726,7 +727,8 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                     hcp_groups[split[0]] = group_bolds
                 else:
                     bolds_ok = False
-                    log.raw("\n\nERROR: multiple concatenations with the same name [%s]!"
+                    log.blank()
+                    log.error("multiple concatenations with the same name [%s]!"
                         % split[0])
 
         # else we extract bolds and use single fix
@@ -749,7 +751,8 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                         if sb == boldtargets[i] or sb == boldtags[i]:
                             if sb in hcp_bolds:
                                 bolds_ok = False
-                                log.raw("\n\nERROR: the bold [%s] is specified twice!" % b)
+                                log.blank()
+                                log.error("the bold [%s] is specified twice!" % b)
                             else:
                                 hcp_bolds.append(b)
 

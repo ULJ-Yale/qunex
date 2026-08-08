@@ -344,7 +344,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
         if options["longitudinal"]:
             studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
-                log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                 boldok = False
             # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])

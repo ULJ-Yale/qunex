@@ -496,7 +496,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if options["longitudinal"]:
                 studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
-                    log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                     run = False
                 # replace path
                 longitudinal_study_dir = os.path.join(
@@ -555,7 +555,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
+        log.error(f"{e}")
         log.unknown_error()
         failed = 1
 

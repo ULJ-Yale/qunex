@@ -499,11 +499,11 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             if options["longitudinal"]:
                 studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
-                    log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                     run = False
 
                 if not options["hcp_longitudinal_subject"]:
-                    log.raw("\nERROR: hcp_longitudinal_subject is a mandatory parameter for the longitudinal mode of temporal ICA!")
+                    log.error("hcp_longitudinal_subject is a mandatory parameter for the longitudinal mode of temporal ICA!")
                     run = False
 
                 # set study dir
@@ -566,7 +566,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             # if longitudinal, check if we have to copy from sessions to subjects
             studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
-                log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                 run = False
             sessions_mad_dir = os.path.join(
                 studyfolder, "sessions", "average_dataset", outgroupname

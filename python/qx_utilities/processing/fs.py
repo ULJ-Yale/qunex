@@ -118,7 +118,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
                 raise NoSourceFolder(
                     "ERROR: Data source folder is not set. Please check your paths!"
                 )
-            log.raw("\n... copying %s" % (f["t1_source"]))
+            log.detail("copying %s" % (f["t1_source"]))
             if options["image_target"] == "4dfp":
                 if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
                     shutil.copy2(f["t1_source"], f["t1"])
@@ -179,7 +179,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
                         shutil.copy2(f["t1_source"], f["t1"])
 
         else:
-            log.raw("\n... %s file present" % (f["t1"]))
+            log.detail("%s file present" % (f["t1"]))
 
         # --- convert to NIfTI
         sfile = f["t1"]
@@ -200,7 +200,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 
         # --- run BET
         if os.path.exists(tfileb):
-            log.raw("\n... bet on %s already done" % (os.path.basename(sfile)))
+            log.detail("bet on %s already done" % (os.path.basename(sfile)))
         else:
             endlog, status, failed = log.run_external(
                 tfileb + ".gz",
@@ -224,7 +224,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 
         # --- run FAST
         if os.path.exists(tfiles):
-            log.raw("\n... fast on %s already done" % (os.path.basename(tfiles)))
+            log.detail("fast on %s already done" % (os.path.basename(tfiles)))
         else:
             endlog, status, failed = log.run_external(
                 tfiles + ".gz",
@@ -277,8 +277,8 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
         print(log.text)
         return log.text
     except Exception:
-        log.raw(
-            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+        log.error(
+            "Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc())
         )
         time.sleep(15)
@@ -374,22 +374,22 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
         if not os.path.exists(f["fs_aseg_mgz"]) or overwrite:
             if "path_freesurfer" in options:
                 fspath = options["path_freesurfer"].replace("[sid]", sinfo["id"])
-                log.raw("\n... looking for: %s" % (fspath))
+                log.detail("looking for: %s" % (fspath))
                 if os.path.exists(fspath):
                     if os.path.exists(d["s_fs"]):
                         shutil.rmtree(d["s_fs"])
                     try:
                         shutil.copytree(fspath, d["s_fs"])
                     except Exception:
-                        log.raw("\n... copy reported an error, please check data!")
-                    log.raw(
-                        "\n... copied existing FreeSurfer data from %s to target folder"
+                        log.detail("copy reported an error, please check data!")
+                    log.detail(
+                        "copied existing FreeSurfer data from %s to target folder"
                         % (fspath)
                     )
             else:
-                log.raw("\n... no freesurfer path in options.")
+                log.detail("no freesurfer path in options.")
         else:
-            log.raw("\n... data already there.")
+            log.detail("data already there.")
 
         # check for specific freesurfer file options
         fsfiles = [
@@ -411,8 +411,8 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
                             shutil.copy2(
                                 sf.replace(".img", ".ifh"), tf.replace(".img", ".ifh")
                             )
-                        log.raw(
-                            "\n... copied %s to target folder" % (os.path.basename(sf))
+                        log.detail(
+                            "copied %s to target folder" % (os.path.basename(sf))
                         )
                         if tf != f[t]:
                             if options["image_target"] == "4dfp":
@@ -451,8 +451,8 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
                                 )
 
     except Exception:
-        log.raw(
-            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+        log.error(
+            "Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc())
         )
         time.sleep(1)
@@ -524,7 +524,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         if (
             os.path.exists(f["fs_aseg_nii"]) and os.path.exists(f["fs_aparc+aseg_nii"])
         ) or (os.path.exists(f["fs_aseg_t1"]) and os.path.exists(f["fs_aparc_t1"])):
-            log.raw("\n... FreeSurfer run already completed!")
+            log.detail("FreeSurfer run already completed!")
 
         else:
             # --- copy file over
@@ -535,8 +535,8 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                         f["t1_source"].replace(".img", ".ifh"),
                         f["t1"].replace(".img", ".ifh"),
                     )
-                log.raw(
-                    "\n... copied %s to target folder"
+                log.detail(
+                    "copied %s to target folder"
                     % (os.path.basename(f["t1_source"]))
                 )
 
@@ -794,8 +794,8 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         print(log.text)
         return log.text
     except Exception:
-        log.raw(
-            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+        log.error(
+            "Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc())
         )
         time.sleep(15)
@@ -857,7 +857,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
 
         # --- check if we need to run fsf
         if os.path.exists(f["fs_aseg_nii"]):
-            log.raw("\n... FreeSurfer run already completed!")
+            log.detail("FreeSurfer run already completed!")
 
         else:
             # --- copy file over
@@ -868,8 +868,8 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
                         f["t1_source"].replace(".img", ".ifh"),
                         f["t1"].replace(".img", ".ifh"),
                     )
-                log.raw(
-                    "\n... copied %s to target folder"
+                log.detail(
+                    "copied %s to target folder"
                     % (os.path.basename(f["t1_source"]))
                 )
 
@@ -1020,8 +1020,8 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         print(log.text)
         return log.text
     except Exception:
-        log.raw(
-            "\nERROR: Unknown error occured: \n...................................\n%s...................................\n"
+        log.error(
+            "Unknown error occured: \n...................................\n%s...................................\n"
             % (traceback.format_exc())
         )
         time.sleep(15)

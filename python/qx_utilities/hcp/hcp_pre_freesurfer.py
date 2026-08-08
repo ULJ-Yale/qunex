@@ -650,7 +650,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 "hcp_sephasepos",
             ]:
                 if not options[p]:
-                    log.raw(f"\nERROR: {p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
+                    log.error(f"{p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
                     run = False
                     sesettings = False
 
@@ -746,7 +746,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     "hcp_seunwarpdir",
                 ]:
                     if p in options and not options[p]:
-                        log.raw(f"\nERROR: {p} parameter not set manually and QuNex was unable to set it automatically.")
+                        log.error(f"{p} parameter not set manually and QuNex was unable to set it automatically.")
                         run = False
 
             except Exception:

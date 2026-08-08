@@ -506,7 +506,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         if options["longitudinal"]:
             studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
-                log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                 run = False
             # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])

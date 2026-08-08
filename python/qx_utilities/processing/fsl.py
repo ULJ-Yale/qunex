@@ -115,14 +115,14 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             )
             log.step("Checking for feat file at %s" % feat_path)
             if os.path.exists(feat_path):
-                log.raw("\n    ... Feat file found")
+                log.detail("Feat file found")
                 feat_file = feat_path
 
         # if feat_file is still none, try absolute path
         if feat_file is None and run:
             log.step(f"Checking for feat file at {options['feat_file']}")
             if os.path.exists(options["feat_file"]):
-                log.raw("\n    ... Feat file found")
+                log.detail("Feat file found")
                 feat_file = options["feat_file"]
 
         if feat_file is None and run:
@@ -280,7 +280,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                 log.step(f"Working on session {session}")
 
                 for path in input_paths:
-                    log.raw(f"\n    ... checking {path}")
+                    log.detail(f"checking {path}")
                     path_candidates = []
                     # check for input file in images functional
                     input_path = os.path.join(
@@ -311,13 +311,13 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                     file_found = False
                     for pathc in path_candidates:
                         if os.path.exists(pathc):
-                            log.raw("\n        ... found at %s" % pathc)
+                            log.detail("found at %s" % pathc)
                             input_files.append(pathc)
                             file_found = True
                             break
 
                     if not file_found:
-                        log.raw(f"\n        ... ERROR: Could not find {path} for session {session}.")
+                        log.error(f"Could not find {path} for session {session}.", depth=1)
                         report = (session, "Not ready for FSL melodic", 1)
                         run = False
                         break
@@ -328,7 +328,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
             for path in input_paths:
                 log.step(f"Working on path {path}")
                 if not os.path.exists(path):
-                    log.raw(f"\n    ... ERROR: Could not find {path}.")
+                    log.error(f"Could not find {path}.", depth=1)
                     input_files.append(path)
                     report = ("Study", "Not ready for FSL melodic", 1)
                     run = False

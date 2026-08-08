@@ -261,9 +261,9 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         nonplaced = re.findall("{{.*?}}", script)
 
         if nonplaced:
-            log.raw("\nWARNING: the following tags were not filled:")
+            log.warning("the following tags were not filled:")
             for n in nonplaced:
-                log.raw("\n ... " + n)
+                log.detail(n)
 
         # --- execute script
 

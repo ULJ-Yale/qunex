@@ -249,14 +249,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     # --- sanity checks
     if "sessionsfolder" not in options:
-        log.raw("\nERROR: sessionsfolder not specified in options, cannot map HCP data!")
+        log.error("sessionsfolder not specified in options, cannot map HCP data!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters!"
         failed = 1
         return (log.text, (sinfo["id"], rstatus, failed))
 
     session_path = os.path.join(options["sessionsfolder"], sinfo["id"])
     if not os.path.exists(session_path):
-        log.raw(f"\nERROR: session {sinfo['id']} does not exists at {session_path}!")
+        log.error(f"session {sinfo['id']} does not exists at {session_path}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
         return (log.text, (sinfo["session"], rstatus, failed))
@@ -266,7 +266,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     d = pc.get_session_folders(sinfo, options)
 
     if "hcp" not in d:
-        log.raw(f"\nERROR: something went wrong, mapping was unable to get the HCP folder for session {sinfo['id']}!")
+        log.error(f"something went wrong, mapping was unable to get the HCP folder for session {sinfo['id']}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and data!"
         failed = 1
 
@@ -279,7 +279,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         return (log.text, (sinfo["session"], rstatus, failed))
 
     if not os.path.exists(d["hcp"]):
-        log.raw(f"\nERROR: HCP folder for session {sinfo['id']} does not exists at {d['hcp']}!")
+        log.error(f"HCP folder for session {sinfo['id']} does not exists at {d['hcp']}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
         return (log.text, (sinfo["session"], rstatus, failed))
@@ -296,7 +296,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     failed = 0
 
     if "hcp" not in d or "s_images" not in d:
-        log.raw(f"\nERROR: found issues with session {sinfo['id']}\n...................................\n{traceback.format_exc()}...................................\n")
+        log.error(f"found issues with session {sinfo['id']}\n...................................\n{traceback.format_exc()}...................................\n")
         failed += 1
         rstatus = f"Mapping {sinfo['id']} failed, check your batch file and session processing!"
     else:
@@ -307,7 +307,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         status = True
 
         if os.path.exists(f["t1"]) and not overwrite:
-            log.raw("\n ... T1 ready")
+            log.detail("T1 ready")
             report["T1"] = "present"
         else:
             status = log.link_or_copy(
@@ -318,7 +318,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             report["T1"] = "copied"
 
         if os.path.exists(f["fs_aparc_t1"]) and not overwrite:
-            log.raw("\n ... highres aseg+aparc ready")
+            log.detail("highres aseg+aparc ready")
             report["hires aseg+aparc"] = "present"
         else:
             status = log.link_or_copy(
@@ -329,7 +329,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             report["hires aseg+aparc"] = "copied"
 
         if os.path.exists(f["fs_aparc_bold"]) and not overwrite:
-            log.raw("\n ... lowres aseg+aparc ready")
+            log.detail("lowres aseg+aparc ready")
             report["lores aseg+aparc"] = "present"
         else:
             if os.path.exists(f["fs_aparc_bold"]):
@@ -366,14 +366,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 else:
                     report["lores aseg+aparc"] = "generated"
             else:
-                log.raw("\n ... ERROR: could not generate downsampled aseg+aparc, files missing!")
+                log.error("could not generate downsampled aseg+aparc, files missing!", depth=1)
                 report["lores aseg+aparc"] = "failed"
                 status = False
                 failed += 1
 
         report["surface"] = "ok"
         if os.path.exists(os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k")):
-            log.raw("\n ... processing surface files")
+            log.detail("processing surface files")
             sfiles = glob.glob(
                 os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k", "*.*")
             )
@@ -409,9 +409,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             if ncp:
                 log.raw("\n     -> copied %d surface files" % (ncp))
         else:
-            log.raw("\n ... ERROR: missing folder: %s!" % (
+            log.error("missing folder: %s!" % (
                 os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k")
-            ))
+            ), depth=1)
             status = False
             report["surface"] = "error"
             failed += 1
@@ -449,7 +449,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 boldnum += 1
 
         for boldinfo in bolds:
-            log.raw("\n ... " + boldinfo["name"])
+            log.detail(boldinfo["name"])
 
             # --- filenames
             if boldinfo["task"] != "additional_bold":
@@ -614,12 +614,12 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 % (options["bolds"]))
             for boldinfo in skipped:
                 if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                    log.raw("\n ... %s [task: '%s']" % (
+                    log.detail("%s [task: '%s']" % (
                         boldinfo["filename"],
                         boldinfo["task"],
                     ))
                 else:
-                    log.raw("\n ... %s [task: '%s']" % (boldinfo["name"], boldinfo["task"]))
+                    log.detail("%s [task: '%s']" % (boldinfo["name"], boldinfo["task"]))
 
         log.raw("\n\nHCP data mapping completed on %s\n------------------------------------------------------------\n"
             % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))

@@ -578,7 +578,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             if options["longitudinal"]:
                 studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
-                    log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                     groupok = False
                 # replace path
                 path = os.path.join(studyfolder, "subjects", sinfo["subject"])

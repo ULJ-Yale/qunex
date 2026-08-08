@@ -1288,7 +1288,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
         if os.path.isdir(slicesdir):
             shutil.rmtree(slicesdir, ignore_errors=True)
 
-        log.raw("\n    ... raw NIFTI QC written to %s and %s" % (zip_out, html_out))
+        log.detail("raw NIFTI QC written to %s and %s" % (zip_out, html_out))
         report["done"].append("rawNII")
         return {"r": log.text, "report": report}
 
@@ -1297,7 +1297,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append("rawNII")
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append("rawNII")
@@ -1442,7 +1442,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
     report_txt = os.path.join(outpath, "EddyQCReport_qc_mot_abs_%s.txt" % timestamp)
     with open(report_txt, "a") as f:
         f.write("%s\n" % mot_abs)
-    log.raw("\n    ... EDDY QC linked to %s; motion recorded in %s" % (eddy_pdf_dst, report_txt))
+    log.detail("EDDY QC linked to %s; motion recorded in %s" % (eddy_pdf_dst, report_txt))
     return
 
 
@@ -1526,7 +1526,7 @@ def _run_qc_custom_scene(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append(label)
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append(label)
@@ -1668,7 +1668,7 @@ def _run_qc_dwi(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append("DWI")
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append("DWI")
@@ -1808,7 +1808,7 @@ def _run_qc_bold_fc(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append(boldinfo["name"])
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append(boldinfo["name"])
@@ -2004,10 +2004,10 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         with open(tsnr_report_bold, "w") as f:
             f.write("%s: %s\n" % (tsnr_dscalar, tsnr_mean))
 
-        log.raw("\n    ... TSNR(mean)=%s written to %s" % (tsnr_mean, tsnr_report_bold))
+        log.detail("TSNR(mean)=%s written to %s" % (tsnr_mean, tsnr_report_bold))
 
         if snronly == "yes":
-            log.raw("\n    ... qc_bold_snronly=yes, skipping scene/png.")
+            log.detail("qc_bold_snronly=yes, skipping scene/png.")
             report["done"].append(report_label)
             return {"r": log.text, "report": report}
 
@@ -2086,7 +2086,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append(boldinfo["name"])
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append(boldinfo["name"])
@@ -2170,7 +2170,7 @@ def _run_qc_t1w(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append("T1w")
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append("T1w")
@@ -2254,7 +2254,7 @@ def _run_qc_t2w(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append("T2w")
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append("T2w")
@@ -2345,7 +2345,7 @@ def _run_qc_myelin(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append("Myelin")
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append("Myelin")
@@ -2432,7 +2432,7 @@ def _run_qc_general(sinfo, options, overwrite, hcp, params: dict):
         report["failed"].append("general")
         return {"r": log.text, "report": report}
     except Exception:
-        log.raw("\nERROR: Unknown error occured:\n...................................\n")
+        log.error("Unknown error occured:\n...................................\n")
         log.raw(traceback.format_exc())
         log.raw("\n...................................\n")
         report["failed"].append("general")

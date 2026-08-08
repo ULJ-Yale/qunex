@@ -341,7 +341,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
                     studyfolder = gc.deduceFolders(options)["basefolder"]
                     if not studyfolder:
-                        log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                        log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                         boldok = False
                     # replace path
                     path = os.path.join(studyfolder, "subjects", subject_id)
