@@ -278,8 +278,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.error("There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # -> FS results, check only for human
@@ -326,10 +325,10 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             tpl = _nhp_postfs_paths(hcp["hcp_Templates"], species)
             if tpl is None:
                 tpl = {}
-                log.step("NOTE: species '%s' is not in QuNex's built-in NHP template map; "
-                    "the surface atlas, grayordinates and reference myelin map paths have to "
-                    "be provided explicitly via hcp_surfatlasdir, hcp_grayordinatesdir and "
-                    "hcp_refmyelinmaps." % (species))
+                log.step(f"NOTE: species '{species}' is not in QuNex's built-in NHP template map; "
+                    f"the surface atlas, grayordinates and reference myelin map paths have to "
+                    f"be provided explicitly via hcp_surfatlasdir, hcp_grayordinatesdir and "
+                    f"hcp_refmyelinmaps.")
 
         # hcp_surfatlasdir
         if options["hcp_surfatlasdir"] is None:

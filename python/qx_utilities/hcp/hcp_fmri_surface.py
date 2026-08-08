@@ -221,8 +221,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.error("There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # -> PostFS results
@@ -241,17 +240,13 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers
         bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
         if len(bolds) == 0:
-            log.error("No BOLD images found for session %s! Check your data or the contents of the batch file."
-                % (sinfo["id"]))
+            log.error(f"No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file.")
             run = False
 
         _build_skipped_report(report, bskip, options)
 
         parelements = max(1, min(options["parelements"], len(bolds)))
-        log.info("%s %d BOLD images in parallel" % (
-            pc.action("Running", options["run"]),
-            parelements,
-        ))
+        log.info(f"{pc.action('Running', options['run'])} {parelements} BOLD images in parallel")
 
         # create a multiprocessing Pool
         process_pool_executor = ProcessPoolExecutor(parelements)
@@ -309,10 +304,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
     }
 
     try:
-        log.raw("\n\n---> %s BOLD image %s" % (
-            pc.action("Processing", options["run"]),
-            printbold,
-        ))
+        log.raw(f"\n\n---> {pc.action('Processing', options['run'])} BOLD image {printbold}")
         boldok = True
 
         # --- check for bold image
@@ -448,14 +440,11 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}

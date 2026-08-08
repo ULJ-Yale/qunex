@@ -102,8 +102,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     f = get_file_names(sinfo, options)
     log.raw("\n---------------------------------------------------------")
     log.info(
-        "Session id: %s \n[started on %s]"
-        % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
     )
     log.info("Running basic structural segmentation ...")
 
@@ -118,7 +117,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
                 raise NoSourceFolder(
                     "ERROR: Data source folder is not set. Please check your paths!"
                 )
-            log.detail("copying %s" % (f["t1_source"]))
+            log.detail(f"copying {f['t1_source']}")
             if options["image_target"] == "4dfp":
                 if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
                     shutil.copy2(f["t1_source"], f["t1"])
@@ -179,7 +178,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
                         shutil.copy2(f["t1_source"], f["t1"])
 
         else:
-            log.detail("%s file present" % (f["t1"]))
+            log.detail(f"{f['t1']} file present")
 
         # --- convert to NIfTI
         sfile = f["t1"]
@@ -200,7 +199,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 
         # --- run BET
         if os.path.exists(tfileb):
-            log.detail("bet on %s already done" % (os.path.basename(sfile)))
+            log.detail(f"bet on {os.path.basename(sfile)} already done")
         else:
             endlog, status, failed = log.run_external(
                 tfileb + ".gz",
@@ -224,7 +223,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 
         # --- run FAST
         if os.path.exists(tfiles):
-            log.detail("fast on %s already done" % (os.path.basename(tfiles)))
+            log.detail(f"fast on {os.path.basename(tfiles)} already done")
         else:
             endlog, status, failed = log.run_external(
                 tfiles + ".gz",
@@ -271,23 +270,20 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     except (ExternalFailed, NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
         log.info(
-            "Basic structural segmentation failed on %s\n---------------------------------------------------------"
-            % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+            f"Basic structural segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
         print(log.text)
         return log.text
     except Exception:
         log.error(
-            "Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc())
+            f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
         print(log.text)
         return log.text
 
     log.info(
-        "Basic structural segmentation completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        f"Basic structural segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     print(log.text)
@@ -365,8 +361,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
         if verbose:
             log.raw("\n---------------------------------------------------------")
             log.info(
-                "Session id: %s \n[started on %s]"
-                % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
             )
             log.info("Checking for existing freesurfer data ...")
 
@@ -374,7 +369,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
         if not os.path.exists(f["fs_aseg_mgz"]) or overwrite:
             if "path_freesurfer" in options:
                 fspath = options["path_freesurfer"].replace("[sid]", sinfo["id"])
-                log.detail("looking for: %s" % (fspath))
+                log.detail(f"looking for: {fspath}")
                 if os.path.exists(fspath):
                     if os.path.exists(d["s_fs"]):
                         shutil.rmtree(d["s_fs"])
@@ -383,8 +378,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
                     except Exception:
                         log.detail("copy reported an error, please check data!")
                     log.detail(
-                        "copied existing FreeSurfer data from %s to target folder"
-                        % (fspath)
+                        f"copied existing FreeSurfer data from {fspath} to target folder"
                     )
             else:
                 log.detail("no freesurfer path in options.")
@@ -412,7 +406,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
                                 sf.replace(".img", ".ifh"), tf.replace(".img", ".ifh")
                             )
                         log.detail(
-                            "copied %s to target folder" % (os.path.basename(sf))
+                            f"copied {os.path.basename(sf)} to target folder"
                         )
                         if tf != f[t]:
                             if options["image_target"] == "4dfp":
@@ -452,8 +446,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
 
     except Exception:
         log.error(
-            "Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc())
+            f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(1)
         print(log.text)
@@ -461,8 +454,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
 
     if verbose:
         log.info(
-            "Check completed on %s\n---------------------------------------------------------"
-            % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+            f"Check completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
         print(log.text)
 
@@ -507,8 +499,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
     try:
         log.raw("\n---------------------------------------------------------")
         log.info(
-            "Session id: %s \n[started on %s]"
-            % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+            f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
         )
         log.info("Running Full FreeSurfer segmentation ...")
 
@@ -536,8 +527,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                         f["t1"].replace(".img", ".ifh"),
                     )
                 log.detail(
-                    "copied %s to target folder"
-                    % (os.path.basename(f["t1_source"]))
+                    f"copied {os.path.basename(f['t1_source'])} to target folder"
                 )
 
             # --- convert to NIfTI
@@ -788,23 +778,20 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
     except (ExternalFailed, NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
         log.info(
-            "FreeSurfer segmentation failed on %s\n---------------------------------------------------------"
-            % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+            f"FreeSurfer segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
         print(log.text)
         return log.text
     except Exception:
         log.error(
-            "Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc())
+            f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
         print(log.text)
         return log.text
 
     log.info(
-        "FreeSurfer segmentation completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        f"FreeSurfer segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     print(log.text)
@@ -842,8 +829,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
     try:
         log.raw("\n---------------------------------------------------------")
         log.info(
-            "Session id: %s \n[started on %s]"
-            % (sinfo["id"], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+            f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
         )
         log.info("Running subcortical only FreeSurfer segmentation ...")
 
@@ -869,8 +855,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
                         f["t1"].replace(".img", ".ifh"),
                     )
                 log.detail(
-                    "copied %s to target folder"
-                    % (os.path.basename(f["t1_source"]))
+                    f"copied {os.path.basename(f['t1_source'])} to target folder"
                 )
 
             # --- convert to NIfTI
@@ -1014,23 +999,20 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
     except (ExternalFailed, NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
         log.info(
-            "FreeSurfer segmentation failed on %s\n---------------------------------------------------------"
-            % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+            f"FreeSurfer segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
         print(log.text)
         return log.text
     except Exception:
         log.error(
-            "Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc())
+            f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
         print(log.text)
         return log.text
 
     log.info(
-        "FreeSurfer segmentation completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        f"FreeSurfer segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     print(log.text)

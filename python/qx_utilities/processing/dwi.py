@@ -110,14 +110,8 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
-    log.info("%s FSL F99 registration [%s] ..." % (
-        pc.action("Running", options["run"]),
-        session,
-    ))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"{pc.action('Running', options['run'])} FSL F99 registration [{session}] ...")
 
     # status variables
     run = True
@@ -210,10 +204,10 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 )
 
                 if failed:
-                    log.step("FSL F99 processing for session %s failed" % session)
+                    log.step(f"FSL F99 processing for session {session} failed")
                     report = (sinfo["id"], "FSL F99 failed", 1)
                 else:
-                    log.step("FSL F99 processing for session %s completed" % session)
+                    log.step(f"FSL F99 processing for session {session} completed")
                     report = (sinfo["id"], "FSL F99 completed", 0)
 
             # just checking
@@ -226,22 +220,16 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     log.step("FSL F99 can be run")
                     report = (sinfo["id"], "FSL F99 ready", 0)
                 else:
-                    log.step("FSL F99 processing for session %s would be skipped"
-                        % session)
+                    log.step(f"FSL F99 processing for session {session} would be skipped")
                     report = (sinfo["id"], "FSL F99 would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of session %s with error:\n" % (
-            session
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "FSL F99 failed", 1)
 
     except Exception:
-        log.info(" --- Failed during processing of session %s with error:\n %s\n" % (
-            session,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "FSL F99 failed", 1)
 
     return (log.text, report)
@@ -383,11 +371,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
-    log.info("%s FSL XTRACT [%s] ..." % (pc.action("Running", options["run"]), session))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"{pc.action('Running', options['run'])} FSL XTRACT [{session}] ...")
 
     # status variables
     run = True
@@ -555,16 +540,13 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     shell=True,
                 )
 
-                log.step("Processing details can be found in %s" % (
-                    os.path.join(output_dir, "logs")
-                ))
+                log.step(f"Processing details can be found in {os.path.join(output_dir, 'logs')}")
 
                 if failed:
-                    log.step("FSL XTRACT processing for session %s failed" % session)
+                    log.step(f"FSL XTRACT processing for session {session} failed")
                     report = (sinfo["id"], "FSL XTRACT failed", 1)
                 else:
-                    log.step("FSL XTRACT processing for session %s completed"
-                        % session)
+                    log.step(f"FSL XTRACT processing for session {session} completed")
                     report = (sinfo["id"], "FSL XTRACT completed", 0)
 
             # just checking
@@ -577,22 +559,16 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     log.step("FSL XTRACT can be run")
                     report = (sinfo["id"], "FSL XTRACT ready", 0)
                 else:
-                    log.step("FSL XTRACT processing for session %s would be skipped"
-                        % session)
+                    log.step(f"FSL XTRACT processing for session {session} would be skipped")
                     report = (sinfo["id"], "FSL XTRACT would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of session %s with error:\n" % (
-            session
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "FSL XTRACT failed", 1)
 
     except Exception:
-        log.info(" --- Failed during processing of session %s with error:\n %s\n" % (
-            session,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "FSL XTRACT failed", 1)
 
     return (log.text, report)
@@ -695,14 +671,8 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     session = sinfo["id"]
 
     log.raw("\n------------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
-    log.info("%s CUDIMOT NODDI modelling [%s] ..." % (
-        pc.action("Running", options["run"]),
-        session,
-    ))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"{pc.action('Running', options['run'])} CUDIMOT NODDI modelling [{session}] ...")
 
     # status variables
     run = True
@@ -806,12 +776,10 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     )
 
                     if failed:
-                        log.step("CUDIMOT NODDI processing for session %s failed"
-                            % session)
+                        log.step(f"CUDIMOT NODDI processing for session {session} failed")
                         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
                     else:
-                        log.step("CUDIMOT NODDI processing for session %s completed"
-                            % session)
+                        log.step(f"CUDIMOT NODDI processing for session {session} completed")
                         report = (sinfo["id"], "CUDIMOT NODDI completed", 0)
 
             # just checking

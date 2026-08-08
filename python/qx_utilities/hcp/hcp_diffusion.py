@@ -305,15 +305,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.error("There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # --- using a legacy parameter?
         if "hcp_dwi_pedir" in options:
             log.warning("you are still providing the hcp_dwi_pedir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it.")
-            log.step("hcp_dwi_phasepos is currently set to %s."
-                % options["hcp_dwi_phasepos"])
+            log.step(f"hcp_dwi_phasepos is currently set to {options['hcp_dwi_phasepos']}.")
 
         # --- set up data
         direction = None
@@ -331,8 +329,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             direction = {"pos": "RL", "neg": "LR"}
             pe_dir = 1
         else:
-            log.error("Invalid value of the hcp_dwi_phasepos parameter [%s]"
-                % options["hcp_dwi_phasepos"])
+            log.error(f"Invalid value of the hcp_dwi_phasepos parameter [{options['hcp_dwi_phasepos']}]")
             run = False
 
         if run:
@@ -400,14 +397,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     dfiles = dwi_files[ddir].split("@")
 
                     if dfiles and dfiles != [""] and dfiles != "EMPTY":
-                        log.step("The following %s direction files were found:" % (
-                            ddir
-                        ))
+                        log.step(f"The following {ddir} direction files were found:")
                         for dfile in dfiles:
-                            log.info("     %s" % (os.path.basename(dfile)))
+                            log.info(f"     {os.path.basename(dfile)}")
                     else:
-                        log.error("No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
-                            % ddir)
+                        log.error(f"No {ddir} direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu.")
                         run = False
                         break
 

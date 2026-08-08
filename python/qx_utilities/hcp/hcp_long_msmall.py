@@ -237,10 +237,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     outfmriname = options["hcp_msmall_outfmriname"]
 
                     log.raw("\n\n------------------------------------------------------------")
-                    log.step("%s MSMAll %s" % (
-                        pc.action("Processing", options["run"]),
-                        outfmriname,
-                    ))
+                    log.step(f"{pc.action('Processing', options['run'])} MSMAll {outfmriname}")
 
                     # --- check for bold images and prepare targets parameter
                     boldtargets = ""
@@ -275,8 +272,8 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
                         )
                         boldok = log.check_for_file(boldimg,
-                            "\n     ... bold image %s present" % boldtarget,
-                            "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                            f"\n     ... bold image {boldtarget} present",
+                            f"\n     ... ERROR: bold image [{boldimg}] missing!",
                             status=boldok,
                         )
 
@@ -297,8 +294,8 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             hcp["hcp_nonlin"], "Results", groupname, groupica
                         )
                         boldok = log.check_for_file(groupimg,
-                            "\n     ... ICA %s present" % groupname,
-                            "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+                            f"\n     ... ICA {groupname} present",
+                            f"\n     ... ERROR: ICA [{groupimg}] missing!",
                             status=boldok,
                         )
 
@@ -522,16 +519,11 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             log.error("something missing, this group would be skipped!")
 
                 except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-                    log.raw("\n\n\n --- Failed during processing of group %s with error:\n"
-                        % (f"{subject_id}_{groupname}"))
+                    log.raw(f"\n\n\n --- Failed during processing of group {f'{subject_id}_{groupname}'} with error:\n")
                     log.raw(str(errormessage))
                     report["failed"].append(f"{subject_id}_{groupname}")
                 except Exception:
-                    log.info(" --- Failed during processing of group %s with error:\n %s\n"
-                        % (
-                            f"{subject_id}_{groupname}",
-                            traceback.format_exc(),
-                        ))
+                    log.info(f" --- Failed during processing of group {f'{subject_id}_{groupname}'} with error:\n {traceback.format_exc()}\n")
                     report["failed"].append(f"{subject_id}_{groupname}")
         else:
             log.step("Subject cannot be processed.")

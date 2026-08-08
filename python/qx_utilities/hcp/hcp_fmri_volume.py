@@ -708,8 +708,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.error("There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # -> Pre FS results
@@ -807,10 +806,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     run = False
 
             if sesettings:
-                log.step("Looking for spin echo fieldmap set images [%s/%s]." % (
-                    options["hcp_bold_sephasepos"],
-                    options["hcp_bold_sephaseneg"],
-                ))
+                log.step(f"Looking for spin echo fieldmap set images [{options['hcp_bold_sephasepos']}/{options['hcp_bold_sephaseneg']}].")
 
                 for senum in range(50):
                     spinok = False
@@ -821,9 +817,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     )
                     if sepath:
                         sepath = sepath[0]
-                        log.detail("identified folder %s" % (
-                            os.path.basename(sepath)
-                        ))
+                        log.detail(f"identified folder {os.path.basename(sepath)}")
                         # get all *.nii.gz files in that folder
                         images = glob.glob(os.path.join(sepath, "*.nii.gz"))
 
@@ -839,10 +833,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             ):
                                 spin_pos = i
                                 spinok = log.check_for_file(spin_pos,
-                                    "\n     ... phase positive %s spin echo fieldmap image present"
-                                    % (options["hcp_bold_sephasepos"]),
-                                    "\n         ERROR: %s spin echo fieldmap image missing!"
-                                    % (options["hcp_bold_sephasepos"]),
+                                    f"\n     ... phase positive {options['hcp_bold_sephasepos']} spin echo fieldmap image present",
+                                    f"\n         ERROR: {options['hcp_bold_sephasepos']} spin echo fieldmap image missing!",
                                     status=spinok,
                                 )
                             # look for phase negative
@@ -851,16 +843,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             ] in os.path.basename(i):
                                 spin_neg = i
                                 spinok = log.check_for_file(spin_neg,
-                                    "\n     ... phase negative %s spin echo fieldmap image present"
-                                    % (options["hcp_bold_sephaseneg"]),
-                                    "\n         ERROR: %s spin echo fieldmap image missing!"
-                                    % (options["hcp_bold_sephaseneg"]),
+                                    f"\n     ... phase negative {options['hcp_bold_sephaseneg']} spin echo fieldmap image present",
+                                    f"\n         ERROR: {options['hcp_bold_sephaseneg']} spin echo fieldmap image missing!",
                                     status=spinok,
                                 )
 
                         if not all([spin_pos, spin_neg]):
-                            log.error("Either one of both pairs of SpinEcho images are missing in the %s folder! Please check your data or settings!"
-                                % (os.path.basename(sepath)))
+                            log.error(f"Either one of both pairs of SpinEcho images are missing in the {os.path.basename(sepath)} folder! Please check your data or settings!")
                             spinok = False
 
                     if spinok:
@@ -878,8 +867,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         hcp["hcp_Config"], options["hcp_bold_topupconfig"]
                     )
                     if not os.path.exists(topupconfig):
-                        log.error("Could not find TOPUP configuration file: %s."
-                            % (options["hcp_bold_topupconfig"]))
+                        log.error(f"Could not find TOPUP configuration file: {options['hcp_bold_topupconfig']}.")
                         run = False
                     else:
                         log.detail("TOPUP configuration file present")
@@ -898,10 +886,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 ):
                     sepos2 = options["hcp_bold_sephasepos2"]
                     seneg2 = options["hcp_bold_sephaseneg2"]
-                    log.step("Second Spin-Echo pair of images present. [%s, %s]" % (
-                        os.path.basename(sepos2),
-                        os.path.basename(seneg2),
-                    ))
+                    log.step(f"Second Spin-Echo pair of images present. [{os.path.basename(sepos2)}, {os.path.basename(seneg2)}]")
                 elif options["hcp_senum2"]:
                     tufolder2 = os.path.join(
                         hcp["source"],
@@ -921,12 +906,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                 "*_" + options["hcp_bold_sephaseneg2"] + "*.nii.gz",
                             )
                         )[0]
-                        log.step("Second Spin-Echo pair of images present. [%s]" % (
-                            os.path.basename(tufolder2)
-                        ))
+                        log.step(f"Second Spin-Echo pair of images present. [{os.path.basename(tufolder2)}]")
                     except IndexError:
-                        log.error("Could not find the relevant second Spin-Echo files! [%s]"
-                            % (tufolder2))
+                        log.error(f"Could not find the relevant second Spin-Echo files! [{tufolder2}]")
                         run = False
                 else:
                     sepos2, sepos2_found = resolve_session_relative_image(
@@ -937,11 +919,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     )
 
                     if sepos2_found and seneg2_found:
-                        log.step("Second Spin-Echo pair of images present. [%s, %s]"
-                            % (
-                                sepos2,
-                                seneg2,
-                            ))
+                        log.step(f"Second Spin-Echo pair of images present. [{sepos2}, {seneg2}]")
                     else:
                         log.error("Could not find the relevant second Spin-Echo files for hcp_bold_sephasepos2/hcp_bold_sephaseneg2! "
                             "Checked each value as an absolute path, relative to the session's hcp folder, and relative to the T2w folder.")
@@ -958,10 +936,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 options["hcp_bold_sephasezero"], hcp["base"]
             )
             if sezero_found:
-                log.step("Zero-phase SE image: %s" % (sezero))
+                log.step(f"Zero-phase SE image: {sezero}")
             else:
-                log.error("Could not find the zero-phase SE image for hcp_bold_sephasezero [%s]! Checked as an absolute path, relative to the session's hcp folder, and relative to the T2w folder."
-                    % (options["hcp_bold_sephasezero"]))
+                log.error(f"Could not find the zero-phase SE image for hcp_bold_sephasezero [{options['hcp_bold_sephasezero']}]! Checked as an absolute path, relative to the session's hcp folder, and relative to the T2w folder.")
                 run = False
 
         if options["hcp_bold_sephasezerofsbrainmask"]:
@@ -969,10 +946,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 options["hcp_bold_sephasezerofsbrainmask"], hcp["base"]
             )
             if sezerobrainmask_found:
-                log.step("Zero-phase SE FS brainmask: %s" % (sezerobrainmask))
+                log.step(f"Zero-phase SE FS brainmask: {sezerobrainmask}")
             else:
-                log.error("Could not find the zero-phase SE FS brainmask for hcp_bold_sephasezerofsbrainmask [%s]! Checked as an absolute path, relative to the session's hcp folder, and relative to the T2w folder."
-                    % (options["hcp_bold_sephasezerofsbrainmask"]))
+                log.error(f"Could not find the zero-phase SE FS brainmask for hcp_bold_sephasezerofsbrainmask [{options['hcp_bold_sephasezerofsbrainmask']}]! Checked as an absolute path, relative to the session's hcp folder, and relative to the T2w folder.")
                 run = False
 
         # --- Process unwarp direction
@@ -998,8 +974,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers
         bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
         if len(bolds) == 0:
-            log.error("No BOLD images found for session %s! Check your data or the contents of the batch file."
-                % (sinfo["id"]))
+            log.error(f"No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file.")
             run = False
 
         _build_skipped_report(report, bskip, options)
@@ -1014,13 +989,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         for boldinfo in bolds:
             printbold, boldtarget, boldsource = pc.get_bold_names(boldinfo, options)
 
-            log.raw("\n\n---> %s BOLD %s" % (
-                pc.action(
-                    "Preprocessing settings (unwarpdir, refimage, moveref, seimage) for",
-                    options["run"],
-                ),
-                printbold,
-            ))
+            log.raw(f"\n\n---> {pc.action('Preprocessing settings (unwarpdir, refimage, moveref, seimage) for', options['run'])} BOLD {printbold}")
             boldok = True
 
             # ---> Check for and prepare distortion correction parameters
@@ -1044,16 +1013,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 if dcset:
                     unwarpdir = unwarpdirs.get(boldinfo["o"])
                     if unwarpdir is None:
-                        log.error("No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!"
-                            % (boldinfo["o"]), depth=1)
+                        log.error(f"No unwarpdir is defined for {boldinfo['o']}! Please check hcp_bold_unwarpdir parameter!", depth=1)
                         boldok = False
             elif "phenc" in boldinfo:
                 orient = "_" + boldinfo["phenc"]
                 if dcset:
                     unwarpdir = unwarpdirs.get(boldinfo["phenc"])
                     if unwarpdir is None:
-                        log.error("No unwarpdir is defined for %s! Please check hcp_bold_unwarpdir parameter!"
-                            % (boldinfo["phenc"]), depth=1)
+                        log.error(f"No unwarpdir is defined for {boldinfo['phenc']}! Please check hcp_bold_unwarpdir parameter!", depth=1)
                         boldok = False
             elif "PEDirection" in boldinfo and check_inline_parameter_use(
                 "BOLD", "PEDirection", options
@@ -1063,8 +1030,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     if dcset:
                         unwarpdir = boldinfo["PEDirection"]
                 else:
-                    log.error("Invalid PEDirection specified [%s]! Please check sequence specific PEDirection value!"
-                        % (boldinfo["PEDirection"]), depth=1)
+                    log.error(f"Invalid PEDirection specified [{boldinfo['PEDirection']}]! Please check sequence specific PEDirection value!", depth=1)
                     boldok = False
             else:
                 orient = ""
@@ -1075,12 +1041,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         boldok = False
 
             if orient:
-                log.detail("phase encoding direction: %s" % (orient[1:]))
+                log.detail(f"phase encoding direction: {orient[1:]}")
             else:
                 log.detail("phase encoding direction not specified")
 
             if dcset:
-                log.detail("unwarp direction: %s" % (unwarpdir))
+                log.detail(f"unwarp direction: {unwarpdir}")
 
             # --- check for bold image
             if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
@@ -1103,14 +1069,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     "BOLD", "EchoSpacing", options
                 ):
                     echospacing = boldinfo["EchoSpacing"]
-                    log.detail("using image specific EchoSpacing: %s s" % (
-                        echospacing
-                    ))
+                    log.detail(f"using image specific EchoSpacing: {echospacing} s")
                 elif options["hcp_bold_echospacing"]:
                     echospacing = options["hcp_bold_echospacing"]
-                    log.detail("using study general EchoSpacing: %s s" % (
-                        echospacing
-                    ))
+                    log.detail(f"using study general EchoSpacing: {echospacing} s")
                 else:
                     # try to set from the JSON sidecar
                     json_sidecar = boldimgs[0].replace(".nii.gz", ".json")
@@ -1139,12 +1101,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 elif options["hcp_bold_seimg"] == "first":
                     if first_se is None:
                         spin_n = int(sepresent[0])
-                        log.detail("using the first recorded spin echo fieldmap set %d"
-                            % (spin_n))
+                        log.detail(f"using the first recorded spin echo fieldmap set {spin_n}")
                     else:
                         spin_n = int(first_se)
-                        log.detail("using the spin echo fieldmap set for the first bold run, %d"
-                            % (spin_n))
+                        log.detail(f"using the spin echo fieldmap set for the first bold run, {spin_n}")
                     spin_neg = sepairs[spin_n]["spinNeg"]
                     spin_pos = sepairs[spin_n]["spinPos"]
 
@@ -1161,13 +1121,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                     spin_neg = sepairs[spin_n]["spinNeg"]
                     spin_pos = sepairs[spin_n]["spinPos"]
-                    log.detail("using spin echo fieldmap set %d" % (spin_n))
-                    log.info("         -> SE Positive image : %s" % (
-                        os.path.basename(spin_pos)
-                    ))
-                    log.info("         -> SE Negative image : %s" % (
-                        os.path.basename(spin_neg)
-                    ))
+                    log.detail(f"using spin echo fieldmap set {spin_n}")
+                    log.info(f"         -> SE Positive image : {os.path.basename(spin_pos)}")
+                    log.info(f"         -> SE Negative image : {os.path.basename(spin_neg)}")
 
                 # -- are we using a new SE image?
                 if spin_n != spin_p:
@@ -1190,39 +1146,31 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     for i, v in hcp["fieldmap"].items():
                         if isinstance(hcp["fieldmap"][i]["magnitude"], list):
                             fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"][0],
-                                "\n     ... Siemens fieldmap magnitude image %d present "
-                                % (i),
-                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                                % (i),
+                                f"\n     ... Siemens fieldmap magnitude image {i} present ",
+                                f"\n     ... ERROR: Siemens fieldmap magnitude image {i} missing!",
                                 status=fieldok,
                             )
                             fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"][1],
-                                "\n     ... Siemens fieldmap magnitude image %d present "
-                                % (i),
-                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                                % (i),
+                                f"\n     ... Siemens fieldmap magnitude image {i} present ",
+                                f"\n     ... ERROR: Siemens fieldmap magnitude image {i} missing!",
                                 status=fieldok,
                             )
                         else:
                             fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"],
-                                "\n     ... Siemens fieldmap magnitude image %d present "
-                                % (i),
-                                "\n     ... ERROR: Siemens fieldmap magnitude image %d missing!"
-                                % (i),
+                                f"\n     ... Siemens fieldmap magnitude image {i} present ",
+                                f"\n     ... ERROR: Siemens fieldmap magnitude image {i} missing!",
                                 status=fieldok,
                             )
 
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["phase"],
-                            "\n     ... Siemens fieldmap phase image %d present " % (i),
-                            "\n     ... ERROR: Siemens fieldmap phase image %d missing!"
-                            % (i),
+                            f"\n     ... Siemens fieldmap phase image {i} present ",
+                            f"\n     ... ERROR: Siemens fieldmap phase image {i} missing!",
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
                     if not pc.is_number(echospacing):
                         fieldok = False
-                        log.error('hcp_bold_echospacing not defined correctly: "%s"!'
-                            % (options["hcp_bold_echospacing"]), depth=1)
+                        log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
 
                     # try to set hcp_bold_echodiff from the JSON sidecar if not yet set
                     if (
@@ -1267,8 +1215,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
                     if not pc.is_number(options["hcp_bold_echodiff"]):
                         fieldok = False
-                        log.error('hcp_bold_echodiff not defined correctly: "%s"!'
-                            % (options["hcp_bold_echodiff"]), depth=1)
+                        log.error(f'hcp_bold_echodiff not defined correctly: "{options["hcp_bold_echodiff"]}"!', depth=1)
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     if isinstance(fmmag, list):
@@ -1289,10 +1236,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["GE"],
-                            "\n     ... GeneralElectric legacy fieldmap image %d present "
-                            % (i),
-                            "\n     ... ERROR: GeneralElectric legacy fieldmap image %d missing!"
-                            % (i),
+                            f"\n     ... GeneralElectric legacy fieldmap image {i} present ",
+                            f"\n     ... ERROR: GeneralElectric legacy fieldmap image {i} missing!",
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
@@ -1313,22 +1258,19 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"],
-                            "\n     ... GE fieldmap magnitude image %d present " % (i),
-                            "\n     ... ERROR: GE fieldmap magnitude image %d missing!"
-                            % (i),
+                            f"\n     ... GE fieldmap magnitude image {i} present ",
+                            f"\n     ... ERROR: GE fieldmap magnitude image {i} missing!",
                             status=fieldok,
                         )
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["phase"],
-                            "\n     ... GE fieldmap phase image %d present " % (i),
-                            "\n     ... ERROR: GE fieldmap phase image %d missing!"
-                            % (i),
+                            f"\n     ... GE fieldmap phase image {i} present ",
+                            f"\n     ... ERROR: GE fieldmap phase image {i} missing!",
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
                     if not pc.is_number(echospacing):
                         fieldok = False
-                        log.error('hcp_bold_echospacing not defined correctly: "%s"!'
-                            % (options["hcp_bold_echospacing"]), depth=1)
+                        log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
@@ -1347,23 +1289,19 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"],
-                            "\n     ... Philips fieldmap magnitude image %d present "
-                            % (i),
-                            "\n     ... ERROR: Philips fieldmap magnitude image %d missing!"
-                            % (i),
+                            f"\n     ... Philips fieldmap magnitude image {i} present ",
+                            f"\n     ... ERROR: Philips fieldmap magnitude image {i} missing!",
                             status=fieldok,
                         )
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["phase"],
-                            "\n     ... Philips fieldmap phase image %d present " % (i),
-                            "\n     ... ERROR: Philips fieldmap phase image %d missing!"
-                            % (i),
+                            f"\n     ... Philips fieldmap phase image {i} present ",
+                            f"\n     ... ERROR: Philips fieldmap phase image {i} missing!",
                             status=fieldok,
                         )
                         boldok = boldok and fieldok
                     if not pc.is_number(echospacing):
                         fieldok = False
-                        log.error('hcp_bold_echospacing not defined correctly: "%s"!'
-                            % (options["hcp_bold_echospacing"]), depth=1)
+                        log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
@@ -1376,8 +1314,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 if options["hcp_bold_precomputedfmap"] is not None:
                     if not os.path.exists(options["hcp_bold_precomputedfmap"]):
-                        log.error("Could not find precomputed fieldmap image specified in hcp_bold_precomputedfmap parameter: %s."
-                            % (options["hcp_bold_precomputedfmap"]))
+                        log.error(f"Could not find precomputed fieldmap image specified in hcp_bold_precomputedfmap parameter: {options['hcp_bold_precomputedfmap']}.")
                         fieldok = False
                     else:
                         log.detail("real fieldmap image present")
@@ -1396,16 +1333,14 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         fieldok = True
                         for i, v in hcp["fieldmap"].items():
                             fieldok = log.check_for_file(hcp["fieldmap"][i]["Real"],
-                                "\n     ... Real fieldmap image %d present " % (i),
-                                "\n     ... ERROR: Real fieldmap image %d missing!"
-                                % (i),
+                                f"\n     ... Real fieldmap image {i} present ",
+                                f"\n     ... ERROR: Real fieldmap image {i} missing!",
                                 status=fieldok,
                             )
                             boldok = boldok and fieldok
                         if not pc.is_number(echospacing):
                             fieldok = False
-                            log.error('hcp_bold_echospacing not defined correctly: "%s"!'
-                                % (options["hcp_bold_echospacing"]), depth=1)
+                            log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
                         boldok = boldok and fieldok
                         fmprecomputed = hcp["fieldmap"][int(fmnum)]["Real"]
                         fmmag = None
@@ -1417,11 +1352,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     # --- user provided a path to a magnitude image
                     if os.path.exists(options["hcp_bold_precomputedfmapmag"]):
                         fmprecomputedmag = options["hcp_bold_precomputedfmapmag"]
-                        log.detail("precomputed fieldmap magnitude image present: %s"
-                            % (fmprecomputedmag))
+                        log.detail(f"precomputed fieldmap magnitude image present: {fmprecomputedmag}")
                     else:
-                        log.error("Could not find precomputed fieldmap magnitude image specified in the hcp_bold_precomputedfmapmag parameter: %s."
-                            % (options["hcp_bold_precomputedfmapmag"]))
+                        log.error(f"Could not find precomputed fieldmap magnitude image specified in the hcp_bold_precomputedfmapmag parameter: {options['hcp_bold_precomputedfmapmag']}.")
                         boldok = False
                 else:
                     # --- try to auto-detect from fieldmap dict using fm number from bold info
@@ -1435,10 +1368,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             "Magnitude"
                         ]
                         boldok = log.check_for_file(auto_precomputedfmapmag,
-                            "\n     ... precomputed fieldmap magnitude image auto-detected and present: %s"
-                            % (auto_precomputedfmapmag),
-                            "\n---> ERROR: Could not find auto-detected precomputed fieldmap magnitude image: %s."
-                            % (auto_precomputedfmapmag),
+                            f"\n     ... precomputed fieldmap magnitude image auto-detected and present: {auto_precomputedfmapmag}",
+                            f"\n---> ERROR: Could not find auto-detected precomputed fieldmap magnitude image: {auto_precomputedfmapmag}.",
                             status=boldok,
                         )
                         if os.path.exists(auto_precomputedfmapmag):
@@ -1486,7 +1417,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             boldok, boldimg = log.check_for_files(boldimgs,
                 "\n     ... bold image present",
-                "\n     ... ERROR: bold image missing, searched for %s!" % (boldimgs),
+                f"\n     ... ERROR: bold image missing, searched for {boldimgs}!",
                 status=boldok,
             )
 
@@ -1514,7 +1445,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     log.error("The requested HCP processing mode is 'HCPStyleData', however, %s was specified as bold mask to use!\n            Consider either using 'T1_fMRI_FOV' for the bold mask or LegacyStyleData processing mode.")
                     run = False
                 else:
-                    log.detail("using %s as BOLD mask" % (options["hcp_bold_mask"]))
+                    log.detail(f"using {options['hcp_bold_mask']} as BOLD mask")
             else:
                 log.detail("using the HCPpipelines default BOLD mask")
 
@@ -1526,7 +1457,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             # --- are we using previous reference
             if fmriref != "NONE":
-                log.detail("using %s as movement correction reference" % (fmriref))
+                log.detail(f"using {fmriref} as movement correction reference")
                 refimg = "NONE"
                 if (
                     options["hcp_processing_mode"] == "HCPStyleData"
@@ -1934,22 +1865,19 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                     # -> bold working folder
                     bold_folder = os.path.join(hcp["base"], boldtarget)
                     if os.path.exists(bold_folder):
-                        log.detail("removing preexisting working bold folder [%s]"
-                            % (bold_folder))
+                        log.detail(f"removing preexisting working bold folder [{bold_folder}]")
                         shutil.rmtree(bold_folder)
 
                     # -> bold MNINonLinear results folder
                     bold_folder = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget)
                     if os.path.exists(bold_folder):
-                        log.detail("removing preexisting MNINonLinar results bold folder [%s]"
-                            % (bold_folder))
+                        log.detail(f"removing preexisting MNINonLinar results bold folder [{bold_folder}]")
                         shutil.rmtree(bold_folder)
 
                     # -> bold T1w results folder
                     bold_folder = os.path.join(hcp["T1w_folder"], "Results", boldtarget)
                     if os.path.exists(bold_folder):
-                        log.detail("removing preexisting T1w results bold folder [%s]"
-                            % (bold_folder))
+                        log.detail(f"removing preexisting T1w results bold folder [{bold_folder}]")
                         shutil.rmtree(bold_folder)
 
                     # -> xfms in T1w folder
@@ -1957,9 +1885,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                         hcp["T1w_folder"], "xfms", "%s2str.nii.gz" % (boldtarget)
                     )
                     if os.path.exists(xfms_file):
-                        log.detail("removing preexisting xfms file [%s]" % (
-                            xfms_file
-                        ))
+                        log.detail(f"removing preexisting xfms file [{xfms_file}]")
                         os.remove(xfms_file)
 
                     # -> xfms in MNINonLinear folder
@@ -1967,9 +1893,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                         hcp["hcp_nonlin"], "xfms", "%s2str.nii.gz" % (boldtarget)
                     )
                     if os.path.exists(xfms_file):
-                        log.detail("removing preexisting xfms file [%s]" % (
-                            xfms_file
-                        ))
+                        log.detail(f"removing preexisting xfms file [{xfms_file}]")
                         os.remove(xfms_file)
 
                     # -> xfms in MNINonLinear folder
@@ -1977,9 +1901,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                         hcp["hcp_nonlin"], "xfms", "standard2%s.nii.gz" % (boldtarget)
                     )
                     if os.path.exists(xfms_file):
-                        log.detail("removing preexisting xfms file [%s]" % (
-                            xfms_file
-                        ))
+                        log.detail(f"removing preexisting xfms file [{xfms_file}]")
                         os.remove(xfms_file)
 
                 logtags = [options["logtag"], boldtarget]
@@ -2027,14 +1949,11 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}

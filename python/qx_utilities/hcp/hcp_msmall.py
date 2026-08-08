@@ -329,10 +329,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         parelements = max(1, min(options["parelements"], len(msmall_groups)))
 
         if parelements > 1:
-            log.raw("\n\n%s %d ICAFix groups in parallel" % (
-                pc.action("Processing", options["run"]),
-                parelements,
-            ))
+            log.raw(f"\n\n{pc.action('Processing', options['run'])} {parelements} ICAFix groups in parallel")
 
         # --- Execute
         # create a multiprocessing Pool
@@ -434,10 +431,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         outfmriname = options["hcp_msmall_outfmriname"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.step("%s MSMAll %s" % (
-            pc.action("Processing", options["run"]),
-            outfmriname,
-        ))
+        log.step(f"{pc.action('Processing', options['run'])} MSMAll {outfmriname}")
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -468,8 +462,8 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
             boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                f"\n     ... bold image {boldtarget} present",
+                f"\n     ... ERROR: bold image [{boldimg}] missing!",
                 status=boldok,
             )
 
@@ -688,14 +682,11 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of bolds %s\n" % (msmall_bolds))
+        log.raw(f"\n\n\n --- Failed during processing of bolds {msmall_bolds}\n")
         log.raw(str(errormessage))
         report["failed"].append(msmall_bolds)
     except Exception:
-        log.info(" --- Failed during processing of bolds %s with error:\n %s\n" % (
-            msmall_bolds,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bolds {msmall_bolds} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(msmall_bolds)
 
     return {"r": log.text, "report": report}
@@ -722,10 +713,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         outfmriname = options["hcp_msmall_outfmriname"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.step("%s MSMAll %s" % (
-            pc.action("Processing", options["run"]),
-            outfmriname,
-        ))
+        log.step(f"{pc.action('Processing', options['run'])} MSMAll {outfmriname}")
 
         # --- check for bold images and prepare targets parameter
         boldtargets = ""
@@ -757,8 +745,8 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
             boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                f"\n     ... bold image {boldtarget} present",
+                f"\n     ... ERROR: bold image [{boldimg}] missing!",
                 status=boldok,
             )
 
@@ -777,8 +765,8 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
             groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
             groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
             boldok = log.check_for_file(groupimg,
-                "\n     ... ICA %s present" % groupname,
-                "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+                f"\n     ... ICA {groupname} present",
+                f"\n     ... ERROR: ICA [{groupimg}] missing!",
                 status=boldok,
             )
 
@@ -982,16 +970,11 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            groupname
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
-            groupname,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}

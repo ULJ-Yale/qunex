@@ -320,8 +320,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # run checks
         if "hcp" not in sinfo:
-            log.error("There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # pre FS results
@@ -364,8 +363,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if e.strip() not in ["aseg", "wm", "brainmask", "yes", "true"]
             ]
             if extra:
-                log.error("Invalid edits specified in hcp_fs_edits: '%s' ['%s']"
-                    % (",".join(extra), options["hcp_fs_edits"]))
+                log.error(f"Invalid edits specified in hcp_fs_edits: '{','.join(extra)}' ['{options['hcp_fs_edits']}']")
                 run = False
 
             else:
@@ -394,12 +392,12 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         edited.append("control")
                     for efile, destfile in copyfiles:
                         if os.path.exists(destfile):
-                            log.detail("replacing: %s " % (fname))
+                            log.detail(f"replacing: {fname} ")
                         else:
-                            log.detail("adding: %s " % (fname))
+                            log.detail(f"adding: {fname} ")
                         shutil.copy2(efile, destfile)
                 else:
-                    log.detail("no edits files found in %s!" % (editsfolder))
+                    log.detail(f"no edits files found in {editsfolder}!")
 
                 # set extra parameters
                 options["hcp_fs_existing_session"] = True
@@ -531,8 +529,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     "hcp_fs_existing_session"
                 ]:
                     if os.path.lexists(hcp["FS_folder"]):
-                        log.step("removing preexisting FS folder [%s]"
-                            % (hcp["FS_folder"]))
+                        log.step(f"removing preexisting FS folder [{hcp['FS_folder']}]")
                         shutil.rmtree(hcp["FS_folder"], ignore_errors=True)
                     for toremove in [
                         "fsaverage",
@@ -547,16 +544,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                             elif os.path.isdir(rmtarget):
                                 shutil.rmtree(rmtarget)
                         except Exception:
-                            log.warning("Could not remove preexisting file/folder: %s! Please check your data!"
-                                % (rmtarget))
+                            log.warning(f"Could not remove preexisting file/folder: {rmtarget}! Please check your data!")
                             status = False
 
                 if os.path.exists(post_fs_tfile):
                     log.warning("PostFreeSurfer results already present!")
                     # cleanup postfs
-                    log.info("     Found PostFreeSurfer results file: %s" % (
-                        post_fs_tfile
-                    ))
+                    log.info(f"     Found PostFreeSurfer results file: {post_fs_tfile}")
                     log.info("     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ...")
                     have_postfs_diff = os.path.exists(postfs_snapshot_paths["diff"])
                     have_postfs_backup = os.path.exists(postfs_snapshot_paths["backup"])

@@ -64,19 +64,13 @@ def _apply_on_existing(on_existing, patterns, label, log):
         return False
 
     if on_existing == "skip":
-        log.step("on_existing=skip: found %d existing %s output(s), skipping." % (
-            len(existing),
-            label,
-        ))
+        log.step(f"on_existing=skip: found {len(existing)} existing {label} output(s), skipping.")
         return True
 
     if on_existing == "delete":
         for f in existing:
             _safe_unlink(f)
-        log.step("on_existing=delete: removed %d existing %s output(s) before running." % (
-            len(existing),
-            label,
-        ))
+        log.step(f"on_existing=delete: removed {len(existing)} existing {label} output(s) before running.")
         return False
 
     return False
@@ -89,14 +83,11 @@ def _dummy_variable_check(template_scene, tokens, log):
         with open(template_scene, "r", encoding="utf-8", errors="ignore") as f:
             txt = f.read()
     except OSError as e:
-        log.error("cannot read scene template %s (%s)" % (template_scene, e))
+        log.error(f"cannot read scene template {template_scene} ({e})")
         return False
     missing = [t for t in tokens if t not in txt]
     if missing:
-        log.error("scene %s missing required tokens: %s" % (
-            template_scene,
-            ", ".join(missing),
-        ))
+        log.error(f"scene {template_scene} missing required tokens: {', '.join(missing)}")
         return False
     return True
 
@@ -443,11 +434,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
     log = ReportLog()
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
-    log.info("Running QC for: %s" % ", ".join(modalities_canon))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"Running QC for: {', '.join(modalities_canon)}")
 
     # --- Base settings
     pc.do_options_check(options, sinfo, "hcp_run_qc")
@@ -518,8 +506,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
     qc_report = {"done": [], "failed": []}
 
-    log.info("HCP folder: %s" % (hcp["base"]))
-    log.info("Template folder: %s" % (scenetemplatefolder))
+    log.info(f"HCP folder: {hcp['base']}")
+    log.info(f"Template folder: {scenetemplatefolder}")
 
     # Build a single list of QC jobs (across modalities) and run them in one executor.
     jobs = []
@@ -533,7 +521,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
         if modality == "rawNII":
             log.info("- rawNII: FSL slicesdir on raw NIFTIs")
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"  Output folder: {outpath}")
             jobs.append(
                 {
                     "modality": "rawNII",
@@ -556,8 +544,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
 
-            log.info("- BOLD: using template %s" % (template_scene))
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"- BOLD: using template {template_scene}")
+            log.info(f"  Output folder: {outpath}")
 
             if "bolds" not in options or not options["bolds"]:
                 options["bolds"] = "all"
@@ -565,7 +553,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             run_bold = True
             bolds, bskip, report_skipped = log.use_or_skip_bold(sinfo, options)
             if len(bolds) == 0:
-                log.error("No BOLD images found for session %s!" % (sinfo["id"]))
+                log.error(f"No BOLD images found for session {sinfo['id']}!")
                 run_bold = False
 
             for boldinfo in bolds:
@@ -598,7 +586,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 "BOLD", scenetemplatefolder, studyfolder,
                 userscenefile, userscenepath, processcustom,
             ):
-                log.info("- BOLD user/custom scene: %s" % (tmpl_base))
+                log.info(f"- BOLD user/custom scene: {tmpl_base}")
                 for boldinfo in bolds:
                     jobs.append(
                         {
@@ -632,15 +620,15 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             run_bold = True
             bolds, bskip, report_skipped = log.use_or_skip_bold(sinfo, options)
             if len(bolds) == 0:
-                log.error("No BOLD images found for session %s!" % (sinfo["id"]))
+                log.error(f"No BOLD images found for session {sinfo['id']}!")
                 run_bold = False
 
             fc_template = {
                 "pscalar": "template_scalar_bold_qc.wb.scene",
                 "pconn": "template_pconn_bold_qc.wb.scene",
             }
-            log.info("- BOLD_FC: types %s" % ", ".join(bold_fc_types))
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"- BOLD_FC: types {', '.join(bold_fc_types)}")
+            log.info(f"  Output folder: {outpath}")
 
             for fctype in bold_fc_types:
                 fcinput = bold_fc_type_input.get(fctype, "")
@@ -653,7 +641,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 template_scene = os.path.join(scenetemplatefolder, fc_template[fctype])
                 if not os.path.exists(template_scene):
                     raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-                log.info("  - %s: using template %s" % (fctype, template_scene))
+                log.info(f"  - {fctype}: using template {template_scene}")
                 for boldinfo in bolds:
                     jobs.append(
                         {
@@ -683,8 +671,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_t1w_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.info("- T1w: using template %s" % (template_scene))
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"- T1w: using template {template_scene}")
+            log.info(f"  Output folder: {outpath}")
             jobs.append(
                 {
                     "modality": "T1w",
@@ -708,8 +696,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_t2w_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.info("- T2w: using template %s" % (template_scene))
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"- T2w: using template {template_scene}")
+            log.info(f"  Output folder: {outpath}")
             jobs.append(
                 {
                     "modality": "T2w",
@@ -733,8 +721,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_myelin_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.info("- Myelin: using template %s" % (template_scene))
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"- Myelin: using template {template_scene}")
+            log.info(f"  Output folder: {outpath}")
             jobs.append(
                 {
                     "modality": "Myelin",
@@ -767,8 +755,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                     "general modality requires --qc_datapath and --qc_datafile (or legacy --datapath/--datafile).",
                 )
 
-            log.info("- general: using template %s" % (template_scene))
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"- general: using template {template_scene}")
+            log.info(f"  Output folder: {outpath}")
             jobs.append(
                 {
                     "modality": "general",
@@ -794,8 +782,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             template_scene = os.path.join(scenetemplatefolder, "template_dwi_qc.wb.scene")
             if not os.path.exists(template_scene):
                 raise ge.CommandError("hcp_run_qc", f"Missing template scene: {template_scene}")
-            log.info("- DWI: using template %s" % (template_scene))
-            log.info("  Output folder: %s" % (outpath))
+            log.info(f"- DWI: using template {template_scene}")
+            log.info(f"  Output folder: {outpath}")
             jobs.append(
                 {
                     "modality": "DWI",
@@ -826,7 +814,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 modality, scenetemplatefolder, studyfolder,
                 userscenefile, userscenepath, processcustom,
             ):
-                log.info("- %s user/custom scene: %s" % (modality, tmpl_base))
+                log.info(f"- {modality} user/custom scene: {tmpl_base}")
                 jobs.append(
                     {
                         "modality": "CUSTOM_SCENE",
@@ -857,13 +845,13 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
         before = len(jobs)
         jobs = [j for j in jobs if not _is_default_scene(j)]
-        log.raw("\n\n---> omitdefaults=yes: dropped %d default-scene job(s)." % (before - len(jobs)))
+        log.raw(f"\n\n---> omitdefaults=yes: dropped {before - len(jobs)} default-scene job(s).")
 
     if len(jobs) == 0:
         log.step("No QC jobs prepared.")
     else:
         max_workers = max(1, min(int(options.get("parelements") or 1), len(jobs)))
-        log.raw("\n\n%s %d QC jobs in parallel" % (pc.action("Running", options["run"]), max_workers))
+        log.raw(f"\n\n{pc.action('Running', options['run'])} {max_workers} QC jobs in parallel")
         with ProcessPoolExecutor(max_workers) as process_pool_executor:
             results = process_pool_executor.map(_run_qc_executor, jobs)
 
@@ -872,11 +860,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             qc_report["done"] += result["report"]["done"]
             qc_report["failed"] += result["report"]["failed"]
 
-    log.raw("\n\nHCP run QC %s on %s\n---------------------------------------------------------"
-        % (
-            pc.action("completed", options["run"]),
-            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-        ))
+    log.raw(f"\n\nHCP run QC {pc.action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
     def _format_item_list(items):
         try:
@@ -1249,7 +1233,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
             return {"r": log.text, "report": report}
 
         if not os.path.isdir(nii_dir):
-            log.error("raw NIFTI folder not found: %s" % nii_dir)
+            log.error(f"raw NIFTI folder not found: {nii_dir}")
             report["failed"].append("rawNII")
             return {"r": log.text, "report": report}
 
@@ -1269,7 +1253,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
         )
 
         if not os.path.exists(index_html):
-            log.error("slicesdir did not produce %s" % index_html)
+            log.error(f"slicesdir did not produce {index_html}")
             report["failed"].append("rawNII")
             return {"r": log.text, "report": report}
 
@@ -1288,7 +1272,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
         if os.path.isdir(slicesdir):
             shutil.rmtree(slicesdir, ignore_errors=True)
 
-        log.detail("raw NIFTI QC written to %s and %s" % (zip_out, html_out))
+        log.detail(f"raw NIFTI QC written to {zip_out} and {html_out}")
         report["done"].append("rawNII")
         return {"r": log.text, "report": report}
 
@@ -1419,7 +1403,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
     eddy_qc = os.path.join(hcp["base"], "Diffusion", "eddy", "eddy_unwarped_images.qc")
     qc_pdf = os.path.join(eddy_qc, "qc.pdf")
     if not os.path.exists(qc_pdf):
-        log.warning("EDDY QC outputs missing (%s); skipping EDDY QC." % qc_pdf)
+        log.warning(f"EDDY QC outputs missing ({qc_pdf}); skipping EDDY QC.")
         return
 
     mot_abs = os.path.join(eddy_qc, "%s_qc_mot_abs.txt" % case_name)
@@ -1430,7 +1414,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
             with open(mot_abs, "w") as f:
                 f.write("%s\n" % val)
         except Exception:
-            log.warning("could not regenerate %s" % mot_abs)
+            log.warning(f"could not regenerate {mot_abs}")
 
     eddy_pdf_dst = os.path.join(outpath, "%s.DWI.eddy.QC.pdf" % case_name)
     _safe_unlink(eddy_pdf_dst)
@@ -1442,7 +1426,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
     report_txt = os.path.join(outpath, "EddyQCReport_qc_mot_abs_%s.txt" % timestamp)
     with open(report_txt, "a") as f:
         f.write("%s\n" % mot_abs)
-    log.detail("EDDY QC linked to %s; motion recorded in %s" % (eddy_pdf_dst, report_txt))
+    log.detail(f"EDDY QC linked to {eddy_pdf_dst}; motion recorded in {report_txt}")
     return
 
 
@@ -1453,7 +1437,7 @@ def _run_qc_custom_scene(sinfo, options, overwrite, hcp, params: dict):
     modality = params["modality_label"]
     template_scene = params["template_scene"]
     template_basename = params["template_basename"]
-    log.raw("\n\nWorking on %s user/custom scene: %s" % (modality, template_basename))
+    log.raw(f"\n\nWorking on {modality} user/custom scene: {template_basename}")
     report = {"done": [], "failed": []}
 
     run = params.get("run", True)
@@ -1472,7 +1456,7 @@ def _run_qc_custom_scene(sinfo, options, overwrite, hcp, params: dict):
     try:
         case_name = "%s%s" % (sinfo["id"], options["hcp_suffix"])
         if not os.path.exists(template_scene):
-            log.error("scene template not found: %s" % template_scene)
+            log.error(f"scene template not found: {template_scene}")
             report["failed"].append(label)
             return {"r": log.text, "report": report}
 
@@ -1636,7 +1620,7 @@ def _run_qc_dwi(sinfo, options, overwrite, hcp, params: dict):
             return {"r": log.text, "report": report}
 
         if not os.path.exists(dwi_nii):
-            log.error("Preprocessed DWI data not found: %s" % dwi_nii)
+            log.error(f"Preprocessed DWI data not found: {dwi_nii}")
             report["failed"].append("DWI")
             return {"r": log.text, "report": report}
 
@@ -1725,7 +1709,7 @@ def _zip_bold_fc_scene(
 def _run_qc_bold_fc(sinfo, options, overwrite, hcp, params: dict):
     log = ReportLog()
     boldinfo = params["boldinfo"]
-    log.raw("\n\nWorking on BOLD FC: %s" % boldinfo["name"])
+    log.raw(f"\n\nWorking on BOLD FC: {boldinfo['name']}")
     report = {"done": [], "failed": []}
 
     run = params.get("run", True)
@@ -1770,7 +1754,7 @@ def _run_qc_bold_fc(sinfo, options, overwrite, hcp, params: dict):
             return {"r": log.text, "report": report}
 
         if not os.path.exists(fc_src):
-            log.error("BOLD FC input not found: %s" % fc_src)
+            log.error(f"BOLD FC input not found: {fc_src}")
             report["failed"].append(report_label)
             return {"r": log.text, "report": report}
 
@@ -1818,7 +1802,7 @@ def _run_qc_bold_fc(sinfo, options, overwrite, hcp, params: dict):
 def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
     log = ReportLog()
     boldinfo = params["boldinfo"]
-    log.raw("\n\nWorking on: %s" % (boldinfo["name"]))
+    log.raw(f"\n\nWorking on: {boldinfo['name']}")
     report = {"done": [], "failed": []}
 
     run = params.get("run", True)
@@ -1908,7 +1892,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         )
 
         if not os.path.exists(dtseries):
-            log.error("missing dtseries: %s" % (dtseries))
+            log.error(f"missing dtseries: {dtseries}")
             report["failed"].append(report_label)
             return {"r": log.text, "report": report}
 
@@ -2004,7 +1988,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         with open(tsnr_report_bold, "w") as f:
             f.write("%s: %s\n" % (tsnr_dscalar, tsnr_mean))
 
-        log.detail("TSNR(mean)=%s written to %s" % (tsnr_mean, tsnr_report_bold))
+        log.detail(f"TSNR(mean)={tsnr_mean} written to {tsnr_report_bold}")
 
         if snronly == "yes":
             log.detail("qc_bold_snronly=yes, skipping scene/png.")
@@ -2125,7 +2109,7 @@ def _run_qc_t1w(sinfo, options, overwrite, hcp, params: dict):
 
         t1w_restore = os.path.join(hcp["hcp_nonlin"], "T1w_restore.nii.gz")
         if not os.path.exists(t1w_restore):
-            log.error("Preprocessed T1w data not found: %s" % t1w_restore)
+            log.error(f"Preprocessed T1w data not found: {t1w_restore}")
             report["failed"].append("T1w")
             return {"r": log.text, "report": report}
 
@@ -2209,7 +2193,7 @@ def _run_qc_t2w(sinfo, options, overwrite, hcp, params: dict):
 
         t2w_restore = os.path.join(hcp["hcp_nonlin"], "T2w_restore.nii.gz")
         if not os.path.exists(t2w_restore):
-            log.error("Preprocessed T2w data not found: %s" % t2w_restore)
+            log.error(f"Preprocessed T2w data not found: {t2w_restore}")
             report["failed"].append("T2w")
             return {"r": log.text, "report": report}
 
@@ -2298,9 +2282,7 @@ def _run_qc_myelin(sinfo, options, overwrite, hcp, params: dict):
             hcp["hcp_nonlin"], f"{case_name}.R.SmoothedMyelinMap.164k_fs_LR.func.gii"
         )
         if not (os.path.exists(myelin_l) and os.path.exists(myelin_r)):
-            log.error("Preprocessed Smoothed Myelin data not found: %s.*.SmoothedMyelinMap.164k_fs_LR.func.gii" % (
-                os.path.join(hcp["hcp_nonlin"], case_name)
-            ))
+            log.error(f"Preprocessed Smoothed Myelin data not found: {os.path.join(hcp['hcp_nonlin'], case_name)}.*.SmoothedMyelinMap.164k_fs_LR.func.gii")
             report["failed"].append("Myelin")
             return {"r": log.text, "report": report}
 
@@ -2388,7 +2370,7 @@ def _run_qc_general(sinfo, options, overwrite, hcp, params: dict):
         data_path_check = os.path.join(session_path, datapath, datafile)
 
         if not os.path.exists(data_path_check):
-            log.error("Data requested not found: %s" % data_path_check)
+            log.error(f"Data requested not found: {data_path_check}")
             report["failed"].append("general")
             return {"r": log.text, "report": report}
 

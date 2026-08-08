@@ -195,10 +195,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
             reclean_elements = icafix_groups
 
-        log.raw("\n\n%s %d ApplyAutoReclean elements in parallel" % (
-            pc.action("Processing", options["run"]),
-            parelements,
-        ))
+        log.raw(f"\n\n{pc.action('Processing', options['run'])} {parelements} ApplyAutoReclean elements in parallel")
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
@@ -297,7 +294,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.step("%s group %s" % (pc.action("Processing", options["run"]), groupname))
+        log.step(f"{pc.action('Processing', options['run'])} group {groupname}")
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -312,9 +309,9 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
-            boldok = log.check_for_file("%s.nii.gz" % boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s.nii.gz] missing!" % boldimg,
+            boldok = log.check_for_file(f"{boldimg}.nii.gz",
+                f"\n     ... bold image {boldtarget} present",
+                f"\n     ... ERROR: bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
             )
 
@@ -445,16 +442,11 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            groupname
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
-            groupname,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}

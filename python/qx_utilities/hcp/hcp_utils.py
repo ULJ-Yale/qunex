@@ -292,8 +292,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                     device["model"] = dmodel
                     device["serial"] = dserial
                 except Exception:
-                    log.warning("device information for this session is malformed: %s"
-                        % (sinfo.get("device", "---")))
+                    log.warning(f"device information for this session is malformed: {sinfo.get('device', '---')}")
                     raise
 
                 gdcoptions = [
@@ -315,9 +314,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                             gdcfileused = "%s: %s" % (ginfo, gwhat)
                             break
             except Exception:
-                log.error("malformed specification of gdcoeffs: %s!" % (
-                    gdcstring
-                ))
+                log.error(f"malformed specification of gdcoeffs: {gdcstring}!")
                 run = False
                 raise
 
@@ -325,8 +322,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                 log.warning("Specific gradient distortion coefficients file could not be identified! None will be used.")
                 gdcfile = "NONE"
             else:
-                log.step("Specific gradient distortion coefficients file identified (%s):\n     %s"
-                    % (gdcfileused, gdcfile))
+                log.step(f"Specific gradient distortion coefficients file identified ({gdcfileused}):\n     {gdcfile}")
 
         else:
             gdcfile = gdcstring
@@ -335,8 +331,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
             if not os.path.exists(gdcfile):
                 gdcoeffs = os.path.join(hcp["hcp_Config"], gdcfile)
                 if not os.path.exists(gdcoeffs):
-                    log.error("Could not find gradient distortion coefficients file: %s."
-                        % (gdcfile))
+                    log.error(f"Could not find gradient distortion coefficients file: {gdcfile}.")
                     run = False
                 else:
                     log.step("Gradient distortion coefficients file present.")
@@ -715,8 +710,7 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                                     if sb in hcp_bolds:
                                         bolds_ok = False
                                         log.blank()
-                                        log.error("the bold [%s] is specified twice!"
-                                            % b)
+                                        log.error(f"the bold [{b}] is specified twice!")
                                     else:
                                         group_bolds.append(b)
                                         hcp_bolds.append(b)
@@ -728,8 +722,7 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                 else:
                     bolds_ok = False
                     log.blank()
-                    log.error("multiple concatenations with the same name [%s]!"
-                        % split[0])
+                    log.error(f"multiple concatenations with the same name [{split[0]}]!")
 
         # else we extract bolds and use single fix
         else:
@@ -752,7 +745,7 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                             if sb in hcp_bolds:
                                 bolds_ok = False
                                 log.blank()
-                                log.error("the bold [%s] is specified twice!" % b)
+                                log.error(f"the bold [{b}] is specified twice!")
                             else:
                                 hcp_bolds.append(b)
 
@@ -850,10 +843,9 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
     # report that some hcp_icafix_bolds not found in bolds
     if len(bold_skip) > 0 or len(bold_error) > 0:
         for b in bold_skip:
-            log.raw("     ... skipping %s: it is not specified in hcp_icafix_bolds\n" % b)
+            log.raw(f"     ... skipping {b}: it is not specified in hcp_icafix_bolds\n")
         for b in bold_error:
-            log.raw("     ... ERROR: %s specified in hcp_icafix_bolds but not found in bolds\n"
-                % b)
+            log.raw(f"     ... ERROR: {b} specified in hcp_icafix_bolds but not found in bolds\n")
     else:
         log.raw("     ... all bolds specified via hcp_icafix_bolds are present\n")
 
@@ -862,9 +854,9 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
 
     # --- Report single fix or multi fix
     if single_fix:
-        log.info("Single-run HCP ICAFix on %d bolds" % len(hcp_bolds))
+        log.info(f"Single-run HCP ICAFix on {len(hcp_bolds)} bolds")
     else:
-        log.info("Multi-run HCP ICAFix on %d groups" % len(hcp_groups))
+        log.info(f"Multi-run HCP ICAFix on {len(hcp_groups)} groups")
 
     # different output for msmall and singlefix
     if msmall and single_fix:
@@ -974,10 +966,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.step("%s bold ICA %s" % (
-            pc.action("Processing", options["run"]),
-            printica,
-        ))
+        log.step(f"{pc.action('Processing', options['run'])} bold ICA {printica}")
 
     else:
         # highpass
@@ -992,18 +981,15 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.step("%s group ICA %s" % (
-            pc.action("Processing", options["run"]),
-            printica,
-        ))
+        log.step(f"{pc.action('Processing', options['run'])} group ICA {printica}")
 
     try:
         boldok = True
 
         # --- check for ICA image
         boldok = log.check_for_file(icaimg,
-            "\n     ... ICA %s present" % boldtarget,
-            "\n     ... ERROR: ICA [%s] missing!" % icaimg,
+            f"\n     ... ICA {boldtarget} present",
+            f"\n     ... ERROR: ICA [{icaimg}] missing!",
             status=boldok,
         )
 
@@ -1125,14 +1111,11 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         log.raw("\n\n")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}
@@ -1159,7 +1142,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         bolds = group["bolds"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.step("%s DeDriftAndResample" % (pc.action("Processing", options["run"])))
+        log.step(f"{pc.action('Processing', options['run'])} DeDriftAndResample")
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -1187,8 +1170,8 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
             boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                f"\n     ... bold image {boldtarget} present",
+                f"\n     ... ERROR: bold image [{boldimg}] missing!",
                 status=boldok,
             )
 
@@ -1366,16 +1349,11 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            "DeDriftAndResample"
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {'DeDriftAndResample'} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(regname)
     except Exception:
-        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
-            "DeDriftAndResample",
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {'DeDriftAndResample'} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(regname)
 
     return {"r": log.text, "report": report}
@@ -1395,7 +1373,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.step("%s DeDriftAndResample" % (pc.action("Processing", options["run"])))
+        log.step(f"{pc.action('Processing', options['run'])} DeDriftAndResample")
 
         # --- check for bold images and prepare targets parameter
         group_list = []
@@ -1432,8 +1410,8 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
             boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                f"\n     ... bold image {boldtarget} present",
+                f"\n     ... ERROR: bold image [{boldimg}] missing!",
             )
 
             if not boldok:
@@ -1451,8 +1429,8 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
         groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
         groupok = log.check_for_file(groupimg,
-            "\n     ... ICA %s present" % groupname,
-            "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+            f"\n     ... ICA {groupname} present",
+            f"\n     ... ERROR: ICA [{groupimg}] missing!",
         )
 
         if not groupok:
@@ -1618,8 +1596,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                         # extract fixname name ok?
                         if fn not in bold_list:
                             runok = False
-                            log.error("extract fix name [%s], not found in provided fix names!"
-                                % fn)
+                            log.error(f"extract fix name [{fn}], not found in provided fix names!")
 
                     if len(en_split) > 0:
                         boldnames = en_split[1].replace(",", "@")
@@ -1654,8 +1631,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
             # check value
             if extractvolume != "TRUE" and extractvolume != "FALSE":
                 runok = False
-                log.error("invalid extractvolume parameter [%s], expecting TRUE or FALSE!"
-                    % extractvolume)
+                log.error(f"invalid extractvolume parameter [{extractvolume}], expecting TRUE or FALSE!")
 
             # append to command
             comm += '             --multirun-fix-extract-volume="%s"' % extractvolume
@@ -1708,16 +1684,11 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            "DeDriftAndResample"
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {'DeDriftAndResample'} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(grouptargets)
     except Exception:
-        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
-            "DeDriftAndResample",
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {'DeDriftAndResample'} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(grouptargets)
 
     return {"r": log.text, "report": report}

@@ -190,10 +190,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_bolds)))
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
-        log.raw("\n\n%s %d PostFixes in parallel" % (
-            pc.action("Processing", options["run"]),
-            parelements,
-        ))
+        log.raw(f"\n\n{pc.action('Processing', options['run'])} {parelements} PostFixes in parallel")
 
         # --- Execute
         # single fix

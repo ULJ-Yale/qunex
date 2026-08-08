@@ -86,10 +86,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     bsearch = re.compile(r"bold([0-9]+)")
 
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info("Copying imaging data ...")
 
     log.info("Structural data ...")
@@ -106,7 +103,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                 raise pc.NoSourceFolder(
                     "ERROR: Data source folder is not set. Please check your paths!"
                 )
-            log.detail("copying %s" % (f["t1_source"]))
+            log.detail(f"copying {f['t1_source']}")
             if options["image_target"] == "4dfp":
                 if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
                     gc.link_or_copy(f["t1_source"], f["t1"])
@@ -167,7 +164,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                         gc.link_or_copy(f["t1_source"], f["t1"])
 
         else:
-            log.detail("%s present" % (f["t1"]))
+            log.detail(f"{f['t1']} present")
     except Exception:
         log.error("getting the data failed! Please check paths and files!", depth=1)
 
@@ -196,12 +193,10 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
                         log.raw(str(errormessage))
                     except Exception:
-                        log.error("Unknown error occured: \n...................................\n%s...................................\n"
-                            % (traceback.format_exc()))
+                        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
                         time.sleep(3)
 
-    log.raw("\n\nImaging data copy completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw(f"\n\nImaging data copy completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
     # print r
     return log.text
@@ -293,19 +288,10 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     }
 
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info("Creating masks for bold runs ... \n")
-    log.raw("\n\n   Files in 'images%s/functional%s will be processed." % (
-        options["img_suffix"],
-        options["bold_variant"],
-    ))
-    log.info("   Masks will be saved in 'images%s/boldmasks.%s." % (
-        options["img_suffix"],
-        options["bold_variant"],
-    ))
+    log.raw(f"\n\n   Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
+    log.info(f"   Masks will be saved in 'images{options['img_suffix']}/boldmasks.{options['bold_variant']}.")
     log.info("   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bolds parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed.")
     log.raw("\n\n........................................................")
 
@@ -319,16 +305,13 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n\nWorking on BOLD images in: " + d["s_images"])
     log.info("Resulting masks will be in: " + d["s_boldmasks"])
-    log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (
-        ", ".join(options["bolds"].split("|"))
-    ))
-    log.info("If already present, existing masks %s be overwritten (see --overwrite).\n"
-        % (ostatus))
+    log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
+    log.info(f"If already present, existing masks {ostatus} be overwritten (see --overwrite).\n")
 
     bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
 
     parelements = options["parelements"]
-    log.info("Processing %d BOLDs in parallel" % (parelements))
+    log.info(f"Processing {parelements} BOLDs in parallel")
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -360,8 +343,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
             report["boldfail"] += temp_report["boldfail"]
             report["boldmissing"] += temp_report["boldmissing"]
 
-    log.raw("\n\nBold mask creation completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw(f"\n\nBold mask creation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
     rstatus = (
         "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d"
         % (report)
@@ -402,19 +384,13 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
         if not os.path.exists(f["bold1"]) or overwrite:
             gi.slice_image(f["bold_vol"], f["bold1"], 1)
             if os.path.exists(f["bold1"]):
-                log.detail("sliced first frame from %s" % (
-                    os.path.basename(f["bold_vol"])
-                ))
+                log.detail(f"sliced first frame from {os.path.basename(f['bold_vol'])}")
             else:
-                log.warning("failed slicing first frame from %s" % (
-                    os.path.basename(f["bold_vol"])
-                ), depth=1)
+                log.warning(f"failed slicing first frame from {os.path.basename(f['bold_vol'])}", depth=1)
                 report["boldfail"] += 1
                 return {"r": log.text, "report": report}
         else:
-            log.detail("first %s frame already present" % (
-                os.path.basename(f["bold_vol"])
-            ))
+            log.detail(f"first {os.path.basename(f['bold_vol'])} frame already present")
 
         # --- logs storage
         endlogs = []
@@ -474,7 +450,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
 
         # --- run BET
         if os.path.exists(bbtarget) and not overwrite:
-            log.detail("bet on %s already run" % (os.path.basename(bsource)))
+            log.detail(f"bet on {os.path.basename(bsource)} already run")
             report["bolddone"] += 1
         else:
             # run BET
@@ -614,8 +590,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             fl.unlock(templatefile)
 
         report["boldfail"] += 1
-        log.error("Unknown error occured: \n...................................\n%s\n%s...................................\n"
-            % (e, traceback.format_exc()))
+        log.error(f"Unknown error occured: \n...................................\n{e}\n{traceback.format_exc()}...................................\n")
         time.sleep(1)
 
     # merge into final comlog
@@ -892,18 +867,11 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     }
 
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw("\n\nComputing BOLD image statistics ...")
-    log.raw("\n\n    Files in 'images%s/functional%s will be processed." % (
-        options["img_suffix"],
-        options["bold_variant"],
-    ))
+    log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
     log.raw("\n\n    The command will compute per frame statistics for each of the specified BOLD\n    files based on its movement correction parameter file and BOLD image analysis.\n    The results will be saved as *.bstat and *.bscrub files in the images/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    target format, nifti volume image will be used to compute statistics.")
-    log.raw("\n\n    Using parameters:\n\n    --mov_radius: %(mov_radius)s\n    --mov_fd: %(mov_fd)s\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_after: %(mov_after)s\n    --mov_before: %(mov_before)s\n    --mov_bad: %(mov_bad)s"
-        % (options))
+    log.raw(f"\n\n    Using parameters:\n\n    --mov_radius: {options['mov_radius']}\n    --mov_fd: {options['mov_fd']}\n    --mov_dvars: {options['mov_dvars']}\n    --mov_dvarsme: {options['mov_dvarsme']}\n    --mov_after: {options['mov_after']}\n    --mov_before: {options['mov_before']}\n    --mov_bad: {options['mov_bad']}")
     log.raw("\n\n    for computing scrubbing information.")
     log.raw("\n\n........................................................")
 
@@ -917,16 +885,13 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n\nWorking on BOLD images in: " + d["s_bold"])
     log.info("Resulting files will be in: " + d["s_bold_mov"])
-    log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (
-        ", ".join(options["bolds"].split("|"))
-    ))
-    log.info("If already present, existing statistics %s be overwritten (see --overwrite)."
-        % (ostatus))
+    log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
+    log.info(f"If already present, existing statistics {ostatus} be overwritten (see --overwrite).")
 
     bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
 
     parelements = options["parelements"]
-    log.info("Processing %d BOLDs in parallel" % (parelements))
+    log.info(f"Processing {parelements} BOLDs in parallel")
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -958,8 +923,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             report["boldfail"] += temp_report["boldfail"]
             report["boldmissing"] += temp_report["boldmissing"]
 
-    log.raw("\n\nBold statistics computation completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw(f"\n\nBold statistics computation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
     rstatus = (
         "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d"
         % (report)
@@ -991,15 +955,15 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
 
         # --- movement
         status = log.check_for_file(f["bold_mov"],
-            "\n    ... movement data present [%s]" % (os.path.basename(f["bold_mov"])),
-            "\n    ... movement data missing [%s]" % (os.path.basename(f["bold_mov"])),
+            f"\n    ... movement data present [{os.path.basename(f['bold_mov'])}]",
+            f"\n    ... movement data missing [{os.path.basename(f['bold_mov'])}]",
             status=status,
         )
 
         # --- bold
         status = log.check_for_file(f["bold_vol"],
-            "\n    ... bold data present [%s]" % (os.path.basename(f["bold_vol"])),
-            "\n    ... bold data missing [%s]" % (os.path.basename(f["bold_vol"])),
+            f"\n    ... bold data present [{os.path.basename(f['bold_vol'])}]",
+            f"\n    ... bold data missing [{os.path.basename(f['bold_vol'])}]",
             status=status,
         )
 
@@ -1050,8 +1014,7 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
             shell=True,
         )
         status = log.check_for_file(f["bold_stats"],
-            bad="\n... " + ("ERROR: Matlab/Octave has failed preprocessing BOLD using command: %s"
-            % (comm)),
+            bad="\n... " + (f"ERROR: Matlab/Octave has failed preprocessing BOLD using command: {comm}"),
         )
 
         if status and runit:
@@ -1063,8 +1026,7 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
         log.raw(str(errormessage))
         report["boldfail"] += 1
     except Exception:
-        log.error("Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc()))
+        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
         report["boldfail"] += 1
 
     return {"r": log.text, "report": report}
@@ -1312,18 +1274,11 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
     try:
         log.raw("\n---------------------------------------------------------")
-        log.info("Session id: %s \n[started on %s]" % (
-            sinfo["id"],
-            datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-        ))
+        log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
         log.raw("\n\nCreating BOLD Movement and statistics report ...")
-        log.raw("\n\n    Files in 'images%s/functional%s will be processed." % (
-            options["img_suffix"],
-            options["bold_variant"],
-        ))
+        log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
         log.raw("\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per session plots, fidl snippets and group reports. Only\n    images specified using --bolds parameter will be processed. Please\n    see documentation for use of other relevant parameters!")
-        log.raw("\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s"
-            % (options))
+        log.raw(f"\n\n    Using parameters:\n\n    --mov_dvars: {options['mov_dvars']}\n    --mov_dvarsme: {options['mov_dvarsme']}\n    --mov_fd: {options['mov_fd']}\n    --mov_radius: {options['mov_radius']}\n    --mov_fidl: {options['mov_fidl']}\n    --mov_post: {options['mov_post']}\n    --mov_pref: {options['mov_pref']}")
         log.raw("\n\n........................................................")
 
         pc.do_options_check(options, sinfo, "create_stats_report")
@@ -1337,10 +1292,8 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         log.raw("\n\nWorking on BOLD information images in: " + d["s_bold_mov"])
         log.info("Resulting plots will be saved in: " + d["s_bold_mov"])
 
-        log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)."
-            % (", ".join(options["bolds"].split("|"))))
-        log.info("If already present, existing results %s be overwritten (see --overwrite)."
-            % (ostatus))
+        log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
+        log.info(f"If already present, existing results {ostatus} be overwritten (see --overwrite).")
 
         procbolds = []
         d = pc.get_session_folders(sinfo, options)
@@ -1367,7 +1320,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             plot = ""
             preport["plotdone"] = "none"
 
-        log.raw("\n\nChecking for data in %s." % (d["s_bold_mov"]))
+        log.raw(f"\n\nChecking for data in {d['s_bold_mov']}.")
 
         bolds, bskip, preport["boldskipped"] = log.use_or_skip_bold(sinfo, options)
 
@@ -1386,24 +1339,18 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(d["s_bold_mov"]):
                     # --- movement
                     status = log.check_for_file(f["bold_mov"],
-                        "\n    ... movement data present [%s]"
-                        % (os.path.basename(f["bold_mov"])),
-                        "\n    ... movement data missing [%s]"
-                        % (os.path.basename(f["bold_mov"])),
+                        f"\n    ... movement data present [{os.path.basename(f['bold_mov'])}]",
+                        f"\n    ... movement data missing [{os.path.basename(f['bold_mov'])}]",
                         status=status,
                     )
                     status = log.check_for_file(f["bold_stats"],
-                        "\n    ... stats data present [%s]"
-                        % (os.path.basename(f["bold_stats"])),
-                        "\n    ... stats data missing [%s]"
-                        % (os.path.basename(f["bold_stats"])),
+                        f"\n    ... stats data present [{os.path.basename(f['bold_stats'])}]",
+                        f"\n    ... stats data missing [{os.path.basename(f['bold_stats'])}]",
                         status=status,
                     )
                     status = log.check_for_file(f["bold_scrub"],
-                        "\n    ... scrub data present [%s]"
-                        % (os.path.basename(f["bold_scrub"])),
-                        "\n    ... scrub data missing [%s]"
-                        % (os.path.basename(f["bold_scrub"])),
+                        f"\n    ... scrub data present [{os.path.basename(f['bold_scrub'])}]",
+                        f"\n    ... scrub data missing [{os.path.basename(f['bold_scrub'])}]",
                         status=status,
                     )
                 else:
@@ -1421,8 +1368,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
                 log.raw(str(errormessage))
             except Exception:
-                log.error("Unknown error occured: \n...................................\n%s...................................\n"
-                    % (traceback.format_exc()))
+                log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
 
         # run the R script
 
@@ -1525,10 +1471,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                     os.path.join(d["s_bold_mov"], froot),
                     os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
                 )
-                log.detail("copying %s to %s" % (
-                    os.path.join(d["s_bold_mov"], froot),
-                    os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
-                ))
+                log.detail(f"copying {os.path.join(d['s_bold_mov'], froot)} to {os.path.join(tfolder, '%s-%s' % (sinfo['id'], froot))}")
 
         if (
             options["mov_fidl"]
@@ -1555,17 +1498,14 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
-        log.info("BOLD statistics and movement report failed on %s\n---------------------------------------------------------"
-            % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+        log.info(f"BOLD statistics and movement report failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
         preport["procok"] = "failed"
     except Exception:
-        log.info("BOLD statistics and movement report failed with and unknown error: \n...................................\n%s...................................\n"
-            % (traceback.format_exc()))
+        log.info(f"BOLD statistics and movement report failed with and unknown error: \n...................................\n{traceback.format_exc()}...................................\n")
         preport["procok"] = "failed"
 
     if preport["procok"] == "ok":
-        log.raw("\n\nBOLD statistics and movement report completed on %s\n---------------------------------------------------------"
-            % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+        log.raw(f"\n\nBOLD statistics and movement report completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
     rstatus = (
         "BOLDs ok: %(boldok)2d, missing data: %(boldmissing)2d, processing: %(procok)s, skipped: %(boldskipped)s"
@@ -1761,19 +1701,11 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     }
 
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw("\n\nExtracting BOLD nuisance signal ...")
-    log.raw("\n\n    Files in 'images%s/functional%s will be processed." % (
-        options["img_suffix"],
-        options["bold_variant"],
-    ))
-    log.raw("\n\n    The command will extract nuisance signal from each of the specified BOLD files.\n    The results will be saved as %s[N]%s.nuisance files in the images%s/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal."
-        % (options["boldname"], options["nifti_tail"], options["img_suffix"]))
-    log.raw("\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sessionroi: %(sessionroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s"
-        % (options))
+    log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
+    log.raw(f"\n\n    The command will extract nuisance signal from each of the specified BOLD files.\n    The results will be saved as {options['boldname']}[N]{options['nifti_tail']}.nuisance files in the images{options['img_suffix']}/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal.")
+    log.raw(f"\n\n    Using parameters:\n\n    --wbmask: {options['wbmask']}\n    --sessionroi: {options['sessionroi']}\n    --nroi: {options['nroi']}\n    --shrinknsroi: {options['shrinknsroi']}")
     log.raw("\n\n    when extracting nuisance signal.")
     log.raw("\n\n........................................................")
 
@@ -1787,16 +1719,13 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n\nWorking on BOLD images in: " + d["s_bold"])
     log.info("Resulting files will be in: " + d["s_bold_mov"])
-    log.raw("\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (
-        ", ".join(options["bolds"].split("|"))
-    ))
-    log.info("If already present, existing nuisance files %s be overwritten (see --overwrite)."
-        % (ostatus))
+    log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
+    log.info(f"If already present, existing nuisance files {ostatus} be overwritten (see --overwrite).")
 
     bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
 
     parelements = options["parelements"]
-    log.info("Processing %d BOLDs in parallel" % (parelements))
+    log.info(f"Processing {parelements} BOLDs in parallel")
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -1828,8 +1757,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             report["boldfail"] += temp_report["boldfail"]
             report["boldmissing"] += temp_report["boldmissing"]
 
-    log.raw("\n\nBold nuisance signal extraction completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw(f"\n\nBold nuisance signal extraction completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
     rstatus = (
         "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, skipped: %(boldskipped)2d, processed: %(boldok)2d"
         % (report)
@@ -1861,20 +1789,20 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         # --- bold mask
         status = log.check_for_file(f["bold1_brain_mask"],
             "\n    ... bold brain mask present",
-            "\n    ... bold brain mask missing [%s]" % (f["bold1_brain_mask"]),
+            f"\n    ... bold brain mask missing [{f['bold1_brain_mask']}]",
             status=status,
         )
 
         # --- aseg
         astat = log.check_for_file(f["fs_aseg_bold"],
             "\n    ... freesurfer aseg present",
-            "\n    ... freesurfer aseg missing [%s]" % (f["fs_aseg_bold"]),
+            f"\n    ... freesurfer aseg missing [{f['fs_aseg_bold']}]",
             status=True,
         )
         if not astat:
             astat = log.check_for_file(f["fs_aparc_bold"],
                 "\n    ... freesurfer aparc present",
-                "\n    ... freesurfer aparc missing [%s]" % (f["fs_aparc_bold"]),
+                f"\n    ... freesurfer aparc missing [{f['fs_aparc_bold']}]",
                 status=True,
             )
             segfile = f["fs_aparc_bold"]
@@ -1886,7 +1814,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         # --- bold
         status = log.check_for_file(f["bold_vol"],
             "\n    ... bold data present",
-            "\n    ... bold data missing [%s]" % (f["bold_vol"]),
+            f"\n    ... bold data missing [{f['bold_vol']}]",
             status=status,
         )
 
@@ -1939,8 +1867,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
             shell=True,
         )
         status = log.check_for_file(f["bold_nuisance"],
-            bad="\n... " + ("ERROR: Matlab/Octave has failed preprocessing BOLD using command: %s"
-            % (comm)),
+            bad="\n... " + (f"ERROR: Matlab/Octave has failed preprocessing BOLD using command: {comm}"),
         )
 
         if runit and status:
@@ -1952,8 +1879,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         log.raw(str(errormessage))
         report["boldfail"] += 1
     except Exception:
-        log.error("Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc()))
+        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
         report["boldfail"] += 1
 
     return {"r": log.text, "report": report}
@@ -2549,18 +2475,10 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     pc.do_options_check(options, sinfo, "preprocess_bold")
 
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
-    log.info("Preprocessing %s BOLD files as specified in --bolds." % (
-        ", ".join(options["bolds"].split("|"))
-    ))
-    log.info("Files in 'images%s/functional%s will be processed." % (
-        options["img_suffix"],
-        options["bold_variant"],
-    ))
-    log.info("%s Preprocessing bold runs ..." % (pc.action("Running", options["run"])))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"Preprocessing {', '.join(options['bolds'].split('|'))} BOLD files as specified in --bolds.")
+    log.info(f"Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
+    log.info(f"{pc.action('Running', options['run'])} Preprocessing bold runs ...")
 
     report = {
         "done": [],
@@ -2575,7 +2493,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     report["skipped"] = [str(binfo["bold_number"]) for binfo in bskip]
 
     parelements = options["parelements"]
-    log.info("Processing %d BOLDs in parallel" % (parelements))
+    log.info(f"Processing {parelements} BOLDs in parallel")
 
     if parelements == 1:  # serial execution
         for b in bolds:
@@ -2609,8 +2527,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             report["ready"] += temp_report["ready"]
             report["not ready"] += temp_report["not ready"]
 
-    log.raw("\n\nBold preprocessing completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw(f"\n\nBold preprocessing completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
     if options["run"] == "run":
         rstatus = (
             "bolds: %d ready [%s], %d not ready [%s], %d already processed [%s], %d ran ok [%s], %d failed [%s], %d skipped [%s]"
@@ -2682,7 +2599,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         ):
             status = log.check_for_file(f["bold_mov"],
                 "\n    ... movement data present",
-                "\n    ... movement data missing [%s]" % (f["bold_mov"]),
+                f"\n    ... movement data missing [{f['bold_mov']}]",
                 status=status,
             )
 
@@ -2690,7 +2607,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         if "m" in options["bold_actions"]:
             status = log.check_for_file(f["bold_stats"],
                 "\n    ... bold statistics data present",
-                "\n    ... bold statistics data missing [%s]" % (f["bold_stats"]),
+                f"\n    ... bold statistics data missing [{f['bold_stats']}]",
                 status=status,
             )
 
@@ -2698,7 +2615,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         if any([e in options["pignore"] for e in ["linear", "spline", "ignore"]]):
             status = log.check_for_file(f["bold_scrub"],
                 "\n    ... bold scrubbing data present",
-                "\n    ... bold scrubbing data missing [%s]" % (f["bold_scrub"]),
+                f"\n    ... bold scrubbing data missing [{f['bold_scrub']}]",
                 status=status,
             )
 
@@ -2709,8 +2626,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
             if any([e in options["bold_nuisance"] for e in ["V", "WM", "WB"]]):
                 status = log.check_for_file(f["bold_nuisance"],
                     "\n    ... bold nuisance signal data present",
-                    "\n    ... bold nuisance signal data missing [%s]"
-                    % (f["bold_nuisance"]),
+                    f"\n    ... bold nuisance signal data missing [{f['bold_nuisance']}]",
                     status=status,
                 )
 
@@ -2718,14 +2634,14 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
             if "e" in options["bold_nuisance"]:
                 status = log.check_for_file(f["bold_event"],
                     "\n    ... event data present",
-                    "\n    ... even data missing [%s]" % (f["bold_event"]),
+                    f"\n    ... even data missing [{f['bold_event']}]",
                     status=status,
                 )
 
         # --- bold
         status = log.check_for_file(f["bold"],
             "\n    ... bold data present",
-            "\n    ... bold data missing [%s]" % (f["bold"]),
+            f"\n    ... bold data missing [{f['bold']}]",
             status=status,
         )
 
@@ -2824,8 +2740,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
                     shell=True,
                 )
                 status = log.check_for_file(f["bold_final"],
-            bad="\n... " + ("ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> %s\n"
-                    % (mcomm)),
+            bad="\n... " + (f"ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> {mcomm}\n"),
         )
                 if status:
                     report["processed"].append(boldnum)
@@ -2835,8 +2750,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         log.raw(str(errormessage))
         report["failed"].append(boldnum)
     except Exception:
-        log.error("Unknown error occured: \n...................................\n%s...................................\n"
-            % (traceback.format_exc()))
+        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
         time.sleep(5)
         report["failed"].append(boldnum)
 
@@ -3432,15 +3346,9 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     pc.do_options_check(options, sinfo, "preprocess_conc")
 
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
-    log.info("%s Preprocessing conc bundles ..." % (pc.action("Running", options["run"])))
-    log.info("Files in 'images%s/functional%s will be processed." % (
-        options["img_suffix"],
-        options["bold_variant"],
-    ))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"{pc.action('Running', options['run'])} Preprocessing conc bundles ...")
+    log.info(f"Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
 
     # --- extract conc and fidl names
     concs = [e.strip().replace(".conc", "") for e in options["bolds"].split("|")]
@@ -3463,8 +3371,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     failed = 0
     if len(concs) != len(fidls):
-        log.error("Number of conc files (%d) does not match number of event files (%d), processing aborted!"
-            % (len(concs), len(fidls)))
+        log.error(f"Number of conc files ({len(concs)}) does not match number of event files ({len(fidls)}), processing aborted!")
 
     else:
         for nb in range(0, len(concs)):
@@ -3477,7 +3384,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 options["fidlname"] = ""
 
             try:
-                log.raw("\n\nConc bundle: %s" % (tconc))
+                log.raw(f"\n\nConc bundle: {tconc}")
 
                 d = pc.get_session_folders(sinfo, options)
                 f = {}
@@ -3491,14 +3398,13 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 if overwrite or not os.path.exists(f_conc):
                     tf = pc.find_file(sinfo, options, tconc + ".conc")
                     if tf:
-                        log.detail("getting conc data from %s" % (tf))
+                        log.detail(f"getting conc data from {tf}")
                         if os.path.exists(f_conc):
                             os.remove(f_conc)
                         shutil.copy2(tf, f_conc)
 
                     else:
-                        log.error("Conc data file (%s) does not exist in the expected locations! Skipping this conc bundle."
-                            % (tconc), depth=1)
+                        log.error(f"Conc data file ({tconc}) does not exist in the expected locations! Skipping this conc bundle.", depth=1)
                         failed += 1
                         continue
                 else:
@@ -3510,20 +3416,18 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     if overwrite or not os.path.exists(f_fidl):
                         tf = pc.find_file(sinfo, options, tfidl + ".fidl")
                         if tf:
-                            log.detail("getting event data from %s" % (tf))
+                            log.detail(f"getting event data from {tf}")
                             if os.path.exists(f_fidl):
                                 os.remove(f_fidl)
                             shutil.copy2(tf, f_fidl)
                         else:
-                            log.error("Event data file (%s) does not exist in the expected locations! Skipping this conc bundle."
-                                % (tfidl), depth=1)
+                            log.error(f"Event data file ({tfidl}) does not exist in the expected locations! Skipping this conc bundle.", depth=1)
                             failed += 1
                             continue
                     else:
                         log.detail("event data present")
                 else:
-                    log.detail("event data not needed (e not specified in --bold_nuisance) %s"
-                        % (options["bold_nuisance"]))
+                    log.detail(f"event data not needed (e not specified in --bold_nuisance) {options['bold_nuisance']}")
 
                 # --- loop through bold files
 
@@ -3534,8 +3438,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 check = {"ok": [], "bad": []}
 
                 if len(conc) == 0:
-                    log.error("No valid image files in conc file (%s)! Skipping this conc bundle."
-                        % (f_conc), depth=1)
+                    log.error(f"No valid image files in conc file ({f_conc})! Skipping this conc bundle.", depth=1)
                     failed += 1
                     continue
 
@@ -3572,7 +3475,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     # --- bold
                     status = log.check_for_file(f["bold"],
                         "\n    ... bold data present",
-                        "\n    ... bold data missing [%s]" % (f["bold"]),
+                        f"\n    ... bold data missing [{f['bold']}]",
                         status=status,
                     )
                     nconc.append((f["bold"], boldnum))
@@ -3584,7 +3487,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     ):
                         status = log.check_for_file(f["bold_mov"],
                             "\n    ... movement data present",
-                            "\n    ... movement data missing [%s]" % (f["bold_mov"]),
+                            f"\n    ... movement data missing [{f['bold_mov']}]",
                             status=status,
                         )
 
@@ -3592,8 +3495,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     if "m" in options["bold_actions"]:
                         status = log.check_for_file(f["bold_stats"],
                             "\n    ... bold statistics data present",
-                            "\n    ... bold statistics data missing [%s]"
-                            % (f["bold_stats"]),
+                            f"\n    ... bold statistics data missing [{f['bold_stats']}]",
                             status=status,
                         )
 
@@ -3606,8 +3508,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     ):
                         status = log.check_for_file(f["bold_scrub"],
                             "\n    ... bold scrubbing data present",
-                            "\n    ... bold scrubbing data missing [%s]"
-                            % (f["bold_scrub"]),
+                            f"\n    ... bold scrubbing data missing [{f['bold_scrub']}]",
                             status=status,
                         )
 
@@ -3618,8 +3519,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     ):
                         status = log.check_for_file(f["bold_nuisance"],
                             "\n    ... bold nuisance signal data present",
-                            "\n    ... bold nuisance signal data missing [%s]"
-                            % (f["bold_nuisance"]),
+                            f"\n    ... bold nuisance signal data missing [{f['bold_nuisance']}]",
                             status=status,
                         )
 
@@ -3718,9 +3618,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     % (mcommand, mcomm)
                 )
 
-                log.raw("\n\n%s nuisance and task removal" % (
-                    pc.action("Running", options["run"])
-                ))
+                log.raw(f"\n\n{pc.action('Running', options['run'])} nuisance and task removal")
                 if options["print_command"] == "yes":
                     log.raw("\n" + comm + "\n")
                 if options["run"] == "run":
@@ -3743,8 +3641,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                         shell=True,
                     )
                     status = log.check_for_file(done,
-            bad="\n... " + ("ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> %s\n"
-                        % (mcomm)),
+            bad="\n... " + (f"ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n---> {mcomm}\n"),
         )
                     if os.path.exists(done):
                         os.remove(done)
@@ -3774,13 +3671,11 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 failed += 1
             except Exception:
                 report += " => processing failed"
-                log.error("Unknown error occured: \n...................................\n%s...................................\n"
-                    % (traceback.format_exc()))
+                log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
                 time.sleep(5)
                 failed += 1
 
-    log.raw("\n\nConc preprocessing (v2) completed on %s\n---------------------------------------------------------"
-        % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw(f"\n\nConc preprocessing (v2) completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
     # print r
     return (log.text, (sinfo["id"], report, failed))

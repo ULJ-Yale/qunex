@@ -215,10 +215,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_bolds)))
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
-        log.raw("\n\n%s %d ReApplyFixes in parallel" % (
-            pc.action("Processing", options["run"]),
-            parelements,
-        ))
+        log.raw(f"\n\n{pc.action('Processing', options['run'])} {parelements} ReApplyFixes in parallel")
 
         # --- Execute
         # single fix
@@ -304,7 +301,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
     try:
         # run HCP hand reclassification
         log.raw("\n------------------------------------------------------------")
-        log.step("Executing HCP Hand reclassification for bold: %s\n" % printbold)
+        log.step(f"Executing HCP Hand reclassification for bold: {printbold}\n")
         result = execute_hcp_hand_reclassification(
             sinfo, options, hcp, run, True, boldtarget, printbold
         )
@@ -455,19 +452,16 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                 log.raw("\n\n")
 
         else:
-            log.error("Hand reclassification failed for bold: %s!" % printbold)
+            log.error(f"Hand reclassification failed for bold: {printbold}!")
             report["failed"].append(printbold)
             boldok = False
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}
@@ -491,7 +485,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n------------------------------------------------------------")
-        log.step("%s group %s" % (pc.action("Processing", options["run"]), groupname))
+        log.step(f"{pc.action('Processing', options['run'])} group {groupname}")
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -508,8 +502,8 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
             )
             boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                f"\n     ... bold image {boldtarget} present",
+                f"\n     ... ERROR: bold image [{boldimg}] missing!",
                 status=boldok,
             )
 
@@ -526,7 +520,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
         # run HCP hand reclassification if not longitudinal
         if not options["longitudinal"]:
-            log.step("Executing HCP Hand reclassification for group: %s\n" % groupname)
+            log.step(f"Executing HCP Hand reclassification for group: {groupname}\n")
             result = execute_hcp_hand_reclassification(
                 sinfo, options, hcp, run, False, groupname, groupname
             )
@@ -724,19 +718,14 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 log.raw("\n\n")
 
         else:
-            log.error("Hand reclassification failed for bold: %s!" % printbold)
+            log.error(f"Hand reclassification failed for bold: {printbold}!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            groupname
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.info(" --- Failed during processing of group %s with error:\n %s\n" % (
-            groupname,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}
@@ -757,7 +746,7 @@ def execute_hcp_hand_reclassification(
     }
 
     try:
-        log.step("%s ICA %s" % (pc.action("Processing", options["run"]), printbold))
+        log.step(f"{pc.action('Processing', options['run'])} ICA {printbold}")
         boldok = True
 
         # load parameters or use default values
@@ -782,8 +771,8 @@ def execute_hcp_hand_reclassification(
             "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
         )
         boldok = log.check_for_file(icaimg,
-            "\n     ... ICA %s present" % boldtarget,
-            "\n     ... ERROR: ICA [%s] missing!" % icaimg,
+            f"\n     ... ICA {boldtarget} present",
+            f"\n     ... ERROR: ICA [{icaimg}] missing!",
             status=boldok,
         )
 
@@ -865,14 +854,11 @@ def execute_hcp_hand_reclassification(
         log.raw("\n")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.info(" --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}

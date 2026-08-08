@@ -292,11 +292,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
         log.raw(
-            "\n\n%s %d ICAFix elements in parallel"
-            % (
-                pc.action("Processing", options["run"]),
-                parelements,
-            )
+            f"\n\n{pc.action('Processing', options['run'])} {parelements} ICAFix elements in parallel"
         )
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
@@ -389,11 +385,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
     try:
         log.raw("\n\n------------------------------------------------------------")
         log.step(
-            "%s BOLD image %s"
-            % (
-                pc.action("Processing", options["run"]),
-                printbold,
-            )
+            f"{pc.action('Processing', options['run'])} BOLD image {printbold}"
         )
         boldok = True
 
@@ -403,8 +395,8 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
         )
         boldok = log.check_for_file(
             boldimg,
-            "\n     ... bold image %s present" % boldtarget,
-            "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+            f"\n     ... bold image {boldtarget} present",
+            f"\n     ... ERROR: bold image [{boldimg}] missing!",
             status=boldok,
         )
 
@@ -521,16 +513,12 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw("\n\n\n --- Failed during processing of bold %s\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold}\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
         log.info(
-            " --- Failed during processing of bold %s with error:\n %s\n"
-            % (
-                printbold,
-                traceback.format_exc(),
-            )
+            f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n"
         )
         report["failed"].append(printbold)
 
@@ -559,7 +547,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
     try:
         log.raw("\n\n------------------------------------------------------------")
         log.step(
-            "%s group %s" % (pc.action("Processing", options["run"]), groupname)
+            f"{pc.action('Processing', options['run'])} group {groupname}"
         )
         groupok = True
 
@@ -577,9 +565,9 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
             boldok = log.check_for_file(
-                "%s.nii.gz" % boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s.nii.gz] missing!" % boldimg,
+                f"{boldimg}.nii.gz",
+                f"\n     ... bold image {boldtarget} present",
+                f"\n     ... ERROR: bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
             )
 
@@ -855,18 +843,13 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(
-            "\n\n\n --- Failed during processing of group %s with error:\n"
-            % (groupname)
+            f"\n\n\n --- Failed during processing of group {groupname} with error:\n"
         )
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
         log.info(
-            " --- Failed during processing of group %s with error:\n %s\n"
-            % (
-                groupname,
-                traceback.format_exc(),
-            )
+            f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n"
         )
         report["failed"].append(groupname)
 

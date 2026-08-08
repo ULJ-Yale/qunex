@@ -154,8 +154,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             # resolves and validates the session HCP paths
             get_hcp_paths(session, options)
             if "hcp" not in session:
-                log.error("There is no hcp info for session %s in batch.txt"
-                    % (session["id"]))
+                log.error(f"There is no hcp info for session {session['id']} in batch.txt")
                 run = False
 
             # subject_list

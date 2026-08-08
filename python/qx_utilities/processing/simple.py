@@ -233,8 +233,8 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
     log = ReportLog()
 
     log.raw("\n---------------------------------------------------------")
-    log.info("Session id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
-    log.info("Running script %s" % (options['script']))
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.info(f"Running script {options['script']}")
     log.raw("\n........................................................\n")
 
     try:
@@ -289,6 +289,6 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         raise
         return (log.text, (sinfo['id'], message, 1))
 
-    log.raw("\n\nrun_shell_script %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+    log.raw(f"\n\nrun_shell_script {options['script']} completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
     print(log.text)
     return (log.text, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))

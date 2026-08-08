@@ -150,8 +150,7 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
             hcp = get_hcp_paths(session, options)
 
             if "hcp" not in session:
-                log.error("There is no hcp info for session %s in batch.txt"
-                    % (session["id"]))
+                log.error(f"There is no hcp info for session {session['id']} in batch.txt")
                 run = False
 
             # subject_list

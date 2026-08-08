@@ -225,8 +225,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.error("There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # extract ASL and SE info
@@ -264,7 +263,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
         # file exists?
         if not os.path.exists(asl_file):
-            log.error("ASL acquistion data not found [%s]" % asl_file)
+            log.error(f"ASL acquistion data not found [{asl_file}]")
             run = False
 
         # AP and PA fieldmaps for use in distortion correction
@@ -287,8 +286,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                                 )
                             )
                             if len(fmap_ap_file) == 0:
-                                log.error("SE AP file not found in [%s]"
-                                    % hcp["ASL_source"])
+                                log.error(f"SE AP file not found in [{hcp['ASL_source']}]")
                                 run = False
                             else:
                                 fmap_ap_file = fmap_ap_file[0]
@@ -305,8 +303,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                                 )
                             )
                             if len(fmap_pa_file) == 0:
-                                log.error("SE PA file not found in [%s]"
-                                    % hcp["ASL_source"])
+                                log.error(f"SE PA file not found in [{hcp['ASL_source']}]")
                                 run = False
                             else:
                                 fmap_pa_file = fmap_pa_file[0]
@@ -335,10 +332,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             run = False
         else:
             if not os.path.exists(fmap_ap_file):
-                log.error("AP fieldmap not found [%s]" % fmap_ap_file)
+                log.error(f"AP fieldmap not found [{fmap_ap_file}]")
                 run = False
             if not os.path.exists(fmap_ap_file):
-                log.error("PA fieldmap not found [%s]" % fmap_pa_file)
+                log.error(f"PA fieldmap not found [{fmap_pa_file}]")
                 run = False
 
         # get library path
