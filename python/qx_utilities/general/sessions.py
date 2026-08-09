@@ -34,6 +34,9 @@ def merge_session(
         useful when data for a subject is split across multiple scanning sessions
         and needs to be combined for processing and analysis.
 
+    ..  qx_command:
+        type: utility
+
     Parameters:
         --source (str):
             A comma-separated list of session IDs or paths to join. Each can be:
@@ -195,8 +198,6 @@ def merge_session(
                 studyfolder='/data/study',
                 overwrite='clean',
                 original_sessions='move:archive/merged_sessions'
-            )
-                overwrite='clean'
             )
     """
 
@@ -763,6 +764,9 @@ def merge_sessions_list(
         Processes a list file containing multiple session join specifications,
         calling merge_session for each line. This is useful for batch processing
         multiple session merges with a single command.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --studyfolder (str):
