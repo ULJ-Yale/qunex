@@ -70,6 +70,12 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
                    this is the whole dicom.
     --parent_path  The path (like fieldname/innerfield) of the parent or None if
                    this is the whole dicom.
+
+    The `debug` trace below stays a `print`: it is a developer's tracing of the
+    tag walk, no caller sets `debug`, and carrying a log into it would mean
+    threading one through the `deid_function` callback signature for lines that
+    never appear. The function records nothing, so this is a seam and not a
+    half-converted function.
     """
     # order the dicom tags
 

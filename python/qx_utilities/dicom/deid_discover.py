@@ -24,6 +24,7 @@ import tempfile
 import zipfile
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 try:
     import pydicom.filereader as dfr
@@ -113,7 +114,7 @@ def get_dicom_name(opened_dicom, extension="dcm"):
     return filename
 
 
-def discover_dicom(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file=""):
+def discover_dicom(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file="", _log=None):
     """
     ``discover_dicom(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file="")``
 
@@ -137,6 +138,8 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
     Given a folder name, looks for DICOMs in nested subfolders, zip files, gzip files
     and tar files and runs the function deid_function on each dicom it finds
     """
+    log = gl.log_or_console(_log)
+
     if output_folder is None and rename_files:
         raise ge.CommandFailed("discover_dicom", "Output folder not specified", "Files can only be renamed if they are being saved in a different location.", "Please provide output_folder as an argument!")
 
@@ -144,7 +147,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
         for filename in filenames:
             full_filename = os.path.join(dirpath, filename)
 
-            print("---> Inspecting", full_filename)
+            log.step("Inspecting %s" % (full_filename))
 
             opened_dicom = None
 
@@ -156,10 +159,10 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     opened_dicom, gz = read_dicom_base(full_filename)
 
                 if opened_dicom:
-                    print(" ... read as dicom")
+                    log.detail("read as dicom")
 
                 modified_dicom = deid_function(opened_dicom, filename=os.path.relpath(full_filename, folder))
-                print(" ... processed")
+                log.detail("processed")
 
                 if save:
                     if output_folder is None:
@@ -191,7 +194,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     else:
                         file = open(output_file, mode='wb')
 
-                    print("     -> saving to", output_file)
+                    log.detail("saving to %s" % (output_file), depth=1)
                     modified_dicom.save_as(file)
 
                     if gz:
@@ -212,9 +215,9 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     file.extractall(temp_directory)
                     file.close()
 
-                    print(" ... extracted as a zip file")
+                    log.detail("extracted as a zip file")
 
-                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
+                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file, _log=log)
 
                     if save:
                         target_file = full_filename
@@ -223,7 +226,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                             relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
 
-                        print("---> zipping to", target_file)
+                        log.step("zipping to %s" % (target_file))
                         file = zipfile.ZipFile(target_file, mode='w')
 
                         for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
@@ -249,11 +252,11 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     file.extractall(temp_directory)
                     file.close()
 
-                    print(" ... extracted as a tar file")
+                    log.detail("extracted as a tar file")
 
                     opened_dicom = True
 
-                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
+                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file, _log=log)
 
                     if save:
                         target_file = full_filename
@@ -264,7 +267,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                             relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
 
-                        print("---> archiving to", target_file)
+                        log.step("archiving to %s" % (target_file))
                         file = tarfile.open(target_file, mode2)
 
                         for item in glob.glob(os.path.join(temp_out_directory, '*')):
@@ -280,6 +283,6 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                     pass  # File was not a tar archive
 
             if opened_dicom is None:
-                print("... not a dicom file ... skipping")
+                log.detail("not a dicom file ... skipping")
                 # logging.warning("Unable to identify %s as a dicom file or zip archive to search.", full_filename)
                 continue

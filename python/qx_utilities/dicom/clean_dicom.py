@@ -18,6 +18,7 @@ folders.
 import os
 
 import qx_utilities.dicom.sort_validate as gds_validate
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom_info import read_dicom_info
 from qx_utilities.dicom.sort_dicom import (
     _instance_record_from_info,
@@ -48,13 +49,15 @@ def _move_files(paths, dest_dir):
     return moved
 
 
-def _clean_sorted_dicom(folder, min_images, move_non_image, move_incomplete, verbose):
+def _clean_sorted_dicom(folder, min_images, move_non_image, move_incomplete, verbose, _log=None):
     """Inspect already-sorted ``dicom/<seq>`` folders and set aside non-image and
     orphaned incomplete-volume files, reusing the shared classifier."""
+    log = gl.log_or_console(_log)
+
     dicom_dir = os.path.join(folder, "dicom")
     if not os.path.isdir(dicom_dir):
-        print("---> DICOM folder not found: %s" % (dicom_dir))
-        print("---> Skipping clean_dicom")
+        log.warning("DICOM folder not found: %s" % (dicom_dir))
+        log.step("Skipping clean_dicom")
         return
 
     non_image_dir = os.path.join(dicom_dir, "non-image")
@@ -95,8 +98,8 @@ def _clean_sorted_dicom(folder, min_images, move_non_image, move_incomplete, ver
         n_ni = _move_files(non_image, non_image_dir) if move_non_image else 0
         n_or = _move_files(orphaned, orphans_dir) if move_incomplete else 0
         if verbose:
-            print(
-                "---> Sequence %s: %d image, moved %d non-image, %d orphaned"
+            log.step(
+                "Sequence %s: %d image, moved %d non-image, %d orphaned"
                 % (sqid, seq.imaging_dicom_count, n_ni, n_or)
             )
 
@@ -108,6 +111,7 @@ def clean_dicom(
     verbose="yes",
     move_non_image=True,
     move_incomplete=True,
+    _log=None,
 ):
     r"""
     ``clean_dicom [folder=.] [min_files=10] [verbose=yes] [move_non_image=True] [move_incomplete=True]``
@@ -147,7 +151,9 @@ def clean_dicom(
         clustering). Orphan files now go to ``dicom/orphans`` (previously
         ``dicom/_REMOVED``).
     """
-    print("Running clean_dicom\n==================")
+    log = gl.log_or_console(_log)
+
+    log.info("Running clean_dicom\n==================")
     verbose_b = true_or_false(verbose)
     try:
         min_images = int(min_files)
@@ -159,5 +165,6 @@ def clean_dicom(
         true_or_false(move_non_image),
         true_or_false(move_incomplete),
         verbose_b,
+        _log=log,
     )
-    print("---> Done")
+    log.step("Done")

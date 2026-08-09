@@ -18,10 +18,11 @@ import glob
 import os
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom_info import get_dicom_time, get_id, read_dicom_base
 
 
-def split_dicom(folder=None):
+def split_dicom(folder=None, _log=None):
     """
     ``split_dicom [folder=inbox]``
 
@@ -50,11 +51,13 @@ def split_dicom(folder=None):
                 --folder=dicommess
     """
 
+    log = gl.log_or_console(_log)
+
     if folder is None:
         folder = os.path.join(".", "inbox")
 
-    print(
-        "============================================\n\nSorting dicoms from %s\n"
+    log.info(
+        "============================================\n\nSorting dicoms from %s"
         % (folder)
     )
 
@@ -81,9 +84,9 @@ def split_dicom(folder=None):
             if sid not in sessions:
                 sessions.append(sid)
                 os.makedirs(os.path.join(folder, sid))
-                print("---> creating subfolder for session %s" % (sid))
-            print(
-                "---> %s - %-6s %6d - %-30s scanned on %s"
+                log.step("creating subfolder for session %s" % (sid))
+            log.step(
+                "%s - %-6s %6d - %-30s scanned on %s"
                 % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
             )
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
