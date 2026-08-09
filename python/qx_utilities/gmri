@@ -325,12 +325,24 @@ def runCommand(command, args):
             # run with log
             else:
                 run.header()
-                _, result, _, _, _ = gc.run_with_log(
+                outcome = gc.run_with_log(
                     qx_commands.get(command).load_callable(),
                     args=args,
                     run=run,
                     tags=[command, args.get("sessionids")],
                 )
+
+                # a failed command exits non-zero, the way the parallel path
+                # below already does: `bin/qunex.sh` returns gmri's status
+                # verbatim, so this is how a shell, a scheduler job or CI
+                # learns the command did not do what it was asked
+                if outcome.failed:
+                    raise ge.CommandFailed(
+                        command,
+                        "The command did not complete successfully",
+                        "Please check the log in %s"
+                        % (outcome.comlog or run.logfolder),
+                    )
 
         # -- sessions loop
         else:
@@ -375,13 +387,14 @@ def runCommand(command, args):
         # processing commands and go through `gp.run`.
         stati = [
             (
-                name,
-                "%s%s" % (result or ("completed with errors" if failed
-                                     else "completed"),
-                          " [log: %s]" % comlog if comlog else ""),
-                failed,
+                outcome.name,
+                "%s%s" % (outcome.error or ("completed with errors"
+                                            if outcome.failed
+                                            else "completed"),
+                          " [log: %s]" % outcome.comlog if outcome.comlog else ""),
+                outcome.failed,
             )
-            for name, result, comlog, _, failed in sorted(results, key=lambda x: x[0])
+            for outcome in sorted(results, key=lambda outcome: outcome.name)
         ]
         run.final_report(stati)
         run.write_status(stati)

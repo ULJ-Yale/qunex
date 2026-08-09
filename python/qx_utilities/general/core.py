@@ -30,7 +30,7 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 
-from collections import UserList
+from collections import UserList, namedtuple
 from copy import deepcopy
 
 import qx_utilities.general.filelock as fl
@@ -779,39 +779,42 @@ def run_external_parallel(calls, cores=None, prepend=""):
 results = []
 lock = multiprocessing.Lock()
 
+# What one call through `run_with_log` came to. `failed` is 0 or 1; `error`
+# is the exception the call raised, or None -- never what the command
+# returned, which is for its python caller (see `run_with_log`). `prepend` is
+# not a field: it is an input, and `run_in_parallel` binds it into the
+# callback rather than carrying it through the worker and back.
+CallOutcome = namedtuple("CallOutcome", "name failed error comlog")
 
-def record(response):
+
+def record(outcome, prepend=""):
     """
-    ``record(response)``
+    ``record(outcome, prepend="")``
 
-    Appends response from a completed function.
+    Appends the :class:`CallOutcome` of a completed function.
 
     For internal use only.
     """
 
     global results
 
-    results.append(response)
+    results.append(outcome)
 
     with lock:
-        name, _, target_log, prepend, failed = response
-        if target_log:
-            see = " [log: %s]." % (target_log)
+        see = " [log: %s]." % outcome.comlog if outcome.comlog else "."
+
+        if outcome.failed:
+            print("%s%s failed%s" % (prepend, outcome.name, see))
         else:
-            see = "."
-
-        if failed:
-            print("%s%s failed%s" % (prepend, name, see))
-        else:
-            print("%s%s finished successfully%s" % (prepend, name, see))
+            print("%s%s finished successfully%s" % (prepend, outcome.name, see))
 
 
-def record_future(future):
+def record_future(future, prepend=""):
     if future.exception() is not None:
         print("Unhandled exception")
         print(future.exception())
     else:
-        record(future.result())
+        record(future.result(), prepend)
 
 
 def _drop_run_parameters(function, args):
@@ -867,10 +870,10 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
     list of files -- and is not inspected here.
 
     Returns:
-        (name, result, comlog path, prepend, failed). `result` is None unless
-        the call raised, in which case it holds the exception; `failed` is 1
-        when the call raised or recorded an error, so a caller building a
-        status does not have to infer it.
+        a :class:`CallOutcome`. `error` is None unless the call raised, in
+        which case it holds the exception; `failed` is 1 when the call raised
+        or recorded an error, so a caller building a status does not have to
+        infer it.
 
     For internal use only.
     """
@@ -928,7 +931,7 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
         # useful to a python caller (a path, a count, a list of files, True),
         # and reading that as a status made a successful `backup_files` an
         # error and a no-op `remove_qunex_metadata` a success.
-        result = None
+        error = None
 
         try:
             _drop_run_parameters(function, args)
@@ -936,20 +939,20 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
         except ge.CommandError as e:
             with lock:
                 print(ge.report_command_error(name, e))
-            result = e
+            error = e
         except ge.CommandNull as e:
             with lock:
                 print(ge.report_command_null(name, e))
-            result = e
+            error = e
         except ge.CommandFailed as e:
             with lock:
                 print(ge.report_command_failed(name, e))
-            result = e
+            error = e
         except Exception as e:
             with lock:
                 print("\n\nERROR")
                 print(traceback.format_exc())
-            result = e
+            error = e
 
         with lock:
             print(
@@ -962,11 +965,11 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
         # the count from. `failed` is the exception *or* a recorded error --
         # the error count is an additional source of failure, not a substitute.
         report = None
-        failed = 1 if result else 0
+        failed = 1 if error else 0
         if log.text:
             report, (_, _, failed) = log.finish(
-                str(result) if result else "completed",
-                failed=1 if result else None,
+                str(error) if error else "completed",
+                failed=1 if error else None,
                 name=name,
             )
 
@@ -992,7 +995,7 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
         body = status if report is None else "%s\n%s" % (report, status)
         run.write("\n%s\n%s\n" % (entry, body))
 
-    return name, result, comlogname, prepend, failed
+    return CallOutcome(name, failed, error, comlogname)
 
 
 def run_in_parallel(calls, cores=None, prepend="", run=None):
@@ -1049,7 +1052,9 @@ def run_in_parallel(calls, cores=None, prepend="", run=None):
                 prepend=prepend,
                 tags=call.get("tags"),
             )
-            future.add_done_callback(record_future)
+            # `prepend` is bound here rather than returned by the worker: it is
+            # an input, and the callback is where it is needed
+            future.add_done_callback(lambda f, p=prepend: record_future(f, p))
 
     return results
 

@@ -74,25 +74,26 @@ def comlogs(run):
 
 
 def test_a_successful_call_leaves_a_done_comlog_holding_its_output(run):
-    name, result, comlog, *_ = gc.run_with_log(
+    outcome = gc.run_with_log(
         works, args={"sessionid": "S01"}, run=run, tags=["works", "S01"]
     )
 
-    assert name == "works"
-    assert not result
-    assert os.path.basename(comlog).startswith("done_works_S01_")
-    with open(comlog) as f:
+    assert outcome.name == "works"
+    assert not outcome.failed and outcome.error is None
+    assert os.path.basename(outcome.comlog).startswith("done_works_S01_")
+    with open(outcome.comlog) as f:
         assert "worked on S01" in f.read()
 
 
 def test_a_failing_call_leaves_an_error_comlog_and_says_so_in_the_runlog(run):
     run.header()
-    _, result, comlog, *_ = gc.run_with_log(
+    outcome = gc.run_with_log(
         fails, args={}, run=run, name="fails: S01", tags=["fails", "S01"]
     )
 
-    assert isinstance(result, ge.CommandFailed)
-    assert os.path.basename(comlog).startswith("error_")
+    assert isinstance(outcome.error, ge.CommandFailed)
+    assert outcome.failed == 1
+    assert os.path.basename(outcome.comlog).startswith("error_")
     with open(run.path) as f:
         runlog = f.read()
     assert "session: S01" in runlog
@@ -100,36 +101,36 @@ def test_a_failing_call_leaves_an_error_comlog_and_says_so_in_the_runlog(run):
 
 
 def test_without_tags_no_comlog_is_opened(run, capsys):
-    _, _, comlog, *_ = gc.run_with_log(works, args={}, run=run, tags=None)
+    outcome = gc.run_with_log(works, args={}, run=run, tags=None)
 
-    assert comlog is None
+    assert outcome.comlog is None
     assert "worked on None" in capsys.readouterr().out
     assert not os.path.isdir(run.comlogfolder)
 
 
 def test_run_level_parameters_do_not_reach_the_command(run):
-    _, result, comlog, *_ = gc.run_with_log(
+    outcome = gc.run_with_log(
         takes_only_its_own,
         args={"folder": "here", "scheduler": "SLURM", "logging": "full"},
         run=run,
         tags=["strip"],
     )
 
-    assert not result
-    with open(comlog) as f:
+    assert not outcome.failed
+    with open(outcome.comlog) as f:
         assert "folder is here" in f.read()
 
 
 def test_a_catch_all_command_still_gets_them(run):
-    _, result, comlog, *_ = gc.run_with_log(
+    outcome = gc.run_with_log(
         takes_everything,
         args={"folder": "here", "scheduler": "SLURM"},
         run=run,
         tags=["keep"],
     )
 
-    assert not result
-    with open(comlog) as f:
+    assert not outcome.failed
+    with open(outcome.comlog) as f:
         assert "got ['folder', 'scheduler']" in f.read()
 
 
@@ -138,28 +139,28 @@ def test_a_disabled_run_writes_no_files_at_all(tmp_path, capsys):
         "test_command", {}, gl.LogSettings(enabled=False), {"basefolder": str(tmp_path)}
     )
 
-    _, result, comlog, *_ = gc.run_with_log(
+    outcome = gc.run_with_log(
         works, args={"sessionid": "S01"}, run=run, tags=["works", "S01"]
     )
 
-    assert not result
-    assert comlog is None
+    assert not outcome.failed
+    assert outcome.comlog is None
     assert "worked on S01" in capsys.readouterr().out
     assert not list(tmp_path.rglob("*.log"))
 
 
 def test_a_command_that_declares_a_log_gets_one_and_its_report_reaches_the_runlog(run):
     run.header()
-    _, result, comlog, _, failed = gc.run_with_log(
+    outcome = gc.run_with_log(
         reports, args={"sessionid": "S01"}, run=run, tags=["reports", "S01"]
     )
 
-    assert not result and failed == 0
+    assert outcome.error is None and outcome.failed == 0
     with open(run.path) as f:
         runlog = f.read()
     # the report, not the two-line stub
     assert "---> reporting on S01" in runlog
-    with open(comlog) as f:
+    with open(outcome.comlog) as f:
         comlogtext = f.read()
     # live in the comlog through the tee, and the injected parameter is not
     # spelled into the call echo
@@ -188,23 +189,23 @@ def test_a_command_that_returns_data_is_not_a_failure(run):
     reading the return value as a status made every one of those a failed run.
     """
     run.header()
-    _, result, comlog, _, failed = gc.run_with_log(
+    outcome = gc.run_with_log(
         returns_data, args={"folder": "here"}, run=run, tags=["returns_data"]
     )
 
-    assert result is None and failed == 0
-    assert os.path.basename(comlog).startswith("done_")
+    assert outcome.error is None and outcome.failed == 0
+    assert os.path.basename(outcome.comlog).startswith("done_")
     with open(run.path) as f:
         assert "Successful completion" in f.read()
 
 
 def test_a_recorded_error_is_a_failure_even_when_the_command_returns_success(run):
-    _, result, _, _, failed = gc.run_with_log(
+    outcome = gc.run_with_log(
         reports_an_error, args={}, run=run, tags=["reports_an_error"]
     )
 
-    assert not result
-    assert failed == 1
+    assert outcome.error is None
+    assert outcome.failed == 1
 
 
 def test_parallel_calls_share_one_runlog_and_get_one_comlog_each(run):
