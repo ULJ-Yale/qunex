@@ -43,6 +43,7 @@ Verbatim text -- :meth:`ReportLog.raw`, the framing rules -- is held as a
 ``RAW`` record and emitted untouched.
 """
 
+import sys
 import traceback
 from contextlib import contextmanager
 from datetime import datetime
@@ -542,3 +543,37 @@ class SessionLog(ReportLog):
             status = (self._sid, report, failed)
 
         return (self.text, status)
+
+
+def log_or_console(log):
+    """
+    The log to report into: the caller's, or one that echoes to the console.
+
+    For a function that reports but is called from both a place that holds a
+    log and a place that does not -- a helper shared by the pipelines and by
+    tests or scripts, a utility command reached directly rather than through
+    ``qunex``. It keeps the body reading as ``log.step(...)``, where guarding
+    every call would put ``if log is not None`` between each line and its
+    meaning.
+
+    **The stand-in echoes to ``sys.stdout``**, which is what a caller with no
+    log had before there was one to give: the line appears as it happens, and
+    under :func:`general.core.run_with_log` -- which tees ``sys.stdout`` into
+    the comlog for the length of the call -- it reaches that file too. A
+    discarding log would make a registered utility command silent. ``sys.stdout``
+    is read here rather than at import, so the tee in place at call time is the
+    one written to.
+
+    :func:`processing.core._say` is the other shape of the same problem and is
+    the better one when there are only a few messages: it takes the level as an
+    argument, so the guard lives in one place rather than in a stand-in object.
+    Reach for this when the guard would otherwise be repeated, and for the
+    nesting -- ``with log.section(...)`` has no ``_say`` equivalent.
+
+    Parameters:
+        log (ReportLog | None): the caller's log, or None.
+
+    Returns:
+        ReportLog: `log` when there is one, an echoing stand-in otherwise.
+    """
+    return log if log is not None else ReportLog(echo=sys.stdout)

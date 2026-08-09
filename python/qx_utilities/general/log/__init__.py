@@ -54,6 +54,7 @@ from qx_utilities.general.log.report import (
     REPORT_TIME,
     ReportLog,
     SessionLog,
+    log_or_console,
 )
 from qx_utilities.general.log.settings import (
     LOGGING_MODES,
@@ -87,6 +88,7 @@ __all__ = [
     "digest",
     "load_settings",
     "log_folder",
+    "log_or_console",
     "read_status",
     "resolve_logging",
     "run_and_log",

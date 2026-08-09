@@ -10,13 +10,14 @@ These pin the rendered text, because that text is what QuNex writes to
 user-facing surface, not an implementation detail.
 """
 
+import contextlib
 import io
 
 import pytest
 
 import qx_utilities.general.exceptions as ge
 from qx_utilities.general.log import report as log_module
-from qx_utilities.general.log import REPORT_RULE, ReportLog, SessionLog
+from qx_utilities.general.log import REPORT_RULE, ReportLog, SessionLog, log_or_console
 
 STAMP = "Monday, 01. January 2024 00:00:00"
 SINFO = {"id": "sess-01"}
@@ -419,3 +420,29 @@ def test_the_echo_is_dropped_while_a_comlog_is_attached():
 
     assert comlog.written == "\n---> running the tool"
     assert echo.getvalue() == "\n---> done"
+
+
+def test_log_or_console_returns_the_callers_log_untouched():
+    log = ReportLog()
+
+    assert log_or_console(log) is log
+
+
+def test_log_or_console_stands_in_with_a_log_that_echoes_to_stdout(capsys):
+    # a caller with no log reported by printing before it had one to give, and
+    # run_with_log tees stdout into the comlog -- a discarding stand-in would
+    # make a registered utility command silent
+    log_or_console(None).step("backing up")
+
+    assert capsys.readouterr().out == "\n---> backing up"
+
+
+def test_log_or_console_reads_stdout_at_call_time(capsys):
+    # run_with_log swaps sys.stdout for the tee around the call, so binding it
+    # at import would write past the comlog
+    tee = io.StringIO()
+    with contextlib.redirect_stdout(tee):
+        log_or_console(None).step("backing up")
+
+    assert tee.getvalue() == "\n---> backing up"
+    assert capsys.readouterr().out == ""
