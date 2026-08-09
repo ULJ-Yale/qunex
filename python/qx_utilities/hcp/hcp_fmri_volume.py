@@ -833,9 +833,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             ):
                                 spin_pos = i
                                 spinok = log.check_for_file(spin_pos,
-                                    f"\n     ... phase positive {options['hcp_bold_sephasepos']} spin echo fieldmap image present",
-                                    f"\n         ERROR: {options['hcp_bold_sephasepos']} spin echo fieldmap image missing!",
+                                    f"phase positive {options['hcp_bold_sephasepos']} spin echo fieldmap image present",
+                                    f"{options['hcp_bold_sephasepos']} spin echo fieldmap image missing!",
                                     status=spinok,
+                                    bad_level="error",
                                 )
                             # look for phase negative
                             elif "_" + options[
@@ -843,9 +844,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             ] in os.path.basename(i):
                                 spin_neg = i
                                 spinok = log.check_for_file(spin_neg,
-                                    f"\n     ... phase negative {options['hcp_bold_sephaseneg']} spin echo fieldmap image present",
-                                    f"\n         ERROR: {options['hcp_bold_sephaseneg']} spin echo fieldmap image missing!",
+                                    f"phase negative {options['hcp_bold_sephaseneg']} spin echo fieldmap image present",
+                                    f"{options['hcp_bold_sephaseneg']} spin echo fieldmap image missing!",
                                     status=spinok,
+                                    bad_level="error",
                                 )
 
                         if not all([spin_pos, spin_neg]):
@@ -1146,26 +1148,30 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     for i, v in hcp["fieldmap"].items():
                         if isinstance(hcp["fieldmap"][i]["magnitude"], list):
                             fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"][0],
-                                f"\n     ... Siemens fieldmap magnitude image {i} present ",
-                                f"\n     ... ERROR: Siemens fieldmap magnitude image {i} missing!",
+                                f"Siemens fieldmap magnitude image {i} present ",
+                                f"Siemens fieldmap magnitude image {i} missing!",
                                 status=fieldok,
+                                bad_level="error",
                             )
                             fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"][1],
-                                f"\n     ... Siemens fieldmap magnitude image {i} present ",
-                                f"\n     ... ERROR: Siemens fieldmap magnitude image {i} missing!",
+                                f"Siemens fieldmap magnitude image {i} present ",
+                                f"Siemens fieldmap magnitude image {i} missing!",
                                 status=fieldok,
+                                bad_level="error",
                             )
                         else:
                             fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"],
-                                f"\n     ... Siemens fieldmap magnitude image {i} present ",
-                                f"\n     ... ERROR: Siemens fieldmap magnitude image {i} missing!",
+                                f"Siemens fieldmap magnitude image {i} present ",
+                                f"Siemens fieldmap magnitude image {i} missing!",
                                 status=fieldok,
+                                bad_level="error",
                             )
 
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["phase"],
-                            f"\n     ... Siemens fieldmap phase image {i} present ",
-                            f"\n     ... ERROR: Siemens fieldmap phase image {i} missing!",
+                            f"Siemens fieldmap phase image {i} present ",
+                            f"Siemens fieldmap phase image {i} missing!",
                             status=fieldok,
+                            bad_level="error",
                         )
                         boldok = boldok and fieldok
                     if not pc.is_number(echospacing):
@@ -1236,9 +1242,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["GE"],
-                            f"\n     ... GeneralElectric legacy fieldmap image {i} present ",
-                            f"\n     ... ERROR: GeneralElectric legacy fieldmap image {i} missing!",
+                            f"GeneralElectric legacy fieldmap image {i} present ",
+                            f"GeneralElectric legacy fieldmap image {i} missing!",
                             status=fieldok,
+                            bad_level="error",
                         )
                         boldok = boldok and fieldok
                     fmmag = None
@@ -1258,14 +1265,16 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"],
-                            f"\n     ... GE fieldmap magnitude image {i} present ",
-                            f"\n     ... ERROR: GE fieldmap magnitude image {i} missing!",
+                            f"GE fieldmap magnitude image {i} present ",
+                            f"GE fieldmap magnitude image {i} missing!",
                             status=fieldok,
+                            bad_level="error",
                         )
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["phase"],
-                            f"\n     ... GE fieldmap phase image {i} present ",
-                            f"\n     ... ERROR: GE fieldmap phase image {i} missing!",
+                            f"GE fieldmap phase image {i} present ",
+                            f"GE fieldmap phase image {i} missing!",
                             status=fieldok,
+                            bad_level="error",
                         )
                         boldok = boldok and fieldok
                     if not pc.is_number(echospacing):
@@ -1289,14 +1298,16 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     fieldok = True
                     for i, v in hcp["fieldmap"].items():
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["magnitude"],
-                            f"\n     ... Philips fieldmap magnitude image {i} present ",
-                            f"\n     ... ERROR: Philips fieldmap magnitude image {i} missing!",
+                            f"Philips fieldmap magnitude image {i} present ",
+                            f"Philips fieldmap magnitude image {i} missing!",
                             status=fieldok,
+                            bad_level="error",
                         )
                         fieldok = log.check_for_file(hcp["fieldmap"][i]["phase"],
-                            f"\n     ... Philips fieldmap phase image {i} present ",
-                            f"\n     ... ERROR: Philips fieldmap phase image {i} missing!",
+                            f"Philips fieldmap phase image {i} present ",
+                            f"Philips fieldmap phase image {i} missing!",
                             status=fieldok,
+                            bad_level="error",
                         )
                         boldok = boldok and fieldok
                     if not pc.is_number(echospacing):
@@ -1334,9 +1345,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         for i, v in hcp["fieldmap"].items():
                             fieldok = log.check_for_file(
                                 hcp["fieldmap"][i]["Precomputed"],
-                                f"\n     ... precomputed fieldmap image {i} present ",
-                                f"\n     ... ERROR: precomputed fieldmap image {i} missing!",
+                                f"precomputed fieldmap image {i} present ",
+                                f"precomputed fieldmap image {i} missing!",
                                 status=fieldok,
+                                bad_level="error",
                             )
                             boldok = boldok and fieldok
                         if not pc.is_number(echospacing):
@@ -1369,9 +1381,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             "Magnitude"
                         ]
                         boldok = log.check_for_file(auto_precomputedfmapmag,
-                            f"\n     ... precomputed fieldmap magnitude image auto-detected and present: {auto_precomputedfmapmag}",
-                            f"\n---> ERROR: Could not find auto-detected precomputed fieldmap magnitude image: {auto_precomputedfmapmag}.",
+                            f"precomputed fieldmap magnitude image auto-detected and present: {auto_precomputedfmapmag}",
+                            f"Could not find auto-detected precomputed fieldmap magnitude image: {auto_precomputedfmapmag}.",
                             status=boldok,
+                            bad_level="error",
                         )
                         if os.path.exists(auto_precomputedfmapmag):
                             fmprecomputedmag = auto_precomputedfmapmag
@@ -1417,9 +1430,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 )
 
             boldok, boldimg = log.check_for_files(boldimgs,
-                "\n     ... bold image present",
-                f"\n     ... ERROR: bold image missing, searched for {boldimgs}!",
+                "bold image present",
+                f"bold image missing, searched for {boldimgs}!",
                 status=boldok,
+                bad_level="error",
             )
 
             # --- check for ref image
@@ -1430,9 +1444,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     "%s_%s_SBRef.nii.gz" % (sinfo["id"], boldroot),
                 )
                 boldok = log.check_for_file(refimg,
-                    "\n     ... reference image present",
-                    "\n     ... ERROR: bold reference image missing!",
+                    "reference image present",
+                    "bold reference image missing!",
                     status=boldok,
+                    bad_level="error",
                 )
             else:
                 log.detail("reference image not used")
@@ -1475,9 +1490,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     "%s_%s_slicetimer.txt" % (sinfo["id"], boldroot),
                 )
                 boldok = log.check_for_file(stfile,
-                    "\n     ... slice timing file present",
-                    "\n     ... ERROR: slice timing file missing!",
+                    "slice timing file present",
+                    "slice timing file missing!",
                     status=boldok,
+                    bad_level="error",
                 )
             else:
                 stfile = None

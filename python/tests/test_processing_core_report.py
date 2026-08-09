@@ -39,11 +39,26 @@ def test_check_for_file_notes_and_returns_the_status(tmp_path, log):
     present = tmp_path / "there.nii.gz"
     present.write_text("x")
 
-    assert pc.check_for_file(log, str(present), "\n ... present", "\n ... missing")
-    assert log.text == "\n ... present"
+    assert pc.check_for_file(log, str(present), "present", "missing")
+    assert log.text == "\n     ... present"
 
-    assert pc.check_for_file(log, str(tmp_path / "gone"), "\n ... ok", "\n ... bad") is False
-    assert log.text.endswith("\n ... bad")
+    assert pc.check_for_file(log, str(tmp_path / "gone"), "ok", "bad") is False
+    assert log.text.endswith("\n     ... bad")
+
+
+def test_check_for_file_takes_its_level_from_the_keywords(tmp_path, log):
+    missing = str(tmp_path / "gone")
+
+    assert pc.check_for_file(log, missing, "found", "not found", bad_level="error") is False
+    assert log.text == "\n---> ERROR: not found"
+    assert log.has_errors
+
+
+def test_check_for_file_records_nothing_for_an_empty_message(tmp_path, log):
+    # `ok` and `bad` default to "": a call that names neither says nothing,
+    # rather than rendering a bare marker
+    assert pc.check_for_file(log, str(tmp_path / "gone")) is False
+    assert log.text == ""
 
 
 def test_check_for_files_returns_the_first_match(tmp_path, log):
@@ -51,11 +66,11 @@ def test_check_for_files_returns_the_first_match(tmp_path, log):
     second.write_text("x")
 
     status, found = pc.check_for_files(
-        log, [str(tmp_path / "a.nii.gz"), str(second)], "\n ... ok", "\n ... bad"
+        log, [str(tmp_path / "a.nii.gz"), str(second)], "ok", "bad"
     )
 
     assert (status, found) == (True, str(second))
-    assert log.text == "\n ... ok"
+    assert log.text == "\n     ... ok"
 
 
 def test_link_or_copy_notes_the_mapping_and_returns_a_bool(tmp_path, log):

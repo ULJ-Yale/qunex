@@ -328,7 +328,15 @@ class ReportLog:
             checkfile, full_test, description, self, overwrite=overwrite
         )
 
-    def check_for_file(self, checkfile, ok="", bad="", status=True):
+    def check_for_file(
+        self,
+        checkfile,
+        ok="",
+        bad="",
+        status=True,
+        ok_level="detail",
+        bad_level="detail",
+    ):
         """
         Note the presence or absence of a file, recording ``ok`` or ``bad``.
 
@@ -337,9 +345,20 @@ class ReportLog:
         """
         import qx_utilities.processing.core as pc
 
-        return pc.check_for_file(self, checkfile, ok, bad, status)
+        return pc.check_for_file(
+            self, checkfile, ok, bad, status, ok_level, bad_level
+        )
 
-    def check_for_files(self, checkfiles, ok, bad, all=False, status=True):
+    def check_for_files(
+        self,
+        checkfiles,
+        ok,
+        bad,
+        all=False,
+        status=True,
+        ok_level="detail",
+        bad_level="detail",
+    ):
         """
         Note the presence of one or all of ``checkfiles``.
 
@@ -348,7 +367,9 @@ class ReportLog:
         """
         import qx_utilities.processing.core as pc
 
-        return pc.check_for_files(self, checkfiles, ok, bad, all, status)
+        return pc.check_for_files(
+            self, checkfiles, ok, bad, all, status, ok_level, bad_level
+        )
 
     def link_or_copy(self, source, target, status=None, name=None, symlink=False):
         """

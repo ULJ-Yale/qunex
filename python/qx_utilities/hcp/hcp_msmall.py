@@ -462,9 +462,10 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
             boldok = log.check_for_file(boldimg,
-                f"\n     ... bold image {boldtarget} present",
-                f"\n     ... ERROR: bold image [{boldimg}] missing!",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
             )
 
             if not boldok:
@@ -745,9 +746,10 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
             boldok = log.check_for_file(boldimg,
-                f"\n     ... bold image {boldtarget} present",
-                f"\n     ... ERROR: bold image [{boldimg}] missing!",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
             )
 
             if not boldok:
@@ -765,9 +767,10 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
             groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
             groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
             boldok = log.check_for_file(groupimg,
-                f"\n     ... ICA {groupname} present",
-                f"\n     ... ERROR: ICA [{groupimg}] missing!",
+                f"ICA {groupname} present",
+                f"ICA [{groupimg}] missing!",
                 status=boldok,
+                bad_level="error",
             )
 
         if options["hcp_msmall_templates"] is None:

@@ -272,9 +272,10 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
                         )
                         boldok = log.check_for_file(boldimg,
-                            f"\n     ... bold image {boldtarget} present",
-                            f"\n     ... ERROR: bold image [{boldimg}] missing!",
+                            f"bold image {boldtarget} present",
+                            f"bold image [{boldimg}] missing!",
                             status=boldok,
+                            bad_level="error",
                         )
 
                         if not boldok:
@@ -294,9 +295,10 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             hcp["hcp_nonlin"], "Results", groupname, groupica
                         )
                         boldok = log.check_for_file(groupimg,
-                            f"\n     ... ICA {groupname} present",
-                            f"\n     ... ERROR: ICA [{groupimg}] missing!",
+                            f"ICA {groupname} present",
+                            f"ICA [{groupimg}] missing!",
                             status=boldok,
+                            bad_level="error",
                         )
 
                     if options["hcp_msmall_templates"] is None:

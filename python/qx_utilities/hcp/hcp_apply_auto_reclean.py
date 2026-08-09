@@ -310,9 +310,10 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
             boldok = log.check_for_file(f"{boldimg}.nii.gz",
-                f"\n     ... bold image {boldtarget} present",
-                f"\n     ... ERROR: bold image [{boldimg}.nii.gz] missing!",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
+                bad_level="error",
             )
 
             if not boldok:

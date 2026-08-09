@@ -502,9 +502,10 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
             )
             boldok = log.check_for_file(boldimg,
-                f"\n     ... bold image {boldtarget} present",
-                f"\n     ... ERROR: bold image [{boldimg}] missing!",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
             )
 
             if not boldok:
@@ -771,9 +772,10 @@ def execute_hcp_hand_reclassification(
             "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
         )
         boldok = log.check_for_file(icaimg,
-            f"\n     ... ICA {boldtarget} present",
-            f"\n     ... ERROR: ICA [{icaimg}] missing!",
+            f"ICA {boldtarget} present",
+            f"ICA [{icaimg}] missing!",
             status=boldok,
+            bad_level="error",
         )
 
         comm = (

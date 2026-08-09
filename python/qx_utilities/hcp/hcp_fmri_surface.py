@@ -313,9 +313,10 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
             )
             boldok = log.check_for_file(boldimg,
-                "\n     ... fMRIVolume preprocessed bold image present",
-                f"\n     ... ERROR: fMRIVolume preprocessed bold image missing {boldimg}!",
+                "fMRIVolume preprocessed bold image present",
+                f"fMRIVolume preprocessed bold image missing {boldimg}!",
                 status=boldok,
+                bad_level="error",
             )
 
         # --- Set up the command

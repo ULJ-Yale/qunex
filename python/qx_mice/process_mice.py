@@ -226,8 +226,9 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
     # --- check for bold image
     boldimg = os.path.join(work_dir, f"{boldinfo['name']}_DS.nii.gz")
     boldok = log.check_for_file(boldimg,
-        "\n     ... preprocess_mice bold image present",
-        "\n     ... ERROR: preprocess_mice bold image missing!",
+        "preprocess_mice bold image present",
+        "preprocess_mice bold image missing!",
+        bad_level="error",
     )
 
     # overwrite and file exists

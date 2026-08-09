@@ -60,8 +60,10 @@ def _say(log, level, message, depth=0):
     :func:`_note`'s counterpart for text the helpers here state themselves:
     the level method spells the marker and the indent, so the message never
     carries them. `log` is optional for the same reason it is in :func:`_note`.
+    An empty message is dropped rather than rendered as a bare marker --
+    :func:`check_for_file`'s `ok` and `bad` both default to `""`.
     """
-    if log is not None:
+    if log is not None and message:
         getattr(log, level)(message, depth=depth)
 
 
@@ -1283,7 +1285,9 @@ def run_script_through_shell(
     return endlog
 
 
-def check_for_file(log, checkfile, ok="", bad="", status=True):
+def check_for_file(
+    log, checkfile, ok="", bad="", status=True, ok_level="detail", bad_level="detail"
+):
     """
     Note the presence or absence of a single file in the report.
 
@@ -1297,24 +1301,32 @@ def check_for_file(log, checkfile, ok="", bad="", status=True):
         bad (str): text noted when the file is missing.
         status (bool): the running status, carried through and set False on a
             missing file.
+        ok_level (str): the level ``ok`` is recorded at.
+        bad_level (str): the level ``bad`` is recorded at.
 
     Returns:
         bool: the running status.
     """
     if os.path.exists(checkfile):
-        _note(log, ok)
+        _say(log, ok_level, ok)
         return status
     else:
-        _note(log, bad)
+        _say(log, bad_level, bad)
         return False
 
 
-def check_for_files(log, checkfiles, ok, bad, all=False, status=True):
+def check_for_files(
+    log, checkfiles, ok, bad, all=False, status=True, ok_level="detail",
+    bad_level="detail",
+):
     """
     check_for_files - checks if any of the files in the checkfiles list exists
 
     If all parameter is set to True, returns True only if all files exist,
     if all parameter is False it returns the first found file.
+
+    ``ok_level`` and ``bad_level`` name the level each message is recorded at,
+    as in :func:`check_for_file`.
 
     Returns:
         tuple: ``(status, found)`` -- the running status and the first file
@@ -1324,19 +1336,19 @@ def check_for_files(log, checkfiles, ok, bad, all=False, status=True):
     for f in checkfiles:
         if os.path.exists(f):
             if not all:
-                _note(log, ok)
+                _say(log, ok_level, ok)
                 return status, f
         else:
             if all:
-                _note(log, bad)
+                _say(log, bad_level, bad)
                 return False, ""
 
     if not all:
-        _note(log, bad)
+        _say(log, bad_level, bad)
         return False, ""
 
     # if we are here all files exist and all is set
-    _note(log, ok)
+    _say(log, ok_level, ok)
     return status, ""
 
 

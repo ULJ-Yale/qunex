@@ -988,9 +988,10 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         # --- check for ICA image
         boldok = log.check_for_file(icaimg,
-            f"\n     ... ICA {boldtarget} present",
-            f"\n     ... ERROR: ICA [{icaimg}] missing!",
+            f"ICA {boldtarget} present",
+            f"ICA [{icaimg}] missing!",
             status=boldok,
+            bad_level="error",
         )
 
         # hcp_postfix_reusehighpass
@@ -1170,9 +1171,10 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
             boldok = log.check_for_file(boldimg,
-                f"\n     ... bold image {boldtarget} present",
-                f"\n     ... ERROR: bold image [{boldimg}] missing!",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
             )
 
             if not boldok:
@@ -1410,8 +1412,9 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
             boldok = log.check_for_file(boldimg,
-                f"\n     ... bold image {boldtarget} present",
-                f"\n     ... ERROR: bold image [{boldimg}] missing!",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
+                bad_level="error",
             )
 
             if not boldok:
@@ -1429,8 +1432,9 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
         groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
         groupok = log.check_for_file(groupimg,
-            f"\n     ... ICA {groupname} present",
-            f"\n     ... ERROR: ICA [{groupimg}] missing!",
+            f"ICA {groupname} present",
+            f"ICA [{groupimg}] missing!",
+            bad_level="error",
         )
 
         if not groupok:

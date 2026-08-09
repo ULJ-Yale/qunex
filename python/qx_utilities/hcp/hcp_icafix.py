@@ -395,9 +395,10 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
         )
         boldok = log.check_for_file(
             boldimg,
-            f"\n     ... bold image {boldtarget} present",
-            f"\n     ... ERROR: bold image [{boldimg}] missing!",
+            f"bold image {boldtarget} present",
+            f"bold image [{boldimg}] missing!",
             status=boldok,
+            bad_level="error",
         )
 
         # bold in input format
@@ -566,9 +567,10 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
             )
             boldok = log.check_for_file(
                 f"{boldimg}.nii.gz",
-                f"\n     ... bold image {boldtarget} present",
-                f"\n     ... ERROR: bold image [{boldimg}.nii.gz] missing!",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
+                bad_level="error",
             )
 
             if not boldok:

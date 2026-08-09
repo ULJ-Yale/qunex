@@ -214,8 +214,9 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
     # --- check for bold image
     source_bold = os.path.join(nifti_dir, f"{boldinfo['ima']}.nii.gz")
     boldok = log.check_for_file(source_bold,
-        "\n     ... setup_mice bold image present",
-        "\n     ... ERROR: setup_mice bold image missing!",
+        "setup_mice bold image present",
+        "setup_mice bold image missing!",
+        bad_level="error",
     )
 
     # map the image
