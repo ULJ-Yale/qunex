@@ -20,11 +20,11 @@ import os.path
 
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog
+from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.hcp.hcp_utils import (
-    check_gdc_coeff_file,
     _check_dwi_echospacing,
+    check_gdc_coeff_file,
     check_inline_parameter_use,
     do_hcp_options_check,
 )
@@ -158,9 +158,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             If specified, use the non-GPU-enabled version of eddy. The
             flag is not set by default.
 
-        --hcp_cuda_version (str, default '11'):
+        --hcp_cuda_version (str, default ''):
             The version of CUDA to use for GPU-enabled processing. This depends
-            on the version of installed FSL and its CUDA support.
+            on the version of installed FSL and its CUDA support. Latest FSL
+            versions do not have a version suffix, so this is empty by default.
 
         --hcp_dwi_even_slices (flag, optional):
             If set will ensure the input images to FSL's topup and eddy
@@ -182,6 +183,31 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             QuNex will create dummy bval and bvec files if they do not yet
             exist. Mainly useful when using distortion maps as part of the
             input data.
+
+        --hcp_species (str, default ''):
+            Species label (Human, Chimp, Macaque, Marmoset or NightMonkey).
+            When unset the HCP pipeline default (Human) is used. Only relevant
+            for non-human species.
+
+        --hcp_truepatientposition (str, default ''):
+            True patient position, e.g. HFS, FFS, HFSx, FFSx. Only relevant for
+            non-human species.
+
+        --hcp_scannerpatientposition (str, default ''):
+            Scanner patient position, e.g. HFS, FFS. Only relevant for
+            non-human species.
+
+        --hcp_dwi_wmprojabs (str, default '2'):
+            White matter projection absolute depth. Only relevant for non-human
+            species.
+
+        --hcp_dwi_resamp (str, default ''):
+            The resamp value to pass to the eddy binary. When unset, no
+            --resamp option is passed to eddy.
+
+        --hcp_dwi_usephasezero (flag, optional):
+            If set, phase zero is used. Only relevant for non-human species.
+            The flag is not set by default.
 
         --hcp_longitudinal_template (str, default 'base'):
             Name of the longitudinal template.
@@ -230,27 +256,33 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Below is a detailed specification about how QuNex parameters are
             mapped onto the HCP Pipelines parameters.
 
-            ============================= ======================================
-            QuNex parameter               HCPpipelines parameter
-            ============================= ======================================
-            ``hcp_dwi_phasepos``          ``posData``, ``negData`` and ``PEdir``
-            ``hcp_dwi_echospacing``       ``echospacing``
-            ``hcp_dwi_gdcoeffs``          ``gdcoeffs``
-            ``hcp_dwi_dof``               ``dof``
-            ``hcp_dwi_b0maxbval``         ``b0maxbval``
-            ``hcp_dwi_combinedata``       ``combine-data-flag``
-            ``hcp_printcom``              ``printcom``
-            ``hcp_dwi_extraeddyarg``      ``extra-eddy-arg``
-            ``hcp_dwi_name``              ``dwiname``
-            ``hcp_dwi_selectbestb0``      ``select-best-b0``
-            ``hcp_dwi_topupconfig``       ``topup-config-file``
-            ``hcp_dwi_even_slices``       ``ensure-even-slices``
-            ``hcp_dwi_posdata``           ``posData``
-            ``hcp_dwi_negdata``           ``negData``
-            ``hcp_nogpu``                 ``gpu``
-            ``hcp_longitudinal_template`` ``longitudinal-template``
-            ``longitudinal``              ``is-longitudinal``
-            ============================= ======================================
+            ============================== =====================================
+            QuNex parameter                HCPpipelines parameter
+            ============================== =====================================
+            ``hcp_dwi_phasepos``           ``posData``, ``negData``, ``PEdir``
+            ``hcp_dwi_echospacing``        ``echospacing``
+            ``hcp_dwi_gdcoeffs``           ``gdcoeffs``
+            ``hcp_dwi_dof``                ``dof``
+            ``hcp_dwi_b0maxbval``          ``b0maxbval``
+            ``hcp_dwi_combinedata``        ``combine-data-flag``
+            ``hcp_printcom``               ``printcom``
+            ``hcp_dwi_extraeddyarg``       ``extra-eddy-arg``
+            ``hcp_dwi_name``               ``dwiname``
+            ``hcp_dwi_selectbestb0``       ``select-best-b0``
+            ``hcp_dwi_topupconfig``        ``topup-config-file``
+            ``hcp_dwi_even_slices``        ``ensure-even-slices``
+            ``hcp_dwi_posdata``            ``posData``
+            ``hcp_dwi_negdata``            ``negData``
+            ``hcp_nogpu``                  ``gpu``
+            ``hcp_longitudinal_template``  ``longitudinal-template``
+            ``longitudinal``               ``is-longitudinal``
+            ``hcp_species``                ``species``
+            ``hcp_truepatientposition``    ``truepatientposition``
+            ``hcp_scannerpatientposition`` ``scannerpatientposition``
+            ``hcp_dwi_wmprojabs``          ``wmprojabs``
+            ``hcp_dwi_resamp``             ``resamp``
+            ``hcp_dwi_usephasezero``       ``usephasezero``
+            ============================== =====================================
 
         Use:
             Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion
@@ -407,7 +439,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
                 # if both dirs are missing
                 if "pos" not in dwi_files and "neg" not in dwi_files:
-                    log.error("No DWI data found, check your batchfile and command parameters!")
+                    log.error(
+                        "No DWI data found, check your batchfile and command parameters!"
+                    )
                     run = False
                 elif "pos" not in dwi_files:
                     pos_data = "EMPTY"
@@ -427,7 +461,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 options["hcp_dwi_posdata"] is None
                 and options["hcp_dwi_negdata"] is not None
             ):
-                log.error("When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters. Set to EMPTY if you do not have data for one of the directions. If there are no pos/neg pairs, also set the --hcp_dwi_combinedata flag.")
+                log.error(
+                    "When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters. Set to EMPTY if you do not have data for one of the directions. If there are no pos/neg pairs, also set the --hcp_dwi_combinedata flag."
+                )
                 run = False
             else:
                 # pos
@@ -450,7 +486,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 neg_data = "@".join(neg_paths)
 
         # --- lookup gdcoeffs file if needed
-        gdcfile, run = check_gdc_coeff_file(options["hcp_dwi_gdcoeffs"], hcp, sinfo, log, run)
+        gdcfile, run = check_gdc_coeff_file(
+            options["hcp_dwi_gdcoeffs"], hcp, sinfo, log, run
+        )
 
         # -- check for DWI data
         dwi_found = False
@@ -490,7 +528,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- check echospacing
             if not echospacing:
-                log.error("QuNex was unable to acquire echospacing from the data and the parameter is not set!")
+                log.error(
+                    "QuNex was unable to acquire echospacing from the data and the parameter is not set!"
+                )
                 run = False
 
         # path
@@ -580,11 +620,41 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if options["hcp_dwi_even_slices"]:
                 comm += "                --ensure-even-slices"
 
+            # optional species / NHP parameters, these are only relevant for
+            # non-human species, when unset the HCP pipeline defaults (Human)
+            # are used
+            if options["hcp_species"]:
+                comm += "                --species=" + options["hcp_species"]
+
+            if options["hcp_truepatientposition"]:
+                comm += (
+                    "                --truepatientposition="
+                    + options["hcp_truepatientposition"]
+                )
+
+            if options["hcp_scannerpatientposition"]:
+                comm += (
+                    "                --scannerpatientposition="
+                    + options["hcp_scannerpatientposition"]
+                )
+
+            if options["hcp_dwi_wmprojabs"]:
+                comm += "                --wmprojabs=" + options["hcp_dwi_wmprojabs"]
+
+            if options["hcp_dwi_resamp"]:
+                comm += "                --resamp=" + options["hcp_dwi_resamp"]
+
+            if options["hcp_dwi_usephasezero"]:
+                comm += "                --usephasezero=True"
+
             if options["hcp_nogpu"]:
                 comm += "                --gpu=False"
             else:
                 comm += "                --gpu=True"
-                comm += f"                --cuda-version={options['hcp_cuda_version']}"
+                if options["hcp_cuda_version"] is not None:
+                    comm += (
+                        f"               --cuda-version={options['hcp_cuda_version']}"
+                    )
 
             # create dummy bvals and bvecs if demanded
             if options["hcp_dwi_dummy_bval_bvec"]:
@@ -624,10 +694,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- Report command
             if run:
-                log.raw("\n\n------------------------------------------------------------\n")
+                log.raw(
+                    "\n\n------------------------------------------------------------\n"
+                )
                 log.raw("Running HCP Pipelines command via QuNex:\n\n")
                 log.raw(comm.replace("                --", "\n    --"))
-                log.raw("\n------------------------------------------------------------\n")
+                log.raw(
+                    "\n------------------------------------------------------------\n"
+                )
 
             # -- Test files
             tfile = None

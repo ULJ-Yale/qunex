@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-08T14:48:23.476267+00:00'
+generated_at: '2026-08-09T00:17:08.170224+00:00'
 source:
     id: core
 commands:
@@ -120,7 +120,7 @@ commands:
     origin: core
 -   name: change_dicom_files
     aliases: []
-    path: qx_utilities.general.dicomdeid.change_dicom_files
+    path: qx_utilities.dicom.change_dicom_files.change_dicom_files
     language: python
     call: change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""]
         [replacementdate=]
@@ -280,6 +280,43 @@ commands:
         type: str
         default: $TOOLS/python/qx_utilities/templates/study_folders_default.txt
         description: Path to the file which defines the study folder structure.
+    options: []
+    returns: []
+    origin: core
+-   name: clean_dicom
+    aliases: []
+    path: qx_utilities.dicom.clean_dicom.clean_dicom
+    language: python
+    call: clean_dicom [folder=.] [min_files=10] [verbose=yes] [move_non_image=True] [move_incomplete=True]
+    description: Inspects already-sorted ``dicom/<seq>`` folders and sets aside DICOM files that hold no imaging data (to
+        ``dicom/non-image``) or that belong to an incomplete volume (to ``dicom/orphans``), preventing conversion errors.
+    type: utility
+    args:
+    -   name: folder
+        type: str
+        default: .
+        description: The base session folder containing the ``dicom`` subfolder with sorted, numbered sequence subfolders.
+    -   name: tol_mm
+        type: null
+        default: null
+        description: null
+    -   name: min_files
+        type: int
+        default: '10'
+        description: Minimum number of imaging files a sequence must have for orphan-slice detection to run (shorter sequences
+            are left intact).
+    -   name: verbose
+        type: str
+        default: 'yes'
+        description: Whether to report per-sequence statistics.
+    -   name: move_non_image
+        type: bool
+        default: 'True'
+        description: Whether to move non-image DICOM files to ``dicom/non-image``.
+    -   name: move_incomplete
+        type: bool
+        default: 'True'
+        description: Whether to move incomplete-volume/orphan files to ``dicom/orphans``.
     options: []
     returns: []
     origin: core
@@ -1158,7 +1195,7 @@ commands:
     origin: core
 -   name: dicom2nii
     aliases: []
-    path: qx_utilities.general.dicom.dicom2nii
+    path: qx_utilities.dicom.legacy.dicom2nii.dicom2nii
     language: python
     call: dicom2nii [folder=.] [clean=no] [unzip=ask] [gzip=folder] [verbose=True] [parelements=1]
     description: Process sessions's DICOM or PAR/REC files and generate NIfTI files using dcm2niix.
@@ -1199,7 +1236,7 @@ commands:
     origin: core
 -   name: dicom2niix
     aliases: []
-    path: qx_utilities.general.dicom.dicom2niix
+    path: qx_utilities.dicom.dicom2niix.dicom2niix
     language: python
     call: dicom2niix [folder=.] [clean=no] [unzip=yes] [gzip=folder] [sessionid=None] [verbose=True] [parelements=1] [tool='auto']
         [add_image_type=0] [add_json_info=""]
@@ -2266,7 +2303,7 @@ commands:
     path: qx_mri/fc/fc_compute_gbc.m
     language: matlab
     call: fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, targetf, options)
-    description: Compute seed based functional connectivity maps for group and/or individual subjects / sessions.
+    description: Compute global brain connectivity (GBC) maps for group and/or individual subjects / sessions.
     type: matlab
     args:
     -   name: flist
@@ -3742,7 +3779,7 @@ commands:
     origin: core
 -   name: get_dicom_fields
     aliases: []
-    path: qx_utilities.general.dicomdeid.get_dicom_fields
+    path: qx_utilities.dicom.get_dicom_fields.get_dicom_fields
     language: python
     call: get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]
     description: Return an overview of DICOM fields across all the DICOM files in the specified folder.
@@ -3766,7 +3803,7 @@ commands:
     origin: core
 -   name: get_dicom_info
     aliases: []
-    path: qx_utilities.general.dicom.get_dicom_info
+    path: qx_utilities.dicom.get_dicom_info.get_dicom_info
     language: python
     call: get_dicom_info dicomfile=<dicom_file> [scanner=siemens]
     description: Inspect the specified DICOM file.
@@ -4370,9 +4407,9 @@ commands:
         description: If specified, use the non-GPU-enabled version of eddy. The flag is not set by default.
     -   name: hcp_cuda_version
         type: str
-        default: '11'
+        default: ''
         description: The version of CUDA to use for GPU-enabled processing. This depends on the version of installed FSL and
-            its CUDA support.
+            its CUDA support. Latest FSL versions do not have a version suffix, so this is empty by default.
     -   name: hcp_dwi_even_slices
         type: flag
         default: null
@@ -4394,6 +4431,31 @@ commands:
         default: null
         description: QuNex will create dummy bval and bvec files if they do not yet exist. Mainly useful when using distortion
             maps as part of the input data.
+    -   name: hcp_species
+        type: str
+        default: ''
+        description: Species label (Human, Chimp, Macaque, Marmoset or NightMonkey). When unset the HCP pipeline default (Human)
+            is used. Only relevant for non-human species.
+    -   name: hcp_truepatientposition
+        type: str
+        default: ''
+        description: True patient position, e.g. HFS, FFS, HFSx, FFSx. Only relevant for non-human species.
+    -   name: hcp_scannerpatientposition
+        type: str
+        default: ''
+        description: Scanner patient position, e.g. HFS, FFS. Only relevant for non-human species.
+    -   name: hcp_dwi_wmprojabs
+        type: str
+        default: '2'
+        description: White matter projection absolute depth. Only relevant for non-human species.
+    -   name: hcp_dwi_resamp
+        type: str
+        default: ''
+        description: The resamp value to pass to the eddy binary. When unset, no --resamp option is passed to eddy.
+    -   name: hcp_dwi_usephasezero
+        type: flag
+        default: null
+        description: If set, phase zero is used. Only relevant for non-human species. The flag is not set by default.
     -   name: hcp_longitudinal_template
         type: str
         default: base
@@ -4714,7 +4776,7 @@ commands:
         default: ''
         description: Path to the precomputed fieldmap image, QuNex tries to automatically set this if left empty and PRECOMPUTED_FIELDMAP
             is selected. This parameter is used when hcp_bold_dcmethod is set to PRECOMPUTED_FIELDMAP. Usually this is set
-            automatically based on the FM-Real image specified in the batch file.
+            automatically based on the FM-Precomputed image specified in the batch file.
     -   name: hcp_bold_precomputedfmapmag
         type: str
         default: ''
@@ -5973,6 +6035,141 @@ commands:
         type: int
         default: null
         description: The ending frame to choose from each fMRI run (inclusive), only applied for single runs.
+    returns: []
+    origin: core
+-   name: hcp_nhp_freesurfer
+    aliases: []
+    path: qx_utilities.hcp.hcp_nhp_freesurfer.hcp_nhp_freesurfer
+    language: python
+    call: hcp_nhp_freesurfer [... processing options]
+    description: Runs the NHP (non-human primate) variant of the FS step of the HCP Pipeline (FreeSurferPipelineNHP.sh).
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: hcp_processing_mode
+        type: str
+        default: HCPStyleData
+        description: Controls whether the HCP acquisition and processing guidelines should be treated as requirements ('HCPStyleData')
+            or if additional processing functionality is allowed ('LegacyStyleData'). In this case running processing w/o
+            a T2w image.
+    -   name: hcp_folderstructure
+        type: str
+        default: hcpls
+        description: If set to 'hcpya' the folder structure used in the initial HCP Young Adults study is used. Specifically,
+            the source files are stored in individual folders within the main 'hcp' folder in parallel with the working folders
+            and the 'MNINonLinear' folder with results. If set to 'hcpls' the folder structure used in the HCP Life Span study
+            is used. Specifically, the source files are all stored within their individual subfolders located in the joint
+            'unprocessed' folder in the main 'hcp' folder, parallel to the working folders and the 'MNINonLinear' folder.
+    -   name: hcp_filename
+        type: str
+        default: automated
+        description: How to name the BOLD files once mapped intothe hcp input folder structure. The default ('automated')
+            will automatically name each file by their number (e.g. BOLD_1). The alternative ('userdefined') is to use the
+            file names, which can be defined by the user prior to mapping (e.g. rfMRI_REST1_AP).
+    -   name: hcp_species
+        type: str
+        default: ''
+        description: 'Species type (required). Controls species-specific processing parameters. One of: Human, Chimp, MacaqueCyno,
+            MacaqueRhesus, MacaqueSnow, NightMonkey, Marmoset.'
+    -   name: hcp_scale_factor
+        type: str
+        default: ''
+        description: Brain scale factor for NHP processing (required). Controls volume rescaling for FreeSurfer and some derived
+            parameters. The recommended value is the BrainScaleFactor defined in the species' SetUp script.
+    -   name: hcp_runmode
+        type: str
+        default: ''
+        description: 'Specify from which step to resume the processing instead of starting from the beginning. Value must
+            be one of: Default, FSinit, FSbrainseg, FSsurfinit, FShires, FSFinish (default: Default).'
+    -   name: hcp_fs_seed
+        type: str
+        default: ''
+        description: Recon-all seed value. If not specified, none will be used.
+    -   name: hcp_fs_edits
+        type: str
+        default: 'FALSE'
+        description: 'Indicates whether manual edits are to be applied to the FreeSurfer outputs. If set to ''TRUE'', the
+            user needs to either place the edited files in <sessions folder>/inbox/FS_edits and prepend ''<session id>_''
+            to identify them, or place them in the standard FreeSurfer location themselves. The ''existing_session'' parameter
+            will be set to TRUE, and ''extra_reconall'' parameters will be set as well to only run the necessary steps to
+            incorporate the edits, depending on the edits present and/or specified. This option can be used for edits to control.dat,
+            aseg.mgz, wm.mgz, and brainmask.mgz files. Accepted values are ''FALSE'', ''TRUE'', or a comma-separated list
+            of edits to apply: ''control'', ''aseg'', ''wm'', ''brainmask''. If edits are not specified explicitly, they will
+            be determined based on the files found in the FS_edits folder.'
+    -   name: hcp_fs_existing_session
+        type: str
+        default: 'FALSE'
+        description: Indicates that the command is to be run on top of an already existing analysis/subject. This excludes
+            the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run
+            using the --hcp_fs_extra_reconall parameter. Accepted values are 'TRUE' and 'FALSE'.
+    -   name: hcp_fs_extra_reconall
+        type: str
+        default: ''
+        description: 'A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed
+            in a pipe (''|'') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters
+            3` to reconall, the string has to be: "-norm3diters|3".'
+    -   name: hcp_fs_flair
+        type: str
+        default: 'FALSE'
+        description: If set to 'TRUE' indicates that recon-all is to be run with the -FLAIR/-FLAIRpial options (rather than
+            the -T2/-T2pial options). The FLAIR input image itself should be provided as a regular T2w image.
+    -   name: hcp_fs_t1wdivflair
+        type: str
+        default: 'FALSE'
+        description: 'If set to ''TRUE'' indicates that recon-all is to be run with the -T1wDivFLAIR/-T1wDivFLAIRpial options
+            (rather than the -T2/-T2pial options). The T1w/FLAIR input image itself should be provided as a regular T2w image.
+            NOTE: This is experimental.'
+    -   name: hcp_conf2hires
+        type: str
+        default: null
+        description: Whether to use the conf2hires flag in recon-all. If set to 'TRUE', the flag will be used, if set to 'FALSE'
+            it will not be used.
+    -   name: hcp_t2
+        type: str
+        default: t2
+        description: '''NONE'' if no T2w image is available and the preprocessing should be run without them, anything else
+            otherwise. ''NONE'' is only valid if ''LegacyStyleData'' processing mode was specified.'
+    -   name: hcp_expert_file
+        type: str
+        default: ''
+        description: Path to the read-in expert options file for FreeSurfer if one is prepared and should be used empty otherwise.
     returns: []
     origin: core
 -   name: hcp_post_fix
@@ -7815,12 +8012,131 @@ commands:
     origin: core
 -   name: import_dicom
     aliases: []
-    path: qx_utilities.general.dicom.import_dicom
+    path: qx_utilities.dicom.import_dicom.import_dicom
     language: python
     call: import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"]
+        [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=all]
+        [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [min_files=4] [tr_abs_ms=100] [tr_rel_pct=5]
+    description: Process sessions's DICOM or PAR/REC files and generate NIfTI files.
+    type: utility
+    args:
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The base study sessions folder (e.g. WM44/sessions) where the inbox and individual session folders are.
+            If not specified, the current working folder will be taken as the location of the sessionsfolder.
+    -   name: sessions
+        type: str
+        default: ''
+        description: A comma delimited string that lists the sessions to process. If master inbox folder is used, the parameter
+            is optional and it can include regex patterns. In this case only those sessions identified by the pattern that
+            also match with any of the patterns in the sessions list will be processed. If `masterinbox` is set to none, the
+            list specifies the session folders to process, and it can include glob patterns.
+    -   name: masterinbox
+        type: str
+        default: <sessionsfolder>/inbox/MR
+        description: 'The master inbox folder with packages to process. By default masterinbox is in sessions folder: <sessionsfolder>/inbox/MR.
+            If the packages are elsewhere, the location can be specified here. If set to "none", the data is assumed to already
+            exist in the individual sessions'' inbox folder: <studyfolder>/<sessionsfolder>/<session id>/inbox.'
+    -   name: check
+        type: str
+        default: any
+        description: The type of check to perform when packages or session folders are identified.
+    -   name: pattern
+        type: null
+        default: null
+        description: null
+    -   name: nameformat
+        type: null
+        default: null
+        description: null
+    -   name: tool
+        type: str
+        default: auto
+        description: What tool to use for the conversion.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: The number of parallel processes to use when running converting DICOM images to NIfTI files. If specified
+            as 'all', all avaliable resources will be utilized.
+    -   name: logfile
+        type: str
+        default: ''
+        description: 'A string specifying the location of the log file and the columns in which packetname, subject id and
+            session name information are stored. The string should specify: ``"path:<path to the log file>| packet_name:<name
+            of the packet extracted by the pattern>|subject_id:<the column with subjectid information>[|session_name:<the
+            column with sesion id information>]"``.'
+    -   name: archive
+        type: str
+        default: leave
+        description: What to do with a processed package.
+    -   name: add_image_type
+        type: int
+        default: '0'
+        description: Adds image type information to the sequence name (Siemens scanners). The value should specify how many
+            of image type labels from the end of the image type list to add.
+    -   name: add_json_info
+        type: str
+        default: all
+        description: What sequence information to extract from JSON sidecar files and add to session.txt file. Specify a comma
+            separated list of fields or 'all'. See list in session.txt file description below.
+    -   name: unzip
+        type: str
+        default: 'yes'
+        description: Whether to unzip individual DICOM files that are gzipped. Valid options are 'yes', 'no'.
+    -   name: gzip
+        type: str
+        default: folder
+        description: Whether to gzip individual DICOM files after they were processed ('file'), gzip a DICOM sequence or acquisition
+            as an tar.gz archive ('folder'), or leave them ungzipped ('no'). Valid options are 'folder', 'file', 'no'.
+    -   name: verbose
+        type: str
+        default: 'yes'
+        description: Whether to provide detailed report also of packets that could not be identified and/or are not matched
+            with log file.
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: min_files
+        type: int
+        default: '4'
+        description: The minimum number of imaging files a sequence has to hold for the incomplete volume (orphan) detection
+            to run. Shorter sequences (localizers, single volume references) are reported but never pruned. Set it higher
+            to be more conservative.
+    -   name: tr_abs_ms
+        type: float
+        default: '100'
+        description: The absolute tolerance in milliseconds when comparing the observed volume repetition time with the TR
+            reported in the DICOM header. A sequence is only flagged for a TR mismatch when it deviates by more than both
+            `tr_abs_ms` and `tr_rel_pct`.
+    -   name: tr_rel_pct
+        type: float
+        default: '5'
+        description: The relative tolerance in percent for the same TR comparison. See `tr_abs_ms`.
+    -   name: existing_structure
+        type: bool
+        default: 'False'
+        description: Deprecated and ignored, a warning is printed when it is set. The single pass importer reads every file
+            in the package and sorts it by its series number, whether or not the package is already organized into per sequence
+            subfolders, so there is nothing left for this flag to switch on.
+    -   name: test
+        type: null
+        default: null
+        description: null
+    options: []
+    returns: []
+    origin: core
+-   name: import_dicom_old
+    aliases: []
+    path: qx_utilities.dicom.legacy.import_dicom_old.import_dicom_old
+    language: python
+    call: import_dicom_old [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"]
         [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""]
         [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]
-    description: Process sessions's DICOM or PAR/REC files and generate NIfTI files.
+    description: Deprecated. Process sessions's DICOM or PAR/REC files and generate NIfTI files using the pre-1.5.0 two-pass
+        implementation.
     type: utility
     args:
     -   name: sessionsfolder
@@ -8120,7 +8436,7 @@ commands:
     origin: core
 -   name: list_dicom
     aliases: []
-    path: qx_utilities.general.dicom.list_dicom
+    path: qx_utilities.dicom.list_dicom.list_dicom
     language: python
     call: list_dicom [folder=inbox]
     description: Identify all DICOM files in a folder and print a detailed report.
@@ -8395,6 +8711,58 @@ commands:
         description: An optional parameter that specifies how the files should be sorted before mapping to `nii` folder and
             inclusion in `session_hcp.txt`. The sorting is specified by a string of sort keys separated by '_'.
     options: []
+    returns: []
+    origin: core
+-   name: map_mice_data
+    aliases: []
+    path: qx_mice.process_mice.map_mice_data
+    language: python
+    call: map_mice_data [... processing options]
+    description: Maps preprocessed mice data to the sessions' image folder.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite target files that already exist (yes) or not (no).
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: bolds
+        type: str
+        default: ''
+        description: Which bold images to process. You can select bolds through their number, name or task (e.g. rest), you
+            can chain multiple conditions together by providing a comma separated list.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: How many elements (e.g. bolds) to run in parallel.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
     returns: []
     origin: core
 -   name: map_nii2bids
@@ -8853,6 +9221,91 @@ commands:
         default: ''
         description: Specifies a suffix for 'images' folder to enable support for multiple parallel workflows. Empty if not
             used.
+    returns: []
+    origin: core
+-   name: preprocess_mice
+    aliases: []
+    path: qx_mice.process_mice.preprocess_mice
+    language: python
+    call: preprocess_mice [... processing options]
+    description: Runs the QuNex mice preprocessing command.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: bolds
+        type: str
+        default: ''
+        description: Which bold images to process. You can select bolds through their number, name or task (e.g. rest), you
+            can chain multiple conditions together by providing a comma separated list.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: How many elements (e.g. bolds) to run in parallel.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: bias_field_correction
+        type: str
+        default: 'yes'
+        description: Whether to perform bias field correction, yes/no.
+    -   name: melodic_anatfile
+        type: str
+        default: qx_library/etc/mice_pipelines/EPI_braine
+        description: Path to the melodic anat file, without the extension, e.g. without .nii.gz.
+    -   name: fix_rdata
+        type: str
+        default: qx_library/etc/mice_pipelines/zerbi_2015_neuroimage.RData
+        description: Path to the RData file used by fix.
+    -   name: fix_threshold
+        type: int
+        default: '2'
+        description: Fix ICA treshold.
+    -   name: mice_highpass
+        type: float
+        default: '0.01'
+        description: The value of the highpass filter.
+    -   name: mice_lowpass
+        type: float
+        default: '0.25'
+        description: The value of the lowpass filter.
+    -   name: mice_volumes
+        type: int
+        default: '900'
+        description: Number of volumes.
+    -   name: flirt_ref
+        type: str
+        default: qx_library/etc/mice_pipelines/EPI_template.nii.gz
+        description: Path to the template file.
     returns: []
     origin: core
 -   name: print_nifti_metadata
@@ -9954,6 +10407,71 @@ commands:
     options: []
     returns: []
     origin: core
+-   name: setup_mice
+    aliases: []
+    path: qx_mice.setup_mice.setup_mice
+    language: python
+    call: setup_mice [... processing options]
+    description: Runs the command to prepare a QuNex study for mice preprocessing.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Note that previous data is deleted before the run,
+            so in the case of a failed command run, previous results are lost.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: bolds
+        type: str
+        default: ''
+        description: Which bold images to process. You can select bolds through their number, name or task (e.g. rest), you
+            can chain multiple conditions together by providing a comma separated list.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: How many elements (e.g. bolds) to run in parallel.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: tr
+        type: float
+        default: '2.5'
+        description: TR of the bold data.
+    -   name: voxel_increase
+        type: int
+        default: null
+        description: The factor by which to increase voxel size. If not provided QuNex will not increase the voxel size.
+    -   name: orienatation
+        type: str
+        default: x -y z
+        description: A string depicting how to fix the orientation. Set to "" to leave orientation as is.
+    returns: []
+    origin: core
 -   name: slice_image
     aliases: []
     path: qx_utilities.general.img.slice_image
@@ -9979,34 +10497,36 @@ commands:
     origin: core
 -   name: sort_dicom
     aliases: []
-    path: qx_utilities.general.dicom.sort_dicom
+    path: qx_utilities.dicom.sort_dicom.sort_dicom
     language: python
-    call: sort_dicom [folder=.]
-    description: Sort DICOM files from the specified folder.
+    call: sort_dicom [folder=.] [outdir=<folder>] [files=<comma-separated list>]
+    description: Sorts DICOM (and PAR/REC) files into per-sequence ``dicom`` subfolders.
     type: utility
     args:
     -   name: folder
         type: str
         default: .
-        description: The base session folder that contains the inbox subfolder with the unsorted DICOM files.
+        description: The base session folder that contains the ``inbox`` subfolder with the unsorted DICOM files.
     -   name: copy
         type: str
         default: move
-        description: Should we 'copy' or 'move'.
+        description: Accepted for backward compatibility but ignored, the files are always copied and the ``inbox`` folder
+            is left intact.
     -   name: outdir
         type: str
         default: detailed below
-        description: Optional directory where the sorted files are to be saved. Defaults to `folder` parameter if not set.
+        description: Optional directory in which the ``dicom`` folder is created. Defaults to the `folder` parameter if not
+            set.
     -   name: files
         type: str
         default: detailed below
-        description: Comma separated list of files to sort. Defaults to files in `folder`.
+        description: Optional comma separated list of files to sort. Defaults to the contents of ``<folder>/inbox``.
     options: []
     returns: []
     origin: core
 -   name: split_dicom
     aliases: []
-    path: qx_utilities.general.dicom.split_dicom
+    path: qx_utilities.dicom.split_dicom.split_dicom
     language: python
     call: split_dicom [folder=inbox]
     description: Sort out DICOM images from different sessions.

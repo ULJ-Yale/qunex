@@ -28,11 +28,10 @@ RE_TAG_BOLD_NUM = re.compile(r"^bold_num\((\w+)\)$")
 RE_TAG_WITH_VALUE = re.compile(r"^(\w+)\((\w+)\)$")
 
 RE_IMAGE_TYPE_SE_PATTERN = re.compile(r"^SE-FM-PA|SE-FM-AP|SE-FM-LR|SE-FM-RL$")
-RE_IMAGE_TYPE_FM_PATTERN = re.compile(r"^FM-Magnitude|FM-Phase|FM-Real$")
+RE_IMAGE_TYPE_FM_PATTERN = re.compile(r"^FM-Magnitude|FM-Phase|FM-Precomputed$")
 RE_IMAGE_TYPE_RB1COR_PATTERN = re.compile(r"^RB1COR-Head|RB1COR-Body$")
 RE_IMAGE_TYPE_TB1TFL_PATTERN = re.compile(r"^TB1TFL-Magnitude|TB1TFL-Phase$")
 RE_IMAGE_TYPE_BOLD_PATTERN = re.compile(r"^(bold|boldref)(\d*)$")
-
 
 def read_generic_session_file(session_file_path):
     """Parse and return the content of a session file

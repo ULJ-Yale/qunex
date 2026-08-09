@@ -85,7 +85,6 @@ deprecated_commands = {
     "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
     "dwi_probtrackx_dense_gpu": ["DWIprobtrackxDenseGPU", "ProbtrackxGPUDense"],
     "dwi_seed_tractography_dense": ["DWIseedTractographyDense", "DWISeedTractography"],
-    "roi_extract": ["ROIExtract"],
     "run_qc_t1w": ["runQC_T1w"],
     "run_qc_t2w": ["runQC_T2w"],
     "run_qc_myelin": ["runQC_Myelin"],
@@ -97,7 +96,7 @@ deprecated_commands = {
     "run_qc_custom": ["runQC_Custom"],
     "run_qc_rawnii": ["runQC_rawNII"],
     "run_turnkey": ["runTurnkey"],
-    "extract_roi": ["extractROI"],
+    "extract_roi": ["extractROI", "ROIExtract", "roi_extract"],
     "matlab_help": ["matlabHelp"],
     "gmri_function": ["gmriFunction"],
     "organize_dicom": ["organizeDicom"],
@@ -180,8 +179,6 @@ deprecated_commands.update(extensions.compile_dict("deprecated_commands"))
 
 
 # the function for checking whether a command is deprecated or not
-
-
 # @register_command(
 #     description="Checks for deprecated commands, remaps deprecated ones, and notifies the user.",
 #     type="utility")
@@ -224,7 +221,6 @@ def check_deprecated_commands(command):
 # ==============================================================================
 #                                                          PARAMETER DEPRECATION
 #
-
 # The "deprecated_parameters" dictionary specifies what is mapped to what
 # If the mapping is 1:1 use 'old_value': 'new_value'
 # If the mapping is 1:n (an old value was split to several new ones) then
@@ -305,7 +301,6 @@ deprecated_values = {
 # string in the pair identifies the target option (the option to check) and the second string
 # identifies the source option (the option from which to take the value to impute). Please note
 # that the imputation will follow the order in which tuples are listed.
-
 to_impute = [
     ("qx_cifti_tail", "hcp_cifti_tail"),
     ("qx_nifti_tail", "hcp_nifti_tail"),
@@ -346,8 +341,6 @@ towarn_parameters.update(extensions.compile_dict("towarn_parameters"))
 # ==============================================================================
 #                                                  MAPPING DEPRECATED PARAMETERS
 #
-
-
 def check_deprecated_parameters(options, command):
     """
     ``check_deprecated_parameters(options, command)``
@@ -474,8 +467,6 @@ def check_deprecated_parameters(options, command):
 # ==============================================================================
 #                                                IMPUTING UNSPECIFIED PARAMETERS
 #
-
-
 def impute_parameters(options, command):
     """
     ``impute_parameters(options, command)``
@@ -494,7 +485,6 @@ def impute_parameters(options, command):
 # ==============================================================================
 #                                                               EXTRA PARAMETERS
 #
-
 extra_parameters = [
     "batchfile",
     "sessions",
@@ -529,13 +519,11 @@ extra_parameters = [
 # Legacy fallback, consulted by `general.log.resolve_logging` only for commands
 # that do not state `logging:` in their `.. qx_command:` block. Annotate the
 # command instead of extending this list; it goes away once all three are.
-
 logskip_commands = [
     "batch_tag2namekey",
     "check_deprecated_commands",
     "get_sessions_for_slurm_array",
 ]
-
 
 # Add information from in extensions
 extra_parameters += extensions.compile_list("extra_parameters")

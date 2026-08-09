@@ -22,8 +22,8 @@ import shutil
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.snapshots as gs
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog
+from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.hcp.hcp_utils import (
     _get_postfreesurfer_snapshot_paths,
     do_hcp_options_check,
@@ -339,7 +339,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             t2w = os.path.join(hcp["T1w_folder"], "T2w_acpc_dc_restore.nii.gz")
 
         if t2w == "NONE" and options["hcp_processing_mode"] == "HCPStyleData":
-            log.error("The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode.")
+            log.error(
+                "The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode."
+            )
             run = False
 
         # test file
@@ -495,7 +497,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         if os.path.exists(post_fs_tfile) and not (
             overwrite or options["hcp_fs_existing_session"]
         ):
-            log.error("PostFreeSurfer results already present! Set overwrite to true or hcp_fs_existing_session to true to reprocess FreeSurfer!")
+            log.error(
+                "PostFreeSurfer results already present! Set overwrite to true or hcp_fs_existing_session to true to reprocess FreeSurfer!"
+            )
             run = False
 
         # report command

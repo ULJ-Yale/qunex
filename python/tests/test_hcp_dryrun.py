@@ -74,8 +74,8 @@ def session(tmp_path, monkeypatch):
     monkeypatch.setenv("HCPPIPEDIR", str(tmp_path / "hcppipedir"))
     monkeypatch.setenv("QUNEXPATH", str(tmp_path / "qunexpath"))
 
-    def _build(bolds=False, subject=False, multisession=False, **overrides):
-        sinfo, sessionsfolder = build_hcp_session(str(tmp_path), bolds=bolds)
+    def _build(bolds=False, dwi=False, subject=False, multisession=False, **overrides):
+        sinfo, sessionsfolder = build_hcp_session(str(tmp_path), bolds=bolds, dwi=dwi)
         options = default_options(
             run="test",
             sessionsfolder=sessionsfolder,
@@ -142,10 +142,41 @@ def test_cortical_thickness_dry_run(session):
 
 
 def test_diffusion_dry_run(session):
-    sinfo, options = session()
+    sinfo, options = session(dwi=True)
     report, status = hcp_diffusion(sinfo, options)
     _check_contract(report, status)
     assert "Diffusion" in report
+    assert "Running HCP Pipelines command via QuNex:" in report
+    # human runs must not pass any of the NHP options
+    for nhp in [
+        "--species",
+        "--truepatientposition",
+        "--scannerpatientposition",
+        "--wmprojabs",
+        "--resamp",
+        "--usephasezero",
+    ]:
+        assert nhp not in report
+
+
+def test_diffusion_nhp_dry_run(session):
+    sinfo, options = session(
+        dwi=True,
+        hcp_species="Macaque",
+        hcp_truepatientposition="HFP",
+        hcp_scannerpatientposition="HFS",
+        hcp_dwi_wmprojabs="1",
+        hcp_dwi_resamp="lsr",
+        hcp_dwi_usephasezero=True,
+    )
+    report, status = hcp_diffusion(sinfo, options)
+    _check_contract(report, status)
+    assert "--species=Macaque" in report
+    assert "--truepatientposition=HFP" in report
+    assert "--scannerpatientposition=HFS" in report
+    assert "--wmprojabs=1" in report
+    assert "--resamp=lsr" in report
+    assert "--usephasezero=True" in report
 
 
 # ------------------------------------------------------------------ functional

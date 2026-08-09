@@ -2,8 +2,8 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 
 %``fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, targetf, options)``
 %
-%   Compute seed based functional connectivity maps for group and/or
-%   individual subjects / sessions.
+%   Compute global brain connectivity (GBC) maps for group and/or individual
+%   subjects / sessions.
 %
 %   .. qx_command:
 %       type: matlab
@@ -487,47 +487,48 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           specified, saved.
 %
 %   Examples:
-%       To compute resting state seed maps using first eigenvariate of each ROI::
+%       To compute resting state GBC as the mean Fisher z value across all
+%       grayordinates over a threshold of 0.1::
 %
-%           qunex fc_compute_seedmaps \
+%           qunex fc_compute_gbc \
 %               --flist='scz.list' \
-%               --roiinfo='CCNet.names' \
+%               --command='mFz:0.1' \
 %               --frames=0 \
-%               --targetf='seed-maps' \
-%               --options='roimethod:pca|ignore:udvarsme'
+%               --targetf='gbc-maps' \
+%               --options='ignore:udvarsme'
 %
-%       To compute resting state seed maps using mean of each region and
-%       covariances instead of correlation::
+%       To compute resting state GBC using covariances instead of correlations::
 %
-%           qunex fc_compute_seedmaps \
+%           qunex fc_compute_gbc \
 %               --flist='scz.list' \
-%               --roiinfo='CCNet.names' \
+%               --command='mFc:0.1' \
 %               --frames=0 \
-%               --targetf='seed-maps' \
-%               --options='roimethod:mean|igmore:udvarsme|fcmeasure:cv'
+%               --targetf='gbc-maps' \
+%               --options='ignore:udvarsme|fcmeasure:cv'
 %
-%       To compute seed maps for third and fourth frame of incongruent and
-%       congruent trials (listed as inc and con events in fidl files with
-%       duration 1) using mean of each region and exclude only frames marked for
-%       exclusion in fidl files::
+%       To compute GBC from a set of source ROIs to all grayordinates for the
+%       third and fourth frame of incongruent and congruent trials (listed as
+%       inc and con events in fidl files with duration 1), excluding only frames
+%       marked for exclusion in fidl files::
 %
-%           qunex fc_compute_seedmaps \
+%           qunex fc_compute_gbc \
 %               --flist='scz.list' \
-%               --roiinfo='CCNet.names' \
+%               --command='mFz:0.1' \
+%               --sroiinfo='CCNet.names' \
 %               --frames='incongruent:inc:2,3|congruent:con:2,3' \
-%               --targetf='seed-maps' \
-%               --options='roimethod:mean|ignore:event'
+%               --targetf='gbc-maps' \
+%               --options='ignore:event'
 %
-%       To compute seed maps across all the tasks blocks, starting with the
-%       third frame into the block and taking one additional frame after the end
-%       of the block, use::
+%       To compute GBC across all the tasks blocks, starting with the third
+%       frame into the block and taking one additional frame after the end of
+%       the block, use::
 %
-%           qunex fc_compute_seedmaps \
+%           qunex fc_compute_gbc \
 %               --flist='scz.list' \
-%               --roiinfo='CCNet.names' \
+%               --command='mFz:0.1' \
 %               --frames='task:easyblock,hardblock:2,1' \
-%               --targetf='seed-maps' \
-%               --options='roimethod:mean|ignore:event'
+%               --targetf='gbc-maps' \
+%               --options='ignore:event'
 
 
 %   - lcgray  (left cortex gray matter)

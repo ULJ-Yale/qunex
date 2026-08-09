@@ -608,6 +608,8 @@ export MAMBADIR PATH
 if [[ -e /opt/.container ]]; then
     eval "$(micromamba shell hook --shell bash 2>/dev/null)"
     micromamba activate /opt/env/qunex 2>/dev/null
+elif [[ -d ${QUNEXENV} ]]; then
+    conda activate ${QUNEXENV} 2>/dev/null
 fi
 
 # -- Set up prompt via PROMPT_COMMAND to ensure it displays in all contexts (especially Singularity)

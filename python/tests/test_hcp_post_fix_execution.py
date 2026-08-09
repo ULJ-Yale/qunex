@@ -29,6 +29,17 @@ from .utils import build_hcp_session, default_options
 GROUP = "fMRI_CONCAT_ALL"
 
 
+@pytest.fixture(autouse=True)
+def hcppipedir(tmp_path, monkeypatch):
+    """Point get_hcp_paths at a placeholder HCP pipelines folder.
+
+    The external runner is stubbed out in these tests, so the folder never has
+    to exist; setting the variable keeps the tests from depending on a sourced
+    QuNex environment.
+    """
+    monkeypatch.setenv("HCPPIPEDIR", str(tmp_path / "hcppipedir"))
+
+
 @pytest.fixture
 def postfix_session(tmp_path):
     """A session whose group ICA output is present, ready for PostFix."""

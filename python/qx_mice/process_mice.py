@@ -12,6 +12,7 @@ This file holds code for processing mice MRI data with QuNex mice pipelines. It
 consists of functions:
 
 - preprocess_mice   Runs the QuNex mice preprocessing pipeline.
+- map_mice_data     Maps preprocessed mice data to the sessions' image folder.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -42,6 +43,9 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     ``preprocess_mice [... processing options]``
 
     Runs the QuNex mice preprocessing command.
+
+    ..  qx_command:
+        type: processing.session
 
     Warning:
         Successful preparation of mice data for preprocessing encompasses:
@@ -329,10 +333,13 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
     """
     ``map_mice_data [... processing options]``
 
-    Runs the command to prepare a QuNex study for mice preprocessing.
+    Maps preprocessed mice data to the sessions' image folder.
+
+    ..  qx_command:
+        type: processing.session
 
     Warning:
-        Preprocessed mica data is required.
+        Preprocessed mice data is required.
 
     Parameters:
         --batchfile (str, default ''):

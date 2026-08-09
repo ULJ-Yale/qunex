@@ -124,7 +124,6 @@ function [] = fc_preprocess(sessionf, bold, omit, doIt, rgss, task, efile, tr, e
 %           - lopass_do       : ['nuisance, movement, events, task']
 %           - framework_path  :
 %           - wb_command_path :
-%           - omp_threads     : 0
 %           - smooth_mask     : false
 %           - dilate_mask     : false
 %           - boldname        : bold

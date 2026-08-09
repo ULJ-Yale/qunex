@@ -43,6 +43,9 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
 
     Runs the command to prepare a QuNex study for mice preprocessing.
 
+    ..  qx_command:
+        type: processing.session
+
     Warning:
         Successful import of mice data is required to run this command.
 

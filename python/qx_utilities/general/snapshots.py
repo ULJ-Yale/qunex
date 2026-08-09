@@ -13,9 +13,12 @@ Functions for recording, comparing, and rolling back directory snapshots:
 - compare_snapshots(): Compare two snapshots or a snapshot against a live directory
 - rollback_snapshot(): Rollback changes based on a comparison snapshot
 
-Function for creating and restoring file backups:
-- create_backup(): Create a backup copy of files
-- restore_backup(): Restore files from backup
+Functions for creating and restoring file backups:
+- backup_files(): Create a backup copy of files
+- restore_files(): Restore files from backup
+
+These are internal helpers used by the processing pipelines (see hcp/hcp_utils.py)
+and are not registered QuNex commands, so they cannot be invoked through qunex.
 """
 
 # Created by Grega Repovs on 2026-02-01.
@@ -94,25 +97,23 @@ def _normalize_exclude_list(exclude_list, root_path):
 
 def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
     """
-    ``record_snapshot targetfolder=<folder path> outfile=<output file> [includehash=True] [exclude=None]``
-
     Creates a hierarchical snapshot of a directory structure, recording file names,
     modification times, sizes, and optionally MD5 hashes. The snapshot is saved as
     a human-readable tree structure in a text file, which can later be used for
     comparison or rollback operations.
 
     Parameters:
-        --targetfolder (str):
+        targetfolder (str):
             The path to the folder to snapshot. The function recursively
             traverses all subdirectories and captures metadata for every file.
             The folder must exist or an error will be raised.
 
-        --outfile (str):
+        outfile (str):
             The path to the output text file where the snapshot will be saved.
             If the file exists, it will be overwritten. Parent directories will
             be created automatically if they don't exist.
 
-        --includehash (bool or str, default True):
+        includehash (bool or str, default True):
             Whether to compute and include MD5 hash for each file:
 
             - True: Compute MD5 hash for all files (slower but more accurate
@@ -123,7 +124,7 @@ def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
 
             Can be specified as boolean or string ("true", "false", "yes", "no").
 
-        --exclude (list or str, default None):
+        exclude (list or str, default None):
             Optional list of files or folders to exclude from the snapshot.
             Excluded items will not appear in the snapshot output. Can be specified as:
 
@@ -182,20 +183,20 @@ def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
         - Can be used for rollback operations with rollback_snapshot()
 
     Examples:
-        Create snapshot with hashes:
-        ::
+        Create snapshot with hashes::
 
-            qunex record_snapshot \\
-                --targetfolder=/path/to/project/data \\
-                --outfile=/path/to/snapshots/baseline.txt
+            record_snapshot(
+                targetfolder="/path/to/project/data",
+                outfile="/path/to/snapshots/baseline.txt",
+            )
 
-        Create fast snapshot without hashes:
-        ::
+        Create fast snapshot without hashes::
 
-            qunex record_snapshot \\
-                --targetfolder=/path/to/project/data \\
-                --outfile=/path/to/snapshots/quick_check.txt \\
-                --includehash=no
+            record_snapshot(
+                targetfolder="/path/to/project/data",
+                outfile="/path/to/snapshots/quick_check.txt",
+                includehash=False,
+            )
     """
     import hashlib
 
@@ -377,20 +378,18 @@ def record_snapshot(targetfolder, outfile, includehash=True, exclude=None):
 
 def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
     """
-    ``compare_snapshots before=<before snapshot> after=<after snapshot or folder> outfile=<output file> [includehash=True] [exclude=None]``
-
     Compares two directory snapshots or a snapshot against a live directory to identify
     changes. Creates a detailed comparison tree showing which files were added, deleted,
     or modified. The comparison can be used for change analysis or as input to
     rollback_snapshot() for reverting changes.
 
     Parameters:
-        --before (str):
+        before (str):
             Path to the "before" snapshot file (baseline state). This must be
             a snapshot file created by record_snapshot(). The snapshot captures
             the original state before changes were made.
 
-        --after (str):
+        after (str):
             Path to either:
 
             - A snapshot file created by record_snapshot() (for comparing two
@@ -401,12 +400,12 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
 
             This represents the state after changes were made.
 
-        --outfile (str):
+        outfile (str):
             Path to the output file where the comparison results will be saved.
             The file will contain a tree structure with status markers showing
             all changes. If the file exists, it will be overwritten.
 
-        --includehash (bool or str, default True):
+        includehash (bool or str, default True):
             Whether to use MD5 hash when detecting modifications:
 
             - True: Files are considered modified if modification time, size,
@@ -418,7 +417,7 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
 
             Can be specified as boolean or string ("true", "false", "yes", "no").
 
-        --exclude (list or str, default None):
+        exclude (list or str, default None):
             Optional list of files or folders to exclude from the comparison.
             Excluded items will not appear in the comparison output. Can be specified as:
 
@@ -474,30 +473,30 @@ def compare_snapshots(before, after, outfile, includehash=True, exclude=None):
         - Empty directories are tracked (shown as added/deleted if they change)
 
     Examples:
-        Compare two snapshot files:
-        ::
+        Compare two snapshot files::
 
-            qunex compare_snapshots \\
-                --before=/snapshots/before_processing.txt \\
-                --after=/snapshots/after_processing.txt \\
-                --outfile=/snapshots/diff_processing.txt
+            compare_snapshots(
+                before="/snapshots/before_processing.txt",
+                after="/snapshots/after_processing.txt",
+                outfile="/snapshots/diff_processing.txt",
+            )
 
-        Compare snapshot against current directory state:
-        ::
+        Compare snapshot against current directory state::
 
-            qunex compare_snapshots \\
-                --before=/snapshots/baseline.txt \\
-                --after=/path/to/project/data \\
-                --outfile=/snapshots/current_changes.txt
+            compare_snapshots(
+                before="/snapshots/baseline.txt",
+                after="/path/to/project/data",
+                outfile="/snapshots/current_changes.txt",
+            )
 
-        Fast comparison without hash checking:
-        ::
+        Fast comparison without hash checking::
 
-            qunex compare_snapshots \\
-                --before=/snapshots/baseline.txt \\
-                --after=/path/to/project/data \\
-                --outfile=/snapshots/quick_diff.txt \\
-                --includehash=no
+            compare_snapshots(
+                before="/snapshots/baseline.txt",
+                after="/path/to/project/data",
+                outfile="/snapshots/quick_diff.txt",
+                includehash=False,
+            )
     """
     import tempfile
 
@@ -913,38 +912,36 @@ def rollback_snapshot(
     diff=None, before=None, after=None, includehash=True, action="check", exclude=None
 ):
     """
-    ``rollback_snapshot [diff=<diff file>] [before=<before snapshot>] [after=<after snapshot>] [includehash=True] [action=check] [exclude=None]``
-
     Analyzes snapshot differences to identify added files and optionally deletes them
     to roll back changes. Useful for reverting unwanted modifications, cleaning up
     failed processing runs, or undoing experimental changes. Can operate in two modes:
     check (analyze only) or delete (perform rollback).
 
     Parameters:
-        --diff (str, optional):
+        diff (str, optional):
             Path to a comparison file created by compare_snapshots(). If provided,
             this file is used directly to determine what changed. If not provided,
             both 'before' and 'after' parameters must be specified to generate
             the comparison on-the-fly.
 
-        --before (str, optional):
+        before (str, optional):
             Path to the "before" snapshot file (baseline state). Required if
             'diff' is not provided. This snapshot represents the state you want
             to roll back to.
 
-        --after (str, optional):
+        after (str, optional):
             Path to either a snapshot file or a directory representing the current
             state. Required if 'diff' is not provided. If a directory is provided,
             a temporary snapshot will be created for comparison.
 
-        --includehash (bool or str, default True):
+        includehash (bool or str, default True):
             Whether to use MD5 hash when comparing files (only relevant if
             generating comparison on-the-fly). If using an existing diff file,
             this parameter is ignored.
 
             Can be specified as boolean or string ("true", "false", "yes", "no").
 
-        --action (str, default "check"):
+        action (str, default "check"):
             The action to perform:
 
             - "check": Analyze changes and show what would be deleted, but don't
@@ -954,7 +951,7 @@ def rollback_snapshot(
               Use with caution - deleted files cannot be recovered unless you
               have backups.
 
-        --exclude (list or str, default None):
+        exclude (list or str, default None):
             Optional list of files or folders to exclude from rollback operations.
             Excluded files will not be deleted even if they were added. Can be specified as:
 
@@ -1021,36 +1018,36 @@ def rollback_snapshot(
         - Consider using backup_files() for reversible operations
 
     Examples:
-        Preview rollback using existing diff:
-        ::
+        Preview rollback using existing diff::
 
-            qunex rollback_snapshot \\
-                --diff=/snapshots/processing_diff.txt \\
-                --action=check
+            rollback_snapshot(
+                diff="/snapshots/processing_diff.txt",
+                action="check",
+            )
 
-        Actually perform rollback:
-        ::
+        Actually perform rollback::
 
-            qunex rollback_snapshot \\
-                --diff=/snapshots/processing_diff.txt \\
-                --action=delete
+            rollback_snapshot(
+                diff="/snapshots/processing_diff.txt",
+                action="delete",
+            )
 
-        Rollback with on-the-fly comparison:
-        ::
+        Rollback with on-the-fly comparison::
 
-            qunex rollback_snapshot \\
-                --before=/snapshots/baseline.txt \\
-                --after=/path/to/project/data \\
-                --action=check
+            rollback_snapshot(
+                before="/snapshots/baseline.txt",
+                after="/path/to/project/data",
+                action="check",
+            )
 
-        Quick preview without hash comparison:
-        ::
+        Quick preview without hash comparison::
 
-            qunex rollback_snapshot \\
-                --before=/snapshots/baseline.txt \\
-                --after=/path/to/project/data \\
-                --includehash=no \\
-                --action=check
+            rollback_snapshot(
+                before="/snapshots/baseline.txt",
+                after="/path/to/project/data",
+                includehash=False,
+                action="check",
+            )
     """
     import tempfile
 
@@ -1388,30 +1385,28 @@ def _process_filelist(filelist):
 
 def backup_files(source, target, filelist, store="original", overwrite=False):
     """
-    ``backup_files source=<source folder path> target=<target folder path> filelist=<file list> [store=original] [overwrite=False]``
-
     Creates a backup of specified files from a source folder to a target location.
     Files are stored with sequential backup prefixes (b001\\_, b002\\_, etc.) and a
     file_list.txt manifest is created to track the original locations.
 
     Parameters:
-        --source (str):
+        source (str):
             The path to the source folder containing the files to back up.
             All file paths in filelist are resolved relative to this folder
             if they are not absolute paths.
 
-        --target (str):
+        target (str):
             The path to the target folder where backups will be stored.
             If the folder does not exist, it will be created.
             For store=zip mode, this should be the path without .zip extension
             (the .zip extension will be added automatically).
 
-        --filelist (list of str):
+        filelist (list of str):
             A list of file paths to back up. Paths can be absolute or relative
             to the source folder. The list can be provided as a Python list or
             as a comma-separated string.
 
-        --store (str, default 'original'):
+        store (str, default 'original'):
             Storage mode for the backup files:
 
             - 'original': Files are copied as-is to the target folder with
@@ -1427,7 +1422,7 @@ def backup_files(source, target, filelist, store="original", overwrite=False):
               directories in the path are created if needed. The file_list.txt
               manifest is included inside the ZIP archive.
 
-        --overwrite (bool, default False):
+        overwrite (bool, default False):
             Controls behavior when target already exists and contains files:
 
             - False: If target exists and contains files, raise an error and
@@ -1481,32 +1476,32 @@ def backup_files(source, target, filelist, store="original", overwrite=False):
         - The manifest file allows easy restoration of original directory structure
 
     Examples:
-        Back up configuration files as-is:
-        ::
+        Back up configuration files as-is::
 
-            qunex backup_files \\
-                --source=/path/to/project \\
-                --target=/path/to/backups/config_backup \\
-                --filelist=configs/settings.json,configs/database.ini,README.md \\
-                --store=original
+            backup_files(
+                source="/path/to/project",
+                target="/path/to/backups/config_backup",
+                filelist=["configs/settings.json", "configs/database.ini", "README.md"],
+                store="original",
+            )
 
-        Back up data files with gzip compression:
-        ::
+        Back up data files with gzip compression::
 
-            qunex backup_files \\
-                --source=/path/to/study/sessions/subject01 \\
-                --target=/path/to/backups/subject01_data \\
-                --filelist="bold/run1.nii,bold/run2.nii,anat/T1w.nii" \\
-                --store=gzip
+            backup_files(
+                source="/path/to/study/sessions/subject01",
+                target="/path/to/backups/subject01_data",
+                filelist=["bold/run1.nii", "bold/run2.nii", "anat/T1w.nii"],
+                store="gzip",
+            )
 
-        Create a ZIP archive of analysis results:
-        ::
+        Create a ZIP archive of analysis results::
 
-            qunex backup_files \\
-                --source=/path/to/analysis \\
-                --target=/path/to/archives/results_2024 \\
-                --filelist="output.csv,plots/figure1.png,plots/figure2.png" \\
-                --store=zip
+            backup_files(
+                source="/path/to/analysis",
+                target="/path/to/archives/results_2024",
+                filelist=["output.csv", "plots/figure1.png", "plots/figure2.png"],
+                store="zip",
+            )
     """
     import gzip
     import shutil
@@ -1747,15 +1742,13 @@ def backup_files(source, target, filelist, store="original", overwrite=False):
 
 def restore_files(source, target=None, overwrite=False, filelist=None):
     """
-    ``restore_files source=<backup location> [target=None] [overwrite=False] [filelist=None]``
-
     Restores files from a backup created by backup_files function. The backup can
     be in any format (original, gzip, or zip). Files are restored to their original
     locations or to a specified target directory, with automatic decompression of
     gzipped files when needed.
 
     Parameters:
-        --source (str):
+        source (str):
             The path to the backup location. Can be either:
 
             - A directory containing backed up files and file_list.txt
@@ -1764,7 +1757,7 @@ def restore_files(source, target=None, overwrite=False, filelist=None):
             The backup must contain a valid file_list.txt manifest describing
             the backup structure and original file locations.
 
-        --target (str, default None):
+        target (str, default None):
             The target directory where files should be restored:
 
             - If provided: Files are restored relative to this directory path,
@@ -1775,7 +1768,7 @@ def restore_files(source, target=None, overwrite=False, filelist=None):
 
             Parent directories are created automatically if they don't exist.
 
-        --overwrite (bool or str, default False):
+        overwrite (bool or str, default False):
             Controls behavior when restored files already exist at target:
 
             - False: If ANY target files exist, raise an error and do not restore
@@ -1786,7 +1779,7 @@ def restore_files(source, target=None, overwrite=False, filelist=None):
             - "skip": Only restore files that don't currently exist at the
               target location. Skip files that already exist without error.
 
-        --filelist (list or str, default None):
+        filelist (list or str, default None):
             Optional list of specific files to restore. If not provided, all files
             from the backup are restored. Can be specified as:
 
@@ -1855,33 +1848,31 @@ def restore_files(source, target=None, overwrite=False, filelist=None):
         - The restore operation is atomic when overwrite=False (all or nothing)
 
     Examples:
-        Restore to original location:
-        ::
+        Restore to original location::
 
-            qunex restore_files \\
-                --source=/path/to/backups/config_backup
+            restore_files(source="/path/to/backups/config_backup")
 
-        Restore to different location:
-        ::
+        Restore to different location::
 
-            qunex restore_files \\
-                --source=/path/to/backups/subject01_data \\
-                --target=/path/to/new/location
+            restore_files(
+                source="/path/to/backups/subject01_data",
+                target="/path/to/new/location",
+            )
 
-        Restore from ZIP archive, overwriting existing files:
-        ::
+        Restore from ZIP archive, overwriting existing files::
 
-            qunex restore_files \\
-                --source=/path/to/archives/results_2024.zip \\
-                --target=/path/to/restore/location \\
-                --overwrite=True
+            restore_files(
+                source="/path/to/archives/results_2024.zip",
+                target="/path/to/restore/location",
+                overwrite=True,
+            )
 
-        Restore only missing files:
-        ::
+        Restore only missing files::
 
-            qunex restore_files \\
-                --source=/path/to/backups/config_backup \\
-                --overwrite=missing
+            restore_files(
+                source="/path/to/backups/config_backup",
+                overwrite="skip",
+            )
     """
     import gzip
     import io
