@@ -480,6 +480,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                             diff=postfs_snapshot_paths["diff"],
                             action="delete",
                             exclude=hcp["snapshots"],
+                            _log=log,
                         )
 
                         # -> restore backup
@@ -488,6 +489,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                             source=postfs_snapshot_paths["backup"],
                             target=hcp["base"],
                             overwrite=True,
+                            _log=log,
                         )
                     elif have_postfs_diff or have_postfs_backup:
                         raise ge.CommandFailed(

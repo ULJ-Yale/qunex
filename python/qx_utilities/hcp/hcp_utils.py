@@ -210,7 +210,7 @@ def _get_postfreesurfer_snapshot_paths(hcp):
     }
 
 
-def _prepare_postfreesurfer_snapshot_state(hcp):
+def _prepare_postfreesurfer_snapshot_state(hcp, log=None):
     """Refresh rollback metadata used before rerunning FreeSurfer after PostFS."""
 
     paths = _get_postfreesurfer_snapshot_paths(hcp)
@@ -240,6 +240,7 @@ def _prepare_postfreesurfer_snapshot_state(hcp):
             "T1w/T2w_acpc_dc_restore_brain.nii.gz",
         ],
         overwrite=True,
+        _log=log,
     )
 
     return paths

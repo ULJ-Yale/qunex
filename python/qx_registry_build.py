@@ -562,8 +562,15 @@ def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
             cmd_type = qx_meta.get("type")
             cmd_logging = parse_logging(qx_meta.get("logging"), f"{pyfile}:{func_name}")
 
-            # Signature args (ordered) + annotations
-            sig_args = python_function_args(node)  # (name, ann_str)
+            # Signature args (ordered) + annotations. A leading underscore
+            # marks a parameter the caller passes and the user must not: a
+            # command's report log is threaded in by whatever invoked it, and
+            # is neither settable nor meaningful on the command line. Dropping
+            # it here keeps it out of `args`, which is what `Command.has_arg`
+            # reads when gmri decides where a `--name=value` goes.
+            sig_args = tuple(
+                (n, t) for n, t in python_function_args(node) if not n.startswith("_")
+            )
             sig_names = [n for n, _ in sig_args]
             has_options = "options" in sig_names
 
