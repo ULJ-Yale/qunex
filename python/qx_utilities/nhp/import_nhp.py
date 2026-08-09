@@ -29,15 +29,26 @@ import re
 # qx imports
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
+import qx_utilities.general.log as gl
 
 
-def map_to_qunex(file, sessionsfolder, sessions, overwrite):
+def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
     """
     Maps a file to QuNex NHP data structure.
+
+    A file whose name cannot be parsed records an error rather than printing
+    one: `False` is also what this returns for a legitimate skip, so the
+    caller's `if result:` cannot tell the two apart and the failure was
+    invisible to the run's status.
+
+    Each path that records ends with a `raw` newline, because `import_nhp`
+    still prints: a record renders as "\\n<line>" where a print emits
+    "<line>\\n", so without it the two run together. The manual prefix the
+    lines carried is gone -- the log spells nesting -- and the enclosing level
+    returns when `import_nhp` itself is converted.
     """
 
-    # log prefix
-    prefix = "        "
+    log = gl.log_or_console(_log)
 
     # remove trailing /
     try:
@@ -58,7 +69,8 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
         file_split = file.split(pathsep)
 
         if "dMRI" not in file_split:
-            print(prefix + "---> skipping %s, not a dMRI file" % (file))
+            log.step("skipping %s, not a dMRI file" % (file))
+            log.raw("\n")
             return False
         else:
             session = file_split[-3]
@@ -69,22 +81,25 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
             # store data
             data_file = file_split[-1]
     except Exception:
-        print("ERROR: Could not parse file:", file)
+        log.error("Could not parse file: %s" % (file))
+        log.raw("\n")
         return False
 
     # target folder and file
     tfile = os.path.join(sessionsfolder, session, "NHP", "dMRI", data_file)
-    print(prefix + "---> Processing session %s, file %s" % (session, data_file))
+    log.step("Processing session %s, file %s" % (session, data_file))
 
     # overwrite?
     if os.path.exists(tfile):
         if overwrite == "yes" or overwrite is True:
-            print(prefix + "---> file %s already exists: deleting ..." % (tfile))
+            log.step("file %s already exists: deleting ..." % (tfile))
             os.remove(tfile)
         else:
-            print(prefix + "---> file %s already exists: skipping ..." % (tfile))
+            log.step("file %s already exists: skipping ..." % (tfile))
+            log.raw("\n")
             return False
 
+    log.raw("\n")
     return [session, tfile]
 
 
@@ -95,6 +110,7 @@ def import_nhp(
     action="link",
     overwrite="no",
     archive="leave",
+    _log=None,
 ):
     """
     ``import_nhp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/NHP] [sessions=""] [action=link] [overwrite=no] [archive=leave]``
@@ -269,7 +285,7 @@ def import_nhp(
                 for sf in z.infolist():
                     if sf.filename[-1] != "/":
                         result = map_to_qunex(
-                            sf.filename, sessionsfolder, sessions, overwrite
+                            sf.filename, sessionsfolder, sessions, overwrite, _log=_log
                         )
                         if result:
                             tfile = result[1]
@@ -302,7 +318,7 @@ def import_nhp(
                 for member in tar.getmembers():
                     if member.isfile():
                         result = map_to_qunex(
-                            member.name, sessionsfolder, sessions, overwrite
+                            member.name, sessionsfolder, sessions, overwrite, _log=_log
                         )
                         if result:
                             tfile = result[1]
@@ -329,7 +345,7 @@ def import_nhp(
                 all_ok = False
 
         else:
-            result = map_to_qunex(file, sessionsfolder, sessions, overwrite)
+            result = map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=_log)
             if result:
                 tfile = result[1]
                 status, msg = gc.move_link_or_copy(

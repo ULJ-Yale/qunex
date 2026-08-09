@@ -21,6 +21,7 @@ import subprocess
 
 import qx_utilities.general.img as gi
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
 
@@ -53,22 +54,31 @@ def read_fidl(fidlf):
     return {'header': header, 'TR': tr, 'events': s, 'source': fidlf}
 
 
-def read_conc(concf, tr):
+def read_conc(concf, tr, _log=None):
+    """
+    Read the bold runs a conc file declares, or record why it could not.
+
+    An empty return means the conc file could not be used. The error is
+    recorded rather than printed, so the command that asked for it is reported
+    as failed instead of exiting 0 with an error on the terminal.
+    """
+    log = gl.log_or_console(_log)
+
     s = gi.read_text_file_to_lines(concf)
     nfiles = int(s[0].split(":")[1])
-    print(" ... %d bolds:" % (nfiles), end=" ")
     s = [e for e in s if "file:" in e]
 
     if len(s) != nfiles:
-        print("---> ERROR: number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles))
+        # no seam on this path: `join_fidl`'s next print and the report of the
+        # `CommandFailed` `split_fidl` raises both open with a newline
+        log.error("number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles))
         return []
 
     boldfiles = [e.split(":")[1].strip() for e in s]
 
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
-            print
-            print("---> ERROR: image does not exist! (%s)" % (boldfile))
+            log.error("image does not exist! (%s)" % (boldfile))
             return []
 
     # m = re.compile(r'_b.*?([0-9]+)')
@@ -77,16 +87,19 @@ def read_conc(concf, tr):
     start = 0
     for boldfile in boldfiles:
         boldname = m.match(boldfile).group(1)
-        print(boldname, end=" ")
         length = bold_info(boldfile).volumes * tr
         bolds.append([boldname, start, length, boldfile])
         start += length
 
-    print
+    log.detail("%d bolds: %s" % (nfiles, " ".join([e[0] for e in bolds])))
+    # seam: `join_fidl` prints again as soon as this returns, and a record
+    # renders as "\n<line>" where a print emits "<line>\n" -- without the
+    # newline the two run together. Goes when `join_fidl` is converted.
+    log.raw("\n")
     return bolds
 
 
-def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
+def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None, _log=None):
     """
     ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [outfolder=<output_folder>] [fidlname=<optional fidl name>]``
 
@@ -135,7 +148,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     # ---> read the conc file, check if the number matches
 
     print("\n---> reading %s" % (os.path.basename(concfile)))
-    bolddata = read_conc(concfile, tr)
+    bolddata = read_conc(concfile, tr, _log=_log)
 
     if len(fidldata) != len(bolddata):
         print("\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata])))
@@ -249,7 +262,7 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
         raise ge.CommandFailed("join_fidl_folder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
 
 
-def split_fidl(concfile, fidlfile, outfolder=None):
+def split_fidl(concfile, fidlfile, outfolder=None, _log=None):
     """
     ``split_fidl concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
 
@@ -289,7 +302,14 @@ def split_fidl(concfile, fidlfile, outfolder=None):
         else:
             raise ge.CommandFailed("split_fidl", "Processing error", "Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile))
 
-    bolddata = read_conc(concfile, tr)
+    bolddata = read_conc(concfile, tr, _log=_log)
+
+    # ---> an empty read means the conc file could not be used; without this
+    #      the loop below runs over nothing and the command exits cleanly
+    #      having split nothing
+
+    if not bolddata:
+        raise ge.CommandFailed("split_fidl", "Could not read the conc file", "No usable bold information in concfile: %s!" % (concfile), "Please check the report!")
 
     # ---> start the split loop
 

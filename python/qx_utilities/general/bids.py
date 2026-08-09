@@ -37,6 +37,7 @@ import yaml
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.filelock as fl
+import qx_utilities.general.log as gl
 
 unwarp = {
     None: "Unknown",
@@ -267,6 +268,7 @@ def import_bids(
     fileinfo=None,
     add_json_info="all",
     merge_multi_echo="no",
+    _log=None,
 ):
     """
     ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=leave] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all'] [merge_multi_echo='no']``
@@ -1020,6 +1022,7 @@ def import_bids(
                         fileinfo=fileinfo,
                         add_json_info=add_json_info,
                         merge_multi_echo=merge_multi_echo,
+                        _log=_log,
                     )
                     nmapping = True
                 except ge.CommandFailed as e:
@@ -1304,6 +1307,7 @@ def map_bids2nii(
     fileinfo=None,
     add_json_info="all",
     merge_multi_echo="no",
+    _log=None,
 ):
     """
     ``map_bids2nii [sourcefolder='.'] [overwrite='no'] [fileinfo='short'] [add_json_info='all'] [merge_multi_echo='no']``
@@ -1470,6 +1474,8 @@ def map_bids2nii(
                 --overwrite=yes
     """
 
+    log = gl.log_or_console(_log)
+
     if fileinfo is None:
         fileinfo = "short"
 
@@ -1499,8 +1505,9 @@ def map_bids2nii(
         info += ", session " + sessionid
 
     splash = "Running map_bids2nii for %s" % (info)
-    print(splash)
-    print("".join(["=" for e in range(len(splash))]))
+    # `raw` because a title over its own rule is not a record shape; it carries
+    # no trailing newline, since every record that follows opens with one
+    log.raw("\n%s\n%s" % (splash, "".join(["=" for e in range(len(splash))])))
 
     if overwrite not in ["yes", "no"]:
         raise ge.CommandError(
@@ -1514,7 +1521,7 @@ def map_bids2nii(
     bids_data = process_bids(bfolder)
 
     if merge_multi_echo == "yes" or merge_multi_echo is True:
-        print("---> checking for multi-echo sequences to merge")
+        log.step("checking for multi-echo sequences to merge")
         session_data = bids_data.get(session)
         if session_data:
             groups = {}
@@ -1565,8 +1572,8 @@ def map_bids2nii(
                     )
 
                     if not os.path.exists(output_path):
-                        print(
-                            f"    ... merging {len(files)} echoes into {output_filename}"
+                        log.detail(
+                            f"merging {len(files)} echoes into {output_filename}"
                         )
                         cmd = ["fslmerge", "-t", output_path] + [
                             f["filepath"] for f in files
@@ -1580,14 +1587,17 @@ def map_bids2nii(
                             )
                             merged_count += 1
                         except Exception as e:
-                            print(f"    ... ERROR: failed to merge files: {e}")
+                            # recorded rather than printed, and recorded only:
+                            # the loop must go on to the other groups, and a
+                            # recorded error is what fails the run
+                            log.error(f"failed to merge files: {e}")
                     else:
                         # print(f"    ... merged file {output_filename} already exists")
                         pass
 
             if merged_count > 0:
-                print(
-                    f"---> merged {merged_count} multi-echo sequences, refreshing BIDS data"
+                log.step(
+                    f"merged {merged_count} multi-echo sequences, refreshing BIDS data"
                 )
                 bids_data = process_bids(bfolder)
 
@@ -1623,11 +1633,15 @@ def map_bids2nii(
             else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
-                print("---> cleaned nii folder, removed existing files")
+                log.step("cleaned nii folder, removed existing files")
     else:
         os.makedirs(nfolder)
 
     # --- create session.txt file
+    # seam: `create_session_file` still prints, and a record renders as
+    # "\n<line>" where a print emits "<line>\n" -- without this newline the
+    # two run together. Goes when that helper takes a log.
+    log.raw("\n")
     sout = gc.create_session_file("map_bids2nii", sfolder, session, subject, overwrite)
 
     # --- open bids2nii log file
@@ -1660,8 +1674,8 @@ def map_bids2nii(
                 action="link",
             )
         if status:
-            print(
-                "---> linked %d.nii.gz <-- %s"
+            log.step(
+                "linked %d.nii.gz <-- %s"
                 % (imgn, bids_data["images"]["info"][image]["filename"])
             )
 
@@ -1707,8 +1721,8 @@ def map_bids2nii(
             )
         else:
             all_ok = False
-            print(
-                "---> ERROR: Linking failed: %d.nii.gz <-- %s"
+            log.error(
+                "Linking failed: %d.nii.gz <-- %s"
                 % (imgn, bids_data["images"]["info"][image]["filename"])
             )
             print(
@@ -1748,8 +1762,8 @@ def map_bids2nii(
                     ),
                     file=bout,
                 )
-                print(
-                    "---> ERROR: bval/bvec files were not found and were not mapped: %d.bval/.bvec <-- %s"
+                log.error(
+                    "bval/bvec files were not found and were not mapped: %d.bval/.bvec <-- %s"
                     % (
                         imgn,
                         bids_data["images"]["info"][image]["filename"].replace(
@@ -1761,6 +1775,11 @@ def map_bids2nii(
 
     sout.close()
     bout.close()
+
+    # seam: `import_bids` prints again once this returns, and the raise's own
+    # report opens with a newline but a clean return leaves the caller's next
+    # print running into the last record. Goes when `import_bids` is converted.
+    log.raw("\n")
 
     if not all_ok:
         raise ge.CommandFailed(

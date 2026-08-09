@@ -28,6 +28,7 @@ import re
 import shutil
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
+import qx_utilities.general.log as gl
 import zipfile
 import tarfile
 from datetime import datetime
@@ -55,11 +56,20 @@ pe_dir_map = {
 
 
 def map_to_qunex_cpls(
-    file, sessionsfolder, hcplsname, sessions, overwrite, prefix, nameformat
+    file, sessionsfolder, hcplsname, sessions, overwrite, nameformat, _log=None
 ):
     """
     Identifies and returns the intended location of the file based on its name.
+
+    A file whose name cannot be parsed records an error rather than printing
+    one: `False` is also what this returns for a legitimate skip, so the
+    caller's `if tfile:` cannot tell the two apart and the failure was
+    invisible to the run's status.
+
+    The `prefix` parameter this took is gone -- the log spells nesting -- and
+    the enclosing level returns when `import_hcp` itself is converted.
     """
+    log = gl.log_or_console(_log)
 
     try:
         if sessionsfolder[-1] == "/":
@@ -80,7 +90,11 @@ def map_to_qunex_cpls(
         session = m.group("session_name")
         data = m.group("data").split(pathsep)
     except Exception:
-        print("ERROR: Could not parse file:", file)
+        log.error("Could not parse file: %s" % (file))
+        # seam: `import_hcp` prints again once this returns, and a record
+        # renders as "\n<line>" where a print emits "<line>\n" -- without the
+        # newline the two run together. Goes when `import_hcp` is converted.
+        log.raw("\n")
         return False
 
     if any([e[0] == "." for e in [subjid, session] + data]):
@@ -98,41 +112,39 @@ def map_to_qunex_cpls(
         sessions["list"].append(sessionid)
         if os.path.exists(tfolder):
             if overwrite == "yes" or overwrite is True:
-                print(
-                    prefix
-                    + "---> hcpls for session %s already exists: cleaning session"
+                log.step(
+                    "hcpls for session %s already exists: cleaning session"
                     % (sessionid)
                 )
                 shutil.rmtree(tfolder)
                 sessions["clean"].append(sessionid)
             elif not os.path.exists(os.path.join(tfolder, "hcpfs2nii.log")):
-                print(
-                    prefix
-                    + "---> incomplete hcpls for session %s already exists: cleaning session"
+                log.step(
+                    "incomplete hcpls for session %s already exists: cleaning session"
                     % (session)
                 )
                 shutil.rmtree(tfolder)
                 sessions["clean"].append(session)
             else:
                 sessions["skip"].append(session)
-                print(
-                    prefix
-                    + "---> hcpls for session %s already exists: skipping session"
-                    % (session)
-                )
-                print(prefix + "    files previously mapped:")
-                with open(os.path.join(tfolder, "hcpfs2nii.log")) as hcpls_log:
-                    for logline in hcpls_log:
-                        if "HCPFS to nii mapping report" in logline:
-                            continue
-                        elif "=>" in logline:
-                            mapped_file = logline.split("=>")[0].strip()
-                            print(
-                                prefix + "    ... %s" % (os.path.basename(mapped_file))
-                            )
+                with log.section(
+                    "hcpls for session %s already exists: skipping session" % (session)
+                ):
+                    log.step("files previously mapped:")
+                    with open(os.path.join(tfolder, "hcpfs2nii.log")) as hcpls_log:
+                        for logline in hcpls_log:
+                            if "HCPFS to nii mapping report" in logline:
+                                continue
+                            elif "=>" in logline:
+                                mapped_file = logline.split("=>")[0].strip()
+                                log.detail(os.path.basename(mapped_file))
         else:
-            print(prefix + "---> creating hcpl session %s" % (sessionid))
+            log.step("creating hcpl session %s" % (sessionid))
             sessions["map"].append(sessionid)
+
+        # seam: see the note in the docstring -- the caller still prints, so
+        # the last record here ends its own line
+        log.raw("\n")
 
     if os.path.exists(tfile):
         if sessionid in sessions["skip"]:
@@ -160,6 +172,7 @@ def import_hcp(
     filesort=None,
     processed_data=None,
     hcp_dataset=None,
+    _log=None,
 ):
     """
     ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=leave] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>] [hcp_dataset=<HCP dataset name>]``
@@ -519,8 +532,8 @@ def import_hcp(
                                 hcplsname,
                                 sessions_list,
                                 overwrite,
-                                "        ",
                                 nameformat,
+                                _log=_log,
                             )
                             if tfile:
                                 fdata = z.read(sf)
@@ -551,8 +564,8 @@ def import_hcp(
                                 hcplsname,
                                 sessions_list,
                                 overwrite,
-                                "        ",
                                 nameformat,
+                                _log=_log,
                             )
                             if tfile:
                                 fobj = tar.extractfile(member)
@@ -578,8 +591,8 @@ def import_hcp(
                     hcplsname,
                     sessions_list,
                     overwrite,
-                    "    ",
                     nameformat,
+                    _log=_log,
                 )
                 if tfile:
                     status, msg = gc.move_link_or_copy(

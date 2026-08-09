@@ -62,8 +62,8 @@ def sign(x):
 
 
 def read_text_file_to_lines(filename):
-    file = open(filename, 'r')
-    s = file.read()
+    with open(filename, 'r') as file:
+        s = file.read()
     s = s.replace('\r', '\n')
     s = s.replace('\n\n', '\n')
     s = s.split('\n')
