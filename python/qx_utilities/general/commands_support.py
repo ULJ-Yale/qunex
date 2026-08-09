@@ -501,6 +501,7 @@ extra_parameters = [
     "nprocess",
     "logging",
     "keep_comlogs",
+    "runlog_content",
     "logfolder",
     "logstatus",
     "basefolder",

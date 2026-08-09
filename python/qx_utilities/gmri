@@ -399,7 +399,10 @@ def runCommand(command, args):
         run.final_report(stati)
         run.write_status(stati)
 
-        if any(failed for _, _, failed in stati):
+        # `failed is None` is a call that did not complete -- a worker that
+        # died -- and it fails the run as squarely as a call that reported a
+        # failure does
+        if any(failed is None or failed for _, _, failed in stati):
             raise ge.CommandFailed(
                 command,
                 "Not all tasks completed fully",

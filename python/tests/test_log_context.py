@@ -180,6 +180,36 @@ def test_the_final_report_sums_the_failures(tmp_path, capsys):
         assert "... S02 ---> done" in f.read()
 
 
+def test_the_final_report_counts_and_groups_the_calls(tmp_path, capsys):
+    """The manifest: how many of each, then who, then where to look."""
+    run = context(tmp_path)
+    run.final_report(
+        [
+            ("S01", "completed [log: a.log]", 0),
+            ("S02", "no luck [log: b.log]", 1),
+            ("S03", "the worker died", None),
+        ]
+    )
+
+    out = capsys.readouterr().out
+    assert "3 run, 1 successful, 1 failed, 1 did not complete" in out
+    assert "Successful:\n     ... S01 ---> completed [log: a.log]" in out
+    assert "Failed:\n     ... S02 ---> no luck [log: b.log]" in out
+    assert "Did not complete:\n     ... S03 ---> the worker died" in out
+    # a call that did not report leaves the overall verdict unknown
+    assert "Success status not reported for some or all tasks" in out
+
+
+def test_a_group_with_nothing_in_it_is_left_out(tmp_path, capsys):
+    run = context(tmp_path)
+    run.final_report([("S01", "completed", 0)])
+
+    out = capsys.readouterr().out
+    assert "1 run, 1 successful, 0 failed, 0 did not complete" in out
+    assert "Failed:" not in out
+    assert "Did not complete:" not in out
+
+
 def test_the_final_report_ignores_unknown_but_reports_the_gap(tmp_path, capsys):
     run = context(tmp_path)
     run.final_report([("S01", "done", 0), ("Unknown", "Unknown", None)])

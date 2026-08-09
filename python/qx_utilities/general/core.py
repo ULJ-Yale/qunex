@@ -779,7 +779,8 @@ def run_external_parallel(calls, cores=None, prepend=""):
 results = []
 lock = multiprocessing.Lock()
 
-# What one call through `run_with_log` came to. `failed` is 0 or 1; `error`
+# What one call through `run_with_log` came to. `failed` is 0, 1 or None
+# ("did not report", the spelling `general.log.digest` already uses); `error`
 # is the exception the call raised, or None -- never what the command
 # returned, which is for its python caller (see `run_with_log`). `prepend` is
 # not a field: it is an input, and `run_in_parallel` binds it into the
@@ -803,16 +804,25 @@ def record(outcome, prepend=""):
     with lock:
         see = " [log: %s]." % outcome.comlog if outcome.comlog else "."
 
-        if outcome.failed:
+        if outcome.failed is None:
+            print("%s%s did not complete%s" % (prepend, outcome.name, see))
+        elif outcome.failed:
             print("%s%s failed%s" % (prepend, outcome.name, see))
         else:
             print("%s%s finished successfully%s" % (prepend, outcome.name, see))
 
 
-def record_future(future, prepend=""):
+def record_future(future, name=None, prepend=""):
     if future.exception() is not None:
         print("Unhandled exception")
         print(future.exception())
+        # the worker itself died -- a BrokenProcessPool, an OOM kill, a
+        # pickling failure, or a raise from the lines of `run_with_log`
+        # outside its try -- so there is no outcome to take. This used to
+        # print and append nothing, which dropped the call from the digest,
+        # from the status record and from the failure count: a run in which a
+        # session never executed reported success and exited 0.
+        record(CallOutcome(name, None, future.exception(), None), prepend)
     else:
         record(future.result(), prepend)
 
@@ -868,10 +878,11 @@ def run_with_log(
                        be followed live.
 
     A command that declares a ``_log`` parameter is handed a
-    :class:`general.log.ReportLog` to report into, and its report -- rather than
-    a two-line stub -- is what goes into the runlog. See §14.15 of the logging
+    :class:`general.log.ReportLog` to report into. See §14.15 of the logging
     plan: the signature is the declaration, and the underscore is what keeps the
-    parameter off the command line.
+    parameter off the command line. Its report goes into the comlog live, and
+    into the runlog as well when ``runlog_content`` is ``full`` or the call has
+    no comlog to hold it.
 
     **A command fails by raising or by recording an error, never by what it
     returns.** Its return value is for a python caller -- a path, a count, a
@@ -1001,7 +1012,20 @@ def run_with_log(
             if failed
             else f"---> Successful completion of task at {datetime.now()}"
         )
-        body = status if report is None else "%s\n%s" % (report, status)
+        # the status line names the comlog in both modes: under `manifest` it is
+        # the only pointer to what the command actually said
+        if comlogname:
+            status += " [log: %s]" % comlogname
+
+        # `runlog_content` decides whether the report goes here as well as into
+        # the comlog, where the same text already is -- and the setting is
+        # clamped: a call with no comlog puts its report in the runlog whatever
+        # the setting says, since `manifest` asks to avoid duplication and not
+        # to discard the only copy.
+        keep_report = report is not None and (
+            comlogname is None or run.settings.runlog_content == "full"
+        )
+        body = "%s\n%s" % (report, status) if keep_report else status
         run.write("\n%s\n%s\n" % (entry, body))
 
     return CallOutcome(name, failed, error, comlogname)
@@ -1062,9 +1086,12 @@ def run_in_parallel(calls, cores=None, prepend="", run=None):
                 tags=call.get("tags"),
                 tee=False,
             )
-            # `prepend` is bound here rather than returned by the worker: it is
-            # an input, and the callback is where it is needed
-            future.add_done_callback(lambda f, p=prepend: record_future(f, p))
+            # the name and `prepend` are bound here rather than returned by the
+            # worker: both are inputs, and a worker that dies returns nothing
+            # to take the name from
+            future.add_done_callback(
+                lambda f, n=call["name"], p=prepend: record_future(f, n, p)
+            )
 
     return results
 

@@ -762,6 +762,8 @@ def copy_study(
                 batchfile = os.path.join(processing_folder, item)
                 print(f" ... processing {batchfile}")
                 filter_batch(batchfile, sessions, subjects)
+
+                
 def filter_batch(batchfile, sessions=None, subjects=None):
     """
     A helper function that removes all unused sessions from a batch file.

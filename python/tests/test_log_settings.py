@@ -351,6 +351,59 @@ def test_a_study_may_state_keep_comlogs_and_comlog_folders(tmp_path):
     assert settings.comlog_folders == ("session",)
 
 
+# ------------------------------------------------------- runlog_content
+
+
+def test_runlog_content_defaults_to_the_manifest():
+    """A utility command's report and its comlog hold the same text."""
+    assert resolve_logging("c", {}).runlog_content == "manifest"
+
+
+def test_runlog_content_comes_from_the_settings_file(tmp_path, monkeypatch):
+    user = write(
+        tmp_path / "user" / "qunex_settings.yaml",
+        "logging:\n  runlog_content: full\n",
+    )
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+
+    assert resolve_logging("c", {}).runlog_content == "full"
+
+
+def test_the_command_line_runlog_content_beats_the_settings_file(tmp_path, monkeypatch):
+    user = write(
+        tmp_path / "user" / "qunex_settings.yaml",
+        "logging:\n  runlog_content: full\n",
+    )
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+
+    assert resolve_logging("c", {"runlog_content": "manifest"}).runlog_content == (
+        "manifest"
+    )
+
+
+def test_an_unknown_runlog_content_is_rejected(tmp_path, monkeypatch):
+    with pytest.raises(ge.CommandError):
+        resolve_logging("c", {"runlog_content": "everything"})
+
+    user = write(
+        tmp_path / "user" / "qunex_settings.yaml",
+        "logging:\n  runlog_content: everything\n",
+    )
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+    with pytest.raises(ge.CommandError):
+        resolve_logging("c", {})
+
+
+def test_a_study_may_state_runlog_content(tmp_path):
+    write(
+        tmp_path / "study" / "qunex_settings.yaml",
+        "logging:\n  runlog_content: full\n",
+    )
+
+    settings = ls.apply_study_settings(LogSettings(), str(tmp_path / "study"), {})
+    assert settings.runlog_content == "full"
+
+
 # --------------------------------------------- the --log deprecation remap
 
 

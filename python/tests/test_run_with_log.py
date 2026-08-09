@@ -41,6 +41,11 @@ def takes_everything(**kwargs):
     return False
 
 
+def dies(sessionid=None):
+    """A worker that never comes back: no outcome, only a broken pool."""
+    os._exit(1)
+
+
 def returns_data(folder=None):
     print("did the work")
     return ["a.txt", "b.txt"]
@@ -64,6 +69,18 @@ def run(tmp_path):
         "test_command",
         {},
         gl.LogSettings(),
+        {"basefolder": str(tmp_path)},
+        timestamp=STAMP,
+    )
+
+
+@pytest.fixture
+def full_run(tmp_path):
+    """A run whose runlog also carries each call's report."""
+    return gl.RunContext(
+        "test_command",
+        {},
+        gl.LogSettings(runlog_content="full"),
         {"basefolder": str(tmp_path)},
         timestamp=STAMP,
     )
@@ -149,23 +166,73 @@ def test_a_disabled_run_writes_no_files_at_all(tmp_path, capsys):
     assert not list(tmp_path.rglob("*.log"))
 
 
-def test_a_command_that_declares_a_log_gets_one_and_its_report_reaches_the_runlog(run):
+def test_a_command_that_declares_a_log_gets_one_and_reports_into_its_comlog(run):
     run.header()
     outcome = gc.run_with_log(
         reports, args={"sessionid": "S01"}, run=run, tags=["reports", "S01"]
     )
 
     assert outcome.error is None and outcome.failed == 0
-    with open(run.path) as f:
-        runlog = f.read()
-    # the report, not the two-line stub
-    assert "---> reporting on S01" in runlog
     with open(outcome.comlog) as f:
         comlogtext = f.read()
     # live in the comlog through the tee, and the injected parameter is not
     # spelled into the call echo
     assert "---> reporting on S01" in comlogtext
     assert "_log" not in comlogtext
+
+
+def test_under_runlog_content_manifest_the_runlog_indexes_rather_than_repeats(run):
+    """The default: the report is in the comlog, and the runlog says where."""
+    run.header()
+    outcome = gc.run_with_log(
+        reports, args={"sessionid": "S01"}, run=run, tags=["reports", "S01"]
+    )
+
+    with open(run.path) as f:
+        runlog = f.read()
+    assert "---> reporting on S01" not in runlog
+    assert "[log: %s]" % outcome.comlog in runlog
+
+
+def test_under_runlog_content_full_the_runlog_carries_the_report_too(full_run):
+    full_run.header()
+    outcome = gc.run_with_log(
+        reports, args={"sessionid": "S01"}, run=full_run, tags=["reports", "S01"]
+    )
+
+    with open(full_run.path) as f:
+        runlog = f.read()
+    assert "---> reporting on S01" in runlog
+    assert "[log: %s]" % outcome.comlog in runlog
+
+
+def test_with_no_comlog_the_report_goes_to_the_runlog_whatever_the_setting_says(
+    tmp_path,
+):
+    """
+    The clamp, and the one case that would lose the output silently.
+
+    Under ``--logging=runlog`` there is no comlog, so the runlog is the only
+    file that would hold the report: ``manifest`` asks to avoid duplication,
+    not to discard the only copy.
+    """
+    run = gl.RunContext(
+        "test_command",
+        {},
+        gl.LogSettings(comlog=False),
+        {"basefolder": str(tmp_path)},
+        timestamp=STAMP,
+    )
+    run.header()
+
+    outcome = gc.run_with_log(
+        reports, args={"sessionid": "S01"}, run=run, tags=["reports", "S01"]
+    )
+
+    assert outcome.comlog is None
+    assert run.settings.runlog_content == "manifest"
+    with open(run.path) as f:
+        assert "---> reporting on S01" in f.read()
 
 
 def test_a_command_that_does_not_declare_one_keeps_the_two_line_stub(run):
@@ -270,7 +337,7 @@ def test_parallel_calls_keep_their_output_in_their_own_comlog_and_off_the_consol
         assert other not in text
 
 
-def test_a_log_declaring_command_runs_per_session_and_writes_one_runlog(run):
+def test_a_log_declaring_command_runs_per_session_and_writes_one_runlog(full_run):
     """
     The log is built inside ``run_with_log``, i.e. in the worker.
 
@@ -278,7 +345,7 @@ def test_a_log_declaring_command_runs_per_session_and_writes_one_runlog(run):
     arguments and ``pickle.dumps(sys.stdout)`` raises. So this pins both that
     the per-session path reports at all and that it still writes one runlog.
     """
-    run.header()
+    full_run.header()
     calls = [
         {
             "name": "reports: %s" % sid,
@@ -289,11 +356,48 @@ def test_a_log_declaring_command_runs_per_session_and_writes_one_runlog(run):
         for sid in ["S01", "S02"]
     ]
 
-    results = gc.run_in_parallel(calls, cores=2, run=run)
+    results = gc.run_in_parallel(calls, cores=2, run=full_run)
 
     assert len(results) == 2
-    assert len(list(os.listdir(run.logfolder))) == 2
-    with open(run.path) as f:
+    assert len(list(os.listdir(full_run.logfolder))) == 2
+    with open(full_run.path) as f:
         runlog = f.read()
     for sid in ["S01", "S02"]:
         assert "---> reporting on %s" % sid in runlog
+
+
+def test_a_worker_that_dies_is_recorded_as_a_call_that_did_not_complete(run, capsys):
+    """
+    The hole nobody would find by reading: no outcome comes back at all.
+
+    A ``BrokenProcessPool``, an OOM kill or a raise from the lines of
+    ``run_with_log`` outside its try used to be printed and appended nowhere,
+    so the call went missing from the digest and from the failure count -- a
+    run in which a session never executed reported success and exited 0.
+    """
+    run.header()
+    calls = [
+        {
+            "name": "dies: S01",
+            "function": dies,
+            "args": {"sessionid": "S01"},
+            "tags": ["dies", "S01"],
+        }
+    ]
+
+    results = gc.run_in_parallel(calls, cores=1, run=run)
+
+    assert len(results) == 1
+    # "did not complete", the spelling `digest` already has
+    assert results[0].name == "dies: S01"
+    assert results[0].failed is None
+    assert results[0].error is not None
+    assert "dies: S01 did not complete" in capsys.readouterr().out
+
+    # and it is in the digest, in its own group, and it makes the run unsound:
+    # `gmri` raises CommandFailed on `failed is None or failed`
+    stati = [(o.name, str(o.error or "completed"), o.failed) for o in results]
+    report = run.final_report(stati)
+    assert "1 run, 0 successful, 0 failed, 1 did not complete" in report
+    assert "Did not complete:" in report
+    assert any(failed is None or failed for _, _, failed in stati)

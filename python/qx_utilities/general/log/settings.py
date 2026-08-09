@@ -23,6 +23,8 @@ questions the log machinery asks before it writes anything::
                                  #          | nested (a folder per recipe step)
         keep_comlogs: false      # never delete a comlog, whatever a caller asks
         comlog_folders: [study]  # study | session | hcp | <path>, one or more
+        runlog_content: manifest # manifest | full -- whether the runlog also
+                                 # carries each utility command's report
         skip_commands: []        # never log these commands
         log_commands: []         # always log these, whatever else says
         skip_types: []           # skip by registry command type, e.g. [utility]
@@ -38,8 +40,8 @@ this order, each layer overriding the one before it:
 5. ``skip_types`` then ``skip_commands``, then ``log_commands``, which wins
    over both -- and, for commands not yet carrying a ``logging:`` field, the
    legacy ``commands_support.logskip_commands`` list,
-6. ``--logging=<none|comlog|runlog|full>`` and ``--keep_comlogs`` on the
-   command line.
+6. ``--logging=<none|comlog|runlog|full>``, ``--keep_comlogs`` and
+   ``--runlog_content=<manifest|full>`` on the command line.
 
 ``comlog_folders`` is the destination half of what ``--log`` used to answer;
 ``--log`` kept the retention half. A command's own ``--comlog_folders``
@@ -95,6 +97,10 @@ OUTSIDE_STUDY = ["home", "cwd"]
 # recognised log folder layouts
 LAYOUTS = ["default", "legacy", "nested"]
 
+# what a runlog may hold beyond the call echoes, the status lines and the
+# closing manifest
+RUNLOG_CONTENTS = ["manifest", "full"]
+
 
 @dataclass(frozen=True)
 class LogSettings:
@@ -117,6 +123,18 @@ class LogSettings:
         comlog_folders: where each comlog goes -- ``study``, ``session``,
             ``hcp`` or a path. The first is where it is written, the rest are
             where it is mapped. A tuple, because the dataclass is frozen.
+        runlog_content: what the runlog holds for a **utility** command --
+            ``manifest`` (the default: the call echo, a status line naming the
+            comlog, and the closing manifest) or ``full``, which adds each
+            call's report. A utility command's report and its comlog hold the
+            same text, so ``full`` writes every line twice; it is what to ask
+            for when one self-contained file is wanted. Read only by
+            ``general.core.run_with_log``, and clamped there: a call with no
+            comlog puts its report in the runlog whatever this says, since
+            ``manifest`` is asking to avoid duplication and not to discard the
+            only copy. Processing commands do not read it -- they have no
+            comlog of their own, so ``process.writelog`` is the only thing
+            that puts their report in a file.
     """
 
     enabled: bool = True
@@ -126,6 +144,7 @@ class LogSettings:
     layout: str = "default"
     keep_comlogs: bool = False
     comlog_folders: tuple = ("study",)
+    runlog_content: str = "manifest"
 
 
 def user_settings_file():
@@ -262,6 +281,9 @@ def settings_to_log_settings(section):
         layout=_choice(section, "layout", "default", LAYOUTS),
         keep_comlogs=_flag(section, "keep_comlogs", False),
         comlog_folders=tuple(_as_list(section.get("comlog_folders")) or ["study"]),
+        runlog_content=_choice(
+            section, "runlog_content", "manifest", RUNLOG_CONTENTS
+        ),
     )
 
 
@@ -323,6 +345,36 @@ def apply_keep_comlogs(settings, value):
     return replace(settings, keep_comlogs=keep)
 
 
+def apply_runlog_content(settings, value):
+    """
+    Apply ``--runlog_content`` to `settings`.
+
+    Parameters:
+        settings: the settings to override.
+        value: ``manifest``, ``full``, or None, which leaves `settings`
+            untouched.
+
+    Returns:
+        the resulting :class:`LogSettings`.
+
+    Raises:
+        ge.CommandError: on any other value.
+    """
+    if value is None:
+        return settings
+
+    content = str(value).strip().lower()
+    if content not in RUNLOG_CONTENTS:
+        raise ge.CommandError(
+            "qunex settings",
+            "Invalid runlog_content value",
+            "--runlog_content must be one of [%s], got: %r"
+            % (", ".join(RUNLOG_CONTENTS), value),
+        )
+
+    return replace(settings, runlog_content=content)
+
+
 def apply_study_settings(settings, studyfolder, args):
     """
     Layer a study's ``logging:`` section over already resolved settings.
@@ -356,6 +408,7 @@ def apply_study_settings(settings, studyfolder, args):
             "layout",
             "keep_comlogs",
             "comlog_folders",
+            "runlog_content",
         )
         if field in section
     }
@@ -363,7 +416,8 @@ def apply_study_settings(settings, studyfolder, args):
     settings = apply_mode(
         replace(settings, **overrides), args.get("logging"), "--logging"
     )
-    return apply_keep_comlogs(settings, args.get("keep_comlogs"))
+    settings = apply_keep_comlogs(settings, args.get("keep_comlogs"))
+    return apply_runlog_content(settings, args.get("runlog_content"))
 
 
 # The settings this process resolved. A module-level value models exactly what
@@ -458,4 +512,5 @@ def resolve_logging(command, args, qx_command=None, studyfolder=None):
         settings = replace(settings, enabled=False)
 
     settings = apply_mode(settings, args.get("logging"), "--logging")
-    return apply_keep_comlogs(settings, args.get("keep_comlogs"))
+    settings = apply_keep_comlogs(settings, args.get("keep_comlogs"))
+    return apply_runlog_content(settings, args.get("runlog_content"))

@@ -527,9 +527,27 @@ class RunContext:
         """
         reported, failed_total = digest(stati)
 
+        # the manifest: the counts first, then the calls grouped by how they
+        # ended, each entry keeping the `[log: …]` its summary carries. A run
+        # of a hundred sessions is read from the top, and the question asked of
+        # it is "what failed and where do I look".
+        groups = [
+            ("Successful", [s for s in reported if s[2] == 0]),
+            ("Failed", [s for s in reported if s[2]]),
+            ("Did not complete", [s for s in reported if s[2] is None]),
+        ]
+
         lines = ["\n\n---> Final report for command %s" % self.command]
-        for sid, report, _ in reported:
-            lines.append("... %s ---> %s" % (sid, report))
+        lines.append(
+            "     %d run, %d successful, %d failed, %d did not complete"
+            % (len(reported), *(len(group) for _, group in groups))
+        )
+        for title, group in groups:
+            if not group:
+                continue
+            lines.append("     %s:" % title)
+            for sid, report, _ in group:
+                lines.append("     ... %s ---> %s" % (sid, report))
 
         if failed_total is None:
             lines.append("---> Success status not reported for some or all tasks")
