@@ -53,6 +53,18 @@ def _note(log, text):
         log.raw(text)
 
 
+def _say(log, level, message, depth=0):
+    """
+    Record `message` at `level` on the report log, when there is one.
+
+    :func:`_note`'s counterpart for text the helpers here state themselves:
+    the level method spells the marker and the indent, so the message never
+    carries them. `log` is optional for the same reason it is in :func:`_note`.
+    """
+    if log is not None:
+        getattr(log, level)(message, depth=depth)
+
+
 @contextlib.contextmanager
 def _streaming(log, comlog):
     """
@@ -756,16 +768,14 @@ def get_session_folders(sinfo, options):
     return d
 
 
-def missing_report(missing, message, prefix):
+def missing_report(log, missing, message):
     """
-    Takes a list of missing files and prepares a list report.
+    Note `message` and the files that are missing, one line each.
     """
 
-    r = message + "\n"
+    _say(log, "step", message)
     for file in missing:
-        r += prefix + file + "\n"
-
-    return r
+        _say(log, "detail", file)
 
 
 # the spellings a comlog is scanned for. Deliberately narrow: a wider net
@@ -830,10 +840,10 @@ def check_run(
 
     if tfile is not None and os.path.exists(tfile) and not overwrite:
         if verbose:
-            _note(
+            _say(
                 log,
-                "\n---> %s test file [%s] present"
-                % (command, os.path.basename(tfile)),
+                "step",
+                f"{command} test file [{os.path.basename(tfile)}] present",
             )
         report = "%s finished" % (command)
         passed = "done"
@@ -849,19 +859,17 @@ def check_run(
                 )
                 if filesmissing:
                     if verbose:
-                        _note(
+                        missing_report(
                             log,
-                            missing_report(
-                                filesmissing,
-                                "\n---> Full file check revealed that the following files were not created:",
-                                "            ",
-                            ),
+                            filesmissing,
+                            "Full file check revealed that the following files "
+                            "were not created:",
                         )
                     report += ", full file check incomplete"
                     passed = "incomplete"
                     failed = 1
                 else:
-                    _note(log, "\n---> Full file check passed")
+                    _say(log, "step", "Full file check passed")
                     report += ", full file check complete"
 
             except ge.CommandFailed as e:
@@ -887,7 +895,8 @@ def check_run(
 
     else:
         if verbose and tfile is not None:
-            _note(log, "\n---> %s test file missing:\n     %s" % (command, tfile))
+            _say(log, "step", f"{command} test file missing:")
+            _say(log, "info", tfile, depth=1)
         report = "%s not finished" % (command)
         passed = None
         failed = 1
@@ -976,13 +985,13 @@ def close_log(comlog, logfolders, status, remove, log=None):
 
     if status == "done" and remove and not gl.active().keep_comlogs:
         if log_has_errors(tfile):
-            _note(log, "\n---> completed, comlog kept -- it reports errors: %s" % (tfile))
+            _say(log, "step", f"completed, comlog kept -- it reports errors: {tfile}")
         else:
             os.remove(tfile)
-            _note(log, "\n---> completed [%s], comlog removed" % (status))
+            _say(log, "step", f"completed [{status}], comlog removed")
             return None
 
-    _note(log, "\n---> logfile: %s" % (tfile))
+    _say(log, "step", f"logfile: {tfile}")
 
     # -- do we have multiple logfolders?
     tname = os.path.basename(tfile)
@@ -991,9 +1000,9 @@ def close_log(comlog, logfolders, status, remove, log=None):
         try:
             os.makedirs(logfolder, exist_ok=True)
             gc.link_or_copy(tfile, nfile)
-            _note(log, "\n---> logfile: %s" % (nfile))
+            _say(log, "step", f"logfile: {nfile}")
         except Exception:
-            _note(log, "\n---> WARNING: could not map logfile to: %s" % (nfile))
+            _say(log, "warning", f"could not map logfile to: {nfile}")
 
     return tfile
 

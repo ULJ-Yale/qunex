@@ -350,8 +350,7 @@ class ReportLog:
 
         return pc.check_for_files(self, checkfiles, ok, bad, all, status)
 
-    def link_or_copy(self, source, target, status=None, name=None,
-                     prefix=None, symlink=False):
+    def link_or_copy(self, source, target, status=None, name=None, symlink=False):
         """
         Link or copy a file, recording the mapping outcome in the report.
 
@@ -360,7 +359,7 @@ class ReportLog:
         """
         import qx_utilities.general.core as gc
 
-        return gc.link_or_copy(source, target, self, status, name, prefix, symlink)
+        return gc.link_or_copy(source, target, self, status, name, symlink)
 
     def use_or_skip_bold(self, sinfo, options):
         """

@@ -63,10 +63,10 @@ def test_link_or_copy_notes_the_mapping_and_returns_a_bool(tmp_path, log):
     source.write_text("x")
 
     assert gc.link_or_copy(source, tmp_path / "target.nii.gz", log, name="T1") is True
-    assert log.text == "\n ... T1 mapped"
+    assert log.text == "\n     ... T1 mapped"
 
     assert gc.link_or_copy(tmp_path / "nope", tmp_path / "t2", log, name="T2") is False
-    assert "ERROR: T2 could not be copied" in log.text
+    assert "\n---> ERROR: T2 could not be copied" in log.text
 
 
 def test_link_or_copy_without_a_log_still_reports_by_return_value(tmp_path):
@@ -276,7 +276,9 @@ def test_check_run_reports_an_incomplete_full_file_check(tmp_path, log):
 
     assert (passed, failed) == ("incomplete", 1)
     assert report == "HCP Test finished, full file check incomplete"
-    assert "two.nii.gz" in log.text
+    # the step and its missing files are records, not hand-spelled indents
+    assert "\n---> Full file check revealed" in log.text
+    assert log.text.endswith("\n     ... " + os.path.join(str(target), "two.nii.gz"))
     with open(path) as written:
         assert "X " + os.path.join(str(target), "two.nii.gz") in written.read()
 

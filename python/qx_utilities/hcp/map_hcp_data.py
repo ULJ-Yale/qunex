@@ -491,8 +491,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                             ),
                             f["bold_qx_vol"],
                             status,
-                            "volume image",
-                            "\n     ... ")
+                            "volume image")
 
                     if os.path.exists(f["bold_qx_dts"]) and not overwrite:
                         log.detail("grayordinate image ready")
@@ -506,8 +505,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                             ),
                             f["bold_qx_dts"],
                             status,
-                            "grayordinate image",
-                            "\n     ... ")
+                            "grayordinate image")
 
                     if os.path.exists(f["bold_mov"]) and not overwrite:
                         log.detail("movement data ready")

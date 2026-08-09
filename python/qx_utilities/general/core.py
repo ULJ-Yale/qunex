@@ -1182,9 +1182,7 @@ def pcslist(s):
     return s
 
 
-def link_or_copy(
-    source, target, log=None, status=None, name=None, prefix=None, symlink=False
-):
+def link_or_copy(source, target, log=None, status=None, name=None, symlink=False):
     """
     Hard-link a file, falling back to a copy, and report the outcome.
 
@@ -1195,28 +1193,25 @@ def link_or_copy(
             noted in it.
         status (bool | None): running status carried through (defaults True).
         name (str | None): human readable name used in the report message.
-        prefix (str | None): prefix for the report message (defaults ``"\n ... "``).
         symlink (bool): create a symbolic link instead of a hard link.
 
     Returns:
         bool: the running status -- False when the file could not be mapped.
     """
 
-    def note(text):
+    def note(level, message):
         if log is not None:
-            log.raw(text)
+            getattr(log, level)(message)
 
     if status is None:
         status = True
     if name is None:
         name = "file"
-    if prefix is None:
-        prefix = "\n ... "
     if os.path.exists(source):
         try:
             if os.path.exists(target):
                 if os.path.samefile(source, target):
-                    note("%s%s already mapped" % (prefix, name))
+                    note("detail", f"{name} already mapped")
                     return status and True
                 else:
                     os.remove(target)
@@ -1227,24 +1222,21 @@ def link_or_copy(
             else:
                 os.symlink(source, target)
 
-            note("%s%s mapped" % (prefix, name))
+            note("detail", f"{name} mapped")
             return status and True
 
         except Exception:
             try:
                 shutil.copy2(source, target)
-                note("%s%s copied" % (prefix, name))
+                note("detail", f"{name} copied")
                 return status and True
             except Exception:
-                note(
-                    "%sERROR: %s could not be copied, check permissions! "
-                    % (prefix, name)
-                )
+                note("error", f"{name} could not be copied, check permissions!")
                 return False
     else:
         note(
-            "%sERROR: %s could not be copied, source file does not exist [%s]! "
-            % (prefix, name, source)
+            "error",
+            f"{name} could not be copied, source file does not exist [{source}]!",
         )
         return False
 
