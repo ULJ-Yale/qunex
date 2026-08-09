@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-09T18:06:54.868672+00:00'
+generated_at: '2026-08-09T23:02:03.055941+00:00'
 source:
     id: core
 commands:
@@ -354,6 +354,33 @@ commands:
         type: bool
         default: 'True'
         description: Whether to move incomplete-volume/orphan files to ``dicom/orphans``.
+    options: []
+    returns: []
+    origin: core
+-   name: compare_nifti_images
+    aliases: []
+    path: qx_utilities.general.img.compare_nifti_images
+    language: python
+    call: compare_nifti_images file1=<path to first NIFTI file> file2=<path to second NIFTI file> [ndifflines=10]
+    description: Performs a detailed comparison of two NIFTI image files, analyzing their headers, extensions, and data arrays.
+        The comparison is presented in a structured, tabular format highlighting differences.
+    type: utility
+    args:
+    -   name: file1
+        type: str
+        default: null
+        description: The path to the first NIFTI file to compare. Can be .nii or .nii.gz format. Supports both NIfTI-1 and
+            NIfTI-2 formats.
+    -   name: file2
+        type: str
+        default: null
+        description: The path to the second NIFTI file to compare. Can be .nii or .nii.gz format. Supports both NIfTI-1 and
+            NIfTI-2 formats.
+    -   name: ndifflines
+        type: int
+        default: '10'
+        description: Maximum number of diff lines to display when comparing textual extensions. If set to -1, all diff lines
+            are printed. This helps manage output length when extensions have many differences.
     options: []
     returns: []
     origin: core

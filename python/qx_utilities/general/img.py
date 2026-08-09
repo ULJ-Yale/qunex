@@ -1504,6 +1504,9 @@ def compare_nifti_images(file1, file2, ndifflines=10):
     headers, extensions, and data arrays. The comparison is presented in a
     structured, tabular format highlighting differences.
 
+    ..  qx_command:
+        type: utility
+
     Parameters:
         --file1 (str):
             The path to the first NIFTI file to compare. Can be .nii or .nii.gz
