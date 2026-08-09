@@ -19,6 +19,7 @@ import os
 
 import qx_utilities.dicom.sort_report as gdr
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom2niix import dicom2niix
 from qx_utilities.dicom.import_utils import (
     _archive_packet,
@@ -56,6 +57,7 @@ def import_dicom(
     tr_rel_pct=5.0,
     existing_structure=False,
     test=False,
+    _log=None,
 ):
     r"""
     ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=all] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [min_files=4] [tr_abs_ms=100] [tr_rel_pct=5]``
@@ -581,13 +583,19 @@ def import_dicom(
             deleted after the successful processing.
     """
 
-    print("Running import_dicom\n====================")
+    log = gl.log_or_console(_log)
+
+    # `raw` with an explicit trailing newline, not `info`, wherever the next
+    # line comes from a helper that still `print()`s: a record renders as
+    # "\n<line>" and a print emits "<line>\n", so a record followed by a print
+    # runs the two together. Reads as `info` again once the helpers convert.
+    log.raw("\nRunning import_dicom\n====================\n")
 
     if true_or_false(existing_structure):
-        print(
-            "WARNING: the existing_structure parameter is deprecated and ignored. The\n"
-            "         importer reads and sorts every file in the package by its series\n"
-            "         number, so preorganized packages need no special handling.\n"
+        log.warning(
+            "the existing_structure parameter is deprecated and ignored. The "
+            "importer reads and sorts every file in the package by its series "
+            "number, so preorganized packages need no special handling."
         )
 
     try:
@@ -612,17 +620,17 @@ def import_dicom(
     afolder = os.path.join(sessionsfolder, "archive", "MR")
     if not os.path.exists(afolder):
         os.makedirs(afolder)
-        print("---> Created Archive folder for processed packages.")
+        log.step("Created Archive folder for processed packages.")
 
     report = {"failed": [], "ok": []}
-    print("---> Starting to process %d packets ..." % (len(to_process)))
+    log.step("Starting to process %d packets ..." % (len(to_process)))
 
     for afile, session in to_process:
         note = []
         try:
             sfolder = os.path.join(sessionsfolder, session["sessionid"])
             dicom_dir = os.path.join(sfolder, "dicom")
-            print("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
+            log.raw("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
 
             sources = _resolve_packet_sources(afile, session, masterinbox, sfolder)
 
@@ -637,12 +645,14 @@ def import_dicom(
                 verbose=verbose_b,
             )
             gdr.write_report(pkg, os.path.join(dicom_dir, "%s_import_report.md" % (session["sessionid"])))
-            print()
-            print(gdr.render_console_summary(pkg))
-            print("---> Package verdict: %s" % (pkg.verdict))
+            log.blank()
+            log.info(gdr.render_console_summary(pkg))
+            log.step("Package verdict: %s" % (pkg.verdict))
 
-            # convert to NIfTI (still writes session.txt and DICOM-Report.txt)
-            print()
+            # convert to NIfTI (still writes session.txt and DICOM-Report.txt).
+            # dicom2niix does not take a log, so its output is live on the
+            # console and in the comlog but is not part of this report
+            log.blank()
             dicom2niix(
                 folder=sfolder,
                 clean="no",
@@ -658,8 +668,8 @@ def import_dicom(
 
             if archive != "leave":
                 s = "Processing packages: " + archive
-                print("\n" + s)
-                print("=" * len(s))
+                # `_archive_packet` prints -- see the note on the opening line
+                log.raw("\n%s\n%s\n" % (s, "=" * len(s)))
             note += _archive_packet(sources, afolder, archive, masterinbox, verbose_b)
 
             report["ok"].append((afile, dict(session), note))
