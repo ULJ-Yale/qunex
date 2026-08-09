@@ -842,9 +842,11 @@ def _drop_run_parameters(function, args):
             del args[extra]
 
 
-def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None):
+def run_with_log(
+    function, args=None, run=None, name=None, prepend="", tags=None, tee=True
+):
     """
-    ``run_with_log(function, args=None, run=None, name=None, prepend="", tags=None)``
+    ``run_with_log(function, args=None, run=None, name=None, prepend="", tags=None, tee=True)``
 
     Runs a function, capturing everything it prints into a comlog and
     recording the call and its outcome in the run's runlog.
@@ -858,6 +860,12 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
         --prepend      The string to prepend to each line of progress report.
         --tags         The name parts of the comlog to open. When None no
                        comlog is opened and the output goes to the console.
+        --tee          Whether the call's output also reaches the console.
+                       False for a call submitted by `run_in_parallel`, whose
+                       output would interleave with every other call's: it
+                       goes to the call's own comlog only, which is announced
+                       before the call starts and is line-buffered so it can
+                       be followed live.
 
     A command that declares a ``_log`` parameter is handed a
     :class:`general.log.ReportLog` to report into, and its report -- rather than
@@ -906,9 +914,10 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
                 + "started running %s at %s" % (name, str(datetime.now()).split(".")[0])
             )
 
-    # everything the command prints from here on is teed into the comlog; the
-    # streams are restored however the block exits
-    with comlog.capture_stdout() if comlog else contextlib.nullcontext():
+    # everything the command prints from here on goes into the comlog -- and,
+    # unless the call is one of several running at once, to the console as
+    # well; the streams are restored however the block exits
+    with comlog.capture_stdout(tee=tee) if comlog else contextlib.nullcontext():
         with lock:
             print(
                 "call: gmri %s %s\n-----------------------------------------"
@@ -1051,6 +1060,7 @@ def run_in_parallel(calls, cores=None, prepend="", run=None):
                 name=call["name"],
                 prepend=prepend,
                 tags=call.get("tags"),
+                tee=False,
             )
             # `prepend` is bound here rather than returned by the worker: it is
             # an input, and the callback is where it is needed

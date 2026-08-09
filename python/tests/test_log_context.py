@@ -346,6 +346,28 @@ def test_capture_stdout_tees_print_into_the_comlog(tmp_path, capsys):
         assert "both places" in f.read()
 
 
+def test_without_the_tee_the_output_goes_to_the_comlog_only_and_goes_live(
+    tmp_path, capsys
+):
+    """
+    The parallel path's arrangement: no console, and the file is the live view.
+
+    Reading the comlog *inside* the block is what pins the line buffering --
+    with the default block buffer the file is still empty at that point, so a
+    ``tail -f`` on it would show nothing until the call ended.
+    """
+    run = context(tmp_path)
+
+    with run.comlog("redirected", timestamp=STAMP) as comlog:
+        with comlog.capture_stdout(tee=False):
+            print("comlog only")
+            with open(comlog.path) as f:
+                live = f.read()
+
+    assert "comlog only" not in capsys.readouterr().out
+    assert "comlog only" in live
+
+
 def test_capture_stdout_restores_the_streams_after_an_exception(tmp_path):
     import sys
 

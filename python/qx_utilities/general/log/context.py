@@ -264,7 +264,11 @@ class ComContext:
 
         os.makedirs(self.folder, exist_ok=True)
         self.path = os.path.join(self.folder, "tmp_" + self.name)
-        self.file = open(self.path, "w")
+        # line-buffered: for a call whose output does not reach the terminal
+        # (`capture_stdout(tee=False)`) this file is the only live view of it,
+        # so `tail -f` has to see lines as they are written rather than a block
+        # at a time
+        self.file = open(self.path, "w", buffering=1)
         return self
 
     def write(self, text):
@@ -274,13 +278,20 @@ class ComContext:
             self.file.flush()
 
     @contextlib.contextmanager
-    def capture_stdout(self):
+    def capture_stdout(self, tee=True):
         """
-        Tee everything printed inside the block into the comlog.
+        Send everything printed inside the block into the comlog.
 
         The commands this wraps report by printing, so their output has to be
         intercepted rather than handed over. Both streams are restored when the
         block exits, however it exits.
+
+        Parameters:
+            tee: when True the output goes to the console *and* the comlog;
+                when False it goes to the comlog only. Several calls running
+                at once interleave unreadably on one terminal, so a parallel
+                run redirects instead of teeing and the comlog -- opened
+                line-buffered -- is the live view.
 
         Yields:
             this comlog.
@@ -289,8 +300,8 @@ class ComContext:
             yield self
             return
 
-        tee = _Tee(sys.stdout, self.file)
-        with contextlib.redirect_stdout(tee), contextlib.redirect_stderr(tee):
+        target = _Tee(sys.stdout, self.file) if tee else self.file
+        with contextlib.redirect_stdout(target), contextlib.redirect_stderr(target):
             yield self
 
     def tee(self, command, shell=True):

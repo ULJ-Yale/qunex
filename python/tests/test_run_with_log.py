@@ -234,6 +234,42 @@ def test_parallel_calls_share_one_runlog_and_get_one_comlog_each(run):
     assert runlog.count("Successful completion") == 3
 
 
+def test_parallel_calls_keep_their_output_in_their_own_comlog_and_off_the_console(
+    run, capsys
+):
+    """
+    N sessions' lines on one terminal are unreadable, so they do not go there.
+
+    What the terminal keeps is the announcement of each comlog path and the
+    per-call completion line, both printed in the parent.
+    """
+    run.header()
+    calls = [
+        {
+            "name": "works: %s" % sid,
+            "function": works,
+            "args": {"sessionid": sid},
+            "tags": ["works", sid],
+        }
+        for sid in ["S01", "S02"]
+    ]
+
+    gc.run_in_parallel(calls, cores=2, run=run)
+
+    out = capsys.readouterr().out
+    for sid in ["S01", "S02"]:
+        assert "worked on %s" % sid not in out
+        assert "works: %s finished successfully" % sid in out
+
+    for name in comlogs(run):
+        with open(os.path.join(run.comlogfolder, name)) as f:
+            text = f.read()
+        mine = "S01" if "S01" in name else "S02"
+        other = "S02" if mine == "S01" else "S01"
+        assert "worked on %s" % mine in text
+        assert other not in text
+
+
 def test_a_log_declaring_command_runs_per_session_and_writes_one_runlog(run):
     """
     The log is built inside ``run_with_log``, i.e. in the worker.

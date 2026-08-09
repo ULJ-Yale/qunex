@@ -121,8 +121,9 @@ class ReportLog:
 
         The line goes to the attached comlog, or -- when there is none -- to
         the echo stream. The two are alternatives rather than both: a log
-        echoing to a ``sys.stdout`` that ``run_with_log`` has tee'd into the
-        comlog would otherwise write the line into that comlog twice.
+        echoing to a ``sys.stdout`` that ``run_with_log`` has pointed at the
+        comlog -- tee'd into it, or redirected into it for a parallel call --
+        would otherwise write the line into that comlog twice.
         """
         rendered = _render(depth, severity, message)
         self._records.append((depth, severity, message))
@@ -602,10 +603,13 @@ def log_or_console(log):
 
     **The stand-in echoes to ``sys.stdout``**, which is what a caller with no
     log had before there was one to give: the line appears as it happens, and
-    under :func:`general.core.run_with_log` -- which tees ``sys.stdout`` into
-    the comlog for the length of the call -- it reaches that file too.
-    ``sys.stdout`` is read here rather than at import, so the tee in place at
-    call time is the one written to.
+    under :func:`general.core.run_with_log` -- which points ``sys.stdout`` at
+    the comlog for the length of the call -- it reaches that file too. For one
+    call that is a tee and the line is live on the terminal as well; for a call
+    submitted by :func:`general.core.run_in_parallel` it is a redirect and the
+    comlog is the only live view, since N calls' lines on one terminal are
+    unreadable. ``sys.stdout`` is read here rather than at import, so whichever
+    is in place at call time is the one written to.
 
     This is the one place the console decision is made, for both branches:
     ``run_with_log`` builds the log it hands a registered command through here
