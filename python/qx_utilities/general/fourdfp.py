@@ -27,6 +27,7 @@ import re
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 from datetime import datetime
 
@@ -57,7 +58,7 @@ set seq = ""
 recode = {True: "ok", False: "missing"}
 
 
-def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
+def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None, _log=None):
     """
     ``run_nil_folder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
 
@@ -87,6 +88,8 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
             qunex run_nil_folder folder=. pattern=OP* overwrite=no sourcefile=session.txt
     """
 
+    log = gl.log_or_console(_log)
+
     if pattern is None:
         pattern = "OP*"
     if sourcefile is None:
@@ -113,36 +116,64 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     ]
 
     do = []
-    print("\n---=== Running NIL preprocessing on folder %s ===---\n" % folder)
-    print("List of sessions to process\n")
-    print("%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params"))
-    for subj, stxt, sdicom, sparam in subjs:
-        print(
-            "%-15s%-15s%-15s%-10s --->"
-            % (os.path.basename(subj), recode[stxt], recode[sdicom], recode[sparam]),
-            end=" ",
+    log.raw("\n\n---=== Running NIL preprocessing on folder %s ===---" % (folder))
+    with log.section("List of sessions to process"):
+        log.detail(
+            "%-15s%-15s%-15s%-10s"
+            % ("session", "session.txt", "DICOM-Report", "params")
         )
-        if not stxt:
-            print("skipping processing")
-        else:
-            if not sdicom:
-                print("estimating TR as 2.49836", end=" ")
-            if not sparam:
-                print("creating param file", end=" ")
-            elif overwrite:
-                print("overwriting existing params file", end=" ")
+        for subj, stxt, sdicom, sparam in subjs:
+            # the row used to be assembled by four prints with `end=" "`; a
+            # record is a whole line, so the notes are collected first
+            if not stxt:
+                notes = ["skipping processing"]
             else:
-                print("working with existing params file", end=" ")
-            do.append(subj)
-        print("")
+                notes = []
+                if not sdicom:
+                    notes.append("estimating TR as 2.49836")
+                if not sparam:
+                    notes.append("creating param file")
+                elif overwrite:
+                    notes.append("overwriting existing params file")
+                else:
+                    notes.append("working with existing params file")
+                do.append(subj)
+            log.detail(
+                "%-15s%-15s%-15s%-10s ---> %s"
+                % (
+                    os.path.basename(subj),
+                    recode[stxt],
+                    recode[sdicom],
+                    recode[sparam],
+                    " ".join(notes),
+                )
+            )
 
+    failed = []
     for s in do:
+        # seam: `run_nil` still prints, and a record renders as "\n<line>"
+        # where a print emits "<line>\n" -- without this newline the two run
+        # together. Goes when `run_nil` is converted.
+        log.raw("\n")
         try:
             run_nil(s, overwrite, sourcefile)
-        except Exception:
-            print("---> Failed running NIL preprocessing on", s)
+        except Exception as e:
+            # the exception used to be swallowed and the failure printed, so
+            # the command reported a failed session and still exited 0
+            failed.append(os.path.basename(s))
+            log.error("Failed running NIL preprocessing on %s: %s" % (s, str(e)))
 
-    print("\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder))
+    log.raw("\n\n---=== Done NIL preprocessing on folder %s ===---" % (folder))
+
+    # raised after the loop, so one failing session does not abort its siblings
+    if failed:
+        raise ge.CommandFailed(
+            "run_nil_folder",
+            "NIL preprocessing failed",
+            "NIL preprocessing failed for %d of %d sessions: %s"
+            % (len(failed), len(do), ", ".join(failed)),
+            "Please check the report!",
+        )
 
 
 def run_nil(folder=".", overwrite=None, sourcefile=None):

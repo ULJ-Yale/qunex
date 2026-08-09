@@ -30,6 +30,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
 * QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
 * Reimplemented `import_dicom` to remove interim steps, set aside orphaned and non-image files, and write detailed per session report.
+* Seven utility commands (`split_fidl`, `merge_sessions_list`, `import_hcp`, `import_nhp`, `map_bids2nii`, `run_nil_folder`, `bruker_to_dicom`) reported a failure by printing it and still exited 0; they now report it through the log and exit non-zero, with sessions after the failing one still processed.
 
 ## 1.4.4
 
