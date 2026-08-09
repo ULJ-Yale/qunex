@@ -41,11 +41,8 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
     caller's `if result:` cannot tell the two apart and the failure was
     invisible to the run's status.
 
-    Each path that records ends with a `raw` newline, because `import_nhp`
-    still prints: a record renders as "\\n<line>" where a print emits
-    "<line>\\n", so without it the two run together. The manual prefix the
-    lines carried is gone -- the log spells nesting -- and the enclosing level
-    returns when `import_nhp` itself is converted.
+    The manual prefix the lines carried is gone: `import_nhp` opens a
+    `log.section` per package and the log spells the nesting.
     """
 
     log = gl.log_or_console(_log)
@@ -70,7 +67,6 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
 
         if "dMRI" not in file_split:
             log.step("skipping %s, not a dMRI file" % (file))
-            log.raw("\n")
             return False
         else:
             session = file_split[-3]
@@ -82,7 +78,6 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
             data_file = file_split[-1]
     except Exception:
         log.error("Could not parse file: %s" % (file))
-        log.raw("\n")
         return False
 
     # target folder and file
@@ -96,10 +91,8 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
             os.remove(tfile)
         else:
             log.step("file %s already exists: skipping ..." % (tfile))
-            log.raw("\n")
             return False
 
-    log.raw("\n")
     return [session, tfile]
 
 
@@ -189,8 +182,11 @@ def import_nhp(
             qunex import_nhp sessionsfolder=myStudy/sessions inbox=myData/NHP overwrite=yes
     """
 
-    print("Running import_nhp")
-    print("==================")
+    log = gl.log_or_console(_log)
+
+    # `raw` because a title over its own rule is not a record shape; no
+    # trailing newline, since every record that follows opens with one
+    log.raw("\nRunning import_nhp\n==================")
 
     # check inputs
     if action not in ["link", "copy", "move"]:
@@ -221,17 +217,17 @@ def import_nhp(
     # check for folders
     if not os.path.exists(os.path.join(sessionsfolder, "inbox", "NHP")):
         os.makedirs(os.path.join(sessionsfolder, "inbox", "NHP"))
-        print("---> creating inbox NHP folder")
+        log.step("creating inbox NHP folder")
 
     if not os.path.exists(os.path.join(sessionsfolder, "archive", "NHP")):
         os.makedirs(os.path.join(sessionsfolder, "archive", "NHP"))
-        print("---> creating archive NHP folder")
+        log.step("creating archive NHP folder")
 
     # identification of files
     if sessions:
         sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
-    print("---> identifying files in %s" % (inbox))
+    log.step("identifying files in %s" % (inbox))
 
     source_files = []
 
@@ -274,78 +270,84 @@ def import_nhp(
         )
 
     # mapping data to sessions" folders
-    print("---> mapping files to QuNex NHP folders")
+    log.step("mapping files to QuNex NHP folders")
     report = {}
     for file in source_files:
         if file.endswith(".zip"):
-            print("    ---> processing zip package [%s]" % (file))
+            with log.section("processing zip package [%s]" % (file)):
+                try:
+                    z = zipfile.ZipFile(file, "r")
+                    for sf in z.infolist():
+                        if sf.filename[-1] != "/":
+                            result = map_to_qunex(
+                                sf.filename,
+                                sessionsfolder,
+                                sessions,
+                                overwrite,
+                                _log=log,
+                            )
+                            if result:
+                                tfile = result[1]
+                                fdata = z.read(sf)
+                                fout = open(tfile, "wb")
+                                fout.write(fdata)
+                                fout.close()
 
-            try:
-                z = zipfile.ZipFile(file, "r")
-                for sf in z.infolist():
-                    if sf.filename[-1] != "/":
-                        result = map_to_qunex(
-                            sf.filename, sessionsfolder, sessions, overwrite, _log=_log
-                        )
-                        if result:
-                            tfile = result[1]
-                            fdata = z.read(sf)
-                            fout = open(tfile, "wb")
-                            fout.write(fdata)
-                            fout.close()
+                                # append mapped file
+                                if result[0] not in report:
+                                    report[result[0]] = [tfile]
+                                else:
+                                    report[result[0]].append(tfile)
+                    z.close()
 
-                            # append mapped file
-                            if result[0] not in report:
-                                report[result[0]] = [tfile]
-                            else:
-                                report[result[0]].append(tfile)
-                z.close()
-
-                print("        ---> done!")
-            except Exception:
-                print(
-                    "           ERROR: Processing of zip package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
-                all_ok = False
-                raise
+                    log.step("done!")
+                except Exception:
+                    log.error(
+                        "Processing of zip package failed. Please check the package!"
+                    )
+                    errors += "\n    .. Processing of package %s failed!" % (file)
+                    all_ok = False
+                    raise
 
         elif ".tar" in file or ".tgz" in file:
-            print("   ---> processing tar package [%s]" % (file))
+            with log.section("processing tar package [%s]" % (file)):
+                try:
+                    tar = tarfile.open(file)
+                    for member in tar.getmembers():
+                        if member.isfile():
+                            result = map_to_qunex(
+                                member.name,
+                                sessionsfolder,
+                                sessions,
+                                overwrite,
+                                _log=log,
+                            )
+                            if result:
+                                tfile = result[1]
+                                fobj = tar.extractfile(member)
+                                fdata = fobj.read()
+                                fobj.close()
+                                fout = open(tfile, "wb")
+                                fout.write(fdata)
+                                fout.close()
 
-            try:
-                tar = tarfile.open(file)
-                for member in tar.getmembers():
-                    if member.isfile():
-                        result = map_to_qunex(
-                            member.name, sessionsfolder, sessions, overwrite, _log=_log
-                        )
-                        if result:
-                            tfile = result[1]
-                            fobj = tar.extractfile(member)
-                            fdata = fobj.read()
-                            fobj.close()
-                            fout = open(tfile, "wb")
-                            fout.write(fdata)
-                            fout.close()
+                                # append mapped file
+                                if result[0] not in report:
+                                    report[result[0]] = [tfile]
+                                else:
+                                    report[result[0]].append(tfile)
+                    tar.close()
 
-                            # append mapped file
-                            if result[0] not in report:
-                                report[result[0]] = [tfile]
-                            else:
-                                report[result[0]].append(tfile)
-                tar.close()
-
-                print("        ---> done!")
-            except Exception:
-                print(
-                    "           ERROR: Processing of tar package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
-                all_ok = False
+                    log.step("done!")
+                except Exception:
+                    log.error(
+                        "Processing of tar package failed. Please check the package!"
+                    )
+                    errors += "\n    .. Processing of package %s failed!" % (file)
+                    all_ok = False
 
         else:
-            result = map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=_log)
+            result = map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=log)
             if result:
                 tfile = result[1]
                 status, msg = gc.move_link_or_copy(
@@ -363,49 +365,49 @@ def import_nhp(
 
     # ---> archiving the dataset
     if errors:
-        print("   ---> The following errors were encountered when mapping the files:")
-        print(errors)
+        log.error("The following errors were encountered when mapping the files:")
+        log.raw(errors)
     else:
         if os.path.isfile(inbox) or not os.path.samefile(
             inbox, os.path.join(sessionsfolder, "inbox", "NHP")
         ):
             try:
                 if archive == "move":
-                    print("---> moving dataset to archive")
+                    log.step("moving dataset to archive")
                     shutil.move(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
                 elif archive == "copy":
-                    print("---> copying dataset to archive")
+                    log.step("copying dataset to archive")
                     shutil.copy2(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
                 elif archive == "delete":
-                    print("---> deleting dataset")
+                    log.step("deleting dataset")
                     if os.path.isfile(inbox):
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
             except Exception:
-                print("---> %s failed!" % (archive))
+                log.warning("%s failed!" % (archive))
         else:
             files = glob.glob(os.path.join(inbox, "*"))
             for file in files:
                 try:
                     if archive == "move":
-                        print("---> moving dataset to archive")
+                        log.step("moving dataset to archive")
                         shutil.move(
                             file, os.path.join(sessionsfolder, "archive", "NHP")
                         )
                     elif archive == "copy":
-                        print("---> copying dataset to archive")
+                        log.step("copying dataset to archive")
                         shutil.copy2(
                             file, os.path.join(sessionsfolder, "archive", "NHP")
                         )
                     elif archive == "delete":
-                        print("---> deleting dataset")
+                        log.step("deleting dataset")
                         if os.path.isfile(file):
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
                 except Exception:
-                    print("---> %s of %s failed!" % (archive, file))
+                    log.warning("%s of %s failed!" % (archive, file))
 
     if not all_ok:
         raise ge.CommandFailed(
@@ -414,11 +416,12 @@ def import_nhp(
 
     # final report and session.txt creation
     if len(report) > 0:
-        print("\nFinal report\n============\n")
+        log.raw("\n\nFinal report\n============")
 
         for s in report:
-            # print session info
-            print("Session %s: " % s)
+            # report session info
+            log.blank()
+            log.step("Session %s: " % (s))
 
             # basic data
             sfolder = os.path.join(sessionsfolder, s)
@@ -426,6 +429,10 @@ def import_nhp(
             subjectid = s.split("_")[0]
 
             # create session.txt
+            # seam: `create_session_file` still prints, and a record renders as
+            # "\n<line>" where a print emits "<line>\n" -- without this newline
+            # the two run together. Goes when that helper takes a log.
+            log.raw("\n")
             sout = gc.create_session_file(
                 "import_nhp", sfolder, s, subjectid, overwrite, prefix="    "
             )
@@ -434,7 +441,7 @@ def import_nhp(
             if os.path.exists(sfile):
                 if overwrite == "yes" or overwrite is True:
                     os.remove(sfile)
-                    print("    ---> removed existing session_nhp.txt file")
+                    log.detail("removed existing session_nhp.txt file")
                 else:
                     raise ge.CommandFailed(
                         "import_nhp",
@@ -456,7 +463,7 @@ def import_nhp(
             i = 1
             for f in report[s]:
                 # report
-                print("    ---> mapped file %s" % f)
+                log.detail("mapped file %s" % (f))
 
                 # add to subject
                 out = "%02d: %s" % (i, f)
@@ -465,6 +472,3 @@ def import_nhp(
 
                 # increase index
                 i = i + 1
-
-            # for nicer output
-            print("")
