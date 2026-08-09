@@ -272,21 +272,18 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
         log.info(
             f"Basic structural segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
-        print(log.text)
         return log.text
     except Exception:
         log.error(
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
-        print(log.text)
         return log.text
 
     log.info(
         f"Basic structural segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
-    print(log.text)
     return log.text
 
 
@@ -449,14 +446,12 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(1)
-        print(log.text)
         return log.text
 
     if verbose:
         log.info(
             f"Check completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
-        print(log.text)
 
     return log.text
 
@@ -780,21 +775,18 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         log.info(
             f"FreeSurfer segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
-        print(log.text)
         return log.text
     except Exception:
         log.error(
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
-        print(log.text)
         return log.text
 
     log.info(
         f"FreeSurfer segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
-    print(log.text)
     return log.text
 
 
@@ -1001,19 +993,16 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         log.info(
             f"FreeSurfer segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
-        print(log.text)
         return log.text
     except Exception:
         log.error(
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
-        print(log.text)
         return log.text
 
     log.info(
         f"FreeSurfer segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
-    print(log.text)
     return log.text

@@ -1723,9 +1723,6 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
             + " "
         )
 
-        print(
-            "======================================================================================================================================="
-        )
         elements = [
             ("path", sinfo["hcp"]),
             ("session", sinfo["id"] + options["hcp_suffix"]),

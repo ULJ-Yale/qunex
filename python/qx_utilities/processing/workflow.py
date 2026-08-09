@@ -48,6 +48,8 @@ from qx_utilities.general.log import ReportLog
 
 
 if "QUNEXMCOMMAND" not in os.environ:
+    # import time, before any command and therefore any log exists: this one
+    # stays a print (group C's frame, not group A's report)
     print(
         "WARNING: QUNEXMCOMMAND environment variable not set. Matlab will be run by default!"
     )
@@ -1489,10 +1491,8 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 try:
                     gm.meltmovfidl(concf, ipatt, fidlf, fidlf.replace(".fidl", ipatt))
                 except Exception:
-                    log.warning("Failed to create a melted fidl file!")
-                    print(
-                        "\nWARNING: Failed to create a melted fidl file! (%s)"
-                        % (sinfo["id"])
+                    log.warning(
+                        f"Failed to create a melted fidl file! ({sinfo['id']})"
                     )
                     raise
             else:
@@ -1765,7 +1765,6 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         % (report)
     )
 
-    print(log.text)
     return (log.text, (sinfo["id"], rstatus, report["boldmissing"] + report["boldfail"]))
 
 

@@ -98,13 +98,15 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
             The root name of the fidl event file for task regression.
 
     """
+    log = ReportLog()
+
     bfile = open(os.path.join(options['sessionsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
     concs = options['bolds'].split("|")
     fidls = options['event_file'].split("|")
 
     if len(concs) != len(fidls):
-        print("\nWARNING: Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls)))
+        log.warning("Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls)))
 
     else:
         for session in sinfo:
@@ -124,10 +126,15 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
                 print("    file:%s" % (f_conc), file=bfile)
 
             except Exception:
-                print("ERROR processing session %s!" % (session['id']))
+                log.error("processing session %s!" % (session['id']))
+                # the report is lost when the command aborts by exception --
+                # showing it is the only thing that survives the raise
+                print(log.text)
                 raise
 
     bfile.close()
+
+    return log.text
 
 
 def list_session_info(sinfo, options, overwrite=False, thread=0):
@@ -274,21 +281,20 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
 
     except AssertionError as message:
         log.raw(str(message) + "\n---------------------------------------------------------")
-        print(log.text)
         return (log.text, (sinfo['id'], message, 1))
 
     except pc.ExternalFailed as errormessage:
         log.raw(str(errormessage) + "\n---------------------------------------------------------")
-        print(log.text)
         return (log.text, (sinfo['id'], "Failed: " + str(errormessage), 1))
 
     except Exception:
         message = 'ERROR: Error in parsing or executing script %s' % (options['script'])
         log.raw("\n" + message + "\n---------------------------------------------------------")
+        # the report is lost when the command aborts by exception -- showing it
+        # is the only thing that survives the raise
         print(log.text)
         raise
         return (log.text, (sinfo['id'], message, 1))
 
     log.raw(f"\n\nrun_shell_script {options['script']} completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
-    print(log.text)
     return (log.text, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))
