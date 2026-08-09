@@ -1263,15 +1263,18 @@ def pcslist(s):
     return s
 
 
-def link_or_copy(source, target, log=None, status=None, name=None, symlink=False):
+def link_or_copy(source, target, _log=None, status=None, name=None, symlink=False):
     """
     Hard-link a file, falling back to a copy, and report the outcome.
 
     Parameters:
         source (str): path to the file to map.
         target (str): destination path.
-        log (ReportLog | None): report log; when given, the mapping outcome is
-            noted in it.
+        _log (ReportLog | None): report log; when given, the mapping outcome is
+            noted in it. Spelled with the underscore because that is the one
+            name a log parameter has in this tree -- a plain `log` in a
+            registered command's signature would collide with the `--log`
+            comlog-retention parameter.
         status (bool | None): running status carried through (defaults True).
         name (str | None): human readable name used in the report message.
         symlink (bool): create a symbolic link instead of a hard link.
@@ -1279,6 +1282,8 @@ def link_or_copy(source, target, log=None, status=None, name=None, symlink=False
     Returns:
         bool: the running status -- False when the file could not be mapped.
     """
+
+    log = _log
 
     def note(level, message):
         if log is not None:

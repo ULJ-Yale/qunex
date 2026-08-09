@@ -590,7 +590,7 @@ class SessionLog(ReportLog):
         return super().result(report, failed, name or self._sid)
 
 
-def log_or_console(log):
+def log_or_console(_log):
     """
     The log to report into: the caller's, or one that echoes to the console.
 
@@ -626,9 +626,11 @@ def log_or_console(log):
     nesting -- ``with log.section(...)`` has no ``_say`` equivalent.
 
     Parameters:
-        log (ReportLog | None): the caller's log, or None.
+        _log (ReportLog | None): the caller's log, or None. Spelled with the
+            underscore because that is the one name a log parameter has in this
+            tree -- see the note on `link_or_copy`.
 
     Returns:
-        ReportLog: `log` when there is one, an echoing stand-in otherwise.
+        ReportLog: `_log` when there is one, an echoing stand-in otherwise.
     """
-    return log if log is not None else ReportLog(echo=sys.stdout)
+    return _log if _log is not None else ReportLog(echo=sys.stdout)
