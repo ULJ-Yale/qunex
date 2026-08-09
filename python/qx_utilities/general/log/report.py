@@ -89,11 +89,20 @@ class ReportLog:
     extends it with the header and footer.
     """
 
-    def __init__(self):
+    def __init__(self, echo=None):
+        """
+        Parameters:
+            echo: an open stream (usually ``sys.stdout``) each recorded line is
+                written to as it is recorded, so a command shows its progress
+                live instead of only when its report is rendered. Off by
+                default: a ``SessionLog`` must not echo, since
+                ``general.process`` prints its report when the session ends.
+        """
         self._records = []
         self._depth = 0
         self._errors = 0
         self._comlog = None
+        self._echo = echo
 
     # ------------------------------------------------------------------ text
 
@@ -106,9 +115,20 @@ class ReportLog:
         return self.text
 
     def _record(self, depth, severity, message) -> None:
-        """Keep one record, and echo it into the attached comlog."""
+        """
+        Keep one record, and show it as it happens.
+
+        The line goes to the attached comlog, or -- when there is none -- to
+        the echo stream. The two are alternatives rather than both: a log
+        echoing to a ``sys.stdout`` that ``run_with_log`` has tee'd into the
+        comlog would otherwise write the line into that comlog twice.
+        """
+        rendered = _render(depth, severity, message)
         self._records.append((depth, severity, message))
-        self.trace(_render(depth, severity, message))
+        self.trace(rendered)
+        if self._comlog is None and self._echo is not None:
+            self._echo.write(rendered)
+            self._echo.flush()
 
     # --------------------------------------------------------- the comlog
 

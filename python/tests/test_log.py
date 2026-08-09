@@ -10,6 +10,8 @@ These pin the rendered text, because that text is what QuNex writes to
 user-facing surface, not an implementation detail.
 """
 
+import io
+
 import pytest
 
 import qx_utilities.general.exceptions as ge
@@ -379,3 +381,41 @@ def test_the_attachment_is_restored_even_when_the_block_raises():
     assert inner.written == "\n---> nested"
     assert outer.written == "\n---> back outside"
     assert log._comlog is None
+
+
+def test_the_echo_shows_each_line_as_it_is_recorded():
+    # a utility command's report is its live output: it has no comlog to watch
+    echo = io.StringIO()
+    log = ReportLog(echo=echo)
+
+    log.step("importing")
+    log.detail("session sess-01")
+    log.error("no dicom files found")
+
+    assert echo.getvalue() == log.text == (
+        "\n---> importing"
+        "\n     ... session sess-01"
+        "\n---> ERROR: no dicom files found"
+    )
+
+
+def test_a_session_log_does_not_echo(capsys):
+    # process.py prints the session report itself; echoing would print it twice
+    log = _log()
+    log.step("running")
+
+    assert capsys.readouterr().out == ""
+
+
+def test_the_echo_is_dropped_while_a_comlog_is_attached():
+    # otherwise a tee'd stdout writes the line into that same comlog twice
+    echo = io.StringIO()
+    log = ReportLog(echo=echo)
+    comlog = _Comlog()
+
+    with log.stream_to(comlog):
+        log.step("running the tool")
+    log.step("done")
+
+    assert comlog.written == "\n---> running the tool"
+    assert echo.getvalue() == "\n---> done"
