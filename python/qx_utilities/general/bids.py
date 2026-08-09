@@ -82,11 +82,16 @@ bids_mri_types = {
 
 
 def map_to_qunex_bids(
-    file, sessionsfolder, bidsfolder, sessions_list, overwrite, prefix, select=False
+    file, sessionsfolder, bidsfolder, sessions_list, overwrite, select=False, _log=None
 ):
     """
     Identifies and returns the intended location of the file based on its name.
+
+    The `prefix` parameter this took is gone: `import_bids` opens a
+    `log.section` per package and the log spells the nesting.
     """
+    log = gl.log_or_console(_log)
+
     try:
         if sessionsfolder[-1] == "/":
             sessionsfolder = sessionsfolder[:-1]
@@ -172,12 +177,12 @@ def map_to_qunex_bids(
 
             # ---> status created
             if io is None:
-                print(prefix + "---> processing BIDS info folder")
+                log.step("processing BIDS info folder")
                 sessions_list["bids"] = "open"
 
             # ---> status exists
             elif io == "File exists" and not (overwrite == "yes" or overwrite is True):
-                print(prefix + "---> skipping processing of BIDS info folder")
+                log.step("skipping processing of BIDS info folder")
                 sessions_list["skip"].append("bids")
                 sessions_list["bids"] = "locked"
                 return False, False
@@ -195,43 +200,36 @@ def map_to_qunex_bids(
         # ---> session folder exists
         elif os.path.exists(folder):
             if overwrite == "yes" or overwrite is True:
-                print(
-                    prefix
-                    + "---> bids for session %s already exists: cleaning session"
-                    % (session)
+                log.step(
+                    "bids for session %s already exists: cleaning session" % (session)
                 )
                 shutil.rmtree(folder)
                 sessions_list["clean"].append(session)
             elif not os.path.exists(os.path.join(folder, "bids2nii.log")):
-                print(
-                    prefix
-                    + "---> incomplete bids for session %s already exists: cleaning session"
+                log.step(
+                    "incomplete bids for session %s already exists: cleaning session"
                     % (session)
                 )
                 shutil.rmtree(folder)
                 sessions_list["clean"].append(session)
             else:
                 sessions_list["skip"].append(session)
-                print(
-                    prefix
-                    + "---> bids for session %s already exists: skipping session"
-                    % (session)
-                )
-                print(prefix + "    files previously mapped:")
-                with open(os.path.join(folder, "bids2nii.log")) as bids_log:
-                    for logline in bids_log:
-                        if "BIDS to nii mapping report" in logline:
-                            continue
-                        elif "=>" in logline:
-                            mapped_file = logline.split("=>")[0].strip()
-                            print(
-                                prefix + "    ... %s" % (os.path.basename(mapped_file))
-                            )
+                with log.section(
+                    "bids for session %s already exists: skipping session" % (session)
+                ):
+                    log.step("files previously mapped:")
+                    with open(os.path.join(folder, "bids2nii.log")) as bids_log:
+                        for logline in bids_log:
+                            if "BIDS to nii mapping report" in logline:
+                                continue
+                            elif "=>" in logline:
+                                mapped_file = logline.split("=>")[0].strip()
+                                log.detail(os.path.basename(mapped_file))
                 return False, False
 
         # ---> session folder does not exist and is not 'bids'
         else:
-            print(prefix + "---> creating bids session %s" % (session))
+            log.step("creating bids session %s" % (session))
             sessions_list["map"].append(session)
 
     # ---> compile target filename
@@ -523,7 +521,11 @@ def import_bids(
                 --bidsname=swga
     """
 
-    print("Running import_bids\n==================")
+    log = gl.log_or_console(_log)
+
+    # `raw` because a title over its own rule is not a record shape; no
+    # trailing newline, since every record that follows opens with one
+    log.raw("\nRunning import_bids\n==================")
 
     if action not in ["link", "copy", "move"]:
         raise ge.CommandError(
@@ -583,7 +585,7 @@ def import_bids(
     if not os.path.exists(bidsinbox):
         io = fl.makedirs(bidsinbox)
         if not io:
-            print("---> created inbox BIDS folder")
+            log.step("created inbox BIDS folder")
         elif io != "File exists":
             raise ge.CommandFailed(
                 "import_bids",
@@ -596,7 +598,7 @@ def import_bids(
     if not os.path.exists(bidsarchive):
         io = fl.makedirs(bidsarchive)
         if not io:
-            print("---> created BIDS archive folder")
+            log.step("created BIDS archive folder")
         elif io != "File exists":
             raise ge.CommandFailed(
                 "import_bids",
@@ -623,7 +625,7 @@ def import_bids(
     _ = ast.literal_eval(content)
 
     # ---> identification of files
-    print("---> identifying files in %s" % (inbox))
+    log.step("identifying files in %s" % (inbox))
 
     source_files = []
     process_all = True
@@ -651,7 +653,7 @@ def import_bids(
             else:
                 folder_type = "inbox"
 
-            print("---> Inbox type:", folder_type)
+            log.step("Inbox type: %s" % (folder_type))
 
             # -- process sessions
             globfor = {
@@ -772,93 +774,91 @@ def import_bids(
     else:
         bidsinfo = os.path.join(qxfolders["basefolder"], "info", "bids", bidsname)
 
-    print("---> Paths:")
-    print("    bidsinfo    ->", bidsinfo)
-    print("    bidsinbox   ->", bidsinbox)
-    print("    bidsarchive ->", bidsarchive)
+    with log.section("Paths:"):
+        log.detail("bidsinfo    -> %s" % (bidsinfo))
+        log.detail("bidsinbox   -> %s" % (bidsinbox))
+        log.detail("bidsarchive -> %s" % (bidsarchive))
 
     # ---> mapping data to sessions' folders
-    print("---> mapping files to QuNex bids folders")
+    log.step("mapping files to QuNex bids folders")
     for file in source_files:
         if file.endswith(".zip"):
-            print("    ---> processing zip package [%s]" % (file))
-
-            try:
-                z = zipfile.ZipFile(file, "r")
-                for source_file in z.infolist():
-                    if source_file.filename[-1] != "/":
-                        target_file, lock = map_to_qunex_bids(
-                            source_file.filename,
-                            sessionsfolder,
-                            bidsinfo,
-                            sessions_list,
-                            overwrite,
-                            "        ",
-                            select,
-                        )
-                        if target_file:
-                            if lock:
-                                fl.lock(target_file)
-                            fdata = z.read(source_file)
-                            if target_file.endswith(".nii"):
-                                target_file += ".gz"
-                                fout = gzip.open(target_file, "wb")
-                            else:
-                                fout = open(target_file, "wb")
-                            fout.write(fdata)
-                            fout.close()
-                            if lock:
-                                fl.unlock(target_file)
-                z.close()
-                print("        -> done!")
-            except Exception:
-                print(
-                    "        => Error: Processing of zip package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
-                raise
+            with log.section("processing zip package [%s]" % (file)):
+                try:
+                    z = zipfile.ZipFile(file, "r")
+                    for source_file in z.infolist():
+                        if source_file.filename[-1] != "/":
+                            target_file, lock = map_to_qunex_bids(
+                                source_file.filename,
+                                sessionsfolder,
+                                bidsinfo,
+                                sessions_list,
+                                overwrite,
+                                select,
+                                _log=log,
+                            )
+                            if target_file:
+                                if lock:
+                                    fl.lock(target_file)
+                                fdata = z.read(source_file)
+                                if target_file.endswith(".nii"):
+                                    target_file += ".gz"
+                                    fout = gzip.open(target_file, "wb")
+                                else:
+                                    fout = open(target_file, "wb")
+                                fout.write(fdata)
+                                fout.close()
+                                if lock:
+                                    fl.unlock(target_file)
+                    z.close()
+                    log.step("done!")
+                except Exception:
+                    log.error(
+                        "Processing of zip package failed. Please check the package!"
+                    )
+                    errors += "\n    .. Processing of package %s failed!" % (file)
+                    raise
 
         elif ".tar" in file or ".tgz" in file:
-            print("   ---> processing tar package [%s]" % (file))
-
-            try:
-                tar = tarfile.open(file)
-                for member in tar.getmembers():
-                    if member.isfile():
-                        target_file, lock = map_to_qunex_bids(
-                            member.name,
-                            sessionsfolder,
-                            bidsinfo,
-                            sessions_list,
-                            overwrite,
-                            "        ",
-                            select,
-                        )
-                        if target_file:
-                            if lock:
-                                fl.lock(target_file)
-                            fobj = tar.extractfile(member)
-                            fdata = fobj.read()
-                            fobj.close()
-                            if target_file.endswith(".nii"):
-                                target_file += ".gz"
-                                fout = gzip.open(target_file, "wb")
-                            else:
-                                fout = open(target_file, "wb")
-                            fout.write(fdata)
-                            fout.close()
-                            if lock:
-                                fl.unlock(target_file)
-                tar.close()
-                print("        -> done!")
-            except Exception:
-                print(
-                    "        => Error: Processing of tar package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
+            with log.section("processing tar package [%s]" % (file)):
+                try:
+                    tar = tarfile.open(file)
+                    for member in tar.getmembers():
+                        if member.isfile():
+                            target_file, lock = map_to_qunex_bids(
+                                member.name,
+                                sessionsfolder,
+                                bidsinfo,
+                                sessions_list,
+                                overwrite,
+                                select,
+                                _log=log,
+                            )
+                            if target_file:
+                                if lock:
+                                    fl.lock(target_file)
+                                fobj = tar.extractfile(member)
+                                fdata = fobj.read()
+                                fobj.close()
+                                if target_file.endswith(".nii"):
+                                    target_file += ".gz"
+                                    fout = gzip.open(target_file, "wb")
+                                else:
+                                    fout = open(target_file, "wb")
+                                fout.write(fdata)
+                                fout.close()
+                                if lock:
+                                    fl.unlock(target_file)
+                    tar.close()
+                    log.step("done!")
+                except Exception:
+                    log.error(
+                        "Processing of tar package failed. Please check the package!"
+                    )
+                    errors += "\n    .. Processing of package %s failed!" % (file)
         else:
             target_file, lock = map_to_qunex_bids(
-                file, sessionsfolder, bidsinfo, sessions_list, overwrite, "    "
+                file, sessionsfolder, bidsinfo, sessions_list, overwrite, _log=log
             )
             if target_file:
                 if target_file.endswith(".nii"):
@@ -887,8 +887,8 @@ def import_bids(
 
     # ---> archiving the dataset
     if errors:
-        print("   ---> The following errors were encountered when mapping the files:")
-        print(errors)
+        log.error("The following errors were encountered when mapping the files:")
+        log.raw(errors)
     else:
         archive_list = []
 
@@ -914,7 +914,7 @@ def import_bids(
 
         # ---> archive
         if archive in ["move", "copy", "delete"]:
-            print("---> Archiving: %sing items" % (archive.replace("y", "yy")[:-1]))
+            log.step("Archiving: %sing items" % (archive.replace("y", "yy")[:-1]))
 
         # -> prepare target folder
         if archive in ["move", "copy"]:
@@ -945,8 +945,8 @@ def import_bids(
                 else:
                     io = fl.rmtree(archive_item)
                 if io and io != "No such file or directory":
-                    print(
-                        "    WARNING: Could not remove %s. Please check permissions!"
+                    log.warning(
+                        "Could not remove %s. Please check permissions!"
                         % (archive_item)
                     )
 
@@ -963,8 +963,8 @@ def import_bids(
 
                 io = fl.makedirs(archive_target_folder)
                 if io and io != "File exists":
-                    print(
-                        "    WARNING: Could not create archive folder %s. Skipping archiving. Please check permissions!"
+                    log.warning(
+                        "Could not create archive folder %s. Skipping archiving. Please check permissions!"
                         % (archive_target_folder)
                     )
                     archive_target_folder = None
@@ -981,8 +981,8 @@ def import_bids(
                                 shutil.rmtree(archive_target)
                             shutil.copytree(archive_item, archive_target)
                 except Exception:
-                    print(
-                        "    WARNING: Could not %s %s. Please check permissions!"
+                    log.warning(
+                        "Could not %s %s. Please check permissions!"
                         % (archive, archive_item)
                     )
                 fl.unlock(archive_target)
@@ -994,8 +994,8 @@ def import_bids(
             os.path.join(bidsinfo, "bids_info_status"), "done"
         )
         if bids_info_status != "done":
-            print(
-                "---> WARNING: Status of behavioral files is unknown! Please check the data!"
+            log.warning(
+                "Status of behavioral files is unknown! Please check the data!"
             )
 
     # ---> get a list of behavioral data:
@@ -1022,22 +1022,31 @@ def import_bids(
                         fileinfo=fileinfo,
                         add_json_info=add_json_info,
                         merge_multi_echo=merge_multi_echo,
-                        _log=_log,
+                        _log=log,
                     )
                     nmapping = True
                 except ge.CommandFailed as e:
-                    print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                    log.warning(e.report[0])
+                    for hint in e.report[1:]:
+                        log.detail(hint)
                     nmapping = False
 
                 # -- do behavioral mapping
                 bmapping = None
                 if behavior:
                     try:
+                        # seam: `map_bids_to_behavior` still prints, and a
+                        # record renders as "\n<line>" where a print emits
+                        # "<line>\n" -- without this newline the two run
+                        # together. Goes when that command is converted.
+                        log.raw("\n")
                         bmapping = map_bids_to_behavior(
                             os.path.join(sessionsfolder, session), behavior, overwrite
                         )
                     except ge.CommandFailed as e:
-                        print("---> WARNING:\n     %s\n" % ("\n     ".join(e.report)))
+                        log.warning(e.report[0])
+                        for hint in e.report[1:]:
+                            log.detail(hint)
                         bmapping = False
 
                 # -- compile report
@@ -1065,10 +1074,10 @@ def import_bids(
 
                 report.append(minfo)
 
-    print("\nFinal report\n============")
+    log.raw("\n\nFinal report\n============")
 
     for line in report:
-        print(line)
+        log.info(line)
 
     if not all_ok:
         raise ge.CommandFailed(
@@ -1775,11 +1784,6 @@ def map_bids2nii(
 
     sout.close()
     bout.close()
-
-    # seam: `import_bids` prints again once this returns, and the raise's own
-    # report opens with a newline but a clean return leaves the caller's next
-    # print running into the last record. Goes when `import_bids` is converted.
-    log.raw("\n")
 
     if not all_ok:
         raise ge.CommandFailed(
