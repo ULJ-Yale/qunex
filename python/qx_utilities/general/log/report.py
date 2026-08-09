@@ -394,6 +394,77 @@ class ReportLog:
 
         return pc.use_or_skip_bold(sinfo, options, self)
 
+    # ---------------------------------------------------------------- finish
+
+    def _derive_failed(self, report, failed):
+        """
+        The failure count to report, derived from the log when not given.
+
+        A command that recorded an error reports a failure. An explicit
+        ``failed=`` (or the count inside a status tuple) always wins, but a
+        caller reporting no failures while errors were recorded gets a warning
+        line in the report -- the two disagreeing is a bug in the command, not
+        something to hide or to raise on mid-run.
+        """
+        reported = report[2] if isinstance(report, tuple) and len(report) == 3 else failed
+        if reported is None:
+            failed = reported = 1 if self.has_errors else 0
+        if self.has_errors and not reported:
+            self.warning(
+                "%d error(s) were recorded but the command reports no failures"
+                % self._errors
+            )
+        return failed
+
+    def finish(self, summary, failed=None, name=None):
+        """
+        Close the report and build the value the caller is handed.
+
+        The status contract processing commands already use, for a log that has
+        no session of its own: ``general.core.run_with_log`` calls this on the
+        log it gave a utility command, writes the report text into the runlog
+        and hands the count on. :class:`SessionLog` overrides it to append its
+        footer first.
+
+        Parameters:
+            summary: the one-line summary, or a ready three-field
+                ``(name, summary, failed)`` status tuple.
+            failed: number of failures; derived from recorded errors when
+                omitted, ignored when ``summary`` is a tuple.
+            name: what the report is filed under -- the command, or
+                ``command: session``.
+
+        Returns:
+            ``(report_text, (name, summary, failed))``.
+        """
+        return self.result(summary, self._derive_failed(summary, failed), name)
+
+    def result(self, report, failed=None, name=None):
+        """
+        Build the ``(report_text, status)`` value the caller is handed.
+
+        Enforces the three-field status contract (see :meth:`finish`). Unlike
+        :meth:`finish` it does not derive ``failed`` -- a direct caller states
+        the count.
+        """
+        if isinstance(report, tuple):
+            if len(report) != 3:
+                raise ValueError(
+                    "command status must be a 3-field "
+                    "(session_id, summary, failed) tuple, got %d fields: %r"
+                    % (len(report), report)
+                )
+            status = report
+        else:
+            if failed is None:
+                raise ValueError(
+                    "finish() needs a failed count when report is a "
+                    "summary string (got failed=None for %r)" % (report,)
+                )
+            status = (name, report, failed)
+
+        return (self.text, status)
+
 
 class SessionLog(ReportLog):
     """
@@ -466,11 +537,9 @@ class SessionLog(ReportLog):
         print "success status not reported".
 
         The failure count is derived from the log when the caller does not give
-        one: a command that recorded an error reports a failure. An explicit
-        ``failed=`` (or the count inside a status tuple) always wins, but a
-        caller reporting no failures while errors were recorded gets a warning
-        line in the report -- the two disagreeing is a bug in the command, not
-        something to hide or to raise on mid-run.
+        one, exactly as :meth:`ReportLog.finish` derives it; the footer goes in
+        before the status is built, so a derived warning still reads inside the
+        report rather than after its closing rule.
 
         Parameters:
             report: the per-session summary string, or a ready three-field
@@ -483,15 +552,7 @@ class SessionLog(ReportLog):
         Returns:
             ``(report_text, (session_id, summary, failed))``.
         """
-        reported = report[2] if isinstance(report, tuple) and len(report) == 3 else failed
-        if reported is None:
-            failed = reported = 1 if self.has_errors else 0
-        if self.has_errors and not reported:
-            self.warning(
-                "%d error(s) were recorded but the command reports no failures"
-                % self._errors
-            )
-
+        failed = self._derive_failed(report, failed)
         self.close(pipeline=pipeline, lead=lead)
         return self.result(report, failed)
 
@@ -518,31 +579,14 @@ class SessionLog(ReportLog):
             REPORT_RULE,
         ))
 
-    def result(self, report, failed=None):
+    def result(self, report, failed=None, name=None):
         """
         Build the ``(report_text, status)`` value the command returns.
 
-        Enforces the three-field status contract (see :meth:`finish`). Unlike
-        :meth:`finish` it does not derive ``failed`` -- a direct caller states
-        the count.
+        As :meth:`ReportLog.result`, with the session id as the name -- a
+        session log knows what it is reporting on and callers do not pass it.
         """
-        if isinstance(report, tuple):
-            if len(report) != 3:
-                raise ValueError(
-                    "command status must be a 3-field "
-                    "(session_id, summary, failed) tuple, got %d fields: %r"
-                    % (len(report), report)
-                )
-            status = report
-        else:
-            if failed is None:
-                raise ValueError(
-                    "SessionLog.finish needs a failed count when report is a "
-                    "summary string (got failed=None for %r)" % (report,)
-                )
-            status = (self._sid, report, failed)
-
-        return (self.text, status)
+        return super().result(report, failed, name or self._sid)
 
 
 def log_or_console(log):
@@ -559,10 +603,17 @@ def log_or_console(log):
     **The stand-in echoes to ``sys.stdout``**, which is what a caller with no
     log had before there was one to give: the line appears as it happens, and
     under :func:`general.core.run_with_log` -- which tees ``sys.stdout`` into
-    the comlog for the length of the call -- it reaches that file too. A
-    discarding log would make a registered utility command silent. ``sys.stdout``
-    is read here rather than at import, so the tee in place at call time is the
-    one written to.
+    the comlog for the length of the call -- it reaches that file too.
+    ``sys.stdout`` is read here rather than at import, so the tee in place at
+    call time is the one written to.
+
+    This is the one place the console decision is made, for both branches:
+    ``run_with_log`` builds the log it hands a registered command through here
+    too, so a switch for the terminal is one line in this function rather than
+    one per command. It is no longer what stops a registered command being
+    silent -- ``run_with_log`` supplies an echoing log -- but the fallback for
+    the paths it never reaches: logging off, ``run_recipe`` without sessions,
+    and a call from another python function.
 
     :func:`processing.core._say` is the other shape of the same problem and is
     the better one when there are only a few messages: it takes the level as an

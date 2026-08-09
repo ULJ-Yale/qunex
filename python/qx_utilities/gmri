@@ -325,7 +325,7 @@ def runCommand(command, args):
             # run with log
             else:
                 run.header()
-                _, result, _, _ = gc.run_with_log(
+                _, result, _, _, _ = gc.run_with_log(
                     qx_commands.get(command).load_callable(),
                     args=args,
                     run=run,
@@ -369,17 +369,19 @@ def runCommand(command, args):
 
         # the same digest a processing command produces, from the same method:
         # the results are adapted to the (id, summary, failed) contract, with
-        # the comlog path folded into the summary. This is a bridge -- when
-        # utility commands that run over sessions become processing commands
-        # they go through `gp.run` and this whole path is deleted.
+        # the comlog path folded into the summary. `failed` comes from
+        # run_with_log, which counts a recorded error as well as a raise; this
+        # path is deleted when utility commands that run over sessions become
+        # processing commands and go through `gp.run`.
         stati = [
             (
                 name,
-                "%s%s" % (result if result else "completed",
+                "%s%s" % (result or ("completed with errors" if failed
+                                     else "completed"),
                           " [log: %s]" % comlog if comlog else ""),
-                1 if result else 0,
+                failed,
             )
-            for name, result, comlog, _ in sorted(results, key=lambda x: x[0])
+            for name, result, comlog, _, failed in sorted(results, key=lambda x: x[0])
         ]
         run.final_report(stati)
         run.write_status(stati)

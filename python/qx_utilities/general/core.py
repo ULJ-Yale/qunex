@@ -794,13 +794,13 @@ def record(response):
     results.append(response)
 
     with lock:
-        name, result, target_log, prepend = response
+        name, _, target_log, prepend, failed = response
         if target_log:
             see = " [log: %s]." % (target_log)
         else:
             see = "."
 
-        if result:
+        if failed:
             print("%s%s failed%s" % (prepend, name, see))
         else:
             print("%s%s finished successfully%s" % (prepend, name, see))
@@ -856,12 +856,26 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
         --tags         The name parts of the comlog to open. When None no
                        comlog is opened and the output goes to the console.
 
+    A command that declares a ``_log`` parameter is handed a
+    :class:`general.log.ReportLog` to report into, and its report -- rather than
+    a two-line stub -- is what goes into the runlog. See §14.15 of the logging
+    plan: the signature is the declaration, and the underscore is what keeps the
+    parameter off the command line.
+
+    **A command fails by raising or by recording an error, never by what it
+    returns.** Its return value is for a python caller -- a path, a count, a
+    list of files -- and is not inspected here.
+
     Returns:
-        (name, result, comlog path, prepend). `result` is falsy on success and
-        holds the exception otherwise.
+        (name, result, comlog path, prepend, failed). `result` is None unless
+        the call raised, in which case it holds the exception; `failed` is 1
+        when the call raised or recorded an error, so a caller building a
+        status does not have to infer it.
 
     For internal use only.
     """
+    import qx_utilities.general.log as gl
+
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
     if name is None:
@@ -901,9 +915,24 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
                 )
             )
 
+        # the log the command reports into, built here so that it echoes into
+        # the tee installed above (and never crosses a process boundary: a
+        # parallel run pickles `args`, and sys.stdout does not pickle). It is
+        # passed only to a callable that declares `_log`, which is how a
+        # command opts in; the rest run exactly as they did before.
+        log = gl.log_or_console(None)
+        takes_log = "_log" in inspect.signature(function).parameters
+
+        # the call's outcome is the exception it raised and the errors it
+        # recorded -- never its return value. A command returns whatever is
+        # useful to a python caller (a path, a count, a list of files, True),
+        # and reading that as a status made a successful `backup_files` an
+        # error and a no-op `remove_qunex_metadata` a success.
+        result = None
+
         try:
             _drop_run_parameters(function, args)
-            result = function(**args)
+            function(**args, **({"_log": log} if takes_log else {}))
         except ge.CommandError as e:
             with lock:
                 print(ge.report_command_error(name, e))
@@ -928,32 +957,42 @@ def run_with_log(function, args=None, run=None, name=None, prepend="", tags=None
                 % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
 
-        # schedule command fix
-        if name == "schedule":
-            result = False
+        # a command that took the log has a report to close; one that did not
+        # recorded nothing, so there is nothing to write and nothing to derive
+        # the count from. `failed` is the exception *or* a recorded error --
+        # the error count is an additional source of failure, not a substitute.
+        report = None
+        failed = 1 if result else 0
+        if log.text:
+            report, (_, _, failed) = log.finish(
+                str(result) if result else "completed",
+                failed=1 if result else None,
+                name=name,
+            )
 
-        if not result:
+        if not failed:
             print(f"\n---> Successful completion of task at {datetime.now()}")
 
-    comlogname = comlog.close(status="error" if result else "done") if comlog else None
+    comlogname = comlog.close(status="error" if failed else "done") if comlog else None
 
     # record the call in the run's runlog -- one runlog per run, so this
-    # appends to the file the RunContext opened rather than creating its own
+    # appends to the file the RunContext opened rather than creating its own.
+    # RunContext.write no-ops when the run has no runlog, which is what keeps
+    # a run the settings gave no runlog from growing one here.
     if run:
-        import qx_utilities.general.log as gl
-
         command, _, session = name.partition(": ")
         # the run's header already spelled the call; only a per-session call
         # is worth echoing again, since its arguments differ from the run's
         entry = gl.call_echo(command, args, session) + "\n" if session else name
         status = (
             "ERROR running %s" % name
-            if result
+            if failed
             else f"---> Successful completion of task at {datetime.now()}"
         )
-        run.write("\n%s\n%s\n" % (entry, status))
+        body = status if report is None else "%s\n%s" % (report, status)
+        run.write("\n%s\n%s\n" % (entry, body))
 
-    return name, result, comlogname, prepend
+    return name, result, comlogname, prepend, failed
 
 
 def run_in_parallel(calls, cores=None, prepend="", run=None):

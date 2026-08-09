@@ -568,6 +568,15 @@ def index_python_commands(root: Path, *, source_id: str) -> List[CommandInfo]:
             # is neither settable nor meaningful on the command line. Dropping
             # it here keeps it out of `args`, which is what `Command.has_arg`
             # reads when gmri decides where a `--name=value` goes.
+            #
+            # This is also why the log parameter is `_log` and not `log`:
+            # `--log` is a live user-facing parameter (comlog retention,
+            # defaulted in general/process.py and remapped for every command in
+            # commands_support.py before dispatch), so a `log` in a signature
+            # would make `has_arg("log")` true and route `--log=keep` into the
+            # command instead of into the comlog policy. `tests/
+            # test_registry_drift.py` asserts no built `args` entry starts
+            # with an underscore.
             sig_args = tuple(
                 (n, t) for n, t in python_function_args(node) if not n.startswith("_")
             )
