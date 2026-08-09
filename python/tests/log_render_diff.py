@@ -30,6 +30,14 @@ Depth is tracked lexically through ``indent()``/``dedent()``/``with section()``,
 so a conversion landing inside a nested block is rendered at the depth it will
 actually print at.
 
+The helpers that are *handed* message text -- ``check_for_file`` and
+``check_for_files``, whose ``ok=``/``bad=`` arguments are log call sites in
+everything but spelling (OI-12) -- are modelled too, one record per message.
+This is the ``log.check_for_file(...)`` call form; a direct
+``pc.check_for_file(log, ...)`` shifts the arguments along by one and is read
+as if it were the wrapped form, which is harmless while the only such calls are
+the wrapper itself and its tests, where no message is a literal.
+
 An empty diff *is* the proof that a byte-identical conversion changed nothing.
 A non-empty one is the exact list of user-visible changes to review.
 
@@ -71,6 +79,22 @@ CONVERSION = re.compile(r"%(\([^)]*\))?[sd]")
 
 # methods that append to a log, by the severity they record with
 LEVELS = set(PREFIXES)
+
+# helpers that take message text and log it on the caller's behalf, so a call
+# site contributes one record per message argument rather than none. Each
+# message is (positional index, keyword, the keyword naming its level, the
+# level used when that keyword is absent) -- the shape OI-12 gives
+# `check_for_file` / `check_for_files`.
+WRAPPERS = {
+    "check_for_file": (
+        (1, "ok", "ok_level", "detail"),
+        (2, "bad", "bad_level", "detail"),
+    ),
+    "check_for_files": (
+        (1, "ok", "ok_level", "detail"),
+        (2, "bad", "bad_level", "detail"),
+    ),
+}
 
 
 def _method(node):
@@ -129,6 +153,23 @@ def _keyword_int(node, name, default=0):
     return default
 
 
+def _keyword_str(node, name, default):
+    """A string keyword argument's literal value."""
+    for kw in node.keywords:
+        if kw.arg == name and isinstance(kw.value, ast.Constant):
+            if isinstance(kw.value.value, str):
+                return kw.value.value
+    return default
+
+
+def _argument(node, position, keyword):
+    """A call's argument, given either positionally or by keyword."""
+    for kw in node.keywords:
+        if kw.arg == keyword:
+            return kw.value
+    return node.args[position] if len(node.args) > position else None
+
+
 class _Records(ast.NodeVisitor):
     """Collects one rendered record per log call, grouped by function."""
 
@@ -157,6 +198,30 @@ class _Records(ast.NodeVisitor):
         text = node.args[0] if node.args else None
         # raw always records at depth 0, whatever the log's depth is
         self._emit(0, RAW, _template(text), _slots(text))
+
+    def _wrapper(self, node, messages):
+        """
+        One record per message a helper is handed (`check_for_file` & co).
+
+        A message that opens with a newline is spelling its own line -- the
+        marker and the indent are in the text, and the helper passes it through
+        verbatim -- so it renders as ``raw``. One that does not is a message
+        for a level method, at the level its ``*_level`` keyword names. That is
+        exactly the before and after of the OI-12 conversion, which is what
+        lets one instrument compare the two revisions.
+        """
+        for position, keyword, level_keyword, default in messages:
+            message = _argument(node, position, keyword)
+            if message is None:
+                continue
+            template = _template(message)
+            if template.startswith("\n"):
+                self._emit(0, RAW, template, _slots(message))
+                continue
+            level = _keyword_str(node, level_keyword, default)
+            # `detail` renders one level deeper than it is called at (report.py)
+            extra = 1 if level == "detail" else 0
+            self._emit(self._depth + extra, level, template, _slots(message))
 
     # ---------------------------------------------------------------- scopes
 
@@ -209,6 +274,8 @@ class _Records(ast.NodeVisitor):
             self._level(node, name)
         elif name == "raw":
             self._raw(node)
+        elif name in WRAPPERS:
+            self._wrapper(node, WRAPPERS[name])
         elif name == "blank":
             self._emit(0, RAW, "\n" * _const_int(node, 1))
         elif name == "indent":
