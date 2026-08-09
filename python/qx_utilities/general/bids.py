@@ -1900,6 +1900,11 @@ def map_nii2bids(
 
     """
 
+    # a processing command builds its own log and returns its text; `gp.run`
+    # puts that in the session log. `nii2bids.log` and its `file=bout` writes
+    # are a data artifact and stay exactly as they are.
+    log = gl.ReportLog()
+
     if "action" in options:
         action = options["action"]
     if action not in ["hardlink", "copy"]:
@@ -1915,7 +1920,7 @@ def map_nii2bids(
 
     if session_mapping_file is not None:
         remaps = yaml.safe_load(open(session_mapping_file))
-        print(f"Session mapping file {session_mapping_file} loaded")
+        log.step(f"Session mapping file {session_mapping_file} loaded")
     else:
         remaps = {}
 
@@ -1987,7 +1992,7 @@ def map_nii2bids(
                 if overwrite in ["yes", True, "True"]:
                     shutil.rmtree(bidsfolder)
                     os.makedirs(bidsfolder)
-                    print("--> cleaned bids folder, removed existing files")
+                    log.step("cleaned bids folder, removed existing files")
                 else:
                     raise ge.CommandFailed(
                         "map_nii2bids",
@@ -2001,7 +2006,7 @@ def map_nii2bids(
 
         # --- read session_hcp.txt file
         if os.path.exists(os.path.join(sourcefolder, "session_hcp.txt")):
-            print("... session_hcp.txt found, reading session info")
+            log.detail("session_hcp.txt found, reading session info")
             session_info = gc.read_session_data(
                 os.path.join(sourcefolder, "session_hcp.txt")
             )[0][0]
@@ -2059,7 +2064,7 @@ def map_nii2bids(
                 bidsfolder, bids_mri_types[image_type]["folder"]
             )
             if not os.path.exists(targetfolder):
-                print(f"... creating folder {targetfolder}")
+                log.detail(f"creating folder {targetfolder}")
                 os.makedirs(targetfolder)
 
             files_to_map = [
@@ -2132,6 +2137,8 @@ def map_nii2bids(
             )
 
         bout.close()
+
+    return log.text
 
 
 def _create_bids_name(
