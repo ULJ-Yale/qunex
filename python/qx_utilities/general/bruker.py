@@ -172,11 +172,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
     # execute
     log.blank()
     log.step('running conversions')
-    # seam: `run_external_parallel` still prints, and a record renders as
-    # "\n<line>" where a print emits "<line>\n" -- without this newline the two
-    # run together. Goes when that helper takes a log.
-    log.raw('\n')
-    done = gc.run_external_parallel(calls, cores=parelements, prepend=' ... ')
+    done = gc.run_external_parallel(calls, cores=parelements, _log=log)
 
     # archive
     failed = []

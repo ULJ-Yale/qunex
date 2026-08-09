@@ -791,9 +791,7 @@ def run_palm(
 
             print(" ---> running PALM for CIFTI input")
 
-            completed = gc.run_external_parallel(
-                calls, cores=parelements, prepend="     ... "
-            )
+            completed = gc.run_external_parallel(calls, cores=parelements)
 
             errors = []
             for complete in completed:

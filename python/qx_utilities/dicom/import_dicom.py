@@ -585,11 +585,7 @@ def import_dicom(
 
     log = gl.log_or_console(_log)
 
-    # `raw` with an explicit trailing newline, not `info`, wherever the next
-    # line comes from a helper that still `print()`s: a record renders as
-    # "\n<line>" and a print emits "<line>\n", so a record followed by a print
-    # runs the two together. Reads as `info` again once the helpers convert.
-    log.raw("\nRunning import_dicom\n====================\n")
+    log.info("Running import_dicom\n====================")
 
     if true_or_false(existing_structure):
         log.warning(
@@ -608,12 +604,12 @@ def import_dicom(
     (sessionsfolder, masterinbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b) = _import_normalize_args(
         sessionsfolder, sessions, masterinbox, pattern, nameformat, tool, add_image_type, verbose, overwrite
     )
-    sessions_info = _import_parse_logfile(logfile)
+    sessions_info = _import_parse_logfile(logfile, _log=log)
 
-    packets, report_set = _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info)
-    _import_report_packets(packets, report_set, overwrite_b)
+    packets, report_set = _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info, _log=log)
+    _import_report_packets(packets, report_set, overwrite_b, _log=log)
 
-    to_process = _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite_b, test)
+    to_process = _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite_b, test, _log=log)
     if to_process is None:
         return
 
@@ -630,7 +626,8 @@ def import_dicom(
         try:
             sfolder = os.path.join(sessionsfolder, session["sessionid"])
             dicom_dir = os.path.join(sfolder, "dicom")
-            log.raw("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
+            log.blank()
+            log.info("\n---=== PROCESSING %s ===---" % (session["sessionid"]))
 
             sources = _resolve_packet_sources(afile, session, masterinbox, sfolder)
 
@@ -643,15 +640,14 @@ def import_dicom(
                 tr_rel_pct=tr_rel_pct,
                 min_images=min_images,
                 verbose=verbose_b,
+                _log=log,
             )
             gdr.write_report(pkg, os.path.join(dicom_dir, "%s_import_report.md" % (session["sessionid"])))
             log.blank()
             log.info(gdr.render_console_summary(pkg))
             log.step("Package verdict: %s" % (pkg.verdict))
 
-            # convert to NIfTI (still writes session.txt and DICOM-Report.txt).
-            # dicom2niix does not take a log, so its output is live on the
-            # console and in the comlog but is not part of this report
+            # convert to NIfTI (still writes session.txt and DICOM-Report.txt)
             log.blank()
             dicom2niix(
                 folder=sfolder,
@@ -664,17 +660,18 @@ def import_dicom(
                 add_image_type=add_image_type,
                 add_json_info=add_json_info,
                 verbose=True,
+                _log=log,
             )
 
             if archive != "leave":
                 s = "Processing packages: " + archive
-                # `_archive_packet` prints -- see the note on the opening line
-                log.raw("\n%s\n%s\n" % (s, "=" * len(s)))
-            note += _archive_packet(sources, afolder, archive, masterinbox, verbose_b)
+                log.blank()
+                log.info("%s\n%s" % (s, "=" * len(s)))
+            note += _archive_packet(sources, afolder, archive, masterinbox, verbose_b, _log=log)
 
             report["ok"].append((afile, dict(session), note))
 
         except ge.CommandFailed as e:
             report["failed"].append((afile, dict(session), ["%s: %s" % (e.function, e.error)]))
 
-    _import_final_report(report)
+    _import_final_report(report, _log=log)

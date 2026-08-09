@@ -19,6 +19,8 @@ import os
 import re
 import shutil
 
+import qx_utilities.general.log as gl
+
 
 if "QUNEXMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
@@ -92,7 +94,7 @@ def match_all(pattern, string):
         return False
 
 
-def _safe_rmtree(path):
+def _safe_rmtree(path, _log=None):
     """
     Best-effort recursive folder removal.
 
@@ -102,4 +104,4 @@ def _safe_rmtree(path):
     try:
         shutil.rmtree(path)
     except Exception as e:
-        print(f"WARNING unable to remove folder {path}: {e}")
+        gl.log_or_console(_log).warning(f"unable to remove folder {path}: {e}")

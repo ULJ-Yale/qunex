@@ -600,9 +600,9 @@ def deduce_folders(args, command=None, timestamp=None):
     }
 
 
-def run_external_parallel(calls, cores=None, prepend=""):
+def run_external_parallel(calls, cores=None, _log=None):
     """
-    ``run_external_parallel(calls, cores=None, prepend='')``
+    ``run_external_parallel(calls, cores=None)``
 
     Runs external commands specified in 'calls' in parallel utilizing all the
     available or the number of cores specified in 'cores'.
@@ -623,15 +623,20 @@ def run_external_parallel(calls, cores=None, prepend=""):
             (3 max for left surface, right surface and volume files) will be
             used. One element per CPU core is processed at a time.
 
-        --prepend (str):
-            The string to prepend to each line of progress report.
+        --_log:
+            The log to report progress into. The underscore keeps the parameter
+            off the command line; it replaces the `prepend` string the callers
+            used to pass, the nesting now coming from the caller's log.
 
     Examples:
         ::
 
             run_external_parallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, \\
-            cores=1, prepend=' ... ')
+            cores=1)
     """
+    import qx_utilities.general.log as gl
+
+    log = gl.log_or_console(_log)
 
     if cores is None or cores in ["all", "All", "ALL"]:
         try:
@@ -697,9 +702,8 @@ def run_external_parallel(calls, cores=None, prepend=""):
                         )
 
                     if call["sout"]:
-                        print(
-                            prepend
-                            + "started running %s at %s, track progress in %s"
+                        log.detail(
+                            "started running %s at %s, track progress in %s"
                             % (
                                 call["name"],
                                 str(datetime.now()).split(".")[0],
@@ -707,15 +711,13 @@ def run_external_parallel(calls, cores=None, prepend=""):
                             )
                         )
                     else:
-                        print(
-                            prepend
-                            + "started running %s at %s"
+                        log.detail(
+                            "started running %s at %s"
                             % (call["name"], str(datetime.now()).split(".")[0])
                         )
                 except Exception:
-                    print(
-                        prepend
-                        + "ERROR: failed to start running %s. Please check your environment!"
+                    log.error(
+                        "failed to start running %s. Please check your environment!"
                         % (call["name"])
                     )
                     completed.append(
@@ -736,9 +738,8 @@ def run_external_parallel(calls, cores=None, prepend=""):
             if running[n]["p"].poll() is not None:
                 running[n]["sout"].close()
                 if running[n]["call"]["sout"]:
-                    print(
-                        prepend
-                        + "finished running %s (exit code: %d), log in %s"
+                    log.detail(
+                        "finished running %s (exit code: %d), log in %s"
                         % (
                             running[n]["call"]["name"],
                             running[n]["p"].poll(),
@@ -746,9 +747,8 @@ def run_external_parallel(calls, cores=None, prepend=""):
                         )
                     )
                 else:
-                    print(
-                        prepend
-                        + "finished running %s (exit code: %d)"
+                    log.detail(
+                        "finished running %s (exit code: %d)"
                         % (running[n]["call"]["name"], running[n]["p"].poll())
                     )
                 completed.append(
@@ -767,7 +767,7 @@ def run_external_parallel(calls, cores=None, prepend=""):
 
         # --- check if we are done:
         if not calls and not running:
-            print(prepend + "DONE")
+            log.detail("DONE")
             break
 
         # --- wait a bit

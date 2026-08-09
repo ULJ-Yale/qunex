@@ -469,7 +469,7 @@ def dicom2nii(
         )
         files.append([niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices])
 
-    _ = gc.run_external_parallel(calls, cores=parelements, prepend=" ... ")
+    _ = gc.run_external_parallel(calls, cores=parelements)
 
     for niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices in files:
         print(logs.pop(0), file=r)

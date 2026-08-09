@@ -25,6 +25,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.img as gi
+import qx_utilities.general.log as gl
 import qx_utilities.general.nifti as gn
 from qx_utilities.dicom.dicom_archive import _unzip_dicom, _zip_dicom
 from qx_utilities.dicom.dicom_info import read_dicom_info, read_par_info
@@ -43,6 +44,7 @@ def dicom2niix(
     tool="auto",
     add_image_type=0,
     add_json_info="",
+    _log=None,
 ):
     """
     ``dicom2niix [folder=.] [clean=no] [unzip=yes] [gzip=folder] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [add_image_type=0] [add_json_info=""]``
@@ -252,7 +254,9 @@ def dicom2niix(
                 --parelements=3
     """
 
-    print("Running dicom2niix\n==================")
+    log = gl.log_or_console(_log)
+
+    log.info("Running dicom2niix\n==================")
 
     if sessionid and sessionid.lower() == "none":
         sessionid = None
@@ -315,11 +319,10 @@ def dicom2niix(
 
     if len(prior) > 0:
         if clean == "yes":
-            print("\nDeleting preexisting files:")
-            for p in prior:
-                print("---> ", p)
-                os.remove(p)
-            print("")
+            with log.section("Deleting preexisting files:"):
+                for p in prior:
+                    log.detail(p)
+                    os.remove(p)
         else:
             raise ge.CommandFailed(
                 "dicom2niix",
@@ -335,8 +338,8 @@ def dicom2niix(
     if len(zipped_file) > 0 or len(zipped_folder) > 0:
         if unzip == "yes":
             if verbose:
-                print("\nUnzipping files (this might take a while)")
-            _unzip_dicom(dmcf, parelements)
+                log.step("Unzipping files (this might take a while)")
+            _unzip_dicom(dmcf, parelements, _log=log)
         else:
             raise ge.CommandFailed(
                 "dicom2niix",
@@ -370,10 +373,9 @@ def dicom2niix(
     c = 0
     calls = []
     logs = []
-    reps = []
     files = []
 
-    print("---> Analyzing data")
+    log.step("Analyzing data")
 
     for folder in folders:
         par = glob.glob(os.path.join(folder, "*.PAR"))
@@ -412,9 +414,8 @@ def dicom2niix(
                     % (folder),
                     file=r,
                 )
-                print(
-                    "---> WARNING: Could not read dicom file! Skipping folder %s"
-                    % (folder)
+                log.warning(
+                    "Could not read dicom file! Skipping folder %s" % (folder)
                 )
                 continue
 
@@ -442,8 +443,8 @@ def dicom2niix(
                 file=r,
             )
             if verbose:
-                print(
-                    "\nProcessing images from %s (%s) scanned on %s"
+                log.step(
+                    "Processing images from %s (%s) scanned on %s"
                     % (sessionid, info["sessionid"], info["datetime"])
                 )
 
@@ -491,24 +492,20 @@ def dicom2niix(
             "%(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s"
             % (info)
         )
-        reps.append(
-            "---> %(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(sessionid)s   %(datetime)s"
-            % (info)
-        )
 
         niiid = str(niinum)
 
         if tool == "auto":
             if par:
                 utool = "dicm2nii"
-                print(
-                    "---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available. [%s: %s]"
+                log.step(
+                    "Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available. [%s: %s]"
                     % (niiid, info["seriesDescription"])
                 )
             else:
                 utool = "dcm2niix"
-                print(
-                    "---> Using dcm2niix for conversion to NIfTI. [%s: %s]"
+                log.step(
+                    "Using dcm2niix for conversion to NIfTI. [%s: %s]"
                     % (niiid, info["seriesDescription"])
                 )
         else:
@@ -517,14 +514,14 @@ def dicom2niix(
         if utool == "dicm2nii":
             if "matlab" in mcommand:
                 if setdi:
-                    print("---> Setting up dicm2nii settings ...")
+                    log.step("Setting up dicm2nii settings ...")
                     subprocess.call(
                         "matlab -nodisplay -r \"setpref('dicm2nii_gui_para', 'save_patientName', true); setpref('dicm2nii_gui_para', 'save_json', true); setpref('dicm2nii_gui_para', 'use_parfor', true); setpref('dicm2nii_gui_para', 'use_seriesUID', true); setpref('dicm2nii_gui_para', 'lefthand', true); setpref('dicm2nii_gui_para', 'scale_16bit', false); exit\" ",
                         shell=True,
                         stdout=null,
                         stderr=null,
                     )
-                    print("     done!")
+                    log.detail("done!")
                     setdi = False
                 calls.append(
                     {
@@ -540,8 +537,8 @@ def dicom2niix(
                     }
                 )
             else:
-                print(
-                    "---> Using dcm2niix for conversion as Matlab is not available! [%s: %s]"
+                log.step(
+                    "Using dcm2niix for conversion as Matlab is not available! [%s: %s]"
                     % (niiid, info["seriesDescription"])
                 )
                 if par:
@@ -657,15 +654,17 @@ def dicom2niix(
             "Please check your data and paths!",
         )
 
-    gc.run_external_parallel(calls, cores=parelements, prepend=" ... ")
+    gc.run_external_parallel(calls, cores=parelements, _log=log)
 
-    print("\nProcessed sequences:")
+    log.step("Processed sequences:")
     for niinum, folder, info in files:
-        print(logs.pop(0), end=" ", file=r)
+        # the row is one record rather than a line assembled with `end=" "`
+        # across the branches below: a record is a whole line, and the notes
+        # that used to be appended to it are records of their own
+        row = logs.pop(0)
+        print(row, end=" ", file=r)
         if verbose:
-            print(reps.pop(0), end=" ")
-            if debug:
-                print("")
+            log.detail(row)
 
         tfname = False
         imgs = glob.glob(os.path.join(folder, "*.nii*"))
@@ -677,7 +676,7 @@ def dicom2niix(
         if nimg == 0:
             print(" WARNING: no NIfTI file created!", file=r)
             if verbose:
-                print(" WARNING: no NIfTI file created!")
+                log.warning("no NIfTI file created!")
             continue
         elif nimg > 9:
             print(
@@ -685,19 +684,18 @@ def dicom2niix(
                 file=r,
             )
             if verbose:
-                print(
-                    " WARNING: More than 9 images created from this sequence! Skipping. Please check conversion log!"
+                log.warning(
+                    "More than 9 images created from this sequence! Skipping. Please check conversion log!"
                 )
             continue
         else:
             print("", file=r)
-            print("")
 
             imgnum = 0
 
             if debug:
-                print(
-                    "     ---> found %s nifti file(s): %s"
+                log.detail(
+                    "found %s nifti file(s): %s"
                     % (nimg, "\n                            ".join(imgs))
                 )
 
@@ -705,13 +703,12 @@ def dicom2niix(
                 if not os.path.exists(image):
                     continue
                 if debug:
-                    print(
-                        "     ---> processing: %s [%s]"
-                        % (image, os.path.basename(image))
+                    log.detail(
+                        "processing: %s [%s]" % (image, os.path.basename(image))
                     )
                 if image.endswith(".nii"):
                     if debug:
-                        print("     ---> gzipping: %s" % (image))
+                        log.detail("gzipping: %s" % (image))
                     subprocess.call(
                         "gzip " + image, shell=True, stdout=null, stderr=null
                     )
@@ -734,7 +731,7 @@ def dicom2niix(
                 # ---> generate the actual target file path and move the image
                 tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
                 if debug:
-                    print("         ... moving '%s' to '%s'" % (image, tfname))
+                    log.detail("moving '%s' to '%s'" % (image, tfname), depth=1)
                 os.rename(image, tfname)
 
                 # ---> check for .bval and .bvec files
@@ -803,9 +800,8 @@ def dicom2niix(
                                 file=r,
                             )
                             if verbose:
-                                print(
-                                    "     WARNING: Could not parse the JSON file [%s]!"
-                                    % (jsonsrc)
+                                log.warning(
+                                    "Could not parse the JSON file [%s]!" % (jsonsrc)
                                 )
 
                 # ---> print the info to session.txt file
@@ -836,8 +832,8 @@ def dicom2niix(
                             file=r,
                         )
                         if verbose:
-                            print(
-                                "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]"
+                            log.warning(
+                                "unusual geometry of the NIfTI file: %d %d %d %d [xyzf]"
                                 % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
                             )
 
@@ -849,8 +845,8 @@ def dicom2niix(
                                 file=r,
                             )
                             if verbose:
-                                print(
-                                    "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames"
+                                log.warning(
+                                    "number of frames in nii does not match dicom information: %d vs. %d frames"
                                     % (hdr.frames, info["volumes"])
                                 )
                             if info["slices"] > 0:
@@ -862,8 +858,8 @@ def dicom2niix(
                                         file=r,
                                     )
                                     if verbose:
-                                        print(
-                                            "     WARNING: reslicing image to %d slices and %d good frames"
+                                        log.warning(
+                                            "reslicing image to %d slices and %d good frames"
                                             % (info["slices"], gframes)
                                         )
                                     gn.reslice(tfname, info["slices"])
@@ -874,8 +870,8 @@ def dicom2niix(
                                         file=r,
                                     )
                                     if verbose:
-                                        print(
-                                            "     WARNING: not enough slices (%d) to make a complete volume."
+                                        log.warning(
+                                            "not enough slices (%d) to make a complete volume."
                                             % (hdr.sizez)
                                         )
                             else:
@@ -885,8 +881,8 @@ def dicom2niix(
                                     file=r,
                                 )
                                 if verbose:
-                                    print(
-                                        "     WARNING: no slice number information, use qunex reslice manually to correct %s"
+                                    log.warning(
+                                        "no slice number information, use qunex reslice manually to correct %s"
                                         % (tfname)
                                     )
 
@@ -896,13 +892,13 @@ def dicom2niix(
     # gzip files
     if gzip == "file" or gzip == "folder":
         if verbose:
-            print("\nCompressing dicom with option {}:".format(gzip))
+            log.step("Compressing dicom with option {}:".format(gzip))
 
         with ProcessPoolExecutor(parelements) as executor:
             pending_futures = []
             for folder in folders:
                 future = executor.submit(_zip_dicom, gzip, folder)
-                print("submit archive dicom: {}".format(folder))
+                log.detail("submit archive dicom: {}".format(folder))
                 pending_futures.append(future)
 
             exceptions = []
@@ -910,16 +906,16 @@ def dicom2niix(
                 if future.exception() is not None:
                     # Unhandled
                     e = future.exception()
-                    print("Unhandled exception")
-                    print(traceback.format_exc())
+                    log.error("unhandled exception")
+                    log.raw("\n" + traceback.format_exc())
                     exceptions.append(e)
                     continue
                 r = future.result()
                 if r["status"] == "ok":
-                    print("archived {}".format(r["args"]["dicom_folder"]))
+                    log.detail("archived {}".format(r["args"]["dicom_folder"]))
                 else:
-                    print("archive failed {}".format(r["args"]["dicom_folder"]))
-                    print(r["traceback"])
+                    log.error("archive failed {}".format(r["args"]["dicom_folder"]))
+                    log.raw("\n" + r["traceback"])
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
                 raise ge.CommandError(
