@@ -222,6 +222,17 @@ def get_bold_names(boldinfo, options):
 
 
 def do_options_check(options, sinfo, command):
+    # the function turns `comlogs` from the single study folder `process.py`
+    # set into the resolved list, so a list is the record that it has already
+    # run for this options dict. calling it twice would take that list as the
+    # study folder and nest it, and a command that calls another command as a
+    # helper passes the same dict to both -- `fs.py`'s two FreeSurfer
+    # segmentation commands call `check_for_freesurfer_data`, which is also a
+    # command in its own right. guarding here rather than at each call site
+    # keeps the callers from having to know which of them is the outer one
+    if isinstance(options["comlogs"], list):
+        return
+
     # logs -- an empty --comlog_folders means "take the settings value"
     folders = options.get("comlog_folders") or ",".join(gl.active().comlog_folders)
     logs = [e.strip() for e in re.split(r" +|\||, *", folders)]

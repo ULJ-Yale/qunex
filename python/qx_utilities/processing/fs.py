@@ -23,24 +23,18 @@ from the command line using `gmri` command. Help is available through:
 - `gmri -o` for a list of relevant arguments and options
 """
 
-# TODO -- this file opts out of `do_options_check`, and nobody has decided
-# whether that is deliberate.
+# TODO -- the four commands here still leave `remove=` at its default of True
+# at all 41 external call sites, so their comlogs are deleted on success --
+# now with a runlog record and an error-scan veto (`processing.core.close_log`),
+# but still deleted, and against `--log`'s documented default of `keep`. Three
+# of the 41 are `recon-all`, whose comlog is the most useful thing the command
+# produces. Whether that should change is one judgement about these four
+# commands and it is still open.
 #
-# Its 41 external call sites all pass `logfolder=options["comlogs"]`, but no
-# function here calls `processing.core.do_options_check`, so `options["comlogs"]`
-# is still the single study folder `process.py` set. The consequences:
-#
-# - `--comlog_folders=session|hcp|<path>` is silently ignored by these four
-#   commands; every other processing command honours it.
-# - all 41 sites also leave `remove=` at its default of True, so their comlogs
-#   are deleted on success -- now with a runlog record and an error-scan veto
-#   (`processing.core.close_log`), but still deleted.
-#
-# Both are the same judgement -- which commands opt into the mechanism -- and it
-# is a decision about these four commands, not about the logging machinery, so
-# it was deliberately left open rather than settled by the rework that exposed
-# it. Calling `do_options_check` in the four entry points is the whole fix if
-# the answer is "they should opt in".
+# The other half of this note is settled: the file used to opt out of
+# `do_options_check` entirely, so `--comlog_folders=session|hcp|<path>` was
+# silently ignored here while every other processing command honoured it. The
+# four entry points now call it.
 
 # Created by Grega Repovs on 2016-12-17.
 # Code split from dofcMRIp_core gCodeP/preprocess codebase.
@@ -58,6 +52,7 @@ from qx_utilities.general.log import ReportLog
 from qx_utilities.processing.core import (
     ExternalFailed,
     NoSourceFolder,
+    do_options_check,
     get_file_names,
     get_session_folders,
     root4dfp,
@@ -98,6 +93,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
             Options passed to FSL FAST.
     """
     log = ReportLog()
+    do_options_check(options, sinfo, "run_basic_structural_segmentation")
 
     f = get_file_names(sinfo, options)
     log.raw("\n---------------------------------------------------------")
@@ -329,6 +325,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
             Path template to an aparc+aseg segmentation in T1 space.
     """
     log = ReportLog()
+    do_options_check(options, sinfo, "check_for_freesurfer_data")
 
     if not log.text:
         verbose = True
@@ -490,6 +487,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
             if other than default.
     """
     log = ReportLog()
+    do_options_check(options, sinfo, "run_freesurfer_full_segmentation")
 
     try:
         log.raw("\n---------------------------------------------------------")
@@ -818,6 +816,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
             if other than default.
     """
     log = ReportLog()
+    do_options_check(options, sinfo, "run_freesurfer_subcortical_segmentation")
     try:
         log.raw("\n---------------------------------------------------------")
         log.info(

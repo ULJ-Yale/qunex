@@ -569,3 +569,74 @@ def test_a_command_line_comlog_folders_overrides_the_settings(default_settings):
     pc.do_options_check(options, {"id": "s01"}, "some_command")
 
     assert options["comlogs"] == ["/study/logs/comlogs", "/elsewhere"]
+
+
+def test_do_options_check_runs_once_per_options_dict(default_settings):
+    """
+    A second call is a no-op, because a command may call another command.
+
+    `fs.py`'s three segmentation commands call `check_for_freesurfer_data`,
+    which is a registered command in its own right, and both are handed the
+    same options dict. Without the guard the second call would read the
+    already-resolved list as the study folder and nest it.
+    """
+    gl.set_active(gl.LogSettings(comlog_folders=("study", "session")))
+    options = {
+        "comlog_folders": "",
+        "comlogs": "/study/logs/comlogs",
+        "sessionsfolder": "/study/sessions",
+    }
+
+    pc.do_options_check(options, {"id": "s01"}, "outer_command")
+    resolved = list(options["comlogs"])
+    pc.do_options_check(options, {"id": "s01"}, "inner_command")
+
+    assert options["comlogs"] == resolved
+    assert all(isinstance(folder, str) for folder in options["comlogs"])
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "run_basic_structural_segmentation",
+        "check_for_freesurfer_data",
+        "run_freesurfer_full_segmentation",
+        "run_freesurfer_subcortical_segmentation",
+    ],
+)
+def test_the_fs_commands_resolve_comlog_folders(
+    default_settings, tmp_path, monkeypatch, command
+):
+    """
+    `processing/fs.py`'s four commands honour `--comlog_folders` (OI-2).
+
+    The file used to call `do_options_check` nowhere, so `options["comlogs"]`
+    stayed the single study folder and `--comlog_folders` was silently ignored
+    by these four while every other processing command honoured it. The call is
+    the first statement of each entry point, so the resolution holds even
+    though none of them can get far without imaging data.
+    """
+    import qx_utilities.processing.fs as fs
+    from tests.utils import default_options
+
+    # three of the four sleep 15s in their catch-all handler, which this test
+    # reaches on purpose and has no interest in waiting for
+    monkeypatch.setattr(fs.time, "sleep", lambda *_: None)
+
+    gl.set_active(gl.LogSettings(comlog_folders=("study",)))
+    options = default_options(
+        comlog_folders="study|session",
+        comlogs=str(tmp_path / "logs" / "comlogs"),
+        sessionsfolder=str(tmp_path / "sessions"),
+    )
+    sinfo = {"id": "s01"}
+
+    try:
+        getattr(fs, command)(sinfo, options)
+    except Exception:
+        pass  # none of them can run without imaging data; the call is first
+
+    assert options["comlogs"] == [
+        str(tmp_path / "logs" / "comlogs"),
+        os.path.join(str(tmp_path / "sessions"), "s01", "logs", "comlogs"),
+    ]
