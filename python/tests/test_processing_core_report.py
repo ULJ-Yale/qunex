@@ -164,6 +164,21 @@ def test_run_external_writes_the_report_into_the_log(tmp_path, log):
     assert "---> logfile: %s" % endlog in log.text
 
 
+@pytest.mark.parametrize("cls", [pc.ExternalFailed, pc.NoSourceFolder])
+def test_the_two_exceptions_render_as_their_message(cls):
+    """
+    Both carry a message and render as it, and both keep their default.
+
+    They used to spell that out by hand -- storing the value on a
+    `.parameter` attribute nothing read and defining a `__str__` that
+    returned it -- which is what `Exception` already does. All ~75 handlers
+    in the tree use `str(errormessage)`, so this is the whole contract.
+    """
+    assert str(cls("bet failed on session s01")) == "bet failed on session s01"
+    assert str(cls()) == "Got lost :-("
+    assert cls("boom").args == ("boom",)
+
+
 def test_run_external_raises_the_error_alone(tmp_path, log):
     log.step("earlier work")
     comlogs = tmp_path / "comlogs"

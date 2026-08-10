@@ -94,18 +94,12 @@ def _trace(log, comlog, text):
 
 class ExternalFailed(Exception):
     def __init__(self, value="Got lost :-("):
-        self.parameter = value
-
-    def __str__(self):
-        return self.parameter  # repr(self.parameter)
+        super().__init__(value)
 
 
 class NoSourceFolder(Exception):
     def __init__(self, value="Got lost :-("):
-        self.parameter = value
-
-    def __str__(self):
-        return self.parameter  # repr(self.parameter)
+        super().__init__(value)
 
 
 def get_extension(filetype):
