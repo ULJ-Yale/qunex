@@ -18,7 +18,6 @@ import glob
 import gzip
 import os
 import re
-import shutil
 import tarfile
 import tempfile
 import zipfile
@@ -46,7 +45,9 @@ def _at_frame(tag, vr, length):
 
 
 def read_dicom_base(filename):
-    # try partial read
+    """Read a file's DICOM header, or return ``(None, None)`` if it is not one."""
+    # `f` is bound before the try so the `finally` cannot raise when opening does
+    f = None
     gz = False
     try:
         if '.gz' in filename:
@@ -65,15 +66,19 @@ def read_dicom_base(filename):
 
 
 def read_dicom_full(filename):
-    # read the full dicom file
+    """Read a whole DICOM file, or return ``(None, None)`` if it is not one."""
+    f = None
+    gz = False
     try:
         if '.gz' in filename:
             f = gzip.open(filename, 'rb')
             gz = True
         else:
             f = open(filename, 'rb')
-            gz = False
-        d = dfr.read_file(f)
+        # `dcmread`, not the `read_file` alias this used to call: that alias was
+        # deprecated in pydicom 2 and removed in pydicom 3, so every read raised
+        # an AttributeError that the `except` below turned into "not a dicom"
+        d = dfr.dcmread(f)
         f.close()
         return d, gz
     except Exception:
@@ -151,136 +156,151 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
 
             opened_dicom = None
 
-            try:
-                # opened_dicom = pydicom.dcmread(full_filename, stop_before_pixels=True)
-                if save:
-                    opened_dicom, gz = read_dicom_full(full_filename)
-                else:
-                    opened_dicom, gz = read_dicom_base(full_filename)
+            if save:
+                opened_dicom, gz = read_dicom_full(full_filename)
+            else:
+                opened_dicom, gz = read_dicom_base(full_filename)
 
-                if opened_dicom:
-                    log.detail("read as dicom")
+            # the callback is only ever handed a DICOM. It used to be called
+            # whatever the read returned, so with a `None` it still parsed its
+            # specification file and reported on it while de-identifying
+            # nothing -- work that looked like work and was not
+            if opened_dicom is not None:
+                log.detail("read as dicom")
 
-                modified_dicom = deid_function(opened_dicom, filename=os.path.relpath(full_filename, folder))
-                log.detail("processed")
+                try:
+                    modified_dicom = deid_function(opened_dicom, filename=os.path.relpath(full_filename, folder))
+                    log.detail("processed")
 
-                if save:
-                    if output_folder is None:
-                        output_file = full_filename
-                    else:
-                        if rename_files:
-                            relative_folder = os.path.dirname(os.path.relpath(full_filename, folder))
-                            target_folder = os.path.join(output_folder, relative_folder)
-                            if not os.path.exists(target_folder):
-                                os.makedirs(target_folder)
-                            if gz:
-                                output_file = os.path.join(target_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm.gz"))
-                            else:
-                                output_file = os.path.join(target_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm"))
-
-                            archive_writer = csv.writer(open(archive_file, mode='a'))
-                            archive_writer.writerow([os.path.relpath(full_filename, folder), 'filename', os.path.relpath(output_file, output_folder)])
-
+                    if save:
+                        if output_folder is None:
+                            output_file = full_filename
                         else:
-                            relative_folder = os.path.dirname(os.path.relpath(full_filename, folder))
-                            target_folder = os.path.join(output_folder, relative_folder)
-                            if not os.path.exists(target_folder):
-                                os.makedirs(target_folder)
-                            relative_filepath = os.path.relpath(full_filename, folder)
-                            output_file = os.path.join(output_folder, relative_filepath)
+                            if rename_files:
+                                relative_folder = os.path.dirname(os.path.relpath(full_filename, folder))
+                                target_folder = os.path.join(output_folder, relative_folder)
+                                if not os.path.exists(target_folder):
+                                    os.makedirs(target_folder)
+                                if gz:
+                                    output_file = os.path.join(target_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm.gz"))
+                                else:
+                                    output_file = os.path.join(target_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm"))
 
-                    if gz:
-                        file = tempfile.TemporaryFile()
-                    else:
-                        file = open(output_file, mode='wb')
+                                with open(archive_file, mode='a') as af:
+                                    csv.writer(af).writerow([os.path.relpath(full_filename, folder), 'filename', os.path.relpath(output_file, output_folder)])
 
-                    log.detail("saving to %s" % (output_file), depth=1)
-                    modified_dicom.save_as(file)
+                            else:
+                                relative_folder = os.path.dirname(os.path.relpath(full_filename, folder))
+                                target_folder = os.path.join(output_folder, relative_folder)
+                                if not os.path.exists(target_folder):
+                                    os.makedirs(target_folder)
+                                relative_filepath = os.path.relpath(full_filename, folder)
+                                output_file = os.path.join(output_folder, relative_filepath)
 
-                    if gz:
-                        gzfile = gzip.open(output_file, mode='wb')
-                        file.seek(0)
-                        gzfile.write(file.read())
-                        gzfile.close()
-                    file.close()
+                        if gz:
+                            file = tempfile.TemporaryFile()
+                        else:
+                            file = open(output_file, mode='wb')
 
-            except Exception:
-                pass  # file was not a dicom
+                        log.detail("saving to %s" % (output_file), depth=1)
+                        modified_dicom.save_as(file)
 
-            if opened_dicom is None:
-                try:
-                    file = zipfile.ZipFile(full_filename)
-                    temp_directory = tempfile.mkdtemp()
-                    temp_out_directory = tempfile.mkdtemp()
-                    file.extractall(temp_directory)
-                    file.close()
-
-                    log.detail("extracted as a zip file")
-
-                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file, _log=log)
-
-                    if save:
-                        target_file = full_filename
-
-                        if output_folder:
-                            relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
-                            target_file = os.path.join(output_folder, relative_filepath)
-
-                        log.step("zipping to %s" % (target_file))
-                        file = zipfile.ZipFile(target_file, mode='w')
-
-                        for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
-                            for filename_2 in filenames_2:
-                                full_path_2 = os.path.join(dirpath_2, filename_2)
-                                relative_filepath_2 = os.path.relpath(full_path_2, temp_out_directory)
-                                file.write(full_path_2, relative_filepath_2)
-
+                        if gz:
+                            gzfile = gzip.open(output_file, mode='wb')
+                            file.seek(0)
+                            gzfile.write(file.read())
+                            gzfile.close()
                         file.close()
 
-                    shutil.rmtree(temp_directory)
-                    shutil.rmtree(temp_out_directory)
+                # a file that read as a DICOM and then failed to be
+                # de-identified or written is a failure of the command's whole
+                # purpose, not a file to skip quietly: the `except Exception:
+                # pass` this replaces is what hid the removed `read_file` API
+                except Exception as e:
+                    log.error("failed to process %s: %s" % (full_filename, e))
 
-                except Exception:
-                    pass  # File was not a zip archive
+            # `is_zipfile`/`is_tarfile` answer "is this an archive?" on their
+            # own, so only the test decides whether the branch is taken. The
+            # work below it -- extraction, recursion, re-archiving -- is a
+            # failure of the command when it fails, not a file to skip: a
+            # package that was de-identified and then not written back used to
+            # be reported as "not a dicom file" and exit 0
+            if opened_dicom is None and zipfile.is_zipfile(full_filename):
+                # the file is a zip whatever happens next, so the tar branch
+                # below must not try it and it is not "not a dicom file"
+                opened_dicom = True
 
-            if opened_dicom is None:
                 try:
-                    file = tarfile.open(full_filename)
-                    mode = file.mode
-                    temp_directory = tempfile.mkdtemp()
-                    temp_out_directory = tempfile.mkdtemp()
-                    file.extractall(temp_directory)
-                    file.close()
+                    with tempfile.TemporaryDirectory() as temp_directory, tempfile.TemporaryDirectory() as temp_out_directory:
+                        with zipfile.ZipFile(full_filename) as file:
+                            file.extractall(temp_directory)
 
-                    log.detail("extracted as a tar file")
+                        log.detail("extracted as a zip file")
 
-                    opened_dicom = True
+                        discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file, _log=log)
 
-                    discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file, _log=log)
+                        if save:
+                            target_file = full_filename
 
-                    if save:
-                        target_file = full_filename
-                        mode2 = 'w' + mode[1:]
+                            if output_folder:
+                                relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
+                                target_file = os.path.join(output_folder, relative_filepath)
 
-                        if output_folder:
-                            tarext = re.search(r"\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", full_filename).group(0)
-                            relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
-                            target_file = os.path.join(output_folder, relative_filepath)
+                            log.step("zipping to %s" % (target_file))
 
-                        log.step("archiving to %s" % (target_file))
-                        file = tarfile.open(target_file, mode2)
+                            with zipfile.ZipFile(target_file, mode='w') as file:
+                                for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
+                                    for filename_2 in filenames_2:
+                                        full_path_2 = os.path.join(dirpath_2, filename_2)
+                                        relative_filepath_2 = os.path.relpath(full_path_2, temp_out_directory)
+                                        file.write(full_path_2, relative_filepath_2)
 
-                        for item in glob.glob(os.path.join(temp_out_directory, '*')):
-                            relative_filepath = os.path.relpath(item, temp_out_directory)
-                            file.add(item, relative_filepath)
+                except Exception as e:
+                    log.error("failed to process zip archive %s: %s" % (full_filename, e))
 
-                        file.close()
+            if opened_dicom is None and tarfile.is_tarfile(full_filename):
+                opened_dicom = True
 
-                    shutil.rmtree(temp_directory)
-                    shutil.rmtree(temp_out_directory)
+                try:
+                    with tempfile.TemporaryDirectory() as temp_directory, tempfile.TemporaryDirectory() as temp_out_directory:
+                        with tarfile.open(full_filename) as file:
+                            file.extractall(temp_directory, filter="data")
 
-                except Exception:
-                    pass  # File was not a tar archive
+                        log.detail("extracted as a tar file")
+
+                        discover_dicom(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file, _log=log)
+
+                        if save:
+                            target_file = full_filename
+
+                            # the compression has to come from the name. this
+                            # used to be `"w" + file.mode[1:]` off the read
+                            # handle, but `TarFile.__init__` reduces the mode
+                            # to a single character, so it is "r" for every
+                            # archive here and the write mode was always plain
+                            # "w" -- a .tar.gz went back out as an
+                            # uncompressed tar still called .tar.gz
+                            if full_filename.endswith((".tar.gz", ".tgz")):
+                                mode2 = "w:gz"
+                            elif full_filename.endswith((".tar.bz2", ".tar.bzip2")):
+                                mode2 = "w:bz2"
+                            else:
+                                mode2 = "w"
+
+                            if output_folder:
+                                tarext = re.search(r"\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", full_filename).group(0)
+                                relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
+                                target_file = os.path.join(output_folder, relative_filepath)
+
+                            log.step("archiving to %s" % (target_file))
+
+                            with tarfile.open(target_file, mode2) as file:
+                                for item in glob.glob(os.path.join(temp_out_directory, '*')):
+                                    relative_filepath = os.path.relpath(item, temp_out_directory)
+                                    file.add(item, relative_filepath)
+
+                except Exception as e:
+                    log.error("failed to process tar archive %s: %s" % (full_filename, e))
 
             if opened_dicom is None:
                 log.detail("not a dicom file ... skipping")
