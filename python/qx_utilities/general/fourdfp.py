@@ -223,7 +223,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info = gc.read_session_data(os.path.join(folder, sourcefile))
+    info, _ = gc.read_session_data(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
@@ -296,9 +296,8 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         params = params.replace("{{boldnums}}", " ".join(["%s" % (b) for k, b in bold]))
         params = params.replace("{{bolds}}", " ".join([k + ".nii.gz" for k, b in bold]))
 
-        pfile = open(os.path.join(folder, "4dfp", "params"), "w")
-        print(params, file=pfile)
-        pfile.close()
+        with open(os.path.join(folder, "4dfp", "params"), "w") as pfile:
+            print(params, file=pfile)
 
     else:
         print("...  using existing params file")
@@ -346,15 +345,14 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     logname = "preprocess." + datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f") + ".log"
     print("...  running NIL preprocessing, saving log to %s " % (logname))
-    logfile = open(os.path.join(folder, "4dfp", logname), "w")
-
-    r = subprocess.call(
-        ["preproc_avi_nifti", os.path.join(folder, "4dfp", "params")],
-        stdout=logfile,
-        stderr=subprocess.STDOUT,
-    )
-
-    logfile.close()
+    # `with`: the explicit close this replaces was skipped whenever the call
+    # raised -- and with the 4dfp tooling absent, that is every call
+    with open(os.path.join(folder, "4dfp", logname), "w") as logfile:
+        r = subprocess.call(
+            ["preproc_avi_nifti", os.path.join(folder, "4dfp", "params")],
+            stdout=logfile,
+            stderr=subprocess.STDOUT,
+        )
 
     if r:
         print(
