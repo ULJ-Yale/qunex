@@ -24,10 +24,8 @@ text instead, so code states *what happened* and this module decides how it is
 spelled:
 
 - :class:`ReportLog` is a plain accumulator with the level vocabulary
-  (``step``/``detail``/``warning``/``error``) and wrappers around the
-  ``processing.core`` / ``general.core`` helpers, which are handed the log and
-  write into it. Per-BOLD / per-group executors use it: they have report text
-  but no session header of their own.
+  (``step``/``detail``/``warning``/``error``). Per-BOLD / per-group executors
+  use it: they have report text but no session header of their own.
 - :class:`SessionLog` adds the per-session header and :meth:`SessionLog.finish`,
   which closes the report and records the summary and failure count.
 
@@ -36,8 +34,14 @@ A processing command returns the log itself. ``general.process`` writes it with
 ``(session_id, summary, failed)`` triple, derived on read rather than assembled
 by hand at the call site.
 
-The ``processing.core`` / ``general.core`` helpers are imported lazily inside
-the wrapper methods so this module stays importable from those packages.
+This package is a **leaf**: it imports nothing from the tree but
+``general.exceptions`` and ``general.parsing``, and everything else imports it.
+The run and check helpers -- ``processing.core.run_external_for_file``,
+``check_run``, ``check_for_file``, ``check_for_files``, ``use_or_skip_bold``
+and ``general.core.link_or_copy`` -- are therefore called where they live, with
+the log handed to them as ``*, _log=None``, keyword-only and last.
+``tests/test_log_is_a_leaf.py`` fails if an import back into the tree
+reappears.
 
 Internally the report is a list of ``(depth, severity, message)`` records
 rendered to text on demand, not a list of pre-formatted strings: severity and
