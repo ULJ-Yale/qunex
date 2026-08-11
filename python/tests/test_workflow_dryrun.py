@@ -132,9 +132,6 @@ def session(tmp_path, monkeypatch):
         run="test",
         comlogs=str(tmp_path / "comlogs"),
         mov_mreport="mov_report.txt",
-        # `get_bold_data` tests `task in options["bolds"].split("|")` literally,
-        # with no case for the "all" default, so the task is named here
-        bolds="rest",
     )
     # `default_options` recodes "" to None, which the file-name builders
     # concatenate; the CLI supplies real empty strings for these
@@ -227,3 +224,34 @@ def test_the_bold_readiness_check_reads_the_bold_and_not_a_stale_status(session)
 
     assert report.count("Data ready!") == 2
     assert "Data missing" not in report
+
+
+def test_bolds_all_processes_every_bold(session):
+    """
+    The default `--bolds=all` used to process nothing at all.
+
+    `get_bold_data` was the only command in the file with a hand-rolled bold
+    selection: it compared each bold's `task` against `options["bolds"]` split
+    on "|", so the default "all" matched no task and the loop body never ran.
+    It now uses `use_or_skip_bold`, the same helper its five siblings use.
+    """
+    sinfo, options, _, _ = session
+    assert options["bolds"] == "all", "the fixture must exercise the default"
+
+    report = wf.get_bold_data(sinfo, dict(options)).text
+
+    assert "Working on: bold1" in report
+    assert "Working on: bold2" in report
+    assert report.count("Data ready!") == 2
+
+
+def test_bolds_can_still_name_a_subset(session):
+    """Naming one bold selects it and reports the other as skipped."""
+    sinfo, options, _, _ = session
+    options["bolds"] = "bold2"
+
+    report = wf.get_bold_data(sinfo, dict(options)).text
+
+    assert "Working on: bold2" in report
+    assert "Working on: bold1" not in report
+    assert "Skipping the following BOLD images" in report

@@ -30,7 +30,6 @@ from the command line using `qunex` command. Help is available through:
 # Copyright (c) Grega Repovs. All rights reserved.
 
 import os
-import re
 import shutil
 import time
 import traceback
@@ -144,7 +143,6 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
             if other than default.
     """
     log = ReportLog()
-    bsearch = re.compile(r"bold([0-9]+)")
 
     log.raw("\n---------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
@@ -231,40 +229,39 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
         except Exception:
             log.error("getting the data failed! Please check paths and files!", depth=1)
 
-        btargets = options["bolds"].split("|")
+        # the same bold selection every other command in this file uses. The
+        # hand-rolled loop this replaces matched `task` alone, split `--bolds`
+        # on "|" only, and had no case for its own default of "all" -- which
+        # matched no task and so processed nothing at all
+        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
 
-        for k, v in sinfo.items():
-            if k.isdigit():
-                bnum = bsearch.match(v["name"])
-                if bnum:
-                    if v["task"] in btargets:
-                        boldname = v["name"]
+        for boldinfo in bolds:
+            boldname = boldinfo["name"]
 
-                        log.raw("\n\nWorking on: " + boldname + " ...")
+            log.raw("\n\nWorking on: " + boldname + " ...")
 
-                        try:
-                            # --- filenames
-                            f = pc.get_file_names(sinfo, options)
-                            f.update(pc.get_bold_file_names(sinfo, boldname, options))
-                            _ = pc.get_session_folders(sinfo, options)
+            try:
+                # --- filenames
+                f = pc.get_file_names(sinfo, options)
+                f.update(pc.get_bold_file_names(sinfo, boldname, options))
+                _ = pc.get_session_folders(sinfo, options)
 
-                            # the bold's own data, not the status of whichever
-                            # structural conversion happened to run last: that
-                            # name is unbound whenever none did -- which is
-                            # every run where the T1 is already in place, and
-                            # every dry run -- and reading it raised a
-                            # NameError the handler below reported as an
-                            # unknown error, once per bold
-                            if os.path.exists(f["bold_vol"]):
-                                log.step("Data ready!")
-                            else:
-                                log.error("Data missing, please check source!")
+                # the bold's own data, not the status of whichever structural
+                # conversion happened to run last: that name is unbound
+                # whenever none did -- which is every run where the T1 is
+                # already in place, and every dry run -- and reading it raised
+                # a NameError the handler below reported as an unknown error,
+                # once per bold
+                if os.path.exists(f["bold_vol"]):
+                    log.step("Data ready!")
+                else:
+                    log.error("Data missing, please check source!")
 
-                        except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-                            log.raw(str(errormessage))
-                        except Exception:
-                            log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
-                            time.sleep(3)
+            except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+                log.raw(str(errormessage))
+            except Exception:
+                log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
+                time.sleep(3)
 
     log.raw(f"\n\nImaging data copy completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
