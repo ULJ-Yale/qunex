@@ -214,8 +214,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
     log.raw("\n------------------------------------------------------------")
     timestamp = datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
     log.info(f"Session id: {sinfo['id']} \n[started on {timestamp}]")
-    action = pc.action("Running", options["run"])
-    log.raw(f"\n{action} rapidtide [{session}] ...")
+    log.action("Running", f"rapidtide [{session}] ...", options["run"], level="info")
 
     # status variables
     run = True

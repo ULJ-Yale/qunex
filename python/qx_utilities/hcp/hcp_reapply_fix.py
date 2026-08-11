@@ -215,7 +215,13 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_bolds)))
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
-        log.raw(f"\n\n{pc.action('Processing', options['run'])} {parelements} ReApplyFixes in parallel")
+        log.blank()
+        log.action(
+            "Processing",
+            f"{parelements} ReApplyFixes in parallel",
+            options["run"],
+            level="info",
+        )
 
         # --- Execute
         # single fix
@@ -485,7 +491,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n------------------------------------------------------------")
-        log.step(f"{pc.action('Processing', options['run'])} group {groupname}")
+        log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -747,7 +753,7 @@ def execute_hcp_hand_reclassification(
     }
 
     try:
-        log.step(f"{pc.action('Processing', options['run'])} ICA {printbold}")
+        log.action("Processing", f"ICA {printbold}", options["run"])
         boldok = True
 
         # load parameters or use default values

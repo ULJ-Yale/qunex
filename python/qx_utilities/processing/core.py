@@ -1388,17 +1388,3 @@ def check_for_files(
     # if we are here all files exist and all is set
     _say(log, ok_level, ok)
     return status, ""
-
-
-def action(action, run):
-    """
-    action(action, run)
-    A function that prepends "test" to action name if run is set to "test".
-    """
-    if run == "test":
-        if action.istitle():
-            return "Test " + action.lower()
-        else:
-            return "test " + action
-    else:
-        return action

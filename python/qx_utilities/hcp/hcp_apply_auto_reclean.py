@@ -195,7 +195,13 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
             reclean_elements = icafix_groups
 
-        log.raw(f"\n\n{pc.action('Processing', options['run'])} {parelements} ApplyAutoReclean elements in parallel")
+        log.blank()
+        log.action(
+            "Processing",
+            f"{parelements} ApplyAutoReclean elements in parallel",
+            options["run"],
+            level="info",
+        )
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
@@ -294,7 +300,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.step(f"{pc.action('Processing', options['run'])} group {groupname}")
+        log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter

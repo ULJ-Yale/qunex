@@ -84,6 +84,26 @@ def _render(depth, severity, message):
     return "\n" + INDENT * depth + PREFIXES[severity] + message
 
 
+def action(word, run):
+    """
+    Spell an action word for the run mode: "Running" or "Test running".
+
+    Under ``--test`` a command reports what it *would* do, and every line
+    saying so is spelled the same way. Use :meth:`ReportLog.action` to record
+    such a line; this function is for the places that need the word as a
+    **value** -- a command's summary string, or a word reused across lines.
+
+    Parameters:
+        word: the action, e.g. ``"Running"`` or ``"completed"``.
+        run: ``options["run"]``.
+    """
+    if run == "test":
+        if word.istitle():
+            return "Test " + word.lower()
+        return "test " + word
+    return word
+
+
 class ReportLog:
     """
     Accumulating report text, spelled in the QuNex runlog vocabulary.
@@ -366,6 +386,23 @@ class ReportLog:
     def info(self, message: str, *, depth: int = 0) -> None:
         """Record an unprefixed line."""
         self._emit("info", message, depth)
+
+    def action(self, word: str, message: str, run: str, *, level: str = "step") -> None:
+        """
+        Record what the command is doing, or -- under ``--test`` -- would do.
+
+        ``log.action("Running", "FSL feat ...", options["run"])`` records
+        ``---> Running FSL feat ...``, or ``---> Test running FSL feat ...``
+        when ``run`` is ``"test"``. The action word is a logging operation
+        rather than a string spliced into the message.
+
+        Parameters:
+            word: the action, e.g. ``"Running"`` or ``"Processing"``.
+            message: what is being acted on.
+            run: ``options["run"]``.
+            level: the level method to record at.
+        """
+        getattr(self, level)("%s %s" % (action(word, run), message))
 
     def blank(self, count: int = 1) -> None:
         """Insert blank lines."""
@@ -702,8 +739,6 @@ class SessionLog(ReportLog):
             label: how the processed unit is named; subject level commands
                 pass ``"Subject"``.
         """
-        import qx_utilities.processing.core as pc
-
         super().__init__()
         self._options = options
         self._pipeline = pipeline
@@ -716,13 +751,13 @@ class SessionLog(ReportLog):
             datetime.now().strftime(REPORT_TIME),
         ))
 
-        action = pc.action("Running", options["run"])
+        running = action("Running", options["run"])
         if mode:
             self.raw("%s%s %s [%s] ...%s" % (
-                lead, action, pipeline, options["hcp_processing_mode"], tail,
+                lead, running, pipeline, options["hcp_processing_mode"], tail,
             ))
         else:
-            self.raw("%s%s %s ...%s" % (lead, action, pipeline, tail))
+            self.raw("%s%s %s ...%s" % (lead, running, pipeline, tail))
 
     # ---------------------------------------------------------------- finish
 
@@ -768,13 +803,11 @@ class SessionLog(ReportLog):
             pipeline: name for the closing line; defaults to the opening one.
             lead: newlines separating the footer from the preceding text.
         """
-        import qx_utilities.processing.core as pc
-
         name = pipeline if pipeline is not None else self._pipeline
         self.raw("%s%s %s on %s\n%s" % (
             lead,
             name,
-            pc.action("completed", self._options["run"]),
+            action("completed", self._options["run"]),
             datetime.now().strftime(REPORT_TIME),
             REPORT_RULE,
         ))

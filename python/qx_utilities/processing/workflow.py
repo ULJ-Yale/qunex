@@ -2599,7 +2599,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info(f"Preprocessing {', '.join(options['bolds'].split('|'))} BOLD files as specified in --bolds.")
     log.info(f"Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
-    log.info(f"{pc.action('Running', options['run'])} Preprocessing bold runs ...")
+    log.action("Running", "Preprocessing bold runs ...", options["run"], level="info")
 
     report = {
         "done": [],
@@ -3471,7 +3471,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n---------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.info(f"{pc.action('Running', options['run'])} Preprocessing conc bundles ...")
+    log.action("Running", "Preprocessing conc bundles ...", options["run"], level="info")
     log.info(f"Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
 
     # --- extract conc and fidl names
@@ -3742,7 +3742,10 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     % (mcommand, mcomm)
                 )
 
-                log.raw(f"\n\n{pc.action('Running', options['run'])} nuisance and task removal")
+                log.blank()
+                log.action(
+                    "Running", "nuisance and task removal", options["run"], level="info"
+                )
                 if options["print_command"] == "yes":
                     log.raw("\n" + comm + "\n")
                 if options["run"] == "run":

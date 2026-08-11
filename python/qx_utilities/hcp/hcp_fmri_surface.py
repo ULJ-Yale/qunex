@@ -246,7 +246,9 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         _build_skipped_report(report, bskip, options)
 
         parelements = max(1, min(options["parelements"], len(bolds)))
-        log.info(f"{pc.action('Running', options['run'])} {parelements} BOLD images in parallel")
+        log.action(
+            "Running", f"{parelements} BOLD images in parallel", options["run"], level="info"
+        )
 
         # create a multiprocessing Pool
         process_pool_executor = ProcessPoolExecutor(parelements)
@@ -304,7 +306,8 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
     }
 
     try:
-        log.raw(f"\n\n---> {pc.action('Processing', options['run'])} BOLD image {printbold}")
+        log.blank()
+        log.action("Processing", f"BOLD image {printbold}", options["run"])
         boldok = True
 
         # --- check for bold image

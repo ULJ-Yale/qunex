@@ -36,11 +36,10 @@ from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.img as gi
-from qx_utilities.general.log import ReportLog
+from qx_utilities.general.log import ReportLog, action
 from qx_utilities.processing.core import (
     ExternalFailed,
     NoSourceFolder,
-    action,
     do_options_check,
     get_file_names,
     get_session_folders,
@@ -126,7 +125,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     log.info(
         f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
     )
-    log.info(f"{action('Running', options['run'])} basic structural segmentation ...")
+    log.action("Running", "basic structural segmentation ...", options["run"], level="info")
 
     try:
         with log.combined_comlog(
@@ -364,7 +363,12 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
                 log.info(
                     f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
                 )
-                log.info(f"{action('Checking', options['run'])} for existing freesurfer data ...")
+                log.action(
+                    "Checking",
+                    "for existing freesurfer data ...",
+                    options["run"],
+                    level="info",
+                )
 
             # check for freesurfer folder
             if not os.path.exists(f["fs_aseg_mgz"]) or overwrite:
@@ -509,7 +513,9 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
             log.info(
                 f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
             )
-            log.info(f"{action('Running', options['run'])} Full FreeSurfer segmentation ...")
+            log.action(
+                "Running", "Full FreeSurfer segmentation ...", options["run"], level="info"
+            )
 
             # check if any data already exists
             check_for_freesurfer_data(sinfo, options, overwrite, thread, log)
@@ -786,7 +792,12 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
             log.info(
                 f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
             )
-            log.info(f"{action('Running', options['run'])} subcortical only FreeSurfer segmentation ...")
+            log.action(
+                "Running",
+                "subcortical only FreeSurfer segmentation ...",
+                options["run"],
+                level="info",
+            )
 
             # check if any data already exists
             check_for_freesurfer_data(sinfo, options, overwrite, thread, log)

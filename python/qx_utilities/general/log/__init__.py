@@ -54,6 +54,7 @@ from qx_utilities.general.log.report import (
     REPORT_TIME,
     ReportLog,
     SessionLog,
+    action,
     log_or_console,
 )
 from qx_utilities.general.log.settings import (
@@ -80,6 +81,7 @@ __all__ = [
     "RunContext",
     "SessionLog",
     "USER_SETTINGS_PATHS",
+    "action",
     "active",
     "apply_study_settings",
     "call_echo",

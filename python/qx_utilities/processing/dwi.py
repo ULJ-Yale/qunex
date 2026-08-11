@@ -111,7 +111,9 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.info(f"{pc.action('Running', options['run'])} FSL F99 registration [{session}] ...")
+    log.action(
+        "Running", f"FSL F99 registration [{session}] ...", options["run"], level="info"
+    )
 
     # status variables
     run = True
@@ -372,7 +374,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.info(f"{pc.action('Running', options['run'])} FSL XTRACT [{session}] ...")
+    log.action("Running", f"FSL XTRACT [{session}] ...", options["run"], level="info")
 
     # status variables
     run = True
@@ -672,7 +674,9 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.info(f"{pc.action('Running', options['run'])} CUDIMOT NODDI modelling [{session}] ...")
+    log.action(
+        "Running", f"CUDIMOT NODDI modelling [{session}] ...", options["run"], level="info"
+    )
 
     # status variables
     run = True

@@ -140,7 +140,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.raw(f"\n{pc.action('Running', options['run'])} preprocess_mice {session} ...")
+    log.action("Running", f"preprocess_mice {session} ...", options["run"], level="info")
 
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
 
@@ -153,7 +153,9 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
 
         # report
         parelements = max(1, min(options["parelements"], len(bolds)))
-        log.raw(f"\n{pc.action('Running', options['run'])} {parelements} BOLD images in parallel")
+        log.action(
+            "Running", f"{parelements} BOLD images in parallel", options["run"], level="info"
+        )
 
         if parelements == 1:  # serial execution
             for b in bolds:
@@ -395,7 +397,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.raw(f"\n{pc.action('Running', options['run'])} map_mice_data {session} ...")
+    log.action("Running", f"map_mice_data {session} ...", options["run"], level="info")
 
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
 

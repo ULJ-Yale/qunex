@@ -32,7 +32,7 @@ import nibabel as nib
 import qx_utilities.processing.core as pc
 import qx_utilities.general.exceptions as ge
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
-from qx_utilities.general.log import ReportLog
+from qx_utilities.general.log import ReportLog, action
 from qx_utilities.hcp.hcp_utils import do_hcp_options_check
 
 
@@ -851,7 +851,10 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         log.step("No QC jobs prepared.")
     else:
         max_workers = max(1, min(int(options.get("parelements") or 1), len(jobs)))
-        log.raw(f"\n\n{pc.action('Running', options['run'])} {max_workers} QC jobs in parallel")
+        log.blank()
+        log.action(
+            "Running", f"{max_workers} QC jobs in parallel", options["run"], level="info"
+        )
         with ProcessPoolExecutor(max_workers) as process_pool_executor:
             results = process_pool_executor.map(_run_qc_executor, jobs)
 
@@ -860,7 +863,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             qc_report["done"] += result["report"]["done"]
             qc_report["failed"] += result["report"]["failed"]
 
-    log.raw(f"\n\nHCP run QC {pc.action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.raw(f"\n\nHCP run QC {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
     def _format_item_list(items):
         try:

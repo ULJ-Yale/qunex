@@ -291,8 +291,12 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_bolds)))
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
-        log.raw(
-            f"\n\n{pc.action('Processing', options['run'])} {parelements} ICAFix elements in parallel"
+        log.blank()
+        log.action(
+            "Processing",
+            f"{parelements} ICAFix elements in parallel",
+            options["run"],
+            level="info",
         )
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
@@ -384,9 +388,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.step(
-            f"{pc.action('Processing', options['run'])} BOLD image {printbold}"
-        )
+        log.action("Processing", f"BOLD image {printbold}", options["run"])
         boldok = True
 
         # --- check for bold image
@@ -547,9 +549,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.step(
-            f"{pc.action('Processing', options['run'])} group {groupname}"
-        )
+        log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter

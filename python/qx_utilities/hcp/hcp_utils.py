@@ -967,7 +967,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.step(f"{pc.action('Processing', options['run'])} bold ICA {printica}")
+        log.action("Processing", f"bold ICA {printica}", options["run"])
 
     else:
         # highpass
@@ -982,7 +982,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.step(f"{pc.action('Processing', options['run'])} group ICA {printica}")
+        log.action("Processing", f"group ICA {printica}", options["run"])
 
     try:
         boldok = True
@@ -1144,7 +1144,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         bolds = group["bolds"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.step(f"{pc.action('Processing', options['run'])} DeDriftAndResample")
+        log.action("Processing", "DeDriftAndResample", options["run"])
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -1376,7 +1376,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.step(f"{pc.action('Processing', options['run'])} DeDriftAndResample")
+        log.action("Processing", "DeDriftAndResample", options["run"])
 
         # --- check for bold images and prepare targets parameter
         group_list = []

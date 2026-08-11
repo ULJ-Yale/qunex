@@ -237,7 +237,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     outfmriname = options["hcp_msmall_outfmriname"]
 
                     log.raw("\n\n------------------------------------------------------------")
-                    log.step(f"{pc.action('Processing', options['run'])} MSMAll {outfmriname}")
+                    log.action("Processing", f"MSMAll {outfmriname}", options["run"])
 
                     # --- check for bold images and prepare targets parameter
                     boldtargets = ""

@@ -89,7 +89,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.info(f"{pc.action('Running', options['run'])} FSL feat [{session}] ...")
+    log.action("Running", f"FSL feat [{session}] ...", options["run"], level="info")
 
     # status variables
     run = True
@@ -243,7 +243,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
 
     log.raw("\n------------------------------------------------------------")
     log.info(f"Melodic: \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.info(f"{pc.action('Running', options['run'])} FSL melodic ...")
+    log.action("Running", "FSL melodic ...", options["run"], level="info")
 
     # status variables
     run = True

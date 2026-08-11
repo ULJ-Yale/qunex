@@ -329,7 +329,13 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         parelements = max(1, min(options["parelements"], len(msmall_groups)))
 
         if parelements > 1:
-            log.raw(f"\n\n{pc.action('Processing', options['run'])} {parelements} ICAFix groups in parallel")
+            log.blank()
+            log.action(
+                "Processing",
+                f"{parelements} ICAFix groups in parallel",
+                options["run"],
+                level="info",
+            )
 
         # --- Execute
         # create a multiprocessing Pool
@@ -431,7 +437,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         outfmriname = options["hcp_msmall_outfmriname"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.step(f"{pc.action('Processing', options['run'])} MSMAll {outfmriname}")
+        log.action("Processing", f"MSMAll {outfmriname}", options["run"])
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -714,7 +720,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         outfmriname = options["hcp_msmall_outfmriname"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.step(f"{pc.action('Processing', options['run'])} MSMAll {outfmriname}")
+        log.action("Processing", f"MSMAll {outfmriname}", options["run"])
 
         # --- check for bold images and prepare targets parameter
         boldtargets = ""

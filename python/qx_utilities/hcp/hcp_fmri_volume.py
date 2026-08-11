@@ -991,7 +991,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         for boldinfo in bolds:
             printbold, boldtarget, boldsource = pc.get_bold_names(boldinfo, options)
 
-            log.raw(f"\n\n---> {pc.action('Preprocessing settings (unwarpdir, refimage, moveref, seimage) for', options['run'])} BOLD {printbold}")
+            log.blank()
+            log.action(
+                "Preprocessing settings (unwarpdir, refimage, moveref, seimage) for",
+                f"BOLD {printbold}",
+                options["run"],
+            )
             boldok = True
 
             # ---> Check for and prepare distortion correction parameters
