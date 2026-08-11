@@ -22,7 +22,8 @@ pragmatic, focused improvements over strict rewrites.**
   files outside `python/qx_utilities` such as `python/qx_registry*.py`); include them explicitly.
 - `python/qx_utilities/` — Python implementation, the bulk of active development:
   - `general/` — core utilities, parsing, sessions, DICOM/BIDS/NIfTI, scheduler, `gmri` driver,
-    and `log.py` (the suite-wide runlog; see **Command logging** below).
+    and the `log/` package (the suite-wide runlog — `report.py`, `context.py`, `settings.py`;
+    see **Command logging** below).
   - `processing/` — preprocessing workflows (`workflow.py`, `dwi.py`, `fs.py`, `fsl.py`, ...).
     `processing/core.py` holds the low-level report/run primitives (`run_external_for_file`,
     `check_run`, `check_for_file`, `check_for_files`, `use_or_skip_bold`, and the comlog

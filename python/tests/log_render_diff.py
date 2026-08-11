@@ -33,10 +33,12 @@ actually print at.
 The helpers that are *handed* message text -- ``check_for_file`` and
 ``check_for_files``, whose ``ok=``/``bad=`` arguments are log call sites in
 everything but spelling (OI-12) -- are modelled too, one record per message.
-This is the ``log.check_for_file(...)`` call form; a direct
-``pc.check_for_file(log, ...)`` shifts the arguments along by one and is read
-as if it were the wrapped form, which is harmless while the only such calls are
-the wrapper itself and its tests, where no message is a literal.
+Both spellings read the same way. The ``ReportLog`` wrapper this was written
+against is gone, and ``pc.check_for_file(f, ok, bad, _log=log)`` puts its
+messages where ``log.check_for_file(f, ok, bad)`` put them -- the log is
+keyword-only and last, so nothing shifts. The pre-2026-08-11 direct form,
+``pc.check_for_file(log, ...)``, did shift them along by one and no longer
+exists in the tree.
 
 An empty diff *is* the proof that a byte-identical conversion changed nothing.
 A non-empty one is the exact list of user-visible changes to review.

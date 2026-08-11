@@ -126,6 +126,20 @@ def test_a_prefixed_check_message_equals_the_levelled_call(before, after):
     assert diff_sources(before, after) == []
 
 
+def test_the_wrapper_and_the_helper_spellings_read_the_same():
+    """
+    The `ReportLog` wrapper is gone; the differ must read what replaced it.
+
+    `pc.check_for_file(f, ok, bad, _log=log)` puts its messages in the same
+    positions the wrapper did, because `_log` is keyword-only and last. Nothing
+    pinned that, and the differ is the instrument every rendering change on this
+    branch was judged by.
+    """
+    wrapper = 'log.check_for_file(f, "found", "missing")'
+    helper = 'pc.check_for_file(f, "found", "missing", _log=log)'
+    assert diff_sources(wrapper, helper) == []
+
+
 def test_a_check_message_indent_change_is_reported():
     # C1 -- the 47 four-space messages normalise to detail()'s five
     before = 'log.check_for_file(f, "\\n    ... found", "\\n    ... missing")'
