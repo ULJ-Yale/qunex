@@ -14,6 +14,7 @@ it reads the record to report what each of its steps did.
 import importlib.machinery
 import importlib.util
 import os
+from pathlib import Path
 
 import pytest
 import yaml
@@ -21,6 +22,18 @@ import yaml
 import qx_utilities.general.log as gl
 import qx_utilities.general.log.context as glc
 import qx_utilities.general.log.settings as gls
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def registry_of_this_tree(monkeypatch):
+    """
+    Dispatching a command reads the command registry, which is loaded from
+    ``$QUNEXPATH/qx_commands.yaml``. This tree carries its own committed
+    registry, so the tests name it and run without the suite's environment.
+    """
+    monkeypatch.setenv("QUNEXPATH", str(REPO_ROOT))
 
 
 @pytest.fixture(autouse=True)
