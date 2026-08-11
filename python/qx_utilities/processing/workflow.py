@@ -95,108 +95,100 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     pc.do_options_check(options, sinfo, "get_bold_data")
     f = pc.get_file_names(sinfo, options)
 
-    copy = True
-    if os.path.exists(f["t1"]):
-        copy = False
+    with log.combined_comlog(options, "get_bold_data", thread=sinfo["id"]):
+        copy = True
+        if os.path.exists(f["t1"]):
+            copy = False
 
-    try:
-        if overwrite or copy:
-            if f["t1_source"] is None:
-                raise pc.NoSourceFolder(
-                    "ERROR: Data source folder is not set. Please check your paths!"
-                )
-            log.detail(f"copying {f['t1_source']}")
-            if options["image_target"] == "4dfp":
-                if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
-                    gc.link_or_copy(f["t1_source"], f["t1"])
-                    gc.link_or_copy(
-                        f["t1_source"].replace(".img", ".ifh"),
-                        f["t1"].replace(".img", ".ifh"),
+        try:
+            if overwrite or copy:
+                if f["t1_source"] is None:
+                    raise pc.NoSourceFolder(
+                        "ERROR: Data source folder is not set. Please check your paths!"
                     )
-                else:
-                    tmpfile = f["t1"].replace(
-                        ".4dfp.img", gi.get_img_format(f["t1_source"])
-                    )
-                    gc.link_or_copy(f["t1_source"], tmpfile)
-                    endlog, status, failed = log.run_external(
-                        f["t1"],
-                        "g_FlipFormat %s %s"
-                        % (tmpfile, f["t1"].replace(".img", ".ifh")),
-                        "... converting %s to 4dfp" % (os.path.basename(tmpfile)),
-                        overwrite=overwrite,
-                        thread=sinfo["id"],
-                        logfolder=options["comlogs"],
-                        logtags=[options["bold_variant"], options["logtag"]],
-                    )
-                    os.remove(tmpfile)
-            if options["image_target"] == "nifti":
-                if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
-                    tmpimg = f["t1"] + ".4dfp.img"
-                    tmpifh = f["t1"] + ".4dfp.ifh"
-                    gc.link_or_copy(f["t1_source"], tmpimg)
-                    gc.link_or_copy(f["t1_source"].replace(".img", ".ifh"), tmpifh)
-                    endlog, status, failed = log.run_external(
-                        f["t1"],
-                        "g_FlipFormat %s %s"
-                        % (tmpifh, f["t1"].replace(".img", ".ifh")),
-                        "... converting %s to NIfTI" % (os.path.basename(tmpimg)),
-                        overwrite=overwrite,
-                        thread=sinfo["id"],
-                        logfolder=options["comlogs"],
-                        logtags=[options["bold_variant"], options["logtag"]],
-                    )
-                    os.remove(tmpimg)
-                    os.remove(tmpifh)
-                else:
-                    if gi.get_img_format(f["t1_source"]) == ".nii.gz":
-                        tmpfile = f["t1"] + ".gz"
+                log.detail(f"copying {f['t1_source']}")
+                if options["image_target"] == "4dfp":
+                    if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
+                        gc.link_or_copy(f["t1_source"], f["t1"])
+                        gc.link_or_copy(
+                            f["t1_source"].replace(".img", ".ifh"),
+                            f["t1"].replace(".img", ".ifh"),
+                        )
+                    else:
+                        tmpfile = f["t1"].replace(
+                            ".4dfp.img", gi.get_img_format(f["t1_source"])
+                        )
                         gc.link_or_copy(f["t1_source"], tmpfile)
                         endlog, status, failed = log.run_external(
                             f["t1"],
-                            "gunzip -f %s" % (tmpfile),
-                            "... gunzipping %s" % (os.path.basename(tmpfile)),
+                            "g_FlipFormat %s %s"
+                            % (tmpfile, f["t1"].replace(".img", ".ifh")),
+                            "... converting %s to 4dfp" % (os.path.basename(tmpfile)),
                             overwrite=overwrite,
-                            thread=sinfo["id"],
-                            logfolder=options["comlogs"],
-                            logtags=[options["bold_variant"], options["logtag"]],
                         )
-                        if os.path.exists(tmpfile):
-                            os.remove(tmpfile)
+                        os.remove(tmpfile)
+                if options["image_target"] == "nifti":
+                    if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
+                        tmpimg = f["t1"] + ".4dfp.img"
+                        tmpifh = f["t1"] + ".4dfp.ifh"
+                        gc.link_or_copy(f["t1_source"], tmpimg)
+                        gc.link_or_copy(f["t1_source"].replace(".img", ".ifh"), tmpifh)
+                        endlog, status, failed = log.run_external(
+                            f["t1"],
+                            "g_FlipFormat %s %s"
+                            % (tmpifh, f["t1"].replace(".img", ".ifh")),
+                            "... converting %s to NIfTI" % (os.path.basename(tmpimg)),
+                            overwrite=overwrite,
+                        )
+                        os.remove(tmpimg)
+                        os.remove(tmpifh)
                     else:
-                        gc.link_or_copy(f["t1_source"], f["t1"])
-
-        else:
-            log.detail(f"{f['t1']} present")
-    except Exception:
-        log.error("getting the data failed! Please check paths and files!", depth=1)
-
-    btargets = options["bolds"].split("|")
-
-    for k, v in sinfo.items():
-        if k.isdigit():
-            bnum = bsearch.match(v["name"])
-            if bnum:
-                if v["task"] in btargets:
-                    boldname = v["name"]
-
-                    log.raw("\n\nWorking on: " + boldname + " ...")
-
-                    try:
-                        # --- filenames
-                        f = pc.get_file_names(sinfo, options)
-                        f.update(pc.get_bold_file_names(sinfo, boldname, options))
-                        _ = pc.get_session_folders(sinfo, options)
-
-                        if status:
-                            log.step("Data ready!")
+                        if gi.get_img_format(f["t1_source"]) == ".nii.gz":
+                            tmpfile = f["t1"] + ".gz"
+                            gc.link_or_copy(f["t1_source"], tmpfile)
+                            endlog, status, failed = log.run_external(
+                                f["t1"],
+                                "gunzip -f %s" % (tmpfile),
+                                "... gunzipping %s" % (os.path.basename(tmpfile)),
+                                overwrite=overwrite,
+                            )
+                            if os.path.exists(tmpfile):
+                                os.remove(tmpfile)
                         else:
-                            log.error("Data missing, please check source!")
+                            gc.link_or_copy(f["t1_source"], f["t1"])
 
-                    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-                        log.raw(str(errormessage))
-                    except Exception:
-                        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
-                        time.sleep(3)
+            else:
+                log.detail(f"{f['t1']} present")
+        except Exception:
+            log.error("getting the data failed! Please check paths and files!", depth=1)
+
+        btargets = options["bolds"].split("|")
+
+        for k, v in sinfo.items():
+            if k.isdigit():
+                bnum = bsearch.match(v["name"])
+                if bnum:
+                    if v["task"] in btargets:
+                        boldname = v["name"]
+
+                        log.raw("\n\nWorking on: " + boldname + " ...")
+
+                        try:
+                            # --- filenames
+                            f = pc.get_file_names(sinfo, options)
+                            f.update(pc.get_bold_file_names(sinfo, boldname, options))
+                            _ = pc.get_session_folders(sinfo, options)
+
+                            if status:
+                                log.step("Data ready!")
+                            else:
+                                log.error("Data missing, please check source!")
+
+                        except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
+                            log.raw(str(errormessage))
+                        except Exception:
+                            log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
+                            time.sleep(3)
 
     log.raw(f"\n\nImaging data copy completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 

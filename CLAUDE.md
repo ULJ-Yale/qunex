@@ -102,7 +102,24 @@ prints it. `general/log/` owns the runlog:
   `log.report` / `log.failed` and `return log`. A study-level command need not name itself:
   a log with no `sid` is filed under the command name.
 - `helper_that_builds_report(..., log)` should take the `log` and append in place, not take and
-  return an `r` string.
+  return an `r` string. A **command** called as a step of another one takes the caller's log as
+  `_log` and reports into it (`processing/fs.py`'s `check_for_freesurfer_data`): building a
+  second log to copy across duplicates it in the comlog and hides its errors from the caller.
+- A command making **more than one** external call opens **one comlog for all of them**:
+
+  ```python
+  with log.combined_comlog(options, "run_freesurfer_full_segmentation", thread=sinfo["id"]):
+      ...                                   # every log.run_external(...) inside writes into it
+  ```
+
+  The block names the comlog after the command, attaches it for the whole body, counts the calls
+  made inside, and closes it once — honouring `--log` at that one site instead of at every call.
+  So a `log.run_external(...)` inside a block passes only what the call *is*: `thread=`,
+  `remove=`, `task=`, `logfolder=` and `logtags=` describe a comlog being opened and are inert
+  there. Nothing is opened under `--test`. External output never reaches the runlog: `trace()`
+  writes to the comlog and never to the log's records, so the traffic is one way by construction.
+  `hcp/qc_hcp.py` is the deliberate exception — its jobs run in a `ProcessPoolExecutor` and
+  cannot share one open file, so its 11 sites keep per-call comlogs and `remove=True`.
 
 ## Comment style
 

@@ -894,7 +894,11 @@ def check_run(
         passed = "done"
         failed = 0
 
-        # nothing to check against, so the comlog's contents are the evidence
+        # nothing to check against, so the comlog's contents are the evidence.
+        # a comlog shared by a whole command (`ReportLog.combined_comlog`) holds
+        # the calls before this one too, so an earlier error would fail this
+        # call as well -- no caller combines the two today, and one that wants
+        # to would have to scan from where its own call started
         if comlog is not None and log_has_errors(comlog.path):
             report = "%s not finished" % (command)
             passed = None
@@ -911,13 +915,17 @@ def check_run(
     return passed, report, failed
 
 
-def _open_comlog(logfolder, task, logtags, thread, timestamp):
+def open_comlog(logfolder, task, logtags, thread, timestamp):
     """
     Open the comlog for one external call, and say where the copies go.
 
     `logfolder` is one folder or the list of them ``do_options_check`` builds:
     the first is where the comlog is written, the rest are where
     :func:`close_log` maps it once it is finished.
+
+    Public because :meth:`general.log.ReportLog.combined_comlog` opens one for a
+    whole command rather than for one call, and the naming, the folder list and
+    the settings check are the same job there.
 
     Whether a file is opened at all is the resolved settings' call -- with
     comlogs switched off nothing is created, :attr:`ComContext.file` stays
@@ -1028,9 +1036,10 @@ def run_external_for_file(
     full_test=None,
     shell=True,
     verbose=True,
+    comlog=None,
 ):
     """
-    ``run_external_for_file(checkfile, run, description, log=None, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=True, verbose=True)``
+    ``run_external_for_file(checkfile, run, description, log=None, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=True, verbose=True, comlog=None)``
 
     Runs the specified command and checks whether it was executed against a
     checkfile, and if provided a full list of files as specified in full_test.
@@ -1066,6 +1075,15 @@ def run_external_for_file(
                          be relative to it)
 
     --shell            Whether to run the command in a shell (boolean).
+    --comlog           An already open comlog to write into (ComContext). When
+                       given, the call joins the caller's comlog instead of
+                       opening one of its own, and neither opens nor closes a
+                       file: `thread`, `remove`, `task`, `logfolder` and
+                       `logtags` describe a comlog being opened and are then
+                       unused, and `endlog` comes back as None because the file
+                       is not finished here. Set by
+                       `general.log.ReportLog.combined_comlog`, which owns the
+                       comlog for the whole command.
 
     OUTPUTS
     =======
@@ -1109,13 +1127,27 @@ def run_external_for_file(
     if overwrite or checkfile is None or not os.path.exists(checkfile):
         _note(log, "\n\n%s" % (description))
 
-        comlog, logfolders = _open_comlog(logfolder, task, logtags, thread, logstamp)
+        # a comlog handed in belongs to the caller: it is neither opened nor
+        # closed here, and `endlog` stays None because the file is not finished
+        shared = comlog is not None
+        if shared:
+            logfolders = []
+            if log is not None:
+                log.external_call()
+        else:
+            comlog, logfolders = open_comlog(logfolder, task, logtags, thread, logstamp)
 
-        # --- report
-        if comlog.path:
-            print("You can follow command's progress in:")
-            print(comlog.path)
-            print("------------------------------------------------------------")
+            # --- report
+            if comlog.path:
+                print("You can follow command's progress in:")
+                print(comlog.path)
+                print("------------------------------------------------------------")
+
+        def finish_comlog(status):
+            """Close the comlog by `status`, unless the caller owns it."""
+            if shared:
+                return None
+            return close_log(comlog, logfolders, status, remove, log)
 
         with _streaming(log, comlog):
             # add command call to start of the log
@@ -1140,7 +1172,7 @@ def run_external_for_file(
                     "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information:\n"
                     + comm
                 )
-                close_log(comlog, logfolders, "error", remove, log)
+                finish_comlog("error")
                 raise ExternalFailed(message)
 
             # --- check results
@@ -1150,7 +1182,7 @@ def run_external_for_file(
                     process.stderr.decode() if process.stderr else "Unknown error",
                     comm,
                 )
-                close_log(comlog, logfolders, "error", remove, log)
+                finish_comlog("error")
                 raise ExternalFailed(message)
 
             status, _, failed = check_run(
@@ -1177,11 +1209,11 @@ def run_external_for_file(
                     "\n\n---> Successful completion of task at %s\n\n"
                     % (datetime.now()),
                 )
-                endlog = close_log(comlog, logfolders, "done", remove, log)
+                endlog = finish_comlog("done")
             elif status and status == "incomplete":
-                endlog = close_log(comlog, logfolders, "incomplete", remove, log)
+                endlog = finish_comlog("incomplete")
             else:
-                endlog = close_log(comlog, logfolders, "error", remove, log)
+                endlog = finish_comlog("error")
 
     else:
         if os.path.getsize(checkfile) < 100:
@@ -1199,6 +1231,7 @@ def run_external_for_file(
                 full_test=full_test,
                 shell=shell,
                 verbose=verbose,
+                comlog=comlog,
             )
         else:
             status, _, failed = check_run(checkfile, full_test)
@@ -1260,7 +1293,7 @@ def run_script_through_shell(
     _note(log, "\n\n%s" % (description))
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    comlog, logfolders = _open_comlog(logfolder, task, logtags, thread, logstamp)
+    comlog, logfolders = open_comlog(logfolder, task, logtags, thread, logstamp)
 
     with _streaming(log, comlog):
         _trace(

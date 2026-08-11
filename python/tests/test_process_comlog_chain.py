@@ -73,6 +73,34 @@ def external_step(sinfo, options, overwrite=False, thread=0):
     return log.result("external step ran", failed, sinfo["id"])
 
 
+# the shape `fs.py`'s four commands and `get_bold_data` now have: many external
+# calls, one comlog for the lot of them, opened and disposed of by the block
+def combined_step(sinfo, options, overwrite=False, thread=0):
+    """A processing command that runs several external calls under one comlog."""
+    log = ReportLog()
+    pc.do_options_check(options, sinfo, "combined_step")
+
+    folder = os.path.join(options["sessionsfolder"], sinfo["id"])
+    failed = 0
+
+    try:
+        with log.combined_comlog(options, "combined_step", thread=sinfo["id"]):
+            log.step("starting %s" % sinfo["id"])
+            for n in range(int(options["steps"])):
+                checkfile = os.path.join(folder, "ran%d.txt" % n)
+                log.run_external(
+                    checkfile,
+                    options["shell_command"] % {"checkfile": checkfile},
+                    "... running external step %d" % n,
+                    overwrite=overwrite,
+                )
+    except pc.ExternalFailed as e:
+        log.raw(str(e))
+        failed = 1
+
+    return log.result("combined step ran", failed, sinfo["id"])
+
+
 # the study level twin: no session id of its own, so `write_to` files it under
 # the command name -- the case `proc_response` used to call "Unknown"
 def study_step(sinfo, options, overwrite=False, thread=0):
@@ -101,6 +129,13 @@ class StudyCommand(Command):
 
     def load_callable(self):
         return study_step
+
+
+class CombinedCommand(Command):
+    name = "combined_step"
+
+    def load_callable(self):
+        return combined_step
 
 
 @pytest.fixture
@@ -278,6 +313,118 @@ def test_comlogs_off_writes_no_comlog_through_the_whole_chain(study):
     assert "---> logfile: " not in runlog
     # the runlog itself is still written, and the session still passed
     assert "external step ran" in runlog
+
+
+# ------------------------------------------ one comlog per command (OI-2)
+
+
+def test_one_comlog_holds_every_call_the_command_made(study):
+    """
+    Three external calls, one file -- named for the command, not for a tool.
+
+    And one ``logfile:`` line in the runlog rather than one per call, which is
+    the 41 identical lines `fs.py` used to print collapsing to one.
+    """
+    logfolder, runlog = run_step(study, command=CombinedCommand(), steps=3)
+
+    written = comlogs_in(logfolder / "comlogs")
+    assert len(written) == 1 and written[0].startswith("done_combined_step_S01_")
+
+    text = (logfolder / "comlogs" / written[0]).read_text()
+    assert text.count("Running external command via QuNex") == 3
+    assert "---> Successful completion at " in text
+
+    assert "---> ran 3 external commands" in runlog
+    assert runlog.count("---> logfile: ") == 1
+
+
+def test_a_call_whose_work_is_already_done_is_not_counted_as_run(study):
+    """
+    "ran N external commands" has to mean N, or it is worth nothing.
+
+    The check files are already there and `overwrite` is off, so every call
+    returns without running its tool. The comlog is still opened -- one per
+    command run, whatever the command turns out to have to do -- and holds the
+    report and no external call at all.
+    """
+    for n in range(3):
+        (study / "sessions" / "S01" / ("ran%d.txt" % n)).write_text("x" * 200)
+
+    logfolder, runlog = run_step(study, command=CombinedCommand(), steps=3)
+
+    assert "---> ran 0 external commands" in runlog
+
+    written = comlogs_in(logfolder / "comlogs")
+    assert len(written) == 1
+    assert (
+        "Running external command via QuNex"
+        not in (logfolder / "comlogs" / written[0]).read_text()
+    )
+
+
+def test_the_runlog_holds_no_external_tool_output(study):
+    """
+    The guarantee the combined comlog is built on.
+
+    Attaching the comlog for the whole command body sends the report into the
+    file as well; nothing travels the other way, because `trace()` writes to the
+    comlog and never appends to the log's own records. So the tool's stdout is
+    in the comlog, twice, and in the runlog not at all.
+    """
+    logfolder, runlog = run_step(
+        study,
+        command=CombinedCommand(),
+        steps=2,
+        # the tool says something the command line does not, so the count is of
+        # what it printed and not of the two echoes of the call itself
+        shell="echo tool-$((6*7)) && touch %(checkfile)s",
+    )
+
+    comlog = logfolder / "comlogs" / comlogs_in(logfolder / "comlogs")[0]
+    text = comlog.read_text()
+
+    assert text.count("tool-42") == 2
+    assert "tool-42" not in runlog
+    # the command's own report did reach both
+    assert "---> starting S01" in text and "---> starting S01" in runlog
+
+
+def test_log_remove_deletes_the_one_comlog_on_success(study):
+    logfolder, runlog = run_step(
+        study, command=CombinedCommand(), steps=2, log="remove"
+    )
+
+    assert comlogs_in(logfolder / "comlogs") == []
+    assert "---> completed [done], comlog removed" in runlog
+
+
+def test_a_failure_keeps_the_comlog_and_says_how_far_it_got(study):
+    """
+    Two calls succeed, the third fails, and `--log=remove` does not apply.
+
+    The summary counts what ran rather than what passed: one `try/except` wraps
+    the whole body and the first failure ends it, so "2 successful, 1 failed"
+    is not a state this can be in.
+    """
+    with pytest.raises(ge.CommandFailed):
+        run_step(
+            study,
+            command=CombinedCommand(),
+            steps=3,
+            log="remove",
+            shell="test %%(checkfile)s != %s && touch %%(checkfile)s"
+            % (study / "sessions" / "S01" / "ran2.txt"),
+        )
+
+    logfolder = next((study / "logs").iterdir())
+    kept = comlogs_in(logfolder / "comlogs")
+    assert len(kept) == 1 and kept[0].startswith("error_combined_step_S01_")
+
+    text = (logfolder / "comlogs" / kept[0]).read_text()
+    assert "---> An external command failed at " in text
+
+    runlog = next(f for f in logfolder.iterdir() if f.name.startswith("Log-"))
+    assert "---> ran 3 external commands before failing" in runlog.read_text()
 
 
 # ------------------------------------------------- the return chain (OI-1)

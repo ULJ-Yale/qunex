@@ -126,6 +126,7 @@ class ReportLog:
         self._errors = 0
         self._comlog = None
         self._echo = echo
+        self._external_calls = 0
 
         self.sid = None
         self.report = None
@@ -215,6 +216,101 @@ class ReportLog:
             yield self
         finally:
             self._comlog = outer
+
+    @contextmanager
+    def combined_comlog(self, options, command, thread=None):
+        """
+        One comlog for the whole command, instead of one per external call.
+
+        A command that makes forty external calls used to leave forty comlogs,
+        each a fragment of one run and each named after the tool rather than
+        after the command. This opens a single comlog named for `command`,
+        attaches it for the length of the block, and closes it once by how the
+        block ended.
+
+        Attachment is what does the work: :meth:`run_external` hands the
+        attached comlog to ``processing.core.run_external_for_file``, which then
+        writes into it instead of opening and disposing of its own. Everything
+        recorded on this log inside the block goes in too, so the file reads as
+        the run rather than as one tool's stdout. The traffic is one way -- the
+        report reaches the comlog, and no external output can reach the runlog,
+        because :meth:`trace` writes to the comlog and never to
+        :attr:`_records`.
+
+        Nothing is opened under ``--test``: a dry run makes no external calls,
+        so there is no output to keep and no file to leave behind.
+
+        Retention is decided here rather than at each call site, which is what
+        makes ``--log`` reach these commands at all::
+
+            with log.combined_comlog(options, "run_freesurfer_full_segmentation",
+                                     thread=sinfo["id"]):
+                ...
+
+        Parameters:
+            options: the command's options; ``comlogs``, ``logtag``, ``run``
+                and ``log`` are read.
+            command: the command's name, which names the comlog.
+            thread: the parallel thread, or the session being processed.
+
+        Yields:
+            this log.
+        """
+        import qx_utilities.processing.core as pc
+
+        if options["run"] != "run":
+            yield self
+            return
+
+        comlog, logfolders = pc.open_comlog(
+            options["comlogs"], command, options["logtag"], thread, None
+        )
+        if comlog.path:
+            print("You can follow the command's progress in:")
+            print(comlog.path)
+            print(REPORT_RULE)
+
+        started = self._external_calls
+        completed = False
+        try:
+            with self.stream_to(comlog):
+                yield self
+            completed = True
+        finally:
+            # written to the comlog directly: the block has ended, so the
+            # attachment is gone, and this line belongs to the file rather than
+            # to the report
+            comlog.write(
+                "\n\n---> %s at %s\n\n"
+                % (
+                    "Successful completion" if completed else
+                    "An external command failed",
+                    datetime.now(),
+                )
+            )
+            ran = self._external_calls - started
+            self.step("ran %d external command%s%s" % (
+                ran,
+                "" if ran == 1 else "s",
+                "" if completed else " before failing",
+            ))
+            pc.close_log(
+                comlog,
+                logfolders,
+                "done" if completed else "error",
+                options["log"] == "remove",
+                self,
+            )
+
+    def external_call(self) -> None:
+        """
+        Count one external command actually run under the combined comlog.
+
+        Counted where the call is made rather than where it is asked for: a
+        call whose check file is already there returns without running
+        anything, and a summary line saying otherwise would be a lie.
+        """
+        self._external_calls += 1
 
     @property
     def has_errors(self) -> bool:
@@ -345,6 +441,11 @@ class ReportLog:
         forwarded as ``**kwargs`` so a mistyped argument is a ``TypeError``
         here, at the call site, and not somewhere inside the helper.
 
+        An attached comlog is handed on as the one to write into, so a call
+        inside a :meth:`combined_comlog` block joins that file instead of
+        opening its own -- and `thread`, `remove`, `task`, `logfolder` and
+        `logtags`, which only describe a comlog being opened, are then inert.
+
         Returns:
             ``(endlog, status, failed)`` from the underlying call.
         """
@@ -364,6 +465,7 @@ class ReportLog:
             full_test=full_test,
             shell=shell,
             verbose=verbose,
+            comlog=self._comlog,
         )
 
     def check_run(self, checkfile, full_test, description, overwrite=False):

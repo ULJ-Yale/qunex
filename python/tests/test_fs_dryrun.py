@@ -129,13 +129,15 @@ def test_the_freesurfer_folder_is_not_replaced_in_a_test_run(session):
     assert os.path.exists(keep), "a --test run deleted an existing FreeSurfer folder"
 
 
-def test_a_real_run_still_passes_the_four_comlog_arguments():
+def test_a_real_run_leaves_the_comlog_to_the_block():
     """
-    The refactor onto `_run_external` must not change what a real run does.
+    `_run_external` says what to run, and nothing about where it is logged.
 
-    All 41 call sites used to spell `overwrite`, `thread`, `logfolder` and
-    `logtags` themselves; the helper spells them once, so this pins that it
-    still forwards exactly those.
+    All 41 call sites used to spell `thread`, `logfolder` and `logtags`
+    themselves, and each of them opened a comlog. The comlog is now the
+    command's, opened once by `combined_comlog`, so the helper forwards only
+    what the call is -- passing the three again would describe a file this call
+    never opens.
     """
     calls = []
 
@@ -154,18 +156,11 @@ def test_a_real_run_still_passes_the_four_comlog_arguments():
         "comlogs": ["/study/logs/comlogs"],
         "logtag": "tag",
     }
-    fs._run_external(
-        FakeLog(), {"id": "s01"}, options, True, "/check.nii.gz", "bet a b", "... bet"
-    )
+    fs._run_external(FakeLog(), options, True, "/check.nii.gz", "bet a b", "... bet")
 
     (args, kwargs) = calls[0]
     assert args == ("/check.nii.gz", "bet a b", "... bet")
-    assert kwargs == {
-        "overwrite": True,
-        "thread": "s01",
-        "logfolder": ["/study/logs/comlogs"],
-        "logtags": "tag",
-    }
+    assert kwargs == {"overwrite": True}
 
 
 # --------------------------------------- the return contract inside the file
@@ -184,13 +179,14 @@ def test_every_command_returns_a_log_with_a_status(session, command):
     assert failed == 0
 
 
-def test_the_nested_check_lands_in_the_callers_report_as_text(session):
+def test_the_nested_check_lands_in_the_callers_report(session):
     """
     `check_for_freesurfer_data` is both a command and a step of two others.
 
-    Its two internal callers take `.text` off the log it now returns -- and
-    pass `r`, which is what tells it the call is nested and so not to repeat
-    the session header.
+    Its two internal callers hand it their own log as `_log`, which is what
+    tells it the call is nested: it reports into that log rather than building
+    a second one to be copied across, so the session header is not repeated and
+    its external calls reach the comlog the outer command opened.
     """
     sinfo, options, _ = session
 
