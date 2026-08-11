@@ -173,6 +173,25 @@ dependency unavailable), explicitly state what was not run.
 The full suite runs ~6 minutes; run it in the background and keep working. `ruff check python`
 should be **clean** — the tree is at zero findings; keep it there.
 
+**A development shell has the QuNex environment sourced; `.github/workflows/tests.yml` does
+not.** It runs the suite on a bare checkout, so anything reading `TOOLS`, `QUNEXPATH`,
+`QUNEXREPO` or another suite variable passes locally and fails there. Check with the workflow's
+own command before pushing:
+
+```bash
+env -u TOOLS -u QUNEXPATH -u QUNEXREPO pytest --ignore=python/tests/test_fc_functions.py -q
+```
+
+(`test_fc_functions` needs the `qx_library` submodule the workflow does not check out; tests
+needing external binaries skip themselves. The lint job pins a ruff version — match it.) When
+this catches something, **fix what reads the variable rather than adding a fixture that sets
+it**: a fixture turns CI green and leaves the failure waiting for anyone who imports QuNex
+without the environment. `general/log/report.py`'s `get_qunex_version` is the pattern — it
+resolves `VERSION.md` from its own source tree, falls back to `$TOOLS/$QUNEXREPO`, and returns
+`unknown` rather than raising, because that string heads every log file. Where a test genuinely
+needs a variable, it sets it itself: `tests/test_registry_drift.py` and
+`tests/test_gmri_dispatch.py` both point `QUNEXPATH` at the repository root.
+
 Dry-run testing: processing commands support `run="test"` (the `--test` flag), which resolves
 inputs, builds the pipeline command and reports what it *would* do without executing anything.
 This is the cheap, dependency-free way to test option handling and the runlog. `tests/utils.py`
