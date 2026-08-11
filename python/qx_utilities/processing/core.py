@@ -121,11 +121,11 @@ def root4dfp(filename):
 
 def use_or_skip_bold(sinfo, options, *, _log=None):
     """
-    ``use_or_skip_bold(sinfo, options, log=None)``
+    ``use_or_skip_bold(sinfo, options, *, _log=None)``
 
     Internal function to determine which bolds to use and which to skip.
 
-    The bolds that are skipped are noted in `log`, when one is given.
+    The bolds that are skipped are noted in `_log`, when one is given.
 
     OUTPUTS
     =======
@@ -823,12 +823,12 @@ def check_run(
     _log=None,
 ):
     """
-    ``check_run(tfile, full_test=None, command=None, log=None, comlog=None, verbose=True, overwrite=False)``
+    ``check_run(tfile, full_test=None, command=None, comlog=None, verbose=True, overwrite=False, *, _log=None)``
 
     The function checks the presence of a test file.
     If specified it runs also full test.
 
-    What was checked is noted in `log`, when one is given and `verbose` is set.
+    What was checked is noted in `_log`, when one is given and `verbose` is set.
     `comlog` is the ``ComContext`` of the call being checked, when the caller
     holds one: the full file check writes its report into it, and a call with
     no test file is judged by what it left in it.
@@ -989,7 +989,7 @@ def close_log(comlog, logfolders, status, remove, _log=None):
         logfolders (list): extra folders to map the finished comlog into.
         status (str): ``done``, ``error`` or ``incomplete``.
         remove (bool): whether to delete a comlog that finished cleanly.
-        log (ReportLog): the report log to note the outcome in.
+        _log (ReportLog): the report log to note the outcome in, keyword-only.
 
     Returns:
         str | None: the path of the final log file, or None when it was
@@ -1127,7 +1127,7 @@ def run_external_for_file(
     _log=None,
 ):
     """
-    ``run_external_for_file(checkfile, run, description, log=None, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=True, verbose=True, comlog=None)``
+    ``run_external_for_file(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=True, verbose=True, comlog=None, *, _log=None)``
 
     Runs the specified command and checks whether it was executed against a
     checkfile, and if provided a full list of files as specified in full_test.
@@ -1143,7 +1143,8 @@ def run_external_for_file(
     --checkfile        The file to run a check against (file path)
     --run              The specific command to run (string)
     --description      A description of the command that will be run (string)
-    --log              The report log to write the report into (ReportLog)
+    --_log             The report log to write the report into (ReportLog),
+                       keyword-only and last
     --overwrite        Whether to overwrite existing data (checkfile present;
                        boolean)
     --thread           Thread count if multiple are run
@@ -1428,7 +1429,7 @@ def check_for_file(
     not; a missing file also drops ``status`` to False.
 
     Parameters:
-        log (ReportLog): the report log to note the outcome in.
+        _log (ReportLog): the report log to note the outcome in, keyword-only.
         checkfile (str): path to test for.
         ok (str): text noted when the file is present.
         bad (str): text noted when the file is missing.

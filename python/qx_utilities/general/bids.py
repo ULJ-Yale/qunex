@@ -575,7 +575,6 @@ def import_bids(
         "bids": False,
     }
     all_ok = True
-    errors = ""
 
     inbox = os.path.abspath(inbox)
 
@@ -813,9 +812,10 @@ def import_bids(
                     log.step("done!")
                 except Exception:
                     log.error(
-                        "Processing of zip package failed. Please check the package!"
+                        f"Processing of zip package {file} failed. "
+                        "Please check the package!"
                     )
-                    errors += "\n    .. Processing of package %s failed!" % (file)
+                    all_ok = False
                     raise
 
         elif ".tar" in file or ".tgz" in file:
@@ -852,9 +852,10 @@ def import_bids(
                     log.step("done!")
                 except Exception:
                     log.error(
-                        "Processing of tar package failed. Please check the package!"
+                        f"Processing of tar package {file} failed. "
+                        "Please check the package!"
                     )
-                    errors += "\n    .. Processing of package %s failed!" % (file)
+                    all_ok = False
         else:
             target_file, lock = map_to_qunex_bids(
                 file, sessionsfolder, bidsinfo, sessions_list, overwrite, _log=log
@@ -862,18 +863,15 @@ def import_bids(
             if target_file:
                 if target_file.endswith(".nii"):
                     target_file += ".gz"
-                    status, msg = gc.move_link_or_copy(
-                        file, target_file, "gzip", r="", prefix="    .. ", lock=lock
+                    status = gc.move_link_or_copy(
+                        file, target_file, "gzip", lock=lock, _log=log
                     )
                 else:
-                    feedback = gc.move_link_or_copy(
-                        file, target_file, action, r="", prefix="    .. ", lock=lock
+                    status = gc.move_link_or_copy(
+                        file, target_file, action, lock=lock, _log=log
                     )
-                    status, msg = feedback
 
                 all_ok = all_ok and status
-                if not status:
-                    errors += msg
 
     # ---> close status file
     if sessions_list["bids"] == "open":
@@ -885,9 +883,11 @@ def import_bids(
         )
 
     # ---> archiving the dataset
-    if errors:
-        log.error("The following errors were encountered when mapping the files:")
-        log.raw(errors)
+    if not all_ok:
+        log.error(
+            "Some files could not be mapped -- see the errors above. The dataset "
+            "was not archived, so nothing has been moved, copied or deleted."
+        )
     else:
         archive_list = []
 

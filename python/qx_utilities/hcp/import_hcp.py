@@ -486,7 +486,6 @@ def import_hcp(
 
     sessions_list = {"list": [], "clean": [], "skip": [], "map": []}
     all_ok = True
-    errors = ""
 
     # ---> Check for folders
     # if not os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS")):
@@ -538,9 +537,9 @@ def import_hcp(
                         log.step("done!")
                     except Exception:
                         log.error(
-                            "Processing of zip package failed. Please check the package!"
+                            f"Processing of zip package {file} failed. "
+                            "Please check the package!"
                         )
-                        errors += "\n    .. Processing of package %s failed!" % (file)
                         all_ok = False
                         raise
 
@@ -571,9 +570,9 @@ def import_hcp(
                         log.step("done!")
                     except Exception:
                         log.error(
-                            "Processing of tar package failed. Please check the package!"
+                            f"Processing of tar package {file} failed. "
+                            "Please check the package!"
                         )
-                        errors += "\n    .. Processing of package %s failed!" % (file)
                         all_ok = False
 
             else:
@@ -587,17 +586,16 @@ def import_hcp(
                     _log=log,
                 )
                 if tfile:
-                    status, msg = gc.move_link_or_copy(
-                        file, tfile, action, r="", prefix="    .. "
-                    )
+                    status = gc.move_link_or_copy(file, tfile, action, _log=log)
                     all_ok = all_ok and status
-                    if not status:
-                        errors += msg
 
         # ---> archiving the dataset
-        if errors:
-            log.error("The following errors were encountered when mapping the files:")
-            log.raw(errors)
+        if not all_ok:
+            log.error(
+                "Some files could not be mapped -- see the errors above. The "
+                "dataset was not archived, so nothing has been moved, copied "
+                "or deleted."
+            )
         else:
             if os.path.isfile(inbox) or (
                 os.path.exists(os.path.join(sessionsfolder, "inbox", "HCPLS"))

@@ -84,6 +84,52 @@ def test_link_or_copy_notes_the_mapping_and_returns_a_bool(tmp_path, log):
     assert "\n---> ERROR: T2 could not be copied" in log.text
 
 
+def test_move_link_or_copy_records_only_what_the_caller_cannot_summarise(tmp_path, log):
+    """
+    Its callers report a count, so a success is silent and a failure is not.
+
+    The `r=` report string it used to take was never a report being threaded:
+    every caller threw the successful message away and kept the failed one, to
+    print all of them together at the end. The log gets the failure where it
+    happens instead, which is also what makes it count as an error.
+    """
+    source = tmp_path / "source.nii.gz"
+    source.write_text("x")
+
+    assert gc.move_link_or_copy(source, tmp_path / "t1.nii.gz", _log=log) is True
+    assert log.text == "", "a successful mapping is not worth a line here"
+
+    missing = gc.move_link_or_copy(tmp_path / "nope", tmp_path / "t2", _log=log)
+    assert missing is False
+    assert "\n---> WARNING: " in log.text, "a missing source is a warning"
+    assert "source file either does not exist" in log.text
+    assert log.has_errors is False, "a missing source is not the run's error"
+
+
+def test_move_link_or_copy_records_a_failure_as_an_error(tmp_path, log):
+    """A mapping that could not be made is an error, and counts as one."""
+    source = tmp_path / "source.nii.gz"
+    source.write_text("x")
+    target = tmp_path / "readonly" / "t.nii.gz"
+    target.parent.mkdir()
+    target.parent.chmod(0o500)
+
+    try:
+        assert gc.move_link_or_copy(source, target, action="copy", name="T1", _log=log) is False
+        assert "\n---> ERROR: T1 could not be copied" in log.text
+        assert log.has_errors is True
+    finally:
+        target.parent.chmod(0o700)
+
+
+def test_move_link_or_copy_without_a_log_still_reports_by_return_value(tmp_path):
+    source = tmp_path / "source.nii.gz"
+    source.write_text("x")
+
+    assert gc.move_link_or_copy(source, tmp_path / "t.nii.gz") is True
+    assert gc.move_link_or_copy(tmp_path / "nope", tmp_path / "t2") is False
+
+
 def test_link_or_copy_without_a_log_still_reports_by_return_value(tmp_path):
     source = tmp_path / "source.nii.gz"
     source.write_text("x")

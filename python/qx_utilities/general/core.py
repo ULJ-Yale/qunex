@@ -1293,28 +1293,32 @@ def link_or_copy(source, target, status=None, name=None, symlink=False, *, _log=
 
 
 def move_link_or_copy(
-    source, target, action=None, r=None, status=None, name=None, prefix=None, lock=False
+    source, target, action=None, status=None, name=None, lock=False, *, _log=None
 ):
     """
     Map a file into place by moving, hard-linking or copying it.
 
+    A failure is recorded in `_log`, when one is given; a success is not. The
+    callers report their mapping as a count ("42 images mapped") rather than
+    per file, so a line each would bury the run's report -- which is also why
+    the message never came back as a string: every caller threw the successful
+    one away and kept only the failure.
+
     Parameters:
         source (str): path to the file to map.
         target (str): destination path.
-        action (str | None): one of ``"move"``, ``"link"`` or ``"copy"``
-            (defaults ``"link"``).
-        r (str | None): report so far; when given, the outcome is appended and
-            returned alongside the status.
+        action (str | None): one of ``"move"``, ``"link"``, ``"copy"`` or
+            ``"gzip"`` (defaults ``"link"``).
         status (bool | None): running status carried through (defaults True).
         name (str | None): human readable name used in the report message
             (defaults to ``source``).
-        prefix (str | None): prefix for the report message.
         lock (bool): serialise the mapping with a file lock to make it safe for
             concurrent callers.
+        _log (ReportLog | None): report log; a failed mapping is recorded in it
+            as an error, or -- for a missing source -- as a warning.
 
     Returns:
-        bool | tuple: the status when ``r`` is None, otherwise
-        ``(status, report_with_outcome_appended)``.
+        bool: the status. False when the mapping failed.
     """
     if action is None:
         action = "link"
@@ -1322,16 +1326,14 @@ def move_link_or_copy(
         status = True
     if name is None:
         name = source
-    if prefix is None:
-        prefix = ""
 
-    def report(rstatus, msg):
+    def report(rstatus, message=None, level="error"):
+        """Unlock, note a failure in the log when there is one, and return."""
         if lock:
             fl.unlock(target)
-        if r is None:
-            return rstatus
-        else:
-            return rstatus, r + prefix + msg
+        if message is not None and _log is not None:
+            getattr(_log, level)(message)
+        return rstatus
 
     if os.path.exists(source):
         targetfolder = os.path.dirname(target)
@@ -1341,8 +1343,8 @@ def move_link_or_copy(
                 if io != "File exists":
                     return report(
                         False,
-                        "ERROR: %s could not be %sed, target folder could not be created, check permissions! "
-                        % (name, action),
+                        f"{name} could not be {action}ed, target folder could not "
+                        "be created, check permissions!",
                     )
 
         if lock:
@@ -1351,21 +1353,21 @@ def move_link_or_copy(
         if action == "link":
             io = fl.link(source, target)
             if not io:
-                return report(status, "%s mapped" % (name))
+                return report(status)
             elif io == "File exists":
                 if os.path.samefile(source, target):
-                    return report(status, "%s already mapped [%s]" % (name, target))
+                    return report(status)
                 else:
                     io = fl.remove(target)
                     if io and io != "No such file or directory":
                         return report(
                             False,
-                            "ERROR: %s could not be %sed, existing file could not be removed, check permissions! "
-                            % (name, action),
+                            f"{name} could not be {action}ed, existing file could "
+                            "not be removed, check permissions!",
                         )
                     io = fl.link(source, target)
                     if not io:
-                        return report(status, "%s mapped" % (name))
+                        return report(status)
                     else:
                         action = "copy"
             else:
@@ -1374,38 +1376,38 @@ def move_link_or_copy(
         if action == "copy":
             try:
                 shutil.copy2(source, target)
-                return report(status, "%s copied" % (name))
+                return report(status)
             except Exception:
                 return report(
-                    False, "ERROR: %s could not be copied, check permissions! " % (name)
+                    False, f"{name} could not be copied, check permissions!"
                 )
 
         if action == "move":
             try:
                 shutil.move(source, target)
-                return report(status, "%s moved" % (name))
+                return report(status)
             except Exception:
                 return report(
-                    False, "ERROR: %s could not be moved, check permissions! " % (name)
+                    False, f"{name} could not be moved, check permissions!"
                 )
 
         if action == "gzip":
             try:
                 with open(source, "rb") as f_in, gzip.open(target, "wb") as f_out:
                     shutil.copyfileobj(f_in, f_out)
-                return report(status, "%s copied and gzipped" % (name))
+                return report(status)
             except Exception:
                 return report(
                     False,
-                    "ERROR: %s could not be copied and gzipped, check permissions! "
-                    % (name),
+                    f"{name} could not be copied and gzipped, check permissions!",
                 )
 
     else:
         return report(
             False,
-            "WARNING: %s could not be %sed, source file either does not exist or can not be accessed [%s]! "
-            % (name, action, source),
+            f"{name} could not be {action}ed, source file either does not exist "
+            f"or can not be accessed [{source}]!",
+            level="warning",
         )
 
 

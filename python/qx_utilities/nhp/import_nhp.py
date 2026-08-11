@@ -212,7 +212,6 @@ def import_nhp(
         inbox = os.path.join(sessionsfolder, "inbox", "NHP")
 
     all_ok = True
-    errors = ""
 
     # check for folders
     if not os.path.exists(os.path.join(sessionsfolder, "inbox", "NHP")):
@@ -303,9 +302,9 @@ def import_nhp(
                     log.step("done!")
                 except Exception:
                     log.error(
-                        "Processing of zip package failed. Please check the package!"
+                        f"Processing of zip package {file} failed. "
+                        "Please check the package!"
                     )
-                    errors += "\n    .. Processing of package %s failed!" % (file)
                     all_ok = False
                     raise
 
@@ -341,22 +340,18 @@ def import_nhp(
                     log.step("done!")
                 except Exception:
                     log.error(
-                        "Processing of tar package failed. Please check the package!"
+                        f"Processing of tar package {file} failed. "
+                        "Please check the package!"
                     )
-                    errors += "\n    .. Processing of package %s failed!" % (file)
                     all_ok = False
 
         else:
             result = map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=log)
             if result:
                 tfile = result[1]
-                status, msg = gc.move_link_or_copy(
-                    file, tfile, action, r="", prefix="    .. "
-                )
+                status = gc.move_link_or_copy(file, tfile, action, _log=log)
                 all_ok = all_ok and status
-                if not status:
-                    errors += msg
-                else:
+                if status:
                     # append mapped file
                     if result[0] not in report:
                         report[result[0]] = [tfile]
@@ -364,9 +359,11 @@ def import_nhp(
                         report[result[0]].append(tfile)
 
     # ---> archiving the dataset
-    if errors:
-        log.error("The following errors were encountered when mapping the files:")
-        log.raw(errors)
+    if not all_ok:
+        log.error(
+            "Some files could not be mapped -- see the errors above. The dataset "
+            "was not archived, so nothing has been moved, copied or deleted."
+        )
     else:
         if os.path.isfile(inbox) or not os.path.samefile(
             inbox, os.path.join(sessionsfolder, "inbox", "NHP")
