@@ -451,7 +451,7 @@ def import_nhp(
                     )
 
             sout_nhp = open(sfile, "w")
-            gc.print_qunex_header(file=sout_nhp)
+            gl.print_qunex_header(file=sout_nhp)
             print("#", file=sout_nhp)
             print("session:", s, file=sout_nhp)
             print("subject:", subjectid, file=sout_nhp)

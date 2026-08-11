@@ -24,6 +24,7 @@ from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
+import qx_utilities.general.log as gl
 from qx_utilities.general.log import ReportLog
 from qx_utilities.hcp.hcp_utils import session_report_header
 
@@ -531,7 +532,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 )
                             ]
                             mfile = open(f["bold_mov"], "w")
-                            gc.print_qunex_header(file=mfile)
+                            gl.print_qunex_header(file=mfile)
                             print("#", file=mfile)
                             print(
                                 "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)",

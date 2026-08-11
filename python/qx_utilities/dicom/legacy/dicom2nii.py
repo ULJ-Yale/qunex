@@ -26,6 +26,7 @@ from datetime import datetime
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.img as gi
+import qx_utilities.general.log as gl
 import qx_utilities.general.nifti as gn
 import qx_utilities.general.qximg as qxi
 from qx_utilities.dicom.dicom_archive import _unzip_dicom, _zip_dicom
@@ -275,8 +276,8 @@ def dicom2nii(
 
     # --- Print header
 
-    gc.print_qunex_header(file=r)
-    gc.print_qunex_header(file=stxt)
+    gl.print_qunex_header(file=r)
+    gl.print_qunex_header(file=stxt)
 
     # get a list of folders
 

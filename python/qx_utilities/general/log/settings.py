@@ -461,17 +461,7 @@ def active():
     return _active if _active is not None else LogSettings()
 
 
-def _legacy_skip(command, declared):
-    """Whether the pre-registry skip list still applies to this command."""
-    if declared:
-        return False
-
-    import qx_utilities.general.commands_support as gcs
-
-    return command in gcs.logskip_commands
-
-
-def resolve_logging(command, args, qx_command=None, studyfolder=None):
+def resolve_logging(command, args, qx_command=None, studyfolder=None, legacy_skip=None):
     """
     Resolve the logging configuration for one command invocation.
 
@@ -487,6 +477,10 @@ def resolve_logging(command, args, qx_command=None, studyfolder=None):
         qx_command: the registry entry for the command, when it has one; its
             ``logging`` and ``type`` fields participate.
         studyfolder: the study folder, when the run has one.
+        legacy_skip: the pre-registry skip list, when the caller has one. It
+            applies only to commands that state no ``logging:`` field, and is
+            passed in rather than read from ``general.commands_support``,
+            which extensions extend and which consumes this package.
 
     Returns:
         the resolved :class:`LogSettings`.
@@ -508,7 +502,7 @@ def resolve_logging(command, args, qx_command=None, studyfolder=None):
 
     if command in _as_list(section.get("log_commands")):
         settings = replace(settings, enabled=True)
-    elif _legacy_skip(command, declared):
+    elif not declared and command in (legacy_skip or ()):
         settings = replace(settings, enabled=False)
 
     settings = apply_mode(settings, args.get("logging"), "--logging")

@@ -93,7 +93,11 @@ def runCommand(command, args):
 
     # -- how, and whether, this run is logged
     log_settings = gl.resolve_logging(
-        command, args, qx_command=qx_command, studyfolder=folders["basefolder"]
+        command,
+        args,
+        qx_command=qx_command,
+        studyfolder=folders["basefolder"],
+        legacy_skip=gcs.logskip_commands,
     )
 
     # the helpers at the bottom of `processing.core` hold no context; this is

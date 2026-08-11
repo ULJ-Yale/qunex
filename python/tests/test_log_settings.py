@@ -214,7 +214,7 @@ def test_the_legacy_skip_list_still_applies_to_unannotated_commands():
 
     legacy = gcs.logskip_commands[0]
 
-    assert resolve_logging(legacy, {}).enabled is False
+    assert resolve_logging(legacy, {}, legacy_skip=gcs.logskip_commands).enabled is False
 
 
 def test_a_logging_field_takes_a_command_off_the_legacy_skip_list():
@@ -222,7 +222,9 @@ def test_a_logging_field_takes_a_command_off_the_legacy_skip_list():
 
     legacy = gcs.logskip_commands[0]
 
-    assert resolve_logging(legacy, {}, qx_command=command(logging="full")).enabled is True
+    assert resolve_logging(
+        legacy, {}, qx_command=command(logging="full"), legacy_skip=gcs.logskip_commands
+    ).enabled is True
 
 
 # --------------------------------------------------------------- validation

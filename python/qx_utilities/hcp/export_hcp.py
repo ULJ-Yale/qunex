@@ -193,7 +193,8 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
         raise ge.CommandFailed("export_hcp", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 
     # -- open logfile
-    comlog = gl.ComContext(gl.comlog_folder({'sessionsfolder': sessionsfolder}), 'export_hcp').open()
+    logfolder = gc.deduce_folders({'sessionsfolder': sessionsfolder})['logfolder']
+    comlog = gl.ComContext(gl.comlog_folder(logfolder), 'export_hcp').open()
     logfile = comlog.file
 
     # -- start

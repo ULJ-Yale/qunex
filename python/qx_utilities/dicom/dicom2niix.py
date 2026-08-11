@@ -355,8 +355,8 @@ def dicom2niix(
 
     # --- Print header
 
-    gc.print_qunex_header(file=r)
-    gc.print_qunex_header(file=stxt)
+    gl.print_qunex_header(file=r)
+    gl.print_qunex_header(file=stxt)
 
     # get a list of folders
 

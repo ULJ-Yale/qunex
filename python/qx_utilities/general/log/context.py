@@ -31,9 +31,11 @@ record**. A parent process that runs QuNex as a subprocess -- ``run_recipe``
 run's report there as data. It is how a report crosses a process boundary
 without anyone grepping stdout.
 
-Note the import direction: nothing here may import ``general.core`` at module
-level -- ``general.core`` is a consumer of this package. The one helper needed
-from it, ``print_qunex_header``, is imported inside :meth:`RunContext.header`.
+Note the import direction: nothing here may import ``general.core`` or
+``processing.core`` at all -- both are consumers of this package. What this
+module needs from them it is given: :func:`comlog_folder` takes the log folder
+rather than deducing it, and the banner it heads a comlog with is the log
+package's own :func:`~general.log.report.print_qunex_header`.
 """
 
 import contextlib
@@ -46,6 +48,8 @@ import sys
 from datetime import datetime
 
 import yaml
+
+from qx_utilities.general.log.report import print_qunex_header
 
 # the timestamp both file names and headers are stamped with
 TIMESTAMP = "%Y-%m-%d_%H.%M.%S.%f"
@@ -175,24 +179,22 @@ def log_folder(command, args, settings, folders, timestamp):
     return os.path.join(root, runfolder)
 
 
-def comlog_folder(folders):
+def comlog_folder(logfolder):
     """
-    The comlogs folder implied by a set of folder hints.
+    Where the comlogs go, under a run's log folder.
 
-    For callers that open a comlog without holding a :class:`RunContext` --
-    they have a sessions folder and nothing else.
+    For callers that open a comlog without holding a :class:`RunContext`. The
+    caller resolves the log folder -- with ``general.core.deduce_folders``
+    when all it has is a sessions folder -- because deducing a study's layout
+    is not this package's business.
 
     Parameters:
-        folders: the hints to deduce from, e.g. ``{"sessionsfolder": ...}``.
+        logfolder: the run's log folder.
 
     Returns:
         the path of the comlogs folder.
     """
-    # lazily imported: `general.core` consumes this package, not the other way
-    # around (see the module docstring)
-    from qx_utilities.general.core import deduce_folders
-
-    return os.path.join(deduce_folders(folders)["logfolder"], "comlogs")
+    return os.path.join(logfolder, "comlogs")
 
 
 class _Tee:
@@ -477,10 +479,6 @@ class RunContext:
         Returns:
             the header text, so the caller can print it as well.
         """
-        # lazily imported: `general.core` consumes this package, not the
-        # other way around (see the module docstring)
-        from qx_utilities.general.core import print_qunex_header
-
         text = "%s\n#\n%s\n%s\n%s" % (
             print_qunex_header(timestamp=self.timestamp),
             RULE,

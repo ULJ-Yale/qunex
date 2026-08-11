@@ -55,7 +55,9 @@ from qx_utilities.general.log.report import (
     ReportLog,
     SessionLog,
     action,
+    get_qunex_version,
     log_or_console,
+    print_qunex_header,
 )
 from qx_utilities.general.log.settings import (
     LOGGING_MODES,
@@ -88,9 +90,11 @@ __all__ = [
     "comlog_folder",
     "comlog_name",
     "digest",
+    "get_qunex_version",
     "load_settings",
     "log_folder",
     "log_or_console",
+    "print_qunex_header",
     "read_status",
     "resolve_logging",
     "run_and_log",

@@ -1101,7 +1101,7 @@ def run_external_for_file(
 
     # -- Report command
     # header
-    print_comm = gc.print_qunex_header(timestamp=logstamp)
+    print_comm = gl.print_qunex_header(timestamp=logstamp)
     print_comm += "#\n"
     # external command info
     print_comm += "------------------------------------------------------------\n"

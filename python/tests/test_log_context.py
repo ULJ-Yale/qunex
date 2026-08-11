@@ -469,10 +469,14 @@ def test_run_and_log_still_runs_the_command_without_a_run(tmp_path, capfd):
     assert not list(tmp_path.rglob("*.log"))
 
 
-def test_comlog_folder_is_deduced_for_callers_without_a_run(tmp_path):
-    sessionsfolder = tmp_path / "sessions"
-    sessionsfolder.mkdir()
+def test_comlog_folder_sits_under_the_log_folder_it_is_given(tmp_path):
+    """
+    The log package is handed the folder rather than deducing the study.
 
-    folder = gl.comlog_folder({"sessionsfolder": str(sessionsfolder)})
+    `general.core.deduce_folders` is what turns a sessions folder into a log
+    folder, and it stays there: a caller with only a sessions folder resolves
+    it and passes the result, which is what `hcp/export_hcp.py` does.
+    """
+    logfolder = os.path.join(str(tmp_path), "processing", "logs")
 
-    assert folder == os.path.join(str(tmp_path), "processing", "logs", "comlogs")
+    assert gl.comlog_folder(logfolder) == os.path.join(logfolder, "comlogs")

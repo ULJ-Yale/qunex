@@ -798,7 +798,7 @@ def import_hcp(
             log.detail(f"creating {session_hcp_file}")
 
             with open(session_hcp_file, "w", encoding="UTF-8") as f:
-                gc.print_qunex_header(timestamp=None, file=f)
+                gl.print_qunex_header(timestamp=None, file=f)
                 f.write("#\n")
                 f.write(f"session: {session}\n")
                 f.write(f"subject: {subject}\n")
@@ -1430,7 +1430,7 @@ def map_hcpls2nii(
             )
 
     sout_hcp = open(sfile, "w")
-    gc.print_qunex_header(file=sout_hcp)
+    gl.print_qunex_header(file=sout_hcp)
     print("#", file=sout_hcp)
     print("session:", session, file=sout_hcp)
     print("subject:", subjectid, file=sout_hcp)
