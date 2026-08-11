@@ -25,9 +25,10 @@ pragmatic, focused improvements over strict rewrites.**
     and `log.py` (the suite-wide runlog; see **Command logging** below).
   - `processing/` — preprocessing workflows (`workflow.py`, `dwi.py`, `fs.py`, `fsl.py`, ...).
     `processing/core.py` holds the low-level report/run primitives (`run_external_for_file`,
-    `check_run`, `check_for_file`, `check_for_files`, `use_or_skip_bold`) that `general/log/`
-    wraps — these take the log object and write into it; they do not take or return a report
-    string.
+    `check_run`, `check_for_file`, `check_for_files`, `use_or_skip_bold`, and the comlog
+    lifecycle `open_comlog`/`close_log`/`combined_comlog`) — these take the log object as
+    `_log` and write into it; they do not take or return a report string. They are **not**
+    wrapped by `general/log/`: the log package is a leaf (see **Command logging**).
   - `hcp/`, `nhp/`, `qa/`, `templates/` — HCP pipelines, non-human-primate, QA, templates.
     In `hcp/`, each processing command lives in its own `hcp_<command>.py` file (e.g.
     `hcp_pre_freesurfer.py`, `hcp_fmri_volume.py`); shared code is in `hcp_utils.py` (option
@@ -87,10 +88,26 @@ prints it. `general/log/` owns the runlog:
 
 - Build the runlog with a `SessionLog` (session/subject commands) or a `ReportLog` (per-BOLD /
   per-group executors and QC helpers), **not** by threading a local `r` string. Use the level
-  methods (`log.step`/`log.detail`/`log.warning`/`log.error`), `log.pipeline_command(cmd)`, and
-  the wrappers `log.run_external(...)`, `log.check_run(...)`, `log.check_for_file(...)`,
-  `log.use_or_skip_bold(...)`, `log.link_or_copy(...)` — these hand the log to the `core.py`
-  primitives, which write into it.
+  methods (`log.step`/`log.detail`/`log.warning`/`log.error`), `log.action(word, message, run)`
+  for a line that has to read as "Test running ..." under `--test`, and
+  `log.pipeline_command(cmd)`.
+- **`general/log/` is a leaf: it imports nothing from the tree but `general/exceptions` and
+  `general/parsing`, and everything else imports it.** So the run/check helpers are called where
+  they live, with the log as the **last, keyword-only** argument:
+
+  ```python
+  status = pc.check_for_file(f["t1"], "present", "missing", _log=log)
+  gc.link_or_copy(source, target, _log=log)
+  ```
+
+  `pc.run_external_for_file`, `pc.check_run`, `pc.check_for_file`, `pc.check_for_files`,
+  `pc.use_or_skip_bold` and `gc.link_or_copy` all take `*, _log=None`. `tests/test_log_is_a_leaf.py`
+  fails if an import back into the tree reappears anywhere in the package, function bodies
+  included — that is how thirteen lazy imports accumulated before.
+- **A log parameter is named `_log`, never `log`.** The plain name is taken: `process.arglist`
+  carries `["log", "keep", str]`, so `options["log"]` is the comlog retention setting. The name
+  says what the parameter is; the default says whether it is required — a private executor that
+  is meaningless without a log keeps `_log` as a required positional.
 - `pc.ExternalFailed` carries the **error message alone**; everything that led up to it is
   already in the log. An `except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:`
   handler appends it with `log.raw(str(errormessage))` — never re-adopt a whole report.
@@ -101,22 +118,22 @@ prints it. `general/log/` owns the runlog:
   (both return `self`, so `return log.finish(...)` is the usual form) or by assigning
   `log.report` / `log.failed` and `return log`. A study-level command need not name itself:
   a log with no `sid` is filed under the command name.
-- `helper_that_builds_report(..., log)` should take the `log` and append in place, not take and
+- `helper_that_builds_report(..., _log)` should take the log and append in place, not take and
   return an `r` string. A **command** called as a step of another one takes the caller's log as
   `_log` and reports into it (`processing/fs.py`'s `check_for_freesurfer_data`): building a
   second log to copy across duplicates it in the comlog and hides its errors from the caller.
 - A command making **more than one** external call opens **one comlog for all of them**:
 
   ```python
-  with log.combined_comlog(options, "run_freesurfer_full_segmentation", thread=sinfo["id"]):
-      ...                                   # every log.run_external(...) inside writes into it
+  with pc.combined_comlog(log, options, "run_freesurfer_full_segmentation", thread=sinfo["id"]):
+      ...                            # every pc.run_external_for_file(..., _log=log) inside
   ```
 
-  The block names the comlog after the command, attaches it for the whole body, counts the calls
-  made inside, and closes it once — honouring `--log` at that one site instead of at every call.
-  So a `log.run_external(...)` inside a block passes only what the call *is*: `thread=`,
-  `remove=`, `task=`, `logfolder=` and `logtags=` describe a comlog being opened and are inert
-  there. Nothing is opened under `--test`. External output never reaches the runlog: `trace()`
+  The block names the comlog after the command, attaches it to the log for the whole body, counts
+  the calls made inside, and closes it once — honouring `--log` at that one site instead of at
+  every call. A call inside the block picks the comlog up off the log it is given, so it passes
+  only what the call *is*: `thread=`, `remove=`, `task=`, `logfolder=` and `logtags=` describe a
+  comlog being opened and are inert there. Nothing is opened under `--test`. External output never reaches the runlog: `trace()`
   writes to the comlog and never to the log's records, so the traffic is one way by construction.
   `hcp/qc_hcp.py` is the deliberate exception — its jobs run in a `ProcessPoolExecutor` and
   cannot share one open file, so its 11 sites keep per-call comlogs and `remove=True`.
