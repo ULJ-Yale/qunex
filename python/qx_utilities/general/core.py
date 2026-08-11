@@ -13,11 +13,9 @@ preprocessing and analysis. The functions are for internal use
 and can not be called externally.
 """
 
-import glob
 import gzip
 import inspect
 import re
-import fnmatch
 import os.path
 import multiprocessing
 import os
@@ -28,14 +26,21 @@ import sys
 import time
 import traceback
 import types
+import warnings
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 
-from collections import UserList
-from copy import deepcopy
-
+import qx_utilities.general.batch_io as bio
 import qx_utilities.general.filelock as fl
 import qx_utilities.general.exceptions as ge
+
+# the batch file parser, the session selector and the filter live in batch_io,
+# which imports nothing from QuNex so it can be spliced into qunex_container.
+# re-exported here, as this is where the tree imports them from.
+BatchError = bio.BatchError
+SessionList = bio.SessionList
+read_batch = bio.read_batch
+read_list = bio.read_list
 
 
 def print_qunex_header(timestamp=None, file=None):
@@ -62,463 +67,60 @@ def print_qunex_header(timestamp=None, file=None):
 # ==============================================================================
 #                                              SESSION AND SUBJECT LIST HANDLING
 
-# ------------------------------------------------------------------------------
-#                                                              SessionList class
-
-class SessionList(UserList):
-    """
-    ``SessionList``
-
-    A list subclass for session and subject data.
-    """
-    def __init__(self, initialdata=None):
-        if initialdata is None:
-            initialdata = []
-        super().__init__(initialdata)
-
-    def copy(self):
-        """
-        ``copy()``
-
-        Returns a deep copy of the SessionList.
-        """
-        return SessionList(deepcopy(self.data))
-
-    def filter_by_key(self, key, value):
-        """
-        ``filter_by_key(key, value)``
-
-        Filter the SessionList by key and value.
-        - If value is a list, matches any of the values.
-        - Values may be glob patterns (*, ?, [a-z]).
-        """
-        def matches(item_value, pattern):
-            # Exact match for non-strings
-            if not isinstance(item_value, str):
-                return item_value == pattern
-
-            # Glob match for strings
-            return item_value == pattern or fnmatch.fnmatchcase(item_value, pattern)
-
-        # Normalize value to list
-        if isinstance(value, str):
-            if "," in value:
-                values = [e.strip() for e in value.split(",")]
-            else:
-                values = [value]
-        # values = value if isinstance(value, list) else [value]
-
-        return SessionList([
-            deepcopy(e)
-            for e in self.data
-            if isinstance(e, dict)
-            and key in e
-            and any(matches(e[key], v) for v in values)
-        ])
-
-    def filter_by_string(self, filter):
-        """
-        Filter the SessionList by a filter string.
-
-        - Use '|' between <key>:<value> pairs for OR
-        Example: "group:pat*|task:rest"
-
-        - Use '&' between <key>:<value> pairs for AND
-        Example: "group:pat*&task:r?st"
-
-        Values are treated as globs (fnmatch):
-        * matches any chars, ? matches one char, [abc] matches one char in set.
-
-        Only one operator type may be used.
-        """
-        if filter is None or filter.strip() == "":
-            return SessionList([])  # or return a copy of self, if you prefer
-
-        fstr = filter.strip()
-
-        has_or = "|" in fstr
-        has_and = "&" in fstr
-        if has_or and has_and:
-            raise ge.CommandFailed(
-                "SessionList.filter_by_string",
-                "Invalid filter parameter",
-                "The provided filter parameter is invalid: '%s'" % (filter),
-                "Use either '|' (OR) or '&' (AND), but not both.",
-                "Please adjust the parameter!",
-            )
-
-        op = "|" if has_or else ("&" if has_and else None)
-        parts = [fstr] if op is None else fstr.split(op)
-
-        try:
-            filters = [[p.strip() for p in e.split(":", 1)] for e in parts]
-        except Exception:
-            filters = []
-
-        if any(len(e) != 2 or e[0] == "" or e[1] == "" for e in filters):
-            raise ge.CommandFailed(
-                "SessionList.filter_by_string",
-                "Invalid filter parameter",
-                "The provided filter parameter is invalid: '%s'" % (filter),
-                "The parameter should be a '%s' separated string of <key>:<value> pairs!"
-                % (op if op else "(single)"),
-                "Please adjust the parameter!",
-            )
-
-        def matches(item, key, pattern):
-            if not (isinstance(item, dict) and key in item):
-                return False
-
-            v = item[key]
-
-            # Exact match for non-strings
-            if not isinstance(v, str):
-                return v == pattern
-
-            # For strings: exact OR glob match
-            # (fnmatchcase is case-sensitive and does not depend on OS)
-            return v == pattern or fnmatch.fnmatchcase(v, pattern)
-
-        filtered_data = []
-        for s in self.data:
-            if op == "&":
-                ok = all(matches(s, key, pattern) for key, pattern in filters)
-            else:
-                ok = any(matches(s, key, pattern) for key, pattern in filters)
-
-            if ok:
-                filtered_data.append(deepcopy(s))
-
-        return SessionList(filtered_data)
-
-    def get_list_by_key(self, key, sep=","):
-        """
-        ``get_list_by_key(key, sep=",")``
-
-        Compile a list of unique values for the specified key. By default it returns
-        a comma separated string. If sep is None or empty string, it returns a list.
-        """
-        if sep is None or sep == "":
-            return list(dict.fromkeys(str(item[key]) for item in self.data if key in item))
-        else:
-            return sep.join(list(dict.fromkeys(str(item[key]) for item in self.data if key in item)))
-
-    def group_by_key(self, key):
-        """
-        ``group_by_key(key)``
-
-        Groups the SessionList by the specified key. Returns a list of SessionLists.
-        """
-        groups = {}
-
-        for item in self.data:
-            if isinstance(item, dict) and key in item:
-                group_value = item[key]
-                groups.setdefault(group_value, []).append(deepcopy(item))
-
-        return [SessionList(items) for items in groups.values()]
-
-    def dont_have_key(self, key):
-        """
-        ``dont_have_key(key)``
-
-        Reports the items that do not have the specified key or have it as None or empty.
-        Returns list of such items.
-        """
-        return SessionList([item for item in self.data if not (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
-
-    def have_key(self, key):
-        """
-        ``have_key(key)``
-
-        Returns all the items that have the specified key with a value that is not None or empty.
-        Returns list of such items.
-        """
-        return SessionList([item for item in self.data if (isinstance(item, dict) and key in item and item[key] is not None and item[key].strip() != "")])
-
-
-# ------------------------------------------------------------------------------
-#                           Read session data from batch.txt or session.txt file
-
-
-def read_session_data(filename, verbose=False):
-    """
-    ``read_session_data(filename, verbose=False)``
-
-    Reads a `batch.txt` file.
-
-    USE
-    ===
-
-    An internal function for reading `batch.txt` and `session.txt` files. It
-    reads the file and returns a list of sessions with the information on images
-    and the additional parameters specified in the header.
-
-    """
-
-    if not os.path.exists(filename):
-        print(
-            "\n\n=====================================================\nERROR: Source file does not exist [%s]"
-            % (filename)
-        )
-        raise ValueError("ERROR: Batch file not found: %s" % (filename))
-
-    file = open(filename, "r")
-    s = file.read()
-    s = s.replace("\r", "\n")
-    s = s.replace("\n\n", "\n")
-    s = re.sub("^#.*?\n", "", s)
-
-    s = s.split("\n---")
-    s = [e for e in s if len(e) > 10]
-
-    nsearch = re.compile(r"(.*?)\((.*)\)")
-    csearch = re.compile(r"c([0-9]+)$")
-
-    slist = []
-    gpref = {}
-
-    c = 0
-    # first "session" is the parameters block
-    first = True
-    try:
-        for sub in s:
-            sub = sub.split("\n")
-            sub = [e.strip() for e in sub]
-            sub = [e.split("#")[0].strip() for e in sub]
-            sub = [e for e in sub if len(e) > 0]
-
-            dic = {}
-            for line in sub:
-                c += 1
-
-                # --- read preferences / settings
-                if line.startswith("--"):
-                    pkey, pvalue = [e.strip() for e in line.split(":", 1)]
-                    if first:
-                        gpref[pkey[2:]] = pvalue
-                    else:
-                        dic[pkey] = pvalue
-                    continue
-
-                elif line.startswith("_") or line.startswith("-"):
-                    pkey, pvalue = [e.strip() for e in line.split(":", 1)]
-                    if first:
-                        gpref[pkey[1:]] = pvalue
-                    else:
-                        dic[pkey] = pvalue
-                    continue
-
-                # --- split line
-                line = line.split(":")
-                line = [e.strip() for e in line]
-                if len(line) < 2:
-                    continue
-
-                # --- read ima data
-                if line[0].isdigit():
-                    image = {}
-                    image["ima"] = line[0]
-                    remove = []
-                    for e in line:
-                        m = nsearch.match(e)
-                        if m:
-                            image[m.group(1).strip()] = m.group(2).strip()
-                            remove.append(e)
-
-                    for e in remove:
-                        line.remove(e)
-
-                    ni = len(line)
-                    if ni > 1:
-                        image["name"] = line[1]
-                    if ni > 2 and ("bold" in image["name"]) or ("DWI" in image["name"]):
-                        image["task"] = line[2]
-                    if ni > 3:
-                        image["ext"] = line[3]
-
-                    dic[line[0]] = image
-
-                # --- read conc data
-                elif csearch.match(line[0]):
-                    conc = {}
-                    conc["cnum"] = line[0]
-                    for e in line:
-                        m = nsearch.match(e)
-                        if m:
-                            conc[m.group(1).strip()] = m.group(2).strip()
-                            line.remove(e)
-
-                    ni = len(line)
-                    if ni < 3:
-                        print("Missing data for conc entry!")
-                        raise AssertionError(
-                            "Not enough values in conc definition line!"
-                        )
-
-                    conc["label"] = line[1]
-                    conc["conc"] = line[2]
-                    conc["fidl"] = line[3]
-                    dic[line[0]] = conc
-
-                # --- read rest of the data
-                else:
-                    dic[line[0]] = ":".join(line[1:])
-
-            if len(dic) > 0:
-                if ("id" not in dic) and ("session" not in dic):
-                    if verbose:
-                        print(
-                            "WARNING: There is a record missing an id field and is being omitted from processing."
-                        )
-                else:
-                    if "id" in dic and "session" not in dic:
-                        dic["session"] = dic["id"]
-                    elif "session" in dic and "id" not in dic:
-                        dic["id"] = dic["session"]
-                    slist.append(dic)
-
-            # check paths
-            for field in ["dicom", "raw_data", "data", "hpc"]:
-                if field in dic:
-                    if not os.path.exists(dic[field]) and verbose:
-                        print(
-                            "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!"
-                            % (dic["id"], field, dic[field], os.path.basename(filename))
-                        )
-
-            # done with the parameters block
-            first = False
-
-    except Exception:
-        print(
-            "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n"
-            % (c, line)
-        )
-        raise
-
-    return slist, gpref
-
-# ------------------------------------------------------------------------------
-#                                              Read session data from .list file
-
-
-def read_list(filename, verbose=False):
-    """
-    ``read_list(filename, verbose=False)``
-
-    An internal function for reading list files. It reads the file and
-    returns a list of sessions each with the provided list of files.
-    """
-
-    slist = []
-    session = {}
-
-    with open(filename) as f:
-        for line in f:
-            if line.strip()[:1] == "#":
-                continue
-
-            line = [e.strip() for e in line.split(":")]
-
-            if len(line) == 2:
-                if line[0] == "session id":
-                    if session != {}:
-                        slist.append(session.copy())
-                    session = {}
-                    session["id"] = line[1]
-
-                else:
-                    if line[0] in session:
-                        session[line[0]].append(line[1])
-                    else:
-                        session[line[0]] = [line[1]]
-        slist.append(session)
-    return slist
-
-# ------------------------------------------------------------------------------
-#                                       Compile session list from various inputs
-
-
-def get_sessions_list(
-    list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False
+# The parsing, selection and filtering themselves live in `batch_io`, which
+# imports nothing from QuNex. What is added here is the QuNex error types.
+
+
+def resolve_sessions(
+    batchfile=None,
+    sessions=None,
+    filter=None,
+    sessionsfolder=None,
+    command=None,
+    verbose=False,
 ):
     """
-    ``get_sessions_list(list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
+    ``resolve_sessions(batchfile=None, sessions=None, filter=None, sessionsfolder=None, command=None, verbose=False)``
 
-    Gets a list of sessions as an array of dictionaries.
+    The single entry point for "which batch file, which sessions". Returns a
+    tuple of the SessionList of the selected sessions and the parameters
+    specified in the batch file header.
 
-    USE
-    ===
+    If batchfile is provided, it is parsed - as a `*.list` file if it has that
+    extension, as a batch file otherwise - and sessions and filter select within
+    it. A batch file that is absent or can not be read is always an error.
 
-    An internal function for getting a list of sessions as an array of
-    dictionaries in the form::
+    If batchfile is not provided, sessions is a comma, space or pipe separated
+    list of session ids or globs, matched against the folders in sessionsfolder
+    if one is given and taken as plain ids if it is not. The returned header
+    parameters are then empty.
 
-        [{'id': <session id>, [... other keys]}, {'id': <session id>, [... other keys]}]
-
-    The provided list_string can be:
-
-    - a comma, space or pipe separated list of session id codes,
-    - a path to a batch file (identified by .txt extension),
-    - a path to a `*.list` file (identified by .list extension).
-
-    In the first cases, the dictionary will include only session ids, in the
-    second all the other information present in the batch file, in the third
-    lists of specified files, e.g.::
-
-        [{'id': <session id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
-
-    If filter is provided (not None), only sessions that match the filter will
-    be returned. If sessionids is provided (not None), only sessions with
-    matching id will be returned. If sessionsfolder is provided (not None),
-    sessions from a list_string will be treated as glob patterns and all folders
-    that match the pattern in the sessionsfolder will be returned as session
-    ids.
+    If the command is running as a SLURM job array, only the sessions that
+    belong to this array task are returned.
     """
 
-    gpref = {}
+    records = []
+    header = {}
 
-    list_string = list_string.strip()
+    try:
+        if batchfile and batchfile.strip():
+            batchfile = batchfile.strip()
+            if re.match(r".*\.list$", batchfile):
+                records = bio.read_list(batchfile, verbose=verbose)
+            else:
+                records, header = bio.read_batch(batchfile, verbose=verbose)
 
-    if re.match(r".*\.list$", list_string):
-        slist = read_list(list_string, verbose=verbose)
-
-    elif os.path.isfile(list_string):
-        slist, gpref = read_session_data(list_string, verbose=verbose)
-
-    elif (
-        re.match(r".*\.txt$", list_string) or "/" in list_string
-    ) and not sessionids:
-        raise ValueError(
-            f"ERROR: The specified session file is not found and sessionids are not provided! [{list_string}]!"
+        slist = bio.select_sessions(
+            records, sessions=sessions, filter=filter, sessionsfolder=sessionsfolder
         )
 
-    else:
-        if (
-            re.match(r".*\.txt$", list_string) or "/" in list_string
-        ) and sessionids:
-            list_string = sessionids
-
-        slist = [e.strip() for e in re.split(r" +|,|\|", list_string)]
-
-        if sessionsfolder is None:
-            slist = [{"id": e} for e in slist]
-
-        else:
-            nlist = []
-            for s in slist:
-                nlist += glob.glob(os.path.join(sessionsfolder, s))
-            slist = [{"id": os.path.basename(e)} for e in nlist]
-
-    slist = SessionList(slist)
-
-    verbose=True
-
-    # filter with sessionids
-    slist = slist.filter_by_key("id", sessionids) if sessionids is not None and sessionids.strip() != "" else slist
-
-    # filter with filter
-    slist = slist.filter_by_string(filter) if filter is not None and filter.strip() != "" else slist
+    except bio.BatchError as e:
+        raise ge.CommandFailed(
+            command if command else "resolve_sessions",
+            "Could not compile the list of sessions to process",
+            str(e),
+            "Please check your parameters!",
+        )
 
     # are we inside a SLURM job array?
     if "SLURM_ARRAY_TASK_ID" in os.environ:
@@ -531,7 +133,60 @@ def get_sessions_list(
         # get the chunk
         slist = slist[slurm_array_ix::slurm_array_size]
 
-    return slist, gpref
+    return slist, header
+
+
+def get_sessions_list(
+    list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False
+):
+    """
+    ``get_sessions_list(list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
+
+    Deprecated, use `resolve_sessions` instead. It takes the legacy encoding, in
+    which list_string is either a path to a batch or `*.list` file or a list of
+    session ids, and sessionids selects within a batch file, and maps it onto
+    `resolve_sessions`.
+
+    Note that a batch file that is absent or can not be read is now an error -
+    it no longer falls back to processing sessionids.
+    """
+
+    # no stacklevel: attributing the warning to the caller would make python's
+    # default filter show it, and gmri is still one of the callers - it is for
+    # whoever migrates the remaining ones, not for the user
+    warnings.warn(
+        "get_sessions_list() is deprecated, use resolve_sessions() instead",
+        DeprecationWarning,
+    )
+
+    list_string = list_string.strip() if list_string else ""
+
+    # a path to a batch or a list file?
+    if (
+        os.path.isfile(list_string)
+        or re.match(r".*\.(txt|list)$", list_string)
+        or "/" in list_string
+    ):
+        return resolve_sessions(
+            batchfile=list_string,
+            sessions=sessionids,
+            filter=filter,
+            sessionsfolder=sessionsfolder,
+            verbose=verbose,
+        )
+
+    # a list of session ids, which sessionids then selects within
+    sessions, header = resolve_sessions(
+        sessions=list_string,
+        filter=filter,
+        sessionsfolder=sessionsfolder,
+        verbose=verbose,
+    )
+
+    if sessionids and sessionids.strip():
+        sessions = sessions.filter_by_key("id", sessionids)
+
+    return sessions, header
 
 
 # ==============================================================================

@@ -297,7 +297,7 @@ def setup_hcp(
 
     print("Running setup_hcp\n================")
 
-    inf = gc.read_session_data(os.path.join(sourcefolder, sourcefile))[0][0]
+    inf = gc.read_batch(os.path.join(sourcefolder, sourcefile))[0][0]
     rawf = inf.get("raw_data", None)
     options = {"use_sequence_info": gc.pcslist(use_sequence_info)}
 

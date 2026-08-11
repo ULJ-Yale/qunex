@@ -1979,7 +1979,7 @@ def map_nii2bids(
         # --- read session_hcp.txt file
         if os.path.exists(os.path.join(sourcefolder, "session_hcp.txt")):
             print("... session_hcp.txt found, reading session info")
-            session_info = gc.read_session_data(
+            session_info = gc.read_batch(
                 os.path.join(sourcefolder, "session_hcp.txt")
             )[0][0]
         else:
