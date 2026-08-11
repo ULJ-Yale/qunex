@@ -40,6 +40,7 @@ from qx_utilities.general.log import ReportLog, action
 from qx_utilities.processing.core import (
     ExternalFailed,
     NoSourceFolder,
+    combined_comlog,
     do_options_check,
     get_file_names,
     get_session_folders,
@@ -52,7 +53,7 @@ def _run_external(log, options, overwrite, checkfile, command, description):
     Run one external command, or -- under ``--test`` -- report it and stop.
 
     All 41 external calls in this file write into the one comlog the command
-    opened for itself (:meth:`general.log.ReportLog.combined_comlog`), so
+    opened for itself (:func:`processing.core.combined_comlog`), so
     nothing here has to say where the comlog goes or whether to keep it: the
     ``with`` block at the top of each command decided both, once.
 
@@ -128,8 +129,8 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     log.action("Running", "basic structural segmentation ...", options["run"], level="info")
 
     try:
-        with log.combined_comlog(
-            options, "run_basic_structural_segmentation", thread=sinfo["id"]
+        with combined_comlog(
+            log, options, "run_basic_structural_segmentation", thread=sinfo["id"]
         ):
             # --- copy structurals over
             copy = True
@@ -332,7 +333,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
     do_options_check(options, sinfo, "check_for_freesurfer_data")
 
     comlog = (
-        log.combined_comlog(options, "check_for_freesurfer_data", thread=sinfo["id"])
+        combined_comlog(log, options, "check_for_freesurfer_data", thread=sinfo["id"])
         if verbose
         else contextlib.nullcontext()
     )
@@ -506,8 +507,8 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
     do_options_check(options, sinfo, "run_freesurfer_full_segmentation")
 
     try:
-        with log.combined_comlog(
-            options, "run_freesurfer_full_segmentation", thread=sinfo["id"]
+        with combined_comlog(
+            log, options, "run_freesurfer_full_segmentation", thread=sinfo["id"]
         ):
             log.raw("\n---------------------------------------------------------")
             log.info(
@@ -785,8 +786,8 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
     log = ReportLog()
     do_options_check(options, sinfo, "run_freesurfer_subcortical_segmentation")
     try:
-        with log.combined_comlog(
-            options, "run_freesurfer_subcortical_segmentation", thread=sinfo["id"]
+        with combined_comlog(
+            log, options, "run_freesurfer_subcortical_segmentation", thread=sinfo["id"]
         ):
             log.raw("\n---------------------------------------------------------")
             log.info(

@@ -152,7 +152,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     pc.do_options_check(options, sinfo, "get_bold_data")
     f = pc.get_file_names(sinfo, options)
 
-    with log.combined_comlog(options, "get_bold_data", thread=sinfo["id"]):
+    with pc.combined_comlog(log, options, "get_bold_data", thread=sinfo["id"]):
         copy = True
         if os.path.exists(f["t1"]):
             copy = False
@@ -721,7 +721,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
         final_log = final_log + f"---> Successful completion of task at {datetime.now()}"
 
     # a dry run ran nothing, so there is no output to merge and no comlog to
-    # leave behind -- the same rule `ReportLog.combined_comlog` follows
+    # leave behind -- the same rule `pc.combined_comlog` follows
     if options["run"] != "run":
         return {"r": log.text, "report": report}
 

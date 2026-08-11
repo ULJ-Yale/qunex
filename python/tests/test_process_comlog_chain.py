@@ -84,7 +84,7 @@ def combined_step(sinfo, options, overwrite=False, thread=0):
     failed = 0
 
     try:
-        with log.combined_comlog(options, "combined_step", thread=sinfo["id"]):
+        with pc.combined_comlog(log, options, "combined_step", thread=sinfo["id"]):
             log.step("starting %s" % sinfo["id"])
             for n in range(int(options["steps"])):
                 checkfile = os.path.join(folder, "ran%d.txt" % n)

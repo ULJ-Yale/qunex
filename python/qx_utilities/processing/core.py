@@ -895,7 +895,7 @@ def check_run(
         failed = 0
 
         # nothing to check against, so the comlog's contents are the evidence.
-        # a comlog shared by a whole command (`ReportLog.combined_comlog`) holds
+        # a comlog shared by a whole command (`combined_comlog`) holds
         # the calls before this one too, so an earlier error would fail this
         # call as well -- no caller combines the two today, and one that wants
         # to would have to scan from where its own call started
@@ -923,7 +923,7 @@ def open_comlog(logfolder, task, logtags, thread, timestamp):
     the first is where the comlog is written, the rest are where
     :func:`close_log` maps it once it is finished.
 
-    Public because :meth:`general.log.ReportLog.combined_comlog` opens one for a
+    Public because :func:`combined_comlog` opens one for a
     whole command rather than for one call, and the naming, the folder list and
     the settings check are the same job there.
 
@@ -1022,6 +1022,96 @@ def close_log(comlog, logfolders, status, remove, log=None):
     return tfile
 
 
+@contextlib.contextmanager
+def combined_comlog(log, options, command, thread=None):
+    """
+    One comlog for the whole command, instead of one per external call.
+
+    A command that makes forty external calls used to leave forty comlogs,
+    each a fragment of one run and each named after the tool rather than after
+    the command. This opens a single comlog named for `command`, attaches it to
+    `log` for the length of the block, and closes it once by how the block
+    ended.
+
+    Attachment is what does the work: :func:`run_external_for_file` takes the
+    comlog attached to the log it is given and writes into it instead of
+    opening and disposing of its own. Everything recorded on the log inside the
+    block goes in too, so the file reads as the run rather than as one tool's
+    stdout. The traffic is one way -- the report reaches the comlog, and no
+    external output can reach the runlog, because
+    ``general.log.ReportLog.trace`` writes to the comlog and never to the
+    log's records.
+
+    Nothing is opened under ``--test``: a dry run makes no external calls, so
+    there is no output to keep and no file to leave behind.
+
+    Retention is decided here rather than at each call site, which is what
+    makes ``--log`` reach these commands at all::
+
+        with pc.combined_comlog(log, options, "run_freesurfer_full_segmentation",
+                                thread=sinfo["id"]):
+            ...
+
+    It lives here rather than on the log because opening a file, fanning it out
+    to the study, session and hcp folders and applying a retention policy are
+    things a run *does*; the log is a parameter to them, and `close_log`'s
+    fan-out needs `general.core.link_or_copy`, which the log package must not
+    reach for.
+
+    Parameters:
+        log: the command's report log, which the comlog is attached to.
+        options: the command's options; ``comlogs``, ``logtag``, ``run`` and
+            ``log`` are read.
+        command: the command's name, which names the comlog.
+        thread: the parallel thread, or the session being processed.
+
+    Yields:
+        the log it was given.
+    """
+    if options["run"] != "run":
+        yield log
+        return
+
+    comlog, logfolders = open_comlog(
+        options["comlogs"], command, options["logtag"], thread, None
+    )
+    if comlog.path:
+        print("You can follow the command's progress in:")
+        print(comlog.path)
+        print(gl.REPORT_RULE)
+
+    started = log.external_calls
+    completed = False
+    try:
+        with log.stream_to(comlog):
+            yield log
+        completed = True
+    finally:
+        # written to the comlog directly: the block has ended, so the
+        # attachment is gone, and this line belongs to the file rather than to
+        # the report
+        comlog.write(
+            "\n\n---> %s at %s\n\n"
+            % (
+                "Successful completion" if completed else
+                "An external command failed",
+                datetime.now(),
+            )
+        )
+        ran = log.external_calls - started
+        log.step("ran %d external command%s%s" % (
+            ran,
+            "" if ran == 1 else "s",
+            "" if completed else " before failing",
+        ))
+        close_log(
+            comlog,
+            logfolders,
+            "done" if completed else "error",
+            options["log"] == "remove",
+            log,
+        )
+
 def run_external_for_file(
     checkfile,
     run,
@@ -1075,15 +1165,16 @@ def run_external_for_file(
                          be relative to it)
 
     --shell            Whether to run the command in a shell (boolean).
-    --comlog           An already open comlog to write into (ComContext). When
-                       given, the call joins the caller's comlog instead of
+    --comlog           An already open comlog to write into (ComContext).
+                       Defaults to whatever is attached to `log`, which is what
+                       a call inside a `combined_comlog` block picks up. When
+                       given, the call joins that comlog instead of
                        opening one of its own, and neither opens nor closes a
                        file: `thread`, `remove`, `task`, `logfolder` and
                        `logtags` describe a comlog being opened and are then
                        unused, and `endlog` comes back as None because the file
-                       is not finished here. Set by
-                       `general.log.ReportLog.combined_comlog`, which owns the
-                       comlog for the whole command.
+                       is not finished here. Attached by `combined_comlog`,
+                       which owns the comlog for the whole command.
 
     OUTPUTS
     =======
@@ -1095,6 +1186,11 @@ def run_external_for_file(
     """
 
     endlog = None
+
+    # a log inside a `combined_comlog` block already holds the comlog this call
+    # belongs in; the caller does not have to hand it over as well
+    if comlog is None and log is not None:
+        comlog = log.comlog
 
     # timestamp
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
