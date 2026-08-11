@@ -89,18 +89,46 @@ def _render(depth, severity, message):
     return "\n" + INDENT * depth + PREFIXES[severity] + message
 
 
+# `VERSION.md` at the root of the source tree this module belongs to, four
+# levels up from `<root>/python/qx_utilities/general/log/report.py`
+VERSION_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), *[os.pardir] * 4, "VERSION.md"
+)
+
+
 def get_qunex_version():
     """
-    Returns the version of currently used QuNex suite.
+    The version of the QuNex suite this code belongs to.
+
+    Read from ``VERSION.md`` at the root of the source tree this module is part
+    of, so the version reported is the version of the code that is running. A
+    deployed suite has the same file at ``$TOOLS/$QUNEXREPO``, which is read
+    when the source relative path cannot be, for an installation that places
+    the python package somewhere else.
+
+    A version that cannot be read at all is reported as ``unknown``. This
+    string heads every log file and every comlog, and writing a header is not a
+    place to end a run: a suite whose environment is not set up should still be
+    able to say what it did.
+
+    Returns:
+        the version, or ``unknown``.
     """
+    candidates = [VERSION_FILE]
 
-    # open the version file and read its contents
-    with open(
-        os.path.join(os.environ["TOOLS"], os.environ["QUNEXREPO"], "VERSION.md"), "r"
-    ) as f:
-        version = f.read().strip()
+    tools = os.environ.get("TOOLS")
+    repo = os.environ.get("QUNEXREPO")
+    if tools and repo:
+        candidates.append(os.path.join(tools, repo, "VERSION.md"))
 
-    return version
+    for candidate in candidates:
+        try:
+            with open(candidate, "r") as version_file:
+                return version_file.read().strip()
+        except OSError:
+            continue
+
+    return "unknown"
 
 
 def print_qunex_header(timestamp=None, file=None):
