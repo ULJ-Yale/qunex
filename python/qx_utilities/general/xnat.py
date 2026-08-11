@@ -42,9 +42,8 @@ def xnat_run_cmd(cmd):
     )
     summary += "\n          --- stdout start --- \n"
     for line in iter(cmd_p.stdout.readline, b""):
-        line = line.decode("utf-8")
-        summary += "\n"
-        summary += line
+        # the line already ends with the newline `readline` read
+        summary += line.decode("utf-8")
     summary += "\n          ---  stdout end  --- \n"
     print(summary)
     return summary

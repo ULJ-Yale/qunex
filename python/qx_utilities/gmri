@@ -72,6 +72,21 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 """
 
 
+def _call_summary(outcome):
+    """
+    What one call through `run_with_log` is reported as, in one line.
+
+    The same spelling for the run's final report and for the status record a
+    parent reads, so the two cannot drift: the error when the call raised, and
+    the comlog to read when there is one.
+    """
+    return "%s%s" % (
+        outcome.error
+        or ("completed with errors" if outcome.failed else "completed"),
+        " [log: %s]" % outcome.comlog if outcome.comlog else "",
+    )
+
+
 def runCommand(command, args):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
@@ -120,11 +135,27 @@ def runCommand(command, args):
     if qx_command.language in ["matlab", "bash"]:
         run.header()
         if "scheduler" in args:
+            # the job is submitted, not run: what it did is for the run on the
+            # node to report, so there is no record to write here
             gs.run_through_scheduler(command, sessions=None, args=args, run=run)
-        elif qx_command.language == "matlab":
-            gm.run(qx_command, args, run=run)
         else:
-            gb.run(qx_command, args, run=run)
+            if qx_command.language == "matlab":
+                code = gm.run(qx_command, args, run=run)
+            else:
+                code = gb.run(qx_command, args, run=run)
+
+            # the record a parent asked for. The exit code was the only thing
+            # these paths reported and it reached the console alone, so a
+            # matlab or bash step of a recipe had no status at all
+            run.write_status(
+                [
+                    (
+                        command,
+                        "completed" if not code else "failed with exit code %s" % code,
+                        1 if code else 0,
+                    )
+                ]
+            )
         return
 
     # -- any other (unsupported) language
@@ -336,6 +367,14 @@ def runCommand(command, args):
                     tags=[command, args.get("sessionids")],
                 )
 
+                # and, when a parent process asked for it, what this call did
+                # as data. The sessions loop below and `gp.run` both write
+                # theirs; a single utility call wrote none, so every utility
+                # step of a recipe was reported as "no status reported" --
+                # which is also what the step's caller has instead of an exit
+                # code once the call is one of several in a recipe
+                run.write_status([(command, _call_summary(outcome), outcome.failed)])
+
                 # a failed command exits non-zero, the way the parallel path
                 # below already does: `bin/qunex.sh` returns gmri's status
                 # verbatim, so this is how a shell, a scheduler job or CI
@@ -390,14 +429,7 @@ def runCommand(command, args):
         # path is deleted when utility commands that run over sessions become
         # processing commands and go through `gp.run`.
         stati = [
-            (
-                outcome.name,
-                "%s%s" % (outcome.error or ("completed with errors"
-                                            if outcome.failed
-                                            else "completed"),
-                          " [log: %s]" % outcome.comlog if outcome.comlog else ""),
-                outcome.failed,
-            )
+            (outcome.name, _call_summary(outcome), outcome.failed)
             for outcome in sorted(results, key=lambda outcome: outcome.name)
         ]
         run.final_report(stati)
@@ -524,15 +556,26 @@ def main(args=None):
         else:
             runCommand(comm, opts)
 
+    # A parent that asked for a status record gets one however this ends. The
+    # run writes its own when it gets far enough to build one, and this fills
+    # in for the runs that do not: a command that raised before its loop, a
+    # worker that never came back, a name that is not a command. Without it
+    # `run_recipe` reported such a step as "no status reported" -- the step
+    # that failed hardest being the one it could say least about. A record
+    # already written is kept: `write_failure_status` no-ops after one.
     except ge.CommandNull as e:
+        # nothing to do is not a failure, and the record says so
+        gl.write_failure_status(opts, comm, e, failed=0)
         print(ge.report_command_null(comm, e))
         print()
         sys.exit(0)
     except ge.CommandFailed as e:
+        gl.write_failure_status(opts, comm, e)
         print(ge.report_command_failed(comm, e))
         print()
         sys.exit(1)
     except ge.CommandError as e:
+        gl.write_failure_status(opts, comm, e)
         print(ge.report_command_error(comm, e))
         print(
             "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
@@ -544,6 +587,7 @@ def main(args=None):
         )
         sys.exit(1)
     except ValueError as e:
+        gl.write_failure_status(opts, comm, e)
         print(
             "\n--------------------------------- QuNex failed ---------------------------------\nERROR: Execution of qunex command %s failed!"
             % (comm)
@@ -555,8 +599,15 @@ def main(args=None):
         )
         raise
     except SystemExit as e:
+        # the paths that exit rather than raise -- an unrecognised command, an
+        # unsupported language -- and which a recipe reaches by way of a typo
+        if e.code:
+            gl.write_failure_status(opts, comm, "exited with status %s" % e.code)
         sys.exit(e)
     except:
+        # the clause stays bare: it is what keeps a KeyboardInterrupt from
+        # being swallowed here, so the exception is read rather than bound
+        gl.write_failure_status(opts, comm, sys.exc_info()[1])
         print(
             "\n--------------------------------- QuNex failed ---------------------------------\n\nERROR: Execution of command `%s` failed!"
             % (comm)

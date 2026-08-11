@@ -45,6 +45,7 @@ from qx_utilities.general.log.context import (
     log_folder,
     read_status,
     run_and_log,
+    write_failure_status,
 )
 from qx_utilities.general.log.report import (
     INDENT,
@@ -96,6 +97,7 @@ __all__ = [
     "log_or_console",
     "print_qunex_header",
     "read_status",
+    "write_failure_status",
     "resolve_logging",
     "run_and_log",
     "set_active",

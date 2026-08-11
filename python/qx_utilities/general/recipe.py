@@ -357,21 +357,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     if logfolder is not None and "logfolder" not in parameters:
         hints["logfolder"] = logfolder
 
-    # mustache injections to logfolder?
-    if "{{" in hints.get("logfolder", "") and "}}" in hints["logfolder"]:
-        logfolder = hints["logfolder"]
-        labels = _find_enclosed_substrings(logfolder)
-        for label in labels:
-            cleaned_label = label.replace("{", "").replace("}", "")
-            os_label = cleaned_label[1:]
-            if cleaned_label[0] == "$" and os_label in os.environ:
-                logfolder = logfolder.replace(label, os.environ[os_label])
-            else:
-                raise ge.CommandFailed(
-                    "run_recipe",
-                    f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-                )
-        hints["logfolder"] = logfolder
+    # Injected here, before anything is deduced from them, and not only into
+    # `logfolder`: these are the values this run resolves its own study, log
+    # folder and status paths from, and a `{{$VAR}}` left in any of them is a
+    # folder of that name. Every path the recipe derives and every path it
+    # hands a step then come from the same resolved text.
+    hints = {key: _inject_labels(value) for key, value in hints.items()}
 
     run_command = f"run_recipe_{recipe}"
     folders = gc.deduce_folders(hints, run_command, timestamp)
@@ -533,21 +524,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
         # executing a custom script
         if command_name == "script" or command_name == "external":
             if "path" in command_parameters:
-                external_path = command_parameters["path"]
-
-                labels = _find_enclosed_substrings(external_path)
-                for label in labels:
-                    cleaned_label = label.replace("{", "").replace("}", "")
-                    os_label = cleaned_label[1:]
-                    if cleaned_label[0] == "$" and os_label in os.environ:
-                        external_path = external_path.replace(
-                            label, os.environ[os_label]
-                        )
-                    else:
-                        raise ge.CommandFailed(
-                            "run_recipe",
-                            f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-                        )
+                external_path = _inject_labels(command_parameters["path"])
 
                 del command_parameters["path"]
             else:
@@ -746,31 +723,18 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             command_parameters["logstatus"] = status_path
 
             for param, value in command_parameters.items():
-                # inject mustache marked values
-                if (
-                    isinstance(value, str)
-                    and len(value) > 0
-                    and "{{" in value
-                    and "}}" in value
-                ):
-                    labels = _find_enclosed_substrings(value)
-                    for label in labels:
-                        cleaned_label = label.replace("{", "").replace("}", "")
-                        os_label = cleaned_label[1:]
-                        if cleaned_label[0] == "$" and os_label in os.environ:
-                            value = value.replace(label, os.environ[os_label])
-                        else:
-                            summary += f"\n - command {command_name} ... FAILED"
-                            _print_end_summary(
-                                summary,
-                                run,
-                                f"Failed running command {command_name}! Cannot inject values marked with double curly braces in the recipe.",
-                            )
-
-                            raise ge.CommandFailed(
-                                "run_recipe",
-                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-                            )
+                # a label the recipe author wrote against this command; the
+                # run level ones were injected before the folders were deduced
+                try:
+                    value = _inject_labels(value)
+                except ge.CommandFailed:
+                    summary += f"\n - command {command_name} ... FAILED"
+                    _print_end_summary(
+                        summary,
+                        run,
+                        f"Failed running command {command_name}! Cannot inject values marked with double curly braces in the recipe.",
+                    )
+                    raise
 
                 if param in flags:
                     command.append(f"--{param}")
@@ -797,11 +761,14 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
             ) as process:
                 for line in iter(process.stdout.readline, b""):
-                    print(line.decode("utf-8"))
+                    # `readline` keeps the newline it read, so the line is
+                    # relayed as it came; printing it would add a second one
+                    # and double space everything every step says
+                    print(line.decode("utf-8"), end="")
 
                 exit_code = process.wait()
 
-            run.write(_step_report(command_name, status_path))
+            run.write(_step_report(command_name, status_path, exit_code))
 
             if exit_code != 0:
                 summary += f"\n - command {command_name} ... FAILED"
@@ -855,20 +822,29 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     _print_end_summary(summary, run, None)
 
 
-def _step_report(command_name, status_path):
+def _step_report(command_name, status_path, exit_code):
     """
     The step's own report, for the recipe log.
 
     Read from the status record the step was asked to write, so what the
     recipe reports is what the command reported -- the top level compiling
     its report from each command's, rather than grepping it out of a pipe.
-    A command that writes no record (a utility command with nothing to
-    report, or one that died first) says so in one line.
+
+    A step that wrote no record is reported from its **exit code**, which is
+    the one thing a parent always has. A record can be missing for reasons no
+    amount of care inside the child covers -- it was killed, it ran out of
+    memory, the scheduler took the node -- so the recipe says what it knows
+    rather than that it knows nothing. The old line said the latter, and said
+    it about failures as well, so the report and the summary two screens down
+    disagreed.
     """
     record = gl.read_status(status_path)
 
     if not record:
-        return f"\n---> {command_name}: no status reported\n"
+        outcome = (
+            "completed" if exit_code == 0 else f"failed with exit code {exit_code}"
+        )
+        return f"\n---> {command_name}: {outcome}; no status record written\n"
 
     lines = [f"\n---> Report for {command_name}"]
     if record.get("runlog"):
@@ -903,6 +879,47 @@ def _print_end_summary(summary, run, error=None):
         print("\n------------------------")
         print(f"\nERROR: {error}")
         print(f"---> run_recipe failed at {datetime.now()}")
+
+
+def _inject_labels(value):
+    """
+    Replace every ``{{$VAR}}`` in `value` with what the environment says.
+
+    The recipe's one substitution rule, in one place. It used to be spelled
+    three times -- for the log folder, for an external step's path and for
+    each command parameter -- and the copies did not run at the same point:
+    a value the recipe resolved its **own** folders from was still uninjected
+    when it did so, while the copy of it handed to a step was injected on the
+    way out. That is how a recipe could log to a folder literally named
+    `{{$STUDY_FOLDER}}` while every step it ran logged to the study.
+
+    Parameters:
+        value: the value to inject into. Anything that is not a string
+            holding a label is returned unchanged, so this can be mapped over
+            a whole parameter dictionary.
+
+    Returns:
+        the value with every label replaced.
+
+    Raises:
+        ge.CommandFailed: when a label names something the environment does
+            not hold. A recipe cannot be run half resolved.
+    """
+    if not isinstance(value, str) or "{{" not in value or "}}" not in value:
+        return value
+
+    for label in _find_enclosed_substrings(value):
+        cleaned_label = label.replace("{", "").replace("}", "")
+        os_label = cleaned_label[1:]
+        if cleaned_label[0] == "$" and os_label in os.environ:
+            value = value.replace(label, os.environ[os_label])
+        else:
+            raise ge.CommandFailed(
+                "run_recipe",
+                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
+            )
+
+    return value
 
 
 def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter="}}"):

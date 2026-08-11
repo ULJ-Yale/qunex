@@ -71,6 +71,16 @@ _lock = multiprocessing.Lock()
 # frames the call echo at the top of a runlog
 RULE = "================================================================="
 
+# whether this process has already written its status record. A run writes one
+# -- the digest it built, or, when it died before building one, the failure
+# `write_failure_status` records at the exit boundary. The flag is what keeps
+# the second from overwriting the first: `process.run` writes its per-session
+# digest and *then* raises for the sessions that failed, and the digest is the
+# better record of the two. A file check cannot tell this run's record from one
+# an earlier run left at the same path, which is why this is a flag and not an
+# `os.path.exists`.
+_status_written = False
+
 
 def digest(stati):
     """
@@ -595,13 +605,69 @@ class RunContext:
             ],
         }
 
-        folder = os.path.dirname(path)
-        if folder:
-            os.makedirs(folder, exist_ok=True)
-        with open(path, "w") as status:
-            yaml.safe_dump(record, status, sort_keys=False, default_flow_style=False)
+        return _write_record(path, record)
 
-        return path
+
+def _write_record(path, record):
+    """Write `record` to `path`, and note that this run has written one."""
+    global _status_written
+
+    folder = os.path.dirname(path)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    with open(path, "w") as status:
+        yaml.safe_dump(record, status, sort_keys=False, default_flow_style=False)
+
+    _status_written = True
+    return path
+
+
+def write_failure_status(args, command, error, failed=1, timestamp=None):
+    """
+    Write the status record for a run that ended before it could build one.
+
+    A run reports what it did through :meth:`RunContext.write_status`, from
+    the digest it collected. A run that dies first -- a command that raises
+    before its loop, a worker that never comes back, a command name that is
+    not one -- collects nothing, and used to leave the parent that asked for a
+    record with nothing to read. That parent is ``run_recipe``, and what it
+    reported for such a step was "no status reported", however loudly the step
+    had failed.
+
+    So this is the same record, from what is known at the exit boundary rather
+    than from a digest: the run has no session level detail to give, and the
+    one thing it does have -- that it failed, and with what -- is the thing
+    worth having. There is no :class:`RunContext` here on purpose: the boundary
+    is reached from paths that never built one, and the only thing needed is
+    the path the parent named, which is in the arguments it passed.
+
+    A run that already wrote its record keeps it: see :data:`_status_written`.
+
+    Parameters:
+        args: the arguments the run was called with, holding ``logstatus``.
+        command: the command as invoked.
+        error: what went wrong, spelled into the summary.
+        failed: the failure count; 0 for an outcome that is not a failure.
+        timestamp: the run's stamp; defaults to now.
+
+    Returns:
+        the path written, or None when no record was asked for or one was
+        already written.
+    """
+    path = (args or {}).get("logstatus")
+    if not path or _status_written:
+        return None
+
+    return _write_record(
+        path,
+        {
+            "command": command,
+            "timestamp": timestamp or datetime.now().strftime(TIMESTAMP),
+            "runlog": None,
+            "failed": failed,
+            "sessions": [{"id": command, "summary": str(error), "failed": failed}],
+        },
+    )
 
 
 def read_status(path):

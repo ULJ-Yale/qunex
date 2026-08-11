@@ -246,7 +246,33 @@ exit 0
     assert "command create_study ... OK" in runlog(study)
 
 
-def test_a_step_that_writes_no_record_says_so_rather_than_guessing(
+def test_a_step_s_output_is_relayed_line_for_line(tmp_path, study, fake_qunex, capsys):
+    """
+    `readline` keeps the newline it read; printing the line added a second one
+    and every step's output reached the console double spaced.
+    """
+    write_script(
+        tmp_path / "bin" / "qunex",
+        """#!/bin/bash
+echo "---> first"
+echo "---> second"
+status=$(echo "$@" | tr ' ' '\\n' | sed -n 's/^--logstatus=//p')
+mkdir -p "$(dirname "$status")"
+printf 'command: create_study\\nfailed: 0\\nsessions: []\\n' > "$status"
+exit 0
+""",
+    )
+
+    gr.run_recipe(
+        recipe_file=recipe_file(tmp_path, ["create_study"]),
+        recipe="test",
+        eargs={"studyfolder": str(study)},
+    )
+
+    assert "---> first\n---> second\n" in capsys.readouterr().out
+
+
+def test_a_step_that_writes_no_record_is_reported_from_its_exit_code(
     tmp_path, study, monkeypatch
 ):
     bin_folder = tmp_path / "bin"
@@ -260,8 +286,83 @@ def test_a_step_that_writes_no_record_says_so_rather_than_guessing(
         eargs={"studyfolder": str(study)},
     )
 
-    assert "create_study: no status reported" in runlog(study)
+    assert "create_study: completed; no status record written" in runlog(study)
     assert "command create_study ... OK" in runlog(study)
+
+
+def test_a_failing_step_that_writes_no_record_is_not_reported_as_silent(
+    tmp_path, study, monkeypatch
+):
+    """
+    A record can be missing because the step was killed -- the case no care
+    inside the child covers. The recipe used to say "no status reported" and
+    leave it there, while its own summary called the step FAILED.
+    """
+    bin_folder = tmp_path / "bin"
+    bin_folder.mkdir()
+    write_script(bin_folder / "qunex", "#!/bin/bash\necho boom\nexit 4\n")
+    monkeypatch.setenv("PATH", "%s:%s" % (bin_folder, os.environ["PATH"]))
+
+    with pytest.raises(ge.CommandFailed):
+        gr.run_recipe(
+            recipe_file=recipe_file(tmp_path, ["create_study"]),
+            recipe="test",
+            eargs={"studyfolder": str(study)},
+        )
+
+    log = runlog(study)
+    assert "create_study: failed with exit code 4; no status record written" in log
+    assert "command create_study ... FAILED" in log
+
+
+# ------------------------------------------------------- label injection
+
+
+def test_a_label_is_injected_before_the_recipe_deduces_its_own_folders(
+    tmp_path, study, fake_qunex, monkeypatch
+):
+    """
+    `{{$VAR}}` used to be injected into each step's parameters only, which is
+    after the recipe resolved the folders it derives from the same values --
+    so the recipe logged to a folder literally named `{{$VAR}}` while every
+    step it ran logged to the study.
+    """
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("QX_TEST_STUDY", str(study))
+
+    gr.run_recipe(
+        recipe_file=recipe_file(
+            tmp_path, ["create_study"], {"studyfolder": "{{$QX_TEST_STUDY}}"}
+        ),
+        recipe="test",
+        eargs={},
+    )
+
+    assert "RECIPE EXECUTION SUMMARY" in runlog(study)
+    assert not (tmp_path / "{{$QX_TEST_STUDY}}").exists()
+
+
+def test_a_step_s_record_is_read_from_where_the_step_was_told_to_write_it(
+    tmp_path, study, fake_qunex, monkeypatch
+):
+    """
+    The status path was derived from the uninjected log folder and injected on
+    its way into `--logstatus`, so the step wrote its record where the recipe
+    did not look and every step reported "no status reported".
+    """
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("QX_TEST_STUDY", str(study))
+
+    gr.run_recipe(
+        recipe_file=recipe_file(
+            tmp_path, ["create_study"], {"studyfolder": "{{$QX_TEST_STUDY}}"}
+        ),
+        recipe="test",
+        eargs={},
+    )
+
+    assert "---> Report for create_study" in runlog(study)
+    assert "... S01 ---> study created" in runlog(study)
 
 
 # ----------------------------------------------------------------- layout

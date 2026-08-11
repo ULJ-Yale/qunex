@@ -109,3 +109,7 @@ def run(qx_command, args, run=None):
         print("\n\nERROR: %s failed! Please check output / log!\n" % (qx_command.name))
     else:
         print("\n\n---> Successful completion of task\n")
+
+    # the caller writes the run's status record from this; printing it was all
+    # that used to be done with it
+    return ret
