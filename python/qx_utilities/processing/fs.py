@@ -49,7 +49,7 @@ from qx_utilities.processing.core import (
 )
 
 
-def _run_external(log, options, overwrite, checkfile, command, description):
+def _run_external(_log, options, overwrite, checkfile, command, description):
     """
     Run one external command, or -- under ``--test`` -- report it and stop.
 
@@ -63,14 +63,14 @@ def _run_external(log, options, overwrite, checkfile, command, description):
     ``ExternalFailed``, which the commands catch.
     """
     if options["run"] != "run":
-        log.raw("\n\n%s" % description)
-        log.detail("test, not run: %s" % command, depth=1)
+        _log.raw("\n\n%s" % description)
+        _log.detail("test, not run: %s" % command, depth=1)
         return
 
-    pc.run_external_for_file(checkfile, command, description, overwrite=overwrite, _log=log)
+    pc.run_external_for_file(checkfile, command, description, overwrite=overwrite, _log=_log)
 
 
-def _copy(log, options, source, target, ifh=False):
+def _copy(_log, options, source, target, ifh=False):
     """
     Copy a file, or -- under ``--test`` -- report the copy and change nothing.
 
@@ -78,7 +78,7 @@ def _copy(log, options, source, target, ifh=False):
     every 4dfp copy in this file does.
     """
     if options["run"] != "run":
-        log.detail("test, not copied: %s" % os.path.basename(source))
+        _log.detail("test, not copied: %s" % os.path.basename(source))
         return
 
     shutil.copy2(source, target)

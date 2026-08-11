@@ -21,7 +21,9 @@ Two guards, and the second is the general one:
    never-convert classes of the transition review (the output *is* the
    command's product, a ``_demo`` self-check, a developer's debug trace).
 2. **The rule of D-improve-logging-001** -- a function that declares ``_log``
-   converts its own prints -- asserted over the whole of ``qx_utilities``.
+   converts its own prints -- asserted over the whole of ``qx_utilities``, with
+   the decision's amendment for the prints that are console notices rather than
+   records (:data:`CONSOLE_NOTICES`).
 
 A failure here is not necessarily a bug: it is a print that has to be either
 converted or added to the budget with its reason.
@@ -105,14 +107,24 @@ def test_every_dicom_module_is_budgeted():
     assert present - set(BUDGET) == set()
 
 
-# functions that take the caller's log and still print, because what they
-# print is not report text: a live console notice saying where the comlog is
-# and what is about to run, which is what makes a long external call watchable.
-# What belongs in the report is already recorded through the log they were
-# given. D-improve-logging-001 obliges a function to report into the log it
-# declares rather than to build its report elsewhere; it does not oblige it to
-# stop talking to the console.
-CONSOLE_NOTICES = {"run_external_for_file"}
+# functions that declare `_log` and still print. D-improve-logging-001's
+# amendment is what admits them: a print is a console notice, never a record,
+# and it is right only where both of these hold.
+#
+# 1. the fact is already recorded durably, by someone. a print never replaces a
+#    record: `close_log` writes `logfile: <path>` into the report once the file
+#    is final, and `_trace` writes the expanded command into the comlog, which
+#    is what makes a comlog readable on its own;
+# 2. the console needs it at a moment, or in a form, the log cannot serve. the
+#    runlog does not stream -- a `SessionLog` does not echo, and
+#    `general.process` prints the whole report only once the command has
+#    returned -- so "you can follow the command's progress in: <path>",
+#    recorded rather than printed, would arrive when the run it invites you to
+#    watch is over, naming the `tmp_` file `ComContext.close` has since renamed.
+#
+# where only 1 holds, record it; where only 2 does, record it *and* echo it. a
+# third entry here has to be argued in the same terms.
+CONSOLE_NOTICES = {"run_external_for_file", "combined_comlog"}
 
 
 def test_declaring_a_log_means_converting_its_prints():

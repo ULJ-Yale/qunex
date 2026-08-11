@@ -65,11 +65,11 @@ def stub_external(monkeypatch):
     """Replace the external runner, recording how the wrapper called it."""
     calls = []
 
-    def fake(checkfile, run, description, log=None, **kwargs):
+    def fake(checkfile, run, description, _log=None, **kwargs):
         calls.append({"checkfile": checkfile, "run": run,
                       "description": description, **kwargs})
-        if log is not None:
-            log.raw("\n---> %s ran" % description)
+        if _log is not None:
+            _log.raw("\n---> %s ran" % description)
         return "done.log", "done", 0
 
     monkeypatch.setattr(pc, "run_external_for_file", fake)

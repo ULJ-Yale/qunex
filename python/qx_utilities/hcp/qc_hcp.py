@@ -40,7 +40,7 @@ from qx_utilities.hcp.hcp_utils import do_hcp_options_check
 QC_SCENE_RES = "2560 1080"
 
 
-def _apply_on_existing(on_existing, patterns, label, log):
+def _apply_on_existing(on_existing, patterns, label, _log):
     """Apply the ``--on_existing`` policy to a modality/run's existing outputs.
 
     on_existing:
@@ -64,30 +64,30 @@ def _apply_on_existing(on_existing, patterns, label, log):
         return False
 
     if on_existing == "skip":
-        log.step(f"on_existing=skip: found {len(existing)} existing {label} output(s), skipping.")
+        _log.step(f"on_existing=skip: found {len(existing)} existing {label} output(s), skipping.")
         return True
 
     if on_existing == "delete":
         for f in existing:
             _safe_unlink(f)
-        log.step(f"on_existing=delete: removed {len(existing)} existing {label} output(s) before running.")
+        _log.step(f"on_existing=delete: removed {len(existing)} existing {label} output(s) before running.")
         return False
 
     return False
 
 
-def _dummy_variable_check(template_scene, tokens, log):
+def _dummy_variable_check(template_scene, tokens, _log):
     """Return (ok, rr): verify the scene template contains the required DUMMY tokens."""
 
     try:
         with open(template_scene, "r", encoding="utf-8", errors="ignore") as f:
             txt = f.read()
     except OSError as e:
-        log.error(f"cannot read scene template {template_scene} ({e})")
+        _log.error(f"cannot read scene template {template_scene} ({e})")
         return False
     missing = [t for t in tokens if t not in txt]
     if missing:
-        log.error(f"scene {template_scene} missing required tokens: {', '.join(missing)}")
+        _log.error(f"scene {template_scene} missing required tokens: {', '.join(missing)}")
         return False
     return True
 
@@ -1002,7 +1002,7 @@ def _write_qc_scene(template_scene: str, working_scene: str, substitutions: dict
         f.write(scene_txt)
 
 
-def _show_scene_png(working_scene, png_out, qclog, thread, logtags, overwrite, desc, log):
+def _show_scene_png(working_scene, png_out, qclog, thread, logtags, overwrite, desc, _log):
     """Render scene index 1 of ``working_scene`` to ``png_out`` at QC_SCENE_RES."""
 
     _endlog, _status, _failed = pc.run_external_for_file(
@@ -1015,7 +1015,7 @@ def _show_scene_png(working_scene, png_out, qclog, thread, logtags, overwrite, d
         logfolder=qclog,
         logtags=logtags,
         shell=True,
-        _log=log,
+        _log=_log,
     )
     return
 
@@ -1030,17 +1030,17 @@ def _render_scene_qc(
     logtags,
     overwrite,
     desc,
-     log):
+     _log):
     """Write a working scene and render its single QC png (scene index 1)."""
 
     _write_qc_scene(template_scene, working_scene, substitutions)
     _show_scene_png(
-        working_scene, png_out, qclog, thread, logtags, overwrite, desc, log)
+        working_scene, png_out, qclog, thread, logtags, overwrite, desc, _log)
     return
 
 
 def _zip_qc_scene(
-    working_scene, base_dir, qc_dir, outpath, timestamp, qclog, thread, logtags,  log
+    working_scene, base_dir, qc_dir, outpath, timestamp, qclog, thread, logtags,  _log
 ):
     """Stage, zip and copy a QC scene into the session/hcp ``qc`` folder.
 
@@ -1072,7 +1072,7 @@ def _zip_qc_scene(
             logfolder=qclog,
             logtags=logtags,
             shell=True,
-            _log=log,
+            _log=_log,
         )
         _safe_copy(zip_out, os.path.join(qc_dir, os.path.basename(zip_out)))
     finally:
@@ -1311,7 +1311,7 @@ def _dwi_derived_scene(
     scenezip,
     overwrite,
     desc,
-     log):
+     _log):
     """Copy the base DWI scene, apply text swaps, render, and (optionally) zip."""
 
     with open(base_scene, "r", encoding="utf-8", errors="ignore") as f:
@@ -1322,23 +1322,23 @@ def _dwi_derived_scene(
         f.write(txt)
 
     _show_scene_png(
-        derived_scene, png_out, qclog, thread, logtags, overwrite, desc,  log
+        derived_scene, png_out, qclog, thread, logtags, overwrite, desc,  _log
     )
     if scenezip == "yes":
         _zip_qc_scene(
-            derived_scene, base_dir, qc_dir, outpath, timestamp, qclog, thread, logtags,  log
+            derived_scene, base_dir, qc_dir, outpath, timestamp, qclog, thread, logtags,  _log
         )
     return
 
 
 def _run_qc_dwi_dtifit(
     dwidir, working_scene, case_name, base_dir, qc_dir, outpath, timestamp,
-    qclog, thread, scenezip, overwrite,  log):
+    qclog, thread, scenezip, overwrite,  _log):
     """dtifit sub-QC: requires dti_FA.nii.gz; renders a dtifit variant scene."""
 
     fa = os.path.join(dwidir, "dti_FA.nii.gz")
     if not (os.path.exists(fa) and os.path.getsize(fa) > 100000):
-        log.warning("FSL dtifit not found (dti_FA.nii.gz); skipping dtifit QC.")
+        _log.warning("FSL dtifit not found (dti_FA.nii.gz); skipping dtifit QC.")
         return
 
     dti_scene = os.path.join(outpath, "%s.DWI.dtifit.QC.wb.scene" % case_name)
@@ -1363,20 +1363,20 @@ def _run_qc_dwi_dtifit(
         scenezip,
         overwrite,
         "    ... rendering DWI dtifit QC png",
-         log)
+         _log)
     return
 
 
 def _run_qc_dwi_bedpostx(
     hcp, dwi_path, working_scene, case_name, base_dir, qc_dir, outpath, timestamp,
-    qclog, thread, scenezip, overwrite,  log):
+    qclog, thread, scenezip, overwrite,  _log):
     """BedpostX sub-QC: requires a complete Diffusion.bedpostX; renders a variant scene."""
 
     bpx = os.path.join(hcp["T1w_folder"], "Diffusion.bedpostX")
     f1 = os.path.join(bpx, "merged_f1samples.nii.gz")
     merged = glob.glob(os.path.join(bpx, "merged_*nii.gz"))
     if not (os.path.exists(f1) and len(merged) == 9 and os.path.getsize(f1) >= 20000000):
-        log.warning("FSL BedpostX outputs missing or incomplete; skipping BedpostX QC.")
+        _log.warning("FSL BedpostX outputs missing or incomplete; skipping BedpostX QC.")
         return
 
     bpx_scene = os.path.join(outpath, "%s.DWI.bedpostx.QC.wb.scene" % case_name)
@@ -1401,17 +1401,17 @@ def _run_qc_dwi_bedpostx(
         scenezip,
         overwrite,
         "    ... rendering DWI bedpostx QC png",
-         log)
+         _log)
     return
 
 
-def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
+def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, _log):
     """EDDY QC stats: hard-link qc.pdf into the QC folder and record qc_mot_abs."""
 
     eddy_qc = os.path.join(hcp["base"], "Diffusion", "eddy", "eddy_unwarped_images.qc")
     qc_pdf = os.path.join(eddy_qc, "qc.pdf")
     if not os.path.exists(qc_pdf):
-        log.warning(f"EDDY QC outputs missing ({qc_pdf}); skipping EDDY QC.")
+        _log.warning(f"EDDY QC outputs missing ({qc_pdf}); skipping EDDY QC.")
         return
 
     mot_abs = os.path.join(eddy_qc, "%s_qc_mot_abs.txt" % case_name)
@@ -1422,7 +1422,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
             with open(mot_abs, "w") as f:
                 f.write("%s\n" % val)
         except Exception:
-            log.warning(f"could not regenerate {mot_abs}")
+            _log.warning(f"could not regenerate {mot_abs}")
 
     eddy_pdf_dst = os.path.join(outpath, "%s.DWI.eddy.QC.pdf" % case_name)
     _safe_unlink(eddy_pdf_dst)
@@ -1434,7 +1434,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, log):
     report_txt = os.path.join(outpath, "EddyQCReport_qc_mot_abs_%s.txt" % timestamp)
     with open(report_txt, "a") as f:
         f.write("%s\n" % mot_abs)
-    log.detail(f"EDDY QC linked to {eddy_pdf_dst}; motion recorded in {report_txt}")
+    _log.detail(f"EDDY QC linked to {eddy_pdf_dst}; motion recorded in {report_txt}")
     return
 
 
@@ -1525,7 +1525,7 @@ def _run_qc_custom_scene(sinfo, options, overwrite, hcp, params: dict):
         return {"r": log.text, "report": report}
 
 
-def _run_qc_dwi_prep(dwidir, dwi_data, dwi_nii, mask, qclog, thread, overwrite, log):
+def _run_qc_dwi_prep(dwidir, dwi_data, dwi_nii, mask, qclog, thread, overwrite, _log):
     """Split off DWI volumes 0 and 10, mask them, and drop the split volumes."""
 
     frame1 = os.path.join(dwidir, "data_frame1_brain.nii.gz")
@@ -1552,14 +1552,14 @@ def _run_qc_dwi_prep(dwidir, dwi_data, dwi_nii, mask, qclog, thread, overwrite, 
         logfolder=qclog,
         logtags=["DWI"],
         shell=True,
-        _log=log,
+        _log=_log,
     )
     return
 
 
 def _run_qc_dwi_base(
     template_scene, working_scene, case_name, base_dir, qc_dir, dwi_path,
-    outpath, timestamp, qclog, thread, scenezip, overwrite,  log):
+    outpath, timestamp, qclog, thread, scenezip, overwrite,  _log):
     """Render the base DWI QC scene and (optionally) zip it."""
 
     png_name = "%s.png" % os.path.basename(working_scene)
@@ -1580,10 +1580,10 @@ def _run_qc_dwi_base(
         ["DWI"],
         overwrite,
         "    ... rendering DWI QC png",
-         log)
+         _log)
     if scenezip == "yes":
         _zip_qc_scene(
-            working_scene, base_dir, qc_dir, outpath, timestamp, qclog, thread, ["DWI"],  log
+            working_scene, base_dir, qc_dir, outpath, timestamp, qclog, thread, ["DWI"],  _log
         )
     return
 
@@ -1670,7 +1670,7 @@ def _run_qc_dwi(sinfo, options, overwrite, hcp, params: dict):
 
 def _zip_bold_fc_scene(
     working_scene, base_dir, boldfcpath, fc_src, fc_name, outpath, timestamp,
-    qclog, thread, logtags,  log):
+    qclog, thread, logtags,  _log):
     """Zip a BOLD-FC scene: copy the FC input into <base>/qc and rewrite its path.
 
     Unlike the structural modalities, the FC input lives outside the HCP tree, so
@@ -1708,7 +1708,7 @@ def _zip_bold_fc_scene(
             logfolder=qclog,
             logtags=logtags,
             shell=True,
-            _log=log,
+            _log=_log,
         )
         _safe_copy(zip_out, os.path.join(qc_dir, os.path.basename(zip_out)))
     finally:

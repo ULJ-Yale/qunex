@@ -435,7 +435,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
                 if overwrite or not os.path.exists(tfile):
                     log.step("Recording pre-PostFreeSurfer snapshot ...")
-                    _prepare_postfreesurfer_snapshot_state(hcp, log=log)
+                    _prepare_postfreesurfer_snapshot_state(hcp, _log=log)
 
                 # ---> clean up test file if overwrite
                 if overwrite and os.path.exists(tfile):

@@ -74,7 +74,7 @@ else:
 # merged comlog -- are guarded where they sit.
 
 
-def _run_external(log, options, checkfile, command, description, **kwargs):
+def _run_external(_log, options, checkfile, command, description, **kwargs):
     """
     Run one external command, or -- under ``--test`` -- report it and stop.
 
@@ -83,23 +83,23 @@ def _run_external(log, options, checkfile, command, description, **kwargs):
     call sites unpack, rather than a bare None that would raise there.
     """
     if options["run"] != "run":
-        log.raw("\n\n%s" % description)
-        log.detail("test, not run: %s" % command, depth=1)
+        _log.raw("\n\n%s" % description)
+        _log.detail("test, not run: %s" % command, depth=1)
         return None, None, 0
 
-    return pc.run_external_for_file(checkfile, command, description, **kwargs, _log=log)
+    return pc.run_external_for_file(checkfile, command, description, **kwargs, _log=_log)
 
 
-def _link_or_copy(log, options, source, target, **kwargs):
+def _link_or_copy(_log, options, source, target, **kwargs):
     """Link or copy a file, or -- under ``--test`` -- report it and change nothing."""
     if options["run"] != "run":
-        log.detail("test, not copied: %s" % os.path.basename(source))
+        _log.detail("test, not copied: %s" % os.path.basename(source))
         return None
 
     return gc.link_or_copy(source, target, **kwargs)
 
 
-def _remove(log, options, path):
+def _remove(_log, options, path):
     """
     Delete a file, or -- under ``--test`` -- report the deletion and keep it.
 
@@ -110,7 +110,7 @@ def _remove(log, options, path):
     """
     if options["run"] != "run":
         if os.path.exists(path):
-            log.detail("test, not removed: %s" % path)
+            _log.detail("test, not removed: %s" % path)
         return
 
     os.remove(path)

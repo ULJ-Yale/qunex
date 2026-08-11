@@ -1614,12 +1614,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     return log.result(report)
 
 
-def execute_single_hcp_fmri_volume(sinfo, options, overwrite, hcp, b, log, report):
+def execute_single_hcp_fmri_volume(sinfo, options, overwrite, hcp, b, _log, report):
     # process
     result = execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b)
 
     # merge r
-    log.raw(result["r"])
+    _log.raw(result["r"])
 
     # merge report
     temp_report = result["report"]
@@ -1633,7 +1633,7 @@ def execute_single_hcp_fmri_volume(sinfo, options, overwrite, hcp, b, log, repor
     return report
 
 
-def execute_multiple_hcp_fmri_volume(sinfo, options, overwrite, hcp, bolds_data, log, report):
+def execute_multiple_hcp_fmri_volume(sinfo, options, overwrite, hcp, bolds_data, _log, report):
     # parelements
     parelements = max(1, min(options["parelements"], len(bolds_data)))
 
@@ -1646,7 +1646,7 @@ def execute_multiple_hcp_fmri_volume(sinfo, options, overwrite, hcp, bolds_data,
 
     # merge r and report
     for result in results:
-        log.raw(result["r"])
+        _log.raw(result["r"])
         temp_report = result["report"]
         report["done"] += temp_report["done"]
         report["incomplete"] += temp_report["incomplete"]

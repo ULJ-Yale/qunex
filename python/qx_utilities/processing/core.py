@@ -40,7 +40,7 @@ def is_number(s):
         return False
 
 
-def _note(log, text):
+def _note(_log, text):
     """
     Append verbatim text to the report log, when there is one.
 
@@ -49,11 +49,11 @@ def _note(log, text):
     places that keep no log (a utility resolving bold names, a recursive
     retry), so the log stays optional and a missing one drops the text.
     """
-    if log is not None:
-        log.raw(text)
+    if _log is not None:
+        _log.raw(text)
 
 
-def _say(log, level, message, depth=0):
+def _say(_log, level, message, depth=0):
     """
     Record `message` at `level` on the report log, when there is one.
 
@@ -63,12 +63,12 @@ def _say(log, level, message, depth=0):
     An empty message is dropped rather than rendered as a bare marker --
     :func:`check_for_file`'s `ok` and `bad` both default to `""`.
     """
-    if log is not None and message:
-        getattr(log, level)(message, depth=depth)
+    if _log is not None and message:
+        getattr(_log, level)(message, depth=depth)
 
 
 @contextlib.contextmanager
-def _streaming(log, comlog):
+def _streaming(_log, comlog):
     """
     Attach `comlog` to the report log for the block, when there is one.
 
@@ -77,17 +77,17 @@ def _streaming(log, comlog):
     raw output. `log` is optional here for the same reason it is in
     :func:`_note`.
     """
-    if log is None:
+    if _log is None:
         yield
     else:
-        with log.stream_to(comlog):
+        with _log.stream_to(comlog):
             yield
 
 
-def _trace(log, comlog, text):
+def _trace(_log, comlog, text):
     """Write verbatim text to the comlog, through `log` when there is one."""
-    if log is not None:
-        log.trace(text)
+    if _log is not None:
+        _log.trace(text)
     else:
         comlog.write(text)
 
@@ -775,14 +775,14 @@ def get_session_folders(sinfo, options):
     return d
 
 
-def missing_report(log, missing, message):
+def missing_report(_log, missing, message):
     """
     Note `message` and the files that are missing, one line each.
     """
 
-    _say(log, "step", message)
+    _say(_log, "step", message)
     for file in missing:
-        _say(log, "detail", file)
+        _say(_log, "detail", file)
 
 
 # the spellings a comlog is scanned for. Deliberately narrow: a wider net
@@ -965,7 +965,7 @@ def open_comlog(logfolder, task, logtags, thread, timestamp):
     return comlog, logfolders
 
 
-def close_log(comlog, logfolders, status, remove, log=None):
+def close_log(comlog, logfolders, status, remove, _log=None):
     """
     Close a comlog by status and map it into the extra folders.
 
@@ -1001,13 +1001,13 @@ def close_log(comlog, logfolders, status, remove, log=None):
 
     if status == "done" and remove and not gl.active().keep_comlogs:
         if log_has_errors(tfile):
-            _say(log, "step", f"completed, comlog kept -- it reports errors: {tfile}")
+            _say(_log, "step", f"completed, comlog kept -- it reports errors: {tfile}")
         else:
             os.remove(tfile)
-            _say(log, "step", f"completed [{status}], comlog removed")
+            _say(_log, "step", f"completed [{status}], comlog removed")
             return None
 
-    _say(log, "step", f"logfile: {tfile}")
+    _say(_log, "step", f"logfile: {tfile}")
 
     # -- do we have multiple logfolders?
     tname = os.path.basename(tfile)
@@ -1016,15 +1016,15 @@ def close_log(comlog, logfolders, status, remove, log=None):
         try:
             os.makedirs(logfolder, exist_ok=True)
             gc.link_or_copy(tfile, nfile)
-            _say(log, "step", f"logfile: {nfile}")
+            _say(_log, "step", f"logfile: {nfile}")
         except Exception:
-            _say(log, "warning", f"could not map logfile to: {nfile}")
+            _say(_log, "warning", f"could not map logfile to: {nfile}")
 
     return tfile
 
 
 @contextlib.contextmanager
-def combined_comlog(log, options, command, thread=None):
+def combined_comlog(_log, options, command, thread=None):
     """
     One comlog for the whole command, instead of one per external call.
 
@@ -1070,7 +1070,7 @@ def combined_comlog(log, options, command, thread=None):
         the log it was given.
     """
     if options["run"] != "run":
-        yield log
+        yield _log
         return
 
     comlog, logfolders = open_comlog(
@@ -1081,11 +1081,11 @@ def combined_comlog(log, options, command, thread=None):
         print(comlog.path)
         print(gl.REPORT_RULE)
 
-    started = log.external_calls
+    started = _log.external_calls
     completed = False
     try:
-        with log.stream_to(comlog):
-            yield log
+        with _log.stream_to(comlog):
+            yield _log
         completed = True
     finally:
         # written to the comlog directly: the block has ended, so the
@@ -1099,8 +1099,8 @@ def combined_comlog(log, options, command, thread=None):
                 datetime.now(),
             )
         )
-        ran = log.external_calls - started
-        log.step("ran %d external command%s%s" % (
+        ran = _log.external_calls - started
+        _log.step("ran %d external command%s%s" % (
             ran,
             "" if ran == 1 else "s",
             "" if completed else " before failing",
@@ -1110,7 +1110,7 @@ def combined_comlog(log, options, command, thread=None):
             logfolders,
             "done" if completed else "error",
             options["log"] == "remove",
-            log,
+            _log,
         )
 
 def run_external_for_file(
@@ -1354,7 +1354,7 @@ def run_external_for_file(
 def run_script_through_shell(
     run,
     description,
-    log=None,
+    _log=None,
     thread="0",
     remove=True,
     task=None,
@@ -1388,14 +1388,14 @@ def run_script_through_shell(
         message alone -- the description is already in the log.
     """
 
-    _note(log, "\n\n%s" % (description))
+    _note(_log, "\n\n%s" % (description))
 
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     comlog, logfolders = open_comlog(logfolder, task, logtags, thread, logstamp)
 
-    with _streaming(log, comlog):
+    with _streaming(_log, comlog):
         _trace(
-            log,
+            _log,
             comlog,
             "\n#-------------------------------\n# Running: %s\n"
             "#-------------------------------\n" % (description),
@@ -1407,16 +1407,16 @@ def run_script_through_shell(
             ret = process.wait()
 
         if ret:
-            close_log(comlog, logfolders, "error", remove, log)
+            close_log(comlog, logfolders, "error", remove, _log)
             raise ExternalFailed("\n\nERROR: Failed with error %s\n" % (ret))
 
         _trace(
-            log,
+            _log,
             comlog,
             "\n\n---> Successful completion of task at %s\n\n" % (datetime.now()),
         )
-        endlog = close_log(comlog, logfolders, "done", remove, log)
-        _note(log, " --- done")
+        endlog = close_log(comlog, logfolders, "done", remove, _log)
+        _note(_log, " --- done")
 
     return endlog
 
