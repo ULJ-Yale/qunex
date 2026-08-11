@@ -907,6 +907,8 @@ def _run_qc_executor(job: dict):
         return _run_qc_custom_scene(sinfo, options, overwrite, hcp, params)
 
     raise ge.CommandError("hcp_run_qc", f"Unknown QC modality in job: {modality}")
+
+
 def _safe_copy(src: str, dst: str) -> None:
     """Copy a file with a fallback for restrictive filesystems.
 

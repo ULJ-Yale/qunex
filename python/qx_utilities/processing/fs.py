@@ -476,9 +476,6 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
 #
 #   --- Run FreeSurfer segmentation
 #
-# -> @register_command(
-#        description="Run full FreeSurfer segmentation on NIL preprocessed images.",
-#         type="processiing.fs")
 def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
     """
     ``run_freesurfer_full_segmentation [... processing options]``
