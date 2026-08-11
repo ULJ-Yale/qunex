@@ -58,6 +58,65 @@ else:
     mcommand = os.environ["QUNEXMCOMMAND"]
 
 
+# --------------------------------------------------------------- the dry run
+#
+# Five commands in this file -- `get_bold_data`, `create_bold_brain_masks`,
+# `compute_bold_stats`, `create_stats_report` and `extract_nuisance_signal` --
+# never consulted `options["run"]`, so `--test` did the work: it copied and
+# linked files, invoked external tools, and deleted existing reports before
+# regenerating them. `preprocess_bold` and `preprocess_conc` did guard, with
+# an inline `if options["run"] == "run":` around the one call each makes.
+#
+# The three helpers below are the same guard for the side effects the five
+# repeat, spelled once instead of at 30 sites, and they follow
+# `processing/fs.py`'s: a dry run reports what it *would* do rather than
+# falling silent, so the report is worth reading. The one-off side effects --
+# `gi.slice_image`, `os.makedirs`, `gm.meltmovfidl`, the file lock and the
+# merged comlog -- are guarded where they sit.
+
+
+def _run_external(log, options, checkfile, command, description, **kwargs):
+    """
+    Run one external command, or -- under ``--test`` -- report it and stop.
+
+    Returns the underlying ``(endlog, status, failed)``. A dry run ran nothing
+    and wrote no comlog, so it returns ``(None, None, 0)`` -- the shape the
+    call sites unpack, rather than a bare None that would raise there.
+    """
+    if options["run"] != "run":
+        log.raw("\n\n%s" % description)
+        log.detail("test, not run: %s" % command, depth=1)
+        return None, None, 0
+
+    return log.run_external(checkfile, command, description, **kwargs)
+
+
+def _link_or_copy(log, options, source, target, **kwargs):
+    """Link or copy a file, or -- under ``--test`` -- report it and change nothing."""
+    if options["run"] != "run":
+        log.detail("test, not copied: %s" % os.path.basename(source))
+        return None
+
+    return gc.link_or_copy(source, target, **kwargs)
+
+
+def _remove(log, options, path):
+    """
+    Delete a file, or -- under ``--test`` -- report the deletion and keep it.
+
+    Only a file that is actually there is reported. Most of these are temporary
+    files a dry run never created, and naming them would be noise; the ones
+    worth naming are the existing outputs `create_stats_report` clears before
+    regenerating them, which is the destructive step a dry run must not take.
+    """
+    if options["run"] != "run":
+        if os.path.exists(path):
+            log.detail("test, not removed: %s" % path)
+        return
+
+    os.remove(path)
+
+
 def get_bold_data(sinfo, options, overwrite=False, thread=0):
     """
     ``get_bold_data [... processing options]``
@@ -109,8 +168,10 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                 log.detail(f"copying {f['t1_source']}")
                 if options["image_target"] == "4dfp":
                     if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
-                        gc.link_or_copy(f["t1_source"], f["t1"])
-                        gc.link_or_copy(
+                        _link_or_copy(log, options, f["t1_source"], f["t1"])
+                        _link_or_copy(
+                            log,
+                            options,
                             f["t1_source"].replace(".img", ".ifh"),
                             f["t1"].replace(".img", ".ifh"),
                         )
@@ -118,44 +179,52 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                         tmpfile = f["t1"].replace(
                             ".4dfp.img", gi.get_img_format(f["t1_source"])
                         )
-                        gc.link_or_copy(f["t1_source"], tmpfile)
-                        endlog, status, failed = log.run_external(
+                        _link_or_copy(log, options, f["t1_source"], tmpfile)
+                        _run_external(
+                            log,
+                            options,
                             f["t1"],
                             "g_FlipFormat %s %s"
                             % (tmpfile, f["t1"].replace(".img", ".ifh")),
                             "... converting %s to 4dfp" % (os.path.basename(tmpfile)),
                             overwrite=overwrite,
                         )
-                        os.remove(tmpfile)
+                        _remove(log, options, tmpfile)
                 if options["image_target"] == "nifti":
                     if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
                         tmpimg = f["t1"] + ".4dfp.img"
                         tmpifh = f["t1"] + ".4dfp.ifh"
-                        gc.link_or_copy(f["t1_source"], tmpimg)
-                        gc.link_or_copy(f["t1_source"].replace(".img", ".ifh"), tmpifh)
-                        endlog, status, failed = log.run_external(
+                        _link_or_copy(log, options, f["t1_source"], tmpimg)
+                        _link_or_copy(
+                            log, options, f["t1_source"].replace(".img", ".ifh"), tmpifh
+                        )
+                        _run_external(
+                            log,
+                            options,
                             f["t1"],
                             "g_FlipFormat %s %s"
                             % (tmpifh, f["t1"].replace(".img", ".ifh")),
                             "... converting %s to NIfTI" % (os.path.basename(tmpimg)),
                             overwrite=overwrite,
                         )
-                        os.remove(tmpimg)
-                        os.remove(tmpifh)
+                        _remove(log, options, tmpimg)
+                        _remove(log, options, tmpifh)
                     else:
                         if gi.get_img_format(f["t1_source"]) == ".nii.gz":
                             tmpfile = f["t1"] + ".gz"
-                            gc.link_or_copy(f["t1_source"], tmpfile)
-                            endlog, status, failed = log.run_external(
+                            _link_or_copy(log, options, f["t1_source"], tmpfile)
+                            _run_external(
+                                log,
+                                options,
                                 f["t1"],
                                 "gunzip -f %s" % (tmpfile),
                                 "... gunzipping %s" % (os.path.basename(tmpfile)),
                                 overwrite=overwrite,
                             )
                             if os.path.exists(tmpfile):
-                                os.remove(tmpfile)
+                                _remove(log, options, tmpfile)
                         else:
-                            gc.link_or_copy(f["t1_source"], f["t1"])
+                            _link_or_copy(log, options, f["t1_source"], f["t1"])
 
             else:
                 log.detail(f"{f['t1']} present")
@@ -179,7 +248,14 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                             f.update(pc.get_bold_file_names(sinfo, boldname, options))
                             _ = pc.get_session_folders(sinfo, options)
 
-                            if status:
+                            # the bold's own data, not the status of whichever
+                            # structural conversion happened to run last: that
+                            # name is unbound whenever none did -- which is
+                            # every run where the T1 is already in place, and
+                            # every dry run -- and reading it raised a
+                            # NameError the handler below reported as an
+                            # unknown error, once per bold
+                            if os.path.exists(f["bold_vol"]):
                                 log.step("Data ready!")
                             else:
                                 log.error("Data missing, please check source!")
@@ -376,13 +452,19 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
 
         # --- extract first bold frame
         if not os.path.exists(f["bold1"]) or overwrite:
-            gi.slice_image(f["bold_vol"], f["bold1"], 1)
-            if os.path.exists(f["bold1"]):
-                log.detail(f"sliced first frame from {os.path.basename(f['bold_vol'])}")
+            if options["run"] != "run":
+                # the check below reads the file the slice would have written,
+                # so a dry run has to skip it rather than report a failure and
+                # return before naming the tools it would have run
+                log.detail(f"test, not sliced: first frame of {os.path.basename(f['bold_vol'])}")
             else:
-                log.warning(f"failed slicing first frame from {os.path.basename(f['bold_vol'])}", depth=1)
-                report["boldfail"] += 1
-                return {"r": log.text, "report": report}
+                gi.slice_image(f["bold_vol"], f["bold1"], 1)
+                if os.path.exists(f["bold1"]):
+                    log.detail(f"sliced first frame from {os.path.basename(f['bold_vol'])}")
+                else:
+                    log.warning(f"failed slicing first frame from {os.path.basename(f['bold_vol'])}", depth=1)
+                    report["boldfail"] += 1
+                    return {"r": log.text, "report": report}
         else:
             log.detail(f"first {os.path.basename(f['bold_vol'])} frame already present")
 
@@ -401,7 +483,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             bsource = f["bold1"].replace(".4dfp.img", ".nii.gz")
 
             # run g_FlipFormat
-            endlog, status, failed = log.run_external(
+            endlog, status, failed = _run_external(
+                log,
+                options,
                 bsource,
                 "g_FlipFormat %s %s" % (f["bold1"], bsource),
                 "    ... converting %s to nifti" % (f["bold1"]),
@@ -422,7 +506,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             endlogs.append(endlog)
 
             # run caret_command
-            endlog, status, failed = log.run_external(
+            endlog, status, failed = _run_external(
+                log,
+                options,
                 bsource,
                 "caret_command -file-convert -vc %s %s"
                 % (f["bold1"].replace("img", "ifh"), bsource),
@@ -448,7 +534,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             report["bolddone"] += 1
         else:
             # run BET
-            endlog, status, failed = log.run_external(
+            endlog, status, failed = _run_external(
+                log,
+                options,
                 bbtarget,
                 "bet %s %s %s" % (bsource, bbtarget, options["betboldmask"]),
                 "    ... running BET on %s with options %s"
@@ -473,7 +561,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
         if options["image_target"] == "4dfp":
             # --- convert nifti to 4dfp
             # run gunzip
-            endlog, status, failed = log.run_external(
+            endlog, status, failed = _run_external(
+                log,
+                options,
                 bbtarget,
                 "gunzip -f %s.gz" % (bbtarget),
                 "    ... gunzipping %s.gz" % (os.path.basename(bbtarget)),
@@ -494,7 +584,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             endlogs.append(endlog)
 
             # run gunzip
-            endlog, status, failed = log.run_external(
+            endlog, status, failed = _run_external(
+                log,
+                options,
                 bmtarget,
                 "gunzip -f %s.gz" % (bmtarget),
                 "    ... gunzipping %s.gz" % (os.path.basename(bmtarget)),
@@ -515,7 +607,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             endlogs.append(endlog)
 
             # run g_FlipFormat
-            endlog, status, failed = log.run_external(
+            endlog, status, failed = _run_external(
+                log,
+                options,
                 f["bold1_brain"],
                 "g_FlipFormat %s %s"
                 % (bbtarget, f["bold1_brain"].replace(".img", ".ifh")),
@@ -537,7 +631,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
             endlogs.append(endlog)
 
             # run g_FlipFormat
-            endlog, status, failed = log.run_external(
+            endlog, status, failed = _run_external(
+                log,
+                options,
                 f["bold1_brain_mask"],
                 "g_FlipFormat %s %s"
                 % (bmtarget, f["bold1_brain_mask"].replace(".img", ".ifh")),
@@ -560,16 +656,21 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
 
         else:
             # --- link a template
-            # lock
-            fl.lock(templatefile)
+            if options["run"] != "run":
+                # `fl.lock` writes a .lock file beside the template, so a dry
+                # run cannot take the lock, let alone make the link it guards
+                log.detail(f"test, not linked: {os.path.basename(f['bold1_brain'])} as the bold template")
+            else:
+                # lock
+                fl.lock(templatefile)
 
-            # create link
-            if not os.path.exists(templatefile):
-                # r += '\n ... link %s to %s' % (f['bold1_brain'], f['bold_template'])
-                gc.link_or_copy(f["bold1_brain"], f["bold_template"])
+                # create link
+                if not os.path.exists(templatefile):
+                    # r += '\n ... link %s to %s' % (f['bold1_brain'], f['bold_template'])
+                    gc.link_or_copy(f["bold1_brain"], f["bold_template"])
 
-            # unlock
-            fl.unlock(templatefile)
+                # unlock
+                fl.unlock(templatefile)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
@@ -597,7 +698,9 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
     remove = options["log"] == "remove"
     if not remove and endlogs:
         for el in endlogs:
-            if os.path.exists(el):
+            # a dry run ran nothing, so every entry is the None `_run_external`
+            # returns in place of a comlog path
+            if el is not None and os.path.exists(el):
                 # did the command error out?
                 el_log = os.path.basename(el)
                 if "error" in el_log:
@@ -611,7 +714,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
                 final_log = final_log + log_content + "\n\n"
 
                 # delete the partial log
-                os.remove(el)
+                _remove(log, options, el)
 
     # fails?
     if report["boldfail"] > 0:
@@ -619,6 +722,11 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
     elif not overwrite and final_log == "":
         final_log = "Previous results present, overwrite set to no.\n\n"
         final_log = final_log + f"---> Successful completion of task at {datetime.now()}"
+
+    # a dry run ran nothing, so there is no output to merge and no comlog to
+    # leave behind -- the same rule `ReportLog.combined_comlog` follows
+    if options["run"] != "run":
+        return {"r": log.text, "report": report}
 
     # print to log file
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -991,7 +1099,9 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
         if os.path.exists(f["bold_stats"]) and not overwrite:
             report["bolddone"] += 1
             runit = False
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = _run_external(
+            log,
+            options,
             f["bold_stats"],
             comm,
             "... running matlab general_compute_bold_stats on %s" % (f["bold_vol"]),
@@ -1381,7 +1491,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 )
                 report[tf] = tmpf
                 if os.path.exists(tmpf) and thread == 1:
-                    os.remove(tmpf)
+                    _remove(log, options, tmpf)
             else:
                 report[tf] = ""
 
@@ -1429,7 +1539,9 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
         if options["print_command"] == "yes":
             log.raw("\n\nRunning\n" + rcomm + "\n")
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = _run_external(
+            log,
+            options,
             tfile,
             rcomm,
             "\nRunning bold_stats",
@@ -1442,7 +1554,12 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         )
         if os.path.exists(tfile):
             preport["procok"] = "ok"
-            os.remove(tfile)
+            _remove(log, options, tfile)
+        elif options["run"] != "run":
+            # nothing ran, so the marker the run would have left is not
+            # evidence of anything -- reporting a failure here would make
+            # every dry run look like a failed one
+            preport["procok"] = "test"
         else:
             preport["procok"] = "failed"
 
@@ -1450,7 +1567,10 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             for sf in ["cor", "dvars", "dvarsme"]:
                 tfolder = os.path.join(d["qc_mov"], options["mov_pdf"], sf)
                 if not os.path.exists(tfolder):
-                    os.makedirs(tfolder)
+                    if options["run"] != "run":
+                        log.detail("test, not created: %s" % tfolder)
+                    else:
+                        os.makedirs(tfolder)
 
                 froot = "%s%s_%s%s_%s.pdf" % (
                     options["boldname"],
@@ -1462,12 +1582,19 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(
                     os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot))
                 ):
-                    os.remove(os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)))
-                gc.link_or_copy(
+                    _remove(
+                        log,
+                        options,
+                        os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
+                    )
+                _link_or_copy(
+                    log,
+                    options,
                     os.path.join(d["s_bold_mov"], froot),
                     os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
                 )
-                log.detail(f"copying {os.path.join(d['s_bold_mov'], froot)} to {os.path.join(tfolder, '%s-%s' % (sinfo['id'], froot))}")
+                if options["run"] == "run":
+                    log.detail(f"copying {os.path.join(d['s_bold_mov'], froot)} to {os.path.join(tfolder, '%s-%s' % (sinfo['id'], froot))}")
 
         if (
             options["mov_fidl"]
@@ -1479,7 +1606,11 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             fidlf = os.path.join(d["s_bold_events"], options["event_file"] + ".fidl")
             ipatt = "_%s_scrub.fidl" % (options["mov_fidl"])
 
-            if os.path.exists(concf) and os.path.exists(fidlf):
+            if options["run"] != "run":
+                log.detail(
+                    "test, not written: %s" % fidlf.replace(".fidl", ipatt)
+                )
+            elif os.path.exists(concf) and os.path.exists(fidlf):
                 try:
                     gm.meltmovfidl(concf, ipatt, fidlf, fidlf.replace(".fidl", ipatt))
                 except Exception:
@@ -1839,7 +1970,9 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         if os.path.exists(f["bold_nuisance"]):
             report["bolddone"] += 1
             runit = False
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = _run_external(
+            log,
+            options,
             f["bold_nuisance"],
             comm,
             "... running matlab general_extract_nuisance on %s" % (f["bold_vol"]),
