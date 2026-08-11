@@ -551,7 +551,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 options["bolds"] = "all"
 
             run_bold = True
-            bolds, bskip, report_skipped = log.use_or_skip_bold(sinfo, options)
+            bolds, bskip, report_skipped = pc.use_or_skip_bold(sinfo, options, _log=log)
             if len(bolds) == 0:
                 log.error(f"No BOLD images found for session {sinfo['id']}!")
                 run_bold = False
@@ -618,7 +618,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 options["bolds"] = "all"
 
             run_bold = True
-            bolds, bskip, report_skipped = log.use_or_skip_bold(sinfo, options)
+            bolds, bskip, report_skipped = pc.use_or_skip_bold(sinfo, options, _log=log)
             if len(bolds) == 0:
                 log.error(f"No BOLD images found for session {sinfo['id']}!")
                 run_bold = False
@@ -1005,7 +1005,7 @@ def _write_qc_scene(template_scene: str, working_scene: str, substitutions: dict
 def _show_scene_png(working_scene, png_out, qclog, thread, logtags, overwrite, desc, log):
     """Render scene index 1 of ``working_scene`` to ``png_out`` at QC_SCENE_RES."""
 
-    _endlog, _status, _failed = log.run_external(
+    _endlog, _status, _failed = pc.run_external_for_file(
         png_out,
         "wb_command -show-scene %s 1 %s %s" % (working_scene, png_out, QC_SCENE_RES),
         desc,
@@ -1015,6 +1015,7 @@ def _show_scene_png(working_scene, png_out, qclog, thread, logtags, overwrite, d
         logfolder=qclog,
         logtags=logtags,
         shell=True,
+        _log=log,
     )
     return
 
@@ -1053,7 +1054,7 @@ def _zip_qc_scene(
         outpath, "%s.%s.zip" % (os.path.basename(working_scene), timestamp)
     )
     try:
-        _endlog, _status, _failed = log.run_external(
+        _endlog, _status, _failed = pc.run_external_for_file(
             zip_out,
             "cd %s && wb_command -zip-scene-file %s %s.%s %s -base-dir %s"
             % (
@@ -1071,6 +1072,7 @@ def _zip_qc_scene(
             logfolder=qclog,
             logtags=logtags,
             shell=True,
+            _log=log,
         )
         _safe_copy(zip_out, os.path.join(qc_dir, os.path.basename(zip_out)))
     finally:
@@ -1245,7 +1247,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
         slicesdir = os.path.join(nii_dir, "slicesdir")
         index_html = os.path.join(slicesdir, "index.html")
 
-        _endlog, _status, _failed = log.run_external(
+        _endlog, _status, _failed = pc.run_external_for_file(
             index_html,
             "cd %s && slicesdir *.nii*" % nii_dir,
             "    ... running slicesdir on raw NIFTIs",
@@ -1255,6 +1257,7 @@ def _run_qc_rawnii(sinfo, options, overwrite, hcp, params: dict):
             logfolder=qclog,
             logtags=["rawNII"],
             shell=True,
+            _log=log,
         )
 
         if not os.path.exists(index_html):
@@ -1539,7 +1542,7 @@ def _run_qc_dwi_prep(dwidir, dwi_data, dwi_nii, mask, qclog, thread, overwrite, 
         split_prefix, mask, frame10[:-7],
         split_prefix,
     )
-    _e, _s, _f = log.run_external(
+    _e, _s, _f = pc.run_external_for_file(
         frame10,
         prep_cmd,
         "    ... preparing DWI QC frames",
@@ -1549,6 +1552,7 @@ def _run_qc_dwi_prep(dwidir, dwi_data, dwi_nii, mask, qclog, thread, overwrite, 
         logfolder=qclog,
         logtags=["DWI"],
         shell=True,
+        _log=log,
     )
     return
 
@@ -1686,7 +1690,7 @@ def _zip_bold_fc_scene(
         outpath, "%s.%s.zip" % (os.path.basename(working_scene), timestamp)
     )
     try:
-        _e, _s, _f = log.run_external(
+        _e, _s, _f = pc.run_external_for_file(
             zip_out,
             "cd %s && wb_command -zip-scene-file %s %s.%s %s -base-dir %s"
             % (
@@ -1704,6 +1708,7 @@ def _zip_bold_fc_scene(
             logfolder=qclog,
             logtags=logtags,
             shell=True,
+            _log=log,
         )
         _safe_copy(zip_out, os.path.join(qc_dir, os.path.basename(zip_out)))
     finally:
@@ -1912,7 +1917,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             hcp["hcp_nonlin"], "Results", bold_name, f"{dtstem}_GS.sdseries.nii"
         )
 
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = pc.run_external_for_file(
             tsnr_dscalar,
             "wb_command -cifti-reduce %s TSNR %s -exclude-outliers 4 4" % (dtseries, tsnr_dscalar),
             "    ... computing TSNR for %s" % (dtstem),
@@ -1922,11 +1927,12 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             logfolder=qclog,
             logtags=["BOLD", "B%s" % bold_num],
             shell=True,
+            _log=log,
         )
 
         tsnr_mean = _run_capture("wb_command -cifti-stats %s -reduce MEAN" % tsnr_dscalar)
 
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = pc.run_external_for_file(
             gs_dtseries,
             "wb_command -cifti-reduce %s MEAN %s -direction COLUMN" % (dtseries, gs_dtseries),
             "    ... computing global-signal dtseries",
@@ -1936,9 +1942,10 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             logfolder=qclog,
             logtags=["BOLD", "B%s" % bold_num],
             shell=True,
+            _log=log,
         )
 
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = pc.run_external_for_file(
             gs_txt,
             "wb_command -cifti-stats %s -reduce MEAN > %s" % (gs_dtseries, gs_txt),
             "    ... writing global-signal txt",
@@ -1948,6 +1955,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             logfolder=qclog,
             logtags=["BOLD", "B%s" % bold_num],
             shell=True,
+            _log=log,
         )
 
         if os.path.exists(bold_nifti):
@@ -1974,7 +1982,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         ymin = min(vals) if vals else 0.0
         ymax = max(vals) if vals else 1.0
 
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = pc.run_external_for_file(
             gs_sdseries,
             "wb_command -cifti-create-scalar-series %s %s -transpose -series SECOND 0 %s"
             % (gs_txt, gs_sdseries, tr_sec),
@@ -1985,6 +1993,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             logfolder=qclog,
             logtags=["BOLD", "B%s" % bold_num],
             shell=True,
+            _log=log,
         )
 
         tsnr_report_bold = os.path.join(
@@ -2032,7 +2041,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
         png_gsmap = os.path.join(outpath, png_gsmap_name)
         png_gstime = os.path.join(outpath, png_gstime_name)
 
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = pc.run_external_for_file(
             png_gsmap,
             "wb_command -show-scene %s 1 %s %s" % (working_scene, png_gsmap, QC_SCENE_RES),
             "    ... rendering GS map png",
@@ -2042,8 +2051,9 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             logfolder=qclog,
             logtags=["BOLD", "B%s" % bold_num, "GSmap"],
             shell=True,
+            _log=log,
         )
-        endlog, status, failed = log.run_external(
+        endlog, status, failed = pc.run_external_for_file(
             png_gstime,
             "wb_command -show-scene %s 2 %s %s" % (working_scene, png_gstime, QC_SCENE_RES),
             "    ... rendering GS timeseries png",
@@ -2053,6 +2063,7 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             logfolder=qclog,
             logtags=["BOLD", "B%s" % bold_num, "GStime"],
             shell=True,
+            _log=log,
         )
 
         if scenezip == "yes":

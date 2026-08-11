@@ -336,7 +336,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Transmit Bias Phase 2, Group Average Fit",
@@ -348,6 +348,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 # #Remove soft links
@@ -355,11 +356,12 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
+                passed, report, failed = pc.check_run(
                     None,
                     None,
                     "HCP Transmit Bias Phase 2, Group Average Fit",
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP Transmit Bias Phase 2, Group Average Fit can be run")

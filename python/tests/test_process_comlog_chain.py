@@ -58,12 +58,12 @@ def external_step(sinfo, options, overwrite=False, thread=0):
             checkfile,
             options["shell_command"] % {"checkfile": checkfile},
             "... running the external step",
-            log,
             overwrite=overwrite,
             task="step",
             logfolder=options["comlogs"],
             logtags=sinfo["id"],
             remove=options["log"] == "remove",
+            _log=log,
         )
     except pc.ExternalFailed as e:
         log.raw(str(e))
@@ -88,11 +88,12 @@ def combined_step(sinfo, options, overwrite=False, thread=0):
             log.step("starting %s" % sinfo["id"])
             for n in range(int(options["steps"])):
                 checkfile = os.path.join(folder, "ran%d.txt" % n)
-                log.run_external(
+                pc.run_external_for_file(
                     checkfile,
                     options["shell_command"] % {"checkfile": checkfile},
                     "... running external step %d" % n,
                     overwrite=overwrite,
+                    _log=log,
                 )
     except pc.ExternalFailed as e:
         log.raw(str(e))

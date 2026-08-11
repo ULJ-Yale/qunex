@@ -275,7 +275,7 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
 
             # -- Run
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP make average dataset",
@@ -287,12 +287,13 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    None, None, "HCP make average dataset", overwrite=True
+                passed, report, failed = pc.check_run(
+                    None, None, "HCP make average dataset", overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP make average dataset can be run")

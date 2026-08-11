@@ -519,7 +519,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 else:
                     logtags = ["long", options["hcp_longitudinal_template"]]
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP ASL",
@@ -531,12 +531,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     logtags=logtags,
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    None, None, "HCP ASL", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    None, None, "HCP ASL", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP ASL can be run")

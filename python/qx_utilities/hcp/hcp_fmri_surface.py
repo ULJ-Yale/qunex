@@ -238,7 +238,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # --- Get sorted bold numbers
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         if len(bolds) == 0:
             log.error(f"No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file.")
             run = False
@@ -315,11 +315,12 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
             )
-            boldok = log.check_for_file(boldimg,
+            boldok = pc.check_for_file(boldimg,
                 "fMRIVolume preprocessed bold image present",
                 f"fMRIVolume preprocessed bold image missing {boldimg}!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
         # --- Set up the command
@@ -403,7 +404,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP fMRISurface",
@@ -415,6 +416,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                     logtags=logtags,
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -424,11 +426,12 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     tfile,
                     full_test,
                     "HCP fMRISurface " + boldtarget,
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP fMRISurface can be run")

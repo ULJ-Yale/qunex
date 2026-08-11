@@ -87,7 +87,7 @@ def _run_external(log, options, checkfile, command, description, **kwargs):
         log.detail("test, not run: %s" % command, depth=1)
         return None, None, 0
 
-    return log.run_external(checkfile, command, description, **kwargs)
+    return pc.run_external_for_file(checkfile, command, description, **kwargs, _log=log)
 
 
 def _link_or_copy(log, options, source, target, **kwargs):
@@ -233,7 +233,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
         # hand-rolled loop this replaces matched `task` alone, split `--bolds`
         # on "|" only, and had no case for its own default of "all" -- which
         # matched no task and so processed nothing at all
-        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+        bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         for boldinfo in bolds:
             boldname = boldinfo["name"]
@@ -375,7 +375,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
     log.info(f"If already present, existing masks {ostatus} be overwritten (see --overwrite).\n")
 
-    bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+    bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
     parelements = options["parelements"]
     log.info(f"Processing {parelements} BOLDs in parallel")
@@ -437,10 +437,11 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
 
         # --- copy over bold data
         # --- bold
-        status = log.check_for_file(f["bold_vol"],
+        status = pc.check_for_file(f["bold_vol"],
             "bold data present",
             "bold data missing, skipping bold",
             status=True,
+            _log=log,
         )
         if not status:
             log.info("Looked for:" + f["bold_vol"])
@@ -987,7 +988,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
     log.info(f"If already present, existing statistics {ostatus} be overwritten (see --overwrite).")
 
-    bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+    bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
     parelements = options["parelements"]
     log.info(f"Processing {parelements} BOLDs in parallel")
@@ -1053,17 +1054,19 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
         status = True
 
         # --- movement
-        status = log.check_for_file(f["bold_mov"],
+        status = pc.check_for_file(f["bold_mov"],
             f"movement data present [{os.path.basename(f['bold_mov'])}]",
             f"movement data missing [{os.path.basename(f['bold_mov'])}]",
             status=status,
+            _log=log,
         )
 
         # --- bold
-        status = log.check_for_file(f["bold_vol"],
+        status = pc.check_for_file(f["bold_vol"],
             f"bold data present [{os.path.basename(f['bold_vol'])}]",
             f"bold data missing [{os.path.basename(f['bold_vol'])}]",
             status=status,
+            _log=log,
         )
 
         # --- check
@@ -1114,10 +1117,11 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
             ],
             shell=True,
         )
-        status = log.check_for_file(
+        status = pc.check_for_file(
             f["bold_stats"],
             bad=f"Matlab/Octave has failed preprocessing BOLD using command: {comm}",
             bad_level="error",
+            _log=log,
         )
 
         if status and runit:
@@ -1425,7 +1429,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
         log.raw(f"\n\nChecking for data in {d['s_bold_mov']}.")
 
-        bolds, bskip, preport["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, preport["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         for boldinfo in bolds:
             log.raw("\n\nWorking on: " + boldinfo["name"] + " ...")
@@ -1441,20 +1445,23 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
                 if os.path.exists(d["s_bold_mov"]):
                     # --- movement
-                    status = log.check_for_file(f["bold_mov"],
+                    status = pc.check_for_file(f["bold_mov"],
                         f"movement data present [{os.path.basename(f['bold_mov'])}]",
                         f"movement data missing [{os.path.basename(f['bold_mov'])}]",
                         status=status,
+                        _log=log,
                     )
-                    status = log.check_for_file(f["bold_stats"],
+                    status = pc.check_for_file(f["bold_stats"],
                         f"stats data present [{os.path.basename(f['bold_stats'])}]",
                         f"stats data missing [{os.path.basename(f['bold_stats'])}]",
                         status=status,
+                        _log=log,
                     )
-                    status = log.check_for_file(f["bold_scrub"],
+                    status = pc.check_for_file(f["bold_scrub"],
                         f"scrub data present [{os.path.basename(f['bold_scrub'])}]",
                         f"scrub data missing [{os.path.basename(f['bold_scrub'])}]",
                         status=status,
+                        _log=log,
                     )
                 else:
                     log.detail("folder does not exist!")
@@ -1840,7 +1847,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
     log.info(f"If already present, existing nuisance files {ostatus} be overwritten (see --overwrite).")
 
-    bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+    bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
     parelements = options["parelements"]
     log.info(f"Processing {parelements} BOLDs in parallel")
@@ -1904,23 +1911,26 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         status = True
 
         # --- bold mask
-        status = log.check_for_file(f["bold1_brain_mask"],
+        status = pc.check_for_file(f["bold1_brain_mask"],
             "bold brain mask present",
             f"bold brain mask missing [{f['bold1_brain_mask']}]",
             status=status,
+            _log=log,
         )
 
         # --- aseg
-        astat = log.check_for_file(f["fs_aseg_bold"],
+        astat = pc.check_for_file(f["fs_aseg_bold"],
             "freesurfer aseg present",
             f"freesurfer aseg missing [{f['fs_aseg_bold']}]",
             status=True,
+            _log=log,
         )
         if not astat:
-            astat = log.check_for_file(f["fs_aparc_bold"],
+            astat = pc.check_for_file(f["fs_aparc_bold"],
                 "freesurfer aparc present",
                 f"freesurfer aparc missing [{f['fs_aparc_bold']}]",
                 status=True,
+                _log=log,
             )
             segfile = f["fs_aparc_bold"]
         else:
@@ -1929,10 +1939,11 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         status = status and astat
 
         # --- bold
-        status = log.check_for_file(f["bold_vol"],
+        status = pc.check_for_file(f["bold_vol"],
             "bold data present",
             f"bold data missing [{f['bold_vol']}]",
             status=status,
+            _log=log,
         )
 
         # --- check
@@ -1985,10 +1996,11 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
             ],
             shell=True,
         )
-        status = log.check_for_file(
+        status = pc.check_for_file(
             f["bold_nuisance"],
             bad=f"Matlab/Octave has failed preprocessing BOLD using command: {comm}",
             bad_level="error",
+            _log=log,
         )
 
         if runit and status:
@@ -2610,7 +2622,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         "skipped": [],
     }
 
-    bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+    bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
     report["skipped"] = [str(binfo["bold_number"]) for binfo in bskip]
 
     parelements = options["parelements"]
@@ -2720,26 +2732,29 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         if "r" in options["bold_actions"] and (
             "m" in options["bold_nuisance"] or "m" in options["bold_actions"]
         ):
-            status = log.check_for_file(f["bold_mov"],
+            status = pc.check_for_file(f["bold_mov"],
                 "movement data present",
                 f"movement data missing [{f['bold_mov']}]",
                 status=status,
+                _log=log,
             )
 
         # --- bold stats
         if "m" in options["bold_actions"]:
-            status = log.check_for_file(f["bold_stats"],
+            status = pc.check_for_file(f["bold_stats"],
                 "bold statistics data present",
                 f"bold statistics data missing [{f['bold_stats']}]",
                 status=status,
+                _log=log,
             )
 
         # --- bold scrub
         if any([e in options["pignore"] for e in ["linear", "spline", "ignore"]]):
-            status = log.check_for_file(f["bold_scrub"],
+            status = pc.check_for_file(f["bold_scrub"],
                 "bold scrubbing data present",
                 f"bold scrubbing data missing [{f['bold_scrub']}]",
                 status=status,
+                _log=log,
             )
 
         # --- check for files if doing regression
@@ -2747,29 +2762,32 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         if "r" in options["bold_actions"]:
             # --- nuisance data
             if any([e in options["bold_nuisance"] for e in ["V", "WM", "WB"]]):
-                status = log.check_for_file(f["bold_nuisance"],
+                status = pc.check_for_file(f["bold_nuisance"],
                     "bold nuisance signal data present",
                     f"bold nuisance signal data missing [{f['bold_nuisance']}]",
                     status=status,
+                    _log=log,
                 )
 
             # --- event
             if "e" in options["bold_nuisance"]:
-                status = log.check_for_file(f["bold_event"],
+                status = pc.check_for_file(f["bold_event"],
                     "event data present",
                     f"even data missing [{f['bold_event']}]",
                     status=status,
+                    _log=log,
                 )
 
         # --- bold
-        status = log.check_for_file(f["bold"],
+        status = pc.check_for_file(f["bold"],
             "bold data present",
             f"bold data missing [{f['bold']}]",
             status=status,
+            _log=log,
         )
 
         # --- results
-        already_done = log.check_for_file(f["bold_final"], "result present")
+        already_done = pc.check_for_file(f["bold_final"], "result present", _log=log)
 
         # --- check
         if not status:
@@ -2843,7 +2861,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
             else:
                 if options["print_command"] == "yes":
                     log.raw("\n\nRunning\n" + comm + "\n")
-                endlog, status, failed = log.run_external(
+                endlog, status, failed = pc.run_external_for_file(
                     f["bold_final"],
                     comm,
                     "running matlab/octave fc_preprocess on %s bold %s"
@@ -2860,11 +2878,13 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
                         "B%s" % (boldnum),
                     ],
                     shell=True,
+                    _log=log,
                 )
-                status = log.check_for_file(
+                status = pc.check_for_file(
                     f["bold_final"],
                     bad=f"Matlab/Octave has failed preprocessing BOLD using command: \n---> {mcomm}\n",
                     bad_level="error",
+                    _log=log,
                 )
                 if status:
                     report["processed"].append(boldnum)
@@ -3597,10 +3617,11 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     status = True
 
                     # --- bold
-                    status = log.check_for_file(f["bold"],
+                    status = pc.check_for_file(f["bold"],
                         "bold data present",
                         f"bold data missing [{f['bold']}]",
                         status=status,
+                        _log=log,
                     )
                     nconc.append((f["bold"], boldnum))
 
@@ -3609,18 +3630,20 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                         "m" in options["bold_nuisance"]
                         or "m" in options["bold_actions"]
                     ):
-                        status = log.check_for_file(f["bold_mov"],
+                        status = pc.check_for_file(f["bold_mov"],
                             "movement data present",
                             f"movement data missing [{f['bold_mov']}]",
                             status=status,
+                            _log=log,
                         )
 
                     # --- bold stats
                     if "m" in options["bold_actions"]:
-                        status = log.check_for_file(f["bold_stats"],
+                        status = pc.check_for_file(f["bold_stats"],
                             "bold statistics data present",
                             f"bold statistics data missing [{f['bold_stats']}]",
                             status=status,
+                            _log=log,
                         )
 
                     # --- bold scrub
@@ -3630,10 +3653,11 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                             for e in ["linear", "spline", "ignore"]
                         ]
                     ):
-                        status = log.check_for_file(f["bold_scrub"],
+                        status = pc.check_for_file(f["bold_scrub"],
                             "bold scrubbing data present",
                             f"bold scrubbing data missing [{f['bold_scrub']}]",
                             status=status,
+                            _log=log,
                         )
 
                     # --- check for nuisance data files if doing regression
@@ -3641,10 +3665,11 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     if "r" in options["bold_actions"] and any(
                         [e in options["bold_nuisance"] for e in ["V", "WM", "WB"]]
                     ):
-                        status = log.check_for_file(f["bold_nuisance"],
+                        status = pc.check_for_file(f["bold_nuisance"],
                             "bold nuisance signal data present",
                             f"bold nuisance signal data missing [{f['bold_nuisance']}]",
                             status=status,
+                            _log=log,
                         )
 
                     # --- check
@@ -3749,7 +3774,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 if options["print_command"] == "yes":
                     log.raw("\n" + comm + "\n")
                 if options["run"] == "run":
-                    endlog, status, failed = log.run_external(
+                    endlog, status, failed = pc.run_external_for_file(
                         done,
                         comm,
                         "running matlab/octave fc_preprocess_conc on bolds [%s]"
@@ -3766,11 +3791,13 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                             options["logtag"],
                         ],
                         shell=True,
+                        _log=log,
                     )
-                    status = log.check_for_file(
+                    status = pc.check_for_file(
                         done,
                         bad=f"Matlab/Octave has failed preprocessing BOLD using command: \n---> {mcomm}\n",
                         bad_level="error",
+                        _log=log,
                     )
                     if os.path.exists(done):
                         os.remove(done)

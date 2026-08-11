@@ -306,7 +306,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Transmit Bias Phase 4, Group Average Corrected Maps",
@@ -318,6 +318,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 # #Remove soft links
@@ -325,11 +326,12 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
+                passed, report, failed = pc.check_run(
                     None,
                     None,
                     "HCP Transmit Bias Phase 4, Group Average Corrected Maps",
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run")

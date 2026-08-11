@@ -300,22 +300,22 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             log.detail("T1 ready")
             report["T1"] = "present"
         else:
-            status = log.link_or_copy(
+            status = gc.link_or_copy(
                 os.path.join(d["hcp"], "MNINonLinear", "T1w.nii.gz"),
                 f["t1"],
                 status,
-                "T1")
+                "T1", _log=log)
             report["T1"] = "copied"
 
         if os.path.exists(f["fs_aparc_t1"]) and not overwrite:
             log.detail("highres aseg+aparc ready")
             report["hires aseg+aparc"] = "present"
         else:
-            status = log.link_or_copy(
+            status = gc.link_or_copy(
                 os.path.join(d["hcp"], "MNINonLinear", "aparc+aseg.nii.gz"),
                 f["fs_aparc_t1"],
                 status,
-                "highres aseg+aparc")
+                "highres aseg+aparc", _log=log)
             report["hires aseg+aparc"] = "copied"
 
         if os.path.exists(f["fs_aparc_bold"]) and not overwrite:
@@ -343,12 +343,12 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         os.path.basename(f["fs_aparc_t1"]),
                         os.path.basename(f["fs_aparc_bold"]),
                     ),
-                    log,
                     overwrite=overwrite,
                     remove=options["log"] == "remove",
                     logfolder=options["comlogs"],
                     logtags=logtags,
                     shell=True,
+                    _log=log,
                 )
                 if failedcom:
                     report["lores aseg+aparc"] = "failed"
@@ -412,7 +412,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         report["boldfail"] = 0
         report["boldskipped"] = 0
 
-        bolds, skipped, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, skipped, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         # add additional BOLDS
         if options["additional_bolds"] is not None:
@@ -485,19 +485,19 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     ):
                         log.warning(f"additional bold source does not exist: {f['bold_vol']}", depth=1)
                     else:
-                        status = log.link_or_copy(
+                        status = gc.link_or_copy(
                             os.path.join(
                                 hcp_bold_path,
                                 hcp_bold_name + options["hcp_nifti_tail"] + ".nii.gz",
                             ),
                             f["bold_qx_vol"],
                             status,
-                            "volume image")
+                            "volume image", _log=log)
 
                     if os.path.exists(f["bold_qx_dts"]) and not overwrite:
                         log.detail("grayordinate image ready")
                     else:
-                        status = log.link_or_copy(
+                        status = gc.link_or_copy(
                             os.path.join(
                                 hcp_bold_path,
                                 hcp_bold_name
@@ -506,7 +506,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                             ),
                             f["bold_qx_dts"],
                             status,
-                            "grayordinate image")
+                            "grayordinate image", _log=log)
 
                     if os.path.exists(f["bold_mov"]) and not overwrite:
                         log.detail("movement data ready")

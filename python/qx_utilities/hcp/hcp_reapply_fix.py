@@ -202,7 +202,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
@@ -418,7 +418,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
             # -- Run
             if run and boldok:
                 if options["run"] == "run":
-                    _, _, failed = log.run_external(
+                    _, _, failed = pc.run_external_for_file(
                         tfile,
                         comm,
                         "Running single-run HCP ReApplyFix",
@@ -430,6 +430,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                         logtags=[options["logtag"], boldtarget],
                         full_test=full_test,
                         shell=True,
+                        _log=log,
                     )
 
                     if failed:
@@ -439,8 +440,8 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
 
                 # -- just checking
                 else:
-                    passed, _, failed = log.check_run(
-                        tfile, full_test, "single-run HCP ReApplyFix " + boldtarget
+                    passed, _, failed = pc.check_run(
+                        tfile, full_test, "single-run HCP ReApplyFix " + boldtarget, _log=log
                     )
                     if passed is None:
                         log.step("single-run HCP ReApplyFix can be run")
@@ -507,11 +508,12 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
             )
-            boldok = log.check_for_file(boldimg,
+            boldok = pc.check_for_file(boldimg,
                 f"bold image {boldtarget} present",
                 f"bold image [{boldimg}] missing!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -685,7 +687,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                     if options["longitudinal"]:
                         logtags.append("long")
 
-                    _, _, failed = log.run_external(
+                    _, _, failed = pc.run_external_for_file(
                         tfile,
                         comm,
                         "Running multi-run HCP ReApplyFix",
@@ -697,6 +699,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                         logtags=logtags,
                         full_test=full_test,
                         shell=True,
+                        _log=log,
                     )
 
                     if failed:
@@ -706,8 +709,8 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, failed = log.check_run(
-                        tfile, full_test, "multi-run HCP ReApplyFix " + groupname
+                    passed, _, failed = pc.check_run(
+                        tfile, full_test, "multi-run HCP ReApplyFix " + groupname, _log=log
                     )
                     if passed is None:
                         log.step("multi-run HCP ReApplyFix can be run")
@@ -777,11 +780,12 @@ def execute_hcp_hand_reclassification(
             boldtarget,
             "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
         )
-        boldok = log.check_for_file(icaimg,
+        boldok = pc.check_for_file(icaimg,
             f"ICA {boldtarget} present",
             f"ICA [{icaimg}] missing!",
             status=boldok,
             bad_level="error",
+            _log=log,
         )
 
         comm = (
@@ -818,7 +822,7 @@ def execute_hcp_hand_reclassification(
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP HandReclassification",
@@ -830,6 +834,7 @@ def execute_hcp_hand_reclassification(
                     logtags=[options["logtag"], boldtarget],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -839,11 +844,12 @@ def execute_hcp_hand_reclassification(
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     tfile,
                     full_test,
                     "HCP HandReclassification " + boldtarget,
                     overwrite=True,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP HandReclassification can be run")

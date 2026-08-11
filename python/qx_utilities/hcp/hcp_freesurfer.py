@@ -599,7 +599,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 )
 
                 if status:
-                    endlog, report, failed = log.run_external(
+                    endlog, report, failed = pc.run_external_for_file(
                         tfile,
                         comm,
                         "Running HCP FS",
@@ -611,12 +611,13 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         logtags=options["logtag"],
                         full_test=full_test,
                         shell=True,
+                        _log=log,
                     )
 
             # just checking
             else:
-                passed, report, failed = log.check_run(
-                    tfile, full_test, "HCP FS", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    tfile, full_test, "HCP FS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP FS can be run")

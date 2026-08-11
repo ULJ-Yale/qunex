@@ -217,7 +217,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         #
         # WARNING: Only BOLDS from the first session are identified!
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo[0], options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo[0], options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
@@ -271,11 +271,12 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             boldtarget,
                             "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
                         )
-                        boldok = log.check_for_file(boldimg,
+                        boldok = pc.check_for_file(boldimg,
                             f"bold image {boldtarget} present",
                             f"bold image [{boldimg}] missing!",
                             status=boldok,
                             bad_level="error",
+                            _log=log,
                         )
 
                         if not boldok:
@@ -294,11 +295,12 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                         groupimg = os.path.join(
                             hcp["hcp_nonlin"], "Results", groupname, groupica
                         )
-                        boldok = log.check_for_file(groupimg,
+                        boldok = pc.check_for_file(groupimg,
                             f"ICA {groupname} present",
                             f"ICA [{groupimg}] missing!",
                             status=boldok,
                             bad_level="error",
+                            _log=log,
                         )
 
                     if options["hcp_msmall_templates"] is None:
@@ -398,7 +400,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     # -- Run
                     if run and boldok:
                         if options["run"] == "run":
-                            _, _, failed = log.run_external(
+                            _, _, failed = pc.run_external_for_file(
                                 None,
                                 comm,
                                 "Running HCP MSMAll",
@@ -410,6 +412,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                 logtags=[options["logtag"], groupname],
                                 full_test=None,
                                 shell=True,
+                                _log=log,
                             )
                             failed = False
 
@@ -500,11 +503,12 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
                         # -- just checking
                         else:
-                            passed, _, failed = log.check_run(
+                            passed, _, failed = pc.check_run(
                                 None,
                                 None,
                                 "HCP MSMAll " + f"{subject_id}_{groupname}",
                                 overwrite=True,
+                                _log=log,
                             )
                             if failed == 0:
                                 log.step("HCP MSMAll can be run")

@@ -105,6 +105,16 @@ def test_every_dicom_module_is_budgeted():
     assert present - set(BUDGET) == set()
 
 
+# functions that take the caller's log and still print, because what they
+# print is not report text: a live console notice saying where the comlog is
+# and what is about to run, which is what makes a long external call watchable.
+# What belongs in the report is already recorded through the log they were
+# given. D-improve-logging-001 obliges a function to report into the log it
+# declares rather than to build its report elsewhere; it does not oblige it to
+# stop talking to the console.
+CONSOLE_NOTICES = {"run_external_for_file"}
+
+
 def test_declaring_a_log_means_converting_its_prints():
     """D-improve-logging-001, over the whole tree."""
     offenders = []
@@ -114,7 +124,7 @@ def test_declaring_a_log_means_converting_its_prints():
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
             declared = [a.arg for a in node.args.args + node.args.kwonlyargs]
-            if "_log" not in declared:
+            if "_log" not in declared or node.name in CONSOLE_NOTICES:
                 continue
             for printed in _stdout_prints(node):
                 offenders.append(

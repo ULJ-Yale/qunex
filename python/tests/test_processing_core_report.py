@@ -39,17 +39,17 @@ def test_check_for_file_notes_and_returns_the_status(tmp_path, log):
     present = tmp_path / "there.nii.gz"
     present.write_text("x")
 
-    assert pc.check_for_file(log, str(present), "present", "missing")
+    assert pc.check_for_file(str(present), "present", "missing", _log=log)
     assert log.text == "\n     ... present"
 
-    assert pc.check_for_file(log, str(tmp_path / "gone"), "ok", "bad") is False
+    assert pc.check_for_file(str(tmp_path / "gone"), "ok", "bad", _log=log) is False
     assert log.text.endswith("\n     ... bad")
 
 
 def test_check_for_file_takes_its_level_from_the_keywords(tmp_path, log):
     missing = str(tmp_path / "gone")
 
-    assert pc.check_for_file(log, missing, "found", "not found", bad_level="error") is False
+    assert pc.check_for_file(missing, "found", "not found", bad_level="error", _log=log) is False
     assert log.text == "\n---> ERROR: not found"
     assert log.has_errors
 
@@ -57,7 +57,7 @@ def test_check_for_file_takes_its_level_from_the_keywords(tmp_path, log):
 def test_check_for_file_records_nothing_for_an_empty_message(tmp_path, log):
     # `ok` and `bad` default to "": a call that names neither says nothing,
     # rather than rendering a bare marker
-    assert pc.check_for_file(log, str(tmp_path / "gone")) is False
+    assert pc.check_for_file(str(tmp_path / "gone"), _log=log) is False
     assert log.text == ""
 
 
@@ -66,7 +66,7 @@ def test_check_for_files_returns_the_first_match(tmp_path, log):
     second.write_text("x")
 
     status, found = pc.check_for_files(
-        log, [str(tmp_path / "a.nii.gz"), str(second)], "ok", "bad"
+        [str(tmp_path / "a.nii.gz"), str(second)], "ok", "bad", _log=log
     )
 
     assert (status, found) == (True, str(second))
@@ -77,10 +77,10 @@ def test_link_or_copy_notes_the_mapping_and_returns_a_bool(tmp_path, log):
     source = tmp_path / "source.nii.gz"
     source.write_text("x")
 
-    assert gc.link_or_copy(source, tmp_path / "target.nii.gz", log, name="T1") is True
+    assert gc.link_or_copy(source, tmp_path / "target.nii.gz", name="T1", _log=log) is True
     assert log.text == "\n     ... T1 mapped"
 
-    assert gc.link_or_copy(tmp_path / "nope", tmp_path / "t2", log, name="T2") is False
+    assert gc.link_or_copy(tmp_path / "nope", tmp_path / "t2", name="T2", _log=log) is False
     assert "\n---> ERROR: T2 could not be copied" in log.text
 
 
@@ -101,7 +101,7 @@ def test_use_or_skip_bold_notes_what_it_skips(log):
         "2": {"name": "bold2", "task": "task"},
     }
 
-    bolds, skipped, nskipped = pc.use_or_skip_bold(sinfo, {"bolds": "1"}, log)
+    bolds, skipped, nskipped = pc.use_or_skip_bold(sinfo, {"bolds": "1"}, _log=log)
 
     assert [b["bold_number"] for b in bolds] == [1]
     assert (len(skipped), nskipped) == (1, 1)
@@ -124,7 +124,7 @@ def test_check_run_notes_a_present_test_file(tmp_path, log):
     tfile = tmp_path / "done.nii.gz"
     tfile.write_text("x")
 
-    passed, report, failed = pc.check_run(str(tfile), command="HCP Test", log=log)
+    passed, report, failed = pc.check_run(str(tfile), command="HCP Test", _log=log)
 
     assert (passed, failed) == ("done", 0)
     assert report == "HCP Test finished"
@@ -133,7 +133,7 @@ def test_check_run_notes_a_present_test_file(tmp_path, log):
 
 def test_check_run_notes_a_missing_test_file(tmp_path, log):
     passed, report, failed = pc.check_run(
-        str(tmp_path / "gone.nii.gz"), command="HCP Test", log=log
+        str(tmp_path / "gone.nii.gz"), command="HCP Test", _log=log
     )
 
     assert (passed, failed) == (None, 1)
@@ -152,10 +152,10 @@ def test_run_external_writes_the_report_into_the_log(tmp_path, log):
         str(checkfile),
         "touch %s" % checkfile,
         "... making a file",
-        log,
         task="touch",
         logfolder=str(comlogs),
         remove=False,
+        _log=log,
     )
 
     assert (status, failed) == ("touch done", 0)
@@ -188,10 +188,10 @@ def test_run_external_raises_the_error_alone(tmp_path, log):
             str(tmp_path / "never.txt"),
             "exit 3",
             "... failing on purpose",
-            log,
             task="boom",
             logfolder=str(comlogs),
             remove=False,
+            _log=log,
         )
 
     message = str(failure.value)
@@ -212,8 +212,9 @@ def test_run_external_skips_a_completed_check_file(tmp_path, log):
     checkfile.write_text("x" * 200)
 
     endlog, status, failed = pc.run_external_for_file(
-        str(checkfile), "exit 1", "... would run", log, task="skip",
+        str(checkfile), "exit 1", "... would run", task="skip",
         logfolder=str(tmp_path / "comlogs"),
+        _log=log,
     )
 
     assert (endlog, status, failed) == (None, "skip done", 0)
@@ -280,7 +281,7 @@ def test_check_run_completes_a_passing_full_file_check(tmp_path, log):
 
     comlog = gl.ComContext(str(tmp_path / "comlogs"), "check").open()
     passed, report, failed = pc.check_run(
-        str(tfile), full_test=full_test, command="HCP Test", log=log, comlog=comlog
+        str(tfile), full_test=full_test, command="HCP Test", comlog=comlog, _log=log
     )
     path = comlog.close()
 
@@ -300,7 +301,7 @@ def test_check_run_reports_an_incomplete_full_file_check(tmp_path, log):
 
     comlog = gl.ComContext(str(tmp_path / "comlogs"), "check").open()
     passed, report, failed = pc.check_run(
-        str(tfile), full_test=full_test, command="HCP Test", log=log, comlog=comlog
+        str(tfile), full_test=full_test, command="HCP Test", comlog=comlog, _log=log
     )
     path = comlog.close()
 
@@ -338,10 +339,10 @@ def test_run_external_maps_the_comlog_into_the_extra_folders(tmp_path, log):
         str(checkfile),
         "touch %s" % checkfile,
         "... making a file",
-        log,
         task="touch",
         logfolder=[str(tmp_path / "comlogs"), str(tmp_path / "session"), str(blocked)],
         remove=False,
+        _log=log,
     )
 
     assert (status, failed) == ("touch done", 0)
@@ -358,10 +359,10 @@ def test_run_external_writes_the_report_into_the_comlog(tmp_path, log):
         str(checkfile),
         "echo hello && touch %s" % checkfile,
         "... making a file",
-        log,
         task="touch",
         logfolder=str(tmp_path / "comlogs"),
         remove=False,
+        _log=log,
     )
 
     with open(endlog) as written:
@@ -392,10 +393,10 @@ def test_comlogs_off_writes_no_file_and_leaves_the_child_on_the_console(
         str(checkfile),
         "echo the-child-spoke && touch %s" % checkfile,
         "... making a file",
-        log,
         task="touch",
         logfolder=str(comlogs),
         remove=False,
+        _log=log,
     )
 
     assert (endlog, status, failed) == (None, "touch done", 0)
@@ -453,10 +454,10 @@ def test_a_removed_comlog_still_leaves_its_status_in_the_report(tmp_path, log):
         str(checkfile),
         "touch %s" % checkfile,
         "... making a file",
-        log,
         task="touch",
         logfolder=str(comlogs),
         remove=True,
+        _log=log,
     )
 
     assert (endlog, status, failed) == (None, "touch done", 0)
@@ -476,10 +477,10 @@ def test_an_error_in_the_comlog_vetoes_its_deletion(tmp_path, log):
         str(checkfile),
         "echo 'ERROR: it went wrong' && touch %s" % checkfile,
         "... making a file",
-        log,
         task="touch",
         logfolder=str(comlogs),
         remove=True,
+        _log=log,
     )
 
     assert endlog is not None and os.path.exists(endlog)
@@ -497,10 +498,10 @@ def test_keep_comlogs_beats_a_call_site_remove(tmp_path, log, default_settings):
         str(checkfile),
         "touch %s" % checkfile,
         "... making a file",
-        log,
         task="touch",
         logfolder=str(comlogs),
         remove=True,
+        _log=log,
     )
 
     assert os.path.exists(endlog)
@@ -529,10 +530,10 @@ def test_check_run_judges_a_call_with_no_test_file_by_the_same_scan(tmp_path, lo
         None,
         "echo 'ERROR: it went wrong'",
         "... running a check-free command",
-        log,
         task="noop",
         logfolder=str(comlogs),
         remove=True,
+        _log=log,
     )
 
     assert (status, failed) == ("noop failed", 1)

@@ -727,7 +727,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP Diffusion Preprocessing",
@@ -739,12 +739,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     logtags=logtags,
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    tfile, full_test, "HCP Diffusion", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    tfile, full_test, "HCP Diffusion", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP Diffusion can be run")

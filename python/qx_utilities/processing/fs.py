@@ -36,6 +36,7 @@ from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.img as gi
+import qx_utilities.processing.core as pc
 from qx_utilities.general.log import ReportLog, action
 from qx_utilities.processing.core import (
     ExternalFailed,
@@ -66,7 +67,7 @@ def _run_external(log, options, overwrite, checkfile, command, description):
         log.detail("test, not run: %s" % command, depth=1)
         return
 
-    log.run_external(checkfile, command, description, overwrite=overwrite)
+    pc.run_external_for_file(checkfile, command, description, overwrite=overwrite, _log=log)
 
 
 def _copy(log, options, source, target, ifh=False):

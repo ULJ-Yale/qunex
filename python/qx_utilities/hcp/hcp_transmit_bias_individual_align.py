@@ -298,7 +298,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
                 else:
                     log.step("Setting the hcp_pt_fmri_names automatically")
                     # --- Get sorted bold numbers and bold data
-                    bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+                    bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
                     pt_fmri_names = []
                     for boldinfo in bolds:
                         if (
@@ -410,7 +410,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Transmit Bias Phase 1, Individual Align",
@@ -422,15 +422,17 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
+                passed, report, failed = pc.check_run(
                     None,
                     None,
                     "HCP Transmit Bias Phase 1, Individual Align",
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP Transmit Bias Phase 1, Individual Align can be run")

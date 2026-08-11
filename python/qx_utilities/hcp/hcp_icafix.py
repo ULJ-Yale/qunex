@@ -278,7 +278,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
@@ -395,12 +395,13 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
         boldimg = os.path.join(
             hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
         )
-        boldok = log.check_for_file(
+        boldok = pc.check_for_file(
             boldimg,
             f"bold image {boldtarget} present",
             f"bold image [{boldimg}] missing!",
             status=boldok,
             bad_level="error",
+            _log=log,
         )
 
         # bold in input format
@@ -462,7 +463,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running single-run HCP ICAFix",
@@ -474,6 +475,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
                     logtags=[options["logtag"], boldtarget],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -496,11 +498,12 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     None,
                     None,
                     "single-run HCP ICAFix " + boldtarget,
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("single-run HCP ICAFix can be run")
@@ -565,12 +568,13 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
-            boldok = log.check_for_file(
+            boldok = pc.check_for_file(
                 f"{boldimg}.nii.gz",
                 f"bold image {boldtarget} present",
                 f"bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -790,7 +794,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
         # -- Run
         if run and groupok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running multi-run HCP ICAFix",
@@ -802,6 +806,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -824,11 +829,12 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     None,
                     None,
                     "multi-run HCP ICAFix " + groupname,
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed == "done":
                     log.step("multi-run HCP ICAFix can be run")

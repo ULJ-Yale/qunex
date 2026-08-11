@@ -191,7 +191,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                 comm = comm_pre + comm + comm_post
 
                 # execute
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     target_file,
                     comm,
                     "Running FSL F99",
@@ -203,6 +203,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     logtags=[options["logtag"]],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -214,8 +215,8 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    target_file, None, "FSL F99 " + session, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    target_file, None, "FSL F99 " + session, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:
@@ -528,7 +529,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     os.remove(target_file)
 
                 # execute
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     target_file,
                     comm,
                     "Running FSL XTRACT",
@@ -540,6 +541,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     logtags=[options["logtag"]],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
                 log.step(f"Processing details can be found in {os.path.join(output_dir, 'logs')}")
@@ -553,8 +555,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    target_file, None, "FSL XTRACT " + session, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    target_file, None, "FSL XTRACT " + session, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:
@@ -765,7 +767,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "CUDIMOT NODDI results already exist", 0)
                 else:
                     # execute
-                    _, _, failed = log.run_external(
+                    _, _, failed = pc.run_external_for_file(
                         None,
                         comm,
                         "Running CUDIMOT NODDI modelling",
@@ -777,6 +779,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                         logtags=[options["logtag"]],
                         full_test=None,
                         shell=True,
+                        _log=log,
                     )
 
                     if failed:
@@ -788,8 +791,8 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "CUDIMOT NODDI " + session, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    None, None, "CUDIMOT NODDI " + session, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:

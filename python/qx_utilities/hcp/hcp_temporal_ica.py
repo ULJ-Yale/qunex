@@ -798,7 +798,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP temporal ICA",
@@ -810,12 +810,13 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                     logtags=logtags,
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    None, None, "HCP temporal ICA", overwrite=True
+                passed, report, failed = pc.check_run(
+                    None, None, "HCP temporal ICA", overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP temporal ICA can be run")

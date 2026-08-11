@@ -238,7 +238,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds

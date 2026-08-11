@@ -1241,7 +1241,7 @@ def pcslist(s):
     return s
 
 
-def link_or_copy(source, target, _log=None, status=None, name=None, symlink=False):
+def link_or_copy(source, target, status=None, name=None, symlink=False, *, _log=None):
     """
     Hard-link a file, falling back to a copy, and report the outcome.
 

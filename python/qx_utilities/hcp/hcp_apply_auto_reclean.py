@@ -181,7 +181,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
@@ -315,11 +315,12 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
-            boldok = log.check_for_file(f"{boldimg}.nii.gz",
+            boldok = pc.check_for_file(f"{boldimg}.nii.gz",
                 f"bold image {boldtarget} present",
                 f"bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -422,7 +423,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         # -- Run
         if run and groupok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running ApplyAutoRecleanPipeline",
@@ -434,6 +435,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:

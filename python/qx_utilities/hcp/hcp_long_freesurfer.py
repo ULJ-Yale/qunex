@@ -265,7 +265,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP Longitudinal FS",
@@ -277,6 +277,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed == 0:
@@ -298,8 +299,8 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, _, _ = log.check_run(
-                    tfile, None, "HCP Longitudinal FS", overwrite=overwrite
+                passed, _, _ = pc.check_run(
+                    tfile, None, "HCP Longitudinal FS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP Longitudinal FS can be run")

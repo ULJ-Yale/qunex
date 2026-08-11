@@ -26,6 +26,7 @@ import subprocess
 import pytest
 
 import qx_utilities.processing.fs as fs
+from qx_utilities.general.log import ReportLog
 from tests.utils import default_options
 
 COMMANDS = [
@@ -141,26 +142,22 @@ def test_a_real_run_leaves_the_comlog_to_the_block():
     """
     calls = []
 
-    class FakeLog:
-        def run_external(self, *args, **kwargs):
-            calls.append((args, kwargs))
+    def fake(*args, **kwargs):
+        calls.append((args, kwargs))
 
-        def raw(self, text):
-            pass
-
-        def detail(self, message, depth=0):
-            pass
-
+    log = ReportLog()
     options = {
         "run": "run",
         "comlogs": ["/study/logs/comlogs"],
         "logtag": "tag",
     }
-    fs._run_external(FakeLog(), options, True, "/check.nii.gz", "bet a b", "... bet")
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(fs.pc, "run_external_for_file", fake)
+        fs._run_external(log, options, True, "/check.nii.gz", "bet a b", "... bet")
 
     (args, kwargs) = calls[0]
     assert args == ("/check.nii.gz", "bet a b", "... bet")
-    assert kwargs == {"overwrite": True}
+    assert kwargs == {"overwrite": True, "_log": log}
 
 
 # --------------------------------------- the return contract inside the file

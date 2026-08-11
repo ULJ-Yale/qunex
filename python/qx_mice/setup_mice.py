@@ -132,7 +132,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
         pc.do_options_check(options, sinfo, "setup_mice")
 
         # get bolds
-        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+        bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         # report
         parelements = max(1, min(options["parelements"], len(bolds)))
@@ -215,10 +215,11 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
 
     # --- check for bold image
     source_bold = os.path.join(nifti_dir, f"{boldinfo['ima']}.nii.gz")
-    boldok = log.check_for_file(source_bold,
+    boldok = pc.check_for_file(source_bold,
         "setup_mice bold image present",
         "setup_mice bold image missing!",
         bad_level="error",
+        _log=log,
     )
 
     # map the image
@@ -269,7 +270,7 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                     os.remove(test_file)
 
                 # execute
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     test_file,
                     comm,
                     "Running setup_mice",
@@ -281,6 +282,7 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:

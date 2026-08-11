@@ -242,7 +242,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         # get bolds
         if not options["bolds"]:
             options["bolds"] = "rest"
-        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+        bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         if len(bolds) == 0:
             # default was used
@@ -419,7 +419,7 @@ def _execute_rapidtide(
             # run
             if options["run"] == "run":
                 # execute
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     out_path,
                     flirt_comm,
                     "Running FSL flirt",
@@ -431,6 +431,7 @@ def _execute_rapidtide(
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
                 if failed:
                     log.step(f"FSL flirt processing for session {session} failed")
@@ -441,8 +442,8 @@ def _execute_rapidtide(
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    out_path, None, "FSL flirt " + session, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    out_path, None, "FSL flirt " + session, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:
@@ -576,7 +577,7 @@ def _execute_rapidtide(
                     rapidtide_comm += f"                --refineexclude {refineexclude}"
 
             # execute
-            _, _, failed = log.run_external(
+            _, _, failed = pc.run_external_for_file(
                 None,
                 rapidtide_comm,
                 "Running rapidtide",
@@ -588,6 +589,7 @@ def _execute_rapidtide(
                 logtags=[options["logtag"]],
                 full_test=None,
                 shell=True,
+                _log=log,
             )
             if failed:
                 log.step(f"rapidtide processing for bold {boldtarget} failed")
@@ -597,8 +599,8 @@ def _execute_rapidtide(
 
         # just checking
         else:
-            passed, _, failed = log.check_run(
-                None, None, "rapidtide " + session, overwrite=overwrite
+            passed, _, failed = pc.check_run(
+                None, None, "rapidtide " + session, overwrite=overwrite, _log=log
             )
             if passed == "done":
                 log.step("rapidtide can be run")

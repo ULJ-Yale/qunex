@@ -441,7 +441,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP PostFS",
@@ -453,12 +453,13 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    tfile, full_test, "HCP PostFS", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    tfile, full_test, "HCP PostFS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP PostFS can be run")

@@ -316,7 +316,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
@@ -467,11 +467,12 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
-            boldok = log.check_for_file(boldimg,
+            boldok = pc.check_for_file(boldimg,
                 f"bold image {boldtarget} present",
                 f"bold image [{boldimg}] missing!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -651,7 +652,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldsok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP MSMAll",
@@ -663,6 +664,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], outfmriname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -672,8 +674,8 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP MSMAll " + outfmriname, overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP MSMAll " + outfmriname, overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP MSMAll can be run")
@@ -751,11 +753,12 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
-            boldok = log.check_for_file(boldimg,
+            boldok = pc.check_for_file(boldimg,
                 f"bold image {boldtarget} present",
                 f"bold image [{boldimg}] missing!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -772,11 +775,12 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
             # check if group file exists
             groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
             groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
-            boldok = log.check_for_file(groupimg,
+            boldok = pc.check_for_file(groupimg,
                 f"ICA {groupname} present",
                 f"ICA [{groupimg}] missing!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
         if options["hcp_msmall_templates"] is None:
@@ -941,7 +945,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP MSMAll",
@@ -953,6 +957,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -962,8 +967,8 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP MSMAll " + groupname, overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP MSMAll " + groupname, overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP MSMAll can be run")

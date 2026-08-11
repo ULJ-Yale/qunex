@@ -193,7 +193,7 @@ def hcp_cortical_thickness(sinfo, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP CorrThick",
@@ -205,12 +205,13 @@ def hcp_cortical_thickness(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    None, None, "HCP CorrThick", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    None, None, "HCP CorrThick", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP CorrThick can be run")

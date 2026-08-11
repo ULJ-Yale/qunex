@@ -988,11 +988,12 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         boldok = True
 
         # --- check for ICA image
-        boldok = log.check_for_file(icaimg,
+        boldok = pc.check_for_file(icaimg,
             f"ICA {boldtarget} present",
             f"ICA [{icaimg}] missing!",
             status=boldok,
             bad_level="error",
+            _log=log,
         )
 
         # hcp_postfix_reusehighpass
@@ -1072,9 +1073,9 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     checkfile=None,
-                    command=comm,
+                    run=comm,
                     description="Running HCP PostFix",
                     overwrite=False,
                     thread=sinfo["id"],
@@ -1084,6 +1085,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
                     logtags=[options["logtag"], boldtarget],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -1093,8 +1095,8 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP PostFix " + boldtarget, overwrite=False
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP PostFix " + boldtarget, overwrite=False, _log=log
                 )
                 if passed is None:
                     log.step("HCP PostFix can be run")
@@ -1171,11 +1173,12 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
-            boldok = log.check_for_file(boldimg,
+            boldok = pc.check_for_file(boldimg,
                 f"bold image {boldtarget} present",
                 f"bold image [{boldimg}] missing!",
                 status=boldok,
                 bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -1314,7 +1317,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldsok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP DeDriftAndResample",
@@ -1326,6 +1329,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], regname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -1335,8 +1339,8 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP DeDriftAndResample", overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP DeDriftAndResample", overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP DeDriftAndResample can be run")
@@ -1412,10 +1416,11 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
-            boldok = log.check_for_file(boldimg,
+            boldok = pc.check_for_file(boldimg,
                 f"bold image {boldtarget} present",
                 f"bold image [{boldimg}] missing!",
                 bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -1432,10 +1437,11 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         # check if group file exists
         groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
         groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
-        groupok = log.check_for_file(groupimg,
+        groupok = pc.check_for_file(groupimg,
             f"ICA {groupname} present",
             f"ICA [{groupimg}] missing!",
             bad_level="error",
+            _log=log,
         )
 
         if not groupok:
@@ -1651,7 +1657,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         # -- Run
         if run and runok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP DeDriftAndResample",
@@ -1663,6 +1669,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -1672,8 +1679,8 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP DeDriftAndResample", overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP DeDriftAndResample", overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP DeDriftAndResample can be run")

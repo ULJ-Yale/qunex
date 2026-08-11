@@ -1220,7 +1220,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(bias):
                         os.remove(bias)
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP PreFS",
@@ -1232,12 +1232,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    tfile, full_test, "HCP PreFS", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    tfile, full_test, "HCP PreFS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP PreFS can be run")

@@ -346,7 +346,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                     log.step("Setting the hcp_pt_fmri_names automatically")
                     # --- Get sorted bold numbers and bold data
                     # WARNING: sinfo[0] used here –- it assumes all the sessions have the same BOLDS as the first one
-                    bolds, _, _ = log.use_or_skip_bold(sinfo[0], options)
+                    bolds, _, _ = pc.use_or_skip_bold(sinfo[0], options, _log=log)
                     pt_fmri_names = []
                     for boldinfo in bolds:
                         if (
@@ -417,7 +417,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
 
             # -- Test file
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Longitudinal Transmit Bias",
@@ -429,6 +429,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed == 0:
@@ -450,8 +451,8 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, _, _ = log.check_run(
-                    None, None, "HCP Longitudinal Transmit Bias", overwrite=overwrite
+                passed, _, _ = pc.check_run(
+                    None, None, "HCP Longitudinal Transmit Bias", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP Longitudinal Transmit Bias can be run")

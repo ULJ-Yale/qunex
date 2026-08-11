@@ -141,7 +141,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             # run
             if options["run"] == "run":
                 # execute
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running FSL feat",
@@ -153,6 +153,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
                 if failed:
                     log.step(f"FSL feat processing for session {session} failed")
@@ -163,8 +164,8 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "FSL feat " + session, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    None, None, "FSL feat " + session, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:
@@ -356,7 +357,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
             # run
             if options["run"] == "run":
                 # execute
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running FSL melodic",
@@ -368,6 +369,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
                 if failed:
                     log.step("FSL melodic processing failed")
@@ -378,8 +380,8 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "FSL melodic " + sessions, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    None, None, "FSL melodic " + sessions, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:

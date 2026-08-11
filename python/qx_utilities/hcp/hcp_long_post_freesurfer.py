@@ -481,7 +481,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             tfile = None
 
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP Longitudinal Post FS",
@@ -493,6 +493,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed == 0:

@@ -149,7 +149,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         pc.do_options_check(options, sinfo, "preprocess_mice")
 
         # get bolds
-        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+        bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         # report
         parelements = max(1, min(options["parelements"], len(bolds)))
@@ -227,10 +227,11 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
 
     # --- check for bold image
     boldimg = os.path.join(work_dir, f"{boldinfo['name']}_DS.nii.gz")
-    boldok = log.check_for_file(boldimg,
+    boldok = pc.check_for_file(boldimg,
         "preprocess_mice bold image present",
         "preprocess_mice bold image missing!",
         bad_level="error",
+        _log=log,
     )
 
     # overwrite and file exists
@@ -294,7 +295,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                     os.remove(test_file)
 
                 # execute
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running preprocess_mice",
@@ -306,6 +307,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -406,7 +408,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         pc.do_options_check(options, sinfo, "map_mice_data")
 
         # get bolds
-        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+        bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         # dirs
         source_dir = os.path.join(options["sessionsfolder"], sinfo["id"], "mice")
