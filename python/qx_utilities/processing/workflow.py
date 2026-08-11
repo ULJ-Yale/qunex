@@ -200,8 +200,8 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
 
     log.raw(f"\n\nImaging data copy completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
-    # print r
-    return log.text
+    # the per-bold errors above are what the failure count is derived from
+    return log.finish("Imaging data copy completed", name=sinfo["id"])
 
 
 def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
@@ -351,7 +351,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         % (report)
     )
 
-    return (log.text, (sinfo["id"], rstatus, report["boldmissing"] + report["boldfail"]))
+    return log.result(rstatus, report["boldmissing"] + report["boldfail"], sinfo["id"])
 
 
 def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
@@ -932,7 +932,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     )
 
     # print r
-    return (log.text, (sinfo["id"], rstatus, report["boldmissing"] + report["boldfail"]))
+    return log.result(rstatus, report["boldmissing"] + report["boldfail"], sinfo["id"])
 
 
 def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
@@ -1516,14 +1516,10 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     if preport["procok"] == "ok":
         rstatus += ", plots: %(plotdone)s" % (preport)
 
-    # print r
-    return (
-        log.text,
-        (
-            sinfo["id"],
-            rstatus,
-            preport["boldmissing"] + (preport["procok"] == "failed"),
-        ),
+    return log.result(
+        rstatus,
+        preport["boldmissing"] + (preport["procok"] == "failed"),
+        sinfo["id"],
     )
 
 
@@ -1765,7 +1761,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         % (report)
     )
 
-    return (log.text, (sinfo["id"], rstatus, report["boldmissing"] + report["boldfail"]))
+    return log.result(rstatus, report["boldmissing"] + report["boldfail"], sinfo["id"])
 
 
 def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
@@ -2565,7 +2561,9 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         )
 
     # print r
-    return (log.text, (sinfo["id"], rstatus, len(report["not ready"]) + len(report["failed"])))
+    return log.result(
+        rstatus, len(report["not ready"]) + len(report["failed"]), sinfo["id"]
+    )
 
 
 def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
@@ -3684,4 +3682,4 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     log.raw(f"\n\nConc preprocessing (v2) completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
 
     # print r
-    return (log.text, (sinfo["id"], report, failed))
+    return log.result(report, failed, sinfo["id"])

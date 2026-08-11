@@ -29,8 +29,12 @@ spelled:
   write into it. Per-BOLD / per-group executors use it: they have report text
   but no session header of their own.
 - :class:`SessionLog` adds the per-session header and :meth:`SessionLog.finish`,
-  which closes the report and builds the ``(text, status)`` value a command
-  returns to ``general.process``.
+  which closes the report and records the summary and failure count.
+
+A processing command returns the log itself. ``general.process`` writes it with
+:meth:`ReportLog.write_to` and asks it for :attr:`ReportLog.status` -- the
+``(session_id, summary, failed)`` triple, derived on read rather than assembled
+by hand at the call site.
 
 The ``processing.core`` / ``general.core`` helpers are imported lazily inside
 the wrapper methods so this module stays importable from those packages.
@@ -98,12 +102,57 @@ class ReportLog:
                 live instead of only when its report is rendered. Off by
                 default: a ``SessionLog`` must not echo, since
                 ``general.process`` prints its report when the session ends.
+
+        Attributes:
+            sid: what the report is filed under -- the session, the subject, or
+                (filled in by :meth:`write_to`) the command. A
+                :class:`SessionLog` sets it from ``sinfo["id"]``.
+            report: the one-line summary of what the command did.
+            failed: the number of failures, or None to have it derived from the
+                errors recorded here.
+
+        The three are plain attributes so a command can state them where it
+        knows them::
+
+            log.step("Subject cannot be processed.")
+            log.report = "FS cannot be run"
+            log.failed = 1
+
+        rather than assembling a positional tuple at the return. Nothing is
+        frozen at assignment: :attr:`status` derives on read.
         """
         self._records = []
         self._depth = 0
         self._errors = 0
         self._comlog = None
         self._echo = echo
+
+        self.sid = None
+        self.report = None
+        self.failed = None
+        self._warned_failed = False
+
+    def __getstate__(self):
+        """
+        The state that crosses a process boundary: everything but the streams.
+
+        A command's log is returned to ``general.process``, which for a
+        parallel run means being pickled out of a ``ProcessPoolExecutor``
+        worker. ``_echo`` and ``_comlog`` are the only unpicklable things a log
+        can hold, and neither has anything left to do once the command returns:
+        both are side channels for records *as they happen*.
+
+        They are dropped, never closed. ``_echo`` is ``sys.stdout``, and
+        ``_comlog`` is a ``ComContext`` whose ``tmp_`` to ``done_`` rename
+        belongs to ``processing.core.close_log``. Dropping them here rather
+        than checking for them at ``finish()`` makes a log picklable by
+        construction -- including the commands that ``return log`` without
+        calling ``finish()`` at all.
+        """
+        state = self.__dict__.copy()
+        state["_echo"] = None
+        state["_comlog"] = None
+        return state
 
     # ------------------------------------------------------------------ text
 
@@ -406,26 +455,68 @@ class ReportLog:
         caller reporting no failures while errors were recorded gets a warning
         line in the report -- the two disagreeing is a bug in the command, not
         something to hide or to raise on mid-run.
+
+        Reached from :attr:`status` as well as from :meth:`finish`, so the
+        warning is recorded at most once however often the status is read.
         """
         reported = report[2] if isinstance(report, tuple) and len(report) == 3 else failed
         if reported is None:
             failed = reported = 1 if self.has_errors else 0
-        if self.has_errors and not reported:
+        if self.has_errors and not reported and not self._warned_failed:
+            self._warned_failed = True
             self.warning(
                 "%d error(s) were recorded but the command reports no failures"
                 % self._errors
             )
         return failed
 
+    @property
+    def status(self):
+        """
+        The ``(session_id, summary, failed)`` triple ``general.process`` files.
+
+        Derived on read rather than stored: whatever a command assigned to
+        :attr:`failed` wins, an unset count comes from the errors recorded
+        here, and a command claiming no failures while errors were recorded
+        still gets its warning line. There is no tuple to build, so there is no
+        wrong order to build it in and no two-field status to reject.
+        """
+        return (self.sid, self.report, self._derive_failed(self.report, self.failed))
+
+    def write_to(self, run):
+        """
+        Append this report to the run's runlog and show it.
+
+        What ``general.process.writelog`` and the ``print(r)`` beside it used
+        to do, in the one place that knows the report is complete. The runlog
+        is written first: it is the durable record, and a broken console must
+        not cost it.
+
+        A log with no id of its own -- a study level command's plain
+        :class:`ReportLog` -- is filed under the run's command name, which is
+        what the final report then lists it as. The command does not have to
+        repeat its own name to say so.
+        """
+        if self.sid is None:
+            self.sid = run.command
+
+        text = self.text
+        run.write(text + "\n")
+        print(text)
+
     def finish(self, summary, failed=None, name=None):
         """
-        Close the report and build the value the caller is handed.
+        Close the report and record what the command is reporting.
 
         The status contract processing commands already use, for a log that has
         no session of its own: ``general.core.run_with_log`` calls this on the
         log it gave a utility command, writes the report text into the runlog
         and hands the count on. :class:`SessionLog` overrides it to append its
         footer first.
+
+        The count is derived here as well as on :attr:`status`, so a derived
+        warning reads inside the report -- before a session log's closing rule
+        -- rather than after it.
 
         Parameters:
             summary: the one-line summary, or a ready three-field
@@ -436,17 +527,20 @@ class ReportLog:
                 ``command: session``.
 
         Returns:
-            ``(report_text, (name, summary, failed))``.
+            ``self``, which is what a processing command returns.
         """
         return self.result(summary, self._derive_failed(summary, failed), name)
 
     def result(self, report, failed=None, name=None):
         """
-        Build the ``(report_text, status)`` value the caller is handed.
+        Record the summary and failure count, and hand the log back.
 
         Enforces the three-field status contract (see :meth:`finish`). Unlike
         :meth:`finish` it does not derive ``failed`` -- a direct caller states
         the count.
+
+        Returns:
+            ``self``, which is what a processing command returns.
         """
         if isinstance(report, tuple):
             if len(report) != 3:
@@ -455,16 +549,19 @@ class ReportLog:
                     "(session_id, summary, failed) tuple, got %d fields: %r"
                     % (len(report), report)
                 )
-            status = report
+            self.sid, self.report, self.failed = report
         else:
             if failed is None:
                 raise ValueError(
                     "finish() needs a failed count when report is a "
                     "summary string (got failed=None for %r)" % (report,)
                 )
-            status = (name, report, failed)
+            if name is not None:
+                self.sid = name
+            self.report = report
+            self.failed = failed
 
-        return (self.text, status)
+        return self
 
 
 class SessionLog(ReportLog):
@@ -508,12 +605,12 @@ class SessionLog(ReportLog):
         super().__init__()
         self._options = options
         self._pipeline = pipeline
-        self._sid = sinfo["id"]
+        self.sid = sinfo["id"]
 
         self.raw("\n%s\n%s: %s \n[started on %s]" % (
             REPORT_RULE,
             label,
-            self._sid,
+            self.sid,
             datetime.now().strftime(REPORT_TIME),
         ))
 
@@ -529,17 +626,17 @@ class SessionLog(ReportLog):
 
     def finish(self, report, failed=None, pipeline=None, lead="\n\n"):
         """
-        Close the report and build the value the command returns.
+        Close the report and record what the command is reporting.
 
-        Every command returns ``(report_text, (session_id, summary, failed))`` --
-        a three-field status ``general.process`` unpacks as
-        ``(sid, report, failed)``. This method builds exactly that, so a command
-        can never return the malformed two-field status that made a whole run
-        print "success status not reported".
+        Every command returns its log, and ``general.process`` reads
+        :attr:`ReportLog.status` off it as ``(sid, report, failed)``. This
+        method records exactly that, so a command can never report the
+        malformed two-field status that made a whole run print "success status
+        not reported".
 
         The failure count is derived from the log when the caller does not give
         one, exactly as :meth:`ReportLog.finish` derives it; the footer goes in
-        before the status is built, so a derived warning still reads inside the
+        after the derivation, so a derived warning still reads inside the
         report rather than after its closing rule.
 
         Parameters:
@@ -551,7 +648,7 @@ class SessionLog(ReportLog):
             lead: newlines separating the footer from the preceding text.
 
         Returns:
-            ``(report_text, (session_id, summary, failed))``.
+            ``self``, which is what the command returns.
         """
         failed = self._derive_failed(report, failed)
         self.close(pipeline=pipeline, lead=lead)
@@ -582,12 +679,12 @@ class SessionLog(ReportLog):
 
     def result(self, report, failed=None, name=None):
         """
-        Build the ``(report_text, status)`` value the command returns.
+        Record the summary and failure count, and hand the log back.
 
         As :meth:`ReportLog.result`, with the session id as the name -- a
         session log knows what it is reporting on and callers do not pass it.
         """
-        return super().result(report, failed, name or self._sid)
+        return super().result(report, failed, name or self.sid)
 
 
 def log_or_console(_log):

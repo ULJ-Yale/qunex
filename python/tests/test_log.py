@@ -12,10 +12,12 @@ user-facing surface, not an implementation detail.
 
 import contextlib
 import io
+import pickle
 
 import pytest
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 from qx_utilities.general.log import report as log_module
 from qx_utilities.general.log import REPORT_RULE, ReportLog, SessionLog, log_or_console
 
@@ -122,27 +124,27 @@ def test_raw_appends_verbatim():
 
 def test_finish_builds_the_process_py_contract():
     log = _log()
-    text, status = log.finish("all good", failed=0)
 
-    assert status == ("sess-01", "all good", 0)
-    assert text.endswith(
+    assert log.finish("all good", failed=0) is log
+    assert log.status == ("sess-01", "all good", 0)
+    assert log.text.endswith(
         "\n\nHCP Test Pipeline completed on " + STAMP + "\n" + REPORT_RULE
     )
 
 
 def test_finish_accepts_a_ready_made_status_tuple():
-    _, status = _log().finish(("sess-01", "bolds 1, 2 done", 3))
-    assert status == ("sess-01", "bolds 1, 2 done", 3)
+    log = _log().finish(("sess-01", "bolds 1, 2 done", 3))
+    assert log.status == ("sess-01", "bolds 1, 2 done", 3)
 
 
 def test_finish_can_rename_the_closing_line():
-    text, _ = _log().finish("done", 0, pipeline="HCP Test")
+    text = _log().finish("done", 0, pipeline="HCP Test").text
     assert "\n\nHCP Test completed on " in text
 
 
 def test_test_mode_marks_both_ends():
     log = SessionLog(SINFO, dict(OPTIONS, run="test"), "HCP Test Pipeline")
-    text, _ = log.finish("would run", 0)
+    text = log.finish("would run", 0).text
 
     assert "Test running HCP Test Pipeline [" in text
     assert "HCP Test Pipeline test completed on " in text
@@ -255,49 +257,60 @@ def test_raw_ignores_depth():
 def test_finish_derives_failed_from_recorded_errors():
     log = _log()
     log.error("could not find the data")
-    _, status = log.finish("HCP Thing failed")
 
-    assert status == ("sess-01", "HCP Thing failed", 1)
+    assert log.finish("HCP Thing failed").status == ("sess-01", "HCP Thing failed", 1)
 
 
 def test_finish_derives_zero_when_nothing_failed():
-    _, status = _log().finish("all good")
-    assert status == ("sess-01", "all good", 0)
+    assert _log().finish("all good").status == ("sess-01", "all good", 0)
 
 
 def test_explicit_failed_count_still_wins():
     log = _log()
     log.error("one error")
-    _, status = log.finish("three bolds failed", failed=3)
+    log.finish("three bolds failed", failed=3)
 
-    assert status == ("sess-01", "three bolds failed", 3)
+    assert log.status == ("sess-01", "three bolds failed", 3)
 
 
 def test_reporting_no_failure_while_errors_exist_is_flagged():
     log = _log()
     log.error("could not find the data")
-    text, status = log.finish("all good", failed=0)
+    log.finish("all good", failed=0)
 
-    assert status == ("sess-01", "all good", 0)
+    assert log.status == ("sess-01", "all good", 0)
     assert "---> WARNING: 1 error(s) were recorded but the command " \
-           "reports no failures" in text
+           "reports no failures" in log.text
+
+
+def test_the_disagreement_is_flagged_once_however_often_status_is_read():
+    # `status` derives on read, and `finish` derives before the footer -- the
+    # warning is a record, so it must not be appended once per read
+    log = _log()
+    log.error("could not find the data")
+    log.finish("all good", failed=0)
+
+    for _ in range(3):
+        assert log.status[2] == 0
+
+    assert log.text.count("reports no failures") == 1
 
 
 def test_the_flag_is_not_raised_when_the_count_agrees():
     log = _log()
     log.error("could not find the data")
-    text, _ = log.finish("failed", failed=1)
+    log.finish("failed", failed=1)
 
-    assert "reports no failures" not in text
+    assert "reports no failures" not in log.text
 
 
 def test_a_status_tuple_reporting_no_failure_is_flagged_too():
     log = _log()
     log.error("could not find the data")
-    text, status = log.finish(("sess-01", "all good", 0))
+    log.finish(("sess-01", "all good", 0))
 
-    assert status == ("sess-01", "all good", 0)
-    assert "reports no failures" in text
+    assert log.status == ("sess-01", "all good", 0)
+    assert "reports no failures" in log.text
 
 
 def test_unknown_error_counts_as_a_failure():
@@ -308,8 +321,7 @@ def test_unknown_error_counts_as_a_failure():
         log.unknown_error()
 
     assert log.has_errors
-    _, status = log.finish("HCP Thing failed")
-    assert status[2] == 1
+    assert log.finish("HCP Thing failed").status[2] == 1
 
 
 def test_command_failed_counts_as_a_failure():
@@ -317,8 +329,7 @@ def test_command_failed_counts_as_a_failure():
     log.command_failed(ge.CommandFailed("hcp_thing", "no data"))
 
     assert log.has_errors
-    _, status = log.finish("HCP Thing failed")
-    assert status[2] == 1
+    assert log.finish("HCP Thing failed").status[2] == 1
 
 
 # ---------------------------------------------------- the second stream
@@ -446,3 +457,90 @@ def test_log_or_console_reads_stdout_at_call_time(capsys):
 
     assert tee.getvalue() == "\n---> backing up"
     assert capsys.readouterr().out == ""
+
+
+# ------------------------------------------- the log a command returns (OI-1)
+
+
+def test_status_is_derived_for_a_log_that_never_called_finish():
+    # the ergonomics a group B command uses: state what happened where it is
+    # known, `return log`, and let `general.process` ask
+    log = ReportLog()
+    log.step("Subject cannot be processed.")
+    log.report = "FS cannot be run"
+    log.failed = 1
+
+    assert log.status == (None, "FS cannot be run", 1)
+
+
+def test_status_derives_the_count_from_recorded_errors():
+    log = ReportLog()
+    log.error("no data")
+    log.report = "failed"
+
+    assert log.status == (None, "failed", 1)
+
+
+def test_status_flags_a_command_that_claims_no_failures():
+    log = ReportLog()
+    log.error("no data")
+    log.report = "all good"
+    log.failed = 0
+
+    assert log.status == (None, "all good", 0)
+    assert "reports no failures" in log.text
+
+
+def test_result_and_finish_hand_the_log_back():
+    # what keeps 30 of the 57 processing commands unchanged in source
+    log = ReportLog()
+
+    assert log.result("done", 0) is log
+    assert log.finish("done") is log
+
+
+def test_a_log_pickles_with_its_streams_attached(tmp_path):
+    """
+    The one new failure class the return contract creates, closed by design.
+
+    Both real streams are used, because both are what makes a log unpicklable:
+    a text file handle -- what `sys.stdout` is on the `log_or_console` path --
+    and an open `ComContext`. `__getstate__` drops both, so a command's log
+    crosses a pool boundary whatever it was carrying, with its text and its
+    error count intact.
+    """
+    comlog = gl.ComContext(str(tmp_path), "step", timestamp="2026-01-01")
+    comlog.open()
+
+    with open(tmp_path / "echo.txt", "w") as echo:
+        log = ReportLog(echo=echo)
+        with log.stream_to(comlog):
+            log.step("ran the tool")
+            log.error("and it went wrong")
+            log.result("it went wrong", 1, "sess-01")
+
+            with pytest.raises(TypeError):
+                pickle.dumps(log.__dict__)     # the state without the guard
+
+            revived = pickle.loads(pickle.dumps(log))
+
+    comlog.close()
+
+    assert revived.text == log.text
+    assert revived.status == ("sess-01", "it went wrong", 1)
+    assert revived.has_errors
+    assert revived._echo is None and revived._comlog is None
+
+
+def test_pickling_a_log_does_not_mutate_the_source(tmp_path):
+    # the streams are dropped from the *copy*: the log being returned is still
+    # live, and closing either would break something that is not the log's
+    with open(tmp_path / "echo.txt", "w") as echo:
+        log = ReportLog(echo=echo)
+
+        pickle.loads(pickle.dumps(log))
+        log.step("still echoing")
+
+        assert log._echo is echo
+
+    assert "still echoing" in (tmp_path / "echo.txt").read_text()

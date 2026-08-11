@@ -875,7 +875,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         failed_count,
         _format_item_list(qc_report["failed"]),
     )
-    return (log.text, (sinfo["id"], status, failed_count))
+    return log.result(status, failed_count, sinfo["id"])
 
 
 def _run_qc_executor(job: dict):

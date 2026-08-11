@@ -38,56 +38,6 @@ from qx_utilities.general.parsing import true_or_false as torf
 
 # =======================================================================
 #                                                       SUPPORT FUNCTIONS
-def writelog(item, run, stati):
-    """
-    ``writelog(item, run, stati)``
-
-    Splits a command's return value into the report text and the status
-    triple, appends the status to `stati` and the report to the run's runlog.
-
-    The report is appended as the session completes, so a long run can be
-    followed by tailing the runlog.
-
-    Returns the (report, status) pair, so callers do not have to split the
-    item a second time - passing an already split report back in would append
-    a spurious "Unknown" status to stati.
-    """
-    r, status = proc_response(item)
-    stati.append(status)
-    run.write(r + "\n")
-    return r, status
-
-
-def proc_response(r):
-    """
-    ``proc_response(r)``
-
-    It processes the response returned from the utilities functions
-    called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple. If the
-    third element is missing, it assumes it ran ok and sets it to
-    0.
-    """
-
-    if r is None:
-        # a command that returns nothing at all -- the report is empty rather
-        # than None, so appending it to the log does not raise
-        return ("", ("Unknown", "Unknown", None))
-
-    if type(r) is tuple:
-        if len(r) == 2:
-            if len(r[1]) == 2:
-                return (r[0], (r[1][0], r[1][1], None))
-            elif len(r[1]) == 3:
-                return r
-            else:
-                return ("Unknown", ("Unknown", "Unknown", None))
-        else:
-            return ("Unknown", ("Unknown", "Unknown", None))
-    else:
-        return (r, ("Unknown", "Unknown", None))
-
-
 def update_options(session, options):
     """
     ``update_options(session, options)``
@@ -1377,8 +1327,6 @@ def run(qx_command, args, log_settings=None):
     # -----------------------------------------------------------------------
     #                                                             local queue
     if options["scheduler"] == "local":
-        console_log = ""
-
         # testing or processing
         action = "testing" if options["run"] == "test" else "processing"
         pending_actions = qx_command.load_callable()
@@ -1396,17 +1344,12 @@ def run(qx_command, args, log_settings=None):
                     soptions = update_options(session, options)
 
                 message = f"\nStarting {action} of sessions {sessionid_list} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                console_log += message
                 print(message)
 
                 # process and write log
-                r, _ = writelog(
-                    pending_actions(sessions, soptions, overwrite, c + 1),
-                    run_context,
-                    stati,
-                )
-                console_log += r
-                print(r)
+                log = pending_actions(sessions, soptions, overwrite, c + 1)
+                log.write_to(run_context)
+                stati.append(log.status)
 
             # ------------------------------------------------------------------
             #                                        subject processing commands
@@ -1414,16 +1357,11 @@ def run(qx_command, args, log_settings=None):
                 for subject in subjects:
                     session_ids = ", ".join([s["id"] for s in subject])
                     message = f"\nProcessing subject {subject[0]['subject']} with sessions {session_ids} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                    console_log += message
                     print(message)
 
-                    r, _ = writelog(
-                        pending_actions(subject, options, overwrite, c + 1),
-                        run_context,
-                        stati,
-                    )
-                    console_log += r
-                    print(r)
+                    log = pending_actions(subject, options, overwrite, c + 1)
+                    log.write_to(run_context)
+                    stati.append(log.status)
                     c += 1
                     if nprocess and c >= nprocess:
                         break
@@ -1434,18 +1372,13 @@ def run(qx_command, args, log_settings=None):
                 for session in sessions:
                     if len(session["id"]) > 1:
                         message = f"\nStarting {action} of session {session['id']} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                        console_log += message
                         print(message)
 
                         soptions = update_options(session, options)
 
-                        r, _ = writelog(
-                            pending_actions(session, soptions, overwrite, c + 1),
-                            run_context,
-                            stati,
-                        )
-                        console_log += r
-                        print(r)
+                        log = pending_actions(session, soptions, overwrite, c + 1)
+                        log.write_to(run_context)
+                        stati.append(log.status)
                         c += 1
                         if nprocess and c >= nprocess:
                             break
@@ -1461,7 +1394,6 @@ def run(qx_command, args, log_settings=None):
             if processing_type == "subject":
                 for subject in subjects:
                     message = f"\nAdding processing of subject {subject[0]['subject']} with sessions {', '.join([s['id'] for s in subject])} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                    console_log += message
                     print(message)
 
                     future = process_pool_executor.submit(
@@ -1480,7 +1412,6 @@ def run(qx_command, args, log_settings=None):
                     if len(session["id"]) > 1:
                         soptions = update_options(session, options)
                         message = f"\nAdding processing of session {session['id']} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                        console_log += message
                         print(message)
 
                         future = process_pool_executor.submit(
@@ -1492,14 +1423,12 @@ def run(qx_command, args, log_settings=None):
                             break
 
             for future in as_completed(futures):
-                # result[0] is not the report unless result is a tuple, so take
-                # the report writelog split out rather than indexing the result
-                r, _ = writelog(future.result(), run_context, stati)
-                console_log += r
-                print(r)
-
-        # print(console log)
-        # print(consoleLog)
+                # the log comes back through the pickle the pool made of it;
+                # `__getstate__` dropped its streams on the way out, so it
+                # arrives with its text and its counts and nothing to close
+                log = future.result()
+                log.write_to(run_context)
+                stati.append(log.status)
 
         # the reports were appended as the sessions completed; all that is
         # left is the digest

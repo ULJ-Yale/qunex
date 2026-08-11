@@ -94,10 +94,13 @@ prints it. `general/log/` owns the runlog:
 - `pc.ExternalFailed` carries the **error message alone**; everything that led up to it is
   already in the log. An `except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:`
   handler appends it with `log.raw(str(errormessage))` — never re-adopt a whole report.
-- A command returns `(log.text, status)` where `status` is a **three-field**
-  `(session_id, summary, failed)` tuple. `SessionLog.finish(report, failed=..., pipeline=...)`
-  builds this and rejects a malformed two-field status. A two-field status makes a whole run
-  print "success status not reported" — never return one.
+- A command returns its **log object** — never a `(text, status)` pair. `general/process.py`
+  writes it with `log.write_to(run)` and reads `log.status`, the **three-field**
+  `(session_id, summary, failed)` triple derived on read. State the summary either with
+  `SessionLog.finish(report, failed=..., pipeline=...)` / `log.result(report, failed, name)`
+  (both return `self`, so `return log.finish(...)` is the usual form) or by assigning
+  `log.report` / `log.failed` and `return log`. A study-level command need not name itself:
+  a log with no `sid` is filed under the command name.
 - `helper_that_builds_report(..., log)` should take the `log` and append in place, not take and
   return an `r` string.
 

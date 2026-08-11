@@ -20,11 +20,16 @@ end.
 :func:`external_step` closes that gap. It is a real session-processing command
 by every contract ``process.run`` applies -- it takes ``(sinfo, options,
 overwrite, thread)``, calls ``do_options_check``, runs something external
-against a check file and returns ``(report, (id, summary, failed))`` -- whose
-external tool happens to be one line of shell. Nothing here is mocked: the
-options come from ``arglist``, the sessions from a batch file, the runlog and
-comlogs from the run context, and the comlog is written by the same helper the
-110 real call sites use.
+against a check file and **returns its log** -- whose external tool happens to
+be one line of shell. Nothing here is mocked: the options come from
+``arglist``, the sessions from a batch file, the runlog and comlogs from the
+run context, and the comlog is written by the same helper the 110 real call
+sites use.
+
+That makes it the one harness in the suite that exercises the *return* chain as
+well: the log a command hands back, ``write_to`` putting its report in the
+runlog, ``status`` reaching the final report -- and, with ``parsessions``
+raised, the log surviving the pickle out of a real ``ProcessPoolExecutor``.
 """
 
 import os
@@ -64,7 +69,19 @@ def external_step(sinfo, options, overwrite=False, thread=0):
         log.raw(str(e))
         failed = 1
 
-    return (log.text, (sinfo["id"], "external step ran", failed))
+    log.step("external step done for %s" % sinfo["id"])
+    return log.result("external step ran", failed, sinfo["id"])
+
+
+# the study level twin: no session id of its own, so `write_to` files it under
+# the command name -- the case `proc_response` used to call "Unknown"
+def study_step(sinfo, options, overwrite=False, thread=0):
+    """A study-processing command that reports without naming a session."""
+    log = ReportLog()
+    pc.do_options_check(options, sinfo, "study_step")
+
+    log.step("looked at %d sessions" % len(list(sinfo)))
+    return log.finish("study step ran")
 
 
 class Command:
@@ -76,6 +93,14 @@ class Command:
 
     def load_callable(self):
         return external_step
+
+
+class StudyCommand(Command):
+    name = "study_step"
+    type = "processing/study"
+
+    def load_callable(self):
+        return study_step
 
 
 @pytest.fixture
@@ -99,7 +124,7 @@ def default_settings():
     gl.set_active(None)
 
 
-def run_step(study, settings=None, shell="touch %(checkfile)s", **args):
+def run_step(study, settings=None, shell="touch %(checkfile)s", command=None, **args):
     """Drive the real `process.run` over the one session, and say what it left."""
     args = {
         "sessions": str(study / "batch.txt"),
@@ -107,7 +132,7 @@ def run_step(study, settings=None, shell="touch %(checkfile)s", **args):
         "shell_command": shell,
         **args,
     }
-    gp.run(Command(), args, settings or gl.LogSettings())
+    gp.run(command or Command(), args, settings or gl.LogSettings())
 
     logfolder = next((study / "logs").iterdir())
     runlog = next(f for f in logfolder.iterdir() if f.name.startswith("Log-"))
@@ -253,3 +278,59 @@ def test_comlogs_off_writes_no_comlog_through_the_whole_chain(study):
     assert "---> logfile: " not in runlog
     # the runlog itself is still written, and the session still passed
     assert "external step ran" in runlog
+
+
+# ------------------------------------------------- the return chain (OI-1)
+
+
+def test_the_returned_log_reaches_both_the_runlog_and_the_final_report(study):
+    """
+    The whole of what a command hands back, end to end.
+
+    Its report text is appended to the runlog by `write_to`, and its `status`
+    is what the run's closing digest is built from -- with the session id it
+    carries, not one reconstructed at the call site.
+    """
+    _, runlog = run_step(study)
+
+    assert "---> external step done for S01" in runlog
+    assert "     ... S01 ---> external step ran" in runlog
+    assert "1 run, 1 successful, 0 failed, 0 did not complete" in runlog
+
+
+def test_a_study_command_is_filed_under_the_command_name(study):
+    """
+    A plain `ReportLog` has no id; the run supplies one.
+
+    `proc_response` used to call this "Unknown" and leave it out of the digest
+    altogether.
+    """
+    _, runlog = run_step(study, command=StudyCommand())
+
+    assert "     ... study_step ---> study step ran" in runlog
+    assert "Unknown" not in runlog
+
+
+def test_a_failing_command_reports_its_failure_through_its_log(study):
+    with pytest.raises(ge.CommandFailed):
+        run_step(study, shell="exit 3")
+
+    logfolder = next((study / "logs").iterdir())
+    runlog = next(f for f in logfolder.iterdir() if f.name.startswith("Log-"))
+    text = runlog.read_text()
+
+    assert "     ... S01 ---> external step ran" in text
+    assert "0 successful, 1 failed" in text
+
+
+def test_the_log_survives_the_process_pool(study):
+    """
+    The one new failure class the return contract creates, closed end to end.
+
+    With `parsessions` above one the log is pickled out of a real
+    `ProcessPoolExecutor` worker, which a `(str, tuple)` never had to survive.
+    """
+    _, runlog = run_step(study, parsessions=2)
+
+    assert "---> external step done for S01" in runlog
+    assert "     ... S01 ---> external step ran" in runlog

@@ -52,10 +52,17 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
         --bolds (str, default ''):
             Pipe-separated list of task names to include (e.g. "rest|task").
     """
-    bfile = open(os.path.join(options['sessionsfolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
+    log = ReportLog()
+
+    listfile = os.path.join(options['sessionsfolder'], 'boldlist' + options['bold_prefix'] + '.list')
+    bfile = open(listfile, 'w')
     bsearch = re.compile(r'bold([0-9]+)')
 
+    nsessions = 0
+    nbolds = 0
+
     for session in sinfo:
+        nsessions += 1
         bolds = []
         for (k, v) in session.items():
             if k.isdigit():
@@ -70,8 +77,16 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
             for bold in bolds:
                 f = pc.get_bold_file_names(session, boldname=bold, options=options)
                 print("    file:%s" % (os.path.abspath(f['bold_final'])), file=bfile)
+            nbolds += len(bolds)
 
     bfile.close()
+
+    # the list itself is the command's product; the report says what went into
+    # it, not what it says
+    log.step("processed %d sessions" % (nsessions))
+    log.step("wrote %s with %d bolds in total" % (listfile, nbolds))
+
+    return log.finish("wrote a bold list with %d bolds from %d sessions" % (nbolds, nsessions))
 
 
 def create_conc_list(sinfo, options, overwrite=False, thread=0):
@@ -105,11 +120,16 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
     concs = options['bolds'].split("|")
     fidls = options['event_file'].split("|")
 
+    nsessions = 0
+
     if len(concs) != len(fidls):
         log.warning("Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls)))
+        bfile.close()
+        return log.result("aborted: %d conc files but %d event files" % (len(concs), len(fidls)), 1)
 
     else:
         for session in sinfo:
+            nsessions += 1
             try:
                 f = pc.get_file_names(session, options)
                 d = pc.get_session_folders(session, options)
@@ -134,7 +154,7 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
 
     bfile.close()
 
-    return log.text
+    return log.finish("wrote a conc list for %d sessions" % (nsessions))
 
 
 def list_session_info(sinfo, options, overwrite=False, thread=0):
@@ -150,12 +170,24 @@ def list_session_info(sinfo, options, overwrite=False, thread=0):
         --sessionsfolder (str, default '.'):
             The path to the study/sessions folder.
     """
-    bfile = open(os.path.join(options['sessionsfolder'], 'session_info.txt'), 'w')
+    log = ReportLog()
 
+    listfile = os.path.join(options['sessionsfolder'], 'session_info.txt')
+    bfile = open(listfile, 'w')
+
+    nsessions = 0
     for session in sinfo:
         print("session: %s, group: %s" % (session['id'], session['group']), file=bfile)
+        nsessions += 1
 
     bfile.close()
+
+    # the listing itself is the command's product; the report says what went
+    # into it, not what it says
+    log.step("listed %d sessions" % (nsessions))
+    log.step("wrote %s" % (listfile))
+
+    return log.finish("listed %d sessions" % (nsessions))
 
 
 def run_shell_script(sinfo, options, overwrite=False, thread=0):
@@ -281,11 +313,11 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
 
     except AssertionError as message:
         log.raw(str(message) + "\n---------------------------------------------------------")
-        return (log.text, (sinfo['id'], message, 1))
+        return log.result(str(message), 1, sinfo['id'])
 
     except pc.ExternalFailed as errormessage:
         log.raw(str(errormessage) + "\n---------------------------------------------------------")
-        return (log.text, (sinfo['id'], "Failed: " + str(errormessage), 1))
+        return log.result("Failed: " + str(errormessage), 1, sinfo['id'])
 
     except Exception:
         message = 'ERROR: Error in parsing or executing script %s' % (options['script'])
@@ -294,7 +326,6 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         # is the only thing that survives the raise
         print(log.text)
         raise
-        return (log.text, (sinfo['id'], message, 1))
 
     log.raw(f"\n\nrun_shell_script {options['script']} completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
-    return (log.text, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))
+    return log.result("Ran %s without errors" % (options['script']), 0, sinfo['id'])

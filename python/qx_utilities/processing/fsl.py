@@ -183,7 +183,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
         log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "FSL feat failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
 
 
 def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
@@ -398,4 +398,4 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
         log.info(f" --- Failed with error:\n {traceback.format_exc()}\n")
         report = ("Study", "FSL melodic failed", 1)
 
-    return (log.text, report)
+    return log.result(report)

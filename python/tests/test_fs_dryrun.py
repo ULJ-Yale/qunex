@@ -84,7 +84,7 @@ def test_a_test_run_changes_nothing_on_disk(session, command):
     sinfo, options, root = session
     before = _tree(root)
 
-    report = getattr(fs, command)(sinfo, dict(options))
+    report = getattr(fs, command)(sinfo, dict(options)).text
 
     assert _tree(root) == before, "a --test run wrote, removed or replaced a file"
     assert "Unknown error occured" not in report, report
@@ -94,7 +94,7 @@ def test_a_test_run_changes_nothing_on_disk(session, command):
 def test_a_test_run_says_it_is_a_test(session, command):
     sinfo, options, root = session
 
-    report = getattr(fs, command)(sinfo, dict(options))
+    report = getattr(fs, command)(sinfo, dict(options)).text
 
     assert "test" in report.lower()
     assert "Unknown error occured" not in report, report
@@ -104,7 +104,7 @@ def test_the_dry_run_reports_the_commands_it_would_have_run(session):
     """The point of a dry run: the fully expanded call, not just a step name."""
     sinfo, options, root = session
 
-    report = fs.run_basic_structural_segmentation(sinfo, dict(options))
+    report = fs.run_basic_structural_segmentation(sinfo, dict(options)).text
 
     for tool in ("g_FlipFormat", "bet ", "fast ", "gunzip -f"):
         assert "test, not run: %s" % tool in report or (
@@ -166,3 +166,37 @@ def test_a_real_run_still_passes_the_four_comlog_arguments():
         "logfolder": ["/study/logs/comlogs"],
         "logtags": "tag",
     }
+
+
+# --------------------------------------- the return contract inside the file
+
+
+@pytest.mark.parametrize("command", COMMANDS)
+def test_every_command_returns_a_log_with_a_status(session, command):
+    """OI-1: these four returned bare report text and no status at all."""
+    sinfo, options, _ = session
+
+    log = getattr(fs, command)(sinfo, dict(options))
+
+    sid, summary, failed = log.status
+    assert sid == "s01"
+    assert isinstance(summary, str) and summary
+    assert failed == 0
+
+
+def test_the_nested_check_lands_in_the_callers_report_as_text(session):
+    """
+    `check_for_freesurfer_data` is both a command and a step of two others.
+
+    Its two internal callers take `.text` off the log it now returns -- and
+    pass `r`, which is what tells it the call is nested and so not to repeat
+    the session header.
+    """
+    sinfo, options, _ = session
+
+    nested = fs.run_freesurfer_full_segmentation(sinfo, dict(options)).text
+    alone = fs.check_for_freesurfer_data(sinfo, dict(options)).text
+
+    assert "looking for: " in nested, "the nested check's report is missing"
+    assert "Session id: s01" in alone
+    assert nested.count("Session id: s01") == 1

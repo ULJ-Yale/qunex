@@ -241,14 +241,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         log.error("sessionsfolder not specified in options, cannot map HCP data!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters!"
         failed = 1
-        return (log.text, (sinfo["id"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["id"])
 
     session_path = os.path.join(options["sessionsfolder"], sinfo["id"])
     if not os.path.exists(session_path):
         log.error(f"session {sinfo['id']} does not exists at {session_path}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
-        return (log.text, (sinfo["session"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["session"])
 
     # --- file/dir structure
     f = pc.get_file_names(sinfo, options)
@@ -265,13 +265,13 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         log.raw("\n\ndirectory structure:\n")
         log.raw(pprint.pformat(d))
 
-        return (log.text, (sinfo["session"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["session"])
 
     if not os.path.exists(d["hcp"]):
         log.error(f"HCP folder for session {sinfo['id']} does not exists at {d['hcp']}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
-        return (log.text, (sinfo["session"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["session"])
 
     #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
     #    MNINonLinear/Results/<boldname>/<boldname>_Atlas.dtseries.nii -- cifti
@@ -584,4 +584,4 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         )
 
     # print r
-    return (log.text, (sinfo["id"], rstatus, failed))
+    return log.result(rstatus, failed, sinfo["id"])

@@ -987,11 +987,13 @@ def run_with_log(
         report = None
         failed = 1 if error else 0
         if log.text:
-            report, (_, _, failed) = log.finish(
+            log.finish(
                 str(error) if error else "completed",
                 failed=1 if error else None,
                 name=name,
             )
+            report = log.text
+            failed = log.status[2]
 
         if not failed:
             print(f"\n---> Successful completion of task at {datetime.now()}")

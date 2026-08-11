@@ -337,7 +337,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "rapidtide failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
 
 
 def _execute_rapidtide(

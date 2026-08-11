@@ -133,7 +133,7 @@ class LogSettings:
             comlog puts its report in the runlog whatever this says, since
             ``manifest`` is asking to avoid duplication and not to discard the
             only copy. Processing commands do not read it -- they have no
-            comlog of their own, so ``process.writelog`` is the only thing
+            comlog of their own, so ``ReportLog.write_to`` is the only thing
             that puts their report in a file.
     """
 

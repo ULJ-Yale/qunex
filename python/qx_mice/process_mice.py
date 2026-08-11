@@ -206,7 +206,7 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "preprocess_mice failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
 
 
 def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
@@ -524,4 +524,4 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "map_mice_data failed", 1)
 
-    return (log.text, report)
+    return log.result(report)

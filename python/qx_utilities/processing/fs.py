@@ -281,19 +281,22 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
         log.info(
             f"Basic structural segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
-        return log.text
+        return log.result("Basic structural segmentation failed", 1, sinfo["id"])
     except Exception:
         log.error(
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
-        return log.text
+        return log.finish("Basic structural segmentation failed", name=sinfo["id"])
 
     log.info(
         f"Basic structural segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
-    return log.text
+    return log.finish(
+        "Basic structural segmentation %s" % (action("completed", options["run"])),
+        name=sinfo["id"],
+    )
 
 
 #
@@ -340,7 +343,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
     log = ReportLog()
     do_options_check(options, sinfo, "check_for_freesurfer_data")
 
-    if not log.text:
+    if not r:
         verbose = True
     else:
         verbose = False
@@ -457,14 +460,17 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(1)
-        return log.text
+        return log.finish("Check for FreeSurfer data failed", name=sinfo["id"])
 
     if verbose:
         log.info(
             f"Check {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
 
-    return log.text
+    return log.finish(
+        "Check for FreeSurfer data %s" % (action("completed", options["run"])),
+        name=sinfo["id"],
+    )
 
 
 #
@@ -512,7 +518,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
 
         # check if any data already exists
         log.raw(
-            check_for_freesurfer_data(sinfo, options, overwrite, thread, log.text)
+            check_for_freesurfer_data(sinfo, options, overwrite, thread, log.text).text
         )
 
         d = get_session_folders(sinfo, options)
@@ -732,19 +738,22 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         log.info(
             f"FreeSurfer segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
-        return log.text
+        return log.result("FreeSurfer segmentation failed", 1, sinfo["id"])
     except Exception:
         log.error(
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
-        return log.text
+        return log.finish("FreeSurfer segmentation failed", name=sinfo["id"])
 
     log.info(
         f"FreeSurfer segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
-    return log.text
+    return log.finish(
+        "FreeSurfer segmentation %s" % (action("completed", options["run"])),
+        name=sinfo["id"],
+    )
 
 
 def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thread=0):
@@ -785,7 +794,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
 
         # check if any data already exists
         log.raw(
-            check_for_freesurfer_data(sinfo, options, overwrite, thread, log.text)
+            check_for_freesurfer_data(sinfo, options, overwrite, thread, log.text).text
         )
 
         d = get_session_folders(sinfo, options)
@@ -921,16 +930,19 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         log.info(
             f"FreeSurfer segmentation failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
-        return log.text
+        return log.result("FreeSurfer segmentation failed", 1, sinfo["id"])
     except Exception:
         log.error(
             f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n"
         )
         time.sleep(15)
-        return log.text
+        return log.finish("FreeSurfer segmentation failed", name=sinfo["id"])
 
     log.info(
         f"FreeSurfer segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
-    return log.text
+    return log.finish(
+        "FreeSurfer segmentation %s" % (action("completed", options["run"])),
+        name=sinfo["id"],
+    )

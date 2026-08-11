@@ -2138,7 +2138,7 @@ def map_nii2bids(
 
         bout.close()
 
-    return log.text
+    return log.finish("mapping to BIDS completed")
 
 
 def _create_bids_name(

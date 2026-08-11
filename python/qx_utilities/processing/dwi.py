@@ -232,7 +232,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "FSL F99 failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
 
 
 def dwi_xtract(sinfo, options, overwrite=False, thread=0):
@@ -571,7 +571,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "FSL XTRACT failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
 
 
 # -> @register_command(
@@ -804,4 +804,4 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "CUDIMOT NODDI failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
