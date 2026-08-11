@@ -69,14 +69,14 @@ def read_conc(concf, tr, _log=None):
     s = [e for e in s if "file:" in e]
 
     if len(s) != nfiles:
-        log.error("number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles))
+        log.error(f"number of bolds does not match the declaration! [{len(s)} vs {nfiles}]")
         return []
 
     boldfiles = [e.split(":")[1].strip() for e in s]
 
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
-            log.error("image does not exist! (%s)" % (boldfile))
+            log.error(f"image does not exist! ({boldfile})")
             return []
 
     # m = re.compile(r'_b.*?([0-9]+)')
@@ -89,7 +89,7 @@ def read_conc(concf, tr, _log=None):
         bolds.append([boldname, start, length, boldfile])
         start += length
 
-    log.detail("%d bolds: %s" % (nfiles, " ".join([e[0] for e in bolds])))
+    log.detail(f'{nfiles} bolds: {" ".join([e[0] for e in bolds])}')
     return bolds
 
 
@@ -143,13 +143,13 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None, _log=None):
 
     # ---> read the conc file, check if the number matches
 
-    log.step("reading %s" % (os.path.basename(concfile)))
+    log.step(f"reading {os.path.basename(concfile)}")
     bolddata = read_conc(concfile, tr, _log=log)
 
     if len(fidldata) != len(bolddata):
-        log.error("Number of fidl [%d] and bold [%d] files do not match!" % (len(fidldata), len(bolddata)))
-        log.detail("fidl files: %s" % (", ".join([os.path.basename(e) for e in fidlf])))
-        log.detail("bold runs:  %s" % (", ".join([os.path.basename(e[3]) for e in bolddata])))
+        log.error(f"Number of fidl [{len(fidldata)}] and bold [{len(bolddata)}] files do not match!")
+        log.detail(f'fidl files: {", ".join([os.path.basename(e) for e in fidlf])}')
+        log.detail(f'bold runs:  {", ".join([os.path.basename(e[3]) for e in bolddata])}')
         raise ge.CommandFailed("join_fidl", "File number mismatch", "Number of fidl [%d] and bold [%d] files do not match!" % (len(fidldata), len(bolddata)), "Please check report!")
 
     # ---> start the matching loop
@@ -181,7 +181,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None, _log=None):
             # print("WARNING: last event in %s %.1fs [at: %.1f] after end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), -dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2]))
             w = "WARNING: fidl too long for bold!"
 
-        log.detail("\t%s\t%s\t%.1f\t%.1f\t%.1f\t%s" % (os.path.basename(bold[3]), os.path.basename(fidlf[c]), bold[2], levent, dlen, w))
+        log.detail(f"\t{os.path.basename(bold[3])}\t{os.path.basename(fidlf[c])}\t{bold[2]:.1f}\t{levent:.1f}\t{dlen:.1f}\t{w}")
 
         tfidl = tfidl + [[e[0] + bold[1]] + e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
@@ -189,7 +189,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None, _log=None):
     jointfile = fidlroot + fidlname + '.fidl'
     if outfolder is not None:
         if not os.path.exists(outfolder):
-            log.step("Creating output folder: %s" % (outfolder))
+            log.step(f"Creating output folder: {outfolder}")
             os.makedirs(outfolder)
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
@@ -258,7 +258,7 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None,
     if failed:
         log.error("Joining fidls failed for the following conc files:")
         for concfile, error in failed:
-            log.detail("%s [%s]" % (concfile, error))
+            log.detail(f"{concfile} [{error}]")
 
         raise ge.CommandFailed("join_fidl_folder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
 

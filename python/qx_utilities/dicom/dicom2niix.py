@@ -415,7 +415,7 @@ def dicom2niix(
                     file=r,
                 )
                 log.warning(
-                    "Could not read dicom file! Skipping folder %s" % (folder)
+                    f"Could not read dicom file! Skipping folder {folder}"
                 )
                 continue
 
@@ -444,8 +444,7 @@ def dicom2niix(
             )
             if verbose:
                 log.step(
-                    "Processing images from %s (%s) scanned on %s"
-                    % (sessionid, info["sessionid"], info["datetime"])
+                    f'Processing images from {sessionid} ({info["sessionid"]}) scanned on {info["datetime"]}'
                 )
 
             # --- setup session.txt file
@@ -499,14 +498,12 @@ def dicom2niix(
             if par:
                 utool = "dicm2nii"
                 log.step(
-                    "Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available. [%s: %s]"
-                    % (niiid, info["seriesDescription"])
+                    f'Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available. [{niiid}: {info["seriesDescription"]}]'
                 )
             else:
                 utool = "dcm2niix"
                 log.step(
-                    "Using dcm2niix for conversion to NIfTI. [%s: %s]"
-                    % (niiid, info["seriesDescription"])
+                    f'Using dcm2niix for conversion to NIfTI. [{niiid}: {info["seriesDescription"]}]'
                 )
         else:
             utool = tool
@@ -538,8 +535,7 @@ def dicom2niix(
                 )
             else:
                 log.step(
-                    "Using dcm2niix for conversion as Matlab is not available! [%s: %s]"
-                    % (niiid, info["seriesDescription"])
+                    f'Using dcm2niix for conversion as Matlab is not available! [{niiid}: {info["seriesDescription"]}]'
                 )
                 if par:
                     calls.append(
@@ -704,11 +700,11 @@ def dicom2niix(
                     continue
                 if debug:
                     log.detail(
-                        "processing: %s [%s]" % (image, os.path.basename(image))
+                        f"processing: {image} [{os.path.basename(image)}]"
                     )
                 if image.endswith(".nii"):
                     if debug:
-                        log.detail("gzipping: %s" % (image))
+                        log.detail(f"gzipping: {image}")
                     subprocess.call(
                         "gzip " + image, shell=True, stdout=null, stderr=null
                     )
@@ -731,7 +727,7 @@ def dicom2niix(
                 # ---> generate the actual target file path and move the image
                 tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
                 if debug:
-                    log.detail("moving '%s' to '%s'" % (image, tfname), depth=1)
+                    log.detail(f"moving '{image}' to '{tfname}'", depth=1)
                 os.rename(image, tfname)
 
                 # ---> check for .bval and .bvec files
@@ -801,7 +797,7 @@ def dicom2niix(
                             )
                             if verbose:
                                 log.warning(
-                                    "Could not parse the JSON file [%s]!" % (jsonsrc)
+                                    f"Could not parse the JSON file [{jsonsrc}]!"
                                 )
 
                 # ---> print the info to session.txt file
@@ -833,8 +829,7 @@ def dicom2niix(
                         )
                         if verbose:
                             log.warning(
-                                "unusual geometry of the NIfTI file: %d %d %d %d [xyzf]"
-                                % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                                f"unusual geometry of the NIfTI file: {hdr.sizex} {hdr.sizey} {hdr.sizez} {hdr.frames} [xyzf]"
                             )
 
                     if info["volumes"] > 1:
@@ -846,8 +841,7 @@ def dicom2niix(
                             )
                             if verbose:
                                 log.warning(
-                                    "number of frames in nii does not match dicom information: %d vs. %d frames"
-                                    % (hdr.frames, info["volumes"])
+                                    f'number of frames in nii does not match dicom information: {hdr.frames} vs. {info["volumes"]} frames'
                                 )
                             if info["slices"] > 0:
                                 gframes = int(hdr.sizez / info["slices"])
@@ -859,8 +853,7 @@ def dicom2niix(
                                     )
                                     if verbose:
                                         log.warning(
-                                            "reslicing image to %d slices and %d good frames"
-                                            % (info["slices"], gframes)
+                                            f'reslicing image to {info["slices"]} slices and {gframes} good frames'
                                         )
                                     gn.reslice(tfname, info["slices"])
                                 elif hdr.sizez < info["slices"]:
@@ -871,8 +864,7 @@ def dicom2niix(
                                     )
                                     if verbose:
                                         log.warning(
-                                            "not enough slices (%d) to make a complete volume."
-                                            % (hdr.sizez)
+                                            f"not enough slices ({hdr.sizez}) to make a complete volume."
                                         )
                             else:
                                 print(
@@ -882,8 +874,7 @@ def dicom2niix(
                                 )
                                 if verbose:
                                     log.warning(
-                                        "no slice number information, use qunex reslice manually to correct %s"
-                                        % (tfname)
+                                        f"no slice number information, use qunex reslice manually to correct {tfname}"
                                     )
 
     r.close()

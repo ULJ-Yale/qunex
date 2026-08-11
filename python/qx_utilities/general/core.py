@@ -681,22 +681,15 @@ def run_external_parallel(calls, cores=None, _log=None):
 
                     if call["sout"]:
                         log.detail(
-                            "started running %s at %s, track progress in %s"
-                            % (
-                                call["name"],
-                                str(datetime.now()).split(".")[0],
-                                call["sout"],
-                            )
+                            f'started running {call["name"]} at {str(datetime.now()).split(".")[0]}, track progress in {call["sout"]}'
                         )
                     else:
                         log.detail(
-                            "started running %s at %s"
-                            % (call["name"], str(datetime.now()).split(".")[0])
+                            f'started running {call["name"]} at {str(datetime.now()).split(".")[0]}'
                         )
                 except Exception:
                     log.error(
-                        "failed to start running %s. Please check your environment!"
-                        % (call["name"])
+                        f'failed to start running {call["name"]}. Please check your environment!'
                     )
                     completed.append(
                         {
@@ -717,17 +710,11 @@ def run_external_parallel(calls, cores=None, _log=None):
                 running[n]["sout"].close()
                 if running[n]["call"]["sout"]:
                     log.detail(
-                        "finished running %s (exit code: %d), log in %s"
-                        % (
-                            running[n]["call"]["name"],
-                            running[n]["p"].poll(),
-                            running[n]["call"]["sout"],
-                        )
+                        f'finished running {running[n]["call"]["name"]} (exit code: {running[n]["p"].poll()}), log in {running[n]["call"]["sout"]}'
                     )
                 else:
                     log.detail(
-                        "finished running %s (exit code: %d)"
-                        % (running[n]["call"]["name"], running[n]["p"].poll())
+                        f'finished running {running[n]["call"]["name"]} (exit code: {running[n]["p"].poll()})'
                     )
                 completed.append(
                     {

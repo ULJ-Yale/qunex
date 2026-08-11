@@ -90,7 +90,7 @@ def map_to_qunex_cpls(
         session = m.group("session_name")
         data = m.group("data").split(pathsep)
     except Exception:
-        log.error("Could not parse file: %s" % (file))
+        log.error(f"Could not parse file: {file}")
         return False
 
     if any([e[0] == "." for e in [subjid, session] + data]):
@@ -109,15 +109,13 @@ def map_to_qunex_cpls(
         if os.path.exists(tfolder):
             if overwrite == "yes" or overwrite is True:
                 log.step(
-                    "hcpls for session %s already exists: cleaning session"
-                    % (sessionid)
+                    f"hcpls for session {sessionid} already exists: cleaning session"
                 )
                 shutil.rmtree(tfolder)
                 sessions["clean"].append(sessionid)
             elif not os.path.exists(os.path.join(tfolder, "hcpfs2nii.log")):
                 log.step(
-                    "incomplete hcpls for session %s already exists: cleaning session"
-                    % (session)
+                    f"incomplete hcpls for session {session} already exists: cleaning session"
                 )
                 shutil.rmtree(tfolder)
                 sessions["clean"].append(session)
@@ -135,7 +133,7 @@ def map_to_qunex_cpls(
                                 mapped_file = logline.split("=>")[0].strip()
                                 log.detail(os.path.basename(mapped_file))
         else:
-            log.step("creating hcpl session %s" % (sessionid))
+            log.step(f"creating hcpl session {sessionid}")
             sessions["map"].append(sessionid)
 
     if os.path.exists(tfile):
@@ -507,7 +505,7 @@ def import_hcp(
     # traditional onboarding with unprocessed data
     report = []
     if inbox != "NONE":
-        log.step("identifying files in %s" % (inbox))
+        log.step(f"identifying files in {inbox}")
 
         source_files = _get_source_files(inbox, sessions, nameformat)
 
@@ -625,7 +623,7 @@ def import_hcp(
                         else:
                             shutil.rmtree(inbox)
                 except Exception:
-                    log.warning("%s failed!" % (archive))
+                    log.warning(f"{archive} failed!")
             else:
                 files = glob.glob(os.path.join(inbox, "*"))
                 for file in files:
@@ -647,7 +645,7 @@ def import_hcp(
                             else:
                                 shutil.rmtree(file)
                     except Exception:
-                        log.warning("%s of %s failed!" % (archive, file))
+                        log.warning(f"{archive} of {file} failed!")
 
         # ---> check status
         if not all_ok:
@@ -1158,7 +1156,7 @@ def process_hcpls(sessionfolder, filesort, _log=None):
 
     # sort folders
     log = gl.log_or_console(_log)
-    log.step("filesort: %s" % (filesort))
+    log.step(f"filesort: {filesort}")
     for sortkey in filesort.split("_"):
         if sortkey == "name":
             checked_folders.sort(key=lambda x: x["name"])
@@ -1370,11 +1368,11 @@ def map_hcpls2nii(
     if sessionid:
         info += ", session " + sessionid
 
-    log.detail("info: %s" % (info))
+    log.detail(f"info: {info}")
 
     splash = "Running map_hcpls2nii for %s" % (info)
     # `raw` because a title over its own rule is not a record shape
-    log.raw("\n%s\n%s" % (splash, "".join(["=" for e in range(len(splash))])))
+    log.raw(f'\n{splash}\n{"".join(["=" for e in range(len(splash))])}')
 
     splash = "\n\nParameters for " + info
     print(splash, file=rout)
@@ -1481,7 +1479,7 @@ def map_hcpls2nii(
 
             if status:
                 nmapped += 1
-                log.step("linked %02d.nii.gz <-- %s" % (imgn, file_info["name"]))
+                log.step(f'linked {imgn:02d}.nii.gz <-- {file_info["name"]}')
 
                 # -- Institution and device information
                 if first_image:
@@ -1647,8 +1645,7 @@ def map_hcpls2nii(
 
                     if phenc == "NA":
                         log.warning(
-                            "Could not identify phase encoding direction for %d.nii.gz [%s]!"
-                            % (imgn, file_info["name"])
+                            f'Could not identify phase encoding direction for {imgn}.nii.gz [{file_info["name"]}]!'
                         )
                         phencstr = ""
                     else:
@@ -1731,8 +1728,7 @@ def map_hcpls2nii(
 
                     if phenc == "NA":
                         log.warning(
-                            "Could not identify phase encoding direction for %d.nii.gz [%s]!"
-                            % (imgn, file_info["name"])
+                            f'Could not identify phase encoding direction for {imgn}.nii.gz [{file_info["name"]}]!'
                         )
                         phencstr = ""
                     else:
@@ -1950,7 +1946,7 @@ def map_hcpls2nii(
             else:
                 all_ok = False
                 log.error(
-                    "Linking failed: %02d.nii.gz <-- %s" % (imgn, file_info["name"])
+                    f'Linking failed: {imgn:02d}.nii.gz <-- {file_info["name"]}'
                 )
                 print("FAILED: %s => %s" % (file_info["path"], tfile), file=bout)
 
@@ -1990,8 +1986,7 @@ def map_hcpls2nii(
 
                 if not all([status_a, status_b]):
                     log.error(
-                        "bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s"
-                        % (imgn, file_info["name"].replace(".nii.gz", ".bval/.bvec"))
+                        f'bval/bvec files were not found and were not mapped: {imgn:02d}.bval/.bvec <-- {file_info["name"].replace(".nii.gz", ".bval/.bvec")}'
                     )
                     all_ok = False
 

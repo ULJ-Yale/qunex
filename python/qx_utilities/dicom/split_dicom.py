@@ -57,8 +57,7 @@ def split_dicom(folder=None, _log=None):
         folder = os.path.join(".", "inbox")
 
     log.info(
-        "============================================\n\nSorting dicoms from %s"
-        % (folder)
+        f"============================================\n\nSorting dicoms from {folder}"
     )
 
     files = glob.glob(os.path.join(folder, "*"))
@@ -84,10 +83,9 @@ def split_dicom(folder=None, _log=None):
             if sid not in sessions:
                 sessions.append(sid)
                 os.makedirs(os.path.join(folder, sid))
-                log.step("creating subfolder for session %s" % (sid))
+                log.step(f"creating subfolder for session {sid}")
             log.step(
-                "%s - %-6s %6d - %-30s scanned on %s"
-                % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
+                f"{dcm} - {sid:<6} {d.SeriesNumber:6d} - {d.SeriesDescription:<30} scanned on {time}"
             )
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
         except Exception:

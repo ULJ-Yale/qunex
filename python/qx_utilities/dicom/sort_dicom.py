@@ -180,7 +180,7 @@ def _place_par_rec(par_members, dicom_dir, session_id, verbose, _log=None):
         if "REC" in parts:
             _write_bytes(os.path.join(seq_dir, stem + ".REC"), parts["REC"])
         elif verbose:
-            log.warning("no REC file found for %s" % (base))
+            log.warning(f"no REC file found for {base}")
 
 
 def _scan_and_sort_session(
@@ -237,11 +237,11 @@ def _scan_and_sort_session(
         total_expected += n
 
     if verbose:
-        log.step("Inspecting and sorting package content for %s" % (session_id))
+        log.step(f"Inspecting and sorting package content for {session_id}")
         for source in sources:
-            log.detail("source: %s" % (source))
+            log.detail(f"source: {source}")
         if total_expected:
-            log.detail("%d member(s) to inspect" % (total_expected))
+            log.detail(f"{total_expected} member(s) to inspect")
             # the scan bar below redraws itself from column 0 and never emits a
             # newline of its own, so it needs the line it draws on opened here
             log.blank()
@@ -259,13 +259,11 @@ def _scan_and_sort_session(
                         # with a carriage return and no newline, which a record
                         # -- a whole line, newline first -- cannot express
                         log.raw(
-                            "\r     ... scanning %s"
-                            % (gds_records.format_progress(seen, total_expected))
+                            f"\r     ... scanning {gds_records.format_progress(seen, total_expected)}"
                         )
                 elif seen % _SCAN_PROGRESS_EVERY == 0:
                     log.detail(
-                        "%d member(s) scanned, %d sequence(s) so far"
-                        % (seen, len(sequence_map))
+                        f"{seen} member(s) scanned, {len(sequence_map)} sequence(s) so far"
                     )
             bn = os.path.basename(name)
             if bn[:4] in ("XX_0", "PS_0"):
@@ -295,7 +293,7 @@ def _scan_and_sort_session(
             sid = info["seriesNumber"]
             if sid is None:
                 if verbose:
-                    log.step("Skipping file with no series number: %s" % (name))
+                    log.step(f"Skipping file with no series number: {name}")
                 continue
 
             pkg.total_dicom += 1
@@ -335,12 +333,10 @@ def _scan_and_sort_session(
             # than render a bar past 100%. The record that follows opens with a
             # newline of its own, which is what closes the line
             log.raw(
-                "\r     ... scanning %s"
-                % (gds_records.format_progress(seen, max(total_expected, seen)))
+                f"\r     ... scanning {gds_records.format_progress(seen, max(total_expected, seen))}"
             )
         log.step(
-            "Inspected %d file(s): %d DICOM in %d sequence(s), %d unreadable"
-            % (pkg.total_members, pkg.total_dicom, len(sequence_map), pkg.parse_errors)
+            f"Inspected {pkg.total_members} file(s): {pkg.total_dicom} DICOM in {len(sequence_map)} sequence(s), {pkg.parse_errors} unreadable"
         )
 
     _place_par_rec(par_members, dicom_dir, session_id, verbose, _log=log)
@@ -407,7 +403,7 @@ def _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms,
                 os.makedirs(orphans_dir, exist_ok=True)
                 os.rename(src, dst)
         if orphaned and verbose:
-            log.step("Sequence %s: moved %d orphaned file(s) to orphans/" % (seq.sequence_id, len(orphaned)))
+            log.step(f"Sequence {seq.sequence_id}: moved {len(orphaned)} orphaned file(s) to orphans/")
 
     eval_sequences = [s for s in mr_sequences if not s.non_evaluable]
     statuses = Counter(s.status for s in eval_sequences)

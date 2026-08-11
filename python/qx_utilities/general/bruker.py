@@ -120,7 +120,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
     if sessions:
         sessions = [e.strip() for e in re.split(r' +|\| *|, *', sessions)]
 
-    log.step('identifying files in %s' % (inbox))
+    log.step(f"identifying files in {inbox}")
 
     # prepare calls
     calls = []

@@ -56,7 +56,7 @@ def _clean_sorted_dicom(folder, min_images, move_non_image, move_incomplete, ver
 
     dicom_dir = os.path.join(folder, "dicom")
     if not os.path.isdir(dicom_dir):
-        log.warning("DICOM folder not found: %s" % (dicom_dir))
+        log.warning(f"DICOM folder not found: {dicom_dir}")
         log.step("Skipping clean_dicom")
         return
 
@@ -99,8 +99,7 @@ def _clean_sorted_dicom(folder, min_images, move_non_image, move_incomplete, ver
         n_or = _move_files(orphaned, orphans_dir) if move_incomplete else 0
         if verbose:
             log.step(
-                "Sequence %s: %d image, moved %d non-image, %d orphaned"
-                % (sqid, seq.imaging_dicom_count, n_ni, n_or)
+                f"Sequence {sqid}: {seq.imaging_dicom_count} image, moved {n_ni} non-image, {n_or} orphaned"
             )
 
 

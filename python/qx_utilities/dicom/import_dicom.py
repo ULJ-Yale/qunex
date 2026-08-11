@@ -619,7 +619,7 @@ def import_dicom(
         log.step("Created Archive folder for processed packages.")
 
     report = {"failed": [], "ok": []}
-    log.step("Starting to process %d packets ..." % (len(to_process)))
+    log.step(f"Starting to process {len(to_process)} packets ...")
 
     for afile, session in to_process:
         note = []
@@ -627,7 +627,7 @@ def import_dicom(
             sfolder = os.path.join(sessionsfolder, session["sessionid"])
             dicom_dir = os.path.join(sfolder, "dicom")
             log.blank()
-            log.info("\n---=== PROCESSING %s ===---" % (session["sessionid"]))
+            log.info(f'\n---=== PROCESSING {session["sessionid"]} ===---')
 
             sources = _resolve_packet_sources(afile, session, masterinbox, sfolder)
 
@@ -645,7 +645,7 @@ def import_dicom(
             gdr.write_report(pkg, os.path.join(dicom_dir, "%s_import_report.md" % (session["sessionid"])))
             log.blank()
             log.info(gdr.render_console_summary(pkg))
-            log.step("Package verdict: %s" % (pkg.verdict))
+            log.step(f"Package verdict: {pkg.verdict}")
 
             # convert to NIfTI (still writes session.txt and DICOM-Report.txt)
             log.blank()
@@ -666,7 +666,7 @@ def import_dicom(
             if archive != "leave":
                 s = "Processing packages: " + archive
                 log.blank()
-                log.info("%s\n%s" % (s, "=" * len(s)))
+                log.info(f'{s}\n{"=" * len(s)}')
             note += _archive_packet(sources, afolder, archive, masterinbox, verbose_b, _log=log)
 
             report["ok"].append((afile, dict(session), note))

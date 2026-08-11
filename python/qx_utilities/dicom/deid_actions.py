@@ -144,7 +144,7 @@ def read_spec_file(spec_file, _log=None):
                     if key not in action_dict:
                         action_dict[key] = []
                     else:
-                        log.warning("actions for tag %s specified more than once! [line: %d]" % (key, line_number))
+                        log.warning(f"actions for tag {key} specified more than once! [line: {line_number}]")
 
                     for action in actions:
                         if "replace" in action:
@@ -153,7 +153,7 @@ def read_spec_file(spec_file, _log=None):
                                 action, replacement = parts
                                 replace_map[key] = replacement
                             else:
-                                log.warning("no replacement specified, skipping replacement! [line %d: %s]" % (line_number, action))
+                                log.warning(f"no replacement specified, skipping replacement! [line {line_number}: {action}]")
 
                         action_dict[key].append(action)
 

@@ -152,7 +152,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
         for filename in filenames:
             full_filename = os.path.join(dirpath, filename)
 
-            log.step("Inspecting %s" % (full_filename))
+            log.step(f"Inspecting {full_filename}")
 
             opened_dicom = None
 
@@ -202,7 +202,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                         else:
                             file = open(output_file, mode='wb')
 
-                        log.detail("saving to %s" % (output_file), depth=1)
+                        log.detail(f"saving to {output_file}", depth=1)
                         modified_dicom.save_as(file)
 
                         if gz:
@@ -217,7 +217,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                 # purpose, not a file to skip quietly: the `except Exception:
                 # pass` this replaces is what hid the removed `read_file` API
                 except Exception as e:
-                    log.error("failed to process %s: %s" % (full_filename, e))
+                    log.error(f"failed to process {full_filename}: {e}")
 
             # `is_zipfile`/`is_tarfile` answer "is this an archive?" on their
             # own, so only the test decides whether the branch is taken. The
@@ -246,7 +246,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                                 relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
                                 target_file = os.path.join(output_folder, relative_filepath)
 
-                            log.step("zipping to %s" % (target_file))
+                            log.step(f"zipping to {target_file}")
 
                             with zipfile.ZipFile(target_file, mode='w') as file:
                                 for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
@@ -256,7 +256,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                                         file.write(full_path_2, relative_filepath_2)
 
                 except Exception as e:
-                    log.error("failed to process zip archive %s: %s" % (full_filename, e))
+                    log.error(f"failed to process zip archive {full_filename}: {e}")
 
             if opened_dicom is None and tarfile.is_tarfile(full_filename):
                 opened_dicom = True
@@ -292,7 +292,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                                 relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
                                 target_file = os.path.join(output_folder, relative_filepath)
 
-                            log.step("archiving to %s" % (target_file))
+                            log.step(f"archiving to {target_file}")
 
                             with tarfile.open(target_file, mode2) as file:
                                 for item in glob.glob(os.path.join(temp_out_directory, '*')):
@@ -300,7 +300,7 @@ def discover_dicom(folder, deid_function, output_folder=None, rename_files=False
                                     file.add(item, relative_filepath)
 
                 except Exception as e:
-                    log.error("failed to process tar archive %s: %s" % (full_filename, e))
+                    log.error(f"failed to process tar archive {full_filename}: {e}")
 
             if opened_dicom is None:
                 log.detail("not a dicom file ... skipping")

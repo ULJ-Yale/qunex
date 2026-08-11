@@ -63,8 +63,8 @@ def _run_external(_log, options, overwrite, checkfile, command, description):
     ``ExternalFailed``, which the commands catch.
     """
     if options["run"] != "run":
-        _log.raw("\n\n%s" % description)
-        _log.detail("test, not run: %s" % command, depth=1)
+        _log.raw(f"\n\n{description}")
+        _log.detail(f"test, not run: {command}", depth=1)
         return
 
     pc.run_external_for_file(checkfile, command, description, overwrite=overwrite, _log=_log)
@@ -78,7 +78,7 @@ def _copy(_log, options, source, target, ifh=False):
     every 4dfp copy in this file does.
     """
     if options["run"] != "run":
-        _log.detail("test, not copied: %s" % os.path.basename(source))
+        _log.detail(f"test, not copied: {os.path.basename(source)}")
         return
 
     shutil.copy2(source, target)

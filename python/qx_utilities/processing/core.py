@@ -1100,11 +1100,7 @@ def combined_comlog(_log, options, command, thread=None):
             )
         )
         ran = _log.external_calls - started
-        _log.step("ran %d external command%s%s" % (
-            ran,
-            "" if ran == 1 else "s",
-            "" if completed else " before failing",
-        ))
+        _log.step(f'ran {ran} external command{"" if ran == 1 else "s"}{"" if completed else " before failing"}')
         close_log(
             comlog,
             logfolders,

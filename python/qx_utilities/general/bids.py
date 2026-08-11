@@ -201,14 +201,13 @@ def map_to_qunex_bids(
         elif os.path.exists(folder):
             if overwrite == "yes" or overwrite is True:
                 log.step(
-                    "bids for session %s already exists: cleaning session" % (session)
+                    f"bids for session {session} already exists: cleaning session"
                 )
                 shutil.rmtree(folder)
                 sessions_list["clean"].append(session)
             elif not os.path.exists(os.path.join(folder, "bids2nii.log")):
                 log.step(
-                    "incomplete bids for session %s already exists: cleaning session"
-                    % (session)
+                    f"incomplete bids for session {session} already exists: cleaning session"
                 )
                 shutil.rmtree(folder)
                 sessions_list["clean"].append(session)
@@ -229,7 +228,7 @@ def map_to_qunex_bids(
 
         # ---> session folder does not exist and is not 'bids'
         else:
-            log.step("creating bids session %s" % (session))
+            log.step(f"creating bids session {session}")
             sessions_list["map"].append(session)
 
     # ---> compile target filename
@@ -625,7 +624,7 @@ def import_bids(
     _ = ast.literal_eval(content)
 
     # ---> identification of files
-    log.step("identifying files in %s" % (inbox))
+    log.step(f"identifying files in {inbox}")
 
     source_files = []
     process_all = True
@@ -653,7 +652,7 @@ def import_bids(
             else:
                 folder_type = "inbox"
 
-            log.step("Inbox type: %s" % (folder_type))
+            log.step(f"Inbox type: {folder_type}")
 
             # -- process sessions
             globfor = {
@@ -775,9 +774,9 @@ def import_bids(
         bidsinfo = os.path.join(qxfolders["basefolder"], "info", "bids", bidsname)
 
     with log.section("Paths:"):
-        log.detail("bidsinfo    -> %s" % (bidsinfo))
-        log.detail("bidsinbox   -> %s" % (bidsinbox))
-        log.detail("bidsarchive -> %s" % (bidsarchive))
+        log.detail(f"bidsinfo    -> {bidsinfo}")
+        log.detail(f"bidsinbox   -> {bidsinbox}")
+        log.detail(f"bidsarchive -> {bidsarchive}")
 
     # ---> mapping data to sessions' folders
     log.step("mapping files to QuNex bids folders")
@@ -914,7 +913,7 @@ def import_bids(
 
         # ---> archive
         if archive in ["move", "copy", "delete"]:
-            log.step("Archiving: %sing items" % (archive.replace("y", "yy")[:-1]))
+            log.step(f'Archiving: {archive.replace("y", "yy")[:-1]}ing items')
 
         # -> prepare target folder
         if archive in ["move", "copy"]:
@@ -946,8 +945,7 @@ def import_bids(
                     io = fl.rmtree(archive_item)
                 if io and io != "No such file or directory":
                     log.warning(
-                        "Could not remove %s. Please check permissions!"
-                        % (archive_item)
+                        f"Could not remove {archive_item}. Please check permissions!"
                     )
 
             # -> move or copy items
@@ -964,8 +962,7 @@ def import_bids(
                 io = fl.makedirs(archive_target_folder)
                 if io and io != "File exists":
                     log.warning(
-                        "Could not create archive folder %s. Skipping archiving. Please check permissions!"
-                        % (archive_target_folder)
+                        f"Could not create archive folder {archive_target_folder}. Skipping archiving. Please check permissions!"
                     )
                     archive_target_folder = None
 
@@ -982,8 +979,7 @@ def import_bids(
                             shutil.copytree(archive_item, archive_target)
                 except Exception:
                     log.warning(
-                        "Could not %s %s. Please check permissions!"
-                        % (archive, archive_item)
+                        f"Could not {archive} {archive_item}. Please check permissions!"
                     )
                 fl.unlock(archive_target)
 
@@ -1516,7 +1512,7 @@ def map_bids2nii(
     splash = "Running map_bids2nii for %s" % (info)
     # `raw` because a title over its own rule is not a record shape; it carries
     # no trailing newline, since every record that follows opens with one
-    log.raw("\n%s\n%s" % (splash, "".join(["=" for e in range(len(splash))])))
+    log.raw(f'\n{splash}\n{"".join(["=" for e in range(len(splash))])}')
 
     if overwrite not in ["yes", "no"]:
         raise ge.CommandError(
@@ -1684,8 +1680,7 @@ def map_bids2nii(
             )
         if status:
             log.step(
-                "linked %d.nii.gz <-- %s"
-                % (imgn, bids_data["images"]["info"][image]["filename"])
+                f'linked {imgn}.nii.gz <-- {bids_data["images"]["info"][image]["filename"]}'
             )
 
             # ---> check if there is sequence info present
@@ -1731,8 +1726,7 @@ def map_bids2nii(
         else:
             all_ok = False
             log.error(
-                "Linking failed: %d.nii.gz <-- %s"
-                % (imgn, bids_data["images"]["info"][image]["filename"])
+                f'Linking failed: {imgn}.nii.gz <-- {bids_data["images"]["info"][image]["filename"]}'
             )
             print(
                 "FAILED: %s => %s"
@@ -1772,13 +1766,9 @@ def map_bids2nii(
                     file=bout,
                 )
                 log.error(
-                    "bval/bvec files were not found and were not mapped: %d.bval/.bvec <-- %s"
-                    % (
-                        imgn,
-                        bids_data["images"]["info"][image]["filename"].replace(
+                    f'bval/bvec files were not found and were not mapped: {imgn}.bval/.bvec <-- {bids_data["images"]["info"][image]["filename"].replace(
                             ".nii.gz", ".bval/.bvec"
-                        ),
-                    )
+                        )}'
                 )
                 all_ok = False
 

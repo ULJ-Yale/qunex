@@ -83,8 +83,8 @@ def create_bold_list(sinfo, options, overwrite=False, thread=0):
 
     # the list itself is the command's product; the report says what went into
     # it, not what it says
-    log.step("processed %d sessions" % (nsessions))
-    log.step("wrote %s with %d bolds in total" % (listfile, nbolds))
+    log.step(f"processed {nsessions} sessions")
+    log.step(f"wrote {listfile} with {nbolds} bolds in total")
 
     return log.finish("wrote a bold list with %d bolds from %d sessions" % (nbolds, nsessions))
 
@@ -123,7 +123,7 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
     nsessions = 0
 
     if len(concs) != len(fidls):
-        log.warning("Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls)))
+        log.warning(f"Number of conc files ({len(concs)}) does not match number of event files ({len(fidls)}), processing aborted!")
         bfile.close()
         return log.result("aborted: %d conc files but %d event files" % (len(concs), len(fidls)), 1)
 
@@ -146,7 +146,7 @@ def create_conc_list(sinfo, options, overwrite=False, thread=0):
                 print("    file:%s" % (f_conc), file=bfile)
 
             except Exception:
-                log.error("processing session %s!" % (session['id']))
+                log.error(f"processing session {session['id']}!")
                 # the report is lost when the command aborts by exception --
                 # showing it is the only thing that survives the raise
                 print(log.text)
@@ -184,8 +184,8 @@ def list_session_info(sinfo, options, overwrite=False, thread=0):
 
     # the listing itself is the command's product; the report says what went
     # into it, not what it says
-    log.step("listed %d sessions" % (nsessions))
-    log.step("wrote %s" % (listfile))
+    log.step(f"listed {nsessions} sessions")
+    log.step(f"wrote {listfile}")
 
     return log.finish("listed %d sessions" % (nsessions))
 

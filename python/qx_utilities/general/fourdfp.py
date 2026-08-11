@@ -116,11 +116,10 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None, _l
     ]
 
     do = []
-    log.raw("\n\n---=== Running NIL preprocessing on folder %s ===---" % (folder))
+    log.raw(f"\n\n---=== Running NIL preprocessing on folder {folder} ===---")
     with log.section("List of sessions to process"):
         log.detail(
-            "%-15s%-15s%-15s%-10s"
-            % ("session", "session.txt", "DICOM-Report", "params")
+            f'{"session":<15}{"session.txt":<15}{"DICOM-Report":<15}{"params":<10}'
         )
         for subj, stxt, sdicom, sparam in subjs:
             # the row used to be assembled by four prints with `end=" "`; a
@@ -139,14 +138,7 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None, _l
                     notes.append("working with existing params file")
                 do.append(subj)
             log.detail(
-                "%-15s%-15s%-15s%-10s ---> %s"
-                % (
-                    os.path.basename(subj),
-                    recode[stxt],
-                    recode[sdicom],
-                    recode[sparam],
-                    " ".join(notes),
-                )
+                f'{os.path.basename(subj):<15}{recode[stxt]:<15}{recode[sdicom]:<15}{recode[sparam]:<10} ---> {" ".join(notes)}'
             )
 
     failed = []
@@ -161,9 +153,9 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None, _l
             # the exception used to be swallowed and the failure printed, so
             # the command reported a failed session and still exited 0
             failed.append(os.path.basename(s))
-            log.error("Failed running NIL preprocessing on %s: %s" % (s, str(e)))
+            log.error(f"Failed running NIL preprocessing on {s}: {str(e)}")
 
-    log.raw("\n\n---=== Done NIL preprocessing on folder %s ===---" % (folder))
+    log.raw(f"\n\n---=== Done NIL preprocessing on folder {folder} ===---")
 
     # raised after the loop, so one failing session does not abort its siblings
     if failed:

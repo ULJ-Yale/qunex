@@ -66,7 +66,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
         file_split = file.split(pathsep)
 
         if "dMRI" not in file_split:
-            log.step("skipping %s, not a dMRI file" % (file))
+            log.step(f"skipping {file}, not a dMRI file")
             return False
         else:
             session = file_split[-3]
@@ -77,20 +77,20 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
             # store data
             data_file = file_split[-1]
     except Exception:
-        log.error("Could not parse file: %s" % (file))
+        log.error(f"Could not parse file: {file}")
         return False
 
     # target folder and file
     tfile = os.path.join(sessionsfolder, session, "NHP", "dMRI", data_file)
-    log.step("Processing session %s, file %s" % (session, data_file))
+    log.step(f"Processing session {session}, file {data_file}")
 
     # overwrite?
     if os.path.exists(tfile):
         if overwrite == "yes" or overwrite is True:
-            log.step("file %s already exists: deleting ..." % (tfile))
+            log.step(f"file {tfile} already exists: deleting ...")
             os.remove(tfile)
         else:
-            log.step("file %s already exists: skipping ..." % (tfile))
+            log.step(f"file {tfile} already exists: skipping ...")
             return False
 
     return [session, tfile]
@@ -227,7 +227,7 @@ def import_nhp(
     if sessions:
         sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
-    log.step("identifying files in %s" % (inbox))
+    log.step(f"identifying files in {inbox}")
 
     source_files = []
 
@@ -385,7 +385,7 @@ def import_nhp(
                     else:
                         shutil.rmtree(inbox)
             except Exception:
-                log.warning("%s failed!" % (archive))
+                log.warning(f"{archive} failed!")
         else:
             files = glob.glob(os.path.join(inbox, "*"))
             for file in files:
@@ -407,7 +407,7 @@ def import_nhp(
                         else:
                             shutil.rmtree(file)
                 except Exception:
-                    log.warning("%s of %s failed!" % (archive, file))
+                    log.warning(f"{archive} of {file} failed!")
 
     if not all_ok:
         raise ge.CommandFailed(
@@ -421,7 +421,7 @@ def import_nhp(
         for s in report:
             # report session info
             log.blank()
-            log.step("Session %s: " % (s))
+            log.step(f"Session {s}: ")
 
             # basic data
             sfolder = os.path.join(sessionsfolder, s)
@@ -463,7 +463,7 @@ def import_nhp(
             i = 1
             for f in report[s]:
                 # report
-                log.detail("mapped file %s" % (f))
+                log.detail(f"mapped file {f}")
 
                 # add to subject
                 out = "%02d: %s" % (i, f)

@@ -83,8 +83,8 @@ def _run_external(_log, options, checkfile, command, description, **kwargs):
     call sites unpack, rather than a bare None that would raise there.
     """
     if options["run"] != "run":
-        _log.raw("\n\n%s" % description)
-        _log.detail("test, not run: %s" % command, depth=1)
+        _log.raw(f"\n\n{description}")
+        _log.detail(f"test, not run: {command}", depth=1)
         return None, None, 0
 
     return pc.run_external_for_file(checkfile, command, description, **kwargs, _log=_log)
@@ -93,7 +93,7 @@ def _run_external(_log, options, checkfile, command, description, **kwargs):
 def _link_or_copy(_log, options, source, target, **kwargs):
     """Link or copy a file, or -- under ``--test`` -- report it and change nothing."""
     if options["run"] != "run":
-        _log.detail("test, not copied: %s" % os.path.basename(source))
+        _log.detail(f"test, not copied: {os.path.basename(source)}")
         return None
 
     return gc.link_or_copy(source, target, **kwargs)
@@ -110,7 +110,7 @@ def _remove(_log, options, path):
     """
     if options["run"] != "run":
         if os.path.exists(path):
-            _log.detail("test, not removed: %s" % path)
+            _log.detail(f"test, not removed: {path}")
         return
 
     os.remove(path)
@@ -1572,7 +1572,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 tfolder = os.path.join(d["qc_mov"], options["mov_pdf"], sf)
                 if not os.path.exists(tfolder):
                     if options["run"] != "run":
-                        log.detail("test, not created: %s" % tfolder)
+                        log.detail(f"test, not created: {tfolder}")
                     else:
                         os.makedirs(tfolder)
 
@@ -1612,7 +1612,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
             if options["run"] != "run":
                 log.detail(
-                    "test, not written: %s" % fidlf.replace(".fidl", ipatt)
+                    f'test, not written: {fidlf.replace(".fidl", ipatt)}'
                 )
             elif os.path.exists(concf) and os.path.exists(fidlf):
                 try:

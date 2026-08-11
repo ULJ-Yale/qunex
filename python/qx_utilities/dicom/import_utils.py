@@ -124,9 +124,9 @@ def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, namefo
         if not os.path.isdir(masterinbox):
             raise ge.CommandFailed("import_dicom", "Master inbox is not a folder", f"{masterinbox} is not a folder.", "Please check your path!")
 
-        log.step("Checking for packets in %s" % (os.path.abspath(masterinbox)))
-        log.detail("using regular expression '%s'" % (pattern))
-        log.detail("extracting subject id using regular expression '%s'" % (nameformat))
+        log.step(f"Checking for packets in {os.path.abspath(masterinbox)}")
+        log.detail(f"using regular expression '{pattern}'")
+        log.detail(f"extracting subject id using regular expression '{nameformat}'")
         try:
             getop = re.compile(pattern)
         except Exception:
@@ -174,7 +174,7 @@ def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, namefo
             ("invalid", "For these folders the folder name could not parsed and they won't be processed:"),
             ("exist", "These folders have existing results:"),
         ]
-        log.step("Checking for folders to process in '%s'" % (os.path.abspath(sessionsfolder)))
+        log.step(f"Checking for folders to process in '{os.path.abspath(sessionsfolder)}'")
         getid = re.compile(nameformat)
 
         sfolders = []
@@ -213,15 +213,15 @@ def _import_report_packets(packets, report_set, overwrite, _log=None):
             for afile, session in packets[tag]:
                 base = os.path.basename(afile)
                 if session["sessionname"]:
-                    log.info("subject: %s, session: %s ... %s <= %s <- %s" % (session["subjectid"], session["sessionname"], session["sessionid"], session["packetname"], base))
+                    log.info(f'subject: {session["subjectid"]}, session: {session["sessionname"]} ... {session["sessionid"]} <= {session["packetname"]} <- {base}')
                 elif session["subjectid"]:
-                    log.info("subject: %s ... %s <= %s <- %s" % (session["subjectid"], session["sessionid"], session["packetname"], base))
+                    log.info(f'subject: {session["subjectid"]} ... {session["sessionid"]} <= {session["packetname"]} <- {base}')
                 elif session["sessionid"]:
-                    log.info("%s <= %s <- %s" % (session["sessionid"], session["packetname"], base))
+                    log.info(f'{session["sessionid"]} <= {session["packetname"]} <- {base}')
                 elif session["packetname"]:
-                    log.info("%s <= %s <- %s" % ("????", session["packetname"], base))
+                    log.info(f'{"????"} <= {session["packetname"]} <- {base}')
                 else:
-                    log.info("%s <= %s <- %s" % ("????", "????", base))
+                    log.info(f'{"????"} <= {"????"} <- {base}')
             if tag == "exist":
                 if overwrite:
                     log.detail("Since overwrite is set the folders will be removed and replaced")
@@ -291,22 +291,22 @@ def _archive_packet(sources, afolder, archive, masterinbox, verbose, _log=None):
         if archive == "move":
             if os.path.exists(target):
                 notes.append("WARNING: %s already exists in archive and it was not moved!" % os.path.basename(p))
-                log.warning("%s already exists in archive and it will not be moved!" % os.path.basename(p))
+                log.warning(f"{os.path.basename(p)} already exists in archive and it will not be moved!")
             else:
-                log.detail("moving %s to archive" % os.path.basename(p))
+                log.detail(f"moving {os.path.basename(p)} to archive")
                 shutil.move(p, target)
         elif archive == "copy":
             if os.path.exists(target):
                 notes.append("WARNING: %s already exists in archive and it was not copied!" % os.path.basename(p))
-                log.warning("%s already exists in archive and it will not be copied!" % os.path.basename(p))
+                log.warning(f"{os.path.basename(p)} already exists in archive and it will not be copied!")
             else:
-                log.detail("copying %s to archive" % os.path.basename(p))
+                log.detail(f"copying {os.path.basename(p)} to archive")
                 if ptype == "folder":
                     shutil.copytree(p, target)
                 else:
                     shutil.copy2(p, afolder)
         elif archive == "delete":
-            log.detail("deleting packet [%s]" % os.path.basename(p))
+            log.detail(f"deleting packet [{os.path.basename(p)}]")
             if ptype == "folder":
                 _safe_rmtree(p, _log=log)
             else:
@@ -355,14 +355,14 @@ def _import_final_report(report, _log=None):
         log.blank()
         log.step("Successfully processed:")
         for afile, session, notes in report["ok"]:
-            log.detail("%s [%s]" % (session["sessionid"], afile))
+            log.detail(f'{session["sessionid"]} [{afile}]')
             for note in notes:
                 log.detail(note, depth=1)
     if report["failed"]:
         log.blank()
         log.step("Failed to process:")
         for afile, session, notes in report["failed"]:
-            log.error("%s [%s]" % (session["sessionid"], afile))
+            log.error(f'{session["sessionid"]} [{afile}]')
             for note in notes:
                 log.detail(note, depth=1)
         raise ge.CommandFailed("import_dicom", "Some packages failed to process", "Please check report!")
