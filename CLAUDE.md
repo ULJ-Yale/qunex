@@ -162,6 +162,27 @@ provides `default_options(**overrides)` (builds the full option surface from `pr
 the same table the CLI parses) and `build_hcp_session(root)` (a minimal session tree). See
 `tests/test_hcp_dryrun.py` for the per-command pattern and `tests/test_log.py` for the log class.
 
+**`--test` is a contract each command has to keep, and nothing enforces it.** There is no shared
+gate: a command that never reads `options["run"]` does the work regardless of the flag, and both
+`processing/fs.py` (4 commands) and `processing/workflow.py` (5) shipped that way — copying files,
+invoking FSL/R/MATLAB, and in two cases deleting existing outputs a dry run then never
+regenerated. When writing or reviewing a processing command:
+
+- guard every side effect — external calls, copies and links, deletions, `os.makedirs`, image
+  writes, and a file lock, which writes a `.lock`;
+- **report what would have happened** rather than falling silent: `... test, not run: <command>`,
+  `test, not copied:`, `test, not removed:`. A dry run that guards its work but says nothing is
+  not worth running. `fs.py`'s `_run_external`/`_copy` and `workflow.py`'s
+  `_run_external`/`_link_or_copy`/`_remove` are the helpers that spell this once per file;
+- watch for a check that reads what the guarded step would have written. Both files had one, and
+  in each the dry run reported a failure and returned before naming the tools it would have run —
+  the check belongs inside the branch that does the work.
+
+`tests/test_fs_dryrun.py` and `tests/test_workflow_dryrun.py` are the pattern: nothing executed,
+no file written/changed/removed, and the tool still named. Note they compare **files only** —
+`pc.get_session_folders` creates the session skeleton whenever it resolves paths, for every
+processing command in the tree, and that is out of scope for a per-command dry-run fix.
+
 Refactors that must preserve behavior: verify with a before/after oracle — run the pre-change and
 post-change code on the same fixture (in `--test` mode) and require identical normalized output
 (strip timestamps/tmp paths/traceback line numbers). This caught real regressions during the
